@@ -33,10 +33,10 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
 
   const handleContinue = () => {
     if (!mode || !templateName.trim() || isDuplicate) return;
+    if (mode === 'copy' && !selectedTemplateId) return;
 
-    if (mode === 'scratch') {
-      router.push(`/${workspaceSlug}/customer-quote-templates/create/build?name=${encodeURIComponent(templateName.trim())}`);
-    }
+    const copyParam = mode === 'copy' ? `&copy=${encodeURIComponent(selectedTemplateId)}` : '';
+    router.push(`/${workspaceSlug}/customer-quote-templates/create/build?name=${encodeURIComponent(templateName.trim())}${copyParam}`);
   };
 
   return (
@@ -123,10 +123,10 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                      Copy existing template · unavailable
+                      Copy existing template
                     </h3>
                     <p className="text-sm text-slate-600">
-                      This existing option is not connected to a copy action yet. Use a blank header or edit an existing template instead.
+                      Start from an existing template&rsquo;s details, logo and footer, then adjust before saving.
                     </p>
                   </div>
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
@@ -141,8 +141,6 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
 
               {mode === 'copy' && (
                 <div className="px-6 pb-6 space-y-2">
-                  {/* AGENT-TODO P7-TEMPLATE-01: baseline copy selection has no implementation. Do not create new persistence here. */}
-                  <p className="qc-flow-notice" role="status">Copying is not available in this version. No template has been changed. Select Build from Scratch to continue.</p>
                   <label className="block text-sm font-medium text-slate-700">
                     Select Template to Copy
                   </label>
@@ -174,7 +172,7 @@ export function TemplateCreator({ workspaceSlug, existingTemplates }: Props) {
           </Link>
           <button data-qc-variant="primary"
             onClick={handleContinue}
-            disabled={mode !== 'scratch' || !templateName.trim() || isDuplicate}
+            disabled={mode === null || !templateName.trim() || isDuplicate || (mode === 'copy' && !selectedTemplateId)}
             className="qc-button qc-flow-control qc-library-control "
           >
             Continue

@@ -6,26 +6,29 @@ import { useRouter } from 'next/navigation';
 import { createCustomerQuoteTemplate } from './actions';
 import { createClient } from '@/app/lib/supabase/client';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
+import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
 
 interface Props {
   workspaceSlug: string;
   templateName: string;
   /** When true the company is over storage - block logo upload. */
   isOverStorage?: boolean;
+  /** Optional source template - prefills the builder when copying an existing header. */
+  sourceTemplate?: CustomerQuoteTemplateRow | null;
 }
 
-export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: Props) {
+export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, sourceTemplate }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [storageBlocked, setStorageBlocked] = useState(false);
 
-  // Company details (always start blank)
-  const [companyName, setCompanyName] = useState('');
-  const [companyAddress, setCompanyAddress] = useState('');
-  const [companyPhone, setCompanyPhone] = useState('');
-  const [companyEmail, setCompanyEmail] = useState('');
-  const [footerText, setFooterText] = useState('');
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  // Company details (prefilled when copying an existing template)
+  const [companyName, setCompanyName] = useState(sourceTemplate?.company_name ?? '');
+  const [companyAddress, setCompanyAddress] = useState(sourceTemplate?.company_address ?? '');
+  const [companyPhone, setCompanyPhone] = useState(sourceTemplate?.company_phone ?? '');
+  const [companyEmail, setCompanyEmail] = useState(sourceTemplate?.company_email ?? '');
+  const [footerText, setFooterText] = useState(sourceTemplate?.footer_text ?? '');
+  const [logoUrl, setLogoUrl] = useState<string | null>(sourceTemplate?.company_logo_url ?? null);
   const [uploading, setUploading] = useState(false);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,7 +120,9 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
             {templateName}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Add your company details, logo and footer. No quote prices or line items are saved here.
+            {sourceTemplate
+              ? `Started from "${sourceTemplate.name}" - adjust anything before saving. No quote prices or line items are saved here.`
+              : 'Add your company details, logo and footer. No quote prices or line items are saved here.'}
           </p>
         </div>
 
