@@ -1,0 +1,866 @@
+{
+  "phase": "8 UX polish and feedback",
+  "status": "IMPLEMENTED_SOURCE_RUNTIME_REVIEW_PENDING",
+  "hash_convention": "SHA-256 of exact raw bytes (BOM and CRLF/LF included). Canonical line diff is review-only.",
+  "baseline_zip": "quotecore-plus-phase8-ux-handoff-2026-09-27.zip",
+  "baseline_zip_sha256": "3419f46b37938caa0d4cd33daa3cf74195722b7d3c857cba16c767344c3869bf",
+  "baseline_outer_commit_label": "a2595922",
+  "older_inner_commit_label": "0f3758dd",
+  "self_exclusion": "docs/ux/phase-8/FILE_CHANGES.json (covered by ZIP-root PACKAGE_MANIFEST.json)",
+  "original_repository_file_count": 3094,
+  "production_counts": {
+    "modified": 24,
+    "added": 2,
+    "deleted": 0
+  },
+  "changes": [
+    {
+      "path": "DESIGN_CHANGES.md",
+      "operation": "modified",
+      "before_sha256": "2930dddc45202af4e1f201dc48955f1461aece217f9088247a4ffdb49dee3fe3",
+      "after_sha256": "72fd5d210f6672b7499da09387e1056c2630114c75b717d5e52e284155972c4e",
+      "bytes": 782,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "RETURN_NOTES.md",
+      "operation": "modified",
+      "before_sha256": "90138ee75bfaef5af44520004909323d8f75ee54ee2549e56f7bb25373a10620",
+      "after_sha256": "6312dc0e521543149877dfe44bc55a0685e917ce88996a55ee579492cc7ceec7",
+      "bytes": 1665,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "operation": "modified",
+      "before_sha256": "3754bffb115369c2a45de48656402b90c786807c1a23163e0d4e24d3c55f4070",
+      "after_sha256": "45a91b108f8e8617984d60ddcf8687d84310d032e4c7b5c03b9250db4573fa0a",
+      "bytes": 26730,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "operation": "modified",
+      "before_sha256": "8b44b2cb68cde778f400a0a9a91bb20f725bddc03b35bf4eb2f40db730d0f1ab",
+      "after_sha256": "ebd4782661bbc5a3e8e8fae3c3ed52647080bde2224b2f73db2169d9e9042ad4",
+      "bytes": 99414,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+      "operation": "modified",
+      "before_sha256": "e6cfa8869bab21614a5aceda705060cb08e89c20a7f47bfd7f1e1760770b91f5",
+      "after_sha256": "52764f756f67155084f41bf4f59442403e12e40420e0f0a1406980e4840993d4",
+      "bytes": 15002,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx",
+      "operation": "modified",
+      "before_sha256": "84a73e759263ef0de3ff95be87b963bdb637fd39e4c9a9cba483f64fef12c575",
+      "after_sha256": "44af26a662c0cf36dcaf615fdf24a141932829840704ed71dcb24424dd07804d",
+      "bytes": 6237,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "operation": "modified",
+      "before_sha256": "e16c1c088879e9c4e530ee95f544b13093bd2ff05277695cad806fc94466fb1e",
+      "after_sha256": "e68e023c52448ab86612f6a404d4af8ec1f20fa6267d28b7dc69bc01f25cb1f3",
+      "bytes": 38818,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/page.tsx",
+      "operation": "modified",
+      "before_sha256": "d1a7ad13533d491b46ca6deed3f4b2a831705c1f73695792541237d198c041f0",
+      "after_sha256": "061fd5300a360be94a6245b23110f40a36ddde5a0bfbf2c78d68d668446f8547",
+      "bytes": 1738,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx",
+      "operation": "modified",
+      "before_sha256": "fb84280f4109971de26841f283fe7bf3519dd6d2ac2e74f5e66c82ed4f50f9b2",
+      "after_sha256": "dc0998877aa33be70d197cf9d8ffdd9acc4ac0684c16d55f288aed588f97451b",
+      "bytes": 11890,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "operation": "modified",
+      "before_sha256": "0d76d5fee95f2c8a89993473348ddf0beb7a51bf2adec38c8eff9e4457286051",
+      "after_sha256": "4fecd8188e4e5a6023b27f1d83c68da2092329def6bd6dceb21fce4b0fef0cc6",
+      "bytes": 27656,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/template-form.tsx",
+      "operation": "modified",
+      "before_sha256": "3c6ae37ec14528b48085fd5cb3fe1668d0339079d2894e2c64210b5370764f10",
+      "after_sha256": "ee775bc48eedfc21e6825a73c92141ca3a30bfa0aeddc4478c06d7576ebbd9bb",
+      "bytes": 17025,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+      "operation": "modified",
+      "before_sha256": "30fff282bd28fe529fec9e797cdb7bb695379ce2a64a45cbf7170ff2cb15ccab",
+      "after_sha256": "7778056e560108dae2e8b7e397443bc59ed0c7ce327ce8542d83727b1d41497a",
+      "bytes": 12092,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx",
+      "operation": "modified",
+      "before_sha256": "2f66d09e8892b1375bdc33fda31905f94a502f3b08434ff9196f9d9c69722e00",
+      "after_sha256": "affc7e6843f40aaa8cacff8075ace512f913dbf6f2a9daf82562faf0a437340a",
+      "bytes": 28301,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "operation": "modified",
+      "before_sha256": "bf4bf9a6396d05da8ef1b55c071fea015b4abc640225b6c85f2b42c765e21022",
+      "after_sha256": "83b21aa6fc23c143ff8cc712f4c85c930c77804a9309a91402a80ee6e5921134",
+      "bytes": 41992,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "operation": "modified",
+      "before_sha256": "b04cd370b04e3e86cbdf15016e3ed188236936878f442db3ca05e10553b4aed0",
+      "after_sha256": "aeac631ba91814a68c965faba11c19818a82aae6a7797c313d54d9d847f6096c",
+      "bytes": 33617,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/resources/EditCustomerTemplateModal.tsx",
+      "operation": "modified",
+      "before_sha256": "af8dd4832e6fd366fbf07da4151e339c298f36c7291290d10af1b146cbcbe0cb",
+      "after_sha256": "8b7a9da2e6d4895bd3da5f3dd9c89f9b28f246926c0581035df5e0723dd48dcf",
+      "bytes": 7871,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+      "operation": "modified",
+      "before_sha256": "8f57b4a935c68c75299542b3011bc4e51dca1cf249fe392ed349d9efde680da7",
+      "after_sha256": "9d04bf8b1325f59341a9ca8af0cf833f2742d59b7f092ef2d950ba5ccda31311",
+      "bytes": 21760,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx",
+      "operation": "modified",
+      "before_sha256": "7f2e6e693f1abac9addf621cc4f64ff143a41592867fcd1ab487d589dff59f4c",
+      "after_sha256": "b0e85c39dc4782449cdb6e8d2ef1cb27c868e3f349c7d821eb3998ae4dfb5397",
+      "bytes": 14280,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+      "operation": "modified",
+      "before_sha256": "abf45110d00a5fb38e9e34697d2241f0678c7ad99977020bdaa86556c8b0d238",
+      "after_sha256": "0ce93bc5e232e7c6c57ee401eda031b91c81a92ee094b72b65e68c405dfc6137",
+      "bytes": 13634,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplatesList.tsx",
+      "operation": "modified",
+      "before_sha256": "56f93333d840e72baf7d2d366550168bdef43b88b0ac4a9e742c85eed5cf0823",
+      "after_sha256": "4226d8cd17e93103ec75d46b10584665ad2278d91c9cd479f64105db31439e15",
+      "bytes": 6661,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/resources/new/page.tsx",
+      "operation": "modified",
+      "before_sha256": "a00bc27f8112fb15bbcb879189b1712700c366d34b0f7d6eeaba57cbad2527f0",
+      "after_sha256": "1ab1877e796d6371cf20c2043696db221c3d738920ebaeaa504700e8b37b0540",
+      "bytes": 408,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "operation": "modified",
+      "before_sha256": "a272aa13716bf85445e77f3a86cb8b4a11f217edb8c78658f2e1325e15817d94",
+      "after_sha256": "a48dd030896589ab0b7d038af2767a23ca38a70c117a2042136ffc428e5f93ec",
+      "bytes": 24850,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
+      "operation": "modified",
+      "before_sha256": "8daa83b2d7f168c2126ed5380767682943e97913153e0e038716308476da1740",
+      "after_sha256": "0318da30bacf99e057ec0f968ac9669bd3ded870c0a0d7a4ef782d9710e18fa7",
+      "bytes": 10329,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "operation": "modified",
+      "before_sha256": "70de08d0a77c349400c4c28503dda6e8c7290ae3fe304a38be3ea18b3072af49",
+      "after_sha256": "99e80ecf62d7d130a70cc843e8b2af2114f03f0201136967604bbd03c8215ed6",
+      "bytes": 109179,
+      "category": "production"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx",
+      "operation": "modified",
+      "before_sha256": "0017325469fc1ff07c2b0c9d92c9cccefa3fcb14ea4dfb845225a28610f31e56",
+      "after_sha256": "9e7f2521ec37a301ec6614ebb6f97bf0dc494a0c75d1e8c9f3765b38d96b2605",
+      "bytes": 19577,
+      "category": "production"
+    },
+    {
+      "path": "app/components/ui/v2/QcActionNotice.tsx",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "a6856703f912899666e229fac2702f5bb243d73c5efd29e30886f374326c0fe7",
+      "bytes": 4117,
+      "category": "production"
+    },
+    {
+      "path": "app/components/ui/v2/qc-feedback.css",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "8b323fe346206764c17d619dae9ceb13fc678eb1408073ec23364567af2573ff",
+      "bytes": 2278,
+      "category": "production"
+    },
+    {
+      "path": "app/components/ui/v2/useQcFeedback.tsx",
+      "operation": "modified",
+      "before_sha256": "4561ca826f9a4719988a18cc88c005c1e6528af2526841ad556909ab2f7a42d9",
+      "after_sha256": "5625426db272985e020922f5f8c5e7e73fbd73ddaf5672f7d303613ce7821d8d",
+      "bytes": 2262,
+      "category": "production"
+    },
+    {
+      "path": "docs/ux/phase-8/AGENT_TODOS.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "738fc488a00afae8483152546b517a694ae284a0ef28ba096f47d34fd0d43f46",
+      "bytes": 2278,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/CAPABILITY_PARITY.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "394d0ac366300e2a41a00b9b8cd0ccc02128aa47e4b25d3e9a351d5506952c8c",
+      "bytes": 3282,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/COMPONENT_CONTRACTS.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "36e53c575cb94e2bd54b49cf1825d98d2378f1f8dfd3e551c3551a43a3ad058d",
+      "bytes": 2532,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/DECISIONS.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "ce82d927ea47e0a9e62f54cb0fa2dbd0c974916cf212a73704507203c5af0e8e",
+      "bytes": 3452,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/INTEGRATION.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "eff00b008c2570432eca0540674019972faf87f881fbd86b9384fe13cdb1ce2a",
+      "bytes": 3964,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/MOBILE_AUDIT.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "c4551999c21c853288c5f9f07d28ab38c154ce7f3f0fa7f8bd77327374db26f0",
+      "bytes": 1215,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/PREVIEWS.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "09df749d30eab1d27bd40d55b4d72b74267e0010d40dccb638af33ad6a8b593c",
+      "bytes": 1969692,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/RUNTIME_CHECKLIST.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "42633e06247e519377492a6945796fc66177d8dac49dae5b6892ba42fc31aedd",
+      "bytes": 4721,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/SCOPE.csv",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "0830663a68d8a69541d210af8245cb3de9822b60b7ad43d9a64bb166dcd79f23",
+      "bytes": 3731,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/VALIDATION.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "6f5c9679b331bcef1976b200701bdc7b65107c1b7ece1d9a9fa65cccc4e05018",
+      "bytes": 3350,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/history/DESIGN_CHANGES.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "2930dddc45202af4e1f201dc48955f1461aece217f9088247a4ffdb49dee3fe3",
+      "bytes": 586,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/history/RETURN_NOTES.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "90138ee75bfaef5af44520004909323d8f75ee54ee2549e56f7bb25373a10620",
+      "bytes": 1722,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/history/START_HERE_PHASE8.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "e2164a92fd51653be8a3340eee3594c1399b9fe59c976660a55dbc57bcca641f",
+      "bytes": 1995,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/call-parity-report.json",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "e9ddaec13129ae48b1fc3caa71213076da022c857d400de89a785d19ec3e928c",
+      "bytes": 30700,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/export-check.json",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "23a4cf60d5ae8daf8ee6d91c4f2dcccc51b29af4fca49aebd6d048f583789fbd",
+      "bytes": 88,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/browser-report.json",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "53ff3cdaef2a9b702e2a4debc418733cdcab247b729c8105c8b46a2e5b909965",
+      "bytes": 15756,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/fixture.css",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "7ed7e08ba106cd6411e450bd5e150a6f63b8d840ec86257ff156783ad274ca8c",
+      "bytes": 288676,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/invoices-skipped-delete.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "dc566c20c9f2dd8d81635ebf39b4b123cf2969e4bb87a84c81143406df89f3db",
+      "bytes": 6655,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/long-result-details.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "5fbd3505827b86df5f5bc29b454ca8495e94c11a7512fc5f736b92ed63ba471f",
+      "bytes": 4214,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/new-quote-customer-validation.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "a78a0b1c698c824d006b789680b25b3bc863b17b225e2b2fe1bcce64fd031097",
+      "bytes": 7829,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/new-quote-digital-validation.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "127f1d8f5cdc348233207f9f639719efd6c22e80923b223fd0774fdc538f2523",
+      "bytes": 9078,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/new-quote-generic-trades.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "11a4f27b20c78ece2a7a02fa7941419b6614e3887552833bca3cdd6aba80c536",
+      "bytes": 9171,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/order-template-name-validation.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "711f2efbf9032e387cbcbcc57f51685a0e9b2398e1fdea4a7a30c87241a106b8",
+      "bytes": 7117,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/orders-complete-export.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "f737a27babe72c6e256a0e4c14111b1d4d42cb74be344532295779e467011f07",
+      "bytes": 4913,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/orders-empty-after-delete.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "ee1c7e3c6f59db4297193e4cc011cd1bc11b274cc38837b8e8f77546dbdc63e8",
+      "bytes": 1994,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/quotes-confirm-delete.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "110e5ffdb7560d36917b5a518ee8bf7aef535e561f6c8ad3743702c97d95c6c1",
+      "bytes": 13259,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/quotes-export-failure.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "1cd5edf5a215d448ce7a75c4550bbb531a747a5313a8da129e99e0f72a8d9625",
+      "bytes": 13137,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/quotes-partial-export.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "1185d25a2ad65a69192c7a8df41d693d6e63a3bda9e96707e0d264bea528433c",
+      "bytes": 11716,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/render-report.json",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "8a89852773d1bedfe695e64fd56fc4c96fb2e24e8e14488a88bd9db4fabeac9e",
+      "bytes": 3977,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/invoices-skipped-delete-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "3038b12cda425729fd80a3459958aeec181ecaf4bf71ed0f0abdfcec0cf8ee4b",
+      "bytes": 59274,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/invoices-skipped-delete-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "612a33686cbc31e291d2eeba28426adf288877c21977f81b35f15cff0f0ab8e2",
+      "bytes": 56717,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/long-result-details-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "9cb34474c22fe2ce2f9cad0f1ee3b09e8c0928f7457c19d7e1758c1e26c5f57d",
+      "bytes": 33412,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/long-result-details-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "f88b5f7f55b6fe10e0b77f71e1cdf06d6867a9605ea609808f7d7fd3854cf188",
+      "bytes": 28078,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/new-quote-customer-validation-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "a42071a8fcacdc4ef4d50f03c8cf3a976f6d22a953f9175660d321d6e518529a",
+      "bytes": 94980,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/new-quote-customer-validation-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "cf845073a66f1e575a2a3677af6364808ba1197b953cd1c3c089a79f5cf2d295",
+      "bytes": 92745,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/new-quote-digital-validation-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "e414ee745579cc0e327188688a8bb2f5b1111231a1551b1ffa04d4c10c95b35f",
+      "bytes": 126900,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/new-quote-digital-validation-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "d6720f951aff8f9bb3aeddc38fc1bfce78567d9c7158a8642885542589ed3ea7",
+      "bytes": 117947,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/new-quote-generic-trades-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "591e90843246ac3d5fa560456e693b9148e3b985c8a086ec536d190f615e4584",
+      "bytes": 111198,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/new-quote-generic-trades-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "261bd644fb5f0179d74609a46710ac40813f07280d47d0d5f077872cbfeef24c",
+      "bytes": 107080,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/order-template-name-validation-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "eae6cd7c4f5d261e7c306f508c8827fa1878b0ac72113347a7b2f4070eb83eed",
+      "bytes": 97191,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/order-template-name-validation-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "7fbcbb3d0528bd322b0e518154e4d6da41b5bd27202ff5782ab07908128dce3f",
+      "bytes": 93647,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/orders-complete-export-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "eae0916c21eb3c1ffd2cb5c12cffcf90b59df2ed5dbd0868f84f786a02ad2f61",
+      "bytes": 40063,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/orders-complete-export-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "e94a514b74a68822f03917c2d472ed56788761ebba4a6dfae4314648451232fb",
+      "bytes": 32537,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/orders-empty-after-delete-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "408d5c62f3a1620b1e3dfc100f95a2b79e307e0dbabda3aacb00264317b22313",
+      "bytes": 34764,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/orders-empty-after-delete-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "2b1dd2eb35fc1f15b4e8e5a95f59d18e74f3e7e6324f48fe3726c9cd2b19d223",
+      "bytes": 28735,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/quotes-confirm-delete-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "2cb4108961c8ec58ec31181ede850bdc83385ad621538cf4d2fc56311c4e27b2",
+      "bytes": 118570,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/quotes-confirm-delete-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "aff3be19ca7eb40d2eb382cc2b083d2451553c5846ada85e00b03f271b782141",
+      "bytes": 93391,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/quotes-export-failure-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "5c31acdfa4b9af3b9c4bceed5470ff3dcc13d2bb2e61d535c5d07875ecb77dc4",
+      "bytes": 88512,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/quotes-export-failure-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "fd281888e0086c2f671407d543918b1800f8256c237459373272cba472d35643",
+      "bytes": 80994,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/quotes-partial-export-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "2b1be0cf2c59680e9674b615c7be03e029ef494e153cc66bb2674b0c2b4e30e4",
+      "bytes": 80829,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/quotes-partial-export-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "c3c72abcb00707e5ef794e4bc216b9b2dbbf68ac36219ab84b3a50ed4a1f0a7a",
+      "bytes": 77714,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/security-remove-confirmation-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "cfb9213de3ce4e26828b5dc009044b3540939b6f0150de08d35c930861b89ec4",
+      "bytes": 61903,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/security-remove-confirmation-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "c5987732ca80b77e4b44385847d6c026b44592d07a6d2699f88488823839d6cc",
+      "bytes": 43859,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/template-empty-confirmation-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "f6aeb69aeb5eb15853a8ac0540b99b6a040a3f3415741554fe19902f00b9f691",
+      "bytes": 115947,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/template-empty-confirmation-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "1b42b6addf029c79fa47e34fd5b2202de97ecde96a593390ec05fc2c74bb67d8",
+      "bytes": 92103,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/template-name-validation-1440.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "6a0451f6fa7b4f018c0f74a9a0c9bf0b6476367f37429d03496cb809a21b8cfb",
+      "bytes": 86597,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/screens/template-name-validation-390.png",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "ef5d13d8226b57c86d472a977b743cf156bc4b43f4e8ecc6fb839d860d795050",
+      "bytes": 78382,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/security-remove-confirmation.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "d6cbdb875be5e4b1e0447f173ccf29af240dd7672c25daadef57fc37368dc0ff",
+      "bytes": 3335,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/template-empty-confirmation.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "801351c8c363e2fe33359ab7824ee72bb53cbdb9d273553881f7abaebd96c547",
+      "bytes": 5857,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/fixtures/template-name-validation.html",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "5875f711e7f1d0c9d44fa9e7b68ee4aafd1acc37683a5b3a35bafd6750e62bdb",
+      "bytes": 5272,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/interaction-report.json",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "e93706f4104fbc8974ff69725333533f6302175b63f8ec0a646d0a606bfc9ed8",
+      "bytes": 5815,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/invariant-report.json",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "2a39ae35d7010cd1fa9c961720721a60f014a6ec72b00fa0ff0b3dd6fc5a44be",
+      "bytes": 2009,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/production.diff",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "99f2482f22dcf5814084e5e06954f76de18ac26fbc3198f699e19bd40688e3e9",
+      "bytes": 91143,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/protected-files.json",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "0fea4a54464d2028dbeb3cf4ad6b3b1e8c4bfc6f577ba1f265436e2aeaf1c384",
+      "bytes": 145010,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/source-check.json",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "b881f6370268c3029986affa4b620d0848d622713c627ec4924b0f20c5fee916",
+      "bytes": 1827,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/syntax-report.json",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "af30498059300fcd65c480a79063ab57ddfab4b3beef99a3201d8ffb8c4fda1c",
+      "bytes": 3522,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/README.md",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "ee4e4e1a39bedfbad61d235d597cd76de4c30ebb93f732d0b633b34217e00bdf",
+      "bytes": 2628,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/browser-checks.py",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "9540d6848a92f93a96997c1528bf0eb8236c95e764b17bc296057a5513dc1478",
+      "bytes": 4659,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/build-css.cjs",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "0b9e077550cde5b00dae8161093aac249df1d2fc8a9174cb390ba6eb9ca689ee",
+      "bytes": 1571,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/call-parity.cjs",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "b8ff3b5bc929dc460e49d0a9e055a2c3ab0cc70cf0a5e7cf3258d4687c47a403",
+      "bytes": 2545,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/check-source.cjs",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "aba0152f5e5ab75836ab834b08a51559a4368fc33ad3a6cafce082bbeb52ce5c",
+      "bytes": 1580,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/compare-baseline.py",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "053f498138819fc9bc402caddb26a7bc9df947e851e8719f6049c7d8ce0bf560",
+      "bytes": 1298,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/controller-harness.cjs",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "a68948fd58ab602f507403e3cf302c61e53b080f99f9aecd0cb03a227f3f2bdc",
+      "bytes": 2602,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/exports.cjs",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "f71a27cf611f0d8ccb4eb4683f8867a54d34a6a00c8e2762dc1aedef92c10f4b",
+      "bytes": 2594,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/interaction-checks.cjs",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "4b1ec94215fc4c3a45f165da9abf2fdc6ca6f37a1e077bcb2712e2e3ef7cc70f",
+      "bytes": 18712,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/invariant-checks.py",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "fbba246ac4dd8ceef12284284fc6100b4b4049afc4f9d0c8bcf827369a6bd675",
+      "bytes": 5128,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/render-fixtures.cjs",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "0fc181322175d962a7f101092084676c8be551e05c5ceda0d545b13bf16a6d35",
+      "bytes": 7356,
+      "category": "documentation_or_validation"
+    },
+    {
+      "path": "docs/ux/phase-8/validation/tools/view-harness.cjs",
+      "operation": "added",
+      "before_sha256": null,
+      "after_sha256": "d823482fbb2cf14f32bfe136deab79381fad5024e4ed407f8bc1d2621da1e573",
+      "bytes": 8119,
+      "category": "documentation_or_validation"
+    }
+  ]
+}

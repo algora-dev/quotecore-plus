@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import '@/app/components/ui/v2/qc-library.css';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props) {
+  const { notify, feedback } = useQcFeedback();
   const router = useRouter();
   const [templates, setTemplates] = useState<InvoiceTemplate[]>(initialTemplates);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props)
       setTemplates((prev) => prev.filter((t) => t.id !== confirmDeleteId));
       setConfirmDeleteId(null);
     } catch {
-      alert('Failed to delete template.');
+      await notify('Failed to delete template.');
     } finally {
       setDeleting(false);
     }
@@ -35,6 +37,7 @@ export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props)
 
   return (
     <>
+      {feedback}
       {/* Toolbar */}
       <div className="flex justify-end">
         <Link data-qc-variant="primary"

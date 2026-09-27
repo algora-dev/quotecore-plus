@@ -1,5 +1,6 @@
 'use client';
 
+import { useQcActionNotice, type QcActionResult } from '@/app/components/ui/v2/QcActionNotice';
 import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -52,7 +53,7 @@ const ORDER_STATUS_CONFIG: Record<string, { label: string; bg: string; text: str
 
 const ORDER_STATUS_ORDER = ['ready', 'ordered', 'delivered', 'paid', 'pickup', 'waiting'];
 
-function OrderStatusDropdown({ orderId, currentStatus }: { orderId: string; currentStatus: string }) {
+function OrderStatusDropdown({ orderId, currentStatus, onResult }: { orderId: string; currentStatus: string; onResult: (result: QcActionResult) => void }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(currentStatus);
@@ -79,17 +80,25 @@ function OrderStatusDropdown({ orderId, currentStatus }: { orderId: string; curr
       router.refresh();
     } catch (err) {
       console.error('Failed to update order status:', err);
+      onResult({ tone: 'danger', title: 'Status was not updated', description: 'The order status could not be saved. Please try again.', focus: true });
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="relative" ref={ref} onClick={e => e.stopPropagation()}>
+    <div className="relative" ref={ref} onKeyDown={(event) => {
+      if (event.key === 'Escape' && open) {
+        event.preventDefault(); event.stopPropagation(); setOpen(false);
+        ref.current?.querySelector<HTMLButtonElement>('button')?.focus();
+      }
+    }} onClick={e => e.stopPropagation()}>
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         disabled={saving}
         title="Click to change status"
+        aria-label={`Change status, currently ${config.label}`} aria-expanded={open} aria-busy={saving || undefined}
         className={"qc-flow-control " + (`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`)}
       >
         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
@@ -160,6 +169,7 @@ function SupplierResponseBadge({
 
 export function OrderList({ orders, workspaceSlug }: Props) {
   const router = useRouter();
+  const { showNotice, clearNotice, notice } = useQcActionNotice();
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   // Multi-select state for bulk download / delete (mirrors QuotesList).
@@ -239,13 +249,15 @@ export function OrderList({ orders, workspaceSlug }: Props) {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
     if (ids.length > MAX_BULK_SELECTION) {
-      alert(`Too many orders selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`);
+      showNotice({ tone: 'warning', title: 'Selection limit', description: `Too many orders selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`, focus: true });
       return;
     }
 
+    clearNotice();
     setBulkBusy('download');
     setBulkProgress({ done: 0, total: ids.length, message: 'Preparing export...' });
 
+    let downloadRequested = false;
     try {
       const zip = new JSZip();
       let succeeded = 0;
@@ -275,7 +287,7 @@ export function OrderList({ orders, workspaceSlug }: Props) {
       }
 
       if (succeeded === 0) {
-        alert(`No orders could be exported.${failures.length ? '\n\nFailed:\n' + failures.join('\n') : ''}`);
+        showNotice({ tone: 'danger', title: 'Nothing exported', description: `No orders could be exported. Review the details before trying again.`, details: failures, focus: true });
         return;
       }
 
@@ -293,10 +305,22 @@ export function OrderList({ orders, workspaceSlug }: Props) {
       }
 
       downloadBlob(blob, zipName);
+      downloadRequested = true;
 
-      if (failures.length > 0) {
-        alert(`Exported ${succeeded} of ${ids.length} orders.\n\nFailed:\n${failures.join('\n')}`);
-      }
+      showNotice({
+        tone: failures.length ? 'warning' : 'success',
+        title: failures.length ? 'Some orders were not exported' : 'Export ready',
+        description: `Prepared ${succeeded} of ${ids.length} orders. The ZIP download has been requested. Check your browser downloads.`,
+        details: failures, focus: true,
+      });
+    } catch (err) {
+      console.error('[bulkDownload] could not finish export:', err);
+      showNotice({ tone: 'danger',
+        title: downloadRequested ? 'Check your download' : 'Export could not finish',
+        description: downloadRequested
+          ? 'The download was requested, but a later export step failed. Check your browser downloads before trying again.'
+          : 'The ZIP could not be prepared or the download could not be started. Your records have not been changed.',
+        details: [err instanceof Error ? err.message : 'Unknown export error'], focus: true });
     } finally {
       setBulkBusy(null);
       setBulkProgress(null);
@@ -307,18 +331,18 @@ export function OrderList({ orders, workspaceSlug }: Props) {
   async function handleBulkDelete() {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
+    clearNotice();
     setBulkBusy('delete');
     try {
       const result = await bulkDeleteOrders(ids);
       setSelectedIds(new Set());
       setBulkDeleteConfirmOpen(false);
       router.refresh();
-      if (result.skipped > 0) {
-        alert(`Deleted ${result.deleted} orders. ${result.skipped} were skipped (not owned or already gone).`);
-      }
+      showNotice({ tone: result.skipped ? 'warning' : 'success', title: result.skipped ? 'Deletion finished with skipped records' : 'Deletion complete', description: `Orders deleted: ${result.deleted}. Skipped: ${result.skipped} (not owned or already gone).`, focus: true });
     } catch (err) {
       console.error('[bulkDelete] failed:', err);
-      alert(`Failed to delete orders: ${err instanceof Error ? err.message : 'unknown error'}`);
+      setBulkDeleteConfirmOpen(false);
+      showNotice({ tone: 'danger', title: 'Deletion failed', description: `Failed to delete orders: ${err instanceof Error ? err.message : 'unknown error'}`, focus: true });
     } finally {
       setBulkBusy(null);
     }
@@ -329,10 +353,12 @@ export function OrderList({ orders, workspaceSlug }: Props) {
     setDeleting(deleteId);
     try {
       await deleteOrder(deleteId);
+      showNotice({ tone: 'success', title: 'Order deleted', description: 'The selected order has been deleted.', focus: true });
       setDeleteId(null);
       router.refresh();
     } catch {
-      alert('Failed to delete order.');
+      setDeleteId(null);
+      showNotice({ tone: 'danger', title: 'Order was not deleted', description: 'Failed to delete order. Please try again.', focus: true });
     } finally {
       setDeleting(null);
     }
@@ -340,14 +366,14 @@ export function OrderList({ orders, workspaceSlug }: Props) {
 
   if (orders.length === 0) {
     return (
-      <QcJourney><div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
+      <QcJourney>{notice}<div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
         <p className="text-sm text-slate-500">No orders yet. Create your first order above.</p>
       </div></QcJourney>
     );
   }
 
   return (
-    <QcJourney><div>
+    <QcJourney>{notice}<div>
       {/* Header */}
       <div className="qc-flow-columns hidden sm:grid grid-cols-[28px_160px_1fr_1fr_130px_80px_70px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
         <input
@@ -405,7 +431,7 @@ export function OrderList({ orders, workspaceSlug }: Props) {
               />
             </div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <OrderStatusDropdown orderId={order.id} currentStatus={order.status || 'ready'} />
+              <OrderStatusDropdown orderId={order.id} currentStatus={order.status || 'ready'}  onResult={showNotice} />
               <RecipientStatusBadge status={orderRecipientStatus(order)} />
             </div>
             <div className="text-xs text-slate-400">

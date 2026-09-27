@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
@@ -84,6 +85,7 @@ export function ComponentList({
   /** Whether this company is an approved supplier. Shows publishing controls. */
   isSupplier?: boolean;
 }) {
+  const { notify, feedback } = useQcFeedback();
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
   // Pitch is shown when the trade requires it (roofing) or opts in optionally
   // (landscaping, concrete, insulation, electrical). pitchOptional trades show
@@ -396,7 +398,7 @@ export function ComponentList({
   function addFlashing() {
     if (!selectedFlashingId) return;
     if (assignedFlashings.includes(selectedFlashingId)) {
-      alert('This flashing is already assigned');
+      setFormError('This image is already assigned. Choose a different image.');
       return;
     }
     setAssignedFlashings(prev => [...prev, selectedFlashingId]);
@@ -413,7 +415,7 @@ export function ComponentList({
     const result = await deleteComponentCollection(deletingLibraryId);
     setDeleteLibraryLoading(false);
     if (!result.ok) {
-      alert(result.message);
+      await notify(result.message);
       setDeletingLibraryId(null);
       return;
     }
@@ -432,7 +434,7 @@ export function ComponentList({
     const result = await renameComponentCollection(renamingLibraryId, renameValue);
     setRenaming(false);
     if (!result.ok) {
-      alert(result.message);
+      await notify(result.message);
       return;
     }
     setCollections(prev => prev.map(c => c.id === renamingLibraryId ? { ...c, name: result.name } : c));
@@ -477,7 +479,7 @@ export function ComponentList({
     // Validate per_pack_coverage requires all three pack fields.
     if (formPricingStrategy === 'per_pack_coverage') {
       if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
-        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+        setFormError('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
         setSaving(false);
         return;
       }
@@ -492,7 +494,7 @@ export function ComponentList({
     if (wasteType === 'fixed' && wasteAmountRaw.includes('.')) {
       const decimals = wasteAmountRaw.split('.')[1];
       if (decimals && decimals.length > 2) {
-        alert('Reduce your decimal places to two or less (e.g. 0.25)');
+        setFormError('Reduce your decimal places to two or less (e.g. 0.25)');
         setSaving(false);
         return;
       }
@@ -614,7 +616,7 @@ export function ComponentList({
     // Validate per_pack_coverage requires all three pack fields.
     if (formPricingStrategy === 'per_pack_coverage') {
       if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
-        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+        setFormError('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
         return;
       }
     }
@@ -628,7 +630,7 @@ export function ComponentList({
     if (wasteType === 'fixed' && wasteAmountRaw.includes('.')) {
       const decimals = wasteAmountRaw.split('.')[1];
       if (decimals && decimals.length > 2) {
-        alert('Reduce your decimal places to two or less (e.g. 0.25)');
+        setFormError('Reduce your decimal places to two or less (e.g. 0.25)');
         return;
       }
     }
@@ -753,6 +755,7 @@ export function ComponentList({
 
   return (
     <QcLibrary className="space-y-5">
+      {feedback}
       {/* Create Library Modal */}
       {showCreateLibraryModal && (
         <QcJourneyDialog label="Create New Library" size="sm">
@@ -1086,7 +1089,7 @@ export function ComponentList({
         <div className="mb-4 p-4 border border-slate-200 rounded-xl bg-white">
           <h3 className="font-semibold text-slate-900 mb-3">New Smart Component™</h3>
           {formError && (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
+            <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
           )}
           <form onSubmit={handleCreate} className="space-y-3">
             <div className="qc-library-field-grid grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1378,7 +1381,7 @@ export function ComponentList({
               <div className="p-4 border border-slate-200 rounded-xl bg-white">
                 <h3 className="font-semibold text-slate-900 mb-3">Edit {comp.name}</h3>
                 {formError && (
-                  <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
+                  <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
                 )}
                 <form onSubmit={(e) => handleUpdate(e, comp.id)} className="space-y-3">
                  <div className="qc-library-field-grid grid grid-cols-1 sm:grid-cols-2 gap-3">

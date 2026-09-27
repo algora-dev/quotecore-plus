@@ -1,6 +1,7 @@
 'use client';
 
-import { QcJourney } from '@/app/components/ui/v2/QcJourney';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import { upsertSecurityQuestion, deleteSecurityQuestion, type SecurityQuestionRecord } from './security-questions-actions';
 import { SUGGESTED_QUESTIONS, CUSTOM_QUESTION_LABEL, QUESTION_SLOTS } from '@/app/lib/security/questions';
@@ -21,6 +22,7 @@ type Props = {
  *    typos that would otherwise lock the user out of recovery.
  */
 export function SecurityQuestionsSection({ initialQuestions }: Props) {
+  const { ask, feedback } = useQcFeedback();
   const [questions, setQuestions] = useState<SecurityQuestionRecord[]>(initialQuestions);
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -32,8 +34,8 @@ export function SecurityQuestionsSection({ initialQuestions }: Props) {
     setEditingSlot(null);
   }
 
-  function handleDelete(slot: number) {
-    if (!confirm('Remove this security question?')) return;
+  async function handleDelete(slot: number) {
+    if (!await ask({ title: 'Remove recovery question?', description: 'You will no longer be able to use this question for account recovery.', confirmLabel: 'Remove question', destructive: true })) return;
     startTransition(async () => {
       await deleteSecurityQuestion(slot);
       setQuestions((prev) => prev.map((q) => (q.slot === slot ? { ...q, question: '', isSet: false, updatedAt: null } : q)));
@@ -41,12 +43,12 @@ export function SecurityQuestionsSection({ initialQuestions }: Props) {
   }
 
   return (
-    <QcJourney><div className="space-y-3">
+    <QcJourney>{feedback}<div className="space-y-3">
       <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
         <div>
           <p className="text-sm font-medium text-slate-900">Recovery Questions</p>
           <p className="text-xs text-slate-500 mt-0.5">
-            {setCount} of {QUESTION_SLOTS} set &mdash; used by support to verify your identity if you lose access to your email.
+            {setCount} of {QUESTION_SLOTS} set - used by support to verify your identity if you lose access to your email.
           </p>
         </div>
       </div>
@@ -147,7 +149,7 @@ function SecurityQuestionEditor({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <QcJourneyDialog label={`Set recovery question ${slot}`} size="sm" pending={isPending}>
       <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full shadow-xl">
         <h3 className="text-base font-semibold text-slate-900">Set recovery question {slot}</h3>
         <p className="text-sm text-slate-500 mt-1 mb-4">
@@ -229,6 +231,6 @@ function SecurityQuestionEditor({
           </div>
         </form>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

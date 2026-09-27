@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
 import '@/app/components/ui/v2/qc-library.css';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function TemplateManager({ initialTemplates, onClose, isOverStorage, initialMode = 'list', initialTemplateId, singleEditor = false }: Props) {
+  const { notify, feedback } = useQcFeedback();
   const [templates, setTemplates] = useState(initialTemplates);
   const [showForm, setShowForm] = useState(initialMode === 'create');
   const [editingTemplate, setEditingTemplate] = useState<MaterialOrderTemplateRow | null>(() => initialMode === 'edit' ? initialTemplates.find(t => t.id === initialTemplateId) ?? null : null);
@@ -50,7 +52,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage, init
       setShowForm(false);
       if (singleEditor) onClose();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create template');
+      await notify(err instanceof Error ? err.message : 'Failed to create template');
     } finally {
       setSaving(false);
     }
@@ -82,7 +84,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage, init
       setEditingTemplate(null);
       if (singleEditor) onClose();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update template');
+      await notify(err instanceof Error ? err.message : 'Failed to update template');
     } finally {
       setSaving(false);
     }
@@ -96,7 +98,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage, init
       setTemplates(prev => prev.filter(t => t.id !== deleteTemplateId));
       setDeleteTemplateId(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete template');
+      await notify(err instanceof Error ? err.message : 'Failed to delete template');
     } finally {
       setDeleteLoading(false);
     }
@@ -106,6 +108,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage, init
   if (showForm) {
     return (
       <QcJourneyDialog label="Create order template" size="lg" pending={saving}>
+        {feedback}
         <div className="qc-order-template-form w-full">
           <div className="px-6 py-4 border-b border-slate-200">
             <h2 className="text-lg font-semibold text-slate-900">Create order template</h2>
@@ -144,6 +147,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage, init
     
     return (
       <QcJourneyDialog label="Edit order template" size="lg" pending={saving}>
+        {feedback}
         <div className="qc-order-template-form w-full">
           <div className="px-6 py-4 border-b border-slate-200">
             <h2 className="text-lg font-semibold text-slate-900">Edit order template</h2>
@@ -167,6 +171,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage, init
   // Template list view
   return (
     <QcJourneyDialog label="Supplier Templates" size="lg">
+        {feedback}
       <div className="w-full flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">

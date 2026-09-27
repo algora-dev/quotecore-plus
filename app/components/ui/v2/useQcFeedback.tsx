@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertModal } from '../../AlertModal';
 import { ConfirmModal } from '../../ConfirmModal';
 
-type FeedbackOptions = { title: string; description: string; confirmLabel?: string; cancelLabel?: string };
+type FeedbackOptions = { title: string; description: string; confirmLabel?: string; cancelLabel?: string; destructive?: boolean };
 type Request = FeedbackOptions & { kind: 'alert' | 'confirm'; resolve: (accepted: boolean) => void };
 
 /** Awaitable feedback preserves the pause formerly provided by native dialogs.
@@ -34,7 +34,7 @@ export function useQcFeedback() {
   const feedback = request?.kind === 'confirm' ? (
     <ConfirmModal appearance="v2" open title={request.title} description={request.description}
       confirmLabel={request.confirmLabel ?? 'Continue'} cancelLabel={request.cancelLabel ?? 'Cancel'}
-      destructive={false} onCancel={() => settle(false)} onConfirm={() => settle(true)} />
+      destructive={request.destructive ?? false} onCancel={() => settle(false)} onConfirm={() => settle(true)} />
   ) : (
     <AlertModal appearance="v2" open={request !== null} title={request?.title ?? ''}
       description={request?.description} confirmLabel={request?.confirmLabel} onClose={() => settle(true)} />

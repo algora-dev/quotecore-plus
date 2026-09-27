@@ -1,7 +1,8 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
 import '@/app/components/ui/v2/qc-library.css';
-import { useState } from 'react';
+import { useState, useRef, useId } from 'react';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 
 interface TemplateFormData {
@@ -33,6 +34,10 @@ interface Props {
 
 export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, isOverStorage }: Props) {
   // Template meta
+  const nameErrorId = useId();
+  const [nameError, setNameError] = useState('');
+  const nameRef = useRef<HTMLInputElement>(null);
+  const { notify, feedback } = useQcFeedback();
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
   
@@ -71,12 +76,12 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file');
+      await notify('Please upload an image file');
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be less than 5MB');
+      await notify('Image must be less than 5MB');
       return;
     }
     
@@ -97,7 +102,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
       setLogoUrl(url);
     } catch (error) {
       console.error('Logo upload error:', error);
-      alert('Failed to upload logo. Please try again.');
+      await notify('Failed to upload logo. Please try again.');
     } finally {
       setUploadingLogo(false);
     }
@@ -107,7 +112,8 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
     e.preventDefault();
     
     if (!name.trim()) {
-      alert('Template name is required');
+      setNameError('Enter a template name.');
+      nameRef.current?.focus();
       return;
     }
     
@@ -129,6 +135,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
   
   return (
     <>
+      {feedback}
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Template Name & Description */}
@@ -137,14 +144,15 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Template Name <span className="text-red-500">*</span>
           </label>
-          <input aria-label="Template Name"
+          <input aria-label="Template Name" ref={nameRef} aria-invalid={!!nameError} aria-describedby={nameError ? nameErrorId : undefined}
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); setNameError(''); }}
             required
             placeholder="e.g., Main Supplier, Emergency Supplier"
             className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           />
+              {nameError && <p id={nameErrorId} className="qc-flow-error" role="alert">{nameError}</p>}
           <p className="text-xs text-slate-500 mt-1">This name will appear in the template dropdown</p>
         </div>
         

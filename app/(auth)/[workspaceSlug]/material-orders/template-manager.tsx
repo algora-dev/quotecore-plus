@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
 import { useState } from 'react';
 import type { MaterialOrderTemplateRow, MaterialOrderTemplateInsert } from '@/app/lib/types';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Props) {
+  const { notify, ask, feedback } = useQcFeedback();
   const [templates, setTemplates] = useState(initialTemplates);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Pr
       setShowForm(false);
       setFormLogoUrl('');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create template');
+      await notify(err instanceof Error ? err.message : 'Failed to create template');
     } finally {
       setSaving(false);
     }
@@ -74,7 +76,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Pr
       setEditingId(null);
       setFormLogoUrl('');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update template');
+      await notify(err instanceof Error ? err.message : 'Failed to update template');
     } finally {
       setSaving(false);
     }
@@ -91,13 +93,13 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Pr
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete template "${name}"?`)) return;
+    if (!await ask({ title: `Delete template "${name}"?`, description: 'This removes the saved template. This action cannot be undone.', confirmLabel: 'Delete template', destructive: true })) return;
     
     try {
       await deleteOrderTemplate(id);
       setTemplates(prev => prev.filter(t => t.id !== id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete template');
+      await notify(err instanceof Error ? err.message : 'Failed to delete template');
     }
   }
   
@@ -107,12 +109,12 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Pr
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file');
+      await notify('Please upload an image file');
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be less than 5MB');
+      await notify('Image must be less than 5MB');
       return;
     }
     
@@ -133,7 +135,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Pr
       setFormLogoUrl(url);
     } catch (error) {
       console.error('Logo upload error:', error);
-      alert('Failed to upload logo. Please try again.');
+      await notify('Failed to upload logo. Please try again.');
     } finally {
       setUploadingLogo(false);
     }
@@ -141,6 +143,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Pr
 
   return (
     <>
+      {feedback}
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">

@@ -1,7 +1,8 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import '@/app/components/ui/v2/qc-library.css';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
-import { useState } from 'react';
+import { useState, useRef, useId } from 'react';
 import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { updateCustomerQuoteTemplate } from './actions';
 import { CustomerTemplateLogoUploader } from './CustomerTemplateLogoUploader';
@@ -16,6 +17,10 @@ interface Props {
 }
 
 export function EditCustomerTemplateModal({ template, companyId, onClose, onSaved, isOverStorage }: Props) {
+  const nameErrorId = useId();
+  const [nameError, setNameError] = useState('');
+  const nameRef = useRef<HTMLInputElement>(null);
+  const { notify, feedback } = useQcFeedback();
   const [name, setName] = useState(template.name);
   const [companyName, setCompanyName] = useState(template.company_name || '');
   const [companyAddress, setCompanyAddress] = useState(template.company_address || '');
@@ -27,7 +32,8 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
 
   async function handleSave() {
     if (!name.trim()) {
-      alert('Template name is required');
+      setNameError('Enter a template name.');
+      nameRef.current?.focus();
       return;
     }
 
@@ -44,7 +50,7 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
       });
       onSaved();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update template');
+      await notify(err instanceof Error ? err.message : 'Failed to update template');
     } finally {
       setSaving(false);
     }
@@ -52,6 +58,7 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
 
   return (
     <QcJourneyDialog label="Edit Template" size="lg">
+      {feedback}
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
@@ -73,13 +80,14 @@ export function EditCustomerTemplateModal({ template, companyId, onClose, onSave
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Template Name <span className="text-red-500">*</span>
             </label>
-            <input aria-label="Template Name"
+            <input aria-label="Template Name" ref={nameRef} aria-invalid={!!nameError} aria-describedby={nameError ? nameErrorId : undefined}
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => { setName(e.target.value); setNameError(''); }}
               className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               required
             />
+              {nameError && <p id={nameErrorId} className="qc-flow-error" role="alert">{nameError}</p>}
           </div>
 
           {/* Header Section */}

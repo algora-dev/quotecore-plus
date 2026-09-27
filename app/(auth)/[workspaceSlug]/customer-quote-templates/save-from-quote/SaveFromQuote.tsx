@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, templateName }: Props) {
+  const { notify, feedback } = useQcFeedback();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [companyName, setCompanyName] = useState('Your Company Name');
@@ -41,13 +43,14 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
       router.refresh();
       router.push(`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`);
     } catch (error) {
-      alert('Failed to save template: ' + (error as Error).message);
+      await notify('Failed to save template: ' + (error as Error).message);
       setSaving(false);
     }
   };
 
   return (
     <QcLibrary className="min-h-0 bg-slate-50">
+      {feedback}
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div>

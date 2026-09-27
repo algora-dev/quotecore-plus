@@ -1,0 +1,18 @@
+/* C66: opt-in, persistent operation results. No global page or document rules. */
+:where([data-qc-ui='v2']) .qc-action-result { min-width: 0; margin-block: 12px; scroll-margin-block: 96px; }
+:where([data-qc-ui='v2']) .qc-action-result:focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; border-radius: var(--qc-radius-control); }
+:where([data-qc-ui='v2']) .qc-action-result .qc-notice > div { flex: 1; min-width: 0; }
+:where([data-qc-ui='v2']) .qc-action-result-heading { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px 16px; }
+:where([data-qc-ui='v2']) .qc-action-result-heading h2 { margin: 6px 0 0; font-size: 15px; line-height: 22px; font-weight: 650; color: inherit; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qc-action-result-description { white-space: pre-line; overflow-wrap: anywhere; margin: 8px 0 0; }
+:where([data-qc-ui='v2']) .qc-action-result-details { margin-top: 12px; }
+:where([data-qc-ui='v2']) .qc-action-result-details summary { display: list-item; cursor: pointer; width: fit-content; max-width: 100%; padding: 10px 6px; min-height: 44px; box-sizing: border-box; border: 1px solid transparent; border-radius: var(--qc-radius-control); font-weight: 600; }
+:where([data-qc-ui='v2']) .qc-action-result-details summary:focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; }
+:where([data-qc-ui='v2']) .qc-action-result-details summary:active { box-shadow: inset 0 2px 3px rgba(25,27,32,.12); }
+:where([data-qc-ui='v2']) .qc-action-result-details ul { padding-left: 20px; margin: 8px 0 0; max-height: 240px; overflow: auto; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qc-action-result-details li + li { margin-top: 6px; }
+@media (hover:hover) { :where([data-qc-ui='v2']) .qc-action-result-details summary:hover { background: var(--qc-bg-surface); border-color: currentColor; } }
+@media (max-width:767px) { :where([data-qc-ui='v2']) .qc-action-result .qc-button { min-height: 44px; } }
+@media (forced-colors:active) { :where([data-qc-ui='v2']) .qc-action-result .qc-notice { border-color: CanvasText; } }
+
+:where([data-qc-ui='v2']) .qc-action-result-details ul:focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; }

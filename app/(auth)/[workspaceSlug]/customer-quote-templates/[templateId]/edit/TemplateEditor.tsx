@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function TemplateEditor({ workspaceSlug, template, isOverStorage }: Props) {
+  const { notify, feedback } = useQcFeedback();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [storageBlocked, setStorageBlocked] = useState(false);
@@ -35,12 +37,12 @@ export function TemplateEditor({ workspaceSlug, template, isOverStorage }: Props
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      alert('File too large. Maximum size is 2MB.');
+      await notify('File too large. Maximum size is 2MB.');
       return;
     }
 
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file.');
+      await notify('Please upload an image file.');
       return;
     }
 
@@ -62,7 +64,7 @@ export function TemplateEditor({ workspaceSlug, template, isOverStorage }: Props
 
       setLogoUrl(urlData.publicUrl);
     } catch (error) {
-      alert('Logo upload failed: ' + (error as Error).message);
+      await notify('Logo upload failed: ' + (error as Error).message);
     } finally {
       setUploading(false);
     }
@@ -99,7 +101,7 @@ export function TemplateEditor({ workspaceSlug, template, isOverStorage }: Props
       if (msg.includes('already exists')) {
         setNameError('A template with this name already exists');
       } else {
-        alert('Failed to update template: ' + msg);
+        await notify('Failed to update template: ' + msg);
       }
       setSaving(false);
     }
@@ -109,6 +111,7 @@ export function TemplateEditor({ workspaceSlug, template, isOverStorage }: Props
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <QcLibrary className="qc-template-editor">
+      {feedback}
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div>

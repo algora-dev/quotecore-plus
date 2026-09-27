@@ -1,6 +1,6 @@
 'use client';
 import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createQuoteWithDetails } from './actions';
@@ -74,6 +74,12 @@ export function QuoteDetailsForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [customerName, setCustomerName] = useState('');
+  // Presentation-only validation. Original submit guards and disabled rules remain.
+  const [customerTouched, setCustomerTouched] = useState(false);
+  const [validationAttempted, setValidationAttempted] = useState(false);
+  const customerRef = useRef<HTMLInputElement>(null);
+  const modeRef = useRef<HTMLDivElement>(null);
+  const planRef = useRef<HTMLDivElement>(null);
   const pdfPicker = usePdfPagePicker();
   const [jobName, setJobName] = useState('');
   const [templateId, setTemplateId] = useState('');
@@ -171,18 +177,20 @@ export function QuoteDetailsForm({
       return;
     }
 
+    setValidationAttempted(true);
     if (!customerName.trim()) {
-      alert('Customer name is required');
+      setCustomerTouched(true);
+      customerRef.current?.focus();
       return;
     }
 
     if (!entryMode) {
-      alert('Please select an entry mode (Component, Digital Measure, or Standard Quote)');
+      modeRef.current?.focus();
       return;
     }
 
     if (entryMode === 'digital' && !planUploaded) {
-      alert('Please upload a plan or image for digital takeoff');
+      planRef.current?.focus();
       return;
     }
 
@@ -271,7 +279,7 @@ export function QuoteDetailsForm({
   return (
     <QcJourney><form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-8 space-y-6">
       {createError && (
-        <div
+        <div role="alert"
           className={`rounded-lg border p-4 ${
             createError.showUpgrade
               ? 'border-amber-300 bg-amber-50 text-amber-900'
@@ -294,7 +302,7 @@ export function QuoteDetailsForm({
       {genericTradesEnabled && (
         <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
           <h3 className="text-sm font-semibold text-slate-800">Industry &amp; Component Collection</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="qc-flow-label block text-xs text-slate-600 mb-1">Industry</label>
               <select aria-label="Industry"
@@ -344,10 +352,14 @@ export function QuoteDetailsForm({
 
       {/* Customer Name */}
       <div data-copilot="quote-customer">
-        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
+        <label htmlFor="new-quote-customer" className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
           Customer Name <span className="text-red-500">*</span>
         </label>
-        <input aria-label="e.g., John Smith"
+        <input id="new-quote-customer" ref={customerRef}
+          aria-invalid={(customerTouched || validationAttempted) && !customerName.trim() || undefined}
+          aria-describedby={(customerTouched || validationAttempted) && !customerName.trim() ? 'new-quote-customer-error' : undefined}
+          onBlur={() => setCustomerTouched(true)}
+          onInvalid={(event) => { event.preventDefault(); setCustomerTouched(true); customerRef.current?.focus(); }}
           type="text"
           value={customerName}
           onChange={(e) => setCustomerName(e.target.value)}
@@ -356,14 +368,16 @@ export function QuoteDetailsForm({
           required
           autoFocus
         />
+        {(customerTouched || validationAttempted) && !customerName.trim() &&
+          <p id="new-quote-customer-error" className="qc-flow-error" role="alert">Enter the customer name to continue.</p>}
       </div>
 
       {/* Job Name */}
       <div data-copilot="quote-job">
-        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
+        <label htmlFor="new-quote-job" className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
           Job Name <span className="text-slate-400">(optional)</span>
         </label>
-        <input aria-label="e.g., Residential Re-roof, 123 Main St"
+        <input id="new-quote-job"
           type="text"
           value={jobName}
           onChange={(e) => setJobName(e.target.value)}
@@ -499,16 +513,20 @@ export function QuoteDetailsForm({
       </div>
 
       {/* Entry Mode Selection */}
-      <div data-copilot="quote-entry">
+      <div data-copilot="quote-entry" ref={modeRef} tabIndex={-1} role="group" aria-label="How to create your quote" aria-describedby="new-quote-mode-help">
         <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-3">
           Entry Mode <span className="text-red-500">*</span>
         </label>
         {/* Three-up mode pills. Manual builds via Areas/Components, Digital
             adds the takeoff canvas step first, Blank skips the builder and
             uses the customer quote editor as the master source. */}
+        <p id="new-quote-mode-help" className={validationAttempted && !entryMode ? 'qc-flow-error' : 'text-xs text-slate-500 mb-3'}>
+          Choose Component, Digital Measure or Standard Quote. Your choice determines the next screen.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Component Quote Button */}
           <button
+            aria-pressed={entryMode === 'manual'}
             type="button"
             onClick={() => {
               setEntryMode('manual');
@@ -533,6 +551,7 @@ export function QuoteDetailsForm({
 
           {/* Digital Measure Button - locked when plan lacks the feature */}
           <button
+            aria-pressed={entryMode === 'digital'}
             type="button"
             onClick={() => {
               if (!digitalTakeoffAvailable) {
@@ -571,6 +590,7 @@ export function QuoteDetailsForm({
 
           {/* Standard Quote Button */}
           <button
+            aria-pressed={entryMode === 'blank'}
             type="button"
             onClick={() => {
               setEntryMode('blank');
@@ -599,14 +619,15 @@ export function QuoteDetailsForm({
 
       {/* Roof Plan Upload (Digital Measure Only) */}
       {entryMode === 'digital' && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+        <div ref={planRef} tabIndex={-1} role="group" aria-label="Plan for digital measurement" aria-describedby="new-quote-plan-help" className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
           <div>
             <h3 className="text-sm font-semibold text-slate-900 mb-1">Upload Plans / Images</h3>
-            <p className="text-xs text-slate-600 mb-3">
-              Upload your plans or images (PDF or image). Max 10 MB.
+            <p id="new-quote-plan-help" className="text-xs text-slate-600 mb-3">
+              Upload a PDF up to 50 MB or an image up to 10 MB. A plan is required for Digital Measure.
             </p>
           </div>
           
+          {validationAttempted && !planUploaded && <p className="qc-flow-error" role="alert">Upload a plan or image before starting Digital Takeoff.</p>}
           {planUploaded ? (
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
               <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -630,6 +651,13 @@ export function QuoteDetailsForm({
         </div>
       )}
 
+      {/* Explain the existing disabled condition without changing its gates. */}
+      <p id="new-quote-next-step" className="text-sm text-slate-600" role="status">
+        {!customerName.trim() ? 'Enter a customer name to continue.'
+          : !entryMode ? 'Choose how you want to create this quote.'
+          : entryMode === 'digital' && !planUploaded ? 'Upload your plan to enable Start Digital Takeoff.'
+          : 'Ready. Your next step will open when you create the quote.'}
+      </p>
       {/* Actions */}
       <div className="flex items-center justify-between pt-4 border-t border-slate-200">
         <Link
@@ -641,6 +669,8 @@ export function QuoteDetailsForm({
         <button data-qc-variant="primary"
           type="submit"
           data-copilot="quote-create"
+          aria-describedby="new-quote-next-step"
+          aria-busy={creating || undefined}
           disabled={creating || !customerName.trim() || !entryMode || (entryMode === 'digital' && !planUploaded)}
           className="qc-flow-control qc-button px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >

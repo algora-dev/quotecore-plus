@@ -1,0 +1,27 @@
+path,operation,purpose
+app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/components/component-list.tsx,modify,Inline existing form validation; shared action-error acknowledgement
+app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx,modify,Bulk/row outcomes and surfaced status errors; Escape/visible row controls
+app/(auth)/[workspaceSlug]/material-orders/order-from-quote/page.tsx,modify,Truthful non-draft eligibility copy only
+app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx,modify,Truthful non-draft eligibility copy only
+app/(auth)/[workspaceSlug]/material-orders/order-list.tsx,modify,Bulk/row outcomes and surfaced status errors; Escape/visible row controls
+app/(auth)/[workspaceSlug]/material-orders/template-form.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx,modify,Bulk/row outcomes and surfaced status errors; Escape/visible row controls
+app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx,modify,Inline validation and guidance; narrow trade grid stacks; guards and payload unchanged
+app/(auth)/[workspaceSlug]/resources/EditCustomerTemplateModal.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplatesList.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/resources/new/page.tsx,modify,Authorised orphan route redirect; no template creation
+app/(auth)/[workspaceSlug]/settings/MfaSection.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx,modify,Native confirmation/editor presentation only; owned provider limitation documented
+app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx,modify,Scoped existing feedback/validation migration; original fields/actions retained
+app/components/ui/v2/QcActionNotice.tsx,add,New C66 persistent result composition/local hook; no request owner
+app/components/ui/v2/qc-feedback.css,add,New opt-in C66 responsive/accessibility styles
+app/components/ui/v2/useQcFeedback.tsx,modify,Optional destructive confirm flag; old default and queue unchanged

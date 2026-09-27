@@ -1,3 +1,7 @@
+# Phase 8 / UX v2.9 update
+
+Read `docs/ux/phase-8/DECISIONS.md` and `COMPONENT_CONTRACTS.md`. Local operation feedback and validation, no output/engine redesign. Historical entries below are preserved.
+
 # Current design return: Phase 7
 
 Phase 7 adds unified Document / Message Templates, Resources, Pricing/supplier/Inbox presentation, deterministic mobile back navigation and authorised Phase 6 carryovers.

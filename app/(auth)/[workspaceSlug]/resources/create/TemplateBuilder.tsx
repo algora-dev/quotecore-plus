@@ -1,6 +1,7 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
-import { useState } from 'react';
+import { useState, useRef, useId } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { ComponentLibraryRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
@@ -20,6 +21,10 @@ interface Props {
 }
 
 export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTemplates }: Props) {
+  const nameErrorId = useId();
+  const [nameError, setNameError] = useState('');
+  const nameRef = useRef<HTMLInputElement>(null);
+  const { notify, ask, feedback } = useQcFeedback();
   const router = useRouter();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -71,15 +76,14 @@ export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTempl
 
   async function handleSave() {
     if (!name.trim()) {
-      alert('Template name is required');
+      setNameError('Enter a template name.');
+      nameRef.current?.focus();
       return;
     }
 
     // Validation modal for empty components/extras
     if (selectedComponents.length === 0 && selectedExtras.length === 0) {
-      const confirmed = confirm(
-        'You have not added any roof components or extras. Are you sure you want to continue? You can still add components/extras when building a quote, adding them here will just save you time when building each quote.'
-      );
+      const confirmed = await ask({ title: 'Save without components?', description: 'You have not added any roof components or extras. Are you sure you want to continue? You can still add components/extras when building a quote, adding them here will just save you time when building each quote.', confirmLabel: 'Save template', cancelLabel: 'Keep editing' });
       if (!confirmed) return;
     }
 
@@ -99,7 +103,7 @@ export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTempl
       router.refresh();
       router.push(`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-structure`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save template');
+      await notify(err instanceof Error ? err.message : 'Failed to save template');
     } finally {
       setSaving(false);
     }
@@ -107,6 +111,7 @@ export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTempl
 
   return (
     <QcLibrary className="qc-template-editor">
+      {feedback}
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -137,14 +142,15 @@ export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTempl
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Template Name <span className="text-red-500">*</span>
               </label>
-              <input aria-label="Template Name"
+              <input aria-label="Template Name" ref={nameRef} aria-invalid={!!nameError} aria-describedby={nameError ? nameErrorId : undefined}
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => { setName(e.target.value); setNameError(''); }}
                 placeholder="e.g., Standard Quote Template"
                 className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
               />
+              {nameError && <p id={nameErrorId} className="qc-flow-error" role="alert">{nameError}</p>}
             </div>
 
             <div>

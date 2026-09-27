@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
@@ -189,6 +190,7 @@ export function SupplierDashboard({
   companyActiveCount: number;
   effectivePlanCode: string;
 }) {
+  const { notify, feedback } = useQcFeedback();
   const [activeTab, setActiveTab] = useState<Tab>('libraries');
 
   // Collapsible sections
@@ -401,10 +403,10 @@ export function SupplierDashboard({
     setRenaming(true);
     try {
       const result = await renameComponentCollection(id, renameValue);
-      if (!result.ok) { alert(result.message); return; }
+      if (!result.ok) { await notify(result.message); return; }
       setLocalLibraries(prev => prev.map(l => l.id === id ? { ...l, name: result.name } : l));
       setRenamingId(null); setRenameValue('');
-    } catch (e) { alert(e instanceof Error ? e.message : 'Failed to rename'); }
+    } catch (e) { await notify(e instanceof Error ? e.message : 'Failed to rename'); }
     finally { setRenaming(false); }
   }
 
@@ -412,10 +414,10 @@ export function SupplierDashboard({
     setDeleteLoading(true);
     try {
       const result = await deleteComponentCollection(id);
-      if (!result.ok) { alert(result.message); return; }
+      if (!result.ok) { await notify(result.message); return; }
       setLocalLibraries(prev => prev.filter(l => l.id !== id));
       setDeletingId(null);
-    } catch (e) { alert(e instanceof Error ? e.message : 'Failed to delete'); }
+    } catch (e) { await notify(e instanceof Error ? e.message : 'Failed to delete'); }
     finally { setDeleteLoading(false); }
   }
 
@@ -436,6 +438,7 @@ export function SupplierDashboard({
 
   return (
     <QcLibrary className="qc-library-detail">
+      {feedback}
       <div className="mx-auto max-w-4xl px-4 py-6">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">
@@ -600,10 +603,10 @@ export function SupplierDashboard({
                         <Hint>Helps your supplier page appear in Google Maps and local search results. Use the buttons below to set your coordinates automatically.</Hint>
                         <div className="mt-2 flex flex-wrap gap-2">
                           <button data-qc-variant="ghost" type="button" onClick={() => {
-                            if (!navigator.geolocation) { alert('Geolocation is not supported by your browser.'); return; }
+                            if (!navigator.geolocation) { void notify('Geolocation is not supported by your browser.'); return; }
                             navigator.geolocation.getCurrentPosition(
                               (pos) => { setBranchLatitude(pos.coords.latitude.toFixed(6)); setBranchLongitude(pos.coords.longitude.toFixed(6)); },
-                              () => { alert('Could not get your location. Please check browser permissions or enter coordinates manually.'); },
+                              () => { void notify('Could not get your location. Please check browser permissions or enter coordinates manually.'); },
                               { enableHighAccuracy: true, timeout: 10000 }
                             );
                           }} className="qc-button qc-flow-control qc-library-control inline-flex gap-1.5">
@@ -612,13 +615,13 @@ export function SupplierDashboard({
                           </button>
                           <button data-qc-variant="ghost" type="button" onClick={async () => {
                             const parts = [branchCity, branchRegion, branchCountry].filter(Boolean).join(',');
-                            if (!parts) { alert('Enter your city, region and country above first, then use this button.'); return; }
+                            if (!parts) { await notify('Enter your city, region and country above first, then use this button.'); return; }
                             try {
                               const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(parts)}&limit=1`);
                               const data = await res.json();
                               if (data && data[0]) { setBranchLatitude(parseFloat(data[0].lat).toFixed(6)); setBranchLongitude(parseFloat(data[0].lon).toFixed(6)); }
-                              else { alert('Could not find coordinates for that address. Try entering them manually.'); }
-                            } catch { alert('Could not look up coordinates. Please enter them manually.'); }
+                              else { await notify('Could not find coordinates for that address. Try entering them manually.'); }
+                            } catch { await notify('Could not look up coordinates. Please enter them manually.'); }
                           }} className="qc-button qc-flow-control qc-library-control inline-flex gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                             Suggest from my address

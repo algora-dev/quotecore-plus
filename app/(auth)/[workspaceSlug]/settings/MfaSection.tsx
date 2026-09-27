@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
 import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
@@ -31,6 +32,7 @@ interface EnrollState {
 }
 
 export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: Props) {
+  const { notify, feedback } = useQcFeedback();
   const router = useRouter();
   const supabase = createClient();
 
@@ -128,7 +130,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
   async function handleToggleMfa(next: boolean) {
     if (next && !hasVerified) {
       // Can't enable without a factor; nudge the user to enrol instead.
-      alert('Add an authenticator factor first before turning 2FA back on.');
+      await notify('Add an authenticator factor first before turning 2FA back on.');
       return;
     }
     setTogglingMfa(true);
@@ -140,7 +142,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
       router.refresh();
     } catch (err) {
       setMfaRequiredState(previous);
-      alert(err instanceof Error ? err.message : 'Could not update 2FA preference');
+      await notify(err instanceof Error ? err.message : 'Could not update 2FA preference');
     } finally {
       setTogglingMfa(false);
     }
@@ -171,14 +173,15 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
       setPendingUnenroll(null);
       router.refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to remove 2FA factor');
+      await notify(err instanceof Error ? err.message : 'Failed to remove 2FA factor');
     } finally {
       setUnenrollDeleting(false);
     }
   }
 
   return (
-    <QcJourney><div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl gap-4">
+    <QcJourney>
+      {feedback}<div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl gap-4">
       <div className="flex-1">
         <div className="flex items-center gap-3">
           <p className="text-sm font-medium text-slate-900">Two-Factor Authentication (2FA)</p>
@@ -218,7 +221,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
         </div>
         <p className="text-xs text-slate-500 mt-0.5">
           Use an authenticator app (Google Authenticator, 1Password, Authy, etc.) to add a
-          second factor to your login. Optional &mdash; recommended for any account holding
+          second factor to your login. Optional - recommended for any account holding
           customer data.
         </p>
 

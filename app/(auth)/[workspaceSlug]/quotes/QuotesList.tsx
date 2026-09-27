@@ -1,5 +1,6 @@
 'use client';
 import { QcLibraryError } from '@/app/components/ui/v2/QcLibrary';
+import { useQcActionNotice, type QcActionResult } from '@/app/components/ui/v2/QcActionNotice';
 import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -125,7 +126,7 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diffDays / 30)} months ago`;
 }
 
-function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; currentStatus: string }) {
+function JobStatusDropdown({ quoteId, currentStatus, onResult }: { quoteId: string; currentStatus: string; onResult: (result: QcActionResult) => void }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(currentStatus);
@@ -157,17 +158,25 @@ function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; curren
       router.refresh();
     } catch (err) {
       console.error('Failed to update job status:', err);
+      onResult({ tone: 'danger', title: 'Status was not updated', description: 'The quote status could not be saved. Please try again.', focus: true });
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="relative" ref={ref} onClick={e => e.stopPropagation()}>
+    <div className="relative" ref={ref} onKeyDown={(event) => {
+      if (event.key === 'Escape' && open) {
+        event.preventDefault(); event.stopPropagation(); setOpen(false);
+        ref.current?.querySelector<HTMLButtonElement>('button')?.focus();
+      }
+    }} onClick={e => e.stopPropagation()}>
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         disabled={saving}
         title="Click to change status"
+        aria-label={`Change status, currently ${config.label}`} aria-expanded={open} aria-busy={saving || undefined}
         className={"qc-flow-control " + (`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`)}
       >
         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
@@ -215,6 +224,7 @@ export function QuotesList({
   effectivePlanCode,
   measureProps,
 }: Props) {
+  const { showNotice, clearNotice, notice } = useQcActionNotice();
   const [capUpgradeOpen, setCapUpgradeOpen] = useState(false);
   // Smoke #7 (2026-05-19): subscription-inactive (e.g. canceled unpaid)
   // opens this modal when the user clicks New Quote. The DB-level guard
@@ -297,11 +307,13 @@ export function QuotesList({
     setDeleting(true);
     try {
       await deleteQuote(deleteId);
+      showNotice({ tone: 'success', title: 'Quote deleted', description: 'The selected quote has been deleted.', focus: true });
       setDeleteId(null);
       router.refresh();
     } catch (err) {
       console.error('Failed to delete quote:', err);
-      alert('Failed to delete quote. Please try again.');
+      setDeleteId(null);
+      showNotice({ tone: 'danger', title: 'Quote was not deleted', description: 'Failed to delete quote. Please try again.', focus: true });
     } finally {
       setDeleting(false);
     }
@@ -373,10 +385,11 @@ export function QuotesList({
     if (ids.length === 0) return;
     if (ids.length > MAX_BULK_SELECTION) {
       // Should be unreachable thanks to the toggle guards; defensive belt anyway.
-      alert(`Too many quotes selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`);
+      showNotice({ tone: 'warning', title: 'Selection limit', description: `Too many quotes selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`, focus: true });
       return;
     }
 
+    clearNotice();
     setBulkBusy('download');
     setBulkProgress({ done: 0, total: ids.length, message: 'Preparing export...' });
 
@@ -388,12 +401,13 @@ export function QuotesList({
       auditId = begin.auditId;
     } catch (err) {
       console.error('[bulkDownload] cap rejected by server:', err);
-      alert(err instanceof Error ? err.message : 'Failed to start bulk download.');
+      showNotice({ tone: 'danger', title: 'Export could not start', description: err instanceof Error ? err.message : 'Failed to start bulk download.', focus: true });
       setBulkBusy(null);
       setBulkProgress(null);
       return;
     }
 
+    let downloadRequested = false;
     try {
       const zip = new JSZip();
       let succeeded = 0;
@@ -430,7 +444,7 @@ export function QuotesList({
           failures.length,
           failures.length > 0 ? failures.slice(0, 5).join('; ') : 'no quotes exported',
         );
-        alert(`No quotes could be exported.${failures.length ? '\n\nFailed:\n' + failures.join('\n') : ''}`);
+        showNotice({ tone: 'danger', title: 'Nothing exported', description: `No quotes could be exported. Review the details before trying again.`, details: failures, focus: true });
         return;
       }
 
@@ -450,6 +464,7 @@ export function QuotesList({
       }
 
       downloadBlob(blob, zipName);
+      downloadRequested = true;
 
       await finishBulkDownloadAudit(
         auditId,
@@ -459,9 +474,20 @@ export function QuotesList({
         failures.length > 0 ? failures.slice(0, 5).join('; ') : undefined,
       );
 
-      if (failures.length > 0) {
-        alert(`Exported ${succeeded} of ${ids.length} quotes.\n\nFailed:\n${failures.join('\n')}`);
-      }
+      showNotice({
+        tone: failures.length ? 'warning' : 'success',
+        title: failures.length ? 'Some quotes were not exported' : 'Export ready',
+        description: `Prepared ${succeeded} of ${ids.length} quotes. The ZIP download has been requested. Check your browser downloads.`,
+        details: failures, focus: true,
+      });
+    } catch (err) {
+      console.error('[bulkDownload] could not finish export:', err);
+      showNotice({ tone: 'danger',
+        title: downloadRequested ? 'Check your download' : 'Export could not finish',
+        description: downloadRequested
+          ? 'The download was requested, but a later export step failed. Check your browser downloads before trying again.'
+          : 'The ZIP could not be prepared or the download could not be started. Your records have not been changed.',
+        details: [err instanceof Error ? err.message : 'Unknown export error'], focus: true });
     } finally {
       setBulkBusy(null);
       setBulkProgress(null);
@@ -472,18 +498,18 @@ export function QuotesList({
   async function handleBulkDelete() {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
+    clearNotice();
     setBulkBusy('delete');
     try {
       const result = await bulkDeleteQuotes(ids);
       setSelectedIds(new Set());
       setBulkDeleteConfirmOpen(false);
       router.refresh();
-      if (result.skipped > 0) {
-        alert(`Deleted ${result.deleted} quotes. ${result.skipped} were skipped (not owned or already gone).`);
-      }
+      showNotice({ tone: result.skipped ? 'warning' : 'success', title: result.skipped ? 'Deletion finished with skipped records' : 'Deletion complete', description: `Quotes deleted: ${result.deleted}. Skipped: ${result.skipped} (not owned or already gone).`, focus: true });
     } catch (err) {
       console.error('[bulkDelete] failed:', err);
-      alert(`Failed to delete quotes: ${err instanceof Error ? err.message : 'unknown error'}`);
+      setBulkDeleteConfirmOpen(false);
+      showNotice({ tone: 'danger', title: 'Deletion failed', description: `Failed to delete quotes: ${err instanceof Error ? err.message : 'unknown error'}`, focus: true });
     } finally {
       setBulkBusy(null);
     }
@@ -499,6 +525,7 @@ export function QuotesList({
 
   return (
     <QcJourney className="qc-journey-stack"><>
+      {notice}
       {/* Top actions row */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="qc-flow-tabs">
@@ -698,7 +725,7 @@ export function QuotesList({
                   </span>
                 ) : (
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <JobStatusDropdown quoteId={q.id} currentStatus={q.job_status || 'unsent'} />
+                    <JobStatusDropdown quoteId={q.id} currentStatus={q.job_status || 'unsent'}  onResult={showNotice} />
                     <RecipientStatusBadge status={quoteRecipientStatus(q)} />
                   </div>
                 )}

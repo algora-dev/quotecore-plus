@@ -1,0 +1,119 @@
+{
+  "method": "Actual source JSX and shared CSS, deterministic hook values, effects off, requests and actions forbidden; not React/Next or deployed screenshots.",
+  "results": [
+    {
+      "name": "quotes-partial-export",
+      "rel": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "pass": true
+    },
+    {
+      "name": "quotes-export-failure",
+      "rel": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "pass": true
+    },
+    {
+      "name": "quotes-confirm-delete",
+      "rel": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "pass": true
+    },
+    {
+      "name": "orders-complete-export",
+      "rel": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "pass": true
+    },
+    {
+      "name": "orders-empty-after-delete",
+      "rel": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "pass": true
+    },
+    {
+      "name": "invoices-skipped-delete",
+      "rel": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "pass": true
+    },
+    {
+      "name": "new-quote-customer-validation",
+      "rel": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "pass": true
+    },
+    {
+      "name": "new-quote-digital-validation",
+      "rel": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "pass": true
+    },
+    {
+      "name": "new-quote-generic-trades",
+      "rel": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "pass": true
+    },
+    {
+      "name": "template-name-validation",
+      "rel": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+      "pass": true
+    },
+    {
+      "name": "template-empty-confirmation",
+      "rel": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+      "pass": true
+    },
+    {
+      "name": "order-template-name-validation",
+      "rel": "app/(auth)/[workspaceSlug]/material-orders/template-form.tsx",
+      "pass": true
+    },
+    {
+      "name": "security-remove-confirmation",
+      "rel": "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
+      "pass": true
+    },
+    {
+      "name": "long-result-details",
+      "rel": "app/components/ui/v2/QcActionNotice.tsx",
+      "pass": true
+    }
+  ],
+  "loaded": [
+    "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+    "app/components/ui/v2/QcLibrary.tsx",
+    "app/components/ui/v2/QcJourney.tsx",
+    "app/components/ui/v2/QcDialog.tsx",
+    "app/components/ui/v2/QcHostedDialog.tsx",
+    "app/components/ui/v2/QcButton.tsx",
+    "app/components/ui/v2/QcIcon.tsx",
+    "app/components/ui/v2/QcActionNotice.tsx",
+    "app/components/ui/v2/QcSurface.tsx",
+    "app/components/UpgradeModal.tsx",
+    "app/components/RecipientStatusBadge.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+    "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+    "app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx",
+    "app/components/ConfirmModal.tsx",
+    "app/lib/currency/currencies.ts",
+    "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+    "app/components/FileUploader.tsx",
+    "app/components/billing/StorageBlockedModal.tsx",
+    "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+    "app/components/ui/v2/useQcFeedback.tsx",
+    "app/components/AlertModal.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/template-form.tsx",
+    "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
+    "app/lib/security/questions.ts",
+    "app/components/ui/PasswordField.tsx"
+  ],
+  "mocked": [
+    "./actions",
+    "./actions-bulk",
+    "jszip",
+    "./lib/quote-bundle",
+    "../MeasureJobModal",
+    "./order-list-actions",
+    "./lib/order-bundle",
+    "./lib/invoice-bundle",
+    "@/app/components/PdfPagePicker (no PDF conversion in static review)",
+    "@/app/lib/supabase/client",
+    "@/app/lib/files/storage-actions",
+    "@/app/lib/files/signed-upload",
+    "../actions",
+    "./security-questions-actions"
+  ]
+}

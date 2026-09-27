@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState } from 'react';
@@ -50,6 +51,7 @@ export function LibraryDetail({
   userCollections: UserCollection[];
   alreadyImportedIds: Set<string>;
 }) {
+  const { notify, feedback } = useQcFeedback();
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [collectionList, setCollectionList] = useState<UserCollection[]>(userCollections);
@@ -135,10 +137,10 @@ export function LibraryDetail({
         setShowNewLibraryInput(false);
         setNewLibraryName('');
       } else {
-        alert(result.message || 'Failed to create library');
+        await notify(result.message || 'Failed to create library');
       }
     } catch {
-      alert('Failed to create library');
+      await notify('Failed to create library');
     } finally {
       setCreatingLibrary(false);
     }
@@ -150,6 +152,7 @@ export function LibraryDetail({
 
   return (
     <QcLibrary className="qc-library-detail">
+      {feedback}
       <div className="mx-auto max-w-4xl px-4 py-6">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">

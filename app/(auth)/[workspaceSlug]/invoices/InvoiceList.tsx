@@ -1,4 +1,5 @@
 'use client';
+import { useQcActionNotice, type QcActionResult } from '@/app/components/ui/v2/QcActionNotice';
 import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -109,7 +110,7 @@ const INVOICE_STATUS_ORDER = ['draft', 'sent', 'paid', 'cancelled'];
  * Orders (OrderStatusDropdown) and Quotes (JobStatusDropdown) lists so all
  * three match. Selecting a status persists via updateInvoiceStatus.
  */
-function InvoiceStatusDropdown({ invoiceId, currentStatus }: { invoiceId: string; currentStatus: string }) {
+function InvoiceStatusDropdown({ invoiceId, currentStatus, onResult }: { invoiceId: string; currentStatus: string; onResult: (result: QcActionResult) => void }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(currentStatus);
@@ -143,18 +144,25 @@ function InvoiceStatusDropdown({ invoiceId, currentStatus }: { invoiceId: string
       router.refresh();
     } catch (err) {
       console.error('Failed to update invoice status:', err);
+      onResult({ tone: 'danger', title: 'Status was not updated', description: 'The invoice status could not be saved. Please try again.', focus: true });
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="relative" ref={ref} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+    <div className="relative" ref={ref} onKeyDown={(event) => {
+      if (event.key === 'Escape' && open) {
+        event.preventDefault(); event.stopPropagation(); setOpen(false);
+        ref.current?.querySelector<HTMLButtonElement>('button')?.focus();
+      }
+    }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
         disabled={saving}
         title="Click to change status"
+        aria-label={`Change status, currently ${config.label}`} aria-expanded={open} aria-busy={saving || undefined}
         className={"qc-flow-control " + (`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`)}
       >
         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
@@ -195,10 +203,12 @@ function InvoiceRowMenu({
   invoice,
   workspaceSlug,
   onDeleted,
+  onResult,
 }: {
   invoice: InvoiceRow;
   workspaceSlug: string;
   onDeleted: (id: string) => void;
+  onResult: (result: QcActionResult) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -211,7 +221,7 @@ function InvoiceRowMenu({
       await deleteInvoice(invoice.id);
       onDeleted(invoice.id);
     } catch {
-      alert('Failed to delete invoice.');
+      onResult({ tone: 'danger', title: 'Invoice was not deleted', description: 'Failed to delete invoice. Please try again.', focus: true });
     } finally {
       setBusy(false);
       setConfirmAction(null);
@@ -224,7 +234,7 @@ function InvoiceRowMenu({
       await cancelInvoice(invoice.id);
       router.refresh();
     } catch {
-      alert('Failed to cancel invoice.');
+      onResult({ tone: 'danger', title: 'Invoice was not cancelled', description: 'Failed to cancel invoice. Please try again.', focus: true });
     } finally {
       setBusy(false);
       setConfirmAction(null);
@@ -238,7 +248,7 @@ function InvoiceRowMenu({
           type="button"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen((v) => !v); }}
           disabled={busy}
-          className="qc-icon-button qc-flow-control icon-btn opacity-0 group-hover:opacity-100 p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          className="qc-icon-button qc-flow-control icon-btn p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           aria-label="Invoice actions"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -340,6 +350,7 @@ function InvoiceRowMenu({
 // ── Main list ──────────────────────────────────────────────────────────────
 
 export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props) {
+  const { showNotice, clearNotice, notice } = useQcActionNotice();
   const [invoices, setInvoices] = useState<InvoiceRow[]>(initialInvoices);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -452,13 +463,15 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
     if (ids.length > MAX_BULK_SELECTION) {
-      alert(`Too many invoices selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`);
+      showNotice({ tone: 'warning', title: 'Selection limit', description: `Too many invoices selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`, focus: true });
       return;
     }
 
+    clearNotice();
     setBulkBusy('download');
     setBulkProgress({ done: 0, total: ids.length, message: 'Preparing export...' });
 
+    let downloadRequested = false;
     try {
       const zip = new JSZip();
       let succeeded = 0;
@@ -488,7 +501,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
       }
 
       if (succeeded === 0) {
-        alert(`No invoices could be exported.${failures.length ? '\n\nFailed:\n' + failures.join('\n') : ''}`);
+        showNotice({ tone: 'danger', title: 'Nothing exported', description: `No invoices could be exported. Review the details before trying again.`, details: failures, focus: true });
         return;
       }
 
@@ -505,10 +518,22 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
       }
 
       downloadBlob(blob, zipName);
+      downloadRequested = true;
 
-      if (failures.length > 0) {
-        alert(`Exported ${succeeded} of ${ids.length} invoices.\n\nFailed:\n${failures.join('\n')}`);
-      }
+      showNotice({
+        tone: failures.length ? 'warning' : 'success',
+        title: failures.length ? 'Some invoices were not exported' : 'Export ready',
+        description: `Prepared ${succeeded} of ${ids.length} invoices. The ZIP download has been requested. Check your browser downloads.`,
+        details: failures, focus: true,
+      });
+    } catch (err) {
+      console.error('[bulkDownload] could not finish export:', err);
+      showNotice({ tone: 'danger',
+        title: downloadRequested ? 'Check your download' : 'Export could not finish',
+        description: downloadRequested
+          ? 'The download was requested, but a later export step failed. Check your browser downloads before trying again.'
+          : 'The ZIP could not be prepared or the download could not be started. Your records have not been changed.',
+        details: [err instanceof Error ? err.message : 'Unknown export error'], focus: true });
     } finally {
       setBulkBusy(null);
       setBulkProgress(null);
@@ -519,6 +544,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
   async function handleBulkDelete() {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
+    clearNotice();
     setBulkBusy('delete');
     try {
       const result = await bulkDeleteInvoices(ids);
@@ -527,12 +553,11 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
       setSelectedIds(new Set());
       setBulkDeleteConfirmOpen(false);
       router.refresh();
-      if (result.skipped > 0) {
-        alert(`Deleted ${result.deleted} draft invoice(s). ${result.skipped} were skipped (only draft invoices can be bulk-deleted; cancel sent invoices individually).`);
-      }
+      showNotice({ tone: result.skipped ? 'warning' : 'success', title: result.skipped ? 'Deletion finished with skipped records' : 'Deletion complete', description: `Draft invoices deleted: ${result.deleted}. Skipped: ${result.skipped}. Only draft invoices can be bulk-deleted; cancel sent invoices individually.`, focus: true });
     } catch (err) {
       console.error('[bulkDelete] failed:', err);
-      alert(`Failed to delete invoices: ${err instanceof Error ? err.message : 'unknown error'}`);
+      setBulkDeleteConfirmOpen(false);
+      showNotice({ tone: 'danger', title: 'Deletion failed', description: `Failed to delete invoices: ${err instanceof Error ? err.message : 'unknown error'}`, focus: true });
     } finally {
       setBulkBusy(null);
     }
@@ -540,6 +565,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
 
   return (
     <QcJourney className="qc-journey-stack"><>
+      {notice}
      {/* Toolbar */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative flex-1 md:max-w-sm">
@@ -686,7 +712,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
 
                 {/* Status - owner dropdown + recipient badge, beside Last Activity */}
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <InvoiceStatusDropdown invoiceId={inv.id} currentStatus={inv.status} />
+                  <InvoiceStatusDropdown invoiceId={inv.id} currentStatus={inv.status}  onResult={showNotice} />
                   <RecipientStatusBadge status={invoiceRecipientStatus(inv)} />
                 </div>
 
@@ -706,6 +732,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
                     invoice={inv}
                     workspaceSlug={workspaceSlug}
                     onDeleted={handleDeleted}
+                    onResult={showNotice}
                   />
                 </div>
               </div>

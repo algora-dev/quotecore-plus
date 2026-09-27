@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
 import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition, useEffect } from 'react';
@@ -74,6 +75,7 @@ export function CatalogList({
   isOverStorage,
   supplierCatalogs = [],
 }: Props) {
+  const { notify, feedback } = useQcFeedback();
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [catalogs, setCatalogs] = useState<CatalogRow[]>(initialCatalogs);
@@ -155,7 +157,7 @@ export function CatalogList({
       setDeleteTarget(null);
       startTransition(() => router.refresh());
     } else {
-      alert(result.message);
+      await notify(result.message);
     }
   }
 
@@ -169,7 +171,7 @@ export function CatalogList({
       setArchiveTarget(null);
       startTransition(() => router.refresh());
     } else {
-      alert(result.message);
+      await notify(result.message);
     }
   }
 
@@ -183,7 +185,7 @@ export function CatalogList({
       setCatalogs((prev) => prev.map((c) => (c.id === catalog.id ? { ...c, status: 'ready' as const } : c)));
       startTransition(() => router.refresh());
     } else {
-      alert(result.message);
+      await notify(result.message);
     }
   }
 
@@ -314,7 +316,8 @@ export function CatalogList({
   }
 
   return (
-    <QcJourney><section className="space-y-5">
+    <QcJourney>
+      {feedback}<section className="space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
