@@ -10,11 +10,11 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Roofing Quoting Software | QuoteCore+",
   description:
-    "Roofing quoting software for roofers and contractors. Digital roof takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Plans from free to $59/month.",
+    "Roofing quoting software for roofers and contractors. Digital roof takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Paid plans from $19 to $59/month.",
   openGraph: {
     title: "Roofing Quoting Software | QuoteCore+",
     description:
-      "Roofing quoting software for roofers and contractors. Digital roof takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Plans from free to $59/month.",
+      "Roofing quoting software for roofers and contractors. Digital roof takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Paid plans from $19 to $59/month.",
     url: "/roofing-quoting-software",
     siteName: "QuoteCore+",
     type: "website",

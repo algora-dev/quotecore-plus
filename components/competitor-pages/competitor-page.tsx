@@ -660,7 +660,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
             variant="ghost"
           />
         </div>
-        <p className="mt-4 text-sm text-zinc-500">No card required. Cancel anytime.</p>
+        <p className="mt-4 text-sm text-zinc-500">Paid plans for the connected app. Free tools are available without signup.</p>
         <div className="mt-12 text-left">
           <DemoCTACard location={`${slug}_final_cta`} variant="inline" className="mx-auto max-w-2xl" />
         </div>

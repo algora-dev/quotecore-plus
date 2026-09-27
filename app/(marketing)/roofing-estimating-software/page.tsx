@@ -13,11 +13,11 @@ import {
 export const metadata: Metadata = {
   title: "Roofing Estimating Software | QuoteCore+",
   description:
-    "Roofing estimating software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Plans from free to $59/month.",
+    "Roofing estimating software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Paid plans from $19 to $59/month.",
   openGraph: {
     title: "Roofing Estimating Software | QuoteCore+",
     description:
-      "Roofing estimating software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Plans from free to $59/month.",
+      "Roofing estimating software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Paid plans from $19 to $59/month.",
     url: "/roofing-estimating-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -167,7 +167,7 @@ export default function RoofingEstimatingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure roofs digitally with AI Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Plans from free to $59/month.
+              Measure roofs digitally with AI Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Paid plans from $19 to $59/month.
             </p>
 
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">

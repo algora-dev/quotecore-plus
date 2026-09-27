@@ -152,7 +152,7 @@ export default function RoofingTakeoffSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Upload plans and measure roof areas, lengths and pitch digitally. AI Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Plans from free to $59/month.
+              Upload plans and measure roof areas, lengths and pitch digitally. AI Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Paid plans from $19 to $59/month.
             </p>
 
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">

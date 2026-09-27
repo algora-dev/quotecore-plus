@@ -1,0 +1,12 @@
+{
+  "phase": "2-agent-handoff",
+  "baseline": "Phase 1A return",
+  "source_code_changed": false,
+  "handoff_files": [
+    "START_HERE_PHASE2_AGENT.md",
+    "docs/marketing-site/PHASE2_CORE_REPOSITIONING.md",
+    "docs/marketing-site/PHASE2_PAGE_MATRIX.md",
+    "docs/marketing-site/PHASE2_ACCEPTANCE.md",
+    "docs/marketing-site/RETURN_NOTES.md"
+  ]
+}

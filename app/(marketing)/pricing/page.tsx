@@ -168,7 +168,7 @@ export default function PricingPage() {
             </a>
             <a href="/planswift-alternative" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">PlanSwift alternative</p>
-              <p className="mt-1 text-sm text-zinc-600">US$2,000/seat/yr vs plans from free.</p>
+              <p className="mt-1 text-sm text-zinc-600">US$2,000/seat/yr vs paid QuoteCore+ plans.</p>
             </a>
             <a href="/features" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Features</p>

@@ -14,7 +14,7 @@ const SiteAssistant = dynamic(() => import("@/components/SiteAssistant"));
 export const metadata: Metadata = {
   title: "QuoteCore+ | Roofing Quoting & Takeoff Software",
   description:
-    "Turn roof measurements into accurate quotes in minutes. Digital takeoff, AI Scan Assist, and Smart Components. Plans from free to $59/month.",
+    "Turn roof measurements into accurate quotes in minutes. Digital takeoff, AI Scan Assist, and Smart Components. Paid plans from $19 to $59/month.",
   metadataBase: new URL("https://quote-core.com"),
   alternates: {
     canonical: "https://quote-core.com/",
