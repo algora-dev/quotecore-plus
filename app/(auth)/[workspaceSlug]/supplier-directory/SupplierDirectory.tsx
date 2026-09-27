@@ -1,5 +1,6 @@
 'use client';
 
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -115,11 +116,11 @@ export function SupplierDirectory({
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
+    <QcLibrary className="qc-library-detail">
       <div className="mx-auto max-w-4xl px-4 py-6">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">
-          <Link href={`/${workspaceSlug}/components`} className="hover:text-slate-700">Components</Link>
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">
+          <Link href={`/${workspaceSlug}/components`} className="qc-flow-link qc-library-control hover:text-slate-700">Components</Link>
           <svg className="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
@@ -127,14 +128,14 @@ export function SupplierDirectory({
         </nav>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Supplier Directory</h1>
+            <h1 className="qc-library-title text-xl font-semibold text-slate-900">Supplier Directory</h1>
             <p className="text-sm text-slate-400 mt-0.5">Find and import supplier component libraries and catalogues</p>
           </div>
           <Link
             href={`/${workspaceSlug}/components`}
-            className="text-xs font-medium text-slate-500 hover:text-slate-700 rounded-full border border-slate-300 px-3 py-1.5"
+            className="qc-flow-link qc-library-control text-xs font-medium text-slate-500 hover:text-slate-700 rounded-full border border-slate-300 px-3 py-1.5"
           >
             My Components
           </Link>
@@ -148,24 +149,24 @@ export function SupplierDirectory({
                 type="text" value={query} onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') applyFilters(); }}
                 placeholder="Search by name, keyword, brand, product..."
-                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                className="qc-input qc-library-control flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
               />
-              <button onClick={applyFilters}
-                className="cursor-pointer rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition whitespace-nowrap">
+              <button data-qc-variant="primary" onClick={applyFilters}
+                className="qc-button qc-flow-control qc-library-control whitespace-nowrap">
                 Search
               </button>
               {hasFilters && (
-                <button onClick={clearFilters}
-                  className="cursor-pointer rounded-full border border-slate-300 px-3 py-2 text-sm text-slate-500 hover:bg-slate-50 whitespace-nowrap">
+                <button data-qc-variant="ghost" onClick={clearFilters}
+                  className="qc-button qc-flow-control qc-library-control whitespace-nowrap">
                   Clear
                 </button>
               )}
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              <input type="text" value={location} onChange={e => setLocation(e.target.value)}
+              <input aria-label="Supplier location" type="text" value={location} onChange={e => setLocation(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') applyFilters(); }}
                 placeholder="Location (e.g. New Zealand, UK, London...)"
-                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                className="qc-input qc-library-control flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
               />
             </div>
           </div>
@@ -173,7 +174,7 @@ export function SupplierDirectory({
           {/* Roofing Type Filter */}
           <div className="flex flex-wrap gap-1.5 mt-3">
             {ROOFING_TYPES.map(type => (
-              <button key={type} type="button"
+              <button key={type} type="button" aria-pressed={selectedType === type}
                 onClick={() => {
                   setSelectedType(type);
                   const params = new URLSearchParams();
@@ -182,11 +183,11 @@ export function SupplierDirectory({
                   if (type !== 'All Roofing') params.set('type', type);
                   router.push(`/${workspaceSlug}/supplier-directory${params.toString() ? `?${params}` : ''}`);
                 }}
-                className={`cursor-pointer text-xs px-2.5 py-1 rounded-full border transition ${
+                className={"qc-flow-control qc-library-choice " + (`cursor-pointer text-xs px-2.5 py-1 rounded-full border transition ${
                   selectedType === type
                     ? 'bg-slate-900 text-white border-slate-900'
                     : 'bg-white text-slate-600 border-slate-300 hover:border-orange-300'
-                }`}
+                }`)}
               >
                 {type}
               </button>
@@ -199,13 +200,13 @@ export function SupplierDirectory({
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-2 mb-4">
-          <button onClick={() => setActiveTab('libraries')}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'libraries' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <button aria-pressed={activeTab === 'libraries'} onClick={() => setActiveTab('libraries')}
+            className={"qc-flow-control qc-library-choice " + (`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'libraries' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`)}>
             Component Libraries ({libraries.length})
           </button>
-          <button onClick={() => setActiveTab('catalogues')}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'catalogues' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+          <button aria-pressed={activeTab === 'catalogues'} onClick={() => setActiveTab('catalogues')}
+            className={"qc-flow-control qc-library-choice " + (`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'catalogues' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`)}>
             Catalogues ({catalogs.length})
           </button>
         </div>
@@ -232,7 +233,7 @@ export function SupplierDirectory({
                 >
                   {supLibs.map(lib => (
                     <div key={lib.id} className="px-4 py-3 hover:bg-orange-50/30 transition">
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="qc-supplier-summary flex flex-wrap items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-medium text-slate-900">{lib.public_title || lib.name}</span>
@@ -246,8 +247,8 @@ export function SupplierDirectory({
                           )}
                           {lib.published_at && <p className="text-xs text-slate-400 mt-1">Published: {new Date(lib.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
                         </div>
-                        <Link href={`/${workspaceSlug}/supplier-directory/library/${lib.id}`}
-                          className="shrink-0 cursor-pointer rounded-full bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition">
+                        <Link data-qc-variant="primary" href={`/${workspaceSlug}/supplier-directory/library/${lib.id}`}
+                          className="qc-button qc-flow-control qc-library-control shrink-0">
                           View
                         </Link>
                       </div>
@@ -281,7 +282,7 @@ export function SupplierDirectory({
                 >
                   {supCats.map(cat => (
                     <div key={cat.id} className="px-4 py-3 hover:bg-orange-50/30 transition">
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="qc-supplier-summary flex flex-wrap items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-medium text-slate-900">{cat.public_title || cat.name}</span>
@@ -300,10 +301,10 @@ export function SupplierDirectory({
                           {cat.published_at && <p className="text-xs text-slate-400 mt-1">Published: {new Date(cat.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
                         </div>
                         <div className="flex flex-col gap-1.5 items-end shrink-0">
-                          <button
+                          <button data-qc-variant="ghost"
                             onClick={() => handleSaveCatalog(cat.id)}
                             disabled={savingCatalogId === cat.id}
-                            className="cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#e55a2b] transition disabled:opacity-50"
+                            className="qc-button qc-flow-control qc-library-control "
                           >
                             {savingCatalogId === cat.id ? 'Adding...' : 'Add Catalogue'}
                           </button>
@@ -322,7 +323,7 @@ export function SupplierDirectory({
           )
         )}
       </div>
-    </div>
+    </QcLibrary>
   );
 }
 
@@ -343,8 +344,8 @@ function SupplierAccordion({
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-      <button onClick={onToggle}
-        className="cursor-pointer w-full flex items-center justify-between px-4 py-3 hover:bg-orange-50/40 transition">
+      <button data-qc-variant="ghost" onClick={onToggle}
+        className="qc-button qc-flow-control qc-library-control w-full justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -372,7 +373,7 @@ function SupplierAccordion({
               {supplier.contact_email && (
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400">Contact:</span>
-                  <a href={`mailto:${supplier.contact_email}`} className="text-[#2563EB] hover:underline">{supplier.contact_email}</a>
+                  <a href={`mailto:${supplier.contact_email}`} className="qc-flow-link qc-library-control text-[#2563EB] hover:underline">{supplier.contact_email}</a>
                 </div>
               )}
               {supplier.phone_number && (
@@ -382,7 +383,7 @@ function SupplierAccordion({
                 const url = supplier.website_url;
                 const href = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
                 return (
-                  <div className="flex items-center gap-2"><span className="text-slate-400">Website:</span><a href={href} target="_blank" rel="noopener noreferrer" className="text-[#2563EB] hover:underline">{url}</a></div>
+                  <div className="flex items-center gap-2"><span className="text-slate-400">Website:</span><a href={href} target="_blank" rel="noopener noreferrer" className="qc-flow-link qc-library-control text-[#2563EB] hover:underline">{url}</a></div>
                 );
               })()}
             </div>

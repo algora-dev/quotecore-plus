@@ -9,6 +9,7 @@ import { QcNavigation } from './QcNavigation';
 import type { WorkspaceNavEntitlements } from './WorkspaceNav';
 import { shellRoute, workspaceNavigation } from './shell-config';
 import { QcSidebarTab } from './QcSidebarTab';
+import { QcMobileReturn } from './QcMobileReturn';
 import { nextSidebarMode, readSidebarPreference, resolveSidebarMode, type SidebarOverride, type SidebarPreference } from './sidebar-state';
 import './qc-shell.css';
 
@@ -91,7 +92,7 @@ export function QcAppShell({ workspaceSlug, userId, companyName, entitlements, i
         <div className="qc-shell-utilities">{bell}{inbox}{help}</div>
       </header>
       {entitlementBanner}
-      <main id="qc-main" tabIndex={-1} className="qc-main">{children}</main>
+      <main id="qc-main" tabIndex={-1} className="qc-main"><QcMobileReturn pathname={pathname} workspaceSlug={workspaceSlug} />{children}</main>
     </div>
     <div data-takeoff-chrome="assistant">{assistant}</div>
     <QcDialog open={mobileOpen} onRequestClose={() => setMobileOpen(false)} title="Your workspace"

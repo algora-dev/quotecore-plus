@@ -14,7 +14,7 @@ export default async function NewQuotePage({
   const supabase = await createSupabaseServerClient();
 
   // Load templates for dropdown
-  const { data: templates } = await supabase
+  const { data: templates, error: templatesError } = await supabase
     .from('templates')
     .select('id, name, description')
     .eq('company_id', profile.company_id)
@@ -53,6 +53,7 @@ export default async function NewQuotePage({
         <QuoteDetailsForm
           workspaceSlug={workspaceSlug}
           templates={templates || []}
+          templatesLoadError={!!templatesError}
           companyId={profile.company_id}
           defaultMeasurementSystem={defaultMeasurementSystem}
           digitalTakeoffAvailable={ent.features.digital_takeoff}

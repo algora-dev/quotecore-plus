@@ -1,5 +1,6 @@
 'use client';
 
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateNotificationPref, updateChannelMaster } from './settings-actions';
@@ -95,15 +96,11 @@ function Toggle({
       aria-label={label}
       disabled={disabled}
       onClick={onChange}
-      className={`relative inline-flex ${trackClass} flex-shrink-0 items-center rounded-full transition ${
-        checked ? onClass : 'bg-slate-300'
-      } ${disabled ? 'opacity-60' : ''}`}
+      className="qc-flow-control qc-library-toggle"
     >
-      <span
-        className={`inline-block ${knobSizeClass} transform rounded-full bg-white transition ${
-          checked ? knobOnClass : knobOffClass
-        }`}
-      />
+      <span aria-hidden="true" className={`qc-library-toggle-track ${trackClass} ${checked ? onClass : 'bg-slate-300'} ${disabled ? 'opacity-60' : ''}`}>
+        <span className={`inline-block ${knobSizeClass} transform rounded-full bg-white transition ${checked ? knobOnClass : knobOffClass}`} />
+      </span>
     </button>
   );
 }
@@ -329,26 +326,26 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
   }
 
   return (
-    <div className="space-y-4">
+    <QcLibrary className="space-y-4">
       {/* Top tabs: Inbox / Settings (rounded-full pill tabs). */}
-      <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+      <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-fit max-w-full">
         <button
           type="button"
-          onClick={() => setView('inbox')}
-          className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+          aria-pressed={view === 'inbox'} onClick={() => setView('inbox')}
+          className={"qc-flow-control qc-library-choice " + (`px-4 py-1.5 text-sm font-medium rounded-full transition ${
             view === 'inbox' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-          }`}
+          }`)}
         >
           Inbox
         </button>
         <button
           type="button"
-          onClick={() => setView('settings')}
-          className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+          aria-pressed={view === 'settings'} onClick={() => setView('settings')}
+          className={"qc-flow-control qc-library-choice " + (`px-4 py-1.5 text-sm font-medium rounded-full transition ${
             view === 'settings' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-          }`}
+          }`)}
         >
-          Settings
+          Notification settings
         </button>
       </div>
 
@@ -381,7 +378,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                     <p className="text-sm font-semibold text-slate-900">{channel.label}</p>
                     <p className="text-xs text-slate-500 mt-0.5">All {channel.label} alerts</p>
                   </div>
-                  <div className="flex items-end gap-4 md:gap-6">
+                  <div className="qc-inbox-switch-columns flex items-end gap-2 md:gap-6">
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-[11px] font-medium uppercase tracking-wide text-[#FF6B35]">In-app</span>
                       <Toggle
@@ -416,7 +413,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                         className="flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-orange-50/40 transition"
                       >
                         <p className="text-sm text-slate-700">{event.label}</p>
-                        <div className="flex items-center gap-4 md:gap-6">
+                        <div className="qc-inbox-switch-columns flex items-center gap-2 md:gap-6">
                           <Toggle
                             size="sm"
                             color="orange"
@@ -448,7 +445,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
       <aside className="w-full md:w-44 flex-shrink-0">
         {/* The guide highlight targets this <nav> (only the 3 folder buttons),
             not the <aside> - the aside stretches to the full list height. */}
-        <nav className="flex md:flex-col gap-1 md:space-y-1 self-start overflow-x-auto md:overflow-visible -mx-2 md:mx-0 px-0 md:px-0 pb-2 md:pb-0" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
+        <nav aria-label="Message folders" className="qc-inbox-folders" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
           {FOLDERS.map((f) => (
             <button
               key={f.key}
@@ -457,12 +454,12 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                 setFolder(f.key);
                 setSelected(new Set());
               }}
-              data-assistant-id={`inbox-folder-${f.key}`}
-              className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 md:py-2 text-sm font-medium transition whitespace-nowrap md:whitespace-normal min-h-[44px] md:min-h-0 ${
+              aria-current={folder === f.key ? 'page' : undefined} data-assistant-id={`inbox-folder-${f.key}`}
+              className={"qc-flow-control qc-library-choice " + (`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 md:py-2 text-sm font-medium transition whitespace-nowrap md:whitespace-normal min-h-[44px] md:min-h-0 ${
                 folder === f.key
                   ? 'border-slate-900 bg-slate-900 text-white'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-orange-200 hover:bg-orange-50/40'
-              }`}
+              }`)}
             >
               <span className="flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -490,21 +487,21 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search messages…"
-              className="w-full rounded-full border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-base md:text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              aria-label="Search messages" placeholder="Search messages…"
+              className="qc-input qc-library-control w-full rounded-full border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-base md:text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0 md:flex-wrap">
+          <div className="qc-library-filters" role="group" aria-label="Filter messages by type">
           {TYPE_FILTERS.map((f) => (
             <button
               key={f.key}
               type="button"
-              onClick={() => setTypeFilter(f.key)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+              aria-pressed={typeFilter === f.key} onClick={() => setTypeFilter(f.key)}
+              className={"qc-flow-control qc-library-choice " + (`rounded-full border px-3 py-1 text-xs font-medium transition ${
                 typeFilter === f.key
                   ? 'bg-slate-900 text-white border-slate-900'
                   : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-              }`}
+              }`)}
             >
               {f.label}
             </button>
@@ -514,20 +511,20 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
 
         {/* Bulk action toolbar - appears when rows are selected */}
         {selInVisible.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap rounded-xl border border-orange-200 bg-orange-50/60 px-3 py-2 text-xs" data-assistant-id="inbox-bulk-bar">
+          <div className="qc-inbox-bulk flex items-center gap-2 flex-wrap rounded-xl border border-orange-200 bg-orange-50/60 px-3 py-2 text-xs" data-assistant-id="inbox-bulk-bar">
             <span className="font-medium text-slate-700">{selInVisible.length} selected</span>
             <span className="h-4 w-px bg-orange-200" />
-            <button disabled={busy} onClick={() => bulk('read', selInVisible)} className="rounded-full px-2.5 py-1 text-slate-600 hover:bg-white">Mark read</button>
+            <button data-qc-variant="ghost" disabled={busy} onClick={() => bulk('read', selInVisible)} className="qc-button qc-flow-control qc-library-control ">Mark read</button>
             {folder !== 'todo' && (
-              <button disabled={busy} onClick={() => bulk('todo', selInVisible)} className="rounded-full px-2.5 py-1 text-slate-600 hover:bg-white">To-Do</button>
+              <button data-qc-variant="ghost" disabled={busy} onClick={() => bulk('todo', selInVisible)} className="qc-button qc-flow-control qc-library-control ">To-Do</button>
             )}
             {folder !== 'active' && (
-              <button disabled={busy} onClick={() => bulk('active', selInVisible)} className="rounded-full px-2.5 py-1 text-slate-600 hover:bg-white">Move to Active</button>
+              <button data-qc-variant="ghost" disabled={busy} onClick={() => bulk('active', selInVisible)} className="qc-button qc-flow-control qc-library-control ">Move to Active</button>
             )}
             {folder !== 'archived' ? (
-              <button disabled={busy} onClick={() => bulk('archive', selInVisible)} className="rounded-full px-2.5 py-1 text-slate-600 hover:bg-white">Done (Archive)</button>
+              <button data-qc-variant="ghost" disabled={busy} onClick={() => bulk('archive', selInVisible)} className="qc-button qc-flow-control qc-library-control ">Done (Archive)</button>
             ) : (
-              <button disabled={busy} onClick={() => bulk('delete', selInVisible)} className="rounded-full px-2.5 py-1 font-medium text-red-600 hover:bg-white">Delete permanently</button>
+              <button data-qc-variant="ghost" disabled={busy} onClick={() => bulk('delete', selInVisible)} className="qc-button qc-flow-control qc-library-control ">Delete permanently</button>
             )}
           </div>
         )}
@@ -535,7 +532,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
         {/* Select-all row */}
         {visible.length > 0 && (
           <label className="flex items-center gap-2 text-xs text-slate-500 px-1">
-            <input type="checkbox" checked={allVisibleSelected} onChange={toggleAll} className="rounded border-slate-300 text-orange-600 focus:ring-orange-500" />
+            <input type="checkbox" checked={allVisibleSelected} onChange={toggleAll} className="qc-checkbox qc-library-control rounded border-slate-300 text-orange-600 focus:ring-orange-500" />
             Select all
           </label>
         )}
@@ -568,24 +565,25 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                   <div className="flex items-center gap-3 px-3 py-2.5">
                     <input
                       type="checkbox"
+                      aria-label={`Select ${a.title}`}
                       checked={checked}
                       onChange={() => toggle(a.id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 flex-shrink-0"
+                      className="qc-checkbox qc-library-control rounded border-slate-300 text-orange-600 focus:ring-orange-500 flex-shrink-0"
                     />
-                    <button
+                    <button data-qc-variant="ghost"
                       type="button"
                       onClick={() => {
                         toggleExpand(a.id);
                         if (!a.is_read) bulk('read', [a.id]);
                       }}
-                      className="flex flex-1 min-w-0 flex-wrap items-center gap-2 text-left md:flex-nowrap"
+                      className="qc-inbox-item-control"
                       aria-expanded={isOpen}
                     >
-                      {!a.is_read && <span className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />}
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium flex-shrink-0 ${badge.cls}`}>{badge.label}</span>
-                      <span className="text-sm font-medium text-slate-900 truncate min-w-0 flex-1">{a.title}</span>
-                      <span className="text-xs text-slate-400 flex-shrink-0 md:ml-auto">{fmt(a.created_at)}</span>
+                      {!a.is_read && <span className="qc-inbox-unread w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />}
+                      <span className={`qc-inbox-category rounded-full px-2.5 py-0.5 text-xs font-medium flex-shrink-0 ${badge.cls}`}>{badge.label}</span>
+                      <span className="qc-inbox-message-title">{a.title}</span>
+                      <span className="qc-inbox-date text-xs text-slate-400 flex-shrink-0 md:ml-auto">{fmt(a.created_at)}</span>
                       <svg
                         className={`w-4 h-4 text-slate-300 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                         fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}
@@ -598,7 +596,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                   {/* Expanded view - full message + contextual actions.
                       Open only renders when openHref resolves (has FK). */}
                   {isOpen && (
-                    <div className="border-t border-slate-100 px-3 py-3 pl-10">
+                    <div className="qc-inbox-expanded border-t border-slate-100 px-3 py-3 pl-10">
                       {a.message ? (
                         <p className="text-sm text-slate-600 whitespace-pre-line">{a.message}</p>
                       ) : (
@@ -606,7 +604,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                       )}
                       <div className="flex items-center gap-2 flex-wrap mt-3">
                         {href && (
-                          <button type="button" onClick={() => open(a)} title="Click to open the full summary page" className="rounded-full bg-black px-3 py-1 text-xs font-medium text-white transition hover:shadow-[0_0_8px_rgba(255,107,53,0.4)]">
+                          <button aria-label="Click to open the full summary page" data-qc-variant="primary" type="button" onClick={() => open(a)} title="Click to open the full summary page" className="qc-button qc-flow-control qc-library-control ">
                             Open {badge.label.toLowerCase()}
                           </button>
                         )}
@@ -615,23 +613,23 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                         {folder === 'active' && (
                           href ? (
                             <>
-                              <button type="button" onClick={() => bulk('todo', [a.id])} title='Click to add this alert to your "To Do" list' className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-white">To-Do</button>
-                              <button type="button" onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white hover:text-emerald-600">Done</button>
+                              <button aria-label='Click to add this alert to your "To Do" list' data-qc-variant="ghost" type="button" onClick={() => bulk('todo', [a.id])} title='Click to add this alert to your "To Do" list' className="qc-button qc-flow-control qc-library-control ">To-Do</button>
+                              <button aria-label='Click to mark this alert "Done" and add to archive list' data-qc-variant="ghost" type="button" onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="qc-button qc-flow-control qc-library-control ">Done</button>
                             </>
                           ) : (
-                            <button type="button" onClick={() => bulk('archive', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white">Dismiss</button>
+                            <button data-qc-variant="ghost" type="button" onClick={() => bulk('archive', [a.id])} className="qc-button qc-flow-control qc-library-control ">Dismiss</button>
                           )
                         )}
                         {folder === 'todo' && (
                           <>
-                            <button type="button" onClick={() => bulk('active', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-white">Move to Active</button>
-                            <button type="button" onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-white hover:text-emerald-600">Done</button>
+                            <button data-qc-variant="ghost" type="button" onClick={() => bulk('active', [a.id])} className="qc-button qc-flow-control qc-library-control ">Move to Active</button>
+                            <button aria-label='Click to mark this alert "Done" and add to archive list' data-qc-variant="ghost" type="button" onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="qc-button qc-flow-control qc-library-control ">Done</button>
                           </>
                         )}
                         {folder === 'archived' && (
                           <>
-                            <button type="button" onClick={() => bulk('active', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-white">Restore</button>
-                            <button type="button" onClick={() => bulk('delete', [a.id])} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-red-600 hover:bg-white">Delete</button>
+                            <button data-qc-variant="ghost" type="button" onClick={() => bulk('active', [a.id])} className="qc-button qc-flow-control qc-library-control ">Restore</button>
+                            <button data-qc-variant="ghost" type="button" onClick={() => bulk('delete', [a.id])} className="qc-button qc-flow-control qc-library-control ">Delete</button>
                           </>
                         )}
                       </div>
@@ -645,6 +643,6 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
       </div>
     </div>
       )}
-    </div>
+    </QcLibrary>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import '@/app/components/ui/v2/qc-library.css';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import type { PendingUpdate } from '../../supplier-directory/actions';
 import { FIELD_LABELS } from '@/app/lib/supabase/sync-fields';
@@ -165,7 +167,7 @@ export function UpdateNotificationModal({
   const remainingCount = updates.filter(u => !dismissedIds.has(u.notification_id)).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <QcJourneyDialog label="Supplier Updates" size="lg">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col relative">
         {/* Loading overlay when applying */}
         {applying && (
@@ -192,9 +194,9 @@ export function UpdateNotificationModal({
             <h2 className="text-base font-semibold text-slate-900">Supplier Updates</h2>
             <p className="text-xs text-slate-400">{remainingCount} pending update{remainingCount !== 1 ? 's' : ''}</p>
           </div>
-          <button
+          <button aria-label="Close" data-qc-variant="ghost"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 cursor-pointer"
+            className="qc-button qc-flow-control qc-library-control "
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -250,24 +252,24 @@ export function UpdateNotificationModal({
                       {/* Actions for removed components */}
                       {update.change_type === 'removed' ? (
                         <div className="flex gap-1.5">
-                          <button
+                          <button data-qc-variant="ghost"
                             onClick={() => handleKeepLocal(update.notification_id, update.imported_component_id)}
-                            className="text-xs font-medium rounded-full border border-slate-300 px-2.5 py-1 hover:bg-slate-50 cursor-pointer"
+                            className="qc-button qc-flow-control qc-library-control "
                           >
                             Keep local
                           </button>
-                          <button
+                          <button data-qc-variant="ghost"
                             onClick={() => handleDismiss(update.notification_id, update.imported_component_id)}
-                            className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer px-2"
+                            className="qc-button qc-flow-control qc-library-control "
                           >
                             Dismiss
                           </button>
                         </div>
                       ) : (
                         changedFields.length > 0 && (
-                          <button
+                          <button data-qc-variant="ghost"
                             onClick={() => toggleComponent(update.notification_id, update.imported_component_id, changedFields)}
-                            className="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
+                            className="qc-button qc-flow-control qc-library-control "
                           >
                             {allFieldsSelected ? 'Clear' : 'Select all'}
                           </button>
@@ -293,7 +295,7 @@ export function UpdateNotificationModal({
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={() => toggleField(update.notification_id, update.imported_component_id, field)}
-                                className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                                className="qc-checkbox qc-library-control h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
                               />
                               <div className="flex-1 flex items-center justify-between gap-3 min-w-0">
                                 <span className="text-xs font-medium text-slate-600 shrink-0">{label}</span>
@@ -334,22 +336,22 @@ export function UpdateNotificationModal({
             {totalSelected > 0 ? `${totalSelected} field${totalSelected !== 1 ? 's' : ''} selected` : 'Select fields to apply'}
           </span>
           <div className="flex gap-2">
-            <button
+            <button data-qc-variant="ghost"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 cursor-pointer"
+              className="qc-button qc-flow-control qc-library-control "
             >
               Close
             </button>
-            <button
+            <button data-qc-variant="primary"
               onClick={handleApply}
               disabled={totalSelected === 0 || applying}
-              className="px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed cursor-pointer"
+              className="qc-button qc-flow-control qc-library-control "
             >
               {applying ? 'Applying...' : `Update Selected (${totalSelected})`}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

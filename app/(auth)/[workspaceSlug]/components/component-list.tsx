@@ -1,5 +1,7 @@
 'use client';
 
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility, setComponentActive } from './actions';
@@ -750,23 +752,23 @@ export function ComponentList({
   const wasteAmountPlaceholderText = wasteAmountPlaceholder(formWasteType, formMeasurementType);
 
   return (
-    <div className="space-y-5">
+    <QcLibrary className="space-y-5">
       {/* Create Library Modal */}
       {showCreateLibraryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+        <QcJourneyDialog label="Create New Library" size="sm">
+          <div className="p-6 w-full">
             <h2 className="text-base font-semibold text-slate-900 mb-4">Create New Library</h2>
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Library Name</label>
-                <input
+                <input aria-label="Library Name"
                   type="text"
                   value={newLibraryName}
                   onChange={e => setNewLibraryName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleCreateLibrary(); } }}
                   placeholder="e.g. Residential, Commercial"
                   maxLength={80}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="qc-input qc-library-control w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   autoFocus
                 />
               </div>
@@ -774,38 +776,38 @@ export function ComponentList({
                 <p className="text-xs text-red-600">{createLibraryError}</p>
               )}
               <div className="flex gap-2 pt-1">
-                <button
+                <button data-qc-variant="primary"
                   type="button"
                   onClick={() => void handleCreateLibrary()}
                   disabled={creatingLibrary || !newLibraryName.trim()}
-                  className="flex-1 px-3 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50"
+                  className="qc-button qc-flow-control qc-library-control flex-1"
                 >
                   {creatingLibrary ? 'Creating...' : 'Create Library'}
                 </button>
-                <button
+                <button data-qc-variant="ghost"
                   type="button"
                   onClick={() => { setShowCreateLibraryModal(false); setNewLibraryName(''); setCreateLibraryError(''); }}
-                  className="px-3 py-2 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
+                  className="qc-button qc-flow-control qc-library-control "
                 >
                   Cancel
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Header */}
       <div>
-        <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Smart Components™</h1>
-        <p className="text-xs md:text-sm text-slate-500 mt-1">Manage your Smart Components™ and extras for quotes.</p>
+        <h1 className="qc-library-title text-xl md:text-2xl font-semibold text-slate-900">Pricing library</h1>
+        <p className="text-xs md:text-sm text-slate-500 mt-1">Find and reuse Smart Components™: saved materials, labour and measurement settings for your quotes.</p>
       </div>
 
       
 
       {/* Active library title + rename */}
       {collections.length > 0 && (
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex flex-wrap items-center gap-2 mb-1">
           {renamingLibraryId && renamingLibraryId === (activeLibraryId || null) ? (
             <div className="flex items-center gap-2">
               <input
@@ -817,21 +819,21 @@ export function ComponentList({
                   if (e.key === 'Escape') { setRenamingLibraryId(null); setRenameValue(''); }
                 }}
                 maxLength={80}
-                className="px-2 py-1 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                className="qc-input qc-library-control px-2 py-1 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                 autoFocus
               />
-              <button
+              <button data-qc-variant="primary"
                 type="button"
                 onClick={() => void handleRenameLibrary()}
                 disabled={renaming || !renameValue.trim()}
-                className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 {renaming ? 'Saving...' : 'Save'}
               </button>
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => { setRenamingLibraryId(null); setRenameValue(''); }}
-                className="px-3 py-1 text-xs rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 Cancel
               </button>
@@ -860,10 +862,10 @@ export function ComponentList({
                         Unlisted
                       </span>
                     )}
-                    <button
+                    <button data-qc-variant="ghost"
                       type="button"
                       onClick={() => setShowPublishModal(activeLibraryId)}
-                      className="text-xs px-2.5 py-1 rounded-full border border-slate-300 hover:bg-slate-50 hover:border-orange-300 text-slate-600 transition"
+                      className="qc-button qc-flow-control qc-library-control "
                     >
                       {vis === 'private' ? 'Publish' : 'Settings'}
                     </button>
@@ -872,14 +874,14 @@ export function ComponentList({
               })()}
               {activeLibraryId && (
                 <>
-                  <button
+                  <button aria-label="Rename library" data-qc-variant="ghost"
                     type="button"
                     title="Rename library"
                     onClick={() => {
                       const col = collections.find(c => c.id === activeLibraryId);
                       if (col) { setRenamingLibraryId(activeLibraryId); setRenameValue(col.name); }
                     }}
-                    className="text-slate-400 hover:text-orange-500 transition-colors"
+                    className="qc-button qc-flow-control qc-library-control "
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -887,11 +889,11 @@ export function ComponentList({
                     </svg>
                   </button>
                   {!collections.find(c => c.id === activeLibraryId)?.is_bootstrap && (
-                    <button
+                    <button aria-label="Delete library" data-qc-variant="ghost"
                       type="button"
                       title="Delete library"
                       onClick={() => setDeletingLibraryId(activeLibraryId)}
-                      className="text-slate-400 hover:text-red-500 transition-colors"
+                      className="qc-button qc-flow-control qc-library-control "
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="3 6 5 6 21 6" />
@@ -910,16 +912,16 @@ export function ComponentList({
       )}
       {/* Filter tabs + Action Buttons */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+        <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-fit max-w-full">
           {(['all', 'main', 'extra'] as const).map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 text-sm rounded-full font-medium transition whitespace-nowrap ${
+              aria-pressed={filter === f} onClick={() => setFilter(f)}
+              className={"qc-flow-control qc-library-choice " + (`px-4 py-1.5 text-sm rounded-full font-medium transition whitespace-nowrap ${
                 filter === f
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
-              }`}
+              }`)}
             >
               {f === 'all' ? 'All' : f === 'main' ? 'Main' : 'Extras'}
             </button>
@@ -927,14 +929,14 @@ export function ComponentList({
           <Link
             href={`/${workspaceSlug}/supplier-directory`}
             prefetch={false}
-            className="px-4 py-1.5 text-sm rounded-full font-medium transition whitespace-nowrap text-slate-500 hover:text-slate-700"
+            className="qc-flow-link qc-library-control px-4 py-1.5 text-sm rounded-full font-medium transition whitespace-nowrap text-slate-500 hover:text-slate-700"
           >
             Supplier Directory
           </Link>
         </div>
         
         <div className="flex flex-col gap-2 md:flex-row">
-          <button
+          <button data-qc-variant="primary"
             onClick={() => {
               if (!subscriptionActive) {
                 setSubBlockedOpen(true);
@@ -945,11 +947,11 @@ export function ComponentList({
               setShowForm(true);
             }}
             data-copilot="add-component"
-            className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
           >
-            + Add Smart Component™
+            + Add component
           </button>
-          <button
+          <button data-qc-variant="ghost"
             onClick={() => {
               if (!subscriptionActive) {
                 setSubBlockedOpen(true);
@@ -957,26 +959,26 @@ export function ComponentList({
               }
               setShowCatalogModal(true);
             }}
-            className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
           >
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
             </svg>
-            Add from Catalog
+            Add from catalogue
           </button>
           {flashingsFeatureEnabled ? (
             <Link
               href={`/${workspaceSlug}/drawings`}
-              className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              className="qc-button qc-flow-control"
             >
               {featureLabel}
             </Link>
           ) : (
-            <button
+            <button aria-label={`${featureLabel} requires a higher plan`} data-qc-variant="ghost"
               type="button"
               onClick={() => setFlashingsUpgradeOpen(true)}
               title={`${featureLabel} requires a higher plan`}
-              className="inline-flex items-center justify-center rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500 cursor-pointer hover:bg-slate-300"
+              className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -988,7 +990,7 @@ export function ComponentList({
       </div>
 
       {/* Measurement type filters */}
-      <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
+      <div className="qc-library-filters" role="group" aria-label="Filter by measurement">
         {[
           { key: 'all', label: 'All Types' },
           { key: 'area', label: 'Area' },
@@ -998,12 +1000,12 @@ export function ComponentList({
         ].map(f => (
           <button
             key={f.key}
-            onClick={() => setMeasurementFilter(f.key as any)}
-            className={`px-3 py-1 text-xs font-medium rounded-full border transition whitespace-nowrap ${
+            aria-pressed={measurementFilter === f.key} onClick={() => setMeasurementFilter(f.key as any)}
+            className={"qc-flow-control qc-library-choice " + (`px-3 py-1 text-xs font-medium rounded-full border transition whitespace-nowrap ${
               measurementFilter === f.key
                 ? 'bg-slate-900 text-white border-slate-900'
                 : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-            }`}
+            }`)}
           >
             {f.label}
           </button>
@@ -1011,13 +1013,13 @@ export function ComponentList({
       </div>
 
       {/* Library filter + Search row */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="qc-library-search-bar flex items-center gap-3 flex-wrap">
         {collections.length > 0 && (
-          <div className="flex items-center gap-2">
-            <select
+          <div className="qc-library-library-picker flex items-center gap-2">
+            <select aria-label="Component library"
               value={activeLibraryId}
               onChange={e => setActiveLibraryId(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
+              className="qc-select qc-library-control px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
             >
               <option value="">All Libraries</option>
               {collections.map(col => (
@@ -1028,7 +1030,7 @@ export function ComponentList({
             </select>
             {/* Set as default button - only shown when a specific library is selected */}
             {activeLibraryId && (
-              <button
+              <button aria-label={savedDefaultLibId === activeLibraryId ? 'This is your default library' : 'Set as default library'}
                 type="button"
                 title={savedDefaultLibId === activeLibraryId ? 'This is your default library' : 'Set as default library'}
                 onClick={() => {
@@ -1046,11 +1048,11 @@ export function ComponentList({
                   }
                   setTimeout(() => setDefaultLibraryFlash(null), 2000);
                 }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-full border transition-all ${
+                className={"qc-flow-control qc-library-choice " + (`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-full border transition-all ${
                   savedDefaultLibId === activeLibraryId
                     ? 'bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100'
                     : 'bg-white border-slate-300 text-slate-500 hover:border-orange-300 hover:text-orange-500'
-                }`}
+                }`)}
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill={savedDefaultLibId === activeLibraryId ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -1063,19 +1065,19 @@ export function ComponentList({
             )}
           </div>
         )}
-        <div className="relative flex-1 max-w-sm">
+        <div className="qc-library-component-search relative flex-1 max-w-sm">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search Smart Components™..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+            aria-label="Search components" placeholder="Search components…"
+            className="qc-input qc-flow-search qc-library-control w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">&times;</button>
+            <button type="button" aria-label="Clear component search" data-qc-variant="ghost" onClick={() => setSearchQuery('')} className="qc-button qc-flow-control qc-library-control qc-search-clear">&times;</button>
           )}
         </div>
       </div>
@@ -1087,22 +1089,22 @@ export function ComponentList({
             <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
           )}
           <form onSubmit={handleCreate} className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="qc-library-field-grid grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div data-copilot="component-name">
                 <label className="block text-xs text-slate-500 mb-1">Name</label>
-                <input name="name" required defaultValue={restoredName} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                <input aria-label="Name" name="name" required defaultValue={restoredName} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
               </div>
               <div data-copilot="component-sku">
                 <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
-                <input name="sku" defaultValue={''} placeholder="e.g. RDG-250-BLK" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none" />
+                <input aria-label="SKU / Product Code" name="sku" defaultValue={''} placeholder="e.g. RDG-250-BLK" className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none" />
               </div>
               <div data-copilot="component-type">
                 <label className="block text-xs text-slate-500 mb-1">Type</label>
-                <select 
+                <select aria-label="Type" 
                   name="component_type" 
                   required 
                   defaultValue={filter === 'extra' ? 'extra' : 'main'}
-                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+                  className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                 >
                   <option value="main">Main Component</option>
                   <option value="extra">Extra</option>
@@ -1110,12 +1112,12 @@ export function ComponentList({
               </div>
               <div data-copilot="component-measurement">
                 <label className="block text-xs text-slate-500 mb-1">Measurement</label>
-                <select
+                <select aria-label="Measurement"
                   name="measurement_type"
                   required
                   value={formMeasurementType}
                   onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
-                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+                  className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                 >
                   {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
                     // Filter the dropdown down to roofing defaults when the
@@ -1131,7 +1133,7 @@ export function ComponentList({
               </div>
               <div data-copilot="component-labour">
                 <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
-                <input name="default_labour_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredLabourRate} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                <input aria-label={`Labour rate (${unitForMeasurement(formMeasurementType)})`} name="default_labour_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredLabourRate} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
               </div>
 
               {/* Item Cost pricing: single source of truth.
@@ -1141,10 +1143,10 @@ export function ComponentList({
               {genericTradesEnabled && (
                 <div className="col-span-2">
                   <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
-                  <select
+                  <select aria-label="Item Cost"
                     value={formPricingStrategy}
                     onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
-                    className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+                    className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                   >
                     {allowedStrategiesFor(formMeasurementType).map((s) => (
                       <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
@@ -1155,7 +1157,7 @@ export function ComponentList({
               {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
                 <div data-copilot="component-rates">
                   <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
-                  <input name="default_material_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredMaterialRate} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                  <input aria-label={`Item cost (${unitForMeasurement(formMeasurementType)})`} name="default_material_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredMaterialRate} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
               {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
@@ -1164,18 +1166,18 @@ export function ComponentList({
                   <input type="hidden" name="default_material_rate" value="0" />
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
-                    <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                    <input aria-label="Quantity Price" type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                   </div>
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">
                       Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
                     </label>
-                    <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                    <input aria-label="Quantity amount" type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                   </div>
                   {formPricingStrategy === 'per_pack_coverage' && (
                     <div className="col-span-2">
                       <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
-                      <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                      <input aria-label="Coverage per pack (m²)" type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                     </div>
                   )}
                 </>
@@ -1183,11 +1185,11 @@ export function ComponentList({
 
               <div data-copilot="component-waste">
                 <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
-                <select
+                <select aria-label="Waste Type"
                   name="default_waste_type"
                   value={formWasteType}
                   onChange={(e) => setFormWasteType(e.target.value as WasteType)}
-                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+                  className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                 >
                   {Object.entries(WASTE_LABELS).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
@@ -1197,7 +1199,7 @@ export function ComponentList({
               {formWasteType !== 'none' && (
                 <div data-copilot="component-waste-amount">
                   <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountLabel}</label>
-                  <input name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} defaultValue={restoredWasteAmount} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                  <input aria-label="Waste Amount" name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} defaultValue={restoredWasteAmount} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
 
@@ -1215,14 +1217,14 @@ export function ComponentList({
 
             {pitchVisible && (
               <>
-                <div className="flex items-center gap-2" data-copilot="component-pitch">
-                  <input type="checkbox" id="pitch-enabled" checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
+                <div className="flex flex-wrap items-center gap-2" data-copilot="component-pitch">
+                  <input type="checkbox" id="pitch-enabled" checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="qc-checkbox qc-library-control rounded" />
                   <label htmlFor="pitch-enabled" className="text-xs text-slate-700">{pitchCheckboxLabel}</label>
                 </div>
                 {formPitchEnabled && (
                   <div data-copilot="component-pitch-type">
                     <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                    <select name="default_pitch_type" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
+                    <select aria-label="Pitch Type" name="default_pitch_type" className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
                       <option value="rafter">{pitchRafterLabel}</option>
                       {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
                     </select>
@@ -1233,7 +1235,7 @@ export function ComponentList({
             <div className="border-t border-slate-200 pt-3 mt-3" data-copilot="component-flashings">
               <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
               <div className="flex items-center gap-2 mb-2">
-                <input type="checkbox" id="eligible-orders" name="eligible_for_orders" defaultChecked className="rounded" />
+                <input aria-label="Include in material orders" type="checkbox" id="eligible-orders" name="eligible_for_orders" defaultChecked className="qc-checkbox qc-library-control rounded" />
                 <label htmlFor="eligible-orders" className="text-xs text-slate-700">Include in material orders</label>
               </div>
               <div>
@@ -1242,7 +1244,7 @@ export function ComponentList({
                   <select 
                     value={selectedFlashingId} 
                     onChange={(e) => setSelectedFlashingId(e.target.value)}
-                    className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
+                    className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
                   >
                     <option value="">{imageSelectPlaceholder}</option>
                     {flashings.map(flashing => (
@@ -1251,11 +1253,11 @@ export function ComponentList({
                       </option>
                     ))}
                   </select>
-                  <button 
+                  <button data-qc-variant="ghost" 
                     type="button" 
                     onClick={addFlashing}
                     disabled={!selectedFlashingId}
-                    className="px-3 py-1 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    className="qc-button qc-flow-control qc-library-control "
                   >
                     Add
                   </button>
@@ -1269,10 +1271,10 @@ export function ComponentList({
                           <span className="text-xs text-slate-700">
                             {flashing?.name || 'Unknown'} {flashing?.description && `- ${flashing.description}`}
                           </span>
-                          <button
+                          <button data-qc-variant="ghost"
                             type="button"
                             onClick={() => removeFlashing(flashingId)}
-                            className="text-red-600 hover:text-red-700 text-xs font-medium"
+                            className="qc-button qc-flow-control qc-library-control "
                           >
                             Remove
                           </button>
@@ -1288,13 +1290,13 @@ export function ComponentList({
             <div className="border-t border-slate-200 pt-3 mt-3">
               <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
               <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
-              <textarea
+              <textarea aria-label="Notes (optional)"
                 value={formNotes}
                 onChange={e => setFormNotes(e.target.value)}
                 placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
                 rows={3}
                 maxLength={500}
-                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
+                className="qc-input qc-library-control w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
               />
               {formNotes.length > 0 && (
                 <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
@@ -1305,7 +1307,7 @@ export function ComponentList({
               <div className="border-t border-slate-200 pt-3 mt-3">
                 <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
                 <div className="flex gap-2">
-                  <select
+                  <select aria-label="Save to Library"
                     value={selectedCollectionId}
                     onChange={e => {
                       if (e.target.value === '__create_new__') {
@@ -1314,7 +1316,7 @@ export function ComponentList({
                         setSelectedCollectionId(e.target.value);
                       }
                     }}
-                    className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
+                    className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
                   >
                     {collections.map(col => (
                       <option key={col.id} value={col.id}>
@@ -1327,10 +1329,10 @@ export function ComponentList({
               </div>
             )}
             <div className="flex gap-2 pt-2" data-copilot="component-save">
-              <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50">
+              <button data-qc-variant="primary" type="submit" disabled={saving} className="qc-button qc-flow-control qc-library-control ">
                 {saving ? 'Saving...' : 'Create'}
               </button>
-              <button type="button" onClick={() => { setShowForm(false); setFormWasteType('none'); setFormMeasurementType('area'); setFormPitchEnabled(false); }} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
+              <button data-qc-variant="ghost" type="button" onClick={() => { setShowForm(false); setFormWasteType('none'); setFormMeasurementType('area'); setFormPitchEnabled(false); }} className="qc-button qc-flow-control qc-library-control ">
                 Cancel
               </button>
             </div>
@@ -1359,9 +1361,9 @@ export function ComponentList({
             </span>
           )}
           {atCap && (
-            <button
+            <button data-qc-variant="ghost"
               onClick={() => setUpgradeOpen(true)}
-              className="shrink-0 inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition"
+              className="qc-button qc-flow-control qc-library-control shrink-0 inline-flex"
             >
               Upgrade
             </button>
@@ -1379,21 +1381,21 @@ export function ComponentList({
                   <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
                 )}
                 <form onSubmit={(e) => handleUpdate(e, comp.id)} className="space-y-3">
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                 <div className="qc-library-field-grid grid grid-cols-1 sm:grid-cols-2 gap-3">
                    <div>
                      <label className="block text-xs text-slate-500 mb-1">Name</label>
-                     <input name="name" required defaultValue={comp.name} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                     <input aria-label="Name" name="name" required defaultValue={comp.name} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                    </div>
                    <div>
                      <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
-                     <input name="sku" defaultValue={comp.sku ?? ''} placeholder="e.g. RDG-250-BLK" className={`w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none ${!!comp.sku ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`} readOnly={!!comp.sku} title={!!comp.sku ? 'SKU cannot be changed once set' : ''} />
+                     <input aria-label="SKU / Product Code" name="sku" defaultValue={comp.sku ?? ''} placeholder="e.g. RDG-250-BLK" className={"qc-input qc-library-control " + (`w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none ${!!comp.sku ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`)} readOnly={!!comp.sku} title={!!comp.sku ? 'SKU cannot be changed once set' : ''} />
                    </div>
                    <div>
                      <label className="block text-xs text-slate-500 mb-1">Measurement</label>
-                     <select
+                     <select aria-label="Measurement"
                        value={formMeasurementType}
                        onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
-                       className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+                       className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                      >
                        {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
                          .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
@@ -1405,17 +1407,17 @@ export function ComponentList({
                     </div>
                     <div>
                       <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
-                      <input name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                      <input aria-label={`Labour rate (${unitForMeasurement(formMeasurementType)})`} name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                     </div>
 
                     {/* Item Cost - unified: strategy dropdown drives per-unit vs pack. */}
                     {genericTradesEnabled && (
                       <div className="col-span-2">
                         <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
-                        <select
+                        <select aria-label="Item Cost"
                           value={formPricingStrategy}
                           onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
-                          className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+                          className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                         >
                           {allowedStrategiesFor(formMeasurementType).map((s) => (
                             <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
@@ -1426,7 +1428,7 @@ export function ComponentList({
                     {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
                       <div>
                         <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
-                        <input name="default_material_rate" type="number" step="0.01" defaultValue={comp.default_material_rate ?? 0} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                        <input aria-label={`Item cost (${unitForMeasurement(formMeasurementType)})`} name="default_material_rate" type="number" step="0.01" defaultValue={comp.default_material_rate ?? 0} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                       </div>
                     )}
                     {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
@@ -1434,18 +1436,18 @@ export function ComponentList({
                         <input type="hidden" name="default_material_rate" value="0" />
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
-                          <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                          <input aria-label="Quantity Price" type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                         </div>
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">
                             Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
                           </label>
-                          <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                          <input aria-label="Quantity amount" type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                         </div>
                         {formPricingStrategy === 'per_pack_coverage' && (
                           <div className="col-span-2">
                             <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
-                            <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                            <input aria-label="Coverage per pack (m²)" type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                           </div>
                         )}
                       </>
@@ -1453,11 +1455,11 @@ export function ComponentList({
 
                     <div>
                       <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
-                      <select
+                      <select aria-label="Waste Type"
                         name="default_waste_type"
                         value={formWasteType}
                         onChange={(e) => setFormWasteType(e.target.value as WasteType)}
-                        className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+                        className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                       >
                         {Object.entries(WASTE_LABELS).map(([k, v]) => (
                           <option key={k} value={k}>{v}</option>
@@ -1467,12 +1469,12 @@ export function ComponentList({
                     {formWasteType !== 'none' && (
                       <div>
                         <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountSuffix(formWasteType, formMeasurementType)}</label>
-                        <input
+                        <input aria-label="Waste Amount"
                           name="waste_amount"
                           type="number"
                           step="0.01"
                           defaultValue={formWasteType === 'percent' ? comp.default_waste_percent : comp.default_waste_fixed}
-                          className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+                          className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                         />
                       </div>
                     )}
@@ -1492,13 +1494,13 @@ export function ComponentList({
                   {pitchVisible && (
                     <>
                       <div className="flex items-center gap-2">
-                        <input type="checkbox" id={`pitch-${comp.id}`} checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
+                        <input type="checkbox" id={`pitch-${comp.id}`} checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="qc-checkbox qc-library-control rounded" />
                         <label htmlFor={`pitch-${comp.id}`} className="text-xs text-slate-700">{pitchCheckboxLabel}</label>
                       </div>
                       {formPitchEnabled && (
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                          <select name="default_pitch_type" defaultValue={comp.default_pitch_type} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
+                          <select aria-label="Pitch Type" name="default_pitch_type" defaultValue={comp.default_pitch_type} className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
                             <option value="rafter">{pitchRafterLabel}</option>
                             {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
                           </select>
@@ -1509,7 +1511,7 @@ export function ComponentList({
                   <div className="border-t border-slate-200 pt-3 mt-3">
                     <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
                     <div className="flex items-center gap-2 mb-2">
-                      <input type="checkbox" id={`eligible-orders-${comp.id}`} name="eligible_for_orders" defaultChecked={comp.eligible_for_orders ?? true} className="rounded" />
+                      <input aria-label="Include in material orders" type="checkbox" id={`eligible-orders-${comp.id}`} name="eligible_for_orders" defaultChecked={comp.eligible_for_orders ?? true} className="qc-checkbox qc-library-control rounded" />
                       <label htmlFor={`eligible-orders-${comp.id}`} className="text-xs text-slate-700">Include in material orders</label>
                     </div>
                     <div>
@@ -1518,7 +1520,7 @@ export function ComponentList({
                         <select 
                           value={selectedFlashingId} 
                           onChange={(e) => setSelectedFlashingId(e.target.value)}
-                          className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
+                          className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
                         >
                           <option value="">{imageSelectPlaceholder}</option>
                           {flashings.map(flashing => (
@@ -1527,11 +1529,11 @@ export function ComponentList({
                             </option>
                           ))}
                         </select>
-                        <button 
+                        <button data-qc-variant="ghost" 
                           type="button" 
                           onClick={addFlashing}
                           disabled={!selectedFlashingId}
-                          className="px-3 py-1 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                          className="qc-button qc-flow-control qc-library-control "
                         >
                           Add
                         </button>
@@ -1545,10 +1547,10 @@ export function ComponentList({
                                 <span className="text-xs text-slate-700">
                                   {flashing?.name || 'Unknown'} {flashing?.description && `- ${flashing.description}`}
                                 </span>
-                                <button
+                                <button data-qc-variant="ghost"
                                   type="button"
                                   onClick={() => removeFlashing(flashingId)}
-                                  className="text-red-600 hover:text-red-700 text-xs font-medium"
+                                  className="qc-button qc-flow-control qc-library-control "
                                 >
                                   Remove
                                 </button>
@@ -1564,13 +1566,13 @@ export function ComponentList({
                   <div className="border-t border-slate-200 pt-3 mt-3">
                     <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
                     <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
-                    <textarea
+                    <textarea aria-label="Notes (optional)"
                       value={formNotes}
                       onChange={e => setFormNotes(e.target.value)}
                       placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
                       rows={3}
                       maxLength={500}
-                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
+                      className="qc-input qc-library-control w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
                     />
                     {formNotes.length > 0 && (
                       <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
@@ -1581,7 +1583,7 @@ export function ComponentList({
                     <div className="border-t border-slate-200 pt-3 mt-3">
                       <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
                       <div className="flex gap-2">
-                        <select
+                        <select aria-label="Save to Library"
                           value={selectedCollectionId}
                           onChange={e => {
                             if (e.target.value === '__create_new__') {
@@ -1590,7 +1592,7 @@ export function ComponentList({
                               setSelectedCollectionId(e.target.value);
                             }
                           }}
-                          className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
+                          className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
                         >
                           {collections.map(col => (
                             <option key={col.id} value={col.id}>
@@ -1603,10 +1605,10 @@ export function ComponentList({
                     </div>
                   )}
                   <div className="flex gap-2 pt-2">
-                    <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
+                    <button data-qc-variant="primary" type="submit" disabled={saving} className="qc-button qc-flow-control qc-library-control ">
                       {saving ? 'Saving...' : 'Save'}
                     </button>
-                    <button type="button" onClick={cancelEdit} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
+                    <button data-qc-variant="ghost" type="button" onClick={cancelEdit} className="qc-button qc-flow-control qc-library-control ">
                       Cancel
                     </button>
                   </div>
@@ -1617,7 +1619,7 @@ export function ComponentList({
                 id={`component-row-${comp.id}`}
                 onClick={() => startEdit(comp)}
                 title="Click to view component"
-                className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${
+                className={`qc-component-row px-4 py-3 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${
                   highlightId === comp.id
                     ? 'border-orange-300 bg-orange-50 shadow-[0_0_12px_rgba(255,107,53,0.25)]'
                     : comp.is_active === false
@@ -1637,8 +1639,8 @@ export function ComponentList({
                   {comp.is_active === false ? 'Inactive' : 'Active'}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className={`font-medium ${comp.is_active === false ? 'text-slate-500' : 'text-slate-900'}`}>{comp.name}</h3>
+                  <div className="qc-component-row-meta">
+                    <h3 className={`font-medium ${comp.is_active === false ? 'text-slate-500' : 'text-slate-900'}`}><button type="button" className="qc-library-action-name" onClick={(event) => { event.stopPropagation(); startEdit(comp); }}>{comp.name}</button></h3>
                     {comp.sku && (
                       <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-mono">{comp.sku}</span>
                     )}
@@ -1660,8 +1662,9 @@ export function ComponentList({
                     </p>
                   )}
                 </div>
-                {/* Activate/Deactivate toggle (hover) */}
-                <button
+                <div className="qc-component-row-actions">
+                {/* The existing actions stay visible on touch and keyboard. */}
+                <button aria-label={comp.is_active === false ? 'Activate component' : 'Deactivate component'}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (!activatingId || activatingId !== comp.id) {
@@ -1671,11 +1674,11 @@ export function ComponentList({
                   disabled={activatingId === comp.id}
                   title={comp.is_active === false ? 'Activate component' : 'Deactivate component'}
                   aria-pressed={comp.is_active !== false}
-                  className={`p-1.5 rounded-full transition opacity-0 group-hover:opacity-100 disabled:opacity-0 ${
+                  className={"qc-flow-control qc-library-choice " + (`qc-component-activation p-1.5 rounded-xl transition disabled:opacity-60 ${
                     comp.is_active === false
-                      ? 'text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 hover:shadow-[0_0_10px_rgba(16,185,129,0.35)]'
-                      : 'text-slate-300 hover:text-red-500 hover:bg-red-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]'
-                  }`}
+                      ? 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 hover:shadow-[0_0_10px_rgba(16,185,129,0.35)]'
+                      : 'text-slate-600 hover:text-red-500 hover:bg-red-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]'
+                  }`)}
                 >
                   {activatingId === comp.id ? (
                     <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1691,24 +1694,25 @@ export function ComponentList({
                     </svg>
                   )}
                 </button>
-                <button
+                <button aria-label={`Edit ${comp.name}`} data-qc-variant="ghost"
                   onClick={(e) => { e.stopPropagation(); startEdit(comp); }}
                   title="Click to edit"
-                  className="p-1.5 rounded-full text-slate-400 hover:text-orange-600 hover:bg-orange-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)] transition opacity-0 group-hover:opacity-100"
+                  className="qc-button qc-flow-control qc-library-control "
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <button 
+                <button aria-label={`Delete ${comp.name}`} data-qc-variant="ghost" 
                   onClick={(e) => { e.stopPropagation(); setDeleteCompId(comp.id); }} 
                   title="Click to delete"
-                  className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)] transition opacity-0 group-hover:opacity-100"
+                  className="qc-button qc-flow-control qc-library-control "
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
+                </div>
               </div>
             )}
           </div>
@@ -1717,22 +1721,22 @@ export function ComponentList({
 
       {/* Delete Modal */}
       {deleteCompId && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
+        <QcJourneyDialog label="Delete Smart Component™" size="sm">
+          <div className="p-4 md:p-6 w-full">
             <h3 className="text-lg font-semibold text-slate-900">Delete Smart Component™</h3>
             <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The Smart Component™ will be removed from your library.</p>
             <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setDeleteCompId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
-              <button onClick={confirmDeleteComp} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
+              <button data-qc-variant="ghost" onClick={() => setDeleteCompId(null)} className="qc-button qc-flow-control qc-library-control " disabled={deleteLoading}>Cancel</button>
+              <button data-qc-variant="danger" onClick={confirmDeleteComp} className="qc-button qc-flow-control qc-library-control " disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Delete Library Confirm Modal */}
       {deletingLibraryId && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
+        <QcJourneyDialog label="Delete Library" size="sm">
+          <div className="p-4 md:p-6 w-full">
             <h3 className="text-lg font-semibold text-slate-900">Delete Library</h3>
             <p className="text-sm text-slate-500 mt-2">
               Deleting this library will delete all components inside it. Move any components you want to keep to another library first, or delete them forever here.
@@ -1741,23 +1745,23 @@ export function ComponentList({
               This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end mt-6">
-              <button
+              <button data-qc-variant="ghost"
                 onClick={() => setDeletingLibraryId(null)}
                 disabled={deleteLibraryLoading}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="danger"
                 onClick={() => void handleDeleteLibrary()}
                 disabled={deleteLibraryLoading}
-                className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 {deleteLibraryLoading ? 'Deleting...' : 'Delete Library'}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       <UpgradeModal
@@ -1786,8 +1790,8 @@ export function ComponentList({
 
       {/* Component Edit Warning Modal */}
       {editWarningOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
+        <QcJourneyDialog label="Heads up before saving" size="sm">
+          <div className="p-4 md:p-6 w-full">
             <h3 className="text-lg font-semibold text-slate-900">Heads up before saving</h3>
             <p className="text-sm text-slate-500 mt-2">
               Beware: edited changes will only affect new component entries moving forward, not previously saved component entries.
@@ -1797,32 +1801,32 @@ export function ComponentList({
                 type="checkbox"
                 checked={editWarningDontShow}
                 onChange={(e) => setEditWarningDontShow(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                className="qc-checkbox qc-library-control h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
               />
               Don’t show me this warning anymore
             </label>
             <div className="flex gap-3 justify-end mt-6">
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => {
                   setEditWarningOpen(false);
                   setPendingUpdateData(null);
                 }}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="primary"
                 type="button"
                 onClick={() => void handleConfirmEditWarning()}
                 disabled={saving}
-                className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 {saving ? 'Saving...' : 'Confirm and Save'}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Publish Library Modal (supplier-only) */}
@@ -1862,7 +1866,7 @@ export function ComponentList({
           }}
         />
       )}
-    </div>
+    </QcLibrary>
   );
 }
 

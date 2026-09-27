@@ -1,5 +1,6 @@
 import { QcJourney, QcJourneySteps } from '@/app/components/ui/v2/QcJourney';
 import Link from 'next/link';
+import { PlanPriceSummary, formatPlanPrice } from '@/app/components/billing/PlanPriceSummary';
 import { redirect } from 'next/navigation';
 
 import { loadCompanyContext } from '@/app/lib/data/company-context';
@@ -45,6 +46,9 @@ export default async function PaywallPage() {
   // Purchasable tiers only. The `free` tier is backend-only (dunning
   // fallback), and coming-soon tiers have no checkout path.
   const plans = await loadBillingPlans(new Set(['starter', 'pro', 'pro_plus']));
+  // Value display only. Setup package amounts and all checkout flows are unchanged.
+  const proPlan = plans.find(plan => plan.code === 'pro');
+  const includedProValue = proPlan && Number.isFinite(proPlan.priceCentsMonthly) && proPlan.priceCentsMonthly > 0 ? formatPlanPrice(proPlan.priceCentsMonthly * 6) : null;
 
   return (
     <QcJourney><div className="qc-flow-auth">
@@ -65,7 +69,8 @@ export default async function PaywallPage() {
           <p className="mt-2 text-sm md:text-base text-slate-600">
             Choose the subscription that fits your work. Features and limits depend on the plan; access begins after payment is confirmed.
           </p>
-          {/* Guarantee - prominent, directly above the cards */}
+          <PlanPriceSummary plans={plans} />
+          {/* Guarantee terms are existing owner-approved copy, not plan data. */}
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2">
             <svg className="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -124,7 +129,7 @@ export default async function PaywallPage() {
             </h2>
             <p className="mt-2 text-sm text-slate-600">
               Let us build your entire estimating system for you - and skip the setup risk
-              completely. Both packages include <span className="font-semibold text-slate-900">6 months of QuoteCore+ Pro ($240 value)</span> plus
+              completely. Both packages include <span className="font-semibold text-slate-900">6 months of QuoteCore+ Pro{includedProValue ? ` (${includedProValue} value)` : ''}</span> plus
               hands-on support while you get up and running.
             </p>
           </div>

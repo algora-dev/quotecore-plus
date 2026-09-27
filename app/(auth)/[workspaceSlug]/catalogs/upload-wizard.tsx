@@ -452,7 +452,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                 </p>
               </div>
               <div className="rounded-lg border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="qc-flow-scroll overflow-x-auto" tabIndex={0} role="region" aria-label="Catalogue preview">
                   <table className="qc-flow-table w-full">
                     <thead>
                       <tr className="bg-slate-50">

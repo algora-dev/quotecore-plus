@@ -1,5 +1,6 @@
 'use client';
 
+import '@/app/components/ui/v2/qc-library.css';
 import { useState } from 'react';
 import type { PendingUpdate } from '../supplier-directory/actions';
 import { UpdateNotificationModal } from './components/UpdateNotificationModal';
@@ -43,9 +44,9 @@ export function PendingUpdatesBanner({
             <span className="text-sm font-semibold text-slate-900 truncate">{mainText}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button
+            <button aria-label="Manage alert preferences" data-qc-variant="ghost"
               onClick={() => setSettingsOpen(true)}
-              className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer px-2"
+              className="qc-button qc-flow-control qc-library-control "
               title="Manage alert preferences"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -53,15 +54,15 @@ export function PendingUpdatesBanner({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </button>
-            <button
+            <button data-qc-variant="primary"
               onClick={() => setModalOpen(true)}
-              className="cursor-pointer rounded-full bg-black px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition"
+              className="qc-button qc-flow-control qc-library-control "
             >
               Review updates
             </button>
-            <button
+            <button data-qc-variant="ghost"
               onClick={() => setRemindLater(true)}
-              className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer px-2"
+              className="qc-button qc-flow-control qc-library-control "
             >
               Remind me later
             </button>

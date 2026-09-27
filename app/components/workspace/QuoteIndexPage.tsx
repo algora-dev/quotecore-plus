@@ -161,8 +161,8 @@ export async function QuoteIndexPage({
         )}
       </header>
 
-      {/* AGENT-TODO P6-DATA-01: quotesRes.error is not part of the current QuotesList contract; keep loader behavior unchanged. */}
       <QuotesList
+        loadError={!!quotesRes.error}
         quotes={quotes}
         workspaceSlug={workspaceSlug}
         monthlyQuoteAtCap={atLimit}

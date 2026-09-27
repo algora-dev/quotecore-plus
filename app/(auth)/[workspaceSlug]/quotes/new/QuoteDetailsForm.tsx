@@ -22,6 +22,7 @@ type MeasurementChoice = 'metric' | 'imperial_ft' | 'imperial_rs';
 interface Props {
   workspaceSlug: string;
   templates: Template[];
+  templatesLoadError?: boolean;
   companyId: string;
   /** Company default measurement system; pre-selects the radio when the form mounts. */
   defaultMeasurementSystem: MeasurementChoice;
@@ -49,6 +50,7 @@ const MEASUREMENT_OPTIONS: Array<{ value: MeasurementChoice; title: string; subt
 export function QuoteDetailsForm({
   workspaceSlug,
   templates,
+  templatesLoadError = false,
   companyId,
   defaultMeasurementSystem,
   digitalTakeoffAvailable,
@@ -465,6 +467,10 @@ export function QuoteDetailsForm({
         <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
           Quote Template <span className="text-slate-400">(optional)</span>
         </label>
+        {templatesLoadError && <div className="qc-flow-error" role="alert">
+          Saved templates could not be loaded. You can continue without a template or
+          <button type="button" className="qc-button qc-flow-control" onClick={() => router.refresh()}>Try again</button>.
+        </div>}
         <select aria-label="Quote Template (optional)"
           value={templateId}
           onChange={(e) => setTemplateId(e.target.value)}

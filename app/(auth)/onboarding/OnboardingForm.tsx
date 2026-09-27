@@ -94,8 +94,7 @@ export function OnboardingForm({
             We&apos;ve put together step-by-step tutorials that walk you through the basics &mdash;
             from creating your first component to sending a quote.{' '}
             <a
-              // AGENT-TODO P6-ONBOARD-01: existing literal URL is retained; Gavin to resolve the correct workspace tutorial route.
-              href="/${companySlug}/tutorials"
+              href={`/${companySlug}/tutorials`}
               target="_blank"
               rel="noopener"
               className="qc-flow-link text-orange-600 font-medium hover:text-orange-700 underline underline-offset-2"

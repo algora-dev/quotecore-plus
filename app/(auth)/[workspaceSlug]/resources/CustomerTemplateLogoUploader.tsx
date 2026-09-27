@@ -1,4 +1,5 @@
 'use client';
+import '@/app/components/ui/v2/qc-library.css';
 import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
@@ -84,9 +85,9 @@ export function CustomerTemplateLogoUploader({ companyId, templateId, currentLog
               alt="Template Logo" 
               className="h-16 object-contain border border-slate-200 rounded p-2 bg-white"
             />
-            <button
+            <button data-qc-variant="ghost"
               onClick={handleRemove}
-              className="qc-flow-control px-3 py-1.5 text-xs font-medium text-red-600 border border-red-300 rounded hover:bg-red-50"
+              className="qc-button qc-flow-control qc-library-control "
             >
               Remove
             </button>

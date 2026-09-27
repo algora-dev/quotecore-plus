@@ -12,10 +12,10 @@ import type { PendingUpdate } from '../supplier-directory/actions';
 
 export default async function ComponentsPage(props: {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ restore?: string; created?: string }>;
+  searchParams: Promise<{ restore?: string; created?: string; from?: string }>;
 }) {
   const { workspaceSlug } = await props.params;
-  const { restore: restoreDraftId, created: createdComponentId } = await props.searchParams;
+  const { restore: restoreDraftId, created: createdComponentId, from } = await props.searchParams;
   let components;
 
   try {
@@ -57,7 +57,7 @@ export default async function ComponentsPage(props: {
   return (
     <>
       {!introSeen && <ComponentsIntroModal />}
-      <BackButton />
+      <BackButton href={from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/resources`} label={from === 'inbox' ? 'Back to inbox' : 'Back to resources'} />
       {/* "Where is my takeoff" helper - shown here because this is the landing
           page after the free-takeoff import banner click. */}
       <TakeoffDraftNoteBanner />

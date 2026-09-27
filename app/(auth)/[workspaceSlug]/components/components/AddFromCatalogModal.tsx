@@ -88,15 +88,16 @@ export function AddFromCatalogModal({
   const [createdCount, setCreatedCount] = useState(0);
 
   // ── Load catalogs on mount ──────────────────────────────────────────
-  const loadMyCatalogs = useCallback(async () => {
+  const loadMyCatalogs = useCallback(async (isCurrent: () => boolean = () => true) => {
     setLoadingCatalogs(true);
+    setError(null);
     try {
       const result = await listUserCatalogs();
-      setMyCatalogs(result);
+      if (isCurrent()) setMyCatalogs(result);
     } catch {
-      setError('Failed to load your catalogs.');
+      if (isCurrent()) setError('Failed to load your catalogs.');
     } finally {
-      setLoadingCatalogs(false);
+      if (isCurrent()) setLoadingCatalogs(false);
     }
   }, []);
 
@@ -112,10 +113,12 @@ export function AddFromCatalogModal({
     }
   }, []);
 
-  // Load my catalogs on first render
-  useMemo(() => {
-    // AGENT-TODO P6-CATALOG-01: existing render-time loading is retained. Gavin to review moving this side effect to useEffect.
-    void loadMyCatalogs();
+  // P6-CATALOG-01 resolved: no network effects during render. Server-action
+  // requests cannot be aborted, so ignore a stale mount (including Strict Mode replay).
+  useEffect(() => {
+    let current = true;
+    void loadMyCatalogs(() => current);
+    return () => { current = false; };
   }, [loadMyCatalogs]);
 
   // ── Catalog selection ───────────────────────────────────────────────
@@ -564,7 +567,7 @@ export function AddFromCatalogModal({
                       : 'Up to the first 20 rows are selected initially. Change the checkboxes to choose your own.'}</span>
                   </div>
                   {/* Rows table */}
-                  <div className="rounded-lg border border-slate-200 overflow-auto max-h-[40vh]">
+                  <div className="qc-flow-scroll rounded-lg border border-slate-200 overflow-auto max-h-[40vh]" tabIndex={0} role="region" aria-label="Catalogue rows">
                     <table className="qc-flow-table min-w-max">
                       <thead className="sticky top-0 z-10 bg-white">
                         <tr className="border-b border-slate-200">

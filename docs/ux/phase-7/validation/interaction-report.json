@@ -1,0 +1,49 @@
+{
+  "method": "Deterministic JSX view evaluator with stubbed hooks, effects disabled, actions forbidden. Tests execute named UI callbacks only; not React runtime, persistence, hydration or E2E.",
+  "tests": [
+    {
+      "name": "Document library keeps every store distinct even with matching IDs",
+      "status": "passed"
+    },
+    {
+      "name": "Document type filters expose correct specialised records",
+      "status": "passed"
+    },
+    {
+      "name": "Name search finds existing saved name without renaming",
+      "status": "passed"
+    },
+    {
+      "name": "New document chooser distinguishes branding from structure and supports Back",
+      "status": "passed"
+    },
+    {
+      "name": "Partial load error is not described as empty success",
+      "status": "passed"
+    },
+    {
+      "name": "Message library distinguishes actual General purpose without fictional invoice/all enums",
+      "status": "passed"
+    },
+    {
+      "name": "Failed attachment load prevents destructive accidental edit",
+      "status": "passed"
+    },
+    {
+      "name": "New email uses General and switching purpose preserves user-written text",
+      "status": "passed"
+    },
+    {
+      "name": "Existing email names, empty subject and body do not get silently replaced",
+      "status": "passed"
+    },
+    {
+      "name": "Mobile returns use deterministic parents, preserve guarded workspace ownership",
+      "status": "passed"
+    },
+    {
+      "name": "Plan labels use supplied cents, not hardcoded subscription amounts",
+      "status": "passed"
+    }
+  ]
+}

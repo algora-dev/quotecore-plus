@@ -1,4 +1,5 @@
 'use client';
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -36,7 +37,9 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
         footerText,
       });
 
-      router.push(`/${workspaceSlug}/customer-quote-templates`);
+      // Successful explicit save only: refresh the library on return, never poll a workspace.
+      router.refresh();
+      router.push(`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`);
     } catch (error) {
       alert('Failed to save template: ' + (error as Error).message);
       setSaving(false);
@@ -44,17 +47,17 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <QcLibrary className="min-h-0 bg-slate-50">
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div>
           <Link
             href={`/${workspaceSlug}/quotes/${quote.id}/customer-edit`}
-            className="text-sm text-slate-500 hover:text-slate-700"
+            className="qc-flow-link qc-library-control text-sm text-slate-500 hover:text-slate-700"
           >
             ← Back to Quote Editor
           </Link>
-          <h1 className="text-2xl font-semibold text-slate-900 mt-2">
+          <h1 className="qc-library-title text-2xl font-semibold text-slate-900 mt-2">
             Save Branding as Template: {templateName}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -69,38 +72,38 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Company Name</label>
-              <input
+              <input aria-label="Company Name"
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
-              <input
+              <input aria-label="Phone"
                 type="tel"
                 value={companyPhone}
                 onChange={(e) => setCompanyPhone(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
-              <input
+              <input aria-label="Email"
                 type="email"
                 value={companyEmail}
                 onChange={(e) => setCompanyEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Address</label>
-              <input
+              <input aria-label="Address"
                 type="text"
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -113,12 +116,12 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
             value={footerText}
             onChange={(e) => setFooterText(e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
           />
         </div>
 
         {/* Info Note */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="bg-orange-50 border border-blue-200 rounded-xl p-4">
           <p className="text-sm text-blue-800">
             <span className="font-medium">Note:</span> This template saves branding only (company details + footer). 
             Component display preferences are controlled by component library defaults.
@@ -129,19 +132,19 @@ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, t
         <div className="flex gap-3 justify-end">
           <Link
             href={`/${workspaceSlug}/quotes/${quote.id}/customer-edit`}
-            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
+            className="qc-button qc-flow-control"
           >
             Cancel
           </Link>
-          <button
+          <button data-qc-variant="primary"
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-button qc-flow-control qc-library-control "
           >
             {saving ? 'Saving Template...' : 'Save Template'}
           </button>
         </div>
       </div>
-    </div>
+    </QcLibrary>
   );
 }

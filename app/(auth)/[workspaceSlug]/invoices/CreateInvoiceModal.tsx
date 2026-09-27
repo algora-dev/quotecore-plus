@@ -1,4 +1,5 @@
 'use client';
+import { QcLibraryError } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -46,6 +47,8 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
   // From quote - only quote picker; line selector is a dedicated full page
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [quotesLoading, setQuotesLoading] = useState(false);
+  const [quotesError, setQuotesError] = useState(false);
+  const [quotesRetry, setQuotesRetry] = useState(0);
   const [quoteSearch, setQuoteSearch] = useState('');
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
   const [showFromQuote, setShowFromQuote] = useState(false);
@@ -53,6 +56,9 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
   // Template selection (blank invoices only)
   const [templates, setTemplates] = useState<InvoiceTemplate[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [templatesError, setTemplatesError] = useState(false);
+  const [templatesRetry, setTemplatesRetry] = useState(0);
+  const [skipUnavailableTemplates, setSkipUnavailableTemplates] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [pendingMethod] = useState<PendingMethod>('blank');
 
@@ -62,27 +68,38 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Load quotes when from-quote picker is open
+  // P6-DATA-03: keep unavailable lists distinct from a successful empty result.
   useEffect(() => {
     if (!showFromQuote) return;
-    setQuotesLoading(true);
-    fetch('/api/invoices/quote-search')
-      .then((r) => r.json())
-      .then((d) => setQuotes(d.quotes ?? []))
-      .catch(() => setQuotes([]))
-      .finally(() => setQuotesLoading(false));
-  }, [showFromQuote]);
+    const controller = new AbortController();
+    setQuotesLoading(true); setQuotesError(false);
+    fetch('/api/invoices/quote-search', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Quote list unavailable');
+        const data = await response.json();
+        if (!Array.isArray(data.quotes)) throw new Error('Invalid quote list');
+        if (!controller.signal.aborted) setQuotes(data.quotes);
+      })
+      .catch(() => { if (!controller.signal.aborted) { setQuotesError(true); setSelectedQuoteId(null); } })
+      .finally(() => { if (!controller.signal.aborted) setQuotesLoading(false); });
+    return () => controller.abort();
+  }, [showFromQuote, quotesRetry]);
 
-  // Load templates when template picker opens
   useEffect(() => {
     if (step !== 'pick-template') return;
-    setTemplatesLoading(true);
-    fetch('/api/invoices/templates')
-      .then((r) => r.json())
-      .then((d) => setTemplates(d.templates ?? []))
-      .catch(() => setTemplates([]))
-      .finally(() => setTemplatesLoading(false));
-  }, [step]);
+    const controller = new AbortController();
+    setTemplatesLoading(true); setTemplatesError(false); setSkipUnavailableTemplates(false);
+    fetch('/api/invoices/templates', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Template list unavailable');
+        const data = await response.json();
+        if (!Array.isArray(data.templates)) throw new Error('Invalid template list');
+        if (!controller.signal.aborted) setTemplates(data.templates);
+      })
+      .catch(() => { if (!controller.signal.aborted) { setTemplatesError(true); setSelectedTemplateId(null); } })
+      .finally(() => { if (!controller.signal.aborted) setTemplatesLoading(false); });
+    return () => controller.abort();
+  }, [step, templatesRetry]);
 
   async function handleCreate() {
     setBusy(true);
@@ -211,6 +228,8 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               <div className="max-h-60 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100">
                 {quotesLoading ? (
                   <p className="p-4 text-sm text-slate-400 text-center">Loading quotes…</p>
+                ) : quotesError ? (
+                  <QcLibraryError title="Quotes could not be loaded" onRetry={() => setQuotesRetry(n => n + 1)}>Try again to choose an existing quote.</QcLibraryError>
                 ) : filteredQuotes.length === 0 ? (
                   <p className="p-4 text-sm text-slate-400 text-center">No quotes found.</p>
                 ) : filteredQuotes.map((q) => (
@@ -244,7 +263,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                     router.push(`/${workspaceSlug}/invoices/invoice-from-quote/${selectedQuoteId}`);
                     onClose();
                   }}
-                  disabled={!selectedQuoteId}
+                  disabled={!selectedQuoteId || quotesLoading || quotesError}
                   className="qc-flow-control qc-button flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
                   Select Lines →
                 </button>
@@ -286,13 +305,21 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
             <div className="space-y-4">
               {templatesLoading ? (
                 <p className="text-sm text-slate-400 text-center py-6">Loading templates…</p>
+              ) : templatesError ? (
+                <div className="space-y-3">
+                  <QcLibraryError title="Templates could not be loaded" onRetry={() => setTemplatesRetry(n => n + 1)}>Try again, or explicitly continue without a template and add the details yourself.</QcLibraryError>
+                  <button type="button" className="qc-button qc-flow-control" aria-pressed={skipUnavailableTemplates}
+                    onClick={() => { setSelectedTemplateId(null); setSkipUnavailableTemplates(true); }}>
+                    {skipUnavailableTemplates ? 'Continuing without a template' : 'Continue without a template'}
+                  </button>
+                </div>
               ) : templates.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center">
                   <p className="text-sm text-slate-500 font-medium">No invoice templates yet</p>
                   <p className="text-xs text-slate-400 mt-1">
                     Create one in{' '}
-                    <a href={`/${workspaceSlug}/resources/invoice-templates`} target="_blank" rel="noopener noreferrer" className="qc-flow-link text-orange-600 hover:underline">
-                      Resources › Invoice Templates
+                    <a href={`/${workspaceSlug}/resources/document-templates?type=invoice`} target="_blank" rel="noopener noreferrer" className="qc-flow-link text-orange-600 hover:underline">
+                      Document templates › Invoices
                     </a>
                   </p>
                 </div>
@@ -332,7 +359,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                 <button data-qc-variant="ghost" type="button" onClick={() => { setStep('blank-form'); setError(null); }}
                   className="qc-flow-control qc-button flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Back</button>
                 <button data-qc-variant="primary" type="button" data-copilot="invoice-create-confirm" data-assistant-id="invoice-create-confirm"
-                  onClick={handleCreate} disabled={busy}
+                  onClick={handleCreate} disabled={busy || templatesLoading || (templatesError && !skipUnavailableTemplates)}
                   className="qc-flow-control qc-button flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
                   {busy ? 'Creating…' : 'Create Invoice'}
                 </button>

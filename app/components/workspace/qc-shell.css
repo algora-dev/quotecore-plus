@@ -114,3 +114,18 @@ html[data-takeoff-immersive='touch'] .qc-main { max-width:none; padding:0; }
 @media(max-width:599px) { [data-qc-shell-mode='hidden'] .qc-topbar { padding-left:8px; } }
 @media(forced-colors:active) { .qc-sidebar-edge-face { background:ButtonFace; color:ButtonText; border:2px solid ButtonText; } .qc-sidebar-edge-tab:focus-visible { outline-color:Highlight; } }
 @media print { .qc-sidebar-edge-tab { display:none!important; } }
+
+/* C65 / Phase 7: an in-flow, visible route back on mobile. Existing guarded
+   workspaces are excluded in code. No canvas width/height transition or remount. */
+.qc-mobile-return { display:none; }
+.qc-page-back { margin-bottom:16px; max-width:100%; white-space:normal; }
+@media(max-width:1023px) {
+ .qc-mobile-return { display:block; margin:0 0 16px; }
+ .qc-mobile-return a { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:8px 12px; border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-control); background:var(--qc-bg-surface); color:var(--qc-text-primary); text-decoration:none; font-size:13px; font-weight:550; max-width:100%; }
+ .qc-mobile-return a:hover { border-color:var(--qc-color-orange-ink); background:var(--qc-selected-bg); }
+ .qc-mobile-return a:focus-visible { outline:2px solid var(--qc-focus-ring); outline-offset:3px; }
+ .qc-mobile-return a:active { background:var(--qc-color-orange-tint); }
+ .qc-main:has(.qc-page-back) > .qc-mobile-return { display:none; }
+ .qc-page-back { min-height:44px; }
+}
+@media print { .qc-mobile-return,.qc-page-back { display:none!important; } }

@@ -1,4 +1,5 @@
 'use client';
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -90,7 +91,9 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
         companyLogoUrl: logoUrl,
       });
 
-      router.push(`/${workspaceSlug}/customer-quote-templates`);
+      // Successful explicit save only: refresh the library on return, never poll a workspace.
+      router.refresh();
+      router.push(`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`);
     } catch (error) {
       alert('Failed to create template: ' + (error as Error).message);
       setSaving(false);
@@ -100,21 +103,21 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="min-h-screen bg-slate-50">
+    <QcLibrary className="qc-template-editor">
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div>
           <Link
-            href={`/${workspaceSlug}/customer-quote-templates`}
-            className="text-sm text-slate-500 hover:text-slate-700"
+            href={`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`}
+            className="qc-flow-link qc-library-control text-sm text-slate-500 hover:text-slate-700"
           >
             ← Back
           </Link>
-          <h1 className="text-2xl font-semibold text-slate-900 mt-2">
+          <h1 className="qc-library-title text-2xl font-semibold text-slate-900 mt-2">
             {templateName}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Build your customer quote template
+            Add your company details, logo and footer. No quote prices or line items are saved here.
           </p>
         </div>
 
@@ -130,12 +133,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Company Name
               </label>
-              <input
+              <input aria-label="Company Name"
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Your Company Name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -143,12 +146,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Phone
               </label>
-              <input
+              <input aria-label="Phone"
                 type="tel"
                 value={companyPhone}
                 onChange={(e) => setCompanyPhone(e.target.value)}
                 placeholder="+64 21 123 4567"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -156,12 +159,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Email
               </label>
-              <input
+              <input aria-label="Email"
                 type="email"
                 value={companyEmail}
                 onChange={(e) => setCompanyEmail(e.target.value)}
                 placeholder="info@yourcompany.com"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -169,12 +172,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Address
               </label>
-              <input
+              <input aria-label="Address"
                 type="text"
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
                 placeholder="123 Main Street, City, Country"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -207,7 +210,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
                     accept="image/*"
                     onChange={handleLogoUpload}
                     disabled={uploading}
-                    className="hidden"
+                    className="qc-flow-file qc-library-control"
                   />
                 </label>
               </div>
@@ -220,10 +223,10 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
                       alt="Company Logo" 
                       className="h-16 w-auto object-contain"
                     />
-                    <button
+                    <button data-qc-variant="ghost"
                       onClick={handleLogoRemove}
                       type="button"
-                      className="ml-auto px-3 py-1.5 text-xs font-medium text-red-600 border border-red-300 rounded-full hover:bg-red-50"
+                      className="qc-button qc-flow-control qc-library-control ml-auto"
                     >
                       Remove
                     </button>
@@ -241,22 +244,23 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
             This text will appear at the bottom of customer quotes (disclaimers, payment terms, etc.)
           </p>
 
-          <textarea
+          <textarea aria-label="Footer text"
             value={footerText}
             onChange={(e) => setFooterText(e.target.value)}
             placeholder="e.g. Payment due within 30 days. Quote valid for 30 days. All work carried out to industry standards."
             rows={4}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
         </div>
 
         {/* Preview */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">Preview</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Example content preview</h2>
+          <p className="qc-flow-description">Sample values only. Final document styling is provided by Document Studio.</p>
           
           <div className="p-6 bg-slate-50 space-y-4">
             {/* Header */}
-            <div className="flex justify-between items-start border-b pb-4">
+            <div className="flex flex-wrap gap-4 justify-between items-start border-b pb-4">
               <div>
                 <h3 className="text-xl font-bold text-slate-900">QUOTE #1000</h3>
                 <div className="mt-2 space-y-1 text-sm text-slate-600">
@@ -265,7 +269,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
                   <p><span className="font-medium">Date:</span> {new Date().toLocaleDateString()}</p>
                 </div>
               </div>
-              <div className="text-right text-sm text-slate-700">
+              <div className="text-right text-sm text-slate-700 break-words min-w-0">
                 {logoUrl && (
                   <img src={logoUrl} alt="Company Logo" className="h-16 w-auto object-contain mb-3 ml-auto" />
                 )}
@@ -316,21 +320,21 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
         {/* Actions */}
         <div className="flex gap-3 justify-end pt-4">
           <Link
-            href={`/${workspaceSlug}/customer-quote-templates`}
-            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
+            href={`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`}
+            className="qc-button qc-flow-control"
           >
             Cancel
           </Link>
-          <button
+          <button data-qc-variant="primary"
             onClick={handleSave}
             disabled={saving || !companyName.trim()}
-            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowe transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-button qc-flow-control qc-library-control "
           >
             {saving ? 'Saving...' : 'Save Template'}
           </button>
         </div>
       </div>
-    </div>
+    </QcLibrary>
     </>
   );
 }

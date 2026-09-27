@@ -84,7 +84,7 @@ function SignupForm() {
           <p className="qc-flow-auth-note">Set up your account, choose your preferences, then activate a paid subscription. There is no free trial.</p>
           <QcJourneySteps steps={["Account", "Workspace", "Subscription"]} current={0} label="Getting started" />
           <div className="mb-6 flex items-center justify-center gap-1">
-            <p className="text-slate-500 text-sm text-center">Plans from $19/mo · 30-day money-back guarantee · Cancel anytime</p>
+            <p className="text-slate-500 text-sm text-center">Paid subscriptions · 30-day money-back guarantee · Cancel anytime</p>
             <button
               type="button"
               aria-label="How the 30-day money-back guarantee works"
@@ -95,6 +95,9 @@ function SignupForm() {
             </button>
           </div>
 
+          {/* P6-BILLING-01: signup has no plan-data prop. Link to the existing pricing page instead of duplicating locked amounts.
+              Guarantee terms below are unchanged; there is no plan-provided guarantee policy in this baseline. */}
+          <p className="text-center text-sm mb-6"><Link className="qc-flow-link" href="/pricing">View current plans and prices</Link></p>
           {showGuaranteeInfo && (
             <div
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
@@ -114,8 +117,7 @@ function SignupForm() {
                 </div>
                 <div className="mt-4 space-y-3 text-sm leading-relaxed text-slate-600">
                   <p>
-                    <span className="font-semibold text-slate-900">1. Pick your plan.</span> After creating your account, choose Starter ($19/mo),
-                    Pro ($39/mo) or Pro Plus ($59/mo).
+                    <span className="font-semibold text-slate-900">1. Pick your plan.</span> After creating your account, choose from the plans and current prices shown at activation.
                   </p>
                   <p>
                     <span className="font-semibold text-slate-900">2. Use it fully for 30 days.</span> Use the features and limits included in your selected plan to work on real jobs.

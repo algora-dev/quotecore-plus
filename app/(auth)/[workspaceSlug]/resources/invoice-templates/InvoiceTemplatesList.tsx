@@ -1,4 +1,5 @@
 'use client';
+import '@/app/components/ui/v2/qc-library.css';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -36,9 +37,9 @@ export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props)
     <>
       {/* Toolbar */}
       <div className="flex justify-end">
-        <Link
+        <Link data-qc-variant="primary"
           href={`/${workspaceSlug}/resources/invoice-templates/new`}
-          className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
+          className="qc-button qc-flow-control qc-library-control inline-flex gap-1.5"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -51,9 +52,9 @@ export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props)
       {templates.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm text-slate-500">No invoice templates yet.</p>
-          <Link
+          <Link data-qc-variant="primary"
             href={`/${workspaceSlug}/resources/invoice-templates/new`}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+            className="qc-button qc-flow-control qc-library-control mt-4 inline-flex gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -92,20 +93,20 @@ export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props)
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-2 opacity-100 group-hover:opacity-100 transition-opacity">
                 <Link
                   href={`/${workspaceSlug}/resources/invoice-templates/${t.id}/edit`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-all"
+                  className="qc-flow-link qc-library-control inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-all"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                   Edit
                 </Link>
-                <button
+                <button data-qc-variant="ghost"
                   type="button"
                   onClick={() => setConfirmDeleteId(t.id)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-all"
+                  className="qc-button qc-flow-control qc-library-control inline-flex gap-1.5"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

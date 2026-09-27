@@ -1,5 +1,7 @@
 'use client';
 
+import '@/app/components/ui/v2/qc-library.css';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 /**
  * First-visit welcome modal for the components page.
  *
@@ -60,7 +62,7 @@ export function ComponentsIntroModal() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+    <QcJourneyDialog label="Welcome to Smart Components™" size="sm">
       <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full mx-4 shadow-xl">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
@@ -78,16 +80,16 @@ export function ComponentsIntroModal() {
           </div>
         </div>
         <div className="flex justify-end mt-6">
-          <button
+          <button data-qc-variant="primary"
             type="button"
             onClick={handleDismiss}
             disabled={dismissing}
-            className="px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition-all disabled:opacity-50"
+            className="qc-button qc-flow-control qc-library-control "
           >
             {dismissing ? 'Loading...' : 'Got it'}
           </button>
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

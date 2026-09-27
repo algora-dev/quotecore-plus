@@ -1,4 +1,5 @@
 'use client';
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/client';
@@ -99,7 +100,9 @@ export function InvoiceTemplateEditor({ workspaceSlug, companyId, template }: Pr
         } else {
           await updateInvoiceTemplate(template.id, input);
         }
-        router.push(`/${workspaceSlug}/resources/invoice-templates`);
+        // Successful explicit save only: refresh the library on return, never poll a workspace.
+        router.refresh();
+        router.push(`/${workspaceSlug}/resources/document-templates?type=invoice`);
       } catch {
         setError('Failed to save template. Please try again.');
       }
@@ -107,27 +110,33 @@ export function InvoiceTemplateEditor({ workspaceSlug, companyId, template }: Pr
   }
 
   return (
-    <div className="max-w-2xl space-y-8">
+    <QcLibrary className="qc-template-editor space-y-6">
+      <nav className="qc-template-sections" aria-label="Invoice template sections">
+        <a className="qc-button qc-flow-control" href="#invoice-template-name">Name</a>
+        <a className="qc-button qc-flow-control" href="#invoice-template-header">Header & footer</a>
+        <a className="qc-button qc-flow-control" href="#invoice-template-payment">Payment details</a>
+        <a className="qc-button qc-flow-control" href="#invoice-template-notes">Notes & terms</a>
+      </nav>
       {/* Template name */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-2">
+      <div id="invoice-template-name" className="qc-template-section bg-white rounded-xl border border-slate-200 p-6 space-y-2">
         <label className="block text-sm font-medium text-slate-700">
           Template Name <span className="text-red-500">*</span>
         </label>
-        <input
+        <input aria-label="Template Name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Standard UK Invoice, Stripe Pay, Construction"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+          className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
           autoFocus
         />
-        <p className="text-xs text-slate-400">Shown when selecting a template at invoice creation.</p>
+        <p className="text-xs text-slate-400">Use a recognisable name, such as “Bank transfer” or “Online payment”. This exact name appears when choosing an invoice template.</p>
       </div>
 
       {/* ── Header section ── */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">Header</h2>
+          <h2 className="text-base font-semibold text-slate-900" id="invoice-template-header">Header & footer</h2>
           <p className="text-sm text-slate-500 mt-0.5">Appears at the top of every invoice using this template.</p>
         </div>
 
@@ -140,47 +149,47 @@ export function InvoiceTemplateEditor({ workspaceSlug, companyId, template }: Pr
             onUpload={handleLogoUpload}
             currentFileUrl={companyLogoUrl || null}
             label="Upload Logo"
-            description="PNG, JPG or WebP (max 2 MB). Appears in the dark header."
+            description="PNG, JPG or WebP (max 2 MB). Used in the invoice header."
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Business Name</label>
-            <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)}
+            <input aria-label="Business Name" type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)}
               placeholder="e.g. Smith Roofing Ltd"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+              className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-            <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)}
+            <input aria-label="Email" type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)}
               placeholder="hello@business.com"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+              className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-            <input type="tel" value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)}
+            <input aria-label="Phone" type="tel" value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)}
               placeholder="+44 7700 000000"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+              className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Footer Text <span className="text-slate-400 font-normal">(opt)</span></label>
-            <input type="text" value={footerText} onChange={(e) => setFooterText(e.target.value)}
+            <input aria-label="Footer Text (opt)" type="text" value={footerText} onChange={(e) => setFooterText(e.target.value)}
               placeholder="e.g. Thank you for your business!"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+              className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
           </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
-          <textarea value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)}
+          <textarea aria-label="Address" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)}
             rows={3} placeholder="Your business address"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
+            className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
         </div>
 
         {/* Live header preview */}
         {(companyName || companyAddress || companyEmail || companyLogoUrl) && (
           <div className="rounded-xl bg-slate-900 p-4">
-            <p className="text-xs text-slate-400 uppercase tracking-wide mb-3 font-semibold">Header preview</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wide mb-3 font-semibold">Example header content</p>
             <div className="flex items-start justify-between gap-4">
               <div>
                 {companyLogoUrl && (
@@ -204,7 +213,7 @@ export function InvoiceTemplateEditor({ workspaceSlug, companyId, template }: Pr
       {/* ── Payment details ── */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">Payment Details</h2>
+          <h2 className="text-base font-semibold text-slate-900" id="invoice-template-payment">Payment details</h2>
           <p className="text-sm text-slate-500 mt-0.5">
             Shown in the Payment Instructions section of every invoice. Customers get individual copy buttons for each field.
           </p>
@@ -213,35 +222,35 @@ export function InvoiceTemplateEditor({ workspaceSlug, companyId, template }: Pr
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Account Name</label>
-            <input type="text" value={payAccountName} onChange={(e) => setPayAccountName(e.target.value)}
+            <input aria-label="Account Name" type="text" value={payAccountName} onChange={(e) => setPayAccountName(e.target.value)}
               placeholder="e.g. Smith Roofing Ltd"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+              className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
             <p className="text-xs text-slate-400 mt-1">Name on your bank account / payment recipient</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
-            <input type="text" value={payBankName} onChange={(e) => setPayBankName(e.target.value)}
+            <input aria-label="Bank Name" type="text" value={payBankName} onChange={(e) => setPayBankName(e.target.value)}
               placeholder="e.g. Barclays"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+              className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Account Number</label>
-            <input type="text" value={payAccountNumber} onChange={(e) => setPayAccountNumber(e.target.value)}
+            <input aria-label="Account Number" type="text" value={payAccountNumber} onChange={(e) => setPayAccountNumber(e.target.value)}
               placeholder="12345678"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none" />
+              className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Sort Code</label>
-            <input type="text" value={paySortCode} onChange={(e) => setPaySortCode(e.target.value)}
+            <input aria-label="Sort Code" type="text" value={paySortCode} onChange={(e) => setPaySortCode(e.target.value)}
               placeholder="00-00-00"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none" />
+              className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none" />
           </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Payment Link <span className="text-slate-400 font-normal">(optional)</span></label>
-          <input type="url" value={payLink} onChange={(e) => setPayLink(e.target.value)}
+          <input aria-label="Payment Link (optional)" type="url" value={payLink} onChange={(e) => setPayLink(e.target.value)}
             placeholder="https://pay.stripe.com/… or paypal.me/…"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+            className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
           <p className="text-xs text-slate-400 mt-1">Shown as a &ldquo;Pay Online&rdquo; button on the invoice</p>
         </div>
 
@@ -249,7 +258,7 @@ export function InvoiceTemplateEditor({ workspaceSlug, companyId, template }: Pr
         {(payAccountName || payAccountNumber || paySortCode) && (
           <div className="rounded-xl bg-orange-50 border border-orange-200 p-4">
             <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-3">Payment Instructions preview</p>
-            <div className="space-y-2 text-sm">
+            <div className="qc-library-preview-details space-y-2 text-sm">
               <div className="flex justify-between items-center">
                 <span className="text-slate-600">Amount Due</span>
                 <div className="flex items-center gap-2">
@@ -274,42 +283,42 @@ export function InvoiceTemplateEditor({ workspaceSlug, companyId, template }: Pr
       {/* ── Default content ── */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">Default Content</h2>
+          <h2 id="invoice-template-notes" className="qc-template-section text-base font-semibold text-slate-900">Notes & terms</h2>
           <p className="text-sm text-slate-500 mt-0.5">Pre-fills Notes and Terms on every invoice using this template. Still editable per-invoice.</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Default Notes</label>
-          <textarea value={defaultNotes} onChange={(e) => setDefaultNotes(e.target.value)}
+          <textarea aria-label="Default Notes" value={defaultNotes} onChange={(e) => setDefaultNotes(e.target.value)}
             rows={4} placeholder="e.g. All prices include VAT. Thank you for your business."
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
+            className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Default Terms</label>
-          <textarea value={defaultTerms} onChange={(e) => setDefaultTerms(e.target.value)}
+          <textarea aria-label="Default Terms" value={defaultTerms} onChange={(e) => setDefaultTerms(e.target.value)}
             rows={4} placeholder="e.g. Payment due within 14 days of invoice date. Late payment fees may apply."
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
+            className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
         </div>
       </div>
 
       {/* Actions */}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-3 pb-8">
-        <button
+        <button data-qc-variant="ghost"
           type="button"
-          onClick={() => router.push(`/${workspaceSlug}/resources/invoice-templates`)}
-          className="rounded-full border border-slate-300 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          onClick={() => router.push(`/${workspaceSlug}/resources/document-templates?type=invoice`)}
+          className="qc-button qc-flow-control qc-library-control "
         >
           Cancel
         </button>
-        <button
+        <button data-qc-variant="primary"
           type="button"
           onClick={handleSave}
           disabled={isPending || logoUploading || !name.trim()}
-          className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+          className="qc-button qc-flow-control qc-library-control "
         >
           {isPending ? 'Saving…' : isNew ? 'Create Template' : 'Save Changes'}
         </button>
       </div>
-    </div>
+    </QcLibrary>
   );
 }
