@@ -241,7 +241,7 @@ export default function SmartComponentsPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 sm:p-10">
             <h2 className="text-2xl font-semibold tracking-tight">Your logic, reused - by you or Smart Assistant</h2>
             <p className="mt-4 leading-7 text-zinc-600">
-              Smart Components™ are the engine underneath your account: saved materials, rates, waste rules and pricing logic. Smart Assistant works with that same engine — ask it to find jobs, quotes, orders and invoices, or adjust a rate on a quote, and it proposes the change using your saved rules for your confirmation. It does not invent pricing logic; it operates yours.
+              Smart Components™ are the engine underneath your account: saved materials, rates, waste rules and pricing logic. Smart Assistant works with that same engine - ask it to find jobs, quotes, orders and invoices, or adjust a rate on a quote, and it proposes the change using your saved rules for your confirmation. It does not invent pricing logic; it operates yours.
             </p>
             <p className="mt-3 leading-7 text-zinc-600">
               The more complete your component library, the more both you and Smart Assistant can do with it.

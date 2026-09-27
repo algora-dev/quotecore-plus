@@ -62,7 +62,7 @@ function StatusCell({
       )}
       {(status === "no" || status === "different" || status === "unconfirmed") && (
         <span aria-hidden="true" className="mt-0.5 shrink-0 font-bold text-zinc-400">
-          —
+          -
         </span>
       )}
       <span>
@@ -206,7 +206,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
                   aria-hidden="true"
                   className={`mt-0.5 shrink-0 font-bold ${b.positive ? "text-[#FF6B35]" : "text-zinc-400"}`}
                 >
-                  {b.positive ? "✓" : "—"}
+                  {b.positive ? "✓" : " - "}
                 </span>
                 {b.label}
               </p>
@@ -276,7 +276,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
         <div className="mx-auto max-w-4xl px-6 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">Which one fits your business?</h2>
           <p className="mt-4 text-lg leading-8 text-zinc-600">
-            An honest starting point — both tools are good at what they do.
+            An honest starting point - both tools are good at what they do.
           </p>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
             <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-7 py-7">
@@ -320,7 +320,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
         <ComparisonTable rows={data.comparison.rows} competitorName={data.competitorName} />
         <p className="mt-6 text-sm text-zinc-500">
           “Not publicly confirmed” means the capability is not clearly stated on the
-          vendor’s official website — it may exist, but we do not claim it either way.
+          vendor’s official website - it may exist, but we do not claim it either way.
         </p>
         <div className="mt-12">
           <DemoCTACard location={`${slug}_comparison_mid`} />

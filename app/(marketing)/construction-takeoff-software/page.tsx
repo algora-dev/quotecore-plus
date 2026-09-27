@@ -11,11 +11,11 @@ import {
 } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: "Construction Takeoff Software — Measure PDF Plans Digitally | QuoteCore+",
+  title: "Construction Takeoff Software - Measure PDF Plans Digitally | QuoteCore+",
   description:
-    "Digital construction takeoff software for PDF plans and images. Measure roof, siding/cladding and flooring areas, lengths and quantities on phone, tablet or desktop, then feed them into materials, labour and pricing. Try the takeoff tools free — no signup.",
+    "Digital construction takeoff software for PDF plans and images. Measure roof, siding/cladding and flooring areas, lengths and quantities on phone, tablet or desktop, then feed them into materials, labour and pricing. Try the takeoff tools free - no signup.",
   openGraph: {
-    title: "Construction Takeoff Software — Measure PDF Plans Digitally | QuoteCore+",
+    title: "Construction Takeoff Software - Measure PDF Plans Digitally | QuoteCore+",
     description:
       "Measure roof, siding/cladding and flooring areas, lengths and quantities from PDF plans and images on phone, tablet or desktop, then feed the measurements into materials, labour and pricing.",
     url: "/construction-takeoff-software",
@@ -134,7 +134,7 @@ export default function ConstructionTakeoffSoftwarePage() {
               Digital construction takeoff software for plans, areas &amp; lengths.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Upload construction plans and measure areas, lengths and quantities digitally — on site from your phone or tablet, or at the office on desktop. Use the same workflow for
+              Upload construction plans and measure areas, lengths and quantities digitally - on site from your phone or tablet, or at the office on desktop. Use the same workflow for
               roofs, siding/cladding, floors and other measured work, then turn the measurements into materials,
               labour, pricing and professional estimates or quotes.
             </p>
@@ -216,7 +216,7 @@ export default function ConstructionTakeoffSoftwarePage() {
             that converts quantities into cost: material rates, labour per unit, waste percentages, pack sizes, pitch
             factors and pricing rules. Build the rules once, and every takeoff - or any measurement set you enter by
             hand - flows through the same pricing automatically. Start the takeoff on your phone on site and finish
-            the pricing at your desk — the job travels with you.
+            the pricing at your desk - the job travels with you.
           </p>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
             <Link href="/measurement-to-quote-tool" className={link}>See how measurements become a priced estimate →</Link>
@@ -315,11 +315,11 @@ export default function ConstructionTakeoffSoftwarePage() {
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
             <h2 className="text-2xl font-semibold">Keep exploring</h2>
             <ul className="mt-4 space-y-2 text-zinc-600">
-              <li><Link href="/free-construction-takeoff-tools" className={link}>Free construction takeoff tools</Link> — measure your own plans, no signup</li>
-              <li><Link href="/roofing-takeoff-software" className={link}>Roofing takeoff software</Link> — roof measurement from PDF plans</li>
-              <li><Link href="/construction-quoting-software" className={link}>Contractor estimating &amp; quoting software</Link> — the connected workflow</li>
-              <li><Link href="/blog/how-to-measure-pdf-plans" className={link}>How to measure PDF plans</Link> — the step-by-step guide</li>
-              <li><Link href="/free-tools" className={link}>All free tools</Link> — calculators, generators and takeoff tools</li>
+              <li><Link href="/free-construction-takeoff-tools" className={link}>Free construction takeoff tools</Link> - measure your own plans, no signup</li>
+              <li><Link href="/roofing-takeoff-software" className={link}>Roofing takeoff software</Link> - roof measurement from PDF plans</li>
+              <li><Link href="/construction-quoting-software" className={link}>Contractor estimating &amp; quoting software</Link> - the connected workflow</li>
+              <li><Link href="/blog/how-to-measure-pdf-plans" className={link}>How to measure PDF plans</Link> - the step-by-step guide</li>
+              <li><Link href="/free-tools" className={link}>All free tools</Link> - calculators, generators and takeoff tools</li>
             </ul>
           </div>
         </section>

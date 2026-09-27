@@ -140,11 +140,11 @@ const faqs = [
   },
   {
     q: "Can I create and manage quotes from my phone?",
-    a: "Yes. The workflow runs on phones and tablets as well as desktop — measure the roof on site, build or review the quote, see whether it has been viewed or accepted, and keep the job moving from wherever you are.",
+    a: "Yes. The workflow runs on phones and tablets as well as desktop - measure the roof on site, build or review the quote, see whether it has been viewed or accepted, and keep the job moving from wherever you are.",
   },
   {
     q: "What can Smart Assistant do?",
-    a: "Smart Assistant works with the data in your QuoteCore+ account. Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks like adjusting rates. Important changes are proposed for your confirmation first — you decide what goes ahead.",
+    a: "Smart Assistant works with the data in your QuoteCore+ account. Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks like adjusting rates. Important changes are proposed for your confirmation first - you decide what goes ahead.",
   },
   {
     q: "What is the best roofing quoting software?",
@@ -285,7 +285,7 @@ export default function RoofingQuotingSoftwarePage() {
         <ThreeWaysToWork
           className="max-w-4xl"
           title="Three ways to build a roofing quote"
-          intro="All three paths use the same saved components and pricing rules — pick the one that fits the job."
+          intro="All three paths use the same saved components and pricing rules - pick the one that fits the job."
           cards={[
             {
               title: "Measure it in QuoteCore+",
@@ -301,7 +301,7 @@ export default function RoofingQuotingSoftwarePage() {
             },
             {
               title: "Ask Smart Assistant",
-              body: "Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks. Important changes are proposed for your confirmation first — you stay in control.",
+              body: "Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks. Important changes are proposed for your confirmation first - you stay in control.",
             },
           ]}
           footnote="The same measurements and pricing rules feed every path, so the quote is built once and carries through to material orders and invoices."
@@ -314,7 +314,7 @@ export default function RoofingQuotingSoftwarePage() {
               One clean workflow. Measure to paid.
             </h2>
             <p className="mt-4 text-lg leading-8 text-zinc-600">
-              QuoteCore+ helps roofers handle the full job journey: measure, quote, send, track approval, order materials, manage the work, invoice the client and get paid. Do it from site or office — the workflow runs on phone, tablet and desktop.
+              QuoteCore+ helps roofers handle the full job journey: measure, quote, send, track approval, order materials, manage the work, invoice the client and get paid. Do it from site or office - the workflow runs on phone, tablet and desktop.
             </p>
 
             <div className="mt-12 flex flex-col gap-5">

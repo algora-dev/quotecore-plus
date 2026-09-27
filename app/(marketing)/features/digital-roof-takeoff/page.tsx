@@ -106,7 +106,7 @@ const faqSchema = {
 };
 
 const steps = [
-  { num: 1, title: "Upload your plan", text: "Upload a roof plan, drawing, or image — on phone, tablet or desktop. Both AI Scan Assist and manual drawing start from the same uploaded plan. No plan? You can also start from scratch with site measurements." },
+  { num: 1, title: "Upload your plan", text: "Upload a roof plan, drawing, or image - on phone, tablet or desktop. Both AI Scan Assist and manual drawing start from the same uploaded plan. No plan? You can also start from scratch with site measurements." },
   { num: 2, title: "Draw or scan - your choice", text: "Use AI Scan Assist to automatically detect roof edges, ridges, valleys, and hips. Or switch to manual and draw every line yourself. Both paths give you the same result." },
   { num: 3, title: "Pitch and quantities auto-calculate", text: "When you draw a section, the pitch and pitch type are calculated automatically. Areas, waste allowances, and material quantities update in real time. You just draw what you see." },
   { num: 4, title: "Attach to components and send to quote", text: "Each measurement attaches to a Smart Component that already knows its pricing and waste rules. Your takeoff flows directly into the quote builder. No copy-pasting." },

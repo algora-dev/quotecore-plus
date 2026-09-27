@@ -62,12 +62,12 @@ const faqs = [
   {
     question: "Can I estimate from my phone or tablet?",
     answer:
-      "Yes. The full measure-to-quote workflow — plan upload, digital takeoff, AI Scan Assist, Smart Components pricing and quote creation — runs on phones and tablets as well as desktop. Measure the roof on site, save and continue, and the same job is ready when you open it on another device.",
+      "Yes. The full measure-to-quote workflow - plan upload, digital takeoff, AI Scan Assist, Smart Components pricing and quote creation - runs on phones and tablets as well as desktop. Measure the roof on site, save and continue, and the same job is ready when you open it on another device.",
   },
   {
     question: "What is Smart Assistant?",
     answer:
-      "Smart Assistant is an in-app assistant that works with the data in your QuoteCore+ account. Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks — important changes are proposed for your confirmation first. It is an easier way to work with your own data, not a replacement for your estimating judgement.",
+      "Smart Assistant is an in-app assistant that works with the data in your QuoteCore+ account. Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks - important changes are proposed for your confirmation first. It is an easier way to work with your own data, not a replacement for your estimating judgement.",
   },
 ];
 
@@ -87,7 +87,7 @@ const estimatingSteps = [
   {
     number: "01",
     title: "Upload plans or use AI scan",
-    body: "Upload a roof plan, satellite image or drawing — on phone, tablet or desktop. Use AI Scan Assist to identify roof areas, ridges, hips, valleys, barges and spouting automatically, or measure manually with digital takeoff tools.",
+    body: "Upload a roof plan, satellite image or drawing - on phone, tablet or desktop. Use AI Scan Assist to identify roof areas, ridges, hips, valleys, barges and spouting automatically, or measure manually with digital takeoff tools.",
   },
   {
     number: "02",
@@ -178,7 +178,7 @@ export default function RoofingEstimatingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure roofs on site or in the office — phone, tablet or desktop — with AI Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Paid plans from $19 to $59/month.
+              Measure roofs on site or in the office - phone, tablet or desktop - with AI Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Paid plans from $19 to $59/month.
             </p>
 
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -219,7 +219,7 @@ export default function RoofingEstimatingSoftwarePage() {
             Traditional estimating often means scaling rulers on paper plans, entering numbers into spreadsheets, and manually calculating waste, pitch adjustments and material counts. Every step is a chance for an error, and the same calculations get repeated on every job.
           </p>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
-            QuoteCore+ replaces that process with a connected estimating workflow. Digital takeoff tools measure the roof. Smart Components&#8482; apply your stored materials, labour, waste and pricing rules automatically. The estimate becomes a quote without manual re-entry, and the same data carries through to material orders and invoices. The whole workflow runs on phone, tablet or desktop — measure the roof on site and continue the same job back at the office.
+            QuoteCore+ replaces that process with a connected estimating workflow. Digital takeoff tools measure the roof. Smart Components&#8482; apply your stored materials, labour, waste and pricing rules automatically. The estimate becomes a quote without manual re-entry, and the same data carries through to material orders and invoices. The whole workflow runs on phone, tablet or desktop - measure the roof on site and continue the same job back at the office.
           </p>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
             However you measure - square feet, roofing squares or square metres, shingles, metal roofing or membrane, your own labor rates in dollars per square or per m² - the estimating rules are yours. Build your roofing estimate, then send it as a quote, bid or proposal without re-entering data. For the measurement side, see{' '}
@@ -236,7 +236,7 @@ export default function RoofingEstimatingSoftwarePage() {
         <ThreeWaysToWork
           className="max-w-4xl"
           title="Three ways to get from measurements to an estimate"
-          intro="Every path feeds the same saved pricing logic — start from the measurement source you actually have."
+          intro="Every path feeds the same saved pricing logic - start from the measurement source you actually have."
           cards={[
             {
               title: "Measure the roof in QuoteCore+",
@@ -246,16 +246,16 @@ export default function RoofingEstimatingSoftwarePage() {
             },
             {
               title: "Enter measurements you already have",
-              body: "Site measure, third-party report, aerial or satellite measurements — enter the dimensions and Smart Components™ apply your saved materials, labour, waste and pricing rules.",
+              body: "Site measure, third-party report, aerial or satellite measurements - enter the dimensions and Smart Components™ apply your saved materials, labour, waste and pricing rules.",
               href: "/measurement-to-quote-tool",
               linkLabel: "See measurement-to-quote →",
             },
             {
               title: "Ask Smart Assistant",
-              body: "Use text or voice to find information and carry out supported tasks in your account — while you stay in control of important changes.",
+              body: "Use text or voice to find information and carry out supported tasks in your account - while you stay in control of important changes.",
             },
           ]}
-          footnote="Example: ask Smart Assistant “What’s the status of the Ridge Road quote?” or “Show me this month’s sent quotes” — find things without navigating every screen."
+          footnote="Example: ask Smart Assistant “What’s the status of the Ridge Road quote?” or “Show me this month’s sent quotes” - find things without navigating every screen."
         />
 
         {/* Key estimating features */}

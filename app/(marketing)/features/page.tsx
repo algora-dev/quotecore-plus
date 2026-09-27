@@ -104,7 +104,7 @@ export default function FeaturesHubPage() {
               Every part of the quoting workflow, connected.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
-              From the first measurement to the final invoice, QuoteCore+ keeps every step of the quoting process in one place — on site or in the office. Work the app directly on phone, tablet or desktop, or ask Smart Assistant when that is faster. Explore the features that make it work.
+              From the first measurement to the final invoice, QuoteCore+ keeps every step of the quoting process in one place - on site or in the office. Work the app directly on phone, tablet or desktop, or ask Smart Assistant when that is faster. Explore the features that make it work.
             </p>
           </div>
         </section>
@@ -113,7 +113,7 @@ export default function FeaturesHubPage() {
         <section className="mx-auto max-w-5xl px-6 pb-12 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 sm:p-10">
             <h2 className="text-center text-2xl font-semibold tracking-tight">From measurement to invoice in one workflow</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Each feature connects to the next. No re-entering data, no switching between tools — and no being stuck at a desk: the workflow runs on phone, tablet and desktop.</p>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Each feature connects to the next. No re-entering data, no switching between tools - and no being stuck at a desk: the workflow runs on phone, tablet and desktop.</p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-sm font-medium sm:gap-3">
               {[
                 { label: "Measure", href: "/features/digital-roof-takeoff" },
@@ -154,7 +154,7 @@ export default function FeaturesHubPage() {
         {/* Three ways to work */}
         <ThreeWaysToWork
           title="Three ways to get from measurements to a quote"
-          intro="Not every job starts the same way. Pick the path that fits the work — all three feed the same saved pricing logic."
+          intro="Not every job starts the same way. Pick the path that fits the work - all three feed the same saved pricing logic."
           cards={[
             {
               title: "Measure it in QuoteCore+",
@@ -170,7 +170,7 @@ export default function FeaturesHubPage() {
             },
             {
               title: "Ask Smart Assistant",
-              body: "Use text or voice to find information and carry out supported tasks in your account — while you stay in control of important changes.",
+              body: "Use text or voice to find information and carry out supported tasks in your account - while you stay in control of important changes.",
             },
           ]}
           footnote="Repairs, variations and one-offs can still start from a blank, line-by-line quote. Shared accelerators across every path: CSV catalogue import, searchable supplier catalogues, supplier component libraries, saved catalogue items and AI line-item import."
@@ -196,7 +196,7 @@ export default function FeaturesHubPage() {
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Sending & Tracking</td><td className="px-5 py-3 text-slate-600">Send documents, track opens/reads, automate follow-ups with cancellation conditions</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Material Ordering</td><td className="px-5 py-3 text-slate-600">Create orders from saved quotes with three display formats and supplier-ready details</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Invoicing</td><td className="px-5 py-3 text-slate-600">Create invoices from accepted quotes with configurable payment methods (bank, Stripe, PayPal)</td></tr>
-                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Smart Assistant</td><td className="px-5 py-3 text-slate-600">Ask by text or voice to find jobs, quotes, orders and invoices and carry out supported tasks — with confirmation before important changes</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Smart Assistant</td><td className="px-5 py-3 text-slate-600">Ask by text or voice to find jobs, quotes, orders and invoices and carry out supported tasks - with confirmation before important changes</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Supplier Resources</td><td className="px-5 py-3 text-slate-600">Import supplier catalogues and build component libraries from CSV</td></tr>
               </tbody>
             </table>

@@ -63,7 +63,7 @@ const faqs = [
 
 const faqSchema = buildFaqSchema(faqs);
 
-// Card styling per tier — richer treatment on higher tiers draws the eye up-range
+// Card styling per tier - richer treatment on higher tiers draws the eye up-range
 function planStyles(plan: (typeof pricingPlans)[number]): string {
   const premium = plan.name === "Pro Plus";
   if (plan.featured) {
