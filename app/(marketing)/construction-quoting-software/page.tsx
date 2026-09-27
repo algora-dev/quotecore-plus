@@ -3,6 +3,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import DemoCTACard from "@/components/DemoCTACard";
+import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import YouTubeLite from "@/components/YouTubeLite";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
@@ -10,11 +11,11 @@ export const metadata: Metadata = {
   // Root layout appends "| QuoteCore+" via template - do NOT add brand suffix here (avoids suffix doubling)
   title: "Contractor Estimating & Quoting Software for Construction",
   description:
-    "Contractor estimating and quoting software for trades — build estimates and quotes from measurements, with digital takeoff, Smart Components, material ordering and invoicing. Free tools and paid plans from $19/month with a 30-day money-back guarantee.",
+    "Contractor estimating and quoting software for trades — build estimates and quotes from measurements on site or in the office, with digital takeoff, Smart Components, material ordering, invoicing and Smart Assistant. Free tools and paid plans from $19/month with a 30-day money-back guarantee.",
   openGraph: {
     title: "Contractor Estimating & Quoting Software | QuoteCore+",
     description:
-      "Contractor estimating and quoting software for trades — build estimates and quotes from measurements. Free tools and paid plans from $19/month.",
+      "Contractor estimating and quoting software for trades — build estimates and quotes from measurements on site or in the office. Free tools and paid plans from $19/month.",
     url: "/construction-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -167,6 +168,22 @@ const faqSchema = {
         text: "Yes. QuoteCore+ is designed to keep the job connected through to invoicing and payment, instead of stopping once the quote is accepted.",
       },
     },
+    {
+      "@type": "Question",
+      name: "Can I quote from my phone or tablet?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. The workflow runs on phones and tablets as well as desktop — measure on site, build or review the quote, track whether it has been viewed or accepted, and keep the job moving from wherever you are.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What is Smart Assistant?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Smart Assistant is an in-app assistant that works with the data in your QuoteCore+ account. Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks — important changes are proposed for your confirmation first. It makes the workflow faster to operate without replacing your pricing judgement.",
+      },
+    },
   ],
 };
 
@@ -174,7 +191,7 @@ const steps = [
   {
     number: "01",
     title: "Choose how you want to quote",
-    body: "Start from a blank quote, use saved Smart Components™, or upload a plan and measure digitally. AI Scan Assist identifies roof areas and components from an uploaded plan automatically. QuoteCore+ gives you different ways to build the job depending on how you work.",
+    body: "Start from a blank quote, use saved Smart Components™, or upload a plan and measure digitally on phone, tablet or desktop. AI Scan Assist identifies roof areas and components from an uploaded plan automatically. QuoteCore+ gives you different ways to build the job depending on how you work.",
   },
   {
     number: "02",
@@ -251,6 +268,14 @@ const faqs = [
   {
     q: "Does QuoteCore+ work for subcontractors?",
     a: "Yes. Subcontractors who quote from plans or site measurements can use QuoteCore+ to build priced quotes, track customer approval, order materials, and invoice — all from the same job data. Smart Components are especially useful for subcontractors who repeat similar work across multiple jobs.",
+  },
+  {
+    q: "Can I quote from my phone or tablet?",
+    a: "Yes. The workflow runs on phones and tablets as well as desktop — measure on site, build or review the quote, track whether it has been viewed or accepted, and keep the job moving from wherever you are.",
+  },
+  {
+    q: "What is Smart Assistant?",
+    a: "Smart Assistant is an in-app assistant that works with the data in your QuoteCore+ account. Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks — important changes are proposed for your confirmation first. It makes the workflow faster to operate without replacing your pricing judgement.",
   },
 ];
 
@@ -340,7 +365,7 @@ export default function ConstructionQuotingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure jobs with digital takeoff and AI Scan Assist, build priced quotes with Smart Components™, track customer approval, order materials, manage work, invoice and get paid - all in one connected workflow.
+              Measure jobs with digital takeoff and AI Scan Assist, build priced quotes with Smart Components™, track customer approval, order materials, manage work, invoice and get paid - all in one connected workflow that runs on phone, tablet or desktop.
             </p>
 
             {/* Two entry paths */}
@@ -442,6 +467,32 @@ export default function ConstructionQuotingSoftwarePage() {
         <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
           <DemoCTACard location="construction_quoting_software_intro" />
         </section>
+
+        {/* Three ways to work */}
+        <ThreeWaysToWork
+          className="max-w-4xl"
+          title="Three ways to get from measurements to a quote"
+          intro="Whatever trade you work in, all three paths feed the same saved pricing rules."
+          cards={[
+            {
+              title: "Measure it in QuoteCore+",
+              body: "Measure from plans or images with digital takeoff on phone, tablet or desktop — roofs, walls or floors. Use AI Scan Assist where it helps, then review before pricing.",
+              href: "/features/digital-roof-takeoff",
+              linkLabel: "See digital takeoff →",
+            },
+            {
+              title: "Enter measurements you already have",
+              body: "Site measure, third-party report or spreadsheet? Enter the dimensions and Smart Components™ apply your saved materials, labour, waste and pricing rules.",
+              href: "/measurement-to-quote-tool",
+              linkLabel: "See measurement-to-quote →",
+            },
+            {
+              title: "Ask Smart Assistant",
+              body: "Ask by text or voice to find jobs, quotes, orders and invoices or carry out supported tasks — important changes are proposed for your confirmation first.",
+            },
+          ]}
+          footnote="The same measurements and pricing rules feed every path — and the priced quote carries through to material orders and invoices."
+        />
 
         {/* Pricing clarity */}
         <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
@@ -689,6 +740,7 @@ export default function ConstructionQuotingSoftwarePage() {
               "You copy the same job details between different tools",
               "You need quotes to look professional without spending hours formatting them",
               "You want job information to stay connected after the customer says yes",
+              "You work from site as much as the office and need the workflow on your phone",
             ].map((item) => (
               <li key={item} className="flex items-start gap-3 text-zinc-700">
                 <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#FF6B35]" />

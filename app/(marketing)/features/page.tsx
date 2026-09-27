@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import React from "react";
 import Link from "next/link";
 import DemoCTACard from "@/components/DemoCTACard";
+import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -11,7 +12,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Roofing & Construction Quoting Features | QuoteCore+",
   description:
-    "Digital roof takeoff, AI Scan Assist, Smart Components, material ordering, quote approvals, and invoicing. Explore every feature of the QuoteCore+ quoting platform.",
+    "Digital roof takeoff on phone, tablet or desktop, AI Scan Assist, Smart Components, material ordering, quote approvals, invoicing, and Smart Assistant. Explore every feature of the QuoteCore+ quoting platform.",
   alternates: {
     canonical: "https://quote-core.com/features",
     languages: hreflangLanguages("/features"),
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Roofing & Construction Quoting Features | QuoteCore+",
     description:
-      "Digital roof takeoff, AI Scan Assist, Smart Components, material ordering, quote approvals, and invoicing. Explore every feature of QuoteCore+.",
+      "Digital roof takeoff on phone, tablet or desktop, AI Scan Assist, Smart Components, material ordering, quote approvals, invoicing, and Smart Assistant. Explore every feature of QuoteCore+.",
     url: "https://quote-core.com/features",
     siteName: "QuoteCore+",
     type: "website",
@@ -103,7 +104,7 @@ export default function FeaturesHubPage() {
               Every part of the quoting workflow, connected.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
-              From the first measurement to the final invoice, QuoteCore+ keeps every step of the quoting process in one place. Explore the features that make it work.
+              From the first measurement to the final invoice, QuoteCore+ keeps every step of the quoting process in one place — on site or in the office. Work the app directly on phone, tablet or desktop, or ask Smart Assistant when that is faster. Explore the features that make it work.
             </p>
           </div>
         </section>
@@ -112,7 +113,7 @@ export default function FeaturesHubPage() {
         <section className="mx-auto max-w-5xl px-6 pb-12 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 sm:p-10">
             <h2 className="text-center text-2xl font-semibold tracking-tight">From measurement to invoice in one workflow</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Each feature connects to the next. No re-entering data, no switching between tools.</p>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Each feature connects to the next. No re-entering data, no switching between tools — and no being stuck at a desk: the workflow runs on phone, tablet and desktop.</p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-sm font-medium sm:gap-3">
               {[
                 { label: "Measure", href: "/features/digital-roof-takeoff" },
@@ -150,43 +151,36 @@ export default function FeaturesHubPage() {
           </div>
         </section>
 
-        {/* Four ways to quote */}
-        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
-          <h2 className="text-center text-2xl font-semibold tracking-tight">Four ways to quote</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Not every job starts the same way. Pick the path that fits the work.</p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h3 className="text-base font-semibold text-slate-900">1. Plan + AI Scan Assist</h3>
-              <p className="mt-2 text-sm text-slate-500">Best for full reroofs and plan work. Upload a roof plan, AI identifies areas and elements, you verify and Smart Components calculate the rest.</p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h3 className="text-base font-semibold text-slate-900">2. Plan + manual takeoff</h3>
-              <p className="mt-2 text-sm text-slate-500">Best for complex or unusual plans. Upload a plan and draw everything digitally. Smart Components apply pricing as you go.</p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h3 className="text-base font-semibold text-slate-900">3. Site measurements + Smart Components</h3>
-              <p className="mt-2 text-sm text-slate-500">Best for site-measured and repeat jobs. Enter measurements from site and saved rules generate quantities, labour and price.</p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h3 className="text-base font-semibold text-slate-900">4. Custom / line-by-line quote</h3>
-              <p className="mt-2 text-sm text-slate-500">Best for repairs, variations and one-offs. Start blank, use CSV catalogues, supplier catalogues or saved items. Includes AI line-item import.</p>
-            </div>
-          </div>
-          <div className="mt-6 rounded-xl border border-dashed border-slate-200 px-6 py-5">
-            <p className="text-sm font-medium text-slate-900">Shared accelerators across all paths:</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {["CSV catalogue import", "Searchable supplier catalogues", "Supplier component libraries", "Saved catalogue items", "AI line-item import"].map((item) => (
-                <span key={item} className="inline-flex items-center rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">{item}</span>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Three ways to work */}
+        <ThreeWaysToWork
+          title="Three ways to get from measurements to a quote"
+          intro="Not every job starts the same way. Pick the path that fits the work — all three feed the same saved pricing logic."
+          cards={[
+            {
+              title: "Measure it in QuoteCore+",
+              body: "Measure from plans or images with digital takeoff on phone, tablet or desktop. Use AI Scan Assist where it helps, then review the result before pricing.",
+              href: "/features/digital-roof-takeoff",
+              linkLabel: "See digital takeoff →",
+            },
+            {
+              title: "Enter measurements you already have",
+              body: "Measured on site or have a report? Enter the dimensions and Smart Components™ apply your saved materials, labour, waste and pricing rules.",
+              href: "/measurement-to-quote-tool",
+              linkLabel: "See measurement-to-quote →",
+            },
+            {
+              title: "Ask Smart Assistant",
+              body: "Use text or voice to find information and carry out supported tasks in your account — while you stay in control of important changes.",
+            },
+          ]}
+          footnote="Repairs, variations and one-offs can still start from a blank, line-by-line quote. Shared accelerators across every path: CSV catalogue import, searchable supplier catalogues, supplier component libraries, saved catalogue items and AI line-item import."
+        />
 
         {/* Comparisons */}
         {/* Feature table */}
         <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-center text-2xl font-semibold tracking-tight">What each feature does</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Seven connected features that take you from plan to payment.</p>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Connected features that take you from plan to payment.</p>
           <div className="mt-8 overflow-hidden rounded-xl border border-slate-200">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
@@ -202,6 +196,7 @@ export default function FeaturesHubPage() {
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Sending & Tracking</td><td className="px-5 py-3 text-slate-600">Send documents, track opens/reads, automate follow-ups with cancellation conditions</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Material Ordering</td><td className="px-5 py-3 text-slate-600">Create orders from saved quotes with three display formats and supplier-ready details</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Invoicing</td><td className="px-5 py-3 text-slate-600">Create invoices from accepted quotes with configurable payment methods (bank, Stripe, PayPal)</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Smart Assistant</td><td className="px-5 py-3 text-slate-600">Ask by text or voice to find jobs, quotes, orders and invoices and carry out supported tasks — with confirmation before important changes</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Supplier Resources</td><td className="px-5 py-3 text-slate-600">Import supplier catalogues and build component libraries from CSV</td></tr>
               </tbody>
             </table>

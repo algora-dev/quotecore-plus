@@ -72,6 +72,14 @@ const faqSchema = {
         text: "Yes. You can create Smart Components™ for any material, assembly, service, or workflow you use regularly. There is no limit to what can be a component - if it has a price and a measurement, it can be a Smart Component.",
       },
     },
+    {
+      "@type": "Question",
+      name: "How do Smart Components work with Smart Assistant?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Smart Assistant can work with the components, rates and rules saved in your account. Ask it to find jobs, quotes, orders and invoices, or carry out supported actions like adjusting a rate - important changes are proposed first and applied only when you confirm. Your pricing logic stays yours: the Assistant operates it, it does not invent it.",
+      },
+    },
   ],
 };
 
@@ -87,6 +95,7 @@ const faqs = [
   { q: "What measurement types do Smart Components™ support?", a: "Smart Components™ support area-based measurements (square metres, square feet, roofing squares), linear measurements (metres, feet), volume, per-unit counts, and fixed-cost items. You choose the measurement type that fits the component, and it calculates accordingly." },
   { q: "Can I import components from my supplier's price list?", a: "Yes. You can import components from supplier catalogs and price lists. You can also search for supplier component libraries by area or product type and add them to your account. This gives you a baseline pricing source even if you don't have your own prices yet." },
   { q: "Can I create my own Smart Components™?", a: "Yes. You can create Smart Components™ for any material, assembly, service, or workflow you use regularly. There is no limit to what can be a component - if it has a price and a measurement, it can be a Smart Component." },
+  { q: "How do Smart Components work with Smart Assistant?", a: "Smart Assistant can work with the components, rates and rules saved in your account. Ask it to find jobs, quotes, orders and invoices, or carry out supported actions like adjusting a rate - important changes are proposed first and applied only when you confirm. Your pricing logic stays yours: the Assistant operates it, it does not invent it." },
 ];
 
 export default function SmartComponentsPage() {
@@ -224,6 +233,19 @@ export default function SmartComponentsPage() {
                 <p className="mt-2 leading-7 text-zinc-600">{step.text}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Smart Assistant synergy */}
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 sm:p-10">
+            <h2 className="text-2xl font-semibold tracking-tight">Your logic, reused - by you or Smart Assistant</h2>
+            <p className="mt-4 leading-7 text-zinc-600">
+              Smart Components™ are the engine underneath your account: saved materials, rates, waste rules and pricing logic. Smart Assistant works with that same engine — ask it to find jobs, quotes, orders and invoices, or adjust a rate on a quote, and it proposes the change using your saved rules for your confirmation. It does not invent pricing logic; it operates yours.
+            </p>
+            <p className="mt-3 leading-7 text-zinc-600">
+              The more complete your component library, the more both you and Smart Assistant can do with it.
+            </p>
           </div>
         </section>
 

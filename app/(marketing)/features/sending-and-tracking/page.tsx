@@ -85,6 +85,14 @@ const faqSchema = {
         text: "Yes. You can attach files to any quote, order or invoice you send from QuoteCore+. Attachments can also be included in automated follow-up emails.",
       },
     },
+    {
+      "@type": "Question",
+      name: "Can Smart Assistant check quote status for me?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. Smart Assistant can find jobs, quotes, orders and invoices in your account, including their status, by text or voice. Automated follow-ups continue to run on the rules you configured - the Assistant helps you check and stay on top of them.",
+      },
+    },
   ],
 };
 
@@ -93,6 +101,7 @@ const faqs = [
   { q: "Can I set up automatic follow-up emails?", a: "Yes. You can configure time-based follow-ups (e.g. send a template email 5 days after a quote is opened with no decision) and event-based follow-ups (e.g. when a quote is accepted, send deposit details after a 10-minute delay). Follow-ups can include attachments and use saved email templates." },
   { q: "Do follow-ups cancel themselves automatically?", a: "Yes. You set cancellation conditions when configuring follow-ups. For example, if a quote is accepted or declined, pending follow-ups for that quote cancel automatically. No manual chasing list to maintain." },
   { q: "Can I send attachments with quotes and documents?", a: "Yes. You can attach files to any quote, order or invoice you send from QuoteCore+. Attachments can also be included in automated follow-up emails." },
+  { q: "Can Smart Assistant check quote status for me?", a: "Yes. Smart Assistant can find jobs, quotes, orders and invoices in your account, including their status, by text or voice. Automated follow-ups continue to run on the rules you configured - the Assistant helps you check and stay on top of them." },
 ];
 
 export default function SendingAndTrackingPage() {
@@ -114,7 +123,7 @@ export default function SendingAndTrackingPage() {
               Send, track and follow up. Automatically.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
-              Send quotes, orders and invoices directly from QuoteCore+ with attachments. Track when recipients open and read them. Set up automatic follow-ups with configurable delays and cancellation conditions - so chasing happens on its own.
+              Send quotes, orders and invoices directly from QuoteCore+ with attachments. Track when recipients open and read them. Set up automatic follow-ups with configurable delays and cancellation conditions - so chasing happens on its own. Check status from your phone, tablet or desktop, or ask Smart Assistant for a quote&rsquo;s status instead of opening the app.
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
@@ -152,6 +161,16 @@ export default function SendingAndTrackingPage() {
               <h3 className="text-base font-semibold text-zinc-950">Message centre</h3>
               <p className="mt-2 text-sm leading-6 text-zinc-600">Central place to manage all document activity. See the full history of sends, opens, accepts, declines and follow-ups in one view.</p>
             </div>
+          </div>
+        </section>
+
+        {/* Mobile + Assistant */}
+        <section className="mx-auto max-w-5xl px-6 pb-12 lg:px-8">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-6">
+            <h2 className="text-xl font-semibold text-zinc-950">From your phone - or without opening the app at all</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Document status is available on phone, tablet and desktop - see what has been opened, accepted or declined from wherever you are. And when it is faster to ask than to navigate, Smart Assistant can find the status of jobs, quotes, orders and invoices by text or voice.
+            </p>
           </div>
         </section>
 

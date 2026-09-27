@@ -1,0 +1,38 @@
+{
+  "phase": "Marketing V2 Phase 2",
+  "date": "2026-09-27",
+  "implemented_by": "Gavin (in-repo; Phase 1A tree 2e9bf3df as baseline)",
+  "source_files_modified": [
+    "app/(marketing)/features/page.tsx",
+    "app/(marketing)/roofing-estimating-software/page.tsx",
+    "app/(marketing)/roofing-quoting-software/page.tsx",
+    "app/(marketing)/roofing-takeoff-software/page.tsx",
+    "app/(marketing)/construction-quoting-software/page.tsx",
+    "app/(marketing)/construction-takeoff-software/page.tsx",
+    "app/(marketing)/features/digital-roof-takeoff/page.tsx",
+    "app/(marketing)/features/ai-scan-assist/page.tsx",
+    "app/(marketing)/features/smart-components/page.tsx",
+    "app/(marketing)/features/sending-and-tracking/page.tsx",
+    "app/(marketing)/features/material-ordering/page.tsx",
+    "app/(marketing)/features/invoicing/page.tsx"
+  ],
+  "components_added": [
+    "components/ThreeWaysToWork.tsx"
+  ],
+  "tier_a_pages": 6,
+  "tier_b_pages": 3,
+  "tier_c_pages": 3,
+  "tier_d_reviewed_unchanged": [
+    "app/(marketing)/done-for-you-setup/page.tsx"
+  ],
+  "homepage_modified": false,
+  "free_tool_source_modified": false,
+  "pricing_values_modified": false,
+  "app_demo_claimed_live": false,
+  "gates": {
+    "tsc_noEmit": "80 errors = exact baseline parity",
+    "eslint_changed_files": "0 new problems vs HEAD (1227 pre-existing before = 1227 after; new component lints clean)",
+    "next_build": "green",
+    "seo_check": "3 pre-existing errors (quotecore-nz sibling, out of scope) + 16 structural warnings; identical to pre-change baseline; no findings reference changed files"
+  }
+}

@@ -64,6 +64,14 @@ const faqSchema = {
         text: "Yes. Invoices include action buttons for customers to mark payment as sent or dispute the invoice. QuoteCore+ does not process payments - customers use the payment instructions provided (such as bank details) to pay, then mark payment as sent. This gives both parties a clear record of invoice status.",
       },
     },
+    {
+      "@type": "Question",
+      name: "Can Smart Assistant help with invoices?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. Smart Assistant can find invoices and their status by text or voice - including which invoices are unpaid - alongside jobs, quotes and orders in your account. Invoice creation and sending stay in the invoicing tool, where line items flow from your quote.",
+      },
+    },
   ],
 };
 
@@ -78,6 +86,7 @@ const faqs = [
   { q: "Do I need a quote to create an invoice?", a: "No. You can generate an invoice from an accepted quote in QuoteCore+, import a quote from another tool, or create a blank invoice from scratch. The invoicing tool works standalone." },
   { q: "Do invoices include payment instructions?", a: "Yes. Every invoice includes a payment instructions panel with the amount due, payment reference, and due date. Customers can copy payment details with one click." },
   { q: "Can customers confirm payment or dispute an invoice online?", a: "Yes. Invoices include action buttons for customers to mark payment as sent or dispute the invoice. QuoteCore+ does not process payments - customers pay using the included payment instructions (such as bank details) and mark payment as sent. This gives both parties a clear record of invoice status." },
+  { q: "Can Smart Assistant help with invoices?", a: "Yes. Smart Assistant can find invoices and their status by text or voice - including which invoices are unpaid - alongside jobs, quotes and orders in your account. Invoice creation and sending stay in the invoicing tool, where line items flow from your quote." },
 ];
 
 export default function InvoicingPage() {
@@ -160,7 +169,7 @@ export default function InvoicingPage() {
             Invoicing is a standalone tool. You can generate an invoice from an accepted quote in QuoteCore+, import a quote from another tool, or create a blank invoice from scratch. However you start, the result is a branded, professional invoice document with line items, totals, and payment instructions.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
-            Every invoice includes a payment instructions panel with the amount due, payment reference, and due date. Customers can copy payment details with one click, mark payment as sent, or dispute the invoice. You see the status of every invoice without chasing emails.
+            Every invoice includes a payment instructions panel with the amount due, payment reference, and due date. Customers can copy payment details with one click, mark payment as sent, or dispute the invoice. You see the status of every invoice without chasing emails - on any device - and Smart Assistant can find which invoices are unpaid or disputed by text or voice.
           </p>
         </section>
 

@@ -3,6 +3,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import DemoCTACard from "@/components/DemoCTACard";
+import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import YouTubeLite from "@/components/YouTubeLite";
 import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
@@ -10,11 +11,11 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Roofing Quoting Software | QuoteCore+",
   description:
-    "Roofing quoting software for roofers and contractors. Digital roof takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Paid plans from $19 to $59/month.",
+    "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, AI Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Paid plans from $19 to $59/month.",
   openGraph: {
     title: "Roofing Quoting Software | QuoteCore+",
     description:
-      "Roofing quoting software for roofers and contractors. Digital roof takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Paid plans from $19 to $59/month.",
+      "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, AI Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Paid plans from $19 to $59/month.",
     url: "/roofing-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -104,6 +105,8 @@ const bullets = [
   "Materials ordering connected to accepted quotes",
   "Job details, invoices and payment workflow kept in one place",
   "Built for roofing first, flexible enough for wider construction work",
+  "Full measure-to-quote workflow on phone, tablet and desktop - work from site or office",
+  "Smart Assistant finds and updates supported information by text or voice, with confirmation before important changes",
 ];
 
 const faqs = [
@@ -134,6 +137,14 @@ const faqs = [
   {
     q: "How do plans and free tools work?",
     a: "The free tools are unlimited and need no signup. Paid plans start at $19/month with a 30-day money-back guarantee.",
+  },
+  {
+    q: "Can I create and manage quotes from my phone?",
+    a: "Yes. The workflow runs on phones and tablets as well as desktop — measure the roof on site, build or review the quote, see whether it has been viewed or accepted, and keep the job moving from wherever you are.",
+  },
+  {
+    q: "What can Smart Assistant do?",
+    a: "Smart Assistant works with the data in your QuoteCore+ account. Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks like adjusting rates. Important changes are proposed for your confirmation first — you decide what goes ahead.",
   },
   {
     q: "What is the best roofing quoting software?",
@@ -222,7 +233,7 @@ export default function RoofingQuotingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure the roof with digital takeoff and AI Scan Assist, build the quote with Smart Components™, send it to the customer, order materials, manage the job, invoice and get paid - all in one connected workflow.
+              Measure the roof with digital takeoff and AI Scan Assist, build the quote with Smart Components™, send it to the customer, order materials, manage the job, invoice and get paid - all in one connected workflow that runs on phone, tablet or desktop.
             </p>
 
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
@@ -270,6 +281,32 @@ export default function RoofingQuotingSoftwarePage() {
           <DemoCTACard location="roofing_quoting_software_intro" />
         </section>
 
+        {/* Three ways to work */}
+        <ThreeWaysToWork
+          className="max-w-4xl"
+          title="Three ways to build a roofing quote"
+          intro="All three paths use the same saved components and pricing rules — pick the one that fits the job."
+          cards={[
+            {
+              title: "Measure it in QuoteCore+",
+              body: "Measure roof areas, ridges, hips, valleys and spouting from plans or images with digital takeoff on phone, tablet or desktop. Use AI Scan Assist where it helps, then review before pricing.",
+              href: "/features/digital-roof-takeoff",
+              linkLabel: "See digital takeoff →",
+            },
+            {
+              title: "Enter measurements you already have",
+              body: "Site measure or third-party report? Enter the dimensions and Smart Components™ apply your saved materials, labour, waste and pricing rules to build the quote.",
+              href: "/measurement-to-quote-tool",
+              linkLabel: "See measurement-to-quote →",
+            },
+            {
+              title: "Ask Smart Assistant",
+              body: "Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks. Important changes are proposed for your confirmation first — you stay in control.",
+            },
+          ]}
+          footnote="The same measurements and pricing rules feed every path, so the quote is built once and carries through to material orders and invoices."
+        />
+
         {/* How it works */}
         <section className="bg-zinc-50 py-20">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
@@ -277,7 +314,7 @@ export default function RoofingQuotingSoftwarePage() {
               One clean workflow. Measure to paid.
             </h2>
             <p className="mt-4 text-lg leading-8 text-zinc-600">
-              QuoteCore+ helps roofers handle the full job journey: measure, quote, send, track approval, order materials, manage the work, invoice the client and get paid.
+              QuoteCore+ helps roofers handle the full job journey: measure, quote, send, track approval, order materials, manage the work, invoice the client and get paid. Do it from site or office — the workflow runs on phone, tablet and desktop.
             </p>
 
             <div className="mt-12 flex flex-col gap-5">

@@ -13,11 +13,11 @@ import {
 export const metadata: Metadata = {
   title: "Construction Takeoff Software — Measure PDF Plans Digitally | QuoteCore+",
   description:
-    "Digital construction takeoff software for PDF plans and images. Measure roof, siding/cladding and flooring areas, lengths and quantities, then feed them into materials, labour and pricing. Try the takeoff tools free — no signup.",
+    "Digital construction takeoff software for PDF plans and images. Measure roof, siding/cladding and flooring areas, lengths and quantities on phone, tablet or desktop, then feed them into materials, labour and pricing. Try the takeoff tools free — no signup.",
   openGraph: {
     title: "Construction Takeoff Software — Measure PDF Plans Digitally | QuoteCore+",
     description:
-      "Measure roof, siding/cladding and flooring areas, lengths and quantities from PDF plans and images, then feed the measurements into materials, labour and pricing.",
+      "Measure roof, siding/cladding and flooring areas, lengths and quantities from PDF plans and images on phone, tablet or desktop, then feed the measurements into materials, labour and pricing.",
     url: "/construction-takeoff-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -58,6 +58,11 @@ const faqs = [
     question: "Can I try it without signing up?",
     answer:
       "Yes. The core takeoff tools - roof, siding/cladding, flooring and measurement-to-quote - can be used without creating an account. An account is only needed to save takeoffs and continue into the full QuoteCore+ workflow.",
+  },
+  {
+    question: "Can I take off plans on my phone or tablet?",
+    answer:
+      "In the paid app, yes. The full takeoff workflow - upload, calibrate, measure, AI Scan Assist on roofs, save and continue - runs on phones and tablets, not just desktop. The free browser takeoff tools are the quickest way to try the measurement workflow; the full mobile workflow is part of the paid app.",
   },
   {
     question: "Is this only for roofing?",
@@ -129,7 +134,7 @@ export default function ConstructionTakeoffSoftwarePage() {
               Digital construction takeoff software for plans, areas &amp; lengths.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Upload construction plans and measure areas, lengths and quantities digitally. Use the same workflow for
+              Upload construction plans and measure areas, lengths and quantities digitally — on site from your phone or tablet, or at the office on desktop. Use the same workflow for
               roofs, siding/cladding, floors and other measured work, then turn the measurements into materials,
               labour, pricing and professional estimates or quotes.
             </p>
@@ -172,7 +177,8 @@ export default function ConstructionTakeoffSoftwarePage() {
           </ul>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
             QuoteCore+ covers the whole chain - but each stage also works on its own, and the core takeoff tools are
-            free without an account.
+            free without an account. In the paid app, takeoff runs on phone, tablet and desktop, so you can measure on
+            site and continue at the office.
           </p>
         </section>
 
@@ -209,7 +215,8 @@ export default function ConstructionTakeoffSoftwarePage() {
             Measurements alone don&rsquo;t price a job. In QuoteCore+, reusable Smart Components&trade; carry the logic
             that converts quantities into cost: material rates, labour per unit, waste percentages, pack sizes, pitch
             factors and pricing rules. Build the rules once, and every takeoff - or any measurement set you enter by
-            hand - flows through the same pricing automatically.
+            hand - flows through the same pricing automatically. Start the takeoff on your phone on site and finish
+            the pricing at your desk — the job travels with you.
           </p>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
             <Link href="/measurement-to-quote-tool" className={link}>See how measurements become a priced estimate →</Link>
@@ -265,7 +272,9 @@ export default function ConstructionTakeoffSoftwarePage() {
             ))}
           </div>
           <p className="mx-auto mt-6 max-w-2xl text-center text-lg leading-8 text-zinc-600">
-            The same job data carries all the way through - no re-entry between tools. See{" "}
+            The same job data carries all the way through - no re-entry between tools. And when you need a number
+            later, Smart Assistant can find jobs, quotes and orders by text or voice instead of clicking through
+            screens. See{" "}
             <Link href="/construction-quoting-software" className={link}>contractor estimating &amp; quoting software</Link>{" "}
             for the full picture.
           </p>

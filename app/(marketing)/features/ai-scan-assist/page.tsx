@@ -11,7 +11,7 @@ import DemoCTACard from "@/components/DemoCTACard";
 export const metadata: Metadata = {
   title: "AI Scan Assist for Roof Plans",
   description:
-    "AI Scan Assist identifies multiple roof areas, ridges, hips, valleys, barges and spouting from your uploaded plan. Verify, adjust and swap components - then carry everything into your quote.",
+    "Scan your roof plan on phone, tablet or desktop. AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting in stages - you review the detected outline, correct anything, and swap components before anything is priced.",
   alternates: {
     canonical: "https://quote-core.com/features/ai-scan-assist",
     languages: hreflangLanguages("/features/ai-scan-assist"),
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "AI Scan Assist for Roof Plans",
     description:
-      "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting from your uploaded plan. Verify, adjust and swap components.",
+      "Scan a roof plan on any device. AI identifies roof areas, ridges, hips, valleys, barges and spouting - you verify, adjust and swap components.",
     url: "https://quote-core.com/features/ai-scan-assist",
     siteName: "QuoteCore+",
     type: "website",
@@ -85,6 +85,14 @@ const faqSchema = {
         text: "Paid plans include 50 (Pro) or 100 (Pro Plus) AI scan points. Additional scan points can be purchased if needed.",
       },
     },
+    {
+      "@type": "Question",
+      name: "Does AI Scan Assist work on mobile?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. The staged scan workflow - upload, scan, review and correct the outline, component detection - runs on phones and tablets as well as desktop. Scan the plan on site and continue the job on any device.",
+      },
+    },
   ],
 };
 
@@ -93,6 +101,7 @@ const faqs = [
   { q: "Can I correct what AI Scan Assist finds?", a: "Yes. Every detected element is a placeholder. You can adjust measurements, swap any placeholder to a different Smart Component via dropdown (quantities, labour, waste and pricing recalculate automatically), and add any components AI does not detect such as flashings, downpipes, parapet caps or change-of-pitch flashings." },
   { q: "Is AI Scan Assist required?", a: "No. AI Scan Assist is an optional accelerator. You can skip it entirely and use manual digital takeoff to draw everything yourself. Both paths produce the same result - a complete, priced roof takeoff." },
   { q: "How many AI scan points do I get?", a: "Paid plans include 50 (Pro) or 100 (Pro Plus) AI scan points. Additional scan points can be purchased if needed." },
+  { q: "Does AI Scan Assist work on mobile?", a: "Yes. The staged scan workflow - upload, scan, review and correct the outline, component detection - runs on phones and tablets as well as desktop. Scan the plan on site and continue the job on any device." },
 ];
 
 export default function AIScanAssistPage() {
@@ -111,10 +120,10 @@ export default function AIScanAssistPage() {
           <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-              AI Scan Assist: from plan to priced takeoff in seconds.
+              AI Scan Assist: scan the plan, review the result, keep control.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
-              Upload a roof plan and AI identifies multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each area, assign different pitches and materials, then verify and adjust everything manually. Each detected element is a placeholder you can swap to any saved Smart Component.
+              Upload a roof plan on phone, tablet or desktop and scan it in stages: AI Scan Assist detects the roof outline for you to review and correct, then identifies roof areas, ridges, hips, valleys, barges and spouting on the corrected geometry. Name each area, assign different pitches and materials, then verify and adjust everything manually. Each detected element is a placeholder you can swap to any saved Smart Component.
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
@@ -168,8 +177,8 @@ export default function AIScanAssistPage() {
             <h2 className="text-2xl font-semibold sm:text-3xl">How it works</h2>
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { num: "1", title: "Upload plan", text: "Upload a plan image or a multi-page PDF (e.g. council plans) and pick the page you need - it is converted to an image automatically. AI Scan Assist starts from the same upload as manual takeoff." },
-                { num: "2", title: "AI identifies elements", text: "AI detects roof areas, ridges, hips, valleys, barges and spouting. Each is a placeholder." },
+                { num: "1", title: "Upload plan", text: "Upload a plan image or a multi-page PDF (e.g. council plans) on phone, tablet or desktop and pick the page you need - it is converted to an image automatically. AI Scan Assist starts from the same upload as manual takeoff." },
+                { num: "2", title: "Review the outline, AI identifies elements", text: "First, review and correct the detected roof outline - drag vertices to match the plan. Then AI detects ridges, hips, valleys, barges and spouting on the corrected geometry. Each is a placeholder." },
                 { num: "3", title: "Verify and swap", text: "Adjust measurements, swap any placeholder to a saved Smart Component. Quantities, labour, waste and pricing recalculate automatically." },
                 { num: "4", title: "Add and carry to quote", text: "Add any non-detected components. Everything carries directly into your quote - no copy-pasting." },
               ].map((step) => (

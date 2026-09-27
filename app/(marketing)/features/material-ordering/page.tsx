@@ -64,6 +64,14 @@ const faqSchema = {
         text: "Yes. You can adjust quantities, add or remove items, and edit delivery details before sending the order to your supplier.",
       },
     },
+    {
+      "@type": "Question",
+      name: "Can Smart Assistant help with material orders?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Smart Assistant can find material orders and their status by text or voice, alongside jobs, quotes and invoices in your account. Creating and sending orders stays in the order builder, where quantities and codes flow from your Smart Components.",
+      },
+    },
   ],
 };
 
@@ -78,6 +86,7 @@ const faqs = [
   { q: "Do I need a quote to create a material order?", a: "No. You can create a material order from an accepted quote in QuoteCore+, import a quote from another tool, or start with a blank order from scratch. The material ordering tool works standalone." },
   { q: "Can I send material orders to my supplier?", a: "Yes. Material orders can be sent directly from QuoteCore+. The order includes quantities, product codes, cut lengths, delivery details, and profile drawings for custom components." },
   { q: "Can I edit a material order before sending it?", a: "Yes. You can adjust quantities, add or remove items, and edit delivery details before sending the order to your supplier." },
+  { q: "Can Smart Assistant help with material orders?", a: "Smart Assistant can find material orders and their status by text or voice, alongside jobs, quotes and invoices in your account. Creating and sending orders stays in the order builder, where quantities and codes flow from your Smart Components." },
 ];
 
 export default function MaterialOrderingPage() {
@@ -160,7 +169,7 @@ export default function MaterialOrderingPage() {
             Material ordering is a standalone tool. You can generate an order from an accepted quote in QuoteCore+, import a quote from another tool, or start with a blank order from scratch. However you start, the order builder gives you a supplier-ready document with quantities, product codes, cut lengths, and delivery details.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
-            When you do start from a QuoteCore+ quote, every Smart Component already knows what material it is, what quantity is needed, and what product code it uses. The material order takes that information and turns it into an order in seconds.
+            When you do start from a QuoteCore+ quote, every Smart Component already knows what material it is, what quantity is needed, and what product code it uses. The material order takes that information and turns it into an order in seconds. Orders live with the job on every device - and if you need to check what was ordered, Smart Assistant can find the orders on a job by text or voice.
           </p>
         </section>
 
