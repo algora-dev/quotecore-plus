@@ -2,7 +2,7 @@
 
 | ID | Source condition / treatment | Next owner action |
 |---|---|---|
-| AGENT-TODO P7-TEMPLATE-01 | Header TemplateCreator's copy-existing branch was already a dead TODO. It now explains the limitation and cannot masquerade as successful copying; scratch remains functional. | Implement the real copy loader/create contract separately, then enable. |
+| AGENT-TODO P7-TEMPLATE-01 | Header TemplateCreator's copy-existing branch was already a dead TODO. It now explains the limitation and cannot masquerade as successful copying; scratch remains functional. | DONE - implemented by Gavin 0f3758dd (2026-09-27): copy option live, builder prefills from selected source template via build page `copy` param + `loadCustomerQuoteTemplates`; save creates a new template. Awaiting owner smoke test. |
 | AGENT-TODO P7-TEMPLATE-02 | Deprecated `/resources/new` still has `roofing_profile` form name versus `roofingProfile` lookup in its existing inline server action. No incoming route uses it for new template creation. | Retire/redirect this legacy path or repair its owned action after review; Phase 7 does not change server actions. |
 | AGENT-TODO P7-API-01 | `/api/invoices/templates` can catch provider failure and return successful `[]`. Client error handling can only distinguish errors actually exposed by HTTP/data shape. | Change protected provider to expose truthful failure separately; test client Retry/continue-without-template flow. |
 | AGENT-TODO P7-INBOX-01 | Existing bulk mutations optimistically roll back on failure without an error notice. All current action bodies remain unchanged. | Decide on an owned mutation-error contract; inject failures in runtime before changing backend behavior. |
