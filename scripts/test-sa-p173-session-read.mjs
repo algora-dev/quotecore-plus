@@ -145,5 +145,45 @@ if (cmd === 'before' || cmd === 'after' || cmd === 'crossuser') {
   fsx.writeFileSync(process.env.TEMP + '/p173-session-' + cmd + '.json', res.body);
   process.exit(0);
 }
-console.error('usage: setup|before|after|crossuser|cleanup');
+if (cmd === 'rollout') {
+  const s = readState();
+  // Remove the retrieval rollout row entirely -> missing-row class on LIVE P1.7.3 code.
+  await srDelete('assistant_v2_retrieval_rollout', `company_id=eq.${s.coA}`);
+  const session = await signIn(s.emailA, s.pwd);
+  const cookie = sessionCookieHeader(session);
+  const conv1 = randomUUID();
+  await srInsert('smart_assistant_conversations', { id: conv1, company_id: s.coA, user_id: s.uidA });
+  const t1 = await fireTurn(cookie, conv1, s.coA, 'what are my quotes');
+  console.log(`[no-row] status=${t1.status} reply=${String(t1.body?.reply ?? JSON.stringify(t1.body)).slice(0, 140)}`);
+  // Explicit disabled row -> must still fall back safely.
+  await srInsert('assistant_v2_retrieval_rollout', { company_id: s.coA, enabled: false, knowledge_enabled: false, knowledge_revision: 1 });
+  const conv2 = randomUUID();
+  await srInsert('smart_assistant_conversations', { id: conv2, company_id: s.coA, user_id: s.uidA });
+  const t2 = await fireTurn(cookie, conv2, s.coA, 'what are my quotes');
+  console.log(`[disabled] status=${t2.status} reply=${String(t2.body?.reply ?? JSON.stringify(t2.body)).slice(0, 140)}`);
+  // Re-enable -> task context path must work again.
+  await srPatch('assistant_v2_retrieval_rollout', { enabled: true }, `company_id=eq.${s.coA}`);
+  const conv3 = randomUUID();
+  await srInsert('smart_assistant_conversations', { id: conv3, company_id: s.coA, user_id: s.uidA });
+  const t3 = await fireTurn(cookie, conv3, s.coA, 'what are my quotes');
+  console.log(`[enabled] status=${t3.status} reply=${String(t3.body?.reply ?? JSON.stringify(t3.body)).slice(0, 140)}`);
+  const rows = await sr('GET', `/rest/v1/smart_assistant_runs?select=status,error_code&conversation_id=in.(${conv1},${conv2},${conv3})&order=started_at.asc`);
+  for (const r of rows) console.log('run:', r.status, r.error_code);
+  process.exit(0);
+}
+if (cmd === 'canary') {
+  const s = readState();
+  // Promote fixture user A to admin, then call the admin canary API route.
+  await srPatch('users', { is_admin: true }, `id=eq.${s.uidA}`);
+  const session = await signIn(s.emailA, s.pwd);
+  const cookie = sessionCookieHeader(session);
+  const r = await fetch(`${BASE_URL}/api/admin/smart-assistant/health`, { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json', Origin: BASE_URL } });
+  const body = await r.json().catch(() => null);
+  console.log(`[canary] status=${r.status} body=${JSON.stringify(body).slice(0, 500)}`);
+  await srPatch('users', { is_admin: false }, `id=eq.${s.uidA}`);
+  const r2 = await fetch(`${BASE_URL}/api/admin/smart-assistant/health`, { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json', Origin: BASE_URL } });
+  console.log(`[canary-after-demote status=${r2.status}] (expect 403/redirect - admin gate holds)`);
+  process.exit(0);
+}
+console.error('usage: setup|before|after|crossuser|rollout|canary|cleanup');
 process.exit(2);
