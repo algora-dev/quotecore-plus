@@ -3855,7 +3855,7 @@
     },
     {
       "path": "app/components/smart-assistant/v2/assistant.module.css",
-      "sha256": "396b95f65f1015d5cab02fce195693a602a411c83666b78f01129f331e564d0f"
+      "sha256": "bee16302c8ae93d6c533b7dfd91c25676aca6d2b66e681acd5a18290583f6be4"
     },
     {
       "path": "app/components/smart-assistant/v2/client.ts",
@@ -3867,7 +3867,7 @@
     },
     {
       "path": "app/components/smart-assistant/v2/useVoiceNote.ts",
-      "sha256": "542bb100a51262a1a4bad0da886522672a89459fba1d8610c0368bb8022d9cda"
+      "sha256": "02db7a960c27bbe87cfab012fec92b899bb5e8be67215ff0df9e870dfaec33ad"
     },
     {
       "path": "app/components/ui/PasswordField.tsx",
