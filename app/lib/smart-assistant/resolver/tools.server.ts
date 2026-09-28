@@ -18,7 +18,10 @@ const requestSchema={type:'object',properties:{
   period:{type:'object',properties:{from:{type:'string'},to:{type:'string'},basis:{type:'string',enum:['created','updated','ordered']},label:text},required:['from','to','basis','label'],additionalProperties:false},
 },required:['version','task','domain'],additionalProperties:false};
 const errorResult = (error: unknown) => {
-  if (error instanceof RetrievalError) return {state:error.code,error:error.message,applied:false};
+  if (error instanceof RetrievalError) {
+    try { console.info('[smart-assistant:resolver-error]', JSON.stringify({ code: error.code, message: error.message })); } catch { /* logging cannot change the result */ }
+    return {state:error.code,error:error.message,applied:false};
+  }
   throw error;
 };
 export function standaloneEntityRequest(message:string):boolean {

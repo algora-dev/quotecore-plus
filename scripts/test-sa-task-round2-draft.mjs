@@ -89,7 +89,7 @@ if (process.argv[2] === 'cleanup') {
   const s = readState();
   if (!s.run) { console.error('No state'); process.exit(2); }
   const errs = [];
-  const tables = ['assistant_v2_task_runs', 'assistant_v2_task_context', 'assistant_v2_actions', 'sa_action_log', 'assistant_v2_cards', 'assistant_v2_context', 'smart_assistant_messages', 'smart_assistant_runs', 'assistant_turn_reservations', 'assistant_usage_events', 'assistant_events', 'smart_assistant_conversations', 'assistant_section_permissions', 'assistant_v2_rollout', 'assistant_feature_flags', 'quote_component_entries', 'quote_components', 'quotes'];
+  const tables = ['assistant_v2_task_runs', 'assistant_v2_task_context', 'assistant_v2_retrieval_rollout', 'assistant_v2_actions', 'sa_action_log', 'assistant_v2_cards', 'assistant_v2_context', 'smart_assistant_messages', 'smart_assistant_runs', 'assistant_turn_reservations', 'assistant_usage_events', 'assistant_events', 'smart_assistant_conversations', 'assistant_section_permissions', 'assistant_v2_rollout', 'assistant_feature_flags', 'quote_component_entries', 'quote_components', 'quotes'];
   for (const t of tables) { try { await srDelete(t, `company_id=eq.${s.coA}`); } catch (e) { errs.push(`${t}: ${e.message.slice(0, 120)}`); } }
   try { await srDelete('users', `company_id=eq.${s.coA}`); } catch (e) { errs.push(`users: ${e.message.slice(0, 120)}`); }
   try { await srDelete('companies', `id=eq.${s.coA}`); } catch (e) { errs.push(`companies: ${e.message.slice(0, 120)}`); }
@@ -110,6 +110,11 @@ const uidA = await createAuthUser(emailA, PWD);
 await srInsert('users', [{ id: uidA, company_id: coA.id, email: emailA, full_name: 'SA R2 A', role: 'owner' }]);
 await srInsert('assistant_feature_flags', [{ company_id: coA.id, enabled: true }]);
 await srInsert('assistant_v2_rollout', [{ company_id: coA.id, p1: true, p2: true, p3: true, p4: false, write_policy: 'propose_then_confirm', confirmation_policy: 'requester_button', ledger_policy: 'retain_action_fields', enabled_at: nowIso }]);
+// P1.7.2 task layer (enabled on testing via TASK_CONTEXT+RESOLVER env pair) hard-requires
+// the P1.6/P1.7 retrieval reader per company: resolverAvailable() = resolver env flag
+// && rollout row enabled && intelligence v1. Without this row every turn 503s
+// 'migration_required' (mis-surfaced as pipeline_error). Same shape as RS Roofing.
+await srInsert('assistant_v2_retrieval_rollout', [{ company_id: coA.id, enabled: true, knowledge_enabled: false, knowledge_revision: 1 }]);
 await srInsert('assistant_section_permissions', { company_id: coA.id, permissions: { quotes: 'edit', draft_quotes: 'edit', orders: 'read_only', invoices: 'read_only', components: 'edit', customers: 'read_only', emails: 'hidden', billing: 'hidden', settings: 'hidden' }, revision: 1, updated_by: uidA });
 const [draft] = await srInsert('quotes', { company_id: coA.id, quote_number: Math.floor(Math.random() * 900000) + 100000, customer_name: 'R2 Customer', job_name: 'SA R2 Draft', status: 'draft', measurement_system: 'metric', currency: 'NZD' });
 const [comp] = await srInsert('quote_components', { quote_id: draft.id, name: 'Ridge', measurement_type: 'lineal' });

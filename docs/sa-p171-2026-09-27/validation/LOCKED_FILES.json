@@ -55,7 +55,7 @@
     },
     {
       "path": "DESIGN_CHANGES.md",
-      "sha256": "1712f22261da3681fb51c2beb0fcf20ab322ab183aab09f23972d14027fd8d29"
+      "sha256": "72fd5d210f6672b7499da09387e1056c2630114c75b717d5e52e284155972c4e"
     },
     {
       "path": "README-DEV.md",
@@ -243,7 +243,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
-      "sha256": "a545703a7bedfeeec90fe03286d1e4fa47e5e4d2076563ff58979a6d730fe77e"
+      "sha256": "45a91b108f8e8617984d60ddcf8687d84310d032e4c7b5c03b9250db4573fa0a"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/catalogs/download/[catalogId]/route.ts",
@@ -291,7 +291,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
-      "sha256": "3ff1ca4f096f89192fc6af993610cc2ec31f259028fbca53957394995f0411d6"
+      "sha256": "ebd4782661bbc5a3e8e8fae3c3ed52647080bde2224b2f73db2169d9e9042ad4"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
@@ -327,11 +327,11 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
-      "sha256": "c36f733d5434d946b3c19dd2b2c788cb84a3d477eacf8297ecc0e395a0e64cea"
+      "sha256": "52764f756f67155084f41bf4f59442403e12e40420e0f0a1406980e4840993d4"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/actions.ts",
-      "sha256": "7e8150fd5dd0a01662567a86d96ab71977005bd0bbb7070b897d1e4fbafcebb5"
+      "sha256": "02fd31abf9604875c7a7ea9a0a5969ffe3c74185fd706910453846bcfb3f46f7"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/page.tsx",
@@ -347,11 +347,11 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/TemplateBuilder.tsx",
-      "sha256": "6fc976a0b1c7fa289f00c646d49706c7c9a4b499b2567ece94d7a6fe67648365"
+      "sha256": "47cacd6bc4310dc398c8b62d55f4a1cabd00e9f7b9d085d104e507819dd632e8"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/actions.ts",
-      "sha256": "b36ece02cb3620a6b199cec16720ebdfbfca038c5380ecac0f9699636a739429"
+      "sha256": "b4c4d6ff6bb6d37e212545ae7dd93f07cdee040259f5e8526a22667002d3bd5f"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/page.tsx",
@@ -367,11 +367,11 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx",
-      "sha256": "70a5738f9a05813525b22c8d2d71735bb75bd7cbf4198a84b7574cacc0a6d199"
+      "sha256": "44af26a662c0cf36dcaf615fdf24a141932829840704ed71dcb24424dd07804d"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/actions.ts",
-      "sha256": "2074b7908ca1d69036d565218e684174d99b591a17a2d55f4f3a6f398d20298e"
+      "sha256": "7bdd3a44b72e0d359b0d2f0ff37f7393a1ebacaa8aa8fcd7a4db723a14afe013"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/page.tsx",
@@ -379,11 +379,11 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/drawings/[id]/edit/edit-form.tsx",
-      "sha256": "8a62258ddd6eebc52aba31f0b5d3dbd62f7415cae001c2dc8b535a8395f40173"
+      "sha256": "5aff673ee59db5c4d7596ae88278d147935e906cf02fd0e1acf2772071487bdc"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/drawings/[id]/edit/page.tsx",
-      "sha256": "6c819d2aad18e12ab485df55d2c7519923d5666553f64e5d7e83f5cdc72154d0"
+      "sha256": "0666ee6b8b4a0ebb36f871b3fa7cd1e7be83ba2b7972415c12bf5bd9789011bf"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/drawings/actions.ts",
@@ -391,15 +391,15 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorModal.tsx",
-      "sha256": "46bf909ddbbceb8d1cd7af5fc298746933137e64762e5de33e3f9f759c18fa75"
+      "sha256": "caa9bcc6bf7dabc8955d76fbaac2d99add222b86cfec5a5a1e82b2a62f24652e"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorWidget.tsx",
-      "sha256": "587316fab1c6859cba9f95b4d5cd3ee500a09f023e3339801397130728ecdbf1"
+      "sha256": "0bdc1d094fc111f473cab13f04d2142452d1e70331c58c20a8addec3efb2ab7f"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/drawings/draw/FlashingCanvas.tsx",
-      "sha256": "bb091db3f5193bfb52d891c4a17280d69faf450139d968e3977fafa024aa0dd3"
+      "sha256": "eb8effccedf542646f1a205c251d89c405a1016c1ea104ea9321f57306172ad5"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/drawings/draw/page.tsx",
@@ -411,15 +411,15 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx",
-      "sha256": "b534d5328ec396358839505344a89438e09928c6eb9ebc4600fe98bd0d02ab16"
+      "sha256": "b58d13fe6a3db13060fec3b5cb32fa20126ea2151f6d4e29ae86b65ac657ad5b"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/drawings/page.tsx",
-      "sha256": "e1f88308ace61ad8579fa1661e950b587ccc097566ad447a53e08dc6ec67b2c3"
+      "sha256": "e0a96d523434c085830d6ee24c097c0d63a7aebb9069610ce322bbd1be658c30"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx",
-      "sha256": "ad6a1c9db8e431801f3923a9cb106646fe123a2da9e4e42df88d8555bc49d504"
+      "sha256": "5d7d07730b7e86444fcb521cd63a892e09acba2ad0686dac051ec86d99c69581"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/inbox/page.tsx",
@@ -435,7 +435,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
-      "sha256": "c1ee824ce489ec40c6819f87d10076bf2cbffe6e15440866940b00987fa4726e"
+      "sha256": "e68e023c52448ab86612f6a404d4af8ec1f20fa6267d28b7dc69bc01f25cb1f3"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/invoices/[id]/AddInvoiceLineModal.tsx",
@@ -487,7 +487,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
-      "sha256": "ed54f32ba776dcda873cf7ca0b3af97d569a8dc84d11a6c4f4b6281eb53f9070"
+      "sha256": "cb561b1724fb8ae5728245055eea5238c24ebcd6c0d81fe9dd6619670d000fbd"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/job-spaces/JobSpacesList.tsx",
@@ -591,11 +591,11 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/page.tsx",
-      "sha256": "360b5059a1490843e044bbdda94545bf23a3878452e6a3620a545e76a36a11bc"
+      "sha256": "061fd5300a360be94a6245b23110f40a36ddde5a0bfbf2c78d68d668446f8547"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx",
-      "sha256": "58abfff837196a649a2c43351ed5478026d0ec5be3253c2288d4baeb9de0efd2"
+      "sha256": "dc0998877aa33be70d197cf9d8ffdd9acc4ac0684c16d55f288aed588f97451b"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/material-orders/order-list-actions.ts",
@@ -603,7 +603,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
-      "sha256": "54250cb19a53431398ac8ccf293d652e06ac37555a142d169715f1131afbc0bf"
+      "sha256": "4fecd8188e4e5a6023b27f1d83c68da2092329def6bd6dceb21fce4b0fef0cc6"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/material-orders/orders-hub.tsx",
@@ -615,19 +615,19 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/material-orders/template-actions.ts",
-      "sha256": "da1fa053b1d088a2d82a1f7aa7ab3bbce7ad651e0d8d9306529151fe1b6187cd"
+      "sha256": "b3006cb64ec06afe1742dd7a63834de12496e0f1f754a772c1433e182a7d0f3d"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/material-orders/template-form.tsx",
-      "sha256": "719de3d2417838cb1cf0d85d53bbfacbfac2e009a5b93ab83454a30bfa84ea3a"
+      "sha256": "ee775bc48eedfc21e6825a73c92141ca3a30bfa0aeddc4478c06d7576ebbd9bb"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
-      "sha256": "63ec066b73b73f94f6ddc77c6d17b5ba8f497feb937e25a924fac5a9e5b5a9b7"
+      "sha256": "7778056e560108dae2e8b7e397443bc59ed0c7ce327ce8542d83727b1d41497a"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx",
-      "sha256": "eeb435b1a6f370e13a2861ca06d5beadf57ca8dfc9cf9894b77ab110e27f185a"
+      "sha256": "affc7e6843f40aaa8cacff8075ace512f913dbf6f2a9daf82562faf0a437340a"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/page.tsx",
@@ -635,7 +635,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
-      "sha256": "f9a63d21a452b372e0c543c520b55355f3e81e2557a0cdcea2eac76128e64758"
+      "sha256": "83b21aa6fc23c143ff8cc712f4c85c930c77804a9309a91402a80ee6e5921134"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/quotes/[id]/ConfirmQuoteButton.tsx",
@@ -787,7 +787,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/CurrencySelector.tsx",
-      "sha256": "ccb9394e48c1fed6365af7c5343fe0279386b7e9ff61e4e6bd09fbbeda1b0071"
+      "sha256": "e22d2d1554213a86e783230600290eb839bfccca1cb330be49e2eef2f786b1b2"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/DeleteAllMessagesButton.tsx",
@@ -839,7 +839,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/SummaryFileRow.tsx",
-      "sha256": "7f402b222d2be685c60b384f1aac9f25dc383a94846928e6698dd4f84d65201d"
+      "sha256": "4bce96005cf89e0d16e541c29847d887493f2411b9b65149ebb2c97659bc3802"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/SummaryFilesPanel.tsx",
@@ -995,7 +995,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
-      "sha256": "ee3004aa752b61557de1dbd3800e20599513cddf92c069e6dd336557f8326b0b"
+      "sha256": "aeac631ba91814a68c965faba11c19818a82aae6a7797c313d54d9d847f6096c"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/quotes/new/actions.ts",
@@ -1019,7 +1019,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/EditCustomerTemplateModal.tsx",
-      "sha256": "2271c02dc3eb3adf7be8ca8cdb774dd575165dba715e9955295dfd67acba31fc"
+      "sha256": "8b7a9da2e6d4895bd3da5f3dd9c89f9b28f246926c0581035df5e0723dd48dcf"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/EmailTemplateEditor.tsx",
@@ -1031,7 +1031,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
-      "sha256": "c5236a967faa3286135a867b02cefb2d11f16485ae50c69d793daaff2373c1a6"
+      "sha256": "9d04bf8b1325f59341a9ca8af0cf833f2742d59b7f092ef2d950ba5ccda31311"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/ViewCustomerTemplateModal.tsx",
@@ -1039,7 +1039,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx",
-      "sha256": "95631fde4483d534e0f7026fc5c9197c400d5d2cfa60d0421f6f028aaff8d625"
+      "sha256": "b0e85c39dc4782449cdb6e8d2ef1cb27c868e3f349c7d821eb3998ae4dfb5397"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/[id]/edit/page.tsx",
@@ -1047,7 +1047,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/actions.ts",
-      "sha256": "a84806f10ec3a4e55d4522d4d52583be4f0fe01c2cf233931c1da03bd05fad76"
+      "sha256": "5d3a64236bac8e1aa42eaee3424109ec8a7a63cc8e664c38be2b5009c18dcd80"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/attachments/page.tsx",
@@ -1059,7 +1059,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
-      "sha256": "4c16cf34a27d7aa9f649eb4c60330de870097b5e5836a808f5310b62bb4c081b"
+      "sha256": "0ce93bc5e232e7c6c57ee401eda031b91c81a92ee094b72b65e68c405dfc6137"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/create/page.tsx",
@@ -1071,7 +1071,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/email-actions.ts",
-      "sha256": "2762b4649f387dfe94c6bcaf56d8ad00b80a7c96d29c8c304b68e1a923bf8eb7"
+      "sha256": "6c14a3bdf0d0b01e7339bcf44c9271a35192c1d3db11176fe4593fe57d4f3752"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplateEditor.tsx",
@@ -1083,7 +1083,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplatesList.tsx",
-      "sha256": "13923473670405862ee44821cfd24f2a77153c0aac4c8681b2eae7475a38b893"
+      "sha256": "4226d8cd17e93103ec75d46b10584665ad2278d91c9cd479f64105db31439e15"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/invoice-templates/[id]/edit/page.tsx",
@@ -1107,7 +1107,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/new/page.tsx",
-      "sha256": "d6735854455b7260ec67e1942b0d7e19a9ae24b8b0b690fd5602344d9ee13b36"
+      "sha256": "655fdc40535fd24f92a6ac74436fcac00a5ca3ede47c7c8e33dcfbf46bc6c36b"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/resources/order-header-templates/page.tsx",
@@ -1139,7 +1139,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
-      "sha256": "10c5d91d186b79768de8621961d5669fc5792bf0f8c7f7f160bba223d4340e96"
+      "sha256": "a48dd030896589ab0b7d038af2767a23ca38a70c117a2042136ffc428e5f93ec"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/settings/PasswordSection.tsx",
@@ -1151,7 +1151,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
-      "sha256": "5a62e5774487f20c76d09c292c5e4957060e226931b055df6c2fc0c3e11c2451"
+      "sha256": "0318da30bacf99e057ec0f968ac9669bd3ded870c0a0d7a4ef782d9710e18fa7"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/settings/actions.ts",
@@ -1191,11 +1191,11 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
-      "sha256": "2fde42473e15db57ef2e3461829259b27b32298826a4bc4db75f520f6b0c10a0"
+      "sha256": "2b8f8b7c77191f8d912c42c92a07050ab241bae2e9400eb414dc711a55b2c3e7"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
-      "sha256": "a4379478d4445815abc14afed6cd80b342cdc4e264ac2c4c10c28d468556d20e"
+      "sha256": "21c6b38bc15c3b7b95e83ce0f75d78710b732db8732b777fec30c3f199b93846"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/supplier/catalogue-actions.ts",
@@ -1211,11 +1211,11 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/supplier-directory/actions.ts",
-      "sha256": "3ab5e91b4544c96ebb817c710bfa617b6951f8195fad4ae2e3980204d0584f17"
+      "sha256": "1142193076ea79e4075d30763a2559b8df8105f61c0a97e2c2e3c6296a0e73a2"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx",
-      "sha256": "a80184f7b99b23c38642928120ac99ce6a345392e899259d9a07230b883e969c"
+      "sha256": "9e7f2521ec37a301ec6614ebb6f97bf0dc494a0c75d1e8c9f3765b38d96b2605"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/page.tsx",
@@ -1231,11 +1231,11 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/tutorials/TutorialModal.tsx",
-      "sha256": "516cfea89acc36934ccb841d2ee5bf50f6bf338538551b91a1d3e0c4a8d6f5a5"
+      "sha256": "9984a9d0ffd94520bccf3830621c6c9241c548318237338915711b7d35748b90"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/tutorials/TutorialsClient.tsx",
-      "sha256": "3234e4424dc1927b2fb20202252a61b413440b0f5748c6277c49b69eca6b3750"
+      "sha256": "b05506915d6e0c22dc896495fa58563adc900e786a40c9f01ba93be57204da67"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/tutorials/WelcomeModal.tsx",
@@ -1287,19 +1287,19 @@
     },
     {
       "path": "app/(marketing)/about/page.tsx",
-      "sha256": "9d06c7cc2f5cb597aca9c076efc22bb3e8678e0a390d45a07bdf5ae044bebb54"
+      "sha256": "d6153851523004d147ba4e31f172ada5aba1ce16367772824b549525c8c7f0aa"
     },
     {
       "path": "app/(marketing)/affiliate-program/DistributorApplicationForm.tsx",
-      "sha256": "7e55c18db6a3766cd4f9bedf0534d2477db9149665bcea0432f6adcbeb794b79"
+      "sha256": "296126b1b50b434dd3fd494096b9ebcd444623c88cf40c2240b4f4898ced48a9"
     },
     {
       "path": "app/(marketing)/affiliate-program/page.tsx",
-      "sha256": "1b16170fee4df48b9334322a99f41fbcd230c1762eac4b765baa21cf26458a31"
+      "sha256": "66d043d93562404b6d0d31e83df24fc8a256f168570771a294134a2236191a8c"
     },
     {
       "path": "app/(marketing)/affiliate-program-terms/page.tsx",
-      "sha256": "bdb536aedda68d7aee79728f5763e343d580fc78f6961b90c54e12f8630e508f"
+      "sha256": "a2d7c9f46f259d466cbb077e72cbb45f1f81fc4bc5aab802ba7f39d722fdded0"
     },
     {
       "path": "app/(marketing)/blog/HOW-TO-PUBLISH.md",
@@ -1327,15 +1327,15 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/best-quoting-software-au.tsx",
-      "sha256": "bfc0e3ab6eaf4b022af4e61411add923d2c993bd28e2834062eb8ea2f286960d"
+      "sha256": "87acdae37ef80c2edfb4c285dcc0a451acf1df1fa306144a3b5f979d7ef267dc"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/best-quoting-software-nz.tsx",
-      "sha256": "147f2ab44259caeb9e1c61600161dbbfaacb9e39ccf97a59285b8aaa9263f567"
+      "sha256": "bd8045dca4c28c9160579cdeadcc76e89f50160f84a5a1a1df726784372136a7"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/best-quoting-software-us.tsx",
-      "sha256": "ed864c2a00d704807cefe12814cf947abc30bfec93aad22597d40644e17e0fee"
+      "sha256": "7b578cc674ddfd5320da12905e628507c094e01b22d83cdb1dabd8bb95a8e225"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/best-roofing-quoting-software-uk-2026.tsx",
@@ -1355,7 +1355,7 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/chrome-roof-pitch-calculator-extension.tsx",
-      "sha256": "5f8fd91e70848c2739be8c2a74a9e17ac5fedcc5d85507df6deca42f4e596f29"
+      "sha256": "e9a276b7d72485ba1a1a8f6158378673388ae12312855ae1f16059478fa605cb"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/construction-cost-estimator-guide.tsx",
@@ -1363,7 +1363,7 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/construction-estimating-spreadsheet-alternative.tsx",
-      "sha256": "25326fa6b4d53806ac78e815e048744135a0187e0030e8f0c7ff07d482ee5eb8"
+      "sha256": "8f269b7f081dcd60bcd859049dd2a8a12cd2d3e9ea1165e3e8f1091b7c21573c"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/construction-quote-speed-checklist.tsx",
@@ -1371,11 +1371,11 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/convert-spreadsheet-to-quote.tsx",
-      "sha256": "f970adf82f5f14a078dfdad8cf6a90722b9eecb42826275a21d9f4fe1489feed"
+      "sha256": "e2a3b3814f9c88974f4f08caeff71ae828a52bf5af14883811c3f7c6575b4594"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/custom-roofing-quoting-software.tsx",
-      "sha256": "e2e478c2e549b8dc0e1fca396a6e38e9cd5106ea7e8bde71ee661858efd3e5e2"
+      "sha256": "4e03b44e8d1e73c3cdf173d312c83e03669d2d0f3ae6d02bb0d95e478bb509a8"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/do-professional-quotes-win-more-jobs.tsx",
@@ -1383,11 +1383,11 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-much-roofing-material.tsx",
-      "sha256": "7a322cd72f4b7c598d9d27df9c57e98a1ac6ac495a57644ca83516641810e15c"
+      "sha256": "5ce129e62a775f3e43105c18b6ca1b625cf7c481fa209ffff56e5161af7af047"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-calculate-roof-pitch.tsx",
-      "sha256": "626f95ce1fa74bf98bf32d3baa09eab65601a62e54ad4ff5405492a5ea71a60c"
+      "sha256": "2cb2d0013d8f1948e11b0640436a9a72e11e17a87499da4f5da609d7b829e162"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-create-an-invoice-for-contractors.tsx",
@@ -1395,15 +1395,15 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-do-a-roof-takeoff.tsx",
-      "sha256": "6f3a70c1dd3ab1f8c1eec5fe43ff86acea5c70942a9efe5cfc4c29bf99ed78d7"
+      "sha256": "f22bca97d3f03b74abaed3567de0dff7baa7835706815247a090f7e77077fd1e"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-do-cladding-takeoff.tsx",
-      "sha256": "94b9b294a4f38dc0e6706098c6862e9f64e177728e0e04e021fae27d8dfbe9ca"
+      "sha256": "38bcd36460d7288d3c4897ec9ab4d6df8b382147489c080ab9cce1e3d5b6ff35"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-estimate-roofing-materials.tsx",
-      "sha256": "91acd702c08bd7877d46d47b3da1b07be3358f2314cb323e7b9522175eb4a968"
+      "sha256": "f690a4f29b8c4b816b07d6b29cc1de87c3d055a9858b8b2f1f7d1ca0d7bf98ec"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-follow-up-on-a-quote.tsx",
@@ -1415,35 +1415,35 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-measure-a-roof-from-a-pdf-plan.tsx",
-      "sha256": "301501dbb37c0c6443119431c538d7d9c5ac7a1f2d7d3d4cea697dc7b00c95ee"
+      "sha256": "2793ead1b7a99f62b8219f39a47b2318674363c9201d73e3c7598d9a4efde315"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-measure-a-roof-online.tsx",
-      "sha256": "62d245730c28e72116a646e8ca4bd8381e954e89de88ca84aff99e1a4b1f3d00"
+      "sha256": "2d0d41ca4c4f665dd6ab970a6db647c98cc643a9c74f7dfce49bf816198e4613"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx",
-      "sha256": "eb8df09e2fec4cb6517cf132dd09e39cc17acf3dbdcfa4c21d0404504b2261c9"
+      "sha256": "661740d8f1d48192b2f97da5976c91178eda4b39aeac56b698acb61e58197cba"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-measure-pdf-plans.tsx",
-      "sha256": "fd1e0e32ebc50b54a7911e2669c3706e5bc7ab5d796c0a312a4b1ceddcb81d12"
+      "sha256": "72bb95e8e2faaa7180b486e57f61358946e982ec8b7012857f5d26f901d63d79"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-measure-walls-cladding-from-plans.tsx",
-      "sha256": "b639f139de39a1eec702ffa3771d98f12b8ebfc073356e8685de2e68ebd5c66f"
+      "sha256": "f8d4dfb81f1954e808b38c06dd55f21a907aaa30c63f2304961794c87d669beb"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx",
-      "sha256": "ed6de0456d819725fae070d836f0184ceb914681fa6b11fc0b807d3f738a62e6"
+      "sha256": "623d3ecc063ec40d60f4bbc4c57ab059a9e327ca8fe941bccd73a88935d593c0"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-quote-a-roof-from-plans.tsx",
-      "sha256": "30b7ad068f1aa4563e7ebd99f0727182a9cbb1f3678776a1031364472c2f86ae"
+      "sha256": "433dc0684fcf50d4d719d80d1dac40d1e789b179d5bb400de9db54fbc52cf0ab"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-reduce-roofing-waste.tsx",
-      "sha256": "86c3ef43fdf5dc37e927e1d7b727e3517f87c585eb8393c1c30ae0c085a12458"
+      "sha256": "cbaf9658ec6698b963fdece858573493c5936469daa95449d38cf5b2d9fe6978"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/how-to-send-a-purchase-order.tsx",
@@ -1455,11 +1455,11 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/import-price-list-csv-to-components.tsx",
-      "sha256": "3e197a4ac91275dae981c6bb19abe73d617b544dd3814d8b2b2ad02e67fcbe16"
+      "sha256": "46e9f73ddbad0006f653d097e02f0240261530c9622934a22d0f3289c9c9388f"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/manual-vs-digital-roof-takeoff.tsx",
-      "sha256": "f92298b128022e23d36739ec0d3dd938922ceb5eb94a079e731d710fbcc8cf70"
+      "sha256": "ee74f503d3622998ce81e96750d7e802f151ad039f2f0ee06ec293fc1e7af5c1"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/margin-vs-markup.tsx",
@@ -1467,11 +1467,11 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/price-a-job-from-measurements.tsx",
-      "sha256": "ca0b24330cd50afc3d8274c164e0593e0de6214b6087cc8cce49c78ce4e15305"
+      "sha256": "7b3869a52c60b4dc3c7631fe7ac7d37a57a040109ed184ed00a368850643f40f"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/quotecore-plus-reviews.tsx",
-      "sha256": "93f1598d1ef9f280181f6c675a5b4be792ffdddaeb60ffe7e0ce845e9414c54d"
+      "sha256": "934afc130aa1fa0c5f058a2f502fa6ff5898b3056ef76430ebc8c9c19b2ab432"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/quotecore-plus-vs-quotesmith.tsx",
@@ -1479,7 +1479,7 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/quoting-from-plans-vs-site-visits.tsx",
-      "sha256": "a6f32994319dd5af82c802dcc8a6a4926334afc56c5db8697e4f2a0efc4c3920"
+      "sha256": "9ecdadd6144091b0ec57b94ee3783c9529a6c2d36ed2be341387aea3380e063e"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/reusable-quoting-templates-smart-components.tsx",
@@ -1487,7 +1487,7 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/roof-measurements-to-quote.tsx",
-      "sha256": "9deef68016a133da211a4ce1adb7741c4020ebc2ee169cc84206eabbaa0cab83"
+      "sha256": "14bba716d025add38744a57d7fdf066de8dbb24631618cd08137b84b3fe552bb"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/roof-replacement-cost-guide-uk.tsx",
@@ -1495,11 +1495,11 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/roofing-estimating-spreadsheet-vs-software.tsx",
-      "sha256": "995bc259f7c332e5fbd7ff39650165bf93757a2eb4bd446f1ac43fd197cf5dcf"
+      "sha256": "a6f440b9cfa4c6bfcc86aa2c1a112d1b64b452ba85d08f5d1e4c9a047291bcdf"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/roofing-estimating-vs-quoting.tsx",
-      "sha256": "14dd0e8d370fc2c664fcd96a16b271119f74ea194c3aef775170108ffb790176"
+      "sha256": "c6d57f9c2a25f3c82ff9c4c77139950cb110a48751fc901c63383cbd1a513c2f"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/roofing-material-list.tsx",
@@ -1515,11 +1515,11 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/roofing-quoting-software-uk.tsx",
-      "sha256": "38de49b7eb773d722d3cb6c6d8a0d99b4616e5254fa27eb976184c5509b86392"
+      "sha256": "9b6ee321e6ed079c87170ba9a24e11c07fd5a3e4412225f6387c93e26c54bd90"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/roofing-quoting-software-vs-spreadsheets.tsx",
-      "sha256": "53f33d47f67f66b5076f5b3cf00a4d0aa36a89ff2fb877def3a3478346cc5645"
+      "sha256": "8f1a6f4757894b5d1d9a75889293616b4a4cbec8386de5f9feacdefb0d8cfa5b"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/roofing-waste-calculation.tsx",
@@ -1527,11 +1527,11 @@
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/simple-roofing-estimating-software.tsx",
-      "sha256": "ac54edbadd9778b2899865fcd9bd20f515ed6bb841385718ad53b26e81648859"
+      "sha256": "2c303fa4b2186874f9e124ecdc641411777de642b7724f85c21d2f75b440f6e9"
     },
     {
       "path": "app/(marketing)/blog/[slug]/content/takeoff-to-quote-workflow.tsx",
-      "sha256": "1e081d1def83c7915fcf81a9b6d4793802383e709db8544f1dca6473d0989b80"
+      "sha256": "8b8a32e1b1eb5bc6f2862ee91e76e17279e412eaf113e653e340db87d7e42fac"
     },
     {
       "path": "app/(marketing)/blog/[slug]/page.tsx",
@@ -1547,7 +1547,7 @@
     },
     {
       "path": "app/(marketing)/bluebeam-alternative-for-roofing/page.tsx",
-      "sha256": "5a05c13c2a71667ba4c00d7b75397d72c5608e29ed4b6c6b65d0b56a4bad699e"
+      "sha256": "34dee542eb1bba4ed7a6caa93c331b6acd9ac598e8cde30d94dd12018e44f11e"
     },
     {
       "path": "app/(marketing)/careers/page.tsx",
@@ -1583,19 +1583,19 @@
     },
     {
       "path": "app/(marketing)/custom-solutions/page.tsx",
-      "sha256": "167bb0d7ed1a3b09bff9a389360a2804801f05ab29bb86b5aa814850bb771683"
+      "sha256": "d24c616aba17efbd38dae31a086dcbb370cb514c5cbf06a1fbac18aedaa34df3"
     },
     {
       "path": "app/(marketing)/customer-stories/page.tsx",
-      "sha256": "829bac1b894a9010ac74f264703cd5a27b9c37032b31d932fe5fe9b055d25c5a"
+      "sha256": "0d5855d598fc624d39b7fd8d04afb5ddb0d2ecd5a2ccb64a6b7535c3e609e4b6"
     },
     {
       "path": "app/(marketing)/done-for-you-setup/page.tsx",
-      "sha256": "8a25391fae1d8aa4189f3aba399ed0690243b9529cac601076ac614863f6f97f"
+      "sha256": "8acaa1534121c75a18e285e952c70d5b8b312df74eae60641418561c89142509"
     },
     {
       "path": "app/(marketing)/eagleview-alternative/page.tsx",
-      "sha256": "19820797975b2d4fc9e7744f4e09d9971c0bdb5a204ad5f70022957a968d6dac"
+      "sha256": "3449291e346fb5c7a9dacd5951562fac608b76ba05ef70c480b252815614ffee"
     },
     {
       "path": "app/(marketing)/features/ai-scan-assist/page.tsx",
@@ -1659,7 +1659,7 @@
     },
     {
       "path": "app/(marketing)/hover-alternative/page.tsx",
-      "sha256": "a648af3304305d48fb32f247c8b7a7a4bd834f5f4fb42fa81f9ea902c14206a3"
+      "sha256": "df9f55d39e273bbdff233e2e4133ea6b969cf066e4f458e8e4141310d5ea3e73"
     },
     {
       "path": "app/(marketing)/integrations/xero/page.tsx",
@@ -1671,7 +1671,7 @@
     },
     {
       "path": "app/(marketing)/planswift-alternative/page.tsx",
-      "sha256": "4addec2943409a546ff0625f30390736150a8038293175cfe58ca53aec988a9f"
+      "sha256": "8eddad299724711b490bd00cf23b9f1eda6c2ec64d20a656d708d2171c6c70b3"
     },
     {
       "path": "app/(marketing)/pricing/page.tsx",
@@ -1699,7 +1699,7 @@
     },
     {
       "path": "app/(marketing)/roof-measurement-cost-comparison/page.tsx",
-      "sha256": "43631c39cf6c019dcf84266b30f76ee2d2099382cc4d1cb0937981f6b63ba318"
+      "sha256": "8a91e089f1cab8606c1b19190c417bbb9a1a9f113ea26ed4a6fa9b0377feddd9"
     },
     {
       "path": "app/(marketing)/roofing-estimating-software/page.tsx",
@@ -1715,11 +1715,11 @@
     },
     {
       "path": "app/(marketing)/roofr-alternative/page.tsx",
-      "sha256": "814eaf92ade9e2b3dfd53192a7f0fc5d8a43b8a7ff2d5826b3faca55a80dd3cc"
+      "sha256": "63088d8c880802ee643cb7ad0876113977d0462287b1ea16e67ec1fc79316637"
     },
     {
       "path": "app/(marketing)/roofsnap-alternative/page.tsx",
-      "sha256": "aa7d625d8864b17c9fd515611a074b18c4502cb920c6b051eb0ee9b3c4ee0047"
+      "sha256": "b89036578e910185988e7d500bde4a21cbfdda9d5c666c3c8f1c211bdb9a053d"
     },
     {
       "path": "app/(marketing)/services/page.tsx",
@@ -1727,11 +1727,11 @@
     },
     {
       "path": "app/(marketing)/stack-alternative-for-roofing/page.tsx",
-      "sha256": "879a9a4455cbf8742bcb9047f2232df012b1f570f6bb03fee655866fb7ffa2a1"
+      "sha256": "82a1481e50bad7cc4678e26919c5b8bd4c57a8d1942e6362267a3036a7e96cf1"
     },
     {
       "path": "app/(marketing)/supplier-partnership/SupplierApplicationModal.tsx",
-      "sha256": "43a24aef6be69509a7a12f9feb10e0317f5ca17f036e5c2238267f3c76f6be39"
+      "sha256": "1e63e380612fccc9fe7f87502eca2a3ce5f33e31a4d37ec84acab6fd9cc82151"
     },
     {
       "path": "app/(marketing)/supplier-partnership/SupplierCTA.tsx",
@@ -1755,7 +1755,7 @@
     },
     {
       "path": "app/(marketing)/suppliers/[slug]/catalogue/page.tsx",
-      "sha256": "50a7d030614387c274047135f24d578938b1c28850ace56b0c3225a4343df135"
+      "sha256": "5507c5c599e3a4f394e04ceb8f6666d366942e3f82f0214a3ce1eb054e93b709"
     },
     {
       "path": "app/(marketing)/suppliers/[slug]/catalogue.csv/route.ts",
@@ -1779,11 +1779,11 @@
     },
     {
       "path": "app/(marketing)/suppliers/[slug]/page.tsx",
-      "sha256": "540331da37ae88e2d78f935467c7d5ea47e11c0b4364be18e0fe3489bd2b279b"
+      "sha256": "8da5974d80167489a617559dbc6ba0690292fc5198de666c842771f6839761ce"
     },
     {
       "path": "app/(marketing)/suppliers/page.tsx",
-      "sha256": "96f624fc90a494108bd1e9c8f9b43179e3541a298c4d5e82719433141b49d3b3"
+      "sha256": "b13945204e57aae6e089966c4d6cba305101ab6e935fd128eac6e717f17ac052"
     },
     {
       "path": "app/(marketing)/suppliers-info/page.tsx",
@@ -1795,7 +1795,7 @@
     },
     {
       "path": "app/(marketing)/takeoff-demo/DemoQuoteView.tsx",
-      "sha256": "d3187b2a9b28cdf3100d39e59cd02f4c15cd2335599f363a3c30017837866863"
+      "sha256": "7101029b492a846079e339c6b86233404738c160910b024f8316c2828531e37c"
     },
     {
       "path": "app/(marketing)/takeoff-demo/DemoTakeoff.tsx",
@@ -1823,7 +1823,7 @@
     },
     {
       "path": "app/(marketing)/takeoff-demo/page.tsx",
-      "sha256": "6ca83b2c08eeee119e3f3a3f15ec681630419a8efae4e284b4886e771f9cf465"
+      "sha256": "1e58c415a2be8950536d27dc90e1d79e5cec68eafb776566feca4a77729f6a57"
     },
     {
       "path": "app/(marketing)/trust/page.tsx",
@@ -2007,11 +2007,11 @@
     },
     {
       "path": "app/(public)/free-cladding-takeoff/CladdingTakeoff.tsx",
-      "sha256": "a42b9d33223a06fb6e1631f854f4a3f2729ad683e945deac7632fa3847931247"
+      "sha256": "ad0580056229e55ac398b2d5df061ae1169261c83ab109f45cf22360a6a95a1c"
     },
     {
       "path": "app/(public)/free-cladding-takeoff/page.tsx",
-      "sha256": "212b6e9e26df0f8484bbc973b5f35ec98c64476379502e2aab41d27e7976fb99"
+      "sha256": "abb540c57303d4f7277b0a96a8eadc2367e370bd41441f3bd0c69e2194be1aeb"
     },
     {
       "path": "app/(public)/free-concrete-bag-calculator/layout.tsx",
@@ -2047,7 +2047,7 @@
     },
     {
       "path": "app/(public)/free-construction-takeoff-tools/page.tsx",
-      "sha256": "7efd104cb91b69f0b208679ae45d71b23ad33311ce1d913c14984d308482e1ee"
+      "sha256": "c38f2e33a4ec5588a4176d5ff0cefcd8f5340089f14e39731762c328727c5e3d"
     },
     {
       "path": "app/(public)/free-flat-roof-calculator/layout.tsx",
@@ -2067,11 +2067,11 @@
     },
     {
       "path": "app/(public)/free-flooring-takeoff/FlooringTakeoff.tsx",
-      "sha256": "535ac77e5b251619f394605eccd838e791681fcf616b74d4030bd2e0aab36979"
+      "sha256": "15796398433a737a25f9365ec61ea503bea7e92c7ed92407c656040d0c970c93"
     },
     {
       "path": "app/(public)/free-flooring-takeoff/page.tsx",
-      "sha256": "9eff39088a4a84212e5465c27c1b01e6e7b301872743e04eba82f95dfe8d485d"
+      "sha256": "4da2a49d6c1254c9bc83a1fc722898d657f916f302664c8fac275cb6b02a76e5"
     },
     {
       "path": "app/(public)/free-footing-calculator/layout.tsx",
@@ -2127,7 +2127,7 @@
     },
     {
       "path": "app/(public)/free-invoice-generator/page.tsx",
-      "sha256": "45fcf1929be44c9d4629ee7ca5f9d730ed5950fe0e31b671c72d72b81d1427b7"
+      "sha256": "64dc86ed89fabb14085ecc016321d0d270e583dbd6513278575f8b31fef31cf0"
     },
     {
       "path": "app/(public)/free-landscaping-calculator/layout.tsx",
@@ -2171,11 +2171,11 @@
     },
     {
       "path": "app/(public)/free-purchase-order-generator/layout.tsx",
-      "sha256": "b9f22f7d13807bf77560248ebc749794af06ea64d9bed3858625f9571bf8dfc1"
+      "sha256": "991c121754568c49cfa0f6dc5e9ed827f452f513cc6c2d2ec9c80205edfb0e85"
     },
     {
       "path": "app/(public)/free-purchase-order-generator/page.tsx",
-      "sha256": "a0c1bd5dadd5d3f87c5679f86cc837dda760f7abf16294c5aaa5d7df82b2c56a"
+      "sha256": "e031064208eb0d444f936bf52a0e7da520e40f3fa83efd96ddf07e956d997133"
     },
     {
       "path": "app/(public)/free-quote-generator/ImageUpload.tsx",
@@ -2191,7 +2191,7 @@
     },
     {
       "path": "app/(public)/free-quote-generator/page.tsx",
-      "sha256": "ee9a591ef2654f7ae4e68a7a31f06aa5af258694ae8c549cd064d563929762af"
+      "sha256": "7c3108d9bec9e2ed92e6a0cd9a5e5a454044af86d7d5b8e76df29b4e38145801"
     },
     {
       "path": "app/(public)/free-rafter-length-calculator/layout.tsx",
@@ -2251,7 +2251,7 @@
     },
     {
       "path": "app/(public)/free-roof-pricing-calculator/layout.tsx",
-      "sha256": "462850a60c4e3b194619c0be844d595991c54cafebeaaa90d35ecb91ac52187b"
+      "sha256": "a60818a46f5db28577a72cfc9d8b39ef53675992e632d11b9d334980359b672a"
     },
     {
       "path": "app/(public)/free-roof-pricing-calculator/page.tsx",
@@ -2311,7 +2311,7 @@
     },
     {
       "path": "app/(public)/free-roof-takeoff/FreeRoofTakeoff.tsx",
-      "sha256": "15f4c6be89eaed1893d3c08c3a00d89c7121a1d8369315f431b2f88be114fa2a"
+      "sha256": "529d4ba8b51ad4e9f70f110bc4488bb5fc530fd6562fe26abb1d2375c26071cb"
     },
     {
       "path": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx",
@@ -2319,7 +2319,7 @@
     },
     {
       "path": "app/(public)/free-roof-takeoff/page.tsx",
-      "sha256": "42701b02550f7bd40e3e443dfdfd713d7d42bcc517d60f90d5eb47bc1fd23512"
+      "sha256": "d9cba3df60fc614f0efbacb2c50055654cee3c4360f9e5d29ec7e24588443552"
     },
     {
       "path": "app/(public)/free-roof-takeoff/tradeConfig.ts",
@@ -2383,7 +2383,7 @@
     },
     {
       "path": "app/(public)/free-roofing-takeoff-builder/[supplierSlug]/page.tsx",
-      "sha256": "c4387c57994ddc90387efd67f5a8f4af7b5e676480b088124facc596c7c3121c"
+      "sha256": "d23affcf3d7408d21c8a2a3e1f8f6948d315fc79c610bffce6ae1ed3304c6fc2"
     },
     {
       "path": "app/(public)/free-roofing-takeoff-builder/baseline.test.ts",
@@ -2463,7 +2463,7 @@
     },
     {
       "path": "app/(public)/free-roofing-takeoff-calculator/page.tsx",
-      "sha256": "e74eb3d53f47a02fe65a5206452c85a97e29d9909f56371d248c22dc00fb2ee9"
+      "sha256": "72dd6aa550839dd2736390f9246e52eabe844e1c75b80721f8b6828866258f89"
     },
     {
       "path": "app/(public)/free-roofing-waste-calculator/layout.tsx",
@@ -2531,11 +2531,11 @@
     },
     {
       "path": "app/(public)/free-tools/TaskAccordions.tsx",
-      "sha256": "a15f310b6c5533e942fcc3ef8c2d4f47adb4e41775ad8dde7f32546a303beb04"
+      "sha256": "a93019682adb6a102b077510d356952016f81d6b936cca9d96afd181ef65fbd3"
     },
     {
       "path": "app/(public)/free-tools/ToolSections.tsx",
-      "sha256": "ac80a201c9a269e5fb266173b685ade862785315d2516ed6734b4e7fba416c83"
+      "sha256": "844e23b22c79409aa83b446fff047bdcc2a65aa64b498e7eed2c50178333fa58"
     },
     {
       "path": "app/(public)/free-tools/layout.tsx",
@@ -2543,7 +2543,7 @@
     },
     {
       "path": "app/(public)/free-tools/page.tsx",
-      "sha256": "3b7cdd9f09687fc2073414295a62345427678f374151fc02a117dd2f7f5e3002"
+      "sha256": "47e5289e6f7a601c233c2d2049feeb4e1fbd134c32979b436fdc67039cf93e34"
     },
     {
       "path": "app/(public)/free-tools/tool-registry.ts",
@@ -2619,11 +2619,11 @@
     },
     {
       "path": "app/(public)/measurement-to-quote-tool/layout.tsx",
-      "sha256": "65010e1ac9c1ce32358fa7b8b34e1dfe8d79dffef155b314d4c43b111bf0749c"
+      "sha256": "ee82ad2467427a623a6e81cabb2e14cd0d86499398b00a93dd361396318b7d7d"
     },
     {
       "path": "app/(public)/measurement-to-quote-tool/page.tsx",
-      "sha256": "254f625958b6edef86101a4edc6f28e9b49644e5e0c979032bdd56af6c781eef"
+      "sha256": "bc2b2796c5448ba8ce7e45cc65201fc0473ccd26f9c85f12957e887771a3bf74"
     },
     {
       "path": "app/(public)/measurement-to-quote-tool/types.ts",
@@ -2919,7 +2919,7 @@
     },
     {
       "path": "app/admin/(dashboard)/AdminNav.tsx",
-      "sha256": "557491941ac0735f3a6668f9d521c0d2f38f29698adb926b6ce137f93594fd5e"
+      "sha256": "edd7d68cca13b9efe2bf7e1abb6e61a696efa5bc285ec66503a7ec25294178e9"
     },
     {
       "path": "app/admin/(dashboard)/admins/AdminManagerPanel.tsx",
@@ -3167,7 +3167,7 @@
     },
     {
       "path": "app/api/alerts/bulk/route.ts",
-      "sha256": "695249d0b6ddaa12ee015e72d50c269b694f61fe3ce4eee3f288ddeb10e06560"
+      "sha256": "5e04338abcc5bb0b42df94138bc2e267070a3e67f64c3b5b3649564821e27985"
     },
     {
       "path": "app/api/alerts/clear-all/route.ts",
@@ -3403,7 +3403,7 @@
     },
     {
       "path": "app/api/invoices/templates/route.ts",
-      "sha256": "3bba33b00f02dabd74c4ad815764d243021377d3184a5972bbf83655c9bef572"
+      "sha256": "61d221349e752b894c403c2702d1ea6a4b25b3638d61cefb8dd51a55c8ac21a6"
     },
     {
       "path": "app/api/leads/route.ts",
@@ -3447,7 +3447,7 @@
     },
     {
       "path": "app/api/smart-assistant/v2/session/route.ts",
-      "sha256": "2fe2c06d85a3276400ec3cfabef1c7ae82e0429277470690c613c2f12f74b622"
+      "sha256": "3550a4aaa3dc2600f67bb65a17f05feb98844a3d13b797de43958ec81b83a040"
     },
     {
       "path": "app/api/supplier-alert-preferences/route.ts",
@@ -3927,7 +3927,7 @@
     },
     {
       "path": "app/components/ui/v2/README.md",
-      "sha256": "033c02e3240cd26be3d685e9ef4e16cb6e4c7813d8cd00bbc415f491122d3136"
+      "sha256": "0c8a55ad86c0bdd410f537bb682eab9cae703fcb87378e103c8dc54350a437ae"
     },
     {
       "path": "app/components/ui/v2/qc-adapters.css",
@@ -3967,7 +3967,7 @@
     },
     {
       "path": "app/components/ui/v2/useQcFeedback.tsx",
-      "sha256": "de97fd2335c12f1fa7087aa9062355cdbabc4053af6d8ff038a28c6360d0299e"
+      "sha256": "5625426db272985e020922f5f8c5e7e73fbd73ddaf5672f7d303613ce7821d8d"
     },
     {
       "path": "app/components/workspace/HomeDashboard.tsx",
@@ -4083,7 +4083,7 @@
     },
     {
       "path": "app/lib/assistant/llmClient.ts",
-      "sha256": "11e4872d309b8f798ea709cb3fea910289dcf7881d854dc134a6ef18b5481540"
+      "sha256": "09b882f3c033c0d511aa2035c3b685e2a3668a830344cf9c486f79226c7afebe"
     },
     {
       "path": "app/lib/assistant/orchestrator.ts",
@@ -4507,7 +4507,7 @@
     },
     {
       "path": "app/lib/smart-assistant/retrieval/semantics.ts",
-      "sha256": "88be9865a0e6c62ae387a798c4978b64f485d2ee8516864c50400c9aa4658f74"
+      "sha256": "caa48fb46c34ec1eeb8d8dc5d588027f627ac78b3a8970ea36dcb96e52ed3f60"
     },
     {
       "path": "app/lib/smart-assistant/retrieval/targets.ts",
@@ -4543,7 +4543,7 @@
     },
     {
       "path": "app/lib/smart-assistant/speed/model-loop.ts",
-      "sha256": "6bddf7e7a279196ee32520f517d0a15d7675a65facabd20164f1d412a2b38bec"
+      "sha256": "4d2d53509d553dc8d4f41b85f8f36d6500eab587f17e107ae09db471b85eaa1b"
     },
     {
       "path": "app/lib/smart-assistant/speed/operations.server.ts",
@@ -4567,7 +4567,7 @@
     },
     {
       "path": "app/lib/smart-assistant/turn.ts",
-      "sha256": "cbd69eb35a36eb85c3b9179919ba0d94be269addc7203d02a4df409089c788df"
+      "sha256": "cb9f90d485accc6872173c9bdb0b7dfc1171c4dd9b01f7f349fb87795d8dca1e"
     },
     {
       "path": "app/lib/smart-assistant/v2/action-domain.ts",
@@ -4659,11 +4659,11 @@
     },
     {
       "path": "app/lib/supabase/cookie-config.ts",
-      "sha256": "e1e3b6056719096cb2dc8dc82ffaa3718b09fcf611515f8282a40fb58b644db4"
+      "sha256": "041511196e12a3e3d22d4a178fd3e60b13f3f491bfbd8530907f2e16fb5a650f"
     },
     {
       "path": "app/lib/supabase/database.types.ts",
-      "sha256": "be5beb1dc5772321c0d08d8118adbc9f60e642cd8a6d2e92239cf3bd62436a6a"
+      "sha256": "cba86c1ead8fef4416a3db8a33312fd31ef3d6a395bb2a0ca18c8a618d675605"
     },
     {
       "path": "app/lib/supabase/free-client.ts",
@@ -6107,7 +6107,7 @@
     },
     {
       "path": "components/BlogHeader.tsx",
-      "sha256": "a87d09628cbdabdab598c03571b8ba772e39886d495c4f3a3a14340f7186ef59"
+      "sha256": "c063d783d94b576cb06cd2bd3a6ddce72800efc333015a58fe33a8caea9badce"
     },
     {
       "path": "components/Breadcrumbs.tsx",
@@ -6135,7 +6135,7 @@
     },
     {
       "path": "components/EarlyAccessPopup.tsx",
-      "sha256": "59fa62d9f065732abea3f572a97a177b5e810504fac21ed4abecd8b24378f73c"
+      "sha256": "5531d45adc2a194d68c7233f86bad578a1f63ad3b7d1cba7f12f6f55464e3b60"
     },
     {
       "path": "components/FreeTakeoffCTACard.tsx",
@@ -6195,7 +6195,7 @@
     },
     {
       "path": "components/competitor-pages/competitor-page.tsx",
-      "sha256": "f5eef5764000aebd164e8407ec1b1a6993c1d0e11b4acc92bb91226fe97852c6"
+      "sha256": "6a255a6ae439b04d12c7e5e551e99712416ed1555d6a3d0b5b9720bf5b170f6d"
     },
     {
       "path": "components/competitor-pages/competitor-video.tsx",
@@ -7983,7 +7983,7 @@
     },
     {
       "path": "docs/sa-p17-2026-09-26/validation/LOCKED_FILES.json",
-      "sha256": "46876d0cd87dc250d63ab9c3c98993a7f768260098d6ae056954867c3af2f2d1"
+      "sha256": "b11bdd1be8b73057dda96118a25350b3007657061f4a4ff509aa560457655986"
     },
     {
       "path": "docs/sa-p17-2026-09-26/validation/OFFLINE_RESULTS.json",
@@ -10171,7 +10171,7 @@
     },
     {
       "path": "middleware.ts",
-      "sha256": "09355b220117570709eabd7e085f3c86f566e151a9b30a5f554318386f87bab5"
+      "sha256": "a571d8e006bd94b1a8c930a27f1fdda882c3e5583cfa20a5554f139a22cf1e1a"
     },
     {
       "path": "next.config.ts",

@@ -34,6 +34,14 @@ export function extractAnchors(message: string): Anchors {
   // "for" is a customer qualifier only in an entity-shaped request, not e.g.
   // "flashing for chimneys". Do not split arbitrary product descriptions.
   const child = /^(?:please\s+)?(?:set|change|update)\s+(?:the\s+)?(.+?)\s+(?:material|labour|labor)\s+rate\s+(?:to|on|in)\b/i.exec(message)?.[1]?.trim().replace(/^["“]|["”]$/g,'');
+  // 2026-09-28 round-2 battery finding: regex backtracking captures a bare article
+  // ("set the material rate on the Ridge component ... to 30" -> child "the"),
+  // which constrainIntent then enforces against the model's real selection and
+  // rejects every proposal for this common rate-first phrasing. Accept the
+  // rate-first capture as a fallback and drop article-only captures.
+  const childAlt = /(?:set|change|update)\s+(?:the\s+)?(?:material|labour|labor)\s+rate\s+(?:to|on|in)\s+(?:the\s+)?(.+?)(?:\s+component\b|\s+line items?\b|\s+items?\b|\s+(?:of|on|for|in)\s+|\s+to\s+|$)/i.exec(message)?.[1]?.trim().replace(/^["']+|["']+$/g,'');
+  const articleOnly = (v?: string) => !v || /^(?:the|a|an|this|that|it|these|those)$/i.test(v);
+  const childFinal = !articleOnly(child) && child ? child : (!articleOnly(childAlt) && childAlt ? childAlt : undefined);
   // Mask quoted literals without changing offsets: a job named "Ridge for
   // Smith" is not customer=Smith. A real qualifier after that literal still
   // binds, including when the customer name itself is quoted.
@@ -42,7 +50,7 @@ export function extractAnchors(message: string): Anchors {
   const customerStart = customerMatch ? customerMatch.index + customerMatch[1].length : 0;
   const customer = customerMatch ? message.slice(customerStart, customerStart + customerMatch[2].length).trim().replace(/^["“]|["”]$/g, '') : undefined;
   const component = /\b(?:quotes|drafts)\s+(?:with|containing|that (?:have|contain))\s+(.+?)(?:\s+(?:with their|and (?:their|the)|for)\b|[.!?]|$)/i.exec(message)?.[1]?.trim().replace(/\s+(?:components|line items)$/i,'');
-  return { numbers: numbers.slice(0, 8), ...(child && child.length<=120 && !/\b(?:and|then|except|without|not)\b/i.test(child)?{child}:{}), ...(customer && customer.length <= 120 && !/\b(?:and|then|except|without|not)\b/i.test(customer) ? { customer } : {}),
+  return { numbers: numbers.slice(0, 8), ...(childFinal && childFinal.length<=120 && !/\b(?:and|then|except|without|not)\b/i.test(childFinal)?{child:childFinal}:{}), ...(customer && customer.length <= 120 && !/\b(?:and|then|except|without|not)\b/i.test(customer) ? { customer } : {}),
     ...(component && component.length <= 120 && !/^(?:their|linked|orders?|invoices?|customers?|status)\b/i.test(component) ? { component } : {}) };
 }
 function conflict(message: string): never { throw new RetrievalError('invalid_query', message); }
