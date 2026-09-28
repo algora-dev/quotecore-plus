@@ -257,7 +257,12 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
                     setUnresolved(false);
                 }
                 const code = isRecord(result) ? String(result.error_code ?? '') : '';
-                throw new Error(code === 'quota_exceeded' ? 'This workspace has reached its assistant limit.' : res.status === 409 ? 'A turn is already in progress or the request conflicts. Refresh before trying again.' : 'The reply could not be verified. Retry the same message rather than send a duplicate.');
+                const serverMessage = isRecord(result) && typeof result.error === 'string' ? result.error : '';
+                throw new Error(code === 'quota_exceeded' ? 'This workspace has reached its assistant limit.'
+                    : code === 'migration_required' ? (serverMessage || 'Smart Assistant setup is incomplete on this deployment. Ask an administrator to finish setup.')
+                    : ['access_changed','permissions_changed','workspace_changed'].includes(code) ? (serverMessage || 'Your Smart Assistant access changed. Reopen the assistant.')
+                    : res.status === 409 ? 'A turn is already in progress or the request conflicts. Refresh before trying again.'
+                    : 'The reply could not be verified. Retry the same message rather than send a duplicate.');
             }
             if (!isRecord(result) || typeof result.run_id !== 'string')
                 throw new Error('Reply status could not be verified. Retry the same message.');

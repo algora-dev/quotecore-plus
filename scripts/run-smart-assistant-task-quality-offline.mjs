@@ -9,8 +9,8 @@ const scripts=[
  'test-smart-assistant-p17.cjs','test-smart-assistant-p17-services.cjs','test-smart-assistant-p17-metrics.mjs','test-smart-assistant-p17-corpus.cjs',
  'test-smart-assistant-resolver-pure.cjs','test-smart-assistant-resolver-services.cjs','test-smart-assistant-resolver-integration.cjs',
  'test-smart-assistant-task-boundary.cjs','test-smart-assistant-task-conversations.cjs','test-smart-assistant-task-integration.cjs',
- 'test-smart-assistant-task-http.cjs','test-smart-assistant-task-presentation.cjs',
+ 'test-smart-assistant-task-http.cjs','test-smart-assistant-task-presentation.cjs','test-smart-assistant-p173.cjs',
 ];
 for(const name of scripts){console.log('\n=== '+name+' ===');const r=spawnSync(process.execPath,['scripts/'+name],{stdio:'inherit',env:process.env});if(r.error||r.status!==0){console.error('FAILED',name,r.error?.message??r.status);process.exit(r.status||1);}}
-for(const name of ['check-smart-assistant-speed-source.cjs','check-smart-assistant-retrieval-source.cjs','check-smart-assistant-p17-source.cjs','check-smart-assistant-task-quality-source.cjs']) {const r=spawnSync(process.execPath,['scripts/'+name],{stdio:'inherit',env:process.env});if(r.error||r.status!==0)process.exit(r.status||1);}
+for(const name of ['check-smart-assistant-speed-source.cjs','check-smart-assistant-retrieval-source.cjs','check-smart-assistant-p17-source.cjs','check-smart-assistant-task-quality-source.cjs','check-smart-assistant-p173-source.cjs']) {const r=spawnSync(process.execPath,['scripts/'+name],{stdio:'inherit',env:process.env});if(r.error||r.status!==0)process.exit(r.status||1);}
 console.log('\nAll executable OFFLINE suites passed. Mock transport != database security, real model, browser or live speed.');

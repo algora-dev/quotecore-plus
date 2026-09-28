@@ -113,11 +113,13 @@ export type RunOutcome = {
     id: string;
     requestId: string;
     status: string;
+    errorCode: string | null;
 };
 export function parseRunOutcome(value: unknown): RunOutcome | null {
     if (!isRecord(value) || !isUuid(value.id) || !isUuid(value.client_request_id) || !['accepted', 'running', 'completed', 'failed', 'cancelled', 'aborted', 'timed_out'].includes(String(value.status)))
         return null;
-    return { id: value.id, requestId: value.client_request_id, status: String(value.status) };
+    return { id: value.id, requestId: value.client_request_id, status: String(value.status),
+        errorCode: typeof value.error_code === 'string' ? value.error_code.slice(0, 240) : null };
 }
 export type SessionSnapshot = {
     /** Optional: absent on a P1.7.2 rollback. Never a business-action approval. */
@@ -308,7 +310,7 @@ export function parsePublicSession(value: unknown): SessionSnapshot | null {
     const cards = value.cards.map(c => isRecord(c) ? parseCard({ ...c, run_id: c.runId, created_at: c.createdAt }) : null);
     const actions = value.actions.map(a => isRecord(a) ? parseActionView({ ...a, action_kind: a.actionKind, proof_digest: a.proofDigest, created_at: a.createdAt }) : null);
     const messages = value.messages.map(m => isRecord(m) ? parseMessage({ ...m, run_id: m.runId, created_at: m.createdAt }) : null);
-    const runs = value.runs.map(v => isRecord(v) ? parseRunOutcome({ ...v, client_request_id: v.requestId }) : null);
+    const runs = value.runs.map(v => isRecord(v) ? parseRunOutcome({ ...v, client_request_id: v.requestId, error_code: v.errorCode }) : null);
     if (cards.some(c => !c) || actions.some(a => !a) || messages.some(m => !m) || runs.some(r => !r))
         return null;
     let page: PageHint | null = null;

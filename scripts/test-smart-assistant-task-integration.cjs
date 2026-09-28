@@ -79,6 +79,9 @@ test('missing task migration is explicit setup failure before model or business 
 test('task flag cannot silently fall back to aggressive P171 on missing capability',async()=>{
  reset();s.cap.resolver_version=0;await assert.rejects(createV2Scope(input('quote 1014')),e=>e.code==='migration_required');assert.equal(s.admin.length,0);
 });
+test('missing or explicitly disabled retrieval rollout degrades to the pre-task-context path',async()=>{
+ reset();s.cap={...s.cap,enabled:false,intelligence_version:1,resolver_version:1};const scope=await createV2Scope(input('Why do prices vary?'));assert.equal(scope.task,undefined);assert.equal(s.calls.some(x=>x.name==='sa_v2_task_read'),false);
+});
 test('disabling task flag keeps the baseline reader path',async()=>{
  reset();process.env.SMART_ASSISTANT_TASK_CONTEXT_ENABLED='false';const scope=await createV2Scope(input('Why do prices vary?'));assert.equal(scope.task,undefined);assert.equal(s.calls.some(x=>x.name==='sa_v2_task_read'),false);
 });

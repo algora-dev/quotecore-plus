@@ -17,9 +17,13 @@ export function failedTurns(messages: ChatMessage[], runs: RunOutcome[]): Failed
     const answered = new Set(messages.filter(m => m.role === 'assistant').map(m => m.runId));
     return runs.filter(r => failed.has(r.status) && !answered.has(r.id)).flatMap(r => {
         const message = messages.find(m => m.runId === r.id && m.role === 'user');
+        const setup = r.errorCode === 'migration_required' || r.errorCode?.startsWith('pipeline_error::Task context setup is incomplete');
+        const access = ['access_changed','permissions_changed','workspace_changed'].includes(r.errorCode ?? '');
         return message ? [{ runId: r.id, requestId: r.requestId, messageId: message.id, retryText: message.content,
-                canRetry: !isTaskMessage(message.content) && !isResolutionMessage(message.content),
-                copy: r.status === 'timed_out' ? 'This request timed out before a reply was confirmed.' : 'This request did not complete. No reply was confirmed.' }] : [];
+                canRetry: !setup && !access && !isTaskMessage(message.content) && !isResolutionMessage(message.content),
+                copy: setup ? 'Smart Assistant setup is incomplete on this deployment. An administrator needs to finish the assistant setup before this request can run.'
+                    : access ? 'Your Smart Assistant access changed. Reopen the assistant before sending another request.'
+                    : r.status === 'timed_out' ? 'This request timed out before a reply was confirmed.' : 'This request did not complete. No reply was confirmed.' }] : [];
     });
 }
 /** Old navigation stays useful. Only resolution/clarification buttons can revive

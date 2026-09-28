@@ -57,13 +57,21 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
     let task: PreparedTask | undefined;
     if (taskContextEnabled()) {
         const capabilities = await getCapabilities();
-        if (!resolverAvailable(capabilities))
-            throw new AssistantV2Error('migration_required', 'Task context requires the enabled P1.7.1 retrieval reader. Check the deployment flags and migrations.', 503);
-        task = await prepareTaskTurn({message:input.userMessage,runId:input.runId,
-            store:createTaskStore(input.supabase,access,input.runId,capabilities.knowledgeRevision),
-            emit:content=>emit(Object.entries(access.permissions).filter(([,v])=>v!=='hidden').map(([k])=>k as AssistantSection),content),
-            report:event=>console.info('[smart-assistant:task]',JSON.stringify(event))});
-        input = {...input,userMessage:task.message};
+        if (resolverAvailable(capabilities)) {
+            task = await prepareTaskTurn({message:input.userMessage,runId:input.runId,
+                store:createTaskStore(input.supabase,access,input.runId,capabilities.knowledgeRevision),
+                emit:content=>emit(Object.entries(access.permissions).filter(([,v])=>v!=='hidden').map(([k])=>k as AssistantSection),content),
+                report:event=>console.info('[smart-assistant:task]',JSON.stringify(event))});
+            input = {...input,userMessage:task.message};
+        } else if (capabilities.state === 'setup_required' || capabilities.state === 'ready') {
+            // A workspace that is enabled for retrieval but lacks the resolver
+            // capability is an incompatible deployment. By contrast, a normal
+            // staged-rollout "disabled" state (including no rollout row)
+            // intentionally falls back to the pre-task-context assistant.
+            throw new AssistantV2Error('migration_required', 'Task context setup is incomplete. The assistant cannot safely start task state on this deployment.', 503);
+        } else {
+            try { console.info('[smart-assistant:task]', JSON.stringify({event:'sa_task_rollout_fallback',version:1,runId:input.runId,state:capabilities.state,resolverByServer:resolverEnabled(),workspaceRetrievalEnabled:capabilities.enabled})); } catch { /* diagnostics only */ }
+        }
     }
     let resolver: ReturnType<typeof createEntityResolver> | undefined;
     const prepareComponent = async (args: Record<string, unknown>, expectedParentId: string) => {

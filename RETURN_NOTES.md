@@ -1,52 +1,116 @@
-# RETURN NOTES - P1.7.2 Task Context Quality (2026-09-28)
+# RETURN NOTES — P1.7.3 Release Hardening (2026-09-28)
 
 ## Start here
 
-This is the actual P1.7.2 implementation based on the latest supplied `quotecore-plus-SA-quality-handoff-2026-09-28.zip` (agent commit `482513c8`). Reconcile newer branch changes rather than overwriting blindly.
+This package is based on the supplied `quotecore-plus-SA-next-round-handoff-2026-09-28.zip`, whose contained source tree is the authority for this pass.
 
-**NOT DEPLOYED. SQL NOT APPLIED. New task feature defaults OFF. No measured live latency claim.**
+**NOT DEPLOYED. NEW SQL NOT APPLIED. No live latency, browser or provider-health claim is made.**
 
-The previous root UX return notes are preserved byte-for-byte at `docs/sa-p172-2026-09-28/BASELINE_RETURN_NOTES.md`. The supplied quality brief remains intact. P172-specific source/delivery changes are described by `FILE_CHANGES.json`; historical manifests stay historical.
+P1.7.3 is deliberately small. It does not redesign task context, Universal Retrieval, P3, quota/admission, or the Smart Assistant UX. It hardens four release risks identified in the latest agent handoff: missing rollout rows, common interpretation anchors, provider/tool-schema health detection, and honest setup/access failure presentation.
 
-## What was corrected
+The prior root return notes are preserved at `docs/sa-p173-2026-09-28/BASELINE_RETURN_NOTES.md`.
 
-P171's old unresolved search could intercept a complete unrelated request before retrieval/model. This implementation owns that design mistake: one shared task-boundary decision now precedes both paths instead of automatically folding every message into prior resolver state.
+## What changed
 
-- Distinguishes new request, expected clarification, dependent follow-up, explicit correction, task closure and an uncertain task boundary. No extra classifier model call. Unrecognized complete wording reaches the existing first planning call, not a fake “no data” result.
-- Keeps conversation, task and admitted run distinct. New tasks exclude old pending clues, record references/actions and model history; true continuations preserve the appropriate task. Exact #1014 after a failed Ridge LIST is fresh; #1014 answering a Ridge COST parent question continues.
-- Done / Move on are authenticated metadata-only controls. Not quite focuses an editable refinement. No generated reply on button click, history deletion, business approval/cancellation or quota/run manipulation. Forgetting Done does not break new requests.
-- Version-fenced task/candidate choices, saved boundary messages, task-scoped resolver state and fresh selected-record reads prevent stale buttons/late responses reopening closed tasks. Current permission and knowledge epochs are enforced.
-- Owner list/restatement phrases retrieve real relationship matches. Ridge/ridges/ridging normalization retains specific qualifiers. Customer lists use customer filters. Supported latest/first selections consistently use creation order and one clickable result, not a picker or the legacy updated-at shortcut.
-- Removes repeated identical supposed broadening within a turn; no cross-turn business-data cache. Existing one-to-five credible candidate selection, P3 proposal safeguards and general retrieval remain.
-- Canonical failed requests get an inline failure tied to the user message. Unknown outcomes retain the SAME request key and one Check request control. Provider diagnostics and per-stage task timings are sanitized; no new retry worker or finalization path.
+### 1. Missing retrieval rollout rows no longer turn task context into a blanket 503
+
+`createV2Scope()` now distinguishes an ordinary staged-rollout `disabled` capability state from an actually incompatible deployment.
+
+- `disabled` — including no rollout row, or an explicit `enabled=false` row — falls back to the pre-task-context assistant path.
+- `setup_required`, or a supposedly ready deployment without the required resolver capability, still fails closed with `migration_required`.
+- Explicit rollout disablement remains disabled; this does **not** silently enable retrieval or task context.
+- A sanitized `sa_task_rollout_fallback` diagnostic records the fallback without user text.
+
+This fixes the release-blocking condition where accounts not yet provisioned for retrieval could fail every Smart Assistant request when the server task-context flag was globally enabled.
+
+### 2. Common edit/customer wording is anchored more consistently
+
+The deterministic anchor layer now recognizes common component-edit shapes for material rate, labour/labor rate, quantity/qty, waste and pitch while preserving the component name supplied by the user. It also recognizes customer qualifiers on plural quote/draft/invoice/job/order requests, including material orders.
+
+Examples covered offline include:
+
+- `Set Ridge labour rate to 25 per m on quote 1014`
+- `Set Ridge quantity to 40 on quote 1014`
+- `Change the waste on Ridge component to 10% on quote 1014`
+- `Change the pitch of Ridge component to 25 degrees on quote 1014`
+- `Show me quotes for John Smith`
+- `Show orders for John Smith`
+
+The existing P3 validator/proposal/Confirm path still owns the requested mutation and value. Anchors only preserve entity/qualifier identity so the model cannot casually switch records/components.
+
+### 3. Admin-only provider canary
+
+A new admin page at `/admin/smart-assistant/health` runs one tiny real configured-model request containing a no-op function schema. Its purpose is to catch provider/model contract regressions — especially function-tool request incompatibilities — immediately after deployment.
+
+The canary:
+
+- requires `requireAdmin()`;
+- uses the existing configured Smart Assistant model/client;
+- includes a deliberately unused function-tool schema;
+- sends no company/customer/conversation data;
+- creates no Smart Assistant run and invokes no QuoteCore business tool;
+- reports healthy/degraded/unavailable, latency, model and token counts.
+
+This is a manual/admin operational probe, not a background monitor and not a substitute for end-to-end assistant acceptance.
+
+### 4. Canonical setup/access failures are visible instead of generic retry noise
+
+The public V2 session contract now retains the bounded canonical `error_code` from recent assistant runs. One additive SQL wrapper extends `sa_v2_session_read(uuid)` so recent run outcomes include that field while retaining the existing owner/company/history fences.
+
+The existing failed-turn UI can therefore distinguish:
+
+- `migration_required` / setup incomplete — explicit setup message, not retryable;
+- access/workspace/permission change — explicit reopen/access message, not retryable;
+- ordinary failed/timed-out turns — existing single logical failure/retry behavior.
+
+No provider body, prompt, stack, secret or model-authored SQL is exposed.
 
 ## Locked boundaries preserved
 
-The original turn HTTP route and canonical run pipeline, model config/Luna reasoning client, dependency manifests, all **180 original migration SQL files**, pricing/tax/currency engines and unrelated UI are unchanged. P2/P3 and existing confirmation/audit are retained. No P4/knowledge enablement, new Orders edits, visual redesign, voice, PWA or analytics expansion.
+- Existing `sa_admit_run` / reservation / quota / replay / trusted finish behavior is unchanged.
+- Existing turn route and canonical turn finalization are unchanged.
+- GPT-5.6 Luna configuration and reasoning client are unchanged.
+- P1.7.2 task semantics, Universal Retrieval, P2 and P3 confirmation/audit remain in place.
+- P4 remains gated.
+- No arbitrary SQL/database tool was added.
+- No existing migration was edited. The package adds one draft migration only.
+- No visual Smart Assistant redesign, voice, image, PWA or analytics expansion is included.
 
-Only functional assistant controls/presentation are changed. There is no arbitrary SQL tool, model-authored database write or second business data store.
+## Important validation-manifest correction
 
-## Required integration sequence
+The supplied authoritative ZIP already failed its own `check-smart-assistant-task-quality-source.cjs` before P1.7.3 changes because `docs/sa-p172-2026-09-28/validation/BASELINE_PROTECTED.json` contained stale hashes from an older tree. This was reproduced on a clean extraction.
 
-1. Read `docs/SMART_ASSISTANT_P172_HANDOFF_2026-09-28.md`, `docs/sa-p172-2026-09-28/validation/VALIDATION.md` and `DATABASE_ACCEPTANCE.md`.
-2. Keep `SMART_ASSISTANT_TASK_CONTEXT_ENABLED=false` through build and SQL review. Existing flags/config remain as in the agent deployment. Run dependency install, real tsc/lint/production build in the normal environment. Run `node scripts/run-smart-assistant-task-quality-offline.mjs`.
-3. Review/test/apply ONLY `backend/supabase/migrations/20260928150000_sa_v2_task_context.sql` to the approved testing database. Two private task-metadata tables and eight narrow functions; do not mass-apply pending migrations. Test owner/tenant/epoch/CAS/current-run/role grants before enabling.
-4. Enable TASK_CONTEXT only on the intended testing deployment with existing resolver/retrieval/V17/P1 gates. Confirm `sa_task_boundary`, `sa_task_stage` and new task reader RPCs in logs. Missing setup fails explicitly; no silent fallback.
-5. Run the owner's four exact messages in one continuous phone conversation, with NO New chat/Done between them. Then run true continuation, Done/forgotten Done, correction, pause/boundary, stale button, failure/uncertain replay and two-tab scenarios from `continuous-acceptance.json`. These are LIVE NOT RUN here. Validate actual selected IDs/cards and current data, not just plausible wording.
-6. Measure per-turn overhead AND reduction of wrong follow-ups. Task-enabled turns add checkpoint read/begin/metadata-finish RPCs; sanitized stage timings expose each. No measured speed promise. Retain existing 90-second run deadline/usage accounting; effective DB cancellation remains a live acceptance gate.
+P1.7.3 refreshes that **validation metadata only** against the actual supplied authoritative ZIP, then runs the protected-source gate. The application source was not altered merely to satisfy the manifest.
 
-Rollback TASK_CONTEXT=false disables this task router/UI but restores old P171 continuation behavior, with its known defect. The resolver master kill switch still works. Do not drop metadata tables or reset reservations to roll back. Old opaque task/candidate messages cannot reach a model after rollback.
+## Required Gavin integration sequence
 
-## Actual evidence
+1. Reconcile this package against the current integration branch; do not blindly overwrite newer fixes.
+2. Keep all current production/testing feature flags as they are. The rollout fallback is compiled behavior, not a new customer-facing enable flag.
+3. Install dependencies and run real `tsc`, lint and `npm run build` in the normal environment.
+4. Run:
+   - `node scripts/run-smart-assistant-task-quality-offline.mjs`
+   - `node scripts/run-smart-assistant-resolver-offline.mjs`
+5. Review/test **only** `backend/supabase/migrations/20260928190000_sa_v2_p173_release_hardening.sql`; do not mass-apply pending migrations.
+6. On a database clone/testing environment, prove the wrapped session reader preserves all existing session content and now returns recent-run `error_code` only for the authenticated owner/company/history scope. Test forged conversation IDs, another user/company, expired history and authenticated grants.
+7. Test two account classes with task context server-side enabled:
+   - approved/ready retrieval rollout: P1.7.2 task context still works;
+   - no rollout row and explicit `enabled=false`: assistant falls back normally rather than 503, without gaining retrieval/task-context access.
+8. Re-run the owner continuous P1.7.2 acceptance sequences and P3 proposal/Confirm tests. Confirm no wrong-record/component regression from the new anchors.
+9. As admin, open `/admin/smart-assistant/health` and run the canary against the actual configured provider/model. Confirm it is admin-only and contains no customer data in request/logs.
+10. Inject/observe `migration_required`, access-changed and ordinary failed turns in testing and verify one clear inline outcome, not a generic retry loop.
+11. Return the complete latest source/handoff ZIP with actual build, SQL/RLS, canary and live acceptance evidence before moving to UX/multimodal work.
 
-**976 offline executable checks pass: 812 retained, 164 new.** See validation logs. These include real orchestration/service code with explicit mock transports, not live RLS/Luna. Syntax across 103 assistant files plus the two quote components, registry/static checks and 3,197 actual-baseline protected files pass.
+## Actual evidence from this environment
 
-The historical P171 raw-file checker already fails the supplied baseline at DESIGN_CHANGES.md due later agent UX edits. It has NOT been weakened. The P172 runner uses the actual Sept28 protected manifest and retains every original executable test.
+- `node scripts/run-smart-assistant-task-quality-offline.mjs` — **PASS**, 981 executable TAP checks across the retained suites and new P1.7.3 checks, plus source/static gates.
+- `node scripts/run-smart-assistant-resolver-offline.mjs` — **PASS**, including 203 resolver cases and retained source boundaries.
+- New P1.7.3 source/migration checker — **PASS**.
+- Baseline-vs-new `npx tsc --noEmit` — both fail because this environment lacks installed React/Next/Supabase/Node types. The updated tree produces 28 additional diagnostics, all attributable to the new admin canary route/components missing those same framework modules/JSX types. This is **not** a successful semantic typecheck.
+- Baseline-vs-new `npm run build` — both run `check-server-deps` successfully, then fail identically with `next: not found` because dependencies are not installed. This is **not** a successful production build.
+- No live PostgreSQL/RLS, browser, Luna/provider, account rollout, P3 mutation, or latency test was run here.
 
-Full typecheck was attempted on baseline and build, both exit 2 from missing dependencies. Diagnostic comparison is included; NOT a successful full typecheck. No install/lint/build, PostgreSQL, browser, Luna, scale or live cancellation test was run. The offline count is not a release success rate. Owner-verbatim continuous behavior is the acceptance bar.
+See `docs/sa-p173-2026-09-28/validation/VALIDATION.md` for exact limitations.
 
-## Limits and next handoff
+## Release decision
 
-No lower latency or perfect natural-language interpretation is claimed. Complex corrections still depend on the existing model planner; ambiguous cases can ask a boundary question. Context expiry is 15 minutes, not automatic task success. Done never confirms a proposal; old pending proposals retain original review/expiry guards. Generic header requests return identity/context and Open, not an unasked automatic pricing calculation. Lower-priority count-copy polish remains outside this quality correction.
-
-Send the full ZIP plus `docs/sa-p172-2026-09-28/AGENT_INTEGRATION_PROMPT.txt`. Return actual testing deployment/flags, applied migrations, browser transcripts, selected records, task decisions, call/timing counts, security/concurrency evidence and remaining failures before any next feature phase.
+P1.7.3 is ready for Gavin to integrate and validate, not ready to declare production-safe from this environment alone. If its live gates pass, this should be the final small backend hardening pass before freezing the assistant foundation and moving into the Smart Assistant UX/multimodal phase.
