@@ -33,9 +33,10 @@ export async function runModelLoop(input: {
         onToken: () => telemetry.token(), signal,
       }));
     } catch (error) {
-      try { console.warn('[smart-assistant:upstream]', JSON.stringify({event:'sa_upstream_failure',runId:input.context.runId,modelHop:hop,...providerFailure(error)})); } catch { /* diagnostics cannot affect trusted finish */ }
+      const providerMessage = (() => { try { const m = (error as { error?: { message?: unknown } })?.error?.message; return typeof m === 'string' && m ? m.replace(/[\u0000-\u001f]/g, ' ').slice(0, 100) : ''; } catch { return ''; } })();
+      try { console.warn('[smart-assistant:upstream]', JSON.stringify({event:'sa_upstream_failure',runId:input.context.runId,modelHop:hop,...providerFailure(error),message:providerMessage})); } catch { /* diagnostics cannot affect trusted finish */ }
       if (signal.aborted || (error instanceof Error && ['AbortError','TimeoutError'].includes(error.name))) fail('turn_timeout');
-      return fail('upstream_error');
+      return fail('upstream_error' + (providerMessage ? '::' + providerMessage : ''));
     }
     tokensIn += step.tokensIn;
     tokensOut += step.tokensOut;

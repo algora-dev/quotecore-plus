@@ -135,14 +135,19 @@ export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult>
   // instant 400 upstream_error with 0 tokens. Tool turns therefore run at
   // 'none' (tool selection needs no hidden reasoning); the final no-tools
   // synthesis step keeps 'low'.
+  // 2026-09-28: provider-alias-proof gate + completion-token clamp. OpenAI
+  // rejects max_completion_tokens above the model cap (400 request_rejected)
+  // and rejects function tools unless reasoning_effort is explicitly set —
+  // infer neither from defaults; pin both explicitly for any gpt-5 id.
+  const chatModelId = MODEL_CONFIG.chatModel.includes('/') ? MODEL_CONFIG.chatModel.split('/').pop() ?? MODEL_CONFIG.chatModel : MODEL_CONFIG.chatModel;
   const reasoning: { reasoning_effort?: 'low' | 'none' } = {};
-  if (MODEL_CONFIG.chatModel.startsWith('gpt-5')) {
+  if (chatModelId.startsWith('gpt-5')) {
     reasoning.reasoning_effort = input.tools.length > 0 ? 'none' : 'low';
   }
   const stream = await client().chat.completions.create(
     {
-      model: MODEL_CONFIG.chatModel,
-      max_completion_tokens: MODEL_LIMITS.maxOutputTokens,
+      model: chatModelId,
+      max_completion_tokens: Math.min(MODEL_LIMITS.maxOutputTokens, 64000),
       ...reasoning,
       messages: toOpenAiMessages(input.messages),
       tools: input.tools.map((t) => ({
