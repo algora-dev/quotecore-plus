@@ -338,6 +338,25 @@ export async function middleware(request: NextRequest) {
     return expireLegacyAuthCookies(request, NextResponse.redirect(url));
   }
 
+  // Demo workspace cookie-view rewrite (Architecture V2 §5, testing-phase
+  // path-based variant): make the demo session visible to the app's normal
+  // clients under the NORMAL cookie name for this request only, so workspace
+  // pages resolve the anon demo user transparently under normal RLS. A stale
+  // normal session in the same browser is masked while inside demo slugs.
+  if (isDemoWorkspace && user) {
+    const legacyPrefix = legacyAuthCookiePrefix();
+    const demoChunks = request.cookies.getAll().filter(c => c.name.startsWith(DEMO_COOKIE_NAME));
+    for (const c of request.cookies.getAll()) {
+      if (c.name.startsWith(AUTH_COOKIE_NAME) || (legacyPrefix && c.name.startsWith(legacyPrefix))) {
+        request.cookies.delete(c.name);
+      }
+    }
+    for (const c of demoChunks) {
+      request.cookies.set(c.name.replace(DEMO_COOKIE_NAME, AUTH_COOKIE_NAME), c.value);
+    }
+    response = NextResponse.next({ request });
+  }
+
   // 2FA gate. getAuthenticatorAssuranceLevel() is a local JWT decode, not a
   // network round-trip, so it's safe to run on every request.
   //   - currentLevel: where the session is now (aal1 or aal2)
