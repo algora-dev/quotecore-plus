@@ -123,7 +123,11 @@ export async function provisionDemo(anonUserId: string, ip: string | null): Prom
     throw new DemoProvisionError(`Provisioning failed: ${userError.message}`, 500);
   }
 
-  await admin.from('assistant_configs').insert({ company_id: companyId }).then(() => undefined, () => undefined); // defaults are fine
+  // SA availability gates: the assistant page 404s unless BOTH the config
+  // row AND the per-company feature flag exist (the smart_assistant_enabled
+  // RPC reads assistant_feature_flags and defaults to false when absent).
+  await admin.from('assistant_configs').insert({ company_id: companyId }).then(() => undefined, () => undefined);
+  await admin.from('assistant_feature_flags').insert({ company_id: companyId, enabled: true }).then(() => undefined, () => undefined);
 
   // 5. Session row: active immediately, expires in 24h (resumable).
   const expiresAt = new Date(Date.now() + SESSION_HOURS * 3600_000).toISOString();
