@@ -1,0 +1,16 @@
+{
+  "result": "PASS OFFLINE",
+  "tests": 976,
+  "baseline_retained": 812,
+  "new": 164,
+  "suites": 18,
+  "evidence": "all-offline.log",
+  "limitations": [
+    "No real database/RLS",
+    "No Luna",
+    "No browser",
+    "Typecheck dependency-blocked",
+    "No install/lint/build",
+    "No live latency or catalogue/cancellation acceptance"
+  ]
+}

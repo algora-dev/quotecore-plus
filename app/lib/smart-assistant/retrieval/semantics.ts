@@ -4,6 +4,7 @@
  */
 import { isRecord, type SectionPermissions } from '../section-permissions';
 import { RetrievalError, type QueryPlan } from './contracts';
+import { componentWords, componentSource } from '../resolver/vocabulary';
 import { parseQueryPlan, sourceSpec } from './registry';
 
 export const STATUS_VALUES = {
@@ -42,6 +43,11 @@ export function compileIntelligentPlan(raw: unknown, permissions: SectionPermiss
     return value.flatMap(item => {
       if (!isRecord(item)) return [item];
       const f: Record<string, unknown> = { ...item, field: alias(item.field, sourceName) };
+      if (componentSource(sourceName) && ['name','item_name','description'].includes(String(f.field)) && f.op === 'words' && typeof f.value === 'string') {
+        const term = componentWords(f.value);
+        if (term !== f.value) notes.add('component_word_variant');
+        f.value = term;
+      }
       const statusDomain = f.field === 'quote_status' ? STATUS_VALUES.quotes
         : f.field === 'status' && own(STATUS_VALUES, sourceName) ? STATUS_VALUES[sourceName as keyof typeof STATUS_VALUES] : null;
       if (!statusDomain || f.op === 'is_null') return [f];
@@ -62,7 +68,14 @@ export function compileIntelligentPlan(raw: unknown, permissions: SectionPermiss
       return [{ ...f, value: normalizedValue }];
     });
   };
-  const normalized: Record<string, unknown> = { ...raw, filters: normalizeFilters(raw.filters, source) };
+  const normalizeSearch = (value:unknown, sourceName:string):unknown => {
+    if(!isRecord(value) || !componentSource(sourceName) || !['words','natural'].includes(String(value.match)) || typeof value.text!=='string')return value;
+    // Do not stem explicit customer/job searches or exact quoted identities.
+    if(value.field!==undefined && !['name','item_name','description'].includes(String(value.field)))return value;
+    const text=componentWords(value.text);if(text!==value.text)notes.add('component_word_variant');
+    return {...value,text};
+  };
+  const normalized: Record<string, unknown> = { ...raw, filters: normalizeFilters(raw.filters, source), ...(raw.search!==undefined?{search:normalizeSearch(raw.search,source)}:{}) };
   if (raw.concepts !== undefined) {
     if (!Array.isArray(raw.concepts) || raw.concepts.length > 3 || !raw.concepts.every(c => c === 'unpaid_invoices')) invalid('Unsupported business concept. Currently the explicit concept is unpaid_invoices.');
     if (raw.concepts.length && source !== 'invoices') invalid('unpaid_invoices applies only to invoices. No source was substituted.');
@@ -92,10 +105,10 @@ export function compileIntelligentPlan(raw: unknown, permissions: SectionPermiss
   if (Array.isArray(raw.related)) normalized.related = raw.related.map(value => {
     if (!isRecord(value) || typeof value.relation !== 'string' || !own(spec.relations, value.relation)) return value;
     const relatedSource = spec.relations[value.relation].source;
-    const relation: Record<string, unknown> = { ...value, filters: normalizeFilters(value.filters, relatedSource) };
+    const relation: Record<string, unknown> = { ...value, filters: normalizeFilters(value.filters, relatedSource), ...(value.search!==undefined?{search:normalizeSearch(value.search,relatedSource)}:{}) };
     if (isRecord(value.search) && value.search.match === 'natural') {
       // Exact same text, stricter membership; no qualifier is removed.
-      relation.search = { ...value.search, match: 'words' };
+      relation.search = { ...(relation.search as Record<string,unknown>), match: 'words' };
       notes.add('related_search_constrained_to_words');
     }
     return relation;

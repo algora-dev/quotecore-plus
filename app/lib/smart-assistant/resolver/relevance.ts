@@ -1,5 +1,6 @@
 /** Positive relevance is independent of database rank. Being first does not
  * imply relevance. Recency orders display ties; it never manufactures identity. */
+import { componentWords, componentSource } from './vocabulary';
 import { normalizeName } from './anchors';
 import { adapter } from './sources';
 import { candidateKey, type Candidate, type Evidence, type QuestionKey, type ResolverIntent } from './contracts';
@@ -47,12 +48,14 @@ export function makeCandidate(source: string, row: QueryRow, intent: ResolverInt
   const names = a.name.map(k => str(row[k])).filter((x): x is string => !!x);
   const evidence = intent.contains && source === 'quotes'
     ? { level: 'words' as const, score: 80, reasons: ['Authoritative EXISTS relationship contains every requested component word'] }
-    : relevance(intent.query, names, !!intent.id || !!intent.number || intent.current === true);
+    : !intent.query && (intent.customer || intent.job || intent.list || intent.selection)
+      ? {level:'words' as const,score:80,reasons:['Authoritative scope predicates matched']}
+      : relevance(componentSource(source) && intent.query ? componentWords(intent.query) : intent.query, componentSource(source) ? names.map(componentWords) : names, !!intent.id || !!intent.number || intent.current === true);
   if (!evidence) return null;
   const parentId = a.parent ? str(row[a.parent],150) : undefined;
-  const parent = source === 'quotes' || row.quote_id ? `${row.status === 'draft' || row.quote_status === 'draft' || row._kind === 'draft_quote' ? 'Draft' : `Quote${row.quote_number != null ? ` #${row.quote_number}` : ''}`}${row.job_name || row.customer_name ? ` — ${row.job_name || row.customer_name}` : ''}`
-    : row.order_number ? `Order ${row.order_number}${row.job_name ? ` — ${row.job_name}` : ''}`
-      : row.invoice_number ? `Invoice ${row.invoice_number}${row.customer_name ? ` — ${row.customer_name}` : ''}` : undefined;
+  const parent = source === 'quotes' || row.quote_id ? `${row.status === 'draft' || row.quote_status === 'draft' || row._kind === 'draft_quote' ? 'Draft' : `Quote${row.quote_number != null ? ` #${row.quote_number}` : ''}`}${row.job_name || row.customer_name ? ` - ${row.job_name || row.customer_name}` : ''}`
+    : row.order_number ? `Order ${row.order_number}${row.job_name ? ` - ${row.job_name}` : ''}`
+      : row.invoice_number ? `Invoice ${row.invoice_number}${row.customer_name ? ` - ${row.customer_name}` : ''}` : undefined;
   const label = (source === 'quotes' ? parent! : source === 'orders' || source === 'invoices' ? parent || names[0] || a.caption : names[0] || a.caption).slice(0,300);
   const detail = [a.caption, ...(a.parent && parent ? [parent] : []), str(row.collection_name), str(row.catalogue_name), str(row.customer_name), row.is_active === false ? 'Inactive library definition' : undefined].filter(Boolean).join(' · ').slice(0,600);
   return { choiceId, key: candidateKey(source, id, parentId), source, id, ...(parentId ? { parentId } : {}), stage, label, detail,
@@ -75,8 +78,8 @@ export function discriminator(candidates: Candidate[], intent: ResolverIntent): 
   if (different(c => c.customer)) return { key: 'customer', text: 'Which customer was it for?' };
   if (different(c => c.job)) return { key: 'job', text: 'Which job or quote name did it belong to?' };
   if (different(c => c.parentId)) return { key: 'parent', text: 'Which quote, order or invoice did it belong to? A name or number is enough.' };
-  if (different(c => c.date)) return { key: 'date', text: 'Roughly when was it used—for example, this month or last month?' };
-  if (!intent.query && !intent.number && !intent.id) return { key: 'name', text: 'What is the item or record called? A quote/order/invoice number also works.' };
+  if (different(c => c.date)) return { key: 'date', text: 'Roughly when was it used, for example, this month or last month?' };
+  if (!intent.query && !intent.number && !intent.id && !intent.contains && !intent.customer && !intent.job) return { key: 'name', text: 'What is the item or record called? A quote/order/invoice number also works.' };
   if (intent.parent) return { key: 'name', text: 'Do you remember the exact component or line-item name on that record?' };
   if (['quotes','drafts'].includes(intent.domain)) return { key: 'customer', text: 'Which customer or job was the quote for?' };
   if (['orders','invoices'].includes(intent.domain)) return { key: 'parent', text: 'Do you remember the order/invoice number or its job/customer name?' };

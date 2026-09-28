@@ -6,6 +6,7 @@ import { compileIntelligentPlan } from '../retrieval/semantics';
 import { RetrievalError, type Filter, type QueryPlan } from '../retrieval/contracts';
 import type { RecordTarget } from '../v2/contracts';
 import type { CandidateRef, Parent, ResolverIntent } from './contracts';
+import { componentWords, componentSource } from './vocabulary';
 import { RESOLVER_LIMITS } from './config';
 
 export const SOURCE_ADAPTERS = {
@@ -28,7 +29,7 @@ export function adapter(name: string) {
   if (!Object.hasOwn(SOURCE_ADAPTERS, name)) throw new RetrievalError('unsupported_source', 'This record kind is not an entity-resolution source. Use the registered query reader for other information.');
   return SOURCE_ADAPTERS[name as ResolverSource];
 }
-const metadata = ['id','quote_id','order_id','invoice_id','catalogue_id','quote_number','quote_status','status','order_number','invoice_number','customer_name','job_name','supplier_name','collection_name','catalogue_name','updated_at','is_active'];
+const metadata = ['id','quote_id','order_id','invoice_id','catalogue_id','quote_number','quote_status','status','order_number','invoice_number','customer_name','job_name','supplier_name','collection_name','catalogue_name','created_at','updated_at','is_active'];
 export function identityFields(source: string, permissions: SectionPermissions): string[] {
   const a = adapter(source), s = sourceSpec(source);
   return [...new Set(['id', ...a.name, ...(a.number ? [a.number] : []), ...metadata])]
@@ -115,14 +116,15 @@ export function discoveryQuery(source: string, intent: ResolverIntent, permissio
     if (!a.number) throw new RetrievalError('invalid_query', 'The exact number needs its header source.');
     q.filters.push({ field: a.number, op: 'eq', value: source === 'quotes' ? Number(intent.number) : intent.number });
   }
-  if (intent.contains && source === 'quotes') q.related.push({ relation: 'components', filters: [{ field: 'name', op: 'words', value: intent.contains }] });
+  if (intent.contains && source === 'quotes') q.related.push({ relation: 'components', filters: [{ field: 'name', op: 'words', value: componentWords(intent.contains) }] });
   let search: { text: string; match: 'words'|'natural'; field?: string } | undefined;
-  if (intent.query && !intent.contains) search = { text: intent.query, match,
+  if (intent.query && !intent.contains) search = { text: componentSource(source) ? componentWords(intent.query) : intent.query, match,
     // A parent name in a child's _search is not evidence that the child name matches.
     ...(a.name.length === 1 && source !== 'catalogue_rows' ? { field: a.name[0] } : {}) };
   return compileIntelligentPlan({ version: 1, source, mode: 'rows', fields: identityFields(source, permissions), ...q,
     ...(search ? { search } : {}), quoteScope: spec.quoteScoped ? (intent.parent?.quoteScope ?? (intent.parent?.domain === 'drafts' || intent.domain === 'drafts' ? 'drafts' : intent.domain === 'quotes' || intent.parent?.domain === 'quotes' ? 'quotes' : 'all_permitted')) : 'all_permitted',
-    limit: RESOLVER_LIMITS.rowsPerSource, resolve: false, current: !!intent.current,
+    ...(intent.selection ? { orderBy: [{field:'created_at',direction:intent.selection==='latest'?'desc':'asc'}, {field:'id',direction:'asc'}] } : {}),
+    limit: intent.selection ? 1 : RESOLVER_LIMITS.rowsPerSource, resolve: false, current: !!intent.current,
   }, permissions).plan;
 }
 export function rereadQuery(ref: CandidateRef, intent: ResolverIntent, permissions: SectionPermissions, facts: boolean): QueryPlan {
@@ -131,7 +133,7 @@ export function rereadQuery(ref: CandidateRef, intent: ResolverIntent, permissio
   q.filters.push({ field: 'id', op: 'eq', value: ref.id });
   if (intent.number && a.number) q.filters.push({ field: a.number, op: 'eq', value: ref.source === 'quotes' ? Number(intent.number) : intent.number });
   if (ref.parentId && a.parent) q.filters.push({ field: a.parent, op: 'eq', value: ref.parentId });
-  if (intent.contains && ref.source === 'quotes') q.related.push({ relation: 'components', filters: [{ field: 'name', op: 'words', value: intent.contains }] });
+  if (intent.contains && ref.source === 'quotes') q.related.push({ relation: 'components', filters: [{ field: 'name', op: 'words', value: componentWords(intent.contains) }] });
   return compileIntelligentPlan({ version: 1, source: ref.source, mode: 'rows', fields: facts ? factFields(ref.source, intent.task, permissions) : identityFields(ref.source, permissions), ...q,
     quoteScope: sourceSpec(ref.source).quoteScoped ? intent.parent?.quoteScope ?? (intent.domain === 'drafts' || intent.parent?.domain === 'drafts' ? 'drafts' : intent.domain === 'quotes' || intent.parent?.domain === 'quotes' ? 'quotes' : 'all_permitted') : 'all_permitted', resolve: false, limit: 2,
   }, permissions).plan;

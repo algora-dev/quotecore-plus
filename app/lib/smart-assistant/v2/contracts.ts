@@ -1,5 +1,6 @@
 /** Wire contracts shared by the assistant UI and server. No privileged imports. */
 import { ASSISTANT_SECTIONS, isRecord, parseSectionPermissions, type AssistantSection, type SectionPermissions } from '../section-permissions';
+import { parseTaskView, type TaskView } from '../tasks/contracts';
 export type EntityKind = 'quote' | 'draft_quote' | 'order' | 'invoice' | 'component' | 'customer';
 export type SearchKind = EntityKind | 'all';
 export type Phase = 'p1' | 'p2' | 'p3' | 'p4';
@@ -119,6 +120,8 @@ export function parseRunOutcome(value: unknown): RunOutcome | null {
     return { id: value.id, requestId: value.client_request_id, status: String(value.status) };
 }
 export type SessionSnapshot = {
+    /** Optional: absent on a P1.7.2 rollback. Never a business-action approval. */
+    task?: TaskView | null;
     runs: RunOutcome[];
     messages: ChatMessage[];
     activeRunId: string | null;
@@ -314,5 +317,7 @@ export function parsePublicSession(value: unknown): SessionSnapshot | null {
             return null;
         page = { pathname: value.page.pathname, target: parseTarget(value.page.target) };
     }
-    return { access, cards: cards.filter(c => c !== null), actions: actions.filter(a => a !== null), messages: messages.filter(m => m !== null), runs: runs.filter(r => r !== null), page, activeRunId: isUuid(value.activeRunId) ? value.activeRunId : null, runStatus: typeof value.runStatus === 'string' ? value.runStatus : null };
+    const task = value.task == null ? null : parseTaskView(value.task);
+    if (value.task != null && !task) return null;
+    return { ...(value.task !== undefined ? {task} : {}), access, cards: cards.filter(c => c !== null), actions: actions.filter(a => a !== null), messages: messages.filter(m => m !== null), runs: runs.filter(r => r !== null), page, activeRunId: isUuid(value.activeRunId) ? value.activeRunId : null, runStatus: typeof value.runStatus === 'string' ? value.runStatus : null };
 }

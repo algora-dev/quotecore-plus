@@ -1,0 +1,333 @@
+{
+  "version": 1,
+  "phase": "P1.7.2",
+  "status": "LIVE NOT RUN",
+  "note": "Conversation scenarios, not isolated request shapes. Evaluate actual replies/cards, DB identity, task decisions and canonical run accounting. Fixture mutations require explicit test-account approval.",
+  "scenarios": [
+    {
+      "id": "owner-live-thread",
+      "setup": "One continuous conversation on the approved company. Data contains Ridge and Ridge (Soft Edge, Standard), multiple John Smith quotes, and Quote 1014. No New chat or Done between messages.",
+      "steps": [
+        {
+          "message": "show me my quotes with ridges",
+          "expect": "List of permitted non-draft quotes containing Ridge-family components; actual Open cards. No request for a name already supplied."
+        },
+        {
+          "message": "I just want to see the quotes that contain ridge components",
+          "expect": "Retrieves the specified list again. Does not consume an old clarification budget or report no retrieval."
+        },
+        {
+          "message": "quote 1014",
+          "expect": "Exact Quote 1014, correct customer/job and clickable destination. No inherited Ridge condition."
+        },
+        {
+          "message": "whats the most recent john smith quote",
+          "expect": "Customer filter, created_at DESC then stable ID, one result with creation date and Open card. Not a picker; no model call for this supported grammar."
+        }
+      ]
+    },
+    {
+      "id": "empty-then-exact",
+      "setup": "First search genuinely empty or wrong term.",
+      "steps": [
+        {
+          "message": "show quotes with nonexistent-zinc-fixture",
+          "expect": "Honest scoped no meaningful match, useful follow-up."
+        },
+        {
+          "message": "quote 1014",
+          "expect": "New exact lookup, no old component constraint."
+        }
+      ]
+    },
+    {
+      "id": "variant-followup",
+      "setup": "Continuous thread; Ridge present.",
+      "steps": [
+        {
+          "message": "show quotes with ridges",
+          "expect": "Ridge word-family matching."
+        },
+        {
+          "message": "ridging?",
+          "expect": "Same list/task with variant normalized; no lookup of literal customer ridging."
+        },
+        {
+          "message": "show quotes with Ridge flashing",
+          "expect": "Preserve flashing qualifier; do not substitute plain Ridge."
+        }
+      ]
+    },
+    {
+      "id": "customer-list",
+      "setup": "Multiple John Smith quotes plus job named John for another customer.",
+      "steps": [
+        {
+          "message": "show me all of John's quotes",
+          "expect": "Customer name filter John, not search string \"all of John\" or a singular picker."
+        },
+        {
+          "message": "show latest quote for NoSuchCustomerFixture",
+          "expect": "Empty with customer filter retained; no fallback to a similarly named job."
+        }
+      ]
+    },
+    {
+      "id": "temporal-semantics",
+      "setup": "Two quotes: older created recently edited, newer created not recently edited.",
+      "steps": [
+        {
+          "message": "Open my latest quote",
+          "expect": "Newest created_at, not newest updated_at. Open the correct record; header created date."
+        },
+        {
+          "message": "Show my first quote",
+          "expect": "Earliest created_at with stable id tie-breaker."
+        }
+      ]
+    },
+    {
+      "id": "parent-slot",
+      "setup": "Ridge exists on multiple quotes, question clearly asks which parent for cost.",
+      "steps": [
+        {
+          "message": "How much does Ridge cost?",
+          "expect": "Credible matches or typed parent question, not least-bad substitutes."
+        },
+        {
+          "message": "quote 1014",
+          "expect": "Continuation: Ridge cost ON 1014. Does not drop cost operation or query. Rereads authoritative data."
+        }
+      ]
+    },
+    {
+      "id": "model-dependent-followup",
+      "setup": "First result has a real quote identity.",
+      "steps": [
+        {
+          "message": "quote 1014",
+          "expect": "New task resolved."
+        },
+        {
+          "message": "What about its labour?",
+          "expect": "Continuation. First ordinary model planning pass sees only task 1014 history, retrieves authoritative labour before quoting values."
+        },
+        {
+          "message": "Thanks, what about its materials?",
+          "expect": "Acknowledgement does not reset a dependent follow-up."
+        }
+      ]
+    },
+    {
+      "id": "complex-correction",
+      "setup": "Current task is a Ridge quote list.",
+      "steps": [
+        {
+          "message": "show quotes with Ridge",
+          "expect": "List."
+        },
+        {
+          "message": "No, that's not what I meant. It was the quote with 200 ridges in it.",
+          "expect": "Correction preserving task and requested relationship. Uses first model plan for quantity semantics; asks units if genuinely ambiguous. Does not search the entire sentence as a name."
+        }
+      ]
+    },
+    {
+      "id": "done-button",
+      "setup": "Any answered task, proposal card may separately exist.",
+      "steps": [
+        {
+          "message": "quote 1014",
+          "expect": "Result."
+        },
+        {
+          "control": "done",
+          "expect": "Only authenticated task-close RPC. No model, admission, extra assistant acknowledgement, transcript deletion or P3 commit."
+        },
+        {
+          "message": "Show invoices",
+          "expect": "Independent task; no quote/ridge constraints."
+        }
+      ]
+    },
+    {
+      "id": "move-on-unresolved",
+      "setup": "Unsuccessful search.",
+      "steps": [
+        {
+          "message": "Find a nonexistent-fixture-item",
+          "expect": "Honest question."
+        },
+        {
+          "control": "move_on",
+          "expect": "Close even though no answer succeeded. History stays."
+        },
+        {
+          "message": "quote 1014",
+          "expect": "New exact query."
+        }
+      ]
+    },
+    {
+      "id": "forgot-done",
+      "setup": "Answered or unresolved prior task.",
+      "steps": [
+        {
+          "message": "show quotes with Ridge",
+          "expect": "Any honest result."
+        },
+        {
+          "message": "show invoices",
+          "expect": "New request WITHOUT requiring Done."
+        },
+        {
+          "message": "thanks",
+          "expect": "Typed closure through ordinary admitted turn, zero model; next request fresh."
+        }
+      ]
+    },
+    {
+      "id": "pause-and-boundary",
+      "setup": "A pending typed customer question.",
+      "steps": [
+        {
+          "message": "show quotes with nonexistent-fixture-item",
+          "expect": "Targeted customer/job question."
+        },
+        {
+          "wait_seconds": 301
+        },
+        {
+          "message": "Smith",
+          "expect": "Boundary choices where ambiguity remains; no literal unrelated search."
+        },
+        {
+          "control": "boundary_continue",
+          "expect": "Reuses server-stored Smith message exactly once. No retyping; current task clues available."
+        }
+      ]
+    },
+    {
+      "id": "boundary-new-and-stale",
+      "setup": "Pending fragment boundary choices.",
+      "steps": [
+        {
+          "control": "boundary_new",
+          "expect": "Stored message starts new; old task history/filters withheld."
+        },
+        {
+          "control": "replay_old_boundary",
+          "expect": "No old task resurrection, query or proposal; safe stale response."
+        }
+      ]
+    },
+    {
+      "id": "candidate-freshness",
+      "setup": "Two credible Ridge library choices.",
+      "steps": [
+        {
+          "message": "How much does Ridge cost?",
+          "expect": "Credible options."
+        },
+        {
+          "fixture_action": "Change selected price using normal test-domain mutation"
+        },
+        {
+          "control": "select_candidate",
+          "expect": "Read current value, not cached label."
+        },
+        {
+          "fixture_action": "Delete/move another selected test record"
+        },
+        {
+          "control": "replay_old_candidate",
+          "expect": "No substitute selection or wrong-parent proposal."
+        }
+      ]
+    },
+    {
+      "id": "p3-separation",
+      "setup": "Approved P3 test draft with editable Ridge and explicit units.",
+      "steps": [
+        {
+          "message": "Set Ridge material rate to 30 per m on my draft P172 fixture",
+          "expect": "Reviewed proposal only after authoritative identity validation."
+        },
+        {
+          "message": "confirmed",
+          "expect": "Never commits; actual Confirm button remains required."
+        },
+        {
+          "control": "done",
+          "expect": "No commit or cancellation of existing proposal; it remains subject to original review/expiry/guards."
+        }
+      ]
+    },
+    {
+      "id": "canonical-failure",
+      "setup": "Inject model 429/400/500 or empty completion; never use real secrets in logs.",
+      "steps": [
+        {
+          "message": "Compare my permitted quotes and explain the difference",
+          "expect": "If canonical run failed: one inline failure attached to stored user message, one retry at most. No blank chat, duplicated banner, or assertion no business effects."
+        }
+      ]
+    },
+    {
+      "id": "uncertain-outcome",
+      "setup": "Drop HTTP after provider execution or fail trusted canonical finish.",
+      "steps": [
+        {
+          "message": "Find my Smith job",
+          "expect": "Check request uses SAME clientRequestId; no second provider execution on replay."
+        },
+        {
+          "control": "done",
+          "expect": "Blocked until canonical run is terminal. Cannot use closure to free quota/admission or abandon an uncertain mutation."
+        }
+      ]
+    },
+    {
+      "id": "security-epoch",
+      "setup": "Two tenants/users and two company states. Change permissions/knowledge revision between reads.",
+      "steps": [
+        {
+          "fixture_action": "Foreign conversation/task/state ids, stale version, revoked domain, knowledge epoch change, service-role writer from authenticated client",
+          "expect": "Reject or withhold all task labels, old candidate state, history and data; no cross-account reference in model prompt or card."
+        }
+      ]
+    },
+    {
+      "id": "concurrent-and-late",
+      "setup": "Two tabs sharing a conversation with current admitted run.",
+      "steps": [
+        {
+          "control": "concurrent_done_and_new_request",
+          "expect": "One coherent CAS result or explicit conflict; never close unresolved run."
+        },
+        {
+          "fixture_action": "Replay task finish from older run after newer task version",
+          "expect": "Rejected; no reopened closed/superseded state. Duplicate HTTP execution stays existing canonical replay."
+        }
+      ]
+    },
+    {
+      "id": "rollout-rollback",
+      "setup": "Testing only. Task flag on/off, migration present/missing; resolver/master kill switches.",
+      "steps": [
+        {
+          "control": "task_flag_off",
+          "expect": "No new task RPC or UI controls. Old task/choice wire is not sent to Luna."
+        },
+        {
+          "control": "task_flag_on_missing_migration",
+          "expect": "Explicit setup error, no silent old resolver fallback."
+        },
+        {
+          "control": "master_off_with_old_wire",
+          "expect": "No control payload interpreted as chat."
+        }
+      ]
+    }
+  ]
+}

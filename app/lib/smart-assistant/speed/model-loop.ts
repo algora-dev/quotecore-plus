@@ -2,6 +2,7 @@ import type { ChatTurnInput, ChatTurnResult, LlmMessage } from '@/app/lib/assist
 import type { RegisteredTool, ToolContext } from '../orchestrator';
 import type { TurnTelemetry } from './telemetry';
 import { executeToolBatch, stableArguments } from './tool-batch';
+import { providerFailure } from './provider-failure';
 import { OrchestratorExecutionError } from './errors';
 
 export async function runModelLoop(input: {
@@ -32,6 +33,7 @@ export async function runModelLoop(input: {
         onToken: () => telemetry.token(), signal,
       }));
     } catch (error) {
+      try { console.warn('[smart-assistant:upstream]', JSON.stringify({event:'sa_upstream_failure',runId:input.context.runId,modelHop:hop,...providerFailure(error)})); } catch { /* diagnostics cannot affect trusted finish */ }
       if (signal.aborted || (error instanceof Error && ['AbortError','TimeoutError'].includes(error.name))) fail('turn_timeout');
       return fail('upstream_error');
     }

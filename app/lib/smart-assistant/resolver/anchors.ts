@@ -41,7 +41,7 @@ export function extractAnchors(message: string): Anchors {
   const customerMatch = /(\b(?:quote|draft|invoice|job)\b[^\n;]*?\s+for\s+)([^\n;?!]+?)(?:\s+(?:on|in)\s+(?:quote|draft|invoice)\b[^\n;]*|[.!?])?$/i.exec(literalMask);
   const customerStart = customerMatch ? customerMatch.index + customerMatch[1].length : 0;
   const customer = customerMatch ? message.slice(customerStart, customerStart + customerMatch[2].length).trim().replace(/^["“]|["”]$/g, '') : undefined;
-  const component = /\b(?:quotes|drafts)\s+(?:with|containing|that (?:have|contain))\s+(.+?)(?:\s+(?:with their|and (?:their|the)|for)\b|[.!?]|$)/i.exec(message)?.[1]?.trim();
+  const component = /\b(?:quotes|drafts)\s+(?:with|containing|that (?:have|contain))\s+(.+?)(?:\s+(?:with their|and (?:their|the)|for)\b|[.!?]|$)/i.exec(message)?.[1]?.trim().replace(/\s+(?:components|line items)$/i,'');
   return { numbers: numbers.slice(0, 8), ...(child && child.length<=120 && !/\b(?:and|then|except|without|not)\b/i.test(child)?{child}:{}), ...(customer && customer.length <= 120 && !/\b(?:and|then|except|without|not)\b/i.test(customer) ? { customer } : {}),
     ...(component && component.length <= 120 && !/^(?:their|linked|orders?|invoices?|customers?|status)\b/i.test(component) ? { component } : {}) };
 }

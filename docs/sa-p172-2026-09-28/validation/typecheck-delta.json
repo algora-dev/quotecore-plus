@@ -1,0 +1,59 @@
+{
+  "kind": "Dependency-blocked diagnostic comparison, NOT a passing semantic typecheck",
+  "command": "tsc --noEmit --incremental false --pretty false",
+  "baseline_exit": 2,
+  "build_exit": 2,
+  "baseline_errors": 66920,
+  "build_errors": 66948,
+  "added": [
+    {
+      "file": "app/api/smart-assistant/v2/task/route.ts",
+      "code": "2307",
+      "message": "Cannot find module 'next/server' or its corresponding type declarations.",
+      "count": 1
+    },
+    {
+      "file": "app/components/smart-assistant/v2/ConversationCards.tsx",
+      "code": "7026",
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
+      "count": 2
+    },
+    {
+      "file": "app/components/smart-assistant/v2/V2ChatClient.tsx",
+      "code": "7006",
+      "message": "Parameter 'value' implicitly has an 'any' type.",
+      "count": 2
+    },
+    {
+      "file": "app/components/smart-assistant/v2/V2ChatClient.tsx",
+      "code": "7006",
+      "message": "Parameter 'r' implicitly has an 'any' type.",
+      "count": 1
+    },
+    {
+      "file": "app/components/smart-assistant/v2/V2ChatClient.tsx",
+      "code": "7006",
+      "message": "Parameter 'm' implicitly has an 'any' type.",
+      "count": 1
+    },
+    {
+      "file": "app/components/smart-assistant/v2/V2ChatClient.tsx",
+      "code": "7026",
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.",
+      "count": 18
+    },
+    {
+      "file": "app/lib/smart-assistant/tasks/config.ts",
+      "code": "2580",
+      "message": "Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.",
+      "count": 2
+    },
+    {
+      "file": "app/lib/smart-assistant/tasks/store.server.ts",
+      "code": "2307",
+      "message": "Cannot find module '@supabase/supabase-js' or its corresponding type declarations.",
+      "count": 1
+    }
+  ],
+  "removed": []
+}

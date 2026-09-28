@@ -13,6 +13,7 @@ import { TurnTelemetry, type SpeedPath } from './speed/telemetry';
 import { runModelLoop } from './speed/model-loop';
 import { OrchestratorExecutionError } from './speed/errors';
 import { displayResolutionMessage, isResolutionMessage } from './resolver/wire';
+import { displayTaskMessage, isTaskMessage } from './tasks/wire';
 export { OrchestratorExecutionError } from './speed/errors';
 
 export interface CompanyAssistantConfig {
@@ -175,8 +176,26 @@ export async function runOrchestratorTurn(
   try {
     const v2 = await telemetry.measure('scope', () => deps.createScope(input));
     telemetry.path = v2 ? 'model' : 'legacy';
-    if (v2?.speed) {
-      const intent = parseFastIntent(userMessage);
+    const executionMessage = v2?.executionMessage ?? userMessage;
+    const finishTask = async () => {
+      if (v2?.task) await telemetry.measure('task_finish', v2.task.finish);
+    };
+    if (v2?.task?.terminal) {
+      await telemetry.measure('access_final', v2.guard);
+      result = {content:v2.task.terminal,tokensIn:0,tokensOut:0};
+      await finishTask();
+      return result;
+    }
+    // Task boundary buttons are control messages, not legacy resolver clues.
+    // Valid selections were already expanded from server state by createScope.
+    // Rollback, expiry or malformed wire must not query old state or reach Luna.
+    if (isTaskMessage(executionMessage)) {
+      if (v2) await telemetry.measure('access_final', v2.guard);
+      result = { content: 'That task choice is no longer available. Please ask again; nothing was selected or applied.', tokensIn: 0, tokensOut: 0 };
+      return result;
+    }
+    if (v2?.speed && (!v2.task || v2.task.allowFast)) {
+      const intent = parseFastIntent(executionMessage);
       if (intent) {
         const answer = await telemetry.measure('fast_operation', () => v2.operations.fast(intent));
         if (answer !== null) {
@@ -186,6 +205,8 @@ export async function runOrchestratorTurn(
           telemetry.path = paths[intent.type];
           // Still an admitted/reserved turn, settled by the unchanged trusted finish.
           result = { content: answer, tokensIn: 0, tokensOut: 0 };
+          v2.task?.noteFast(intent);
+          await finishTask();
           return result;
         }
       }
@@ -197,11 +218,12 @@ export async function runOrchestratorTurn(
         await telemetry.measure('access_final', v2.guard);
         telemetry.path = 'resolver';
         result = { content: resolved.answer, tokensIn: 0, tokensOut: 0 };
+        await finishTask();
         return result;
       }
     }
     // Even a complete V2 rollback must not send an opaque selection to Luna.
-    if (isResolutionMessage(userMessage)) {
+    if (isResolutionMessage(executionMessage) || isTaskMessage(executionMessage)) {
       if (v2) await telemetry.measure('access_final', v2.guard);
       result = { content: 'That record selection is no longer available. Please ask again; nothing was selected or applied.', tokensIn: 0, tokensOut: 0 };
       return result;
@@ -229,21 +251,27 @@ export async function runOrchestratorTurn(
     }
     const messages: LlmMessage[] = [
       { role: 'system', content: buildSystemPrompt(config, !!v2) + (context ? `\n\n${context.prompt}` : '') },
-      ...priorReversed.reverse().filter(m => !context || context.visibleMessageIds.has(m.id)).map(m => ({ role: m.role, content: displayResolutionMessage(m.content) })),
-      { role: 'user', content: userMessage },
+      ...priorReversed.reverse().filter(m => !context || context.visibleMessageIds.has(m.id)).map(m => ({ role: m.role, content: displayTaskMessage(displayResolutionMessage(m.content)) })),
+      { role: 'user', content: executionMessage },
     ];
     result = await runModelLoop({ messages, registry: v2?.tools ?? TOOL_REGISTRY,
       context: { supabase, companyId, runId, signal: controller.signal },
       guard: v2?.guard ?? (async () => {}), step: deps.modelStep,
       signal: controller.signal, speed: v2?.speed ?? false, telemetry });
+    await finishTask();
     return result;
   } catch (error) {
-    failure = error;
-    throw error;
+    // Post-model metadata or access failure must not discard provider usage.
+    // Trusted finish still owns the canonical run and quota accounting.
+    const metered = result && !(error instanceof OrchestratorExecutionError)
+      ? new OrchestratorExecutionError(typeof (error as {code?:unknown})?.code === 'string' ? String((error as {code:string}).code) : 'task_unavailable', result.tokensIn, result.tokensOut)
+      : error;
+    failure = metered;
+    throw metered;
   } finally {
     clearTimeout(timer);
     const failed = failure instanceof OrchestratorExecutionError ? failure : null;
     // Logging must never turn a completed task into a retryable failure.
-    try { deps.report(telemetry.snapshot(result ? 'completed' : failed?.errorCode ?? 'failed', result?.tokensIn ?? failed?.tokensIn ?? 0, result?.tokensOut ?? failed?.tokensOut ?? 0)); } catch { /* diagnostics only */ }
+    try { deps.report(telemetry.snapshot(result && !failure ? 'completed' : failed?.errorCode ?? 'failed', result?.tokensIn ?? failed?.tokensIn ?? 0, result?.tokensOut ?? failed?.tokensOut ?? 0)); } catch { /* diagnostics only */ }
   }
 }

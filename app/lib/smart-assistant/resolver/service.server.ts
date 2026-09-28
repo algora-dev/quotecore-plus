@@ -1,4 +1,6 @@
 import 'server-only';
+import type { TaskDecision } from '../tasks/boundary';
+import { stableArguments } from '../speed/tool-batch';
 import { randomUUID } from 'node:crypto';
 import { isRecord, type AssistantSection } from '../section-permissions';
 import { isUuid, type Access, type CardContent, type RecordTarget } from '../v2/contracts';
@@ -25,6 +27,9 @@ export interface ResolverDependencies {
   guard: () => Promise<void>;
   /** Existing P3 domain planner, NEVER a commit/confirm operation. */
   propose?: (args: Record<string, unknown>, expectedQuoteId: string) => Promise<unknown>;
+  /** Supplied only after the single authenticated task-boundary decision. */
+  taskTurn?: { decision: TaskDecision; previous: StoredResolution | null };
+  onResult?: (intent: ResolverIntent, result: ResolverResult) => void;
   now?: () => Date; uuid?: () => string; report?: (event: Record<string, unknown>) => void;
 }
 const refOnly = ({ row: _row, evidence: _evidence, ...ref }: Candidate): CandidateRef => ref;
@@ -59,6 +64,7 @@ export function createEntityResolver(dep: ResolverDependencies) {
     let parentId: string | undefined, parentSelector = intent.parent;
     let persisted = false, candidateSetComplete = false;
     let orderParentIds: string[] | undefined;
+    const readCache = new Map<string, RetrievalResult>();
     const checkOuter = () => { if (signal?.aborted) throw new AssistantV2Error('turn_timeout','The assistant turn timed out.',408); };
     const base = (state: ResolverResult['state'], answer: string): ResolverResult => ({ state, answer, candidates: [], canClarify: false, coverage, applied: false });
     const finish = async (result: ResolverResult, candidates: Candidate[] = [], status: ResolutionState['status'] = result.canClarify ? 'pending' : 'resolved'): Promise<ResolverResult> => {
@@ -79,6 +85,7 @@ export function createEntityResolver(dep: ResolverDependencies) {
           expiresAt: saved.expiresAt, question: question.text,
           options: refs.map(r => ({ choiceId: r.choiceId, label: r.label, detail: r.detail })) });
       }
+      dep.onResult?.(intent, result);
       produced.add(result);
       return result;
     };
@@ -87,12 +94,14 @@ export function createEntityResolver(dep: ResolverDependencies) {
       const question = fallback ?? discriminator(candidates, intent);
       const result = { ...base(state, answer), canClarify, question };
       if(state==='candidates' && (coverage.failed.length||coverage.truncated.length))result.answer += ' Some sources were incomplete; these are plausible matches, not a complete list.';
-      result.answer += canClarify ? ` ${question.text}` : ' I still cannot identify it reliably. Start a fresh request with its exact name or number and where it belongs; no substitute was selected.';
+      result.answer += canClarify ? ` ${candidates.length ? 'Choose a matching record below, or send me more information. ' : ''}${question.text}` : ' I still cannot identify it reliably. Start a fresh request with its exact name or number and where it belongs; no substitute was selected.';
       if (!canClarify) result.state = coverage.failed.length ? 'read_failed' : 'not_found';
       return await finish(result, canClarify ? candidates : [], canClarify ? 'pending' : 'closed');
     };
     async function read(plan: QueryPlan): Promise<RetrievalResult> {
       checkOuter();
+      // Only failed-to-match DISCOVERY can reuse this below. Identity/fact rereads
+      // always execute again and therefore still observe deletion/price changes.
       if (coverage.reads >= RESOLVER_LIMITS.reads || budget.signal.aborted) throw new RetrievalError('too_broad','The bounded discovery budget was reached. Narrow the record type, parent or name.');
       coverage.reads++;
       if (!coverage.searched.includes(plan.source)) coverage.searched.push(plan.source);
@@ -109,6 +118,7 @@ export function createEntityResolver(dep: ResolverDependencies) {
         } else if (!result.complete || result.truncated) {
           if (!coverage.truncated.includes(plan.source)) coverage.truncated.push(plan.source);
         }
+        readCache.set(stableArguments(plan), result);
         return result;
       } catch (error) {
         checkOuter();
@@ -209,7 +219,9 @@ export function createEntityResolver(dep: ResolverDependencies) {
         const result = { ...base(refused ? 'proposal_refused' : 'resolved', answer), selected: { source:candidate.source,id:candidate.id,parentId:candidate.parentId }, proposalPrepared: !refused };
         return await finish(result, [], 'resolved');
       }
-      const answer = formatFacts(candidate, intent, current.result);
+      const selectedDate = intent.selection ? candidate.row.created_at : undefined;
+      const answer = formatFacts(candidate, intent, current.result)
+        + (intent.selection ? `\n${intent.selection==='latest'?'Newest':'Earliest'} by creation date${typeof selectedDate==='string'?`: ${selectedDate.slice(0,10)}`:''}.` : '');
       const result: ResolverResult = { ...base('resolved', answer), selected: {source:candidate.source,id:candidate.id,...(candidate.parentId?{parentId:candidate.parentId}:{})} };
       await dep.guard();
       const target = targetForRow(candidate.row, candidate.source, true);
@@ -218,7 +230,7 @@ export function createEntityResolver(dep: ResolverDependencies) {
       return await finish(result, [], 'resolved');
     }
     async function showList(candidates: Candidate[]): Promise<ResolverResult> {
-      const list = [...new Map(candidates.map(c=>[c.key,c])).values()].slice(0,RESOLVER_LIMITS.candidates);
+      const list = [...new Map(candidates.map(c=>[c.key,c])).values()].slice(0,RESOLVER_LIMITS.rowsPerSource);
       const lines: string[] = [];
       for (const c of list) {
         lines.push(c.label);
@@ -228,10 +240,10 @@ export function createEntityResolver(dep: ResolverDependencies) {
           const related = await read(plan);
           if (!available(related)) lines.push(`  ${kind}: read did not complete.`);
           else if (!related.rows.length) lines.push(`  ${kind}: no permitted linked records found.`);
-          else lines.push(`  ${kind}: ` + related.rows.map(row=>`${row.order_number ?? row.invoice_number ?? 'record'} — ${row.status ?? 'status unavailable'}`).join('; ') + (related.truncated?' (more matches exist)':''));
+          else lines.push(`  ${kind}: ` + related.rows.map(row=>`${row.order_number ?? row.invoice_number ?? 'record'} - ${row.status ?? 'status unavailable'}`).join('; ') + (related.truncated?' (more matches exist)':''));
         }
       }
-      const result = base('resolved', `${lines.join('\n')}\n${intent.nameOrContents?'Matches may be by record name or by a contained component. ':''}${incomplete() || candidates.length>list.length ? 'This is a bounded list, not a complete account total or ranking.' : 'Matched within your permitted data.'}`);
+      const result = base('resolved', `${lines.join('\n')}\n${intent.nameOrContents?'Matches may be by record name or by a contained component. ':''}${incomplete() || candidates.length>list.length ? 'This is a bounded list, not a complete account total or ranking.' : 'Matched within your permitted data.'}\nNot these? Give a customer, job, or component detail to narrow this list.`);
       const options = [...new Map(list.flatMap(c=>{const target=targetForRow(c.row,c.source,true);return target?[[targetKey(target),{...target,label:c.label,detail:c.detail}] as const]:[];})).values()];
       await dep.guard();
       if(options.length)result.cardId=await dep.emit(sectionsFor(intent,list.map(c=>c.source)),{kind:'records',title:'Matching records',options,note:'Matching records, not an inferred ranking. Opening does not approve a change.',autoOpen:false});
@@ -300,6 +312,9 @@ export function createEntityResolver(dep: ResolverDependencies) {
     async function decide(candidates: Candidate[]): Promise<ResolverResult> {
       candidateSetComplete = !incomplete() && new Set(candidates.map(c=>c.key)).size <= RESOLVER_LIMITS.candidates;
       if(intent.list && candidates.length)return await showList(candidates);
+      // A sorted, filtered header lookup already specifies which row. A display
+      // limit is not ambiguity. Read errors still prevent a claim of selection.
+      if (intent.selection && candidates.length && !coverage.failed.length) return await showResolved(candidates[0]);
       const selected=chooseCandidates(candidates,incomplete());
       if(selected.state==='resolved')return await showResolved(selected.candidates[0]);
       if(selected.state==='candidates')return await questionResult('candidates','These have positive matching evidence. Is one of them what you meant?',selected.candidates);
@@ -312,7 +327,17 @@ export function createEntityResolver(dep: ResolverDependencies) {
       const names=sourcesFor(intent,visible,parentSelector);
       if(!names.length)return await questionResult('permission_denied','The requested scope has no permitted entity sources in this configuration. This is not proof that the record is absent.');
       const readSource=async(source:ResolverSource,match:'words'|'natural'):Promise<Candidate[]>=>{
-        try{return resultCandidates(await read(orderScoped(discoveryQuery(source,sourceContext(source,intent),dep.access.permissions,parentId,match))),intent);}
+        try {
+          const plan=orderScoped(discoveryQuery(source,sourceContext(source,intent),dep.access.permissions,parentId,match));
+          const key=stableArguments(plan);
+          // A parent/component-only query has no text match mode to broaden.
+          // Repeating it cannot find new data. Only discovery (never the final
+          // authoritative reread) may reuse a same-run result.
+          const cached=readCache.get(key);
+          if(cached)return resultCandidates(cached,intent);
+          if(match==='natural')coverage.broadened=true;
+          return resultCandidates(await read(plan),intent);
+        }
         catch(error){if(error instanceof RetrievalError&&['unsupported_field','permission_denied'].includes(error.code)){coverage.skipped.push(source);return [];}throw error;}
       };
       let candidates=await parallel(names,source=>readSource(source,'words'));
@@ -321,8 +346,16 @@ export function createEntityResolver(dep: ResolverDependencies) {
         const result=await read(discoveryQuery('quotes',named,dep.access.permissions));
         candidates.push(...resultCandidates(result,named));
       }
-      if(!candidates.length&&!incomplete()&&!intent.id&&!intent.number){
+      // Only the explicitly ambiguous colloquial form "latest Smith quote"
+      // can try a job/name interpretation after a COMPLETE empty customer read.
+      // "quote for Smith" is an explicit customer constraint and never widens.
+      if(!candidates.length&&!incomplete()&&intent.customerOrName&&intent.customer){
+        const clue=intent.customer;
+        intent={...intent,query:clue}; delete intent.customer; delete intent.customerOrName;
         coverage.broadened=true;
+        candidates=await parallel(names,source=>readSource(source,'words'));
+      }
+      if(!candidates.length&&!incomplete()&&!intent.id&&!intent.number){
         // Natural fuzzy ranking on a 100k catalogue is not a cheap broadening.
         // Ask for a spelling/catalogue clue rather than launch an unindexed scan.
         candidates=await parallel(names.filter(n=>!['catalogue_rows','catalogues'].includes(n)),source=>readSource(source,'natural'));
@@ -357,20 +390,42 @@ export function createEntityResolver(dep: ResolverDependencies) {
   }
   const api={
     terminal(value:unknown):string|null{return isRecord(value)&&produced.has(value)&&typeof value.answer==='string'?value.answer:null;},
-    execute(intent:ResolverIntent,signal?:AbortSignal){return start(constrainIntent(intent,extractAnchors(dep.userMessage)),signal);},
+    execute(intent:ResolverIntent,signal?:AbortSignal){
+      if(dep.taskTurn && ['continue','correct'].includes(dep.taskTurn.decision.disposition) && dep.taskTurn.previous?.state.status==='pending')
+        throw new RetrievalError('invalid_query','This is a continuation of the current task. Use refinement to preserve its operation and qualifiers, or query_workspace for the requested scoped data. Do not start an unrelated entity search.');
+      return start(constrainIntent(intent,extractAnchors(dep.userMessage)),signal);
+    },
     async pendingContext(signal?:AbortSignal){
+      if (dep.taskTurn && !['continue','correct'].includes(dep.taskTurn.decision.disposition)) return null;
       const saved=await loadPrevious(signal);
-      if(!saved||saved.state.status!=='pending'||Date.parse(saved.expiresAt)<=now().getTime())return null;
+      if(!saved||(saved.state.status!=='pending' && !(dep.taskTurn?.decision.disposition==='correct' && saved.state.status==='resolved'))||Date.parse(saved.expiresAt)<=now().getTime())return null;
       return {intent:saved.state.intent,question:saved.state.question,clarifications:saved.state.clarifications,candidates:saved.state.candidates.map(c=>({label:c.label,detail:c.detail})),rejectedCount:saved.state.rejected.length};
     },
     async refine(raw:unknown,signal?:AbortSignal){
+      if (dep.taskTurn && !['continue','correct'].includes(dep.taskTurn.decision.disposition)) throw new RetrievalError('invalid_query','This is a new task. Do not reuse the previous search; use a fresh request.');
       const saved=await loadPrevious(signal);
-      if(!saved||saved.state.status!=='pending'||Date.parse(saved.expiresAt)<=now().getTime())throw new RetrievalError('invalid_query','There is no current clarification to resume. Use a new request.');
+      if(!saved || (saved.state.status!=='pending' && !(dep.taskTurn?.decision.disposition==='correct' && saved.state.status==='resolved')) || Date.parse(saved.expiresAt)<=now().getTime())throw new RetrievalError('invalid_query','There is no current clarification to resume. Use a new request.');
       const parsed=mergeRefinement(saved.state,raw,dep.userMessage);
       return start(parsed.intent,signal,saved,undefined,parsed.rejectShown,parsed.useful);
     },
     async tryTurn(signal?:AbortSignal):Promise<ResolverResult|null>{
       const choice=decodeResolutionChoice(dep.userMessage);if(choice)return choose(choice,signal);
+      if (dep.taskTurn) {
+        const {decision, previous} = dep.taskTurn;
+        if (decision.disposition === 'new') return decision.parsed ? api.execute(decision.parsed,signal) : null;
+        if (!['continue','correct'].includes(decision.disposition)) return null;
+        if (!previous || Date.parse(previous.expiresAt)<=now().getTime()) return null;
+        const refinement=decision.refinement;
+        // Unknown wording is interpreted in the existing first model step. No
+        // fabricated no-match and no consumed clarification budget.
+        if (!refinement) return null;
+        if ('cancel' in refinement) return choose({version:1,stateId:previous.id,choice:'cancel'},signal);
+        if ('choiceIndex' in refinement) {
+          const ref=previous.state.candidates[refinement.choiceIndex];
+          return ref ? choose({version:1,stateId:previous.id,choice:ref.choiceId},signal) : null;
+        }
+        return start(refinement.intent,signal,previous,undefined,refinement.rejectShown,refinement.useful);
+      }
       const parsed=requestFromText(dep.userMessage,now());if(parsed)return api.execute(parsed,signal);
       if(dep.userMessage.length>240 || /^(?:please\s+)?(?:what|how|why|show|open|find|set|change|send|delete|compare|could|can|would|tell)\b/i.test(dep.userMessage.trim()))return null;
       const saved=await loadPrevious(signal);

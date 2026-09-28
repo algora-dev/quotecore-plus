@@ -4,6 +4,8 @@ import { body, exactKeys, failure, reply } from '@/app/lib/smart-assistant/v2/ht
 import { isUuid } from '@/app/lib/smart-assistant/v2/contracts';
 import { AssistantV2Error, loadAccess, requestAccess, v2SwitchOn } from '@/app/lib/smart-assistant/v2/runtime.server';
 import { readSession, storePage } from '@/app/lib/smart-assistant/v2/session.server';
+import { taskContextEnabled } from '@/app/lib/smart-assistant/tasks/config';
+import { taskSnapshot } from '@/app/lib/smart-assistant/tasks/store.server';
 export const runtime = 'nodejs';
 export async function GET(req: NextRequest) {
     try {
@@ -21,7 +23,11 @@ export async function GET(req: NextRequest) {
         const id = req.nextUrl.searchParams.get('conversationId');
         if (!id)
             return reply({ enabled: true, access });
-        return reply({ enabled: true, ...(await readSession(client, access, id)) });
+        const [snapshot, task] = await Promise.all([
+            readSession(client, access, id),
+            taskContextEnabled() ? taskSnapshot(client, id) : Promise.resolve(undefined),
+        ]);
+        return reply({ enabled: true, ...snapshot, ...(task !== undefined ? {task} : {}) });
     }
     catch (error) {
         return failure(error);

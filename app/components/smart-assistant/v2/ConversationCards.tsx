@@ -4,7 +4,8 @@ import type { ActionView, ConversationCard, RecordTarget } from '@/app/lib/smart
 import s from './assistant.module.css';
 import { encodeResolutionChoice } from '@/app/lib/smart-assistant/resolver/wire';
 import { targetKey } from '@/app/lib/smart-assistant/v2/navigation';
-export function ConversationCards({ cards, actions, busy, canConfirm, onOpen, onReply, onAction }: {
+export function ConversationCards({ cards, actions, busy, canConfirm, onOpen, onReply, onAction, isStale }: {
+    isStale?: (card: ConversationCard) => boolean;
     cards: ConversationCard[];
     actions: ActionView[];
     busy: boolean;
@@ -15,23 +16,25 @@ export function ConversationCards({ cards, actions, busy, canConfirm, onOpen, on
 }) {
     return <>{cards.map(card => {
             const c = card.content;
+            const stale = isStale?.(card) ?? false;
             const action = c.kind === 'proposal' ? actions.find(a => a.id === c.actionId) : null;
             return <section className={s.card} key={card.id} aria-label={c.title} data-sa-card={card.id}>
       <h3>{c.title}</h3>
+      {stale && <p className={s.detail}>These choices belong to an earlier task. Send a new request to search again.</p>}
       {c.kind === 'records' && <>{c.note && <p className={s.detail}>{c.note}</p>}
         <div className={s.actions}>{c.options.map(o => <QcButton key={targetKey(o)} disabled={busy} onClick={() => onOpen(card, o)}>
           <span>{o.label}<span className={s.detail}>{o.detail}</span></span>
         </QcButton>)}</div>{c.options.length === 0 && <p>No matching records in your permitted sections.</p>}</>}
-      {c.kind === 'choices' && <><p className={s.detail}>Choose a reply. This does not approve changes.</p><div className={s.actions}>{c.options.map((o, i) => <QcButton key={i} disabled={busy} onClick={() => onReply(o.reply)}>{o.label}</QcButton>)}</div></>}
+      {c.kind === 'choices' && <><p className={s.detail}>Choose a reply. This does not approve changes.</p><div className={s.actions}>{c.options.map((o, i) => <QcButton key={i} disabled={busy || stale} onClick={() => onReply(o.reply)}>{o.label}</QcButton>)}</div></>}
       {c.kind === 'resolution' && <>
         <p className={s.detail}>Select the correct record, or give another clue below. Selecting is not approval to change anything.</p>
-        <div className={s.actions}>{c.options.map(o => <QcButton key={o.choiceId} disabled={busy} onClick={() => onReply(encodeResolutionChoice({ version: 1, stateId: c.stateId, choice: o.choiceId }))}>
+        <div className={s.actions}>{c.options.map(o => <QcButton key={o.choiceId} disabled={busy || stale} onClick={() => onReply(encodeResolutionChoice({ version: 1, stateId: c.stateId, choice: o.choiceId }))}>
           <span>{o.label}<span className={s.detail}>{o.detail}</span></span>
         </QcButton>)}</div>
         <p className={s.detail}>None of these? {c.question}</p>
         <div className={s.actions}>
-          <QcButton disabled={busy} onClick={() => onReply(encodeResolutionChoice({ version: 1, stateId: c.stateId, choice: 'none' }))}>None of these</QcButton>
-          <QcButton disabled={busy} onClick={() => onReply(encodeResolutionChoice({ version: 1, stateId: c.stateId, choice: 'cancel' }))}>Cancel search</QcButton>
+          <QcButton disabled={busy || stale} onClick={() => onReply(encodeResolutionChoice({ version: 1, stateId: c.stateId, choice: 'none' }))}>None of these</QcButton>
+          <QcButton disabled={busy || stale} onClick={() => onReply(encodeResolutionChoice({ version: 1, stateId: c.stateId, choice: 'cancel' }))}>Cancel search</QcButton>
         </div>
       </>}
       {c.kind === 'attention' && <><p className={s.detail}>{c.note} Checked {new Date(c.asOf).toLocaleString()}.</p>{c.groups.map(g => <div key={g.key} className={s.card}>
@@ -47,7 +50,7 @@ export function ConversationCards({ cards, actions, busy, canConfirm, onOpen, on
         <div className={s.actions}>
           {action.status === 'proposed' && <><QcButton variant="primary" disabled={busy || !canConfirm(action)} onClick={() => onAction(action, 'confirm')}>Confirm these changes</QcButton><QcButton disabled={busy} onClick={() => onAction(action, 'cancel')}>Cancel proposal</QcButton></>}
           {action.target && <QcButton disabled={busy} onClick={() => onOpen(card, action.target!)}>{action.status === 'committed' ? 'Review saved record' : 'Open current record'}</QcButton>}
-          {['conflict', 'failed'].includes(action.status) && <QcButton disabled={busy} onClick={() => onReply(`Please prepare a fresh proposal for action ${action.id}; the previous one was not applied.`)}>Review again</QcButton>}
+          {['conflict', 'failed'].includes(action.status) && <QcButton disabled={busy || stale} onClick={() => onReply(`Please prepare a fresh proposal for action ${action.id}; the previous one was not applied.`)}>Review again</QcButton>}
         </div>
       </>)}
     </section>;

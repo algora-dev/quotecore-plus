@@ -81,7 +81,7 @@ function currentPlan(plan:QueryPlan,target:RecordTarget|null):QueryPlan {
  return {...plan,current:false,filters:[...plan.filters,{field:key,op:'eq',value:target.id}]};
 }
 function resultError(error:RetrievalError,scope='No data read.'):RetrievalResult{return {source:'',mode:'none',state:error.code,code:error.code,rows:[],asOf:null,complete:false,truncated:false,scope,warnings:[],answer:error.message};}
-export function createRetrievalService(input:{client:SupabaseClient;access:Access;runId:string;capabilities:RetrievalCapabilities;userMessage?:string;signal?:AbortSignal;current:()=>Promise<RecordTarget|null>;emit:(sections:AssistantSection[],content:CardContent)=>Promise<string>;report?:(value:Record<string,unknown>)=>void}){
+export function createRetrievalService(input:{client:SupabaseClient;access:Access;runId:string;capabilities:RetrievalCapabilities;userMessage?:string;signal?:AbortSignal;current:()=>Promise<RecordTarget|null>;emit:(sections:AssistantSection[],content:CardContent)=>Promise<string>;report?:(value:Record<string,unknown>)=>void;onPlan?:(plan:QueryPlan)=>void}){
  // Current history can contain prior knowledge even when this turn queries a quote.
  const usedKnowledge=input.capabilities.knowledge;
  let hasQueried=false;
@@ -131,6 +131,7 @@ export function createRetrievalService(input:{client:SupabaseClient;access:Acces
     if(sourceSpec(plan.source).feature==='catalogs'&&!input.capabilities.catalogues)throw new RetrievalError('feature_disabled','Catalogue access is not enabled by this account’s current application entitlement.');
     if(resolved&&!internal&&plan.resolve&&!sourceSpec(plan.source).knowledge)throw new RetrievalError('invalid_query','Use resolve_workspace_entity for uncertain single-entity resolution. Query_workspace is for scoped data, lists and analytics, not a competing identity selection.');
     if(plan.current)plan=currentPlan(plan,await input.current());
+    if(!internal)input.onPlan?.(plan);
     hasQueried=true;
     if(signal?.aborted)throw new AssistantV2Error('turn_timeout','The turn timed out.',408);
     // The invoker RPC revalidates the admitted run, tenant, current permissions

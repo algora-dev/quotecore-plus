@@ -22,12 +22,17 @@ export function parseResolutionState(value: unknown): ResolutionState | null {
     const internalTask = raw.task === 'propose_component';
     const proposal = raw.proposal;
     const nameOrContents = raw.nameOrContents;
-    delete raw.proposal; delete raw.nameOrContents;
+    const customerOrName = raw.customerOrName;
+    delete raw.proposal; delete raw.nameOrContents; delete raw.customerOrName;
     if (internalTask) raw.task = 'find';
     const intent = parseResolverIntent(raw);
     if (nameOrContents !== undefined) {
       if (nameOrContents !== true || !intent.contains || !['quotes','drafts'].includes(intent.domain)) return null;
       intent.nameOrContents = true;
+    }
+    if (customerOrName !== undefined) {
+      if (customerOrName !== true || !intent.customer || intent.query || intent.id || intent.number || intent.parent || !intent.selection) return null;
+      intent.customerOrName = true;
     }
     if (internalTask) {
       if (!isRecord(proposal) || Object.keys(proposal).some(k => !['changes','quantity_unit','rate_unit'].includes(k))

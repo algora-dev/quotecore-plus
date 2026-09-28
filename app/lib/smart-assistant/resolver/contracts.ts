@@ -13,6 +13,9 @@ export type ResolverIntent = {
   query?: string; id?: string; number?: string; parent?: Parent;
   customer?: string; job?: string; period?: Period; current?: boolean;
   contains?: string; nameOrContents?: boolean; list?: boolean;
+  selection?: 'latest' | 'earliest';
+  /** Internal provenance: a bare NAME quote, not an explicit customer qualifier. */
+  customerOrName?: boolean;
   include?: ('orders' | 'invoices')[];
   /** Server-only: this operation is supplied by the existing P3 adapter. */
   proposal?: ProposalInput;
@@ -71,7 +74,7 @@ export function parseParent(value: unknown): Parent {
 /** Strict public read contract. Mutation inputs and policy/tenant IDs are absent. */
 export function parseResolverIntent(value: unknown): ResolverIntent {
   if (JSON.stringify(value)?.length > 6_000) invalid('The entity request is too large.');
-  const v = strictObject(value, ['version', 'task', 'domain', 'query', 'id', 'number', 'parent', 'customer', 'job', 'period', 'current', 'contains', 'list', 'include'], 'entity request');
+  const v = strictObject(value, ['version', 'task', 'domain', 'query', 'id', 'number', 'parent', 'customer', 'job', 'period', 'current', 'contains', 'list', 'include', 'selection'], 'entity request');
   if (v.version !== 1 || !['find', 'open', 'cost', 'charge'].includes(String(v.task)) || !DOMAINS.includes(v.domain as ResolverDomain)) invalid('Choose a registered read task and business domain.');
   for (const key of ['query', 'customer', 'job', 'number', 'contains']) if (v[key] !== undefined && !bounded(v[key], key === 'number' ? 60 : 120)) invalid(`Invalid ${key} clue.`);
   if (v.id !== undefined && !isUuid(v.id)) invalid('Use a UUID from an authorised result.');
@@ -81,6 +84,7 @@ export function parseResolverIntent(value: unknown): ResolverIntent {
   for (const key of ['current', 'list']) if (v[key] !== undefined && typeof v[key] !== 'boolean') invalid(`Invalid ${key} flag.`);
   if (v.contains !== undefined && !['quotes', 'drafts'].includes(String(v.domain))) invalid('The contains clue currently describes components within quotes or drafts.');
   if (v.include !== undefined && (!Array.isArray(v.include) || v.include.length > 2 || new Set(v.include).size !== v.include.length || v.include.some(x => !['orders', 'invoices'].includes(String(x))) || !['quotes', 'drafts'].includes(String(v.domain)))) invalid('Related status expansion is registered only for quotes/drafts → orders/invoices.');
+  if (v.selection !== undefined && (!['latest','earliest'].includes(String(v.selection)) || !['quotes','drafts','orders','invoices'].includes(String(v.domain)) || v.list === true || v.parent !== undefined)) invalid('Temporal selection needs one header source, not a child or list.');
   const parent = v.parent === undefined ? undefined : parseParent(v.parent);
   let period: Period | undefined;
   if (v.period !== undefined) {

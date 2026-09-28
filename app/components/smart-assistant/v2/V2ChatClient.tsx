@@ -3,6 +3,8 @@ import { notifyComponentFocus } from '@/app/lib/smart-assistant/v2/component-foc
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createConversation, type ConversationRow } from '@/app/(auth)/[workspaceSlug]/assistant/actions';
+import { displayTaskMessage } from '@/app/lib/smart-assistant/tasks/wire';
+import { failedTurns, staleTaskCard } from '@/app/lib/smart-assistant/tasks/presentation';
 import { displayResolutionMessage } from '@/app/lib/smart-assistant/resolver/wire';
 import { SafeMessage } from '../SafeMessage';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
@@ -55,6 +57,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     const visibility = useRef(visible);
     visibility.current = visible;
     const end = useRef<HTMLDivElement>(null);
+    const composer = useRef<HTMLTextAreaElement>(null);
     const prefKey = `sa-input:${access.userId}:${access.companyId}`;
     const lastConversationKey = `sa-conversation:${access.userId}:${access.companyId}`;
     const voice = useVoiceNote(visible && !locked, text => { if (text)
@@ -94,8 +97,10 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             if (outcome && ['completed', 'failed', 'cancelled', 'aborted', 'timed_out'].includes(outcome.status)) {
                 pending.current.delete(id);
                 setUnresolved(false);
-                if (outcome.status !== 'completed')
-                    setNotice('The previous message did not complete. No unconfirmed change was applied. You can send a new message.');
+                // Canonical failures are rendered with their user message below.
+                // Do not also show a transient banner or restore the composer.
+                setNotice(null);
+                setInput(value => value.trim() === p?.message.trim() ? '' : value);
             }
             return next;
         }
@@ -231,7 +236,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         }
         const earlier = pending.current.get(id);
         if (earlier && earlier.message !== text) {
-            setNotice('Resolve the previous message before sending a different one. Use Retry same message.');
+            setNotice('The previous request\'s outcome is still unconfirmed. Use Check request before sending another.');
             return;
         }
         const logical = earlier ?? { requestId: crypto.randomUUID(), message: text };
@@ -272,13 +277,14 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
                 await openRecord(card, card.content.options[0]);
         }
         catch (error) {
-            if (mounted.current) {
-                setNotice(error instanceof Error ? error.message : 'Connection interrupted. Retry the same message.');
-                // Do NOT re-fill the composer on failure: the message is already in
-                // the thread and the Retry same message button covers an idempotent
-                // retry. Re-filling tripled the text visually (thread + composer).
+            const next = await refresh(id);
+            if (mounted.current && current.current === id && next) {
+                const outcome = next.runs.find(r => r.requestId === logical.requestId);
+                // A lost HTTP response is not proof of failure. Reconcile first;
+                // the inline canonical error or one uncertain-run control owns it.
+                if (outcome || pending.current.has(id)) setNotice(null);
+                else setNotice(error instanceof Error ? error.message : 'The request could not be submitted.');
             }
-            await refresh(id);
         }
         finally {
             if (!navPending.current) {
@@ -317,6 +323,32 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             }
         }
     };
+    const finishTask = async (command: 'done' | 'move_on') => {
+        const task = snapshot?.task;
+        if (!active || !task || task.status === 'closed' || operation.current || unresolved || snapshot?.activeRunId || locked) return;
+        operation.current = true; setBusy(true); setNotice(null);
+        try {
+            await request('/api/smart-assistant/v2/task', {companyId:access.companyId,conversationId:active,taskId:task.id,version:task.version,command});
+            // No generated acknowledgement, no transcript deletion and no proposal
+            // command. The next message starts fresh on every device.
+            await refresh(active);
+        } catch(error) {
+            const next = await refresh(active);
+            if (next?.task?.id === task.id && next.task.status === 'closed') setNotice(null);
+            else setNotice(error instanceof Error ? error.message : 'Task status could not be verified.');
+        } finally { operation.current = false; if(mounted.current)setBusy(false); }
+    };
+    const refineAnswer = () => {
+        changeMode('text');
+        // This is a visible user-editable cue, not a hidden instruction or a
+        // synthetic paid turn. They can erase it and ask an unrelated question.
+        setInput(value => value || 'Not quite. ');
+        requestAnimationFrame(() => composer.current?.focus());
+    };
+    const failures = failedTurns(snapshot?.messages ?? [], snapshot?.runs ?? []);
+    const failureByMessage = new Map(failures.map(f => [f.messageId, f]));
+    const latestUser = snapshot?.messages.filter(m=>m.role==='user').at(-1)?.id;
+    const staleChoice = (card:ConversationCard) => staleTaskCard(card,snapshot?.task);
     const canConfirm = (action: ActionView) => { const live = snapshot?.access ?? access; return live.phases.p3 && (action.actionKind !== 'draft_create' || live.phases.p4) && action.sections.every(section => live.permissions[section] === 'edit'); };
     // Owner direction: show the answer and its final click options only.
     // Intermediate lookup cards from the same run are trail noise and get hidden.
@@ -343,22 +375,39 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         {(snapshot?.access ?? access).permissions.draft_quotes !== 'hidden' && <QcButton disabled={busy || locked} onClick={() => void send('Open my most recent draft.')}>Open my latest draft</QcButton>}
         {access.phases.p2 && <QcButton disabled={busy || locked} onClick={() => void send('What needs my attention today?')}>What needs attention?</QcButton>}
       </div>{access.historyAfter && <p className={s.detail}>Earlier messages may be withheld after an access change.</p>}</>}
-      {snapshot?.messages.map(m => <div key={m.id}><div className={`${s.message} ${m.role === 'user' ? s.user : ''}`}><SafeMessage content={displayResolutionMessage(m.content)}/></div>
-        {m.role === 'assistant' && <ConversationCards canConfirm={canConfirm} cards={cardsFor(m.runId)} actions={snapshot.actions} busy={busy || locked} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>}</div>)}
-      <ConversationCards canConfirm={canConfirm} cards={orphanCards} actions={snapshot?.actions ?? []} busy={busy || locked} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>
+      {snapshot?.messages.map(m => <div key={m.id}><div className={`${s.message} ${m.role === 'user' ? s.user : ''}`}><SafeMessage content={displayTaskMessage(displayResolutionMessage(m.content))}/></div>
+        {failureByMessage.has(m.id) && <div className={s.card} role="status" data-sa-failed-run={m.runId ?? undefined}>
+          <p>{failureByMessage.get(m.id)!.copy} Review any proposal card separately; task controls never approve changes.</p>
+          {m.id === latestUser && failureByMessage.get(m.id)!.canRetry && <QcButton disabled={busy || locked || unresolved || !!snapshot.activeRunId} onClick={() => void send(failureByMessage.get(m.id)!.retryText)}>Retry request</QcButton>}
+        </div>}
+        {m.role === 'assistant' && <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={cardsFor(m.runId)} actions={snapshot.actions} busy={busy || locked} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>}</div>)}
+      <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={orphanCards} actions={snapshot?.actions ?? []} busy={busy || locked} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>
+      {snapshot?.task && <div className={s.card} data-sa-task={snapshot.task.id}>
+        {snapshot.task.status === 'closed' ? <p className={s.detail}>Task closed. Your next request starts fresh. History is still here.</p> : <>
+          <p className={s.detail}>{snapshot.task.label}</p>
+          <div className={s.actions}>
+            <QcButton disabled={busy || locked || unresolved || !!snapshot.activeRunId} onClick={() => void finishTask(snapshot.task?.status === 'answered' ? 'done' : 'move_on')}>{snapshot.task.status === 'answered' ? 'Done' : 'Move on'}</QcButton>
+            {snapshot.task.status === 'answered' && <QcButton disabled={busy || locked || unresolved || !!snapshot.activeRunId} onClick={refineAnswer}>Not quite</QcButton>}
+          </div>
+          <p className={s.detail}>You can also ask a new question without closing this task. Done and Move on never approve changes.</p>
+        </>}
+      </div>}
+      {unresolved && !busy && !snapshot?.activeRunId && active && <div className={s.card} role="status">
+        <p>The last request&apos;s outcome is not confirmed. Check the same request before sending another.</p>
+        <QcButton disabled={locked} onClick={() => void send(pending.current.get(active)?.message)}>Check request</QcButton>
+      </div>}
       {(busy || snapshot?.activeRunId) && <p role="status">Working. You can hide the assistant and come back.</p>}<div ref={end}/>
     </div>
-    {notice && <div className={s.notice} role="alert">{notice}{active && <QcButton disabled={busy} onClick={() => void refresh(active)}>Refresh status</QcButton>}</div>}
+    {notice && <div className={s.notice} role="alert">{notice}{locked && active && <QcButton disabled={busy} onClick={() => void refresh(active)}>Refresh status</QcButton>}</div>}
     <div className={s.composer}>
       {voice.state !== 'off' && <p className={s.live} role="status">{voice.state === 'recording' ? 'Listening. Tap Stop when finished.' : voice.state === 'requesting' ? 'Opening microphone...' : 'Transcribing. Review before sending.'}</p>}
-      {mode === 'text' ? <textarea className={s.input} aria-label="Message the assistant" value={input} disabled={busy || locked || voice.state !== 'off'} maxLength={16000} rows={2} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      {mode === 'text' ? <textarea ref={composer} className={s.input} aria-label="Message the assistant" value={input} disabled={busy || locked || voice.state !== 'off'} maxLength={16000} rows={2} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
         e.preventDefault();
         void send();
     } }}/> : input && <div className={s.card}><p>{input}</p><QcButton onClick={() => changeMode('text')}>Edit transcript</QcButton><QcButton onClick={() => setInput('')}>Discard</QcButton></div>}
       <div className={s.row}><QcButton className={mode === 'voice' ? s.mic : ''} aria-pressed={voice.state === 'recording'} disabled={busy || locked || ['requesting', 'transcribing'].includes(voice.state)} onClick={() => void voice.toggle()}>{voice.state === 'recording' ? 'Stop' : 'Microphone'}</QcButton>
         <QcButton onClick={() => changeMode(mode === 'text' ? 'voice' : 'text')}>{mode === 'text' ? 'Voice' : 'Type'}</QcButton>
         {input.trim() && <QcButton variant="primary" disabled={busy || locked || voice.state !== 'off'} onClick={() => void send()}>Send</QcButton>}
-        {unresolved && active && <QcButton disabled={busy || locked} onClick={() => void send(pending.current.get(active)?.message)}>Retry same message</QcButton>}
       </div>
     </div>
   </div>;

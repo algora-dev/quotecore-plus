@@ -18,11 +18,11 @@ export interface ResolutionStore {
   load: (id?: string, signal?: AbortSignal) => Promise<StoredResolution | null>;
   save: (state: ResolutionState, sections: AssistantSection[], signal?: AbortSignal) => Promise<StoredResolution>;
 }
-export function createResolutionStore(client: SupabaseClient, access: Access, runId: string): ResolutionStore {
+export function createResolutionStore(client: SupabaseClient, access: Access, runId: string, taskScoped = false): ResolutionStore {
   return {
     async load(id, signal) {
       if (id !== undefined && !isUuid(id)) return null;
-      const request = batchClient(client).rpc('sa_v2_resolution_read', { p_run_id: runId, p_revision: access.permissionRevision, p_state_id: id ?? null });
+      const request = batchClient(client).rpc(taskScoped ? 'sa_v2_resolution_read_v172' : 'sa_v2_resolution_read', { p_run_id: runId, p_revision: access.permissionRevision, p_state_id: id ?? null });
       const { data, error } = await (signal ? request.abortSignal(signal) : request);
       if (error) throw failure(error.code);
       if (data === null) return null;

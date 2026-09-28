@@ -12,6 +12,12 @@ export type AssistantBatchDatabase = Omit<Database, 'public'> & {
             sa_v2_retrieval_capabilities: Rpc<{ p_run_id: string; p_revision: number }>;
             sa_v2_retrieval_query: Rpc<{ p_run_id: string; p_revision: number; p_plan: Json }>;
             sa_v2_retrieval_query_v171: Rpc<{ p_run_id: string; p_revision: number; p_plan: Json }>;
+            sa_v2_resolution_read_v172: Rpc<{ p_run_id: string; p_revision: number; p_state_id: string | null }>;
+            sa_v2_task_snapshot: Rpc<{p_conversation_id: string}>;
+            sa_v2_task_read: Rpc<{p_run_id: string; p_revision: number}>;
+            sa_v2_task_begin: Rpc<{p_run_id: string; p_user_id: string; p_revision: number; p_knowledge_revision:string; p_expected_task: string|null; p_expected_version: number|null; p_disposition: string; p_reason: string; p_label: string; p_pending_message: string|null; p_closure: string|null}>;
+            sa_v2_task_finish: Rpc<{p_run_id: string; p_user_id: string; p_revision: number; p_knowledge_revision:string; p_status: string; p_label: string}>;
+            sa_v2_task_close: Rpc<{p_conversation_id: string; p_task_id: string; p_version: number; p_closure: string}>;
             sa_v2_resolution_read: Rpc<{ p_run_id: string; p_revision: number; p_state_id: string | null }>;
             sa_v2_resolution_store: Rpc<{ p_run_id: string; p_user_id: string; p_revision: number; p_sections: string[]; p_state: Json }>;
             sa_v2_retrieval_query_v17: Rpc<{ p_run_id: string; p_revision: number; p_plan: Json }>;

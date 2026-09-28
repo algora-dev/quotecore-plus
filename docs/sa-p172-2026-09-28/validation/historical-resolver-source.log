@@ -1,0 +1,23 @@
+P1.7.1 SQL verified; registry feaff3719950d5d17cd163326b06d5641f1b03a915fe947aa9b9abfa94b6eaad; NOT APPLIED.
+node:internal/assert/utils:281
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: protected raw baseline drift: DESIGN_CHANGES.md
+    at Object.<anonymous> (/mnt/data/sa_p172_build/quotecore-plus/scripts/check-smart-assistant-resolver-source.cjs:29:265)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '=='
+}
+
+Node.js v22.16.0
