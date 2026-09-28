@@ -100,7 +100,11 @@ export function pipelineFailureDetails(err: unknown): PipelineFailure {
     const e = err as Error & { tokensIn: number; tokensOut: number; errorCode?: string };
     return { errorCode: e.errorCode ?? 'pipeline_error', tokensIn: e.tokensIn, tokensOut: e.tokensOut };
   }
-  return { errorCode: 'pipeline_error', tokensIn: 0, tokensOut: 0 };
+  // Incident backstop (2026-09-28): unmarked pipeline errors must carry their
+  // message into runs.error_code so provider/runtime breaks are one DB query
+  // from diagnosis (same convention as upstream_error:: capture).
+  const detail = err instanceof Error ? String(err.message).replace(/\s+/g, ' ').trim().slice(0, 180) : '';
+  return { errorCode: detail ? `pipeline_error::${detail}` : 'pipeline_error', tokensIn: 0, tokensOut: 0 };
 }
 
 /**
