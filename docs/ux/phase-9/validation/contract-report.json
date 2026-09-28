@@ -1,0 +1,123 @@
+{
+  "method": "Actual TS source executed with mock auth/Supabase/NextResponse. No live API calls, database writes, RLS tests or Next caching tests.",
+  "tests": [
+    {
+      "name": "Invoice templates: empty",
+      "pass": true
+    },
+    {
+      "name": "Invoice templates: populated",
+      "pass": true
+    },
+    {
+      "name": "Invoice templates: provider-error",
+      "pass": true
+    },
+    {
+      "name": "Invoice templates: connection-error",
+      "pass": true
+    },
+    {
+      "name": "Invoice templates: auth-error",
+      "pass": true
+    },
+    {
+      "name": "Inbox API: read returns actual affected IDs and tenant scope",
+      "pass": true
+    },
+    {
+      "name": "Inbox API: unread returns actual affected IDs and tenant scope",
+      "pass": true
+    },
+    {
+      "name": "Inbox API: todo returns actual affected IDs and tenant scope",
+      "pass": true
+    },
+    {
+      "name": "Inbox API: active returns actual affected IDs and tenant scope",
+      "pass": true
+    },
+    {
+      "name": "Inbox API: archive returns actual affected IDs and tenant scope",
+      "pass": true
+    },
+    {
+      "name": "Inbox API: delete returns actual affected IDs and tenant scope",
+      "pass": true
+    },
+    {
+      "name": "Inbox API rejects no ids",
+      "pass": true
+    },
+    {
+      "name": "Inbox API rejects unsupported action",
+      "pass": true
+    },
+    {
+      "name": "Inbox API rejects non-string ids",
+      "pass": true
+    },
+    {
+      "name": "Inbox API provider failure does not claim success or clear badges",
+      "pass": true
+    },
+    {
+      "name": "Inbox outcome deduplicates/intersects returned IDs",
+      "pass": true
+    },
+    {
+      "name": "Inbox outcome accepts confirmed zero rows, leaves all selected",
+      "pass": true
+    },
+    {
+      "name": "Inbox rejects unconfirmed result null",
+      "pass": true
+    },
+    {
+      "name": "Inbox rejects unconfirmed result {}",
+      "pass": true
+    },
+    {
+      "name": "Inbox rejects unconfirmed result {\"ok\":false,\"updatedIds\":[\"a1\"]}",
+      "pass": true
+    },
+    {
+      "name": "Inbox rejects unconfirmed result {\"ok\":true,\"count\":9}",
+      "pass": true
+    },
+    {
+      "name": "Inbox rejects unconfirmed result {\"ok\":true,\"updatedIds\":[42]}",
+      "pass": true
+    },
+    {
+      "name": "Manifest bypass remains exact: /manifest.webmanifest",
+      "pass": true
+    },
+    {
+      "name": "Manifest bypass remains exact: /manifest.webmanifest/extra",
+      "pass": true
+    },
+    {
+      "name": "Manifest bypass remains exact: /demo/manifest.webmanifest",
+      "pass": true
+    },
+    {
+      "name": "Manifest bypass remains exact: /demo/quotes",
+      "pass": true
+    },
+    {
+      "name": "Manifest bypass remains exact: /api/alerts/bulk",
+      "pass": true
+    },
+    {
+      "name": "Manifest bypass remains exact: /q-mark.png",
+      "pass": true
+    },
+    {
+      "name": "Existing manifest source serializes to JSON and retains icons",
+      "pass": true
+    }
+  ],
+  "passed": 29,
+  "failed": 0
+}

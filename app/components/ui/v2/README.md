@@ -1,14 +1,9 @@
-# QuoteCore+ v2 presentation primitives
+# QuoteCore+ v2 shared presentation primitives
 
-Phase1 candidate only. Use these with an explicit `data-qc-ui="v2"` root and retain native props, existing handlers and stable domain IDs. Never put pricing, requests or permission rules into these components.
+Use an explicit `data-qc-ui="v2"` scope. The latest integrated source, phase handoff and current standard supersede the old Phase1 candidate notes. Preserve native props, stable domain IDs, event owners and dirty/submit guards. Do not put pricing, provider calls or permissions in presentation components.
 
-Read `DESIGN_CHANGES.md` and `docs/ux/phase-1/COMPONENT_CONTRACTS.md` before extending the system. The current AGENT_BRIEF.md remains the boundary authority. Other routes are not opted in automatically.
+Current families include C01 buttons, field/surface primitives, C27 native dialogs, C53 hosted scopes, Document Studio selection/output adapters, C61/C63 journey composition, C64 libraries, C65 deterministic mobile returns and C66 persistent local operation feedback. Exact contracts live in each implementation and the relevant phase documentation.
 
-- Actions: QcButton / QcLinkButton.
-- Fields: QcField / QcInput / QcSelect.
-- Surfaces: QcSurface / QcNotice / QcStatusBadge.
-- Workflow: controlled QcWorkflowStepper; audience-explicit, preformatted QcMoneySummary.
-- Dialog: QcDialog; existing ConfirmModal/AlertModal via appearance="v2"; useQcFeedback for awaitable acknowledgement.
-- Canonical values: qc-tokens.css; shared rules: qc.css, qc-adapters.css, qc-overlays.css.
+Phase9 adds **C67 QcDrawingWorkspace** and **C68 QcToolHelp** in `QcDrawingWorkspace.tsx`, with opt-in `qc-drawings.css`. C67 is chrome around a fixed-coordinate drawing, not a new canvas controller. C68 is click/tap help reusing C27 rather than hover-only overflow. Neither owns geometry, history, requests or saves. Never apply drawing selectors to Takeoff/Smart Assistant globally.
 
-The domain-specific builder CSS and existing components are adapters, not a second pricing/quote engine. App-level typecheck/build and runtime parity remain required before release.
+`qc-tokens.css` remains unchanged. Dialog Escape/backdrop policy stays owned by the feature and existing shared controller. Error/result notices must describe actual outcomes, not inferred success or an unconfirmed server rollback. App typecheck/build and real-device/runtime parity remain the integration gate.

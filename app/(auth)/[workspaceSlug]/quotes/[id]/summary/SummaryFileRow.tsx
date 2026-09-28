@@ -2,6 +2,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { deleteFile, deleteTakeoffCanvas } from '../actions-files';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 
 interface Props {
@@ -19,6 +20,7 @@ interface Props {
 
 export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, storagePath: _storagePath, url, deletable = true }: Props) {
   const router = useRouter();
+  const { notify, feedback } = useQcFeedback();
   const [pending, startTransition] = useTransition();
   const [removed, setRemoved] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -42,7 +44,7 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
         setRemoved(true);
         router.refresh();
       } catch (err) {
-        alert(err instanceof Error ? err.message : 'Failed to delete file');
+        await notify(err instanceof Error ? err.message : 'Failed to delete file');
       }
     });
   }
@@ -57,7 +59,8 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
   const sizeText = fileSize > 0 ? ` • ${(fileSize / 1024 / 1024).toFixed(2)} MB` : '';
 
   return (
-    <div className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-full">
+    <div data-qc-ui="v2" className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-2 hover:bg-slate-50 rounded-xl">
+      {feedback}
       <div className="flex-shrink-0">
         {fileName.toLowerCase().endsWith('.pdf') ? (
           <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -79,8 +82,8 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          title="View file"
-          className="icon-btn border-slate-300 bg-white"
+          title="View file" aria-label={`View ${fileName}`}
+          className="qc-button qc-icon-button border-slate-300 bg-white"
         >
           {/* Eye / view icon */}
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,8 +94,8 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
         <a
           href={url}
           download={fileName}
-          title="Download file"
-          className="icon-btn border-slate-300 bg-white"
+          title="Download file" aria-label={`Download ${fileName}`}
+          className="qc-button qc-icon-button border-slate-300 bg-white"
         >
           {/* Download arrow icon */}
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,8 +107,8 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
             type="button"
             onClick={requestDelete}
             disabled={pending}
-            title="Delete file"
-            className="icon-btn icon-btn--danger border-slate-300 bg-white"
+            title="Delete file" aria-label={`Delete ${fileName}`}
+            className="qc-button qc-icon-button icon-btn--danger border-slate-300 bg-white"
           >
             {pending ? (
               <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">

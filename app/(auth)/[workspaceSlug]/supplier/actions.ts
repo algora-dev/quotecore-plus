@@ -275,6 +275,7 @@ export async function updateSupplierProfile(
     if (error) return { ok: false, message: error.message };
 
     revalidatePath('/[workspaceSlug]/supplier', 'page');
+    revalidatePath('/[workspaceSlug]/supplier-directory', 'page');
     return { ok: true };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
@@ -458,6 +459,7 @@ export async function publishCatalogUpdate(
     }
 
     revalidatePath('/[workspaceSlug]/supplier', 'page');
+    revalidatePath('/[workspaceSlug]/supplier-directory', 'page');
     return { ok: true, newVersion };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
@@ -535,6 +537,7 @@ export async function updateTakeoffBuilderSettings(input: {
     }
 
     revalidatePath('/[workspaceSlug]/supplier', 'page');
+    revalidatePath('/[workspaceSlug]/supplier-directory', 'page');
     return { ok: true };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
@@ -715,6 +718,7 @@ export async function updateSupplierVisibility(input: {
     if (error) return { ok: false, message: error.message };
 
     revalidatePath('/[workspaceSlug]/supplier', 'page');
+    revalidatePath('/[workspaceSlug]/supplier-directory', 'page');
     return { ok: true };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };

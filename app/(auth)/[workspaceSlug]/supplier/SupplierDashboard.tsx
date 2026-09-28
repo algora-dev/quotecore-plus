@@ -3,7 +3,8 @@ import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   updateSupplierProfile,
@@ -191,6 +192,7 @@ export function SupplierDashboard({
   effectivePlanCode: string;
 }) {
   const { notify, feedback } = useQcFeedback();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('libraries');
 
   // Collapsible sections
@@ -217,6 +219,10 @@ export function SupplierDashboard({
 
   const [localLibraries, setLocalLibraries] = useState(libraries);
   const [localCatalogs, setLocalCatalogs] = useState(catalogs);
+  // Explicit successful publication refreshes server lists without resetting
+  // unrelated profile drafts or reloading the entire application.
+  useEffect(() => setLocalLibraries(libraries), [libraries]);
+  useEffect(() => setLocalCatalogs(catalogs), [catalogs]);
 
   const [websiteUrl, setWebsiteUrl] = useState(profile?.website_url ?? '');
   const [contactEmail, setContactEmail] = useState(profile?.contact_email ?? '');
@@ -1433,7 +1439,7 @@ export function SupplierDashboard({
               publicTitle={lib.public_title || ''} publicDescription={lib.public_description || ''}
               roofingTypes={lib.roofing_types || []}
               onClose={() => setShowPublishModal(null)}
-              onSaved={() => { setShowPublishModal(null); window.location.reload(); }}
+              onSaved={() => { setShowPublishModal(null); router.refresh(); }}
             />
           );
         })()}
@@ -1446,7 +1452,7 @@ export function SupplierDashboard({
             <CatalogPublishModal
               catalog={cat}
               onClose={() => setShowCatalogPublishModal(null)}
-              onSaved={() => { setShowCatalogPublishModal(null); window.location.reload(); }}
+              onSaved={() => { setShowCatalogPublishModal(null); router.refresh(); }}
             />
           );
         })()}

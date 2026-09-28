@@ -1,0 +1,528 @@
+{
+  "method": "Raw baseline hashes, TypeScript AST comparisons and route existence checks. No framework execution or behavioural equivalence claim.",
+  "tests": [
+    {
+      "name": "All original repository paths retained",
+      "pass": true,
+      "count": 3219,
+      "missing": []
+    },
+    {
+      "name": "Protected engine, provider, parallel lanes, output, configuration and ledger bytes unchanged",
+      "pass": true,
+      "count": 1191
+    },
+    {
+      "name": "Cache-only server-action diff: app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/actions.ts",
+      "pass": true
+    },
+    {
+      "name": "Cache-only server-action diff: app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/actions.ts",
+      "pass": true
+    },
+    {
+      "name": "Cache-only server-action diff: app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/actions.ts",
+      "pass": true
+    },
+    {
+      "name": "Cache-only server-action diff: app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
+      "pass": true
+    },
+    {
+      "name": "Cache-only server-action diff: app/(auth)/[workspaceSlug]/material-orders/template-actions.ts",
+      "pass": true
+    },
+    {
+      "name": "Cache-only server-action diff: app/(auth)/[workspaceSlug]/resources/actions.ts",
+      "pass": true
+    },
+    {
+      "name": "Cache-only server-action diff: app/(auth)/[workspaceSlug]/resources/email-actions.ts",
+      "pass": true
+    },
+    {
+      "name": "Cache-only server-action diff: app/(auth)/[workspaceSlug]/supplier/actions.ts",
+      "pass": true
+    },
+    {
+      "name": "Cache-only server-action diff: app/(auth)/[workspaceSlug]/supplier-directory/actions.ts",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/resources/document-templates",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/customer-quote-templates/[templateId]",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/customer-quote-templates/[templateId]/edit",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/resources/invoice-templates",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/resources/invoice-templates/[id]/edit",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/material-orders",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/resources/[id]/edit",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/resources/message-templates",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/supplier",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/supplier-directory",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/components",
+      "pass": true
+    },
+    {
+      "name": "Revalidation target exists: /[workspaceSlug]/catalogs",
+      "pass": true
+    },
+    {
+      "name": "No unreviewed named canvas-engine function changes",
+      "pass": true,
+      "unexpected": [],
+      "reviewed": [
+        "FlashingCanvas",
+        "handleKeyDown",
+        "loadFlashing",
+        "_handleAddRightAngle",
+        "_handleAddCustomAngle",
+        "handleSave",
+        "close",
+        "submit"
+      ],
+      "unchangedCount": 29
+    },
+    {
+      "name": "Hidden drawing regeneration / measurement-edit engine functions unchanged",
+      "pass": true,
+      "reviewed": [
+        "EditFlashingForm",
+        "handleSave"
+      ],
+      "unchanged": [
+        "regeneratePreview",
+        "handleUpdateMeasurement"
+      ]
+    },
+    {
+      "name": "Native canvas attributes, intrinsic dimensions and ref unchanged",
+      "pass": true,
+      "before": [
+        "ref={canvasRef} width={currentSize.width} height={currentSize.height}"
+      ],
+      "after": [
+        "ref={canvasRef} width={currentSize.width} height={currentSize.height}"
+      ]
+    },
+    {
+      "name": "Archive source-entity helper unchanged",
+      "pass": true
+    },
+    {
+      "name": "Middleware change is only exact manifest asset bypass",
+      "pass": true
+    },
+    {
+      "name": "Accepted navigation/layout lock unchanged: app/(auth)/[workspaceSlug]/resources/new/page.tsx",
+      "pass": true
+    },
+    {
+      "name": "Accepted navigation/layout lock unchanged: app/(auth)/[workspaceSlug]/quotes/page.tsx",
+      "pass": true
+    },
+    {
+      "name": "Accepted navigation/layout lock unchanged: app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "pass": true
+    },
+    {
+      "name": "Accepted navigation/layout lock unchanged: public/q-mark.png",
+      "pass": true
+    },
+    {
+      "name": "Accepted navigation/layout lock unchanged: app/components/workspace/workspace-return.ts",
+      "pass": true
+    }
+  ],
+  "detail": {
+    "legacyCacheTargets": [
+      "/components"
+    ],
+    "cacheTargets": [
+      {
+        "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/actions.ts",
+        "target": "/[workspaceSlug]/customer-quote-templates/[templateId]",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/actions.ts",
+        "target": "/[workspaceSlug]/customer-quote-templates/[templateId]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/actions.ts",
+        "target": "/[workspaceSlug]/customer-quote-templates/[templateId]",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/actions.ts",
+        "target": "/[workspaceSlug]/customer-quote-templates/[templateId]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/actions.ts",
+        "target": "/[workspaceSlug]/customer-quote-templates/[templateId]",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/actions.ts",
+        "target": "/[workspaceSlug]/customer-quote-templates/[templateId]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/invoice-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/invoice-templates/[id]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/invoice-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/invoice-templates/[id]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/invoice-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/invoices/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/invoice-templates/[id]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/material-orders/template-actions.ts",
+        "target": "/[workspaceSlug]/material-orders",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/material-orders/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/material-orders/template-actions.ts",
+        "target": "/[workspaceSlug]/material-orders",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/material-orders/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/material-orders/template-actions.ts",
+        "target": "/[workspaceSlug]/material-orders",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/material-orders/template-actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/actions.ts",
+        "target": "/[workspaceSlug]/resources/[id]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/actions.ts",
+        "target": "/[workspaceSlug]/resources/[id]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/actions.ts",
+        "target": "/[workspaceSlug]/resources/[id]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/actions.ts",
+        "target": "/[workspaceSlug]/resources/[id]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/actions.ts",
+        "target": "/[workspaceSlug]/resources/document-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/actions.ts",
+        "target": "/[workspaceSlug]/resources/[id]/edit",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/email-actions.ts",
+        "target": "/[workspaceSlug]/resources/message-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/email-actions.ts",
+        "target": "/[workspaceSlug]/resources/message-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/resources/email-actions.ts",
+        "target": "/[workspaceSlug]/resources/message-templates",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
+        "target": "/[workspaceSlug]/supplier",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
+        "target": "/[workspaceSlug]/supplier-directory",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
+        "target": "/[workspaceSlug]/supplier",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
+        "target": "/[workspaceSlug]/supplier-directory",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
+        "target": "/[workspaceSlug]/supplier",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
+        "target": "/[workspaceSlug]/supplier-directory",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
+        "target": "/[workspaceSlug]/supplier",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
+        "target": "/[workspaceSlug]/supplier-directory",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
+        "target": "/[workspaceSlug]/supplier",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier/actions.ts",
+        "target": "/[workspaceSlug]/supplier-directory",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier-directory/actions.ts",
+        "target": "/[workspaceSlug]/components",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier-directory/actions.ts",
+        "target": "/components"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier-directory/actions.ts",
+        "target": "/[workspaceSlug]/supplier-directory",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier-directory/actions.ts",
+        "target": "/[workspaceSlug]/components",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier-directory/actions.ts",
+        "target": "/[workspaceSlug]/components",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier-directory/actions.ts",
+        "target": "/[workspaceSlug]/components",
+        "type": "'page'"
+      },
+      {
+        "source": "app/(auth)/[workspaceSlug]/supplier-directory/actions.ts",
+        "target": "/[workspaceSlug]/catalogs",
+        "type": "'page'"
+      }
+    ],
+    "app/(auth)/[workspaceSlug]/drawings/draw/FlashingCanvas.tsx": {
+      "identicalFunctions": [
+        "pushHistorySnapshot",
+        "restoreSnapshot",
+        "handleUndo",
+        "handleRedo",
+        "handleSelectAll",
+        "handleConfirmSelectAll",
+        "handleDeselectAll",
+        "calculateDistance",
+        "calculateAngle",
+        "getAngleBisector",
+        "checkAdjustPointsExit",
+        "liveMeasurements",
+        "handleClear",
+        "_handleFinishLine",
+        "handleFinishTool",
+        "handleToggleMeasurementVisibility",
+        "handleToggleTextVisibility",
+        "handleToggleArcVisibility",
+        "updateConnectedGeometry",
+        "handleEditMeasurementValue",
+        "applyEditMeasurementValue",
+        "handleAdjustPointsMode",
+        "handleConfirmFinishAdjusting",
+        "handleRecalibrateAll",
+        "handleToggleAngleType",
+        "handleOpenCalculator",
+        "handleApplyCalculatedAngle",
+        "handleSelectMeasurement",
+        "handleTogglePlacementSide"
+      ],
+      "changedFunctions": [
+        "FlashingCanvas",
+        "handleKeyDown",
+        "loadFlashing",
+        "_handleAddRightAngle",
+        "_handleAddCustomAngle",
+        "handleSave",
+        "close",
+        "submit"
+      ],
+      "removedFunctions": []
+    },
+    "app/(auth)/[workspaceSlug]/drawings/[id]/edit/edit-form.tsx": {
+      "identicalFunctions": [
+        "regeneratePreview",
+        "handleUpdateMeasurement"
+      ],
+      "changedFunctions": [
+        "EditFlashingForm",
+        "handleSave"
+      ],
+      "removedFunctions": []
+    },
+    "app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorModal.tsx": {
+      "identicalFunctions": [
+        "handleApply"
+      ],
+      "changedFunctions": [
+        "HelpIcon",
+        "AngleCalculatorModal",
+        "validatePitch",
+        "validateCorner",
+        "handleCalculate",
+        "handleClose"
+      ],
+      "removedFunctions": []
+    },
+    "app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorWidget.tsx": {
+      "identicalFunctions": [
+        "handleMove",
+        "handleUp",
+        "handleApply"
+      ],
+      "changedFunctions": [
+        "HelpIcon",
+        "AngleCalculatorWidget",
+        "validatePitch",
+        "validateCorner",
+        "handleCalculate"
+      ],
+      "removedFunctions": []
+    }
+  },
+  "passed": 33,
+  "failed": 0
+}

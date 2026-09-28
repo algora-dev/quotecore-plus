@@ -1,0 +1,145 @@
+{
+  "method": "Actual JSX/CSS with sample hook state. Effects and requests disabled. Fabric canvas shown as a labelled placeholder, not simulated geometry validation.",
+  "results": [
+    {
+      "name": "drawings-library",
+      "source": "app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx",
+      "pass": true
+    },
+    {
+      "name": "drawings-empty",
+      "source": "app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx",
+      "pass": true
+    },
+    {
+      "name": "drawing-upload-error",
+      "source": "app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx",
+      "pass": true
+    },
+    {
+      "name": "drawing-delete-error",
+      "source": "app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx",
+      "pass": true
+    },
+    {
+      "name": "drawing-image-preview",
+      "source": "app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx",
+      "pass": true
+    },
+    {
+      "name": "drawing-load-error",
+      "source": "app/(auth)/[workspaceSlug]/drawings/error.tsx",
+      "pass": true
+    },
+    {
+      "name": "drawing-workspace",
+      "source": "app/(auth)/[workspaceSlug]/drawings/draw/FlashingCanvas.tsx",
+      "pass": true
+    },
+    {
+      "name": "drawing-loading",
+      "source": "app/(auth)/[workspaceSlug]/drawings/draw/FlashingCanvas.tsx",
+      "pass": true
+    },
+    {
+      "name": "drawing-edit-value",
+      "source": "app/(auth)/[workspaceSlug]/drawings/draw/FlashingCanvas.tsx",
+      "pass": true
+    },
+    {
+      "name": "drawing-adjust-confirm",
+      "source": "app/(auth)/[workspaceSlug]/drawings/draw/FlashingCanvas.tsx",
+      "pass": true
+    },
+    {
+      "name": "drawing-select-all",
+      "source": "app/(auth)/[workspaceSlug]/drawings/draw/FlashingCanvas.tsx",
+      "pass": true
+    },
+    {
+      "name": "angle-floating-error",
+      "source": "app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorWidget.tsx",
+      "pass": true
+    },
+    {
+      "name": "angle-floating-result",
+      "source": "app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorWidget.tsx",
+      "pass": true
+    },
+    {
+      "name": "angle-dialog",
+      "source": "app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorModal.tsx",
+      "pass": true
+    },
+    {
+      "name": "angle-help",
+      "source": "app/components/ui/v2/QcDrawingWorkspace.tsx",
+      "pass": true
+    },
+    {
+      "name": "tutorial-dialog-long",
+      "source": "app/(auth)/[workspaceSlug]/tutorials/TutorialModal.tsx",
+      "pass": true
+    },
+    {
+      "name": "tutorials-library",
+      "source": "app/(auth)/[workspaceSlug]/tutorials/TutorialsClient.tsx",
+      "pass": true
+    },
+    {
+      "name": "tutorial-intro",
+      "source": "app/(auth)/[workspaceSlug]/tutorials/TutorialsClient.tsx",
+      "pass": true
+    },
+    {
+      "name": "inbox-partial-update",
+      "source": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx",
+      "pass": true
+    },
+    {
+      "name": "template-logo-error",
+      "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/TemplateBuilder.tsx",
+      "pass": true
+    }
+  ],
+  "loaded": [
+    "app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx",
+    "app/components/ui/v2/QcJourney.tsx",
+    "app/components/ui/v2/QcDialog.tsx",
+    "app/components/ui/v2/QcHostedDialog.tsx",
+    "app/components/ui/v2/QcButton.tsx",
+    "app/components/ui/v2/QcActionNotice.tsx",
+    "app/components/ui/v2/QcSurface.tsx",
+    "app/components/UpgradeModal.tsx",
+    "app/components/billing/StorageBlockedModal.tsx",
+    "app/(auth)/[workspaceSlug]/drawings/error.tsx",
+    "app/components/BackButton.tsx",
+    "app/components/ui/v2/QcIcon.tsx",
+    "app/components/workspace/workspace-return.ts",
+    "app/components/ui/v2/QcLibrary.tsx",
+    "app/(auth)/[workspaceSlug]/drawings/draw/FlashingCanvas.tsx",
+    "app/components/ui/v2/QcDrawingWorkspace.tsx",
+    "app/components/ui/v2/useQcFeedback.tsx",
+    "app/components/AlertModal.tsx",
+    "app/components/ConfirmModal.tsx",
+    "app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorWidget.tsx",
+    "app/(auth)/[workspaceSlug]/drawings/draw/parts/helpers.ts",
+    "app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorModal.tsx",
+    "app/(auth)/[workspaceSlug]/tutorials/TutorialModal.tsx",
+    "app/components/assistant/startGuide.ts",
+    "app/(auth)/[workspaceSlug]/tutorials/TutorialsClient.tsx",
+    "app/(auth)/[workspaceSlug]/tutorials/tutorials.data.tsx",
+    "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx",
+    "app/(auth)/[workspaceSlug]/inbox/inbox-outcomes.ts",
+    "app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/TemplateBuilder.tsx"
+  ],
+  "mocked": [
+    "./actions",
+    "fabric",
+    "../actions",
+    "@/app/lib/roofAngleCalculator",
+    "@/app/lib/takeoff/useCanvasHistory (history engine not executed)",
+    "./settings-actions",
+    "@/app/lib/supabase/client"
+  ]
+}

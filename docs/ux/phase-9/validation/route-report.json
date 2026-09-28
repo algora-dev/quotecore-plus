@@ -1,0 +1,29 @@
+{
+  "method": "Route source inventory and pure mapping. No authenticated/device journey execution.",
+  "routeCount": 62,
+  "counts": {
+    "feature-owned-exit": 16,
+    "shell-mobile-return": 45,
+    "workspace-root": 1
+  },
+  "tests": [
+    {
+      "name": "Nested drawings keep feature-owned exits",
+      "pass": true
+    },
+    {
+      "name": "Ordinary libraries have deterministic mobile parents",
+      "pass": true
+    },
+    {
+      "name": "Protected Takeoff/Builder/Studio/Assistant routes opt out of generic exit",
+      "pass": true
+    },
+    {
+      "name": "Workspace boundary rejects another workspace",
+      "pass": true
+    }
+  ],
+  "passed": 4,
+  "failed": 0
+}

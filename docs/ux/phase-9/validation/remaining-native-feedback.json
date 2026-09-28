@@ -1,0 +1,204 @@
+{
+  "note": "Syntactic call inventory. An unqualified confirm may be a locally supplied helper rather than window.confirm; inspect ownership before changing. Protected and admin surfaces deliberately excluded from this implementation.",
+  "files": 15,
+  "calls": [
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "line": 243,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "line": 251,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "line": 368,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "line": 421,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/[orderId]/preview/order-preview.tsx",
+      "line": 95,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/[orderId]/preview/order-preview.tsx",
+      "line": 103,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/[orderId]/preview/order-preview.tsx",
+      "line": 118,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer/DownloadPDFButton.tsx",
+      "line": 21,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer/DownloadPDFButton.tsx",
+      "line": 33,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "line": 797,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "line": 1286,
+      "call": "prompt",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "line": 1299,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "line": 1301,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "line": 1413,
+      "call": "confirm",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "line": 1587,
+      "call": "prompt",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "line": 1599,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "line": 1601,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/LineEditForm.tsx",
+      "line": 210,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/labor/LaborSheetPreview.tsx",
+      "line": 140,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/labor/LaborSheetPreview.tsx",
+      "line": 212,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/labor/LaborSheetPreview.tsx",
+      "line": 218,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/(public)/free-invoice-generator/page.tsx",
+      "line": 198,
+      "call": "confirm",
+      "classification": "marketing/public: other lane"
+    },
+    {
+      "path": "app/(public)/free-purchase-order-generator/page.tsx",
+      "line": 184,
+      "call": "confirm",
+      "classification": "marketing/public: other lane"
+    },
+    {
+      "path": "app/(public)/free-quote-generator/page.tsx",
+      "line": 215,
+      "call": "confirm",
+      "classification": "marketing/public: other lane"
+    },
+    {
+      "path": "app/(public)/free-roofing-takeoff-builder/RoofTakeoffBuilder.tsx",
+      "line": 490,
+      "call": "window.confirm",
+      "classification": "marketing/public: other lane"
+    },
+    {
+      "path": "app/(public)/free-roofing-takeoff-builder/RoofTakeoffBuilder.tsx",
+      "line": 496,
+      "call": "window.confirm",
+      "classification": "marketing/public: other lane"
+    },
+    {
+      "path": "app/(public)/free-roofing-takeoff-builder/RoofTakeoffBuilder.tsx",
+      "line": 992,
+      "call": "window.confirm",
+      "classification": "marketing/public: other lane"
+    },
+    {
+      "path": "app/(public)/supplier-pricing-tool/quote/page.tsx",
+      "line": 137,
+      "call": "alert",
+      "classification": "marketing/public: other lane"
+    },
+    {
+      "path": "app/accept/[token]/AcceptDeclineButtons.tsx",
+      "line": 61,
+      "call": "alert",
+      "classification": "public recipient/authentication: preserved"
+    },
+    {
+      "path": "app/admin/(dashboard)/roof-components/RoofComponentsPanel.tsx",
+      "line": 129,
+      "call": "confirm",
+      "classification": "admin/ops: not ordinary product migration"
+    },
+    {
+      "path": "app/components/auth/GoogleSignInButton.tsx",
+      "line": 26,
+      "call": "alert",
+      "classification": "public recipient/authentication: preserved"
+    },
+    {
+      "path": "app/invoice/[token]/PublicInvoiceView.tsx",
+      "line": 126,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    },
+    {
+      "path": "app/invoice/[token]/PublicInvoiceView.tsx",
+      "line": 199,
+      "call": "alert",
+      "classification": "stateful editor: preserved"
+    }
+  ]
+}

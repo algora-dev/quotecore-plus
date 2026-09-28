@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useId } from 'react';
+import { QcToolHelp } from '@/app/components/ui/v2/QcDrawingWorkspace';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
 import {
   calculateRidgeAngle,
   calculateHipValleyMultiPitch,
@@ -61,31 +63,8 @@ const TOOLTIPS: Record<string, { title: string; description: string; image: stri
 };
 
 function HelpIcon({ tooltipKey }: { tooltipKey: string }) {
-  const [show, setShow] = useState(false);
   const tip = TOOLTIPS[tooltipKey];
-  if (!tip) return null;
-
-  return (
-    <div className="relative inline-flex" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
-      <button
-        type="button"
-        onClick={() => setShow(s => !s)}
-        className="ml-1 text-slate-400 hover:text-slate-600 transition-colors"
-        aria-label={`Help: ${tip.title}`}
-      >
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-        </svg>
-      </button>
-      {show && (
-        <div className="absolute z-[60] left-0 top-5 w-64 bg-white border border-slate-200 rounded-xl shadow-lg p-3">
-          <img src={tip.image} alt={tip.title} className="w-full h-24 object-contain mb-2" />
-          <p className="text-xs font-semibold text-slate-900 mb-1">{tip.title}</p>
-          <p className="text-xs text-slate-600 leading-relaxed">{tip.description}</p>
-        </div>
-      )}
-    </div>
-  );
+  return tip ? <QcToolHelp {...tip} /> : null;
 }
 
 export function AngleCalculatorWidget({
@@ -94,6 +73,9 @@ export function AngleCalculatorWidget({
   onApply,
   currentAngle: _currentAngle,
 }: AngleCalculatorWidgetProps) {
+  const fieldId = useId();
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
   const [calcType, setCalcType] = useState<CalcType>('hipValley');
   const [rafterSubType, setRafterSubType] = useState<RafterSubType>('ridge');
 
@@ -143,6 +125,34 @@ export function AngleCalculatorWidget({
     }
   }, [isOpen]);
 
+  // Keep the floating controls reachable after orientation/keyboard changes.
+  // This adjusts the panel only, never the drawing or its viewport transform.
+  useEffect(() => {
+    if (!isOpen) return;
+    const viewport = window.visualViewport;
+    const fit = () => {
+      const available = Math.max(120, (viewport?.height ?? window.innerHeight) - 24);
+      const top = (viewport?.offsetTop ?? 0) + 12;
+      panelRef.current?.style.setProperty('--qc-tool-available-height', `${available}px`);
+      panelRef.current?.style.setProperty('--qc-tool-viewport-top', `${top}px`);
+      const width = panelRef.current?.offsetWidth ?? WIDGET_WIDTH;
+      const height = Math.min(widgetHeight, available);
+      setPosition(prev => ({
+        x: Math.max(12, Math.min(prev.x, window.innerWidth - width - 12)),
+        y: Math.max(top, Math.min(prev.y, top + available - height)),
+      }));
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    viewport?.addEventListener('resize', fit);
+    viewport?.addEventListener('scroll', fit);
+    return () => {
+      window.removeEventListener('resize', fit);
+      viewport?.removeEventListener('resize', fit);
+      viewport?.removeEventListener('scroll', fit);
+    };
+  }, [isOpen, widgetHeight]);
+
   // Sync pitch2 to pitch1 when sameAsPitch1 is checked (Hip/Valley)
   useEffect(() => {
     if (sameAsPitch1) setPitch2(pitch1);
@@ -169,11 +179,11 @@ export function AngleCalculatorWidget({
       const dy = ev.clientY - dragRef.current.startY;
       const newX = dragRef.current.origX + dx;
       const newY = dragRef.current.origY + dy;
-      const maxX = window.innerWidth - WIDGET_WIDTH;
-      const maxY = window.innerHeight - 60;
+      const maxX = window.innerWidth - (panelRef.current?.offsetWidth ?? WIDGET_WIDTH) - 12;
+      const maxY = window.innerHeight - (panelRef.current?.offsetHeight ?? 60) - 12;
       setPosition({
-        x: Math.max(0, Math.min(maxX, newX)),
-        y: Math.max(0, Math.min(maxY, newY)),
+        x: Math.max(12, Math.min(maxX, newX)),
+        y: Math.max(12, Math.min(maxY, newY)),
       });
     };
 
@@ -210,12 +220,14 @@ export function AngleCalculatorWidget({
     document.addEventListener('mouseup', handleUp);
   }, [widgetHeight]);
 
+  useEffect(() => { if (validationError) errorRef.current?.focus({ preventScroll: false }); }, [validationError]);
+
   if (!isOpen) return null;
 
   const validatePitch = (val: string, label = 'roof pitch'): number | null => {
     const p = parseFloat(val);
     if (isNaN(p) || p < 0 || p > 89) {
-      alert(`Enter a ${label} between 0° and 89°.`);
+      setValidationError(`Enter a ${label} between 0° and 89°.`);
       return null;
     }
     return p;
@@ -224,13 +236,14 @@ export function AngleCalculatorWidget({
   const validateCorner = (val: string): number | null => {
     const c = parseFloat(val);
     if (isNaN(c) || c < 1 || c > 180) {
-      alert('Enter a corner angle between 1° and 180°.');
+      setValidationError('Enter a corner angle between 1° and 180°.');
       return null;
     }
     return c;
   };
 
   const handleCalculate = () => {
+    setValidationError(null);
     let calculatedResult: AngleResult;
 
     if (calcType === 'hipValley') {
@@ -286,7 +299,7 @@ export function AngleCalculatorWidget({
     // Auto-scroll to bottom so results are visible
     requestAnimationFrame(() => {
       if (bodyRef.current) {
-        bodyRef.current.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' });
+        bodyRef.current.scrollTo({ top: bodyRef.current.scrollHeight, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
       }
     });
   };
@@ -303,14 +316,15 @@ export function AngleCalculatorWidget({
 
   return (
     <div
-      ref={panelRef}
-      className="fixed z-50 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 select-none flex flex-col"
+      ref={panelRef} data-qc-ui="v2" role="dialog" aria-label="Angle calculator"
+      className="qc-angle-tool qc-angle-widget"
+      onKeyDown={event => { if (event.key === 'Escape' && !(event.target as Element).closest('dialog')) { event.preventDefault(); event.stopPropagation(); onClose(); } }}
       style={{ left: `${position.x}px`, top: `${position.y}px`, height: `${widgetHeight}px` }}
     >
       {/* Draggable Header */}
       <div
         onMouseDown={handleMouseDown}
-        className="flex items-center justify-between px-4 py-3 border-b border-slate-200 cursor-move bg-slate-50 rounded-t-xl shrink-0"
+        className="qc-angle-header"
       >
         <div className="flex items-center gap-2">
           <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -318,19 +332,20 @@ export function AngleCalculatorWidget({
           </svg>
           <h2 className="text-sm font-semibold text-slate-900">Angle Calculator</h2>
         </div>
-        <button
+        <QcButton
           onClick={onClose}
-          className="p-1 rounded-full hover:bg-slate-200 transition-colors"
+          
           aria-label="Close"
         >
           <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </button>
+        </QcButton>
       </div>
 
       {/* Body - scrolls within fixed-height panel */}
-      <div ref={bodyRef} className="p-4 flex-1 overflow-y-auto overflow-x-hidden">
+      <div ref={bodyRef} className="qc-angle-body">
+        {validationError && <p ref={errorRef} id={`${fieldId}-error`} tabIndex={-1} role="alert" className="qc-drawing-error">{validationError}</p>}
         {/* Main Calculator Type */}
         <div className="mb-3">
           <label className="block text-xs font-medium text-slate-700 mb-1.5">Calculator Type</label>
@@ -338,10 +353,10 @@ export function AngleCalculatorWidget({
             <label className="flex items-center">
               <input
                 type="radio"
-                name="calcType"
+                name={`${fieldId}-calcType`}
                 value="hipValley"
                 checked={calcType === 'hipValley'}
-                onChange={(e) => { setCalcType(e.target.value as CalcType); setResult(null); }}
+                onChange={(e) => { setCalcType(e.target.value as CalcType); setResult(null); setValidationError(null); }}
                 className="mr-2"
               />
               <span className="text-xs">Hip / Valley</span>
@@ -350,10 +365,10 @@ export function AngleCalculatorWidget({
             <label className="flex items-center">
               <input
                 type="radio"
-                name="calcType"
+                name={`${fieldId}-calcType`}
                 value="rafterPitch"
                 checked={calcType === 'rafterPitch'}
-                onChange={(e) => { setCalcType(e.target.value as CalcType); setResult(null); }}
+                onChange={(e) => { setCalcType(e.target.value as CalcType); setResult(null); setValidationError(null); }}
                 className="mr-2"
               />
               <span className="text-xs">Rafter Pitch</span>
@@ -370,10 +385,10 @@ export function AngleCalculatorWidget({
               <label className="flex items-center">
                 <input
                   type="radio"
-                  name="rafterSubType"
+                  name={`${fieldId}-rafterSubType`}
                   value="ridge"
                   checked={rafterSubType === 'ridge'}
-                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); }}
+                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); setValidationError(null); }}
                   className="mr-2"
                 />
                 <span className="text-xs">Ridge</span>
@@ -382,10 +397,10 @@ export function AngleCalculatorWidget({
               <label className="flex items-center">
                 <input
                   type="radio"
-                  name="rafterSubType"
+                  name={`${fieldId}-rafterSubType`}
                   value="changeOfPitch"
                   checked={rafterSubType === 'changeOfPitch'}
-                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); }}
+                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); setValidationError(null); }}
                   className="mr-2"
                 />
                 <span className="text-xs">Change of Pitch</span>
@@ -394,10 +409,10 @@ export function AngleCalculatorWidget({
               <label className="flex items-center">
                 <input
                   type="radio"
-                  name="rafterSubType"
+                  name={`${fieldId}-rafterSubType`}
                   value="upstandOntoRoof"
                   checked={rafterSubType === 'upstandOntoRoof'}
-                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); }}
+                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); setValidationError(null); }}
                   className="mr-2"
                 />
                 <span className="text-xs">Upstand onto Roof</span>
@@ -406,10 +421,10 @@ export function AngleCalculatorWidget({
               <label className="flex items-center">
                 <input
                   type="radio"
-                  name="rafterSubType"
+                  name={`${fieldId}-rafterSubType`}
                   value="roofIntoUpstand"
                   checked={rafterSubType === 'roofIntoUpstand'}
-                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); }}
+                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); setValidationError(null); }}
                   className="mr-2"
                 />
                 <span className="text-xs">Roof into Upstand</span>
@@ -428,10 +443,11 @@ export function AngleCalculatorWidget({
               <label className="block text-xs font-medium text-slate-700 mb-1">Roof Pitch 1 (°)</label>
               <input
                 type="number"
+                aria-label="Roof pitch 1 in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
                 value={pitch1}
-                onChange={(e) => { setPitch1(e.target.value); setResult(null); }}
+                onChange={(e) => { setPitch1(e.target.value); setResult(null); setValidationError(null); }}
                 min="0" max="89" step="0.1"
-                className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+                className="qc-input w-full"
               />
               <p className="text-xs text-slate-400 mt-1">Enter the pitch of the first roof plane.</p>
             </div>
@@ -441,10 +457,11 @@ export function AngleCalculatorWidget({
                 <label className="block text-xs font-medium text-slate-700 mb-1">Roof Pitch 2 (°)</label>
                 <input
                   type="number"
-                  value={pitch2}
-                  onChange={(e) => { setPitch2(e.target.value); setResult(null); }}
+                  aria-label="Roof pitch 2 in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
+                value={pitch2}
+                  onChange={(e) => { setPitch2(e.target.value); setResult(null); setValidationError(null); }}
                   min="0" max="89" step="0.1"
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+                  className="qc-input w-full"
                 />
               </div>
             )}
@@ -457,7 +474,7 @@ export function AngleCalculatorWidget({
                   onChange={(e) => {
                     setSameAsPitch1(e.target.checked);
                     if (e.target.checked) setPitch2(pitch1);
-                    setResult(null);
+                    setResult(null); setValidationError(null);
                   }}
                   className="rounded border-slate-300"
                 />
@@ -472,10 +489,11 @@ export function AngleCalculatorWidget({
               <label className="block text-xs font-medium text-slate-700 mb-1">Corner Angle (°)</label>
               <input
                 type="number"
+                aria-label="Corner angle in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
                 value={cornerAngle}
-                onChange={(e) => { setCornerAngle(e.target.value); setResult(null); }}
+                onChange={(e) => { setCornerAngle(e.target.value); setResult(null); setValidationError(null); }}
                 min="1" max="180" step="0.1"
-                className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+                className="qc-input w-full"
               />
               <p className="text-xs text-slate-400 mt-1">Angle between the two roof lines. Usually 90°. Change only if the building corner is not square.</p>
             </div>
@@ -489,10 +507,11 @@ export function AngleCalculatorWidget({
               <label className="block text-xs font-medium text-slate-700 mb-1">Roof Pitch 1 (°)</label>
               <input
                 type="number"
+                aria-label="Ridge pitch 1 in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
                 value={ridgePitch1}
-                onChange={(e) => { setRidgePitch1(e.target.value); setResult(null); }}
+                onChange={(e) => { setRidgePitch1(e.target.value); setResult(null); setValidationError(null); }}
                 min="0" max="89" step="0.1"
-                className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+                className="qc-input w-full"
               />
             </div>
 
@@ -501,10 +520,11 @@ export function AngleCalculatorWidget({
                 <label className="block text-xs font-medium text-slate-700 mb-1">Roof Pitch 2 (°)</label>
                 <input
                   type="number"
-                  value={ridgePitch2}
-                  onChange={(e) => { setRidgePitch2(e.target.value); setResult(null); }}
+                  aria-label="Ridge pitch 2 in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
+                value={ridgePitch2}
+                  onChange={(e) => { setRidgePitch2(e.target.value); setResult(null); setValidationError(null); }}
                   min="0" max="89" step="0.1"
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+                  className="qc-input w-full"
                 />
               </div>
             )}
@@ -517,7 +537,7 @@ export function AngleCalculatorWidget({
                   onChange={(e) => {
                     setRidgeSameAsPitch1(e.target.checked);
                     if (e.target.checked) setRidgePitch2(ridgePitch1);
-                    setResult(null);
+                    setResult(null); setValidationError(null);
                   }}
                   className="rounded border-slate-300"
                 />
@@ -537,10 +557,11 @@ export function AngleCalculatorWidget({
               <label className="block text-xs font-medium text-slate-700 mb-1">Upper Roof Pitch (°)</label>
               <input
                 type="number"
+                aria-label="Upper pitch in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
                 value={upperPitch}
-                onChange={(e) => { setUpperPitch(e.target.value); setResult(null); }}
+                onChange={(e) => { setUpperPitch(e.target.value); setResult(null); setValidationError(null); }}
                 min="0" max="89" step="0.1"
-                className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+                className="qc-input w-full"
               />
               <p className="text-xs text-slate-400 mt-1">Pitch of the roof section above the change line.</p>
             </div>
@@ -548,10 +569,11 @@ export function AngleCalculatorWidget({
               <label className="block text-xs font-medium text-slate-700 mb-1">Lower Roof Pitch (°)</label>
               <input
                 type="number"
+                aria-label="Lower pitch in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
                 value={lowerPitch}
-                onChange={(e) => { setLowerPitch(e.target.value); setResult(null); }}
+                onChange={(e) => { setLowerPitch(e.target.value); setResult(null); setValidationError(null); }}
                 min="0" max="89" step="0.1"
-                className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+                className="qc-input w-full"
               />
               <p className="text-xs text-slate-400 mt-1">Pitch of the roof section below the change line.</p>
             </div>
@@ -564,10 +586,11 @@ export function AngleCalculatorWidget({
             <label className="block text-xs font-medium text-slate-700 mb-1">Roof Pitch (°)</label>
             <input
               type="number"
-              value={singlePitch}
-              onChange={(e) => { setSinglePitch(e.target.value); setResult(null); }}
+              aria-label="Roof pitch in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
+                value={singlePitch}
+              onChange={(e) => { setSinglePitch(e.target.value); setResult(null); setValidationError(null); }}
               min="0" max="89" step="0.1"
-              className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+              className="qc-input w-full"
             />
             <p className="text-xs text-slate-400 mt-1">Enter the pitch of the roof plane the flashing turns onto.</p>
           </div>
@@ -579,21 +602,22 @@ export function AngleCalculatorWidget({
             <label className="block text-xs font-medium text-slate-700 mb-1">Roof Pitch (°)</label>
             <input
               type="number"
-              value={singlePitch}
-              onChange={(e) => { setSinglePitch(e.target.value); setResult(null); }}
+              aria-label="Roof pitch in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
+                value={singlePitch}
+              onChange={(e) => { setSinglePitch(e.target.value); setResult(null); setValidationError(null); }}
               min="0" max="89" step="0.1"
-              className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+              className="qc-input w-full"
             />
             <p className="text-xs text-slate-400 mt-1">Enter the pitch of the roof plane running into the upstand.</p>
           </div>
         )}
 
-        <button
-          onClick={handleCalculate}
-          className="w-full px-4 py-2 bg-[#FF6B35] text-white font-medium rounded-full hover:bg-[#ff5722] transition-colors mb-3 text-sm"
+        <QcButton
+          variant="primary" onClick={handleCalculate}
+          className="w-full"
         >
           Calculate
-        </button>
+        </QcButton>
 
         {/* Results */}
         {result && (
@@ -607,7 +631,7 @@ export function AngleCalculatorWidget({
                 <label className="flex items-center p-2.5 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 transition-colors">
                   <input
                     type="radio"
-                    name="angleSelection"
+                    name={`${fieldId}-angleSelection`}
                     value="finished"
                     checked={selectedAngle === 'finished'}
                     onChange={(e) => setSelectedAngle(e.target.value as AngleSelection)}
@@ -622,7 +646,7 @@ export function AngleCalculatorWidget({
                 <label className="flex items-center p-2.5 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 transition-colors">
                   <input
                     type="radio"
-                    name="angleSelection"
+                    name={`${fieldId}-angleSelection`}
                     value="bend"
                     checked={selectedAngle === 'bend'}
                     onChange={(e) => setSelectedAngle(e.target.value as AngleSelection)}
@@ -646,26 +670,26 @@ export function AngleCalculatorWidget({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-slate-200 flex gap-2 shrink-0">
-        <button
+      <div className="qc-angle-footer">
+        <QcButton
           onClick={onClose}
-          className="flex-1 px-3 py-2 border border-slate-300 text-slate-700 font-medium rounded-full hover:bg-slate-50 transition-colors text-xs"
+          className="flex-1"
         >
           Close
-        </button>
-        <button
-          onClick={handleApply}
+        </QcButton>
+        <QcButton
+          variant="primary" onClick={handleApply}
           disabled={!result}
-          className="flex-1 px-3 py-2 bg-black text-white font-medium rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+          className="flex-1"
         >
           Apply Angle
-        </button>
+        </QcButton>
       </div>
 
       {/* Resize handle - bottom-right corner */}
       <div
         onMouseDown={handleResizeStart}
-        className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize"
+        className="qc-angle-resize" aria-hidden="true"
         style={{
           background: 'linear-gradient(135deg, transparent 50%, rgb(203 213 225) 50%)',
           borderBottomRightRadius: '0.75rem',

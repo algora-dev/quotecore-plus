@@ -81,7 +81,8 @@ export async function createTemplate(data: TemplateData) {
     }
   }
 
-  revalidatePath('/resources');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/[id]/edit', 'page');
   return template.id;
 }
 
@@ -181,7 +182,8 @@ export async function updateTemplate(templateId: string, data: TemplateData) {
     }
   }
 
-  revalidatePath('/resources');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/[id]/edit', 'page');
   return templateId;
 }
 
@@ -242,7 +244,8 @@ export async function deleteTemplate(templateId: string) {
     throw new Error(error.message);
   }
 
-  revalidatePath('/resources');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/[id]/edit', 'page');
 }
 
 export async function updateCustomerQuoteTemplate(
@@ -293,7 +296,8 @@ export async function updateCustomerQuoteTemplate(
     throw new Error(error.message);
   }
 
-  revalidatePath('/resources');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/[id]/edit', 'page');
 }
 
 export async function deleteCustomerQuoteTemplate(templateId: string) {
@@ -325,5 +329,6 @@ export async function deleteCustomerQuoteTemplate(templateId: string) {
     throw new Error(error.message);
   }
 
-  revalidatePath('/resources');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/[id]/edit', 'page');
 }

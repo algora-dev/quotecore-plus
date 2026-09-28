@@ -1,7 +1,10 @@
 'use client';
 
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useQcActionNotice } from '@/app/components/ui/v2/QcActionNotice';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+import { resolveInboxOutcome } from './inbox-outcomes';
 import { useRouter } from 'next/navigation';
 import { updateNotificationPref, updateChannelMaster } from './settings-actions';
 import type { EventPref, PrefSurface } from '@/app/lib/alerts/prefs';
@@ -164,6 +167,10 @@ const TYPE_FILTERS: { key: TypeFilter; label: string }[] = [
 
 export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPrefs }: Props) {
   const router = useRouter();
+  const { showNotice, notice } = useQcActionNotice();
+  const { ask, feedback } = useQcFeedback();
+  const mutationBusy = useRef(false);
+  const preferenceBusy = useRef(false);
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [view, setView] = useState<'inbox' | 'settings'>('inbox');
   const [prefs, setPrefs] = useState<Record<string, EventPref>>(initialNotificationPrefs);
@@ -236,36 +243,68 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
     return null;
   }
 
-  // Apply a bulk action to a set of ids, with optimistic local update.
-  async function bulk(action: 'read' | 'unread' | 'todo' | 'active' | 'archive' | 'delete', ids: string[]) {
-    if (ids.length === 0) return;
+  // Optimistic changes remain local. Restore only unsuccessful rows and keep
+  // those selected; no polling or router.refresh can remount another workspace.
+  async function bulk(action: 'read' | 'unread' | 'todo' | 'active' | 'archive' | 'delete', ids: string[], quiet = false) {
+    if (ids.length === 0 || mutationBusy.current) return;
+    mutationBusy.current = true;
     setBusy(true);
-    const prev = alerts;
-    setAlerts((list) => {
-      if (action === 'delete') return list.filter((a) => !ids.includes(a.id));
-      return list.map((a) => {
-        if (!ids.includes(a.id)) return a;
-        if (action === 'read') return { ...a, is_read: true };
-        if (action === 'unread') return { ...a, is_read: false };
-        if (action === 'archive') return { ...a, status: 'archived' as AlertStatus };
-        if (action === 'todo') return { ...a, status: 'todo' as AlertStatus };
-        if (action === 'active') return { ...a, status: 'active' as AlertStatus };
-        return a;
+    const requested = Array.from(new Set(ids));
+    const previous = alerts;
+    const apply = (list: Alert[], affected: Set<string>): Alert[] => {
+      if (action === 'delete') return list.filter(a => !affected.has(a.id));
+      return list.map(a => {
+        if (!affected.has(a.id)) return a;
+        if (action === 'read' || action === 'unread') return { ...a, is_read: action === 'read' };
+        return { ...a, status: (action === 'archive' ? 'archived' : action) as AlertStatus };
       });
-    });
-    setSelected(new Set());
-    const res = await fetch('/api/alerts/bulk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids, action }),
-    }).catch(() => null);
-    if (!res || !res.ok) setAlerts(prev); // rollback
-    setBusy(false);
+    };
+    try {
+      if (action === 'delete' && !await ask({
+        title: 'Delete selected messages?',
+        description: `${requested.length} message${requested.length === 1 ? '' : 's'} will be permanently deleted. This cannot be undone.`,
+        confirmLabel: 'Delete messages', cancelLabel: 'Keep messages', destructive: true,
+      })) return;
+      setAlerts(apply(previous, new Set(requested)));
+      const res = await fetch('/api/alerts/bulk', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: requested, action }),
+      });
+      if (!res.ok) throw new Error('The update could not be confirmed.');
+      const { updatedIds, failedIds } = resolveInboxOutcome(await res.json(), requested);
+      setAlerts(apply(previous, new Set(updatedIds)));
+      setSelected(current => {
+        const next = new Set(current);
+        updatedIds.forEach(id => next.delete(id));
+        if (!quiet) failedIds.forEach(id => next.add(id));
+        return next;
+      });
+      if (failedIds.length || !quiet) {
+        showNotice({
+          tone: failedIds.length ? (updatedIds.length ? 'warning' : 'danger') : 'success',
+          title: failedIds.length ? `${updatedIds.length} of ${requested.length} messages updated` : 'Messages updated',
+          description: failedIds.length
+            ? (quiet ? 'The message update was not confirmed. Check the details before trying again.' : 'Messages without a confirmed update remain selected. Check the details before trying again.')
+            : `${updatedIds.length} message${updatedIds.length === 1 ? '' : 's'} ${action === 'delete' ? 'deleted' : action === 'read' ? 'marked as read' : action === 'unread' ? 'marked as unread' : action === 'archive' ? 'archived' : action === 'todo' ? 'moved to To-Do' : 'moved to Active'}.`,
+          details: failedIds.map(id => `${previous.find(a => a.id === id)?.title ?? id}: no update confirmed. The record may no longer be available.`),
+          focus: !quiet,
+        });
+      }
+    } catch {
+      setAlerts(previous);
+      if (!quiet) setSelected(current => new Set([...current, ...requested]));
+      showNotice({ tone: 'danger', title: 'Message update not confirmed',
+        description: 'Your previous view has been restored. The server may have received the request. Refresh this page to check before trying again.',
+        focus: !quiet });
+    } finally {
+      mutationBusy.current = false;
+      setBusy(false);
+    }
   }
 
   async function open(a: Alert) {
     const href = openHref(a);
-    if (!a.is_read) bulk('read', [a.id]);
+    if (!a.is_read) void bulk('read', [a.id], true);
     if (href) router.push(href);
   }
 
@@ -297,6 +336,8 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
   }
 
   async function toggleEvent(eventKey: string, surface: PrefSurface) {
+    if (preferenceBusy.current) return;
+    preferenceBusy.current = true;
     const next = !eventOn(eventKey, surface);
     const prev = prefs;
     setPrefs((p) => ({
@@ -305,13 +346,20 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
     })); // optimistic
     setSavingPref(true);
     const res = await updateNotificationPref(eventKey, surface, next).catch(() => null);
-    if (!res || !res.ok) setPrefs(prev); // rollback
+    if (!res || !res.ok) {
+      setPrefs(prev);
+      showNotice({ tone: 'danger', title: 'Notification setting not saved',
+        description: 'The previous setting has been restored. Try again when your connection is available.', focus: true });
+    }
+    preferenceBusy.current = false;
     setSavingPref(false);
   }
 
   async function toggleMaster(channelKey: NotificationChannelKey, surface: PrefSurface) {
+    if (preferenceBusy.current) return;
     const ch = NOTIFICATION_MATRIX.find((c) => c.key === channelKey);
     if (!ch) return;
+    preferenceBusy.current = true;
     const next = !channelMasterOn(channelKey, surface); // bulk-set all children
     const prev = prefs;
     setPrefs((p) => {
@@ -321,12 +369,20 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
     });
     setSavingPref(true);
     const res = await updateChannelMaster(channelKey, surface, next).catch(() => null);
-    if (!res || !res.ok) setPrefs(prev); // rollback
+    if (!res || !res.ok) {
+      setPrefs(prev);
+      showNotice({ tone: 'danger', title: 'Notification setting not saved',
+        description: 'The previous setting has been restored. Try again when your connection is available.', focus: true });
+    }
+    preferenceBusy.current = false;
     setSavingPref(false);
   }
 
   return (
     <QcLibrary className="space-y-4">
+      {feedback}
+      {notice}
+      {busy && <p role="status" className="qc-flow-description">Updating selected messages...</p>}
       {/* Top tabs: Inbox / Settings (rounded-full pill tabs). */}
       <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-fit max-w-full">
         <button
@@ -532,7 +588,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
         {/* Select-all row */}
         {visible.length > 0 && (
           <label className="flex items-center gap-2 text-xs text-slate-500 px-1">
-            <input type="checkbox" checked={allVisibleSelected} onChange={toggleAll} className="qc-checkbox qc-library-control rounded border-slate-300 text-orange-600 focus:ring-orange-500" />
+            <input type="checkbox" checked={allVisibleSelected} disabled={busy} onChange={toggleAll} className="qc-checkbox qc-library-control rounded border-slate-300 text-orange-600 focus:ring-orange-500" />
             Select all
           </label>
         )}
@@ -540,7 +596,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
         {/* Rows */}
         {visible.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-400">
-            Nothing in {FOLDERS.find((f) => f.key === folder)?.label}.
+            {search.trim() || typeFilter !== 'all' ? 'No messages match these filters.' : `Nothing in ${FOLDERS.find(f => f.key === folder)?.label}.`}
           </div>
         ) : (
           <ul className="space-y-2">
@@ -567,7 +623,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                       type="checkbox"
                       aria-label={`Select ${a.title}`}
                       checked={checked}
-                      onChange={() => toggle(a.id)}
+                      disabled={busy} onChange={() => toggle(a.id)}
                       onClick={(e) => e.stopPropagation()}
                       className="qc-checkbox qc-library-control rounded border-slate-300 text-orange-600 focus:ring-orange-500 flex-shrink-0"
                     />
@@ -575,7 +631,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                       type="button"
                       onClick={() => {
                         toggleExpand(a.id);
-                        if (!a.is_read) bulk('read', [a.id]);
+                        if (!a.is_read) void bulk('read', [a.id], true);
                       }}
                       className="qc-inbox-item-control"
                       aria-expanded={isOpen}
@@ -613,23 +669,23 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                         {folder === 'active' && (
                           href ? (
                             <>
-                              <button aria-label='Click to add this alert to your "To Do" list' data-qc-variant="ghost" type="button" onClick={() => bulk('todo', [a.id])} title='Click to add this alert to your "To Do" list' className="qc-button qc-flow-control qc-library-control ">To-Do</button>
-                              <button aria-label='Click to mark this alert "Done" and add to archive list' data-qc-variant="ghost" type="button" onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="qc-button qc-flow-control qc-library-control ">Done</button>
+                              <button aria-label='Click to add this alert to your "To Do" list' data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('todo', [a.id])} title='Click to add this alert to your "To Do" list' className="qc-button qc-flow-control qc-library-control ">To-Do</button>
+                              <button aria-label='Click to mark this alert "Done" and add to archive list' data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="qc-button qc-flow-control qc-library-control ">Done</button>
                             </>
                           ) : (
-                            <button data-qc-variant="ghost" type="button" onClick={() => bulk('archive', [a.id])} className="qc-button qc-flow-control qc-library-control ">Dismiss</button>
+                            <button data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('archive', [a.id])} className="qc-button qc-flow-control qc-library-control ">Dismiss</button>
                           )
                         )}
                         {folder === 'todo' && (
                           <>
-                            <button data-qc-variant="ghost" type="button" onClick={() => bulk('active', [a.id])} className="qc-button qc-flow-control qc-library-control ">Move to Active</button>
-                            <button aria-label='Click to mark this alert "Done" and add to archive list' data-qc-variant="ghost" type="button" onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="qc-button qc-flow-control qc-library-control ">Done</button>
+                            <button data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('active', [a.id])} className="qc-button qc-flow-control qc-library-control ">Move to Active</button>
+                            <button aria-label='Click to mark this alert "Done" and add to archive list' data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="qc-button qc-flow-control qc-library-control ">Done</button>
                           </>
                         )}
                         {folder === 'archived' && (
                           <>
-                            <button data-qc-variant="ghost" type="button" onClick={() => bulk('active', [a.id])} className="qc-button qc-flow-control qc-library-control ">Restore</button>
-                            <button data-qc-variant="ghost" type="button" onClick={() => bulk('delete', [a.id])} className="qc-button qc-flow-control qc-library-control ">Delete</button>
+                            <button data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('active', [a.id])} className="qc-button qc-flow-control qc-library-control ">Restore</button>
+                            <button data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('delete', [a.id])} className="qc-button qc-flow-control qc-library-control ">Delete</button>
                           </>
                         )}
                       </div>

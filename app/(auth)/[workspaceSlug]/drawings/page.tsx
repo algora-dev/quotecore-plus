@@ -1,3 +1,4 @@
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import Link from 'next/link';
 import { loadFlashingLibrary } from './actions';
 import { FlashingList } from './flashing-list';
@@ -34,7 +35,7 @@ export default async function FlashingsPage(props: Props) {
   if (!ent.features.flashings) {
     const requiredPlan = FEATURE_MIN_PLAN.flashings;
     return (
-      <section className="space-y-4 md:space-y-5 px-0 md:px-0">
+      <QcJourney className="space-y-4 md:space-y-5">
         <BackButton />
         <div>
           <h1 className="text-xl md:text-2xl font-semibold text-slate-900">{featureLabel}</h1>
@@ -55,7 +56,7 @@ export default async function FlashingsPage(props: Props) {
               <div className="mt-4">
                 <Link
                   href={`/${workspaceSlug}/account?tab=billing&plan=${requiredPlan}`}
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
+                  className="qc-button" data-qc-variant="primary"
                 >
                   View plans
                 </Link>
@@ -63,14 +64,14 @@ export default async function FlashingsPage(props: Props) {
             </div>
           </div>
         </div>
-      </section>
+      </QcJourney>
     );
   }
 
   const flashings = await loadFlashingLibrary();
 
   return (
-    <section className="space-y-4 md:space-y-5 px-0 md:px-0">
+    <QcJourney className="space-y-4 md:space-y-5">
       <BackButton />
       <div>
         <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Drawings/Images</h1>
@@ -87,6 +88,6 @@ export default async function FlashingsPage(props: Props) {
         featureLabelSingular={featureLabelSingular}
         isOverStorage={ent.isOverStorage}
       />
-    </section>
+    </QcJourney>
   );
 }

@@ -163,7 +163,9 @@ function isStaticAsset(pathname: string): boolean {
   return (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
-    pathname === '/favicon.ico' ||
+    // P9: Next's public metadata response must not be redirected to HTML login.
+    pathname === '/manifest.webmanifest' ||
+        pathname === '/favicon.ico' ||
     pathname === '/favicon.png' ||
     pathname === '/logo.png' ||
     // Gerald audit M-04: SEO/discovery metadata routes must be reachable

@@ -1,4 +1,5 @@
 'use server';
+import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 
 interface SaveTemplateData {
@@ -34,5 +35,8 @@ export async function saveQuoteAsTemplate(data: SaveTemplateData) {
 
   if (templateError) throw new Error(templateError.message);
 
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
+  revalidatePath('/[workspaceSlug]/customer-quote-templates/[templateId]', 'page');
+  revalidatePath('/[workspaceSlug]/customer-quote-templates/[templateId]/edit', 'page');
   return template.id;
 }
