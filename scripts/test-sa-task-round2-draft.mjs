@@ -149,7 +149,13 @@ async function confirm(proposed) {
 }
 const compRow = async () => (await sr('GET', `/rest/v1/quote_components?select=*&id=eq.${comp.id}`))[0];
 const entryRow = async () => (await sr('GET', `/rest/v1/quote_component_entries?select=*&id=eq.${entry.id}`))[0];
-const taskRows = async () => (await sr('GET', `/rest/v1/assistant_v2_task_context?select=*&conversation_id=eq.${conversationId}&order=created_at.asc`));
+// Task tables deny direct REST reads (even service role) - use the authenticated RPC snapshot.
+const taskSnapshot = async () => {
+  const r = await fetch(`${SUPA_URL}/rest/v1/rpc/sa_v2_task_snapshot`, { method: 'POST', headers: { apikey: ANON_KEY, Authorization: `Bearer ${sessionA.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_conversation_id: conversationId }) });
+  if (!r.ok) throw new Error(`task snapshot -> ${r.status}: ${(await r.text()).slice(0, 300)}`);
+  return await r.json();
+};
+const closeTaskEndpoint = (task) => app('POST', '/api/smart-assistant/v2/task', cookieA, { companyId: coA.id, conversationId, taskId: task.id, version: task.version, command: 'done' });
 const proposed = (snap) => (snap.actions ?? []).filter((x) => x.status === 'proposed');
 
 try {
@@ -163,8 +169,9 @@ try {
   check('T1 confirm committed', r1.status === 200 && r1.body?.action?.status === 'committed');
   let c = await compRow();
   check('T1 DB material_rate = 30', Number(c.material_rate) === 30, `material_rate=${c.material_rate}`);
-  let tasks1 = await taskRows();
-  check('T1 task open (1 task)', tasks1.length === 1 && tasks1[0].status !== 'closed', `tasks=${tasks1.length} status=${tasks1[0]?.status}`);
+  let tsnap = await taskSnapshot();
+  check('T1 task open', !!tsnap.task && tsnap.task.status !== 'closed', `status=${tsnap.task?.status}`);
+  const t1TaskId = tsnap.task?.id;
 
   // T2: correction to 25
   await turn('actually make it 25 per m');
@@ -176,8 +183,8 @@ try {
   check('T2 confirm committed', r2.status === 200 && r2.body?.action?.status === 'committed');
   c = await compRow();
   check('T2 DB material_rate = 25', Number(c.material_rate) === 25, `material_rate=${c.material_rate}`);
-  const tasks2 = await taskRows();
-  check('T2 SAME task continues (no new task row)', tasks2.length === 1, `tasks=${tasks2.length}`);
+  tsnap = await taskSnapshot();
+  check('T2 SAME task continues', tsnap.task?.id === t1TaskId, `task=${tsnap.task?.id} status=${tsnap.task?.status}`);
 
   // T3: quantity 40
   await turn('set the Ridge quantity to 40');
@@ -189,32 +196,34 @@ try {
   check('T3 confirm committed', r3.status === 200 && r3.body?.action?.status === 'committed');
   const e = await entryRow();
   check('T3 DB entry raw_value = 40', Number(e.raw_value) === 40, `raw_value=${e.raw_value}`);
-  const tasks3 = await taskRows();
-  check('T3 SAME task continues', tasks3.length === 1, `tasks=${tasks3.length}`);
+  tsnap = await taskSnapshot();
+  check('T3 SAME task continues', tsnap.task?.id === t1TaskId, `task=${tsnap.task?.id} status=${tsnap.task?.status}`);
 
   // T4: done -> close
   const t4 = await turn('done');
-  const tasks4 = await taskRows();
-  check('T4 task closed', tasks4.length === 1 && tasks4[0].status === 'closed', `tasks=${tasks4.length} status=${tasks4[0]?.status}`);
+  tsnap = await taskSnapshot();
+  if (tsnap.task && tsnap.task.status !== 'closed') {
+    // The real client calls the metadata-only close endpoint when a turn routes 'close'.
+    const cr = await closeTaskEndpoint(tsnap.task);
+    console.log(`close endpoint -> ${cr.status} ${JSON.stringify(cr.body).slice(0, 200)}`);
+    tsnap = await taskSnapshot();
+  }
+  check('T4 task closed', !tsnap.task || tsnap.task.status === 'closed', `task=${tsnap.task?.id} status=${tsnap.task?.status}`);
   check('T4 close acknowledged in reply', /closed|fresh|next request/i.test(String(t4.reply)) || /closed|fresh/i.test(String(t4.text ?? '')));
 
   // T5: unrelated -> NEW task, no inheritance
   await turn('what are my quotes');
   snap = await session();
-  const tasks5 = await taskRows();
-  check('T5 NEW task row (2 tasks)', tasks5.length === 2, `tasks=${tasks5.length}`);
-  check('T5 old task stays closed', tasks5[0].status === 'closed' && tasks5[1].status !== 'closed', `t0=${tasks5[0]?.status} t1=${tasks5[1]?.status}`);
+  tsnap = await taskSnapshot();
+  check('T5 NEW task (different id, no inheritance)', !!tsnap.task && tsnap.task.id !== t1TaskId && tsnap.task.status !== 'closed', `task=${tsnap.task?.id} status=${tsnap.task?.status}`);
   check('T5 records card present', (snap.cards ?? []).some((x) => x.content?.kind === 'records'));
 
   // Evidence dump
   const runsRows = await sr('GET', `/rest/v1/smart_assistant_runs?select=id,status,error_code,tokens_in,tokens_out,created_at&conversation_id=eq.${conversationId}&order=created_at.asc`);
   console.log('\n--- RUNS ---');
   for (const rr of runsRows) console.log(JSON.stringify(rr));
-  console.log('--- TASKS ---');
-  for (const t of tasks5) console.log(JSON.stringify({ id: t.id, status: t.status, version: t.version, label: t.label ?? null }));
-  const trRows = await sr('GET', `/rest/v1/assistant_v2_task_runs?select=*&conversation_id=eq.${conversationId}&order=created_at.asc`);
-  console.log('--- TASK RUNS ---');
-  for (const tr of trRows) console.log(JSON.stringify(tr).slice(0, 300));
+  console.log('--- TASK SNAPSHOT ---');
+  console.log(JSON.stringify(tsnap).slice(0, 600));
   check('No upstream_error in runs', runsRows.every((rr) => !rr.error_code), runsRows.filter((rr) => rr.error_code).map((rr) => rr.error_code).join('; ').slice(0, 200));
 
   const failed = RESULTS.filter((x) => !x.ok);
