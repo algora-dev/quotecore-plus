@@ -5,7 +5,7 @@ export default function Post() {
         <strong>Your estimate is done. Now: build the customer quote in the spreadsheet, or in quoting software?</strong>
       </p>
       <p>
-        This article is only about the output step — turning a finished roofing estimate into the
+        This article is only about the output step - turning a finished roofing estimate into the
         professional quote document the customer receives. In a spreadsheet workflow that means
         copying totals into a document and formatting it by hand; in a quoting-software workflow the
         quote is generated from the priced estimate and stays connected to follow-up, acceptance,
@@ -38,7 +38,7 @@ export default function Post() {
         <li>Open a Word, PDF or spreadsheet quote template.</li>
         <li>Copy across customer details, scope and the line items to show.</li>
         <li>Reformat: remove internal notes and costs, group items, fix layout.</li>
-        <li>Add tax, validity date, exclusions and payment terms — by hand, every time.</li>
+        <li>Add tax, validity date, exclusions and payment terms - by hand, every time.</li>
         <li>Export to PDF, name it carefully, email it.</li>
         <li>Record somewhere that it was sent, and set a reminder to follow up.</li>
       </ol>
@@ -53,7 +53,7 @@ export default function Post() {
       </p>
       <ol>
         <li>Open the priced job.</li>
-        <li>Generate the customer quote from it — scope, grouped line items, totals, terms.</li>
+        <li>Generate the customer quote from it - scope, grouped line items, totals, terms.</li>
         <li>Review what the customer will see: hide or group internal detail.</li>
         <li>Send it, and the system records when, to whom, and whether it was opened.</li>
         <li>Follow up from the same record; on acceptance, order and invoice from the same job.</li>
@@ -85,14 +85,14 @@ export default function Post() {
       <p>
         The moment a customer asks for a change, the spreadsheet workflow forks: quote_v2, an email
         with &ldquo;final FINAL&rdquo; in the subject, and real uncertainty about which document is
-        binding. In a connected tool, a revision is issued on the same job record — you always know
+        binding. In a connected tool, a revision is issued on the same job record - you always know
         which version the customer accepted.
       </p>
 
       <h2>Customer-facing presentation</h2>
       <p>
-        A quote is a sales document. Professional presentation — clear scope, grouped line items,
-        your branding, explicit exclusions — wins work that a raw spreadsheet print-out does not.
+        A quote is a sales document. Professional presentation - clear scope, grouped line items,
+        your branding, explicit exclusions - wins work that a raw spreadsheet print-out does not.
         The spreadsheet can hold perfect numbers and still cost you the job at the presentation step,
         which is why most contractors end up rebuilding the quote in a document anyway. See{' '}
         <a href="/blog/roofing-quote-example">a roofing quote example and free template</a> for what
@@ -104,15 +104,15 @@ export default function Post() {
         Whichever route you use, run every quote against this checklist before sending:
       </p>
       <ul>
-        <li><strong>Customer details</strong> — correct name, business and address (not the last job&apos;s)</li>
-        <li><strong>Scope</strong> — clearly states what is included, in the customer&apos;s language</li>
-        <li><strong>Exclusions</strong> — explicit; unwritten exclusions are future disputes</li>
-        <li><strong>Tax</strong> — shown correctly, not silently inside totals</li>
-        <li><strong>Quote validity</strong> — a stated expiry, protecting you against price moves</li>
-        <li><strong>Payment terms</strong> — deposit, stage payments, due dates</li>
-        <li><strong>Revision/version</strong> — the customer can see this supersedes the previous quote</li>
-        <li><strong>Acceptance</strong> — a clear way to say yes (signature, link, button)</li>
-        <li><strong>Tracking</strong> — you know it was sent, when, and when to follow up</li>
+        <li><strong>Customer details</strong> - correct name, business and address (not the last job&apos;s)</li>
+        <li><strong>Scope</strong> - clearly states what is included, in the customer&apos;s language</li>
+        <li><strong>Exclusions</strong> - explicit; unwritten exclusions are future disputes</li>
+        <li><strong>Tax</strong> - shown correctly, not silently inside totals</li>
+        <li><strong>Quote validity</strong> - a stated expiry, protecting you against price moves</li>
+        <li><strong>Payment terms</strong> - deposit, stage payments, due dates</li>
+        <li><strong>Revision/version</strong> - the customer can see this supersedes the previous quote</li>
+        <li><strong>Acceptance</strong> - a clear way to say yes (signature, link, button)</li>
+        <li><strong>Tracking</strong> - you know it was sent, when, and when to follow up</li>
       </ul>
       <p>
         A quoting tool applies most of these by default; in a spreadsheet workflow you are the
@@ -124,7 +124,7 @@ export default function Post() {
       <div className="not-prose my-10 rounded-xl border border-zinc-200 bg-zinc-50 px-6 py-7 text-center">
         <p className="text-xl font-semibold text-zinc-950">Create a professional roofing quote now</p>
         <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-zinc-600">
-          Turn your line items into a formatted, customer-ready quote document — free, no signup required.
+          Turn your line items into a formatted, customer-ready quote document - free, no signup required.
         </p>
         <a
           href="/free-quote-generator"

@@ -6,7 +6,7 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        You have already measured the job. You know the areas, lengths and quantities — maybe from a
+        You have already measured the job. You know the areas, lengths and quantities - maybe from a
         site measure, a plan takeoff, another estimating tool, or a page of handwritten notes. The
         next step is turning those measurements into materials, labour and a price.
       </p>
@@ -19,7 +19,7 @@ export default function Post() {
         <Link href="/measurement-to-quote-tool" className={link}>
           <strong>Try the free Measurement-to-Quote Tool →</strong>
         </Link>{' '}
-        — free to use, no signup required.
+        - free to use, no signup required.
       </p>
 
       <hr />
@@ -33,14 +33,14 @@ export default function Post() {
       </p>
       <p>
         The important part: measurements themselves do not create a price. A measurement is just a
-        number — 100 m² of roof, 12 m of ridge, 6 vents. To turn it into a price you need pricing
+        number - 100 m² of roof, 12 m of ridge, 6 vents. To turn it into a price you need pricing
         logic that knows what each measurement <em>means</em>: how much material it implies, what
         waste to add, how much labour it takes, and what rates apply.
       </p>
       <p>
         Traditionally that logic lives in a spreadsheet you (or someone before you) built. The rest
-        of this article shows a different approach — saving that logic in reusable pricing
-        components — and exactly how the numbers work.
+        of this article shows a different approach - saving that logic in reusable pricing
+        components - and exactly how the numbers work.
       </p>
 
       <h2>What is a reusable pricing component?</h2>
@@ -59,7 +59,7 @@ export default function Post() {
       </ul>
       <p>
         On the next job, enter 125 m² and the same logic runs again automatically. You never rebuild
-        the formula — you just feed it new measurements.
+        the formula - you just feed it new measurements.
       </p>
 
       <hr />
@@ -68,7 +68,7 @@ export default function Post() {
       <p>
         Here is how two typical measurements flow through components in the{' '}
         <Link href="/measurement-to-quote-tool" className={link}>free Measurement-to-Quote Tool</Link>.
-        Rates are illustrative — you use your own.
+        Rates are illustrative - you use your own.
       </p>
 
       <h3>Measurement 1: Roofing area</h3>
@@ -95,7 +95,7 @@ export default function Post() {
         lineal metre.
       </p>
       <p>
-        Note the waste approach: for components like ridge, waste is not a percentage — it is a
+        Note the waste approach: for components like ridge, waste is not a percentage - it is a
         fixed allowance added per length or run, because offcuts happen per piece, not per square
         metre. The component stores that rule so you do not have to remember it each time.
       </p>
@@ -108,12 +108,12 @@ export default function Post() {
 
       <h3>Measurement 3: Quantity items</h3>
       <p>
-        Simple counts — vents, penetrations, posts, gates, fittings — work the same way. Enter the
+        Simple counts - vents, penetrations, posts, gates, fittings - work the same way. Enter the
         quantity; the component multiplies it by your material and labour rates. No waste logic
         needed unless you want one.
       </p>
       <p>
-        Add the areas, ridge and counts together and you have a complete priced output for the job —
+        Add the areas, ridge and counts together and you have a complete priced output for the job -
         built entirely from measurements you already had.
       </p>
 
@@ -151,7 +151,7 @@ export default function Post() {
         </table>
       </div>
       <p>
-        A well-built spreadsheet can calculate a job very effectively — we are not pretending
+        A well-built spreadsheet can calculate a job very effectively - we are not pretending
         otherwise. The limitation is usually workflow: building formulas, maintaining them, copying
         files, moving numbers into another document, keeping pricing consistent, and reusing data
         across quote, order and invoice workflows.
@@ -178,15 +178,15 @@ export default function Post() {
       <hr />
 
       <h2>Three ways to continue with your priced output</h2>
-      <h3>Option 1 — Use the free output</h3>
+      <h3>Option 1 - Use the free output</h3>
       <p>Review it, print it, download it. No signup required.</p>
-      <h3>Option 2 — Convert to the Free Quote Generator</h3>
+      <h3>Option 2 - Convert to the Free Quote Generator</h3>
       <p>
-        One click moves the priced lines into a customer-facing quote — without retyping the priced
+        One click moves the priced lines into a customer-facing quote - without retyping the priced
         output. Start at the{' '}
         <Link href="/free-quote-generator" className={link}>Free Quote Generator</Link>.
       </p>
-      <h3>Option 3 — Save to QuoteCore+</h3>
+      <h3>Option 3 - Save to QuoteCore+</h3>
       <p>
         Save components, measurements and pricing logic, then continue in the app across quotes,
         material orders and invoices. Paid plans start at $19/month with a 30-day money-back guarantee.
@@ -197,24 +197,24 @@ export default function Post() {
       <p>
         Turn each measurement into a quantity (applying waste where relevant), multiply by your
         material and labour rates, and total the lines. Doing it with reusable components means you
-        save those rules once instead of rebuilding them per job — the{' '}
+        save those rules once instead of rebuilding them per job - the{' '}
         <Link href="/measurement-to-quote-tool" className={link}>free tool here</Link> does exactly that.
       </p>
       <h3>How do I turn a takeoff into a quote?</h3>
       <p>
         Take your takeoff quantities (areas, lengths, counts), price them through components, then
-        convert the priced output into a customer quote — one click in the tool, no retyping.
+        convert the priced output into a customer quote - one click in the tool, no retyping.
       </p>
       <h3>Can I calculate materials and labour from measurements?</h3>
       <p>
-        Yes — each component carries both a material rate and a labour rate, plus waste rules, so
+        Yes - each component carries both a material rate and a labour rate, plus waste rules, so
         quantities, materials, labour and totals come out together.
       </p>
       <h3>Can I use my own material and labour rates?</h3>
-      <p>Yes. Every rate is yours — nothing is locked to a supplier price book.</p>
+      <p>Yes. Every rate is yours - nothing is locked to a supplier price book.</p>
       <h3>Can I import prices from Excel or CSV?</h3>
       <p>
-        Yes — upload a CSV export, map your columns, and turn rows into components (up to 7 at a
+        Yes - upload a CSV export, map your columns, and turn rows into components (up to 7 at a
         time in the free tool).
       </p>
       <h3>Is the measurement-to-quote tool free?</h3>
@@ -226,7 +226,7 @@ export default function Post() {
       </p>
       <h3>Can I convert the result into a customer quote?</h3>
       <p>
-        Yes — one click sends the priced lines into the{' '}
+        Yes - one click sends the priced lines into the{' '}
         <Link href="/free-quote-generator" className={link}>Free Quote Generator</Link>.
       </p>
       <h3>Can I reuse the pricing rules on future jobs?</h3>

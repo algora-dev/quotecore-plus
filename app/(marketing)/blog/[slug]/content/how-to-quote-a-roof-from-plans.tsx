@@ -52,7 +52,7 @@ export default function Post() {
 
       <h2>2. Do the takeoff</h2>
       <p>
-        Measurement is its own discipline — this step is about getting it done reliably, then moving on to
+        Measurement is its own discipline - this step is about getting it done reliably, then moving on to
         pricing. Calibrate the plan against a known dimension, trace each roof plane as a separate area with
         its own pitch, and measure or count every linear and point component: ridges, hips, valleys, barges,
         eaves, flashings, parapets, gutters, penetrations and access requirements. Keep the main roof, lower
@@ -99,7 +99,7 @@ export default function Post() {
         Say the takeoff gives 95 m² of sloped roof area plus 24 linear metres of ridge and hip. Applying
         the covering rules gives 105 m² of material (after laps and waste). At an illustrative materials
         rate of 30 per m², materials come to 3,150. Labour, scaffold and disposal add an illustrative 2,600,
-        giving a job cost of 5,750. Applying a 20% margin prices the job at 6,900 — the number that appears
+        giving a job cost of 5,750. Applying a 20% margin prices the job at 6,900 - the number that appears
         on the customer quote once tax, validity and exclusions are added. These figures are example round
         numbers only, not market rates; replace them with your own measured quantities and current costs.
       </p>

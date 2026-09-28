@@ -62,7 +62,7 @@ export default function RoofMeasurementCostComparison() {
             What does a roof measurement or quote actually cost?
           </h1>
           <p className="mt-3 text-base text-zinc-500">
-            QuoteCore+ vs per-report measurement services — prices checked August 2026
+            QuoteCore+ vs per-report measurement services - prices checked August 2026
           </p>
 
           <div className="prose prose-zinc mt-10 max-w-none prose-a:text-[#BD4A1A]">
@@ -74,7 +74,7 @@ export default function RoofMeasurementCostComparison() {
             </p>
             <p>
               Here&rsquo;s the honest breakdown, with every price sourced from official pricing
-              pages and dated. We&rsquo;re in this comparison too — our costs are stated with plan
+              pages and dated. We&rsquo;re in this comparison too - our costs are stated with plan
               context so you can check the maths yourself.
             </p>
           </div>
@@ -123,19 +123,19 @@ export default function RoofMeasurementCostComparison() {
           <div className="prose prose-zinc mt-4 max-w-none prose-a:text-[#BD4A1A]">
             <p>
               QuoteCore+ is subscription software, not a per-report service. Manual digital takeoff
-              is unlimited — no per-measurement fee. AI Scan Assist (which detects roof areas,
+              is unlimited - no per-measurement fee. AI Scan Assist (which detects roof areas,
               ridges, hips, valleys, barges and spouting for you to verify) costs cents per scan,
               with a worst case around $0.50.
             </p>
             <p>
               On the Pro plan ($39/mo), a roofer sending 50+ quotes a month works out to well under
-              $1 per quote — including measurement, pricing, the quote document itself, sending,
+              $1 per quote - including measurement, pricing, the quote document itself, sending,
               tracking, material orders and invoicing. Paid plans start at $19/month with a 30-day
               money-back guarantee.
             </p>
             <p>
               We&rsquo;ve demonstrated a complete complex roofing quote created in under 3 minutes
-              for less than $1 —{" "}
+              for less than $1 - {" "}
               <Link href="/" className="font-medium text-[#BD4A1A] underline underline-offset-2">
                 see the video on our homepage
               </Link>
@@ -156,8 +156,8 @@ export default function RoofMeasurementCostComparison() {
               , where 10 remote takeoffs were checked against physical site measurements.
             </p>
             <p>
-              If you quote weekly or more — and especially if you then rebuild the measured roof
-              into materials, labour and a priced quote — the per-report maths gets expensive fast,
+              If you quote weekly or more - and especially if you then rebuild the measured roof
+              into materials, labour and a priced quote - the per-report maths gets expensive fast,
               and the measurement doesn&rsquo;t carry through to the quote. That&rsquo;s the gap
               QuoteCore+ is built to close.
             </p>

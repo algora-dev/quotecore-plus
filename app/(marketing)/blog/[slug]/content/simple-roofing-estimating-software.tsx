@@ -388,7 +388,7 @@ export default function Post() {
       <p>
         <strong>
           The goal is simple: get you to a point where the new system makes quoting easier
-          — not give you another piece of software to manage.
+          - not give you another piece of software to manage.
         </strong>
       </p>
     </div>

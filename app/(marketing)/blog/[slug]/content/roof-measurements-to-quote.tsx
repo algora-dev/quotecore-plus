@@ -7,7 +7,7 @@ export default function Post() {
     <div className="prose prose-zinc max-w-none">
       <p>
         <strong>
-          You have your roof measurements — areas, lengths, pitches. Now you need them
+          You have your roof measurements - areas, lengths, pitches. Now you need them
           to become a priced quote your customer can say yes to.
         </strong>
       </p>
@@ -19,7 +19,7 @@ export default function Post() {
         without a spreadsheet full of formulas.
       </p>
       <p>
-        This is the roofing-focused guide in our measurement-to-price series — the
+        This is the roofing-focused guide in our measurement-to-price series - the
         general version is{' '}
         <Link href="/blog/price-a-job-from-measurements" className={link}>
           How to Price a Job From Your Measurements
@@ -35,17 +35,17 @@ export default function Post() {
       <p>A complete roof quote starts with two kinds of numbers:</p>
       <ul>
         <li>
-          <strong>Areas</strong> — each roof face (or parent area), measured flat and
+          <strong>Areas</strong> - each roof face (or parent area), measured flat and
           adjusted for pitch to get the true roof surface area
         </li>
         <li>
-          <strong>Lines</strong> — ridges, hips, valleys, barges, spouting, flashings:
+          <strong>Lines</strong> - ridges, hips, valleys, barges, spouting, flashings:
           anything priced per lineal metre/foot rather than per area
         </li>
       </ul>
       <p>
         Whether those numbers come from a site tape measure, a printed plan, a PDF, or
-        a digital takeoff doesn&rsquo;t matter — the quote math is the same. What
+        a digital takeoff doesn&rsquo;t matter - the quote math is the same. What
         matters is that each measurement ends up attached to the right component, at
         the right pitch, with the right product.
       </p>
@@ -64,8 +64,8 @@ export default function Post() {
       <h2>From measurement to price: the four conversions</h2>
       <h3>1. Area → material quantity</h3>
       <p>
-        Roof area divided by product coverage gives base quantity. Add waste —
-        percentage for cuts and damage, or a fixed allowance — and round up to pack
+        Roof area divided by product coverage gives base quantity. Add waste -
+        percentage for cuts and damage, or a fixed allowance - and round up to pack
         size. Nobody orders 2.4 bundles.
       </p>
       <h3>2. Lines → lineal components</h3>
@@ -82,11 +82,11 @@ export default function Post() {
       </p>
       <h3>4. Priced lines → a quote document</h3>
       <p>
-        The finished calculation has to become a clean, professional document — with
+        The finished calculation has to become a clean, professional document - with
         the customer-facing detail you choose to show and nothing you don&rsquo;t.
       </p>
       <p>
-        Doing all four by hand in a spreadsheet works until roofs get complicated —
+        Doing all four by hand in a spreadsheet works until roofs get complicated -
         then pitch factors, waste rules and pack sizes start living in formulas only
         one person understands. (We cover the risks in{' '}
         <Link href="/blog/roofing-estimating-spreadsheet-vs-software" className={link}>
@@ -105,20 +105,20 @@ export default function Post() {
       </p>
       <ol>
         <li>
-          <strong>Enter your measurements</strong> — areas and lineals, with pitch per
+          <strong>Enter your measurements</strong> - areas and lineals, with pitch per
           area. No plan upload needed.
         </li>
         <li>
-          <strong>Attach components</strong> — pick from built-in roofing component
+          <strong>Attach components</strong> - pick from built-in roofing component
           types (or define your own) covering materials, coverage, waste, labour and
           pricing.
         </li>
         <li>
-          <strong>Review the calculation</strong> — quantities, cost and sell price per
+          <strong>Review the calculation</strong> - quantities, cost and sell price per
           component, all visible together.
         </li>
         <li>
-          <strong>Print or PDF</strong> the priced result — or convert it into a quote
+          <strong>Print or PDF</strong> the priced result - or convert it into a quote
           and finish it in QuoteCore+ with your own branding, documents and follow-up.
         </li>
       </ol>
@@ -139,7 +139,7 @@ export default function Post() {
       <p>
         If you don&rsquo;t have measurements at all yet, your options are a site
         visit, a measurement report, or measuring the plan yourself. Each has a
-        cost/accuracy tradeoff — see{' '}
+        cost/accuracy tradeoff - see{' '}
         <Link href="/blog/quoting-from-plans-vs-site-visits" className={link}>
           Quoting From Plans vs Site Visits
         </Link>{' '}
@@ -154,7 +154,7 @@ export default function Post() {
       <p>
         The free tool prices measurements. What it doesn&rsquo;t give you is the rest
         of the job: saved component libraries, quote templates and tracking, material
-        orders, invoices, supplier catalogues. That&rsquo;s QuoteCore+ — and if your
+        orders, invoices, supplier catalogues. That&rsquo;s QuoteCore+ - and if your
         requirement goes beyond what QuoteCore+ does, our{' '}
         <Link href="/custom-solutions" className={link}>
           custom solutions page
@@ -175,19 +175,19 @@ export default function Post() {
       <p>
         Yes. Pitch multiplies the flat (plan) area to give the true roof surface area,
         and can affect labour difficulty too. Any measurement-to-price system you use
-        should apply pitch per roof area, not as one global number — different faces
+        should apply pitch per roof area, not as one global number - different faces
         often have different pitches.
       </p>
       <h3>Can I price a roof from measurements without software?</h3>
       <p>
-        You can — a spreadsheet with the right formulas will produce numbers. The
+        You can - a spreadsheet with the right formulas will produce numbers. The
         risks are maintenance (formulas nobody dares touch), re-entry of the same data
         into quotes and orders, and inconsistent results between jobs. Free tools
         remove those risks at the same price as the spreadsheet.
       </p>
       <h3>Is the Measurement to Quote Tool really free?</h3>
       <p>
-        Yes — enter measurements, price them, print or PDF the result, no account
+        Yes - enter measurements, price them, print or PDF the result, no account
         needed. Creating a free account lets you save results and convert them into
         editable quotes in QuoteCore+.
       </p>

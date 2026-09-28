@@ -1,0 +1,727 @@
+{
+  "phase": "Marketing V3 competitor implementation",
+  "date": "2026-09-27",
+  "input_archive": "quotecore-plus-marketing-competitor-handoff-2026-09-27.zip",
+  "input_sha256": "5ecbfa5a5ed8575387fdcbd3e15583b3a51558c4430bd66eefb4f1b75e9906df",
+  "path_base": "ZIP root, including quotecore-plus/ wrapper",
+  "counts": {
+    "baseline_files": 2970,
+    "modified_production_files": 73,
+    "substantive_files": 8,
+    "punctuation_only_files": 65,
+    "punctuation_replacements": 542,
+    "added_return_files": 6,
+    "deleted_files": 0,
+    "unchanged_original_files": 2897
+  },
+  "self_hash_note": "This manifest lists itself with sha256_after null to avoid recursive hashing. The external archive verification covers its bytes.",
+  "frozen": [
+    "app implementation",
+    "homepage and homepage-shared dependencies",
+    "pricing values",
+    "dependencies",
+    "routing and security configuration",
+    "free-tool and Roofing Takeoff Demo logic",
+    "future App Demo"
+  ],
+  "files": [
+    {
+      "path": "quotecore-plus/app/(marketing)/about/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "cf30a31181b6d4aa32f11c34356ab1206ef9d76d4e5eeb39c80206d4bbb3f9ec",
+      "sha256_after": "95d7072db1a8360d92ba1dcfa18844de264b350f70bec3562b4bf633cbb4e185",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/affiliate-program-terms/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "c9c2c787c55ef1b0a6d842442f2068a16962b531d559cdc752baeb44b8e65791",
+      "sha256_after": "9292f26498e13d5a7acf48fbe398a3ac79b525c9d27c8c6c79b641a28eab858b",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/affiliate-program/DistributorApplicationForm.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "3 dash replacement(s); no other source edits.",
+      "sha256_before": "8948026e4ea378b7c13aacb74e158ec7436cbf6e9b7ec10bd591fa7108e7313c",
+      "sha256_after": "6d11ab42511e432c509c901abc55aab398bd20d92090cd94ab57b0af754bac50",
+      "dash_replacements": 3
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/affiliate-program/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "7 dash replacement(s); no other source edits.",
+      "sha256_before": "5cbcf9552ad3e1c70638694c6195caacb0441e2c4f4c8b5e5277a0db1a41b1f5",
+      "sha256_after": "c48e9e013fa4653a06747697a4fcf77949d015a1fbade33e563570e23e475843",
+      "dash_replacements": 7
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/best-quoting-software-au.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "8 dash replacement(s); no other source edits.",
+      "sha256_before": "ee47a7f8078815e7d30062135116a120359ccfd961e484bce86592693fbb77f2",
+      "sha256_after": "34ef356d654ba907e30c2ef9e8154aedd20080483c57b6969754f5733f468490",
+      "dash_replacements": 8
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/best-quoting-software-nz.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "11 dash replacement(s); no other source edits.",
+      "sha256_before": "d6c8da015f74589bd4f4ef123ae2f749a8075ac0f7685f9216f48b74f2c26597",
+      "sha256_after": "276fa636bde530f5609ce3d02f30b39d6dac268adff568c1bcb4d0ecf8ffdc4d",
+      "dash_replacements": 11
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/best-quoting-software-us.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "8 dash replacement(s); no other source edits.",
+      "sha256_before": "b45fc9ea4546a6c4a9423459da4595ce9405e6354c0712e3a359db206062bf16",
+      "sha256_after": "c730193ef6678601b601f4e1d974fb1588ade43dfc53e0be383259d900ad3655",
+      "dash_replacements": 8
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/chrome-roof-pitch-calculator-extension.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "14 dash replacement(s); no other source edits.",
+      "sha256_before": "e7d387fbe4f6331a08ed7aea50462acd2170a023bd2f61829d7ebc8b4e70af0a",
+      "sha256_after": "c6c856efef9af5e1ecfceed68752f02b1b59e275c6b00eba6b00c9bb14318d7a",
+      "dash_replacements": 14
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/construction-estimating-spreadsheet-alternative.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "18 dash replacement(s); no other source edits.",
+      "sha256_before": "1e755446ad17412d55dbf7b62c94c20ba584b623d501151cbfa2cbbb48f50f0f",
+      "sha256_after": "4e96909573622fda487405f053a2bf96a0d1bff750b0f72792f5d0d662e5ee80",
+      "dash_replacements": 18
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/convert-spreadsheet-to-quote.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "28 dash replacement(s); no other source edits.",
+      "sha256_before": "9beef3e4996c2c9b84478817ac0f2337fe42cb3ebad8e4eb3e2f9213b22340a2",
+      "sha256_after": "da9abfb373cdf0594e3eb61eba1ef2ab7213c7887ecdbf6f63d5892dd2f2456f",
+      "dash_replacements": 28
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/custom-roofing-quoting-software.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "21 dash replacement(s); no other source edits.",
+      "sha256_before": "096332fc035ce8193e00c278a302486b1c1b9ae17fde07cbce2fe5bf381280f4",
+      "sha256_after": "c47b93a7dc363350007b211e2107010bc29d17184c77b4544475bc507cd27d34",
+      "dash_replacements": 21
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-much-roofing-material.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "b7ffb4f5124f7caf6f294e1672590466208a908a3938155c224afde69d5700eb",
+      "sha256_after": "84aa0d504dc89157daed33edf73c5a7cd3e65cc1c0f787dbd35838b97918a6f3",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-calculate-roof-pitch.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "62c649ac981749a2179899ddf707fc64850c49a8cb44109df5fbe8da49b34b10",
+      "sha256_after": "71e587146b88428677213dee67bb8adee04fa7d1560a4fb414cff6d00cb43ace",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-do-a-roof-takeoff.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "f0efbe4fb189233a49ef405c00b332d730918ff4eee29cbf71636198b2d4d889",
+      "sha256_after": "83c8184b502d61dd7196cb2f7f3e8f07fa28ba0166c4061476a50c047e388ac2",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-do-cladding-takeoff.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "27 dash replacement(s); no other source edits.",
+      "sha256_before": "73fc8124f2a6881128d872384bcc5ddbd34f3a9b20d9228e0b186671e710f980",
+      "sha256_after": "0adae3dffe619a6fdf3719ac5125050eaca542c006d65743565e881ffaa9070f",
+      "dash_replacements": 27
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-estimate-roofing-materials.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "77b3ddbcbaaa4d988d9e7b2891b5145de3df74659689cdc232451d96ff8509a4",
+      "sha256_after": "e898df389922a6bfcccc95a61046dbaf9d3263ce6478cf55075152479bf1d36a",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-measure-a-roof-from-a-pdf-plan.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "36 dash replacement(s); no other source edits.",
+      "sha256_before": "f0f47358af38cdef8f61045adc9a8b35c5b6c0e5cf95a6d704bc8a793d977d1e",
+      "sha256_after": "063fb3782cc9e084897fd291c75817dab2d4c9d8f949a62fe96cc9ab3d9de83c",
+      "dash_replacements": 36
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-measure-a-roof-online.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "fd4e05b92f7a8c248bf44f9fbbbf8161ba94004ac45aad000256c365a0ddd10f",
+      "sha256_after": "18cc6037c278d029ce1b8a9b4743ff0a81b13343238650b8282cf972205ebdf5",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "3 dash replacement(s); no other source edits.",
+      "sha256_before": "c0f0710a793513001e1512183db3f04aaaea619198fd5709b86cb048030ac292",
+      "sha256_after": "fdac3dcebecd4c321cae025ed0fc234cbab4b47c83c0d027bf7ce63c9b45134b",
+      "dash_replacements": 3
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-measure-pdf-plans.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "24 dash replacement(s); no other source edits.",
+      "sha256_before": "30f592484c1929f0231a6edaebab53cb6d761a11f8dd2d38db095be8ec69d8cf",
+      "sha256_after": "18b1bca0d81a27d499a5a935e2d0826f590a93d60123153c32716516d252d266",
+      "dash_replacements": 24
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-measure-walls-cladding-from-plans.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "24 dash replacement(s); no other source edits.",
+      "sha256_before": "5c27e3ba88d206e4a270fb705d7f9bd6a9395b545511b51fea0b898a149e24da",
+      "sha256_after": "1166adddc7926bbea3f1d7cb835c6f3d9c0cbe255ebc6133779abbd95ea5cb2b",
+      "dash_replacements": 24
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "e095ed194457f289ea9e646b9b127d2486a8d675268637565cb11b481d81aa10",
+      "sha256_after": "35e2596604f44637bbea28a1a22c36ae3323c01fbbeb91f88e852de92947bbfd",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-quote-a-roof-from-plans.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "b053e43eba513910bebaf8bab39a0a9ca2b117464fa6ba45d5a6064e8eacc63f",
+      "sha256_after": "7d32fe972c200f0d622539189667e358208a7ddcbe5292d9edfc1d8a5d1727e9",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/how-to-reduce-roofing-waste.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "11 dash replacement(s); no other source edits.",
+      "sha256_before": "74793c78f6d2e3ad1b7ae354d0e2ed493d3054a0a17688c20e4156434f1c2180",
+      "sha256_after": "2c38a55141fb9ad538840d4ee6872248885231050fe966a192faae2d172b9e6a",
+      "dash_replacements": 11
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/import-price-list-csv-to-components.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "14 dash replacement(s); no other source edits.",
+      "sha256_before": "ffe740a64528c34b896f963f488bcb3243b6c6b8a3dd6c908d257aadd49f836a",
+      "sha256_after": "1e6e4c40780238b6b24da4909f88c5217da6fc1972cd564f0f9ec07b09e18dfc",
+      "dash_replacements": 14
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/manual-vs-digital-roof-takeoff.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "7 dash replacement(s); no other source edits.",
+      "sha256_before": "50d2b4a4dd761e08117e8e69bdd66cae686fd5c728c81a71eac0e31e9d79d11f",
+      "sha256_after": "3a327bfebe81254c5ed362a81bd97b354b3acf98d1fc2453d02c7ee44c51dee2",
+      "dash_replacements": 7
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/price-a-job-from-measurements.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "22 dash replacement(s); no other source edits.",
+      "sha256_before": "a9a0c4581410cd7f7187667859c5c24029d4eae57e6af3f8e498ee018597406e",
+      "sha256_after": "e557481f71240a8799b33100cd2de6b1f3740f7288a89de731689f2501251bc9",
+      "dash_replacements": 22
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/quotecore-plus-reviews.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "b6cee02e1adf7fb8f97661f1dca627a00510ac525c1deb023cd31017d514a49d",
+      "sha256_after": "1ea06345e76afd8576612d72bbb34452f90291f46f0f5b5ebf6bc082945c6db9",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/quoting-from-plans-vs-site-visits.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "18 dash replacement(s); no other source edits.",
+      "sha256_before": "e5fd755a909973c826c3b5833b13635a1e883e111aa418e7f8694c1682fb4b52",
+      "sha256_after": "4579842c2ad768f0f337b446415687c2a570ffe903fc4ddb39c7ae225d448f6e",
+      "dash_replacements": 18
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/roof-measurements-to-quote.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "18 dash replacement(s); no other source edits.",
+      "sha256_before": "c9a4ccb95e0bb1d5e9ad280bc14352e903feeca944b381c9c5978a505a14a25e",
+      "sha256_after": "424ad25b4e12b028e14cbc8962cd0a51b2ab91b94973c616edfe46fe9253ee18",
+      "dash_replacements": 18
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/roofing-estimating-spreadsheet-vs-software.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "11 dash replacement(s); no other source edits.",
+      "sha256_before": "26c7d145144aa90d9d4738d84595c7ca86f6fbacdef2619938dc3bdc05fea035",
+      "sha256_after": "f48a4ff004116a2edaf22999eb5ecb1c6d495f2be2ed0435f994661bbd5164b2",
+      "dash_replacements": 11
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/roofing-estimating-vs-quoting.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "050939a79526140a3690accf8082052442393b2aaa5096498d50fc06c5cd80e3",
+      "sha256_after": "cbdb64f753cc21ac2d43551251dd431f486e64af98885f1751ce2f4a316b4e1e",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/roofing-quoting-software-uk.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "b057202135f88504d64a5175322f74a22ac0cfc79df5a9a58d7c32834fd552e0",
+      "sha256_after": "8e53ab40e27134eec03e28243e9d6a870d52d279273ce654c62139f955c56bf8",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/roofing-quoting-software-vs-spreadsheets.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "16 dash replacement(s); no other source edits.",
+      "sha256_before": "e0fb861502ebcdd380b97275c0e55cc0fbd03aa5d90c18a7a5277a4b5bca2b7c",
+      "sha256_after": "1040df56af0660f027515b1362f8f34984740d09ca4f9cc29e51e7a55daa58b0",
+      "dash_replacements": 16
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/simple-roofing-estimating-software.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "735e3ad38a2c54210512ca2174c156c8f35f3c74617d6372736ee0dbcbd8541d",
+      "sha256_after": "b6056614b282c9618ad2f788e601f23090b2f47dc9fa57d752cd827492f29128",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/blog/[slug]/content/takeoff-to-quote-workflow.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "17 dash replacement(s); no other source edits.",
+      "sha256_before": "cc636ebc61c83c3f4909280bcdbe63907aa30ffaaf3a40e8851ae0efbcc04df7",
+      "sha256_after": "bb342e21f78ee484e26fceb5ebb6926238589530132cf50e043d20a689e5bcb7",
+      "dash_replacements": 17
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/bluebeam-alternative-for-roofing/page.tsx",
+      "status": "modified",
+      "category": "competitor_route",
+      "purpose": "Compare the roofing customer-quote workflow with PDF collaboration, formulas and Excel links. Acknowledge web/mobile measurement and Max AI document actions. Do not claim QuoteCore+ replaces Studio/CAD or is cheaper than every Bluebeam tier.",
+      "sha256_before": "2661d70a420de69a98071d195c9c32188b095c737ec0955cbbffe1ed3bf7c3d1",
+      "sha256_after": "34dee542eb1bba4ed7a6caa93c331b6acd9ac598e8cde30d94dd12018e44f11e"
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/custom-solutions/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "6 dash replacement(s); no other source edits.",
+      "sha256_before": "da1654ea68876b4da48e4176b8074107c2f1d5e905be4aa32c52303f36079a57",
+      "sha256_after": "7f352eeaba11c21bd667880180f11ad1e799de24076d05677a98b0a7d4ebb938",
+      "dash_replacements": 6
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/customer-stories/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "73a5850363723ac2a15936bb4624467c89d926dcf1a6d5104d3e6d41f740cfbf",
+      "sha256_after": "daabaef8f2fd3463c0411d7ea695119a9d20d11322677c46a2c745644694da94",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/done-for-you-setup/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "13 dash replacement(s); no other source edits.",
+      "sha256_before": "0a6b901ddbd2879be3c9e0fd811b6a780331bd45f96d84be55a31df63a908c47",
+      "sha256_after": "80ae02db245c00d2b4f026dec83cb0da0e5168d47c766c795fd0d9dbdbfb518d",
+      "dash_replacements": 13
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/eagleview-alternative/page.tsx",
+      "status": "modified",
+      "category": "competitor_route",
+      "purpose": "Compare self-service takeoff with supplied property reports, not two identical software subscriptions. Acknowledge Eagleview One subscription access and qualify Horizon as announced/coming soon in the reviewed source. Keep imagery, models and report-service limitations explicit.",
+      "sha256_before": "5e846c5639e43b58848abf7e3b9dc728ef6fe585f4b819a67d765b070ce2aed1",
+      "sha256_after": "3449291e346fb5c7a9dacd5951562fac608b76ba05ef70c480b252815614ffee"
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/hover-alternative/page.tsx",
+      "status": "modified",
+      "category": "competitor_route",
+      "purpose": "Acknowledge phone/tablet estimating, custom estimating logic, agreements, supplier-connected ordering and 3D visualization. Separate annual subscriptions from per-project charges. Do not imply QuoteCore+ recreates a photo-derived 3D property model.",
+      "sha256_before": "e124f83397f1417157450b5e3fa9436af36f975bd38276e7e669865c19f6b718",
+      "sha256_after": "df9f55d39e273bbdff233e2e4133ea6b969cf066e4f458e8e4141310d5ea3e73"
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/planswift-alternative/page.tsx",
+      "status": "modified",
+      "category": "competitor_route",
+      "purpose": "Lead with Windows takeoff versus the paid QuoteCore+ phone/tablet/browser workflow. Preserve US$2,000 per seat per year, now identified as Essential; include the separate Core tier and published AI tools. Remove unsupported extra support/training surcharges.",
+      "sha256_before": "1a2fe00403bafd8273f130d9c232036306b0c0a82d813847f546b1901e6d70af",
+      "sha256_after": "8eddad299724711b490bd00cf23b9f1eda6c2ec64d20a656d708d2171c6c70b3"
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/roof-measurement-cost-comparison/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "7 dash replacement(s); no other source edits.",
+      "sha256_before": "b3298bdf1dacfc40adccecab24d67322f333aaf7340f924a8892acd741aedb3b",
+      "sha256_after": "6a156d7b6a29e96d444048ca703148f276bc0e2119e91a1fec32d95088887e58",
+      "dash_replacements": 7
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/roofr-alternative/page.tsx",
+      "status": "modified",
+      "category": "competitor_route",
+      "purpose": "Separate DIY measurement, report purchasing and roofing CRM workflows. Retain Roofr mobile, proposal, invoice and payment capabilities; distinguish its customer-call AI Receptionist from supported QuoteCore+ account actions. Show paid/billing conditions rather than an unqualified low headline price.",
+      "sha256_before": "cc899edc40dcc63e2b1acfddf4f724783a38924a4db519685ac92e1712815115",
+      "sha256_after": "63088d8c880802ee643cb7ad0876113977d0462287b1ea16e67ec1fc79316637"
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/roofsnap-alternative/page.tsx",
+      "status": "modified",
+      "category": "competitor_route",
+      "purpose": "Acknowledge DIY measurement on multiple devices, blueprints, connected estimating and ordered reports. Explain the team-size and annual-billing conditions behind the advertised annual per-user rates, rather than applying a ten-user price to a solo contractor.",
+      "sha256_before": "4c14b120a8997e4895a1a6fc73766fc9de807c5cf22f9df6cf8625b94bee36cb",
+      "sha256_after": "b89036578e910185988e7d500bde4a21cbfdda9d5c666c3c8f1c211bdb9a053d"
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/stack-alternative-for-roofing/page.tsx",
+      "status": "modified",
+      "category": "competitor_route",
+      "purpose": "Acknowledge connected takeoff, estimating, assemblies and proposals, plus STACK IQ and its authorized external-AI-client workflow. Do not claim QuoteCore+ uniquely has conversational actions or permission controls. Separate field collaboration from unverified full phone takeoff equivalence.",
+      "sha256_before": "7de9deff276f3882de0ad9f0c92a66f991991d31f76b4db48bc3d43a6d8fcd99",
+      "sha256_after": "82a1481e50bad7cc4678e26919c5b8bd4c57a8d1942e6362267a3036a7e96cf1"
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/supplier-partnership/SupplierApplicationModal.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "93e905df20b233221cafc4c80ae34a7e27e7cd9b2ebac3b6a9ace3181e1a5d3c",
+      "sha256_after": "8fa5444a692b5471aa94cf4a1f8f006d777bb963b4356c72b9cdd74798767920",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/suppliers/[slug]/catalogue/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "825ed92caad56f0cb436bd8ca0d99701e0feb1fc1333a8c1a0da55cefa05dc26",
+      "sha256_after": "2ccd5b0b8a18387d53f154a6a6c09e383166cb1cb263038afc3f8d5f07733e36",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/suppliers/[slug]/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "5 dash replacement(s); no other source edits.",
+      "sha256_before": "ddfa8173e8a19236b6b61977c2cd4ea9b98e6efcbe8df4e1411707b9cd2cc5ca",
+      "sha256_after": "07db884c59df3374d54e33aad6d61719e6d4a1ada8c3550506d901576417e35b",
+      "dash_replacements": 5
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/suppliers/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "0deb1fb0f77c39dec7b0afed54c4984c681da9331e56fcfeebd575c657189fc1",
+      "sha256_after": "20a268109e0b2d427e0f76196d2973cfb4da5339c0b943286d4f7d1f7199c50e",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/takeoff-demo/DemoQuoteView.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "2fbb61a4ef118dd17ef48e6bb8f6492a59e4709b9ebc15f23fcf9eb3c857cca6",
+      "sha256_after": "1ef5b92a5bfe40fb166077299f1600b6afffed639c3d0c3046d9714606544407",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(marketing)/takeoff-demo/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "10 dash replacement(s); no other source edits.",
+      "sha256_before": "68dbf0f62996d313e937464cefe4e353c8f164fa9b1a1cc2cbe79a6245a5389c",
+      "sha256_after": "ab222494c32e7e1ef2326670be622310fb19ec77dfb0bc853d5353fcf2f19123",
+      "dash_replacements": 10
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-cladding-takeoff/CladdingTakeoff.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "e75356a157637689af731f7550f4500ce279020daaeb10a180dbf43ea124b026",
+      "sha256_after": "521f2c3a5d0129a21157102ebc23cbed567df648bb024be43b1148ffb0c457ec",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-cladding-takeoff/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "24 dash replacement(s); no other source edits.",
+      "sha256_before": "b4aae15658319197f539c430114d382e6744714870daa6f1d9ee535f9a3921b3",
+      "sha256_after": "4c5abb8c63ba93f997fd99c5e86d05d92648a34ff63ad47f5b354aaffb0fc853",
+      "dash_replacements": 24
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-construction-takeoff-tools/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "3 dash replacement(s); no other source edits.",
+      "sha256_before": "749c5233c853b23f3e9e25bba44ddbf07f86d23ce4c1bb7ee7390a4eb6f4fb4a",
+      "sha256_after": "2d93e82e57cc95873abfe38bf0c5cf82e17a2734226a64dcd1f9794c733b8fed",
+      "dash_replacements": 3
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-flooring-takeoff/FlooringTakeoff.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "51070cc539c200d74d1bbde8d1125c003cfd3e9e839a604f1e1d5239c34ac6ce",
+      "sha256_after": "ed4d2893954177aac89ad8c02346cf0ad79735db69269e8d8174ae09bc724dc7",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-flooring-takeoff/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "19 dash replacement(s); no other source edits.",
+      "sha256_before": "632782d9eb3d0c7bef6e8f8b21001bfbaa736607aa300f80b0d8aa1d41521ba4",
+      "sha256_after": "42f8b762bec9cdca59acda208329461889b27f800efe6e92d9adeea4920e7574",
+      "dash_replacements": 19
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-invoice-generator/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "39e73aa76a6542f4374d806c8b2983b78f5d321707b9f8d1078a3323a22f4846",
+      "sha256_after": "d57308eefd98e81159c0f45d732b477339851389c8c8ba7d6f9066d48d3648a7",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-purchase-order-generator/layout.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "4 dash replacement(s); no other source edits.",
+      "sha256_before": "c1f9bdaad358e045025483cf48d32d5238c65351c23fcca4aa35013e5fe288fb",
+      "sha256_after": "f1e9d387106a35b7890008188a690eaccb4d1b7022298491c295ec697d745f8c",
+      "dash_replacements": 4
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-purchase-order-generator/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "11 dash replacement(s); no other source edits.",
+      "sha256_before": "498d0b40d002f83f0112e867857da3a28b10cb761f3448f0a292bfb14f8cbd6e",
+      "sha256_after": "64bf9ffd0bf5060577a03f658d0fe5c157a8b3b0a8fcf068e2366906063dcb35",
+      "dash_replacements": 11
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-quote-generator/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "d2558f9f6ef3d009d5db74675c3e106c23c1fdd068dd645d317e1e18b70a1352",
+      "sha256_after": "b917c84ff10ad751cfe3cc4d85a69b06320bf6f77dc0ac9c26c6d54689f11fa5",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-roof-pricing-calculator/layout.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "3 dash replacement(s); no other source edits.",
+      "sha256_before": "f027b30fceca883a89118633298012bf8ccd806aa3c202f7e5f4891324186bc3",
+      "sha256_after": "ac7d80adfa42c93b6c68ea6e48debb68731e8b0b6835a3ce24f1f19878a78ce4",
+      "dash_replacements": 3
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-roof-takeoff/FreeRoofTakeoff.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "8397be76ca0bcd525bba526b2de6abded0b2d321b8e9adb3065b9cef27d47bb5",
+      "sha256_after": "7d1a811ced91c84c151931f51d0bbaa906d4526c2238d39e4ead445dbc2a1e26",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-roof-takeoff/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "2 dash replacement(s); no other source edits.",
+      "sha256_before": "873aef5377fa31bf8c24cff7e275af6cf501b865a8c0b6ea330c3390c0481e35",
+      "sha256_after": "4216810342c911b7bc3d3e127260083de460dbd58cc1af7e3c27b1cab6f64512",
+      "dash_replacements": 2
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-roofing-takeoff-builder/[supplierSlug]/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "13 dash replacement(s); no other source edits.",
+      "sha256_before": "4285083572d112d597c2f5477e5f492f6548bffaac0e46630f9de2835a1c226b",
+      "sha256_after": "8d8e81124d945e9a486269f713c2939539ec4e5a8ca9d16a9c10a9d23807e1ea",
+      "dash_replacements": 13
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-roofing-takeoff-calculator/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "3 dash replacement(s); no other source edits.",
+      "sha256_before": "2c4765aeaff2a5b1b5a9a658044ce77e6e3755b4f025e343f1677b8648813101",
+      "sha256_after": "78e08688573389317222b5e9e76e4e1821b849c18cb538221e5f67e8f8c0a0b8",
+      "dash_replacements": 3
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-tools/TaskAccordions.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "4 dash replacement(s); no other source edits.",
+      "sha256_before": "51b8b17a390e731edf65ec40e6ad43906db0821352a8d517981f0ab0d9b534a0",
+      "sha256_after": "f590c1e32748316044bcf7502ec5895fd05c7763fad6259b5d71ad818d99834c",
+      "dash_replacements": 4
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-tools/ToolSections.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "6 dash replacement(s); no other source edits.",
+      "sha256_before": "84bea98e0a5b7cf6749567ede40b9b196a83bdd78dbc1d0da67a84f14678935a",
+      "sha256_after": "3f4627ed28d24aaede3c4ff6817feb1402f2aa0eb0e532eb562e4b2f04499df7",
+      "dash_replacements": 6
+    },
+    {
+      "path": "quotecore-plus/app/(public)/free-tools/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "67a9aebe2b43f8a0db9d324301a749263baae7822ac1da6feeacffa195c766ab",
+      "sha256_after": "e1f61fe3fa45aaafdbc062d6a09b828dfad16f92a47077c9a3e61ba4eb108e2a",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(public)/measurement-to-quote-tool/layout.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "1 dash replacement(s); no other source edits.",
+      "sha256_before": "ebdfcac0d730c50873b23a63a459c6714f77a7178464ccad4e94cd050a7b72a2",
+      "sha256_after": "b028fc1438b30015ba02bd0b832b4cc353a8dbc9869011db592cb4a5a17045d8",
+      "dash_replacements": 1
+    },
+    {
+      "path": "quotecore-plus/app/(public)/measurement-to-quote-tool/page.tsx",
+      "status": "modified",
+      "category": "punctuation_only",
+      "purpose": "4 dash replacement(s); no other source edits.",
+      "sha256_before": "166a5ce0fad4b6f76caba8034c4b66f415e43d012e8a6f1367037bf574579910",
+      "sha256_after": "8a966c483040e11d8b8562c0f63e06463feef86ad1a2a68308b12ab470782d49",
+      "dash_replacements": 4
+    },
+    {
+      "path": "quotecore-plus/components/competitor-pages/competitor-page.tsx",
+      "status": "modified",
+      "category": "shared_competitor_renderer",
+      "purpose": "Source/date links, mobile price cards, three-ways section, semantic fixes, honest paid/free separation and explicit Roofing Takeoff Demo CTA.",
+      "sha256_before": "0833f6c4e47f7d667004d268d2806ed8dcdd8c066613567567693018426dc530",
+      "sha256_after": "6a255a6ae439b04d12c7e5e551e99712416ed1555d6a3d0b5b9720bf5b170f6d"
+    },
+    {
+      "path": "START_HERE_RETURN.md",
+      "status": "added",
+      "category": "return_documentation",
+      "purpose": "Integration handoff, provenance, validation, research or decisions.",
+      "sha256_before": null,
+      "sha256_after": "26be98c44f791d8331930a4f1ccf2659776976a2c7d65a179b531c4759fab36b"
+    },
+    {
+      "path": "quotecore-plus/docs/marketing-site/COMPETITOR_RESEARCH_2026-09-27.md",
+      "status": "added",
+      "category": "return_documentation",
+      "purpose": "Integration handoff, provenance, validation, research or decisions.",
+      "sha256_before": null,
+      "sha256_after": "a1b46fe9e0013e3d440d50c2bbfdc191a7320932fa6e61d9224c1bc3472b2810"
+    },
+    {
+      "path": "quotecore-plus/docs/marketing-site/OWNER_DECISIONS_COMPETITOR.md",
+      "status": "added",
+      "category": "return_documentation",
+      "purpose": "Integration handoff, provenance, validation, research or decisions.",
+      "sha256_before": null,
+      "sha256_after": "cbac1fed4d3825cfc7df330f985eefac49e238ee5b10f718e1a936130871469d"
+    },
+    {
+      "path": "quotecore-plus/docs/marketing-site/RETURN_NOTES_COMPETITOR.md",
+      "status": "added",
+      "category": "return_documentation",
+      "purpose": "Integration handoff, provenance, validation, research or decisions.",
+      "sha256_before": null,
+      "sha256_after": "80e50304d2ee65b2b795a3c97d6247047896669093699bdd28b4dc18cfaa3e01"
+    },
+    {
+      "path": "quotecore-plus/docs/marketing-site/VALIDATION_COMPETITOR.json",
+      "status": "added",
+      "category": "return_documentation",
+      "purpose": "Integration handoff, provenance, validation, research or decisions.",
+      "sha256_before": null,
+      "sha256_after": "658c856c2ff99aff53408d3ebb96c4dd12bdc6ebcadc2e485fc57d161c3eb4b0"
+    },
+    {
+      "path": "quotecore-plus/docs/marketing-site/FILE_CHANGES_COMPETITOR.json",
+      "status": "added",
+      "category": "return_documentation",
+      "purpose": "Integration handoff, provenance, validation, research or decisions.",
+      "sha256_before": null,
+      "sha256_after": null
+    }
+  ],
+  "deleted": []
+}

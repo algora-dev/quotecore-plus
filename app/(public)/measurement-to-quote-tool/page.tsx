@@ -10,7 +10,7 @@ export default function Page() {
     <>
       {/* Accessible summary (screen readers / crawlers) */}
       <section className="sr-only" aria-labelledby="mtq-capabilities">
-        <h1 id="mtq-capabilities">Turn Measurements Into a Priced Estimate — Free</h1>
+        <h1 id="mtq-capabilities">Turn Measurements Into a Priced Estimate - Free</h1>
         <p>
           Already have your measurements from a site measure, PDF plan takeoff, aerial or satellite
           measurement, a third-party report or an estimating spreadsheet? Enter areas, lengths and
@@ -42,7 +42,7 @@ export default function Page() {
           <p className="text-xs font-semibold uppercase tracking-wider text-[#BD4A1A]">Measurements → Reusable components → Priced output</p>
           <h2 className="mt-2 text-2xl font-semibold text-slate-900">You already did the measuring. Don&apos;t rebuild the pricing every time.</h2>
           <p className="mt-3 max-w-3xl text-slate-600">
-            This tool is for contractors who already have measurements — from a site measure, a plan
+            This tool is for contractors who already have measurements - from a site measure, a plan
             takeoff, another estimating tool, or handwritten notes. Save your pricing logic once as a
             reusable component, then every new measurement set flows through the same rules:
             materials, waste, labour and totals.
@@ -70,7 +70,7 @@ export default function Page() {
               <h3 className="text-sm font-semibold text-slate-900">3. Already have prices in a spreadsheet?</h3>
               <p className="mt-2 text-sm text-slate-600">
                 Export your price list as CSV, upload it, map your columns, and turn rows into
-                reusable components — up to 7 at a time in the free tool.{' '}
+                reusable components - up to 7 at a time in the free tool.{' '}
                 <Link href="/free-smart-component-creator" className={link}>The Catalog-to-Component Converter</Link>{' '}
                 handles larger catalogs.
               </p>
@@ -125,7 +125,7 @@ export default function Page() {
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             <div className="rounded-xl border border-slate-200 p-5">
               <h3 className="text-sm font-semibold text-slate-900">Print / Download</h3>
-              <p className="mt-2 text-sm text-slate-600">Use the priced output immediately — no signup required.</p>
+              <p className="mt-2 text-sm text-slate-600">Use the priced output immediately - no signup required.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-5">
               <h3 className="text-sm font-semibold text-slate-900">Convert to a free quote</h3>

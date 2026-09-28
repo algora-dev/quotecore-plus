@@ -8,12 +8,12 @@ import { buildFaqSchema } from '@/lib/schema';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Roof Takeoff & Measurement Tool — Upload Plans Online | QuoteCore+',
+  title: 'Free Roof Takeoff & Measurement Tool - Upload Plans Online | QuoteCore+',
   description:
     'Free roof takeoff and measurement tool. Upload a roof plan image, set the scale and measure roof areas, ridges, hips, valleys and eaves in metric, imperial or roofing squares. No signup required.',
   alternates: { canonical: '/free-roof-takeoff' },
   openGraph: {
-    title: 'Free Roof Takeoff & Measurement Tool — Upload Plans Online | QuoteCore+',
+    title: 'Free Roof Takeoff & Measurement Tool - Upload Plans Online | QuoteCore+',
     description:
       'Upload your own roof plan, measure with pitch calculations, and get a full measurement output. Free, no signup required.',
     url: '/free-roof-takeoff',

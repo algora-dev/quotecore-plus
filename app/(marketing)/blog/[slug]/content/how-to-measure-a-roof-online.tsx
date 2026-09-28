@@ -136,7 +136,7 @@ export default function Post() {
             </tr>
           </thead>
           <tbody className="text-zinc-700">
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Cost</td><td className="py-2 pr-4">Free, no signup</td><td className="py-2">RoofSnap from $13 per report ($105/mo, $52–78/mo annual); EagleView $32.75–$105 per report (verified Aug 2026)</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Cost</td><td className="py-2 pr-4">Free, no signup</td><td className="py-2">RoofSnap from $13 per report ($105/mo, $52 - 78/mo annual); EagleView $32.75 - $105 per report (verified Aug 2026)</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Source of measurements</td><td className="py-2 pr-4">Your own plan, measured by you</td><td className="py-2">Aerial or plan-based, measured by the service</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Turnaround</td><td className="py-2 pr-4">Immediate - you measure as you quote</td><td className="py-2">Report delivery time varies by service</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Pitch-calculated lengths</td><td className="py-2 pr-4">Yes, automatic</td><td className="py-2">Yes</td></tr>

@@ -4,7 +4,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Partner Program Terms — QuoteCore+",
+  title: "Partner Program Terms - QuoteCore+",
   description:
     "Terms for the QuoteCore Partner & Affiliate Program: attribution, commission eligibility, payouts, refunds, prohibited promotion and program rules.",
   alternates: { canonical: "https://quote-core.com/affiliate-program-terms" },
@@ -18,7 +18,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
       <p>
         The QuoteCore Partner Program (also called the affiliate or referral program) lets approved partners earn
         commission by referring paying customers to QuoteCore+. These terms apply to all partners unless a signed custom
-        agreement states otherwise — in which case the custom agreement takes precedence.
+        agreement states otherwise - in which case the custom agreement takes precedence.
       </p>
     ),
   },

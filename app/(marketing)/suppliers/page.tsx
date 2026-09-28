@@ -141,7 +141,7 @@ export default async function SupplierDirectoryPage() {
               Roofing suppliers with authorised pricing
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base text-zinc-600 sm:text-lg md:text-xl">
-              Browse suppliers publishing their roofing material catalogues on QuoteCore+. Calculate roof takeoffs using real supplier pricing — then contact the supplier directly.
+              Browse suppliers publishing their roofing material catalogues on QuoteCore+. Calculate roof takeoffs using real supplier pricing - then contact the supplier directly.
             </p>
           </div>
         </section>

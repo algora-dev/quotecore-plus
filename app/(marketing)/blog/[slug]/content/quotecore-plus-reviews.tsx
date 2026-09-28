@@ -113,7 +113,7 @@ export default function Post() {
       <hr />
 
       <h2>What happens after you get started?</h2>
-      <p>Your first 30 days are the best chance to test QuoteCore+ with a real workflow — and every plan is backed by a 30-day money-back guarantee.</p>
+      <p>Your first 30 days are the best chance to test QuoteCore+ with a real workflow - and every plan is backed by a 30-day money-back guarantee.</p>
       <p>The best way to try it is not to click around randomly. It is to take one job you would normally quote manually and run it through the platform.</p>
       <p>A good first-month process looks like this:</p>
       <ol>

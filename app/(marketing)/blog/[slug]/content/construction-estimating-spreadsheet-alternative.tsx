@@ -34,10 +34,10 @@ export default function Post() {
 
       <h2>Why contractors look beyond spreadsheets</h2>
       <p>
-        Spreadsheets are powerful — a good one calculates accurately, handles complex formulas,
+        Spreadsheets are powerful - a good one calculates accurately, handles complex formulas,
         stores pricing and produces totals. If you built one that works, you did something
         genuinely useful. The reason to look at alternatives is{' '}
-        <strong>workflow cost, not licence cost</strong>. The spreadsheet itself is free — the time
+        <strong>workflow cost, not licence cost</strong>. The spreadsheet itself is free - the time
         around it isn&apos;t:
       </p>
       <ul>
@@ -52,26 +52,26 @@ export default function Post() {
 
       <h2>What to look for in an estimating alternative</h2>
       <p>
-        Every serious option — free tool or paid software — should reduce the amount of work you
+        Every serious option - free tool or paid software - should reduce the amount of work you
         rebuild on every job. The core ideas to look for:
       </p>
       <ul>
-        <li><strong>Reusable pricing</strong> — rates and rules saved once, applied to each job&apos;s measurements.</li>
-        <li><strong>Measurement input</strong> — enter quantities directly, or measure from plans, without re-typing.</li>
-        <li><strong>Document output</strong> — a priced result that becomes a customer quote without copy-paste.</li>
-        <li><strong>Migration path</strong> — a way to bring your existing spreadsheet pricing with you.</li>
+        <li><strong>Reusable pricing</strong> - rates and rules saved once, applied to each job&apos;s measurements.</li>
+        <li><strong>Measurement input</strong> - enter quantities directly, or measure from plans, without re-typing.</li>
+        <li><strong>Document output</strong> - a priced result that becomes a customer quote without copy-paste.</li>
+        <li><strong>Migration path</strong> - a way to bring your existing spreadsheet pricing with you.</li>
       </ul>
 
       <h2>The main replacement approaches</h2>
       <p><strong>1. Template-based estimating tools.</strong> Pre-built spreadsheets or quote templates. Lowest effort, but they keep the core problem: you still copy and adjust per job, and pricing rules live in cells only you understand.</p>
-      <p><strong>2. Component systems.</strong> You save your pricing logic — materials, labour, waste, pack rules — as reusable components, then enter each job&apos;s measurements. If a spreadsheet formula says <em>&quot;roof area × material allowance + waste + labour&quot;</em>, a component stores that same business logic once and re-applies it to every new measurement, with no formula rebuild.</p>
-      <p><strong>3. Connected estimating software.</strong> A component system plus the surrounding workflow — quote, order, invoice, follow-up — kept attached to the same job instead of living in separate files.</p>
+      <p><strong>2. Component systems.</strong> You save your pricing logic - materials, labour, waste, pack rules - as reusable components, then enter each job&apos;s measurements. If a spreadsheet formula says <em>&quot;roof area × material allowance + waste + labour&quot;</em>, a component stores that same business logic once and re-applies it to every new measurement, with no formula rebuild.</p>
+      <p><strong>3. Connected estimating software.</strong> A component system plus the surrounding workflow - quote, order, invoice, follow-up - kept attached to the same job instead of living in separate files.</p>
       <p>
         Side by side, the mental model carries straight across:
       </p>
       <ul>
         <li><strong>A spreadsheet row</strong> = one measurement + a formula + material cost + labor + waste + markup, rebuilt or copied for every job.</li>
-        <li><strong>A reusable component</strong> = the same measurement type and the same material / labor / waste / pricing logic, saved once and applied to any job&apos;s measurements — and its output can feed a quote, bid, proposal, order or invoice directly.</li>
+        <li><strong>A reusable component</strong> = the same measurement type and the same material / labor / waste / pricing logic, saved once and applied to any job&apos;s measurements - and its output can feed a quote, bid, proposal, order or invoice directly.</li>
       </ul>
       <p>
         Want the full walkthrough with numbers?{' '}
@@ -83,7 +83,7 @@ export default function Post() {
 
       <h2>7-point evaluation checklist</h2>
       <p>
-        Before you commit time (or money) to any alternative — including ours — score it against
+        Before you commit time (or money) to any alternative - including ours - score it against
         this checklist:
       </p>
       <ol>
@@ -92,7 +92,7 @@ export default function Post() {
         <li><strong>Waste rules:</strong> can waste be applied per component (valleys vs plain field vs flashings) rather than one blanket percentage?</li>
         <li><strong>Measurement input:</strong> can you enter measurements directly, or ideally measure from uploaded plans?</li>
         <li><strong>Quote/document output:</strong> does the priced result convert into a professional customer document without rebuilding it in Word?</li>
-        <li><strong>Price updates:</strong> when supplier pricing changes, do you update one place — or every template?</li>
+        <li><strong>Price updates:</strong> when supplier pricing changes, do you update one place - or every template?</li>
         <li><strong>Migration/setup effort:</strong> can your existing spreadsheet pricing be imported, or do you start from zero?</li>
       </ol>
       <p>
@@ -125,10 +125,10 @@ export default function Post() {
         <Link href="/measurement-to-quote-tool" className={link}>
           <strong>Try the free Measurement-to-Quote Tool →</strong>
         </Link>{' '}
-        — enter your measurements, reuse your pricing, get a priced output. Free, no signup required.
+        - enter your measurements, reuse your pricing, get a priced output. Free, no signup required.
       </p>
       <p>
-        You already built the spreadsheet — keep the useful part. Export your pricing as CSV and use
+        You already built the spreadsheet - keep the useful part. Export your pricing as CSV and use
         the{' '}
         <Link href="/free-smart-component-creator" className={link}>
           Catalog-to-Component Converter

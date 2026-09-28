@@ -8,8 +8,8 @@ export default function Post() {
       <p>
         A cladding takeoff turns elevation drawings into orderable quantities: net cladding areas by
         material, linear metres of trims and battens, opening counts, and waste. This guide walks the
-        whole process — gross wall area, opening deductions, gables, material zones, trims and
-        waste — and you can follow along with the{' '}
+        whole process - gross wall area, opening deductions, gables, material zones, trims and
+        waste - and you can follow along with the{' '}
         <Link href="/free-cladding-takeoff" className={link}>
           Free Wall &amp; Cladding Takeoff Tool
         </Link>
@@ -25,7 +25,7 @@ export default function Post() {
       <p>
         A cladding takeoff is the measurement stage of pricing a cladding job: reading wall and
         elevation drawings to determine cladding areas, trim and batten lengths, and opening
-        counts — then converting those into material quantities (with waste) and labour. Siding and
+        counts - then converting those into material quantities (with waste) and labour. Siding and
         façade takeoffs are the same process with different vocabulary.
       </p>
       <p>
@@ -33,14 +33,14 @@ export default function Post() {
         <Link href="/blog/how-to-measure-walls-cladding-from-plans" className={link}>
           how to measure walls &amp; cladding from plans
         </Link>{' '}
-        first — it covers drawing types, scale checks and tracing basics. This article focuses on
+        first - it covers drawing types, scale checks and tracing basics. This article focuses on
         the cladding-specific quantities.
       </p>
 
       <h2>Step 1: Gross wall area from the elevations</h2>
       <p>
         For each elevation, trace the full rectangle: width × height to the eaves. Add gables as
-        triangles (½ × width × height). Work elevation by elevation and name each area — the sum is
+        triangles (½ × width × height). Work elevation by elevation and name each area - the sum is
         your <strong>gross wall area</strong>.
       </p>
 
@@ -52,7 +52,7 @@ export default function Post() {
         <strong>Net cladding area = gross wall area − openings</strong>
       </p>
       <p>
-        Cross-check against the window and door schedule — total schedule area should match your
+        Cross-check against the window and door schedule - total schedule area should match your
         traced deductions.
       </p>
 
@@ -69,13 +69,13 @@ export default function Post() {
       </ul>
       <p>
         Repeat per elevation, per material. The other three elevations of this house give another
-        128.4 m² gross and 9.9 m² of openings — the same arithmetic applies.
+        128.4 m² gross and 9.9 m² of openings - the same arithmetic applies.
       </p>
 
       <h2>Step 3: Gables and irregular shapes</h2>
       <p>
         Gables are pure triangles; raked walls and angled bays are polygons. Trace the vertices and
-        let the tool compute the area — never re-derive triangle formulas by hand. Gables are the
+        let the tool compute the area - never re-derive triangle formulas by hand. Gables are the
         single most-forgotten area in cladding takeoffs; check each elevation end before totalling.
       </p>
 
@@ -84,23 +84,23 @@ export default function Post() {
         One elevation often carries several materials. Trace each zone separately and name it:
       </p>
       <ul>
-        <li><strong>Timber / weatherboard</strong> — area-based; board coverage (effective width) converts m² to linear metres of board.</li>
-        <li><strong>Fibre cement</strong> — sheet or plank based; count sheets or planks from area + sheet size + waste.</li>
-        <li><strong>Composite</strong> — usually board-based like weatherboard; check the manufacturer&rsquo;s coverage per m².</li>
-        <li><strong>Metal / corrugated</strong> — sheet-based; effective sheet coverage after laps drives the count.</li>
-        <li><strong>Panelised (brick slips, terracotta, ACM)</strong> — panel counts from area ÷ panel coverage + fixings.</li>
+        <li><strong>Timber / weatherboard</strong> - area-based; board coverage (effective width) converts m² to linear metres of board.</li>
+        <li><strong>Fibre cement</strong> - sheet or plank based; count sheets or planks from area + sheet size + waste.</li>
+        <li><strong>Composite</strong> - usually board-based like weatherboard; check the manufacturer&rsquo;s coverage per m².</li>
+        <li><strong>Metal / corrugated</strong> - sheet-based; effective sheet coverage after laps drives the count.</li>
+        <li><strong>Panelised (brick slips, terracotta, ACM)</strong> - panel counts from area ÷ panel coverage + fixings.</li>
       </ul>
 
       <h2>Step 5: Trims and linear items</h2>
       <p>
-        Cladding jobs carry a long tail of linear items — measure them all as runs:
+        Cladding jobs carry a long tail of linear items - measure them all as runs:
       </p>
       <ul>
-        <li><strong>Window &amp; door trims</strong> — the perimeter of every opening (or width+height × 2).</li>
-        <li><strong>Corner trims</strong> — external and internal corner heights, per corner.</li>
-        <li><strong>Battens</strong> — cavity batten runs from batten spacing × wall area, or trace vertical runs for complex elevations.</li>
-        <li><strong>Flashings, sills, junction trims</strong> — wherever the cladding stops or changes material.</li>
-        <li><strong>Building wrap &amp; soffit</strong> — full-surface areas, gross not net.</li>
+        <li><strong>Window &amp; door trims</strong> - the perimeter of every opening (or width+height × 2).</li>
+        <li><strong>Corner trims</strong> - external and internal corner heights, per corner.</li>
+        <li><strong>Battens</strong> - cavity batten runs from batten spacing × wall area, or trace vertical runs for complex elevations.</li>
+        <li><strong>Flashings, sills, junction trims</strong> - wherever the cladding stops or changes material.</li>
+        <li><strong>Building wrap &amp; soffit</strong> - full-surface areas, gross not net.</li>
       </ul>
 
       <h2>Step 6: Waste allowances by material</h2>
@@ -108,11 +108,11 @@ export default function Post() {
         Add waste <em>after</em> the net calculation, at ordering:
       </p>
       <ul>
-        <li>Weatherboard / composite boards: 5–10% (more for many short cuts)</li>
-        <li>Fibre cement sheet: 7–10%</li>
-        <li>Metal sheet: 5–8% depending on laps and cutting</li>
+        <li>Weatherboard / composite boards: 5 - 10% (more for many short cuts)</li>
+        <li>Fibre cement sheet: 7 - 10%</li>
+        <li>Metal sheet: 5 - 8% depending on laps and cutting</li>
         <li>Trims and battens: 5%</li>
-        <li>Panelised systems: 3–5%</li>
+        <li>Panelised systems: 3 - 5%</li>
       </ul>
 
       <h2>From quantities to price</h2>
@@ -128,11 +128,11 @@ export default function Post() {
 
       <h2>Common cladding takeoff mistakes</h2>
       <ul>
-        <li>Ordering from gross area — cladding goes on net area, not gross.</li>
+        <li>Ordering from gross area - cladding goes on net area, not gross.</li>
         <li>Forgetting gables and raked sections.</li>
-        <li>One waste rate for everything — battens and boards waste differently.</li>
-        <li>Counting openings as cladding — trims run <em>around</em> them, boards don&rsquo;t cover them.</li>
-        <li>Ignoring board coverage vs total width — laps shrink effective coverage.</li>
+        <li>One waste rate for everything - battens and boards waste differently.</li>
+        <li>Counting openings as cladding - trims run <em>around</em> them, boards don&rsquo;t cover them.</li>
+        <li>Ignoring board coverage vs total width - laps shrink effective coverage.</li>
       </ul>
 
       <h2>Do your takeoff now</h2>
