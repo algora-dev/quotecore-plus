@@ -141,6 +141,13 @@ function isAal1Allowed(pathname: string): boolean {
   return AAL1_ALLOWED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+/** AI-costing/assistant API routes (demo guard scope, Architecture V2 §11
+ *  interim). Calls carrying a demo cookie are treated as demo-context:
+ *  master-switch check + cookie-view rewrite so routes resolve the demo
+ *  tenant. Normal users' calls (no demo cookie) are untouched. */
+const DEMO_AI_API_PATTERN =
+  /^\/api\/(smart-assistant(\/|$)|takeoff\/(ai-scan-v3|scan-jobs)|app\/(parse-document|ai-quota))/;
+
 function isPublicPath(pathname: string): boolean {
   // All /free-* paths are public (calculators, generators, hub page).
   // This covers all current and future free tool routes without needing
@@ -259,6 +266,41 @@ export async function middleware(request: NextRequest) {
     const appUrl = new URL(pathname, `https://app.quote-core.com`);
     appUrl.search = request.nextUrl.search;
     return NextResponse.redirect(appUrl, 308);
+  }
+
+  // ── Demo AI guard (interim wiring; full route metering lands with the SA
+  // agent return). Runs before the static-asset skip because /api/* short-
+  // circuits there. Demo cookie present + AI route = demo-context call. ──
+  if (
+    DEMO_AI_API_PATTERN.test(pathname) &&
+    request.cookies.getAll().some(c => c.name.startsWith(DEMO_COOKIE_NAME))
+  ) {
+    const check = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/demo_ai_enabled`,
+      {
+        method: 'POST',
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Content-Type': 'application/json',
+        },
+        body: '{}',
+      }
+    );
+    const enabled = check.ok ? (await check.json()) === true : false;
+    if (!enabled) {
+      return NextResponse.json({ error: 'Demo AI is currently switched off.' }, { status: 403 });
+    }
+    const legacyPrefix = legacyAuthCookiePrefix();
+    const demoChunks = request.cookies.getAll().filter(c => c.name.startsWith(DEMO_COOKIE_NAME));
+    for (const c of request.cookies.getAll()) {
+      if (c.name.startsWith(AUTH_COOKIE_NAME) || (legacyPrefix && c.name.startsWith(legacyPrefix))) {
+        request.cookies.delete(c.name);
+      }
+    }
+    for (const c of demoChunks) {
+      request.cookies.set(c.name.replace(DEMO_COOKIE_NAME, AUTH_COOKIE_NAME), c.value);
+    }
+    return NextResponse.next({ request });
   }
 
   // Skip static assets and API routes
