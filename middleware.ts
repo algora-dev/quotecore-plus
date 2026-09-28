@@ -3,6 +3,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import {
   AUTH_COOKIE_NAME,
   authCookieOptions,
+  demoAuthCookieOptions,
+  DEMO_COOKIE_NAME,
   legacyAuthCookiePrefix,
 } from '@/app/lib/supabase/cookie-config';
 import {
@@ -54,6 +56,7 @@ const STABLE_VERCEL_ALIASES = new Set([
 const PUBLIC_PATHS = [
   '/login',
   '/signup',
+  '/demo',        // Public live demo entry (Architecture V2, switch-aware)
   '/accept',       // Quote acceptance (public)
   '/auth/callback', // OAuth callback
   '/auth/verify',   // Magic-link verification (impersonation flow)
@@ -268,6 +271,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Demo workspace routes (slug prefix demo-) authenticate via the DEMO
+  // cookie namespace (Architecture V2 §5): a demo session and a normal
+  // session coexist in one browser and never touch each other.
+  const firstSegment = pathname.split('/')[1] ?? '';
+  const isDemoWorkspace = firstSegment.startsWith('demo-');
+
   // Create Supabase client for middleware
   let response = NextResponse.next({ request });
 
@@ -277,7 +286,7 @@ export async function middleware(request: NextRequest) {
     {
       // Cross-subdomain auth cookies (see cookie-config.ts): sessions
       // refreshed here must stay valid on all quote-core.com subdomains.
-      cookieOptions: authCookieOptions(hostname),
+      cookieOptions: isDemoWorkspace ? demoAuthCookieOptions(hostname) : authCookieOptions(hostname),
       cookies: {
         get(name: string) {
           return request.cookies.get(name)?.value;
@@ -308,7 +317,7 @@ export async function middleware(request: NextRequest) {
   if (!user) {
     const hasAuthCookies = request.cookies
       .getAll()
-      .some(c => c.name.startsWith(AUTH_COOKIE_NAME));
+      .some(c => c.name.startsWith(isDemoWorkspace ? DEMO_COOKIE_NAME : AUTH_COOKIE_NAME));
     if (hasAuthCookies) {
       const { data: refreshData } = await supabase.auth.refreshSession();
       user = refreshData.user ?? null;
@@ -316,10 +325,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // No user (and refresh failed) — redirect to login
+  // (demo workspaces bounce to /demo for a fresh sandbox instead)
   if (!user) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    url.searchParams.set('redirect', pathname);
+    if (isDemoWorkspace) {
+      url.pathname = '/demo';
+      url.search = '';
+    } else {
+      url.pathname = '/login';
+      url.searchParams.set('redirect', pathname);
+    }
     return expireLegacyAuthCookies(request, NextResponse.redirect(url));
   }
 
