@@ -1,49 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createDemoBrowserClient } from '@/app/lib/demo/browser-client';
 
 /**
- * Start button for the public demo entry. Flow: anonymous sign-in into the
- * DEMO cookie namespace (isolated from any normal session in this browser)
- * → provision/resume sandbox via /api/demo/start → straight into the app.
+ * Auto-start launcher (owner direction 2026-09-28: no middle step).
+ * Landing on /demo immediately mints/resumes the anonymous demo session and
+ * provisions the sandbox, then routes straight into the workspace. The only
+ * visible state is a brief "preparing" beat; errors offer a single retry.
  */
 export function DemoLauncher() {
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const started = useRef(false);
 
-  async function start() {
-    setBusy(true);
-    setError(null);
-    try {
-      const demo = createDemoBrowserClient();
-      const { data: { session } } = await demo.auth.getSession();
-      if (!session) {
-        const { error: signInError } = await demo.auth.signInAnonymously();
-        if (signInError) throw new Error(signInError.message);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void (async () => {
+      try {
+        const demo = createDemoBrowserClient();
+        const { data: { session } } = await demo.auth.getSession();
+        if (!session) {
+          const { error: signInError } = await demo.auth.signInAnonymously();
+          if (signInError) throw new Error(signInError.message);
+        }
+        const res = await fetch('/api/demo/start', { method: 'POST' });
+        const body = (await res.json().catch(() => ({}))) as { slug?: string; error?: string };
+        if (!res.ok || !body.slug) throw new Error(body.error || 'Could not start the demo. Try again shortly.');
+        router.push('/' + body.slug);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not start the demo. Try again shortly.');
       }
-      const res = await fetch('/api/demo/start', { method: 'POST' });
-      const body = (await res.json().catch(() => ({}))) as { slug?: string; error?: string };
-      if (!res.ok || !body.slug) throw new Error(body.error || 'Could not start the demo. Try again shortly.');
-      router.push('/' + body.slug);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not start the demo. Try again shortly.');
-      setBusy(false);
-    }
+    })();
+  }, [router]);
+
+  if (error) {
+    return (
+      <div className="w-full max-w-sm rounded-lg border border-amber-200 bg-amber-50 p-4 text-center">
+        <p className="text-sm text-slate-700">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="qc-flow-control qc-button mt-3 px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors"
+        >
+          Try again
+        </button>
+      </div>
+    );
   }
 
   return (
-    <div className="mt-6">
-      <button
-        onClick={start}
-        disabled={busy}
-        className="w-full rounded-full bg-[#FF6B35] px-5 py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-60"
-      >
-        {busy ? 'Preparing your workspace…' : 'Start the demo'}
-      </button>
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+    <div className="flex flex-col items-center gap-3" role="status" aria-live="polite">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-orange-500" aria-hidden="true" />
+      <p className="text-sm text-slate-600">Preparing your demo workspace…</p>
     </div>
   );
 }
