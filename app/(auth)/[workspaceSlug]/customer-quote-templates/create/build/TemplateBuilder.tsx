@@ -20,6 +20,8 @@ interface Props {
 export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, sourceTemplate }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [storageBlocked, setStorageBlocked] = useState(false);
 
   // Company details (prefilled when copying an existing template)
@@ -32,19 +34,20 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
   const [uploading, setUploading] = useState(false);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLogoError(null);
     if (isOverStorage) { setStorageBlocked(true); return; }
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Validate file size (2MB max)
     if (file.size > 2 * 1024 * 1024) {
-      alert('File too large. Maximum size is 2MB.');
+      setLogoError('File too large. Maximum size is 2MB.');
       return;
     }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file.');
+      setLogoError('Please upload an image file.');
       return;
     }
 
@@ -71,17 +74,21 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
 
       setLogoUrl(urlData.publicUrl);
     } catch (error) {
-      alert('Logo upload failed: ' + (error as Error).message);
+      setLogoError('The logo could not be uploaded. Please try again.');
+      console.error('Logo upload failed:', error);
     } finally {
       setUploading(false);
     }
   };
 
   const handleLogoRemove = () => {
+    setLogoError(null);
     setLogoUrl(null);
   };
 
   const handleSave = async () => {
+    if (saving || uploading) return;
+    setSaveError(null);
     setSaving(true);
     try {
       const _templateId = await createCustomerQuoteTemplate({
@@ -98,7 +105,8 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
       router.refresh();
       router.push(`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`);
     } catch (error) {
-      alert('Failed to create template: ' + (error as Error).message);
+      setSaveError('The template could not be saved. Your changes are still here. Please try again.');
+      console.error('Failed to create template:', error);
       setSaving(false);
     }
   };
@@ -107,14 +115,14 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <QcLibrary className="qc-template-editor">
-      <div className="max-w-5xl mx-auto p-6 space-y-6">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
         {/* Header */}
         <div>
           <Link
             href={`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`}
-            className="qc-flow-link qc-library-control text-sm text-slate-500 hover:text-slate-700"
+            className="qc-page-back qc-flow-link qc-library-control text-sm text-slate-500 hover:text-slate-700"
           >
-            ← Back
+            ← Back to Document Templates
           </Link>
           <h1 className="qc-library-title text-2xl font-semibold text-slate-900 mt-2">
             {templateName}
@@ -127,7 +135,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
         </div>
 
         {/* Company Details Section */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 space-y-4">
           <h2 className="text-lg font-semibold text-slate-900">Company Details</h2>
           <p className="text-sm text-slate-500">
             These details will appear on customer quotes created with this template
@@ -193,6 +201,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
               Company Logo
             </label>
             
+            {logoError && <p id="template-logo-error" role="alert" className="qc-flow-error">{logoError}</p>}
             {!logoUrl ? (
               <div className="space-y-2">
                 <label
@@ -214,7 +223,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
                     type="file"
                     accept="image/*"
                     onChange={handleLogoUpload}
-                    disabled={uploading}
+                    disabled={uploading || saving} aria-invalid={!!logoError} aria-describedby={logoError ? 'template-logo-error' : undefined}
                     className="qc-flow-file qc-library-control"
                   />
                 </label>
@@ -226,7 +235,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
                     <img 
                       src={logoUrl} 
                       alt="Company Logo" 
-                      className="h-16 w-auto object-contain"
+                      className="h-16 w-auto max-w-[60%] object-contain"
                     />
                     <button data-qc-variant="ghost"
                       onClick={handleLogoRemove}
@@ -243,7 +252,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
         </div>
 
         {/* Footer Section */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 space-y-4">
           <h2 className="text-lg font-semibold text-slate-900">Footer / Terms & Conditions</h2>
           <p className="text-sm text-slate-500">
             This text will appear at the bottom of customer quotes (disclaimers, payment terms, etc.)
@@ -259,7 +268,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
         </div>
 
         {/* Preview */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 space-y-4">
           <h2 className="text-lg font-semibold text-slate-900">Example content preview</h2>
           <p className="qc-flow-description">Sample values only. Final document styling is provided by Document Studio.</p>
           
@@ -322,6 +331,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
           </div>
         </div>
 
+        {saveError && <p role="alert" className="qc-flow-error">{saveError}</p>}
         {/* Actions */}
         <div className="flex gap-3 justify-end pt-4">
           <Link
@@ -332,7 +342,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, so
           </Link>
           <button data-qc-variant="primary"
             onClick={handleSave}
-            disabled={saving || !companyName.trim()}
+            disabled={saving || uploading || !companyName.trim()}
             className="qc-button qc-flow-control qc-library-control "
           >
             {saving ? 'Saving...' : 'Save Template'}

@@ -70,7 +70,7 @@ export async function createEmailTemplate(input: {
 
   if (error) throw new Error(error.message);
 
-  revalidatePath('/');
+  revalidatePath('/[workspaceSlug]/resources/message-templates', 'page');
   return data;
 }
 
@@ -106,7 +106,7 @@ export async function updateEmailTemplate(
 
   if (error) throw new Error(error.message);
 
-  revalidatePath('/');
+  revalidatePath('/[workspaceSlug]/resources/message-templates', 'page');
 }
 
 export async function deleteEmailTemplate(id: string): Promise<void> {
@@ -131,5 +131,5 @@ export async function deleteEmailTemplate(id: string): Promise<void> {
     throw new Error(error.message);
   }
 
-  revalidatePath('/');
+  revalidatePath('/[workspaceSlug]/resources/message-templates', 'page');
 }

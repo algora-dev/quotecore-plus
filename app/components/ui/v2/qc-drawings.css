@@ -1,0 +1,105 @@
+/* C67 / C68: opt-in drawing chrome only. NEVER size/transform canvas elements
+   or Fabric's wrapper; the contained scrollport preserves model coordinates. */
+.qc-drawing-workspace { min-width: 0; max-width: 100%; display: grid; gap: 16px; padding: 0 0 24px; }
+.qc-drawing-workspace .qc-drawing-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.qc-drawing-workspace h1 { font-size: clamp(22px,3vw,28px); line-height: 1.25; color: var(--qc-text-primary); font-weight: 650; margin: 0; }
+.qc-drawing-workspace .qc-drawing-card { border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); background: var(--qc-bg-surface); padding: 16px; min-width: 0; }
+.qc-drawing-fields { display: grid; grid-template-columns: minmax(0,1fr) minmax(160px,230px); gap: 16px; }
+.qc-drawing-fields > div { min-width: 0; }
+.qc-drawing-workspace :is(input,select) { max-width: 100%; }
+.qc-drawing-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px; border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); background: var(--qc-bg-surface); }
+.qc-drawing-workspace .qc-button { box-shadow: none; height: auto; white-space: normal; animation: none; }
+.qc-drawing-workspace .qc-button[aria-pressed='true'] { background: var(--qc-selected-bg); color: var(--qc-selected-text); border-color: var(--qc-color-orange-ink); }
+.qc-drawing-primary-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-left: auto; }
+.qc-drawing-readout { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 16px; background: var(--qc-bg-subtle); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-control); }
+.qc-drawing-readout > div { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.qc-drawing-grid { display: grid; grid-template-columns: minmax(250px,280px) minmax(0,1fr); gap: 16px; align-items: start; min-width: 0; }
+.qc-drawing-measurements { min-width: 0; max-height: 700px; overflow: auto; overscroll-behavior: contain; }
+.qc-drawing-measurement { min-width: 0; padding: 12px; border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-control); background: var(--qc-bg-surface); }
+.qc-drawing-measurement[data-selected='true'] { background: var(--qc-selected-bg); border-color: var(--qc-color-orange-ink); }
+.qc-drawing-measurement-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.qc-drawing-measurement-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.qc-drawing-scrollport { min-width: 0; max-width: 100%; overflow: auto; overscroll-behavior: contain; border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); background: var(--qc-bg-subtle); max-height: 74vh; max-height: 74dvh; scrollbar-gutter: stable; }
+.qc-drawing-paper { width: max-content; min-width: 0; background: white; }
+.qc-drawing-canvas-section { min-width: 0; display: grid; gap: 8px; }
+.qc-drawing-scroll-hint { font-size: 12px; color: var(--qc-text-secondary); margin: 0; }
+.qc-drawing-help { padding: 12px 16px; border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); background: var(--qc-bg-surface); min-width: 0; }
+.qc-drawing-help summary { cursor: pointer; min-height: 44px; display: list-item; align-content: center; color: var(--qc-text-primary); font-weight: 600; }
+.qc-drawing-help ul { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 24px; padding: 8px 0 12px; list-style: none; }
+.qc-drawing-error { border: 1px solid var(--qc-color-danger); border-radius: var(--qc-radius-control); background: var(--qc-color-danger-bg); padding: 12px; color: var(--qc-color-danger); font-size: 14px; overflow-wrap: anywhere; }
+.qc-drawing-dialog { min-width: 0; display: grid; gap: 16px; }
+.qc-drawing-dialog-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.qc-drawing-dialog input { min-width: 0; }
+.qc-drawing-load { padding: 20px; border: 1px solid var(--qc-border-divider); background: var(--qc-bg-surface); border-radius: var(--qc-radius-card); }
+.qc-drawing-library-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,220px),1fr)); gap: 16px; }
+.qc-drawing-library-card { min-width: 0; border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); background: var(--qc-bg-surface); overflow: hidden; }
+.qc-drawing-library-card button.qc-drawing-card-open { display: block; width: 100%; padding: 12px; text-align: left; background: transparent; border: 0; cursor: pointer; border-radius: var(--qc-radius-card); }
+.qc-drawing-card-open h3, .qc-drawing-card-open p { overflow-wrap: anywhere; }
+.qc-drawing-card-actions { display: flex; flex-wrap: wrap; gap: 4px; border-top: 1px solid var(--qc-border-divider); padding: 8px 12px; }
+.qc-drawing-view-header { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.qc-drawing-view-image { display: block; width: auto; height: auto; max-width: 100%; max-height: 60dvh; object-fit: contain; margin: auto; }
+.qc-tool-help { display: inline-flex; vertical-align: middle; }
+.qc-tool-help-image { max-width: 100%; height: 160px; object-fit: contain; margin: 0 auto 16px; }
+.qc-tool-help-copy { color: var(--qc-text-body); line-height: 1.6; overflow-wrap: anywhere; }
+.qc-angle-tool { color: var(--qc-text-body); font: 14px/1.5 var(--qc-font-sans); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); background: var(--qc-bg-surface); box-shadow: var(--qc-shadow-floating); }
+.qc-angle-modal { padding: 20px; }
+.qc-angle-widget { position: fixed; z-index: 60; display: flex; flex-direction: column; width: 384px; max-width: calc(100vw - 24px); max-height: min(calc(100dvh - 24px),var(--qc-tool-available-height,800px)); overflow: hidden; }
+.qc-angle-body { min-height: 0; flex: 1; overflow: auto; overscroll-behavior: contain; padding: 16px; }
+.qc-angle-header, .qc-angle-footer { display: flex; flex-shrink: 0; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; }
+.qc-angle-header { border-bottom: 1px solid var(--qc-border-divider); background: var(--qc-bg-subtle); cursor: move; }
+.qc-angle-footer { border-top: 1px solid var(--qc-border-divider); }
+.qc-angle-tool :is(input:not([type=checkbox]):not([type=radio]), select) { min-width: 0; max-width: 100%; }
+.qc-angle-tool label:has(input[type='radio']), .qc-angle-tool label:has(input[type='checkbox']) { min-height: 44px; flex-wrap: wrap; }
+.qc-angle-resize { position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize; }
+.qc-drawing-workspace :is(button,summary,[tabindex]):focus-visible, .qc-angle-tool :is(button,input,summary):focus-visible, .qc-drawing-card-open:focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; }
+@media (hover:hover) {
+ .qc-drawing-card-open:hover { background: var(--qc-color-orange-wash); }
+ .qc-drawing-help summary:hover { color: var(--qc-color-orange-ink); }
+}
+.qc-drawing-card-open:active { background: var(--qc-selected-bg); box-shadow: inset 0 2px 3px #191b201a; }
+@media (max-width:1023px) {
+ .qc-drawing-grid { grid-template-columns: minmax(0,1fr); }
+ .qc-drawing-canvas-section { grid-row: 1; }
+ .qc-drawing-measurements { max-height: none; overflow: visible; }
+ .qc-drawing-primary-actions { width: 100%; margin-left: 0; border-top: 1px solid var(--qc-border-divider); padding-top: 12px; }
+}
+@media (max-width:639px) {
+ .qc-drawing-fields { grid-template-columns: minmax(0,1fr); }
+ .qc-drawing-workspace .qc-drawing-card { padding: 12px; }
+ .qc-drawing-help ul { grid-template-columns: minmax(0,1fr); }
+ .qc-drawing-primary-actions .qc-button { flex: 1 1 auto; }
+ .qc-drawing-dialog-actions .qc-button { flex: 1 1 auto; }
+ .qc-angle-widget { left: 12px !important; right: 12px !important; top: max(12px,var(--qc-tool-viewport-top,12px)) !important; width: auto; height: min(620px,var(--qc-tool-available-height,calc(100dvh - 24px))) !important; }
+ .qc-angle-header { cursor: default; }
+ .qc-angle-resize { display: none; }
+ .qc-angle-footer { padding-bottom: max(12px,env(safe-area-inset-bottom)); }
+}
+@media (max-width:767px), (pointer:coarse) {
+ .qc-angle-tool :is(input:not([type=checkbox]):not([type=radio]),select), .qc-drawing-workspace :is(input,select) { font-size: 16px; min-height: 44px; }
+}
+@media (prefers-reduced-motion:reduce) { .qc-drawing-workspace *, .qc-angle-tool * { animation: none !important; transition: none !important; } }
+@media (forced-colors:active) {
+ .qc-drawing-measurement[data-selected='true'] { border: 2px solid Highlight; }
+ .qc-drawing-library-card, .qc-angle-tool { border-color: CanvasText; }
+}
+
+/* C67 library/preview frames. Long names and actions wrap; never hover-only. */
+.qc-drawing-library { min-width:0; }
+.qc-drawing-library-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
+.qc-drawing-library-heading > div { min-width:0; }
+.qc-drawing-library > .qc-drawing-card { margin-bottom:20px; }
+.qc-drawing-thumbnail { background:#f7f7f8; height:170px; display:flex; justify-content:center; align-items:center; border-radius:12px; margin-bottom:12px; }
+.qc-drawing-thumbnail img { width:100%; height:100%; object-fit:contain; }
+.qc-drawing-card-open strong,.qc-drawing-card-open span { display:block; overflow-wrap:anywhere; }
+.qc-drawing-card-open span { color:var(--qc-text-secondary); font-size:13px; margin-top:6px; }
+.qc-drawing-card-actions { flex-wrap:wrap; }
+.qc-drawing-viewer { padding:20px; min-width:0; }
+.qc-drawing-viewer-image { background:#f7f7f8; border-radius:12px; overflow:hidden; display:flex; justify-content:center; }
+.qc-drawing-viewer-image img { max-width:100%; height:auto; max-height:60dvh; object-fit:contain; }
+@media(max-width:639px){ .qc-drawing-library-heading { align-items:flex-start; } .qc-drawing-viewer { padding:16px; } }
+
+.qc-drawing-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.qc-drawing-library .qc-drawing-card { min-width:0; border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-card); background:var(--qc-bg-surface); padding:20px; }
+
+.qc-drawing-identity { flex:1 1 220px; min-width:0; }
+.qc-drawing-identity p { overflow-wrap:anywhere; }

@@ -1,0 +1,32 @@
+path,change,scope
+app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/actions.ts,modified,authorised cache revalidation only
+app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/TemplateBuilder.tsx,modified,ordinary feedback/list freshness
+app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/actions.ts,modified,authorised cache revalidation only
+app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/actions.ts,modified,authorised cache revalidation only
+app/(auth)/[workspaceSlug]/drawings/[id]/edit/edit-form.tsx,modified,drawing presentation/feedback; engine retained
+app/(auth)/[workspaceSlug]/drawings/[id]/edit/page.tsx,modified,drawing presentation/feedback; engine retained
+app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorModal.tsx,modified,drawing presentation/feedback; engine retained
+app/(auth)/[workspaceSlug]/drawings/draw/AngleCalculatorWidget.tsx,modified,drawing presentation/feedback; engine retained
+app/(auth)/[workspaceSlug]/drawings/draw/FlashingCanvas.tsx,modified,drawing presentation/feedback; engine retained
+app/(auth)/[workspaceSlug]/drawings/error.tsx,new,drawing presentation/feedback; engine retained
+app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx,modified,drawing presentation/feedback; engine retained
+app/(auth)/[workspaceSlug]/drawings/page.tsx,modified,drawing presentation/feedback; engine retained
+app/(auth)/[workspaceSlug]/inbox/InboxList.tsx,modified,confirmed-result/partial outcome presentation
+app/(auth)/[workspaceSlug]/inbox/inbox-outcomes.ts,new,confirmed-result/partial outcome presentation
+app/(auth)/[workspaceSlug]/invoices/template-actions.ts,modified,authorised cache revalidation only
+app/(auth)/[workspaceSlug]/material-orders/template-actions.ts,modified,authorised cache revalidation only
+app/(auth)/[workspaceSlug]/quotes/[id]/summary/CurrencySelector.tsx,modified,ordinary feedback/list freshness
+app/(auth)/[workspaceSlug]/quotes/[id]/summary/SummaryFileRow.tsx,modified,ordinary feedback/list freshness
+app/(auth)/[workspaceSlug]/resources/actions.ts,modified,authorised cache revalidation only
+app/(auth)/[workspaceSlug]/resources/email-actions.ts,modified,authorised cache revalidation only
+app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx,modified,ordinary feedback/list freshness
+app/(auth)/[workspaceSlug]/supplier/actions.ts,modified,authorised cache revalidation only
+app/(auth)/[workspaceSlug]/supplier-directory/actions.ts,modified,authorised cache revalidation only
+app/(auth)/[workspaceSlug]/tutorials/TutorialModal.tsx,modified,tutorial presentation/dialogs; guide launch retained
+app/(auth)/[workspaceSlug]/tutorials/TutorialsClient.tsx,modified,tutorial presentation/dialogs; guide launch retained
+app/(auth)/[workspaceSlug]/tutorials/tutorials.css,new,tutorial presentation/dialogs; guide launch retained
+app/api/alerts/bulk/route.ts,modified,authorised error/outcome contract
+app/api/invoices/templates/route.ts,modified,authorised error/outcome contract
+app/components/ui/v2/QcDrawingWorkspace.tsx,new,additive shared drawing chrome
+app/components/ui/v2/qc-drawings.css,new,additive shared drawing chrome
+middleware.ts,modified,authorised exact manifest asset bypass

@@ -55,7 +55,9 @@ export async function createInvoiceTemplate(input: InvoiceTemplateInput): Promis
     .single();
 
   if (error || !data) throw error ?? new Error('Failed to create template');
-  revalidatePath('/[workspaceSlug]/resources/invoice-templates');
+  revalidatePath('/[workspaceSlug]/resources/invoice-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/invoice-templates/[id]/edit', 'page');
   return data.id;
 }
 
@@ -72,7 +74,9 @@ export async function updateInvoiceTemplate(id: string, input: Partial<InvoiceTe
     .eq('company_id', profile.company_id);
 
   if (error) throw error;
-  revalidatePath('/[workspaceSlug]/resources/invoice-templates');
+  revalidatePath('/[workspaceSlug]/resources/invoice-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/invoice-templates/[id]/edit', 'page');
 }
 
 export async function deleteInvoiceTemplate(id: string) {
@@ -86,5 +90,7 @@ export async function deleteInvoiceTemplate(id: string) {
     .eq('company_id', profile.company_id);
 
   if (error) throw error;
-  revalidatePath('/[workspaceSlug]/resources/invoice-templates');
+  revalidatePath('/[workspaceSlug]/resources/invoice-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
+  revalidatePath('/[workspaceSlug]/resources/invoice-templates/[id]/edit', 'page');
 }

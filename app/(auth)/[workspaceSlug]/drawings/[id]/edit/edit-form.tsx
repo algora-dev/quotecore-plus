@@ -6,6 +6,8 @@ import { Canvas } from 'fabric';
 import { updateFlashingWithImage } from '../../actions';
 import type { FlashingLibraryRow } from '@/app/lib/types';
 import Image from 'next/image';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 
 interface Props {
   flashing: FlashingLibraryRow;
@@ -27,6 +29,7 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
   const [name, setName] = useState(flashing.name);
   const [description, setDescription] = useState(flashing.description || '');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState(flashing.image_url);
   
   // Hidden canvas for regeneration
@@ -133,6 +136,7 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
   const handleSave = async () => {
     if (!fabricRef.current) return;
     
+    setSaveError(null);
     setSaving(true);
     try {
       const canvas = fabricRef.current;
@@ -170,14 +174,15 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
       router.push(`/${workspaceSlug}/drawings`);
     } catch (err: any) {
       console.error('Failed to update flashing:', err);
-      alert(`Error: ${err.message}`);
+      setSaveError('The drawing could not be saved. Keep this page open and try again.');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="space-y-6">
+    <QcJourney className="space-y-6">
+      {saveError && <p role="alert" className="qc-flow-error">{saveError}</p>}
       {/* Hidden canvas for regeneration */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
       
@@ -204,23 +209,23 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
         <h3 className="text-sm font-semibold text-slate-900 mb-3">Details</h3>
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+            <label htmlFor="drawing-edit-name" className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
             <input
-              type="text"
+              id="drawing-edit-name" type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Custom Ridge Cap"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+              className="qc-input w-full"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+            <label htmlFor="drawing-edit-description" className="block text-sm font-medium text-slate-700 mb-1">Description</label>
             <input
-              type="text"
+              id="drawing-edit-description" type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+              className="qc-input w-full"
             />
           </div>
         </div>
@@ -235,18 +240,18 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
           <p className="text-xs text-slate-600 mb-3">
             Update measurement values. These changes will apply to the saved image data.
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {measurements.map((m, index) => (
               <div key={m.id} className="border border-slate-200 rounded-lg p-3">
-                <label className="block text-xs text-slate-600 mb-1">
+                <label htmlFor={`drawing-edit-measurement-${m.id}`} className="block text-xs text-slate-600 mb-1">
                   {m.type === 'length' ? 'Length' : 'Angle'} #{index + 1}
                 </label>
                 <div className="flex items-center gap-2">
                   <input
-                    type="number"
+                    id={`drawing-edit-measurement-${m.id}`} type="number"
                     value={m.value}
                     onChange={(e) => handleUpdateMeasurement(m.id, parseFloat(e.target.value) || 0)}
-                    className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-black focus:border-black"
+                    className="qc-input w-full"
                   />
                   <span className="text-sm text-slate-600">
                     {/* Render the stored unit on the measurement (set at
@@ -263,21 +268,21 @@ export function EditFlashingForm({ flashing, workspaceSlug }: Props) {
       )}
 
       {/* Actions */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 flex gap-3 justify-end">
-        <button
+      <div className="bg-white border border-slate-200 rounded-lg p-4 flex flex-wrap gap-3 justify-end">
+        <QcButton
           onClick={() => router.push(`/${workspaceSlug}/drawings`)}
-          className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50 transition-all shadow-sm"
+          disabled={saving}
         >
           Cancel
-        </button>
-        <button
+        </QcButton>
+        <QcButton
           onClick={handleSave}
           disabled={saving || !name.trim()}
-          className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all shadow-sm disabled:opacity-50"
+          variant="primary" pending={saving}
         >
           {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+        </QcButton>
       </div>
-    </div>
+    </QcJourney>
   );
 }

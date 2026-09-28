@@ -1727,6 +1727,7 @@ export async function saveSupplierCatalog(catalogId: string): Promise<
       return { ok: false, message: insertError?.message ?? 'Failed to add catalogue.' };
     }
 
+    revalidatePath('/[workspaceSlug]/catalogs', 'page');
     return { ok: true, newCatalogId: newCat.id };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };

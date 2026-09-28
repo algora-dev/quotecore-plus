@@ -1,7 +1,10 @@
 'use client';
 
 import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { useQcActionNotice } from '@/app/components/ui/v2/QcActionNotice';
+import '@/app/components/ui/v2/qc-drawings.css';
 import { useRouter } from 'next/navigation';
 import { createFlashing, deleteFlashing } from './actions';
 import type { FlashingLibraryRow } from '@/app/lib/types';
@@ -51,7 +54,7 @@ async function downloadFlashing(flashing: FlashingLibraryRow) {
     URL.revokeObjectURL(url);
   } catch (err: any) {
     console.error('Download failed:', err);
-    alert(`Could not download flashing: ${err.message || 'unknown error'}`);
+    throw new Error('The image could not be downloaded. Please try again.');
   }
 }
 
@@ -60,34 +63,39 @@ async function downloadFlashing(flashing: FlashingLibraryRow) {
  * avoids dragging app chrome into the printed page; `window.print()` is fired
  * after the image has loaded so the browser has the correct intrinsic size.
  */
-function printFlashing(flashing: FlashingLibraryRow) {
-  const w = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
-  if (!w) {
-    alert('Pop-up blocked. Please allow pop-ups for printing.');
+function printFlashing(flashing: FlashingLibraryRow, onError: (message: string) => void) {
+  // Keep a same-origin handle for the print preview, then sever the opener before
+  // adding content. Passing noopener to window.open can return null even on success.
+  const preview = window.open('', '_blank', 'width=900,height=700');
+  if (!preview) {
+    onError('The print window was blocked. Allow pop-ups, then try Print again.');
     return;
   }
-  const safeName = flashing.name.replace(/</g, '&lt;');
-  const safeDesc = (flashing.description || '').replace(/</g, '&lt;');
-  w.document.write(`<!doctype html>
-<html><head><title>${safeName}</title>
-<style>
-  body { margin: 0; padding: 24px; font-family: system-ui, -apple-system, Segoe UI, sans-serif; color: #0f172a; }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  p { margin: 0 0 16px; color: #475569; font-size: 13px; }
-  img { display: block; max-width: 100%; max-height: 80vh; margin: 0 auto; }
-  @media print { p, h1 { color: #000; } }
-</style>
-</head><body>
-  <h1>${safeName}</h1>
-  ${safeDesc ? `<p>${safeDesc}</p>` : ''}
-  <img id="img" src="${flashing.image_url}" alt="${safeName}" />
-  <script>
-    var img = document.getElementById('img');
-    function go() { setTimeout(function () { window.focus(); window.print(); }, 100); }
-    if (img && !img.complete) { img.onload = go; img.onerror = go; } else { go(); }
-  </script>
-</body></html>`);
-  w.document.close();
+  preview.opener = null;
+  preview.document.title = flashing.name;
+  const style = preview.document.createElement('style');
+  style.textContent = `body{margin:0;padding:24px;font-family:system-ui,sans-serif;color:#0f172a}
+    h1{font-size:18px;margin:0 0 4px}p{margin:0 0 16px;color:#475569;font-size:13px}
+    img{display:block;max-width:100%;max-height:80vh;margin:0 auto}
+    @media print{p,h1{color:#000}}`;
+  preview.document.head.appendChild(style);
+  const heading = preview.document.createElement('h1');
+  heading.textContent = flashing.name;
+  preview.document.body.appendChild(heading);
+  if (flashing.description) {
+    const description = preview.document.createElement('p');
+    description.textContent = flashing.description;
+    preview.document.body.appendChild(description);
+  }
+  const image = preview.document.createElement('img');
+  image.alt = flashing.name;
+  image.onload = () => { if (!preview.closed) { preview.focus(); preview.print(); } };
+  image.onerror = () => {
+    onError('The image could not load in the print window. Close it and try again.');
+    image.alt = 'Image unavailable. Close this window and try again.';
+  };
+  image.src = flashing.image_url;
+  preview.document.body.appendChild(image);
 }
 
 /**
@@ -120,9 +128,9 @@ function FlashingDropZone({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      onClick={onClick}
+      onClick={() => { if (!saving) onClick(); }}
       role="button" tabIndex={0} aria-label={`Choose ${featureSingularLower} image`}
-      aria-busy={saving}
+      aria-busy={saving} aria-disabled={saving}
       onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
       className={`
         qc-flow-dropzone relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition
@@ -157,7 +165,7 @@ function FlashingDropZone({
         )}
       </div>
       {error && (
-        <p className="text-xs text-red-600 mt-2 text-center">{error}</p>
+        <p role="alert" className="text-sm text-red-700 mt-2 text-center">{error}</p>
       )}
     </div>
   );
@@ -174,6 +182,40 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
   const [viewingFlashing, setViewingFlashing] = useState<FlashingLibraryRow | null>(null);
   const [deleteFlashingId, setDeleteFlashingId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const downloadBusy = useRef(false);
+  const { notice, showNotice } = useQcActionNotice();
+  // Reconcile an explicit server refresh; do not poll or remount active editors.
+  useEffect(() => setFlashings(initialFlashings), [initialFlashings]);
+
+  async function handleDownload(flashing: FlashingLibraryRow) {
+    if (downloadBusy.current) return;
+    downloadBusy.current = true;
+    setDownloadingId(flashing.id);
+    setOperationError(null);
+    try {
+      await downloadFlashing(flashing);
+      showNotice({ tone: 'success', title: 'Download started', description: `Your browser is downloading ${flashing.name}.` });
+    } catch {
+      reportOperationError('The image could not be downloaded. Please try again.');
+    } finally {
+      downloadBusy.current = false;
+      setDownloadingId(null);
+    }
+  }
+
+  function reportOperationError(message: string) {
+    setOperationError(message);
+    showNotice({ tone: 'danger', title: 'Image unavailable', description: message });
+  }
+
+  function handlePrint(flashing: FlashingLibraryRow) {
+    setOperationError(null);
+    try { printFlashing(flashing, reportOperationError); }
+    catch { reportOperationError('The print preview could not open. Please try again.'); }
+  }
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [storageBlocked, setStorageBlocked] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -204,7 +246,9 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
+    setUploadError(null);
     try {
       const fd = new FormData(e.currentTarget);
       const imageFile = fd.get('image') as File;
@@ -229,297 +273,161 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
           setShowUploadForm(false);
           setUpgradeOpen(true);
         } else {
-          alert(result.code === 'internal_error' ? `Error: ${result.message}` : 'Could not create flashing.');
+          setUploadError(result.code === 'internal_error' ? result.message : `Could not upload this ${featureSingularLower}. Please try again.`);
         }
         return;
       }
 
-      setFlashings([...flashings, result.data]);
+      setFlashings(current => [...current, result.data]);
+      showNotice({ tone: 'success', title: 'Image added', description: `${result.data.name} is now in your library.`, focus: true });
       setShowUploadForm(false);
       setUploadFileName(null);
       setUploadError(null);
       // Form will be unmounted when upload form closes, no need to reset
     } catch (err: any) {
       console.error('Failed to create flashing:', err);
-      alert(`Error creating flashing: ${err.message || 'Unknown error'}\n\nCheck browser console for details.`);
+      setUploadError(`The upload could not be completed. Check your connection and try again.`);
     } finally {
       setSaving(false);
     }
   }
 
   async function confirmDeleteFlashing() {
-    if (!deleteFlashingId) return;
+    if (!deleteFlashingId || deleteLoading) return;
+    setDeleteError(null);
     setDeleteLoading(true);
     try {
       await deleteFlashing(deleteFlashingId);
-      setFlashings(flashings.filter((f) => f.id !== deleteFlashingId));
+      setFlashings(current => current.filter((f) => f.id !== deleteFlashingId));
+      showNotice({ tone: 'success', title: 'Removed from library', description: `The ${featureSingularLower} has been deleted.`, focus: true });
       setDeleteFlashingId(null);
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      setDeleteError(`The ${featureSingularLower} could not be deleted. Please try again.`);
     } finally {
       setDeleteLoading(false);
     }
   }
 
   return (
-    <QcJourney><div>
-      <div className="mb-6 flex justify-between items-center">
-        <p className="text-sm text-slate-500">
-          {flashings.length} {flashings.length === 1 ? featureSingularLower : featureLower} in library
-        </p>
-        <div className="flex gap-2 items-center">
-          {flashingLimit !== null && (
-            <span className="text-xs text-slate-500 mr-1">
-              {effectiveCount}/{flashingLimit} used
-            </span>
-          )}
-          <button data-qc-variant="primary"
-            onClick={() => {
-              if (atCap) {
-                setUpgradeOpen(true);
-                return;
-              }
-              router.push(`/${workspaceSlug}/drawings/draw`);
-            }}
+    <QcJourney><div className="qc-drawing-library">
+      {notice}
+      <div className="qc-drawing-library-heading">
+        <div><h2 className="text-lg font-semibold">Your library</h2>
+          <p className="text-sm text-slate-500">{flashings.length} {flashings.length === 1 ? featureSingularLower : featureLower}</p>
+          {flashingLimit !== null && <p className="text-xs text-slate-500">{effectiveCount}/{flashingLimit} used</p>}
+        </div>
+        <div className="qc-drawing-actions">
+          <QcButton variant="primary"
+            onClick={() => { if (atCap) { setUpgradeOpen(true); return; } router.push(`/${workspaceSlug}/drawings/draw`); }}
             data-copilot={isRoofing ? 'draw-flashing' : 'create-drawing'}
-            title={atCap ? `Upgrade to create more ${featureLower}` : `Create a new ${featureSingularLower}`}
-            className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all shadow-sm hover:shadow-md"
-          >
-            Create
-          </button>
-          <button data-qc-variant="primary"
-            onClick={() => {
-              if (atCap) { setUpgradeOpen(true); return; }
-              if (isOverStorage) { setStorageBlocked(true); return; }
-              setShowUploadForm(true);
-            }}
-            title={atCap ? `Upgrade to upload more ${featureLower}` : `Upload an existing ${featureSingularLower}`}
-            className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all shadow-sm hover:shadow-md"
-          >
-            Upload
-          </button>
+            title={atCap ? `Upgrade to create more ${featureLower}` : `Create a new ${featureSingularLower}`}>
+            Create drawing
+          </QcButton>
+          <QcButton variant="secondary" onClick={() => {
+            if (atCap) { setUpgradeOpen(true); return; }
+            if (isOverStorage) { setStorageBlocked(true); return; }
+            setShowUploadForm(true);
+          }}>Upload image</QcButton>
         </div>
       </div>
 
-      {showUploadForm && (
-        <div className="mb-6 p-4 border border-slate-200 rounded-xl bg-white">
-          <h3 className="font-semibold text-slate-900 mb-3">Upload New {featureLabelSingular}</h3>
-          <form onSubmit={handleCreate} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="qc-flow-label block text-xs text-slate-500 mb-1">Name *</label>
-                <input aria-label={isRoofing ? 'e.g., Ridge Flashing' : 'e.g., Site Plan'}
-                  name="name"
-                  required
-                  placeholder={isRoofing ? 'e.g., Ridge Flashing' : 'e.g., Site Plan'}
-                  className="qc-input w-full px-2 py-1 text-sm border border-slate-300 rounded"
-                />
-              </div>
-              <div>
-                <label className="qc-flow-label block text-xs text-slate-500 mb-1">Description</label>
-                <input aria-label="Optional description"
-                  name="description"
-                  placeholder="Optional description"
-                  className="qc-input w-full px-2 py-1 text-sm border border-slate-300 rounded"
-                />
-              </div>
-            </div>
-            <FlashingDropZone
-              isDragging={isDragging}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setIsDragging(false);
-                const file = e.dataTransfer.files[0];
-                if (file) {
-                  const err = validateUploadFile(file);
-                  if (err) { setUploadError(err); return; }
-                  setUploadError(null);
-                  const dt = new DataTransfer();
-                  dt.items.add(file);
-                  if (fileInputRef.current) {
-                    fileInputRef.current.files = dt.files;
-                    setUploadFileName(file.name);
-                  }
-                }
-              }}
-              onClick={() => fileInputRef.current?.click()}
-              fileName={uploadFileName}
-              saving={saving}
-              featureSingularLower={featureSingularLower}
-              error={uploadError}
-            />
-            <input
-              ref={fileInputRef}
-              type="file"
-              name="image"
-              accept="image/png,image/jpeg,image/webp"
-              required
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const err = validateUploadFile(file);
-                  if (err) { setUploadError(err); return; }
-                  setUploadError(null);
-                  setUploadFileName(file.name);
-                }
-              }}
-            />
-            <div className="flex gap-2 pt-2">
-              <button data-qc-variant="primary"
-                type="submit"
-                disabled={saving}
-                className="qc-flow-control qc-button px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
-              >
-                {saving ? 'Uploading...' : 'Upload'}
-              </button>
-              <button data-qc-variant="ghost"
-                type="button"
-                onClick={() => {
-                  setShowUploadForm(false);
-                  setUploadFileName(null);
-                  setUploadError(null);
-                }}
-                className="qc-flow-control qc-button px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {flashings.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-slate-300 rounded-xl bg-slate-50">
-          <p className="text-slate-500 mb-2">No {featureLower} in your library yet</p>
-          <p className="text-xs text-slate-400">
-            Upload standard {featureSingularLower} designs to use in material order forms
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {flashings.map((flashing) => (
-            <div
-              key={flashing.id}
-              onClick={() => setViewingFlashing(flashing)}
-              title="Click to view"
-              className="border border-slate-200 rounded-xl bg-white p-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group relative"
-            >
-              <div className="aspect-square bg-slate-100 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
-                <Image
-                  src={flashing.image_url}
-                  alt={flashing.name}
-                  width={200}
-                  height={200}
-                  className="object-contain"
-                />
-              </div>
-              <div>
-                <h3 className="font-medium text-sm text-slate-900">{flashing.name}</h3>
-                {flashing.description && (
-                  <p className="text-xs text-slate-500 mt-0.5">{flashing.description}</p>
-                )}
-              </div>
-              {/* Hover-reveal action row: download, print, delete. Same icon
-                  language as the quote summary pages (icon-btn class + matching
-                  outline SVGs) so the action vocabulary is consistent. */}
-              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                <button aria-label={`Download ${featureSingularLower} image`}
-                  onClick={(e) => { e.stopPropagation(); downloadFlashing(flashing); }}
-                  title={`Download ${featureSingularLower} image`}
-                  className="qc-icon-button qc-flow-control icon-btn border-slate-300 bg-white"
-                >
-                  <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                </button>
-                <button aria-label={`Print ${featureSingularLower} image`}
-                  onClick={(e) => { e.stopPropagation(); printFlashing(flashing); }}
-                  title={`Print ${featureSingularLower} image`}
-                  className="qc-icon-button qc-flow-control icon-btn border-slate-300 bg-white"
-                >
-                  <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                </button>
-                <button aria-label={`Delete ${featureSingularLower}`}
-                  onClick={(e) => { e.stopPropagation(); setDeleteFlashingId(flashing.id); }}
-                  title={`Delete ${featureSingularLower}`}
-                  className="qc-icon-button qc-flow-control icon-btn icon-btn--danger border-slate-300 bg-white"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Delete Modal */}
-      {deleteFlashingId && (
-        <QcJourneyDialog label="Drawing library" size="sm">
-          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Delete {featureLabelSingular}</h3>
-            <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The {featureSingularLower} will be permanently deleted.</p>
-            <div className="flex gap-3 justify-end mt-6">
-              <button data-qc-variant="ghost" onClick={() => setDeleteFlashingId(null)} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
-              <button data-qc-variant="danger" onClick={confirmDeleteFlashing} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
-            </div>
+      {showUploadForm && <section className="qc-drawing-card" aria-labelledby="drawing-upload-heading">
+        <h3 id="drawing-upload-heading" className="text-lg font-semibold mb-3">Upload {featureLabelSingular}</h3>
+        <form onSubmit={handleCreate} className="space-y-3" aria-busy={saving}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label className="qc-flow-label" htmlFor="drawing-upload-name">Name *</label>
+              <input id="drawing-upload-name" name="name" required disabled={saving}
+                placeholder={isRoofing ? 'e.g., Ridge Flashing' : 'e.g., Site Plan'} className="qc-input w-full" /></div>
+            <div><label className="qc-flow-label" htmlFor="drawing-upload-description">Description</label>
+              <input id="drawing-upload-description" name="description" disabled={saving}
+                placeholder="Optional description" className="qc-input w-full" /></div>
           </div>
-        </QcJourneyDialog>
-      )}
+          <FlashingDropZone isDragging={isDragging}
+            onDragOver={e => { e.preventDefault(); if (!saving) setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={e => {
+              e.preventDefault(); setIsDragging(false); if (saving) return;
+              const file = e.dataTransfer.files[0];
+              if (file) {
+                const err = validateUploadFile(file);
+                if (err) { setUploadError(err); return; }
+                setUploadError(null);
+                const dt = new DataTransfer(); dt.items.add(file);
+                if (fileInputRef.current) { fileInputRef.current.files = dt.files; setUploadFileName(file.name); }
+              }
+            }} onClick={() => fileInputRef.current?.click()} fileName={uploadFileName}
+            saving={saving} featureSingularLower={featureSingularLower} error={uploadError} />
+          <input ref={fileInputRef} type="file" name="image" accept="image/png,image/jpeg,image/webp"
+            disabled={saving} className="hidden" aria-label="Image file"
+            onChange={e => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const err = validateUploadFile(file);
+                if (err) { setUploadError(err); return; }
+                setUploadError(null); setUploadFileName(file.name);
+              }
+            }} />
+          <div className="qc-drawing-actions">
+            <QcButton variant="primary" type="submit" pending={saving}>{saving ? 'Uploading...' : 'Upload'}</QcButton>
+            <QcButton disabled={saving} onClick={() => { setShowUploadForm(false); setUploadFileName(null); setUploadError(null); }}>Cancel</QcButton>
+          </div>
+        </form>
+      </section>}
+
+      {flashings.length === 0 ? <div className="qc-drawing-card text-center py-12">
+        <h3 className="font-semibold">No {featureLower} yet</h3>
+        <p className="text-sm text-slate-500 mt-2">Create a drawing or upload an image to reuse in your material orders.</p>
+      </div> : <div className="qc-drawing-library-grid">
+        {flashings.map(flashing => <article key={flashing.id} className="qc-drawing-library-card">
+          <button type="button" className="qc-drawing-card-open" onClick={() => { setOperationError(null); setViewingFlashing(flashing); }}
+            aria-label={`View ${flashing.name}`}>
+            <div className="qc-drawing-thumbnail"><Image src={flashing.image_url} alt="" width={200} height={200} className="object-contain" /></div>
+            <strong>{flashing.name}</strong>{flashing.description && <span>{flashing.description}</span>}
+          </button>
+          <div className="qc-drawing-card-actions">
+            <QcButton size="sm" disabled={downloadingId !== null} aria-label={`Download ${flashing.name}`} onClick={() => void handleDownload(flashing)}>
+              {downloadingId === flashing.id ? 'Downloading...' : 'Download'}</QcButton>
+            <QcButton size="sm" aria-label={`Print ${flashing.name}`} onClick={() => handlePrint(flashing)}>Print</QcButton>
+            <QcButton size="sm" variant="danger" aria-label={`Delete ${flashing.name}`} onClick={() => { setDeleteError(null); setDeleteFlashingId(flashing.id); }}>Delete</QcButton>
+          </div>
+        </article>)}
+      </div>}
+
+      {deleteFlashingId && <QcJourneyDialog label={`Delete ${featureLabelSingular}`} size="sm" pending={deleteLoading}>
+        <div className="p-5">
+          <h3 className="text-lg font-semibold">Delete {featureLabelSingular}?</h3>
+          <p className="text-sm text-slate-600 mt-2">This action cannot be undone. The {featureSingularLower} will be permanently deleted.</p>
+          {deleteError && <p role="alert" className="text-sm text-red-700 mt-3">{deleteError}</p>}
+          <div className="qc-drawing-actions mt-5">
+            <QcButton disabled={deleteLoading} onClick={() => setDeleteFlashingId(null)}>Cancel</QcButton>
+            <QcButton variant="danger" pending={deleteLoading} onClick={confirmDeleteFlashing}>{deleteLoading ? 'Deleting...' : 'Delete'}</QcButton>
+          </div>
+        </div>
+      </QcJourneyDialog>}
 
       <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-      <UpgradeModal
-        open={upgradeOpen}
-        onClose={() => setUpgradeOpen(false)}
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)}
         title={`${featureLabelSingular} library full on the ${effectivePlanCode} plan`}
         description={`You've reached your ${flashingLimit ?? 0} ${featureSingularLower} limit. Upgrade your plan to add more ${featureSingularLower} designs to your library.`}
-        recommendedPlan="pro"
-      />
+        recommendedPlan="pro" />
 
-      {/* View Flashing Modal */}
-      {viewingFlashing && (
-
-        <QcJourneyDialog label="Drawing library" size="md">
-          <div className="bg-white rounded-xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4 gap-3">
-              <div className="min-w-0">
-                <h3 className="text-lg font-semibold text-slate-900 truncate">{viewingFlashing.name}</h3>
-                {viewingFlashing.description && (
-                  <p className="text-sm text-slate-500 mt-0.5">{viewingFlashing.description}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <button aria-label={`Download ${featureSingularLower} image`}
-                  onClick={() => downloadFlashing(viewingFlashing)}
-                  title={`Download ${featureSingularLower} image`}
-                  className="qc-icon-button qc-flow-control icon-btn border-slate-300 bg-white"
-                >
-                  <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                </button>
-                <button aria-label={`Print ${featureSingularLower} image`}
-                  onClick={() => printFlashing(viewingFlashing)}
-                  title={`Print ${featureSingularLower} image`}
-                  className="qc-icon-button qc-flow-control icon-btn border-slate-300 bg-white"
-                >
-                  <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                </button>
-                <button aria-label="Close" onClick={() => setViewingFlashing(null)} title="Close" className="qc-icon-button qc-flow-control icon-btn border-slate-300 bg-white">
-                  <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-            </div>
-            <div className="bg-slate-50 rounded-lg p-4 flex items-center justify-center">
-              <Image
-                src={viewingFlashing.image_url}
-                alt={viewingFlashing.name}
-                width={800}
-                height={800}
-                className="object-contain max-h-[70vh]"
-              />
-            </div>
+      {viewingFlashing && <QcJourneyDialog label={`View ${viewingFlashing.name}`} size="lg">
+        <div className="qc-drawing-viewer">
+          <div className="qc-drawing-library-heading">
+            <div className="min-w-0"><h3 className="text-lg font-semibold break-words">{viewingFlashing.name}</h3>
+              {viewingFlashing.description && <p className="text-sm text-slate-500 break-words">{viewingFlashing.description}</p>}</div>
+            <QcButton onClick={() => setViewingFlashing(null)}>Close</QcButton>
           </div>
-        </QcJourneyDialog>
-      )}
+          {operationError && <p role="alert" className="text-sm text-red-700 mb-3">{operationError}</p>}
+          <div className="qc-drawing-viewer-image"><Image src={viewingFlashing.image_url} alt={viewingFlashing.name}
+            width={800} height={800} className="object-contain" /></div>
+          <div className="qc-drawing-actions mt-4">
+            <QcButton disabled={downloadingId !== null} onClick={() => void handleDownload(viewingFlashing)}>
+              {downloadingId ? 'Downloading...' : 'Download image'}</QcButton>
+            <QcButton onClick={() => handlePrint(viewingFlashing)}>Print image</QcButton>
+          </div>
+        </div>
+      </QcJourneyDialog>}
     </div></QcJourney>
   );
 }

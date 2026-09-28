@@ -1,0 +1,21 @@
+/* Phase 9: tutorial presentation only. The guide engine and content are unchanged. */
+.qc-tutorial-library { min-width:0; }
+.qc-tutorial-card { min-width:0; padding:20px; text-align:left; border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-card); background:var(--qc-bg-surface); cursor:pointer; }
+.qc-tutorial-card h3, .qc-tutorial-card p { overflow-wrap:anywhere; }
+.qc-tutorial-card:focus-visible { outline:2px solid var(--qc-focus-ring); outline-offset:3px; }
+.qc-tutorial-card:active { background:var(--qc-selected-bg); box-shadow:inset 0 2px 3px #191b201a; }
+@media(hover:hover) { .qc-tutorial-card:hover { border-color:var(--qc-color-orange-ink); background:var(--qc-color-orange-wash); } }
+[data-qc-ui='v2'].qc-tutorial-dialog[open] { display:flex; flex-direction:column; overflow:hidden; padding:20px; }
+[data-qc-ui='v2'].qc-tutorial-dialog .qc-dialog-header { flex-shrink:0; }
+[data-qc-ui='v2'].qc-tutorial-dialog .qc-dialog-header h2 { overflow-wrap:anywhere; }
+[data-qc-ui='v2'].qc-tutorial-dialog .qc-dialog-body { min-height:0; overflow:auto; overscroll-behavior:contain; flex:1; padding-right:8px; }
+[data-qc-ui='v2'].qc-tutorial-dialog .qc-dialog-footer { flex-shrink:0; margin-top:16px; padding-top:16px; border-top:1px solid var(--qc-border-divider); }
+.qc-tutorial-content { font-size:14px; line-height:1.7; overflow-wrap:anywhere; }
+.qc-tutorial-content > * + * { margin-top:12px; }
+.qc-tutorial-content h3 { font-weight:650; color:var(--qc-color-orange-ink); }
+.qc-tutorial-footer { width:100%; display:grid; gap:16px; }
+.qc-tutorial-pager { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
+.qc-tutorial-pager span { font-size:13px; color:var(--qc-text-secondary); }
+.qc-tutorial-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
+@media(max-width:639px) { .qc-tutorial-actions .qc-button { flex:1 1 auto; } [data-qc-ui='v2'].qc-tutorial-dialog { padding:16px; } }
+@media(max-height:500px) { [data-qc-ui='v2'].qc-tutorial-dialog .qc-dialog-header p { margin-top:4px; } .qc-tutorial-footer { gap:8px; } }

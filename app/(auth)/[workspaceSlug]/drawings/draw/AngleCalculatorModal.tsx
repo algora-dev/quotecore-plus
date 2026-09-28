@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId, useRef } from 'react';
+import { QcToolHelp } from '@/app/components/ui/v2/QcDrawingWorkspace';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import {
   calculateRidgeAngle,
   calculateHipValleyMultiPitch,
@@ -55,31 +58,8 @@ const TOOLTIPS: Record<string, { title: string; description: string; image: stri
 };
 
 function HelpIcon({ tooltipKey }: { tooltipKey: string }) {
-  const [show, setShow] = useState(false);
   const tip = TOOLTIPS[tooltipKey];
-  if (!tip) return null;
-
-  return (
-    <div className="relative inline-flex" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
-      <button
-        type="button"
-        onClick={() => setShow(s => !s)}
-        className="ml-1 text-slate-400 hover:text-slate-600 transition-colors"
-        aria-label={`Help: ${tip.title}`}
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-        </svg>
-      </button>
-      {show && (
-        <div className="absolute z-[60] left-0 top-6 w-64 bg-white border border-slate-200 rounded-xl shadow-lg p-3">
-          <img src={tip.image} alt={tip.title} className="w-full h-24 object-contain mb-2" />
-          <p className="text-xs font-semibold text-slate-900 mb-1">{tip.title}</p>
-          <p className="text-xs text-slate-600 leading-relaxed">{tip.description}</p>
-        </div>
-      )}
-    </div>
-  );
+  return tip ? <QcToolHelp {...tip} /> : null;
 }
 
 export function AngleCalculatorModal({
@@ -88,6 +68,9 @@ export function AngleCalculatorModal({
   onApply,
   currentAngle: _currentAngle,
 }: AngleCalculatorModalProps) {
+  const fieldId = useId();
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
   const [calcType, setCalcType] = useState<CalcType>('hipValley');
   const [rafterSubType, setRafterSubType] = useState<RafterSubType>('ridge');
 
@@ -122,12 +105,14 @@ export function AngleCalculatorModal({
     if (ridgeSameAsPitch1) setRidgePitch2(ridgePitch1);
   }, [ridgePitch1, ridgeSameAsPitch1]);
 
+  useEffect(() => { if (validationError) errorRef.current?.focus({ preventScroll: false }); }, [validationError]);
+
   if (!isOpen) return null;
 
   const validatePitch = (val: string, label = 'roof pitch'): number | null => {
     const p = parseFloat(val);
     if (isNaN(p) || p < 0 || p > 89) {
-      alert(`Enter a ${label} between 0° and 89°.`);
+      setValidationError(`Enter a ${label} between 0° and 89°.`);
       return null;
     }
     return p;
@@ -136,13 +121,14 @@ export function AngleCalculatorModal({
   const validateCorner = (val: string): number | null => {
     const c = parseFloat(val);
     if (isNaN(c) || c < 1 || c > 180) {
-      alert('Enter a corner angle between 1° and 180°.');
+      setValidationError('Enter a corner angle between 1° and 180°.');
       return null;
     }
     return c;
   };
 
   const handleCalculate = () => {
+    setValidationError(null);
     let calculatedResult: AngleResult;
 
     if (calcType === 'hipValley') {
@@ -203,7 +189,7 @@ export function AngleCalculatorModal({
   };
 
   const handleClose = () => {
-    setResult(null);
+    setResult(null); setValidationError(null);
     onClose();
   };
 
@@ -211,10 +197,11 @@ export function AngleCalculatorModal({
   const showCornerAngle = calcType === 'hipValley';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+    <QcJourneyDialog label="Calculate roof angle" size="sm">
+      <div className="qc-angle-tool qc-angle-modal" data-qc-ui="v2">
         <h2 className="text-xl font-bold text-slate-900 mb-4">Auto-Calculate Roof Angle</h2>
 
+        {validationError && <p ref={errorRef} id={`${fieldId}-error`} tabIndex={-1} role="alert" className="qc-drawing-error">{validationError}</p>}
         {/* Main Calculator Type */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-slate-700 mb-2">Calculator Type</label>
@@ -222,10 +209,10 @@ export function AngleCalculatorModal({
             <label className="flex items-center">
               <input
                 type="radio"
-                name="calcType"
+                name={`${fieldId}-calcType`}
                 value="hipValley"
                 checked={calcType === 'hipValley'}
-                onChange={(e) => { setCalcType(e.target.value as CalcType); setResult(null); }}
+                onChange={(e) => { setCalcType(e.target.value as CalcType); setResult(null); setValidationError(null); }}
                 className="mr-2"
               />
               <span className="text-sm">Hip / Valley</span>
@@ -234,10 +221,10 @@ export function AngleCalculatorModal({
             <label className="flex items-center">
               <input
                 type="radio"
-                name="calcType"
+                name={`${fieldId}-calcType`}
                 value="rafterPitch"
                 checked={calcType === 'rafterPitch'}
-                onChange={(e) => { setCalcType(e.target.value as CalcType); setResult(null); }}
+                onChange={(e) => { setCalcType(e.target.value as CalcType); setResult(null); setValidationError(null); }}
                 className="mr-2"
               />
               <span className="text-sm">Rafter Pitch</span>
@@ -254,10 +241,10 @@ export function AngleCalculatorModal({
               <label className="flex items-center">
                 <input
                   type="radio"
-                  name="rafterSubType"
+                  name={`${fieldId}-rafterSubType`}
                   value="ridge"
                   checked={rafterSubType === 'ridge'}
-                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); }}
+                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); setValidationError(null); }}
                   className="mr-2"
                 />
                 <span className="text-sm">Ridge</span>
@@ -266,10 +253,10 @@ export function AngleCalculatorModal({
               <label className="flex items-center">
                 <input
                   type="radio"
-                  name="rafterSubType"
+                  name={`${fieldId}-rafterSubType`}
                   value="changeOfPitch"
                   checked={rafterSubType === 'changeOfPitch'}
-                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); }}
+                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); setValidationError(null); }}
                   className="mr-2"
                 />
                 <span className="text-sm">Change of Pitch</span>
@@ -278,10 +265,10 @@ export function AngleCalculatorModal({
               <label className="flex items-center">
                 <input
                   type="radio"
-                  name="rafterSubType"
+                  name={`${fieldId}-rafterSubType`}
                   value="upstandOntoRoof"
                   checked={rafterSubType === 'upstandOntoRoof'}
-                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); }}
+                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); setValidationError(null); }}
                   className="mr-2"
                 />
                 <span className="text-sm">Upstand onto Roof</span>
@@ -290,10 +277,10 @@ export function AngleCalculatorModal({
               <label className="flex items-center">
                 <input
                   type="radio"
-                  name="rafterSubType"
+                  name={`${fieldId}-rafterSubType`}
                   value="roofIntoUpstand"
                   checked={rafterSubType === 'roofIntoUpstand'}
-                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); }}
+                  onChange={(e) => { setRafterSubType(e.target.value as RafterSubType); setResult(null); setValidationError(null); }}
                   className="mr-2"
                 />
                 <span className="text-sm">Roof into Upstand</span>
@@ -312,10 +299,11 @@ export function AngleCalculatorModal({
               <label className="block text-sm font-medium text-slate-700 mb-1">Roof Pitch 1 (°)</label>
               <input
                 type="number"
+                aria-label="Roof pitch 1 in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
                 value={pitch1}
-                onChange={(e) => { setPitch1(e.target.value); setResult(null); }}
+                onChange={(e) => { setPitch1(e.target.value); setResult(null); setValidationError(null); }}
                 min="0" max="89" step="0.1"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                className="qc-input w-full"
               />
               <p className="text-xs text-slate-400 mt-1">Enter the pitch of the first roof plane.</p>
             </div>
@@ -325,10 +313,11 @@ export function AngleCalculatorModal({
                 <label className="block text-sm font-medium text-slate-700 mb-1">Roof Pitch 2 (°)</label>
                 <input
                   type="number"
-                  value={pitch2}
-                  onChange={(e) => { setPitch2(e.target.value); setResult(null); }}
+                  aria-label="Roof pitch 2 in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
+                value={pitch2}
+                  onChange={(e) => { setPitch2(e.target.value); setResult(null); setValidationError(null); }}
                   min="0" max="89" step="0.1"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  className="qc-input w-full"
                 />
               </div>
             )}
@@ -341,7 +330,7 @@ export function AngleCalculatorModal({
                   onChange={(e) => {
                     setSameAsPitch1(e.target.checked);
                     if (e.target.checked) setPitch2(pitch1);
-                    setResult(null);
+                    setResult(null); setValidationError(null);
                   }}
                   className="rounded border-slate-300"
                 />
@@ -356,10 +345,11 @@ export function AngleCalculatorModal({
               <label className="block text-sm font-medium text-slate-700 mb-1">Corner Angle (°)</label>
               <input
                 type="number"
+                aria-label="Corner angle in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
                 value={cornerAngle}
-                onChange={(e) => { setCornerAngle(e.target.value); setResult(null); }}
+                onChange={(e) => { setCornerAngle(e.target.value); setResult(null); setValidationError(null); }}
                 min="1" max="180" step="0.1"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                className="qc-input w-full"
               />
               <p className="text-xs text-slate-400 mt-1">Angle between the two roof lines. Usually 90°. Change only if the building corner is not square.</p>
             </div>
@@ -373,10 +363,11 @@ export function AngleCalculatorModal({
               <label className="block text-sm font-medium text-slate-700 mb-1">Roof Pitch 1 (°)</label>
               <input
                 type="number"
+                aria-label="Ridge pitch 1 in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
                 value={ridgePitch1}
-                onChange={(e) => { setRidgePitch1(e.target.value); setResult(null); }}
+                onChange={(e) => { setRidgePitch1(e.target.value); setResult(null); setValidationError(null); }}
                 min="0" max="89" step="0.1"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                className="qc-input w-full"
               />
             </div>
 
@@ -385,10 +376,11 @@ export function AngleCalculatorModal({
                 <label className="block text-sm font-medium text-slate-700 mb-1">Roof Pitch 2 (°)</label>
                 <input
                   type="number"
-                  value={ridgePitch2}
-                  onChange={(e) => { setRidgePitch2(e.target.value); setResult(null); }}
+                  aria-label="Ridge pitch 2 in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
+                value={ridgePitch2}
+                  onChange={(e) => { setRidgePitch2(e.target.value); setResult(null); setValidationError(null); }}
                   min="0" max="89" step="0.1"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  className="qc-input w-full"
                 />
               </div>
             )}
@@ -401,7 +393,7 @@ export function AngleCalculatorModal({
                   onChange={(e) => {
                     setRidgeSameAsPitch1(e.target.checked);
                     if (e.target.checked) setRidgePitch2(ridgePitch1);
-                    setResult(null);
+                    setResult(null); setValidationError(null);
                   }}
                   className="rounded border-slate-300"
                 />
@@ -421,10 +413,11 @@ export function AngleCalculatorModal({
               <label className="block text-sm font-medium text-slate-700 mb-1">Upper Roof Pitch (°)</label>
               <input
                 type="number"
+                aria-label="Upper pitch in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
                 value={upperPitch}
-                onChange={(e) => { setUpperPitch(e.target.value); setResult(null); }}
+                onChange={(e) => { setUpperPitch(e.target.value); setResult(null); setValidationError(null); }}
                 min="0" max="89" step="0.1"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                className="qc-input w-full"
               />
               <p className="text-xs text-slate-400 mt-1">Pitch of the roof section above the change line.</p>
             </div>
@@ -432,10 +425,11 @@ export function AngleCalculatorModal({
               <label className="block text-sm font-medium text-slate-700 mb-1">Lower Roof Pitch (°)</label>
               <input
                 type="number"
+                aria-label="Lower pitch in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
                 value={lowerPitch}
-                onChange={(e) => { setLowerPitch(e.target.value); setResult(null); }}
+                onChange={(e) => { setLowerPitch(e.target.value); setResult(null); setValidationError(null); }}
                 min="0" max="89" step="0.1"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                className="qc-input w-full"
               />
               <p className="text-xs text-slate-400 mt-1">Pitch of the roof section below the change line.</p>
             </div>
@@ -448,10 +442,11 @@ export function AngleCalculatorModal({
             <label className="block text-sm font-medium text-slate-700 mb-1">Roof Pitch (°)</label>
             <input
               type="number"
-              value={singlePitch}
-              onChange={(e) => { setSinglePitch(e.target.value); setResult(null); }}
+              aria-label="Roof pitch in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
+                value={singlePitch}
+              onChange={(e) => { setSinglePitch(e.target.value); setResult(null); setValidationError(null); }}
               min="0" max="89" step="0.1"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="qc-input w-full"
             />
             <p className="text-xs text-slate-400 mt-1">Enter the pitch of the roof plane the flashing turns onto.</p>
           </div>
@@ -463,21 +458,22 @@ export function AngleCalculatorModal({
             <label className="block text-sm font-medium text-slate-700 mb-1">Roof Pitch (°)</label>
             <input
               type="number"
-              value={singlePitch}
-              onChange={(e) => { setSinglePitch(e.target.value); setResult(null); }}
+              aria-label="Roof pitch in degrees" aria-describedby={validationError ? `${fieldId}-error` : undefined}
+                value={singlePitch}
+              onChange={(e) => { setSinglePitch(e.target.value); setResult(null); setValidationError(null); }}
               min="0" max="89" step="0.1"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="qc-input w-full"
             />
             <p className="text-xs text-slate-400 mt-1">Enter the pitch of the roof plane running into the upstand.</p>
           </div>
         )}
 
-        <button
-          onClick={handleCalculate}
-          className="w-full px-4 py-2 bg-[#FF6B35] text-white font-medium rounded-full hover:bg-[#ff5722] transition-colors mb-4"
+        <QcButton
+          variant="primary" onClick={handleCalculate}
+          className="w-full"
         >
           Calculate
-        </button>
+        </QcButton>
 
         {/* Results */}
         {result && (
@@ -491,7 +487,7 @@ export function AngleCalculatorModal({
                 <label className="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 transition-colors">
                   <input
                     type="radio"
-                    name="angleSelection"
+                    name={`${fieldId}-angleSelection`}
                     value="finished"
                     checked={selectedAngle === 'finished'}
                     onChange={(e) => setSelectedAngle(e.target.value as AngleSelection)}
@@ -506,7 +502,7 @@ export function AngleCalculatorModal({
                 <label className="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 transition-colors">
                   <input
                     type="radio"
-                    name="angleSelection"
+                    name={`${fieldId}-angleSelection`}
                     value="bend"
                     checked={selectedAngle === 'bend'}
                     onChange={(e) => setSelectedAngle(e.target.value as AngleSelection)}
@@ -530,21 +526,21 @@ export function AngleCalculatorModal({
 
         {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
-          <button
+          <QcButton
             onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-full hover:bg-slate-50 transition-colors"
+            className="flex-1"
           >
             Cancel
-          </button>
-          <button
-            onClick={handleApply}
+          </QcButton>
+          <QcButton
+            variant="primary" onClick={handleApply}
             disabled={!result}
-            className="flex-1 px-4 py-2 bg-black text-white font-medium rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1"
           >
             Add Angle
-          </button>
+          </QcButton>
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

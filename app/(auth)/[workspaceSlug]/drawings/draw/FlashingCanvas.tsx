@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { QcDrawingWorkspace } from '@/app/components/ui/v2/QcDrawingWorkspace';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Canvas, Line, Circle, IText, Rect, ActiveSelection, Object as _FabricObject, PencilBrush } from 'fabric';
 import { createFlashingFromCanvas, updateFlashingWithImage, loadFlashingById } from '../actions';
@@ -42,6 +46,9 @@ export function FlashingCanvas({
 }) {
   const featureSingularLower = featureLabelSingular.toLowerCase();
   const router = useRouter();
+  const { notify, feedback } = useQcFeedback();
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [editValueError, setEditValueError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
@@ -130,6 +137,9 @@ export function FlashingCanvas({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Do not intercept typing/select-all/undo inside a field or open dialog.
+      // Canvas shortcuts otherwise keep the existing history/selection owners.
+      if (e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable="true"], dialog, [role="dialog"]')) return;
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 'a') {
           e.preventDefault();
@@ -708,7 +718,7 @@ export function FlashingCanvas({
             canvasDataObj = JSON.parse(canvasDataObj) as FabricCanvasData;
           } catch (e) {
             console.error('[FlashingCanvas] Failed to parse canvas_data:', e);
-            alert('Error: Canvas data is corrupted');
+            await notify('This drawing could not be loaded because its saved data is invalid.', 'Drawing unavailable');
             setLoading(false);
             setFlashingLoaded(true);
             return;
@@ -759,7 +769,7 @@ export function FlashingCanvas({
           if (fabricRef.current.getObjects().length === 0) {
             console.error('[FlashingCanvas] CRITICAL: No objects loaded!');
             console.error('[FlashingCanvas] This indicates a fabric.js deserialization failure');
-            alert('⚠️ Cannot load this drawing for editing.\n\nThis may be due to incompatible canvas format.\n\nPlease create a new ' + featureSingularLower + ' from scratch.');
+            void notify('This drawing could not be loaded for editing. Its saved format may be incompatible. Return to the library to view the saved image.', 'Drawing unavailable');
           } else {
             console.log('[FlashingCanvas] Successfully loaded', fabricRef.current.getObjects().length, 'objects');
           }
@@ -821,7 +831,7 @@ export function FlashingCanvas({
         console.log('[FlashingCanvas] Measurements count:', flashing.measurements?.length || 0);
       } catch (err) {
         console.error('[FlashingCanvas] Failed to load flashing:', err);
-        alert(`Failed to load flashing: ${err}`);
+        await notify(`Failed to load ${featureSingularLower}: ${err}`, 'Drawing unavailable');
         setLoading(false);
       }
     }
@@ -1595,7 +1605,7 @@ export function FlashingCanvas({
 
   const _handleAddRightAngle = () => {
     if (selectedPoint === null || selectedPoint === 0 || selectedPoint >= linePoints.length - 1) {
-      alert('Right angle can only be added to middle points');
+      void notify('Select a middle point to add a right angle.', 'Select a middle point');
       return;
     }
     pushHistorySnapshot();
@@ -1630,7 +1640,7 @@ export function FlashingCanvas({
 
   const _handleAddCustomAngle = () => {
     if (selectedPoint === null || selectedPoint < 1 || selectedPoint >= linePoints.length - 1) {
-      alert('Custom angle requires a middle point');
+      void notify('Select a middle point to add a custom angle.', 'Select a middle point');
       return;
     }
     pushHistorySnapshot();
@@ -1699,10 +1709,11 @@ export function FlashingCanvas({
   const handleSave = async () => {
     if (!fabricRef.current) return;
     if (!name.trim()) {
-      alert(`Please enter a name for this ${featureSingularLower}`);
+      setSaveError(`Please enter a name for this ${featureSingularLower}.`);
       return;
     }
 
+    setSaveError(null);
     setSaving(true);
     try {
       const canvas = fabricRef.current;
@@ -1775,7 +1786,7 @@ export function FlashingCanvas({
             return;
           }
           const msg = result.code === 'internal_error' ? result.message : `Save failed (${result.code})`;
-          alert(`Error: ${msg}`);
+          setSaveError(msg);
           return;
         }
       }
@@ -1783,7 +1794,7 @@ export function FlashingCanvas({
       router.push(`/${workspaceSlug}/drawings`);
     } catch (err: any) {
       console.error('Failed to save flashing:', err);
-      alert(`Error: ${err.message}`);
+      setSaveError(err.message || 'The drawing could not be saved. Your work is still here.');
     } finally {
       setSaving(false);
     }
@@ -1792,51 +1803,48 @@ export function FlashingCanvas({
   const currentSize = CANVAS_SIZES[canvasSize];
 
   return (
-    <div className="max-w-full mx-auto p-6 bg-slate-50 min-h-screen">
+    <QcDrawingWorkspace>
+      {feedback}
+      {saveError && <p className="qc-drawing-error" role="alert">{saveError}</p>}
       {/* Loading overlay - show over canvas */}
-      {loading && (
-        <div className="fixed inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="text-center">
-            <div className="text-lg font-semibold text-slate-900">Loading {featureSingularLower}...</div>
-            <div className="text-sm text-slate-600 mt-2">Please wait</div>
-          </div>
-        </div>
-      )}
-      <div className="mb-6">
-        <button
+      {loading && <QcJourneyDialog label="Loading drawing" size="sm" pending>
+        <div className="qc-drawing-load" role="status" aria-live="polite">Loading drawing...</div>
+      </QcJourneyDialog>}
+
+      <div className="qc-drawing-header">
+        <QcButton
           onClick={() => router.push(`/${workspaceSlug}/drawings`)}
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-3"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          Back
-        </button>
-        <h1 className="text-2xl font-semibold text-slate-900">
+          Back to library
+        </QcButton>
+        <div className="qc-drawing-identity"><h1 className="text-2xl font-semibold text-slate-900">
           {editMode ? `Edit ${featureLabelSingular}` : `Draw ${featureLabelSingular}`}
         </h1>
         <p className="text-sm text-slate-500 mt-1">
           Draw to scale: 2 pixels = 1mm (max {currentSize.maxMm})
-        </p>
+        </p></div>
       </div>
 
       {/* Input fields - Clean Card */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4 space-y-3" data-copilot="flashing-inputs">
-        <div className="flex gap-4">
+      <div className="qc-drawing-card space-y-3" data-copilot="flashing-inputs">
+        <div className="qc-drawing-fields">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+            <label htmlFor="qc-drawing-name" className="qc-label">Name *</label>
             <input
-              type="text"
+              id="qc-drawing-name" type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => { setName(e.target.value); setSaveError(null); }}
               placeholder="e.g., Custom Ridge Cap"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              className="qc-input w-full"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Canvas Size</label>
-            <select
+            <label htmlFor="qc-drawing-size" className="qc-label">Canvas size</label>
+            <select id="qc-drawing-size"
               value={canvasSize}
               onChange={(e) => setCanvasSize(e.target.value as CanvasSize)}
-              className="px-3 py-2 border border-slate-300 rounded-lg bg-white"
+              className="qc-select w-full"
             >
               <option value="small">Small (600x450)</option>
               <option value="medium">Medium (800x600)</option>
@@ -1845,195 +1853,159 @@ export function FlashingCanvas({
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+          <label htmlFor="qc-drawing-description" className="qc-label">Description</label>
           <input
-            type="text"
+            id="qc-drawing-description" type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional description"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+            className="qc-input w-full"
           />
         </div>
       </div>
 
       {/* Toolbar - Professional Design */}
-      <div className="bg-white rounded-lg border border-slate-200 p-3 mb-4 flex gap-2 items-center flex-wrap" data-copilot="flashing-toolbar">
-        <button
+      <div className="qc-drawing-toolbar" aria-label="Drawing tools" role="group" data-copilot="flashing-toolbar">
+        <QcButton
           onClick={() => {
             if (!editingLocked && !checkAdjustPointsExit()) {
               setDrawMode('line');
             }
           }}
           disabled={editingLocked}
-          data-copilot="flashing-tool-line"
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'line' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
-          } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+          aria-pressed={drawMode === 'line'} data-copilot="flashing-tool-line"
         >
           Line
-        </button>
-        <button
+        </QcButton>
+        <QcButton
           onClick={() => {
             if (!editingLocked && !checkAdjustPointsExit()) {
               setDrawMode('text');
             }
           }}
           disabled={editingLocked}
-          data-copilot="flashing-tool-text"
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'text' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
-          } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+          aria-pressed={drawMode === 'text'} data-copilot="flashing-tool-text"
         >
           Text
-        </button>
+        </QcButton>
         <div className="relative">
-          <button
+          <QcButton
             onClick={() => {
               if (!editingLocked && !checkAdjustPointsExit()) {
                 setDrawMode('draw');
               }
             }}
             disabled={editingLocked}
-            data-copilot="flashing-tool-pencil"
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-              drawMode === 'draw' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
-            } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+            aria-pressed={drawMode === 'draw'} data-copilot="flashing-tool-pencil"
           >
             Pencil
-          </button>
+          </QcButton>
           {drawMode === 'draw' && (
-            <div className="absolute top-full left-0 mt-1 flex gap-1 bg-white border border-slate-200 rounded-lg p-1.5 shadow-lg z-10">
-              <button
+            <div className="absolute top-full right-0 mt-1 flex gap-1 bg-white border border-slate-200 rounded-lg p-1.5 shadow-lg z-10">
+              <QcButton
                 onClick={() => setPencilWidth(1)}
-                className={`w-8 h-8 flex items-center justify-center rounded transition ${
-                  pencilWidth === 1 ? 'bg-black text-white' : 'hover:bg-slate-100'
-                }`}
-                title="Thin"
+                aria-label="Thin pencil" aria-pressed={pencilWidth === 1} title="Thin"
               >
                 <div className="w-3 border-t border-current" style={{ borderWidth: '1px' }} />
-              </button>
-              <button
+              </QcButton>
+              <QcButton
                 onClick={() => setPencilWidth(2)}
-                className={`w-8 h-8 flex items-center justify-center rounded transition ${
-                  pencilWidth === 2 ? 'bg-black text-white' : 'hover:bg-slate-100'
-                }`}
-                title="Medium"
+                aria-label="Medium pencil" aria-pressed={pencilWidth === 2} title="Medium"
               >
                 <div className="w-3 border-t-2 border-current" />
-              </button>
-              <button
+              </QcButton>
+              <QcButton
                 onClick={() => setPencilWidth(4)}
-                className={`w-8 h-8 flex items-center justify-center rounded transition ${
-                  pencilWidth === 4 ? 'bg-black text-white' : 'hover:bg-slate-100'
-                }`}
-                title="Thick"
+                aria-label="Thick pencil" aria-pressed={pencilWidth === 4} title="Thick"
               >
                 <div className="w-3 border-t-4 border-current" />
-              </button>
+              </QcButton>
             </div>
           )}
         </div>
-        <button
+        <QcButton
           onClick={() => {
             if (!editingLocked && !checkAdjustPointsExit()) {
               setDrawMode('edit');
             }
           }}
           disabled={editingLocked}
-          data-copilot="flashing-tool-edit"
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'edit' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
-          } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+          aria-pressed={drawMode === 'edit'} data-copilot="flashing-tool-edit"
         >
           Edit
-        </button>
-        <button
+        </QcButton>
+        <QcButton
           onClick={() => {
             if (!editingLocked) {
               handleAdjustPointsMode();
             }
           }}
           disabled={editingLocked}
-          data-copilot="flashing-tool-adjust"
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            drawMode === 'adjustPoints' ? 'bg-black text-white shadow-lg' : 'bg-white border border-slate-300 hover:bg-slate-50'
-          } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+          aria-pressed={drawMode === 'adjustPoints'} data-copilot="flashing-tool-adjust"
         >
           Adjust Points
-        </button>
+        </QcButton>
 
-        <button
-          onClick={handleRecalibrateAll}
+        <QcButton
+          variant={needsRecalibration ? 'primary' : 'ghost'} onClick={handleRecalibrateAll}
           disabled={editingLocked}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            needsRecalibration
-              ? 'bg-[#FF6B35] text-white shadow-lg animate-pulse hover:bg-[#ff5722]'
-              : 'bg-white border border-slate-300 hover:bg-slate-50'
-          } ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Recalibrate
-        </button>
+        </QcButton>
 
-        <button
+        <QcButton
           onClick={handleSelectAll}
           disabled={editingLocked}
           title="Select All (Ctrl+A)"
-          className={`px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Select All
-        </button>
+        </QcButton>
         {editingLocked && (
-          <button
+          <QcButton
             onClick={handleDeselectAll}
             title="Deselect All - resume editing"
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all"
           >
             Deselect All
-          </button>
+          </QcButton>
         )}
 
-        <div className="ml-auto flex gap-2">
-          <button
+        <div className="qc-drawing-primary-actions">
+          <QcButton
             onClick={handleUndo}
             disabled={!canUndo}
-            className="px-3 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
             title="Undo (Ctrl+Z)"
           >
             ↩ Undo
-          </button>
-          <button
+          </QcButton>
+          <QcButton
             onClick={handleRedo}
             disabled={!canRedo}
-            className="px-3 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
             title="Redo (Ctrl+Y)"
           >
             ↪ Redo
-          </button>
-          <button
-            onClick={handleClear}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
+          </QcButton>
+          <QcButton
+            variant="danger" onClick={handleClear}
           >
             Clear
-          </button>
-          <button
+          </QcButton>
+          <QcButton
             onClick={() => router.push(`/${workspaceSlug}/drawings`)}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-white border border-slate-300 hover:bg-slate-50"
           >
             Cancel
-          </button>
-          <button
-            onClick={handleSave}
+          </QcButton>
+          <QcButton
+            variant="primary" onClick={handleSave}
             disabled={saving || !name.trim()}
             data-copilot="flashing-save"
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
           >
             {saving ? 'Saving...' : `Save ${featureLabelSingular}`}
-          </button>
+          </QcButton>
         </div>
       </div>
 
       {/* Live Measurements + Finish button - Subtle Professional Design */}
-      <div className="mb-4 p-3 bg-slate-100 border border-slate-200 rounded-lg inline-flex items-center" data-copilot="flashing-live-readout">
+      <div className="qc-drawing-readout" data-copilot="flashing-live-readout">
         <div className="flex gap-6 text-sm">
           <div>
             <span className="text-slate-600 font-medium">Length:</span>{' '}
@@ -2052,19 +2024,19 @@ export function FlashingCanvas({
             Clicking it deselects everything and exits the tool so the user
             can freely pick a new tool, interact with the sidebar, or save. */}
         {(['line', 'text', 'draw', 'edit'] as DrawMode[]).includes(drawMode) && (
-          <button
-            onClick={handleFinishTool}
-            className="ml-4 px-4 py-1.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          <QcButton
+            variant="primary" onClick={handleFinishTool}
+            className="ml-4"
           >
             Finish
-          </button>
+          </QcButton>
         )}
       </div>
 
       {/* Main Layout: Sidebar + Canvas */}
-      <div className="flex gap-4">
+      <div className="qc-drawing-grid">
         {/* Left Sidebar - Measurements List - Professional Design */}
-        <div className="w-72 bg-white border border-slate-200 rounded-lg p-4 max-h-[700px] overflow-y-auto shadow-sm" data-copilot="flashing-measurements">
+        <div className="qc-drawing-card qc-drawing-measurements" data-copilot="flashing-measurements">
           <h3 className="text-sm font-semibold text-slate-900 mb-3">Measurements</h3>
           {measurements.length === 0 ? (
             <p className="text-xs text-slate-400">No measurements yet</p>
@@ -2073,23 +2045,15 @@ export function FlashingCanvas({
               {measurements.map((m) => (
                 <div
                   key={m.id}
-                  onClick={() => {
-                    if (!checkAdjustPointsExit()) {
-                      handleSelectMeasurement(m.id);
-                    }
-                  }}
-                  className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                    selectedMeasurement === m.id
-                      ? 'border-[#FF6B35] bg-orange-50 shadow-sm ring-1 ring-orange-200'
-                      : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
-                  }`}
+                  className="qc-drawing-measurement" data-selected={selectedMeasurement === m.id}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-medium text-slate-600">
-                      {m.type === 'length' ? 'Length' : 'Angle'}
-                    </span>
-                    <div className="flex gap-1">
-                      <button
+                  <div className="qc-drawing-measurement-heading">
+                    <QcButton aria-pressed={selectedMeasurement === m.id}
+                      onClick={() => { if (!checkAdjustPointsExit()) handleSelectMeasurement(m.id); }}>
+                      Select {m.type === 'length' ? 'length' : 'angle'}
+                    </QcButton>
+                    <div className="qc-drawing-measurement-actions">
+                      <QcButton
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!editingLocked && !checkAdjustPointsExit()) {
@@ -2097,13 +2061,12 @@ export function FlashingCanvas({
                           }
                         }}
                         disabled={editingLocked || !m.visible}
-                        className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${(editingLocked || !m.visible) ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title={m.textHidden ? 'Show text' : 'Hide text'}
                       >
                         {m.textHidden ? 'Show Text' : 'Hide Text'}
-                      </button>
+                      </QcButton>
                       {m.type === 'angle' && (
-                        <button
+                        <QcButton
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!editingLocked && !checkAdjustPointsExit()) {
@@ -2111,13 +2074,12 @@ export function FlashingCanvas({
                             }
                           }}
                           disabled={editingLocked || !m.visible}
-                          className={`flex items-center justify-center w-7 h-6 bg-slate-200 hover:bg-slate-300 rounded ${(editingLocked || !m.visible) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          title={m.arcHidden ? 'Show angle arc ring' : 'Hide angle arc ring'}
+                          aria-label={m.arcHidden ? 'Show angle arc ring' : 'Hide angle arc ring'} title={m.arcHidden ? 'Show angle arc ring' : 'Hide angle arc ring'}
                         >
                           <span style={{ color: m.arcHidden ? '#94a3b8' : '#FF6B35', fontSize: '20px', lineHeight: 1, fontWeight: 'bold' }}>○</span>
-                        </button>
+                        </QcButton>
                       )}
-                      <button
+                      <QcButton
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!editingLocked && !checkAdjustPointsExit()) {
@@ -2125,11 +2087,10 @@ export function FlashingCanvas({
                           }
                         }}
                         disabled={editingLocked}
-                        className={`text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title={m.visible ? 'Hide all' : 'Show all'}
                       >
                         {m.visible ? 'Hide' : 'Show'}
-                      </button>
+                      </QcButton>
                     </div>
                   </div>
                   <div className="text-base font-bold text-slate-900 mb-3">
@@ -2143,7 +2104,7 @@ export function FlashingCanvas({
                   <div className="space-y-1">
                     {m.type === 'angle' && (
                       <>
-                        <button
+                        <QcButton
                           data-copilot="flashing-angle-calc"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -2152,12 +2113,12 @@ export function FlashingCanvas({
                             }
                           }}
                           disabled={editingLocked}
-                          className={`w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left font-medium text-slate-700 ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className="w-full text-left"
                           title="Auto-Calculate from Roof Pitches"
                         >
                           Auto-Calculate
-                        </button>
-                        <button
+                        </QcButton>
+                        <QcButton
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!editingLocked && !checkAdjustPointsExit()) {
@@ -2165,15 +2126,15 @@ export function FlashingCanvas({
                             }
                           }}
                           disabled={editingLocked}
-                          className={`w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className="w-full text-left"
                           title="Toggle Interior/Exterior"
                         >
                           Toggle Angle Type
-                        </button>
+                        </QcButton>
                       </>
                     )}
                     {m.type === 'length' && (
-                      <button
+                      <QcButton
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!editingLocked && !checkAdjustPointsExit()) {
@@ -2181,13 +2142,13 @@ export function FlashingCanvas({
                           }
                         }}
                         disabled={editingLocked}
-                        className={`w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className="w-full text-left"
                         title="Toggle placement side"
                       >
                         {m.placementSide === 'exterior' ? 'Exterior' : 'Interior'} Side
-                      </button>
+                      </QcButton>
                     )}
-                    <button
+                    <QcButton
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!editingLocked && !checkAdjustPointsExit()) {
@@ -2195,11 +2156,11 @@ export function FlashingCanvas({
                         }
                       }}
                       disabled={editingLocked}
-                      className={`w-full text-xs px-2 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-left ${editingLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className="w-full text-left"
                       title="Edit Value"
                     >
                       Edit Value
-                    </button>
+                    </QcButton>
                   </div>
                 </div>
               ))}
@@ -2208,14 +2169,19 @@ export function FlashingCanvas({
         </div>
 
         {/* Canvas - Professional Container */}
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-          <canvas ref={canvasRef} width={currentSize.width} height={currentSize.height} />
-        </div>
+        <section className="qc-drawing-canvas-section" aria-label="Drawing canvas">
+          <p id="qc-drawing-scroll-help" className="qc-drawing-scroll-hint">Drawing stays at its true scale. Scroll inside the canvas to see the rest.</p>
+          <div className="qc-drawing-scrollport" tabIndex={0} role="region" aria-label="Scrollable drawing" aria-describedby="qc-drawing-scroll-help">
+            <div className="qc-drawing-paper">
+              <canvas ref={canvasRef} width={currentSize.width} height={currentSize.height} />
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* Instructions - Subtle Design */}
-      <div className="mt-4 p-4 bg-slate-100 border border-slate-200 rounded-lg">
-        <h3 className="text-sm font-semibold text-slate-900 mb-2">How to Use:</h3>
+      <details className="qc-drawing-help">
+        <summary>Drawing tools and shortcuts</summary>
         <ul className="text-sm text-slate-700 space-y-1 grid grid-cols-2 gap-x-6">
           <li><strong>Line Tool:</strong> Click points to draw. Angles appear automatically after 3rd point.</li>
           <li><strong>Text Tool:</strong> Click to add text labels anywhere on the canvas.</li>
@@ -2228,7 +2194,7 @@ export function FlashingCanvas({
           <li><strong>Edit Values:</strong> Change any measurement value manually.</li>
           <li><strong>Auto-Calculate:</strong> Use roof pitch calculator for accurate angles.</li>
         </ul>
-      </div>
+      </details>
 
       {/* Angle Calculator Widget - same draggable floating widget used in
           the order editor. Stays open so the user can apply multiple angles
@@ -2246,7 +2212,7 @@ export function FlashingCanvas({
 
       {/* Adjust Points Confirmation Modal */}
       {showAdjustConfirmation && (
-        <div className="fixed inset-0 backdrop-blur-md bg-slate-900/20 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Finish adjusting points" size="sm">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
             <h2 className="text-xl font-bold text-slate-900 mb-4">Finished Adjusting?</h2>
             <p className="text-slate-700 mb-6">
@@ -2256,54 +2222,54 @@ export function FlashingCanvas({
               Click <strong>Recalibrate</strong> after adjusting to update all measurements.
             </p>
             <div className="flex gap-3">
-              <button
+              <QcButton
                 onClick={() => handleConfirmFinishAdjusting(false)}
-                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-full hover:bg-slate-50 transition-all shadow-sm"
+                className="flex-1"
               >
                 No, Continue
-              </button>
-              <button
-                onClick={() => handleConfirmFinishAdjusting(true)}
-                className="flex-1 px-4 py-2 bg-[#FF6B35] text-white font-medium rounded-full hover:bg-[#ff5722] transition-all shadow-sm"
+              </QcButton>
+              <QcButton
+                variant="primary" onClick={() => handleConfirmFinishAdjusting(true)}
+                className="flex-1"
               >
                 Yes, Finish
-              </button>
+              </QcButton>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Select All Warning Modal */}
       {showSelectAllWarning && (
-        <div className="fixed inset-0 backdrop-blur-md bg-slate-900/20 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Move the whole drawing" size="sm">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
-            <h2 className="text-xl font-bold text-red-600 mb-4">⚠️ Warning: Final Step</h2>
+            <h2 className="text-xl font-bold text-red-600 mb-4">Move the whole drawing?</h2>
             <p className="text-slate-700 mb-4">
               <strong>Make sure you are finished editing your drawing.</strong>
             </p>
             <p className="text-slate-700 mb-6">
-              Once you use the Select All feature, you <strong>cannot edit the drawing any further</strong>.
-              You will only be able to move and resize the entire image.
+              Select All pauses individual editing while you move or resize the whole drawing.
+              Choose <strong>Deselect All</strong> to resume editing individual parts.
             </p>
             <p className="text-sm text-slate-500 mb-6">
-              Are you ready to finalize your drawing?
+              Select the whole drawing now?
             </p>
             <div className="flex gap-3">
-              <button
+              <QcButton
                 onClick={() => handleConfirmSelectAll(false)}
-                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-full hover:bg-slate-50 transition-all shadow-sm"
+                className="flex-1"
               >
                 No, Continue Editing
-              </button>
-              <button
-                onClick={() => handleConfirmSelectAll(true)}
-                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-full hover:bg-red-700 transition-all shadow-sm"
+              </QcButton>
+              <QcButton
+                variant="primary" onClick={() => handleConfirmSelectAll(true)}
+                className="flex-1"
               >
-                Yes, Finalize
-              </button>
+                Select all
+              </QcButton>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Edit Value Modal - replaces the old window.prompt() for editing
@@ -2316,18 +2282,17 @@ export function FlashingCanvas({
         const close = () => {
           setEditValueMeasurementId(null);
           setEditValueInput('');
+          setEditValueError(null);
         };
         const submit = () => {
           const num = parseFloat(editValueInput);
-          if (!Number.isFinite(num)) return;
+          if (!Number.isFinite(num)) { setEditValueError('Enter a valid number.'); return; }
           applyEditMeasurementValue(editValueMeasurementId, num);
           close();
         };
         const unit = m.type === 'length' ? lengthUnit : '°';
         return (
-          <div
-            className="fixed inset-0 backdrop-blur-md bg-slate-900/20 flex items-center justify-center z-50"
-          >
+          <QcJourneyDialog label="Edit measurement value" size="sm" onRequestClose={close}>
             <div
               className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200"
               onClick={(e) => e.stopPropagation()}
@@ -2340,42 +2305,43 @@ export function FlashingCanvas({
                   ? 'Enter the real-world length for this segment. The drawing will rescale to match while keeping connected points in sync.'
                   : 'Enter the angle you want this vertex to read. Subsequent points rotate around this vertex to land at the new angle.'}
               </p>
+              {editValueError && <p role="alert" id="qc-value-error" className="qc-drawing-error">{editValueError}</p>}
               <div className="flex items-center gap-2 mb-6">
-                <input
+                <input aria-label={m.type === 'length' ? `Length in ${lengthUnit}` : 'Angle in degrees'} aria-invalid={!!editValueError} aria-describedby={editValueError ? 'qc-value-error' : undefined}
                   type="number"
                   step="any"
                   value={editValueInput}
-                  onChange={(e) => setEditValueInput(e.target.value)}
+                  onChange={(e) => { setEditValueInput(e.target.value); setEditValueError(null); }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') submit();
                     if (e.key === 'Escape') close();
                   }}
                   autoFocus
-                  className="flex-1 px-3 py-2 text-base border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="qc-input flex-1"
                 />
                 <span className="text-sm text-slate-500 font-medium">{unit}</span>
               </div>
               <div className="flex gap-3">
-                <button
+                <QcButton
                   type="button"
                   onClick={close}
-                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-full hover:bg-slate-50 transition-all shadow-sm"
+                  className="flex-1"
                 >
                   Cancel
-                </button>
-                <button
+                </QcButton>
+                <QcButton
                   type="button"
-                  onClick={submit}
-                  className="flex-1 px-4 py-2 bg-[#FF6B35] text-white font-medium rounded-full hover:bg-[#ff5722] transition-all shadow-sm"
+                  variant="primary" onClick={submit}
+                  className="flex-1"
                 >
                   Apply
-                </button>
+                </QcButton>
               </div>
             </div>
-          </div>
+          </QcJourneyDialog>
         );
       })()}
-    </div>
+    </QcDrawingWorkspace>
   );
 }
 
