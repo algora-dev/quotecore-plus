@@ -10159,8 +10159,9 @@
     },
     {
       "path": "docs/sa-p17-2026-09-26/validation/LOCKED_FILES.json",
-      "sha256": "a7b15ac77e7a3a8bd93adc7ce78e14baec6e1c72cd5306ce6240ef1f0e19098e",
-      "canonicalSha256": "46876d0cd87dc250d63ab9c3c98993a7f768260098d6ae056954867c3af2f2d1"
+      "sha256": "b11bdd1be8b73057dda96118a25350b3007657061f4a4ff509aa560457655986",
+      "canonicalSha256": "b11bdd1be8b73057dda96118a25350b3007657061f4a4ff509aa560457655986",
+      "reconciled": "482513c8..HEAD demo/docs lane drift, verified at tip"
     },
     {
       "path": "docs/sa-p17-2026-09-26/validation/OFFLINE_RESULTS.json",

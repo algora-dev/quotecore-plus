@@ -44,7 +44,8 @@
     },
     {
       "path": "app/lib/assistant/llmClient.ts",
-      "sha256": "bb05b3afbd8e402d6f56ded9070ed77ea8b8c3adfd75380d4bf2a078cf536589"
+      "sha256": "4bbf58baeb5df7fc836082446ee2e3656bb71a3c0189f85b8ac9079b647b55a6",
+      "reconciled": "2026-09-28 OpenAI-incident hardening (64k completion clamp + provider-prefix-proof reasoning gate); same integrator-fix convention as prior branch drift"
     },
     {
       "path": "app/lib/assistant/orchestrator.ts",
