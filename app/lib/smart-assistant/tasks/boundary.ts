@@ -100,7 +100,11 @@ export function decideTask(message: string, snapshot: TaskSnapshot, now = new Da
     if (/^(?:what|how) about\b|\b(?:its|their)\b|^(?:and\s+)?(?:that|those|it|them|the other one)\b/i.test(text)) {
         return { disposition: 'continue', reason: 'dependent_reference', message: text };
     }
-    if (/^(?:yes|yep|yeah|confirmed|confirm|approved|approve|okay|ok)[.!]?$/i.test(text.trim()))
+    // Acknowledgements and proceed-style confirmations (the task strip's
+    // Proceed button sends "Yes, proceed.", users type the same words) continue
+    // the CURRENT task. They are never authority for a write: Confirm cards are
+    // the only path that applies a change.
+    if (/^(?:please[ ,]+)?(?:yes|yep|yeah|confirmed|confirm|approved|approve|okay|ok|proceed|go ahead|carry on|keep going|continue)\b[ ,.!]*(?:(?:please[ ,]+)?(?:proceed|continue|go ahead|carry on|keep going)\b[ ,.!]*)*(?:please[ ,.!]*)?$/i.test(text.trim()))
         return { disposition: 'continue', reason: 'acknowledgement_not_authority', message: text };
     if (pending) {
         const ordinal = /^(?:the\s+)?(?:first|second|third|fourth|fifth|[1-5])(?:\s+(?:one|option))?[.!?]?$/i.test(text);

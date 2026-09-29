@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createConversation, type ConversationRow } from '@/app/(auth)/[workspaceSlug]/assistant/actions';
 import { displayTaskMessage } from '@/app/lib/smart-assistant/tasks/wire';
-import { failedTurns, staleTaskCard } from '@/app/lib/smart-assistant/tasks/presentation';
+import { failedTurns, staleTaskCard, awaitingProceed } from '@/app/lib/smart-assistant/tasks/presentation';
 import { displayResolutionMessage } from '@/app/lib/smart-assistant/resolver/wire';
 import { SafeMessage } from '../SafeMessage';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
@@ -557,7 +557,14 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             </div>
           </div>}
           {task && <div className={s.taskFooter} data-sa-task={task.id}>
-            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task closed. Ask something new whenever you’re ready.</p> : <>
+            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task closed. Ask something new whenever you’re ready.</p> : awaitingProceed(task, snapshot?.messages ?? []) ? <>
+              {/* Assistant asked for confirmation to continue: Proceed is UX sugar over
+                  sending "Yes, proceed." through the normal turn pipeline. Never a write
+                  confirmation — action cards keep their own Confirm/Cancel protocol. */}
+              <QcButton variant="primary" disabled={controlsBusy || voice.state !== 'off'} onClick={() => void send('Yes, proceed.')}><AssistantIcon name="chevron"/><span>Proceed</span></QcButton>
+              <QcButton className={s.quietButton} disabled={controlsBusy || voice.state !== 'off'} onClick={refineAnswer}>Not quite</QcButton>
+              <QcButton className={s.doneButton} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void finishTask('done')}><AssistantIcon name="check"/><span>Done</span></QcButton>
+            </> : <>
               <QcButton className={s.doneButton} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void finishTask(task.status === 'answered' ? 'done' : 'move_on')}><AssistantIcon name={task.status === 'answered' ? 'check' : 'chevron'}/>{task.status === 'answered' ? 'Done' : 'Move on'}</QcButton>
               {task.status === 'answered' && <QcButton className={s.quietButton} disabled={controlsBusy || voice.state !== 'off'} onClick={refineAnswer}>Not quite</QcButton>}
             </>}

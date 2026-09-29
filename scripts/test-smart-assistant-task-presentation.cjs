@@ -18,3 +18,21 @@ for(const patch of [{version:0},{version:'1'},{label:'bad\nlabel'},{label:'x'.re
 test('valid task checkpoint survives public parsing',()=>assert.ok(parseTaskView(task())));
 for(const [e,category]of [[{status:429,code:'rate_limit_exceeded'},'rate_limit'],[{status:401},'authentication'],[{status:503},'provider_server'],[{status:400},'request_rejected'],[{name:'AbortError'},'timeout']])test('provider diagnostic '+category,()=>assert.equal(providerFailure(e).category,category));
 test('provider diagnostic never leaks arbitrary body/message/key/code',()=>{const e={status:500,code:'secret-prompt-text',message:'a private user question',body:'private response',stack:'apikey=secret'};assert.deepEqual(providerFailure(e),{category:'provider_server',status:500,code:null});assert.deepEqual(providerFailure(null),{category:'unknown',status:null,code:null});});
+const {awaitingProceed}=load('tasks/presentation.ts');
+const reply=(content,runId=uuid(2))=>({id:uuid(9),role:'assistant',content,runId,createdAt:new Date().toISOString()});
+test('confirm-to-continue reply shows the Proceed affordance',()=>{for(const content of [
+ 'I found corrugated sheets at 12.50/m2 and the cheapest underlay at 4.10/m2. Shall I proceed with those prices?',
+ 'So that is a 100 m2 plan-area roof at 30 degrees with 10% waste. Is my understanding correct?',
+ 'That sounds right - want me to continue with the James Smith draft?',
+ 'Ready when you are. Shall I create the draft now?',
+ 'Does that look okay to you?']
+ )assert.equal(awaitingProceed(task(),[user,reply(content)]),true,content);});
+test('ordinary answers keep the current strip',()=>{for(const content of [
+ 'The Smith draft has Ridge, Underlay and Spouting on it.','Here are your five most recent quotes.',
+ 'Do you want the cheapest underlay or the premium one?','How much does the Ridge cost on this draft?',
+ 'What is the cheapest underlay in your library?']
+ )assert.equal(awaitingProceed(task(),[user,reply(content)]),false,content);});
+test('resolver input, closed tasks and missing replies never offer Proceed',()=>{
+ assert.equal(awaitingProceed({...task(),status:'awaiting_input'},[user,reply('Shall I proceed?')]),false);
+ assert.equal(awaitingProceed({...task(),status:'closed'},[user,reply('Shall I proceed?')]),false);
+ assert.equal(awaitingProceed(null,[user]),false);assert.equal(awaitingProceed(task(),[]),false);});

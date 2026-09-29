@@ -2,7 +2,7 @@
  * speculation about successful/failed business writes. */
 import type { ChatMessage, ConversationCard, RunOutcome } from '../v2/contracts';
 import type { TaskView } from './contracts';
-import { isTaskMessage } from './wire';
+import { displayTaskMessage, isTaskMessage } from './wire';
 import { isResolutionMessage } from '../resolver/wire';
 const failed = new Set(['failed', 'cancelled', 'aborted', 'timed_out']);
 export type FailedTurn = {
@@ -34,4 +34,23 @@ export function staleTaskCard(card: ConversationCard, task: TaskView | null | un
     if (!task || task.status === 'closed' || Date.parse(task.expiresAt) <= Date.now())
         return true;
     return Date.parse(card.createdAt) < Date.parse(task.startedAt);
+}
+/** Owner request 2026-09-29: when the assistant ends its turn explicitly asking
+ * for confirmation to continue ("Shall I proceed with those prices?", "Is my
+ * understanding correct?"), Done (task complete) and Not quite (correction) are
+ * both wrong answers. This recognises that state from the task's latest reply
+ * so the strip can offer Proceed. Pure heuristic: an answered/open task (a
+ * resolver clarification is awaiting_input and keeps its own choice cards) whose
+ * final line is a question phrased as confirmation-to-continue. */
+export function awaitingProceed(task: TaskView | null | undefined, messages: ChatMessage[]): boolean {
+    if (!task || (task.status !== 'answered' && task.status !== 'open')) return false;
+    const reply = [...messages].reverse().find(m => m.role === 'assistant' && m.runId === task.lastRunId);
+    if (!reply) return false;
+    const lines = displayTaskMessage(reply.content).trim().split('\n').map(l => l.trim()).filter(Boolean);
+    const last = lines[lines.length - 1] ?? '';
+    if (!last.endsWith('?')) return false;
+    return /\b(?:proceed|continue|go ahead|carry on|keep going)\b/i.test(last)
+        || /\b(?:is|are|do|does|did)\s+(?:that|this|it|my understanding|everything|those|the)\b[^\n?]{0,80}\b(?:correct|right|accurate|good|okay|fine)\b/i.test(last)
+        || /\b(?:sounds?|looks?)\s+(?:right|correct|good|okay|fine)\b/i.test(last)
+        || /\b(?:shall|should|would|could|can)\s+i\b/i.test(last);
 }

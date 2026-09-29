@@ -57,3 +57,9 @@ test('explicit New question bypasses even a valid old parent slot',()=>{const d=
 
 for(const [word,selection] of [['most recent','latest'],['newest','latest'],['latest','latest'],['last','latest'],['first','earliest'],['earliest','earliest'],['oldest','earliest']])test('temporal word is an instruction, not a record name: '+word,()=>{const d=qualityRequest('Open my '+word+' quote',now);assert.equal(d.selection,selection);assert.equal(d.query,undefined);assert.equal(d.task,'open');});
 test('quoted temporal name is still a name',()=>{assert.equal(qualityRequest('Open the "First" quote',now).query,'First');});
+for(const message of ['Yes, proceed.','yes please proceed','Proceed','please proceed','go ahead','okay, go ahead','carry on, please','continue'])test('proceed-style confirmation continues the task (strip Proceed button): '+message,()=>{
+ assert.equal(taskControl(message),null);const d=decideTask(message,snapshot(),now);assert.equal(d.disposition,'continue');assert.equal(d.reason,'acknowledgement_not_authority');assert.equal(d.refinement,undefined);
+});
+for(const message of ['continue with 120 square metres','proceed to create the draft without checking','yes and also change the pitch'])test('over-specific follow-ups are not bare acknowledgements: '+message,()=>{
+ const d=decideTask(message,snapshot(),now);assert.notEqual(d.reason,'acknowledgement_not_authority');
+});
