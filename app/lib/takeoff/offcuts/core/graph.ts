@@ -1,6 +1,9 @@
 import type { Issue, Point, RoofEdge, RoofFace, RoofInput } from './types';
-import { EPS, distance, dot, projection, segmentHits, signedArea, sub, unit, validateRing } from './math';
+import { EPS, distance, projection, segmentHits, signedArea, validateRing } from './math';
 import { area, fromRing, intersect, subtract, unionAll } from './regions';
+import { validatePartition } from './partition';
+import { inferredFlow } from './reviewGeometry';
+export { validatePartition } from './partition';
 export interface FaceDetection { faces: RoofFace[]; issues: Issue[] }
 /** Nodes all crossings/collinear overlaps, then walks half edges. A boundary
  * polygon, not a scalar measurement or bounding box, is the input. */
@@ -66,10 +69,7 @@ export function deriveFaces(roof: RoofInput, snapTolerance = 1): FaceDetection {
     if (invalid) { issues.push({ severity: 'error', code: 'OPEN_TOPOLOGY', message: `A candidate boundary is invalid: ${invalid}` }); continue; }
     const region = fromRing(polygon), outlineRegion = unionAll(roof.outlines.map(o => fromRing(o.polygon)));
     if (area(subtract(region, outlineRegion)) > 1e-5) continue;
-    const flows = boundary.filter(e => e.kind === 'spouting').map(e => {
-      const d = sub(e.b, e.a); return unit({ x: d.y, y: -d.x });
-    });
-    const flow = flows.length && flows.every(f => dot(f, flows[0]) > 0.995) ? flows[0] : null;
+    const flow = inferredFlow({ boundary });
     const owner = roof.outlines.find(o => area(intersect(region, fromRing(o.polygon))) > area(region) * 0.99);
     const id = `face-${faces.length + 1}`;
     faces.push({ id, name: `Face ${String.fromCharCode(65 + faces.length % 26)}${faces.length >= 26 ? Math.floor(faces.length / 26) : ''}`, polygon, boundary, flow, lap: 1, lapLocked: false,
@@ -78,17 +78,4 @@ export function deriveFaces(roof: RoofInput, snapTolerance = 1): FaceDetection {
   }
   issues.push(...validatePartition(roof, faces));
   return { faces, issues };
-}
-export function validatePartition(roof: RoofInput, faces: RoofFace[]): Issue[] {
-  const issues: Issue[] = [];
-  try {
-    const outlines = roof.outlines.map(o => fromRing(o.polygon)), rs = faces.map(f => fromRing(f.polygon));
-    const total = unionAll(outlines), tol = Math.max(1e-5, area(total) * 1e-8);
-    for (let i = 0; i < outlines.length; i++) for (let j = i + 1; j < outlines.length; j++) if (area(intersect(outlines[i], outlines[j])) > tol) issues.push({ severity: 'error', code: 'OUTLINE_OVERLAP', message: 'Selected roof outlines overlap. Select the actual perimeter, not duplicate estimating areas.' });
-    const covered = unionAll(rs);
-    if (area(subtract(total, covered)) > tol) issues.push({ severity: 'error', code: 'UNCOVERED_ROOF', message: 'The reviewed faces leave some selected roof outline uncovered.' });
-    if (area(subtract(covered, total)) > tol) issues.push({ severity: 'error', code: 'FACE_OUTSIDE_ROOF', message: 'A face extends outside the selected roof outline.' });
-    for (let i = 0; i < rs.length; i++) for (let j = i + 1; j < rs.length; j++) if (area(intersect(rs[i], rs[j])) > tol) issues.push({ severity: 'error', code: 'FACE_OVERLAP', faceId: faces[i].id, message: `${faces[i].name} overlaps ${faces[j].name}.` });
-  } catch (error) { issues.push({ severity: 'error', code: 'INVALID_POLYGON', message: error instanceof Error ? error.message : String(error) }); }
-  return issues;
 }

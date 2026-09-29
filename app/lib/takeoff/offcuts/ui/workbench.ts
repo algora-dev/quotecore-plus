@@ -1,9 +1,11 @@
 import type { Draft, Issue, Point, RoofFace, RoofInput, Solution } from '../core/types';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../core/types';
-import { deriveFaces, validatePartition } from '../core/graph';
-import { centroid, distance, unit, sub } from '../core/math';
-import { area, pointInRegion } from '../core/regions';
-import { scenePointToDemand } from '../core/material';
+import { deriveFaces } from '../core/graph';
+import { analysePartition, type PartitionReport } from '../core/partition';
+import { currentDetectionIssues, narrowFace, refreshFaceBoundary, validateFaceDirections } from '../core/reviewGeometry';
+import { centroid, distance, unit, sub, validateRing, fingerprint } from '../core/math';
+import { area, pointInRegion, bounds } from '../core/regions';
+import { scenePointToDemand, validateInputs } from '../core/material';
 import { findFit } from '../core/solver';
 import { materialPlan, newStockSchedule, reuseGroups } from '../core/plan';
 import { moveReuseGroup } from '../core/groupEditing';
@@ -12,6 +14,7 @@ import { exportDraft } from '../core/codec';
 import { roofRevision } from '../adapters/quotecore';
 import { escapeHtml as esc, PALETTE, renderSvg, interiorAnchor } from './svg';
 import { styles } from './styles';
+import { icon } from './icons';
 export interface WorkbenchOptions {
   initialDraft?: Draft;
   initialIssues?: Issue[];
@@ -25,8 +28,9 @@ export interface WorkbenchHandle { destroy: () => void; getDraft: () => Draft }
 let localIdCounter = 0;
 function localId(): string { return globalThis.crypto?.randomUUID?.() ?? `review-${Date.now().toString(36)}-${++localIdCounter}`; }
 interface Drag {
-  kind: 'vertex' | 'flow' | 'offcut' | 'group'; groupId?: string; faceId?: string; vertex?: number; offcutId?: string;
+  kind: 'vertex' | 'flow' | 'offcut' | 'group' | 'pan'; groupId?: string; faceId?: string; vertex?: number; offcutId?: string;
   start: Point; last: Point; original?: Point; pointerId: number;
+  clientStart: Point; initialView?: number[]; inverse?: { a: number; b: number; c: number; d: number };
 }
 export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: WorkbenchOptions = {}): WorkbenchHandle {
   const shadow = host.shadowRoot ?? host.attachShadow({ mode: 'open' });
@@ -36,55 +40,128 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   const capturedRevision=roof.sourceRevision, sourceOutlines=structuredClone(roof.outlines);
   let phase: 'faces'|'solution' = draft.solution?'solution':'faces';
   let selectedFaceId='', selectedOffcutId='', selectedGroupId='', advancedOpen=false, editPieces=false, worker: Worker|null=null, jobId='', busy=false, progress='', disposed=false;
-  let issues: Issue[] = [...(options.initialIssues??[])], error='', stale=false;
+  let issues: Issue[] = [...(options.initialIssues??[])], error='', stale=false, notice='';
+  let hiddenFaceIds = new Set<string>(), panMode = false, spaceHeld = false, pointerOverCanvas = false;
+  let focusedDiagnosticId = '', validationAttempted = false, pendingSourceAck = false;
+  let partitionKey = '', partitionCache: PartitionReport | null = null;
   let showSheets=false, showSources=false, showEnvelope=false, drawPoints: Point[]|null=null, drag:Drag|null=null;
   let viewBox = [-30,-30,roof.sceneWidth+60,roof.sceneHeight+60];
   const history: string[] = [], redoHistory: string[] = [];
-  function checkpoint():void { history.push(JSON.stringify(draft)); if(history.length>40)history.shift(); redoHistory.length=0; }
-  function cancel():void {worker?.terminate();worker=null;busy=false;jobId='';}
-  function invalidate():void { cancel();draft.solution=null;phase='faces';selectedOffcutId='';selectedGroupId='';error=''; }
-  function detect():void {
-    checkpoint();invalidate();
-    try { const result=deriveFaces(draft.roof);draft.faces=result.faces;issues=[...(options.initialIssues??[]),...result.issues];selectedFaceId=draft.faces[0]?.id??''; }
-    catch(e){error=message(e);draft.faces=[];}
+  function snapshot(): string { return JSON.stringify({ draft, issues, hiddenFaceIds: [...hiddenFaceIds], selectedFaceId, phase }); }
+  function checkpoint(): void {
+    const value = snapshot();
+    if (history[history.length - 1] !== value) history.push(value);
+    if (history.length > 40) history.shift();
+    redoHistory.length = 0;
   }
-  const message=(e:unknown):string=>e instanceof Error?e.message:String(e);
-  if(!draft.faces.length)detect();else selectedFaceId=draft.faces[0]?.id??'';
-  // The first detection runs synchronously; constructor failures remain visible.
-  function face():RoofFace|undefined {return draft.faces.find(f=>f.id===selectedFaceId);}
-  function allIssues():Issue[] {
-    const current=draft.solution?validateDraft(draft):validatePartition(draft.roof,draft.faces);
-    const reported=[...issues,...current,...(draft.solution?.issues??[])];
-    return reported.filter((i,index,a)=>a.findIndex(j=>j.code===i.code&&j.message===i.message)===index);
+  function cancel(): void { worker?.terminate(); worker = null; busy = false; jobId = ''; }
+  function invalidate(): void {
+    cancel(); draft.solution = null; phase = 'faces'; selectedOffcutId = ''; selectedGroupId = '';
+    error = ''; pendingSourceAck = false; partitionKey = '';
+  }
+  function detect(record = true): void {
+    if (record) checkpoint();
+    invalidate(); hiddenFaceIds.clear(); notice = ''; validationAttempted = false;
+    try {
+      const result = deriveFaces(draft.roof);
+      draft.faces = result.faces.map(f => ({ ...f, flowSource: 'inferred' }));
+      issues = [...(options.initialIssues ?? []), ...result.issues];
+      selectedFaceId = draft.faces[0]?.id ?? '';
+    } catch (e) { error = message(e); draft.faces = []; }
+  }
+  const message = (e: unknown): string => e instanceof Error ? e.message : String(e);
+  if (!draft.faces.length) detect(false); else selectedFaceId = draft.faces[0]?.id ?? '';
+  function face(): RoofFace | undefined { return draft.faces.find(f => f.id === selectedFaceId); }
+  function partition(): PartitionReport {
+    const key = fingerprint([draft.roof.outlines, draft.roof.mmPerSceneUnit, draft.roof.calibrationConfirmed, draft.faces.map(f => [f.id, f.polygon])]);
+    if (!partitionCache || key !== partitionKey) { partitionCache = analysePartition(draft.roof, draft.faces); partitionKey = key; }
+    return partitionCache;
+  }
+  function allIssues(): Issue[] {
+    const current = draft.solution ? validateDraft(draft) : validationAttempted
+      ? validateInputs(draft.roof, draft.faces, draft.profile, draft.settings)
+      : [...partition().issues, ...draft.faces.flatMap(f => validateRing(f.polygon) ? [] : validateFaceDirections(f, draft.roof))];
+    const small = draft.faces.filter(f => !validateRing(f.polygon) && narrowFace(f, draft.roof)).map(f => ({
+      severity: 'warning' as const, code: 'NARROW_FACE', faceId: f.id,
+      message: `${f.name}: narrow face. Hide it to inspect what lies underneath; delete only if it is a false face. It still participates in the calculation while hidden.`,
+    }));
+    const reported: Issue[] = [...currentDetectionIssues(issues, draft.faces), ...current, ...small, ...(draft.solution?.issues ?? [])];
+    return reported.filter((i, index, a) => a.findIndex(j => j.code === i.code && j.message === i.message && j.faceId === i.faceId && j.objectId === i.objectId) === index);
   }
   function scenePoint(e:PointerEvent|MouseEvent|WheelEvent):Point {
     const svg=shadow.querySelector('svg.qc-scene') as SVGSVGElement|null;
     if(!svg)return{x:0,y:0};const matrix=svg.getScreenCTM();if(!matrix)return{x:0,y:0};
     const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(matrix.inverse());return{x:p.x,y:p.y};
   }
-  function renderScene():void {
-    const canvas=shadow.querySelector('.qc-canvas');if(!canvas)return;
-    canvas.innerHTML=renderSvg(draft,{phase,selectedFaceId,selectedOffcutId,selectedGroupId,editPieces,showSheets,showSources,showEnvelope,viewBox:viewBox.join(' '),pendingPolygon:drawPoints??undefined});
+  function renderScene(): void {
+    const canvas = shadow.querySelector<HTMLElement>('.qc-canvas'); if (!canvas) return;
+    const box = canvas.getBoundingClientRect();
+    canvas.dataset.pan = String(panMode || spaceHeld);
+    canvas.dataset.dragging = String(drag?.kind === 'pan');
+    canvas.innerHTML = renderSvg(draft, { phase, selectedFaceId, selectedOffcutId, selectedGroupId, editPieces,
+      showSheets, showSources, showEnvelope, viewBox: viewBox.join(' '), pendingPolygon: drawPoints ?? undefined,
+      hiddenFaceIds, coverage: partition().regions, focusedDiagnosticId,
+      sceneUnitsPerPixel: Math.max(viewBox[2] / Math.max(1, box.width), viewBox[3] / Math.max(1, box.height)),
+    });
+  }
+  function focusFace(id: string): void {
+    const f = draft.faces.find(f => f.id === id); if (!f) return;
+    selectedFaceId = id;
+    const xs = f.polygon.map(p => p.x), ys = f.polygon.map(p => p.y);
+    fitBounds(Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys));
+  }
+  function fitBounds(minX: number, minY: number, maxX: number, maxY: number): void {
+    const pad = Math.max(5, Math.max(maxX - minX, maxY - minY) * .18);
+    const width = Math.max(roof.sceneWidth * .05, maxX - minX + pad * 2);
+    const height = Math.max(roof.sceneHeight * .05, maxY - minY + pad * 2);
+    viewBox = [(minX + maxX - width) / 2, (minY + maxY - height) / 2, width, height];
+  }
+  /** Rerendering never throws the sidebar back to its top or discards keyboard
+   * focus/disclosure state. Scene geometry stays outside application state. */
+  function captureView(): { scroll: number; mainScroll: number; open: Map<string, boolean>; focus: Record<string, string> | null } {
+    const active = shadow.activeElement as HTMLElement | null;
+    const identity: Record<string, string> = {};
+    if (active) for (const name of ['id', 'data-action', 'data-id', 'data-field', 'data-display', 'data-outline', 'data-focus']) {
+      const value = active.getAttribute(name); if (value) identity[name] = value;
+    }
+    return { scroll: shadow.querySelector('.qc-sidebar')?.scrollTop ?? 0, mainScroll: shadow.querySelector('.qc-main')?.scrollTop ?? 0,
+      open: new Map([...shadow.querySelectorAll('details')].map(d => [d.id || d.querySelector('summary')?.textContent || '', d.open])),
+      focus: Object.keys(identity).length ? identity : null };
+  }
+  function restoreView(view: ReturnType<typeof captureView>, resetScroll: boolean): void {
+    for (const d of shadow.querySelectorAll('details')) {
+      const key = d.id || d.querySelector('summary')?.textContent || '';
+      if (d.id !== 'qc-advanced' && view.open.has(key)) d.open = view.open.get(key)!;
+    }
+    if (view.focus) [...shadow.querySelectorAll<HTMLElement>('button,input,select,textarea,summary,[tabindex]')]
+      .find(e => Object.entries(view.focus!).every(([k, v]) => e.getAttribute(k) === v))?.focus({ preventScroll: true });
+    const sidebar = shadow.querySelector('.qc-sidebar'), main = shadow.querySelector('.qc-main');
+    if (sidebar) sidebar.scrollTop = resetScroll ? 0 : view.scroll;
+    if (main) main.scrollTop = resetScroll ? 0 : view.mainScroll;
   }
   function inputField(label:string,field:string,value:number|null,step='1'):string {return `<label>${esc(label)}<input data-field="${field}" type="number" step="${step}" value="${value===null?'':value}"/></label>`;}
-  function render(): void {
+  function render(resetScroll = false): void {
     if (disposed) return;
+    const view = captureView();
     const f = face(), s = draft.solution, reported = allIssues(), errors = reported.filter(i => i.severity === 'error');
     const faceName = (id: string): string => draft.faces.find(g => g.id === id)?.name ?? id;
     const color = (id: string): string => PALETTE[Math.max(0, draft.faces.findIndex(g => g.id === id)) % PALETTE.length];
     const pitch = draft.faces.length && draft.faces.every(g => g.pitchDeg === draft.faces[0].pitchDeg) ? draft.faces[0].pitchDeg : null;
-    const faceButtons = `<div class="qc-face-grid">${draft.faces.map(g => `<button class="qc-face ${g.id === selectedFaceId ? 'active' : ''}" data-action="select-face" data-id="${esc(g.id)}">${esc(g.name)}${g.confirmed ? ' ✓' : ''}</button>`).join('')}</div>`;
+    const smallIds = new Set(draft.faces.filter(g => !validateRing(g.polygon) && narrowFace(g, draft.roof)).map(g => g.id));
+    const faceButtons = `<div class="qc-face-grid" aria-label="Roof faces">${draft.faces.map(g => `<button class="qc-face ${g.id === selectedFaceId ? 'active' : ''}" data-action="select-face" data-id="${esc(g.id)}" aria-pressed="${g.id === selectedFaceId}" data-hidden="${hiddenFaceIds.has(g.id)}"><span class="qc-face-label">${esc(g.name)}</span><span class="qc-face-meta">${smallIds.has(g.id) ? '<span class="qc-small-tag">Small</span>' : ''}${hiddenFaceIds.has(g.id) ? icon('eyeOff') + '<span class="qc-sr-only">Hidden</span>' : g.confirmed ? icon('check') + '<span class="qc-sr-only">Confirmed</span>' : ''}</span></button>`).join('')}</div>`;
+    const quickTools = f ? `<div class="qc-face-tools"><div class="qc-face-tools-head"><strong>${esc(f.name)}</strong>${hiddenFaceIds.has(f.id) ? '<span class="qc-badge">Hidden</span>' : smallIds.has(f.id) ? '<span class="qc-small-tag">Narrow face</span>' : ''}</div><small>${hiddenFaceIds.has(f.id) ? 'Hidden on screen only — still part of the roof.' : smallIds.has(f.id) ? 'Hide to inspect underneath, or delete if incorrect.' : 'Select a face to inspect, hide or remove it.'}</small><div class="qc-quick-actions"><button data-action="focus-face" data-id="${esc(f.id)}" title="Zoom to ${esc(f.name)}">${icon('focus')}Locate</button><button data-action="toggle-face" aria-label="${hiddenFaceIds.has(f.id) ? 'Show' : 'Hide'} ${esc(f.name)}">${icon(hiddenFaceIds.has(f.id) ? 'eye' : 'eyeOff')}${hiddenFaceIds.has(f.id) ? 'Show' : 'Hide'}</button><button data-action="delete-face" class="quiet-danger" aria-label="Delete ${esc(f.name)}">${icon('trash')}Delete</button></div></div>` : '';
     const faceTools = f ? `<h3>${esc(f.name)} — face tools</h3><label class="qc-field">Name<input data-field="name" value="${esc(f.name)}"/></label>
-      <div class="qc-fields">${inputField('Water angle ° (90 = down)', 'flowAngle', f.flow ? Math.atan2(f.flow.y, f.flow.x) * 180 / Math.PI : null, '45')}${inputField('This face’s pitch °', 'pitch', f.pitchDeg, '0.5')}${inputField('Lane start offset, mm', 'laneOffset', f.laneOffsetMm)}<label>Lap direction<select data-field="lap"><option value="1" ${f.lap === 1 ? 'selected' : ''}>Along +cross-slope</option><option value="-1" ${f.lap === -1 ? 'selected' : ''}>Along −cross-slope</option></select></label></div>
+      <div class="qc-fields">${inputField('Water angle ° (90 = down)', 'flowAngle', f.flow ? Math.atan2(f.flow.y, f.flow.x) * 180 / Math.PI : null, '1')}${inputField('This face’s pitch °', 'pitch', f.pitchDeg, '0.5')}${inputField('Lane start offset, mm', 'laneOffset', f.laneOffsetMm)}<label>Lap direction<select data-field="lap"><option value="1" ${f.lap === 1 ? 'selected' : ''}>Along +cross-slope</option><option value="-1" ${f.lap === -1 ? 'selected' : ''}>Along −cross-slope</option></select></label></div>
       <label class="qc-check"><input data-field="lapLocked" type="checkbox" ${f.lapLocked ? 'checked' : ''}/>Lock this face’s lap direction</label>
       <label class="qc-check"><input data-field="laneOffsetLocked" type="checkbox" ${f.laneOffsetLocked ? 'checked' : ''}/>Lock this face’s sheet-joint registration</label>
-      <div class="qc-actions"><button data-action="confirm-face">Confirm this face</button><button data-action="apply-pitch">Apply pitch to all</button><button data-action="delete-face">Delete face</button></div>
+      <div class="qc-actions"><button data-action="confirm-face">Confirm this face</button><button data-action="apply-pitch">Apply pitch to all</button></div>
       <details><summary>Split, join or edit vertices</summary><div class="qc-fields"><label>Split axis<select id="split-axis"><option value="x">Vertical (x)</option><option value="y">Horizontal (y)</option></select></label><label>Scene coordinate<input id="split-at" type="number" value="${centroid(f.polygon).x.toFixed(1)}"/></label></div><button data-action="split">Split selected face</button>
       <label class="qc-field">Join with<select id="merge-target">${draft.faces.filter(g => g.id !== f.id).map(g => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('')}</select></label><button data-action="merge" ${draft.faces.length < 2 ? 'disabled' : ''}>Join faces</button>
       <label class="qc-field">Vertices: x,y per line<textarea id="polygon-points">${f.polygon.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join('\n')}</textarea></label><button data-action="apply-polygon">Apply polygon</button></details>` : '';
     const materialTools = `<h3>Material rules</h3><label class="qc-field">Stock strategy<select data-field="stockMode"><option value="bank-first" ${draft.settings.stockMode === 'bank-first' ? 'selected' : ''}>Primary banks + straight fillers</option><option value="face-envelope" ${draft.settings.stockMode === 'face-envelope' ? 'selected' : ''}>Legacy: full face envelopes</option><option value="per-lane" ${draft.settings.stockMode === 'per-lane' ? 'selected' : ''}>Legacy: independent sheet lengths</option></select></label>
       <div class="qc-fields">${inputField('Physical left lap, mm', 'leftLapMm', draft.profile.leftLapMm)}${inputField('Physical right lap, mm', 'rightLapMm', draft.profile.rightLapMm)}${inputField('Cut clearance, mm', 'cutGapMm', draft.profile.cutGapMm)}${inputField('End allowance, mm', 'endAllowanceMm', draft.profile.endAllowanceMm)}${inputField('Maximum sheet length, mm', 'maxLengthMm', draft.profile.maxLengthMm)}${inputField('Length increment, mm', 'lengthIncrementMm', draft.profile.lengthIncrementMm)}${inputField('Max extra reuse stock, mm', 'maxBankExtensionMm', draft.settings.maxBankExtensionMm ?? 100)}</div>
       <p class="qc-muted">Extra reuse stock is optional, counted as supplied length and reported on the plan. Set its limit to 0 to prohibit it. Physical overlaps and cut allowances require profile-specific checks.</p>
+      <label class="qc-check"><input data-field="allowEndForEnd" type="checkbox" ${draft.profile.allowEndForEnd ? 'checked' : ''}/>Allow end-for-end reuse (long-run default)</label><p class="qc-muted">Rotation stays face-up. Side-lap compatibility is always checked. Disable for profiles or finishes that cannot be reversed.</p>
       <label class="qc-check"><input data-field="rulesConfirmed" type="checkbox" ${draft.profile.rulesConfirmed ? 'checked' : ''}/>Profile / lap rules checked</label>
       <label class="qc-check"><input data-field="optimiseLapDirections" type="checkbox" ${draft.settings.optimiseLapDirections ? 'checked' : ''}/>Suggest lap directions for unlocked faces</label>`;
     let normal = '', solutionTools = '';
@@ -113,31 +190,44 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         <details><summary>Plan-derived stock lengths</summary><p class="qc-muted">Replace with verified site-measured lengths before ordering. Includes reported extra stock. Spares are not included.</p><table class="qc-stock"><thead><tr><th>Face</th><th>Qty</th><th>Length</th></tr></thead><tbody>${newStockSchedule(s).map(g => `<tr><td>${esc(faceName(g.faceId))}<small>${esc(g.role)}</small></td><td>${g.count}</td><td>${(g.lengthMm / 1000).toFixed(3)} m</td></tr>`).join('')}</tbody></table></details>
         <details><summary>Material totals & search</summary><p class="qc-muted">New physical metal: ${(s.metrics.newMaterialMm2 / 1e6).toFixed(2)} m²<br/>Net roof surface: ${(s.metrics.netRoofMm2 / 1e6).toFixed(2)} m²<br/>Modelled waste: ${(s.metrics.wasteMm2 / 1e6).toFixed(2)} m²<br/>${s.search.completedTrials} completed trials · ${(s.search.elapsedMs / 1000).toFixed(2)} s<br/>Practical bounded search, not a proven minimum. Areas include pitch; physical overlaps differ from net cover. Waste is not a quoting allowance.</p></details>`;
     } else {
-      normal = `<h2>Check the faces</h2><p class="qc-muted">${draft.faces.length} faces found. Check the outlines and water arrows; drag to correct them.</p>${faceButtons}
+      normal = `<h2>Review roof faces</h2><p class="qc-muted">${draft.faces.length} faces. Check each outline and water arrow.</p>${quickTools}${faceButtons}
+        ${hiddenFaceIds.size ? `<div class="qc-hidden-summary"><span>${hiddenFaceIds.size} hidden · still included</span><button data-action="show-all">Show all</button></div>` : ''}
+        <div class="qc-actions"><button data-action="add-face">${icon('plus')}Add face</button></div>
         <div class="qc-fields">${inputField('Sheet cover, mm', 'coverMm', draft.profile.coverMm)}${inputField('Pitch ° — all faces', 'allPitch', pitch, '0.5')}</div>
         ${draft.faces.some(g => g.pitchDeg !== pitch) ? '<p class="qc-muted">Mixed pitches: keep them, or enter a common pitch. Individual pitches are in Advanced.</p>' : ''}
-        <label class="qc-check"><input data-field="approvedEndForEnd" type="checkbox" ${draft.profile.allowEndForEnd && draft.profile.rulesConfirmed ? 'checked' : ''}/>End-for-end reuse is approved for this profile.</label>
-        <p class="qc-muted">Never turn a sheet face-down. Leave this unchecked until the profile / lap rule is verified.</p>
+        ${!draft.profile.allowEndForEnd ? '<div class="qc-note">End-for-end reuse is off. This may reduce matches; change it under Advanced → Material rules.</div>' : ''}
         ${drawPoints ? '<div class="qc-actions"><button data-action="finish-polygon">Finish polygon</button><button data-action="cancel-polygon">Cancel polygon</button></div>' : ''}
-        <button data-action="confirm-run" class="primary qc-wide" ${busy || stale ? 'disabled' : ''}>Faces correct — find offcuts</button>`;
+        <button data-action="confirm-run" class="primary qc-wide" ${busy || stale || drawPoints ? 'disabled' : ''}>Faces correct — find offcuts ${icon('arrow')}</button>`;
+
     }
-    const advanced = `<details id="qc-advanced" ${advancedOpen ? 'open' : ''}><summary>Advanced</summary>${phase === 'solution' ? solutionTools : `<details><summary>Selected roof outlines</summary>${sourceOutlines.map(o => `<label class="qc-check"><input data-outline="${esc(o.id)}" type="checkbox" ${draft.roof.outlines.some(a => a.id === o.id) ? 'checked' : ''}/>${esc(o.name)}</label>`).join('')}<button data-action="detect">Rebuild from linework</button></details><div class="qc-actions"><button data-action="add-face">Add face</button><button data-action="confirm-all">Confirm reviewed faces</button></div>${faceTools}${materialTools}`}
+    const advanced = `<details id="qc-advanced" ${advancedOpen ? 'open' : ''}><summary>Advanced</summary>${phase === 'solution' ? solutionTools : `<details><summary>Selected roof outlines</summary>${sourceOutlines.map(o => `<label class="qc-check"><input data-outline="${esc(o.id)}" type="checkbox" ${draft.roof.outlines.some(a => a.id === o.id) ? 'checked' : ''}/>${esc(o.name)}</label>`).join('')}<button data-action="detect">Rebuild from linework</button></details><div class="qc-actions"><button data-action="confirm-all">Confirm reviewed faces</button></div>${faceTools}${materialTools}`}
       ${reported.length ? `<details ${errors.length ? 'open' : ''}><summary>Checks / notes (${reported.length})</summary>${reported.slice(0, 35).map(i => `<div class="qc-note ${i.severity === 'error' ? 'qc-error' : ''}"><b>${esc(i.code)}</b><br/>${esc(i.message)}</div>`).join('')}</details>` : ''}
-      <div class="qc-actions"><button data-action="export-json">Export draft</button><button data-action="redo" ${redoHistory.length ? '' : 'disabled'}>Redo</button></div><p class="qc-muted">Page: ${esc(draft.roof.pageId)}<br/>Scope: ${esc(draft.roof.areaScopeId ?? 'selected page')}<br/>${draft.roof.mmPerSceneUnit.toFixed(3)} mm / scene unit<br/>Export a draft to keep it; this review does not save to the database.</p></details>`;
-    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div><span class="qc-badge">V2 · DRAFT PLAN</span>${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
-      <nav class="qc-topbar"><span class="qc-step"><b>1</b>Review faces</span><span class="qc-muted">→</span><span class="qc-step"><b>2</b>Cut plan</span><span class="qc-spacer"></span><button data-action="undo" ${history.length ? '' : 'disabled'}>Undo</button><button data-action="fit">Fit</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="zoom-out" aria-label="Zoom out">−</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
-      <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas"></div><div class="qc-help">${drawPoints ? 'Click polygon vertices, then Finish polygon.' : phase === 'faces' ? 'Select a face · drag a vertex or water arrow · scroll to zoom' : 'Solid = new · matching hatch = offcuts · arrows = water / lap'}</div>${busy ? `<div class="qc-busy"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
-      <aside class="qc-sidebar">${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}</div>` : ''}${errors.length ? `<div class="qc-note qc-error" role="alert"><b>${errors.length} check${errors.length === 1 ? '' : 's'} need attention.</b> ${esc(errors[0].message)}<br/>See Advanced for details. An invalid plan cannot be exported as a drawing.</div>` : ''}${normal}${advanced}</aside></main>
+      <div class="qc-actions"><button data-action="export-json">Export draft</button></div><p class="qc-muted">Page: ${esc(draft.roof.pageId)}<br/>Scope: ${esc(draft.roof.areaScopeId ?? 'selected page')}<br/>${draft.roof.mmPerSceneUnit.toFixed(3)} mm / scene unit<br/>Export a draft to keep it; this review does not save to the database.</p></details>`;
+    const coverage = partition().regions;
+    const focused = coverage.find(r => r.id === focusedDiagnosticId) ?? coverage.find(r => r.severity === 'error') ?? coverage[0];
+    const focusedIndex = focused ? coverage.indexOf(focused) : 0;
+    const coverageLabel = focused?.kind === 'gap' ? 'Uncovered roof area' : focused?.kind === 'outside' ? 'Face outside the roof' : focused?.kind === 'overlap' ? 'Faces overlap' : 'Roof outlines overlap';
+    const coverageAlert = focused ? `<div class="qc-note ${focused.severity === 'error' ? 'qc-error' : ''}"><div class="qc-check-title">${icon('warning')}${esc(coverageLabel)}</div><p>${(focused.areaMm2 / 1e6).toFixed(4)} m² · ${focused.severity === 'error' ? 'Check the highlighted region before calculating.' : 'Small drawing discrepancy. Shown in amber; draft calculation can continue.'}</p><div class="qc-view-issues"><button data-action="focus-issue" data-id="${focused.id}">${icon('focus')}Show on plan</button>${coverage.length > 1 ? `<button data-action="next-issue">Next (${focusedIndex + 1}/${coverage.length})</button>` : ''}</div></div>` : '';
+    const otherError = errors.find(i => !coverage.some(r => r.id === i.objectId));
+    const actionableError = otherError ? `<div class="qc-note qc-error" role="alert"><div class="qc-check-title">${icon('warning')}Check ${otherError.faceId ? esc(faceName(otherError.faceId)) : 'the review'}</div><p>${esc(otherError.message)}</p>${otherError.faceId ? `<button data-action="focus-face" data-id="${esc(otherError.faceId)}">Show face</button>` : ''}${errors.length > 1 ? '<small>Further checks are in Advanced.</small>' : ''}</div>` : '';
+    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.1 · Draft plan</span>${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+      <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
+      <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Use the face list to select a face."></div><div class="qc-help">${drawPoints ? 'Click polygon vertices, then Finish polygon. Esc cancels.' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Solid = new · hatch = offcuts · middle mouse / Space + drag to pan'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
+      <aside class="qc-sidebar" aria-label="Offcut review controls">${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}</div>` : ''}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advanced}</aside></main>
       <footer class="qc-footer"><span>Draft only — verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>`;
-    renderScene();
+    renderScene(); restoreView(view, resetScroll);
   }
+
   function download(name:string,contents:string,mime:string):void {
     const blob=new Blob([contents],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   function ensureCurrent():void { if(stale||options.readCurrentSourceRevision&&options.readCurrentSourceRevision()!==capturedRevision)throw new Error('Takeoff changed. Reopen this review from the current canvas.'); }
   function run():void {
     ensureCurrent();
-    if(issues.some(i=>i.severity==='error'))throw new Error('Face detection reported topology errors. Correct the faces, then use Confirm reviewed faces to explicitly acknowledge the reviewed linework.');
+    validationAttempted = true;
+    const detected = currentDetectionIssues(issues, draft.faces);
+    if (detected.some(i => i.severity === 'error')) { pendingSourceAck = true; render(true); return; }
+    if (validateInputs(draft.roof, draft.faces, draft.profile, draft.settings).some(i => i.severity === 'error')) { render(true); return; }
     checkpoint();cancel();error='';selectedOffcutId='';busy=true;progress='Testing primary banks and complete offcut sets…';jobId=localId();
     const id=jobId;
     try {
@@ -149,7 +239,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
           draft.solution=event.data.solution as Solution;phase='solution';selectedOffcutId='';selectedGroupId='';advancedOpen=false;editPieces=false;
           // Suggestions become visible arrows without mutating the locked input
           // face state used to fingerprint the original solve request.
-          cancel();render();
+          notice=''; cancel();render(true);
         }else if(event.data.kind==='error'){error=event.data.message;cancel();render();}
       };
       worker.onerror=(e)=>{error=`Worker failed: ${e.message}. Check the module-worker path / Content Security Policy.`;cancel();render();};
@@ -160,10 +250,28 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function click(event:Event):void {
     const target=(event.target as Element).closest<HTMLElement>('[data-action]');if(!target)return;
     const action=target.dataset.action;error='';
+    if (target instanceof HTMLButtonElement && target.disabled) return;
     try {
       if(action==='close'){options.onClose?.();return;}
       if(action==='cancel'){cancel();render();return;}
-      if(action==='select-face'){selectedFaceId=target.dataset.id??'';render();return;}
+      if(action==='select-face'){selectedFaceId=target.dataset.id??'';notice='';render();return;}
+      if(action==='focus-face'){focusFace(target.dataset.id ?? selectedFaceId);render();return;}
+      if(action==='focus-issue'){
+        const region=partition().regions.find(r=>r.id===target.dataset.id);if(!region)return;
+        focusedDiagnosticId=region.id;const b=bounds(region.region);fitBounds(b.minX,b.minY,b.maxX,b.maxY);render();return;
+      }
+      if(action==='next-issue'){
+        const rs=partition().regions, index=rs.findIndex(r=>r.id===focusedDiagnosticId);
+        if(rs.length)focusedDiagnosticId=rs[(index+1)%rs.length].id;
+        render();return;
+      }
+      if(action==='toggle-face'&&face()){
+        checkpoint();const f=face()!;if(hiddenFaceIds.has(f.id))hiddenFaceIds.delete(f.id);else hiddenFaceIds.add(f.id);
+        notice=hiddenFaceIds.has(f.id)?`${f.name} hidden for inspection. It is still included in the roof.`:`${f.name} shown.`;render();return;
+      }
+      if(action==='show-all'){checkpoint();hiddenFaceIds.clear();notice='All faces are visible.';render();return;}
+      if(action==='pan'){panMode=!panMode;render();return;}
+
       if(action==='select-offcut'){selectedOffcutId=target.dataset.id??'';selectedGroupId='';advancedOpen=true;editPieces=true;render();return;}
       if(action==='select-plan-face'){selectedFaceId=target.dataset.id??'';selectedGroupId=draft.solution?reuseGroups(draft.solution).find(g=>g.destinationFaceId===selectedFaceId)?.id??'':'';render();return;}
       if(action==='clear-selection'){selectedGroupId='';selectedOffcutId='';render();return;}
@@ -171,7 +279,12 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='flip-lap'&&draft.solution){const f=draft.faces.find(f=>f.id===target.dataset.id);if(!f)return;const lap=draft.solution.lapByFace[f.id];checkpoint();invalidate();f.lap=lap===1?-1:1;f.lapLocked=true;run();return;}
       if(action==='undo'||action==='redo'){
         const from=action==='undo'?history:redoHistory,to=action==='undo'?redoHistory:history,item=from.pop();
-        if(item){to.push(JSON.stringify(draft));cancel();draft=JSON.parse(item);phase=draft.solution?'solution':'faces';selectedFaceId=draft.faces[0]?.id??'';selectedOffcutId='';}render();return;
+        if(item){
+          to.push(snapshot());cancel();const saved=JSON.parse(item) as {draft:Draft;issues:Issue[];hiddenFaceIds:string[];selectedFaceId:string;phase:'faces'|'solution'};
+          draft=saved.draft;issues=saved.issues;hiddenFaceIds=new Set(saved.hiddenFaceIds);selectedFaceId=saved.selectedFaceId;
+          phase=saved.phase;selectedOffcutId='';selectedGroupId='';partitionKey='';drawPoints=null;pendingSourceAck=false;validationAttempted=false;
+          notice=action==='undo'?'Previous change undone.':'Change restored.';
+        }render();return;
       }
       if(action==='fit'){viewBox=[-30,-30,roof.sceneWidth+60,roof.sceneHeight+60];renderScene();return;}
       if(action==='zoom-in'||action==='zoom-out'){const factor=action==='zoom-in'?.8:1.25;zoom(factor,{x:viewBox[0]+viewBox[2]/2,y:viewBox[1]+viewBox[3]/2});return;}
@@ -179,7 +292,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='export-svg'){
         ensureCurrent();if(!draft.solution)throw new Error('Run the optimiser first.');
         if(validateDraft(draft).some(i=>i.severity==='error'))throw new Error('The current placement is invalid. Export a draft JSON for review, or fix it before exporting a drawing.');
-        download('quotecore-offcuts-PROTOTYPE.svg',renderSvg(draft,{phase:'solution',print:true,showSheets,showEnvelope}),'image/svg+xml');return;
+        download('quotecore-offcuts-PROTOTYPE.svg',renderSvg(draft,{phase:'solution',print:true,showSheets,showEnvelope,coverage:partition().regions}),'image/svg+xml');return;
       }
       if(action==='run'){run();return;}
       if(action==='back'){cancel();phase='faces';render();return;}
@@ -188,23 +301,33 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='cancel-polygon'){drawPoints=null;render();return;}
       if(action==='finish-polygon'){
         if(!drawPoints||drawPoints.length<3)throw new Error('Add at least three polygon vertices.');
-        const id=`manual-${localId().slice(0,8)}`;draft.faces.push({id,name:`Face ${draft.faces.length+1}`,polygon:drawPoints,boundary:[],flow:null,lap:1,lapLocked:false,pitchDeg:null,laneOffsetMm:0,confirmed:false,provenance:'manual'});selectedFaceId=id;drawPoints=null;render();return;
+        const invalid=validateRing(drawPoints);if(invalid)throw new Error(invalid);
+        const id=`manual-${localId().slice(0,8)}`;draft.faces.push(refreshFaceBoundary({id,name:`Face ${draft.faces.length+1}`,polygon:drawPoints,boundary:[],flow:null,lap:1,lapLocked:false,pitchDeg:face()?.pitchDeg??null,laneOffsetMm:0,confirmed:false,provenance:'manual'},draft.roof));selectedFaceId=id;drawPoints=null;render();return;
       }
-      if(action==='confirm-all'||action==='confirm-run'){
-        if(issues.some(i=>i.severity==='error')){
-          if(!window.confirm('Linework anomalies remain. Have you manually checked and corrected every face despite these anomalies? The geometric partition will still be validated.'))return;
-          draft.reviewNotes=[...(draft.reviewNotes??[]),...issues.filter(i=>i.severity==='error')];
-          issues=issues.map(i=>i.severity==='error'?{...i,severity:'warning',code:`REVIEWED_${i.code}`,message:`Explicitly acknowledged during face review: ${i.message}`} : i);
+      if(action==='cancel-acknowledge'){pendingSourceAck=false;render();return;}
+      if(action==='confirm-all'||action==='confirm-run'||action==='acknowledge-run'){
+        if(hiddenFaceIds.size){checkpoint();hiddenFaceIds.clear();notice='Hidden faces are visible again. Review the whole roof, then confirm to calculate.';render(true);return;}
+        const sourceProblems=currentDetectionIssues(issues,draft.faces).filter(i=>i.severity==='error');
+        if(sourceProblems.length&&action!=='acknowledge-run'){pendingSourceAck=true;render(true);return;}
+        checkpoint();
+        if(sourceProblems.length){
+          draft.reviewNotes=[...(draft.reviewNotes??[]),...sourceProblems];
+          issues=currentDetectionIssues(issues,draft.faces).map(i=>i.severity==='error'?{...i,severity:'warning',code:`REVIEWED_${i.code}`,message:`Acknowledged against manually reviewed faces: ${i.message}`}:i);
         }
-        checkpoint();draft.faces.forEach(f=>{f.confirmed=true;});if(action==='confirm-run'){run();return;}render();return;
+        pendingSourceAck=false;draft.faces.forEach(f=>{f.confirmed=true;});
+        if(action!=='confirm-all'){run();return;}render();return;
       }
       const f=face();
       if(action==='confirm-face'&&f){checkpoint();f.confirmed=true;render();return;}
       if(action==='apply-pitch'&&f){checkpoint();invalidate();draft.faces.forEach(g=>{g.pitchDeg=f.pitchDeg;g.confirmed=false;});render();return;}
-      if(action==='delete-face'&&f){checkpoint();invalidate();draft.faces=draft.faces.filter(g=>g.id!==f.id);selectedFaceId=draft.faces[0]?.id??'';render();return;}
-      if(action==='merge'&&f){const id=(shadow.querySelector('#merge-target') as HTMLSelectElement).value,g=draft.faces.find(g=>g.id===id);if(!g)throw new Error('Choose an adjacent face.');const combined=mergeFaces(f,g);checkpoint();invalidate();draft.faces=draft.faces.filter(h=>h.id!==g.id).map(h=>h.id===f.id?combined:h);render();return;}
-      if(action==='split'&&f){const axis=(shadow.querySelector('#split-axis') as HTMLSelectElement).value as 'x'|'y',at=Number((shadow.querySelector('#split-at') as HTMLInputElement).value);const parts=splitFace(f,axis,at);checkpoint();invalidate();draft.faces=draft.faces.flatMap(g=>g.id===f.id?parts:[g]);selectedFaceId=parts[0].id;render();return;}
-      if(action==='apply-polygon'&&f){const text=(shadow.querySelector('#polygon-points') as HTMLTextAreaElement).value,ps=text.trim().split(/\n+/).map(line=>{const nums=line.trim().split(/[,\s]+/).map(Number);if(nums.length!==2||!nums.every(Number.isFinite))throw new Error('Use one x,y vertex per line.');return{x:nums[0],y:nums[1]};});checkpoint();invalidate();f.polygon=ps;f.boundary=[];f.confirmed=false;f.provenance='edited';render();return;}
+      if(action==='delete-face'&&f){
+        checkpoint();const index=draft.faces.findIndex(g=>g.id===f.id);invalidate();hiddenFaceIds.delete(f.id);
+        draft.faces=draft.faces.filter(g=>g.id!==f.id);selectedFaceId=draft.faces[Math.min(index,draft.faces.length-1)]?.id??'';
+        notice=`${f.name} deleted. Undo restores it. The roof perimeter has not been changed.`;render();return;
+      }
+      if(action==='merge'&&f){const id=(shadow.querySelector('#merge-target') as HTMLSelectElement).value,g=draft.faces.find(g=>g.id===id);if(!g)throw new Error('Choose an adjacent face.');const combined=refreshFaceBoundary(mergeFaces(f,g),draft.roof);checkpoint();invalidate();draft.faces=draft.faces.filter(h=>h.id!==g.id).map(h=>h.id===f.id?combined:h);hiddenFaceIds.delete(g.id);hiddenFaceIds.delete(f.id);render();return;}
+      if(action==='split'&&f){const axis=(shadow.querySelector('#split-axis') as HTMLSelectElement).value as 'x'|'y',at=Number((shadow.querySelector('#split-at') as HTMLInputElement).value);const parts=splitFace(f,axis,at).map(g=>refreshFaceBoundary(g,draft.roof));checkpoint();invalidate();draft.faces=draft.faces.flatMap(g=>g.id===f.id?parts:[g]);hiddenFaceIds.delete(f.id);selectedFaceId=parts[0].id;render();return;}
+      if(action==='apply-polygon'&&f){const text=(shadow.querySelector('#polygon-points') as HTMLTextAreaElement).value,ps=text.trim().split(/\n+/).map(line=>{const nums=line.trim().split(/[,\s]+/).map(Number);if(nums.length!==2||!nums.every(Number.isFinite))throw new Error('Use one x,y vertex per line.');return{x:nums[0],y:nums[1]};});checkpoint();invalidate();f.polygon=ps;Object.assign(f,refreshFaceBoundary(f,draft.roof));f.confirmed=false;f.provenance='edited';render();return;}
       if((action==='apply-placement'||action==='rotate-offcut'||action==='fit-placement')&&draft.solution){
         const o=draft.solution.offcuts.find(o=>o.id===selectedOffcutId);if(!o)throw new Error('Select an offcut.');
         const p=draft.solution.placements.find(p=>p.kind==='reuse'&&p.offcutId===selectedOffcutId) ?? {rotation:0 as const,translateY:0};
@@ -224,13 +347,12 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       checkpoint();invalidate();const f=face(),value=target.value;
       if(field==='name'&&f)f.name=value;
       else if(field==='pitch'&&f){f.pitchDeg=value===''?null:Number(value);f.confirmed=false;}
-      else if(field==='flowAngle'&&f){const angle=Number(value)*Math.PI/180;f.flow={x:Math.cos(angle),y:Math.sin(angle)};f.confirmed=false;}
+      else if(field==='flowAngle'&&f){const angle=Number(value)*Math.PI/180;f.flow=value===''?null:{x:Math.cos(angle),y:Math.sin(angle)};f.flowSource='manual';f.confirmed=false;}
       else if(field==='laneOffset'&&f)f.laneOffsetMm=Number(value);
       else if(field==='lap'&&f)f.lap=Number(value) as -1|1;
       else if(field==='lapLocked'&&f)f.lapLocked=(target as HTMLInputElement).checked;
       else if(field==='laneOffsetLocked'&&f)f.laneOffsetLocked=(target as HTMLInputElement).checked;
       else if(field==='allPitch')draft.faces.forEach(g=>{g.pitchDeg=value===''?null:Number(value);g.confirmed=false;});
-      else if(field==='approvedEndForEnd'){const yes=(target as HTMLInputElement).checked;draft.profile.allowEndForEnd=yes;draft.profile.rulesConfirmed=yes;}
       else if(field==='maxBankExtensionMm')draft.settings.maxBankExtensionMm=Number(value);
       else if(field==='stockMode')draft.settings.stockMode=value as 'bank-first'|'per-lane'|'face-envelope';
       else if(field==='optimiseLapDirections')draft.settings.optimiseLapDirections=(target as HTMLInputElement).checked;
@@ -238,72 +360,174 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       else if(['coverMm','leftLapMm','rightLapMm','cutGapMm','endAllowanceMm','maxLengthMm','lengthIncrementMm'].includes(field)) (draft.profile as unknown as Record<string,unknown>)[field]=Number(value);
     }catch(e){error=message(e);}render();
   }
-  function pointerDown(event:Event):void {
-    const e=event as PointerEvent,target=e.target as Element;if(!target.closest('svg.qc-scene'))return;
-    const p=scenePoint(e);if(drawPoints){drawPoints.push(p);renderScene();return;}
-    const vertex=target.closest<SVGElement>('[data-vertex]'),flow=target.closest<SVGElement>('[data-flow]'),offcut=target.closest<SVGElement>('[data-offcut]'),group=target.closest<SVGElement>('[data-group]'),faceEl=target.closest<SVGElement>('[data-face]');
-    if(vertex){const f=draft.faces.find(f=>f.id===vertex.dataset.faceId);if(f)drag={kind:'vertex',faceId:f.id,vertex:Number(vertex.dataset.vertex),start:p,last:p,original:{...f.polygon[Number(vertex.dataset.vertex)]},pointerId:e.pointerId};}
-    else if(flow)drag={kind:'flow',faceId:flow.dataset.flow,start:p,last:p,pointerId:e.pointerId};
-    else if(group&&phase==='solution'){selectedGroupId=group.dataset.group??'';selectedOffcutId='';drag={kind:'group',groupId:selectedGroupId,start:p,last:p,pointerId:e.pointerId};}
-    else if(offcut&&phase==='solution'){selectedOffcutId=offcut.dataset.offcut??'';drag={kind:'offcut',offcutId:selectedOffcutId,start:p,last:p,pointerId:e.pointerId};}
-    else if(faceEl&&phase==='faces'){selectedFaceId=faceEl.dataset.face??'';render();return;}
-    if(drag){e.preventDefault();(shadow.querySelector('.qc-canvas') as HTMLElement).setPointerCapture(e.pointerId);}
+  function releasePointer(id: number): void {
+    const canvas = shadow.querySelector<HTMLElement>('.qc-canvas');
+    if (canvas?.hasPointerCapture(id)) canvas.releasePointerCapture(id);
   }
-  function pointerMove(event:Event):void {
-    if(!drag)return;const e=event as PointerEvent;drag.last=scenePoint(e);
-    if(drag.kind==='group'){
-      const group=[...shadow.querySelectorAll<SVGGElement>('[data-group]')].find(g=>g.dataset.group===drag!.groupId);
-      group?.setAttribute('transform',`translate(${drag.last.x-drag.start.x} ${drag.last.y-drag.start.y})`);
-    }else if(drag.kind==='offcut'){
-      const group=[...shadow.querySelectorAll<SVGGElement>('[data-offcut]')].find(g=>g.dataset.offcut===drag!.offcutId);
-      group?.setAttribute('transform',`translate(${drag.last.x-drag.start.x} ${drag.last.y-drag.start.y})`);
-    }else if(drag.kind==='vertex'){
-      const handle=[...shadow.querySelectorAll<SVGCircleElement>('[data-vertex]')].find(g=>g.dataset.faceId===drag!.faceId&&Number(g.dataset.vertex)===drag!.vertex);
-      handle?.setAttribute('cx',String(drag.last.x));handle?.setAttribute('cy',String(drag.last.y));
-    }else{
-      const handle=[...shadow.querySelectorAll<SVGCircleElement>('[data-flow]')].find(g=>g.dataset.flow===drag!.faceId);
-      handle?.setAttribute('cx',String(drag.last.x));handle?.setAttribute('cy',String(drag.last.y));
+  function pointerDown(event: Event): void {
+    const e = event as PointerEvent, target = e.target as Element;
+    if (!target.closest('.qc-canvas') || drag || e.button === 2) return;
+    const canvas = shadow.querySelector<HTMLElement>('.qc-canvas')!;
+    const p = scenePoint(e), base = { start: p, last: p, clientStart: { x: e.clientX, y: e.clientY }, pointerId: e.pointerId };
+    // Navigation wins BEFORE face/handle hit testing. A middle click or Space
+    // drag must never start moving a vertex, flow arrow or physical offcut.
+    if (e.button === 1 || e.button === 0 && (spaceHeld || panMode)) {
+      const svg = shadow.querySelector<SVGSVGElement>('svg.qc-scene'), m = svg?.getScreenCTM()?.inverse();
+      if (!m) return;
+      drag = { ...base, kind: 'pan', initialView: [...viewBox], inverse: { a: m.a, b: m.b, c: m.c, d: m.d } };
+      canvas.focus({ preventScroll: true }); canvas.dataset.dragging = 'true';
+    } else {
+      if (e.button !== 0 || busy || stale) return;
+      if (target.closest('[data-action]')) return; // lap/diagnostic buttons own clicks
+      if (drawPoints) { drawPoints.push(p); renderScene(); return; }
+      const vertex = target.closest<SVGElement>('[data-vertex]'), flow = target.closest<SVGElement>('[data-flow]');
+      const offcut = target.closest<SVGElement>('[data-offcut]'), group = target.closest<SVGElement>('[data-group]'), faceEl = target.closest<SVGElement>('[data-face]');
+      if (vertex) {
+        const f = draft.faces.find(f => f.id === vertex.dataset.faceId);
+        if (f) drag = { ...base, kind: 'vertex', faceId: f.id, vertex: Number(vertex.dataset.vertex), original: { ...f.polygon[Number(vertex.dataset.vertex)] } };
+      } else if (flow) drag = { ...base, kind: 'flow', faceId: flow.dataset.flow };
+      else if (group && phase === 'solution') { selectedGroupId = group.dataset.group ?? ''; selectedOffcutId = ''; drag = { ...base, kind: 'group', groupId: selectedGroupId }; }
+      else if (offcut && phase === 'solution') { selectedOffcutId = offcut.dataset.offcut ?? ''; drag = { ...base, kind: 'offcut', offcutId: selectedOffcutId }; }
+      else if (faceEl && phase === 'faces') { selectedFaceId = faceEl.dataset.face ?? ''; notice = ''; render(); shadow.querySelector<HTMLElement>('.qc-canvas')?.focus({ preventScroll: true }); return; }
+    }
+    if (drag) { e.preventDefault(); canvas.setPointerCapture(e.pointerId); }
+  }
+  function pointerMove(event: Event): void {
+    const e = event as PointerEvent;
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    if (drag.kind === 'pan') {
+      const dx = e.clientX - drag.clientStart.x, dy = e.clientY - drag.clientStart.y, m = drag.inverse!, initial = drag.initialView!;
+      // Transform the CLIENT delta as a vector, using the gesture's original
+      // matrix. SVG meet/letterboxing and non-zero page offsets are supported.
+      viewBox = [initial[0] - (m.a * dx + m.c * dy), initial[1] - (m.b * dx + m.d * dy), initial[2], initial[3]];
+      shadow.querySelector('svg.qc-scene')?.setAttribute('viewBox', viewBox.join(' '));
+      e.preventDefault(); return;
+    }
+    drag.last = scenePoint(e);
+    if (drag.kind === 'group') {
+      const group = [...shadow.querySelectorAll<SVGGElement>('[data-group]')].find(g => g.dataset.group === drag!.groupId);
+      group?.setAttribute('transform', `translate(${drag.last.x - drag.start.x} ${drag.last.y - drag.start.y})`);
+    } else if (drag.kind === 'offcut') {
+      const group = [...shadow.querySelectorAll<SVGGElement>('[data-offcut]')].find(g => g.dataset.offcut === drag!.offcutId);
+      group?.setAttribute('transform', `translate(${drag.last.x - drag.start.x} ${drag.last.y - drag.start.y})`);
+    } else if (drag.kind === 'vertex') {
+      const handle = [...shadow.querySelectorAll<SVGCircleElement>('[data-vertex]')].find(g => g.dataset.faceId === drag!.faceId && Number(g.dataset.vertex) === drag!.vertex);
+      handle?.setAttribute('cx', String(drag.last.x)); handle?.setAttribute('cy', String(drag.last.y));
+      for (const f of draft.faces) {
+        const polygon = [...shadow.querySelectorAll<SVGPolygonElement>('polygon[data-face]')].find(g => g.dataset.face === f.id);
+        polygon?.setAttribute('points', f.polygon.map(q => distance(q, drag!.original!) < .01 ? drag!.last : q).map(p => `${p.x},${p.y}`).join(' '));
+      }
+    } else {
+      const handle = [...shadow.querySelectorAll<SVGCircleElement>('[data-flow]')].find(g => g.dataset.flow === drag!.faceId);
+      handle?.setAttribute('cx', String(drag.last.x)); handle?.setAttribute('cy', String(drag.last.y));
+      const arrow = [...shadow.querySelectorAll<SVGLineElement>('[data-water-face]')].find(g => g.dataset.waterFace === drag!.faceId);
+      arrow?.setAttribute('x2', String(drag.last.x)); arrow?.setAttribute('y2', String(drag.last.y));
     }
   }
-  function pointerUp(event:Event):void {
-    if(!drag)return;const e=event as PointerEvent,state=drag;drag=null;
-    try{
-      const p=scenePoint(e);if(distance(p,state.start)<.5){render();return;}
-      checkpoint();
-      if(state.kind==='vertex'){
-        invalidate();for(const f of draft.faces){let changed=false;f.polygon=f.polygon.map(q=>{if(distance(q,state.original!)<.01){changed=true;return p;}return q;});if(changed){f.confirmed=false;f.provenance='edited';f.boundary=[];}}
-      }else if(state.kind==='flow'){
-        const f=draft.faces.find(f=>f.id===state.faceId);if(f){invalidate();f.flow=unit(sub(p,interiorAnchor(f.polygon)));f.confirmed=false;}
-      }else if(state.kind==='group'&&draft.solution){
-        const target=draft.solution.demands.find(d=>pointInRegion(d.cover,scenePointToDemand(p,d)));
-        if(!target)throw new Error('Drop this offcut set onto a roof face.');
-        draft.solution=moveReuseGroup(draft.solution,state.groupId!,target.faceId,target.laneIndex);selectedGroupId='';
-      }else if(draft.solution){
-        const s=draft.solution,o=s.offcuts.find(o=>o.id===state.offcutId);if(!o)throw new Error('Source offcut not found.');
-        const placement=s.placements.find(a=>a.offcutId===state.offcutId&&a.kind==='reuse') ?? {demandId:o.sourceDemandId,translateY:0,rotation:0 as const};
-        const target=s.demands.find(d=>pointInRegion(d.cover,scenePointToDemand(p,d)));
-        if(!target)throw new Error('Drop the offcut onto a sheet lane on the roof.');
-        const original=s.demands.find(d=>d.id===placement.demandId)!;
-        let dy=placement.translateY;
-        if(target.id===original.id)dy+=scenePointToDemand(p,target).y-scenePointToDemand(state.start,original).y;
-        else {
-          // Preserve the grabbed point's relative sheet coordinate at the new
-          // destination. Horizontal motion snaps; only along-run shift is free.
-          const anchor=scenePointToDemand(state.start,original).y-placement.translateY;
-          dy=scenePointToDemand(p,target).y-anchor;
+  function pointerUp(event: Event): void {
+    const e = event as PointerEvent;
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    const state = drag; drag = null; releasePointer(e.pointerId);
+    if (state.kind === 'pan') { renderScene(); return; }
+    try {
+      const p = scenePoint(e);
+      if (distance({ x: e.clientX, y: e.clientY }, state.clientStart) < 3) { render(); return; }
+      if (state.kind === 'vertex') {
+        checkpoint(); invalidate();
+        for (const f of draft.faces) {
+          let changed = false;
+          f.polygon = f.polygon.map(q => { if (distance(q, state.original!) < .01) { changed = true; return p; } return q; });
+          if (changed) { f.confirmed = false; f.provenance = 'edited'; Object.assign(f, refreshFaceBoundary(f, draft.roof)); }
         }
-        draft.solution=editPlacement(s,state.offcutId!,target.id,placement.rotation,dy);
+      } else if (state.kind === 'flow') {
+        const f = draft.faces.find(f => f.id === state.faceId);
+        if (f) { const flow = unit(sub(p, interiorAnchor(f.polygon))); checkpoint(); invalidate(); f.flow = flow; f.flowSource = 'manual'; f.confirmed = false; }
+      } else if (state.kind === 'group' && draft.solution) {
+        const target = draft.solution.demands.find(d => pointInRegion(d.cover, scenePointToDemand(p, d)));
+        if (!target) throw new Error('Drop this offcut set onto a roof face.');
+        const moved = moveReuseGroup(draft.solution, state.groupId!, target.faceId, target.laneIndex);
+        checkpoint(); draft.solution = moved; selectedGroupId = '';
+      } else if (draft.solution) {
+        const s = draft.solution, o = s.offcuts.find(o => o.id === state.offcutId); if (!o) throw new Error('Source offcut not found.');
+        const placement = s.placements.find(a => a.offcutId === state.offcutId && a.kind === 'reuse') ?? { demandId: o.sourceDemandId, translateY: 0, rotation: 0 as const };
+        const target = s.demands.find(d => pointInRegion(d.cover, scenePointToDemand(p, d)));
+        if (!target) throw new Error('Drop the offcut onto a sheet lane on the roof.');
+        const original = s.demands.find(d => d.id === placement.demandId)!;
+        let dy = placement.translateY;
+        if (target.id === original.id) dy += scenePointToDemand(p, target).y - scenePointToDemand(state.start, original).y;
+        else { const anchor = scenePointToDemand(state.start, original).y - placement.translateY; dy = scenePointToDemand(p, target).y - anchor; }
+        checkpoint(); draft.solution = editPlacement(s, state.offcutId!, target.id, placement.rotation, dy);
       }
-    }catch(e){error=message(e);}render();
+    } catch (e) { error = message(e); }
+    render();
   }
-  function zoom(factor:number,anchor:Point):void {if(viewBox[2]*factor<roof.sceneWidth*.12||viewBox[2]*factor>roof.sceneWidth*3)return;viewBox=[anchor.x+(viewBox[0]-anchor.x)*factor,anchor.y+(viewBox[1]-anchor.y)*factor,viewBox[2]*factor,viewBox[3]*factor];renderScene();}
-  function wheel(event:Event):void {const e=event as WheelEvent;if(!(e.target as Element).closest('.qc-canvas'))return;e.preventDefault();zoom(e.deltaY>0?1.12:1/1.12,scenePoint(e));}
-  function pointerCancel():void {drag=null;renderScene();}
-  function keyDown(event:Event):void {const e=event as KeyboardEvent;if((e.key==='Enter'||e.key===' ')&&(e.target as Element).closest('[data-action="flip-lap"]')){e.preventDefault();click(e);}}
-  function toggle(event:Event):void {const target=event.target as HTMLDetailsElement;if(target.id==='qc-advanced')advancedOpen=target.open;}
-  shadow.addEventListener('toggle',toggle,true);shadow.addEventListener('keydown',keyDown);
-  shadow.addEventListener('click',click);shadow.addEventListener('change',change);shadow.addEventListener('pointerdown',pointerDown);shadow.addEventListener('pointermove',pointerMove);shadow.addEventListener('pointerup',pointerUp);shadow.addEventListener('pointercancel',pointerCancel);shadow.addEventListener('wheel',wheel,{passive:false});
-  const watch=options.readCurrentSourceRevision?setInterval(()=>{try{if(!stale&&options.readCurrentSourceRevision!()!==capturedRevision){stale=true;cancel();render();}}catch{stale=true;cancel();render();}},1000):null;
+  function zoom(factor: number, anchor: Point): void {
+    if (drag || !Number.isFinite(factor) || factor <= 0 || viewBox[2] * factor < roof.sceneWidth * .015 || viewBox[2] * factor > roof.sceneWidth * 4) return;
+    viewBox = [anchor.x + (viewBox[0] - anchor.x) * factor, anchor.y + (viewBox[1] - anchor.y) * factor, viewBox[2] * factor, viewBox[3] * factor]; renderScene();
+  }
+  function wheel(event: Event): void {
+    const e = event as WheelEvent; if (!(e.target as Element).closest('.qc-canvas')) return;
+    e.preventDefault(); if (!e.deltaY) return; zoom(e.deltaY > 0 ? 1.12 : 1 / 1.12, scenePoint(e));
+  }
+  function pointerCancel(event?: Event): void {
+    if (!drag || event instanceof PointerEvent && event.pointerId !== drag.pointerId) return;
+    const id = drag.pointerId; drag = null; releasePointer(id); renderScene();
+  }
+  function isEditing(e: KeyboardEvent): boolean {
+    return e.composedPath().some(t => t instanceof HTMLElement && (t.matches('input,textarea,select') || t.isContentEditable));
+  }
+  function invoke(action: string): void { shadow.querySelector<HTMLButtonElement>(`button[data-action="${action}"]`)?.click(); }
+  function keyDown(event: Event): void {
+    const e = event as KeyboardEvent;
+    if (isEditing(e)) return;
+    if (e.key === 'Escape' && (drag || drawPoints || pendingSourceAck)) {
+      e.preventDefault(); e.stopPropagation(); pointerCancel(); drawPoints = null; pendingSourceAck = false; render(); return;
+    }
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && ['z', 'y'].includes(e.key.toLowerCase())) {
+      e.preventDefault(); e.stopPropagation(); invoke(e.key.toLowerCase() === 'y' || e.shiftKey ? 'redo' : 'undo'); return;
+    }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && phase === 'faces' && !e.ctrlKey && !e.metaKey && !e.altKey &&
+        (e.target as Element).matches('.qc-canvas,button[data-action="select-face"]')) {
+      e.preventDefault(); e.stopPropagation(); invoke('delete-face'); return;
+    }
+    if ((e.key === 'Enter' || e.key === ' ') && (e.target as Element).closest('[data-action="flip-lap"],[data-action="focus-issue"]')) { e.preventDefault(); click(e); }
+  }
+  function globalKeyDown(e: KeyboardEvent): void {
+    if (e.code !== 'Space' || isEditing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+    const canvas = shadow.querySelector<HTMLElement>('.qc-canvas');
+    if (!pointerOverCanvas && shadow.activeElement !== canvas) return;
+    spaceHeld = true; e.preventDefault();
+    if (canvas) canvas.dataset.pan = 'true';
+  }
+  function globalKeyUp(e: KeyboardEvent): void {
+    if (e.code !== 'Space') return;
+    spaceHeld = false; const canvas = shadow.querySelector<HTMLElement>('.qc-canvas'); if (canvas) canvas.dataset.pan = String(panMode);
+  }
+  function blur(): void { spaceHeld = false; pointerOverCanvas = false; pointerCancel(); const c = shadow.querySelector<HTMLElement>('.qc-canvas'); if (c) c.dataset.pan = String(panMode); }
+  function over(event: Event): void { pointerOverCanvas = !!(event.target as Element).closest('.qc-canvas'); }
+  function out(event: Event): void { const to = (event as PointerEvent).relatedTarget; if (!(to instanceof Element) || !to.closest('.qc-canvas')) pointerOverCanvas = false; }
+  function auxClick(event: Event): void { if ((event as MouseEvent).button === 1 && (event.target as Element).closest('.qc-canvas')) event.preventDefault(); }
+  function toggle(event: Event): void { const target = event.target as HTMLDetailsElement; if (target.id === 'qc-advanced') advancedOpen = target.open; }
+  const listeners: [string, EventListener, boolean | AddEventListenerOptions | undefined][] = [
+    ['toggle', toggle, true], ['keydown', keyDown, undefined], ['click', click, undefined], ['change', change, undefined],
+    ['pointerdown', pointerDown, undefined], ['pointermove', pointerMove, undefined], ['pointerup', pointerUp, undefined],
+    ['pointercancel', pointerCancel, undefined], ['lostpointercapture', pointerCancel, undefined], ['wheel', wheel, { passive: false }],
+    ['pointerover', over, undefined], ['pointerout', out, undefined], ['auxclick', auxClick, undefined],
+  ];
+  for (const [type, fn, config] of listeners) shadow.addEventListener(type, fn, config);
+  window.addEventListener('keydown', globalKeyDown); window.addEventListener('keyup', globalKeyUp); window.addEventListener('blur', blur);
+  const watch = options.readCurrentSourceRevision ? setInterval(() => {
+    try { if (!stale && options.readCurrentSourceRevision!() !== capturedRevision) { stale = true; cancel(); pointerCancel(); render(); } }
+    catch { stale = true; cancel(); pointerCancel(); render(); }
+  }, 1000) : null;
   render();
-  return {getDraft:()=>structuredClone(draft),destroy:()=>{disposed=true;cancel();if(watch)clearInterval(watch);shadow.removeEventListener('toggle',toggle,true);shadow.removeEventListener('keydown',keyDown);shadow.removeEventListener('click',click);shadow.removeEventListener('change',change);shadow.removeEventListener('pointerdown',pointerDown);shadow.removeEventListener('pointermove',pointerMove);shadow.removeEventListener('pointerup',pointerUp);shadow.removeEventListener('wheel',wheel);shadow.removeEventListener('pointercancel',pointerCancel);shadow.innerHTML='';}};
+  return {
+    getDraft: () => structuredClone(draft),
+    destroy: () => {
+      disposed = true; cancel(); pointerCancel(); if (watch) clearInterval(watch);
+      for (const [type, fn, config] of listeners) shadow.removeEventListener(type, fn, config);
+      window.removeEventListener('keydown', globalKeyDown); window.removeEventListener('keyup', globalKeyUp); window.removeEventListener('blur', blur);
+      shadow.innerHTML = '';
+    },
+  };
 }

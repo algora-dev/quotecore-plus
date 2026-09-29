@@ -1,7 +1,8 @@
 import type { BankLayout, Demand, FaceFrame, Issue, Offcut, Point, Profile, RoofFace, RoofInput, SolveSettings } from './types';
 import { EPS, add, dot, mul, sub, unit, validateRing } from './math';
 import { area, bounds, components, extendY, fromRing, intersect, isMonotone, rectangle, subtract, translate } from './regions';
-import { validatePartition } from './graph';
+import { validatePartition } from './partition';
+import { validateFaceDirections } from './reviewGeometry';
 export function frameFor(face: RoofFace, roof: RoofInput): FaceFrame {
   if (!face.flow || face.pitchDeg === null) throw new Error(`${face.name}: confirm water direction and pitch first.`);
   const v = unit(face.flow), u = { x: v.y, y: -v.x };
@@ -25,7 +26,8 @@ export function validateInputs(roof: RoofInput, faces: RoofFace[], p: Profile, s
   const numbers = [p.coverMm, p.leftLapMm, p.rightLapMm, p.cutGapMm, p.endAllowanceMm, p.maxLengthMm, p.lengthIncrementMm];
   if (!numbers.every(Number.isFinite) || p.coverMm < 1 || p.coverMm > 3000 || p.leftLapMm < 0 || p.rightLapMm < 0 || p.cutGapMm < 0 || p.endAllowanceMm < 0 || p.maxLengthMm <= 0 || p.lengthIncrementMm <= 0) error('PROFILE', 'Check cover, overlaps, allowances, maximum length and length increment.');
   if (p.allowEndForEnd && Math.abs(p.leftLapMm - p.rightLapMm) > EPS) error('ASYMMETRIC_PROFILE', 'V1 end-for-end reuse requires symmetric side allowances. Asymmetric profiles need a manufacturer-specific rib/edge registration adapter.');
-  if (p.allowEndForEnd && !p.rulesConfirmed) error('UNCONFIRMED_ROTATION', 'Confirm the profile rules before enabling end-for-end reuse.');
+  // End-for-end is a long-run planning default, NOT manufacturer approval.
+  // Unverified rules remain a visible warning and every output is draft-only.
   if (![settings.maxSheets, settings.maxTrials, settings.maxMilliseconds].every(n => Number.isFinite(n) && n > 0) || settings.maxSheets > 2000 || settings.maxTrials > 64 || settings.maxMilliseconds > 30000) error('BUDGET', 'Use positive search limits: at most 2000 sheets, 64 trials and 30000 milliseconds.');
   if (!['bank-first', 'per-lane', 'face-envelope'].includes(settings.stockMode)) error('STOCK_MODE', 'Unknown sheet layout mode.');
   if (settings.maxBankExtensionMm !== undefined && (!Number.isFinite(settings.maxBankExtensionMm) || settings.maxBankExtensionMm < 0 || settings.maxBankExtensionMm > 300)) error('BANK_EXTENSION', 'Automatic extra stock must be between 0 and 300 mm.');
@@ -37,20 +39,7 @@ export function validateInputs(roof: RoofInput, faces: RoofFace[], p: Profile, s
     if (!f.flow || !Number.isFinite(f.flow.x) || !Number.isFinite(f.flow.y) || Math.hypot(f.flow.x, f.flow.y) < EPS) { error('FLOW', `${f.name}: water direction is missing.`, f.id); continue; }
     if (f.lap !== 1 && f.lap !== -1) error('LAP', `${f.name}: invalid lap direction.`, f.id);
     if (!Number.isFinite(f.laneOffsetMm) || f.laneOffsetMm < 0 || f.laneOffsetMm >= p.coverMm) error('LANE_PHASE', `${f.name}: lane offset must be at least zero and less than one effective cover.`, f.id);
-    const v = unit(f.flow), u = { x: v.y, y: -v.x };
-    for (const e of f.boundary) {
-      const direction = unit(sub(e.b, e.a));
-      if (e.kind === 'spouting' && dot(v, { x: direction.y, y: -direction.x }) < 0.99) error('FLOW_EAVE_CONFLICT', `${f.name}: the water arrow does not point outward through its spouting edge.`, f.id);
-      if (e.kind === 'barge' && Math.abs(dot(v, direction)) < 0.99) error('BARGE_DIRECTION', `${f.name}: the barge does not run with the water direction.`, f.id);
-      if (e.kind === 'ridge' && Math.abs(dot(v, direction)) > 0.03) error('RIDGE_DIRECTION', `${f.name}: the ridge is not across the water direction.`, f.id);
-    }
-    // V1 geometry is restricted to 0/45/90 degrees RELATIVE to the face,
-    // not to north or the screen. Never silently snap the user's polygon.
-    f.polygon.forEach((a, i) => {
-      const b = f.polygon[(i + 1) % f.polygon.length], d = unit(sub(b, a));
-      const angle = Math.atan2(Math.abs(dot(d, v)), Math.abs(dot(d, u))) * 180 / Math.PI;
-      if (Math.min(Math.abs(angle), Math.abs(angle - 45), Math.abs(angle - 90)) > 1.5) error('UNSUPPORTED_ANGLE', `${f.name}: an edge is not 0°, 45° or 90° in the face's plan frame. Adjust it or use manual review.`, f.id);
-    });
+    issues.push(...validateFaceDirections(f, roof));
   }
   return issues;
 }

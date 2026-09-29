@@ -28,6 +28,8 @@ export interface RoofFace {
   flow: Point | null;
   lap: Lap; lapLocked: boolean;
   pitchDeg: number | null;
+  /** Explicit manual direction resolves inference warnings, never physical contradictions. */
+  flowSource?: 'inferred' | 'manual';
   /** Phase measured from the local minimum cross-slope coordinate. */
   laneOffsetMm: number;
   /** Manual registration locks are respected by the bank search. */
@@ -62,7 +64,7 @@ export interface SolveSettings {
 export const DEFAULT_PROFILE: Profile = {
   id: 'unverified-profile', coverMm: 760, leftLapMm: 0, rightLapMm: 0,
   cutGapMm: 5, endAllowanceMm: 0, maxLengthMm: 18000,
-  lengthIncrementMm: 1, allowEndForEnd: false, rulesConfirmed: false,
+  lengthIncrementMm: 1, allowEndForEnd: true, rulesConfirmed: false,
 };
 export const DEFAULT_SETTINGS: SolveSettings = {
   stockMode: 'bank-first', optimiseLapDirections: true, maxBankExtensionMm: 100,

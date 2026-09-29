@@ -27,10 +27,11 @@ export function parseDraft(text: string): Draft {
   for (const f of faces) {
     if (!f || typeof f.id !== 'string' || !Array.isArray(f.polygon)) throw new Error('Invalid face.');
     const error = validateRing(f.polygon); if (error) throw new Error(error);
+    f.boundary = Array.isArray(f.boundary) ? f.boundary : [];
     f.confirmed = false; // imported geometry always needs fresh human review
   }
   // Do NOT hydrate executable URLs or trust precomputed material allocations.
   delete roof.imageUrl; roof.sourceRevision = roofRevision(roof);
-  return { schemaVersion: 1, roof, faces, profile: { ...DEFAULT_PROFILE, ...(data.profile as object ?? {}), rulesConfirmed: false, allowEndForEnd: false },
+  return { schemaVersion: 1, roof, faces, profile: { ...DEFAULT_PROFILE, ...(data.profile as object ?? {}), rulesConfirmed: false },
     settings: { ...DEFAULT_SETTINGS, ...(data.settings as object ?? {}) }, solution: null };
 }

@@ -130,7 +130,7 @@ export function validateSolution(s: Solution): Issue[] {
     if (!source || area(subtract(o.region, subtract(source.blank, source.required))) > 1e-3) error('INVALID_SOURCE_GEOMETRY', 'An offcut extends outside the actual unused source material.', o.id);
     if (Math.abs(o.widthMm - d.widthMm) > 1e-6) error('PROFILE_WIDTH', 'Source and destination physical sheet widths differ.', d.id);
     if (p.rotation !== 0 && p.rotation !== 180) error('ROTATION', 'Only 0° or approved end-for-end rotation is allowed.', d.id);
-    if (p.rotation === 180 && (!s.profile.allowEndForEnd || !s.profile.rulesConfirmed)) error('ROTATION', 'End-for-end rotation is not approved for this profile.', d.id);
+    if (p.rotation === 180 && !s.profile.allowEndForEnd) error('ROTATION', 'End-for-end rotation is disabled for this profile.', d.id);
     if ((p.rotation === 180 ? -o.lap : o.lap) !== d.lap) error('LAP_CONFLICT', 'The reused piece laps the wrong way on the destination face.', d.id);
     if (!Number.isFinite(p.translateY)) error('PLACEMENT_TRANSFORM', 'Invalid placement translation.', d.id);
     else if (area(subtract(d.required, placedRegion(s, p))) > Math.max(1e-3, area(d.required) * 1e-9)) error('PIECE_TOO_SMALL', 'The moved offcut leaves part of this sheet requirement uncovered.', d.id);
