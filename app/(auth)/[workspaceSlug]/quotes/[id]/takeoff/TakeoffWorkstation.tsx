@@ -29,6 +29,10 @@ import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
+// Offcuts V1: isolated review module; no quote/persistence changes.
+import type { QuoteCoreSnapshot } from '@/app/lib/takeoff/offcuts/adapters/quotecore';
+import type { WorkbenchHandle } from '@/app/lib/takeoff/offcuts/ui/workbench';
+import { fingerprint as offcutFingerprint } from '@/app/lib/takeoff/offcuts/core/math';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
@@ -7104,6 +7108,49 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     }
   };
 
+  // Offcuts V1 snapshots the same live scene geometry as the workstation.
+  // Null page stamps are legacy/current-page rows; the adapter rejects explicit
+  // foreign page/area stamps. Scope is the ACTIVE estimating area only in V1.
+  // (Integration note 2026-09-29: assignment runs in a no-deps effect so the
+  // ref stays current after every render while honouring react-hooks/refs.)
+  const offcutsLiveSnapshotRef = useRef<QuoteCoreSnapshot | null>(null);
+  const offcutsModalRef = useRef<WorkbenchHandle | null>(null);
+  useEffect(() => {
+    offcutsLiveSnapshotRef.current = {
+      quoteId: quote.id,
+      pageId: pages[currentPageIndex]?.id ?? '',
+      areaScopeId: activeAreaId,
+      imageRevision: touchOutlineLiveRef.current?.pageImageRevision ?? offcutFingerprint({
+        pageId: pages[currentPageIndex]?.id,
+        image: pages[currentPageIndex]?.url ?? planUrl,
+        dimensions: canvasDims,
+      }),
+      imageUrl: pages[currentPageIndex]?.url ?? planUrl,
+      width: canvasDims.width,
+      height: canvasDims.height,
+      calibrationConfirmed,
+      calibrations,
+      roofAreas,
+      components,
+      componentMeasurements,
+      // Exact registry resolution only. Custom library components that do not
+      // retain their semantic meaning need an explicit map in the main repo.
+      semanticByComponentId: Object.fromEntries(components.flatMap(component => {
+        const key = resolveSemanticKey(component.name);
+        if (!key) return [];
+        const singular = {
+          ridges: 'ridge', hips: 'hip', valleys: 'valley', broken_hips: 'broken_hip',
+          barges: 'barge', spouting: 'spouting', uncertain: 'unknown',
+        } as const;
+        return [[component.id, singular[key]]];
+      })),
+    };
+  });
+  useEffect(() => () => {
+    offcutsModalRef.current?.destroy();
+    offcutsModalRef.current = null;
+  }, [pages[currentPageIndex]?.id, activeAreaId]);
+
   return (
     <QcHostedDialogScope enabled={desktopAppearance}>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
@@ -8064,7 +8111,37 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       onClick={() => setShowPitchEstimator(true)}
                       data-copilot="takeoff-tool-pitch-estimator"
                       title="Estimate roof pitch from a photo"
-                    ><QcIcon name="pitch" />Estimate pitch</QcToolButton></QcCanvasToolGroup>
+                    ><QcIcon name="pitch" />Estimate pitch</QcToolButton>
+                    {process.env.NEXT_PUBLIC_TAKEOFF_OFFCUTS_V1 === 'true' && (
+                      <button
+                        data-copilot="takeoff-tool-offcuts"
+                        className="px-3 py-2 rounded-full text-sm bg-slate-900 text-white disabled:opacity-40"
+                        disabled={!calibrationConfirmed || !pages[currentPageIndex]?.id || roofAreas.length === 0 || isSaving}
+                        title="Review faces and prototype offcut reuse. Does not change pricing or saved takeoff measurements."
+                        onClick={async () => {
+                          try {
+                            const { launchQuoteCoreOffcuts } = await import('@/app/lib/takeoff/offcuts/ui/launch');
+                            offcutsModalRef.current?.destroy();
+                            offcutsModalRef.current = launchQuoteCoreOffcuts(() => {
+                              const snapshot = offcutsLiveSnapshotRef.current;
+                              if (!snapshot) throw new Error('The takeoff workspace is not ready.');
+                              // The existing touch bridge refreshes image metadata in
+                              // an effect. Read its latest same-page revision at use
+                              // time rather than freezing a previous-render revision.
+                              const live = touchOutlineLiveRef.current;
+                              return {
+                                ...snapshot,
+                                imageRevision: live?.pageId === snapshot.pageId && live.pageImageRevision
+                                  ? live.pageImageRevision
+                                  : snapshot.imageRevision,
+                              };
+                            });
+                          } catch (error) {
+                            window.alert(error instanceof Error ? error.message : String(error));
+                          }
+                        }}
+                      >Find offcuts (V1)</button>
+                    )}</QcCanvasToolGroup>
                 </div>
                 <div className="qc-takeoff-toolbar-context">
                   <div className="qc-takeoff-subtools">

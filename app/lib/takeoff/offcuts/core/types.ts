@@ -1,0 +1,115 @@
+/** All input polygons are unclosed rings in unzoomed SCENE coordinates (y down).
+ * Material regions use a face-local coordinate frame, in millimetres on the
+ * roof surface. Effective cover and physical width are deliberately distinct. */
+export interface Point { x: number; y: number }
+export type Ring = Point[];
+export type EdgeKind = 'ridge' | 'hip' | 'valley' | 'broken_hip' | 'barge' | 'spouting' | 'unknown';
+export interface RoofEdge { id: string; a: Point; b: Point; kind: EdgeKind }
+export interface Outline { id: string; name: string; polygon: Ring; suggestedPitchDeg?: number }
+export interface RoofInput {
+  schemaVersion: 1;
+  quoteId: string; pageId: string; areaScopeId: string | null;
+  imageRevision: string; sceneWidth: number; sceneHeight: number;
+  /** Display only: never included in saved exports (signed URLs expire). */
+  imageUrl?: string;
+  mmPerSceneUnit: number;
+  calibrationConfirmed: boolean;
+  outlines: Outline[]; edges: RoofEdge[];
+  sourceRevision: string;
+}
+export interface Issue {
+  severity: 'error' | 'warning'; code: string; message: string;
+  faceId?: string; objectId?: string;
+}
+export type Lap = -1 | 1; // relative to +u = {flow.y, -flow.x}: right when water points down
+export interface RoofFace {
+  id: string; name: string; polygon: Ring;
+  boundary: RoofEdge[];
+  flow: Point | null;
+  lap: Lap; lapLocked: boolean;
+  pitchDeg: number | null;
+  /** Phase measured from the local minimum cross-slope coordinate. */
+  laneOffsetMm: number;
+  confirmed: boolean; provenance: 'derived' | 'edited' | 'manual';
+}
+/** Exact linear upper/lower boundaries on one cross-sheet interval.
+ * Regions consist of non-overlapping trapezoids, not a raster or bounding box.
+ * This representation handles concavity, holes and disconnected Boolean output. */
+export interface Band { x0: number; x1: number; top0: number; top1: number; bottom0: number; bottom1: number }
+export type Region = Band[];
+export interface Profile {
+  id: string; coverMm: number;
+  /** Additional physical metal on each side of the effective-cover cell. */
+  leftLapMm: number; rightLapMm: number;
+  /** Longitudinal trimming clearance, not a manufacturer-specific blade kerf. */
+  cutGapMm: number;
+  endAllowanceMm: number;
+  maxLengthMm: number;
+  lengthIncrementMm: number;
+  allowEndForEnd: boolean;
+  /** Must reflect a roofer/manufacturer-approved profile rule, not AI inference. */
+  rulesConfirmed: boolean;
+}
+export interface SolveSettings {
+  stockMode: 'per-lane' | 'face-envelope';
+  optimiseLapDirections: boolean;
+  maxTrials: number; maxMilliseconds: number; maxSheets: number;
+}
+export const DEFAULT_PROFILE: Profile = {
+  id: 'unverified-profile', coverMm: 760, leftLapMm: 0, rightLapMm: 0,
+  cutGapMm: 5, endAllowanceMm: 0, maxLengthMm: 18000,
+  lengthIncrementMm: 1, allowEndForEnd: false, rulesConfirmed: false,
+};
+export const DEFAULT_SETTINGS: SolveSettings = {
+  stockMode: 'per-lane', optimiseLapDirections: true,
+  maxTrials: 16, maxMilliseconds: 4000, maxSheets: 600,
+};
+export interface FaceFrame {
+  origin: Point; u: Point; v: Point; mmPerSceneUnit: number; pitchCos: number;
+}
+export interface Demand {
+  id: string; faceId: string; laneIndex: number; lap: Lap;
+  widthMm: number; origin: Point; frame: FaceFrame;
+  /** Physical footprint includes configured side overlaps and end allowances. */
+  required: Region;
+  /** Non-overlapping net roof cover, for checking complete roof coverage. */
+  cover: Region;
+  blank: Region;
+}
+export interface Offcut {
+  id: string; sourceDemandId: string; sourceFaceId: string; region: Region;
+  widthMm: number; lap: Lap;
+}
+export interface Placement {
+  demandId: string;
+  kind: 'new' | 'reuse';
+  offcutId?: string;
+  /** Only material-valid transformations are searched. No mirror or scaling. */
+  rotation: 0 | 180;
+  translateY: number;
+  /** Geometric prototype edits are kept and visibly invalidated, never hidden. */
+  manual?: boolean;
+}
+export interface Solution {
+  schemaVersion: 1; sourceRevision: string; facesRevision: string;
+  profile: Profile; settings: SolveSettings;
+  demands: Demand[]; offcuts: Offcut[]; placements: Placement[];
+  lapByFace: Record<string, Lap>;
+  metrics: {
+    newMaterialMm2: number; baselineNewMaterialMm2: number;
+    netRoofMm2: number; installedPhysicalMm2: number; wasteMm2: number;
+    savedMm2: number; newSheetCount: number; reusedPieceCount: number;
+  };
+  search: { method: 'bounded-multistart'; completedTrials: number; elapsedMs: number; budgetReached: boolean; provenOptimal: false };
+  issues: Issue[];
+  status: 'prototype-review' | 'invalid';
+  /** V1 never produces an approved manufacturing/order list. */
+  orderReady: false;
+}
+export interface SolveRequest { roof: RoofInput; faces: RoofFace[]; profile: Profile; settings: SolveSettings }
+export interface Draft {
+  schemaVersion: 1; roof: RoofInput; faces: RoofFace[];
+  profile: Profile; settings: SolveSettings; solution: Solution | null;
+  exportedAt?: string;
+  reviewNotes?: Issue[];
+}
