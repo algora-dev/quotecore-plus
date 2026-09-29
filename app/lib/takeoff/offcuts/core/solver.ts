@@ -1,22 +1,24 @@
-import type { Demand, Issue, Lap, Offcut, Placement, Profile, Solution, SolveRequest } from './types';
+import type { Demand, Issue, Lap, Offcut, Placement, Solution, SolveRequest } from './types';
 import { fingerprint } from './math';
-import { area, bounds, fitY, rotate180, subtract, translate } from './regions';
+import { area, bounds, rotate180, subtract, translate } from './regions';
+import { findFit } from './fit';
+export { findFit } from './fit';
+import { optimiseBanks } from './banks';
 import { generateDemands, offcutsFrom, validateInputs } from './material';
 export function facesRevision(request: SolveRequest): string {
   return fingerprint({ faces: request.faces, profile: request.profile, settings: request.settings });
 }
-export function findFit(o: Offcut, d: Demand, profile: Profile): Placement | null {
-  if (Math.abs(o.widthMm - d.widthMm) > 1e-6 || area(o.region) + 1e-4 < area(d.required)) return null;
-  for (const rotation of (profile.allowEndForEnd && profile.rulesConfirmed ? [0, 180] : [0]) as (0 | 180)[]) {
-    if ((rotation === 180 ? -o.lap : o.lap) !== d.lap) continue;
-    const available = rotation === 180 ? rotate180(o.region, o.widthMm) : o.region;
-    const translateY = fitY(available, d.required);
-    if (translateY !== null) return { demandId: d.id, kind: 'reuse', offcutId: o.id, rotation, translateY };
-  }
-  return null;
-}
 export interface SearchHooks { onProgress?: (completed: number, total: number) => void; shouldCancel?: () => boolean; now?: () => number }
 export function optimise(request: SolveRequest, hooks: SearchHooks = {}): Solution {
+  if (request.settings.stockMode === 'bank-first') {
+    const solution = optimiseBanks(request, hooks);
+    solution.issues.push(...validateSolution(solution));
+    if (solution.issues.some(i => i.severity === 'error')) solution.status = 'invalid';
+    return solution;
+  }
+  return optimiseLegacy(request, hooks);
+}
+export function optimiseLegacy(request: SolveRequest, hooks: SearchHooks = {}): Solution {
   const clock = hooks.now ?? (() => performance.now()), started = clock();
   const issues = validateInputs(request.roof, request.faces, request.profile, request.settings);
   const errors = issues.filter(i => i.severity === 'error'); if (errors.length) throw new Error(errors.map(i => i.message).join('\n'));

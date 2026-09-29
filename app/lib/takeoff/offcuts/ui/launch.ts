@@ -3,8 +3,8 @@ import { mountWorkbench, type WorkbenchHandle } from './workbench';
 import type { Draft } from '../core/types';
 export interface LaunchOptions { createWorker?: () => Worker; onExport?: (draft: Draft) => void }
 /** QuoteCore/Next integration entry. The .ts worker URL is intentional: Next
- * bundles the source worker. The standalone precompiled demo instead uses
- * workbench.ts's .js worker URL. Do not change one to match the other. */
+ * bundles the source worker. Demo tooling rewrites only emitted dist files to
+ * .js / Blob URLs; production source imports and worker URLs stay unchanged. */
 export function launchQuoteCoreOffcuts(readSnapshot: () => QuoteCoreSnapshot, options: LaunchOptions = {}): WorkbenchHandle {
   const captured=fromQuoteCore(readSnapshot()), priorFocus=document.activeElement as HTMLElement|null;
   const modal=document.createElement('div');
