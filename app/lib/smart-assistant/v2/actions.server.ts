@@ -8,6 +8,7 @@ import { canEdit, isUuid, parseActionView, type Access, type ActionView } from '
 import { AssistantV2Error, freshAccess, rpcError } from './runtime.server';
 import { canonical, editableQuote, parseQuoteChanges, parseComponentChanges, ProposalError, quoteSection, row, type ActionPlan } from './action-domain';
 import { componentResult } from './component-plan';
+import { areaResult, areaCreateResult, parseAreaChanges, parseAreaCreate, selectArea } from './area-plan';
 import { baseUnit, canonicalChanges } from './units';
 export function proof(value: unknown): string { return createHash('sha256').update(canonical(value)).digest('hex'); }
 export async function targetSnapshot(client: SupabaseClient, access: Access, kind: string, id: unknown): Promise<Record<string, unknown>> {
@@ -62,6 +63,34 @@ export async function proposeComponentChange(client: SupabaseClient, access: Acc
     const unit = baseUnit(c.measurement_type);
     return storeProposal(access, runId, { kind: 'component_change', target: { kind: q.status === 'draft' ? 'draft_quote' : 'quote', id: String(q.id) }, targetKind: 'quote_component', targetId: String(c.id), sections, before: snapshot, after: { fields: result.fields, entries: result.entries }, title: `Review ${String(c.name).slice(0, 180)}`, changes: result.changes.map(d => ({ ...d, label: d.label.replace('canonical unit', unit) })),
         note: `Not applied yet. Only this quote component changes, not the library. Values below use ${unit} and ${String(q.currency ?? 'the quote currency')}. Costs are from the existing engine, before quote margins and taxes.`, permissionRevision: access.permissionRevision }, { kind: 'component_change', id: c.id, input, quantity_unit: args.quantity_unit ?? null, rate_unit: args.rate_unit ?? null });
+}
+export async function proposeAreaChange(client: SupabaseClient, access: Access, runId: string, args: Record<string, unknown>): Promise<ActionView> {
+    const change = parseAreaChanges(args.changes);
+    // Bound-draft navigation: resolve the targeted area inside the quote's
+    // actual area list first (exact ID or unique label; otherwise the error
+    // lists the areas and asks which one). Never guess an identity.
+    const index = await targetSnapshot(client, access, 'quote_areas', args.quote_id);
+    const { areaId } = selectArea(index, args.quote_id, args.area_id, args.area_label);
+    const snapshot = await targetSnapshot(client, access, 'quote_area', areaId);
+    const q = row(snapshot.quote, 'quote');
+    const sections: AssistantSection[] = [quoteSection(q), 'components'];
+    requireEdits(access, sections);
+    const result = areaResult(snapshot, change, access.userId);
+    const area = row(snapshot.area, 'roof area');
+    return storeProposal(access, runId, { kind: 'area_change', target: { kind: q.status === 'draft' ? 'draft_quote' : 'quote', id: String(q.id) }, targetKind: 'quote_area', targetId: String(area.id), sections, before: snapshot,
+        after: { fields: result.fields, entries: result.entries }, title: `Review area ${String(area.label).slice(0, 160)}`, changes: result.changes,
+        note: 'Not applied yet. Only this roof area changes. The engine recomputes its surface; component quantities on this record are independent measurements and are not recalculated. Areas measured on a plan drawing must be edited in the takeoff editor.', permissionRevision: access.permissionRevision }, { kind: 'area_change', id: area.id, change });
+}
+export async function proposeAreaCreate(client: SupabaseClient, access: Access, runId: string, args: Record<string, unknown>): Promise<ActionView> {
+    const input = parseAreaCreate(args);
+    const snapshot = await targetSnapshot(client, access, 'quote_areas', args.quote_id);
+    const q = row(snapshot.quote, 'quote');
+    const sections: AssistantSection[] = [quoteSection(q), 'components'];
+    requireEdits(access, sections);
+    const result = areaCreateResult(snapshot, input, access.userId);
+    return storeProposal(access, runId, { kind: 'area_change', target: { kind: q.status === 'draft' ? 'draft_quote' : 'quote', id: String(q.id) }, targetKind: 'quote_areas', targetId: String(q.id), sections, before: snapshot,
+        after: { area: result.area }, title: `Add area ${input.label.slice(0, 160)}`, changes: result.changes,
+        note: 'Not applied yet. Confirming adds one new manual roof area to this record. It does not add components or change existing areas; a future takeoff save manages areas measured on plan drawings separately.', permissionRevision: access.permissionRevision }, { kind: 'area_create', id: q.id, input });
 }
 export async function actionRead(client: SupabaseClient, id: string): Promise<ActionView> {
     const { data, error } = await batchClient(client).rpc('sa_v2_action_read', { p_action_id: id });

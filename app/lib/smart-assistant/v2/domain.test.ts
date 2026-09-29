@@ -8,6 +8,8 @@ import { linearInputToMetric, areaInputToMetric } from '@/app/lib/measurements/c
 import { destinationFor, isSafeDestination, isSafeReturnDestination, pageHint } from './navigation';
 import { parseAccess, parseCard, parseActionView, parsePublicSession, canEdit, canRead, ENTITY_SECTIONS, type Access, type EntityHit } from './contracts';
 import { componentResult } from './component-plan';
+import { areaResult, areaCreateResult, parseAreaChanges, parseAreaCreate, selectArea } from './area-plan';
+import { computeRoofArea, rafterPitchFactor } from '@/app/lib/pricing/engine';
 import { parseDraft, buildDraft } from './draft-plan';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 const id = '11111111-1111-4111-8111-111111111111', other = '22222222-2222-4222-8222-222222222222';
@@ -74,3 +76,89 @@ test('P3 storage precision matches decimal ties, including negative and exponent
 const actionWire = { id, status: 'proposed', title: 'Review change', sections: ['draft_quotes', 'components'], changes: [{ label: 'Quantity', before: '1', after: '2' }], note: 'Not applied', proof_digest: 'a'.repeat(64), version: 1, created_at: '2026-09-24', target: { kind: 'draft_quote', id } };
 test('P3 proof view declares the sections needed for confirmation', () => { assert.deepEqual(parseActionView(actionWire)?.sections, ['draft_quotes', 'components']); assert.equal(parseActionView({ ...actionWire, sections: ['unknown'] }), null); });
 test('P3 approval text is exact or refused, never silently truncated', () => { const long = 'x'.repeat(700); assert.equal(parseActionView({ ...actionWire, changes: [{ label: 'Changed name', before: 'old', after: long }] })?.changes[0].after, long); assert.equal(parseActionView({ ...actionWire, changes: [{ label: 'Changed name', before: 'old', after: 'x'.repeat(2001) }] }), null); });
+
+// ── Phase 2b: roof-area create/edit (offline domain checks) ───────────────
+const areaQuote = { ...quote };
+function areaSnapshot(overrides: Record<string, unknown> = {}, entries: Record<string, unknown>[] = []) {
+    return { quote: { ...areaQuote }, area: { id, quote_id: id, label: 'Main Roof', input_mode: 'calculated', calc_plan_sqm: 100, calc_pitch_degrees: 25, calc_width_m: null, calc_length_m: null, final_value_sqm: null, computed_sqm: 110.3378, sort_order: 0, ...overrides }, area_entries: entries, takeoff_linked: false };
+}
+test('P4 area edit recomputes the surface through the existing engine', () => {
+    const out = areaResult(areaSnapshot(), parseAreaChanges({ calc_plan_sqm: 120 }), id);
+    assert.equal(out.fields.calc_plan_sqm, 120);
+    assert.equal(out.fields.computed_sqm, storageNumber(computeRoofArea({ id, label: 'Main Roof', inputMode: 'calculated', calcPlanSqm: 120, calcPitchDegrees: 25 })));
+    assert.ok(out.changes.some(c => c.label === 'Plan area (m2)' && c.before === '100' && c.after === '120'));
+    assert.ok(out.changes.some(c => c.label === 'Engine roof surface (m2)' && c.after === String(out.fields.computed_sqm)));
+});
+test('P4 typed surface target is back-derived by the engine, not model arithmetic', () => {
+    const out = areaResult(areaSnapshot(), parseAreaChanges({ surface_sqm: 130 }), id);
+    const factor = rafterPitchFactor(25);
+    assert.ok(Math.abs(Number(out.fields.calc_plan_sqm) - 130 / factor) < 0.0002);
+    assert.ok(Math.abs(Number(out.fields.computed_sqm) - 130) < 0.0002);
+});
+test('P4 area label-only edit preserves every stored value exactly', () => {
+    const out = areaResult(areaSnapshot(), parseAreaChanges({ label: ' Rear extension ' }), id);
+    assert.deepEqual(out.entries, []);
+    assert.equal(out.fields.label, 'Rear extension');
+    assert.equal(out.fields.calc_plan_sqm, 100);
+    assert.equal(out.fields.computed_sqm, 110.3378);
+    assert.equal(out.fields.final_value_sqm, null);
+});
+test('P4 pitch edit re-pitches manual width x length rows like the builder', () => {
+    const entries = [{ id, width_m: 10, length_m: 10, sort_order: 0 }, { id: other, width_m: 5, length_m: 4, sort_order: 1 }];
+    const out = areaResult(areaSnapshot({ calc_plan_sqm: null }, entries), parseAreaChanges({ calc_pitch_degrees: 30 }), id);
+    const factor = rafterPitchFactor(30);
+    assert.deepEqual(out.entries, [{ id, sqm: Math.round(100 * factor * 100) / 100 }, { id: other, sqm: Math.round(20 * factor * 100) / 100 }]);
+    assert.equal(out.fields.computed_sqm, storageNumber(out.entries.reduce((sum, e) => sum + e.sqm, 0)));
+});
+for (const [name, change] of [
+    ['takeoff geometry', { snapshot: areaSnapshot(undefined, [{ id, width_m: 10, length_m: 10, sort_order: 0 }]), change: { takeoff: true, patch: { calc_plan_sqm: 120 } } }],
+    ['entry-built plan value', { snapshot: areaSnapshot({ calc_plan_sqm: null }, [{ id, width_m: 10, length_m: 10, sort_order: 0 }]), change: { takeoff: false, patch: { calc_plan_sqm: 120 } } }],
+    ['typed total on plan basis', { snapshot: areaSnapshot(), change: { takeoff: false, patch: { final_value_sqm: 130 } } }],
+    ['pitch on typed-total area', { snapshot: areaSnapshot({ input_mode: 'final', final_value_sqm: 110, calc_plan_sqm: null, calc_pitch_degrees: null }), change: { takeoff: false, patch: { calc_pitch_degrees: 30 } } }],
+] as const)
+    test(`P4 area edit refuses ${name}`, () => {
+        const snap = { ...change.snapshot, takeoff_linked: change.change.takeoff };
+        assert.throws(() => areaResult(snap, parseAreaChanges(change.change.patch), id), ProposalError);
+    });
+test('P4 area edit is deterministic for idempotent re-proposals', () => {
+    const change = parseAreaChanges({ surface_sqm: 130, label: 'Main Roof 2' });
+    assert.deepEqual(areaResult(areaSnapshot(), change, id), areaResult(areaSnapshot(), change, id));
+});
+const areasIndex = { quote: { ...areaQuote }, areas: [
+    { id, quote_id: id, label: 'Main Roof', input_mode: 'calculated', calc_plan_sqm: 100, calc_pitch_degrees: 25, computed_sqm: 110.3378, sort_order: 0 },
+    { id: other, quote_id: id, label: 'Garage', input_mode: 'final', final_value_sqm: 40, computed_sqm: 40, sort_order: 1 },
+] };
+test('P4 area selection resolves a unique label without guessing', () => {
+    assert.deepEqual(selectArea(areasIndex, id, null, ' garage '), { areaId: other });
+    assert.deepEqual(selectArea(areasIndex, id, id, null), { areaId: id });
+});
+test('P4 wrong-area guard refuses foreign quotes and unknown areas', () => {
+    assert.throws(() => selectArea(areasIndex, 'not-a-uuid', null, 'Garage'), ProposalError);
+    assert.throws(() => selectArea({ ...areasIndex, quote: { ...areaQuote, id: other } }, id, null, 'Garage'), /no longer belongs/);
+    assert.throws(() => selectArea(areasIndex, id, '33333333-3333-4333-8333-333333333333', null), ProposalError);
+});
+test('P4 duplicate area labels ask which area, listing actual values', () => {
+    const duplicate = { quote: { ...areaQuote }, areas: [...areasIndex.areas, { id: '33333333-3333-4333-8333-333333333333', quote_id: id, label: 'garage', computed_sqm: 12.5, calc_pitch_degrees: null, sort_order: 2 }] };
+    assert.throws(() => selectArea(duplicate, id, null, 'Garage'), /Garage|garage/);
+    assert.throws(() => selectArea(duplicate, id, null, 'Garage'), /12.5/);
+});
+test('P4 area create mirrors draft-creation rows and converts units first', () => {
+    const input = parseAreaCreate({ label: 'Annexe', quantity: 100, unit: 'ft2', basis: 'plan' });
+    assert.equal(input.unit, 'm2');
+    const out = areaCreateResult(areasIndex, input, id);
+    assert.equal(out.area.input_mode, 'calculated');
+    assert.equal(out.area.calc_pitch_degrees, 25);
+    assert.equal(out.area.sort_order, 2);
+    assert.equal(out.area.computed_sqm, storageNumber(computeRoofArea({ id: out.area.id, label: 'Annexe', inputMode: 'calculated', calcPlanSqm: input.quantity, calcPitchDegrees: 25 })));
+    const typed = areaCreateResult(areasIndex, parseAreaCreate({ label: 'Annexe', quantity: 55, unit: 'm2', basis: 'surface' }), id);
+    assert.equal(typed.area.input_mode, 'final');
+    assert.equal(typed.area.final_value_sqm, 55);
+    assert.equal(typed.area.computed_sqm, 55);
+});
+test('P4 area create refuses duplicates and full area sets', () => {
+    assert.throws(() => areaCreateResult(areasIndex, parseAreaCreate({ label: 'main roof', quantity: 10, unit: 'm2', basis: 'plan' }), id), ProposalError);
+    const full = { quote: { ...areaQuote }, areas: Array.from({ length: 12 }, (_, index) => ({ id: index === 0 ? id : other, quote_id: id, label: `Area ${index}`, sort_order: index })) };
+    assert.throws(() => areaCreateResult(full, parseAreaCreate({ label: 'Extra', quantity: 10, unit: 'm2', basis: 'plan' }), id), ProposalError);
+});
+for (const change of [{ calc_plan_sqm: 100, surface_sqm: 130 }, { label: '' }, { calc_pitch_degrees: 90 }, { surface_sqm: -1 }, {}])
+    test(`P4 reject invalid area change ${JSON.stringify(change)}`, () => assert.throws(() => parseAreaChanges(change), ProposalError));

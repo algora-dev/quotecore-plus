@@ -1,7 +1,7 @@
 /** Pure input and proof contracts. No model-generated SQL or arbitrary patches. */
 import { isRecord, type AssistantSection } from '../section-permissions';
 import { boundedText, isUuid, type ChangeRow, type RecordTarget } from './contracts';
-export type ActionKind = 'quote_details' | 'component_change' | 'draft_create';
+export type ActionKind = 'quote_details' | 'component_change' | 'draft_create' | 'area_change';
 export type ComponentChanges = {
     material_rate?: number;
     labour_rate?: number;
@@ -16,7 +16,7 @@ export type QuoteChanges = {
 export type ActionPlan = {
     kind: ActionKind;
     target: RecordTarget | null;
-    targetKind: 'quote' | 'quote_component' | 'creation';
+    targetKind: 'quote' | 'quote_component' | 'creation' | 'quote_area' | 'quote_areas';
     targetId: string | null;
     sections: AssistantSection[];
     before: Record<string, unknown>;
