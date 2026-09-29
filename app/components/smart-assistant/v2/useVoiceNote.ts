@@ -4,6 +4,8 @@ import { isRecord } from '@/app/lib/smart-assistant/section-permissions';
 
 export type VoiceNoteState = 'off' | 'requesting' | 'recording' | 'transcribing';
 
+type ScreenWakeSentinel = { released?: boolean; release(): Promise<void>; addEventListener?(type: 'release', listener: () => void): void };
+
 /** Capture -> existing authenticated transcription endpoint -> editable text. Never submits a turn. */
 export function useVoiceNote(visible: boolean, onText: (text: string) => void, onError: (message: string) => void) {
   const [state, setState] = useState<VoiceNoteState>('off');
@@ -20,6 +22,22 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
   const clock = useRef<ReturnType<typeof setInterval> | null>(null);
   const upload = useRef<AbortController | null>(null);
   const uploadTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Screen Wake Lock (owner feedback 2026-09-29): long voice notes were lost when
+  // the phone screen slept mid-recording. Best-effort: unsupported browsers record on.
+  const wakeLock = useRef<ScreenWakeSentinel | null>(null);
+  const keepScreenAwake = useCallback(async () => {
+    try {
+      const nav = navigator as Navigator & { wakeLock?: { request(type: 'screen'): Promise<ScreenWakeSentinel> } };
+      if (!nav.wakeLock || wakeLock.current) return;
+      const sentinel = await nav.wakeLock.request('screen');
+      wakeLock.current = sentinel;
+      sentinel.addEventListener?.('release', () => { wakeLock.current = null; });
+    } catch { /* recording continues without the lock */ }
+  }, []);
+  const dropWakeLock = useCallback(() => {
+    const sentinel = wakeLock.current; wakeLock.current = null;
+    try { void sentinel?.release(); } catch { /* already released */ }
+  }, []);
   const callbacks = useRef({ onText, onError });
   callbacks.current = { onText, onError };
   const allowed = useRef(visible); allowed.current = visible;
@@ -30,12 +48,13 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
     if (clock.current) clearInterval(clock.current);
     cap.current = null; clock.current = null;
     analyser.current = null;
+    dropWakeLock();
     const ctx = context.current; context.current = null;
     if (ctx && ctx.state !== 'closed') void ctx.close().catch(() => undefined);
     const tracks = source.current; source.current = null;
     tracks?.getTracks().forEach(track => { track.onended = null; track.stop(); });
     setMeterAvailable(false);
-  }, []);
+  }, [dropWakeLock]);
 
   const cancel = useCallback(() => {
     generation.current++;
@@ -130,6 +149,7 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
       clock.current = setInterval(() => { if (ticket === generation.current) setElapsedSeconds(Math.floor((Date.now() - began) / 1000)); }, 1000);
       cap.current = setTimeout(() => { if (rec.state === 'recording') finish(); }, 120000);
       transition('recording');
+      void keepScreenAwake();
       if (finishAfterPermission.current) finish();
     } catch (error) {
       if (ticket !== generation.current) return;
@@ -141,6 +161,6 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
           ? 'No microphone was found. Connect one or use Type.'
           : 'The microphone could not be opened. Check site permission or use Type.');
     }
-  }, [cancel, finish, release, transition]);
+  }, [cancel, finish, keepScreenAwake, release, transition]);
   return { state, elapsedSeconds, analyser, meterAvailable, start, finish, cancel };
 }

@@ -3,6 +3,23 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { speechChunks } from './media-utils';
 export type SpeechPlaybackState = 'off' | 'loading' | 'speaking' | 'paused' | 'error';
 
+/** Owner feedback 2026-09-29: the raw device list is long and mostly robotic.
+ * Offer only a few high-quality natural voices, never novelty/robot voices.
+ * Premium engine names first (Natural/Premium/Enhanced/Neural/Google), network
+ * engines over local ones, English locales, one per accent, hard cap of four. */
+function curateVoices(list: SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {
+  const english = list.filter(v => v.lang.toLowerCase().startsWith('en'));
+  const premium = /(natural|premium|enhanced|neural|google|azure|siri)/i;
+  const score = (v: SpeechSynthesisVoice) => (premium.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1);
+  const seen = new Set<string>();
+  const picked = [...english].sort((a, b) => score(b) - score(a)).filter(v => {
+    const key = v.lang.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  }).slice(0, 4);
+  return picked.length ? picked : english.slice(0, 4);
+}
+
 /** Optional browser/device speech. Canonical text is never replaced; no model calls or task actions. */
 export function useSpeechPlayback(visible: boolean, storageKey: string) {
   const [enabled, setEnabled] = useState(false);
@@ -38,7 +55,17 @@ export function useSpeechPlayback(visible: boolean, storageKey: string) {
     let saved = false; let voice = '';
     try { saved = localStorage.getItem(storageKey) === '1'; voice = localStorage.getItem(`${storageKey}:voice`) ?? ''; } catch { /* optional */ }
     preference.current = saved; setEnabled(saved); selectedVoice.current = voice; setVoiceURI(voice);
-    const updateVoices = () => { try { setVoices(synth.current?.getVoices() ?? []); } catch { setVoices([]); } };
+    const updateVoices = () => {
+      try {
+        const curated = curateVoices(synth.current?.getVoices() ?? []);
+        setVoices(curated);
+        // A saved voice outside the curated set (e.g. an old novelty voice) falls back to the best available.
+        if (curated.length && !curated.some(v => v.voiceURI === selectedVoice.current)) {
+          selectedVoice.current = curated[0].voiceURI; setVoiceURI(curated[0].voiceURI);
+          try { localStorage.setItem(`${storageKey}:voice`, curated[0].voiceURI); } catch { /* optional */ }
+        }
+      } catch { setVoices([]); }
+    };
     updateVoices(); synth.current?.addEventListener('voiceschanged', updateVoices);
     return () => { synth.current?.removeEventListener('voiceschanged', updateVoices); stop(); synth.current = null; };
   }, [storageKey, stop]);

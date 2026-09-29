@@ -100,7 +100,7 @@
 .failure > svg { flex-shrink: 0; width: 18px; height: 18px; margin-top: 2px; }
 .failure p { margin: 0 0 8px; }
 .working { display: flex; gap: 10px; align-items: center; color: #cbcdd5; padding: 4px 0 14px; font-size: 13px; }
-.spinner { width: 18px; height: 18px; border: 2px solid #ffffff33; border-top-color: #ffae7e; border-radius: 50%; animation: sa-spin .8s linear infinite; flex-shrink: 0; }
+.spinner { width: 20px; height: 20px; border: 2.5px solid #ffffff2e; border-top-color: #ff8a4d; border-radius: 50%; animation: sa-spin .8s linear infinite; flex-shrink: 0; will-change: transform; filter: drop-shadow(0 0 6px rgba(255, 138, 77, 0.65)); }
 @keyframes sa-spin { to { transform: rotate(360deg); } }
 
 .bottomArea { flex: 0 0 auto; width: 100%; max-width: 780px; max-height: 65%; margin-inline: auto; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }

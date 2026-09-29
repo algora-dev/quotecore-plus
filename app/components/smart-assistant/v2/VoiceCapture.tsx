@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, type PointerEvent, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, type RefObject } from 'react';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { AssistantIcon } from './AssistantIcon';
 import { recordingTime, waveformLevels } from './media-utils';
@@ -39,32 +39,17 @@ export function VoiceCapture({ voice, disabled, expanded, beforeStart }: {
 }) {
   const refs = useRef({ voice, beforeStart });
   useEffect(() => { refs.current = { voice, beforeStart }; });
-  const cleanupGesture = useRef<(() => void) | null>(null);
   const lastStarted = useRef(0);
-  useEffect(() => () => cleanupGesture.current?.(), []);
   const start = useCallback(() => { refs.current.beforeStart(); lastStarted.current = Date.now(); void refs.current.voice.start(); }, []);
-  const pointerDown = (event: PointerEvent<HTMLButtonElement>) => {
-    if (disabled || event.button !== 0 || !event.isPrimary || ['requesting', 'transcribing'].includes(voice.state)) return;
-    const wasRecording = voice.state === 'recording';
-    const began = Date.now(); const pointer = event.pointerId;
-    cleanupGesture.current?.();
-    if (!wasRecording) start();
-    const clear = () => {
-      window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel); window.removeEventListener('blur', cancel);
-      cleanupGesture.current = null;
-    };
-    const up = (e: globalThis.PointerEvent) => {
-      if (e.pointerId !== pointer) return;
-      clear();
-      if (wasRecording) {
-        // A quick second tap locks recording, rather than accidentally starting then stopping.
-        if (began - lastStarted.current > 380) refs.current.voice.finish();
-      } else if (Date.now() - began >= 300) refs.current.voice.finish(); // press-and-hold releases to review
-    };
-    const cancel = () => { clear(); refs.current.voice.cancel(); };
-    window.addEventListener('pointerup', up); window.addEventListener('pointercancel', cancel); window.addEventListener('blur', cancel);
-    cleanupGesture.current = clear;
-  };
+  // Tap-only recording (owner feedback 2026-09-29): one tap starts, tapping Finish
+  // stops into review. A 380ms lockout absorbs accidental double-taps. There is no
+  // press-and-hold mode: holding used to land the finger on Cancel and kill the note.
+  const toggle = useCallback(() => {
+    if (disabled || ['requesting', 'transcribing'].includes(refs.current.voice.state)) return;
+    if (refs.current.voice.state === 'recording') {
+      if (Date.now() - lastStarted.current > 380) refs.current.voice.finish();
+    } else start();
+  }, [disabled, start]);
   const recording = voice.state === 'recording';
   const waiting = voice.state === 'requesting' || voice.state === 'transcribing';
   return <section className={s.voiceCapture} data-expanded={expanded} data-recording={recording} data-waiting={waiting} aria-label="Voice recorder">
@@ -75,14 +60,12 @@ export function VoiceCapture({ voice, disabled, expanded, beforeStart }: {
     </div> : <>
       <div className={s.voiceHeading}>
         <strong>{recording ? 'Listening…' : 'Ready when you are'}</strong>
-        <p>{recording ? 'Your microphone is on' : 'Tap to talk, or press and hold'}</p>
+        <p>{recording ? 'Your microphone is on — the screen stays awake while you talk' : 'Tap to talk'}</p>
       </div>
       {recording && <><Waveform analyser={voice.analyser} active={recording}/><div className={s.recordingTime}><span className={s.recordingDot} aria-hidden="true"/>{recordingTime(voice.elapsedSeconds)}</div></>}
       <div className={s.voiceControls}>
         {recording && <QcButton className={s.recordCancel} onClick={voice.cancel}><AssistantIcon name="close"/><span>Cancel</span></QcButton>}
-        <QcButton className={recording ? s.recordFinish : s.voiceOrb} aria-label={recording ? 'Finish recording' : 'Start recording'} aria-pressed={recording} disabled={disabled} onPointerDown={pointerDown} onContextMenu={e => e.preventDefault()} onClick={e => {
-          if (e.detail === 0) { if (recording) voice.finish(); else start(); }
-        }}>
+        <QcButton className={recording ? s.recordFinish : s.voiceOrb} aria-label={recording ? 'Finish recording' : 'Start recording'} aria-pressed={recording} disabled={disabled} onClick={toggle} onContextMenu={e => e.preventDefault()}>
           <AssistantIcon name={recording ? 'stop' : 'mic'}/>
           {recording && <span>Finish</span>}
         </QcButton>

@@ -62,6 +62,15 @@ export function decideTask(message: string, snapshot: TaskSnapshot, now = new Da
         if (refinement && 'intent' in refinement && refinement.useful)
             return { disposition: 'continue', reason: 'expected_parent_answer', message: text, refinement };
     }
+    // Owner feedback 2026-09-29 (voice follow-ups): an anaphoric mention of the
+    // task's document ("that draft", "this quote", "on the record we opened") or a
+    // definite roof-area reference ("the main roof area") continues the live task
+    // instead of spinning a fresh one that re-asks which job is meant. Proper-noun
+    // records ("the Smith quote") still fall through to a new task below.
+    if (/\b(?:that|this)\s+(?:draft|quote|invoice|order|job|record)\b/i.test(text)
+        || /\b(?:that|this|the)\s+(?:(?:main|front|back|rear|left|right|upper|lower|garage|porch|extension)\s+)?(?:roof\s+)?areas?\b/i.test(text)
+        || /\bon\s+(?:that|this|the)\s+(?:draft|quote|invoice|order|job|record|area)\b/i.test(text))
+        return { disposition: 'continue', reason: 'dependent_reference', message: text };
     if (standalone || parseFastIntent(text))
         return next('self_contained_request');
     // A variant-only follow-up repairs the prior component term, not the task's
