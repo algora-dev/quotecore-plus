@@ -1,0 +1,156 @@
+import type { Demand, Issue, Lap, Offcut, Placement, Profile, Solution, SolveRequest } from './types';
+import { fingerprint } from './math';
+import { area, bounds, fitY, rotate180, subtract, translate } from './regions';
+import { generateDemands, offcutsFrom, validateInputs } from './material';
+export function facesRevision(request: SolveRequest): string {
+  return fingerprint({ faces: request.faces, profile: request.profile, settings: request.settings });
+}
+export function findFit(o: Offcut, d: Demand, profile: Profile): Placement | null {
+  if (Math.abs(o.widthMm - d.widthMm) > 1e-6 || area(o.region) + 1e-4 < area(d.required)) return null;
+  for (const rotation of (profile.allowEndForEnd && profile.rulesConfirmed ? [0, 180] : [0]) as (0 | 180)[]) {
+    if ((rotation === 180 ? -o.lap : o.lap) !== d.lap) continue;
+    const available = rotation === 180 ? rotate180(o.region, o.widthMm) : o.region;
+    const translateY = fitY(available, d.required);
+    if (translateY !== null) return { demandId: d.id, kind: 'reuse', offcutId: o.id, rotation, translateY };
+  }
+  return null;
+}
+export interface SearchHooks { onProgress?: (completed: number, total: number) => void; shouldCancel?: () => boolean; now?: () => number }
+export function optimise(request: SolveRequest, hooks: SearchHooks = {}): Solution {
+  const clock = hooks.now ?? (() => performance.now()), started = clock();
+  const issues = validateInputs(request.roof, request.faces, request.profile, request.settings);
+  const errors = issues.filter(i => i.severity === 'error'); if (errors.length) throw new Error(errors.map(i => i.message).join('\n'));
+  const baseDemands = generateDemands(request.roof, request.faces, request.profile, request.settings);
+  const byId = new Map(baseDemands.map(d => [d.id, d]));
+  const baseline = baseDemands.reduce((n, d) => n + area(d.blank), 0);
+  const faceIds = request.faces.map(f => f.id), baseLaps = Object.fromEntries(request.faces.map(f => [f.id, f.lap])) as Record<string, Lap>;
+  const movable = request.faces.filter(f => !f.lapLocked).map(f => f.id);
+  const masks: Record<string, Lap>[] = [baseLaps];
+  if (request.settings.optimiseLapDirections && request.profile.allowEndForEnd) {
+    // Bounded alternatives, not exponential exhaustive search. A fixed face lap
+    // is respected by every sheet assigned to that face.
+    for (let k = 0; k < Math.min(12, movable.length); k++) masks.push({ ...baseLaps, [movable[k]]: baseLaps[movable[k]] === 1 ? -1 : 1 });
+    masks.push(Object.fromEntries(faceIds.map((id, i) => [id, movable.includes(id) && i % 2 ? -baseLaps[id] : baseLaps[id]])) as Record<string, Lap>);
+    masks.push(Object.fromEntries(faceIds.map((id, i) => [id, movable.includes(id) && i % 2 === 0 ? -baseLaps[id] : baseLaps[id]])) as Record<string, Lap>);
+  }
+  const lengthOf = (d: Demand): number => { const b = bounds(d.blank); return b.maxY - b.minY; };
+  const orderings = [
+    [...baseDemands].sort((a, b) => lengthOf(b) - lengthOf(a) || a.id.localeCompare(b.id)),
+    [...baseDemands].sort((a, b) => area(b.blank) - area(a.blank) || a.id.localeCompare(b.id)),
+    [...baseDemands].sort((a, b) => a.faceId.localeCompare(b.faceId) || lengthOf(b) - lengthOf(a)),
+    [...baseDemands].sort((a, b) => lengthOf(a) - lengthOf(b) || a.id.localeCompare(b.id)),
+  ];
+  // Baseline is a fully-covered fallback, so a timeout can never leave a
+  // partially-filled roof masquerading as a complete material requirement.
+  let bestPlacements: Placement[] = baseDemands.map(d => ({ demandId: d.id, kind: 'new', rotation: 0, translateY: 0 }));
+  let bestOffcuts = baseDemands.flatMap(d => offcutsFrom(d, request.profile));
+  let bestLaps = baseLaps, bestCost = baseline, completed = 0, budgetReached = false;
+  const total = Math.min(request.settings.maxTrials, masks.length * orderings.length);
+  outer: for (let trial = 0; trial < total; trial++) {
+    if (hooks.shouldCancel?.()) throw new Error('Offcut search cancelled.');
+    if (clock() - started > request.settings.maxMilliseconds) { budgetReached = true; break; }
+    // Interleave lap configurations so a modest budget still tries lap changes.
+    const laps = masks[trial % masks.length], order = orderings[Math.floor(trial / masks.length) % orderings.length];
+    const inventory: Offcut[] = [], used = new Set<string>(), placements: Placement[] = [];
+    let cost = 0;
+    for (let index = 0; index < order.length; index++) {
+      if (hooks.shouldCancel?.()) throw new Error('Offcut search cancelled.');
+      if (clock() - started > request.settings.maxMilliseconds) { budgetReached = true; break outer; }
+      const original = order[index], d = { ...original, lap: laps[original.faceId] };
+      let fit: Placement | null = null, score = Infinity;
+      for (let oi = 0; oi < inventory.length; oi++) {
+        if (oi % 32 === 0 && clock() - started > request.settings.maxMilliseconds) { budgetReached = true; break outer; }
+        const o = inventory[oi]; if (used.has(o.id)) continue;
+        const candidate = findFit(o, d, request.profile); if (!candidate) continue;
+        const waste = area(o.region) - area(d.required);
+        if (waste < score) { score = waste; fit = candidate; }
+      }
+      if (fit) { placements.push(fit); used.add(fit.offcutId!); }
+      else {
+        placements.push({ demandId: d.id, kind: 'new', rotation: 0, translateY: 0 });
+        cost += area(d.blank); inventory.push(...offcutsFrom(d, request.profile));
+      }
+    }
+    completed++; hooks.onProgress?.(completed, total);
+    if (cost < bestCost - 1e-4) { bestCost = cost; bestPlacements = placements; bestOffcuts = inventory; bestLaps = laps; }
+  }
+  const demands = baseDemands.map(d => ({ ...d, lap: bestLaps[d.faceId] }));
+  const installed = demands.reduce((n, d) => n + area(d.required), 0);
+  const solution: Solution = {
+    schemaVersion: 1, sourceRevision: request.roof.sourceRevision, facesRevision: facesRevision(request),
+    profile: structuredClone(request.profile), settings: structuredClone(request.settings), demands,
+    offcuts: bestOffcuts, placements: bestPlacements.sort((a, b) => a.demandId.localeCompare(b.demandId)), lapByFace: bestLaps,
+    metrics: { newMaterialMm2: bestCost, baselineNewMaterialMm2: baseline,
+      netRoofMm2: demands.reduce((n, d) => n + area(d.cover), 0), installedPhysicalMm2: installed,
+      wasteMm2: Math.max(0, bestCost - installed), savedMm2: Math.max(0, baseline - bestCost),
+      newSheetCount: bestPlacements.filter(p => p.kind === 'new').length, reusedPieceCount: bestPlacements.filter(p => p.kind === 'reuse').length },
+    search: { method: 'bounded-multistart', completedTrials: completed, elapsedMs: clock() - started, budgetReached, provenOptimal: false },
+    issues: [...issues, { severity: 'warning', code: 'PROTOTYPE_ONLY', message: 'Geometric prototype only. Profile rules, buildability and real roof dimensions need roofer approval; this is not an ordering/cutting instruction.' }],
+    status: 'prototype-review', orderReady: false,
+  };
+  // Independently recheck every proposed placement and source dependency.
+  solution.issues.push(...validateSolution(solution));
+  if (solution.issues.some(i => i.severity === 'error')) solution.status = 'invalid';
+  void byId;
+  return solution;
+}
+export function placedRegion(s: Solution, p: Placement) {
+  const o = s.offcuts.find(o => o.id === p.offcutId); if (!o) return [];
+  return translate(p.rotation === 180 ? rotate180(o.region, o.widthMm) : o.region, 0, p.translateY);
+}
+export function validateSolution(s: Solution): Issue[] {
+  const issues: Issue[] = [], demandMap = new Map(s.demands.map(d => [d.id, d])), offcutMap = new Map(s.offcuts.map(o => [o.id, o]));
+  const canonicalOffcuts = new Map(s.demands.flatMap(d => offcutsFrom(d, s.profile)).map(o => [o.id, o]));
+  const counts = new Map<string, number>(), used = new Set<string>(), fresh = new Set(s.placements.filter(p => p.kind === 'new').map(p => p.demandId));
+  const error = (code: string, message: string, id?: string): void => { issues.push({ severity: 'error', code, message, objectId: id }); };
+  if (demandMap.size !== s.demands.length || offcutMap.size !== s.offcuts.length) error('DUPLICATE_ID', 'Duplicate sheet or offcut IDs.');
+  // Rebuild the physical inventory independently, including the configured cut
+  // clearance. Matching a bounding box or forging a second ID cannot create metal.
+  for (const o of s.offcuts) {
+    const expected = canonicalOffcuts.get(o.id);
+    if (!expected || o.sourceDemandId !== expected.sourceDemandId || o.sourceFaceId !== expected.sourceFaceId ||
+        o.lap !== expected.lap || Math.abs(o.widthMm - expected.widthMm) > 1e-6 ||
+        area(subtract(o.region, expected.region)) + area(subtract(expected.region, o.region)) > 1e-3) {
+      error('INVENTORY_MISMATCH', 'The offcut does not match the source sheet and its actual cut-clearance inventory.', o.id);
+    }
+  }
+  let freshArea = 0;
+  for (const p of s.placements) {
+    counts.set(p.demandId, (counts.get(p.demandId) ?? 0) + 1);
+    const d = demandMap.get(p.demandId); if (!d) { error('UNKNOWN_TARGET', 'A placement references an unknown sheet lane.', p.demandId); continue; }
+    if (d.lap !== s.lapByFace[d.faceId]) error('FACE_LAP', 'All sheets on a face must have the same lap direction.', d.id);
+    if (p.kind === 'new') { freshArea += area(d.blank); continue; }
+    const o = offcutMap.get(p.offcutId ?? '');
+    if (!o) { error('UNKNOWN_OFFCUT', 'The source offcut does not exist.', d.id); continue; }
+    if (used.has(o.id)) error('DOUBLE_USE', 'The same physical offcut is assigned more than once.', o.id); used.add(o.id);
+    if (!fresh.has(o.sourceDemandId)) error('SOURCE_NOT_FRESH', 'This offcut depends on a source sheet which was not ordered new.', o.id);
+    const source = demandMap.get(o.sourceDemandId);
+    if (!source || area(subtract(o.region, subtract(source.blank, source.required))) > 1e-3) error('INVALID_SOURCE_GEOMETRY', 'An offcut extends outside the actual unused source material.', o.id);
+    if (Math.abs(o.widthMm - d.widthMm) > 1e-6) error('PROFILE_WIDTH', 'Source and destination physical sheet widths differ.', d.id);
+    if (p.rotation !== 0 && p.rotation !== 180) error('ROTATION', 'Only 0° or approved end-for-end rotation is allowed.', d.id);
+    if (p.rotation === 180 && (!s.profile.allowEndForEnd || !s.profile.rulesConfirmed)) error('ROTATION', 'End-for-end rotation is not approved for this profile.', d.id);
+    if ((p.rotation === 180 ? -o.lap : o.lap) !== d.lap) error('LAP_CONFLICT', 'The reused piece laps the wrong way on the destination face.', d.id);
+    if (!Number.isFinite(p.translateY)) error('PLACEMENT_TRANSFORM', 'Invalid placement translation.', d.id);
+    else if (area(subtract(d.required, placedRegion(s, p))) > Math.max(1e-3, area(d.required) * 1e-9)) error('PIECE_TOO_SMALL', 'The moved offcut leaves part of this sheet requirement uncovered.', d.id);
+  }
+  for (const d of s.demands) if (counts.get(d.id) !== 1) error('COVERAGE', 'Every required sheet lane must have exactly one new/reused allocation.', d.id);
+  const installed = s.demands.reduce((n, d) => n + area(d.required), 0);
+  if (freshArea + 1e-3 < installed) error('MATERIAL_CONSERVATION', 'Installed physical material exceeds the new material supplied.');
+  if (Math.abs(freshArea - s.metrics.newMaterialMm2) > Math.max(1e-3, freshArea * 1e-9)) error('STALE_TOTALS', 'Material totals do not match the current placements.');
+  const expectedTotals: Record<string, number> = {
+    baselineNewMaterialMm2: s.demands.reduce((n, d) => n + area(d.blank), 0),
+    netRoofMm2: s.demands.reduce((n, d) => n + area(d.cover), 0),
+    installedPhysicalMm2: installed,
+    wasteMm2: freshArea - installed,
+    newSheetCount: s.placements.filter(p => p.kind === 'new').length,
+    reusedPieceCount: s.placements.filter(p => p.kind === 'reuse').length,
+  };
+  expectedTotals.savedMm2 = expectedTotals.baselineNewMaterialMm2 - freshArea;
+  for (const [key, expected] of Object.entries(expectedTotals)) {
+    const actual = s.metrics[key as keyof typeof s.metrics];
+    if (!Number.isFinite(actual) || Math.abs(actual - expected) > Math.max(1e-3, Math.abs(expected) * 1e-9)) {
+      error('STALE_TOTALS', `The ${key} total does not match the current physical allocations.`);
+    }
+  }
+  return issues;
+}
