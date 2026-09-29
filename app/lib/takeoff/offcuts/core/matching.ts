@@ -53,16 +53,29 @@ export function matchFace(demands: Demand[], inventory: Offcut[], profile: Profi
   });
   return { placements, freshArea, used, sourceCount: sources.size };
 }
-/** Prefer one understandable source bank if it costs no more than 0.25% of
- * this face's all-new fallback. Exact matching is still checked sheet by sheet. */
+/** Practical roofers keep a cut set coherent: one source face feeds one
+ * destination face, and straight new sheets fill the remainder. A destination
+ * is never mosaiced from unrelated source banks. We only claim a relationship
+ * when the coherent source replaces a meaningful share of the destination;
+ * otherwise the face remains new material and its own cuts can feed later faces. */
 export function matchFaceGrouped(demands: Demand[], inventory: Offcut[], profile: Profile, check: () => void): FaceMatch {
+  const allNew = matchFace(demands, [], profile, check);
   const sourceIds = [...new Set(inventory.map(o => o.sourceFaceId))];
-  let best = matchFace(demands, inventory, profile, check);
-  if (best.sourceCount <= 1 || sourceIds.length > 12) return best;
-  const allowance = demands.reduce((n, d) => n + area(d.blank), 0) * .0025;
+  let best = allNew;
+  let bestReuseCount = 0;
   for (const id of sourceIds) {
+    check();
     const candidate = matchFace(demands, inventory.filter(o => o.sourceFaceId === id), profile, check);
-    if (candidate.freshArea <= best.freshArea + allowance && candidate.sourceCount < best.sourceCount) best = candidate;
+    const reuseCount = candidate.placements.filter(p => p.kind === 'reuse').length;
+    const reuseRatio = demands.length ? reuseCount / demands.length : 0;
+    // One-sheet faces can sensibly be supplied by one cut. For larger faces,
+    // require a substantial coherent contribution instead of scattering scraps.
+    const meaningful = demands.length <= 2 ? reuseCount > 0 : reuseRatio >= 0.35;
+    if (!meaningful) continue;
+    if (candidate.freshArea < best.freshArea - 1e-3 ||
+        Math.abs(candidate.freshArea - best.freshArea) < 1e-3 && reuseCount > bestReuseCount) {
+      best = candidate; bestReuseCount = reuseCount;
+    }
   }
   return best;
 }

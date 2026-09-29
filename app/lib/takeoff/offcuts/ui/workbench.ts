@@ -45,6 +45,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let focusedDiagnosticId = '', validationAttempted = false, pendingSourceAck = false;
   let partitionKey = '', partitionCache: PartitionReport | null = null;
   let showSheets=false, showSources=false, showEnvelope=false, drawPoints: Point[]|null=null, drag:Drag|null=null;
+  let initialPaintQueued = false;
   let viewBox = [-30,-30,roof.sceneWidth+60,roof.sceneHeight+60];
   const history: string[] = [], redoHistory: string[] = [];
   function snapshot(): string { return JSON.stringify({ draft, issues, hiddenFaceIds: [...hiddenFaceIds], selectedFaceId, phase }); }
@@ -103,6 +104,17 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       hiddenFaceIds, coverage: partition().regions, focusedDiagnosticId,
       sceneUnitsPerPixel: Math.max(viewBox[2] / Math.max(1, box.width), viewBox[3] / Math.max(1, box.height)),
     });
+    // Chromium can defer the first SVG external/blob image paint inside a newly
+    // mounted shadow root until another interaction invalidates the layer. Force
+    // two cold-open paint opportunities; this changes no geometry or view state.
+    if (!initialPaintQueued) {
+      initialPaintQueued = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (disposed) return;
+        const scene = shadow.querySelector<SVGSVGElement>('svg.qc-scene');
+        if (scene) { scene.style.transform = 'translateZ(0)'; void scene.getBoundingClientRect(); scene.style.transform = ''; }
+      }));
+    }
   }
   function focusFace(id: string): void {
     const f = draft.faces.find(f => f.id === id); if (!f) return;
@@ -210,7 +222,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     const coverageAlert = focused ? `<div class="qc-note ${focused.severity === 'error' ? 'qc-error' : ''}"><div class="qc-check-title">${icon('warning')}${esc(coverageLabel)}</div><p>${(focused.areaMm2 / 1e6).toFixed(4)} m² · ${focused.severity === 'error' ? 'Check the highlighted region before calculating.' : 'Small drawing discrepancy. Shown in amber; draft calculation can continue.'}</p><div class="qc-view-issues"><button data-action="focus-issue" data-id="${focused.id}">${icon('focus')}Show on plan</button>${coverage.length > 1 ? `<button data-action="next-issue">Next (${focusedIndex + 1}/${coverage.length})</button>` : ''}</div></div>` : '';
     const otherError = errors.find(i => !coverage.some(r => r.id === i.objectId));
     const actionableError = otherError ? `<div class="qc-note qc-error" role="alert"><div class="qc-check-title">${icon('warning')}Check ${otherError.faceId ? esc(faceName(otherError.faceId)) : 'the review'}</div><p>${esc(otherError.message)}</p>${otherError.faceId ? `<button data-action="focus-face" data-id="${esc(otherError.faceId)}">Show face</button>` : ''}${errors.length > 1 ? '<small>Further checks are in Advanced.</small>' : ''}</div>` : '';
-    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.1 · Draft plan</span>${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.3 · Draft plan</span>${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
       <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Use the face list to select a face."></div><div class="qc-help">${drawPoints ? 'Click polygon vertices, then Finish polygon. Esc cancels.' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Solid = new · hatch = offcuts · middle mouse / Space + drag to pan'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
       <aside class="qc-sidebar" aria-label="Offcut review controls">${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}</div>` : ''}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advanced}</aside></main>
