@@ -90,13 +90,22 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const prefKey = `sa-input:${access.userId}:${access.companyId}`;
   const lastConversationKey = `sa-conversation:${access.userId}:${access.companyId}`;
   const speechPrefKey = `sa-speech:${access.userId}:${access.companyId}`;
+  const ttsPrefKey = `sa-tts:${access.userId}:${access.companyId}`;
+  const [voiceSendQueue, setVoiceSendQueue] = useState<string | null>(null);
 
   const voice = useVoiceNote(visible && !locked && !busy && !snapshot?.activeRunId && !unresolved, text => {
     const next = inputValue.current ? `${inputValue.current} ${text}` : text;
     if (next.length > MAX_INPUT) { setNotice('That would make the message too long. Send the existing draft first, then record another note.'); return; }
     setInput(next); setDraftOrigin('voice'); setMode('voice');
-  }, setNotice);
-  const speech = useSpeechPlayback(visible && !locked, speechPrefKey);
+  }, setNotice, text => {
+    // Transcribe & send: same composition + guards as the review card's Send,
+    // then the transcript submits itself once the recorder has fully stopped.
+    const composed = inputValue.current ? `${inputValue.current} ${text}` : text;
+    if (composed.length > MAX_INPUT) { setNotice('That would make the message too long. Send the existing draft first, then record another note.'); return; }
+    if (attachments.length > 0) { setNotice('Attachments are local previews only in this build. Remove them to send a text or voice message.'); return; }
+    setVoiceSendQueue(composed);
+  });
+  const speech = useSpeechPlayback(visible && !locked, speechPrefKey, ttsPrefKey);
   const capturing = useRef(false); capturing.current = voice.state !== 'off';
 
   const clearAttachments = useCallback(() => {
@@ -122,7 +131,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   }, [prefKey, lastConversationKey]);
   useEffect(() => {
     // Late transcription/playback cannot leak into a different conversation.
-    voice.cancel(); speech.stop(); clearAttachments(); setSheet(null);
+    voice.cancel(); speech.stop(); clearAttachments(); setSheet(null); setVoiceSendQueue(null);
   }, [active, voice.cancel, speech.stop, clearAttachments]);
   useEffect(() => { if (!visible || locked) { setSheet(null); speech.stop(); } }, [visible, locked, speech.stop]);
 
@@ -375,6 +384,18 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     }
   };
 
+  const sendRef = useRef(send);
+  sendRef.current = send;
+  useEffect(() => {
+    // Auto-submit for Transcribe & send: fires only after the recorder is fully
+    // off so send() sees a clean voice state; a blocked send leaves the
+    // transcript in the review card exactly like the default path.
+    if (voiceSendQueue === null || voice.state !== 'off') return;
+    const text = voiceSendQueue;
+    setVoiceSendQueue(null);
+    void sendRef.current(text);
+  }, [voiceSendQueue, voice.state]);
+
   const act = async (action: ActionView, command: 'confirm' | 'cancel') => {
     if (operation.current || !active || locked) return;
     operation.current = true;
@@ -556,7 +577,14 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
           <select id={`sa-voice-${access.companyId}`} aria-label="Reading voice" value={speech.voiceURI} disabled={!speech.available} onChange={e => speech.chooseVoice(e.target.value)}>
             <option value="">Device default voice</option>{speech.voices.map(v => <option key={`${v.voiceURI}:${v.lang}`} value={v.voiceURI}>{v.name} · {v.lang}</option>)}
           </select>
-          <p className={s.detail}>AI-generated speech. Browser/device voices vary. Spoken replies never replace the text.</p>
+          <div className={s.voiceTtsRow}>
+            <label htmlFor={`sa-tts-voice-${access.companyId}`}>Premium AI voice</label>
+            <QcButton disabled={!speech.available} aria-pressed={speech.premiumEnabled} onClick={speech.togglePremium}>{speech.premiumEnabled ? 'On' : 'Off'}</QcButton>
+          </div>
+          {speech.premiumEnabled && <select id={`sa-tts-voice-${access.companyId}`} aria-label="Premium reading voice" value={speech.premiumVoice} onChange={e => speech.choosePremiumVoice(e.target.value)}>
+            {speech.premiumVoices.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
+          </select>}
+          <p className={s.detail}>{speech.premiumEnabled && !speech.premiumReady ? 'Premium AI voice is not available right now, so browser/device voices will speak replies. It turns on automatically when the service is reachable.' : 'Premium AI voice speaks replies with a natural neural voice and falls back to browser voices when unavailable. Spoken replies never replace the text.'}</p>
         </div>
         <h3 className={s.sectionLabel}>Recent conversations</h3>
         <div className={s.conversationList}>{conversations.slice(0, 12).map(c => <QcButton key={c.id} disabled={controlsBusy} aria-current={active === c.id ? 'page' : undefined} onClick={() => { voice.cancel(); speech.stop(); setActive(c.id); setInput(''); clearAttachments(); setSheet(null); }}><AssistantIcon name="history"/><span>{c.title || `Conversation · ${new Date(c.last_active_at).toLocaleDateString()}`}</span><AssistantIcon name="chevron"/></QcButton>)}</div>

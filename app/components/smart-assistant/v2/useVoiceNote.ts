@@ -6,10 +6,14 @@ export type VoiceNoteState = 'off' | 'requesting' | 'recording' | 'transcribing'
 
 type ScreenWakeSentinel = { released?: boolean; release(): Promise<void>; addEventListener?(type: 'release', listener: () => void): void };
 
-/** Capture -> existing authenticated transcription endpoint -> editable text. Never submits a turn. */
-export function useVoiceNote(visible: boolean, onText: (text: string) => void, onError: (message: string) => void) {
+/** Capture -> existing authenticated transcription endpoint -> editable text.
+ * Never submits a turn unless the caller explicitly arms the send-on-transcribe
+ * path (finish(true)): then the transcript is ALSO handed to onAutoSend so the
+ * host can submit it directly, skipping the manual review card. */
+export function useVoiceNote(visible: boolean, onText: (text: string) => void, onError: (message: string) => void, onAutoSend?: (text: string) => void) {
   const [state, setState] = useState<VoiceNoteState>('off');
   const stateRef = useRef<VoiceNoteState>('off');
+  const [armedSend, setArmedSend] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [meterAvailable, setMeterAvailable] = useState(false);
   const analyser = useRef<AnalyserNode | null>(null);
@@ -38,8 +42,10 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
     const sentinel = wakeLock.current; wakeLock.current = null;
     try { void sentinel?.release(); } catch { /* already released */ }
   }, []);
-  const callbacks = useRef({ onText, onError });
-  callbacks.current = { onText, onError };
+  const callbacks = useRef({ onText, onError, onAutoSend });
+  callbacks.current = { onText, onError, onAutoSend };
+  const autoSendAfter = useRef(false);
+  const clearArmedSend = useCallback(() => { autoSendAfter.current = false; setArmedSend(false); }, []);
   const allowed = useRef(visible); allowed.current = visible;
   const transition = useCallback((next: VoiceNoteState) => { stateRef.current = next; setState(next); }, []);
 
@@ -59,6 +65,7 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
   const cancel = useCallback(() => {
     generation.current++;
     finishAfterPermission.current = false;
+    autoSendAfter.current = false; setArmedSend(false);
     upload.current?.abort(); upload.current = null;
     if (uploadTimeout.current) clearTimeout(uploadTimeout.current);
     uploadTimeout.current = null;
@@ -74,8 +81,9 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
     return () => document.removeEventListener('visibilitychange', hidden);
   }, [cancel]);
 
-  const finish = useCallback(() => {
-    if (stateRef.current === 'requesting') { finishAfterPermission.current = true; return; }
+  const finish = useCallback((thenSend = false) => {
+    if (stateRef.current === 'requesting') { finishAfterPermission.current = true; if (thenSend) { autoSendAfter.current = true; setArmedSend(true); } return; }
+    if (thenSend) { autoSendAfter.current = true; setArmedSend(true); }
     const rec = recorder.current;
     if (rec?.state === 'recording') { transition('transcribing'); rec.stop(); }
   }, [transition]);
@@ -87,6 +95,7 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
     }
     const ticket = ++generation.current;
     finishAfterPermission.current = false;
+    autoSendAfter.current = false; setArmedSend(false);
     transition('requesting'); setElapsedSeconds(0);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
@@ -119,7 +128,7 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
         if (ticket !== generation.current) return;
         release(); recorder.current = null;
         if (tooLarge || bytes === 0) {
-          transition('off'); callbacks.current.onError(tooLarge ? 'That recording is too large. Try a shorter voice note.' : 'No audio was captured. Try again or use Type.'); return;
+          clearArmedSend(); transition('off'); callbacks.current.onError(tooLarge ? 'That recording is too large. Try a shorter voice note.' : 'No audio was captured. Try again or use Type.'); return;
         }
         transition('transcribing');
         const controller = new AbortController(); upload.current = controller;
@@ -135,7 +144,14 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
           if (!text) throw new Error('I could not hear any words. Try again or use Type.');
           if (text.length > 16000) throw new Error('The transcript is too long. Please record a shorter message.');
           callbacks.current.onText(text);
+          // Transcribe & send: hand the transcript straight to the host after the
+          // normal review landing, so a blocked send still leaves the text in review.
+          if (autoSendAfter.current) {
+            clearArmedSend();
+            callbacks.current.onAutoSend?.(text);
+          }
         } catch (error) {
+          clearArmedSend();
           if (ticket === generation.current) callbacks.current.onError(controller.signal.aborted ? 'Transcription took too long. Please try again or use Type.' : error instanceof Error ? error.message : 'Transcription failed. Use Type instead.');
         } finally {
           if (ticket === generation.current) {
@@ -161,6 +177,6 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
           ? 'No microphone was found. Connect one or use Type.'
           : 'The microphone could not be opened. Check site permission or use Type.');
     }
-  }, [cancel, finish, keepScreenAwake, release, transition]);
-  return { state, elapsedSeconds, analyser, meterAvailable, start, finish, cancel };
+  }, [cancel, clearArmedSend, finish, keepScreenAwake, release, transition]);
+  return { state, elapsedSeconds, analyser, meterAvailable, armedSend, start, finish, cancel };
 }

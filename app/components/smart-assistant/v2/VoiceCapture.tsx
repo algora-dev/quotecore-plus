@@ -52,10 +52,15 @@ export function VoiceCapture({ voice, disabled, expanded, beforeStart }: {
   }, [disabled, start]);
   const recording = voice.state === 'recording';
   const waiting = voice.state === 'requesting' || voice.state === 'transcribing';
+  // Transcribe & send skips the review card: same lockout as Finish so a
+  // mis-tap right after starting cannot fire an unintended send.
+  const finishAndSend = useCallback(() => {
+    if (Date.now() - lastStarted.current > 380) refs.current.voice.finish(true);
+  }, []);
   return <section className={s.voiceCapture} data-expanded={expanded} data-recording={recording} data-waiting={waiting} aria-label="Voice recorder">
     {waiting ? <div className={s.voiceWaiting}>
       <span className={s.spinner} aria-hidden="true" /><strong role="status">{voice.state === 'requesting' ? 'Opening microphone…' : 'Transcribing…'}</strong>
-      <p>{voice.state === 'requesting' ? 'Allow access to start your voice note.' : 'You’ll review your words before sending.'}</p>
+      <p>{voice.state === 'requesting' ? 'Allow access to start your voice note.' : voice.armedSend ? 'Your words go straight to the assistant.' : 'You’ll review your words before sending.'}</p>
       <QcButton onClick={voice.cancel}>Cancel</QcButton>
     </div> : <>
       <div className={s.voiceHeading}>
@@ -65,6 +70,7 @@ export function VoiceCapture({ voice, disabled, expanded, beforeStart }: {
       {recording && <><Waveform analyser={voice.analyser} active={recording}/><div className={s.recordingTime}><span className={s.recordingDot} aria-hidden="true"/>{recordingTime(voice.elapsedSeconds)}</div></>}
       <div className={s.voiceControls}>
         {recording && <QcButton className={s.recordCancel} onClick={voice.cancel}><AssistantIcon name="close"/><span>Cancel</span></QcButton>}
+        {recording && <QcButton className={s.recordSend} disabled={disabled} onClick={finishAndSend}><AssistantIcon name="send"/><span>Transcribe & send</span></QcButton>}
         <QcButton className={recording ? s.recordFinish : s.voiceOrb} aria-label={recording ? 'Finish recording' : 'Start recording'} aria-pressed={recording} disabled={disabled} onClick={toggle} onContextMenu={e => e.preventDefault()}>
           <AssistantIcon name={recording ? 'stop' : 'mic'}/>
           {recording && <span>Finish</span>}

@@ -144,3 +144,23 @@ export const MODEL_CONFIG = {
   /** Embedding vector dimensions (must match the doc_chunks column). */
   embeddingDimensions: envInt('ASSISTANT_EMBEDDING_DIMENSIONS', 1_536),
 } as const;
+
+// ---------------------------------------------------------------------------
+// Neural text-to-speech (Smart Assistant Phase 2a premium voices)
+// ---------------------------------------------------------------------------
+
+/**
+ * Server-side OpenAI TTS for spoken replies. Default OFF: the speak route
+ * 404s until SA_TTS_ENABLED is set on the deployment env (owner-controlled).
+ * The browser speechSynthesis path stays the free default/fallback regardless.
+ */
+export const TTS_CONFIG = {
+  /** Master flag. The /v2/speak route refuses service when false. */
+  enabled: envBool('SA_TTS_ENABLED', false),
+  /** OpenAI TTS model. tts-1 = lowest latency, suits reply playback. */
+  model: process.env.SA_TTS_MODEL ?? 'tts-1',
+  /** Allowed voices only (natural, non-robotic). Never accept arbitrary ids. */
+  voices: ['alloy', 'verse', 'sage', 'coral'] as const,
+  /** Max reply characters accepted for one synthesis request. */
+  maxInputChars: envInt('SA_TTS_MAX_INPUT_CHARS', 4_000),
+} as const;
