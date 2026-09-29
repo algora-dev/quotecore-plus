@@ -7,3 +7,7 @@ Current families include C01 buttons, field/surface primitives, C27 native dialo
 Phase9 adds **C67 QcDrawingWorkspace** and **C68 QcToolHelp** in `QcDrawingWorkspace.tsx`, with opt-in `qc-drawings.css`. C67 is chrome around a fixed-coordinate drawing, not a new canvas controller. C68 is click/tap help reusing C27 rather than hover-only overflow. Neither owns geometry, history, requests or saves. Never apply drawing selectors to Takeoff/Smart Assistant globally.
 
 `qc-tokens.css` remains unchanged. Dialog Escape/backdrop policy stays owned by the feature and existing shared controller. Error/result notices must describe actual outcomes, not inferred success or an unconfirmed server rollback. App typecheck/build and real-device/runtime parity remain the integration gate.
+
+## Pricing Activation / standard v2.11
+
+C69 `SmartComponentEditor`, C70 `ComponentTestPanel`, and C71 `PricingIntroduction` live under `app/components/pricing/`, scoped by `pricing-activation.css`. They reuse the v2 controls; no palette/token changes. C69 keeps existing library save ownership; C70 uses a read-only draft adapter around existing calculation helpers and never persists. Sample controls explicitly detach from the parent form. C71 is personal optional guidance, never a price-readiness classifier. Desktop side-by-side / mobile same-state Settings-Test view contract and exact runtime gates are in `docs/ux/experience-1-pricing-activation`.

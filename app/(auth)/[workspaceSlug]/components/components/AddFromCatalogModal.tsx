@@ -9,7 +9,7 @@ import {
   type UserCatalogSummary,
   type PublicCatalogSummary,
 } from '../catalog-actions';
-import type { ComponentLibraryRow } from '@/app/lib/types';
+import '@/app/components/pricing/pricing-activation.css';
 
 type ModalStep = 'select-catalog' | 'view-rows' | 'destination' | 'creating' | 'success' | 'error';
 type CatalogTab = 'my-catalogs' | 'supplier-catalogs';
@@ -23,7 +23,7 @@ const NAME_CHAR_LIMIT = 60;
 const MAPPABLE_FIELDS = [
   { value: 'name', label: 'Component Name', required: true, placeholder: 'Select a column...' },
   { value: 'sku', label: 'SKU / Product Code', required: false, placeholder: 'Select a column...' },
-  { value: 'price', label: 'Price', required: false, placeholder: 'Select a column...' },
+  { value: 'price', label: 'Material cost', required: false, placeholder: 'Select a column...' },
   { value: 'notes', label: 'Description / Notes', required: false, placeholder: 'Select a column...' },
 ] as const;
 
@@ -301,7 +301,7 @@ export function AddFromCatalogModal({
       .map((row, i) => ({ row, i }))
       .filter(({ row }) => {
         if (!rowSearchFilter) return true;
-        return Object.values(row).some(v => v?.toLowerCase().includes(rowSearchFilter.toLowerCase()));
+        return Object.values(row).some(v => String(v ?? '').toLowerCase().includes(rowSearchFilter.toLowerCase()));
       });
   }, [allRows, rowSearchFilter]);
 
@@ -310,6 +310,10 @@ export function AddFromCatalogModal({
   const effectiveLimit = rowSearchFilter ? SEARCH_RENDER_LIMIT : visibleCount;
   const visibleRowData = filteredRowData.slice(0, effectiveLimit);
   const filteredIndices = filteredRowData.map(d => d.i);
+
+  // Show the SAME source row, not guessed parsed rates or invented pack rules.
+  const exampleIndex = allRows.findIndex((_, index) => selectedRowIndices.has(index));
+  const exampleRow = exampleIndex >= 0 ? allRows[exampleIndex] : undefined;
 
   // Set of headers that are currently mapped to a field (for column highlighting)
   const mappedHeaders = useMemo(() => {
@@ -347,9 +351,9 @@ export function AddFromCatalogModal({
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl border border-slate-200 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100 flex-shrink-0">
-          <div><h2 className="text-lg font-semibold text-slate-900">Create components from a catalogue</h2><p className="qc-flow-description mb-0">Choose a source, check the fields, then add selected rows to a library.</p></div>
-          <button aria-label="Close"
-            onClick={onClose}
+          <div><h2 className="text-lg font-semibold text-slate-900">Create components from a catalogue</h2><p className="qc-flow-description mb-0">One row becomes one basic component. Match columns, choose rows, then review the pricing rules in your library.</p></div>
+          <button aria-label={step === 'creating' ? 'Creating components, please wait' : 'Close catalogue import'}
+            onClick={onClose} disabled={step === 'creating'}
             className="qc-icon-button qc-flow-control text-slate-400 hover:text-slate-600 transition cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -500,7 +504,7 @@ export function AddFromCatalogModal({
                   <div className="rounded-lg border border-slate-200 overflow-hidden">
                     <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5">
                       <p className="text-xs font-medium text-slate-600">Map your catalog columns to component fields</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Only Component Name is required. We auto-detected matches where possible.</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Only Component Name is required. Suggested matches are a starting point: check what each column contains.</p>
                     </div>
                     <div className="divide-y divide-slate-100">
                       {MAPPABLE_FIELDS.map(field => {
@@ -535,6 +539,12 @@ export function AddFromCatalogModal({
                       })}
                     </div>
                   </div>
+
+                  <section className="qc-catalogue-example" aria-label="Example component from selected row">
+                    <header><span className="qc-eyebrow">Your row → a Smart Component</span><h3>{exampleRow ? `Example from row ${exampleIndex + 1}` : 'Select a row to see an example'}</h3></header>
+                    {exampleRow && <dl>{MAPPABLE_FIELDS.map(field => <div key={field.value}><dt>{field.label}<small>{fieldToHeader[field.value] ? `From “${fieldToHeader[field.value]}”` : 'Not mapped'}</small></dt><dd>{fieldToHeader[field.value] ? (String(exampleRow[fieldToHeader[field.value]] ?? '') || 'Empty in this row') : 'Not supplied'}</dd></div>)}</dl>}
+                    <p>These are your selected source values. After import, check measurement, labour, waste and pitch. Roll or pack prices also need purchasing settings.</p>
+                  </section>
 
                   {/* Search + selection counter */}
                   <div className="flex items-center justify-between gap-3">
@@ -702,7 +712,7 @@ export function AddFromCatalogModal({
                 </div>
 
                 {destMode === 'existing' ? (
-                  <select
+                  <select aria-label="Destination library"
                     value={existingCollectionId}
                     onChange={e => setExistingCollectionId(e.target.value)}
                     className="qc-select w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
@@ -732,7 +742,7 @@ export function AddFromCatalogModal({
                   Creating <span className="font-semibold">{selectedRowIndices.size}</span> component{selectedRowIndices.size !== 1 ? 's' : ''} from catalog rows.
                 </p>
                 <p className="text-xs text-slate-400 mt-1">
-                  Each row becomes a new component with mapped fields auto-populated.
+                  Each selected row creates a basic record. Check measurement type, material units and costs, labour, purchasing and allowances before quoting. Missing prices must be reviewed.
                 </p>
               </div>
 
@@ -774,20 +784,20 @@ export function AddFromCatalogModal({
                 Created {createdCount} component{createdCount !== 1 ? 's' : ''} successfully.
               </p>
               <p className="text-xs text-slate-400 mt-1 mb-6">
-                They are now in your library and ready to use in quotes.
+                The basic records are saved. Open them to check measurement type, purchasing, labour, waste and pitch, then use Test component before quoting.
               </p>
               <div className="flex gap-3 justify-center">
                 <button data-qc-variant="ghost"
                   onClick={handleReset}
                   className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
                 >
-                  Convert More
+                  Import more
                 </button>
                 <button data-qc-variant="primary"
                   onClick={onClose}
                   className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition cursor-pointer"
                 >
-                  Done
+                  Review components
                 </button>
               </div>
             </div>

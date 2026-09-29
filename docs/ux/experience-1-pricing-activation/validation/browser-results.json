@@ -1,0 +1,299 @@
+{
+  "scope": "Isolated real source components + React18.2/Chromium; actions/navigation/transport mocked, no Next or live data",
+  "checks": [
+    {
+      "name": "Enter calculates with unsaved settings",
+      "status": "PASS"
+    },
+    {
+      "name": "Calculate never invokes save callback",
+      "status": "PASS"
+    },
+    {
+      "name": "All test input/select controls detached from parent form",
+      "status": "PASS"
+    },
+    {
+      "name": "Changed unsaved cost updates live result",
+      "status": "PASS"
+    },
+    {
+      "name": "Close restores focus to test toggle",
+      "status": "PASS"
+    },
+    {
+      "name": "Hide/show preserves test measurement and result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid sample removes stale result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid sample does not block valid component saving",
+      "status": "PASS"
+    },
+    {
+      "name": "FormData has original payload controls only",
+      "status": "PASS"
+    },
+    {
+      "name": "Plan measurement requires pitch instead of assuming it",
+      "status": "PASS"
+    },
+    {
+      "name": "Plan pitch recalculates through current draft",
+      "status": "PASS"
+    },
+    {
+      "name": "Turning pitch off hides input and removes adjustment",
+      "status": "PASS"
+    },
+    {
+      "name": "Unit change never reinterprets old number as new units",
+      "status": "PASS"
+    },
+    {
+      "name": "Real library row opens stable editor with test panel",
+      "status": "PASS"
+    },
+    {
+      "name": "Switching components cannot silently drop dirty settings",
+      "status": "PASS"
+    },
+    {
+      "name": "Use as starting point copies draft settings and clears unique SKU",
+      "status": "PASS"
+    },
+    {
+      "name": "Copied draft tests before saving",
+      "status": "PASS"
+    },
+    {
+      "name": "Pending save freezes editing until real response",
+      "status": "PASS"
+    },
+    {
+      "name": "Real create callback retains pack/waste/labour fields",
+      "status": "PASS"
+    },
+    {
+      "name": "Real create callback gets no tester data",
+      "status": "PASS"
+    },
+    {
+      "name": "Learning milestones reflect actual test plus save, not presence",
+      "status": "PASS"
+    },
+    {
+      "name": "Create failure keeps unsaved values and truthful error",
+      "status": "PASS"
+    },
+    {
+      "name": "At-cap result is saved inactive, never claimed ready",
+      "status": "PASS"
+    },
+    {
+      "name": "Inactive subscription still blocks creation",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing edit warning remains before update",
+      "status": "PASS"
+    },
+    {
+      "name": "Flag-off stored pack tests without enabling gated controls",
+      "status": "PASS"
+    },
+    {
+      "name": "Flag-off save does not overwrite protected generic pack data",
+      "status": "PASS"
+    },
+    {
+      "name": "Known empty work offers pricing first",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing work offers real continue route, not signup instructions",
+      "status": "PASS"
+    },
+    {
+      "name": "Unknown read does not imply no jobs",
+      "status": "PASS"
+    },
+    {
+      "name": "Real mapping shows same selected source row",
+      "status": "PASS"
+    },
+    {
+      "name": "Changing mapping updates worked row immediately",
+      "status": "PASS"
+    },
+    {
+      "name": "CSV numeric cells searchable without type crash",
+      "status": "PASS"
+    },
+    {
+      "name": "Import clearly leaves advanced component setup for later",
+      "status": "PASS"
+    },
+    {
+      "name": "Import pending cannot be mistaken for cancelled request",
+      "status": "PASS"
+    },
+    {
+      "name": "Success stays visible instead of immediately reloading parent",
+      "status": "PASS"
+    },
+    {
+      "name": "Import uses original mapping/payload contract",
+      "status": "PASS"
+    },
+    {
+      "name": "Review exits on deliberate action",
+      "status": "PASS"
+    },
+    {
+      "name": "Personal intro preference failure is not hidden",
+      "status": "PASS"
+    },
+    {
+      "name": "Guide dismissible for visit without fake persistence",
+      "status": "PASS"
+    },
+    {
+      "name": "editor 1440px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "intro 1440px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "home 1440px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "list 1440px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "editor 1024px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "intro 1024px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "home 1024px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "list 1024px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "editor 768px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "intro 768px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "home 768px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "list 768px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "editor 390px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Editor 390px readable numeric fields",
+      "status": "PASS"
+    },
+    {
+      "name": "intro 390px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "home 390px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "list 390px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "editor 320px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Editor 320px readable numeric fields",
+      "status": "PASS"
+    },
+    {
+      "name": "intro 320px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "home 320px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "list 320px no page-wide overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "390px Settings view hides test without unmounting",
+      "status": "PASS"
+    },
+    {
+      "name": "390px returning to test preserves measurement and recomputes unsaved settings",
+      "status": "PASS"
+    },
+    {
+      "name": "390px hidden invalid test cannot block valid save",
+      "status": "PASS"
+    },
+    {
+      "name": "390px catalogue mapping stays in viewport",
+      "status": "PASS"
+    },
+    {
+      "name": "390px catalogue result and review action reachable",
+      "status": "PASS"
+    },
+    {
+      "name": "320px Settings view hides test without unmounting",
+      "status": "PASS"
+    },
+    {
+      "name": "320px returning to test preserves measurement and recomputes unsaved settings",
+      "status": "PASS"
+    },
+    {
+      "name": "320px hidden invalid test cannot block valid save",
+      "status": "PASS"
+    },
+    {
+      "name": "320px catalogue mapping stays in viewport",
+      "status": "PASS"
+    },
+    {
+      "name": "320px catalogue result and review action reachable",
+      "status": "PASS"
+    },
+    {
+      "name": "Copy of a legacy linear row uses canonical lineal for the new record",
+      "status": "PASS"
+    }
+  ],
+  "passed": 73,
+  "failed": 0
+}

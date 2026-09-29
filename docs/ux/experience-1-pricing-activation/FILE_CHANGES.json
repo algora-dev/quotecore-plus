@@ -1,0 +1,590 @@
+{
+  "workstream": "Experience 1 / Pricing Activation & Smart Component Testing",
+  "status": "IMPLEMENTED_SOURCE_APP_ACCEPTANCE_PENDING",
+  "baseline_archive": "quotecore-plus-phase10-runtime-acceptance-return-2026-09-28.zip",
+  "baseline_sha256": "abe445278468e356e508b5cd12ac893093b9efeb2e559960a56d528d2d4bedf7",
+  "baseline_commit_reported_by_gavin": "b5db9ab3",
+  "paths_relative_to": "quotecore-plus repository root, NOT outer delivery root",
+  "hash_convention": "SHA-256 raw bytes, and UTF-8 CRLF-to-LF normalized bytes where applicable; no BOM stripping",
+  "self_exclusion": "docs/ux/experience-1-pricing-activation/FILE_CHANGES.json (self entry retained for exact path-set verification; digest in outer PACKAGE_MANIFEST.json)",
+  "original_repository_file_count": 3358,
+  "all_original_paths_retained": true,
+  "production_counts": {
+    "modified": 7,
+    "added": 5,
+    "deleted": 0
+  },
+  "changes": [
+    {
+      "path": "START_HERE_PRICING_ACTIVATION_RETURN.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "e61e3215211bd307147f9aa7f1626fd016cd45ae37262a41bb94c838e086b50e",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "e61e3215211bd307147f9aa7f1626fd016cd45ae37262a41bb94c838e086b50e",
+      "bytes": 1485
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "change": "modified",
+      "category": "production",
+      "before_sha256": "fd974cc07dc60a3e21f66a6ea9201b9841e252fee04c9c8129a8f5b6002e6820",
+      "after_sha256": "fdcd5865d6a15783a5b5d6936ae7f0fe86d95bf207f020a953c27e3179a7f94f",
+      "before_lf_sha256": "ebd4782661bbc5a3e8e8fae3c3ed52647080bde2224b2f73db2169d9e9042ad4",
+      "after_lf_sha256": "8354f24780cb501018ae98b05592332b9a45b62824f762a5c93ea7a1294613e4",
+      "bytes": 78380
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "change": "modified",
+      "category": "production",
+      "before_sha256": "937237faf8733c4f49ee3f80bb9bbea11a91e906176754d55f9255999927fabc",
+      "after_sha256": "6992dde65040db7d45f7ffd2a42fd435a1bf40783a58afad38c7c9e9ba28dbca",
+      "before_lf_sha256": "0a907288e7439e877c789120899c6660303e5272b5a21436c519f3f7a879cf06",
+      "after_lf_sha256": "a4a87a68ad52e2cd462bb8f38a2475d8a36e82c60ab3db3d39026b299652badc",
+      "bytes": 41401
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/components/page.tsx",
+      "change": "modified",
+      "category": "production",
+      "before_sha256": "a58687290ce0b608e03f82b453f859e7f50eddd1b37b4febd6922c05da5c37cc",
+      "after_sha256": "7b81c7139430c5775a3bec5812d4b0bbefa758c625e6898c6824606649d6593e",
+      "before_lf_sha256": "abcf4e2b092fc991f9efda94ff109742eb1be2036e6151f292f41a0d52122d78",
+      "after_lf_sha256": "cb469f1370dcd044bd93ec6067232cc49f577e4984fe8d2a4ae71205bbae64ea",
+      "bytes": 4060
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/page.tsx",
+      "change": "modified",
+      "category": "production",
+      "before_sha256": "7e63c3c162307952f753fc1da26fe7e0c416aed89a64468e160ad27d6423f784",
+      "after_sha256": "3203bee92c145708f6d2ba1b2fb32bd8982eebe41a8361d2d45d80dee3f955cf",
+      "before_lf_sha256": "a37fc611a3502e8660febc3e8ee0bf08d2a62fea85a6bd8fcc280d4f52a0b50f",
+      "after_lf_sha256": "a91db1e5448bcd6cfdd6ba4575afbbc1d1d8c31f942210780915121a3374bfd0",
+      "bytes": 7762
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/tutorials/WelcomeModal.tsx",
+      "change": "modified",
+      "category": "production",
+      "before_sha256": "588fabf907875d347d8c1335d1263b78225f8862b30c55802626955c43a17610",
+      "after_sha256": "5757a0a192c51f0ecd80d4ec48e8f259c3656e45b06256cd1e3c82c014d25180",
+      "before_lf_sha256": "ef8f19be63d5d4a940fe983c14e25385d8a0385835c3a98c3bfac2b145b9e6db",
+      "after_lf_sha256": "5f8a399e186d17d160d1df1d967f06752a5d5148b5f47d964a000120df7f3d2f",
+      "bytes": 2312
+    },
+    {
+      "path": "app/components/pricing/ComponentTestPanel.tsx",
+      "change": "added",
+      "category": "production",
+      "before_sha256": null,
+      "after_sha256": "b448a779bdc197c95c0a06b2f2ecd382fd62e94ef0550f97189f00f651fedeef",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "b448a779bdc197c95c0a06b2f2ecd382fd62e94ef0550f97189f00f651fedeef",
+      "bytes": 10402
+    },
+    {
+      "path": "app/components/pricing/PricingIntroduction.tsx",
+      "change": "added",
+      "category": "production",
+      "before_sha256": null,
+      "after_sha256": "3a406f4883a7a0988a77d888e8d3a45a3ef79f7ba2ba300f2d23200da3c1ce89",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "3a406f4883a7a0988a77d888e8d3a45a3ef79f7ba2ba300f2d23200da3c1ce89",
+      "bytes": 4643
+    },
+    {
+      "path": "app/components/pricing/SmartComponentEditor.tsx",
+      "change": "added",
+      "category": "production",
+      "before_sha256": null,
+      "after_sha256": "d1f32710ead87bdaab48596ed75345aeaafdf6a930aafd03409de40894c31bcc",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "d1f32710ead87bdaab48596ed75345aeaafdf6a930aafd03409de40894c31bcc",
+      "bytes": 21207
+    },
+    {
+      "path": "app/components/pricing/componentTest.ts",
+      "change": "added",
+      "category": "production",
+      "before_sha256": null,
+      "after_sha256": "563a815037cb1aa44e6f731e7d4cd3da9c1f2d35c68d6381496b3f6121b63f2b",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "563a815037cb1aa44e6f731e7d4cd3da9c1f2d35c68d6381496b3f6121b63f2b",
+      "bytes": 9108
+    },
+    {
+      "path": "app/components/pricing/pricing-activation.css",
+      "change": "added",
+      "category": "production",
+      "before_sha256": null,
+      "after_sha256": "9f7033c05e86d6c530e6ccddf48ab42cc54cff17a6cdebc5ecc5cbd9f3958f98",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "9f7033c05e86d6c530e6ccddf48ab42cc54cff17a6cdebc5ecc5cbd9f3958f98",
+      "bytes": 13145
+    },
+    {
+      "path": "app/components/ui/v2/README.md",
+      "change": "modified",
+      "category": "documentation_or_validation",
+      "before_sha256": "0eddd55b06922b0cac211420dda5028414f5fbd800e221c9bcdef3c780d7528c",
+      "after_sha256": "69e535fe0b452585a60ab145074dfb5184d45484f85b1a5748b7d6b29ee2fff5",
+      "before_lf_sha256": "0c8a55ad86c0bdd410f537bb682eab9cae703fcb87378e103c8dc54350a437ae",
+      "after_lf_sha256": "78772fe44d9e385aa9f567fbbcb7d40bd42a41288d4bb8a754c1896405fe14b3",
+      "bytes": 2074
+    },
+    {
+      "path": "app/components/workspace/HomeDashboard.tsx",
+      "change": "modified",
+      "category": "production",
+      "before_sha256": "dfc55e04766e2b49cbbfc7e3a8c45a53f2b4af2cf6330102635a91b81cfab2ee",
+      "after_sha256": "ba7005af1af6f640d755dfb49ab4a142345dfc1aa8c9599980b69aff35bd08d2",
+      "before_lf_sha256": "386e4b3e1f59c0a9512cc93ab3523874194bafae2ebbbe249fce0958a117e764",
+      "after_lf_sha256": "25dc9ac7da0207f59f99a62d58d212c98f11cebec73fe62a296aaf2e0375415d",
+      "bytes": 8273
+    },
+    {
+      "path": "app/components/workspace/qc-home.css",
+      "change": "modified",
+      "category": "production",
+      "before_sha256": "41bba3d4467e3016f3728dce09dc0c1d351b44a11d69aff719ab83daffea6311",
+      "after_sha256": "fc2fbcb690b0c3bdf2ae51f3f1f2953587fd46b509f26475f81a3f9abc61d360",
+      "before_lf_sha256": "0cd60a8934d05a6d4b3e1f2dbfb6b1a23cfdfedf81511a766b6a36bccecff34a",
+      "after_lf_sha256": "d20d51e74d06f734c8e9450449271f1b9a09c6165b94a7155bf449c9c77886d8",
+      "bytes": 7045
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/AGENT_TODOS.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "272ed0c8d86b00e523c3d5ef538d564cf1550a449343b421f69b0bbc91e61a9b",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "272ed0c8d86b00e523c3d5ef538d564cf1550a449343b421f69b0bbc91e61a9b",
+      "bytes": 2729
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/BUILD_ENVIRONMENT.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "c6b1778cb6120c2ec628178ada8ebd490378fcf4261d93ff39e6d70ad0d469c1",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "c6b1778cb6120c2ec628178ada8ebd490378fcf4261d93ff39e6d70ad0d469c1",
+      "bytes": 574
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/CALCULATION_CONTRACT.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "89e57b9e01f4ade3fcd6326b5527ebd778c2e1049d28862f54d0f723cbef8a7f",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "89e57b9e01f4ade3fcd6326b5527ebd778c2e1049d28862f54d0f723cbef8a7f",
+      "bytes": 4006
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/CAPABILITY_PARITY.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "0ed8e47974b7be61b79ba8c5eaeedf34438a1afe1c582ec29ccc698575397dcf",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "0ed8e47974b7be61b79ba8c5eaeedf34438a1afe1c582ec29ccc698575397dcf",
+      "bytes": 3189
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/FILE_CHANGES.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": null,
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": null,
+      "self_hash": "Recorded in ZIP-root PACKAGE_MANIFEST.json; no recursive self-hash."
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/HANDOFF.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "f279a80b2f7380b6ecebb19bf640d638694d34ea9d4bef8776fd8d4a680436e8",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "f279a80b2f7380b6ecebb19bf640d638694d34ea9d4bef8776fd8d4a680436e8",
+      "bytes": 1844
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/INTEGRATION.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "e52f52114dfb83141b0006a2644e4bed5d4d30ed7212ef8194b86f8b3d95d2a6",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "e52f52114dfb83141b0006a2644e4bed5d4d30ed7212ef8194b86f8b3d95d2a6",
+      "bytes": 5182
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/PREVIEWS.html",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "f491be901f53b717eff6fcc4bb9e9ac39a6bf03052088202557082e2f0280046",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "f491be901f53b717eff6fcc4bb9e9ac39a6bf03052088202557082e2f0280046",
+      "bytes": 1380647
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/PRODUCTION_REVIEW.diff",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "7ca5ef11f34d09c70214e1d31b06b4203616b7db8bacd1e02acd5d4dcddcc441",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "7ca5ef11f34d09c70214e1d31b06b4203616b7db8bacd1e02acd5d4dcddcc441",
+      "bytes": 145596
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/PROTECTED_FILE_REPORT.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "261d88f4d2a7c2aa85442c8d2f6ebd415cf8f9ab211a1373f304507a637bcebd",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "261d88f4d2a7c2aa85442c8d2f6ebd415cf8f9ab211a1373f304507a637bcebd",
+      "bytes": 186410
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/RUNTIME_CHECKLIST.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "e3cd03754a4f2dee45abfe3fbb039a50f8601fd6d8a2c7702eef656b290512e7",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "e3cd03754a4f2dee45abfe3fbb039a50f8601fd6d8a2c7702eef656b290512e7",
+      "bytes": 5067
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/SCOPE_AND_DECISIONS.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "06618b310c41fdd7d1c83b075d43ebeb7495e6ecdaef30b8c09008c1f2500ef0",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "06618b310c41fdd7d1c83b075d43ebeb7495e6ecdaef30b8c09008c1f2500ef0",
+      "bytes": 4207
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/VALIDATION.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "f6395eda0770b2dad2b83693ddbf97fb92b1b0ff345e00cc169b71efa872433f",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "f6395eda0770b2dad2b83693ddbf97fb92b1b0ff345e00cc169b71efa872433f",
+      "bytes": 3023
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/OFFLINE_FIXTURE_NOTICE.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "73f222a0aefe0b8c4b3a624fff78ca79cb44d330a33a467617e7f7552c39382a",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "73f222a0aefe0b8c4b3a624fff78ca79cb44d330a33a467617e7f7552c39382a",
+      "bytes": 1190
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/THIRD_PARTY_NOTICES.txt",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "73406c879234a1e87060ab95d0fec4e20d20db89a03b8eeb113d0ca1287405ee",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "73406c879234a1e87060ab95d0fec4e20d20db89a03b8eeb113d0ca1287405ee",
+      "bytes": 1299
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/browser-results.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "a9cc4febfae5fc6728cc3ffa4696227fdb8223427f9c33bce6d97521ba455262",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "a9cc4febfae5fc6728cc3ffa4696227fdb8223427f9c33bce6d97521ba455262",
+      "bytes": 7384
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/browser/bundle.js",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "0f8e0b06aa73439e96430a4f5ce036eb027587fde1268ef163180caaae0566b8",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "0f8e0b06aa73439e96430a4f5ce036eb027587fde1268ef163180caaae0566b8",
+      "bytes": 434139
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/browser/entry.js",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "04a9e352be277d360e01173c72b9dd14abfdfc6368ccf7b60e4f6b7a6b9bbe10",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "04a9e352be277d360e01173c72b9dd14abfdfc6368ccf7b60e4f6b7a6b9bbe10",
+      "bytes": 6555
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/browser/index.html",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "8ecfa91a60864bd8de56f858999f6579ed7460523b788255237ed9d2cb929ba4",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "8ecfa91a60864bd8de56f858999f6579ed7460523b788255237ed9d2cb929ba4",
+      "bytes": 1506
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/browser/input.css",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "cc1a7ad0d019ddb1d32d0ecb588ba0ac26ce41d8625dd6c366348b25f83a28ec",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "cc1a7ad0d019ddb1d32d0ecb588ba0ac26ce41d8625dd6c366348b25f83a28ec",
+      "bytes": 59
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/browser/module-inventory.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "00c1875d7d10c4668e999bf0aaf8cf16c06ca52ddf8c7cd2a218dc470f9b7f7a",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "00c1875d7d10c4668e999bf0aaf8cf16c06ca52ddf8c7cd2a218dc470f9b7f7a",
+      "bytes": 4930
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/browser/source.css",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "bff264c24c490de8da0423f2a7678eac6c66beacdf5e22227518480f99055815",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "cd44cc9601ff595fae8fdefcb834143ab3e9988a780680431badb7ba29ed7404",
+      "bytes": 85282
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/browser/tailwind.config.cjs",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "c4610be03a46dd7b606d5655ef8bfbbf71e03591fc6dadb5ae3ad0cc52ce4c3f",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "c4610be03a46dd7b606d5655ef8bfbbf71e03591fc6dadb5ae3ad0cc52ce4c3f",
+      "bytes": 313
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/browser/tailwind.css",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "b0c14580bc91f56339df4240585c4c320691257d4b03b744a71b968058cfe2fb",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "b0c14580bc91f56339df4240585c4c320691257d4b03b744a71b968058cfe2fb",
+      "bytes": 37157
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/browser_harness.py",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "4a9d00b22312cc012984675b6ffe6c652014fc474bb778cbd86a5cf45352fcd8",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "4a9d00b22312cc012984675b6ffe6c652014fc474bb778cbd86a5cf45352fcd8",
+      "bytes": 1062
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/check-source.cjs",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "7071221d39a1f92d4414dcaec87c3c3b5167ad3c4587205a3b36f9e90614f110",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "7071221d39a1f92d4414dcaec87c3c3b5167ad3c4587205a3b36f9e90614f110",
+      "bytes": 3863
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/engine-results.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "e9ffaaec2334f26ef8765cfa8d0d2822ca38cdf5d9168669168f733c02c12a54",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "e9ffaaec2334f26ef8765cfa8d0d2822ca38cdf5d9168669168f733c02c12a54",
+      "bytes": 6435
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/module-loader.cjs",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "419308d35ad65d9c04a5cca90be1c7c626408ec331d1b7c3d22c19013d7bca7a",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "419308d35ad65d9c04a5cca90be1c7c626408ec331d1b7c3d22c19013d7bca7a",
+      "bytes": 1130
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/editor-1440.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "33b97a341f10fc6854618340e903bef477af21acd9a01e388461e137f9591888",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 201916
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/editor-320.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "9e8f1c6257a4109957549b053f5a3c79084b1b782b988d416accbf8906ddca38",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 98921
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/editor-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "fcb6a7f9fd6157dac6b31d78e0ae9a6b48c5ab968fac777158845c3315d3af36",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 99544
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/editor-settings-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "9a46e81a7787902a9c6439ba6d9d0aef3e70c0d8cc30c7ca717da675a279aa9c",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 144081
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/home-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "fe15f914048d99919f35a8c7f31175adc84dd40a1a3e6bed5b164a4ca472dfa8",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 162414
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/home-pricing-1440.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "5058e9904ffdba0d4f263ff75ba244a38fd27626440a713f4c0087b002e2aa1f",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 220480
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/import-mapping-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "2791b49f167712264f17558f2fa6348b4db9fa15e493d6da5fb24af45c62cf1e",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 64719
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/import-success-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "da13ae30cdcffb860552b3e53452760545ea8c4fa50641cad62e0b6d0bee4552",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 48954
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/intro-1440.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "8240f13d6249ec5222ecd0d5b85942b75490c3bc913d6d2afaa0b913a1416399",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 76291
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/intro-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "0743c2b4f8a06d3b6ec7841371227dfc3788d49499f76cc3ff1b7586969d28b6",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 74067
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/list-1440.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "5a67666d0db0aeb78156a7f82eafccf28ddf83d4af45d31bd967bda37690fcdc",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 180795
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/screens/list-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "a9190cf614b00134110bd0b8f16e956f3c8909c370f56a30f176fd0bcf96ceec",
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": 176597
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/source-results.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "c9c85d333fefe1d7e611f381e8a6021d0c40781571f6b52b83d9015e5d8f6138",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "c9c85d333fefe1d7e611f381e8a6021d0c40781571f6b52b83d9015e5d8f6138",
+      "bytes": 1657
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/test-browser.py",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "06f8b14260ced0561aa4cec3a16260ed66a564e5ac2a59beb23004ffdbdbed5e",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "06f8b14260ced0561aa4cec3a16260ed66a564e5ac2a59beb23004ffdbdbed5e",
+      "bytes": 16291
+    },
+    {
+      "path": "docs/ux/experience-1-pricing-activation/validation/test-engine.cjs",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "6cda048ff96cae8aae0d522c42f67976844cb0a4046978ff908440716ce9dbfb",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "6cda048ff96cae8aae0d522c42f67976844cb0a4046978ff908440716ce9dbfb",
+      "bytes": 8046
+    }
+  ]
+}

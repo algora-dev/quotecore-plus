@@ -1,6 +1,5 @@
 import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections, hasDismissedComponentEditWarning } from './actions';
 import { ComponentList } from './component-list';
-import { ComponentsIntroModal } from './components-intro-modal';
 import { PendingUpdatesBanner } from './PendingUpdatesBanner';
 import { SupplierAlertSettingsButton } from './SupplierAlertSettingsButton';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
@@ -12,10 +11,10 @@ import type { PendingUpdate } from '../supplier-directory/actions';
 
 export default async function ComponentsPage(props: {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ restore?: string; created?: string; from?: string }>;
+  searchParams: Promise<{ restore?: string; created?: string; from?: string; learn?: string; reviewImport?: string }>;
 }) {
   const { workspaceSlug } = await props.params;
-  const { restore: restoreDraftId, created: createdComponentId, from } = await props.searchParams;
+  const { restore: restoreDraftId, created: createdComponentId, from, learn, reviewImport } = await props.searchParams;
   let components;
 
   try {
@@ -31,17 +30,12 @@ export default async function ComponentsPage(props: {
     );
   }
 
-  // Component library is per-company - shared across every quote regardless of
-  // measurement system. We render rates in the company default so an Imperial
-  // shop sees ft²/RS labels here, with a note that per-quote display still
-  // follows the quote's own measurement_system.
+  // Stored rates and pack settings are canonical metric. Only test inputs and
+  // measured quantities use the company's preferred display system.
   const { company } = await loadCompanyContext();
   const ent = await loadCompanyEntitlements(company.id);
 
-  // First-visit modal: shown once per user. Suppresses the copilot tour
-  // while open (see ComponentsIntroModal). After dismissal the existing
-  // copilot auto-detect picks up and runs the `components` guide if the
-  // user has copilot enabled.
+  // Personal guidance preference only, never a company-pricing readiness flag.
   const introSeen = await hasSeenComponentsIntro();
   const collections = await loadComponentCollections();
   const editWarningDismissed = await hasDismissedComponentEditWarning();
@@ -56,7 +50,6 @@ export default async function ComponentsPage(props: {
 
   return (
     <>
-      {!introSeen && <ComponentsIntroModal />}
       <BackButton href={from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/resources`} label={from === 'inbox' ? 'Back to inbox' : 'Back to resources'} />
       {/* "Where is my takeoff" helper - shown here because this is the landing
           page after the free-takeoff import banner click. */}
@@ -71,6 +64,9 @@ export default async function ComponentsPage(props: {
         initialComponents={components}
         workspaceSlug={workspaceSlug}
         companyMeasurementSystem={company.default_measurement_system}
+        companyCurrency={company.default_currency ?? 'NZD'}
+        reviewImported={reviewImport === '1'}
+        showPricingIntroduction={learn === '1' || (!introSeen && !restoreDraftId && !createdComponentId)}
         companyDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
         componentCollections={collections}
         componentLimit={ent.componentLimit}

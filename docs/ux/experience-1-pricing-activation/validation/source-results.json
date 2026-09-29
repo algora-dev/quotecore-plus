@@ -1,0 +1,70 @@
+{
+  "syntax": [
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/page.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/page.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/tutorials/WelcomeModal.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "app/components/pricing/ComponentTestPanel.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "app/components/pricing/PricingIntroduction.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "app/components/pricing/SmartComponentEditor.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "app/components/pricing/componentTest.ts",
+      "diagnostics": []
+    },
+    {
+      "file": "app/components/workspace/HomeDashboard.tsx",
+      "diagnostics": []
+    }
+  ],
+  "contracts": [
+    {
+      "name": "input",
+      "occurrences": 2,
+      "equal": true
+    },
+    {
+      "name": "inputWithGenericTrades",
+      "occurrences": 2,
+      "equal": true
+    },
+    {
+      "name": "MAX_ROWS",
+      "occurrences": 1,
+      "equal": true
+    },
+    {
+      "name": "NAME_CHAR_LIMIT",
+      "occurrences": 1,
+      "equal": true
+    }
+  ],
+  "isolatedCalculatorTypes": {
+    "scope": "Real componentTest.ts, engine, conversions, union and generated database types; server module reduced to unchanged type exports. Not the full application build.",
+    "diagnostics": []
+  }
+}

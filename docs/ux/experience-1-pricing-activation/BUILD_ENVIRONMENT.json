@@ -1,0 +1,12 @@
+{
+  "node": "22.16.0",
+  "next_requested_by_app": "16.2.12",
+  "react_requested_by_app": "18.3.1",
+  "actual_project_dependencies_installed": false,
+  "full_app_typecheck": "NOT_RUN",
+  "full_app_build": "NOT_RUN",
+  "full_app_lint": "NOT_RUN",
+  "reason": "No project Next/React dependency installation in this environment. Source/isolated checks run; no full-build success claimed.",
+  "isolated_runtime": "React/ReactDOM18.2.0 from installed JupyterLab, global Tailwind4 utilities, source-scoped CSS, Chromium; mocked providers/navigation",
+  "real_data_writes": false
+}

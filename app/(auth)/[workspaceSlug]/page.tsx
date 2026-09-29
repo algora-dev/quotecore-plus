@@ -72,7 +72,7 @@ export default async function WorkspaceHome({
     .single();
 
   const firstName = user?.full_name?.split(' ')[0] || 'there';
-  // Brand-new users (never dismissed) see the one-time Welcome modal.
+  // A personal help preference, not workspace pricing-readiness. No blocking tour.
   const showWelcome = !user?.tutorials_seen_at;
 
   // Check for calculator draft from signup flow (H-03: signup context preservation)
@@ -121,7 +121,7 @@ export default async function WorkspaceHome({
 
   return (
     <section data-qc-ui="v2" className="space-y-5">
-      {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} /> : null}
+      {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} pricingFirst={!hasCalcDraft && recentWork !== undefined && recentWork.length === 0 && !(company as { is_supplier?: boolean }).is_supplier} /> : null}
       {hasCalcDraft && <CalcDraftImportBanner draftId={signupDraft!} sourceRef={signupRef ?? null} />}
       <Suspense fallback={null}><DocDraftRestorer workspaceSlug={workspaceSlug} /></Suspense>
       <TakeoffDraftNoteBanner />
@@ -130,6 +130,7 @@ export default async function WorkspaceHome({
       <HomeDashboard workspaceSlug={workspaceSlug} firstName={firstName} newUser={showWelcome}
         notificationCount={unreadAlerts ?? 0} canCreateQuote={!monthlyQuoteAtCap}
         assistantAvailable={!!smartAssistantOn} recentWork={recentWork}
+        allowPricingInvitation={!hasCalcDraft && !(company as { is_supplier?: boolean }).is_supplier}
         measureAction={
 <MeasureJobButton
         variant="inline"

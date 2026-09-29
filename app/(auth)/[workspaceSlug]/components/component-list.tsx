@@ -1,9 +1,14 @@
 'use client';
 import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+import { useQcActionNotice } from '@/app/components/ui/v2/QcActionNotice';
+import { SmartComponentEditor, type ComponentEditorSettings, type ComponentEditorInitial } from '@/app/components/pricing/SmartComponentEditor';
+import { PricingIntroduction } from '@/app/components/pricing/PricingIntroduction';
+import { canonicalUnit } from '@/app/components/pricing/componentTest';
+import { formatCurrency } from '@/app/lib/currency/currencies';
 
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility, setComponentActive } from './actions';
 import { AddFromCatalogModal } from './components/AddFromCatalogModal';
@@ -19,26 +24,23 @@ import type {
   PricingStrategy,
   FlashingLibraryRow,
 } from '@/app/lib/types';
-import {
-  computePackCount,
-} from '@/app/lib/pricing/engine';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import type { MeasurementSystem } from '@/app/lib/types';
-import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import { loadFlashingLibrary } from '../drawings/actions';
 import { loadCalcDraftAsync, clearCalcDraft } from '@/app/(public)/free-calculators/_shared/types';
 
 /** Build the radio-button labels that decorate measurement type with the company's preferred unit. */
 // F-15: Extracted helpers + sub-components
-import { buildMeasurementLabels, allowedStrategiesFor, ROOFING_DEFAULT_TYPES, PRICING_STRATEGY_LABELS, WASTE_UNIT_LABELS, WASTE_LABELS, PITCH_LABELS } from './parts/helpers';
-import { TypeSpecificFields } from './parts/TypeSpecificFields';
+import { buildMeasurementLabels, allowedStrategiesFor, PITCH_LABELS } from './parts/helpers';
 import { PublishLibraryModal } from './components/PublishLibraryModal';
 export function ComponentList({
   initialComponents,
   workspaceSlug,
   companyMeasurementSystem = 'metric',
   companyDefaultTrade = 'roofing',
+  companyCurrency = 'NZD',
+  showPricingIntroduction = false,
+  reviewImported = false,
   componentCollections = [],
   componentLimit,
   componentCount,
@@ -56,6 +58,9 @@ export function ComponentList({
   companyMeasurementSystem?: MeasurementSystem;
   /** Company default trade; hides pitch for non-roofing trades. */
   companyDefaultTrade?: string;
+  companyCurrency?: string;
+  showPricingIntroduction?: boolean;
+  reviewImported?: boolean;
   /** Component collections for the company (for library assignment UI). */
   componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
   /** Plan cap on lifetime active components. NULL = unlimited. */
@@ -85,7 +90,21 @@ export function ComponentList({
   /** Whether this company is an approved supplier. Shows publishing controls. */
   isSupplier?: boolean;
 }) {
-  const { notify, feedback } = useQcFeedback();
+  const { notify, ask, feedback } = useQcFeedback();
+  const { notice, showNotice } = useQcActionNotice();
+  const [learning, setLearning] = useState(showPricingIntroduction);
+  const [testedInSession, setTestedInSession] = useState(false);
+  const [createdInSession, setCreatedInSession] = useState(false);
+  const [ownTested, setOwnTested] = useState(false);
+  const [draftTested, setDraftTested] = useState(false);
+  const [lastCreatedId, setLastCreatedId] = useState<string | null>(null);
+  const [testOnOpen, setTestOnOpen] = useState(false);
+  const [testRequest, setTestRequest] = useState(0);
+  const [editorDirty, setEditorDirty] = useState(false);
+  const [editorVersion, setEditorVersion] = useState(0);
+  const [createDefaults, setCreateDefaults] = useState<ComponentEditorInitial | null>(null);
+  const editorAnchor = useRef<HTMLDivElement>(null);
+  const [catalogueChanged, setCatalogueChanged] = useState(false);
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
   // Pitch is shown when the trade requires it (roofing) or opts in optionally
   // (landscaping, concrete, insulation, electrical). pitchOptional trades show
@@ -102,24 +121,7 @@ export function ComponentList({
   // Drawing-library feature label: 'Flashings' for roofing, 'Drawings & Images' for all others.
   const featureLabel = _tradeLabels.featureLabel ?? 'Flashings';
   const featureLabelSingular = _tradeLabels.featureLabelSingular ?? 'Flashing';
-  const imageAssignLabel = 'Assign Images (Optional)';
-  const imageSelectPlaceholder = 'Select an image...';
   const imageHelperText = isRoofingTrade ? 'Add flashing drawings to use in material order forms' : 'Add images/drawings to use in material order forms';
-  /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
-  const unitForMeasurement = (mt: MeasurementType) =>
-    getUnitLabel(mt as 'area' | 'lineal' | 'quantity' | 'fixed', companyMeasurementSystem);
-  /** System-aware version of `wasteAmountSuffix(wt, mt)` from types.ts. Drives the
-   *  right-hand label next to the Waste Amount input on the component editor. */
-  const wasteAmountSuffix = (wt: WasteType, mt: MeasurementType): string => {
-    if (wt === 'percent') return '%';
-    if (wt === 'fixed') return unitForMeasurement(mt);
-    return '';
-  };
-  /** Placeholder text inside the Waste Amount input. Mirrors the suffix unit. */
-  const wasteAmountPlaceholder = (wt: WasteType, mt: MeasurementType): string => {
-    if (wt === 'percent') return '% e.g. 10';
-    return `e.g. 0.25 (${unitForMeasurement(mt)})`;
-  };
   const [components, setComponents] = useState(initialComponents);
   const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -157,7 +159,7 @@ export function ComponentList({
   // Initialise from localStorage so the user's last-set default is applied on landing.
   const LOCAL_KEY = `qc-default-lib-${workspaceSlug}`;
   const [activeLibraryId, setActiveLibraryId] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
+    if (reviewImported || typeof window === 'undefined') return '';
     const saved = localStorage.getItem(LOCAL_KEY);
     // Validate saved id still exists in collections list before applying.
     if (saved && componentCollections.some(c => c.id === saved)) return saved;
@@ -214,7 +216,8 @@ export function ComponentList({
   // type, snap back to per_unit. Keeps the dropdown honest under rapid
   // measurement-type changes.
   useEffect(() => {
-    if (!allowedStrategiesFor(formMeasurementType).includes(formPricingStrategy)) {
+    if (!allowedStrategiesFor(formMeasurementType).includes(formPricingStrategy) &&
+        !(formPricingStrategy === 'per_pack_coverage' && allowedStrategiesFor(formMeasurementType).includes('per_pack_area'))) {
       setFormPricingStrategy('per_unit');
     }
   }, [formMeasurementType, formPricingStrategy]);
@@ -335,7 +338,23 @@ export function ComponentList({
     return a.name.localeCompare(b.name);
   });
 
-  function startEdit(comp: ComponentLibraryRow) {
+  async function mayLeaveEditor() {
+    if (saving) return false;
+    if (!editorDirty) return true;
+    return ask({ title: 'Leave unsaved component settings?', description: 'Testing does not save your changes. Keep editing to save them first.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', destructive: true });
+  }
+
+  async function startEdit(comp: ComponentLibraryRow, openTest = false) {
+    if (editingId === comp.id) {
+      if (openTest) setTestRequest(value => value + 1);
+      editorAnchor.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+      return;
+    }
+    if (!(await mayLeaveEditor())) return;
+    setShowForm(false);
+    setEditorDirty(false);
+    setEditorVersion(value => value + 1);
+    setTestOnOpen(openTest); setTestRequest(0);
     setEditingId(comp.id);
     setFormError(null);
     setFormMeasurementType(comp.measurement_type);
@@ -363,6 +382,8 @@ export function ComponentList({
   }
 
   function cancelEdit() {
+    setEditorDirty(false);
+    setShowForm(false);
     setEditingId(null);
     setFormError(null);
     setFormWasteType('none');
@@ -559,6 +580,18 @@ export function ComponentList({
         return;
       }
       setComponents((prev) => [...prev, result.data]);
+      setEditorDirty(false);
+      setCreateDefaults(null);
+      setCreatedInSession(true);
+      setLastCreatedId(result.data.id);
+      setOwnTested(draftTested);
+      setDraftTested(false);
+      setActiveLibraryId(selectedCollectionId);
+      setFilter('all'); setMeasurementFilter('all'); setSearchQuery('');
+      showNotice({ title: 'Component saved', tone: result.activeStatus === 'inactive' ? 'warning' : 'success', focus: true,
+        description: result.activeStatus === 'inactive'
+          ? `${result.data.name} was saved as inactive because your active-component allowance is full. Activate it before using it in quotes.`
+          : `${result.data.name} is saved in your library. Check another component or price a job when your costs are ready.` });
       // Update authoritative active count from the server response.
       setActiveCountState(result.activeCount);
       // If the component was created as inactive (at cap), show a brief message.
@@ -694,6 +727,7 @@ export function ComponentList({
       const updated = await updateComponent(id, input);
       setComponents((prev) => prev.map((c) => (c.id === id ? updated : c)));
       cancelEdit();
+      showNotice({ title: 'Component saved', tone: 'success', focus: true, description: `${updated.name} has been updated. Testing explains the calculation; you remain responsible for checking your business costs.` });
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to update component');
     } finally {
@@ -742,20 +776,89 @@ export function ComponentList({
       if (wasActive) {
         setActiveCountState(prev => Math.max(0, prev - 1));
       }
+      if (deleteCompId === editingId) cancelEdit();
       setDeleteCompId(null);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Failed to delete');
+      showNotice({ title: 'Component was not deleted', tone: 'danger', description: err instanceof Error ? err.message : 'Please try again.', focus: true });
     } finally {
       setDeleteLoading(false);
     }
   }
 
-  const wasteAmountLabel = wasteAmountSuffix(formWasteType, formMeasurementType);
-  const wasteAmountPlaceholderText = wasteAmountPlaceholder(formWasteType, formMeasurementType);
+
+  const editingComponent = components.find(component => component.id === editingId);
+  function initialForComponent(component: ComponentLibraryRow): ComponentEditorInitial {
+    const extra = component as unknown as Record<string, unknown>;
+    return { name: component.name, sku: component.sku ?? '', componentType: component.component_type,
+      materialRate: String(component.default_material_rate ?? 0), labourRate: String(component.default_labour_rate ?? 0),
+      wasteAmount: String(component.default_waste_type === 'percent' ? component.default_waste_percent ?? 0 : component.default_waste_fixed ?? 0),
+      pitchType: component.default_pitch_type, eligibleForOrders: component.eligible_for_orders ?? true,
+      storedStrategy: (extra.pricing_strategy as PricingStrategy) ?? 'per_unit',
+      storedPackPrice: String(extra.pack_price ?? ''), storedPackSize: String(extra.pack_size ?? ''), storedPackCoverage: String(extra.pack_coverage_m2 ?? ''),
+      storedHeightMm: String(extra.height_value_mm ?? ''), storedDepthMm: String(extra.depth_value_mm ?? '') };
+  }
+  const editorInitial: ComponentEditorInitial = editingComponent ? initialForComponent(editingComponent) : createDefaults ?? {
+    name: restoredName, sku: '', componentType: filter === 'extra' ? 'extra' : 'main', materialRate: restoredMaterialRate,
+    labourRate: restoredLabourRate, wasteAmount: restoredWasteAmount, pitchType: 'rafter', eligibleForOrders: true };
+  const editorSettings: ComponentEditorSettings = { measurementType: formMeasurementType, wasteType: formWasteType,
+    pitchEnabled: formPitchEnabled, pricingStrategy: formPricingStrategy, packPrice: formPackPrice, packSize: formPackSize,
+    packCoverage: formPackCoverageM2, heightMm: formHeightMm, depthMm: formDepthMm, hoursUnit: formHoursUnit,
+    wasteUnit: formWasteUnit, notes: formNotes };
+  function updateEditorSettings(patch: Partial<ComponentEditorSettings>) {
+    setEditorDirty(true); setDraftTested(false);
+    if (patch.measurementType !== undefined) setFormMeasurementType(patch.measurementType);
+    if (patch.wasteType !== undefined) setFormWasteType(patch.wasteType);
+    if (patch.pitchEnabled !== undefined) setFormPitchEnabled(patch.pitchEnabled);
+    if (patch.pricingStrategy !== undefined) setFormPricingStrategy(patch.pricingStrategy);
+    if (patch.packPrice !== undefined) setFormPackPrice(patch.packPrice);
+    if (patch.packSize !== undefined) setFormPackSize(patch.packSize);
+    if (patch.packCoverage !== undefined) setFormPackCoverageM2(patch.packCoverage);
+    if (patch.heightMm !== undefined) setFormHeightMm(patch.heightMm);
+    if (patch.depthMm !== undefined) setFormDepthMm(patch.depthMm);
+    if (patch.hoursUnit !== undefined) setFormHoursUnit(patch.hoursUnit);
+    if (patch.wasteUnit !== undefined) setFormWasteUnit(patch.wasteUnit);
+    if (patch.notes !== undefined) setFormNotes(patch.notes);
+  }
+  async function startNew(copy?: ComponentEditorInitial) {
+    if (!subscriptionActive) { setSubBlockedOpen(true); return; }
+    // Explicitly making a copy preserves its draft values. Other navigation is
+    // confirmed first; never save implicitly or bypass subscription/cap guards.
+    if (!copy && !(await mayLeaveEditor())) return;
+    setEditingId(null); setShowForm(true); setFormError(null); setEditorDirty(!!copy); setDraftTested(false);
+    setCreateDefaults(copy ?? null); setEditorVersion(value => value + 1); setTestOnOpen(false); setTestRequest(0);
+    // A copied legacy row is a NEW record: use the canonical linear enum.
+    if (copy && formMeasurementType === 'linear') setFormMeasurementType('lineal');
+    if (!copy) {
+      setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false);
+      setFormPricingStrategy('per_unit'); setFormPackPrice(''); setFormPackSize(''); setFormPackCoverageM2('');
+      setFormHeightMm(''); setFormDepthMm(''); setFormHoursUnit('hr'); setFormWasteUnit('percent'); setFormNotes('');
+      setAssignedFlashings([]); setSelectedFlashingId('');
+      setRestoredName(''); setRestoredMaterialRate(''); setRestoredLabourRate(''); setRestoredWasteAmount('');
+      setSelectedCollectionId(activeLibraryId || collections.find(c => c.is_bootstrap)?.id || collections[0]?.id || '');
+    }
+  }
+  function componentCostSummary(component: ComponentLibraryRow) {
+    const values = initialForComponent(component);
+    if (values.storedStrategy && values.storedStrategy !== 'per_unit') {
+      if (!values.storedPackPrice || !(values.storedStrategy === 'per_pack_coverage' ? values.storedPackCoverage : values.storedPackSize)) return 'Materials: complete the pack settings';
+      return `Materials: ${formatCurrency(Number(values.storedPackPrice || 0), companyCurrency)} per pack (${values.storedStrategy === 'per_pack_coverage' ? values.storedPackCoverage : values.storedPackSize} ${canonicalUnit(component.measurement_type)})`;
+    }
+    return `Materials: ${formatCurrency(component.default_material_rate ?? 0, companyCurrency)}/${canonicalUnit(component.measurement_type)}`;
+  }
+  useEffect(() => {
+    if (showForm || editingId) editorAnchor.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+  }, [showForm, editingId, editorVersion]);
+  useEffect(() => {
+    if (!editorDirty) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [editorDirty]);
 
   return (
     <QcLibrary className="space-y-5">
       {feedback}
+      {notice}
       {/* Create Library Modal */}
       {showCreateLibraryModal && (
         <QcJourneyDialog label="Create New Library" size="sm">
@@ -805,6 +908,19 @@ export function ComponentList({
         <h1 className="qc-library-title text-xl md:text-2xl font-semibold text-slate-900">Pricing library</h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">Find and reuse Smart Components™: saved materials, labour and measurement settings for your quotes.</p>
       </div>
+      <PricingIntroduction open={learning} onOpen={() => setLearning(true)} onDismiss={() => setLearning(false)}
+        hasComponents={components.length > 0} tested={testedInSession} created={createdInSession} ownTested={ownTested}
+        workspaceSlug={workspaceSlug} onCreate={() => { void startNew(); }}
+        onTestCreated={() => {
+          const created = components.find(component => component.id === lastCreatedId);
+          if (created) void startEdit(created, true);
+          else void startNew();
+        }}
+        onChoose={() => {
+          setFilter('all'); setMeasurementFilter('all'); setSearchQuery(''); setActiveLibraryId('');
+          requestAnimationFrame(() => document.getElementById('qc-pricing-component-list')?.scrollIntoView({ block: 'start', behavior: 'auto' }));
+        }} />
+
 
       
 
@@ -914,7 +1030,7 @@ export function ComponentList({
         </div>
       )}
       {/* Filter tabs + Action Buttons */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-fit max-w-full">
           {(['all', 'main', 'extra'] as const).map((f) => (
             <button
@@ -940,19 +1056,11 @@ export function ComponentList({
         
         <div className="flex flex-col gap-2 md:flex-row">
           <button data-qc-variant="primary"
-            onClick={() => {
-              if (!subscriptionActive) {
-                setSubBlockedOpen(true);
-                return;
-              }
-              // No cap block here - the DB trigger handles it.
-              // Components created at cap land as inactive.
-              setShowForm(true);
-            }}
+            onClick={() => { void startNew(); }}
             data-copilot="add-component"
             className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
           >
-            + Add component
+            + Create component
           </button>
           <button data-qc-variant="ghost"
             onClick={() => {
@@ -960,7 +1068,7 @@ export function ComponentList({
                 setSubBlockedOpen(true);
                 return;
               }
-              setShowCatalogModal(true);
+              void mayLeaveEditor().then(leave => { if (leave) { cancelEdit(); setShowCatalogModal(true); } });
             }}
             className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
           >
@@ -1085,263 +1193,29 @@ export function ComponentList({
         </div>
       </div>
 
-           {showForm && (
-        <div className="mb-4 p-4 border border-slate-200 rounded-xl bg-white">
-          <h3 className="font-semibold text-slate-900 mb-3">New Smart Component™</h3>
-          {formError && (
-            <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
-          )}
-          <form onSubmit={handleCreate} className="space-y-3">
-            <div className="qc-library-field-grid grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div data-copilot="component-name">
-                <label className="block text-xs text-slate-500 mb-1">Name</label>
-                <input aria-label="Name" name="name" required defaultValue={restoredName} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-              </div>
-              <div data-copilot="component-sku">
-                <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
-                <input aria-label="SKU / Product Code" name="sku" defaultValue={''} placeholder="e.g. RDG-250-BLK" className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none" />
-              </div>
-              <div data-copilot="component-type">
-                <label className="block text-xs text-slate-500 mb-1">Type</label>
-                <select aria-label="Type" 
-                  name="component_type" 
-                  required 
-                  defaultValue={filter === 'extra' ? 'extra' : 'main'}
-                  className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                >
-                  <option value="main">Main Component</option>
-                  <option value="extra">Extra</option>
-                </select>
-              </div>
-              <div data-copilot="component-measurement">
-                <label className="block text-xs text-slate-500 mb-1">Measurement</label>
-                <select aria-label="Measurement"
-                  name="measurement_type"
-                  required
-                  value={formMeasurementType}
-                  onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
-                  className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                >
-                  {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
-                    // Filter the dropdown down to roofing defaults when the
-                    // generic-trades flag is off; show every type when on.
-                    // The legacy `linear` alias stays hidden in both modes
-                    // because new rows must always use `lineal`.
-                    .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
-                    .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
-                    .map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
-                    ))}
-                </select>
-              </div>
-              <div data-copilot="component-labour">
-                <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
-                <input aria-label={`Labour rate (${unitForMeasurement(formMeasurementType)})`} name="default_labour_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredLabourRate} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-              </div>
-
-              {/* Item Cost pricing: single source of truth.
-                  When generic trades on: pricing strategy dropdown drives whether
-                  we show per-unit Item Cost OR pack price/size fields.
-                  When flag off: always show the simple Item Cost field. */}
-              {genericTradesEnabled && (
-                <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
-                  <select aria-label="Item Cost"
-                    value={formPricingStrategy}
-                    onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
-                    className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                  >
-                    {allowedStrategiesFor(formMeasurementType).map((s) => (
-                      <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
-                <div data-copilot="component-rates">
-                  <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
-                  <input aria-label={`Item cost (${unitForMeasurement(formMeasurementType)})`} name="default_material_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredMaterialRate} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                </div>
-              )}
-              {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
-                <>
-                  {/* hidden zero so the form submission always has default_material_rate */}
-                  <input type="hidden" name="default_material_rate" value="0" />
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
-                    <input aria-label="Quantity Price" type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">
-                      Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
-                    </label>
-                    <input aria-label="Quantity amount" type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                  </div>
-                  {formPricingStrategy === 'per_pack_coverage' && (
-                    <div className="col-span-2">
-                      <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
-                      <input aria-label="Coverage per pack (m²)" type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                    </div>
-                  )}
-                </>
-              )}
-
-              <div data-copilot="component-waste">
-                <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
-                <select aria-label="Waste Type"
-                  name="default_waste_type"
-                  value={formWasteType}
-                  onChange={(e) => setFormWasteType(e.target.value as WasteType)}
-                  className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                >
-                  {Object.entries(WASTE_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
-                </select>
-              </div>
-              {formWasteType !== 'none' && (
-                <div data-copilot="component-waste-amount">
-                  <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountLabel}</label>
-                  <input aria-label="Waste Amount" name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} defaultValue={restoredWasteAmount} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                </div>
-              )}
-
-            </div>
-
-            {/* Type-specific fields (generic trades only): height, depth, time unit. */}
-            {genericTradesEnabled && (
-              <TypeSpecificFields
-                measurementType={formMeasurementType}
-                heightMm={formHeightMm} setHeightMm={setFormHeightMm}
-                depthMm={formDepthMm} setDepthMm={setFormDepthMm}
-                hoursUnit={formHoursUnit} setHoursUnit={setFormHoursUnit}
-              />
-            )}
-
-            {pitchVisible && (
-              <>
-                <div className="flex flex-wrap items-center gap-2" data-copilot="component-pitch">
-                  <input type="checkbox" id="pitch-enabled" checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="qc-checkbox qc-library-control rounded" />
-                  <label htmlFor="pitch-enabled" className="text-xs text-slate-700">{pitchCheckboxLabel}</label>
-                </div>
-                {formPitchEnabled && (
-                  <div data-copilot="component-pitch-type">
-                    <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                    <select aria-label="Pitch Type" name="default_pitch_type" className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
-                      <option value="rafter">{pitchRafterLabel}</option>
-                      {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
-                    </select>
-                  </div>
-                )}
-              </>
-            )}
-            <div className="border-t border-slate-200 pt-3 mt-3" data-copilot="component-flashings">
-              <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
-              <div className="flex items-center gap-2 mb-2">
-                <input aria-label="Include in material orders" type="checkbox" id="eligible-orders" name="eligible_for_orders" defaultChecked className="qc-checkbox qc-library-control rounded" />
-                <label htmlFor="eligible-orders" className="text-xs text-slate-700">Include in material orders</label>
-              </div>
-              <div>
-                <label className="block text-xs text-slate-500 mb-1">{imageAssignLabel}</label>
-                <div className="flex gap-2">
-                  <select 
-                    value={selectedFlashingId} 
-                    onChange={(e) => setSelectedFlashingId(e.target.value)}
-                    className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
-                  >
-                    <option value="">{imageSelectPlaceholder}</option>
-                    {flashings.map(flashing => (
-                      <option key={flashing.id} value={flashing.id}>
-                        {flashing.name} {flashing.description && `- ${flashing.description}`}
-                      </option>
-                    ))}
-                  </select>
-                  <button data-qc-variant="ghost" 
-                    type="button" 
-                    onClick={addFlashing}
-                    disabled={!selectedFlashingId}
-                    className="qc-button qc-flow-control qc-library-control "
-                  >
-                    Add
-                  </button>
-                </div>
-                {assignedFlashings.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {assignedFlashings.map(flashingId => {
-                      const flashing = flashings.find(f => f.id === flashingId);
-                      return (
-                        <div key={flashingId} className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded border border-slate-200">
-                          <span className="text-xs text-slate-700">
-                            {flashing?.name || 'Unknown'} {flashing?.description && `- ${flashing.description}`}
-                          </span>
-                          <button data-qc-variant="ghost"
-                            type="button"
-                            onClick={() => removeFlashing(flashingId)}
-                            className="qc-button qc-flow-control qc-library-control "
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
-              </div>
-            </div>
-            {/* Notes */}
-            <div className="border-t border-slate-200 pt-3 mt-3">
-              <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
-              <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
-              <textarea aria-label="Notes (optional)"
-                value={formNotes}
-                onChange={e => setFormNotes(e.target.value)}
-                placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
-                rows={3}
-                maxLength={500}
-                className="qc-input qc-library-control w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
-              />
-              {formNotes.length > 0 && (
-                <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
-              )}
-            </div>
-
-            {collections.length > 0 && (
-              <div className="border-t border-slate-200 pt-3 mt-3">
-                <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
-                <div className="flex gap-2">
-                  <select aria-label="Save to Library"
-                    value={selectedCollectionId}
-                    onChange={e => {
-                      if (e.target.value === '__create_new__') {
-                        setShowCreateLibraryModal(true);
-                      } else {
-                        setSelectedCollectionId(e.target.value);
-                      }
-                    }}
-                    className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
-                  >
-                    {collections.map(col => (
-                      <option key={col.id} value={col.id}>
-                        {col.name}{col.is_bootstrap ? ' (default)' : ''}
-                      </option>
-                    ))}
-                    <option value="__create_new__">+ Create New Library</option>
-                  </select>
-                </div>
-              </div>
-            )}
-            <div className="flex gap-2 pt-2" data-copilot="component-save">
-              <button data-qc-variant="primary" type="submit" disabled={saving} className="qc-button qc-flow-control qc-library-control ">
-                {saving ? 'Saving...' : 'Create'}
-              </button>
-              <button data-qc-variant="ghost" type="button" onClick={() => { setShowForm(false); setFormWasteType('none'); setFormMeasurementType('area'); setFormPitchEnabled(false); }} className="qc-button qc-flow-control qc-library-control ">
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      <div ref={editorAnchor} className="qc-pricing-editor-anchor">
+        {(showForm || editingComponent) && (
+          <SmartComponentEditor key={`${editingId ?? 'new'}-${editorVersion}`}
+            mode={editingComponent ? 'edit' : 'create'} initial={editorInitial} settings={editorSettings}
+            onSettingsChange={updateEditorSettings} measurementSystem={companyMeasurementSystem} currency={companyCurrency}
+            genericTradesEnabled={genericTradesEnabled} pitchVisible={pitchVisible} pitchHidesValleyHip={pitchHidesValleyHip}
+            pitchRafterLabel={pitchRafterLabel} pitchCheckboxLabel={pitchCheckboxLabel}
+            collections={collections} selectedCollectionId={selectedCollectionId}
+            onCollectionChange={value => { setEditorDirty(true); if (value === '__create_new__') setShowCreateLibraryModal(true); else setSelectedCollectionId(value); }}
+            flashings={flashings} assignedFlashings={assignedFlashings} selectedFlashingId={selectedFlashingId}
+            onFlashingSelection={setSelectedFlashingId} onAddFlashing={addFlashing} onRemoveFlashing={removeFlashing}
+            imageHelperText={imageHelperText} supplierSkuRequired={!!(isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published')}
+            saving={saving} error={formError} onSubmit={editingComponent ? event => handleUpdate(event, editingComponent.id) : handleCreate}
+            onCancel={() => { void mayLeaveEditor().then(leave => { if (leave) cancelEdit(); }); }}
+            onDirty={() => { setEditorDirty(true); setDraftTested(false); }} onCalculated={() => {
+              setTestedInSession(true);
+              if (showForm) setDraftTested(true);
+              if (editingId && editingId === lastCreatedId) setOwnTested(true);
+            }}
+            onCopy={copy => { void startNew(copy); }} openTestInitially={testOnOpen} testRequest={testRequest} learning={learning}
+          />
+        )}
+      </div>
 
       {/* Active component allowance counter */}
       <div className="flex items-center justify-between mb-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5">
@@ -1374,250 +1248,10 @@ export function ComponentList({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div id="qc-pricing-component-list" className="space-y-2">
         {filtered.map((comp) => (
           <div key={comp.id}>
-            {editingId === comp.id ? (
-              <div className="p-4 border border-slate-200 rounded-xl bg-white">
-                <h3 className="font-semibold text-slate-900 mb-3">Edit {comp.name}</h3>
-                {formError && (
-                  <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
-                )}
-                <form onSubmit={(e) => handleUpdate(e, comp.id)} className="space-y-3">
-                 <div className="qc-library-field-grid grid grid-cols-1 sm:grid-cols-2 gap-3">
-                   <div>
-                     <label className="block text-xs text-slate-500 mb-1">Name</label>
-                     <input aria-label="Name" name="name" required defaultValue={comp.name} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                   </div>
-                   <div>
-                     <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
-                     <input aria-label="SKU / Product Code" name="sku" defaultValue={comp.sku ?? ''} placeholder="e.g. RDG-250-BLK" className={"qc-input qc-library-control " + (`w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none ${!!comp.sku ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`)} readOnly={!!comp.sku} title={!!comp.sku ? 'SKU cannot be changed once set' : ''} />
-                   </div>
-                   <div>
-                     <label className="block text-xs text-slate-500 mb-1">Measurement</label>
-                     <select aria-label="Measurement"
-                       value={formMeasurementType}
-                       onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
-                       className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                     >
-                       {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
-                         .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
-                         .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
-                         .map(([k, v]) => (
-                           <option key={k} value={k}>{v}</option>
-                         ))}
-                     </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
-                      <input aria-label={`Labour rate (${unitForMeasurement(formMeasurementType)})`} name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                    </div>
 
-                    {/* Item Cost - unified: strategy dropdown drives per-unit vs pack. */}
-                    {genericTradesEnabled && (
-                      <div className="col-span-2">
-                        <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
-                        <select aria-label="Item Cost"
-                          value={formPricingStrategy}
-                          onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
-                          className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                        >
-                          {allowedStrategiesFor(formMeasurementType).map((s) => (
-                            <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
-                      <div>
-                        <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
-                        <input aria-label={`Item cost (${unitForMeasurement(formMeasurementType)})`} name="default_material_rate" type="number" step="0.01" defaultValue={comp.default_material_rate ?? 0} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                      </div>
-                    )}
-                    {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
-                      <>
-                        <input type="hidden" name="default_material_rate" value="0" />
-                        <div>
-                          <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
-                          <input aria-label="Quantity Price" type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-slate-500 mb-1">
-                            Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
-                          </label>
-                          <input aria-label="Quantity amount" type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                        </div>
-                        {formPricingStrategy === 'per_pack_coverage' && (
-                          <div className="col-span-2">
-                            <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
-                            <input aria-label="Coverage per pack (m²)" type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
-                      <select aria-label="Waste Type"
-                        name="default_waste_type"
-                        value={formWasteType}
-                        onChange={(e) => setFormWasteType(e.target.value as WasteType)}
-                        className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                      >
-                        {Object.entries(WASTE_LABELS).map(([k, v]) => (
-                          <option key={k} value={k}>{v}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {formWasteType !== 'none' && (
-                      <div>
-                        <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountSuffix(formWasteType, formMeasurementType)}</label>
-                        <input aria-label="Waste Amount"
-                          name="waste_amount"
-                          type="number"
-                          step="0.01"
-                          defaultValue={formWasteType === 'percent' ? comp.default_waste_percent : comp.default_waste_fixed}
-                          className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                        />
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* Type-specific fields (generic trades only). */}
-                  {genericTradesEnabled && (
-                    <TypeSpecificFields
-                      measurementType={formMeasurementType}
-                      heightMm={formHeightMm} setHeightMm={setFormHeightMm}
-                      depthMm={formDepthMm} setDepthMm={setFormDepthMm}
-                      hoursUnit={formHoursUnit} setHoursUnit={setFormHoursUnit}
-                    />
-                  )}
-
-                  {pitchVisible && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <input type="checkbox" id={`pitch-${comp.id}`} checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="qc-checkbox qc-library-control rounded" />
-                        <label htmlFor={`pitch-${comp.id}`} className="text-xs text-slate-700">{pitchCheckboxLabel}</label>
-                      </div>
-                      {formPitchEnabled && (
-                        <div>
-                          <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                          <select aria-label="Pitch Type" name="default_pitch_type" defaultValue={comp.default_pitch_type} className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
-                            <option value="rafter">{pitchRafterLabel}</option>
-                            {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
-                          </select>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  <div className="border-t border-slate-200 pt-3 mt-3">
-                    <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
-                    <div className="flex items-center gap-2 mb-2">
-                      <input aria-label="Include in material orders" type="checkbox" id={`eligible-orders-${comp.id}`} name="eligible_for_orders" defaultChecked={comp.eligible_for_orders ?? true} className="qc-checkbox qc-library-control rounded" />
-                      <label htmlFor={`eligible-orders-${comp.id}`} className="text-xs text-slate-700">Include in material orders</label>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">{imageAssignLabel}</label>
-                      <div className="flex gap-2">
-                        <select 
-                          value={selectedFlashingId} 
-                          onChange={(e) => setSelectedFlashingId(e.target.value)}
-                          className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
-                        >
-                          <option value="">{imageSelectPlaceholder}</option>
-                          {flashings.map(flashing => (
-                            <option key={flashing.id} value={flashing.id}>
-                              {flashing.name} {flashing.description && `- ${flashing.description}`}
-                            </option>
-                          ))}
-                        </select>
-                        <button data-qc-variant="ghost" 
-                          type="button" 
-                          onClick={addFlashing}
-                          disabled={!selectedFlashingId}
-                          className="qc-button qc-flow-control qc-library-control "
-                        >
-                          Add
-                        </button>
-                      </div>
-                      {assignedFlashings.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {assignedFlashings.map(flashingId => {
-                            const flashing = flashings.find(f => f.id === flashingId);
-                            return (
-                              <div key={flashingId} className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded border border-slate-200">
-                                <span className="text-xs text-slate-700">
-                                  {flashing?.name || 'Unknown'} {flashing?.description && `- ${flashing.description}`}
-                                </span>
-                                <button data-qc-variant="ghost"
-                                  type="button"
-                                  onClick={() => removeFlashing(flashingId)}
-                                  className="qc-button qc-flow-control qc-library-control "
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
-                    </div>
-                  </div>
-                  {/* Notes */}
-                  <div className="border-t border-slate-200 pt-3 mt-3">
-                    <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
-                    <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
-                    <textarea aria-label="Notes (optional)"
-                      value={formNotes}
-                      onChange={e => setFormNotes(e.target.value)}
-                      placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
-                      rows={3}
-                      maxLength={500}
-                      className="qc-input qc-library-control w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
-                    />
-                    {formNotes.length > 0 && (
-                      <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
-                    )}
-                  </div>
-
-                  {collections.length > 0 && (
-                    <div className="border-t border-slate-200 pt-3 mt-3">
-                      <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
-                      <div className="flex gap-2">
-                        <select aria-label="Save to Library"
-                          value={selectedCollectionId}
-                          onChange={e => {
-                            if (e.target.value === '__create_new__') {
-                              setShowCreateLibraryModal(true);
-                            } else {
-                              setSelectedCollectionId(e.target.value);
-                            }
-                          }}
-                          className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
-                        >
-                          {collections.map(col => (
-                            <option key={col.id} value={col.id}>
-                              {col.name}{col.is_bootstrap ? ' (default)' : ''}
-                            </option>
-                          ))}
-                          <option value="__create_new__">+ Create New Library</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex gap-2 pt-2">
-                    <button data-qc-variant="primary" type="submit" disabled={saving} className="qc-button qc-flow-control qc-library-control ">
-                      {saving ? 'Saving...' : 'Save'}
-                    </button>
-                    <button data-qc-variant="ghost" type="button" onClick={cancelEdit} className="qc-button qc-flow-control qc-library-control ">
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            ) : (
               <div
                 id={`component-row-${comp.id}`}
                 onClick={() => startEdit(comp)}
@@ -1653,9 +1287,9 @@ export function ComponentList({
                     <span className="text-xs text-slate-400">{MEASUREMENT_LABELS[comp.measurement_type]}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Item Cost: ${(comp.default_material_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)} · Labour: ${(comp.default_labour_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)}
+                    {componentCostSummary(comp)} · Labour: {formatCurrency(comp.default_labour_rate ?? 0, companyCurrency)}/{canonicalUnit(comp.measurement_type)}
                     {comp.default_waste_type !== 'none' && (
-                      <> · Waste: {comp.default_waste_type === 'percent' ? `${comp.default_waste_percent}%` : `${comp.default_waste_fixed} ${unitForMeasurement(comp.measurement_type)}`}</>
+                      <> · Waste: {comp.default_waste_type === 'percent' ? `${comp.default_waste_percent}%` : `${comp.default_waste_fixed} ${canonicalUnit(comp.measurement_type)}`}</>
                     )}
                     {comp.default_pitch_type !== 'none' && <> · {PITCH_LABELS[comp.default_pitch_type]}</>}
                   </p>
@@ -1697,14 +1331,15 @@ export function ComponentList({
                     </svg>
                   )}
                 </button>
-                <button aria-label={`Edit ${comp.name}`} data-qc-variant="ghost"
-                  onClick={(e) => { e.stopPropagation(); startEdit(comp); }}
-                  title="Click to edit"
+                <button aria-label={`Open and test ${comp.name}`} data-qc-variant="ghost"
+                  onClick={(e) => { e.stopPropagation(); void startEdit(comp, true); }}
+                  title="Open and test this component"
                   className="qc-button qc-flow-control qc-library-control "
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
+                  Open & test
                 </button>
                 <button aria-label={`Delete ${comp.name}`} data-qc-variant="ghost" 
                   onClick={(e) => { e.stopPropagation(); setDeleteCompId(comp.id); }} 
@@ -1717,7 +1352,6 @@ export function ComponentList({
                 </button>
                 </div>
               </div>
-            )}
           </div>
         ))}
       </div>
@@ -1862,11 +1496,13 @@ export function ComponentList({
             is_bootstrap: c.is_bootstrap,
             component_count: undefined,
           }))}
-          onClose={() => setShowCatalogModal(false)}
-          onCreated={() => {
-            // Reload to pick up new components
-            window.location.reload();
+          onClose={() => {
+            setShowCatalogModal(false);
+            // Only refresh after the user has read the confirmed import result.
+            // Opening import is dirty-guarded; no active draft is discarded.
+            if (catalogueChanged) window.location.assign(`/${workspaceSlug}/components?reviewImport=1`);
           }}
+          onCreated={() => setCatalogueChanged(true)}
         />
       )}
     </QcLibrary>

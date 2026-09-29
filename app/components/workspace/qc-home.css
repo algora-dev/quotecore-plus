@@ -57,3 +57,8 @@
   .qc-home-resume { padding:20px 14px; align-items:flex-start; } .qc-home-resume > svg { display:none; } .qc-home-resume strong { font-size:16px; } .qc-home-resume span span { font-size:13px; }
   .qc-section-heading { align-items:flex-start; gap:8px; } .qc-text-link { min-height:44px; } .qc-recent-row { grid-template-columns:1fr auto; } .qc-recent-row > small,.qc-recent-row > svg { display:none; }
 }
+
+/* Pricing activation is guidance based on known work, never a verification badge. */
+.qc-home .qc-home-pricing-note { font-size:12px; margin:16px 0 0; max-width:540px; }
+.qc-home-start-copy { min-width:0; overflow-wrap:anywhere; }
+@media(max-width:599px) { .qc-home-start-actions { gap:8px; } }

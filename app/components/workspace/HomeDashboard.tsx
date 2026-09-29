@@ -12,11 +12,18 @@ interface Props {
   canCreateQuote: boolean; assistantAvailable: boolean; measureAction: ReactNode;
   /** undefined means not loaded, NOT an empty company. No demo rows in application code. */
   recentWork?: RecentWorkItem[];
+  /** Suppressed for supplier workspaces and resumed signup drafts. This is guidance,
+   *  not a claim that company prices are unverified. */
+  allowPricingInvitation?: boolean;
 }
 /** T01/C48. Read-only dashboard composition. Data is owned by the existing server page. */
 export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationCount,
-  canCreateQuote, assistantAvailable, measureAction, recentWork }: Props) {
+  canCreateQuote, assistantAvailable, measureAction, recentWork, allowPricingInvitation = true }: Props) {
   const base = `/${workspaceSlug}`;
+  // Only a successful, empty recent-work read can select the getting-started
+  // state. Unknown data and an existing company's jobs never become "new".
+  const pricingFirst = allowPricingInvitation && recentWork !== undefined && recentWork.length === 0;
+  const resume = recentWork?.[0];
   return <div className="qc-home" data-qc-ui="v2">
     <header className="qc-home-heading">
       <div><p className="qc-eyebrow">Your workspace</p><h1>Welcome {newUser ? '' : 'back, '}{firstName}</h1>
@@ -24,21 +31,30 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
       <Link href={`${base}/tutorials`} prefetch={false} className="qc-button" data-qc-variant="glass"><QcIcon name="help" /> Tutorials</Link>
     </header>
     <section className="qc-home-start" aria-labelledby="qc-home-start-title">
-      <div className="qc-home-start-copy"><span className="qc-eyebrow">Start something new</span>
-        <h2 id="qc-home-start-title">What are we pricing today?</h2>
-        <p>Already measured the job? Start a quote. Need quantities first? Open your plan in takeoff.</p>
+      <div className="qc-home-start-copy"><span className="qc-eyebrow">{pricingFirst ? 'Build your pricing system' : resume ? 'Pick up where you left off' : 'Start something new'}</span>
+        <h2 id="qc-home-start-title">{pricingFirst ? 'Make QuoteCore use your prices' : resume ? 'Continue your work' : 'What are we pricing today?'}</h2>
+        <p>{pricingFirst
+          ? 'Open a familiar Smart Component, test a measurement, then enter your own costs. Set up once and reuse your pricing on every job.'
+          : resume ? `Return to ${resume.title}. Your other jobs and starting options are below.`
+          : 'Already measured the job? Start a quote. Need quantities first? Open your plan in takeoff.'}</p>
         <div className="qc-home-start-actions">
-          <Link href={canCreateQuote ? `${base}/quotes/new` : `${base}/quotes`} prefetch={false}
+          <Link href={pricingFirst ? `${base}/components?learn=1` : resume ? resume.href : canCreateQuote ? `${base}/quotes/new` : `${base}/quotes`} prefetch={false}
             className="qc-button" data-qc-variant="primary" data-qc-size="lg">
-            <QcIcon name="plus" />{canCreateQuote ? 'New quote' : 'Open quotes'}<QcIcon name="arrow" />
+            <QcIcon name={pricingFirst ? 'pricing' : resume ? 'quote' : 'plus'} />
+            {pricingFirst ? 'Set up your pricing' : resume ? 'Continue this job' : canCreateQuote ? 'New quote' : 'Open quotes'}<QcIcon name="arrow" />
           </Link>
+          {(pricingFirst || resume) && <Link href={canCreateQuote ? `${base}/quotes/new` : `${base}/quotes`} prefetch={false} className="qc-button" data-qc-variant="ghost">
+            {canCreateQuote ? 'Start a new job' : 'Open quotes'}
+          </Link>}
           <div className="qc-home-measure">{measureAction}</div>
         </div>
+        {pricingFirst && <p className="qc-home-pricing-note">Starter rates are examples, not recommended prices. Already using your company's pricing? Go straight to a job.</p>}
       </div>
-      <div className="qc-home-process" aria-label="Measure, price, quote">
-        {(['measure','pricing','quote'] as const).map((name, index) => <div key={name}>
+      <div className="qc-home-process" aria-label={pricingFirst ? 'Check a component, make your own, price a job' : 'Measure, price, quote'}>
+        {(pricingFirst ? (['pricing','library','quote'] as const) : (['measure','pricing','quote'] as const)).map((name, index) => <div key={name}>
           <span className="qc-home-process-icon"><QcIcon name={name} /></span>
-          <strong>{['Measure','Price','Quote'][index]}</strong><span>{['Capture the job','Use your pricing','Make it yours'][index]}</span>
+          <strong>{(pricingFirst ? ['Try one','Make your own','Price a job'] : ['Measure','Price','Quote'])[index]}</strong>
+          <span>{(pricingFirst ? ['Test a familiar item','Use your costs','Apply measurements'] : ['Capture the job','Use your pricing','Make it yours'])[index]}</span>
         </div>)}
       </div>
     </section>
@@ -51,8 +67,8 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
             <span className="qc-hub-icon"><QcIcon name="quote" /></span><span><strong>Find a job or quote</strong>
               <span>Open your quotes to continue pricing, review a draft or check a customer response.</span></span><QcIcon name="arrow" />
           </Link>
-        ) : recentWork.length === 0 ? <div className="qc-home-empty"><QcIcon name="quote" /><h3>Your first quote starts here</h3>
-          <p>Create a quote and it will appear in your recent work.</p></div> : <div className="qc-recent-list">
+        ) : recentWork.length === 0 ? <div className="qc-home-empty"><QcIcon name="quote" /><h3>Your work will appear here</h3>
+          <p>Check your pricing, then start a real job. You can return here to continue it.</p></div> : <div className="qc-recent-list">
           {recentWork.map(work => <Link key={work.id} href={work.href} prefetch={false} className="qc-recent-row">
             <span><strong>{work.title}</strong><small>{work.customer} · {work.quoteNumber}</small></span>
             <span className="qc-status" data-qc-tone={work.statusTone}>{work.statusLabel}</span><small>{work.updatedLabel}</small><QcIcon name="chevron" />
