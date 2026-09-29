@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: canonical paths converge on existing customer editor / summary
+ok 1 - canonical paths converge on existing customer editor / summary
+  ---
+  duration_ms: 1.07804
+  type: 'test'
+  ...
+# Subtest: route segments are encoded, not raw path/query insertion
+ok 2 - route segments are encoded, not raw path/query insertion
+  ---
+  duration_ms: 0.210826
+  type: 'test'
+  ...
+# Subtest: margin save completes before confirmation starts
+ok 3 - margin save completes before confirmation starts
+  ---
+  duration_ms: 1.126648
+  type: 'test'
+  ...
+# Subtest: non-draft review keeps the original no-reconfirmation path
+ok 4 - non-draft review keeps the original no-reconfirmation path
+  ---
+  duration_ms: 1.250701
+  type: 'test'
+  ...
+# Subtest: invalid margins are reported without introducing a confirmation veto
+ok 5 - invalid margins are reported without introducing a confirmation veto
+  ---
+  duration_ms: 0.766466
+  type: 'test'
+  ...
+# Subtest: rejected margin request is nonfatal and explicitly reported
+ok 6 - rejected margin request is nonfatal and explicitly reported
+  ---
+  duration_ms: 0.32581
+  type: 'test'
+  ...
+# Subtest: confirmation failure is not represented as success
+ok 7 - confirmation failure is not represented as success
+  ---
+  duration_ms: 0.219503
+  type: 'test'
+  ...
+# Subtest: both failed operations report unconfirmed quote and unsaved margins
+ok 8 - both failed operations report unconfirmed quote and unsaved margins
+  ---
+  duration_ms: 0.256545
+  type: 'test'
+  ...
+# Subtest: absence of a margin hook does not fabricate a save
+ok 9 - absence of a margin hook does not fabricate a save
+  ---
+  duration_ms: 0.854462
+  type: 'test'
+  ...
+# Subtest: legacy void callback does not fabricate a save
+ok 10 - legacy void callback does not fabricate a save
+  ---
+  duration_ms: 0.440418
+  type: 'test'
+  ...
+# Subtest: unmounted before click does no work
+ok 11 - unmounted before click does no work
+  ---
+  duration_ms: 0.399383
+  type: 'test'
+  ...
+# Subtest: unmounted during margin save does not start confirmation
+ok 12 - unmounted during margin save does not start confirmation
+  ---
+  duration_ms: 0.153356
+  type: 'test'
+  ...
+# Subtest: unmounted during confirmation does not continue/navigation
+ok 13 - unmounted during confirmation does not continue/navigation
+  ---
+  duration_ms: 0.602153
+  type: 'test'
+  ...
+# Subtest: progress reports only operations that execute
+ok 14 - progress reports only operations that execute
+  ---
+  duration_ms: 0.293399
+  type: 'test'
+  ...
+# Subtest: draft progress order is saving then confirming
+ok 15 - draft progress order is saving then confirming
+  ---
+  duration_ms: 0.194514
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 90.189016

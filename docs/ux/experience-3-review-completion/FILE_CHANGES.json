@@ -1,0 +1,629 @@
+{
+  "workstream": "Experience 3 / Review → Customer Quote",
+  "status": "IMPLEMENTED_SOURCE_APP_ACCEPTANCE_PENDING",
+  "baseline_archive": "quotecore-plus-ux-handoff-2-2026-09-29.zip",
+  "baseline_sha256": "19edd3f1504caf47781ee24eceb704ad6774d047ab771f43d4fc89fee37c6951",
+  "paths_relative_to": "quotecore-plus repository root, not outer delivery root",
+  "hash_convention": "SHA-256 raw bytes and CRLF-to-LF normalized bytes; no BOM stripping",
+  "self_exclusion": "docs/ux/experience-3-review-completion/FILE_CHANGES.json (self entry retained; actual digest in outer PACKAGE_MANIFEST.json)",
+  "original_repository_file_count": 3503,
+  "all_original_paths_retained": true,
+  "production_counts": {
+    "modified": 2,
+    "added": 5,
+    "deleted": 0
+  },
+  "changes": [
+    {
+      "path": "START_HERE_REVIEW_CUSTOMER_QUOTE_RETURN.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "300baa948e00e8efcb76df2bb3b96033a0456fbe1fad162455e304489ab7fde2",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "300baa948e00e8efcb76df2bb3b96033a0456fbe1fad162455e304489ab7fde2",
+      "bytes": 1075
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/ConfirmQuoteButton.tsx",
+      "change": "modified",
+      "category": "production",
+      "before_sha256": "c27bedbc10c3e7a461e0f514db61ef71ba6a2621750f2077e729e80e190495f0",
+      "after_sha256": "d77b78a12933bac01466938cb80bc8f3cf02d6cbb49d3899d4c7e3b66f9368ed",
+      "before_lf_sha256": "2744cf39f5f336b17732e83bd0f1321413ab93e7947fcc192725ce12f084f120",
+      "after_lf_sha256": "d77b78a12933bac01466938cb80bc8f3cf02d6cbb49d3899d4c7e3b66f9368ed",
+      "bytes": 10158
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/error.tsx",
+      "change": "added",
+      "category": "production",
+      "before_sha256": null,
+      "after_sha256": "d2ac3e568f3074d12e6771ab167dc8f53b9961b772e985425d129996ee11feaa",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "d2ac3e568f3074d12e6771ab167dc8f53b9961b772e985425d129996ee11feaa",
+      "bytes": 644
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/loading.tsx",
+      "change": "added",
+      "category": "production",
+      "before_sha256": null,
+      "after_sha256": "8c03fd0710e8393a5a963d342a18588248b10277a4022f5eb2d3bff7ae711dc7",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "8c03fd0710e8393a5a963d342a18588248b10277a4022f5eb2d3bff7ae711dc7",
+      "bytes": 186
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/quote-builder.tsx",
+      "change": "modified",
+      "category": "production",
+      "before_sha256": "6dbc2ecac97359710cea660b9a217f5cbfbb55e1937de0e5e7dd8f4c9add51e7",
+      "after_sha256": "3274bc24161eb0315591a409363bf20da5b7f51807b964492f6dadeb6b00939e",
+      "before_lf_sha256": "d09457c5286dae01908216ccf2fec11cbe2d680b22fd890d89d0b125f22fa1ab",
+      "after_lf_sha256": "55b109bed0b65a246b3850f42087ac851e49f0f76290d689f683a0577a70195e",
+      "bytes": 61068
+    },
+    {
+      "path": "app/components/quote-entry/CustomerQuoteRouteState.tsx",
+      "change": "added",
+      "category": "production",
+      "before_sha256": null,
+      "after_sha256": "2793cfbc88f59d3c9a91bc36230e68f6bab70e96d6b1e1936a4ad9f5198f9cb9",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "2793cfbc88f59d3c9a91bc36230e68f6bab70e96d6b1e1936a4ad9f5198f9cb9",
+      "bytes": 2398
+    },
+    {
+      "path": "app/components/quote-entry/review-completion.css",
+      "change": "added",
+      "category": "production",
+      "before_sha256": null,
+      "after_sha256": "cb9cb3ffd9ea00fd552436e7953b71351346b14c7882deebec7daf32b1b3dc61",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "cb9cb3ffd9ea00fd552436e7953b71351346b14c7882deebec7daf32b1b3dc61",
+      "bytes": 3694
+    },
+    {
+      "path": "app/components/quote-entry/reviewCompletion.ts",
+      "change": "added",
+      "category": "production",
+      "before_sha256": null,
+      "after_sha256": "59dd2aab687c3a9e53d9823f38d8e9b743d6bfa68e44e492b25e28c179cb29ce",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "59dd2aab687c3a9e53d9823f38d8e9b743d6bfa68e44e492b25e28c179cb29ce",
+      "bytes": 2250
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/AGENT_TODOS.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "2b4756055d13548ba2d877276c3181955011559899a1a27fe33bf2bf48544da4",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "2b4756055d13548ba2d877276c3181955011559899a1a27fe33bf2bf48544da4",
+      "bytes": 2274
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/CAPABILITY_PARITY.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "75001b64cfd1d4b5aa269c49caa7b1991d37d115aef3f678d6e531a651c022a0",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "75001b64cfd1d4b5aa269c49caa7b1991d37d115aef3f678d6e531a651c022a0",
+      "bytes": 2454
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/FILE_CHANGES.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": null,
+      "before_lf_sha256": null,
+      "after_lf_sha256": null,
+      "bytes": null,
+      "self_hash": "Digest supplied in outer PACKAGE_MANIFEST.json; entry retained for exact path-set verification."
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/INTEGRATION.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "09eef47f242892467493979956552cda694148e2d2f28a052c02fc0a107d40ad",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "09eef47f242892467493979956552cda694148e2d2f28a052c02fc0a107d40ad",
+      "bytes": 3456
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/PREVIEWS.html",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "4324362dfbaad933e6534185cffbcd7a6a6ee1a96617a957bfbd146b25653f8b",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "4324362dfbaad933e6534185cffbcd7a6a6ee1a96617a957bfbd146b25653f8b",
+      "bytes": 789794
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/RETURN_NOTES.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "2d88a1e0949c410a9448170b786c263fbc8ad85f7f3176b0593ea8b17fd8dac6",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "2d88a1e0949c410a9448170b786c263fbc8ad85f7f3176b0593ea8b17fd8dac6",
+      "bytes": 2613
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/RUNTIME_CHECKLIST.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "0d26cdd9e0ff49c8252f1513926a894825d1194d96fd7643d6f2925be20ab3c0",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "0d26cdd9e0ff49c8252f1513926a894825d1194d96fd7643d6f2925be20ab3c0",
+      "bytes": 3665
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/SOURCE_AUDIT.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "4e538c48be8941a27da2ba01f8bffd3dd1b4eb2c1b0cd99fe114d9d38e001269",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "4e538c48be8941a27da2ba01f8bffd3dd1b4eb2c1b0cd99fe114d9d38e001269",
+      "bytes": 2557
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/VALIDATION.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "d2bd1a572f58fa3bba7cb7bc3797b34cc6eebd0f012fd4969af007581206ff65",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "d2bd1a572f58fa3bba7cb7bc3797b34cc6eebd0f012fd4969af007581206ff65",
+      "bytes": 3555
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/README.md",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "142f1c5ee1dc666aa397ca8458e7c36036fd9f291b0e2acfe61084ceb7d94d1d",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "142f1c5ee1dc666aa397ca8458e7c36036fd9f291b0e2acfe61084ceb7d94d1d",
+      "bytes": 1623
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/baseline/ConfirmQuoteButton.tsx",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "c27bedbc10c3e7a461e0f514db61ef71ba6a2621750f2077e729e80e190495f0",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "2744cf39f5f336b17732e83bd0f1321413ab93e7947fcc192725ce12f084f120",
+      "bytes": 1717
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/baseline/quote-builder.tsx",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "6dbc2ecac97359710cea660b9a217f5cbfbb55e1937de0e5e7dd8f4c9add51e7",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "d09457c5286dae01908216ccf2fec11cbe2d680b22fd890d89d0b125f22fa1ab",
+      "bytes": 60133
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/browser/entry.js",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "b4b6bafc721d4b649c56959a1ad8c46e4671113e3a6b9fb2543d4bad6b1e3306",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "b4b6bafc721d4b649c56959a1ad8c46e4671113e3a6b9fb2543d4bad6b1e3306",
+      "bytes": 3210
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/browser/index.html",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "4e13050ad245062d67fe16b7ab60139af816a62b7252dfb7e7efc3891b397a5c",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "4e13050ad245062d67fe16b7ab60139af816a62b7252dfb7e7efc3891b397a5c",
+      "bytes": 1035
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/browser/inventory.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "4d35c03d7dca24fbbbd92e9976692a6dc0340cd6a259b0bb878a7039fafe45d8",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "4d35c03d7dca24fbbbd92e9976692a6dc0340cd6a259b0bb878a7039fafe45d8",
+      "bytes": 3133
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/browser/runtime.js",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "a4a158fb3ed8258121598f76eaa8e59489df6f8546afe7c5e3cd41faa51d11c5",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "b3889be00d4aa30f402c9c92e3fae1bcdaa0dc0f7dbbb226c393844eb9c1f599",
+      "bytes": 142146
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/browser/source.css",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "ba14b799daaffca6092e33a4ca74af91243434eb8c9246b7d512487af83f2165",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "c64d722a4de36ea6373260cde4123c86b8e4ff37d4f1b34cfbbd7e42834fc3c7",
+      "bytes": 61757
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/browser/source.js",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "08117db47b402015c4ed4f4110cf002c651d002515cd04b88292404a99be1be2",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "08117db47b402015c4ed4f4110cf002c651d002515cd04b88292404a99be1be2",
+      "bytes": 178866
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/browser/tailwind.css",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "e9784e65a3f9c599e85be355d1b4c0732df3250e86c7dc98eadd8549ee21d87a",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "e9784e65a3f9c599e85be355d1b4c0732df3250e86c7dc98eadd8549ee21d87a",
+      "bytes": 12347
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/browser-report.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "c0ad799bb8550cc33ce497dbc332941b5f51deea4326b750bec502670faba0bf",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "c0ad799bb8550cc33ce497dbc332941b5f51deea4326b750bec502670faba0bf",
+      "bytes": 8667
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/browser-tests.py",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "6d843f13897806b512447e494e80ffdfbb7276df2b3cc0574a67d613be44c035",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "6d843f13897806b512447e494e80ffdfbb7276df2b3cc0574a67d613be44c035",
+      "bytes": 14045
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/build-fixture.cjs",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "4cf6988c554987521ffa2f18b271b3786fd8a809041db22061f4e4f4f23ef8f5",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "4cf6988c554987521ffa2f18b271b3786fd8a809041db22061f4e4f4f23ef8f5",
+      "bytes": 4968
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/check-syntax.cjs",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "cdca63fe6a5c139e3951ed350b5a8cf99e67ef35f9d6bfccfa35f6c4581fbece",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "cdca63fe6a5c139e3951ed350b5a8cf99e67ef35f9d6bfccfa35f6c4581fbece",
+      "bytes": 1193
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/compile-tailwind.cjs",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "b97bebbb244c3218e87d144aa55c292db29856d616ede70c51361ea0bf8c7604",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "b97bebbb244c3218e87d144aa55c292db29856d616ede70c51361ea0bf8c7604",
+      "bytes": 888
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/controller.test.cjs",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "f3faf587faf038b45ba5eda556dcc280edabd030469dd1edbeac11c81a719df3",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "f3faf587faf038b45ba5eda556dcc280edabd030469dd1edbeac11c81a719df3",
+      "bytes": 4535
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/pure/reviewCompletion.js",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "ef231f740bf89761213a160899cc9153ecbd334e1f9fd43b7ff2342d69840860",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "ef231f740bf89761213a160899cc9153ecbd334e1f9fd43b7ff2342d69840860",
+      "bytes": 1570
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/completion-1440.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "a2f7b58f4ca8fb619000365f6e431c27bfa379c6d4f95d1c135080e54957d7a8",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "8105a99c8f85f3b03c4a6088b24779be5d3e989a2c46b13a02d71d94721d388d",
+      "bytes": 33373
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/completion-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "cfb07b66ab96123c74b9eb5cedf0f7344a9dd3304e0998a6d758e8befbd3a197",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "7348861d895c0e40e1291fb60b163eb15ca5f8b56c87f5fa64056f956675368e",
+      "bytes": 29366
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/confirmation-error-1440.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "2d4a4e8d56b74f6b16fa5233508470145669c44bafc368ea08c707f1b1f14b25",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "86e9d7dd19fe7ed3805a612860dbdfabf5dde60ee7c3b4c6c86a110e56bfefb4",
+      "bytes": 179147
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/confirmation-error-320.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "a28ca1775123b7efc4ef0cdb13b96452d825a8b90adc2372d36c24f89dd63b46",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "a148e6543649f4c899f98f6c0a192f779a5990ed9f32df1aba7e6fc7db26164a",
+      "bytes": 153836
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/confirmation-error-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "b9b00118f17cf52284c2657c69a01dea406b251376fdd04159c85d7b2b5c1f43",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "b6b2f9cedfc64b91859473f53ab987436cb03d0d53eabd458e0f7da9bcbc58a4",
+      "bytes": 154542
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/loading-1440.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "0f71da08e18bbf921cdb888484886c2fc3f4631d6b92f2fcfe03b3a85e8768c9",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "ef319590cf8d89bba1c599496c03e51c6967f3f1d142cb344adfe2373e8aa8d9",
+      "bytes": 33905
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/loading-320.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "44d4e83115269a14423c8c2ecf233770829f0374341463b470abfe742883a86f",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "cb15163def47947f128cbf236065977eca784b779f694650e8f050cd7d42cddb",
+      "bytes": 27045
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/loading-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "1b5ce7fbe7930fbf19a0e8ec5cc47fd5829b792a5756b9d55cc2ef3efd68ce6f",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "0ac598dc6927d73829f115d59a2684269df6cb3b418db3517cce12df346ca4d4",
+      "bytes": 27177
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/margin-warning-1440.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "cbdc83ce3c5d70614722f2737490413e478377afc2e31519671a61e12220db6d",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "3adfd24722675cc0102da98d1ee83cb5982eff41d2c0f6ccb8f4a31f6b476f61",
+      "bytes": 188028
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/margin-warning-320.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "30770e8218047243906bc6a2016fa4d6a3722d36c9551ed6a53eb52c3ff6b463",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "7ca761c0f148993ef02ef9526dd492d8c04529e1dfd6c38462a1b40c9af686c6",
+      "bytes": 163268
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/margin-warning-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "2707c94728201700480779da869c1da6c8970462ac1fc47d0c426dde63e8bdcc",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "94167fc9df5beaeefe4c30d4886ff2c86a56707d72c4ccd4a3dc8f957ece439d",
+      "bytes": 164799
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/review-1440.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "a1c8370909bbd38c3611b986521a1b93d2e7fee3ff66d12398879020044670d7",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "69d49ba86704ce6148feed20b54ced91cda7df37a1a97609623cdea3d92457b1",
+      "bytes": 174682
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/review-320.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "8c3c57695ede65531f95cc4b35056b1cf0ef662b42def0a5526c4f4b2d0bebd9",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "6280f32c04ef1eb771594766a89071f1673e591bea77ab33a19d56b127f1af26",
+      "bytes": 146135
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/review-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "150027039de91a41714389d0b645f12e102abeb1f25bfd78c7d490070a32b016",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "f9a119e75545df01399bdc0d29b523bd4af1bf14a5ed2a2ee045b2456c2fcf31",
+      "bytes": 146085
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/route-error-1440.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "02ace4aeeb7735bce5f3b6b292ca52a5ae91ea66536ea30dff194aa75c456a7e",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "bc91a5d6dec7a1a5ae74377f440e3754e337d28ec05138eefa47600fc8334aa2",
+      "bytes": 42057
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/route-error-320.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "b58f4228c66e4c792a39af4888fe94472aa4adf31d5afc2762f614aba9b6e261",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "2cf11175d6dc67a53ba239896ae0577e6e7a87e050d3c9a71faa9243732bd816",
+      "bytes": 37453
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/screens/route-error-390.png",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "bcee336f65a3ab574b72c512cf5b9007dd4fc9ffc1f693346da0481aa8c2cae7",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "35142b134b9e828ed3b964478062eebca24fbb9be397853439027c21a4aad40f",
+      "bytes": 39308
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/source-contracts.cjs",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "93bc774ac984b406163e6deaad2e345ab23ef68bf0747f25dfd5af43da0b9990",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "93bc774ac984b406163e6deaad2e345ab23ef68bf0747f25dfd5af43da0b9990",
+      "bytes": 3876
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/source-contracts.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "f1385775082cb1fea4f9c18df602b518a4a9f51e3ee4ae17d644892225e9b49b",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "f1385775082cb1fea4f9c18df602b518a4a9f51e3ee4ae17d644892225e9b49b",
+      "bytes": 7259
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/syntax.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "472de121edf4d08ebaa61e56f1cc5c576e9ab4fdba9250c9d9d259ef6210235c",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "472de121edf4d08ebaa61e56f1cc5c576e9ab4fdba9250c9d9d259ef6210235c",
+      "bytes": 756
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/fixtures/tsconfig.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "cd8e07b26aa5347420c16831c00b80f67a8c077d4be424b8d9651b3ab2de5b5f",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "cd8e07b26aa5347420c16831c00b80f67a8c077d4be424b8d9651b3ab2de5b5f",
+      "bytes": 248
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/validation/browser-report.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "c0ad799bb8550cc33ce497dbc332941b5f51deea4326b750bec502670faba0bf",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "c0ad799bb8550cc33ce497dbc332941b5f51deea4326b750bec502670faba0bf",
+      "bytes": 8667
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/validation/controller-test.log",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "fbf69709395c5ff1222fdfc4846f9ad72074c55508b11cf90f8fb081f9dbcea9",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "fbf69709395c5ff1222fdfc4846f9ad72074c55508b11cf90f8fb081f9dbcea9",
+      "bytes": 2798
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/validation/protected-files.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "fa04375dd661a34e3fe73a02955ef15c1d3cc07bbd38a491084bd84078975ff1",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "fa04375dd661a34e3fe73a02955ef15c1d3cc07bbd38a491084bd84078975ff1",
+      "bytes": 700066
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/validation/pure-typecheck.log",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/validation/source-contracts.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "f1385775082cb1fea4f9c18df602b518a4a9f51e3ee4ae17d644892225e9b49b",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "f1385775082cb1fea4f9c18df602b518a4a9f51e3ee4ae17d644892225e9b49b",
+      "bytes": 7259
+    },
+    {
+      "path": "docs/ux/experience-3-review-completion/validation/syntax.json",
+      "change": "added",
+      "category": "documentation_or_validation",
+      "before_sha256": null,
+      "after_sha256": "472de121edf4d08ebaa61e56f1cc5c576e9ab4fdba9250c9d9d259ef6210235c",
+      "before_lf_sha256": null,
+      "after_lf_sha256": "472de121edf4d08ebaa61e56f1cc5c576e9ab4fdba9250c9d9d259ef6210235c",
+      "bytes": 756
+    }
+  ]
+}

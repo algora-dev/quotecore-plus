@@ -1,0 +1,295 @@
+{
+  "method": "TypeScript AST normalized expressions compared to supplied baseline; direct source contracts. Not pricing or live-app validation.",
+  "checks": [
+    {
+      "name": "Existing Builder binding unchanged: newAreaId",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: materialMarginId",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: labourMarginId",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: phase",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: tradeLabels",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: focusHandler",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: id",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: component",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: destinationPhase",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: focus",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: mainComps",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: extraComps",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: totalRoofSqm",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: effectiveCurrency",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: engineComps",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: totals",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: allAreasLocked",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleAddArea",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: created",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleUpdateArea",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: updated",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleToggleLock",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleAddRoofAreaEntry",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: area",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: widthM",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: lengthM",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: entry",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: areaEnts",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: totalSqm",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleRemoveRoofAreaEntry",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleRemoveArea",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:confirmRemoveArea",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleAddFromLibrary",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: lib",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleComponentCreated",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleRemoveComponent",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: n",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleAddEntry",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: comp",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: rawValue",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: mt",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: convertAs",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: areaPitch",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleUseRoofArea",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: _comp",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleRemoveEntry",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleCombineEntries",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: result",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleSplitEntries",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:handleUpdateCompSettings",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:formatQuantity",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fn:formatPricedQuantity",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: actual",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: priced",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: packSnap",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: fractional",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: matPercent",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: labPercent",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: areaComps",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: noAreaComps",
+      "pass": true
+    },
+    {
+      "name": "Existing Builder binding unchanged: target",
+      "pass": true
+    },
+    {
+      "name": "Margin action payload arguments unchanged",
+      "pass": true
+    },
+    {
+      "name": "Totals calculator calls unchanged",
+      "pass": true
+    },
+    {
+      "name": "No document creation/save/send action added to completion",
+      "pass": true
+    },
+    {
+      "name": "No refresh polling, remount key hack, browser storage or timer added",
+      "pass": true
+    },
+    {
+      "name": "Compatibility selector retained",
+      "pass": true
+    },
+    {
+      "name": "Non-draft statuses skip confirmation",
+      "pass": true
+    },
+    {
+      "name": "Destination load retries use Next 16.2 refetch callback",
+      "pass": true
+    },
+    {
+      "name": "Fallback without retry performs only same-route navigation",
+      "pass": true
+    },
+    {
+      "name": "No empty-area/component guard introduced",
+      "pass": true
+    },
+    {
+      "name": "Named destination helper has no dependencies",
+      "pass": true
+    },
+    {
+      "name": "Existing customer editor global and per-line margin fields remain",
+      "pass": true
+    }
+  ],
+  "passed": 72,
+  "failed": 0
+}

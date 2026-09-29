@@ -1,0 +1,263 @@
+{
+  "method": "Actual QuoteBuilder Review, completion/route-state components and pure calculation/display helpers in Chromium; sample records, action/router/other-step mocks. Browser policy blocks navigation, so supplied local HTML/CSS/JS rendered with set_content. No live Next/RSC/backend/device tests. Runtime reused from prior baseline fixture.",
+  "checks": [
+    {
+      "name": "Two end actions; no request or send on mount",
+      "pass": true
+    },
+    {
+      "name": "Primary uses current unsaved margins, then confirms, then existing customer route",
+      "pass": true
+    },
+    {
+      "name": "Digital Review secondary uses identical preparation and Job Space route",
+      "pass": true
+    },
+    {
+      "name": "Original non-draft lifecycle preserved: confirmed",
+      "pass": true
+    },
+    {
+      "name": "Original non-draft lifecycle preserved: sent",
+      "pass": true
+    },
+    {
+      "name": "Original non-draft lifecycle preserved: accepted",
+      "pass": true
+    },
+    {
+      "name": "Original non-draft lifecycle preserved: declined",
+      "pass": true
+    },
+    {
+      "name": "Original non-draft lifecycle preserved: withdrawn",
+      "pass": true
+    },
+    {
+      "name": "Original non-draft lifecycle preserved: archived",
+      "pass": true
+    },
+    {
+      "name": "Synchronous single flight blocks repeated/mixed destination clicks",
+      "pass": true
+    },
+    {
+      "name": "Review settings and step/back controls lock for the same submitted snapshot",
+      "pass": true
+    },
+    {
+      "name": "No navigation until the existing confirmation action resolves",
+      "pass": true
+    },
+    {
+      "name": "Margin failure is explicit, nonfatal, focused, and requires acknowledgement",
+      "pass": true
+    },
+    {
+      "name": "Review margins restores focus/draft and retries save without repeating successful confirmation",
+      "pass": true
+    },
+    {
+      "name": "Preserved validation with explicit result: Item Cost=-1",
+      "pass": true
+    },
+    {
+      "name": "Preserved validation with explicit result: Labour=101",
+      "pass": true
+    },
+    {
+      "name": "Preserved validation with explicit result: Item Cost=",
+      "pass": true
+    },
+    {
+      "name": "Disabled margin submits the original null/enabled payload semantics",
+      "pass": true
+    },
+    {
+      "name": "Confirmation failure does not navigate; deliberate retry follows original idempotent action",
+      "pass": true
+    },
+    {
+      "name": "Combined failures do not claim a margin save or a confirmed quote",
+      "pass": true
+    },
+    {
+      "name": "Leaving during margins cancels client continuation, not completed server work",
+      "pass": true
+    },
+    {
+      "name": "Leaving during confirm cancels client continuation, not completed server work",
+      "pass": true
+    },
+    {
+      "name": "Known navigation rejection retries opening only; no repeated save/confirm",
+      "pass": true
+    },
+    {
+      "name": "Navigation recovery can explicitly unlock review for more edits",
+      "pass": true
+    },
+    {
+      "name": "Margin warning preserves the originally selected Job Space destination",
+      "pass": true
+    },
+    {
+      "name": "Keyboard activates primary with Enter",
+      "pass": true
+    },
+    {
+      "name": "Keyboard activates primary with Space",
+      "pass": true
+    },
+    {
+      "name": "Existing empty/no-area policy unchanged; no new blocking guard",
+      "pass": true
+    },
+    {
+      "name": "Route error handles direct visits without fabricated save proof or document recreation",
+      "pass": true
+    },
+    {
+      "name": "Older-runtime route retry offers same-route reload, not a cached reset",
+      "pass": true
+    },
+    {
+      "name": "Loading state provides status/escape without initiating a mutation",
+      "pass": true
+    },
+    {
+      "name": "Primary hover/pressed/focus states remain visibly distinct",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion inherits the shared no-transition rule",
+      "pass": true
+    },
+    {
+      "name": "Forced-colour buttons retain boundaries/focus",
+      "pass": true
+    },
+    {
+      "name": "Layout review at 1440px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout margin-warning at 1440px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout confirmation-error at 1440px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout route-error at 1440px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout loading at 1440px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout review at 1024px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout margin-warning at 1024px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout confirmation-error at 1024px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout route-error at 1024px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout loading at 1024px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout review at 768px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout margin-warning at 768px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout confirmation-error at 768px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout route-error at 768px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout loading at 768px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout review at 390px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout margin-warning at 390px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout confirmation-error at 390px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout route-error at 390px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout loading at 390px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout review at 360px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout margin-warning at 360px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout confirmation-error at 360px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout route-error at 360px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout loading at 360px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout review at 320px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout margin-warning at 320px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout confirmation-error at 320px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout route-error at 320px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    },
+    {
+      "name": "Layout loading at 320px: no page overflow; actions meet the shared desktop/mobile target rules",
+      "pass": true
+    }
+  ],
+  "passed": 64,
+  "failed": 0
+}
