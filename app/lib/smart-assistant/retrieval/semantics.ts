@@ -16,6 +16,16 @@ export const CONCEPTS = ['unpaid_invoices'] as const;
 const ALIASES: Record<string, Record<string, string>> = {
   quotes: { quote_value: 'customer_total', saved_quote_total: 'customer_total', current_builder_total: 'builder_total' },
   invoices: { invoice_total: 'total' },
+  // Roof-area and component value reads: the model reliably guesses these
+  // colloquial names; map them to the registered authoritative fields instead
+  // of rejecting the whole plan (owner 2026-09-29 14:00 area-read failure).
+  quote_areas: {
+    sqm: 'computed_sqm', area: 'computed_sqm', roof_area: 'computed_sqm', roof_area_sqm: 'computed_sqm',
+    total_sqm: 'computed_sqm', value_sqm: 'computed_sqm', square_metre: 'computed_sqm', square_metres: 'computed_sqm',
+    square_meter: 'computed_sqm', square_meters: 'computed_sqm', m2: 'computed_sqm', size: 'computed_sqm',
+    plan_area: 'plan_sqm', pitch: 'pitch_degrees', degrees: 'pitch_degrees', name: 'label',
+  },
+  quote_components: { quantity: 'final_quantity', qty: 'final_quantity', amount: 'final_quantity' },
 };
 const own = (o: object, key: string) => Object.hasOwn(o, key);
 function invalid(message: string): never { throw new RetrievalError('invalid_query', message); }

@@ -81,13 +81,19 @@ export async function runModelLoop(input: {
         seen.add(fingerprint);
         telemetry.toolCalls++;
         try {
-          return await telemetry.measure('tool:' + call.name, () => registry[call.name].handler(args, input.context));
+          const result = await telemetry.measure('tool:' + call.name, () => registry[call.name].handler(args, input.context));
+          telemetry.recordToolResultState(call.name, result);
+          return result;
         } catch (error) {
           // A revoked/uncertain access context is terminal, not model-readable data.
           const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
           if (['access_changed','permissions_changed','unauthenticated'].includes(code)) fail('access_changed');
           if (code === 'turn_timeout') fail('turn_timeout');
-          return { error: 'Tool execution failed. Do not guess the missing result or claim success.' };
+          // Persist a sanitized tool:class marker for one-query diagnosis; the
+          // class (e.g. migration_required) is a safe identifier, never a message.
+          telemetry.recordToolError(call.name, code || 'exception');
+          const classHint = /^[a-z][a-z0-9_]{0,39}$/.test(code) ? ` (${code})` : '';
+          return { error: `Tool execution failed${classHint}. Do not guess the missing result or claim success.` };
         }
       }, input.speed ? 3 : 1);
     const failedPlan = results.some((result, index) => registry[step.toolCalls[index].name]?.retrievalPolicy && repairable(result));

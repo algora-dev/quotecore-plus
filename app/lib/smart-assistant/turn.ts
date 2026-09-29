@@ -76,7 +76,7 @@ export async function runPipeline(
   runId: string,
   userMessage: string,
   ctx: PipelineContext,
-): Promise<{ content: string; tokensIn: number; tokensOut: number }> {
+): Promise<{ content: string; tokensIn: number; tokensOut: number; toolErrors?: string[] }> {
   const result = await runOrchestratorTurn({
     supabase: ctx.supabase,
     companyId: ctx.companyId,
@@ -85,7 +85,8 @@ export async function runPipeline(
     userMessage,
     pageContext: ctx.pageContext,
   });
-  return { content: result.content, tokensIn: result.tokensIn, tokensOut: result.tokensOut };
+  return { content: result.content, tokensIn: result.tokensIn, tokensOut: result.tokensOut,
+    ...(result.toolErrors?.length ? { toolErrors: result.toolErrors } : {}) };
 }
 
 /** Usage already incurred when a pipeline fails mid-flight (never lost). */

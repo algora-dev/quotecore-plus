@@ -13,7 +13,7 @@ import { constrainIntent, extractAnchors, normalizeName } from './anchors';
 import { requestFromText, refineRequest } from './clues';
 import { mergeRefinement } from './continuation';
 import { decodeResolutionChoice, type ResolutionChoice } from './wire';
-import { currentParent, discoveryQuery, identityFields, parentQuery, rereadQuery, sourcesFor, visibleResolverSources, qualifiers, type ResolverSource } from './sources';
+import { currentParent, discoveryQuery, factFields, identityFields, parentQuery, rereadQuery, sourcesFor, visibleResolverSources, qualifiers, type ResolverSource } from './sources';
 import { chooseCandidates, discriminator, makeCandidate } from './relevance';
 import { type Candidate, type CandidateRef, type DiscoveryCoverage, type Parent, type ResolutionState, type ResolverIntent, type ResolverResult, type StoredResolution } from './contracts';
 import type { ResolutionStore } from './state.server';
@@ -143,6 +143,56 @@ export function createEntityResolver(dep: ResolverDependencies) {
     const resultCandidates = (result: RetrievalResult, context: ResolverIntent, stage: 'parent'|'entity' = 'entity') => available(result)
       ? result.rows.map(row => makeCandidate(result.source, row, context, uuid(), stage)).filter((c): c is Candidate => !!c && !rejected.includes(c.key)) : [];
     const incomplete = () => !!(coverage.failed.length || coverage.truncated.length);
+    /** Bounded actual-contents read for a bound quote/draft. Offered when a
+     * component search inside that record has no match, instead of a bare
+     * "exact name?" dead-end (owner 2026-09-29 13:59 failure). Read-only. */
+    async function parentComponentInventory(): Promise<string | null> {
+      if (!parentId || !isUuid(parentId) || !parentSelector || !['quotes', 'drafts'].includes(parentSelector.domain)
+        || !visible.includes('quote_components')) return null;
+      try {
+        const plan = compileIntelligentPlan({ version: 1, source: 'quote_components', mode: 'rows',
+          fields: ['name', 'final_quantity', 'unit'], filters: [{ field: 'quote_id', op: 'eq', value: parentId }],
+          quoteScope: parentSelector.quoteScope ?? (parentSelector.domain === 'drafts' ? 'drafts' : 'quotes'), limit: 15, resolve: false }, dep.access.permissions).plan;
+        const result = await read(plan);
+        if (!available(result) || !result.complete) return null;
+        const seen = new Set<string>();
+        const items = result.rows.map(row => {
+          const name = typeof row.name === 'string' ? row.name.trim().slice(0, 60) : '';
+          if (!name || seen.has(name)) return null;
+          seen.add(name);
+          const quantity = row.final_quantity != null && Number.isFinite(Number(row.final_quantity)) ? ` \u2014 ${String(row.final_quantity).slice(0, 12)}${typeof row.unit === 'string' ? ' ' + row.unit : ''}` : '';
+          return `${name}${quantity}`;
+        }).filter((x): x is string => !!x);
+        if (!items.length) return 'That record currently has no components.';
+        return `That record currently has: ${items.join('; ')}.${result.truncated ? ' (More exist; this is a bounded list.)' : ''}`;
+      } catch { return null; }
+    }
+    /** Area-value questions ("what's the roof area") for a bound quote/draft:
+     * answer with the record's ACTUAL stored areas and values instead of
+     * failing a label word-match (owner 2026-09-29 14:00 failure). Read-only. */
+    async function parentAreaValues(): Promise<ResolverResult | null> {
+      if (!areaValueShaped(intent) || !parentId || !isUuid(parentId) || !parentSelector
+        || !['quotes', 'drafts'].includes(parentSelector.domain) || !visible.includes('quote_areas')) return null;
+      try {
+        const plan = compileIntelligentPlan({ version: 1, source: 'quote_areas', mode: 'rows',
+          fields: factFields('quote_areas', intent.task, dep.access.permissions),
+          filters: [{ field: 'quote_id', op: 'eq', value: parentId }],
+          quoteScope: parentSelector.quoteScope ?? (parentSelector.domain === 'drafts' ? 'drafts' : 'quotes'),
+          limit: RESOLVER_LIMITS.rowsPerSource, resolve: false }, dep.access.permissions).plan;
+        const result = await read(plan);
+        if (!available(result) || !result.complete) return null;
+        if (!result.rows.length) return await finish(base('resolved', 'That record has no roof areas defined yet; no value was inferred.'), [], 'resolved');
+        const context: ResolverIntent = { ...intent, query: undefined, list: true };
+        const candidates = result.rows.map(row => makeCandidate('quote_areas', row, context, uuid())).filter((c): c is Candidate => !!c);
+        const lines = candidates.map(c => {
+          const sqm = c.row.computed_sqm != null ? `${String(c.row.computed_sqm).slice(0, 20)} m2`
+            : c.row.plan_sqm != null ? `plan ${String(c.row.plan_sqm).slice(0, 20)} m2` : 'no stored m2 value yet';
+          const pitch = c.row.pitch_degrees != null && String(c.row.pitch_degrees) !== '0' ? `, ${String(c.row.pitch_degrees).slice(0, 12)} degrees` : '';
+          return `${c.label} \u2014 ${sqm}${pitch}`;
+        });
+        return await finish(base('resolved', `${lines.join('\n')}\nStored authoritative roof-area values for that record. Need a different record? Name its customer or job.`), [], 'resolved');
+      } catch { return null; }
+    }
 
     const sourceContext = (source:string, context:ResolverIntent):ResolverIntent => orderParentIds && ['order_lines','order_text_lines'].includes(source)
       ? {...context,period:undefined,customer:undefined,job:undefined} : context;
@@ -319,6 +369,19 @@ export function createEntityResolver(dep: ResolverDependencies) {
       if(selected.state==='resolved')return await showResolved(selected.candidates[0]);
       if(selected.state==='candidates')return await questionResult('candidates','These have positive matching evidence. Is one of them what you meant?',selected.candidates);
       if(selected.state==='needs_discriminator')return await questionResult('needs_discriminator','There are too many equally plausible matches to offer an arbitrary few.',[],discriminator(candidates,intent));
+      // No match anywhere. When the request was item-shaped inside a bound
+      // quote/draft, offer that record's ACTUAL component list instead of
+      // asking for an exact name the user may not know (un-gated reads, 2026-09-29).
+      if (!coverage.failed.length && parentId && (intent.query || intent.contains || intent.list)
+        && parentSelector && ['quotes', 'drafts'].includes(parentSelector.domain)) {
+        const inventory = await parentComponentInventory();
+        if (inventory) {
+          const asked = intent.query || intent.contains;
+          return await questionResult('no_meaningful_match',
+            `${asked ? `No component matching \u201c${String(asked).slice(0, 60)}\u201d was found on that record. ` : ''}${inventory} Which did you mean, or would you like to add it as a new component?`,
+            [], { key: 'name', text: 'Which of those components did you mean?' });
+        }
+      }
       return await questionResult(coverage.failed.length?'read_failed':'no_meaningful_match',coverage.failed.length
         ? 'Some permitted sources did not finish, so I cannot claim the item does not exist.'
         : 'I have not found a genuinely relevant match in the sources searched. I will not offer unrelated substitutes.');
@@ -326,6 +389,8 @@ export function createEntityResolver(dep: ResolverDependencies) {
     async function discover(): Promise<ResolverResult> {
       const names=sourcesFor(intent,visible,parentSelector);
       if(!names.length)return await questionResult('permission_denied','The requested scope has no permitted entity sources in this configuration. This is not proof that the record is absent.');
+      const areaValues = await parentAreaValues();
+      if (areaValues) return areaValues;
       const readSource=async(source:ResolverSource,match:'words'|'natural'):Promise<Candidate[]>=>{
         try {
           const plan=orderScoped(discoveryQuery(source,sourceContext(source,intent),dep.access.permissions,parentId,match));
@@ -443,6 +508,17 @@ export function createEntityResolver(dep: ResolverDependencies) {
  * taxes/units or internal costs presented as a customer selling price. */
 export function formatFacts(candidate:Candidate,intent:ResolverIntent,result:RetrievalResult):string {
   const row=candidate.row;
+  // A roof-area question is a value question by nature: always surface the
+  // stored authoritative values, even for a plain find (owner 2026-09-29 14:00).
+  if(candidate.source==='quote_areas'){
+    const area=[`${String(row.label??candidate.label).slice(0,120)}`,
+      ...(row.computed_sqm!=null?[`Stored roof area: ${String(row.computed_sqm).slice(0,20)} m2`]:[]),
+      ...(row.plan_sqm!=null?[`Plan area: ${String(row.plan_sqm).slice(0,20)} m2`]:[]),
+      ...(row.pitch_degrees!=null?[`Pitch: ${String(row.pitch_degrees).slice(0,20)} degrees`]:[]),
+      ...(row.is_locked===true?['Value is locked against recalculation']:[])];
+    if(row.computed_sqm==null&&row.plan_sqm==null)area.push('No stored square-metre value is recorded for this area yet; missing is not zero.');
+    return area.join('\n')+(result.warnings.length?'\n'+result.warnings.join(' '):'');
+  }
   if(!['cost','charge'].includes(intent.task))return `Found ${candidate.label}. ${candidate.detail}`;
   const currency=typeof row.currency==='string'?row.currency:'currency not recorded';
   const unit=typeof row.unit==='string'?row.unit:'unit not recorded';
@@ -459,6 +535,19 @@ export function formatFacts(candidate:Candidate,intent:ResolverIntent,result:Ret
   const lines=facts.filter(([field])=>row[field]!==null&&row[field]!==undefined).map(([field,label])=>`${label}: ${String(row[field]).slice(0,500)}`);
   if(!lines.length)return `${candidate.label}: I found the record, but this authoritative reader has no usable price for it. Missing prices are not zero. ${result.warnings.join(' ')}`;
   return `${candidate.label}\n${lines.join('\n')}${candidate.source==='quote_components'?'\nThese are internal component rates/costs, not the price charged to the customer.':''}${!result.complete?'\nThe authoritative calculation is incomplete; no complete total is claimed.':''}${result.warnings.length?'\n'+result.warnings.join(' '):''}`;
+}
+
+const AREA_VALUE_WORDS = new Set(['roof', 'roofs', 'roofing', 'area', 'areas', 'square', 'sqm', 'm2', 'metre', 'metres', 'meter', 'meters',
+  'value', 'values', 'size', 'pitch', 'degree', 'degrees', 'total', 'what', 'whats', 'the', 'is', 'are', 'on', 'for', 'of', 'in', 'that', 'this', 'record', 'draft', 'quote',
+  'tell', 'me', 'show', 'us', 'please', 'give', 'how', 'and', 'was', 'were']);
+/** "what's the roof area (square metre value)" style queries: every token is a
+ * generic area/value word, so the intent targets the record's stored areas as a
+ * whole rather than a named row. */
+export function areaValueShaped(intent: ResolverIntent): boolean {
+  const query = intent.query ?? intent.contains;
+  if (!query) return false;
+  const tokens = normalizeName(query).split(' ').filter(Boolean);
+  return tokens.length > 0 && tokens.every(t => AREA_VALUE_WORDS.has(t));
 }
 
 /** Only additive refinements may reuse a complete candidate universe. */

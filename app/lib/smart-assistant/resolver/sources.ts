@@ -39,6 +39,7 @@ export function factFields(source: string, task: ResolverIntent['task'], permiss
   const fields: Record<string, string[]> = {
     quotes: ['id','quote_number','job_name','customer_name','status','customer_total','currency','updated_at'],
     quote_components: ['id','name','quote_id','quote_number','quote_status','job_name','customer_name','unit','material_rate','labour_rate','material_cost','labour_cost','final_quantity','pricing_unit','priced_quantity','currency'],
+    quote_areas: ['id','label','quote_id','quote_number','job_name','computed_sqm','plan_sqm','pitch_degrees','is_locked','updated_at'],
     customer_quote_lines: ['id','text','quote_id','quote_number','quote_status','job_name','customer_name','amount','unit_price','quantity_text','currency','is_visible','include_in_total'],
     component_library: ['id','name','collection_name','default_material_rate','default_labour_rate','unit','currency','pricing_strategy','pack_size','pack_price','is_active'],
     order_lines: ['id','item_name','order_id','order_number','job_name','quantity','unit','measurement_display','priced_quantity'],
@@ -48,7 +49,9 @@ export function factFields(source: string, task: ResolverIntent['task'], permiss
     catalogue_rows: ['id','description','catalogue_id','catalogue_name','row_index','mapped_price_text','mapped_quantity_text','currency'],
   };
   const s = sourceSpec(source);
-  return (task === 'cost' || task === 'charge' ? fields[source] ?? identityFields(source, permissions) : identityFields(source, permissions))
+  // Roof areas are a value source: their facts (m2/pitch) are the answer even
+  // for a plain find, not only cost/charge tasks.
+  return (task === 'cost' || task === 'charge' || source === 'quote_areas' ? fields[source] ?? identityFields(source, permissions) : identityFields(source, permissions))
     .filter(k => s.fields[k] && fieldAllowed(s.fields[k], permissions));
 }
 export function visibleResolverSources(permissions: SectionPermissions, catalogues: boolean): ResolverSource[] {

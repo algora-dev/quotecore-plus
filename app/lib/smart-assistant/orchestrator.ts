@@ -136,6 +136,8 @@ export interface OrchestratorTurnResult {
   content: string;
   tokensIn: number;
   tokensOut: number;
+  /** Sanitized `tool:class` markers from model-loop tool failures (diagnostics only). */
+  toolErrors?: string[];
 }
 
 const TURN_DEADLINE_MS = 90_000;
@@ -258,6 +260,9 @@ export async function runOrchestratorTurn(
       context: { supabase, companyId, runId, signal: controller.signal },
       guard: v2?.guard ?? (async () => {}), step: deps.modelStep,
       signal: controller.signal, speed: v2?.speed ?? false, telemetry });
+    // Tool failures inside a completed turn are invisible in the transcript;
+    // surface their sanitized markers through the trusted finish path.
+    if (telemetry.toolErrors.length) result.toolErrors = telemetry.toolErrors.slice();
     await finishTask();
     return result;
   } catch (error) {

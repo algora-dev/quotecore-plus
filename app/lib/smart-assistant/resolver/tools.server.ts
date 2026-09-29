@@ -93,4 +93,5 @@ export const RESOLVER_PROMPT = [
  'A selection is never confirmation. Named edits use propose_component_change.selection directly; no prior model verification loop. Only its existing Confirm button can apply a reviewed change.',
  'Catalogue rows use indexed search match=words or exact, not natural. Dense candidate populations request a narrower description/catalogue instead of returning a sampled winner. Never silently drop other filters to avoid a read limit.',
  'New states distinguish real ambiguity, no meaningful match, read failure, missing setup and hidden permissions. Two useful clarification opportunities are bounded; do not invent a record or repeat rejected candidates.',
+ 'When a component or item search inside an already-identified quote/draft finds no match, the result lists that record\u2019s ACTUAL components. Relay that list and ask which one they meant (or whether to add it); never ask the user for an \u201cexact name\u201d they already implied, and never claim the lookup itself failed. Roof areas answer with their stored label, square-metre and pitch values.',
 ].join('\n');

@@ -55,18 +55,22 @@ function compactRows(rows: QueryRow[], plan: QueryPlan): {rows: QueryRow[]; exce
 }
 export function renderResult(data:QueryData,plan:QueryPlan):RetrievalResult {
  const spec=sourceSpec(plan.source),scope=scopeLabel(plan);
+ // `scope` stays a structured model-facing property; it is NEVER embedded in
+ // the answer. Answers can be served verbatim to the user (terminal replies),
+ // and a raw scope dump (source labels, filter values, UUIDs) is internal
+ // diagnostics, not a user-facing explanation.
  const base:RetrievalResult={source:plan.source,mode:plan.mode,state:'ok',rows:data.rows,asOf:data.asOf,complete:data.complete,truncated:data.truncated,scope,warnings:[...data.warnings],answer:'',...(data.coverage?{coverage:data.coverage}:{})};
- if(data.status==='too_broad')return {...base,state:'too_broad',answer:`${data.warnings.join(' ')}\nScope: ${scope}`};
- if(!data.complete&&!data.rows.length)return {...base,state:'incomplete',answer:`I could not obtain a complete result. ${data.warnings.join(' ')}\nScope: ${scope}`};
+ if(data.status==='too_broad')return {...base,state:'too_broad',answer:data.warnings.join(' ')};
+ if(!data.complete&&!data.rows.length)return {...base,state:'incomplete',answer:`I could not obtain a complete result. ${data.warnings.join(' ')}`};
  const hasMatches=data.rows.length>0 && !(plan.mode==='aggregate'&&data.rows.every(r=>r._matched==='0')&&plan.metrics.some(m=>m.op!=='count'));
- if(!hasMatches)return {...base,state:'empty',answer:`No accessible records matched this search. ${plan.source.startsWith('knowledge_')?'Only ready uploads with approved section classification were searched. ':''}Try a job/customer name or a date range.\nScope: ${scope}`};
+ if(!hasMatches)return {...base,state:'empty',answer:`No accessible records matched this search. ${plan.source.startsWith('knowledge_')?'Only ready uploads with approved section classification were searched. ':''}Try a job/customer name or a date range.`};
  if(plan.mode==='rows'&&plan.resolve){
   const resolution=resolveRows(data.rows,plan,data.truncated);base.resolution=resolution;
   if(resolution.state!=='selected'){
    const compact=compactRows(data.rows,plan);
    return {...base,state:'ambiguous',rows:compact.rows,truncated:base.truncated||compact.omitted,
     warnings:[...base.warnings,...(compact.excerpted?['Long source text is excerpted.']:[]),...(compact.omitted?['More candidates were omitted from the bounded response.']:[])],
-    answer:`${clarificationFor(data.rows,resolution.state==='broad')}\nScope: ${scope}`};
+    answer:clarificationFor(data.rows,resolution.state==='broad')};
   }
   base.rows=[data.rows[resolution.selectedIndex!]];
  }
@@ -108,6 +112,5 @@ export function renderResult(data:QueryData,plan:QueryPlan):RetrievalResult {
  const budget=Math.max(1500,9800-scope.length);
  const visible:string[]=[];let length=0;
  for(const line of lines){if(length+line.length+2>budget){if(visible.length===0){visible.push(text(line,Math.max(500,budget-180)));}visible.push('More verified detail is available; narrow the selection to keep the answer readable.');base.truncated=true;break;}visible.push(line);length+=line.length+2;}
- visible.push(`Scope: ${scope}`);
  base.answer=visible.join('\n\n');return base;
 }

@@ -110,12 +110,19 @@ export async function POST(req: NextRequest) {
 
   // Exactly one finalization attempt. A failed finish is an uncertain outcome,
   // not a reason to execute the pipeline again or certify it as a different run.
+  // Completed runs may still carry sanitized tool-error markers
+  // (`tool_error::tool:class|...`) so in-loop tool failures are one DB query
+  // from diagnosis. Identifiers only; no user text, arguments or record data.
+  const toolErrorCode = result?.toolErrors?.length
+    ? ('tool_error::' + result.toolErrors.join('|')).slice(0, 180)
+    : undefined;
   const finishStarted = performance.now();
   let finished = false;
   try {
     finished = await finishRunTrusted(admin, result ? {
       runId: admit.runId, status: 'completed', assistantContent: result.content,
       tokensIn: result.tokensIn, tokensOut: result.tokensOut,
+      ...(toolErrorCode ? { errorCode: toolErrorCode } : {}),
     } : {
       runId: admit.runId, status: 'failed', errorCode: failure?.errorCode ?? 'pipeline_error',
       tokensIn: failure?.tokensIn ?? 0, tokensOut: failure?.tokensOut ?? 0,
