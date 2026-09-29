@@ -7,6 +7,7 @@ import { RetrievalError, type Filter, type QueryPlan } from '../retrieval/contra
 import type { RecordTarget } from '../v2/contracts';
 import type { CandidateRef, Parent, ResolverIntent } from './contracts';
 import { componentWords, componentSource } from './vocabulary';
+import { companyScoped } from './anchors';
 import { RESOLVER_LIMITS } from './config';
 
 export const SOURCE_ADAPTERS = {
@@ -86,6 +87,10 @@ export function qualifiers(source: string, intent: Pick<ResolverIntent,'customer
       let relation = related.find(r => r.relation === 'quote');
       if (!relation) { relation = { relation: 'quote', filters: [] }; related.push(relation); }
       relation.filters.push({ field, op: 'words', value: intent[key]! });
+    } else if (companyScoped(source)) {
+      // Company-scoped library/catalogue sources carry no customer/job dimension
+      // and require no resolved parent (draft creation queries prices before any
+      // parent record exists). The qualifier does not apply; the query stands.
     } else throw new RetrievalError('unsupported_field', `The ${source} reader cannot preserve this ${key} qualifier without a parent. Select the parent record first.`);
   }
   if (intent.period) {

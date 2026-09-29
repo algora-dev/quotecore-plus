@@ -63,6 +63,26 @@ test('P3 compound source provenance survives rate-only edits', () => { const bas
     }[];
 }; assert.equal(audit.entries[0].combinedFrom[1].raw, 60); });
 test('P4 creates a concrete, engine-priced proposal, not a quote row', () => { const args = draftArgs(); const spec = parseDraft(args, creationContext, false); const result = buildDraft(spec, creationContext, [library]); assert.equal(result.params.entryMode, 'manual'); assert.equal(result.params.measurementSystem, 'metric'); assert.equal(result.currency, 'GBP'); assert.equal(result.children.components.length, 1); assert.equal(result.children.components[0].final_quantity, storageNumber(applyPitchAndWaste(100, true, 'rafter', 25, 'percent', 10, 0).afterWaste)); assert.ok(result.changes.some(c => c.label.startsWith('Engine costs'))); });
+// Owner evidence 2026-09-29 18:49 UTC: the creation flow stalled because a
+// component-price lookup was refused mid-creation (customer-context gate). The
+// gate fix lives in resolver/anchors.ts + resolver/sources.ts; this proves the
+// mocked end state: standalone library lookups -> multi-component proposal.
+test('P4 owner-shaped creation flow (corrugate + cheapest underlay) proposes with engine prices', () => {
+    const underlay = { ...library, id: '33333333-3333-4333-8333-333333333333', name: 'Cheapest underlay', default_waste_type: 'none', default_waste_percent: 0, default_pitch_type: 'none', default_material_rate: 4, default_labour_rate: 2 };
+    const args = { ...draftArgs(), customer_name: 'James Smith', job_name: 'Smith Roof',
+        components: [{ library_id: other, quantity: 100, unit: 'm2', basis: 'plan', area_index: 0 }, { library_id: underlay.id, quantity: 100, unit: 'm2', basis: 'plan', area_index: 0 }] };
+    const spec = parseDraft(args, creationContext, false);
+    const result = buildDraft(spec, creationContext, [library, underlay]);
+    assert.equal(result.params.customerName, 'James Smith');
+    assert.equal(result.children.components.length, 2);
+    const corrugate = result.children.components[0], felt = result.children.components[1];
+    assert.equal(corrugate.name, 'Test covering');
+    assert.equal(corrugate.final_quantity, storageNumber(applyPitchAndWaste(100, true, 'rafter', 25, 'percent', 10, 0).afterWaste));
+    // Pitchless, wasteless library row prices exactly as stored.
+    assert.equal(felt.final_quantity, 100); assert.equal(felt.material_cost, 400); assert.equal(felt.labour_cost, 200);
+    assert.ok(result.changes.some(c => c.label === 'Customer' && c.after === 'James Smith'));
+    assert.ok(result.changes.some(c => c.label.startsWith('Engine costs')));
+});
 test('P4 supports header-only drafts without inventing dimensions', () => { const args = { ...draftArgs(), areas: [], components: [] }; const out = buildDraft(parseDraft(args, creationContext, false), creationContext, []); assert.deepEqual(out.children, { areas: [], components: [] }); });
 test('P4 known surface is not pitched twice', () => { const args = { ...draftArgs(), areas: [{ label: 'Main Roof', quantity: 100, unit: 'm2', basis: 'surface' }], components: [] }; const out = buildDraft(parseDraft(args, creationContext, false), creationContext, []); assert.equal(out.children.areas[0].computed_sqm, 100); });
 test('P4 rejects unsupported dimensions rather than guess', () => { const args = draftArgs(); assert.throws(() => buildDraft(parseDraft(args, creationContext, false), creationContext, [{ ...library, measurement_type: 'length_x_height' }]), ProposalError); });

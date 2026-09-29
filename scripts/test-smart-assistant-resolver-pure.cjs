@@ -10,7 +10,7 @@ const {parseResolverIntent,parseParent,candidateKey}=load('resolver/contracts.ts
 const {relevance,chooseCandidates,makeCandidate,discriminator}=load('resolver/relevance.ts');
 const {parseResolutionState}=load('resolver/state.ts');
 const {encodeResolutionChoice,decodeResolutionChoice,displayResolutionMessage}=load('resolver/wire.ts');
-const {sourcesFor,visibleResolverSources,identityFields,factFields,parentQuery,discoveryQuery,rereadQuery}=load('resolver/sources.ts');
+const {sourcesFor,visibleResolverSources,identityFields,factFields,parentQuery,discoveryQuery,rereadQuery,qualifiers}=load('resolver/sources.ts');
 const {resolverAvailable}=load('resolver/config.ts');
 const {compileIntelligentPlan}=load('retrieval/semantics.ts');
 const {componentIntent,standaloneEntityRequest}=load('resolver/tools.server.ts');
@@ -48,6 +48,18 @@ test('quote exact number changes model fuzzy plan into an equality constraint',(
 test('exact parent applies through registered quote relation on orders',()=>{const p=constrainPlan({source:'orders'},extractAnchors('Show orders on quote 1014'));assert.deepEqual(p.related,[{relation:'quote',filters:[{field:'quote_number',op:'eq',value:1014}]}]);});
 for(const p of [{source:'quotes',filters:[{field:'quote_number',op:'eq',value:1042}]},{source:'quotes',filters:[{field:'quote_number',op:'gt',value:1}]},{source:'component_library'}])test('plan cannot evade explicit parent '+JSON.stringify(p),()=>assert.throws(()=>constrainPlan(p,extractAnchors('Ridge on quote 1014'))));
 test('model customer qualifier is bound separately and not searched as a whole sentence',()=>{const p=constrainPlan({source:'quotes',search:{text:'Maple Ridge quote for John Smith',match:'natural'}},extractAnchors('Show the Maple Ridge quote for John Smith'));assert.equal(p.search.text,'Maple Ridge');assert.ok(p.filters.some(f=>f.field==='customer_name'&&f.value==='John Smith'));});
+// ── Creation-time component-library gate (owner evidence 2026-09-29 18:49 UTC) ──
+const creationAnchors=extractAnchors('Create a draft quote for James Smith with corrugated sheets and the cheapest underlay');
+test('creation-time standalone component-library query is allowed',()=>{
+  assert.equal(creationAnchors.customer,'James Smith');
+  const p=constrainPlan({version:1,source:'component_library',mode:'rows',fields:['name','default_material_rate','unit'],search:{text:'corrugate',match:'words'}},creationAnchors);
+  assert.equal(p.search.text,'corrugate');assert.deepEqual(p.filters??[],[]);assert.equal(p.related,undefined);
+});
+for(const source of ['component_collections','catalogues','catalogue_rows'])test(`creation-time customer anchor does not gate company-scoped ${source}`,()=>{const p=constrainPlan({version:1,source,mode:'rows'},creationAnchors);assert.deepEqual(p.filters??[],[]);});
+test('quote-scoped customer behaviour is unchanged by the library fix',()=>{const p=constrainPlan({version:1,source:'quotes',mode:'rows',search:{text:'corrugate',match:'words'}},creationAnchors);assert.ok(p.filters.some(f=>f.field==='customer_name'&&f.op==='words'&&f.value==='James Smith'));});
+test('non-library parentless sources still refuse a customer qualifier',()=>{assert.throws(()=>constrainPlan({version:1,source:'order_lines',mode:'rows'},extractAnchors('Show orders for John Smith')));assert.throws(()=>qualifiers('order_lines',{customer:'John Smith'}));});
+test('resolver library discovery skips (not refuses) the customer qualifier',()=>{const q=qualifiers('component_library',{customer:'James Smith',job:'Smith Roof'});assert.deepEqual(q,{filters:[],related:[]});const p=discoveryQuery('component_library',{version:1,task:'cost',domain:'library',query:'underlay',customer:'James Smith'},perms);assert.equal(p.source,'component_library');assert.ok(!(p.filters??[]).some(f=>f.field==='customer_name'));assert.throws(()=>qualifiers('order_lines',{customer:'John Smith'}));});
+test('explicit quote number still cannot be satisfied by a library plan',()=>assert.throws(()=>constrainPlan({version:1,source:'component_library',mode:'rows'},extractAnchors('Ridge on quote 1014'))));
 test('conflicting intent number or customer is rejected',()=>{assert.throws(()=>constrainIntent({version:1,domain:'quotes',task:'open',number:'1042'},extractAnchors('quote 1014')));assert.throws(()=>constrainIntent({...msg(),customer:'James'},extractAnchors('quote for John Smith')));});
 test('multiple numbers cannot be arbitrarily narrowed to one entity',()=>assert.throws(()=>constrainIntent(msg(),extractAnchors('quote 1014 and quote 1042'))));
 for(const [query,names,level]of [

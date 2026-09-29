@@ -5,6 +5,16 @@ import { RetrievalError } from '../retrieval/contracts';
 import type { ResolverDomain, ResolverIntent } from './contracts';
 export type NumberAnchor = { domain: 'quotes' | 'orders' | 'invoices'; number: string };
 export type Anchors = { numbers: NumberAnchor[]; customer?: string; component?: string; child?: string };
+/** Entity sources whose rows belong to the company workspace itself, not to a
+ * quote/order/invoice parent. A customer/job qualifier names a parent record
+ * (during draft creation it may not exist yet), never a row filter on these
+ * sources: they stay queryable standalone (owner evidence 2026-09-29 18:49 UTC —
+ * mid-creation component-price lookups were refused because the request carried
+ * the draft's customer name). RLS still scopes every row to the company. */
+export const COMPANY_SCOPED_SOURCES = Object.freeze(['component_library', 'component_collections', 'catalogues', 'catalogue_rows'] as const);
+export function companyScoped(source: string): boolean {
+  return (COMPANY_SCOPED_SOURCES as readonly string[]).includes(source);
+}
 export function normalizeName(text: string): string {
   return text.normalize('NFKC').toLocaleLowerCase('en').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/\s+/g, ' ');
 }
@@ -120,6 +130,11 @@ export function constrainPlan(raw: unknown, anchors: Anchors): unknown {
       filters.push({ field: 'customer_name', op: 'words', value: text });
       if (i >= 0) related[i] = { ...q, filters }; else related.push({ ...q, filters });
       plan.related = related;
+    } else if (companyScoped(source)) {
+      // Company-scoped library/catalogue rows have no customer dimension and no
+      // parent to resolve yet (draft creation composes one). The qualifier is
+      // simply not applicable here; the plan proceeds unchanged rather than
+      // refusing the read (RLS still bounds rows to this company).
     } else conflict('This source cannot preserve the explicit customer qualifier. Resolve the named parent first.');
   }
   if (anchors.component && source === 'quotes') {
