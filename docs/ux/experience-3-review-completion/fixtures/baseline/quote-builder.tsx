@@ -25,7 +25,6 @@ import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentR
 // QuoteDetailsForm + convertQuoteMeasurementSystem).
 import { QuoteNameEditor } from './QuoteNameEditor';
 import { ConfirmQuoteButton } from './ConfirmQuoteButton';
-import type { ReviewMarginResult } from '@/app/components/quote-entry/reviewCompletion';
 import { CurrencySelector } from './CurrencySelector';
 import { FilesManager } from './FilesManager';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
@@ -118,7 +117,6 @@ export function QuoteBuilder({
   // Use external phase if provided, otherwise use internal
   const phase = externalPhase ?? internalPhase;
   const setPhase = (newPhase: Phase) => {
-    if (reviewCompleting) return;
     if (onPhaseChange) {
       onPhaseChange(newPhase);
     } else {
@@ -145,8 +143,6 @@ export function QuoteBuilder({
     (quote.labor_margin_percent ?? 0).toString()
   );
   const [marginSaving, setMarginSaving] = useState(false);
-  const [reviewCompleting, setReviewCompleting] = useState(false);
-  const marginSectionRef = useRef<HTMLDivElement>(null);
   
   const [roofAreas, setRoofAreas] = useState(initialRoofAreas);
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
@@ -543,7 +539,7 @@ export function QuoteBuilder({
     { key: 'areas', label: tradeLabels.builderStepLabel, description: 'Define your areas' },
     { key: 'components', label: 'Components', description: 'Measurements and pricing' },
     { key: 'extras', label: 'Extras', description: 'Other items and services' },
-    { key: 'review', label: 'Review', description: 'Margins and next steps' },
+    { key: 'review', label: 'Review', description: 'Margins and confirmation' },
   ];
   const phaseHelp: Record<Phase, string> = {
     areas: tradeLabels.areaIsOptional
@@ -551,22 +547,25 @@ export function QuoteBuilder({
       : 'Group measurements in areas, or continue to Components to enter a total area, length or quantity directly.',
     components: 'Choose your Smart Components, then add or check their measurements.',
     extras: 'Add saved extras for the other items and services this quote needs.',
-    review: 'Check the quantities, costs and margins, then prepare the customer quote or return to Job Space.',
+    review: 'Check the quantities, costs and margins before confirming your quote.',
   };
 
-  // Existing validation, update payload and calculation semantics are unchanged.
-  // Report the result to Review completion so a failed save is not silent.
-  // Continuing with the last saved margins remains an explicit non-blocking option.
-  const handleSaveMargins = async (): Promise<ReviewMarginResult> => {
+  // AGENT-TODO: Preserve the existing save/confirm contract in this UX pass.
+  // Gavin must review failure propagation before release: ConfirmQuoteButton
+  // currently continues after validation or a failed margin save (see RETURN_NOTES).
+  // Save margin settings
+  const handleSaveMargins = async () => {
     const matPercent = parseFloat(materialMarginPercent);
     const labPercent = parseFloat(laborMarginPercent);
 
     if (isNaN(matPercent) || matPercent < 0 || matPercent > 100) {
-      return { status: 'not-saved', message: 'Item Cost margin must be between 0 and 100%.' };
+      await notify('Item Cost margin must be between 0 and 100%');
+      return;
     }
 
     if (isNaN(labPercent) || labPercent < 0 || labPercent > 100) {
-      return { status: 'not-saved', message: 'Labour margin must be between 0 and 100%.' };
+      await notify('Labor margin must be between 0 and 100%');
+      return;
     }
 
     setMarginSaving(true);
@@ -586,10 +585,9 @@ export function QuoteBuilder({
         material_margin_enabled: materialMarginEnabled,
         labor_margin_enabled: laborMarginEnabled,
       });
-      return { status: 'saved' };
     } catch (err) {
       console.error('Failed to save margins:', err);
-      return { status: 'not-saved', message: 'The margin changes could not be saved. Check your connection and try again.' };
+      await notify('Failed to save margins. Please try again.');
     } finally {
       setMarginSaving(false);
     }
@@ -669,7 +667,7 @@ export function QuoteBuilder({
 
       </div>
 
-      <QcWorkflowStepper steps={phases.map(step => ({ ...step, disabled: reviewCompleting }))} current={phase} onSelect={setPhase} />
+      <QcWorkflowStepper steps={phases} current={phase} onSelect={setPhase} />
 
       <div className="qb-work-grid">
         {phase !== 'review' && (
@@ -684,7 +682,7 @@ export function QuoteBuilder({
               ]}
               totalLabel="Quote total"
               total={formatCurrency(totals.grandTotal, effectiveCurrency)}
-              note="Uses the saved margin settings. Check margins in Review before continuing."
+              note="Uses the saved margin settings. Check margins in Review before confirming."
             />
           </aside>
         )}
@@ -1021,13 +1019,13 @@ export function QuoteBuilder({
 
           <div className="qb-review-grid">
           {/* Profit Margin Controls */}
-          <div ref={marginSectionRef} tabIndex={-1} aria-label="Profit margins" className="qc-surface qb-margins qb-stack" data-copilot="quote-margins">
+          <div className="qc-surface qb-margins qb-stack" data-copilot="quote-margins">
             <div>
               <h3 className="qb-group-title">Profit margins</h3>
-              <p className="qc-help">Adjust your margins here. Both completion options save these settings. You can also adjust margins in the customer quote editor.</p>
+              <p className="qc-help">Adjust your margins here. Changes are saved when you confirm this quote.</p>
             </div>
 
-            <fieldset disabled={reviewCompleting || marginSaving} className="qrc-margin-inputs grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4" aria-label="Margin settings">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {/* Material Margin */}
               <div className="qb-margin-field">
                 <label className="qc-check-label">
@@ -1095,7 +1093,7 @@ export function QuoteBuilder({
                   </p>
                 )}
               </div>
-            </fieldset>
+            </div>
 
             <div className="qc-notice">
               <p className="qc-help">
@@ -1106,7 +1104,7 @@ export function QuoteBuilder({
 
           <div className="qc-surface qb-review-totals">
             <h3 className="qb-group-title">Quote breakdown</h3>
-            <p className="qc-help">Margin previews reflect your entries. Tax and grand total below use saved margins until you save this pricing.</p>
+            <p className="qc-help">Margin previews reflect your entries. Tax and grand total below use saved margins until you confirm.</p>
             <div className="flex justify-between text-sm">
               <span>Total Item Cost</span>
               <span>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span>
@@ -1159,24 +1157,22 @@ export function QuoteBuilder({
           </div>
           </div>
           <p className="qc-help">A dot marks a value overridden from its template default.</p>
-          {/* Both completion choices retain the existing no-area/no-component policy. */}
-          <ConfirmQuoteButton
-            key={quote.id}
-            quoteId={quote.id}
-            workspaceSlug={workspaceSlug}
-            quoteStatus={quote.status}
-            onBeforeSubmit={handleSaveMargins}
-            onPendingChange={setReviewCompleting}
-            onConfirmed={() => setQuote(current => ({ ...current, status: 'confirmed' }))}
-            onReviewMargins={() => {
-              marginSectionRef.current?.focus({ preventScroll: true });
-              marginSectionRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-            }}
-          />
           <div className="qb-step-actions">
-            <QcButton onClick={() => setPhase('extras')} variant="ghost" disabled={reviewCompleting}>
+            <QcButton
+              onClick={() => setPhase('extras')}
+              variant="ghost"
+            >
               ← Back to Extras
             </QcButton>
+            {/* Guard removed per Shaun: areas are optional for generic quotes
+                and the roofing guard was more friction than value. Just show
+                the ConfirmQuoteButton directly. */}
+            <ConfirmQuoteButton
+              quoteId={quote.id}
+              workspaceSlug={workspaceSlug}
+              quoteStatus={quote.status}
+              onBeforeSubmit={handleSaveMargins}
+            />
           </div>
         </div>
       )}
