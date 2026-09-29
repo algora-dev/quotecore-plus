@@ -1,0 +1,4680 @@
+{
+  "runtime": "actual React 18.2.0 (installed offline JupyterLab runtime)",
+  "chromium": "144.0.7559.96",
+  "checks": 121,
+  "passed": 121,
+  "failed": 0,
+  "results": [
+    {
+      "name": "small-phone/text: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 568,
+          "right": 320,
+          "bottom": 568
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 68,
+          "right": 320,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 320,
+          "h": 354.609375,
+          "right": 320,
+          "bottom": 422.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 498,
+          "w": 296,
+          "h": 60,
+          "right": 308,
+          "bottom": 558
+        },
+        "headerChildren": [
+          {
+            "x": 10,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 54,
+            "bottom": 55.5
+          },
+          {
+            "x": 60,
+            "y": 14.921875,
+            "w": 150,
+            "h": 37.140625,
+            "right": 210,
+            "bottom": 52.0625
+          },
+          {
+            "x": 216,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 260,
+            "bottom": 55.5
+          },
+          {
+            "x": 266,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 310,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "small-phone/text: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 568,
+          "right": 320,
+          "bottom": 568
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 68,
+          "right": 320,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 320,
+          "h": 354.609375,
+          "right": 320,
+          "bottom": 422.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 498,
+          "w": 296,
+          "h": 60,
+          "right": 308,
+          "bottom": 558
+        },
+        "headerChildren": [
+          {
+            "x": 10,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 54,
+            "bottom": 55.5
+          },
+          {
+            "x": 60,
+            "y": 14.921875,
+            "w": 150,
+            "h": 37.140625,
+            "right": 210,
+            "bottom": 52.0625
+          },
+          {
+            "x": 216,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 260,
+            "bottom": 55.5
+          },
+          {
+            "x": 266,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 310,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "small-phone/text: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 568,
+          "right": 320,
+          "bottom": 568
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 68,
+          "right": 320,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 320,
+          "h": 354.609375,
+          "right": 320,
+          "bottom": 422.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 498,
+          "w": 296,
+          "h": 60,
+          "right": 308,
+          "bottom": 558
+        },
+        "headerChildren": [
+          {
+            "x": 10,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 54,
+            "bottom": 55.5
+          },
+          {
+            "x": 60,
+            "y": 14.921875,
+            "w": 150,
+            "h": 37.140625,
+            "right": 210,
+            "bottom": 52.0625
+          },
+          {
+            "x": 216,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 260,
+            "bottom": 55.5
+          },
+          {
+            "x": 266,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 310,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "small-phone/text: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 568,
+          "right": 320,
+          "bottom": 568
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 68,
+          "right": 320,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 320,
+          "h": 354.609375,
+          "right": 320,
+          "bottom": 422.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 498,
+          "w": 296,
+          "h": 60,
+          "right": 308,
+          "bottom": 558
+        },
+        "headerChildren": [
+          {
+            "x": 10,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 54,
+            "bottom": 55.5
+          },
+          {
+            "x": 60,
+            "y": 14.921875,
+            "w": 150,
+            "h": 37.140625,
+            "right": 210,
+            "bottom": 52.0625
+          },
+          {
+            "x": 216,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 260,
+            "bottom": 55.5
+          },
+          {
+            "x": 266,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 310,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "small-phone/text: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "small-phone/voice: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 568,
+          "right": 320,
+          "bottom": 568
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 68,
+          "right": 320,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 320,
+          "h": 333,
+          "right": 320,
+          "bottom": 401
+        },
+        "dock": {
+          "x": 12,
+          "y": 498,
+          "w": 296,
+          "h": 60,
+          "right": 308,
+          "bottom": 558
+        },
+        "headerChildren": [
+          {
+            "x": 10,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 54,
+            "bottom": 55.5
+          },
+          {
+            "x": 60,
+            "y": 14.921875,
+            "w": 150,
+            "h": 37.140625,
+            "right": 210,
+            "bottom": 52.0625
+          },
+          {
+            "x": 216,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 260,
+            "bottom": 55.5
+          },
+          {
+            "x": 266,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 310,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "small-phone/voice: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 568,
+          "right": 320,
+          "bottom": 568
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 68,
+          "right": 320,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 320,
+          "h": 333,
+          "right": 320,
+          "bottom": 401
+        },
+        "dock": {
+          "x": 12,
+          "y": 498,
+          "w": 296,
+          "h": 60,
+          "right": 308,
+          "bottom": 558
+        },
+        "headerChildren": [
+          {
+            "x": 10,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 54,
+            "bottom": 55.5
+          },
+          {
+            "x": 60,
+            "y": 14.921875,
+            "w": 150,
+            "h": 37.140625,
+            "right": 210,
+            "bottom": 52.0625
+          },
+          {
+            "x": 216,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 260,
+            "bottom": 55.5
+          },
+          {
+            "x": 266,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 310,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "small-phone/voice: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 568,
+          "right": 320,
+          "bottom": 568
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 68,
+          "right": 320,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 320,
+          "h": 333,
+          "right": 320,
+          "bottom": 401
+        },
+        "dock": {
+          "x": 12,
+          "y": 498,
+          "w": 296,
+          "h": 60,
+          "right": 308,
+          "bottom": 558
+        },
+        "headerChildren": [
+          {
+            "x": 10,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 54,
+            "bottom": 55.5
+          },
+          {
+            "x": 60,
+            "y": 14.921875,
+            "w": 150,
+            "h": 37.140625,
+            "right": 210,
+            "bottom": 52.0625
+          },
+          {
+            "x": 216,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 260,
+            "bottom": 55.5
+          },
+          {
+            "x": 266,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 310,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "small-phone/voice: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 568,
+          "right": 320,
+          "bottom": 568
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 68,
+          "right": 320,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 320,
+          "h": 333,
+          "right": 320,
+          "bottom": 401
+        },
+        "dock": {
+          "x": 12,
+          "y": 498,
+          "w": 296,
+          "h": 60,
+          "right": 308,
+          "bottom": 558
+        },
+        "headerChildren": [
+          {
+            "x": 10,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 54,
+            "bottom": 55.5
+          },
+          {
+            "x": 60,
+            "y": 14.921875,
+            "w": 150,
+            "h": 37.140625,
+            "right": 210,
+            "bottom": 52.0625
+          },
+          {
+            "x": 216,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 260,
+            "bottom": 55.5
+          },
+          {
+            "x": 266,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 310,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "small-phone/voice: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "phone-360/text: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 640,
+          "right": 360,
+          "bottom": 640
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 68,
+          "right": 360,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 360,
+          "h": 426.609375,
+          "right": 360,
+          "bottom": 494.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 570,
+          "w": 336,
+          "h": 60,
+          "right": 348,
+          "bottom": 630
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 162,
+            "h": 39.640625,
+            "right": 230,
+            "bottom": 53.3125
+          },
+          {
+            "x": 240,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 284,
+            "bottom": 55.5
+          },
+          {
+            "x": 294,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 346,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone-360/text: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 640,
+          "right": 360,
+          "bottom": 640
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 68,
+          "right": 360,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 360,
+          "h": 426.609375,
+          "right": 360,
+          "bottom": 494.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 570,
+          "w": 336,
+          "h": 60,
+          "right": 348,
+          "bottom": 630
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 162,
+            "h": 39.640625,
+            "right": 230,
+            "bottom": 53.3125
+          },
+          {
+            "x": 240,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 284,
+            "bottom": 55.5
+          },
+          {
+            "x": 294,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 346,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone-360/text: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 640,
+          "right": 360,
+          "bottom": 640
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 68,
+          "right": 360,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 360,
+          "h": 426.609375,
+          "right": 360,
+          "bottom": 494.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 570,
+          "w": 336,
+          "h": 60,
+          "right": 348,
+          "bottom": 630
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 162,
+            "h": 39.640625,
+            "right": 230,
+            "bottom": 53.3125
+          },
+          {
+            "x": 240,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 284,
+            "bottom": 55.5
+          },
+          {
+            "x": 294,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 346,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone-360/text: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 640,
+          "right": 360,
+          "bottom": 640
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 68,
+          "right": 360,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 360,
+          "h": 426.609375,
+          "right": 360,
+          "bottom": 494.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 570,
+          "w": 336,
+          "h": 60,
+          "right": 348,
+          "bottom": 630
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 162,
+            "h": 39.640625,
+            "right": 230,
+            "bottom": 53.3125
+          },
+          {
+            "x": 240,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 284,
+            "bottom": 55.5
+          },
+          {
+            "x": 294,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 346,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone-360/text: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "phone-360/voice: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 640,
+          "right": 360,
+          "bottom": 640
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 68,
+          "right": 360,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 360,
+          "h": 405,
+          "right": 360,
+          "bottom": 473
+        },
+        "dock": {
+          "x": 12,
+          "y": 570,
+          "w": 336,
+          "h": 60,
+          "right": 348,
+          "bottom": 630
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 162,
+            "h": 39.640625,
+            "right": 230,
+            "bottom": 53.3125
+          },
+          {
+            "x": 240,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 284,
+            "bottom": 55.5
+          },
+          {
+            "x": 294,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 346,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone-360/voice: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 640,
+          "right": 360,
+          "bottom": 640
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 68,
+          "right": 360,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 360,
+          "h": 405,
+          "right": 360,
+          "bottom": 473
+        },
+        "dock": {
+          "x": 12,
+          "y": 570,
+          "w": 336,
+          "h": 60,
+          "right": 348,
+          "bottom": 630
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 162,
+            "h": 39.640625,
+            "right": 230,
+            "bottom": 53.3125
+          },
+          {
+            "x": 240,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 284,
+            "bottom": 55.5
+          },
+          {
+            "x": 294,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 346,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone-360/voice: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 640,
+          "right": 360,
+          "bottom": 640
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 68,
+          "right": 360,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 360,
+          "h": 405,
+          "right": 360,
+          "bottom": 473
+        },
+        "dock": {
+          "x": 12,
+          "y": 570,
+          "w": 336,
+          "h": 60,
+          "right": 348,
+          "bottom": 630
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 162,
+            "h": 39.640625,
+            "right": 230,
+            "bottom": 53.3125
+          },
+          {
+            "x": 240,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 284,
+            "bottom": 55.5
+          },
+          {
+            "x": 294,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 346,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone-360/voice: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 640,
+          "right": 360,
+          "bottom": 640
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 360,
+          "h": 68,
+          "right": 360,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 360,
+          "h": 405,
+          "right": 360,
+          "bottom": 473
+        },
+        "dock": {
+          "x": 12,
+          "y": 570,
+          "w": 336,
+          "h": 60,
+          "right": 348,
+          "bottom": 630
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 162,
+            "h": 39.640625,
+            "right": 230,
+            "bottom": 53.3125
+          },
+          {
+            "x": 240,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 284,
+            "bottom": 55.5
+          },
+          {
+            "x": 294,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 346,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone-360/voice: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "phone/text: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 68,
+          "right": 390,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 390,
+          "h": 630.609375,
+          "right": 390,
+          "bottom": 698.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 774,
+          "w": 366,
+          "h": 60,
+          "right": 378,
+          "bottom": 834
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 192,
+            "h": 39.640625,
+            "right": 260,
+            "bottom": 53.3125
+          },
+          {
+            "x": 270,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 314,
+            "bottom": 55.5
+          },
+          {
+            "x": 324,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 376,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone/text: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 68,
+          "right": 390,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 390,
+          "h": 630.609375,
+          "right": 390,
+          "bottom": 698.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 774,
+          "w": 366,
+          "h": 60,
+          "right": 378,
+          "bottom": 834
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 192,
+            "h": 39.640625,
+            "right": 260,
+            "bottom": 53.3125
+          },
+          {
+            "x": 270,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 314,
+            "bottom": 55.5
+          },
+          {
+            "x": 324,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 376,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone/text: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 68,
+          "right": 390,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 390,
+          "h": 630.609375,
+          "right": 390,
+          "bottom": 698.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 774,
+          "w": 366,
+          "h": 60,
+          "right": 378,
+          "bottom": 834
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 192,
+            "h": 39.640625,
+            "right": 260,
+            "bottom": 53.3125
+          },
+          {
+            "x": 270,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 314,
+            "bottom": 55.5
+          },
+          {
+            "x": 324,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 376,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone/text: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 68,
+          "right": 390,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 390,
+          "h": 630.609375,
+          "right": 390,
+          "bottom": 698.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 774,
+          "w": 366,
+          "h": 60,
+          "right": 378,
+          "bottom": 834
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 192,
+            "h": 39.640625,
+            "right": 260,
+            "bottom": 53.3125
+          },
+          {
+            "x": 270,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 314,
+            "bottom": 55.5
+          },
+          {
+            "x": 324,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 376,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone/text: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "phone/voice: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 68,
+          "right": 390,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 390,
+          "h": 609,
+          "right": 390,
+          "bottom": 677
+        },
+        "dock": {
+          "x": 12,
+          "y": 774,
+          "w": 366,
+          "h": 60,
+          "right": 378,
+          "bottom": 834
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 192,
+            "h": 39.640625,
+            "right": 260,
+            "bottom": 53.3125
+          },
+          {
+            "x": 270,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 314,
+            "bottom": 55.5
+          },
+          {
+            "x": 324,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 376,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone/voice: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 68,
+          "right": 390,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 390,
+          "h": 609,
+          "right": 390,
+          "bottom": 677
+        },
+        "dock": {
+          "x": 12,
+          "y": 774,
+          "w": 366,
+          "h": 60,
+          "right": 378,
+          "bottom": 834
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 192,
+            "h": 39.640625,
+            "right": 260,
+            "bottom": 53.3125
+          },
+          {
+            "x": 270,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 314,
+            "bottom": 55.5
+          },
+          {
+            "x": 324,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 376,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone/voice: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 68,
+          "right": 390,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 390,
+          "h": 609,
+          "right": 390,
+          "bottom": 677
+        },
+        "dock": {
+          "x": 12,
+          "y": 774,
+          "w": 366,
+          "h": 60,
+          "right": 378,
+          "bottom": 834
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 192,
+            "h": 39.640625,
+            "right": 260,
+            "bottom": 53.3125
+          },
+          {
+            "x": 270,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 314,
+            "bottom": 55.5
+          },
+          {
+            "x": 324,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 376,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone/voice: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 844,
+          "right": 390,
+          "bottom": 844
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 68,
+          "right": 390,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 390,
+          "h": 609,
+          "right": 390,
+          "bottom": 677
+        },
+        "dock": {
+          "x": 12,
+          "y": 774,
+          "w": 366,
+          "h": 60,
+          "right": 378,
+          "bottom": 834
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 192,
+            "h": 39.640625,
+            "right": 260,
+            "bottom": 53.3125
+          },
+          {
+            "x": 270,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 314,
+            "bottom": 55.5
+          },
+          {
+            "x": 324,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 376,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "phone/voice: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "large-phone/text: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 932,
+          "right": 430,
+          "bottom": 932
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 68,
+          "right": 430,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 430,
+          "h": 718.609375,
+          "right": 430,
+          "bottom": 786.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 862,
+          "w": 406,
+          "h": 60,
+          "right": 418,
+          "bottom": 922
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 232,
+            "h": 39.640625,
+            "right": 300,
+            "bottom": 53.3125
+          },
+          {
+            "x": 310,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 354,
+            "bottom": 55.5
+          },
+          {
+            "x": 364,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 416,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "large-phone/text: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 932,
+          "right": 430,
+          "bottom": 932
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 68,
+          "right": 430,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 430,
+          "h": 718.609375,
+          "right": 430,
+          "bottom": 786.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 862,
+          "w": 406,
+          "h": 60,
+          "right": 418,
+          "bottom": 922
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 232,
+            "h": 39.640625,
+            "right": 300,
+            "bottom": 53.3125
+          },
+          {
+            "x": 310,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 354,
+            "bottom": 55.5
+          },
+          {
+            "x": 364,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 416,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "large-phone/text: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 932,
+          "right": 430,
+          "bottom": 932
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 68,
+          "right": 430,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 430,
+          "h": 718.609375,
+          "right": 430,
+          "bottom": 786.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 862,
+          "w": 406,
+          "h": 60,
+          "right": 418,
+          "bottom": 922
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 232,
+            "h": 39.640625,
+            "right": 300,
+            "bottom": 53.3125
+          },
+          {
+            "x": 310,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 354,
+            "bottom": 55.5
+          },
+          {
+            "x": 364,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 416,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "large-phone/text: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 932,
+          "right": 430,
+          "bottom": 932
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 68,
+          "right": 430,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 430,
+          "h": 718.609375,
+          "right": 430,
+          "bottom": 786.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 862,
+          "w": 406,
+          "h": 60,
+          "right": 418,
+          "bottom": 922
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 232,
+            "h": 39.640625,
+            "right": 300,
+            "bottom": 53.3125
+          },
+          {
+            "x": 310,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 354,
+            "bottom": 55.5
+          },
+          {
+            "x": 364,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 416,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "large-phone/text: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "large-phone/voice: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 932,
+          "right": 430,
+          "bottom": 932
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 68,
+          "right": 430,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 430,
+          "h": 697,
+          "right": 430,
+          "bottom": 765
+        },
+        "dock": {
+          "x": 12,
+          "y": 862,
+          "w": 406,
+          "h": 60,
+          "right": 418,
+          "bottom": 922
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 232,
+            "h": 39.640625,
+            "right": 300,
+            "bottom": 53.3125
+          },
+          {
+            "x": 310,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 354,
+            "bottom": 55.5
+          },
+          {
+            "x": 364,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 416,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "large-phone/voice: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 932,
+          "right": 430,
+          "bottom": 932
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 68,
+          "right": 430,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 430,
+          "h": 697,
+          "right": 430,
+          "bottom": 765
+        },
+        "dock": {
+          "x": 12,
+          "y": 862,
+          "w": 406,
+          "h": 60,
+          "right": 418,
+          "bottom": 922
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 232,
+            "h": 39.640625,
+            "right": 300,
+            "bottom": 53.3125
+          },
+          {
+            "x": 310,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 354,
+            "bottom": 55.5
+          },
+          {
+            "x": 364,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 416,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "large-phone/voice: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 932,
+          "right": 430,
+          "bottom": 932
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 68,
+          "right": 430,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 430,
+          "h": 697,
+          "right": 430,
+          "bottom": 765
+        },
+        "dock": {
+          "x": 12,
+          "y": 862,
+          "w": 406,
+          "h": 60,
+          "right": 418,
+          "bottom": 922
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 232,
+            "h": 39.640625,
+            "right": 300,
+            "bottom": 53.3125
+          },
+          {
+            "x": 310,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 354,
+            "bottom": 55.5
+          },
+          {
+            "x": 364,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 416,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "large-phone/voice: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 932,
+          "right": 430,
+          "bottom": 932
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 430,
+          "h": 68,
+          "right": 430,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 430,
+          "h": 697,
+          "right": 430,
+          "bottom": 765
+        },
+        "dock": {
+          "x": 12,
+          "y": 862,
+          "w": 406,
+          "h": 60,
+          "right": 418,
+          "bottom": 922
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 232,
+            "h": 39.640625,
+            "right": 300,
+            "bottom": 53.3125
+          },
+          {
+            "x": 310,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 354,
+            "bottom": 55.5
+          },
+          {
+            "x": 364,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 416,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "large-phone/voice: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "tablet/text: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 1024,
+          "right": 768,
+          "bottom": 1024
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 68,
+          "right": 768,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 768,
+          "h": 794.609375,
+          "right": 768,
+          "bottom": 862.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 938,
+          "w": 744,
+          "h": 60,
+          "right": 756,
+          "bottom": 998
+        },
+        "headerChildren": [
+          {
+            "x": 24,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 68,
+            "bottom": 55.5
+          },
+          {
+            "x": 78,
+            "y": 13.671875,
+            "w": 550,
+            "h": 39.640625,
+            "right": 628,
+            "bottom": 53.3125
+          },
+          {
+            "x": 638,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 682,
+            "bottom": 55.5
+          },
+          {
+            "x": 692,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 744,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "tablet/text: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 1024,
+          "right": 768,
+          "bottom": 1024
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 68,
+          "right": 768,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 768,
+          "h": 794.609375,
+          "right": 768,
+          "bottom": 862.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 938,
+          "w": 744,
+          "h": 60,
+          "right": 756,
+          "bottom": 998
+        },
+        "headerChildren": [
+          {
+            "x": 24,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 68,
+            "bottom": 55.5
+          },
+          {
+            "x": 78,
+            "y": 13.671875,
+            "w": 550,
+            "h": 39.640625,
+            "right": 628,
+            "bottom": 53.3125
+          },
+          {
+            "x": 638,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 682,
+            "bottom": 55.5
+          },
+          {
+            "x": 692,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 744,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "tablet/text: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 1024,
+          "right": 768,
+          "bottom": 1024
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 68,
+          "right": 768,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 768,
+          "h": 794.609375,
+          "right": 768,
+          "bottom": 862.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 938,
+          "w": 744,
+          "h": 60,
+          "right": 756,
+          "bottom": 998
+        },
+        "headerChildren": [
+          {
+            "x": 24,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 68,
+            "bottom": 55.5
+          },
+          {
+            "x": 78,
+            "y": 13.671875,
+            "w": 550,
+            "h": 39.640625,
+            "right": 628,
+            "bottom": 53.3125
+          },
+          {
+            "x": 638,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 682,
+            "bottom": 55.5
+          },
+          {
+            "x": 692,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 744,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "tablet/text: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 1024,
+          "right": 768,
+          "bottom": 1024
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 68,
+          "right": 768,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 768,
+          "h": 794.609375,
+          "right": 768,
+          "bottom": 862.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 938,
+          "w": 744,
+          "h": 60,
+          "right": 756,
+          "bottom": 998
+        },
+        "headerChildren": [
+          {
+            "x": 24,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 68,
+            "bottom": 55.5
+          },
+          {
+            "x": 78,
+            "y": 13.671875,
+            "w": 550,
+            "h": 39.640625,
+            "right": 628,
+            "bottom": 53.3125
+          },
+          {
+            "x": 638,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 682,
+            "bottom": 55.5
+          },
+          {
+            "x": 692,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 744,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "tablet/text: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "tablet/voice: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 1024,
+          "right": 768,
+          "bottom": 1024
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 68,
+          "right": 768,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 768,
+          "h": 773,
+          "right": 768,
+          "bottom": 841
+        },
+        "dock": {
+          "x": 12,
+          "y": 938,
+          "w": 744,
+          "h": 60,
+          "right": 756,
+          "bottom": 998
+        },
+        "headerChildren": [
+          {
+            "x": 24,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 68,
+            "bottom": 55.5
+          },
+          {
+            "x": 78,
+            "y": 13.671875,
+            "w": 550,
+            "h": 39.640625,
+            "right": 628,
+            "bottom": 53.3125
+          },
+          {
+            "x": 638,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 682,
+            "bottom": 55.5
+          },
+          {
+            "x": 692,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 744,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "tablet/voice: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 1024,
+          "right": 768,
+          "bottom": 1024
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 68,
+          "right": 768,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 768,
+          "h": 773,
+          "right": 768,
+          "bottom": 841
+        },
+        "dock": {
+          "x": 12,
+          "y": 938,
+          "w": 744,
+          "h": 60,
+          "right": 756,
+          "bottom": 998
+        },
+        "headerChildren": [
+          {
+            "x": 24,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 68,
+            "bottom": 55.5
+          },
+          {
+            "x": 78,
+            "y": 13.671875,
+            "w": 550,
+            "h": 39.640625,
+            "right": 628,
+            "bottom": 53.3125
+          },
+          {
+            "x": 638,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 682,
+            "bottom": 55.5
+          },
+          {
+            "x": 692,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 744,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "tablet/voice: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 1024,
+          "right": 768,
+          "bottom": 1024
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 68,
+          "right": 768,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 768,
+          "h": 773,
+          "right": 768,
+          "bottom": 841
+        },
+        "dock": {
+          "x": 12,
+          "y": 938,
+          "w": 744,
+          "h": 60,
+          "right": 756,
+          "bottom": 998
+        },
+        "headerChildren": [
+          {
+            "x": 24,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 68,
+            "bottom": 55.5
+          },
+          {
+            "x": 78,
+            "y": 13.671875,
+            "w": 550,
+            "h": 39.640625,
+            "right": 628,
+            "bottom": 53.3125
+          },
+          {
+            "x": 638,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 682,
+            "bottom": 55.5
+          },
+          {
+            "x": 692,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 744,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "tablet/voice: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 1024,
+          "right": 768,
+          "bottom": 1024
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 68,
+          "right": 768,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 768,
+          "h": 773,
+          "right": 768,
+          "bottom": 841
+        },
+        "dock": {
+          "x": 12,
+          "y": 938,
+          "w": 744,
+          "h": 60,
+          "right": 756,
+          "bottom": 998
+        },
+        "headerChildren": [
+          {
+            "x": 24,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 68,
+            "bottom": 55.5
+          },
+          {
+            "x": 78,
+            "y": 13.671875,
+            "w": 550,
+            "h": 39.640625,
+            "right": 628,
+            "bottom": 53.3125
+          },
+          {
+            "x": 638,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 682,
+            "bottom": 55.5
+          },
+          {
+            "x": 692,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 744,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "tablet/voice: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "desktop/text: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 900,
+          "right": 1440,
+          "bottom": 900
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 68,
+          "right": 1440,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 1440,
+          "h": 670.609375,
+          "right": 1440,
+          "bottom": 738.609375
+        },
+        "dock": {
+          "x": 342,
+          "y": 814,
+          "w": 756,
+          "h": 60,
+          "right": 1098,
+          "bottom": 874
+        },
+        "headerChildren": [
+          {
+            "x": 330,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 374,
+            "bottom": 55.5
+          },
+          {
+            "x": 384,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 994,
+            "bottom": 53.3125
+          },
+          {
+            "x": 1004,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 1048,
+            "bottom": 55.5
+          },
+          {
+            "x": 1058,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 1110,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "desktop/text: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 900,
+          "right": 1440,
+          "bottom": 900
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 68,
+          "right": 1440,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 1440,
+          "h": 670.609375,
+          "right": 1440,
+          "bottom": 738.609375
+        },
+        "dock": {
+          "x": 342,
+          "y": 814,
+          "w": 756,
+          "h": 60,
+          "right": 1098,
+          "bottom": 874
+        },
+        "headerChildren": [
+          {
+            "x": 330,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 374,
+            "bottom": 55.5
+          },
+          {
+            "x": 384,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 994,
+            "bottom": 53.3125
+          },
+          {
+            "x": 1004,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 1048,
+            "bottom": 55.5
+          },
+          {
+            "x": 1058,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 1110,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "desktop/text: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 900,
+          "right": 1440,
+          "bottom": 900
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 68,
+          "right": 1440,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 1440,
+          "h": 670.609375,
+          "right": 1440,
+          "bottom": 738.609375
+        },
+        "dock": {
+          "x": 342,
+          "y": 814,
+          "w": 756,
+          "h": 60,
+          "right": 1098,
+          "bottom": 874
+        },
+        "headerChildren": [
+          {
+            "x": 330,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 374,
+            "bottom": 55.5
+          },
+          {
+            "x": 384,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 994,
+            "bottom": 53.3125
+          },
+          {
+            "x": 1004,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 1048,
+            "bottom": 55.5
+          },
+          {
+            "x": 1058,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 1110,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "desktop/text: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 900,
+          "right": 1440,
+          "bottom": 900
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 68,
+          "right": 1440,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 1440,
+          "h": 670.609375,
+          "right": 1440,
+          "bottom": 738.609375
+        },
+        "dock": {
+          "x": 342,
+          "y": 814,
+          "w": 756,
+          "h": 60,
+          "right": 1098,
+          "bottom": 874
+        },
+        "headerChildren": [
+          {
+            "x": 330,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 374,
+            "bottom": 55.5
+          },
+          {
+            "x": 384,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 994,
+            "bottom": 53.3125
+          },
+          {
+            "x": 1004,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 1048,
+            "bottom": 55.5
+          },
+          {
+            "x": 1058,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 1110,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "desktop/text: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "desktop/voice: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 900,
+          "right": 1440,
+          "bottom": 900
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 68,
+          "right": 1440,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 1440,
+          "h": 649,
+          "right": 1440,
+          "bottom": 717
+        },
+        "dock": {
+          "x": 342,
+          "y": 814,
+          "w": 756,
+          "h": 60,
+          "right": 1098,
+          "bottom": 874
+        },
+        "headerChildren": [
+          {
+            "x": 330,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 374,
+            "bottom": 55.5
+          },
+          {
+            "x": 384,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 994,
+            "bottom": 53.3125
+          },
+          {
+            "x": 1004,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 1048,
+            "bottom": 55.5
+          },
+          {
+            "x": 1058,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 1110,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "desktop/voice: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 900,
+          "right": 1440,
+          "bottom": 900
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 68,
+          "right": 1440,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 1440,
+          "h": 649,
+          "right": 1440,
+          "bottom": 717
+        },
+        "dock": {
+          "x": 342,
+          "y": 814,
+          "w": 756,
+          "h": 60,
+          "right": 1098,
+          "bottom": 874
+        },
+        "headerChildren": [
+          {
+            "x": 330,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 374,
+            "bottom": 55.5
+          },
+          {
+            "x": 384,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 994,
+            "bottom": 53.3125
+          },
+          {
+            "x": 1004,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 1048,
+            "bottom": 55.5
+          },
+          {
+            "x": 1058,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 1110,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "desktop/voice: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 900,
+          "right": 1440,
+          "bottom": 900
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 68,
+          "right": 1440,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 1440,
+          "h": 649,
+          "right": 1440,
+          "bottom": 717
+        },
+        "dock": {
+          "x": 342,
+          "y": 814,
+          "w": 756,
+          "h": 60,
+          "right": 1098,
+          "bottom": 874
+        },
+        "headerChildren": [
+          {
+            "x": 330,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 374,
+            "bottom": 55.5
+          },
+          {
+            "x": 384,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 994,
+            "bottom": 53.3125
+          },
+          {
+            "x": 1004,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 1048,
+            "bottom": 55.5
+          },
+          {
+            "x": 1058,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 1110,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "desktop/voice: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 900,
+          "right": 1440,
+          "bottom": 900
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 68,
+          "right": 1440,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 1440,
+          "h": 649,
+          "right": 1440,
+          "bottom": 717
+        },
+        "dock": {
+          "x": 342,
+          "y": 814,
+          "w": 756,
+          "h": 60,
+          "right": 1098,
+          "bottom": 874
+        },
+        "headerChildren": [
+          {
+            "x": 330,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 374,
+            "bottom": 55.5
+          },
+          {
+            "x": 384,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 994,
+            "bottom": 53.3125
+          },
+          {
+            "x": 1004,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 1048,
+            "bottom": 55.5
+          },
+          {
+            "x": 1058,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 1110,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "desktop/voice: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "landscape/text: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 390,
+          "right": 844,
+          "bottom": 390
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 68,
+          "right": 844,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 844,
+          "h": 192.609375,
+          "right": 844,
+          "bottom": 260.609375
+        },
+        "dock": {
+          "x": 44,
+          "y": 336,
+          "w": 756,
+          "h": 44,
+          "right": 800,
+          "bottom": 380
+        },
+        "headerChildren": [
+          {
+            "x": 32,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 76,
+            "bottom": 55.5
+          },
+          {
+            "x": 86,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 696,
+            "bottom": 53.3125
+          },
+          {
+            "x": 706,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 750,
+            "bottom": 55.5
+          },
+          {
+            "x": 760,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 812,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "landscape/text: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 390,
+          "right": 844,
+          "bottom": 390
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 68,
+          "right": 844,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 844,
+          "h": 192.609375,
+          "right": 844,
+          "bottom": 260.609375
+        },
+        "dock": {
+          "x": 44,
+          "y": 336,
+          "w": 756,
+          "h": 44,
+          "right": 800,
+          "bottom": 380
+        },
+        "headerChildren": [
+          {
+            "x": 32,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 76,
+            "bottom": 55.5
+          },
+          {
+            "x": 86,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 696,
+            "bottom": 53.3125
+          },
+          {
+            "x": 706,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 750,
+            "bottom": 55.5
+          },
+          {
+            "x": 760,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 812,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "landscape/text: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 390,
+          "right": 844,
+          "bottom": 390
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 68,
+          "right": 844,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 844,
+          "h": 192.609375,
+          "right": 844,
+          "bottom": 260.609375
+        },
+        "dock": {
+          "x": 44,
+          "y": 336,
+          "w": 756,
+          "h": 44,
+          "right": 800,
+          "bottom": 380
+        },
+        "headerChildren": [
+          {
+            "x": 32,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 76,
+            "bottom": 55.5
+          },
+          {
+            "x": 86,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 696,
+            "bottom": 53.3125
+          },
+          {
+            "x": 706,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 750,
+            "bottom": 55.5
+          },
+          {
+            "x": 760,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 812,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "landscape/text: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 390,
+          "right": 844,
+          "bottom": 390
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 68,
+          "right": 844,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 844,
+          "h": 192.609375,
+          "right": 844,
+          "bottom": 260.609375
+        },
+        "dock": {
+          "x": 44,
+          "y": 336,
+          "w": 756,
+          "h": 44,
+          "right": 800,
+          "bottom": 380
+        },
+        "headerChildren": [
+          {
+            "x": 32,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 76,
+            "bottom": 55.5
+          },
+          {
+            "x": 86,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 696,
+            "bottom": 53.3125
+          },
+          {
+            "x": 706,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 750,
+            "bottom": 55.5
+          },
+          {
+            "x": 760,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 812,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "landscape/text: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "landscape/voice: header stays one row",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 390,
+          "right": 844,
+          "bottom": 390
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 68,
+          "right": 844,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 844,
+          "h": 171,
+          "right": 844,
+          "bottom": 239
+        },
+        "dock": {
+          "x": 44,
+          "y": 336,
+          "w": 756,
+          "h": 44,
+          "right": 800,
+          "bottom": 380
+        },
+        "headerChildren": [
+          {
+            "x": 32,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 76,
+            "bottom": 55.5
+          },
+          {
+            "x": 86,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 696,
+            "bottom": 53.3125
+          },
+          {
+            "x": 706,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 750,
+            "bottom": 55.5
+          },
+          {
+            "x": 760,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 812,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "landscape/voice: no horizontal overflow",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 390,
+          "right": 844,
+          "bottom": 390
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 68,
+          "right": 844,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 844,
+          "h": 171,
+          "right": 844,
+          "bottom": 239
+        },
+        "dock": {
+          "x": 44,
+          "y": 336,
+          "w": 756,
+          "h": 44,
+          "right": 800,
+          "bottom": 380
+        },
+        "headerChildren": [
+          {
+            "x": 32,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 76,
+            "bottom": 55.5
+          },
+          {
+            "x": 86,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 696,
+            "bottom": 53.3125
+          },
+          {
+            "x": 706,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 750,
+            "bottom": 55.5
+          },
+          {
+            "x": 760,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 812,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "landscape/voice: controls fit the viewport",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 390,
+          "right": 844,
+          "bottom": 390
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 68,
+          "right": 844,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 844,
+          "h": 171,
+          "right": 844,
+          "bottom": 239
+        },
+        "dock": {
+          "x": 44,
+          "y": 336,
+          "w": 756,
+          "h": 44,
+          "right": 800,
+          "bottom": 380
+        },
+        "headerChildren": [
+          {
+            "x": 32,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 76,
+            "bottom": 55.5
+          },
+          {
+            "x": 86,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 696,
+            "bottom": 53.3125
+          },
+          {
+            "x": 706,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 750,
+            "bottom": 55.5
+          },
+          {
+            "x": 760,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 812,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "landscape/voice: conversation gets majority of usable height",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 390,
+          "right": 844,
+          "bottom": 390
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 844,
+          "h": 68,
+          "right": 844,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 844,
+          "h": 171,
+          "right": 844,
+          "bottom": 239
+        },
+        "dock": {
+          "x": 44,
+          "y": 336,
+          "w": 756,
+          "h": 44,
+          "right": 800,
+          "bottom": 380
+        },
+        "headerChildren": [
+          {
+            "x": 32,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 76,
+            "bottom": 55.5
+          },
+          {
+            "x": 86,
+            "y": 13.671875,
+            "w": 610,
+            "h": 39.640625,
+            "right": 696,
+            "bottom": 53.3125
+          },
+          {
+            "x": 706,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 750,
+            "bottom": 55.5
+          },
+          {
+            "x": 760,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 812,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "landscape/voice: exactly one input mode selected",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Type idle send disabled",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Typed message reaches existing turn endpoint unchanged",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Typed send keeps clientRequestId",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Tap starts microphone without submitting a turn",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Recording label is visible",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Waveform reflects nonzero simulated amplitude",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Silence becomes dots, not decorative motion",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Finish transcribes once",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Transcript review does not auto-send",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Transcript has explicit Send",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Transcript becomes the normal text turn",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Capture tracks stop after finish",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Cancel records no transcription or turn",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Cancel releases microphone tracks",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Press/hold/release goes to transcript review",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Permission failure remains visible",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Mic failure never disables typing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Enabling speech does not replay history",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "New completed answer can speak",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Text remains visible during speech",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Pause/resume/stop never submits a task",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Stopped speech does not restart on render",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Attachment opens a dialog sheet",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Attachment does not become a third selected input mode",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Background assistant is inert while sheet is open",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Escape closes sheet, not assistant",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Closing sheet restores focus to Attach",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "File preview is explicitly not uploaded",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Sending unsupported attachments is blocked, not fake metadata",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Removing preview restores send",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Confirm retains action proof/version/company payload",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Candidate selection uses existing encoded turn, not action confirmation",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Stale resolver buttons remain disabled",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Done uses task metadata, never actions endpoint",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "One failed request has one inline recovery",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Hide/reopen preserves conversation",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Desktop panel is compact, not a stretched phone",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 953,
+          "y": 61,
+          "w": 468,
+          "h": 820,
+          "right": 1421,
+          "bottom": 881
+        },
+        "header": {
+          "x": 953,
+          "y": 61,
+          "w": 468,
+          "h": 68,
+          "right": 1421,
+          "bottom": 129
+        },
+        "messages": {
+          "x": 953,
+          "y": 129,
+          "w": 468,
+          "h": 606.609375,
+          "right": 1421,
+          "bottom": 735.609375
+        },
+        "dock": {
+          "x": 965,
+          "y": 811,
+          "w": 444,
+          "h": 60,
+          "right": 1409,
+          "bottom": 871
+        },
+        "headerChildren": [
+          {
+            "x": 967,
+            "y": 72.5,
+            "w": 44,
+            "h": 44,
+            "right": 1011,
+            "bottom": 116.5
+          },
+          {
+            "x": 1021,
+            "y": 74.671875,
+            "w": 270,
+            "h": 39.640625,
+            "right": 1291,
+            "bottom": 114.3125
+          },
+          {
+            "x": 1301,
+            "y": 72.5,
+            "w": 44,
+            "h": 44,
+            "right": 1345,
+            "bottom": 116.5
+          },
+          {
+            "x": 1355,
+            "y": 72.5,
+            "w": 52,
+            "h": 44,
+            "right": 1407,
+            "bottom": 116.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "Reduced motion disables decorative transitions",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Visual viewport resize keeps dock above keyboard boundary",
+      "passed": true,
+      "details": {
+        "root": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 410,
+          "right": 390,
+          "bottom": 410
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 68,
+          "right": 390,
+          "bottom": 68
+        },
+        "messages": {
+          "x": 0,
+          "y": 68,
+          "w": 390,
+          "h": 212.609375,
+          "right": 390,
+          "bottom": 280.609375
+        },
+        "dock": {
+          "x": 12,
+          "y": 356,
+          "w": 366,
+          "h": 44,
+          "right": 378,
+          "bottom": 400
+        },
+        "headerChildren": [
+          {
+            "x": 14,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 58,
+            "bottom": 55.5
+          },
+          {
+            "x": 68,
+            "y": 13.671875,
+            "w": 192,
+            "h": 39.640625,
+            "right": 260,
+            "bottom": 53.3125
+          },
+          {
+            "x": 270,
+            "y": 11.5,
+            "w": 44,
+            "h": 44,
+            "right": 314,
+            "bottom": 55.5
+          },
+          {
+            "x": 324,
+            "y": 11.5,
+            "w": 52,
+            "h": 44,
+            "right": 376,
+            "bottom": 55.5
+          }
+        ],
+        "overflow": 0,
+        "dark": "rgb(17, 18, 22)",
+        "selected": 1
+      }
+    },
+    {
+      "name": "Hiding during permission request releases a late microphone stream",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Reopen after late microphone permission is idle",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Late transcription after Cancel cannot refill the composer",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Cancelled transcription never creates an assistant turn",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "A quick second tap keeps recording latched",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "A deliberate Finish after double-tap still reaches review",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Recording stops playback before using the microphone",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "A late cancelled speech event cannot restart audio",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Sheet keyboard focus cannot escape to the conversation",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Menu closes with focus returned to the branded Q",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Mobile Enter inserts a line break instead of sending",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "No browser runtime exceptions",
+      "passed": true,
+      "details": []
+    }
+  ],
+  "limitations": [
+    "Mock transport, not Supabase/RLS or Luna",
+    "Simulated audio input and speech output, not real microphone/TTS quality",
+    "Not a full Next build or authenticated deployed shell",
+    "Keyboard size simulation, not native iOS/Android keyboard certification"
+  ]
+}

@@ -1,190 +1,146 @@
 'use client';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { isRecord } from '@/app/lib/smart-assistant/section-permissions';
 
-const EMPTY_METER = Array.from({ length: 12 }, () => 0.14);
+export type VoiceNoteState = 'off' | 'requesting' | 'recording' | 'transcribing';
 
-/** Existing V1 transcription service, extended with richer client-side capture UX. */
+/** Capture -> existing authenticated transcription endpoint -> editable text. Never submits a turn. */
 export function useVoiceNote(visible: boolean, onText: (text: string) => void, onError: (message: string) => void) {
-  const [state, setState] = useState<'off' | 'requesting' | 'recording' | 'transcribing'>('off');
-  const [elapsedMs, setElapsedMs] = useState(0);
-  const [meter, setMeter] = useState<number[]>(EMPTY_METER);
-  const stateRef = useRef(state);
-  stateRef.current = state;
-  const generation = useRef(0);
-  const stream = useRef<MediaStream | null>(null);
-  const recorder = useRef<MediaRecorder | null>(null);
-  const cap = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const upload = useRef<AbortController | null>(null);
-  const handlers = useRef({ onText, onError });
+  const [state, setState] = useState<VoiceNoteState>('off');
+  const stateRef = useRef<VoiceNoteState>('off');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [meterAvailable, setMeterAvailable] = useState(false);
   const analyser = useRef<AnalyserNode | null>(null);
-  const audioContext = useRef<AudioContext | null>(null);
-  const meterFrame = useRef<number | null>(null);
-  const startedAt = useRef<number>(0);
-  const elapsedTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  handlers.current = { onText, onError };
+  const context = useRef<AudioContext | null>(null);
+  const source = useRef<MediaStream | null>(null);
+  const recorder = useRef<MediaRecorder | null>(null);
+  const generation = useRef(0);
+  const finishAfterPermission = useRef(false);
+  const cap = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clock = useRef<ReturnType<typeof setInterval> | null>(null);
+  const upload = useRef<AbortController | null>(null);
+  const uploadTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callbacks = useRef({ onText, onError });
+  callbacks.current = { onText, onError };
+  const allowed = useRef(visible); allowed.current = visible;
+  const transition = useCallback((next: VoiceNoteState) => { stateRef.current = next; setState(next); }, []);
 
-  const stopMetering = useCallback(() => {
-    if (meterFrame.current) cancelAnimationFrame(meterFrame.current);
-    meterFrame.current = null;
+  const release = useCallback(() => {
+    if (cap.current) clearTimeout(cap.current);
+    if (clock.current) clearInterval(clock.current);
+    cap.current = null; clock.current = null;
     analyser.current = null;
-    if (elapsedTimer.current) clearInterval(elapsedTimer.current);
-    elapsedTimer.current = null;
-    startedAt.current = 0;
-    setElapsedMs(0);
-    setMeter(EMPTY_METER);
-    void audioContext.current?.close().catch(() => undefined);
-    audioContext.current = null;
+    const ctx = context.current; context.current = null;
+    if (ctx && ctx.state !== 'closed') void ctx.close().catch(() => undefined);
+    const tracks = source.current; source.current = null;
+    tracks?.getTracks().forEach(track => { track.onended = null; track.stop(); });
+    setMeterAvailable(false);
   }, []);
 
   const cancel = useCallback(() => {
     generation.current++;
-    if (cap.current) clearTimeout(cap.current);
-    cap.current = null;
-    upload.current?.abort();
-    upload.current = null;
-    stopMetering();
-    if (recorder.current?.state === 'recording') recorder.current.stop();
-    recorder.current = null;
-    stream.current?.getTracks().forEach(t => t.stop());
-    stream.current = null;
-    setState('off');
-  }, [stopMetering]);
+    finishAfterPermission.current = false;
+    upload.current?.abort(); upload.current = null;
+    if (uploadTimeout.current) clearTimeout(uploadTimeout.current);
+    uploadTimeout.current = null;
+    const rec = recorder.current; recorder.current = null;
+    if (rec && rec.state !== 'inactive') { try { rec.stop(); } catch { /* already stopped */ } }
+    release(); setElapsedSeconds(0); transition('off');
+  }, [release, transition]);
 
-  useEffect(() => { if (!visible) cancel(); return () => cancel(); }, [visible, cancel]);
+  useEffect(() => { if (!visible) cancel(); return cancel; }, [visible, cancel]);
   useEffect(() => {
     const hidden = () => { if (document.hidden) cancel(); };
     document.addEventListener('visibilitychange', hidden);
     return () => document.removeEventListener('visibilitychange', hidden);
   }, [cancel]);
 
-  const startMetering = useCallback((source: MediaStream) => {
-    if (typeof AudioContext === 'undefined') return;
-    const ctx = new AudioContext();
-    audioContext.current = ctx;
-    const node = ctx.createMediaStreamSource(source);
-    const nextAnalyser = ctx.createAnalyser();
-    nextAnalyser.fftSize = 256;
-    node.connect(nextAnalyser);
-    analyser.current = nextAnalyser;
-    const data = new Uint8Array(nextAnalyser.fftSize);
-    startedAt.current = Date.now();
-    setElapsedMs(0);
-    elapsedTimer.current = setInterval(() => {
-      if (startedAt.current) setElapsedMs(Date.now() - startedAt.current);
-    }, 250);
-    const tick = () => {
-      const live = analyser.current;
-      if (!live) return;
-      live.getByteTimeDomainData(data);
-      let sum = 0;
-      for (let i = 0; i < data.length; i++) {
-        const v = (data[i] - 128) / 128;
-        sum += v * v;
-      }
-      const rms = Math.sqrt(sum / data.length);
-      const level = Math.min(1, Math.max(0.06, rms * 4.8));
-      const bars = EMPTY_METER.map((base, index) => {
-        const wave = Math.sin((Date.now() / 90) + index * 0.65) * 0.08;
-        const emphasis = 1 - Math.abs((index - (EMPTY_METER.length - 1) / 2) / EMPTY_METER.length);
-        return Math.max(0.14, Math.min(1, base + level * (0.32 + emphasis) + wave));
-      });
-      setMeter(bars);
-      meterFrame.current = requestAnimationFrame(tick);
-    };
-    meterFrame.current = requestAnimationFrame(tick);
-  }, []);
+  const finish = useCallback(() => {
+    if (stateRef.current === 'requesting') { finishAfterPermission.current = true; return; }
+    const rec = recorder.current;
+    if (rec?.state === 'recording') { transition('transcribing'); rec.stop(); }
+  }, [transition]);
 
-  const toggle = async () => {
-    if (stateRef.current === 'recording') {
-      recorder.current?.stop();
-      return;
+  const start = useCallback(async () => {
+    if (!allowed.current || stateRef.current !== 'off') return;
+    if (!window.isSecureContext || typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      callbacks.current.onError('Microphone recording is unavailable here. You can still use Type.'); return;
     }
-    if (stateRef.current !== 'off' || !visible) return;
-    if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      handlers.current.onError('Voice notes are unavailable here. Use Type instead.');
-      return;
-    }
-    const current = ++generation.current;
-    setState('requesting');
+    const ticket = ++generation.current;
+    finishAfterPermission.current = false;
+    transition('requesting'); setElapsedSeconds(0);
     try {
-      const source = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (current !== generation.current) {
-        source.getTracks().forEach(t => t.stop());
-        return;
-      }
-      stream.current = source;
-      startMetering(source);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      if (ticket !== generation.current || !allowed.current) { stream.getTracks().forEach(t => t.stop()); return; }
+      source.current = stream;
       const mime = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].find(v => MediaRecorder.isTypeSupported(v));
-      const rec = new MediaRecorder(source, mime ? { mimeType: mime } : undefined);
+      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       recorder.current = rec;
-      const chunks: Blob[] = [];
-      let bytes = 0;
-      let tooLarge = false;
-      rec.ondataavailable = e => {
-        bytes += e.data.size;
-        if (bytes > 14 * 1024 * 1024) {
-          tooLarge = true;
-          if (rec.state === 'recording') rec.stop();
-        } else if (e.data.size) chunks.push(e.data);
-      };
-      rec.onerror = () => {
-        if (current === generation.current) {
-          cancel();
-          handlers.current.onError('Recording stopped unexpectedly. Please try again.');
+      const chunks: Blob[] = []; let bytes = 0; let tooLarge = false;
+      // Metering is optional. Failure to initialise AudioContext must not disable recording.
+      try {
+        const Ctor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (Ctor) {
+          const ctx = new Ctor(); context.current = ctx;
+          const meter = ctx.createAnalyser(); meter.fftSize = 256;
+          ctx.createMediaStreamSource(stream).connect(meter); // deliberately not connected to speakers
+          analyser.current = meter;
+          void ctx.resume().then(() => { if (ticket === generation.current) setMeterAvailable(ctx.state === 'running'); }).catch(() => undefined);
         }
+      } catch { analyser.current = null; setMeterAvailable(false); }
+      rec.ondataavailable = event => {
+        bytes += event.data.size;
+        if (bytes > 14 * 1024 * 1024) { tooLarge = true; if (rec.state === 'recording') rec.stop(); }
+        else if (event.data.size) chunks.push(event.data);
       };
+      rec.onerror = () => { if (ticket === generation.current) { cancel(); callbacks.current.onError('Recording stopped unexpectedly. Please try again or use Type.'); } };
+      stream.getAudioTracks().forEach(track => { track.onended = () => { if (ticket === generation.current && stateRef.current === 'recording') { cancel(); callbacks.current.onError('The microphone disconnected. Please try again or use Type.'); } }; });
       rec.onstop = async () => {
-        stopMetering();
-        if (cap.current) clearTimeout(cap.current);
-        cap.current = null;
-        source.getTracks().forEach(t => t.stop());
-        stream.current = null;
-        if (current !== generation.current) return;
+        // An old cancelled recorder must not stop a new recorder or its meter.
+        if (ticket !== generation.current) return;
+        release(); recorder.current = null;
         if (tooLarge || bytes === 0) {
-          setState('off');
-          handlers.current.onError(tooLarge ? 'Voice note is too long. Try a shorter recording.' : 'No audio was captured.');
-          return;
+          transition('off'); callbacks.current.onError(tooLarge ? 'That recording is too large. Try a shorter voice note.' : 'No audio was captured. Try again or use Type.'); return;
         }
-        setState('transcribing');
-        const controller = new AbortController();
-        upload.current = controller;
+        transition('transcribing');
+        const controller = new AbortController(); upload.current = controller;
+        uploadTimeout.current = setTimeout(() => controller.abort(), 45000);
         try {
-          const data = new FormData();
-          data.append('audio', new Blob(chunks, { type: rec.mimeType }), rec.mimeType.includes('mp4') ? 'voice.mp4' : 'voice.webm');
-          const res = await fetch('/api/smart-assistant/transcribe', { method: 'POST', body: data, signal: controller.signal });
-          const result: unknown = await res.json();
-          if (current !== generation.current) return;
-          if (!res.ok || !isRecord(result) || typeof result.text !== 'string') throw new Error('Transcription failed. Try again or use Type.');
-          handlers.current.onText(result.text.trim());
-        } catch (e) {
-          if (current === generation.current) handlers.current.onError(e instanceof Error ? e.message : 'Transcription failed.');
+          const form = new FormData();
+          form.append('audio', new Blob(chunks, { type: rec.mimeType }), rec.mimeType.includes('mp4') ? 'voice.mp4' : 'voice.webm');
+          const response = await fetch('/api/smart-assistant/transcribe', { method: 'POST', body: form, signal: controller.signal });
+          const result: unknown = await response.json().catch(() => null);
+          if (ticket !== generation.current || !allowed.current) return;
+          if (!response.ok || !isRecord(result) || typeof result.text !== 'string') throw new Error('Transcription failed. Try again or use Type.');
+          const text = result.text.trim();
+          if (!text) throw new Error('I could not hear any words. Try again or use Type.');
+          if (text.length > 16000) throw new Error('The transcript is too long. Please record a shorter message.');
+          callbacks.current.onText(text);
+        } catch (error) {
+          if (ticket === generation.current) callbacks.current.onError(controller.signal.aborted ? 'Transcription took too long. Please try again or use Type.' : error instanceof Error ? error.message : 'Transcription failed. Use Type instead.');
         } finally {
-          if (current === generation.current) {
-            setState('off');
-            upload.current = null;
+          if (ticket === generation.current) {
+            if (uploadTimeout.current) clearTimeout(uploadTimeout.current);
+            uploadTimeout.current = null; upload.current = null; transition('off');
           }
         }
       };
-      rec.start(1000);
-      setState('recording');
-      cap.current = setTimeout(() => { if (rec.state === 'recording') rec.stop(); }, 120000);
+      rec.start(250);
+      const began = Date.now();
+      clock.current = setInterval(() => { if (ticket === generation.current) setElapsedSeconds(Math.floor((Date.now() - began) / 1000)); }, 1000);
+      cap.current = setTimeout(() => { if (rec.state === 'recording') finish(); }, 120000);
+      transition('recording');
+      if (finishAfterPermission.current) finish();
     } catch (error) {
-      if (current === generation.current) {
-        cancel();
-        const name = error instanceof DOMException ? error.name : '';
-        const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-        const isIOS = /iPad|iPhone|iPod/.test(ua) || (typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        const standalone = typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)').matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true);
-        if (name === 'NotAllowedError' || name === 'SecurityError') handlers.current.onError(isIOS
-          ? 'Microphone permission was denied. Allow microphone access for this site (iPhone: Settings, then Safari or Apps, then Microphone) and try again. You can also use Type.'
-          : 'Microphone permission was denied. Allow it for this site using the padlock or tune icon in the browser address bar, then try again. You can also use Type.');
-        else if (standalone && isIOS) handlers.current.onError('Voice input is not available in the installed home-screen app on iPhone. Open this site in the Safari browser app for voice notes, or use Type.');
-        else if (name === 'NotFoundError' || name === 'OverconstrainedError') handlers.current.onError('No microphone was found on this device. Use Type instead.');
-        else handlers.current.onError('Microphone could not be opened. Check permission or use Type.');
-      }
+      if (ticket !== generation.current) return;
+      cancel();
+      const name = error instanceof DOMException ? error.name : '';
+      callbacks.current.onError(name === 'NotAllowedError' || name === 'SecurityError'
+        ? 'Microphone permission was not granted. Allow microphone access in your browser’s site settings, or use Type.'
+        : name === 'NotFoundError' || name === 'OverconstrainedError'
+          ? 'No microphone was found. Connect one or use Type.'
+          : 'The microphone could not be opened. Check site permission or use Type.');
     }
-  };
-
-  return useMemo(() => ({ state, elapsedMs, meter, toggle, cancel }), [state, elapsedMs, meter, cancel]);
+  }, [cancel, finish, release, transition]);
+  return { state, elapsedSeconds, analyser, meterAvailable, start, finish, cancel };
 }

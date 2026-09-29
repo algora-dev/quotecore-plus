@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: recording timer formats real seconds, including the two-minute cap
+ok 1 - recording timer formats real seconds, including the two-minute cap
+  ---
+  duration_ms: 0.938636
+  type: 'test'
+  ...
+# Subtest: silence returns only zero levels, not animated fake listening
+ok 2 - silence returns only zero levels, not animated fake listening
+  ---
+  duration_ms: 0.333653
+  type: 'test'
+  ...
+# Subtest: louder actual samples produce higher bounded levels
+ok 3 - louder actual samples produce higher bounded levels
+  ---
+  duration_ms: 0.186215
+  type: 'test'
+  ...
+# Subtest: empty audio buffer is safe
+ok 4 - empty audio buffer is safe
+  ---
+  duration_ms: 0.102712
+  type: 'test'
+  ...
+# Subtest: speech conversion preserves amounts and units
+ok 5 - speech conversion preserves amounts and units
+  ---
+  duration_ms: 0.266103
+  type: 'test'
+  ...
+# Subtest: speech chunking is bounded and does not drop content
+ok 6 - speech chunking is bounded and does not drop content
+  ---
+  duration_ms: 0.238802
+  type: 'test'
+  ...
+# Subtest: unbroken speech text is bounded
+ok 7 - unbroken speech text is bounded
+  ---
+  duration_ms: 0.181698
+  type: 'test'
+  ...
+# Subtest: blank speech is not enqueued
+ok 8 - blank speech is not enqueued
+  ---
+  duration_ms: 0.083002
+  type: 'test'
+  ...
+# Subtest: local attachment preview rejects empty files
+ok 9 - local attachment preview rejects empty files
+  ---
+  duration_ms: 0.364778
+  type: 'test'
+  ...
+# Subtest: local attachment preview caps size before reading
+ok 10 - local attachment preview caps size before reading
+  ---
+  duration_ms: 0.310028
+  type: 'test'
+  ...
+# Subtest: active SVG/HTML are not accepted as image previews
+ok 11 - active SVG/HTML are not accepted as image previews
+  ---
+  duration_ms: 0.14882
+  type: 'test'
+  ...
+# Subtest: known image/PDF/text local preview types accepted
+ok 12 - known image/PDF/text local preview types accepted
+  ---
+  duration_ms: 0.095431
+  type: 'test'
+  ...
+# Subtest: all referenced CSS module classes exist
+ok 13 - all referenced CSS module classes exist
+  ---
+  duration_ms: 1.15136
+  type: 'test'
+  ...
+# Subtest: no fabricated attachment filenames are fed to the model
+ok 14 - no fabricated attachment filenames are fed to the model
+  ---
+  duration_ms: 0.168008
+  type: 'test'
+  ...
+# Subtest: no emoji or fake keyboard in the shipped shell
+ok 15 - no emoji or fake keyboard in the shipped shell
+  ---
+  duration_ms: 0.392289
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16.426197

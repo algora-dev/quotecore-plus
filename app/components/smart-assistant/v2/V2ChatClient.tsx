@@ -1,6 +1,6 @@
 'use client';
 import { notifyComponentFocus } from '@/app/lib/smart-assistant/v2/component-focus';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createConversation, type ConversationRow } from '@/app/(auth)/[workspaceSlug]/assistant/actions';
 import { displayTaskMessage } from '@/app/lib/smart-assistant/tasks/wire';
@@ -16,6 +16,11 @@ import { ConversationCards } from './ConversationCards';
 import { request, session } from './client';
 import { useVoiceNote } from './useVoiceNote';
 import { useSpeechPlayback } from './useSpeechPlayback';
+import { AssistantIcon } from './AssistantIcon';
+import { AssistantSheet } from './AssistantSheet';
+import { VoiceCapture } from './VoiceCapture';
+import { useAssistantViewport } from './useAssistantViewport';
+import { attachmentError, MAX_LOCAL_ATTACHMENTS } from './media-utils';
 import s from './assistant.module.css';
 
 type Pending = {
@@ -51,9 +56,8 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [menu, setMenu] = useState(false);
+  const [sheet, setSheet] = useState<'menu' | 'attach' | null>(null);
   const [mode, setMode] = useState<'voice' | 'text'>('text');
-  const [attachOpen, setAttachOpen] = useState(false);
   const [attachments, setAttachments] = useState<LocalAttachment[]>([]);
   const [unresolved, setUnresolved] = useState(false);
   const [locked, setLocked] = useState(false);
@@ -66,7 +70,15 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const navTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navPending = useRef<string | null>(null);
   const autoOpened = useRef(new Set<string>());
+  const root = useRef<HTMLDivElement>(null);
+  const frame = useRef<HTMLDivElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
+  const attachmentUrls = useRef(new Set<string>());
+  const attachmentCount = useRef(0);
+  attachmentCount.current = attachments.length;
+  const inputValue = useRef(input); inputValue.current = input;
+  const [draftOrigin, setDraftOrigin] = useState<'text' | 'voice'>('text');
+  useAssistantViewport(root, visible);
   const nearBottom = useRef(true);
   const visibility = useRef(visible);
   visibility.current = visible;
@@ -74,93 +86,65 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const composer = useRef<HTMLTextAreaElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
   const uploadInput = useRef<HTMLInputElement>(null);
+  const imageInput = useRef<HTMLInputElement>(null);
   const prefKey = `sa-input:${access.userId}:${access.companyId}`;
   const lastConversationKey = `sa-conversation:${access.userId}:${access.companyId}`;
   const speechPrefKey = `sa-speech:${access.userId}:${access.companyId}`;
 
-  const voice = useVoiceNote(visible && !locked, text => {
-    if (text) setInput(p => p ? `${p} ${text}` : text);
-    setMode('voice');
+  const voice = useVoiceNote(visible && !locked && !busy && !snapshot?.activeRunId && !unresolved, text => {
+    const next = inputValue.current ? `${inputValue.current} ${text}` : text;
+    if (next.length > MAX_INPUT) { setNotice('That would make the message too long. Send the existing draft first, then record another note.'); return; }
+    setInput(next); setDraftOrigin('voice'); setMode('voice');
   }, setNotice);
-  const speech = useSpeechPlayback(visible, speechPrefKey);
+  const speech = useSpeechPlayback(visible && !locked, speechPrefKey);
+  const capturing = useRef(false); capturing.current = voice.state !== 'off';
 
+  const clearAttachments = useCallback(() => {
+    attachmentUrls.current.forEach(url => URL.revokeObjectURL(url));
+    attachmentUrls.current.clear(); attachmentCount.current = 0; setAttachments([]);
+  }, []);
   useEffect(() => {
     mounted.current = true;
+    const urls = attachmentUrls.current;
     return () => {
-      mounted.current = false;
-      epoch.current++;
+      mounted.current = false; epoch.current++;
       if (navTimer.current) clearTimeout(navTimer.current);
-      attachments.forEach(item => { if (item.previewUrl) URL.revokeObjectURL(item.previewUrl); });
+      urls.forEach(url => URL.revokeObjectURL(url)); urls.clear();
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, []);
   useEffect(() => {
     try {
       const pref = localStorage.getItem(prefKey);
       if (pref === 'voice' || pref === 'text') setMode(pref);
       const id = sessionStorage.getItem(lastConversationKey);
       if (isUuid(id)) setActive(id);
-    } catch {
-      /* storage can be unavailable */
-    }
-  }, [prefKey, lastConversationKey, initialConversations]);
-
+    } catch { /* storage can be unavailable */ }
+  }, [prefKey, lastConversationKey]);
   useEffect(() => {
-    if (voice.state === 'recording') speech.stop();
-  }, [voice.state, speech]);
+    // Late transcription/playback cannot leak into a different conversation.
+    voice.cancel(); speech.stop(); clearAttachments(); setSheet(null);
+  }, [active, voice.cancel, speech.stop, clearAttachments]);
+  useEffect(() => { if (!visible || locked) { setSheet(null); speech.stop(); } }, [visible, locked, speech.stop]);
 
-  const quickTaskLabel = snapshot?.task?.status && snapshot.task.status !== 'closed' ? snapshot.task.label : null;
-
-  const assistantMessages = useMemo(() => snapshot?.messages.filter(m => m.role === 'assistant') ?? [], [snapshot?.messages]);
-  useEffect(() => {
-    const latest = assistantMessages.at(-1);
-    if (!latest || voice.state !== 'off') return;
-    const content = displayTaskMessage(displayResolutionMessage(latest.content)).trim();
-    if (content) speech.speak(latest.id, content);
-  }, [assistantMessages, speech, voice.state]);
-
-  const clearAttachments = useCallback(() => {
-    setAttachments(prev => {
-      prev.forEach(item => { if (item.previewUrl) URL.revokeObjectURL(item.previewUrl); });
-      return [];
-    });
-  }, []);
-
-  const changeMode = (next: 'voice' | 'text') => {
-    voice.cancel();
-    setMode(next);
-    setAttachOpen(false);
-    try { localStorage.setItem(prefKey, next); } catch { /* local preference only */ }
+  const changeMode = (next: 'voice' | 'text', focus = false) => {
+    voice.cancel(); setMode(next); setSheet(null);
+    try { localStorage.setItem(prefKey, next); } catch { /* personal preference only */ }
+    if (next === 'text' && focus) requestAnimationFrame(() => composer.current?.focus({ preventScroll: true }));
   };
-
-  const attachmentSummary = (items: LocalAttachment[]) => items.map(item => {
-    const size = item.file.size > 1024 * 1024
-      ? `${(item.file.size / (1024 * 1024)).toFixed(1)} MB`
-      : `${Math.max(1, Math.round(item.file.size / 1024))} KB`;
-    const kind = item.file.type.startsWith('image/') ? 'image' : item.file.type || 'file';
-    return `- ${item.file.name} (${kind}, ${size})`;
-  }).join('\n');
-
-  const enrichTurnMessage = (text: string) => attachments.length > 0
-    ? `${text.trim()}\n\n[Selected attachments]\n${attachmentSummary(attachments)}\n\nIf the file contents are not available to inspect directly yet, tell me what extra context you need rather than guessing.`
-    : text.trim();
-
   const onFilesSelected = (files: FileList | null) => {
     if (!files?.length) return;
-    const next: LocalAttachment[] = [];
-    for (const file of Array.from(files).slice(0, 5)) {
+    const next: LocalAttachment[] = []; const errors: string[] = [];
+    for (const file of Array.from(files)) {
+      const error = attachmentError(file);
+      if (error) { errors.push(error); continue; }
+      if (attachmentCount.current + next.length >= MAX_LOCAL_ATTACHMENTS) { errors.push('Preview up to three files at a time.'); break; }
       const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+      if (previewUrl) attachmentUrls.current.add(previewUrl);
       next.push({ id: crypto.randomUUID(), file, previewUrl });
     }
-    setAttachments(prev => {
-      const all = [...prev, ...next].slice(0, 5);
-      if (all.length < prev.length + next.length) {
-        next.slice(Math.max(0, 5 - prev.length)).forEach(item => { if (item.previewUrl) URL.revokeObjectURL(item.previewUrl); });
-      }
-      return all;
-    });
-    setAttachOpen(true);
-    setNotice('Attachment added. Tell Smart Assistant what you want done with it. Multimodal file reading can be wired to the backend next.');
+    attachmentCount.current += next.length;
+    setAttachments(prev => [...prev, ...next]); setSheet(null);
+    if (errors.length) setNotice(errors[0]);
   };
 
   const refresh = useCallback(async (id: string) => {
@@ -183,6 +167,10 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         pending.current.delete(id);
         setUnresolved(false);
         setNotice(null);
+        if (outcome.status === 'completed' && !capturing.current) {
+          const reply = next.messages.filter(m => m.role === 'assistant' && m.runId === outcome.id).at(-1);
+          if (reply) speech.autoSpeak(reply.id, displayTaskMessage(displayResolutionMessage(reply.content)));
+        }
         setInput(value => value.trim() === p?.message.trim() ? '' : value);
       }
       return next;
@@ -194,7 +182,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
       }
       return null;
     }
-  }, [access.companyId, access.userId]);
+  }, [access.companyId, access.userId, speech.autoSpeak]);
 
   useEffect(() => {
     setSnapshot(null);
@@ -292,7 +280,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
       setActive(row.id);
       setInput('');
       clearAttachments();
-      setMenu(false);
+      setSheet(null);
       return row.id;
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Could not start a conversation.');
@@ -305,16 +293,16 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
 
   const send = async (textOverride?: string) => {
     const rawText = (textOverride ?? input).trim();
-    if ((!rawText && attachments.length === 0) || rawText.length > MAX_INPUT || operation.current || locked) return;
-    if (!rawText && attachments.length > 0) {
-      setNotice('Add a short note telling Smart Assistant what you want done with this attachment.');
+    if (!rawText || rawText.length > MAX_INPUT || operation.current || locked || voice.state !== 'off') return;
+    if (textOverride === undefined && attachments.length > 0) {
+      setNotice('Attachments are local previews only in this build. Remove them to send a text or voice message.');
       return;
     }
     if (snapshot?.activeRunId) {
       setNotice('The assistant is still working. Please wait or refresh.');
       return;
     }
-    const text = enrichTurnMessage(rawText);
+    const text = rawText; // No fake attachment metadata is ever sent as a model prompt.
     let id = active;
     if (!id) {
       id = await newChat() ?? null;
@@ -360,9 +348,8 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
       if (!isRecord(result) || typeof result.run_id !== 'string') throw new Error('Reply status could not be verified. Retry the same message.');
       logical.runId = result.run_id;
       if (mounted.current && current.current === id) {
-        setInput('');
-        clearAttachments();
-        setAttachOpen(false);
+        setInput(value => value.trim() === rawText ? '' : value);
+        setSheet(null);
       }
       const next = await refresh(id);
       if (result.status === 'completed') {
@@ -453,208 +440,138 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const replies = new Set(snapshot?.messages.filter(m => m.role === 'assistant').map(m => m.runId));
   const orphanCards = lastCardOnly(snapshot?.cards.filter(c => !replies.has(c.runId)) ?? []);
 
-  const busyText = voice.state === 'requesting'
-    ? 'Opening microphone…'
-    : voice.state === 'transcribing'
-      ? 'Transcribing your voice note…'
-      : busy || snapshot?.activeRunId
-        ? 'Smart Assistant is working. You can hide it and come back.'
-        : null;
-
+  const controlsBusy = busy || locked || unresolved || !!snapshot?.activeRunId;
+  const hasMessages = !!snapshot?.messages.length;
+  const currentAccess = snapshot?.access ?? access;
+  const task = snapshot?.task;
+  const taskLabel = task && task.status !== 'closed' ? task.label : 'Your QuoteCore+ copilot';
   const removeAttachment = (id: string) => {
-    setAttachments(prev => prev.filter(item => {
-      if (item.id === id && item.previewUrl) URL.revokeObjectURL(item.previewUrl);
-      return item.id !== id;
-    }));
+    const item = attachments.find(a => a.id === id);
+    if (item?.previewUrl) { URL.revokeObjectURL(item.previewUrl); attachmentUrls.current.delete(item.previewUrl); }
+    setAttachments(prev => prev.filter(a => a.id !== id));
   };
+  const hide = () => { voice.cancel(); speech.stop(); setSheet(null); onHide(); };
+  const openAttachmentSheet = () => { voice.cancel(); speech.stop(); setSheet('attach'); };
 
-  return <div className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true">
-    <header className={s.header}>
-      <div className={s.headerLead}>
-        <QcButton autoFocus aria-label="Assistant menu" aria-expanded={menu} className={`${s.iconButton} ${s.brandButton}`} onClick={() => setMenu(!menu)}>
-          <img src="/smart-assistant/q-logo-square.png" alt="" className={s.brandMark} />
-          <span className="sr-only">Menu</span>
+  return <div ref={root} className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true" data-sa-experience="visual-v2" data-mode={mode}>
+    <div className={s.frame} ref={frame}>
+      <header className={s.header}>
+        <QcButton autoFocus className={s.brandButton} aria-label="Assistant menu" aria-haspopup="dialog" aria-expanded={sheet === 'menu'} onClick={() => { voice.cancel(); setSheet('menu'); }}>
+          <img src="/smart-assistant/q-menu.webp" alt="" width="44" height="44" draggable="false" />
         </QcButton>
-        <div className={s.headerCopy}>
-          <p className={s.kicker}>{assistantName}</p>
-          <p className={s.headerTitle}>{quickTaskLabel || 'Ready for your next task'}</p>
-        </div>
-      </div>
-      <div className={s.headerActions}>
-        <QcButton
-          aria-label={speech.enabled ? 'Turn spoken replies off' : 'Turn spoken replies on'}
-          aria-pressed={speech.enabled}
-          disabled={speech.state === 'unavailable'}
-          className={s.iconButton}
-          onClick={() => speech.toggleEnabled()}>
-          <span aria-hidden>{speech.enabled ? '🔊' : '🔈'}</span>
+        <div className={s.headerCopy}><h1>{assistantName || 'Smart Assistant'}</h1><p title={taskLabel}>{taskLabel}</p></div>
+        <QcButton className={s.speakerButton} aria-label={speech.enabled ? 'Turn spoken replies off' : 'Turn spoken replies on'} aria-pressed={speech.enabled} disabled={!speech.available} title={!speech.available ? 'Spoken replies are unavailable in this browser' : speech.enabled ? 'Spoken replies on' : 'Spoken replies off'} onClick={speech.toggleEnabled}>
+          <AssistantIcon name={speech.enabled ? 'speaker' : 'muted'}/>
         </QcButton>
-        <QcButton className={s.hideButton} onClick={() => { voice.cancel(); setMenu(false); onHide(); }}>Hide</QcButton>
-      </div>
-    </header>
+        <QcButton className={s.hideButton} onClick={hide} aria-label="Hide assistant"><AssistantIcon name="hide"/><span>Hide</span></QcButton>
+      </header>
 
-    {menu && <nav className={s.menu} aria-label="Assistant menu">
-      <div className={s.menuRow}>
-        <QcButton size="sm" disabled={busy || unresolved} onClick={() => void newChat()}>New chat</QcButton>
-        <QcButton size="sm" onClick={() => { voice.cancel(); router.push(settingsHref); onHide(); }}>Settings</QcButton>
-      </div>
-      <p className={s.detail}>Recent conversations</p>
-      <div className={s.convList}>
-        {conversations.slice(0, 12).map(c => <QcButton key={c.id} className={s.convRow} disabled={busy || unresolved} aria-current={active === c.id ? 'page' : undefined} onClick={() => { voice.cancel(); setActive(c.id); setInput(''); setMenu(false); }}>{c.title || `Conversation ${new Date(c.last_active_at).toLocaleDateString()}`}</QcButton>)}
-      </div>
-    </nav>}
-
-    <div className={s.messages} ref={scroll} onScroll={() => {
-      const el = scroll.current;
-      if (el) nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-    }} aria-label="Conversation">
-      {snapshot?.task && snapshot.task.status !== 'closed' && <div className={s.taskStrip} data-sa-task={snapshot.task.id}>
-        <div>
-          <span className={s.taskEyebrow}>Current task</span>
-          <strong>{snapshot.task.label}</strong>
-        </div>
-        <div className={s.taskStripActions}>
-          <QcButton size="sm" disabled={busy || locked || unresolved || !!snapshot.activeRunId} onClick={() => void finishTask(snapshot.task?.status === 'answered' ? 'done' : 'move_on')}>
-            {snapshot.task.status === 'answered' ? 'Done' : 'Move on'}
-          </QcButton>
-          {snapshot.task.status === 'answered' && <QcButton size="sm" disabled={busy || locked || unresolved || !!snapshot.activeRunId} onClick={refineAnswer}>Not quite</QcButton>}
-        </div>
-      </div>}
-
-      {!snapshot?.messages.length && <section className={s.hero}>
-        <div className={s.heroBadge}>QuoteCore+ Ferrari mode</div>
-        <h2>{assistantName}</h2>
-        <p>{greeting || 'Tell me what you need to find, open or change. I will keep the task clear, suggest likely matches and ask you to review important actions.'}</p>
-        <div className={s.quickActions}>
-          {(snapshot?.access ?? access).permissions.draft_quotes !== 'hidden' && <QcButton variant="glass" disabled={busy || locked} onClick={() => void send('Open my most recent draft.')}>Open my latest draft</QcButton>}
-          {access.phases.p2 && <QcButton variant="glass" disabled={busy || locked} onClick={() => void send('What needs my attention today?')}>What needs attention?</QcButton>}
-          <QcButton variant="glass" disabled={busy || locked} onClick={() => changeMode('voice')}>Talk to Smart Assistant</QcButton>
-        </div>
-        {access.historyAfter && <p className={s.detail}>Earlier messages may be withheld after an access change.</p>}
-      </section>}
-
-      {snapshot?.messages.map(m => <div key={m.id} className={s.turn}>
-        <div className={`${s.message} ${m.role === 'user' ? s.user : s.assistant}`}>
-          {m.role === 'assistant' && <span className={s.messageLabel}>Smart Assistant</span>}
-          {m.role === 'user' && <span className={s.messageLabel}>You</span>}
-          <SafeMessage content={displayTaskMessage(displayResolutionMessage(m.content))} />
-        </div>
-        {failureByMessage.has(m.id) && <div className={s.noticeCard} role="status" data-sa-failed-run={m.runId ?? undefined}>
-          <p>{failureByMessage.get(m.id)!.copy} Review any proposal card separately; task controls never approve changes.</p>
-          {m.id === latestUser && failureByMessage.get(m.id)!.canRetry && <QcButton disabled={busy || locked || unresolved || !!snapshot?.activeRunId} onClick={() => void send(failureByMessage.get(m.id)!.retryText)}>Retry request</QcButton>}
-        </div>}
-        {m.role === 'assistant' && <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={cardsFor(m.runId)} actions={snapshot.actions} busy={busy || locked} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)} />}
-      </div>)}
-
-      <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={orphanCards} actions={snapshot?.actions ?? []} busy={busy || locked} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)} />
-
-      {snapshot?.task && snapshot.task.status === 'closed' && <div className={s.taskClosed}><p>Task complete. Your next request starts fresh. History stays here.</p></div>}
-
-      {unresolved && !busy && !snapshot?.activeRunId && active && <div className={s.noticeCard} role="status">
-        <p>The last request&apos;s outcome is not confirmed yet.</p>
-        <QcButton disabled={locked} onClick={() => void send(pending.current.get(active)?.message)}>Check request</QcButton>
-      </div>}
-
-      {busyText && <p className={s.processHint} role="status">{busyText}</p>}
-      <div ref={end} />
-    </div>
-
-    {notice && <div className={s.notice} role="alert">{notice}{locked && active && <QcButton size="sm" disabled={busy} onClick={() => void refresh(active)}>Refresh status</QcButton>}</div>}
-
-    <div className={s.composer}>
-      {speech.enabled && (speech.state === 'speaking' || speech.state === 'paused') && <div className={s.audioBar} role="status">
-        <span>{speech.state === 'speaking' ? 'Speaking response' : 'Speech paused'}</span>
-        <div className={s.audioActions}>
-          <QcButton size="sm" onClick={() => speech.pauseOrResume()}>{speech.state === 'speaking' ? 'Pause' : 'Resume'}</QcButton>
-          <QcButton size="sm" onClick={() => speech.stop()}>Stop voice</QcButton>
-        </div>
-      </div>}
-
-      {attachments.length > 0 && <div className={s.attachments}>
-        <div className={s.attachmentHeader}>
-          <strong>Attachments</strong>
-          <span className={s.detail}>Add a note or voice instruction so Smart Assistant knows what you want done.</span>
-        </div>
-        <div className={s.attachmentList}>
-          {attachments.map(item => <div key={item.id} className={s.attachmentItem}>
-            {item.previewUrl ? <img src={item.previewUrl} alt="" className={s.attachmentPreview} /> : <div className={s.attachmentFallback}>FILE</div>}
-            <div className={s.attachmentMeta}>
-              <strong>{item.file.name}</strong>
-              <span>{item.file.type.startsWith('image/') ? 'Image' : 'File'} · {item.file.size > 1024 * 1024 ? `${(item.file.size / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(item.file.size / 1024))} KB`}</span>
+      <div className={s.messages} ref={scroll} onScroll={() => { const el = scroll.current; if (el) nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100; }} aria-label="Conversation" tabIndex={0}>
+        <div className={s.conversationContent}>
+          {!hasMessages && <section className={s.welcome}>
+            <span className={s.welcomeEyebrow}>QUOTECORE+ SMART ASSISTANT</span>
+            <h2>{mode === 'voice' ? <>Less typing.<br/>More getting things done.</> : <>What can I help<br/>you with today?</>}</h2>
+            <p>{greeting || 'Find the right record. Check a price. Review a change. All in one place.'}</p>
+            <div className={s.quickActions}>
+              {currentAccess.permissions.quotes !== 'hidden' && <QcButton disabled={controlsBusy} onClick={() => void send('Show my quotes.')}><AssistantIcon name="search"/><span>Find my quotes</span><AssistantIcon name="chevron"/></QcButton>}
+              {currentAccess.permissions.draft_quotes !== 'hidden' && <QcButton disabled={controlsBusy} onClick={() => void send('Open my most recent draft.')}><AssistantIcon name="draft"/><span>Open my latest draft</span><AssistantIcon name="chevron"/></QcButton>}
+              {currentAccess.phases.p2 && <QcButton disabled={controlsBusy} onClick={() => void send('What needs my attention today?')}><AssistantIcon name="alert"/><span>What needs attention?</span><AssistantIcon name="chevron"/></QcButton>}
             </div>
-            <QcButton size="sm" className={s.attachmentRemove} onClick={() => removeAttachment(item.id)}>Remove</QcButton>
+            {access.historyAfter && <p className={s.detail}>Earlier messages may be withheld after an access change.</p>}
+          </section>}
+
+          {snapshot?.messages.map(m => <div key={m.id} className={s.turn}>
+            <div className={m.role === 'user' ? s.userMessage : s.assistantMessage}>
+              {m.role === 'assistant' && <div className={s.assistantHeading}><span className={s.messageLabel}>ASSISTANT</span>{speech.available && <QcButton className={s.readAloud} aria-label="Read this answer aloud" disabled={locked || voice.state !== 'off'} onClick={() => speech.play(displayTaskMessage(displayResolutionMessage(m.content)))}><AssistantIcon name="speaker"/></QcButton>}</div>}
+              <SafeMessage content={displayTaskMessage(displayResolutionMessage(m.content))}/>
+            </div>
+            {failureByMessage.has(m.id) && <div className={s.failure} role="status" data-sa-failed-run={m.runId ?? undefined}>
+              <AssistantIcon name="alert"/><div><p>{failureByMessage.get(m.id)!.copy}</p>
+              {m.id === latestUser && failureByMessage.get(m.id)!.canRetry && <QcButton disabled={controlsBusy} onClick={() => void send(failureByMessage.get(m.id)!.retryText)}>Retry request</QcButton>}</div>
+            </div>}
+            {m.role === 'assistant' && <>
+              <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={cardsFor(m.runId)} actions={snapshot.actions} busy={controlsBusy || voice.state !== 'off'} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>
+            </>}
           </div>)}
+          <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={orphanCards} actions={snapshot?.actions ?? []} busy={controlsBusy || voice.state !== 'off'} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>
+          {task && <div className={s.taskFooter} data-sa-task={task.id}>
+            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task closed. Ask something new whenever you’re ready.</p> : <>
+              <QcButton className={s.doneButton} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void finishTask(task.status === 'answered' ? 'done' : 'move_on')}><AssistantIcon name={task.status === 'answered' ? 'check' : 'chevron'}/>{task.status === 'answered' ? 'Done' : 'Move on'}</QcButton>
+              {task.status === 'answered' && <QcButton className={s.quietButton} disabled={controlsBusy || voice.state !== 'off'} onClick={refineAnswer}>Not quite</QcButton>}
+            </>}
+          </div>}
+          {unresolved && !busy && !snapshot?.activeRunId && active && <div className={s.failure} role="status"><AssistantIcon name="alert"/><div><p>The last request’s outcome is not confirmed yet.</p><QcButton disabled={locked} onClick={() => void send(pending.current.get(active)?.message)}>Check request</QcButton></div></div>}
+          {(busy || snapshot?.activeRunId) && <div className={s.working} role="status"><span className={s.spinner} aria-hidden="true"/><span>Working on your request…</span></div>}
+          <div ref={end}/>
         </div>
-      </div>}
-
-      {attachOpen && <div className={s.attachTray}>
-        <QcButton variant="glass" className={s.attachAction} onClick={() => cameraInput.current?.click()}>Take photo</QcButton>
-        <QcButton variant="glass" className={s.attachAction} onClick={() => uploadInput.current?.click()}>Choose image</QcButton>
-        <QcButton variant="glass" className={s.attachAction} onClick={() => uploadInput.current?.click()}>Upload file</QcButton>
-      </div>}
-      <input ref={cameraInput} className={s.hiddenInput} type="file" accept="image/*" capture="environment" onChange={e => { onFilesSelected(e.target.files); e.currentTarget.value = ''; }} />
-      <input ref={uploadInput} className={s.hiddenInput} type="file" accept="image/*,.pdf,.doc,.docx,.txt,.csv" multiple onChange={e => { onFilesSelected(e.target.files); e.currentTarget.value = ''; }} />
-
-      <div className={s.modeTabs} role="tablist" aria-label="Assistant input method">
-        <button type="button" role="tab" aria-selected={mode === 'text'} className={`${s.modeTab} ${mode === 'text' ? s.modeTabActive : ''}`} onClick={() => changeMode('text')}>
-          <span className={s.modeGlyph}>ABC</span>
-          <span>Type</span>
-        </button>
-        <button type="button" role="tab" aria-selected={mode === 'voice'} className={`${s.modeTab} ${mode === 'voice' ? s.modeTabActive : ''}`} onClick={() => changeMode('voice')}>
-          <span className={s.modeGlyph}>🎙</span>
-          <span>Voice</span>
-        </button>
-        <button type="button" role="tab" aria-selected={attachOpen} className={`${s.modeTab} ${attachOpen ? s.modeTabActive : ''}`} onClick={() => setAttachOpen(v => !v)}>
-          <span className={s.modeGlyph}>＋</span>
-          <span>Attach</span>
-        </button>
       </div>
 
-      {mode === 'text' ? <div className={s.textDock}>
-        <textarea ref={composer} className={s.input} aria-label="Message the assistant" value={input} disabled={busy || locked || voice.state !== 'off'} maxLength={MAX_INPUT} rows={3} placeholder={attachments.length > 0 ? 'Describe what you want Smart Assistant to do with the attachment…' : 'Ask Smart Assistant anything…'} onChange={e => setInput(e.target.value)} onKeyDown={e => {
-          if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-            e.preventDefault();
-            void send();
-          }
-        }} />
-        <div className={s.composerActions}>
-          <span className={s.composerHint}>{attachments.length > 0 ? 'Text + attachments ready' : 'Type your request'}</span>
-          <QcButton variant="primary" disabled={busy || locked || voice.state !== 'off' || (!input.trim() && attachments.length === 0)} onClick={() => void send()}>Send</QcButton>
-        </div>
-      </div> : <div className={s.voiceDock}>
-        {voice.state === 'recording' ? <>
-          <div className={s.voiceLive}><span className={s.livePill}>Listening</span><span className={s.timer}>{formatElapsed(voice.elapsedMs)}</span></div>
-          <div className={s.waveform} aria-hidden="true">{voice.meter.map((value, index) => <span key={index} className={s.waveBar} style={{ height: `${Math.max(16, Math.round(value * 84))}px` }} />)}</div>
-          <div className={s.voiceActions}>
-            <QcButton className={s.secondaryLarge} onClick={() => voice.cancel()}>Cancel</QcButton>
-            <QcButton variant="primary" className={s.primaryLarge} onClick={() => void voice.toggle()}>Finish</QcButton>
-          </div>
-        </> : input.trim() ? <div className={s.transcriptCard}>
-          <div className={s.transcriptHeader}><strong>Voice transcript</strong><span className={s.detail}>Review before sending.</span></div>
-          <p>{input}</p>
-          <div className={s.voiceActions}>
-            <QcButton className={s.secondaryLarge} onClick={() => setInput('')}>Discard</QcButton>
-            <QcButton className={s.secondaryLarge} onClick={() => changeMode('text')}>Edit</QcButton>
-            <QcButton variant="primary" className={s.primaryLarge} disabled={busy || locked || voice.state !== 'off'} onClick={() => void send()}>Send</QcButton>
-          </div>
-        </div> : <>
-          <div className={s.voiceIntro}>
-            <span className={s.livePill}>Voice mode</span>
-            <p>Tap the microphone to start recording. Tap again to finish, then review the transcript before sending.</p>
-          </div>
-          <button type="button" className={`${s.voiceOrb} ${voice.state === 'requesting' ? s.voiceOrbPending : ''}`} disabled={busy || locked || ['requesting', 'transcribing'].includes(voice.state)} onClick={() => void voice.toggle()}>
-            <span className={s.voiceOrbIcon}>{voice.state === 'requesting' ? '…' : '🎙'}</span>
-            <span className={s.voiceOrbLabel}>{voice.state === 'requesting' ? 'Opening mic' : 'Tap to record'}</span>
-          </button>
-        </>}
-      </div>}
-    </div>
-  </div>;
-}
+      <div className={s.bottomArea}>
+        {notice && <div className={s.notice} role="alert"><AssistantIcon name="alert"/><span>{notice}</span>{locked && active ? <QcButton size="sm" disabled={busy} onClick={() => void refresh(active)}>Check status</QcButton> : <QcButton className={s.iconButton} aria-label="Dismiss notice" onClick={() => setNotice(null)}><AssistantIcon name="close"/></QcButton>}</div>}
+        {speech.state !== 'off' && <div className={s.playback}>
+          <AssistantIcon name="speaker"/><div className={s.playbackCopy}><strong>{speech.state === 'error' ? 'Audio unavailable' : speech.state === 'paused' ? 'Paused' : speech.state === 'loading' ? 'Preparing audio…' : 'Speaking response'}</strong><span>{speech.error || 'Your text answer stays in the conversation'}</span></div>
+          {['speaking','paused'].includes(speech.state) && <QcButton className={s.iconButton} aria-label={speech.state === 'paused' ? 'Resume speech' : 'Pause speech'} onClick={speech.pauseOrResume}><AssistantIcon name={speech.state === 'paused' ? 'play' : 'pause'}/></QcButton>}
+          <QcButton className={s.iconButton} aria-label="Stop speech" onClick={speech.stop}><AssistantIcon name="close"/></QcButton>
+        </div>}
 
-function formatElapsed(ms: number) {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        {mode === 'voice' && !busy && !snapshot?.activeRunId && !(input.trim() && voice.state === 'off') && <VoiceCapture voice={voice} disabled={controlsBusy} expanded={!hasMessages} beforeStart={() => { speech.stop(); setNotice(null); }}/>} 
+        {mode === 'voice' && input.trim() && voice.state === 'off' && <section className={s.transcript} aria-label="Review message">
+          <div className={s.transcriptHeader}><span>{draftOrigin === 'voice' ? 'YOUR VOICE NOTE' : 'YOUR MESSAGE'}</span><QcButton className={s.quietButton} onClick={() => changeMode('text', true)}><AssistantIcon name="edit"/>Edit</QcButton></div>
+          <p>{input}</p><div className={s.transcriptActions}><QcButton disabled={controlsBusy} onClick={() => setInput('')}>Discard</QcButton><QcButton variant="primary" disabled={controlsBusy || !!attachments.length} onClick={() => void send()}><AssistantIcon name="send"/>Send message</QcButton></div>
+        </section>}
+
+        <div className={s.dock}>
+          {attachments.length > 0 && <div className={s.attachments}>
+            <div className={s.attachmentList}>{attachments.map(item => <div key={item.id} className={s.attachmentItem}>
+              {item.previewUrl ? <img src={item.previewUrl} alt="Local attachment preview" width="40" height="40"/> : <AssistantIcon name="file"/>}
+              <span><strong>{item.file.name}</strong><small>On this device · not uploaded</small></span>
+              <QcButton className={s.iconButton} aria-label={`Remove ${item.file.name}`} onClick={() => removeAttachment(item.id)}><AssistantIcon name="close"/></QcButton>
+            </div>)}</div>
+            <p>File reading is not enabled yet. Remove previews to send.</p>
+          </div>}
+          {mode === 'text' && <div className={s.textDock}>
+            <textarea ref={composer} className={s.input} aria-label="Message the assistant" value={input} disabled={busy || locked || voice.state !== 'off'} maxLength={MAX_INPUT} rows={1} placeholder="Ask Smart Assistant…" onChange={e => { setInput(e.target.value); setDraftOrigin('text'); }} onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia('(hover: hover) and (pointer: fine)').matches) { e.preventDefault(); void send(); }
+            }}/>
+            <QcButton className={s.sendButton} variant="primary" aria-label="Send message" disabled={controlsBusy || voice.state !== 'off' || !input.trim() || !!attachments.length} onClick={() => void send()}><AssistantIcon name="send"/></QcButton>
+          </div>}
+          <div className={s.modeBar} role="group" aria-label="Input controls">
+            <QcButton className={s.modeButton} aria-pressed={mode === 'text'} onClick={() => changeMode('text', true)}><AssistantIcon name="keyboard"/><span>Type</span></QcButton>
+            <QcButton className={s.modeButton} aria-pressed={mode === 'voice'} onClick={() => changeMode('voice')}><AssistantIcon name="mic"/><span>Voice</span></QcButton>
+            <QcButton className={s.modeButton} aria-haspopup="dialog" aria-expanded={sheet === 'attach'} aria-label="Attach a photo or file" onClick={openAttachmentSheet}><AssistantIcon name="attach"/><span>Attach</span></QcButton>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {sheet && <AssistantSheet title={sheet === 'menu' ? 'Your assistant' : 'Add an attachment'} background={frame} onClose={() => setSheet(null)}>
+      {sheet === 'menu' ? <>
+        <div className={s.menuActions}>
+          <QcButton disabled={controlsBusy} onClick={() => void newChat()}><AssistantIcon name="plus"/>New conversation</QcButton>
+          <QcButton onClick={() => { voice.cancel(); speech.stop(); router.push(settingsHref); hide(); }}><AssistantIcon name="settings"/>Assistant settings</QcButton>
+        </div>
+        <div className={s.voicePreference}>
+          <label htmlFor={`sa-voice-${access.companyId}`}>Spoken replies</label>
+          <QcButton disabled={!speech.available} aria-pressed={speech.enabled} onClick={speech.toggleEnabled}>{speech.enabled ? 'On' : 'Off'}</QcButton>
+          <select id={`sa-voice-${access.companyId}`} aria-label="Reading voice" value={speech.voiceURI} disabled={!speech.available} onChange={e => speech.chooseVoice(e.target.value)}>
+            <option value="">Device default voice</option>{speech.voices.map(v => <option key={`${v.voiceURI}:${v.lang}`} value={v.voiceURI}>{v.name} · {v.lang}</option>)}
+          </select>
+          <p className={s.detail}>AI-generated speech. Browser/device voices vary. Spoken replies never replace the text.</p>
+        </div>
+        <h3 className={s.sectionLabel}>Recent conversations</h3>
+        <div className={s.conversationList}>{conversations.slice(0, 12).map(c => <QcButton key={c.id} disabled={controlsBusy} aria-current={active === c.id ? 'page' : undefined} onClick={() => { voice.cancel(); speech.stop(); setActive(c.id); setInput(''); clearAttachments(); setSheet(null); }}><AssistantIcon name="history"/><span>{c.title || `Conversation · ${new Date(c.last_active_at).toLocaleDateString()}`}</span><AssistantIcon name="chevron"/></QcButton>)}</div>
+      </> : <>
+        <p className={s.sheetIntro}>Add context to your next request.</p>
+        <div className={s.attachmentNotice}><AssistantIcon name="lock"/><p><strong>Local preview only</strong>Photo and file reading is not enabled in this build. Nothing is uploaded or sent to the assistant.</p></div>
+        <div className={s.attachmentOptions}>
+          <QcButton onClick={() => cameraInput.current?.click()}><span className={s.optionIcon}><AssistantIcon name="camera"/></span><span><strong>Take a photo</strong><small>Open your camera</small></span><AssistantIcon name="chevron"/></QcButton>
+          <QcButton onClick={() => imageInput.current?.click()}><span className={s.optionIcon}><AssistantIcon name="image"/></span><span><strong>Choose an image</strong><small>From your photo library</small></span><AssistantIcon name="chevron"/></QcButton>
+          <QcButton onClick={() => uploadInput.current?.click()}><span className={s.optionIcon}><AssistantIcon name="file"/></span><span><strong>Choose a file</strong><small>PDF or plain text</small></span><AssistantIcon name="chevron"/></QcButton>
+        </div><p className={s.detail}>Up to 3 local previews · 10 MB each. Remove previews before sending a message.</p>
+        <input ref={cameraInput} hidden type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={e => { onFilesSelected(e.target.files); e.currentTarget.value = ''; }}/>
+        <input ref={imageInput} hidden type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={e => { onFilesSelected(e.target.files); e.currentTarget.value = ''; }}/>
+        <input ref={uploadInput} hidden type="file" accept="application/pdf,text/plain" multiple onChange={e => { onFilesSelected(e.target.files); e.currentTarget.value = ''; }}/>
+      </>}
+    </AssistantSheet>}
+  </div>;
 }

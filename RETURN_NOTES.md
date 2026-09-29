@@ -1,116 +1,99 @@
-# RETURN NOTES — P1.7.3 Release Hardening (2026-09-28)
+# Return notes — Smart Assistant Visual Convergence
 
-## Start here
+**29 September 2026 · SA-UX-V2 · not deployed**
 
-This package is based on the supplied `quotecore-plus-SA-next-round-handoff-2026-09-28.zip`, whose contained source tree is the authority for this pass.
+## Baseline and integration warning
 
-**NOT DEPLOYED. NEW SQL NOT APPLIED. No live latency, browser or provider-health claim is made.**
+Built directly from `quotecore-plus-SA-ux-shell-refresh-2026-09-28.zip`, the latest
+supplied UI source. No newer post-Gavin/P1.7.3 source archive was supplied alongside
+the failed UI screenshots. Consequently this full source archive is **not an
+instruction to overwrite Gavin's newer backend branch**. Integrate the UI-only
+delta, preserving his release-hardening and subsequent fixes.
 
-P1.7.3 is deliberately small. It does not redesign task context, Universal Retrieval, P3, quota/admission, or the Smart Assistant UX. It hardens four release risks identified in the latest agent handoff: missing rollout rows, common interpretation anchors, provider/tool-schema health detection, and honest setup/access failure presentation.
+Read `docs/sa-visual-2026-09-29/AGENT_INTEGRATION_PROMPT.txt` and
+`docs/sa-visual-2026-09-29/HANDOFF.md`. Use `VISUAL_CHANGES.json` as this return's
+manifest. Earlier FILE_CHANGES/CHANGED_FILES/START_HERE documents remain historical.
+The previous root return notes are preserved in this phase's documentation folder.
 
-The prior root return notes are preserved at `docs/sa-p173-2026-09-28/BASELINE_RETURN_NOTES.md`.
+## What was corrected
 
-## What changed
+The previous assistant UI failed to follow the approved concept. Its responsive CSS
+stacked the mobile header, nested white panels consumed the conversation, and the
+voice controls used emoji instead of a coherent icon set. This return corrects
+those implementation choices rather than blaming the integration.
 
-### 1. Missing retrieval rollout rows no longer turn task context into a blanket 503
+- Assistant-local charcoal surfaces, quiet readable conversation, brighter orange/red
+  microphone, silver shared Type/Voice/Attach dock. Real Q logo is the menu button;
+  no duplicate hamburger and no literal "Ferrari mode" product copy.
+- Header stays one row, including 320px phones. Type/Voice are mutually exclusive;
+  Attach opens a focus-managed overlay, not a third selected mode or a tall block
+  pushing the conversation away. Desktop panel stays compact.
+- Large welcoming mic on an empty voice screen; compact mic when messages exist;
+  expanded capture only while recording/transcribing. Transcript review and explicit
+  Send remain. Tap/latch, press-hold/release and rapid-second-tap behaviour are covered.
+- Actual microphone analyser drives the waveform. Silence becomes dots. No synthetic
+  sine animation, whole-transcript 60fps React rendering or permanent microphone capture.
+- Consistent SVG icons, tactile focus/hover/press, reduced motion, forced colours,
+  safe-area padding and visual-viewport resizing. No custom/fake mobile keyboard.
+- Better entity/candidate/proposal presentation; task label once in the header;
+  Done / Move on / Not quite by the task result. Existing callback/proof/selection
+  payloads remain authoritative. Selecting a candidate is never edit approval.
+- Browser speech now plays only a newly completed locally requested answer when
+  enabled, or a manually selected Read aloud answer. Enabling/reopening does not
+  replay history. Pause/Resume/Stop remain independent of tasks. Recording/hiding/
+  account-lock/conversation changes stop audio and stale events cannot restart it.
+- Removed the previous fake attachment path which sent filenames as if attached
+  content might be available. Camera/image/PDF/text previews are explicitly local,
+  bounded and removable. Composer Send is blocked until previews are removed.
+  No uploaded file or image is claimed to have been read.
 
-`createV2Scope()` now distinguishes an ordinary staged-rollout `disabled` capability state from an actually incompatible deployment.
+## Protected boundaries
 
-- `disabled` — including no rollout row, or an explicit `enabled=false` row — falls back to the pre-task-context assistant path.
-- `setup_required`, or a supposedly ready deployment without the required resolver capability, still fails closed with `migration_required`.
-- Explicit rollout disablement remains disabled; this does **not** silently enable retrieval or task context.
-- A sanitized `sa_task_rollout_fallback` diagnostic records the fallback without user text.
+Only five existing assistant client/UI files are modified, plus new local UI helpers,
+asset, tests and documentation. All existing `app/api/`, `app/lib/`, shared UI,
+dependency manifests and **183 original migration SQL files** remain byte-identical
+to the supplied UI baseline. No migration, pricing, authentication, quota, model,
+retrieval, task-routing or domain-operation change is introduced.
 
-This fixes the release-blocking condition where accounts not yet provisioned for retrieval could fail every Smart Assistant request when the server task-context flag was globally enabled.
+There is no new feature flag or new API. The visual correction applies to V2ChatClient
+where the existing V2 capability already selects it. Legacy assistant stays unchanged.
+Gavin must preserve newer branch fixes when merging V2ChatClient.
 
-### 2. Common edit/customer wording is anchored more consistently
+## Validation actually performed
 
-The deterministic anchor layer now recognizes common component-edit shapes for material rate, labour/labor rate, quantity/qty, waste and pitch while preserving the component name supplied by the user. It also recognizes customer qualifiers on plural quote/draft/invoice/job/order requests, including material orders.
+- **121/121 isolated Chromium browser checks** using the actual edited TSX, shared
+  QcButton/styles and real React. Mock transport and simulated media; no live services.
+- **15/15 pure media/source checks** for real-signal behaviour, limits, speech text
+  preservation, CSS references and removal of fake attachment input.
+- **976 retained backend/task checks passed** before the existing historical file-hash
+  checker rejected the old UX-shell CSS drift. The same checker fails on the untouched
+  supplied baseline. The runner therefore exits nonzero; it is not claimed green.
+  That historical checker is untouched. A separate actual-baseline byte audit is included.
+- Actual component preview bundle: 26 modules transpiled. Screenshots cover Type,
+  Voice idle, recording, transcript, candidates, proposal, TTS, attachments, failure,
+  compact desktop and keyboard-sized viewports. These are real browser renders, not
+  image-generator concepts.
+- Full typecheck attempted on baseline and return; both blocked by missing dependencies.
+  Lint could not launch (eslint absent); production build could not launch Next.
+  Tooling installation attempt failed DNS. No successful full typecheck/lint/build claimed.
 
-Examples covered offline include:
+The preview used installed offline **React 18.2.0**, whereas this project declares
+18.3.1. This is an isolated component validation, not a replacement for the project's
+actual Next/React build. Full logs and limitations are in
+`docs/sa-visual-2026-09-29/validation/VALIDATION.md`.
 
-- `Set Ridge labour rate to 25 per m on quote 1014`
-- `Set Ridge quantity to 40 on quote 1014`
-- `Change the waste on Ridge component to 10% on quote 1014`
-- `Change the pitch of Ridge component to 25 degrees on quote 1014`
-- `Show me quotes for John Smith`
-- `Show orders for John Smith`
+## Not implemented or certified
 
-The existing P3 validator/proposal/Confirm path still owns the requested mutation and value. Anchors only preserve entity/qualifier identity so the model cannot casually switch records/components.
+No real phone/Safari/Android microphone, native keyboard, Bluetooth/car audio, production
+TTS quality, authenticated deployed browser, Supabase, Luna or live latency test ran here.
+No paid TTS, Realtime voice, vision/OCR, secure file upload or automatic draft creation
+is added. Browser voices vary and may use device-vendor services. Text always remains.
+Attachment preview is a foundation, not a usable image-understanding feature.
 
-### 3. Admin-only provider canary
+## Next handoff
 
-A new admin page at `/admin/smart-assistant/health` runs one tiny real configured-model request containing a no-op function schema. Its purpose is to catch provider/model contract regressions — especially function-tool request incompatibilities — immediately after deployment.
-
-The canary:
-
-- requires `requireAdmin()`;
-- uses the existing configured Smart Assistant model/client;
-- includes a deliberately unused function-tool schema;
-- sends no company/customer/conversation data;
-- creates no Smart Assistant run and invokes no QuoteCore business tool;
-- reports healthy/degraded/unavailable, latency, model and token counts.
-
-This is a manual/admin operational probe, not a background monitor and not a substitute for end-to-end assistant acceptance.
-
-### 4. Canonical setup/access failures are visible instead of generic retry noise
-
-The public V2 session contract now retains the bounded canonical `error_code` from recent assistant runs. One additive SQL wrapper extends `sa_v2_session_read(uuid)` so recent run outcomes include that field while retaining the existing owner/company/history fences.
-
-The existing failed-turn UI can therefore distinguish:
-
-- `migration_required` / setup incomplete — explicit setup message, not retryable;
-- access/workspace/permission change — explicit reopen/access message, not retryable;
-- ordinary failed/timed-out turns — existing single logical failure/retry behavior.
-
-No provider body, prompt, stack, secret or model-authored SQL is exposed.
-
-## Locked boundaries preserved
-
-- Existing `sa_admit_run` / reservation / quota / replay / trusted finish behavior is unchanged.
-- Existing turn route and canonical turn finalization are unchanged.
-- GPT-5.6 Luna configuration and reasoning client are unchanged.
-- P1.7.2 task semantics, Universal Retrieval, P2 and P3 confirmation/audit remain in place.
-- P4 remains gated.
-- No arbitrary SQL/database tool was added.
-- No existing migration was edited. The package adds one draft migration only.
-- No visual Smart Assistant redesign, voice, image, PWA or analytics expansion is included.
-
-## Important validation-manifest correction
-
-The supplied authoritative ZIP already failed its own `check-smart-assistant-task-quality-source.cjs` before P1.7.3 changes because `docs/sa-p172-2026-09-28/validation/BASELINE_PROTECTED.json` contained stale hashes from an older tree. This was reproduced on a clean extraction.
-
-P1.7.3 refreshes that **validation metadata only** against the actual supplied authoritative ZIP, then runs the protected-source gate. The application source was not altered merely to satisfy the manifest.
-
-## Required Gavin integration sequence
-
-1. Reconcile this package against the current integration branch; do not blindly overwrite newer fixes.
-2. Keep all current production/testing feature flags as they are. The rollout fallback is compiled behavior, not a new customer-facing enable flag.
-3. Install dependencies and run real `tsc`, lint and `npm run build` in the normal environment.
-4. Run:
-   - `node scripts/run-smart-assistant-task-quality-offline.mjs`
-   - `node scripts/run-smart-assistant-resolver-offline.mjs`
-5. Review/test **only** `backend/supabase/migrations/20260928190000_sa_v2_p173_release_hardening.sql`; do not mass-apply pending migrations.
-6. On a database clone/testing environment, prove the wrapped session reader preserves all existing session content and now returns recent-run `error_code` only for the authenticated owner/company/history scope. Test forged conversation IDs, another user/company, expired history and authenticated grants.
-7. Test two account classes with task context server-side enabled:
-   - approved/ready retrieval rollout: P1.7.2 task context still works;
-   - no rollout row and explicit `enabled=false`: assistant falls back normally rather than 503, without gaining retrieval/task-context access.
-8. Re-run the owner continuous P1.7.2 acceptance sequences and P3 proposal/Confirm tests. Confirm no wrong-record/component regression from the new anchors.
-9. As admin, open `/admin/smart-assistant/health` and run the canary against the actual configured provider/model. Confirm it is admin-only and contains no customer data in request/logs.
-10. Inject/observe `migration_required`, access-changed and ordinary failed turns in testing and verify one clear inline outcome, not a generic retry loop.
-11. Return the complete latest source/handoff ZIP with actual build, SQL/RLS, canary and live acceptance evidence before moving to UX/multimodal work.
-
-## Actual evidence from this environment
-
-- `node scripts/run-smart-assistant-task-quality-offline.mjs` — **PASS**, 981 executable TAP checks across the retained suites and new P1.7.3 checks, plus source/static gates.
-- `node scripts/run-smart-assistant-resolver-offline.mjs` — **PASS**, including 203 resolver cases and retained source boundaries.
-- New P1.7.3 source/migration checker — **PASS**.
-- Baseline-vs-new `npx tsc --noEmit` — both fail because this environment lacks installed React/Next/Supabase/Node types. The updated tree produces 28 additional diagnostics, all attributable to the new admin canary route/components missing those same framework modules/JSX types. This is **not** a successful semantic typecheck.
-- Baseline-vs-new `npm run build` — both run `check-server-deps` successfully, then fail identically with `next: not found` because dependencies are not installed. This is **not** a successful production build.
-- No live PostgreSQL/RLS, browser, Luna/provider, account rollout, P3 mutation, or latency test was run here.
-
-See `docs/sa-p173-2026-09-28/validation/VALIDATION.md` for exact limitations.
-
-## Release decision
-
-P1.7.3 is ready for Gavin to integrate and validate, not ready to declare production-safe from this environment alone. If its live gates pass, this should be the final small backend hardening pass before freezing the assistant foundation and moving into the Smart Assistant UX/multimodal phase.
+Give Gavin the full ZIP plus the integration prompt. Prefer the surgical UI patch for
+his newer branch. Require actual mobile/desktop screenshots matching the included
+rendered reference, deployed backend regressions and physical-device recording tests
+before release. Do not silently replace the approved dark assistant with shared light
+styles or start another backend redesign during this merge.

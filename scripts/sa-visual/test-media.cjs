@@ -1,0 +1,20 @@
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),test=require('node:test'),assert=require('node:assert/strict');
+let ts;try{ts=require('typescript');}catch{ts=require(path.join(require('node:child_process').execSync('npm root -g').toString().trim(),'typescript'));}
+const root=path.resolve(__dirname,'../..'),dir=path.join(root,'app/components/smart-assistant/v2');
+const mod={exports:{}};const code=ts.transpileModule(fs.readFileSync(path.join(dir,'media-utils.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+vm.runInNewContext(code,{module:mod,exports:mod.exports});const {recordingTime,waveformLevels,speechText,speechChunks,attachmentError}=mod.exports;
+test('recording timer formats real seconds, including the two-minute cap',()=>{assert.equal(recordingTime(0),'00:00');assert.equal(recordingTime(65.7),'01:05');assert.equal(recordingTime(120),'02:00');assert.equal(recordingTime(NaN),'00:00');});
+test('silence returns only zero levels, not animated fake listening',()=>assert.ok(waveformLevels(new Uint8Array(256).fill(128)).every(n=>n===0)));
+test('louder actual samples produce higher bounded levels',()=>{const a=waveformLevels(new Uint8Array(256).fill(132));const b=waveformLevels(new Uint8Array(256).fill(155));assert.ok(b.every((n,i)=>n>a[i]&&n<=1));});
+test('empty audio buffer is safe',()=>assert.ok(waveformLevels(new Uint8Array()).every(n=>n===0)));
+test('speech conversion preserves amounts and units',()=>assert.equal(speechText('**Ridge** costs £30 / m. `25°` pitch.'),'Ridge costs £30 / m. 25° pitch.'));
+test('speech chunking is bounded and does not drop content',()=>{const text='Ridge costs £30 per metre. '.repeat(60).trim();const c=speechChunks(text);assert.ok(c.every(p=>p.length<=320));assert.equal(c.join(' '),text);});
+test('unbroken speech text is bounded',()=>assert.ok(speechChunks('x'.repeat(1500)).every(p=>p.length<=320)));
+test('blank speech is not enqueued',()=>assert.equal(speechChunks('  ').length,0));
+test('local attachment preview rejects empty files',()=>assert.match(attachmentError({type:'image/png',name:'a.png',size:0}),/empty/));
+test('local attachment preview caps size before reading',()=>assert.match(attachmentError({type:'image/png',name:'a.png',size:11*1024*1024}),/10 MB/));
+test('active SVG/HTML are not accepted as image previews',()=>{for(const type of ['image/svg+xml','text/html','application/javascript'])assert.ok(attachmentError({type,name:'a',size:20}));});
+test('known image/PDF/text local preview types accepted',()=>{for(const type of ['image/png','image/jpeg','image/webp','image/gif','application/pdf','text/plain'])assert.equal(attachmentError({type,name:'a',size:1024}),null);});
+test('all referenced CSS module classes exist',()=>{const css=fs.readFileSync(path.join(dir,'assistant.module.css'),'utf8');for(const name of fs.readdirSync(dir).filter(n=>n.endsWith('.tsx'))){for(const m of fs.readFileSync(path.join(dir,name),'utf8').matchAll(/\bs\.([a-zA-Z]\w*)/g))assert.ok(css.includes('.'+m[1]),`${name}: missing .${m[1]}`);}});
+test('no fabricated attachment filenames are fed to the model',()=>{const s=fs.readFileSync(path.join(dir,'V2ChatClient.tsx'),'utf8');assert.ok(!s.includes('enrichTurnMessage'));assert.ok(!s.includes('[Selected attachments]'));assert.ok(s.includes('const text = rawText;'));});
+test('no emoji or fake keyboard in the shipped shell',()=>{for(const name of ['V2ChatClient.tsx','VoiceCapture.tsx'])assert.doesNotMatch(fs.readFileSync(path.join(dir,name),'utf8'),/[\u{1F300}-\u{1FAFF}]/u);});

@@ -1,7 +1,14 @@
-# Phase 9 implemented return
+# Start here — Smart Assistant Visual Convergence (29 September 2026)
 
-Read `RETURN_NOTES.md`, then `docs/ux/phase-9/INTEGRATION.md` and root `FILE_CHANGES.json`.
+This is the corrected, owner-approved **dark assistant UI**, not a new retrieval/task phase.
 
-The original `CHANGED_FILES.json` and `START_HERE_SA.md` are retained for the separate Smart Assistant lane. They are not this Phase9 change manifest. The old phase docs and original Phase9 HANDOFF remain historical baseline/authority; this is the implemented return.
+Read `quotecore-plus/RETURN_NOTES.md`, then
+`quotecore-plus/docs/sa-visual-2026-09-29/AGENT_INTEGRATION_PROMPT.txt`.
 
-Use the exact supplied Phase9 handoff as common ancestor and preserve newer fixes. The companion UX archive is v2.10. Real build/runtime/device tests remain Gavin's release gate.
+**Merge the small UI delta into Gavin's current branch. Do not replace his current
+branch with this archive.** The baseline is the last supplied UI-shell package,
+`quotecore-plus-SA-ux-shell-refresh-2026-09-28.zip`; it is not an export of the newer
+post-P1.7.3 integration branch. All baseline backend files remain unchanged.
+
+Actual rendered screenshots and honest isolated-browser validation are included.
+No SQL or dependency changes. Not deployed. Live browser/device/backend gates remain.

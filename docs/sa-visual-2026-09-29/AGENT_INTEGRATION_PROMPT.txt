@@ -1,0 +1,86 @@
+Gavin — integrate the attached Smart Assistant Visual Convergence package.
+
+IMPORTANT BASELINE:
+This is based on quotecore-plus-SA-ux-shell-refresh-2026-09-28.zip, NOT an export of
+your latest post-P1.7.3 branch. Preserve your newer backend and client fixes. Use the
+UI delta/patch and VISUAL_CHANGES.json; do not blindly overwrite your current repo.
+
+READ FIRST:
+1. RETURN_NOTES.md
+2. docs/sa-visual-2026-09-29/HANDOFF.md
+3. docs/sa-visual-2026-09-29/validation/VALIDATION.md
+4. docs/sa-visual-2026-09-29/screenshots/ (actual rendered target)
+
+OBJECTIVE:
+Make the real Smart Assistant match the owner-approved charcoal/orange voice concept.
+The previous light/nested/stacked implementation was not approved. This is a visual
+correction with client media lifecycle fixes, not a backend/retrieval redesign.
+
+MERGE SCOPE:
+Five modified existing files in app/components/smart-assistant/v2/:
+V2ChatClient.tsx, assistant.module.css, ConversationCards.tsx, useVoiceNote.ts,
+useSpeechPlayback.ts. Add the accompanying local UI helpers and q-menu.webp asset.
+No global design tokens, shared QcButton, unrelated app UI, dependency or SQL changes.
+The patch also carries tests/docs/screenshots; it is not a deployment script.
+
+KEEP INTACT:
+Your P1.7.3 hardening, configured model and provider fixes; admission, reservation,
+quota, replay, finish; company/user isolation and Hidden/View/Edit; resolver/task
+behaviour; P2/P3 proof/Confirm/audit; existing domain/pricing engines. P4 remains gated.
+Check conflicts around V2ChatClient's response error-code handling against your newer
+branch rather than replacing your setup/access reporting with the older baseline.
+
+VISUAL ACCEPTANCE (not just "build passed"):
+- Real Q logo IS the menu button; no hamburger or tiny logo inside a large blank box.
+- Header always one row at 320/360/390/430px: Q, title/task subtitle, speaker, Hide.
+- Charcoal conversation and restrained cards; no blanket pale/white nested surfaces.
+- One silver Type/Voice/Attach dock. Only Type OR Voice is selected. Attach is a sheet.
+- Voice idle is expressive only on the empty screen, compact with conversation.
+- Recording has real amplitude bars, silence dots, explicit microphone-on state,
+  Cancel and Finish; transcript always reviewed before Send.
+- Speaker output never replaces the text. Pause/Resume/Stop are immediately available.
+- Candidate and proposal controls retain their exact server-bound semantics.
+- Normal conversation gets most of the usable screen. No controls below the viewport,
+  stacked mobile header, keyboard cover, duplicate task block or giant desktop mic.
+- Compare rendered phone and desktop screenshots with those included before signing off.
+
+HONEST CAPABILITY LIMITS:
+Attachments remain LOCAL PREVIEW ONLY. The previous filename-only model input was
+removed. Files are not uploaded, analysed or sent. Composer Send is blocked until local
+previews are removed. Do not claim image understanding or add an unsafe upload shortcut.
+Speech remains browser/device speechSynthesis, not paid OpenAI TTS. Voices vary; test
+quality/availability. Audio/mic failures must leave normal text usable.
+
+RUN YOUR NORMAL GATES:
+Clean dependency install; full project typecheck, lint and production build; retained
+Smart Assistant/P1.7.3 regressions; browser candidate, P3 Confirm, Done/Move on and
+navigation+hide/reopen flows against testing. No new migration should be applied.
+
+NEW REPRODUCIBLE UI CHECKS:
+node scripts/sa-visual/test-media.cjs
+node scripts/sa-visual/build-preview.cjs /tmp/sa-visual-preview
+python scripts/sa-visual/browser-checks.py /tmp/sa-visual-preview /tmp/sa-visual-evidence
+(Preview requires normal React/ReactDOM/TypeScript installation; Python test requires
+Playwright and Chromium, CHROMIUM_PATH can identify the installed browser.)
+
+Offline evidence here: 121 isolated browser checks, 15 pure media/source checks and
+976 retained executable checks passed. The old task runner exits nonzero at its
+historical file-hash guard on BOTH the supplied baseline and return. Do not disable
+security tests or call the full suite green; reconcile its snapshot separately with
+your known baseline. The new exact-baseline audit is only a packaging/integrity gate.
+No successful full Next build or real microphone/Supabase/Luna validation is claimed.
+
+PHYSICAL DEVICE GATES:
+Actual iPhone Safari + Android Chrome: safe areas, keyboard open/close, portrait/
+landscape, browser text scaling, touch press/hold/tap/Finish, permission denied/no mic,
+late permission after Hide, cancel during transcription, interruption/hide/background,
+transcript Edit/Discard/Send, local camera/file picker, overlay focus/Escape, TTS
+start/pause/resume/stop and voice selection. Check no old answer auto-plays on enable,
+reopen or history changes. Starting capture must stop speech. Check reduced motion.
+
+RETURN:
+Latest complete source/handoff ZIP, exact merge changes, install/build/typecheck/lint
+results, backend regression results, actual mobile/desktop screenshots, short recording
+video or equivalent observation, microphone/TTS/device findings, remaining limitations.
+Flag material divergence from the supplied rendered target rather than quietly reverting
+the assistant to shared light styles. Do not start multimodal ingestion during this merge.

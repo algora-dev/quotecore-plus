@@ -1,0 +1,5 @@
+
+> quotecore-app@0.1.0 lint
+> eslint app/components/smart-assistant/v2
+
+sh: 1: eslint: not found

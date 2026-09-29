@@ -291,11 +291,11 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
-      "sha256": "ebd4782661bbc5a3e8e8fae3c3ed52647080bde2224b2f73db2169d9e9042ad4"
+      "sha256": "8354f24780cb501018ae98b05592332b9a45b62824f762a5c93ea7a1294613e4"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
-      "sha256": "0a907288e7439e877c789120899c6660303e5272b5a21436c519f3f7a879cf06"
+      "sha256": "a4a87a68ad52e2cd462bb8f38a2475d8a36e82c60ab3db3d39026b299652badc"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/components/components/PublishLibraryModal.tsx",
@@ -315,7 +315,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/components/page.tsx",
-      "sha256": "abcf4e2b092fc991f9efda94ff109742eb1be2036e6151f292f41a0d52122d78"
+      "sha256": "cb469f1370dcd044bd93ec6067232cc49f577e4984fe8d2a4ae71205bbae64ea"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/components/parts/TypeSpecificFields.tsx",
@@ -631,7 +631,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/page.tsx",
-      "sha256": "a37fc611a3502e8660febc3e8ee0bf08d2a62fea85a6bd8fcc280d4f52a0b50f"
+      "sha256": "a91db1e5448bcd6cfdd6ba4575afbbc1d1d8c31f942210780915121a3374bfd0"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
@@ -1239,7 +1239,7 @@
     },
     {
       "path": "app/(auth)/[workspaceSlug]/tutorials/WelcomeModal.tsx",
-      "sha256": "ef8f19be63d5d4a940fe983c14e25385d8a0385835c3a98c3bfac2b145b9e6db"
+      "sha256": "5f8a399e186d17d160d1df1d967f06752a5d5148b5f47d964a000120df7f3d2f"
     },
     {
       "path": "app/(auth)/[workspaceSlug]/tutorials/page.tsx",
@@ -3855,7 +3855,7 @@
     },
     {
       "path": "app/components/smart-assistant/v2/assistant.module.css",
-      "sha256": "bee16302c8ae93d6c533b7dfd91c25676aca6d2b66e681acd5a18290583f6be4"
+      "sha256": "948e79581fdf22ec5d205d06050ca1a5aafd48e2866280e53eadd3925764ffec"
     },
     {
       "path": "app/components/smart-assistant/v2/client.ts",
@@ -3867,7 +3867,7 @@
     },
     {
       "path": "app/components/smart-assistant/v2/useVoiceNote.ts",
-      "sha256": "02db7a960c27bbe87cfab012fec92b899bb5e8be67215ff0df9e870dfaec33ad"
+      "sha256": "a593886fc67aec4047d9befd1414181426685ea384f15b07dfd8d7c8511333fa"
     },
     {
       "path": "app/components/ui/PasswordField.tsx",
@@ -3927,7 +3927,7 @@
     },
     {
       "path": "app/components/ui/v2/README.md",
-      "sha256": "0c8a55ad86c0bdd410f537bb682eab9cae703fcb87378e103c8dc54350a437ae"
+      "sha256": "78772fe44d9e385aa9f567fbbcb7d40bd42a41288d4bb8a754c1896405fe14b3"
     },
     {
       "path": "app/components/ui/v2/qc-adapters.css",
@@ -3971,7 +3971,7 @@
     },
     {
       "path": "app/components/workspace/HomeDashboard.tsx",
-      "sha256": "386e4b3e1f59c0a9512cc93ab3523874194bafae2ebbbe249fce0958a117e764"
+      "sha256": "25dc9ac7da0207f59f99a62d58d212c98f11cebec73fe62a296aaf2e0375415d"
     },
     {
       "path": "app/components/workspace/MobileHeader.tsx",
@@ -3999,7 +3999,7 @@
     },
     {
       "path": "app/components/workspace/qc-home.css",
-      "sha256": "0cd60a8934d05a6d4b3e1f2dbfb6b1a23cfdfedf81511a766b6a36bccecff34a"
+      "sha256": "d20d51e74d06f734c8e9450449271f1b9a09c6165b94a7155bf449c9c77886d8"
     },
     {
       "path": "app/components/workspace/qc-shell.css",
