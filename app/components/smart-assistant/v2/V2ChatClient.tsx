@@ -18,6 +18,7 @@ import { consumeTurnStream } from './stream-turn';
 import { useVoiceNote } from './useVoiceNote';
 import { useSpeechPlayback } from './useSpeechPlayback';
 import { AssistantIcon } from './AssistantIcon';
+import { AssistantSpinner } from './AssistantSpinner';
 import { AssistantSheet } from './AssistantSheet';
 import { VoiceCapture } from './VoiceCapture';
 import { useAssistantViewport } from './useAssistantViewport';
@@ -570,7 +571,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             </>}
           </div>}
           {unresolved && !busy && !snapshot?.activeRunId && active && <div className={s.failure} role="status"><AssistantIcon name="alert"/><div><p>The last request’s outcome is not confirmed yet.</p><QcButton disabled={locked} onClick={() => void send(pending.current.get(active)?.message)}>Check request</QcButton></div></div>}
-          {(busy || snapshot?.activeRunId) && <div className={s.working} role="status"><span className={s.spinner} aria-hidden="true"/><span>Working on your request…</span></div>}
+          {(busy || snapshot?.activeRunId) && <div className={s.working} role="status"><AssistantSpinner/><span>Working on your request…</span></div>}
           <div ref={end}/>
         </div>
       </div>

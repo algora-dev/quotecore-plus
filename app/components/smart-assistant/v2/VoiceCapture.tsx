@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { AssistantIcon } from './AssistantIcon';
+import { AssistantSpinner } from './AssistantSpinner';
 import { recordingTime, waveformLevels } from './media-utils';
 import type { useVoiceNote } from './useVoiceNote';
 import s from './assistant.module.css';
@@ -59,7 +60,7 @@ export function VoiceCapture({ voice, disabled, expanded, beforeStart }: {
   }, []);
   return <section className={s.voiceCapture} data-expanded={expanded} data-recording={recording} data-waiting={waiting} aria-label="Voice recorder">
     {waiting ? <div className={s.voiceWaiting}>
-      <span className={s.spinner} aria-hidden="true" /><strong role="status">{voice.state === 'requesting' ? 'Opening microphone…' : 'Transcribing…'}</strong>
+      <AssistantSpinner /><strong role="status">{voice.state === 'requesting' ? 'Opening microphone…' : 'Transcribing…'}</strong>
       <p>{voice.state === 'requesting' ? 'Allow access to start your voice note.' : voice.armedSend ? 'Your words go straight to the assistant.' : 'You’ll review your words before sending.'}</p>
       <QcButton onClick={voice.cancel}>Cancel</QcButton>
     </div> : <>
