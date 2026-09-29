@@ -72,6 +72,13 @@ test('boundary choice resumes stored input exactly once without opaque marker',a
  s.history=[{id:uuid(20),role:'user',content:encodeTaskChoice({taskId:uuid(50),version:1,choice:'continue'}),run_id:uuid(4),created_at:new Date().toISOString()},{id:uuid(21),role:'user',content:s.read.pendingMessage,run_id:uuid(9),created_at:new Date().toISOString()}];s.session.messages=s.history.map(m=>({...m,runId:m.run_id,createdAt:m.created_at}));
  await runOrchestratorTurn(input(s.history[0].content),dependencies);assert.equal(s.modelInput.filter(m=>m.role==='user'&&m.content==='Explain its labour allowance').length,1);assert.doesNotMatch(JSON.stringify(s.modelInput),/\[\[sa-task:/);
 });
+test('natural confirmation phrases continue the live task (owner 2026-09-29 voice test)',async()=>{
+ for(const phrase of ['Correct, proceed.','Yeah, so proceed.','That is right, go ahead.','Sounds good, continue.','Perfect, go for it']){
+  reset();s.read={task:view({status:'answered'}),resolution:null,runIds:[uuid(9)],pendingMessage:null};
+  await runOrchestratorTurn(input(phrase),dependencies);
+  assert.equal(s.admin[0].args.p_disposition,'continue',phrase);
+ }
+});
 test('Done wire is never interpreted by a model when feature disabled',async()=>{
  reset();process.env.SMART_ASSISTANT_TASK_CONTEXT_ENABLED='false';let models=0;const r=await runOrchestratorTurn(input(encodeTaskChoice({taskId:uuid(50),version:1,choice:'new'})),{...dependencies,modelStep:async()=>{models++;throw Error('must not run')}});assert.equal(models,0);assert.equal(r.tokensIn,0);assert.match(r.content,/no longer available/);assert.equal(s.calls.some(x=>x.name==='sa_v2_task_read'),false);
 });

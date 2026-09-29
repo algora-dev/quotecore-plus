@@ -101,10 +101,15 @@ export function decideTask(message: string, snapshot: TaskSnapshot, now = new Da
         return { disposition: 'continue', reason: 'dependent_reference', message: text };
     }
     // Acknowledgements and proceed-style confirmations (the task strip's
-    // Proceed button sends "Yes, proceed.", users type the same words) continue
-    // the CURRENT task. They are never authority for a write: Confirm cards are
-    // the only path that applies a change.
-    if (/^(?:please[ ,]+)?(?:yes|yep|yeah|confirmed|confirm|approved|approve|okay|ok|proceed|go ahead|carry on|keep going|continue)\b[ ,.!]*(?:(?:please[ ,]+)?(?:proceed|continue|go ahead|carry on|keep going)\b[ ,.!]*)*(?:please[ ,.!]*)?$/i.test(text.trim()))
+    // Proceed button sends "Yes, proceed."; users type or voice the same intent
+    // with fillers - owner 2026-09-29 mobile test: "Correct, proceed." and
+    // "Yeah, so proceed." both spun pointless boundary questions mid-creation)
+    // continue the CURRENT task when the message is short and made purely of
+    // confirmation words. They are never authority for a write: Confirm cards
+    // are the only path that applies a change.
+    const CONFIRM_WORDS = new Set(['please', 'thanks', 'thank', 'you', 'yes', 'yeah', 'yep', 'yup', 'correct', 'right', 'thats', "that's", 'sounds', 'looks', 'good', 'perfect', 'great', 'sure', 'ok', 'okay', 'confirmed', 'confirm', 'approved', 'approve', 'proceed', 'continue', 'go', 'ahead', 'carry', 'on', 'keep', 'going', 'for', 'it', 'so', 'then', 'now', 'that', 'is', 'was']);
+    const confirmWords = text.replace(/[\u2019\u2018]/g, "'").toLowerCase().split(/[^a-z']+/).filter(Boolean);
+    if (confirmWords.length > 0 && confirmWords.length <= 6 && !text.includes('?') && confirmWords.every(word => CONFIRM_WORDS.has(word)))
         return { disposition: 'continue', reason: 'acknowledgement_not_authority', message: text };
     if (pending) {
         const ordinal = /^(?:the\s+)?(?:first|second|third|fourth|fifth|[1-5])(?:\s+(?:one|option))?[.!?]?$/i.test(text);

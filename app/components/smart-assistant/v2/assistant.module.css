@@ -265,3 +265,18 @@
 .root .assistantHeading { display: flex; align-items: center; justify-content: space-between; min-height: 38px; gap: 12px; }
 .assistantHeading .messageLabel { margin: 0; }
 .root .assistantHeading button.readAloud { width: 44px; height: 44px; padding: 10px; justify-content: center; }
+
+.updateChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 16px 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid #fdba74;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}

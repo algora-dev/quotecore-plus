@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   }
 
   let text = '';
-  let voice = 'alloy';
+  let voice = 'ash';
   try {
     const value: unknown = await req.json();
     if (!isRecord(value)) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });

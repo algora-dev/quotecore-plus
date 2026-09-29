@@ -6,10 +6,10 @@ export type SpeechPlaybackState = 'off' | 'loading' | 'speaking' | 'paused' | 'e
 /** Premium neural voices offered by the server TTS route (SA Phase 2a).
  * Mirrors the route allowlist exactly - the client never sends other ids. */
 export const PREMIUM_VOICES = [
-  { id: 'alloy', label: 'Alloy · neutral' },
-  { id: 'verse', label: 'Verse · versatile' },
-  { id: 'sage', label: 'Sage · calm' },
-  { id: 'coral', label: 'Coral · warm' },
+  { id: 'ash', label: 'Ash · Male' },
+  { id: 'verse', label: 'Verse · Male' },
+  { id: 'coral', label: 'Coral · Female' },
+  { id: 'nova', label: 'Nova · Female' },
 ] as const;
 
 const SPEAK_ENDPOINT = '/api/smart-assistant/v2/speak';
@@ -106,7 +106,7 @@ export function useSpeechPlayback(visible: boolean, storageKey: string, ttsKey: 
     try { saved = localStorage.getItem(storageKey) === '1'; voice = localStorage.getItem(`${storageKey}:voice`) ?? ''; } catch { /* optional */ }
     preference.current = saved; setEnabled(saved); selectedVoice.current = voice; setVoiceURI(voice);
     // Premium neural-voice preference (same SSR-safe hydration pattern).
-    let premiumSaved = false; let premiumVoiceSaved = 'alloy'; let probed: string | null = null;
+    let premiumSaved = false; let premiumVoiceSaved = 'ash'; let probed: string | null = null;
     try {
       premiumSaved = localStorage.getItem(ttsKey) === '1';
       const savedId = localStorage.getItem(`${ttsKey}:voice`) ?? '';

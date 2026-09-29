@@ -159,8 +159,8 @@ export const TTS_CONFIG = {
   enabled: envBool('SA_TTS_ENABLED', false),
   /** OpenAI TTS model. tts-1 = lowest latency, suits reply playback. */
   model: process.env.SA_TTS_MODEL ?? 'tts-1',
-  /** Allowed voices only (natural, non-robotic). Never accept arbitrary ids. */
-  voices: ['alloy', 'verse', 'sage', 'coral'] as const,
+  /** Allowed voices only (owner 2026-09-29: two male + two female, clearly labelled). Never accept arbitrary ids. */
+  voices: ['ash', 'verse', 'coral', 'nova'] as const,
   /** Max reply characters accepted for one synthesis request. */
   maxInputChars: envInt('SA_TTS_MAX_INPUT_CHARS', 4_000),
 } as const;

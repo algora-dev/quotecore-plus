@@ -17,6 +17,7 @@ import { request, session } from './client';
 import { consumeTurnStream } from './stream-turn';
 import { useVoiceNote } from './useVoiceNote';
 import { useSpeechPlayback } from './useSpeechPlayback';
+import { useBuildVersion } from './useBuildVersion';
 import { AssistantIcon } from './AssistantIcon';
 import { AssistantSpinner } from './AssistantSpinner';
 import { AssistantSheet } from './AssistantSheet';
@@ -115,6 +116,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   });
   const speech = useSpeechPlayback(visible && !locked, speechPrefKey, ttsPrefKey);
   const capturing = useRef(false); capturing.current = voice.state !== 'off';
+  const updateReady = useBuildVersion(!busy && voice.state === 'off');
 
   const clearAttachments = useCallback(() => {
     attachmentUrls.current.forEach(url => URL.revokeObjectURL(url));
@@ -529,7 +531,12 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             <span className={s.welcomeEyebrow}>QUOTECORE+ SMART ASSISTANT</span>
             <h2>{mode === 'voice' ? <>Less typing.<br/>More getting things done.</> : <>What can I help<br/>you with today?</>}</h2>
             <p>{greeting || 'Find the right record. Check a price. Review a change. All in one place.'}</p>
-            <div className={s.quickActions}>
+            {updateReady && (
+        <button type="button" onClick={() => window.location.reload()} className={s.updateChip}>
+          Update available · tap to reload
+        </button>
+      )}
+      <div className={s.quickActions}>
               {currentAccess.permissions.quotes !== 'hidden' && <QcButton disabled={controlsBusy} onClick={() => void send('Show my quotes.')}><AssistantIcon name="search"/><span>Find my quotes</span><AssistantIcon name="chevron"/></QcButton>}
               {currentAccess.permissions.draft_quotes !== 'hidden' && <QcButton disabled={controlsBusy} onClick={() => void send('Open my most recent draft.')}><AssistantIcon name="draft"/><span>Open my latest draft</span><AssistantIcon name="chevron"/></QcButton>}
               {currentAccess.phases.p2 && <QcButton disabled={controlsBusy} onClick={() => void send('What needs my attention today?')}><AssistantIcon name="alert"/><span>What needs attention?</span><AssistantIcon name="chevron"/></QcButton>}
