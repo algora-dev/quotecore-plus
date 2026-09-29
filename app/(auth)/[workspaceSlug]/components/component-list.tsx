@@ -9,10 +9,8 @@ import { formatCurrency } from '@/app/lib/currency/currencies';
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility } from './actions';
+import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning } from './actions';
 import { AddFromCatalogModal } from './components/AddFromCatalogModal';
-import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
   ComponentLibraryRow,
   ComponentLibraryInsert,
@@ -42,7 +40,6 @@ export function ComponentList({
   showPricingIntroduction = false,
   reviewImported = false,
   componentCollections = [],
-  flashingsFeatureEnabled,
   editWarningDismissed = false,
   restoreDraftId,
   highlightComponentId,
@@ -59,9 +56,6 @@ export function ComponentList({
   reviewImported?: boolean;
   /** Component collections for the company (for library assignment UI). */
   componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
-  /** Whether the plan includes the flashings feature. Controls the
-   *  Flashings entry button on this page. */
-  flashingsFeatureEnabled: boolean;
   /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
   editWarningDismissed?: boolean;
   /** Draft ID from ?restore= query param - loads a saved calculator draft. */
@@ -100,14 +94,10 @@ export function ComponentList({
   const pitchRafterLabel = _tradeLabels.pitchRafterLabel ?? 'Rafter Pitch';
   // Material orders image label - flashings terminology only applies to roofing.
   const isRoofingTrade = companyDefaultTrade === 'roofing';
-  // Drawing-library feature label: 'Flashings' for roofing, 'Drawings & Images' for all others.
-  const featureLabel = _tradeLabels.featureLabel ?? 'Flashings';
-  const featureLabelSingular = _tradeLabels.featureLabelSingular ?? 'Flashing';
   const imageHelperText = isRoofingTrade ? 'Add flashing drawings to use in material order forms' : 'Add images/drawings to use in material order forms';
   const [components, setComponents] = useState(initialComponents);
   const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [flashingsUpgradeOpen, setFlashingsUpgradeOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | ComponentType>('all');
   const [measurementFilter, setMeasurementFilter] = useState<'all' | MeasurementType | 'rafter' | 'valley_hip'>('all');
@@ -970,13 +960,9 @@ export function ComponentList({
               {f === 'all' ? 'All' : f === 'main' ? 'Main' : 'Extras'}
             </button>
           ))}
-          <Link
-            href={`/${workspaceSlug}/supplier-directory`}
-            prefetch={false}
-            className="qc-flow-link qc-library-control px-4 py-1.5 text-sm rounded-full font-medium transition whitespace-nowrap text-slate-500 hover:text-slate-700"
-          >
-            Supplier Directory
-          </Link>
+          {/* Owner 2026-09-29: Supplier Directory tab hidden on the pricing
+              library page for now. Re-add the Link here when the supplier
+              feature returns. */}
         </div>
         
         <div className="flex flex-col gap-2 md:flex-row">
@@ -998,26 +984,8 @@ export function ComponentList({
             </svg>
             Add from catalogue
           </button>
-          {flashingsFeatureEnabled ? (
-            <Link
-              href={`/${workspaceSlug}/drawings`}
-              className="qc-button qc-flow-control"
-            >
-              {featureLabel}
-            </Link>
-          ) : (
-            <button aria-label={`${featureLabel} requires a higher plan`} data-qc-variant="ghost"
-              type="button"
-              onClick={() => setFlashingsUpgradeOpen(true)}
-              title={`${featureLabel} requires a higher plan`}
-              className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
-            >
-              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              {featureLabel}
-            </button>
-          )}
+          {/* Owner 2026-09-29: Flashings entry button hidden on the pricing
+              library page for now, along with its upgrade modal and plan gate. */}
         </div>
       </div>
 
@@ -1247,14 +1215,6 @@ export function ComponentList({
           </div>
         </QcJourneyDialog>
       )}
-
-      <UpgradeModal
-        open={flashingsUpgradeOpen}
-        onClose={() => setFlashingsUpgradeOpen(false)}
-        title={`${featureLabelSingular} drawings require a higher plan`}
-        description={`Upgrade your account to access the ${featureLabel.toLowerCase()} drawing tool and reusable library.`}
-        recommendedPlan="pro"
-      />
 
       {/* Component Edit Warning Modal */}
       {editWarningOpen && (

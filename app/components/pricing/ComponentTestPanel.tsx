@@ -117,6 +117,7 @@ export function ComponentTestPanel({ draft, measurementSystem, currency, onClose
           : `Materials: ${number(total.packs)} whole packs × ${money(Number(draft.packPrice))}.`}</p>
         <p>Labour: {number(total.required)} {costUnit} × {money(Number(draft.labourRate))}. Labour uses the quantity after pitch and waste, not rounded-up pack coverage.</p>
         {(draft.wasteType === 'fixed' || draft.wasteType === 'fixed_per_segment') && <p>The fixed allowance is applied to each entered measurement in this manual-entry test. Takeoff keeps its existing segment rules.</p>}
+        {total.pitchApplied && <p>Pitch method: {draft.pitchType === 'valley_hip' ? 'hip/valley' : 'rafter'} multiplier at {pitch}° — plan measurements are multiplied ({qty(total.measured ?? total.entered)} → {qty(total.afterPitch)} {costUnit}). Surface measurements already include pitch and are never multiplied again.</p>}
         <p>Uses the quote calculation helpers with no job overrides, margins or tax. This explains the rules; it does not verify that your prices are right for your business.</p>
       </div></details>
       <p className="qc-test-live"><QcIcon name="check" /> Valid changes update this result immediately.</p>

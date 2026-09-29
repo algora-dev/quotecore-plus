@@ -63,8 +63,10 @@
 .qc-library-detail { overflow-wrap: anywhere; }
 .qc-library-toggle { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 6px; border-radius: var(--qc-radius-control); }
 .qc-library-toggle-track { display: flex; align-items: center; border-radius: 999px; }
-.qc-component-row { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 12px; align-items: center; }
-.qc-component-row > :nth-child(n+3) { grid-row: 1; }
+.qc-component-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: center; }
+/* Owner 2026-09-29: rows have exactly two children (text column + actions).
+   The old 3-column template put the text column in an unbounded auto track,
+   squeezing the actions into a vertical pill on long descriptions. */
 .qc-component-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .qc-component-row-actions { display: flex; align-items: center; gap: 4px; }
 .qc-library .qc-library-action-name { text-align: left; border: 0; padding: 0; font-weight: 600; background: transparent; color: var(--qc-text-primary); border-radius: 4px; cursor: pointer; }

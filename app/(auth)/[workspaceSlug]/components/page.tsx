@@ -1,9 +1,7 @@
 import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections, hasDismissedComponentEditWarning } from './actions';
 import { ComponentList } from './component-list';
 import { PendingUpdatesBanner } from './PendingUpdatesBanner';
-import { SupplierAlertSettingsButton } from './SupplierAlertSettingsButton';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
-import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { BackButton } from '@/app/components/BackButton';
 import { getPendingSupplierUpdates } from '../supplier-directory/actions';
 import { TakeoffDraftNoteBanner } from '../TakeoffDraftNoteBanner';
@@ -33,7 +31,6 @@ export default async function ComponentsPage(props: {
   // Stored rates and pack settings are canonical metric. Only test inputs and
   // measured quantities use the company's preferred display system.
   const { company } = await loadCompanyContext();
-  const ent = await loadCompanyEntitlements(company.id);
 
   // Personal guidance preference only, never a company-pricing readiness flag.
   const introSeen = await hasSeenComponentsIntro();
@@ -57,9 +54,10 @@ export default async function ComponentsPage(props: {
       {pendingUpdates.length > 0 && (
         <PendingUpdatesBanner workspaceSlug={workspaceSlug} updates={pendingUpdates} />
       )}
-      <div className="flex justify-end mb-2">
-        <SupplierAlertSettingsButton workspaceSlug={workspaceSlug} />
-      </div>
+      {/* Owner 2026-09-29: Supplier Directory tab, Supplier Alerts button and
+          Flashings button hidden on the pricing library page for now. Re-add by
+          restoring the SupplierAlertSettingsButton render here (and the two
+          controls inside ComponentList) when the supplier feature returns. */}
       <ComponentList
         initialComponents={components}
         workspaceSlug={workspaceSlug}
@@ -69,7 +67,6 @@ export default async function ComponentsPage(props: {
         showPricingIntroduction={learn === '1' || (!introSeen && !restoreDraftId && !createdComponentId)}
         companyDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
         componentCollections={collections}
-        flashingsFeatureEnabled={ent.features.flashings}
         editWarningDismissed={editWarningDismissed}
         restoreDraftId={restoreDraftId}
         highlightComponentId={createdComponentId}
