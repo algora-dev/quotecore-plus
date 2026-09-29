@@ -82,6 +82,8 @@ export interface Demand {
   cover: Region;
   blank: Region;
   stockRole?: 'primary-cut' | 'filler' | 'supplement';
+  /** Only hip/valley/broken-hip cuts enter reusable inventory. */
+  reusableCut?: boolean;
 }
 export interface Offcut {
   id: string; sourceDemandId: string; sourceFaceId: string; region: Region;

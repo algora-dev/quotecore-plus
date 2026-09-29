@@ -76,7 +76,34 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
   primary = true, extraLengthMm = 0): Demand[] {
   const result: Demand[] = [], w = profile.coverMm, physicalWidth = w + profile.leftLapMm + profile.rightLapMm;
   const frame = frameFor(face, roof), local = fromRing(face.polygon.map(p => sceneToSurface(p, frame))), box = bounds(local);
-  if (!isMonotone(local)) throw new Error(`${face.name}: a sheet run crosses disjoint roof intervals. Split/review this face; penetrations and non-continuous runs are not supported.`);
+  // V2.2 approval boundary: once the roofer confirms a face, its polygon and
+  // run direction are authoritative cut-planning input. A concave/notched face
+  // can produce more than one vertical interval in the exact polygon sweep.
+  // That must not reopen architectural interpretation or block Find Offcuts.
+  // Each physical sheet lane therefore uses one continuous planning envelope
+  // from the first to last approved-face intersection. `cover` below remains
+  // the exact approved polygon, so net roof quantities are not enlarged.
+  const continuousRunEnvelope = (region: typeof local): typeof local => {
+    if (isMonotone(region)) return region;
+    const xs = [...new Set(region.flatMap(b => [b.x0, b.x1]).map(x => +x.toFixed(9)))].sort((a, b) => a - b);
+    const out: typeof local = [];
+    const value = (b: (typeof region)[number], x: number, top: boolean): number => {
+      const t = (x - b.x0) / (b.x1 - b.x0);
+      const a = top ? b.top0 : b.bottom0, z = top ? b.top1 : b.bottom1;
+      return a + (z - a) * t;
+    };
+    for (let i = 0; i < xs.length - 1; i++) {
+      const x0 = xs[i], x1 = xs[i + 1], mid = (x0 + x1) / 2;
+      const active = region.filter(b => b.x0 < mid && b.x1 > mid);
+      if (!active.length) continue;
+      const topBand = active.reduce((best, b) => value(b, mid, true) < value(best, mid, true) ? b : best);
+      const bottomBand = active.reduce((best, b) => value(b, mid, false) > value(best, mid, false) ? b : best);
+      out.push({ x0, x1, top0: value(topBand, x0, true), top1: value(topBand, x1, true),
+        bottom0: value(bottomBand, x0, false), bottom1: value(bottomBand, x1, false) });
+    }
+    return out;
+  };
+  const planningLocal = continuousRunEnvelope(local);
   const start = box.minX - face.laneOffsetMm, count = sheetCount(box.maxX - box.minX, w, face.laneOffsetMm);
   if (count > settings.maxSheets) throw new Error(`Sheet limit exceeded (${settings.maxSheets}). Check the calibration/cover or reduce the selected roof scope.`);
   for (let i = 0; i < count; i++) {
@@ -84,7 +111,7 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
     const cover = intersect(local, rectangle(x, box.minY - 1, x + w, box.maxY + 1));
     if (area(cover) < EPS) continue;
     const laneX = x - profile.leftLapMm;
-    const physical = intersect(local, rectangle(laneX, box.minY - 1, laneX + physicalWidth, box.maxY + 1));
+    const physical = intersect(planningLocal, rectangle(laneX, box.minY - 1, laneX + physicalWidth, box.maxY + 1));
     const expanded = extendY(physical, profile.endAllowanceMm), physicalBox = bounds(expanded);
     const y = physicalBox.minY, required = translate(expanded, -laneX, -y);
     const bank = settings.stockMode === 'bank-first', filler = isStraightFiller(required);
@@ -94,8 +121,13 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
     const rawY1 = envelope ? box.maxY + profile.endAllowanceMm - y : physicalBox.maxY - y;
     const len = Math.ceil((rawY1 - blankY0 - EPS) / profile.lengthIncrementMm) * profile.lengthIncrementMm;
     if (len > profile.maxLengthMm + EPS) throw new Error(`${face.name}, lane ${i + 1}: ${(len / 1000).toFixed(3)} m exceeds the profile maximum. The planner never inserts end laps to make it fit.`);
+    const reusableCut = face.boundary.some(edge => {
+      if (!['hip', 'valley', 'broken_hip'].includes(edge.kind)) return false;
+      const a = sceneToSurface(edge.a, frame), b = sceneToSurface(edge.b, frame);
+      return Math.max(a.x, b.x) >= laneX - EPS && Math.min(a.x, b.x) <= laneX + physicalWidth + EPS;
+    });
     result.push({ id: `${face.id}:sheet:${i + 1}`, faceId: face.id, laneIndex: i, lap: face.lap,
-      widthMm: physicalWidth, origin: { x: laneX, y }, frame, required,
+      widthMm: physicalWidth, origin: { x: laneX, y }, frame, required, reusableCut,
       cover: translate(cover, -laneX, -y), blank: rectangle(0, blankY0, physicalWidth, blankY0 + len),
       ...(bank ? { stockRole: primary ? filler ? 'filler' as const : 'primary-cut' as const : 'supplement' as const } : {}) });
   }
@@ -112,6 +144,11 @@ export function generateDemands(roof: RoofInput, faces: RoofFace[], profile: Pro
   return result;
 }
 export function offcutsFrom(d: Demand, profile: Profile): Offcut[] {
+  // QuoteCore Find Offcuts intentionally inventories only angled roof cuts.
+  // Ridge termination and barge/eave trimming are not reusable stock here.
+  if (d.reusableCut === false) return [];
+  // Backward-compatible imported V2.1 drafts may omit reusableCut; regenerated
+  // V2.2 demands always set it from the approved face boundary semantics.
   // Longitudinal clearance beyond the installed cut belongs to waste. It is
   // never reintroduced to inventory as an apparently reusable polygon.
   const left = subtract(d.blank, extendY(d.required, profile.cutGapMm));
