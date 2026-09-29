@@ -190,7 +190,6 @@ export function CreateSmartComponentModal({
   const pitchHidesValleyHip = !!tradeLabels.pitchHidesValleyHip;
   const pitchRafterLabel = tradeLabels.pitchRafterLabel ?? 'Rafter Pitch';
   const isRoofingTrade = defaultTrade === 'roofing';
-  const featureLabel = tradeLabels.featureLabel ?? 'Flashings';
   const imageAssignLabel = 'Assign Images (Optional)';
   const imageSelectPlaceholder = 'Select an image...';
   const imageHelperText = isRoofingTrade
@@ -334,11 +333,7 @@ export function CreateSmartComponentModal({
     try {
       const result = await createComponent(fullInput);
       if (!result.ok) {
-        if (result.code === 'subscription_inactive') {
-          await notify('Your subscription is inactive. Please choose a plan to continue.');
-        } else {
-          await notify(result.code === 'internal_error' ? result.message : 'Could not create Smart Component™.');
-        }
+        await notify(result.code === 'internal_error' ? result.message : 'Could not create Smart Component™.');
         return;
       }
       onCreated(result.data);

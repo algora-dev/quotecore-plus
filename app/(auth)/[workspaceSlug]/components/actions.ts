@@ -3,13 +3,6 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext, requireUser } from '@/app/lib/supabase/server';
 import { pickFields } from '@/app/lib/security/pickFields';
 import type { ComponentLibraryInsert } from '@/app/lib/types';
-import {
-  requireComponentSlot,
-  ComponentLimitReachedError,
-  SubscriptionInactiveError,
-  isBillingError,
-  loadCompanyEntitlements,
-} from '@/app/lib/billing/entitlements';
 
 /**
  * Sentinel id we slot into `copilot_progress.guides_completed[]` once the
@@ -129,17 +122,12 @@ export async function loadComponentLibrary(collectionId?: string | null) {
 }
 
 /**
- * Result envelope so the client can pattern-match on `code` to render a
- * tier-upgrade modal instead of a generic toast. Keeps the success path
- * unchanged: callers that just need the row still get `data` on success.
- *
- * `activeStatus` tells the caller whether the component was created active
- * or forced inactive by the DB trigger (at cap). `activeCount` and
- * `componentLimit` give authoritative post-insert numbers for UI updates.
+ * Result envelope for component creation. The active/inactive system and
+ * plan component caps were removed (owner decision 2026-09-29): components
+ * are always active and unlimited.
  */
 export type CreateComponentResult =
-  | { ok: true; data: NonNullable<Awaited<ReturnType<typeof loadComponentLibrary>>>[number]; activeStatus: 'active' | 'inactive'; activeCount: number; componentLimit: number | null }
-  | { ok: false; code: 'subscription_inactive'; status: string }
+  | { ok: true; data: NonNullable<Awaited<ReturnType<typeof loadComponentLibrary>>>[number] }
   | { ok: false; code: 'internal_error'; message: string };
 
 export async function createComponent(input: ComponentLibraryInsert): Promise<CreateComponentResult> {
@@ -151,12 +139,6 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
     return { ok: false, code: 'internal_error', message: 'Account setup incomplete. Please log out and log back in.' };
   }
 
-  // The DB trigger (tg_enforce_component_cap) now handles the cap:
-  // - Below cap: insert lands active (as requested).
-  // - At cap: insert lands inactive (trigger forces is_active=false).
-  // - Subscription inactive: trigger raises P0001 (we catch below).
-  // No need for a pre-check here.
-
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('component_library')
@@ -165,26 +147,12 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
     .single();
 
   if (error) {
-    const code = (error as { code?: string }).code;
-    if (code === 'P0001') {
-      const ent = await loadCompanyEntitlements(profile.company_id);
-      return { ok: false, code: 'subscription_inactive', status: ent.subscriptionStatus };
-    }
     console.error('[createComponent] Database error:', error);
     return { ok: false, code: 'internal_error', message: `${error.message} (Code: ${error.code})` };
   }
 
-  // Get authoritative post-insert active count + limit for UI.
-  const ent = await loadCompanyEntitlements(profile.company_id);
-
   revalidatePath('/[workspaceSlug]/components', 'page');
-  return {
-    ok: true,
-    data,
-    activeStatus: data.is_active ? 'active' : 'inactive',
-    activeCount: ent.componentCount,
-    componentLimit: ent.componentLimit,
-  };
+  return { ok: true, data };
 }
 
 /**
@@ -207,7 +175,8 @@ const UPDATABLE_COMPONENT_FIELDS = [
   'show_dimensions_default',
   'eligible_for_orders',
   'flashing_ids',
-  // is_active is intentionally excluded - use setComponentActive() instead.
+  // is_active is intentionally excluded from client updates - the active/inactive
+  // system was removed (owner 2026-09-29); components are always active.
   // The DB trigger enforces the cap on reactivation (false -> true).
   'sort_order',
   // Phase 2/6 (Generic Trades): new column writes allowed from the
@@ -335,70 +304,6 @@ export async function deleteComponent(id: string) {
     .eq('company_id', profile.company_id);
   if (error) throw new Error(error.message);
   revalidatePath('/[workspaceSlug]/components', 'page');
-}
-
-/**
- * Result type for setComponentActive.
- */
-export type SetComponentActiveResult =
-  | { ok: true; activeCount: number; componentLimit: number | null }
-  | { ok: false; code: 'component_limit_reached'; used: number; limit: number; planCode: string }
-  | { ok: false; code: 'not_found' }
-  | { ok: false; code: 'internal_error'; message: string };
-
-/**
- * Toggle a component's active status. When activating, the DB trigger
- * (tg_enforce_component_cap_reactivate) enforces the cap via P0010.
- * Returns authoritative post-toggle active count + limit.
- */
-export async function setComponentActive(
-  componentId: string,
-  nextActive: boolean,
-): Promise<SetComponentActiveResult> {
-  let profile;
-  try {
-    profile = await requireCompanyContext();
-  } catch (err) {
-    return { ok: false, code: 'internal_error', message: 'Account setup incomplete.' };
-  }
-
-  const supabase = await createSupabaseServerClient();
-
-  const { error } = await supabase
-    .from('component_library')
-    .update({ is_active: nextActive })
-    .eq('id', componentId)
-    .eq('company_id', profile.company_id)
-    .select('id')
-    .single();
-
-  if (error) {
-    const code = (error as { code?: string }).code;
-    if (code === 'P0010') {
-      const ent = await loadCompanyEntitlements(profile.company_id);
-      return {
-        ok: false,
-        code: 'component_limit_reached',
-        used: ent.componentCount,
-        limit: ent.componentLimit ?? 0,
-        planCode: ent.effectivePlanCode,
-      };
-    }
-    if (error.code === 'PGRST116') {
-      // No rows returned - component not found or not owned by this company.
-      return { ok: false, code: 'not_found' };
-    }
-    console.error('[setComponentActive] Database error:', error);
-    return { ok: false, code: 'internal_error', message: error.message };
-  }
-
-  const ent = await loadCompanyEntitlements(profile.company_id);
-  revalidatePath('/[workspaceSlug]/components', 'page');
-  return {
-    ok: true,
-    activeCount: ent.componentCount,
-    componentLimit: ent.componentLimit,
-  };
 }
 
 /**
@@ -576,7 +481,6 @@ export async function updateLibraryVisibility(
         .from('component_library')
         .select('id', { count: 'exact', head: true })
         .eq('collection_id', id)
-        .eq('is_active', true)
         .or('sku.is.null,sku.eq.');
       if (missingSkuCount && missingSkuCount > 0) {
         return { ok: false, message: `Cannot publish: ${missingSkuCount} component(s) are missing a SKU / Product Code. Add SKUs to all components before publishing.` };
@@ -624,7 +528,6 @@ export async function updateLibraryVisibility(
           eligible_for_orders, height_value_mm, depth_value_mm
         `)
         .eq('collection_id', id)
-        .eq('is_active', true)
         .order('name');
 
       const snapshot = buildSnapshotArray(currentComponents ?? []);

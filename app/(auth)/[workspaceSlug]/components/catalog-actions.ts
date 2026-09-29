@@ -191,8 +191,10 @@ export async function convertCatalogRowsToComponents(params: {
   newLibraryName?: string;
   selectedRows: Record<string, string>[];
   columnMapping: Record<string, string[]>;
+  /** How to apply mapped waste values: percentage or per-unit length. */
+  wasteUnit?: 'percent' | 'length';
 }): Promise<ConvertFromCatalogResult> {
-  const { targetCollectionId, newLibraryName, selectedRows, columnMapping } = params;
+  const { targetCollectionId, newLibraryName, selectedRows, columnMapping, wasteUnit = 'percent' } = params;
 
   // Hard cap at 20 rows
   if (selectedRows.length > 20) {
@@ -246,21 +248,6 @@ export async function convertCatalogRowsToComponents(params: {
     }
   }
 
-  // The DB trigger (tg_enforce_component_cap) handles the cap per-row:
-  // rows up to the cap land active, overflow lands inactive. No pre-check
-  // needed - imports never fail solely because the cap is full.
-  // We only need to verify the subscription is active.
-  try {
-    const { loadCompanyEntitlements, SubscriptionInactiveError } = await import('@/app/lib/billing/entitlements');
-    const ent = await loadCompanyEntitlements(profile.company_id);
-    if (ent.subscriptionStatus === 'suspended' || ent.subscriptionStatus === 'canceled') {
-      return { ok: false, errors: ['Subscription inactive.'] };
-    }
-  } catch (err) {
-    // If entitlement load fails, let the DB trigger handle it.
-    console.error('[convertCatalogRowsToComponents] entitlement check failed (non-fatal):', err);
-  }
-
   // Get current max sort_order
   const { data: maxSort } = await supabase
     .from('component_library')
@@ -307,6 +294,12 @@ export async function convertCatalogRowsToComponents(params: {
     const priceStr = fieldToHeader.price ? (row[fieldToHeader.price] ?? '0') : '0';
     const price = parseFloat(priceStr.replace(/[^0-9.\-]/g, '')) || 0;
     const notes = fieldToHeader.notes ? (row[fieldToHeader.notes] ?? '').trim() : '';
+    const labourStr = fieldToHeader.labour ? (row[fieldToHeader.labour] ?? '0') : '0';
+    const labour = parseFloat(labourStr.replace(/[^0-9.\-]/g, '')) || 0;
+    const wasteStr = fieldToHeader.waste ? (row[fieldToHeader.waste] ?? '0') : '0';
+    const wasteValue = parseFloat(wasteStr.replace(/[^0-9.\-]/g, '')) || 0;
+    const wasteMapped = Boolean(fieldToHeader.waste) && wasteValue > 0;
+    const wasteIsPercent = wasteUnit !== 'length';
 
     const { slot, mType } = mapProductType('');
 
@@ -317,16 +310,16 @@ export async function convertCatalogRowsToComponents(params: {
       component_type: 'main' as const,
       measurement_type: mType,
       default_material_rate: price,
-      default_labour_rate: 0,
-      default_waste_type: 'percent' as const,
-      default_waste_percent: 0,
-      default_waste_fixed: 0,
+      default_labour_rate: labour,
+      default_waste_type: (wasteMapped && !wasteIsPercent ? 'fixed' : 'percent') as 'percent' | 'fixed',
+      default_waste_percent: wasteMapped && wasteIsPercent ? wasteValue : 0,
+      default_waste_fixed: wasteMapped && !wasteIsPercent ? wasteValue : 0,
       default_pitch_type: 'none' as const,
       pack_price: null,
       pack_size: null,
       pack_coverage_m2: null,
       pricing_strategy: 'per_unit' as const,
-      waste_unit: 'percent' as const,
+      waste_unit: (wasteMapped && !wasteIsPercent ? 'flat' : 'percent') as 'percent' | 'flat',
       show_price_default: true,
       show_dimensions_default: false,
       eligible_for_orders: false,

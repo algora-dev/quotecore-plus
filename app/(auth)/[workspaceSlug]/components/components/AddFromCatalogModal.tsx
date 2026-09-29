@@ -24,6 +24,8 @@ const MAPPABLE_FIELDS = [
   { value: 'name', label: 'Component Name', required: true, placeholder: 'Select a column...' },
   { value: 'sku', label: 'SKU / Product Code', required: false, placeholder: 'Select a column...' },
   { value: 'price', label: 'Material cost', required: false, placeholder: 'Select a column...' },
+  { value: 'labour', label: 'Labour cost', required: false, placeholder: 'Select a column...' },
+  { value: 'waste', label: 'Waste', required: false, placeholder: 'Select a column...' },
   { value: 'notes', label: 'Description / Notes', required: false, placeholder: 'Select a column...' },
 ] as const;
 
@@ -63,6 +65,8 @@ export function AddFromCatalogModal({
   // Column mapping - stored as Record<string, string[]> (header -> fields[]) for backend compat,
   // but the UI is field-first: user picks a column for each field via dropdown.
   const [columnMapping, setColumnMapping] = useState<Record<string, string[]>>({});
+  // How mapped waste values are applied on import: percentage or per-unit length.
+  const [wasteUnit, setWasteUnit] = useState<'percent' | 'length'>('percent');
   // fieldToHeader: which catalog column is assigned to each field (field -> header | '')
   const [fieldToHeader, setFieldToHeader] = useState<Record<string, string>>({});
 
@@ -149,6 +153,12 @@ export function AddFromCatalogModal({
           }
           if (!autoFieldMap.price && (lower === 'price' || lower === 'cost' || lower === 'rate' || lower === 'unit price' || lower === 'buy price')) {
             autoFieldMap.price = h;
+          }
+          if (!autoFieldMap.labour && (lower === 'labour' || lower === 'labor' || lower === 'labour rate' || lower === 'labour cost' || lower === 'wage')) {
+            autoFieldMap.labour = h;
+          }
+          if (!autoFieldMap.waste && (lower === 'waste' || lower === 'waste %' || lower === 'wastage' || lower === 'allowance')) {
+            autoFieldMap.waste = h;
           }
           if (!autoFieldMap.notes && (lower === 'notes' || lower === 'note' || lower === 'description' || lower === 'desc')) {
             autoFieldMap.notes = h;
@@ -264,6 +274,7 @@ export function AddFromCatalogModal({
         newLibraryName: destMode === 'new' ? newLibraryName.trim() : undefined,
         selectedRows: rows,
         columnMapping,
+        wasteUnit,
       });
 
       if (result.ok) {
@@ -539,6 +550,24 @@ export function AddFromCatalogModal({
                       })}
                     </div>
                   </div>
+
+                  {(fieldToHeader.waste ?? '') !== '' && (
+                    <div className="rounded-lg border border-slate-200 px-4 py-2.5 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-700">Apply waste as</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Each row&apos;s waste value is saved onto the component and used in quote calculations.</p>
+                      </div>
+                      <select
+                        value={wasteUnit}
+                        aria-label="Waste unit"
+                        onChange={e => setWasteUnit(e.target.value === 'length' ? 'length' : 'percent')}
+                        className="qc-select text-xs rounded-lg border border-slate-300 px-2 py-1.5 focus:border-orange-500 focus:outline-none min-w-[140px]"
+                      >
+                        <option value="percent">Percentage (%)</option>
+                        <option value="length">Length (per unit)</option>
+                      </select>
+                    </div>
+                  )}
 
                   <section className="qc-catalogue-example" aria-label="Example component from selected row">
                     <header><span className="qc-eyebrow">Your row → a Smart Component</span><h3>{exampleRow ? `Example from row ${exampleIndex + 1}` : 'Select a row to see an example'}</h3></header>

@@ -683,10 +683,6 @@ export function BillingPanel(props: BillingPanelProps) {
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Components</dt>
-                <dd className="font-semibold text-slate-900">{formatCap(viewPlan.componentLimit)}</dd>
-              </div>
-              <div>
                 <dt className="text-xs text-slate-500">Drawings &amp; Images</dt>
                 <dd className={`font-semibold ${viewPlan.features.flashings ? 'text-slate-900' : 'text-slate-400 italic'}`}>
                   {viewPlan.features.flashings ? formatCap(viewPlan.flashingLimit) : 'Not included'}

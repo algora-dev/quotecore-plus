@@ -10,7 +10,7 @@ import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility, setComponentActive } from './actions';
+import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility } from './actions';
 import { AddFromCatalogModal } from './components/AddFromCatalogModal';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
@@ -42,11 +42,7 @@ export function ComponentList({
   showPricingIntroduction = false,
   reviewImported = false,
   componentCollections = [],
-  componentLimit,
-  componentCount,
-  effectivePlanCode,
   flashingsFeatureEnabled,
-  subscriptionActive,
   editWarningDismissed = false,
   restoreDraftId,
   highlightComponentId,
@@ -63,23 +59,9 @@ export function ComponentList({
   reviewImported?: boolean;
   /** Component collections for the company (for library assignment UI). */
   componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
-  /** Plan cap on lifetime active components. NULL = unlimited. */
-  componentLimit: number | null;
-  /** Lifetime active component count as of server render. Local state
-   *  tracks deltas during this page session. */
-  componentCount: number;
-  effectivePlanCode: string;
   /** Whether the plan includes the flashings feature. Controls the
    *  Flashings entry button on this page. */
   flashingsFeatureEnabled: boolean;
-  /**
-   * Smoke #8 (2026-05-19): when the company's effective subscription is
-   * inactive (e.g. canceled without payment), block the + Add Component button at
-   * the click layer. DB triggers refuse the actual insert too
-   * (subscription_inactive via the H-04 cap trigger which fires P0001
-   * before reaching the cap check), so this is purely UX.
-   */
-  subscriptionActive: boolean;
   /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
   editWarningDismissed?: boolean;
   /** Draft ID from ?restore= query param - loads a saved calculator draft. */
@@ -125,18 +107,7 @@ export function ComponentList({
   const [components, setComponents] = useState(initialComponents);
   const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [flashingsUpgradeOpen, setFlashingsUpgradeOpen] = useState(false);
-  // Smoke #8 (2026-05-19): subscription-inactive upgrade modal. Mirrors
-  // the same pattern in QuotesList.
-  const [subBlockedOpen, setSubBlockedOpen] = useState(false);
-
-  // Active component allowance tracking. `componentCount` is the server-provided
-  // authoritative count; `activeCount` tracks local state for immediate UI feedback.
-  // We use the server count as the source of truth and update it after each action.
-  const [activeCountState, setActiveCountState] = useState(componentCount);
-  const atCap = componentLimit !== null && activeCountState >= componentLimit;
-  const [activatingId, setActivatingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | ComponentType>('all');
   const [measurementFilter, setMeasurementFilter] = useState<'all' | MeasurementType | 'rafter' | 'valley_hip'>('all');
@@ -330,13 +301,8 @@ export function ComponentList({
     filtered = filtered.filter(c => c.name.toLowerCase().includes(s));
   }
 
-  // Sort: active components first, then by name.
-  filtered = [...filtered].sort((a, b) => {
-    const aActive = a.is_active !== false ? 0 : 1;
-    const bActive = b.is_active !== false ? 0 : 1;
-    if (aActive !== bActive) return aActive - bActive;
-    return a.name.localeCompare(b.name);
-  });
+  // Sort by name.
+  filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
 
   async function mayLeaveEditor() {
     if (saving) return false;
@@ -394,27 +360,7 @@ export function ComponentList({
     setFormNotes('');
   }
 
-  async function handleToggleActive(compId: string, nextActive: boolean) {
-    setActivatingId(compId);
-    try {
-      const result = await setComponentActive(compId, nextActive);
-      if (result.ok) {
-        // Update local component state
-        setComponents(prev => prev.map(c =>
-          c.id === compId ? { ...c, is_active: nextActive } : c
-        ));
-        // Update authoritative count
-        setActiveCountState(result.activeCount);
-      } else if (result.code === 'component_limit_reached') {
-        // At cap - open upgrade modal
-        setUpgradeOpen(true);
-      }
-    } catch (err) {
-      console.error('[toggleActive] failed:', err);
-    } finally {
-      setActivatingId(null);
-    }
-  }
+
 
   function addFlashing() {
     if (!selectedFlashingId) return;
@@ -572,11 +518,7 @@ export function ComponentList({
     try {
       const result = await createComponent(inputWithGenericTrades);
       if (!result.ok) {
-        if (result.code === 'subscription_inactive') {
-          setSubBlockedOpen(true);
-        } else {
-          setFormError(result.code === 'internal_error' ? result.message : 'Could not create component.');
-        }
+        setFormError(result.code === 'internal_error' ? result.message : 'Could not create component.');
         return;
       }
       setComponents((prev) => [...prev, result.data]);
@@ -588,18 +530,8 @@ export function ComponentList({
       setDraftTested(false);
       setActiveLibraryId(selectedCollectionId);
       setFilter('all'); setMeasurementFilter('all'); setSearchQuery('');
-      showNotice({ title: 'Component saved', tone: result.activeStatus === 'inactive' ? 'warning' : 'success', focus: true,
-        description: result.activeStatus === 'inactive'
-          ? `${result.data.name} was saved as inactive because your active-component allowance is full. Activate it before using it in quotes.`
-          : `${result.data.name} is saved in your library. Check another component or price a job when your costs are ready.` });
-      // Update authoritative active count from the server response.
-      setActiveCountState(result.activeCount);
-      // If the component was created as inactive (at cap), show a brief message.
-      if (result.activeStatus === 'inactive') {
-        // Could use a toast here; for now, the inactive badge on the row
-        // plus the counter updating is sufficient feedback.
-        console.log('[createComponent] Component created as inactive (at cap).');
-      }
+      showNotice({ title: 'Component saved', tone: 'success', focus: true,
+        description: `${result.data.name} is saved in your library. Check another component or price a job when your costs are ready.` });
       setShowForm(false);
       setFormWasteType('none');
       setFormMeasurementType('area');
@@ -768,14 +700,8 @@ export function ComponentList({
     if (!deleteCompId) return;
     setDeleteLoading(true);
     try {
-      // Check if the component being deleted was active (to update count).
-      const comp = components.find(c => c.id === deleteCompId);
-      const wasActive = comp ? comp.is_active !== false : false;
       await deleteComponent(deleteCompId);
       setComponents((prev) => prev.filter((c) => c.id !== deleteCompId));
-      if (wasActive) {
-        setActiveCountState(prev => Math.max(0, prev - 1));
-      }
       if (deleteCompId === editingId) cancelEdit();
       setDeleteCompId(null);
     } catch (err) {
@@ -820,7 +746,6 @@ export function ComponentList({
     if (patch.notes !== undefined) setFormNotes(patch.notes);
   }
   async function startNew(copy?: ComponentEditorInitial) {
-    if (!subscriptionActive) { setSubBlockedOpen(true); return; }
     // Explicitly making a copy preserves its draft values. Other navigation is
     // confirmed first; never save implicitly or bypass subscription/cap guards.
     if (!copy && !(await mayLeaveEditor())) return;
@@ -1064,10 +989,6 @@ export function ComponentList({
           </button>
           <button data-qc-variant="ghost"
             onClick={() => {
-              if (!subscriptionActive) {
-                setSubBlockedOpen(true);
-                return;
-              }
               void mayLeaveEditor().then(leave => { if (leave) { cancelEdit(); setShowCatalogModal(true); } });
             }}
             className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
@@ -1217,37 +1138,6 @@ export function ComponentList({
         )}
       </div>
 
-      {/* Active component allowance counter */}
-      <div className="flex items-center justify-between mb-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5">
-        <div className="flex items-center gap-3">
-          <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold ${atCap ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
-            {componentLimit !== null
-              ? `${activeCountState} / ${componentLimit} active`
-              : `${activeCountState} active`}
-          </span>
-          <span className="text-xs text-slate-500">
-            {componentLimit !== null
-              ? `Smart Components on your ${effectivePlanCode} plan`
-              : 'Smart Components - unlimited on your plan'}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {!atCap && componentLimit !== null && (
-            <span className="text-xs text-slate-400">
-              {componentLimit - activeCountState} slot{(componentLimit - activeCountState) !== 1 ? 's' : ''} free
-            </span>
-          )}
-          {atCap && (
-            <button data-qc-variant="ghost"
-              onClick={() => setUpgradeOpen(true)}
-              className="qc-button qc-flow-control qc-library-control shrink-0 inline-flex"
-            >
-              Upgrade
-            </button>
-          )}
-        </div>
-      </div>
-
       <div id="qc-pricing-component-list" className="space-y-2">
         {filtered.map((comp) => (
           <div key={comp.id}>
@@ -1259,25 +1149,12 @@ export function ComponentList({
                 className={`qc-component-row px-4 py-3 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${
                   highlightId === comp.id
                     ? 'border-orange-300 bg-orange-50 shadow-[0_0_12px_rgba(255,107,53,0.25)]'
-                    : comp.is_active === false
-                      ? 'border-slate-200 bg-slate-50/50'
-                      : 'border-slate-200 bg-white'
+                    : 'border-slate-200 bg-white'
                 }`}
               >
-                {/* Active/Inactive status badge */}
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium shrink-0 ${
-                    comp.is_active === false
-                      ? 'bg-slate-100 text-slate-400 border border-slate-200'
-                      : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${comp.is_active === false ? 'bg-slate-300' : 'bg-emerald-500'}`} />
-                  {comp.is_active === false ? 'Inactive' : 'Active'}
-                </span>
                 <div className="flex-1 min-w-0">
                   <div className="qc-component-row-meta">
-                    <h3 className={`font-medium ${comp.is_active === false ? 'text-slate-500' : 'text-slate-900'}`}><button type="button" className="qc-library-action-name" onClick={(event) => { event.stopPropagation(); startEdit(comp); }}>{comp.name}</button></h3>
+                    <h3 className="font-medium text-slate-900"><button type="button" className="qc-library-action-name" onClick={(event) => { event.stopPropagation(); startEdit(comp); }}>{comp.name}</button></h3>
                     {comp.sku && (
                       <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-mono">{comp.sku}</span>
                     )}
@@ -1301,36 +1178,6 @@ export function ComponentList({
                 </div>
                 <div className="qc-component-row-actions">
                 {/* The existing actions stay visible on touch and keyboard. */}
-                <button aria-label={comp.is_active === false ? 'Activate component' : 'Deactivate component'}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!activatingId || activatingId !== comp.id) {
-                      void handleToggleActive(comp.id, comp.is_active === false);
-                    }
-                  }}
-                  disabled={activatingId === comp.id}
-                  title={comp.is_active === false ? 'Activate component' : 'Deactivate component'}
-                  aria-pressed={comp.is_active !== false}
-                  className={"qc-flow-control qc-library-choice " + (`qc-component-activation p-1.5 rounded-xl transition disabled:opacity-60 ${
-                    comp.is_active === false
-                      ? 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 hover:shadow-[0_0_10px_rgba(16,185,129,0.35)]'
-                      : 'text-slate-600 hover:text-red-500 hover:bg-red-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]'
-                  }`)}
-                >
-                  {activatingId === comp.id ? (
-                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  ) : comp.is_active === false ? (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
-                  )}
-                </button>
                 <button aria-label={`Open and test ${comp.name}`} data-qc-variant="ghost"
                   onClick={(e) => { e.stopPropagation(); void startEdit(comp, true); }}
                   title="Open and test this component"
@@ -1402,27 +1249,11 @@ export function ComponentList({
       )}
 
       <UpgradeModal
-        open={upgradeOpen}
-        onClose={() => setUpgradeOpen(false)}
-        title={`Active Smart Component limit reached on the ${effectivePlanCode} plan`}
-        description={`You can store unlimited Smart Components, but only ${componentLimit ?? 0} can be active at once. Deactivate components you don't need, or upgrade to activate more.`}
-        recommendedPlan="growth"
-      />
-
-      <UpgradeModal
         open={flashingsUpgradeOpen}
         onClose={() => setFlashingsUpgradeOpen(false)}
         title={`${featureLabelSingular} drawings require a higher plan`}
         description={`Upgrade your account to access the ${featureLabel.toLowerCase()} drawing tool and reusable library.`}
         recommendedPlan="pro"
-      />
-      <UpgradeModal
-        open={subBlockedOpen}
-        onClose={() => setSubBlockedOpen(false)}
-        title="Your subscription is inactive"
-        description="You need to subscribe to a plan to create more Smart Components™. Your existing Smart Components™ remain viewable on any plan."
-        ctaLabel="View plans"
-        recommendedPlan="starter"
       />
 
       {/* Component Edit Warning Modal */}

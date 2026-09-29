@@ -69,11 +69,7 @@ export default async function ComponentsPage(props: {
         showPricingIntroduction={learn === '1' || (!introSeen && !restoreDraftId && !createdComponentId)}
         companyDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
         componentCollections={collections}
-        componentLimit={ent.componentLimit}
-        componentCount={ent.componentCount}
-        effectivePlanCode={ent.effectivePlanCode}
         flashingsFeatureEnabled={ent.features.flashings}
-        subscriptionActive={ent.isActive}
         editWarningDismissed={editWarningDismissed}
         restoreDraftId={restoreDraftId}
         highlightComponentId={createdComponentId}
