@@ -76,6 +76,7 @@ export async function runPipeline(
   runId: string,
   userMessage: string,
   ctx: PipelineContext,
+  onText?: { delta: (text: string) => void; discard: () => void },
 ): Promise<{ content: string; tokensIn: number; tokensOut: number; toolErrors?: string[] }> {
   const result = await runOrchestratorTurn({
     supabase: ctx.supabase,
@@ -84,6 +85,7 @@ export async function runPipeline(
     runId,
     userMessage,
     pageContext: ctx.pageContext,
+    ...(onText ? { onText } : {}),
   });
   return { content: result.content, tokensIn: result.tokensIn, tokensOut: result.tokensOut,
     ...(result.toolErrors?.length ? { toolErrors: result.toolErrors } : {}) };

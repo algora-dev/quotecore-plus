@@ -9,6 +9,10 @@ export async function runModelLoop(input: {
   messages: LlmMessage[]; registry: Record<string, RegisteredTool>; context: ToolContext;
   guard: () => Promise<void>; step: (input: ChatTurnInput) => Promise<ChatTurnResult>;
   signal: AbortSignal; speed: boolean; telemetry: TurnTelemetry;
+  /** Optional final-answer text streaming. The tool-calling loop is unchanged:
+   * synthesis text deltas are forwarded live; text emitted by a hop that ends
+   * up calling tools is invalidated via discard(). */
+  onText?: { delta: (text: string) => void; discard: () => void };
 }) {
   let tokensIn = 0, tokensOut = 0, totalToolCalls = 0;
   const seen = new Set<string>();
@@ -26,11 +30,18 @@ export async function runModelLoop(input: {
   for (let hop = 0; hop < 5; hop++) {
     await checkpoint();
     let step: ChatTurnResult;
+    let streamedThisHop = '';
     try {
       telemetry.modelCalls++;
       step = await telemetry.measure('model', () => input.step({
         messages, tools: synthesisOnly ? [] : Object.values(registry).map(t => t.schema),
-        onToken: () => telemetry.token(), signal,
+        onToken: (delta: string) => {
+          telemetry.token();
+          if (input.onText && delta) {
+            streamedThisHop += delta;
+            input.onText.delta(delta);
+          }
+        }, signal,
       }));
     } catch (error) {
       const providerMessage = (() => { try { const m = (error as { error?: { message?: unknown } })?.error?.message; return typeof m === 'string' && m ? m.replace(/[\u0000-\u001f]/g, ' ').slice(0, 100) : ''; } catch { return ''; } })();
@@ -45,6 +56,9 @@ export async function runModelLoop(input: {
       await checkpoint(); // output is never released before fresh access verification
       return { content: step.text.trim(), tokensIn, tokensOut };
     }
+    // A hop that streamed text but continued with tool calls was intermediate
+    // planning narration, not the final answer: invalidate any rendered text.
+    if (streamedThisHop.trim()) input.onText?.discard();
     if (synthesisOnly) fail('repeated_tool_loop');
     totalToolCalls += step.toolCalls.length;
     if (totalToolCalls > 10) fail('tool_call_limit');

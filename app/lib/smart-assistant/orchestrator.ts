@@ -130,6 +130,8 @@ export interface OrchestratorTurnInput {
   userMessage: string;
   /** Untrusted page hint only. Not a permission grant or confirmation authority. */
   pageContext?: { companyId: string; pathname: string | null };
+  /** Optional live forwarding of model synthesis text (streamed replies). */
+  onText?: { delta: (text: string) => void; discard: () => void };
 }
 
 export interface OrchestratorTurnResult {
@@ -259,7 +261,8 @@ export async function runOrchestratorTurn(
     result = await runModelLoop({ messages, registry: v2?.tools ?? TOOL_REGISTRY,
       context: { supabase, companyId, runId, signal: controller.signal },
       guard: v2?.guard ?? (async () => {}), step: deps.modelStep,
-      signal: controller.signal, speed: v2?.speed ?? false, telemetry });
+      signal: controller.signal, speed: v2?.speed ?? false, telemetry,
+      ...(input.onText ? { onText: input.onText } : {}) });
     // Tool failures inside a completed turn are invisible in the transcript;
     // surface their sanitized markers through the trusted finish path.
     if (telemetry.toolErrors.length) result.toolErrors = telemetry.toolErrors.slice();

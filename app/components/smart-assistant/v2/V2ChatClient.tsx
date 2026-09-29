@@ -14,6 +14,7 @@ import { isSafeDestination } from '@/app/lib/smart-assistant/v2/navigation';
 import { isRecord } from '@/app/lib/smart-assistant/section-permissions';
 import { ConversationCards } from './ConversationCards';
 import { request, session } from './client';
+import { consumeTurnStream } from './stream-turn';
 import { useVoiceNote } from './useVoiceNote';
 import { useSpeechPlayback } from './useSpeechPlayback';
 import { AssistantIcon } from './AssistantIcon';
@@ -78,6 +79,12 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   attachmentCount.current = attachments.length;
   const inputValue = useRef(input); inputValue.current = input;
   const [draftOrigin, setDraftOrigin] = useState<'text' | 'voice'>('text');
+  const [streamText, setStreamText] = useState('');
+  // Streaming capability probe: on when the server flag serves SSE; any
+  // mid-stream failure disables it permanently for this browser session and
+  // every later turn uses the classic JSON path unchanged.
+  const streamOffKey = `sa-stream-off:${access.userId}:${access.companyId}`;
+  const canStream = useRef(false);
   useAssistantViewport(root, visible);
   const nearBottom = useRef(true);
   const visibility = useRef(visible);
@@ -127,8 +134,9 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
       if (pref === 'voice' || pref === 'text') setMode(pref);
       const id = sessionStorage.getItem(lastConversationKey);
       if (isUuid(id)) setActive(id);
+      try { canStream.current = sessionStorage.getItem(streamOffKey) !== '1'; } catch { canStream.current = true; }
     } catch { /* storage can be unavailable */ }
-  }, [prefKey, lastConversationKey]);
+  }, [prefKey, lastConversationKey, streamOffKey]);
   useEffect(() => {
     // Late transcription/playback cannot leak into a different conversation.
     voice.cancel(); speech.stop(); clearAttachments(); setSheet(null); setVoiceSendQueue(null);
@@ -214,6 +222,12 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   useEffect(() => {
     if (nearBottom.current && visible) end.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
   }, [snapshot?.messages.length, snapshot?.cards.length, busy, visible]);
+
+  // Streamed provisional text follows the same bottom-anchored scroll as
+  // persisted messages (answers stream token-by-token when enabled).
+  useEffect(() => {
+    if (nearBottom.current && visible && streamText) end.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
+  }, [streamText, visible]);
 
   useEffect(() => {
     if (!navPending.current) return;
@@ -334,9 +348,30 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     try {
       const res = await fetch('/api/smart-assistant/turn', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: id, message: text, clientRequestId: logical.requestId, pageContext: { companyId: access.companyId, pathname } }),
+        body: JSON.stringify({ conversationId: id, message: text, clientRequestId: logical.requestId, pageContext: { companyId: access.companyId, pathname }, ...(canStream.current ? { stream: true } : {}) }),
       });
-      const result: unknown = await res.json().catch(() => null);
+      let result: unknown;
+      if ((res.headers.get('content-type') ?? '').includes('text/event-stream')) {
+        // Server streaming is enabled: consume SSE deltas with the SAME markdown
+        // pipeline; the final event is authoritative and replaces provisional
+        // text. Any failure disables streaming for this session and throws into
+        // the existing pending/check-request flow (the run still finishes
+        // server-side, so nothing is ever re-sent).
+        try {
+          result = await consumeTurnStream(res, {
+            onDelta: delta => { if (mounted.current && current.current === id) setStreamText(prev => prev + delta); },
+            onDiscard: () => { if (mounted.current) setStreamText(''); },
+          });
+        } catch (streamError) {
+          canStream.current = false;
+          try { sessionStorage.setItem(streamOffKey, '1'); } catch { /* preference only */ }
+          setStreamText('');
+          throw streamError;
+        }
+        setStreamText('');
+      } else {
+        result = await res.json().catch(() => null);
+      }
       if (!res.ok) {
         if (res.status >= 400 && res.status < 500 && (!isRecord(result) || result.error_code !== 'already_running')) {
           pending.current.delete(id);
@@ -515,6 +550,12 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             </>}
           </div>)}
           <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={orphanCards} actions={snapshot?.actions ?? []} busy={controlsBusy || voice.state !== 'off'} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>
+          {streamText && <div className={s.turn} data-sa-streaming="true">
+            <div className={s.assistantMessage}>
+              <div className={s.assistantHeading}><span className={s.messageLabel}>ASSISTANT</span></div>
+              <SafeMessage content={streamText}/>
+            </div>
+          </div>}
           {task && <div className={s.taskFooter} data-sa-task={task.id}>
             {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task closed. Ask something new whenever you’re ready.</p> : <>
               <QcButton className={s.doneButton} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void finishTask(task.status === 'answered' ? 'done' : 'move_on')}><AssistantIcon name={task.status === 'answered' ? 'check' : 'chevron'}/>{task.status === 'answered' ? 'Done' : 'Move on'}</QcButton>
