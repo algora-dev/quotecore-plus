@@ -117,7 +117,7 @@ export function SmartComponentEditor(props: Props) {
           <section className="qc-pricing-section" aria-labelledby={`${id}-identity`}>
             <header><span>1</span><div><h3 id={`${id}-identity`}>What are you pricing?</h3><p>A product, service or charge you can recognise later.</p></div></header>
             <div className="qc-pricing-fields-grid">
-              <div data-copilot="component-name"><QcField htmlFor={`${id}-name`} label="Component name"><QcInput id={`${id}-name`} name="name" required value={name} placeholder="e.g. Roofing underlay" onChange={e => setName(e.target.value)} /></QcField></div>
+              <div data-copilot="component-name"><QcField htmlFor={`${id}-name`} label="Component name" help="What you will see in the app and pricing outputs" helpId={`${id}-name-help`}><QcInput id={`${id}-name`} name="name" required value={name} placeholder="e.g. Roofing underlay" aria-describedby={`${id}-name-help`} onChange={e => setName(e.target.value)} /></QcField></div>
               <div data-copilot="component-sku"><QcField htmlFor={`${id}-sku`} label={`Product code / SKU${props.supplierSkuRequired ? ' (required for publishing)' : ' (optional)'}`} help={mode === 'edit' && initial.sku ? 'An existing product code cannot be changed.' : undefined}>
                 <QcInput id={`${id}-sku`} name="sku" value={sku} readOnly={mode === 'edit' && !!initial.sku} onChange={e => setSku(e.target.value)} placeholder="Your reference code" />
               </QcField></div>
@@ -182,7 +182,7 @@ export function SmartComponentEditor(props: Props) {
             </div>
             <QcField htmlFor={`${id}-notes`} label="Notes (optional)" help="Usage tips for your team. Up to 500 characters."><textarea id={`${id}-notes`} className="qc-input" value={s.notes} maxLength={500} rows={3} onChange={e => set({ notes: e.target.value })} /></QcField>
           </div></details>
-          {props.collections.length > 0 && <QcField htmlFor={`${id}-library`} label="Save to library"><QcSelect id={`${id}-library`} value={props.selectedCollectionId} onChange={e => props.onCollectionChange(e.target.value)}>
+          {props.collections.length > 0 && <QcField htmlFor={`${id}-library`} label="Save to library" help="Add to an existing library or create a new library" helpId={`${id}-library-help`}><QcSelect id={`${id}-library`} value={props.selectedCollectionId} aria-describedby={`${id}-library-help`} onChange={e => props.onCollectionChange(e.target.value)}>
             {props.collections.map(collection => <option key={collection.id} value={collection.id}>{collection.name}{collection.is_bootstrap ? ' (default)' : ''}</option>)}<option value="__create_new__">+ Create new library</option>
           </QcSelect></QcField>}
         </div>

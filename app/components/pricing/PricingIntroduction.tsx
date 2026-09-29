@@ -37,7 +37,7 @@ export function PricingIntroduction({ open, onOpen, onDismiss, hasComponents, te
   return <section className="qc-pricing-intro" aria-labelledby="qc-pricing-intro-title" data-qc-component="C71">
     <header className="qc-pricing-heading"><div><span className="qc-eyebrow">Set up once. Reuse on every job.</span><h2 id="qc-pricing-intro-title">Make QuoteCore use your prices</h2></div>
       <QcButton pending={pending} onClick={() => { void dismiss(); }} aria-label="Hide pricing introduction">Hide guide</QcButton></header>
-    <p>A Smart Component is like a reusable spreadsheet row: a name, material and labour costs, plus rules for measurement, purchasing and waste.</p>
+    <p>A Smart Component can be any product or service you provide, it could be a specific hourly rate, product, install cost. If you already use spreadsheets for pricing, think of each Smart Component like a reusable spreadsheet row: a name, material and labour costs, plus rules for measurement, purchasing and waste. You just tell the Smart Component what it is, and it calculates the rest automatically.</p>
     <div className="qc-pricing-learning-steps">
       <section><span className="qc-pricing-step-number">{tested ? <QcIcon name="check" /> : '1'}</span><h3>{hasComponents ? 'Test something familiar' : 'Start with one useful item'}</h3>
         <p>{hasComponents ? 'Open a component below, choose Test component and enter a length, area or quantity. Change a setting to see its effect.' : 'Your library is empty. Create a product or service you know, enter its costs and test a measurement.'}</p>

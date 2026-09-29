@@ -18,7 +18,7 @@ export function ComponentTestPanel({ draft, measurementSystem, currency, onClose
   const firstInput = useRef<HTMLInputElement>(null);
   const [values, setValues] = useState(['']);
   const [system, setSystem] = useState<MeasurementSystem>(measurementSystem);
-  const [basis, setBasis] = useState<'surface' | 'plan'>('surface');
+  const [basis, setBasis] = useState<'surface' | 'plan'>(draft.pitchType !== 'none' ? 'plan' : 'surface');
   const [pitch, setPitch] = useState('');
   const [attempted, setAttempted] = useState(false);
   const inputDim = inputDimension(draft.measurementType);
@@ -48,7 +48,7 @@ export function ComponentTestPanel({ draft, measurementSystem, currency, onClose
       <h3 id={`${id}-title`}>Test component</h3></div>
       {onClose && <QcButton className="qc-icon-button" aria-label="Close component test" onClick={onClose}><QcIcon name="close" /></QcButton>}
     </header>
-    <p className="qc-pricing-muted">Uses the settings in this editor. Nothing is saved and no quote is created.</p>
+    <p className="qc-pricing-muted">Uses the settings in this editor. Nothing is saved and no quote is created — use this to fine tune your pricing until you are happy.</p>
     <div className="qc-test-inputs" onKeyDown={event => {
       // Enter calculates, never submits the parent component form.
       if (event.key === 'Enter' && event.target instanceof HTMLInputElement) { event.preventDefault(); calculate(); }
