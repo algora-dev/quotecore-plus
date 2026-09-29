@@ -47,7 +47,7 @@ $precision$;
 DO $checks$
 DECLARE c record;
 BEGIN
- FOR c IN SELECT conname FROM pg_constraint WHERE conrelid='public.assistant_v2_actions'::regclass AND contype='c' LOOP
+ FOR c IN SELECT conname, oid FROM pg_constraint WHERE conrelid='public.assistant_v2_actions'::regclass AND contype='c' LOOP
    IF pg_get_constraintdef(c.oid) ~* 'kind[[:space:]]+IN[[:space:]]+\(''quote_details''' THEN
      EXECUTE format('ALTER TABLE public.assistant_v2_actions DROP CONSTRAINT %I', c.conname);
      EXECUTE 'ALTER TABLE public.assistant_v2_actions ADD CONSTRAINT assistant_v2_actions_kind_check CHECK(kind IN (''quote_details'',''component_change'',''draft_create'',''area_change''))';
