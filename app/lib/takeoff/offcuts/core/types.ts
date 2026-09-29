@@ -30,6 +30,8 @@ export interface RoofFace {
   pitchDeg: number | null;
   /** Phase measured from the local minimum cross-slope coordinate. */
   laneOffsetMm: number;
+  /** Manual registration locks are respected by the bank search. */
+  laneOffsetLocked?: boolean;
   confirmed: boolean; provenance: 'derived' | 'edited' | 'manual';
 }
 /** Exact linear upper/lower boundaries on one cross-sheet interval.
@@ -51,7 +53,9 @@ export interface Profile {
   rulesConfirmed: boolean;
 }
 export interface SolveSettings {
-  stockMode: 'per-lane' | 'face-envelope';
+  stockMode: 'bank-first' | 'per-lane' | 'face-envelope';
+  /** Bounded, explicitly reported extra stock at the upstream end of cut lanes. */
+  maxBankExtensionMm?: number;
   optimiseLapDirections: boolean;
   maxTrials: number; maxMilliseconds: number; maxSheets: number;
 }
@@ -61,8 +65,8 @@ export const DEFAULT_PROFILE: Profile = {
   lengthIncrementMm: 1, allowEndForEnd: false, rulesConfirmed: false,
 };
 export const DEFAULT_SETTINGS: SolveSettings = {
-  stockMode: 'per-lane', optimiseLapDirections: true,
-  maxTrials: 16, maxMilliseconds: 4000, maxSheets: 600,
+  stockMode: 'bank-first', optimiseLapDirections: true, maxBankExtensionMm: 100,
+  maxTrials: 32, maxMilliseconds: 4000, maxSheets: 600,
 };
 export interface FaceFrame {
   origin: Point; u: Point; v: Point; mmPerSceneUnit: number; pitchCos: number;
@@ -75,6 +79,7 @@ export interface Demand {
   /** Non-overlapping net roof cover, for checking complete roof coverage. */
   cover: Region;
   blank: Region;
+  stockRole?: 'primary-cut' | 'filler' | 'supplement';
 }
 export interface Offcut {
   id: string; sourceDemandId: string; sourceFaceId: string; region: Region;
@@ -90,17 +95,25 @@ export interface Placement {
   /** Geometric prototype edits are kept and visibly invalidated, never hidden. */
   manual?: boolean;
 }
+export interface BankLayout {
+  primaryFaceIds: string[];
+  laneOffsetByFace: Record<string, number>;
+  /** Extra length applies to angled primary cuts, not short straight fillers. */
+  extraLengthByFace: Record<string, number>;
+}
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
   profile: Profile; settings: SolveSettings;
   demands: Demand[]; offcuts: Offcut[]; placements: Placement[];
   lapByFace: Record<string, Lap>;
+  /** Selected geometric stock/registration model; revalidated on draft review. */
+  bankLayout?: BankLayout;
   metrics: {
     newMaterialMm2: number; baselineNewMaterialMm2: number;
     netRoofMm2: number; installedPhysicalMm2: number; wasteMm2: number;
     savedMm2: number; newSheetCount: number; reusedPieceCount: number;
   };
-  search: { method: 'bounded-multistart'; completedTrials: number; elapsedMs: number; budgetReached: boolean; provenOptimal: false };
+  search: { method: 'bounded-multistart' | 'bank-first'; completedTrials: number; elapsedMs: number; budgetReached: boolean; provenOptimal: false };
   issues: Issue[];
   status: 'prototype-review' | 'invalid';
   /** V1 never produces an approved manufacturing/order list. */

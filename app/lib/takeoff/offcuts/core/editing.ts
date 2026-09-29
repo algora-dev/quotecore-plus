@@ -45,10 +45,13 @@ export function editPlacement(solution: Solution, offcutId: string, destinationI
 export function validateDraft(draft: Draft): Issue[] {
   const issues = validatePartition(draft.roof, draft.faces), s = draft.solution;
   if (!s) return issues;
+  if (fingerprint(s.profile) !== fingerprint(draft.profile) || fingerprint(s.settings) !== fingerprint(draft.settings)) issues.push({ severity: 'error', code: 'SOLUTION_RULES', message: 'Saved allocation rules do not match the reviewed material settings.' });
+  if (draft.settings.stockMode === 'bank-first' && !s.bankLayout) issues.push({ severity: 'error', code: 'MISSING_BANK_LAYOUT', message: 'This bank-first solution has no verifiable stock/registration layout.' });
+  if (Object.keys(s.lapByFace).length !== draft.faces.length || draft.faces.some(f => ![1, -1].includes(s.lapByFace[f.id]) || f.lapLocked && s.lapByFace[f.id] !== f.lap)) issues.push({ severity: 'error', code: 'LOCKED_LAP', message: 'The proposed lap directions do not match the face set or a user-locked direction.' });
   const request = { roof: draft.roof, faces: draft.faces, profile: draft.profile, settings: draft.settings };
   if (s.sourceRevision !== draft.roof.sourceRevision || s.facesRevision !== facesRevision(request)) issues.push({ severity: 'error', code: 'STALE_SOLUTION', message: 'Geometry, direction, calibration or material settings changed. Run the optimiser again.' });
   try {
-    const expected = generateDemands(draft.roof, draft.faces, draft.profile, draft.settings).map(d => ({ ...d, lap: s.lapByFace[d.faceId] }));
+    const expected = generateDemands(draft.roof, draft.faces, draft.profile, draft.settings, s.bankLayout).map(d => ({ ...d, lap: s.lapByFace[d.faceId] }));
     if (fingerprint(expected) !== fingerprint(s.demands)) issues.push({ severity: 'error', code: 'DEMAND_TAMPER', message: 'The sheet requirements no longer match the current reviewed roof.' });
   } catch (error) { issues.push({ severity: 'error', code: 'INPUTS', message: String(error) }); }
   issues.push(...validateSolution(s)); return issues;

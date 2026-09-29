@@ -9,6 +9,19 @@ const fn = (x0: number, x1: number, y0: number, y1: number): Fn => ({ m: (y1 - y
 const val = (f: Fn, x: number): number => f.m * x + f.c;
 const top = (b: Band): Fn => fn(b.x0, b.x1, b.top0, b.top1);
 const bottom = (b: Band): Fn => fn(b.x0, b.x1, b.bottom0, b.bottom1);
+/** Collapse only sub-EPS endpoint inversions caused by evaluating intersecting
+ * floating-point lines. A materially crossed band is an error, never repaired
+ * into apparently valid stock. The sweep already nodes true intersections. */
+function cleanEndpointRoundoff(b: Band): Band {
+  for (const end of [0, 1] as const) {
+    const t = end === 0 ? b.top0 : b.top1, d = end === 0 ? b.bottom0 : b.bottom1;
+    if (d < t) {
+      if (t - d > EPS) throw new Error('Geometry produced a crossed trapezoid boundary.');
+      if (end === 0) b.bottom0 = b.top0; else b.bottom1 = b.top1;
+    }
+  }
+  return b;
+}
 export const bandArea = (b: Band): number => (b.x1 - b.x0) * ((b.bottom0 - b.top0) + (b.bottom1 - b.top1)) / 2;
 export const area = (r: Region): number => r.reduce((s, b) => s + bandArea(b), 0);
 export const bandRing = (b: Band): Ring => [
@@ -36,7 +49,7 @@ export function fromRing(r: Ring): Region {
     if (edges.length % 2) throw new Error('Polygon has an odd number of cross-section intersections.');
     for (let j = 0; j < edges.length; j += 2) {
       const b = { x0, x1, top0: val(edges[j], x0), top1: val(edges[j], x1), bottom0: val(edges[j + 1], x0), bottom1: val(edges[j + 1], x1) };
-      if (bandArea(b) > EPS) out.push(b);
+      if (bandArea(b) > EPS) out.push(cleanEndpointRoundoff(b));
     }
   }
   return out;
@@ -76,7 +89,7 @@ export function boolean(a: Region, b: Region, op: 'union' | 'intersection' | 'di
       if (!before && after) start = f;
       if (before && !after && start) {
         const band = { x0, x1, top0: val(start, x0), top1: val(start, x1), bottom0: val(f, x0), bottom1: val(f, x1) };
-        if (bandArea(band) > EPS) out.push(band); start = null;
+        if (bandArea(band) > EPS) out.push(cleanEndpointRoundoff(band)); start = null;
       }
     }
   }
@@ -120,21 +133,41 @@ export function components(r: Region): Region[] {
 /** Fit with fixed rib registration (no sideways sliding). Piece shape, not its
  * bounding rectangle, controls acceptance. All interval endpoints are checked. */
 export function fitY(available: Region, required: Region): number | null {
-  if (!isMonotone(available) || !isMonotone(required)) return null;
-  let lower = -Infinity, upper = Infinity;
+  if (!available.length || !required.length || !isMonotone(required)) return null;
+  // A single physical remnant can be non-monotone (e.g. a rounded stock length
+  // leaves a thin return strip joined around a cut). Rejecting the entire piece
+  // loses usable metal. Intersect feasible translation INTERVALS instead; every
+  // slice of the required continuous sheet must still lie in real source metal.
+  let feasible: [number, number][] = [[-Infinity, Infinity]];
   const xs = uniqueSorted([...available, ...required].flatMap(b => [b.x0, b.x1]));
   for (let i = 0; i < xs.length - 1; i++) {
     const x0 = xs[i], x1 = xs[i + 1], mid = (x0 + x1) / 2;
     const t = required.find(b => b.x0 < mid && b.x1 > mid); if (!t) continue;
-    const s = available.find(b => b.x0 < mid && b.x1 > mid); if (!s) return null;
-    for (const x of [x0, x1]) {
-      upper = Math.min(upper, val(top(t), x) - val(top(s), x));
-      lower = Math.max(lower, val(bottom(t), x) - val(bottom(s), x));
+    const allowed: [number, number][] = [];
+    for (const s of available.filter(b => b.x0 < mid && b.x1 > mid)) {
+      const lo = Math.max(...[x0, x1].map(x => val(bottom(t), x) - val(bottom(s), x)));
+      const hi = Math.min(...[x0, x1].map(x => val(top(t), x) - val(top(s), x)));
+      if (lo <= hi + EPS) allowed.push([lo, hi]);
+    }
+    const next: [number, number][] = [];
+    for (const [a, b] of feasible) for (const [c, d] of allowed) {
+      const lo = Math.max(a, c), hi = Math.min(b, d);
+      if (lo <= hi + EPS) next.push([lo, hi]);
+    }
+    if (!next.length) return null;
+    next.sort((a, b) => a[0] - b[0]); feasible = [];
+    for (const interval of next) {
+      const previous = feasible[feasible.length - 1];
+      if (previous && interval[0] <= previous[1] + EPS) previous[1] = Math.max(previous[1], interval[1]);
+      else feasible.push(interval);
     }
   }
-  if (!Number.isFinite(lower) || lower > upper + EPS) return null;
-  const dy = (lower + upper) / 2;
-  return area(subtract(required, translate(available, 0, dy))) <= Math.max(1e-4, area(required) * 1e-10) ? dy : null;
+  for (const [lo, hi] of feasible) {
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) continue;
+    const dy = (lo + hi) / 2;
+    if (area(subtract(required, translate(available, 0, dy))) <= Math.max(1e-4, area(required) * 1e-10)) return dy;
+  }
+  return null;
 }
 export function pointInRegion(r: Region, p: Point): boolean {
   return r.some(b => p.x >= b.x0 - EPS && p.x <= b.x1 + EPS && p.y >= val(top(b), p.x) - EPS && p.y <= val(bottom(b), p.x) + EPS);

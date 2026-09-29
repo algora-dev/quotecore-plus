@@ -5,3 +5,6 @@ export * from './core/solver';
 export * from './core/editing';
 export * from './core/codec';
 export * from './adapters/quotecore';
+
+export * from './core/plan';
+export * from './core/groupEditing';
