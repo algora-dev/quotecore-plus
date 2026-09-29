@@ -120,6 +120,10 @@ export function RoofAreaCard({
             </div>
           </div>
           <div>
+              {areaPitchVisible && <p className="qce-basis-help" style={{ marginTop: 8 }}>
+                Width × length is plan area; the pitch below adjusts it to the surface.
+                Already have a surface total? Enter it on a component as an Actual measurement instead.
+              </p>}
               {areaPitchVisible && <div className="mb-2" data-copilot="quote-pitch">
                 <PitchInput
                   appearance="v2"

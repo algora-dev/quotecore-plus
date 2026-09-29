@@ -1,707 +1,397 @@
-'use client';
-import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
-import { useState, useEffect, useRef } from 'react';
+"use client";
+import { useState, useRef, useEffect, useId } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
+import { QcDialog } from '@/app/components/ui/v2/QcDialog';
+import { QcHostedDialogScope } from '@/app/components/ui/v2/QcHostedDialog';
+import { MeasurementChoiceCards } from '@/app/components/quote-entry/MeasurementChoiceCards';
+import { entryModeFromHint, quoteJourneyDestination, type QuoteEntryMode } from '@/app/components/quote-entry/quoteJourney';
 import { createQuoteWithDetails } from './actions';
 import { FileUploader } from '@/app/components/FileUploader';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { createClient } from '@/app/lib/supabase/client';
-import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
+import { saveFileMetadata } from '@/app/lib/files/storage-actions';
 import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
-
-interface Template {
-  id: string;
-  name: string;
-  description: string | null;
-}
+import '@/app/components/quote-entry/quote-entry.css';
 
 type MeasurementChoice = 'metric' | 'imperial_ft' | 'imperial_rs';
-
-interface Props {
-  workspaceSlug: string;
-  templates: Template[];
-  templatesLoadError?: boolean;
-  companyId: string;
-  /** Company default measurement system; pre-selects the radio when the form mounts. */
-  defaultMeasurementSystem: MeasurementChoice;
-  /** Whether the digital takeoff feature is available on the company's plan. */
-  digitalTakeoffAvailable: boolean;
-  /** True if the company has hit their monthly quote limit. Blocks submission. */
-  monthlyQuoteAtCap: boolean;
-  monthlyQuoteUsed: number;
-  monthlyQuoteLimit: number;
-  effectivePlanCode: string;
-  /** Phase 8 (Generic Trades): pre-seeded from company.default_trade. */
-  defaultTrade?: string;
-  /** Phase 8 (Generic Trades): collections the user can pick from. */
-  componentCollections?: Array<{ id: string; name: string; is_bootstrap: boolean }>;
-  /** When true the company is over storage - block plan file upload. */
-  isOverStorage?: boolean;
+type CreateParams = Parameters<typeof createQuoteWithDetails>[0];
+interface Template { id: string; name: string; description: string | null }
+interface PendingPlan {
+  fileName: string; fileSize: number; mimeType: string; bucket: string; tempPath: string;
 }
-
+export interface QuoteDetailsFormProps {
+  workspaceSlug: string; templates: Template[]; templatesLoadError?: boolean; companyId: string;
+  defaultMeasurementSystem: MeasurementChoice; digitalTakeoffAvailable: boolean;
+  monthlyQuoteAtCap: boolean; monthlyQuoteUsed: number; monthlyQuoteLimit: number;
+  effectivePlanCode: string; defaultTrade?: string;
+  componentCollections?: Array<{ id: string; name: string; is_bootstrap: boolean }>;
+  isOverStorage?: boolean;
+  /** Existing measure-first contract: job required, customer optional/falls back to job. */
+  context?: 'quote' | 'measure';
+  onCancel?: () => void;
+  /** Host must stay mounted while working or while a nested dialog owns Escape. */
+  onPendingChange?: (pending: boolean) => void;
+}
 const MEASUREMENT_OPTIONS: Array<{ value: MeasurementChoice; title: string; subtitle: string }> = [
-  { value: 'metric', title: 'Metric', subtitle: 'meters & m²' },
-  { value: 'imperial_ft', title: 'Imperial - ft²', subtitle: 'feet & square feet' },
-  { value: 'imperial_rs', title: 'Imperial - Roofing Squares', subtitle: 'feet & Roofing Squares (RS)' },
+  { value: 'metric', title: 'Metric', subtitle: 'Metres & m²' },
+  { value: 'imperial_ft', title: 'Imperial', subtitle: 'Feet & ft²' },
+  { value: 'imperial_rs', title: 'Roofing squares', subtitle: 'Feet & RS' },
 ];
+// Preserve the complete existing Generic Trades option set. No defaulting logic
+// moves here: the existing creation action is still the final authority.
+const TRADES = ['generic', 'roofing', 'cladding', 'electrical', 'landscaping', 'concrete', 'plumbing', 'flooring', 'tiling', 'foundations', 'insulation', 'painting', 'fencing', 'construction', 'solar'];
+const isBillingMessage = (message: string) => /quote_limit_reached|feature_gated|subscription_inactive|storage_quota_exceeded|monthly quote limit|requires "/i.test(message);
 
-export function QuoteDetailsForm({
-  workspaceSlug,
-  templates,
-  templatesLoadError = false,
-  companyId,
-  defaultMeasurementSystem,
-  digitalTakeoffAvailable,
-  monthlyQuoteAtCap,
-  monthlyQuoteUsed,
-  monthlyQuoteLimit,
-  effectivePlanCode,
-  defaultTrade = 'roofing',
-  componentCollections = [],
-  isOverStorage,
-}: Props) {
-  // Phase 8 (Generic Trades): trade + collection pickers.
-  // Only rendered when NEXT_PUBLIC_GENERIC_TRADES_V1 is on.
-  const genericTradesEnabled =
-    (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
-  const [selectedTrade, setSelectedTrade] = useState<string>(defaultTrade);
-  // '' = All Components (no filter); pre-select bootstrap if it exists.
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
-    componentCollections.find(c => c.is_bootstrap)?.id ?? componentCollections[0]?.id ?? ''
-  );
+/** One entry controller used by New Quote and the existing measure-first shortcut.
+ * Same creation/upload/actions; no quote written until the explicit primary action.
+ * Acquisition is separate from future assistance. No new persisted fields.
+ */
+export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError = false, companyId,
+  defaultMeasurementSystem, digitalTakeoffAvailable, monthlyQuoteAtCap, monthlyQuoteUsed,
+  monthlyQuoteLimit, effectivePlanCode, defaultTrade = 'roofing', componentCollections = [],
+  isOverStorage, context = 'quote', onCancel, onPendingChange }: QuoteDetailsFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [customerName, setCustomerName] = useState('');
-  // Presentation-only validation. Original submit guards and disabled rules remain.
-  const [customerTouched, setCustomerTouched] = useState(false);
-  const [validationAttempted, setValidationAttempted] = useState(false);
-  const customerRef = useRef<HTMLInputElement>(null);
-  const modeRef = useRef<HTMLDivElement>(null);
-  const planRef = useRef<HTMLDivElement>(null);
   const pdfPicker = usePdfPagePicker();
+  const id = useId();
+  const measureFirst = context === 'measure';
+  const genericTradesEnabled = (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
+  const validTemplate = templates.find(t => t.id === searchParams.get('template'))?.id ?? '';
+  const [templateId, setTemplateId] = useState(measureFirst ? '' : validTemplate);
+  const [entryMode, setEntryMode] = useState<QuoteEntryMode | null>(() => {
+    if (measureFirst) return 'digital';
+    if (validTemplate) return 'manual';
+    const hint = entryModeFromHint(searchParams.get('measurements'));
+    return hint === 'digital' && !digitalTakeoffAvailable ? null : hint;
+  });
+  const [choosing, setChoosing] = useState(() => !measureFirst && !validTemplate && !(entryModeFromHint(searchParams.get('measurements')) === 'manual' || (entryModeFromHint(searchParams.get('measurements')) === 'digital' && digitalTakeoffAvailable)));
+  const choiceSummaryRef = useRef<HTMLHeadingElement>(null);
+  const choiceChanged = useRef(false);
+  const [customerName, setCustomerName] = useState('');
   const [jobName, setJobName] = useState('');
-  const [templateId, setTemplateId] = useState('');
-  // Entry mode: manual (traditional builder), digital (takeoff canvas), or
-  // blank (skip the builder and go straight to the customer quote editor as
-  // the master source). Null until the user clicks one of the three pills.
-  const [entryMode, setEntryMode] = useState<'manual' | 'digital' | 'blank' | null>(null);
-  const [planUploaded, setPlanUploaded] = useState(false);
-  const [uploadedPlanPath, setUploadedPlanPath] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-  // Inline error surface for the new-quote flow. Billing errors flag
-  // showUpgrade so we render a CTA to /account?tab=billing rather than a
-  // dead alert(). See catch block below.
-  const [createError, setCreateError] = useState<
-    { message: string; showUpgrade: boolean } | null
-  >(null);
-  // Measurement system for the quote-to-be. Locked once the quote is created.
+  const [customerTouched, setCustomerTouched] = useState(false);
+  const [jobTouched, setJobTouched] = useState(false);
+  const [validationAttempted, setValidationAttempted] = useState(false);
   const [measurementSystem, setMeasurementSystem] = useState<MeasurementChoice>(defaultMeasurementSystem);
   const [pendingSystemSwitch, setPendingSystemSwitch] = useState<MeasurementChoice | null>(null);
-
-  // Upgrade modal state. Two trigger paths:
-  //   1. User clicks the greyed-out Digital Mode button on a plan without
-  //      the digital_takeoff feature.
-  //   2. User submits the form with monthlyQuoteAtCap=true.
-  // Both share the same modal component but with different copy / target plan.
+  const [selectedTrade, setSelectedTrade] = useState(defaultTrade);
+  const [selectedCollectionId, setSelectedCollectionId] = useState(componentCollections.find(c => c.is_bootstrap)?.id ?? componentCollections[0]?.id ?? '');
+  const [pendingPlan, setPendingPlan] = useState<PendingPlan | null>(null);
+  const [replacingPlan, setReplacingPlan] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [progress, setProgress] = useState('');
+  const [createError, setCreateError] = useState<{ message: string; showUpgrade: boolean } | null>(null);
   const [digitalUpgradeOpen, setDigitalUpgradeOpen] = useState(false);
   const [quoteCapUpgradeOpen, setQuoteCapUpgradeOpen] = useState(false);
-
-  // Pre-select template from URL param. setState inside effect is
-  // intentional: the URL is external state we mirror. React 19's stricter
-  // rule flags it; the guard above prevents loops.
+  const [createdRecord, setCreatedRecord] = useState<{ id: string; entryMode: QuoteEntryMode } | null>(null);
+  const [creationUncertain, setCreationUncertain] = useState(false);
+  const customerRef = useRef<HTMLInputElement>(null);
+  const jobRef = useRef<HTMLInputElement>(null);
+  const modeRef = useRef<HTMLDivElement>(null);
+  const planRef = useRef<HTMLElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const submitLock = useRef(false);
+  const uploadLock = useRef(false);
+  // Same-tick double click and post-create attachment failure cannot create a
+  // second quote. This guard is local only; server atomic quota checks remain.
+  const createdRef = useRef<{ id: string; entryMode: QuoteEntryMode } | null>(null);
+  const busy = creating || uploading;
+  const locked = busy || !!createdRecord || creationUncertain;
   useEffect(() => {
-    const urlTemplateId = searchParams.get('template');
-    if (urlTemplateId && templates.find(t => t.id === urlTemplateId)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTemplateId(urlTemplateId);
+    // Native child cancel can bubble through a parent dialog. Keep the host
+    // pending for that event, without changing shared QcDialog behaviour.
+    onPendingChange?.(busy || !!pendingSystemSwitch || digitalUpgradeOpen || quoteCapUpgradeOpen);
+  }, [busy, pendingSystemSwitch, digitalUpgradeOpen, quoteCapUpgradeOpen, onPendingChange]);
+  useEffect(() => { if (createError) errorRef.current?.focus(); }, [createError]);
+
+  useEffect(() => {
+    if (!choosing && choiceChanged.current) {
+      choiceSummaryRef.current?.focus({ preventScroll: true });
+      choiceChanged.current = false;
     }
-  }, [searchParams, templates]);
+  }, [choosing]);
+
+  function selectMode(mode: QuoteEntryMode) {
+    if (locked) return;
+    if (mode === 'digital' && !digitalTakeoffAvailable) { setDigitalUpgradeOpen(true); return; }
+    setEntryMode(mode);
+    choiceChanged.current = true;
+    setChoosing(false);
+    setCreateError(null);
+    // Keep the local file/template draft when exploring the two paths. Only
+    // the selected mode is submitted; unsupported fields never reach actions.
+  }
 
   async function handlePlanUpload(rawFile: File) {
-    // PDF plans: convert selected page to PNG client-side before upload.
-    const file = await pdfPicker.convertIfNeeded(rawFile);
-    if (!file) return; // user cancelled the page picker
-    // Gerald audit H-05: the client no longer has direct INSERT on the
-    // private bucket. Ask the server to mint a signed upload URL after
-    // it has verified company context + tier + storage quota.
-    const mint = await mintQuoteDocumentUploadUrl({
-      scope: { kind: 'pending' },
-      filename: file.name,
-      contentType: file.type || 'application/octet-stream',
-      claimedSize: file.size,
-    });
-    if (!mint.ok) {
-      // Surface a billing-style message that the existing storage_quota
-      // UI banner already handles.
-      if (mint.code === 'storage_quota_exceeded') {
-        throw new Error('Storage quota exceeded. Please upgrade your plan.');
-      }
-      throw new Error(mint.message);
+    if (uploadLock.current || submitLock.current || createdRef.current || creationUncertain) return;
+    uploadLock.current = true;
+    setUploading(true);
+    try {
+      const file = await pdfPicker.convertIfNeeded(rawFile);
+      if (!file) return; // Cancellation keeps an existing uploaded selection.
+      const mint = await mintQuoteDocumentUploadUrl({ scope: { kind: 'pending' }, filename: file.name,
+        contentType: file.type || 'application/octet-stream', claimedSize: file.size });
+      if (!mint.ok) throw new Error(mint.code === 'storage_quota_exceeded'
+        ? 'Storage quota exceeded. Please upgrade your plan.' : mint.message);
+      const supabase = createClient();
+      const { error: uploadError } = await supabase.storage.from(mint.bucket)
+        .uploadToSignedUrl(mint.storagePath, mint.token, file, { contentType: file.type || undefined });
+      if (uploadError) throw new Error(uploadError.message);
+      // Instance-local metadata replaces the former window.__pendingPlanFile.
+      // There is no cross-dialog/file contamination and no new storage schema.
+      setPendingPlan({ fileName: file.name, fileSize: file.size, mimeType: file.type,
+        bucket: mint.bucket, tempPath: mint.storagePath });
+      setReplacingPlan(false);
+    } finally {
+      uploadLock.current = false;
+      setUploading(false);
     }
-
-    const supabase = createClient();
-    const { error: uploadError } = await supabase.storage
-      .from(mint.bucket)
-      .uploadToSignedUrl(mint.storagePath, mint.token, file, {
-        contentType: file.type || undefined,
-      });
-    if (uploadError) {
-      throw new Error(uploadError.message);
-    }
-
-    // Store file info in state - will save metadata after quote creation
-    setUploadedPlanPath(mint.storagePath);
-    setPlanUploaded(true);
-
-    // Store file details for later metadata save. fileName is just for
-    // display + filetype detection; the canonical path is mint.storagePath.
-    const displayName = file.name;
-    (window as { __pendingPlanFile?: unknown }).__pendingPlanFile = {
-      fileName: displayName,
-      fileSize: file.size,
-      mimeType: file.type,
-      tempPath: mint.storagePath,
-    };
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    // Last-line client guard before we hit the server. The server's
-    // create_quote_atomic also enforces this so a bypass attempt still
-    // fails with quote_limit_reached.
-    if (monthlyQuoteAtCap) {
-      setQuoteCapUpgradeOpen(true);
-      return;
-    }
-
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (submitLock.current || uploadLock.current || createdRef.current || creationUncertain) return;
+    if (monthlyQuoteAtCap) { setQuoteCapUpgradeOpen(true); return; }
     setValidationAttempted(true);
-    if (!customerName.trim()) {
-      setCustomerTouched(true);
-      customerRef.current?.focus();
+    if (!entryMode) { modeRef.current?.focus(); return; }
+    if (entryMode === 'digital' && !digitalTakeoffAvailable) { setDigitalUpgradeOpen(true); return; }
+    if (measureFirst ? !jobName.trim() : !customerName.trim()) {
+      if (measureFirst) { setJobTouched(true); jobRef.current?.focus(); }
+      else { setCustomerTouched(true); customerRef.current?.focus(); }
       return;
     }
-
-    if (!entryMode) {
-      modeRef.current?.focus();
-      return;
-    }
-
-    if (entryMode === 'digital' && !planUploaded) {
-      planRef.current?.focus();
-      return;
-    }
-
+    if (entryMode === 'digital' && !pendingPlan) { planRef.current?.focus(); return; }
+    submitLock.current = true;
     setCreating(true);
+    setCreateError(null);
+    setProgress('Creating your quote…');
+    let navigating = false;
     try {
+      const selectedTemplate = !measureFirst && entryMode === 'manual' ? templateId : '';
       const result = await createQuoteWithDetails({
-        customerName: customerName.trim(),
+        customerName: measureFirst ? customerName.trim() || jobName.trim() : customerName.trim(),
         jobName: jobName.trim() || null,
-        templateId: templateId || null,
+        templateId: selectedTemplate || null,
         entryMode,
         measurementSystem,
-        // Phase 8 (Generic Trades): pass through when the flag is on.
-        ...(genericTradesEnabled && selectedTrade ? { trade: selectedTrade as 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction' } : {}),
+        ...(genericTradesEnabled && selectedTrade ? { trade: selectedTrade as CreateParams['trade'] } : {}),
         ...(genericTradesEnabled && selectedCollectionId ? { componentCollectionId: selectedCollectionId } : {}),
       });
-
-      // Structured failure path: server caught a billing error and returned
-      // it as data so we can render the typed banner instead of crashing
-      // through Next's masked-error pipeline. `code` is stable and matches
-      // the BillingError subclasses on the server.
-      if (!result.ok) {
-        const isBilling =
-          result.code === 'quote_limit_reached' ||
-          result.code === 'subscription_inactive' ||
-          result.code === 'feature_gated' ||
-          result.code === 'storage_quota_exceeded';
-        setCreateError({ message: result.message, showUpgrade: isBilling });
-        setCreating(false);
+      // Template creation performs its own server redirect. Preserve it instead
+      // of manufacturing a quote ID, navigating twice or overriding its route.
+      if (!result && selectedTemplate) { navigating = true; return; }
+      if (!result?.ok) {
+        const message = result && !result.ok ? result.message : 'Quote creation returned no result. Check Quotes before trying again.';
+        const code = result && !result.ok ? result.code : 'unknown';
+        if (!result) setCreationUncertain(true);
+        setCreateError({ message, showUpgrade: ['quote_limit_reached','subscription_inactive','feature_gated','storage_quota_exceeded'].includes(code) });
         return;
       }
-
-      const quoteId = result.quoteId;
-
-      // If template mode, redirect happens inside createQuoteWithDetails
-      // and quoteId is undefined (the server function never returns).
-      if (!quoteId) return;
-
-      // If digital mode with uploaded plan, move file and save metadata
-      if (entryMode === 'digital' && uploadedPlanPath) {
-        const pendingFile = (window as any).__pendingPlanFile;
-        if (pendingFile) {
-          const supabase = createClient();
-          
-          // Move file from temp to final location
-          const finalPath = `${companyId}/${quoteId}/${pendingFile.fileName}`;
-          await supabase.storage.from('QUOTE-DOCUMENTS').move(pendingFile.tempPath, finalPath);
-          
-          // Save metadata now that quote exists
-          await saveFileMetadata({
-            companyId,
-            quoteId,
-            fileType: 'plan',
-            fileName: pendingFile.fileName,
-            fileSize: pendingFile.fileSize,
-            mimeType: pendingFile.mimeType,
-            storagePath: finalPath,
-          });
-          
-          delete (window as any).__pendingPlanFile;
-        }
-        
-        router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff`);
-      } else if (entryMode === 'blank') {
-        // Blank quote skips the traditional Areas/Components/Extras builder
-        // entirely. We route to the dedicated /blank-build screen which is
-        // the master source of line items for blank quotes. The customer
-        // quote editor remains accessible from the summary if the user
-        // wants to further customise what the customer sees vs the master.
-        router.push(`/${workspaceSlug}/quotes/${quoteId}/blank-build`);
-      } else {
-        // Manual mode goes to the traditional quote builder.
-        router.push(`/${workspaceSlug}/quotes/${quoteId}`);
+      if (!result.quoteId) {
+        if (selectedTemplate) { navigating = true; return; }
+        setCreationUncertain(true);
+        setCreateError({ message: 'The request completed without a quote reference. Check your Quotes list before creating another.', showUpgrade: false });
+        return;
       }
-    } catch (err) {
-      const raw = err instanceof Error ? err.message : 'Failed to create quote';
-      // Billing errors from create_quote_atomic / requireFeature surface
-      // with stable phrases. Show an inline banner with an Upgrade CTA
-      // instead of a dead alert(). The exhaustive code lookup happens on
-      // the server; here we just sniff the message.
-      const isBilling = /quote_limit_reached|feature_gated|subscription_inactive|storage_quota_exceeded|monthly quote limit|requires "/i.test(raw);
-      setCreateError({ message: raw, showUpgrade: isBilling });
-      setCreating(false);
+      const record = { id: result.quoteId, entryMode };
+      createdRef.current = record;
+      setCreatedRecord(record);
+      if (entryMode === 'digital' && pendingPlan) {
+        setProgress('Attaching your plan…');
+        const supabase = createClient();
+        const finalPath = `${companyId}/${record.id}/${pendingPlan.fileName}`;
+        const { error: moveError } = await supabase.storage.from(pendingPlan.bucket).move(pendingPlan.tempPath, finalPath);
+        if (moveError) throw new Error(`Could not attach the plan: ${moveError.message}`);
+        await saveFileMetadata({ companyId, quoteId: record.id, fileType: 'plan',
+          fileName: pendingPlan.fileName, fileSize: pendingPlan.fileSize,
+          mimeType: pendingPlan.mimeType, storagePath: finalPath });
+      }
+      setProgress(entryMode === 'digital' ? 'Opening Digital Takeoff…' : 'Opening your workspace…');
+      router.push(quoteJourneyDestination({ workspaceSlug, quoteId: record.id, entryMode }));
+      navigating = true;
+    } catch (error) {
+      // Do not turn Next's intentional template redirect into a creation error.
+      // No Next internals/API imported; the existing action owns navigation.
+      if (typeof error === 'object' && error !== null && 'digest' in error
+        && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT;')) {
+        navigating = true;
+        return;
+      }
+      const message = error instanceof Error ? error.message : 'Could not start the quote. Please try again.';
+      setCreateError({ message, showUpgrade: isBillingMessage(message) });
+    } finally {
+      if (!navigating) { submitLock.current = false; setCreating(false); setProgress(''); }
     }
   }
 
-  return (
-    <QcJourney><form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-8 space-y-6">
-      {createError && (
-        <div role="alert"
-          className={`rounded-lg border p-4 ${
-            createError.showUpgrade
-              ? 'border-amber-300 bg-amber-50 text-amber-900'
-              : 'border-red-300 bg-red-50 text-red-900'
-          }`}
-        >
-          <p className="text-sm font-medium">{createError.message}</p>
-          {createError.showUpgrade && (
-            <Link
-              href={`/${workspaceSlug}/account?tab=billing`}
-              prefetch={false}
-              className="qc-flow-link mt-2 inline-block text-sm font-semibold text-amber-900 underline"
-            >
-              View plans →
-            </Link>
-          )}
-        </div>
-      )}
-      {/* Phase 8 (Generic Trades): trade + collection pickers. Only when flag on. */}
-      {genericTradesEnabled && (
-        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
-          <h3 className="text-sm font-semibold text-slate-800">Industry &amp; Component Collection</h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="qc-flow-label block text-xs text-slate-600 mb-1">Industry</label>
-              <select aria-label="Industry"
-                value={selectedTrade}
-                onChange={e => setSelectedTrade(e.target.value)}
-                className="qc-select w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              >
-                <option value="generic">Generic</option>
-                <option value="roofing">Roofing</option>
-                <option value="cladding">Cladding</option>
-                <option value="electrical">Electrical</option>
-                <option value="landscaping">Landscaping</option>
-                <option value="concrete">Concrete</option>
-                <option value="plumbing">Plumbing</option>
-                <option value="flooring">Flooring</option>
-                <option value="tiling">Tiling</option>
-                <option value="foundations">Foundations</option>
-                <option value="insulation">Insulation</option>
-                <option value="painting">Painting</option>
-                <option value="fencing">Fencing</option>
-                <option value="construction">Construction</option>
-                <option value="solar">Solar</option>
-              </select>
+  const requiredMissing = measureFirst ? !jobName.trim() : !customerName.trim();
+  const customerInvalid = !measureFirst && (customerTouched || validationAttempted) && !customerName.trim();
+  const jobInvalid = measureFirst && (jobTouched || validationAttempted) && !jobName.trim();
+  const selectedTemplateName = templates.find(t => t.id === templateId)?.name;
+  const selectedCollectionName = componentCollections.find(c => c.id === selectedCollectionId)?.name ?? 'All components';
+  const helper = !entryMode ? 'Choose where your measurements will come from.'
+    : requiredMissing ? `Enter ${measureFirst ? 'a job' : 'the customer'} name to continue.`
+    : entryMode === 'digital' && !pendingPlan ? 'Upload a plan or image to start measuring.'
+    : entryMode === 'digital' ? 'Next: calibrate and measure in Digital Takeoff.'
+    : entryMode === 'blank' ? 'Next: write your line-by-line quote.'
+    : 'Next: enter measurements in the Advanced workspace.';
+  const recoveryUrl = createdRecord ? quoteJourneyDestination({ workspaceSlug, quoteId: createdRecord.id,
+    entryMode: createdRecord.entryMode, stage: 'pricing' }) : `/${workspaceSlug}/quotes`;
+
+  const customerField = (<div className="qce-field" data-copilot="quote-customer">
+              <label htmlFor={`${id}-customer`}>Customer name {measureFirst ? <span>(optional)</span> : <span>(required)</span>}</label>
+              <QcInput ref={customerRef} id={`${id}-customer`} value={customerName} type="text" autoComplete="name"
+                onChange={e => setCustomerName(e.target.value)} onBlur={() => setCustomerTouched(true)} required={!measureFirst}
+                aria-invalid={customerInvalid || undefined} aria-describedby={customerInvalid ? `${id}-customer-error` : undefined} placeholder="e.g. Alex Smith" />
+              {customerInvalid && <p id={`${id}-customer-error`} className="qce-error">Enter the customer name to continue.</p>}
+            </div>);
+  const jobField = (<div className="qce-field" data-copilot="quote-job">
+              <label htmlFor={`${id}-job`}>Job name {measureFirst ? <span>(required)</span> : <span>(optional)</span>}</label>
+              <QcInput ref={jobRef} id={`${id}-job`} value={jobName} type="text" onChange={e => setJobName(e.target.value)}
+                onBlur={() => setJobTouched(true)} required={measureFirst} aria-invalid={jobInvalid || undefined}
+                aria-describedby={jobInvalid ? `${id}-job-error` : undefined} placeholder="e.g. 18 Workshop Lane" />
+              {jobInvalid && <p id={`${id}-job-error`} className="qce-error">Enter a job name to continue.</p>}
+            </div>);
+
+  return <QcJourney className="qc-quote-entry"><QcHostedDialogScope enabled>
+    <form onSubmit={handleSubmit} noValidate className="qce-form" data-quote-entry-context={context}>
+      {createError && <div ref={errorRef} tabIndex={-1} className="qce-message" role="alert" data-warning={createError.showUpgrade || undefined}>
+        {createdRecord && <p><strong>Your quote was created.</strong> The next step did not finish. Open that quote to continue; do not create another one.</p>}
+        <p>{createError.message}</p>
+        {createError.showUpgrade && <Link href={`/${workspaceSlug}/account?tab=billing`} prefetch={false}>View plans →</Link>}
+        {(createdRecord || creationUncertain) && <Link href={recoveryUrl}>Open {createdRecord ? 'the created quote' : 'Quotes'} →</Link>}
+      </div>}
+      <fieldset className="qce-section-disabled" disabled={locked}>
+        <section className="qce-section" aria-labelledby={`${id}-question`}>
+          {choosing || !entryMode ? <>
+            <h2 id={`${id}-question`}>Do you already have the measurements?</h2>
+            <p className="qce-subtitle">Two ways to start. The same pricing workspace afterwards.</p>
+            <MeasurementChoiceCards ref={modeRef} value={entryMode} onSelect={selectMode}
+              digitalAvailable={digitalTakeoffAvailable} disabled={locked} describedBy={validationAttempted && !entryMode ? `${id}-mode-error` : undefined} />
+            {validationAttempted && !entryMode && <p id={`${id}-mode-error`} className="qce-error">Choose how to get your measurements.</p>}
+            <div className="qce-other"><span>Not using measurements?</span>
+              <QcButton size="sm" aria-pressed={entryMode === 'blank'} onClick={() => selectMode('blank')}>Write a line-by-line quote</QcButton>
+              {entryMode && <QcButton size="sm" onClick={() => { choiceChanged.current = true; setChoosing(false); }}>Keep current choice</QcButton>}
             </div>
-            <div>
-              <label className="qc-flow-label block text-xs text-slate-600 mb-1">Component Collection</label>
-              {componentCollections.length === 0 ? (
-                <p className="text-xs text-slate-500 py-2">No collections found. Go to Components to create one.</p>
-              ) : (
-                <select
-                  value={selectedCollectionId}
-                  onChange={e => setSelectedCollectionId(e.target.value)}
-                  className="qc-select w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                >
+          </> : <div className="qce-chosen">
+            <div><p className="qce-help">{entryMode === 'blank' ? 'Standard quote' : 'Measurements'}</p>
+              <h2 id={`${id}-question`} ref={choiceSummaryRef} tabIndex={-1}>{entryMode === 'manual' ? 'I have measurements' : entryMode === 'digital' ? 'I need to measure' : 'Line-by-line quote'}</h2>
+            </div>
+            <QcButton size="sm" onClick={() => setChoosing(true)} aria-label="Change measurement path">Change</QcButton>
+          </div>}
+          {entryMode && <div className="qce-next"><span aria-hidden="true">→</span><div>
+            <strong>{entryMode === 'manual' ? 'Enter measurements → Price → Customer quote'
+              : entryMode === 'digital' ? 'Measure → Price → Customer quote' : 'Write → Review → Send'}</strong>
+            <p>{entryMode === 'manual' ? 'Use measurements from any source with your Smart Components in the Advanced workspace.'
+              : entryMode === 'digital' ? 'Calibrate your plan, measure, then price the job.'
+              : 'Create a Standard Quote without components or measurements. This opens the existing line editor.'}</p>
+            {entryMode === 'manual' && <details><summary>Are your measurements plan or actual?</summary>
+              <p>Plan measurements are viewed from above. Actual measurements already follow the surface or slope. You will choose the appropriate basis on each component when entering measurements; this screen does not apply pitch.</p>
+              <p>For work without pitch, use the measurements you have. Waste and purchasing rules still come from the component.</p>
+            </details>}
+          </div></div>}
+        </section>
+        {entryMode && <>
+        <section className="qce-section" aria-labelledby={`${id}-job-heading`}>
+          <h2 id={`${id}-job-heading`}>{measureFirst ? 'Name the job' : 'Who is this quote for?'}</h2>
+          <p className="qce-help">{measureFirst ? 'Customer details can be added later. For now, use a name you will recognise.' : 'A name is enough to start. Add the rest of the customer details later.'}</p>
+          <div className="qce-fields">
+            {measureFirst ? <>{jobField}{customerField}</> : <>{customerField}{jobField}</>}
+          </div>
+          <fieldset className="qce-units" data-copilot="quote-measurement">
+            <legend>Units for this quote</legend>
+            <details className="qce-unit-choice">
+              <summary><span><strong>{MEASUREMENT_OPTIONS.find(o => o.value === measurementSystem)?.title}</strong> · {MEASUREMENT_OPTIONS.find(o => o.value === measurementSystem)?.subtitle}</span><span className="qce-unit-change">Change units</span></summary>
+            <div className="qce-unit-options" role="group" aria-label="Units for this quote">
+              {MEASUREMENT_OPTIONS.map(option => <QcButton key={option.value} aria-pressed={measurementSystem === option.value}
+                aria-label={`${option.title}: ${option.subtitle}${option.value === defaultMeasurementSystem ? ', company default' : ''}`}
+                onClick={() => { if (option.value === measurementSystem) return;
+                  if (option.value !== defaultMeasurementSystem) setPendingSystemSwitch(option.value);
+                  else setMeasurementSystem(option.value); }}>
+                <span>{option.title}</span><small>{option.subtitle}</small>
+              </QcButton>)}
+            </div>
+            </details>
+            <p className="qce-help">{measurementSystem === defaultMeasurementSystem ? 'Your company default. ' : ''}<strong>Units cannot change after creation.</strong></p>
+          </fieldset>
+        </section>
+        {entryMode === 'digital' && <section ref={planRef} tabIndex={-1} className="qce-section" aria-labelledby={`${id}-plan-heading`}>
+          <h2 id={`${id}-plan-heading`}>Add your plan or image</h2>
+          <p className="qce-subtitle">Use a PDF or an image, including a satellite image you already have. You will need a known distance to calibrate it.</p>
+          {validationAttempted && !pendingPlan && <p className="qce-error">Upload a plan or image before starting.</p>}
+          {pendingPlan && <div className="qce-plan-file" role="status"><div><strong>{pendingPlan.fileName}</strong>
+            <p className="qce-help">Uploaded and ready to attach to this quote.</p></div>
+            <QcButton size="sm" onClick={() => setReplacingPlan(v => !v)}>{replacingPlan ? 'Keep this plan' : 'Change plan'}</QcButton>
+          </div>}
+          {(!pendingPlan || replacingPlan) && <FileUploader appearance="v2" accept="image/*,application/pdf"
+            maxSize={10485760} pdfMaxSize={52428800} onUpload={handlePlanUpload} currentFileUrl={null}
+            label={pendingPlan ? 'Choose a different plan' : 'Choose a plan or image'}
+            description="PDF up to 50 MB · image up to 10 MB" isOverStorage={isOverStorage} />}
+          <p className="qce-help" style={{ marginTop: 12 }}>PDFs open the existing page picker. There is no satellite lookup on this screen.</p>
+        </section>}
+        {(genericTradesEnabled || !measureFirst) && <details className="qce-options">
+          <summary><strong>Quote setup</strong><span>{genericTradesEnabled ? `${selectedTrade.charAt(0).toUpperCase() + selectedTrade.slice(1)} · ${selectedCollectionName}` : 'Company defaults'}{entryMode === 'manual' && selectedTemplateName ? ` · Template: ${selectedTemplateName}` : ''}</span></summary>
+          <div className="qce-options-body">
+            {genericTradesEnabled && <div className="qce-fields">
+              <div className="qce-field"><label htmlFor={`${id}-trade`}>Industry</label>
+                <QcSelect id={`${id}-trade`} value={selectedTrade} onChange={e => setSelectedTrade(e.target.value)}>
+                  {TRADES.map(trade => <option key={trade} value={trade}>{trade.charAt(0).toUpperCase() + trade.slice(1)}</option>)}
+                </QcSelect>
+              </div>
+              <div className="qce-field"><label htmlFor={`${id}-collection`}>Component collection</label>
+                <QcSelect id={`${id}-collection`} value={selectedCollectionId} onChange={e => setSelectedCollectionId(e.target.value)}>
                   <option value="">All Components</option>
-                  {componentCollections.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}{c.is_bootstrap ? ' (default)' : ''}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+                  {componentCollections.map(c => <option key={c.id} value={c.id}>{c.name}{c.is_bootstrap ? ' (default)' : ''}</option>)}
+                </QcSelect>
+                {componentCollections.length === 0 && <p className="qce-help">No collections yet. You can create one in Pricing Library.</p>}
+              </div>
+            </div>}
+            {!measureFirst && <div className="qce-field qce-template" data-copilot="quote-template">
+              <label htmlFor={`${id}-template`}>Use a quote template <span>(optional)</span></label>
+              <QcSelect id={`${id}-template`} value={entryMode === 'manual' || entryMode === null ? templateId : ''}
+                disabled={entryMode === 'digital' || entryMode === 'blank'} onChange={e => { setTemplateId(e.target.value); if (!entryMode && e.target.value) { setEntryMode('manual'); setChoosing(false); } }}>
+                <option value="">Start without a template</option>
+                {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </QcSelect>
+              <p className="qce-help">{entryMode === 'digital' ? 'Takeoff creates the measured areas and components. Quote templates apply to the “I have measurements” path.'
+                : entryMode === 'blank' ? 'The line-by-line editor starts without an area/component template.'
+                : 'Bring saved areas and components into this job, then enter or check their measurements.'}</p>
+            </div>}
           </div>
+        </details>}
+        </>}
+      </fieldset>
+      {templatesLoadError && !measureFirst && <div className="qce-message" data-warning="true" role="alert">Saved quote templates could not be loaded. You can start without one. <QcButton size="sm" onClick={() => router.refresh()} disabled={locked}>Retry templates</QcButton></div>}
+      {entryMode && <div className="qce-footer">
+        {onCancel ? <QcButton onClick={onCancel} disabled={busy}>Cancel</QcButton>
+          : <Link className="qce-back" href={`/${workspaceSlug}/quotes`} aria-disabled={busy || undefined}
+              onClick={e => { if (busy) e.preventDefault(); }}>← Quotes</Link>}
+        <div className="qce-footer-end">
+          <p id={`${id}-next`} className="qce-help" role="status">{progress || (uploading ? 'Preparing your plan…' : helper)}</p>
+          {!createdRecord && !creationUncertain && <QcButton type="submit" variant="primary" size="lg" data-copilot="quote-create"
+            pending={creating} disabled={uploading || requiredMissing || !entryMode || (entryMode === 'digital' && !pendingPlan)} aria-describedby={`${id}-next`}>
+            {creating ? 'Starting…' : entryMode === 'digital' ? 'Start measuring →' : entryMode === 'blank' ? 'Open line editor →' : 'Enter measurements →'}
+          </QcButton>}
         </div>
-      )}
-
-      {/* Customer Name */}
-      <div data-copilot="quote-customer">
-        <label htmlFor="new-quote-customer" className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
-          Customer Name <span className="text-red-500">*</span>
-        </label>
-        <input id="new-quote-customer" ref={customerRef}
-          aria-invalid={(customerTouched || validationAttempted) && !customerName.trim() || undefined}
-          aria-describedby={(customerTouched || validationAttempted) && !customerName.trim() ? 'new-quote-customer-error' : undefined}
-          onBlur={() => setCustomerTouched(true)}
-          onInvalid={(event) => { event.preventDefault(); setCustomerTouched(true); customerRef.current?.focus(); }}
-          type="text"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          placeholder="e.g., John Smith"
-          className="qc-input w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          required
-          autoFocus
-        />
-        {(customerTouched || validationAttempted) && !customerName.trim() &&
-          <p id="new-quote-customer-error" className="qc-flow-error" role="alert">Enter the customer name to continue.</p>}
-      </div>
-
-      {/* Job Name */}
-      <div data-copilot="quote-job">
-        <label htmlFor="new-quote-job" className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
-          Job Name <span className="text-slate-400">(optional)</span>
-        </label>
-        <input id="new-quote-job"
-          type="text"
-          value={jobName}
-          onChange={(e) => setJobName(e.target.value)}
-          placeholder="e.g., Residential Re-roof, 123 Main St"
-          className="qc-input w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-        />
-      </div>
-
-      {/* Measurement System (locked once the quote is created) */}
-      <div data-copilot="quote-measurement">
-        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
-          Measurement System <span className="text-red-500">*</span>
-        </label>
-        <p className="text-xs text-slate-500 mb-3">
-          Pick now - this <strong>cannot be changed later</strong> for this quote. Default comes from your company settings.
-        </p>
-        <div className="grid grid-cols-1 gap-2">
-          {MEASUREMENT_OPTIONS.map((opt) => {
-            const isActive = measurementSystem === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => {
-                  if (opt.value === measurementSystem) return;
-                  // If the user switches AWAY from their company default,
-                  // confirm so they don't do it by accident on a tiny radio.
-                  if (opt.value !== defaultMeasurementSystem) {
-                    setPendingSystemSwitch(opt.value);
-                  } else {
-                    setMeasurementSystem(opt.value);
-                  }
-                }}
-                className={"qc-flow-control qc-flow-card " + (`relative p-3 rounded-lg border-2 transition text-left ${
-                  isActive
-                    ? 'border-orange-500 bg-orange-50'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`)}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    aria-hidden
-                    className={`inline-block w-3 h-3 rounded-full border-2 ${
-                      isActive ? 'border-orange-500 bg-orange-500' : 'border-slate-300'
-                    }`}
-                  />
-                  <div>
-                    <div className="font-medium text-sm text-slate-900">{opt.title}</div>
-                    <div className="text-xs text-slate-500">{opt.subtitle}</div>
-                  </div>
-                  {opt.value === defaultMeasurementSystem && (
-                    <span className="ml-auto text-[11px] uppercase tracking-wide text-slate-400">
-                      Company default
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Confirm modal: switching away from the company default */}
-      {pendingSystemSwitch && (
-        <QcJourneyDialog label="Quote setup" size="sm">
-          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900">Switch measurement system?</h3>
-            <p className="text-sm text-slate-600">
-              You&apos;re about to use <strong>
-                {MEASUREMENT_OPTIONS.find((o) => o.value === pendingSystemSwitch)?.title}
-              </strong> for this quote instead of your company default.
-            </p>
-            <p className="text-sm text-slate-600">
-              This <strong>cannot be changed</strong> after the quote is created. Are you sure?
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button data-qc-variant="ghost"
-                type="button"
-                onClick={() => setPendingSystemSwitch(null)}
-                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-              <button data-qc-variant="primary"
-                type="button"
-                onClick={() => {
-                  setMeasurementSystem(pendingSystemSwitch);
-                  setPendingSystemSwitch(null);
-                }}
-                className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800"
-              >
-                Yes, use this
-              </button>
-            </div>
-          </div>
-        </QcJourneyDialog>
-      )}
-
-      {/* Template Selection */}
-      <div data-copilot="quote-template">
-        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
-          Quote Template <span className="text-slate-400">(optional)</span>
-        </label>
-        {templatesLoadError && <div className="qc-flow-error" role="alert">
-          Saved templates could not be loaded. You can continue without a template or
-          <button type="button" className="qc-button qc-flow-control" onClick={() => router.refresh()}>Try again</button>.
-        </div>}
-        <select aria-label="Quote Template (optional)"
-          value={templateId}
-          onChange={(e) => setTemplateId(e.target.value)}
-          // Templates pre-load roof areas/components, neither of which exists
-          // in digital mode (added in-process) or blank mode (skipped entirely).
-          disabled={entryMode === 'digital' || entryMode === 'blank'}
-          className={"qc-select " + (`w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-            entryMode === 'digital' || entryMode === 'blank' ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''
-          }`)}
-        >
-          <option value="">Start from scratch</option>
-          {templates.map((template) => (
-            <option key={template.id} value={template.id}>
-              {template.name}
-              {template.description ? ` - ${template.description}` : ''}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-slate-500 mt-1">
-          {entryMode === 'digital'
-            ? 'Templates are not available in Digital Measure mode (components added in process)'
-            : entryMode === 'blank'
-            ? 'Templates do not apply to Standard quotes (no areas or components)'
-            : 'Templates pre-load roof areas and components'}
-        </p>
-      </div>
-
-      {/* Entry Mode Selection */}
-      <div data-copilot="quote-entry" ref={modeRef} tabIndex={-1} role="group" aria-label="How to create your quote" aria-describedby="new-quote-mode-help">
-        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-3">
-          Entry Mode <span className="text-red-500">*</span>
-        </label>
-        {/* Three-up mode pills. Manual builds via Areas/Components, Digital
-            adds the takeoff canvas step first, Blank skips the builder and
-            uses the customer quote editor as the master source. */}
-        <p id="new-quote-mode-help" className={validationAttempted && !entryMode ? 'qc-flow-error' : 'text-xs text-slate-500 mb-3'}>
-          Choose Component, Digital Measure or Standard Quote. Your choice determines the next screen.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Component Quote Button */}
-          <button
-            aria-pressed={entryMode === 'manual'}
-            type="button"
-            onClick={() => {
-              setEntryMode('manual');
-              setPlanUploaded(false);
-              setUploadedPlanPath(null);
-            }}
-            className={"qc-flow-control " + (`relative p-4 rounded-full border-2 transition-all ${
-              entryMode === 'manual'
-                ? 'border-orange-500 bg-blue-50'
-                : 'border-slate-300 hover:border-slate-400'
-            }`)}
-            title="Build your quote using saved Smart Components™ with measurements, labour, materials and pricing"
-          >
-            <div className="flex items-center justify-center mb-2">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div className="text-sm font-medium text-slate-900">Component Quote</div>
-            <div className="text-xs text-slate-500 mt-1">Using Smart Components™</div>
-          </button>
-
-          {/* Digital Measure Button - locked when plan lacks the feature */}
-          <button
-            aria-pressed={entryMode === 'digital'}
-            type="button"
-            onClick={() => {
-              if (!digitalTakeoffAvailable) {
-                setDigitalUpgradeOpen(true);
-                return;
-              }
-              setEntryMode('digital');
-              setTemplateId(''); // Auto-switch to "Start from scratch"
-            }}
-            className={"qc-flow-control " + (`relative p-4 rounded-full border-2 transition-all ${
-              !digitalTakeoffAvailable
-                ? 'border-slate-200 bg-slate-100 opacity-60 cursor-pointer'
-                : entryMode === 'digital'
-                ? 'border-orange-500 bg-blue-50'
-                : 'border-slate-300 hover:border-slate-400'
-            }`)}
-            title={!digitalTakeoffAvailable
-              ? 'To access digital takeoff mode please upgrade your account'
-              : 'Upload your plans/images, measure and assign areas and components (Faster)'}
-          >
-            {!digitalTakeoffAvailable && (
-              <span className="absolute top-2 right-2">
-                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </span>
-            )}
-            <div className="flex items-center justify-center mb-2">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-              </svg>
-            </div>
-            <div className="text-sm font-medium text-slate-900">Digital Measure</div>
-            <div className="text-xs text-slate-500 mt-1">Upload & measure from plan</div>
-          </button>
-
-          {/* Standard Quote Button */}
-          <button
-            aria-pressed={entryMode === 'blank'}
-            type="button"
-            onClick={() => {
-              setEntryMode('blank');
-              setTemplateId('');           // Templates do not apply.
-              setPlanUploaded(false);
-              setUploadedPlanPath(null);
-            }}
-            className={"qc-flow-control " + (`relative p-4 rounded-full border-2 transition-all ${
-              entryMode === 'blank'
-                ? 'border-orange-500 bg-blue-50'
-                : 'border-slate-300 hover:border-slate-400'
-            }`)}
-            title="Build a fully custom quote line by line - no components or areas required"
-          >
-            <div className="flex items-center justify-center mb-2">
-              {/* Document-with-pencil icon - reads as "freeform write". */}
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-3M16.5 3.5a2.121 2.121 0 113 3L12 14l-4 1 1-4 7.5-7.5z" />
-              </svg>
-            </div>
-            <div className="text-sm font-medium text-slate-900">Standard Quote</div>
-            <div className="text-xs text-slate-500 mt-1">Custom - Line by line</div>
-          </button>
-        </div>
-      </div>
-
-      {/* Roof Plan Upload (Digital Measure Only) */}
-      {entryMode === 'digital' && (
-        <div ref={planRef} tabIndex={-1} role="group" aria-label="Plan for digital measurement" aria-describedby="new-quote-plan-help" className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900 mb-1">Upload Plans / Images</h3>
-            <p id="new-quote-plan-help" className="text-xs text-slate-600 mb-3">
-              Upload a PDF up to 50 MB or an image up to 10 MB. A plan is required for Digital Measure.
-            </p>
-          </div>
-          
-          {validationAttempted && !planUploaded && <p className="qc-flow-error" role="alert">Upload a plan or image before starting Digital Takeoff.</p>}
-          {planUploaded ? (
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-sm text-green-900 font-medium">Plan uploaded successfully!</span>
-            </div>
-          ) : (
-            <FileUploader
-              appearance="v2"
-              accept="image/*,application/pdf"
-              maxSize={10485760}
-              pdfMaxSize={52428800}
-              onUpload={handlePlanUpload}
-              currentFileUrl={null}
-              label="Upload Plans / Images"
-              description="PDF up to 50 MB or image (max 10 MB)"
-              isOverStorage={isOverStorage}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Explain the existing disabled condition without changing its gates. */}
-      <p id="new-quote-next-step" className="text-sm text-slate-600" role="status">
-        {!customerName.trim() ? 'Enter a customer name to continue.'
-          : !entryMode ? 'Choose how you want to create this quote.'
-          : entryMode === 'digital' && !planUploaded ? 'Upload your plan to enable Start Digital Takeoff.'
-          : 'Ready. Your next step will open when you create the quote.'}
-      </p>
-      {/* Actions */}
-      <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-        <Link
-          href={`/${workspaceSlug}/quotes`}
-          className="qc-flow-link text-sm text-slate-600 hover:text-slate-900"
-        >
-          ← Cancel
-        </Link>
-        <button data-qc-variant="primary"
-          type="submit"
-          data-copilot="quote-create"
-          aria-describedby="new-quote-next-step"
-          aria-busy={creating || undefined}
-          disabled={creating || !customerName.trim() || !entryMode || (entryMode === 'digital' && !planUploaded)}
-          className="qc-flow-control qc-button px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-        >
-          {creating
-            ? 'Creating...'
-            : entryMode === 'digital'
-            ? 'Start Digital Takeoff'
-            : entryMode === 'blank'
-            ? 'Start Standard Quote'
-            : 'Create Quote'}
-        </button>
-      </div>
-
-      <UpgradeModal
-        open={digitalUpgradeOpen}
-        onClose={() => setDigitalUpgradeOpen(false)}
-        title="Digital takeoff requires a higher plan"
-        description="To access digital takeoff mode please upgrade your account."
-        recommendedPlan="growth"
-      />
-
-      <UpgradeModal
-        open={quoteCapUpgradeOpen}
-        onClose={() => setQuoteCapUpgradeOpen(false)}
-        title={`Monthly quote limit reached (${monthlyQuoteUsed}/${monthlyQuoteLimit})`}
-        description={`To create more quotes this month you need to upgrade your account tier, or wait until your quote limit resets next month. (${effectivePlanCode} plan)`}
-        recommendedPlan="pro"
-      />
-
-      {/* PDF page picker modal (client-side pdfjs) */}
-      {pdfPicker.modal}
-    </form></QcJourney>
-  );
+      </div>}
+      {!entryMode && onCancel && <QcButton onClick={onCancel}>Cancel</QcButton>}
+    </form>
+    <QcDialog open={!!pendingSystemSwitch} onRequestClose={() => setPendingSystemSwitch(null)} title="Use different units?"
+      footer={<><QcButton onClick={() => setPendingSystemSwitch(null)}>Keep current units</QcButton>
+        <QcButton variant="primary" onClick={() => { if (pendingSystemSwitch) setMeasurementSystem(pendingSystemSwitch); setPendingSystemSwitch(null); }}>Use these units</QcButton></>}>
+      <p>You are selecting <strong>{MEASUREMENT_OPTIONS.find(o => o.value === pendingSystemSwitch)?.title}</strong> instead of your company default.</p>
+      <p>Units cannot be changed after this quote is created.</p>
+    </QcDialog>
+    <UpgradeModal open={digitalUpgradeOpen} onClose={() => setDigitalUpgradeOpen(false)} title="Digital takeoff requires a higher plan"
+      description="To access digital takeoff mode please upgrade your account." recommendedPlan="growth" />
+    <UpgradeModal open={quoteCapUpgradeOpen} onClose={() => setQuoteCapUpgradeOpen(false)} title={`Monthly quote limit reached (${monthlyQuoteUsed}/${monthlyQuoteLimit})`}
+      description={`To create more quotes this month you need to upgrade your account tier, or wait until your quote limit resets next month. (${effectivePlanCode} plan)`} recommendedPlan="pro" />
+    {pdfPicker.modal}
+  </QcHostedDialogScope></QcJourney>;
 }

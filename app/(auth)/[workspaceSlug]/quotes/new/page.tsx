@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import '@/app/components/quote-entry/quote-entry.css';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { QuoteDetailsForm } from './QuoteDetailsForm';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
@@ -41,14 +43,12 @@ export default async function NewQuotePage({
   const defaultTrade = (company as { default_trade?: string }).default_trade ?? 'roofing';
 
   return (
-    <div>
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900">Create New Quote</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Enter job details to get started.
-          </p>
-        </div>
+    <div data-qc-ui="v2" className="qce-page">
+        <header className="qce-page-header">
+          <Link href={`/${workspaceSlug}/quotes`} className="qce-back">← Quotes</Link>
+          <h1>Start a quote</h1>
+          <p>Your measurements. Your pricing. One place to build the quote.</p>
+        </header>
 
         <QuoteDetailsForm
           workspaceSlug={workspaceSlug}
@@ -65,7 +65,6 @@ export default async function NewQuotePage({
           componentCollections={componentCollections ?? []}
           isOverStorage={ent.isOverStorage}
         />
-      </div>
     </div>
   );
 }

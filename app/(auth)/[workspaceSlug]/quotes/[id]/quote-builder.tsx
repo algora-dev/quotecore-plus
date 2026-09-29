@@ -1,4 +1,5 @@
 'use client';
+import { QuoteJourneyContext } from '@/app/components/quote-entry/QuoteJourneyContext';
 import { useState, useRef, useEffect, useId, type ReactNode, Fragment } from 'react';
 import Link from 'next/link';
 import { COMPONENT_FOCUS_EVENT, componentFocusId } from '@/app/lib/smart-assistant/v2/component-focus';
@@ -543,7 +544,7 @@ export function QuoteBuilder({
   const phaseHelp: Record<Phase, string> = {
     areas: tradeLabels.areaIsOptional
       ? 'Add and confirm areas when useful, or continue to Components to price your work directly.'
-      : 'Add an area, enter its measurements and confirm it before continuing.',
+      : 'Group measurements in areas, or continue to Components to enter a total area, length or quantity directly.',
     components: 'Choose your Smart Components, then add or check their measurements.',
     extras: 'Add saved extras for the other items and services this quote needs.',
     review: 'Check the quantities, costs and margins before confirming your quote.',
@@ -601,7 +602,7 @@ export function QuoteBuilder({
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="m14 7-5 5 5 5M9 12h11" /></svg>
             Quotes
           </Link>
-          <p className="qb-eyebrow">Quote builder</p>
+          <p className="qb-eyebrow">Measurements &amp; pricing</p>
           <div className="qb-job-name">
             <QuoteNameEditor 
               quoteId={quote.id}
@@ -626,6 +627,12 @@ export function QuoteBuilder({
           </QcStatusBadge>
         </div>
       </header>
+
+      <QuoteJourneyContext
+        digital={quote.entry_mode === 'digital'}
+        hasMeasurements={Object.values(entries).some(items => items.length > 0) || Object.values(roofAreaEntries).some(items => items.length > 0)}
+        pitchRelevant={tradeLabels.pitchRequired || !!tradeLabels.pitchOptional}
+      />
 
       <div className="qb-context-tools">
       {/* Edit Digital Take-off - always visible above Plans & Files (2026-07-06) */}
@@ -724,7 +731,7 @@ export function QuoteBuilder({
               {tradeLabels.addAreaCta}
             </QcButton>
             </div>
-            <p className="qc-help">{tradeLabels.areaIsOptional ? 'Areas are optional. You can also add components directly in the next step.' : 'Use a clear name such as Main Roof or Garage. Measurements belong to the area you create.'}</p>
+            <p className="qc-help">{tradeLabels.areaIsOptional ? 'Areas are optional. You can also add components directly in the next step.' : 'Use a clear name such as Main Roof or Garage to reuse an area total. Already have a total? You can enter it directly in Components.'}</p>
           </div>
           <div className="qb-step-actions qb-step-actions-end">
             <QcButton

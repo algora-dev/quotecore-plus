@@ -1,4 +1,5 @@
 'use client';
+import { MeasurementBasisHelp } from '@/app/components/quote-entry/QuoteJourneyContext';
 import { useState, useRef, useId, useEffect, Fragment } from 'react';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
@@ -301,17 +302,19 @@ export function ExpandableComponent({
       {expanded && (
         <div id={`${controlId}-panel`} aria-labelledby={`${controlId}-toggle`} className="qb-component-body">
           <div className="qb-setting-row">
-            <span className="qc-label">Input:</span>
+            <span className="qc-label">Measurements:</span>
             {(['calculated', 'final'] as InputMode[]).map(mode => (
               <QcButton
                 key={mode}
                 onClick={() => onUpdateSettings(comp.id, { input_mode: mode })}
                 size="sm" aria-pressed={comp.input_mode === mode} className="qc-choice"
               >
-                {mode === 'calculated' ? 'Plan' : 'Actual'}
+                {mode === 'calculated' ? 'Plan measurement' : 'Actual measurement'}
               </QcButton>
             ))}
           </div>
+
+          <MeasurementBasisHelp isPlan={comp.input_mode === 'calculated'} hasPitch={hasPitch} />
 
           {roofAreas.length > 1 && (
             <div className="qb-setting-row">
