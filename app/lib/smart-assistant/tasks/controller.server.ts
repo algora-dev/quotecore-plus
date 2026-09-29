@@ -62,9 +62,12 @@ export async function prepareTaskTurn(dep: {
     const transcriptIds = new Set(ids);
     if (!carries) for (const priorRun of snapshot.runIds.slice(-2)) transcriptIds.add(priorRun);
     // The stored fragment was already sent on the boundary-question run. In the
-    // model's current turn it is represented once, as the resolved current input.
-    if (resumedBoundary && snapshot.task)
+    // model's current turn it is represented once, as the resolved current input
+    // (both the strict per-task filter and the transcript-continuity filter).
+    if (resumedBoundary && snapshot.task) {
         ids.delete(snapshot.task.lastRunId);
+        transcriptIds.delete(snapshot.task.lastRunId);
+    }
     ids.add(dep.runId);
     let terminal: string | null = null;
     if (decision.disposition === 'close')

@@ -56,7 +56,10 @@ test('new task excludes old model history, references and pending actions',async
  s.session.messages=[message];s.session.cards=[{id:uuid(21),runId:uuid(9),createdAt:new Date().toISOString(),content:{kind:'records',options:[{kind:'quote',id:uuid(22),label:'OLD RECORD',detail:'old'}]}},{id:uuid(23),runId:uuid(9),createdAt:new Date().toISOString(),content:{kind:'proposal',actionId:uuid(24)}}];s.session.actions=[{id:uuid(24),title:'OLD ACTION',status:'proposed'}];
  s.history=[{id:uuid(5),role:'user',content:'Why do prices vary?',run_id:uuid(4),created_at:new Date().toISOString()},{...message,run_id:message.runId,created_at:message.createdAt}];
  await runOrchestratorTurn(input('Why do prices vary?'),dependencies);
- const text=JSON.stringify(s.modelInput);assert.match(text,/TASK BOUNDARY: NEW/);assert.doesNotMatch(text,/OLD TASK|OLD RECORD|OLD ACTION|PENDING_ENTITY_RESOLUTION_DATA \(UNTRUSTED/);assert.equal(s.historyLimit,31);assert.deepEqual(s.historyOrder,['created_at',{ascending:false}]);assert.equal(s.modelInput.filter(m=>m.role==='user'&&m.content==='Why do prices vary?').length,1);
+ const text=JSON.stringify(s.modelInput);assert.match(text,/TASK BOUNDARY: NEW/);
+ // Owner 2026-09-29: NEW tasks keep the last two transcript turns model-visible for conversational
+ // continuity (repeat-last-answer); cards, record references and actions stay per-task filtered.
+ assert.match(text,/OLD TASK PRIVATE LABEL/);assert.doesNotMatch(text,/OLD RECORD|OLD ACTION|PENDING_ENTITY_RESOLUTION_DATA \(UNTRUSTED/);assert.equal(s.historyLimit,31);assert.deepEqual(s.historyOrder,['created_at',{ascending:false}]);assert.equal(s.modelInput.filter(m=>m.role==='user'&&m.content==='Why do prices vary?').length,1);
 });
 test('dependent follow-up carries ONLY current-task history and still reads current facts',async()=>{
  reset();s.read={task:view({status:'answered'}),resolution:null,runIds:[uuid(9)],pendingMessage:null};

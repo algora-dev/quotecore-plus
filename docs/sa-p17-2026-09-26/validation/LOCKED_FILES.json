@@ -4,7 +4,7 @@
   "files": [
     {
       "path": "app/api/smart-assistant/turn/route.ts",
-      "sha256": "d7739670a69317b3b89dc98ed0ea147cf843e76b3739620fa99c86b4feb88800"
+      "sha256": "a3eb2da33707a6704c1a95353623e8449455a69a72f0a00f3d6daf82f3add1d7"
     },
     {
       "path": "app/lib/assistant/README.md",
@@ -12,7 +12,7 @@
     },
     {
       "path": "app/lib/assistant/config.ts",
-      "sha256": "ac12f9e76d188cad6fff71fffa1918ac983b6912722f4c53b8242e4f5ef4f978"
+      "sha256": "43f24a7b8a6294bc31f010a733e5c33e0fbb19413124c774964cae92923b4552"
     },
     {
       "path": "app/lib/assistant/contextResolver.ts",
