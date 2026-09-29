@@ -43,24 +43,13 @@ END;
 $precision$;
 
 -- 1. Extend the journal CHECK constraints for the new kind/targets.
---    Constraint names are discovered, not assumed.
-DO $checks$
-DECLARE c record;
-BEGIN
- FOR c IN SELECT conname, oid FROM pg_constraint WHERE conrelid='public.assistant_v2_actions'::regclass AND contype='c' LOOP
-   IF pg_get_constraintdef(c.oid) ~* 'kind[[:space:]]+IN[[:space:]]+\(''quote_details''' THEN
-     EXECUTE format('ALTER TABLE public.assistant_v2_actions DROP CONSTRAINT %I', c.conname);
-     EXECUTE 'ALTER TABLE public.assistant_v2_actions ADD CONSTRAINT assistant_v2_actions_kind_check CHECK(kind IN (''quote_details'',''component_change'',''draft_create'',''area_change''))';
-   ELSIF pg_get_constraintdef(c.oid) ~* 'target_kind[[:space:]]+IN[[:space:]]+\(''quote''' THEN
-     EXECUTE format('ALTER TABLE public.assistant_v2_actions DROP CONSTRAINT %I', c.conname);
-     EXECUTE 'ALTER TABLE public.assistant_v2_actions ADD CONSTRAINT assistant_v2_actions_target_kind_check CHECK(target_kind IN (''quote'',''quote_component'',''creation'',''quote_area'',''quote_areas''))';
-   END IF;
- END LOOP;
- IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='public.assistant_v2_actions'::regclass AND conname='assistant_v2_actions_kind_check') THEN
-   RAISE EXCEPTION 'kind CHECK constraint was not found to extend; review the live schema before applying.';
- END IF;
-END;
-$checks$;
+--    Direct DDL. A def-regex match silently no-ops because pg_get_constraintdef()
+--    normalises IN (...) to = ANY (ARRAY[...]); replaced 2026-09-29 after the
+--    first live apply (constraints verified in pg_constraint on the shared DB).
+ALTER TABLE public.assistant_v2_actions DROP CONSTRAINT assistant_v2_actions_kind_check;
+ALTER TABLE public.assistant_v2_actions ADD CONSTRAINT assistant_v2_actions_kind_check CHECK(kind IN (''quote_details'',''component_change'',''draft_create'',''area_change''));
+ALTER TABLE public.assistant_v2_actions DROP CONSTRAINT assistant_v2_actions_target_kind_check;
+ALTER TABLE public.assistant_v2_actions ADD CONSTRAINT assistant_v2_actions_target_kind_check CHECK(target_kind IN (''quote'',''quote_component'',''creation'',''quote_area'',''quote_areas''));
 
 -- 2. Private snapshots for roof areas (service-role only, tenant-scoped).
 --    'quote_area'  : {quote, area, area_entries[], takeoff_linked}
