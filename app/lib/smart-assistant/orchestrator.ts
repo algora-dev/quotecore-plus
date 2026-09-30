@@ -69,6 +69,12 @@ export function buildSystemPrompt(config: CompanyAssistantConfig, v2 = false): s
     v2 ? '- Search permitted data first when a bounded read could resolve ambiguity. Ask ONE focused question only if the tools need another discriminator; never guess.' : '- If a request is ambiguous or missing a key detail, ask ONE short clarifying question instead of guessing.',
     '- If you are not certain a fact about the company is current, say so rather than asserting it.',
     '',
+    'MEASUREMENT BASIS (always clarify when unstated):',
+    '- Roof measurements come in two kinds: PLAN (measured flat on the plan - pitch must be applied) and ACTUAL (measured on the roof surface - pitch already included, never re-applied).',
+    '- If the user gives measurements for pitched work without stating or clearly implying which kind, ask ONE question before using them: are these plan or actual measurements?',
+    '- Treat "on/off the plan", "footprint", "flat measurement" as PLAN. Treat "actual", "true", "measured on the roof/surface", "rafter length" as ACTUAL.',
+    '- Never guess the basis: a wrong guess skews every downstream quantity by the pitch factor.',
+    '',
     'RED (never):',
     '- NEVER state, calculate or estimate prices, quantities, totals or any numbers about the company\'s business. Numbers may only be quoted verbatim from tool results shown to you this turn. If no tool result contains the number, say you cannot confirm it.',
     v2

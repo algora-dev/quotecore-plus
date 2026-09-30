@@ -7,18 +7,18 @@ import s from './assistant.module.css';
  * turns (2026-09-29), so rotation runs on the SVG animation clock via
  * animateTransform, with a requestAnimationFrame fallback for engines without
  * SMIL. Size, position, colour and glow match the previous CSS border spinner
- * exactly; prefers-reduced-motion keeps the ring static (design-system rule).
- * Both call sites render this from client-only state, so the lazy mechanism
- * probe never runs during server rendering. */
+ * exactly. Owner 2026-09-30: reduced-motion is deliberately bypassed - the
+ * ring always animates (tiny indicator; same JS-clock approach as the
+ * marketing hero intro). Both call sites render this from client-only state,
+ * so the lazy mechanism probe never runs during server rendering. */
 export function AssistantSpinner() {
   const group = useRef<SVGGElement | null>(null);
   const [smil] = useState(() => typeof window !== 'undefined'
-    && 'SVGAnimateTransformElement' in window
-    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    && 'SVGAnimateTransformElement' in window);
   useEffect(() => {
     if (smil) return;
     const node = group.current;
-    if (!node || typeof window === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!node || typeof window === 'undefined') return;
     let frame = 0;
     const start = performance.now();
     const draw = (time: number) => {

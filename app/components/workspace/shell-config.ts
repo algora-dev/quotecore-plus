@@ -18,7 +18,7 @@ export function workspaceNavigation(slug: string, supplier: boolean, assistant: 
     { key: 'pricing', label: 'Pricing Library', href: `${b}/components`, icon: 'pricing', group: 'library' },
     { key: 'resources', label: 'Resources', href: `${b}/resources`, icon: 'library', group: 'library', copilot: 'nav-resources' },
     ...(supplier ? [{ key: 'supplier', label: 'Supplier', href: `${b}/supplier`, icon: 'supplier' as const, group: 'library' as const }] : []),
-    ...(assistant ? [{ key: 'assistant', label: 'Smart Assistant', href: `${b}/assistant`, icon: 'assistant' as const, group: 'utility' as const }] : []),
+    ...(assistant ? [{ key: 'assistant', label: 'Smart Assistant', href: `${b}/account/smart-assistant`, icon: 'assistant' as const, group: 'utility' as const }] : []),
     { key: 'tutorials', label: 'Tutorials', href: `${b}/tutorials`, icon: 'help', group: 'utility' },
     { key: 'account', label: 'Account', href: `${b}/account`, icon: 'account', group: 'utility' },
   ];
