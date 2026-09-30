@@ -1,11 +1,13 @@
 import type { BankLayout, Demand, Issue, Lap, MaterialBank, Offcut, Placement, RoofFace, Solution, SolveRequest } from './types';
 import type { SearchHooks } from './solver';
-import { fingerprint } from './math';
+import { fingerprint, dot } from './math';
 import { area } from './regions';
-import { frameFor, sceneToSurface, generateDemands, generateFaceDemands, isStraightFiller, offcutsFrom, offcutsFromMaterial, validateInputs } from './material';
+import { frameFor, sceneToSurface, generateDemands, generateFaceDemands, isStraightFiller, offcutsFrom, validateInputs } from './material';
 import { buildMaterialBanks, bankOffsets } from './materialBanks';
 import { matchCoherentSets, type CoherentMatch } from './coherentMatching';
-import { materialAtDestination, rebuildInventory } from './inventory';
+import { rebuildInventory } from './inventory';
+import { isSelfFillCandidate, selfFillDonorWindows } from './zones';
+import { supplyView } from './supply';
 
 interface Info { face:RoofFace; bank:MaterialBank; offsets:number[]; net:number; length:number; ridgeLength:number; selfComplement:boolean }
 interface State {
@@ -15,12 +17,13 @@ interface State {
 interface Offer { info:Info; ds:Demand[]; phase:number; lap:Lap; primary:boolean; match:CoherentMatch; score:number }
 class Deadline extends Error {}
 
-/** V2.4 elevation/material-bank search. Physical faces are never collapsed.
+/** V2.5 longest-useful-bank search with eave-anchored self-fill. Physical faces are never collapsed.
  *
  * 1. Pick a long bank and supply one main cutting operation.
  * 2. Offer WHOLE ordered hip/valley sets to complementary faces, preferring
  *    complete angled coverage and useful sets, not arbitrary scraps.
- * 3. A receiving face keeps one root supply bank. Actual recuts can feed the
+ * 3. Prefer one source block; a second coherent set may fill fresh gaps.
+ *    Actual recuts can feed the
  *    next face (C -> G -> H/I), with an auditable acyclic material tree.
  * 4. Remaining faces start another bank; unused sets may feed their own face.
  *
@@ -36,7 +39,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const baseLayout:BankLayout={primaryFaceIds:[],laneOffsetByFace:Object.fromEntries(faces.map(f=>[f.id,f.laneOffsetMm])),
     extraLengthByFace:Object.fromEntries(faces.map(f=>[f.id,0])),tailExtensionByFace:Object.fromEntries(faces.map(f=>[f.id,0])),
     cutLengthByFace:Object.fromEntries(faces.map(f=>[f.id,Math.min(profile.maxLengthMm,banks.find(b=>b.faceIds.includes(f.id))!.cutLengthMm)])),
-    materialBanks:banks,primarySequence:[]};
+    materialBanks:banks,primarySequence:[],selfFillFaceIds:[]};
   const base=generateDemands(roof,faces,profile,settings,baseLayout);
   const infos:Info[]=faces.map(face=>{
     const ds=base.filter(d=>d.faceId===face.id), bank=banks.find(b=>b.faceIds.includes(face.id))!;
@@ -46,18 +49,27 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     // The longest run TO A RIDGE is the purchasing anchor. A long hip point
     // on an end face must not outrank a main face's actual long ridge bank.
     const ridgeLength=ridges.length?Math.max(...ridges.map(e=>maxY-(sceneToSurface(e.a,frame).y+sceneToSurface(e.b,frame).y)/2)):0;
-    const angled=face.boundary.filter(e=>['hip','valley','broken_hip'].includes(e.kind));
-    const slopes=angled.map(e=>{const a=sceneToSurface(e.a,frame),b=sceneToSurface(e.b,frame);return (b.y-a.y)/(b.x-a.x);});
+
     return{face,bank,offsets:bankOffsets(face,bank,request),net:ds.reduce((n,d)=>n+area(d.cover),0),
-      length:maxY-minY,ridgeLength,selfComplement:angled.length===2 && ridges.length>0 && slopes.every(Number.isFinite) && Math.abs(slopes[0]-slopes[1])<1e-5};
+      length:maxY-minY,ridgeLength,selfComplement:isSelfFillCandidate(face,roof)};
   });
   const sorted=[...infos].sort((a,b)=>Math.round(b.ridgeLength)-Math.round(a.ridgeLength)||Math.round(b.length)-Math.round(a.length)||b.net-a.net||a.face.id.localeCompare(b.face.id));
+
   const longestRidge=Math.max(...infos.map(i=>i.ridgeLength));
-  const mains=new Set(infos.filter(i=>i.ridgeLength>=longestRidge*.97 && !i.selfComplement).map(i=>i.face.id));
+  const mains=new Set(infos.filter(i=>i.ridgeLength>=longestRidge*.97&&!i.selfComplement).map(i=>i.face.id));
   const check=()=>{if(hooks.shouldCancel?.())throw new Error('Offcut search cancelled.');if(clock()-started>settings.maxMilliseconds)throw new Deadline();};
   const defaultLaps=Object.fromEntries(faces.map(f=>[f.id,f.lap])) as Record<string,Lap>;
   const blankState=():State=>({demands:[],placements:[],inventory:[],used:new Set(),done:new Set(),layout:structuredClone(baseLayout),laps:{...defaultLaps}});
   const cache=new Map<string,Demand[]>();
+  const matchCache=new Map<string,CoherentMatch>();
+  function matchSets(ds:Demand[],stock:Offcut[],preserve=false):CoherentMatch {
+    check();
+    const key=fingerprint([ds.map(d=>[d.id,d.lap,d.origin,d.required,d.blank]),stock.map(o=>[o.id,o.lap,o.region,o.sourceCrossMm,o.cutSetId]),preserve]);
+    const cached=matchCache.get(key);if(cached)return cached;
+    const match=matchCoherentSets(ds,stock,profile,check,preserve);
+    if(matchCache.size<12000)matchCache.set(key,match);
+    return match;
+  }
   // Total extra stock is capped by the user's existing extension setting.
   // Split it between ends; only an actual angled lower cut uses the tail.
   // Valley -> matching hip needs downstream clearance, not an upstream-only
@@ -69,29 +81,22 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     const key=`${info.face.id}/${phase}/${primary}/${extend}/${shared}`;
     let ds=cache.get(key);
     if(!ds){ds=generateFaceDemands(roof,{...info.face,laneOffsetMm:phase},profile,settings,primary,
-      primary&&extend?headExtra:0,shared?baseLayout.cutLengthByFace![info.face.id]:info.length,primary&&extend?tailExtra:0,info.bank.id);cache.set(key,ds);}
+      primary&&extend?(info.selfComplement?(settings.maxBankExtensionMm??100):headExtra):0,shared?baseLayout.cutLengthByFace![info.face.id]:info.length,primary&&extend?(info.selfComplement?0:tailExtra):0,info.bank.id);cache.set(key,ds);}
     return ds.map(d=>({...d,lap}));
   }
   function setLayout(state:State,info:Info,phase:number,lap:Lap,primary:boolean,extend:boolean,shared=false):void {
     const id=info.face.id;state.layout.cutLengthByFace![id]=shared?baseLayout.cutLengthByFace![id]:info.length;state.layout.laneOffsetByFace[id]=phase;state.laps[id]=lap;
     if(primary&&!state.layout.primaryFaceIds.includes(id))state.layout.primaryFaceIds.push(id);
-    state.layout.extraLengthByFace[id]=primary&&extend?headExtra:0;
-    state.layout.tailExtensionByFace![id]=primary&&extend?tailExtra:0;
+    state.layout.extraLengthByFace[id]=primary&&extend?(info.selfComplement?(settings.maxBankExtensionMm??100):headExtra):0;
+    state.layout.tailExtensionByFace![id]=primary&&extend?(info.selfComplement?0:tailExtra):0;
   }
   function commit(state:State,info:Info,ds:Demand[],placements:Placement[],phase:number,lap:Lap,primary:boolean,extend:boolean,shared=false):void {
-    const map=new Map(state.inventory.map(o=>[o.id,o]));
     state.demands.push(...ds);state.placements.push(...placements);state.done.add(info.face.id);
     setLayout(state,info,phase,lap,primary,extend,shared);
-    const ps=new Map(placements.map(p=>[p.demandId,p]));
-    for(const d of ds){
-      const p=ps.get(d.id)!;
-      if(p.kind==='new')state.inventory.push(...offcutsFrom(d,profile));
-      else{
-        const o=map.get(p.offcutId!);if(!o||state.used.has(o.id))throw new Error('Internal cut-set dependency conflict.');
-        state.used.add(o.id);
-        state.inventory.push(...offcutsFromMaterial(d,profile,materialAtDestination(o,p),o));
-      }
-    }
+    const rebuilt=rebuildInventory(state.demands,state.placements,profile);
+    if(rebuilt.unresolved.length)throw new Error('Internal cut-set dependency conflict.');
+    state.inventory=rebuilt.offcuts;
+    state.used=new Set(state.placements.filter(p=>p.kind==='reuse').map(p=>p.offcutId!));
     if(state.demands.length>settings.maxSheets)throw new Error(`Sheet limit exceeded (${settings.maxSheets}).`);
   }
   function completeNew(state:State):void {
@@ -112,17 +117,19 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
 
   function bestOffer(state:State,shift:number,extend:boolean):Offer|undefined {
     const unused=state.inventory.filter(o=>!state.used.has(o.id));
-    const rootIds=[...new Set(unused.map(o=>o.rootBankId??o.sourceFaceId))];
+    const supply=supplyView({...state,offcuts:state.inventory,bankLayout:state.layout});
+    const blockOf=(o:Offcut)=>supply.blockByRootDemand.get(o.rootDemandId??o.sourceDemandId)??o.sourceFaceId;
+    const rootIds=[...new Set(unused.map(blockOf))];
     const offers=new Map<string,Offer>();
     for(const root of rootIds){
-      const stock=unused.filter(o=>(o.rootBankId??o.sourceFaceId)===root);
+      const stock=unused.filter(o=>blockOf(o)===root),rootFamily=stock[0]?.rootBankId;
       // Different cutting sites are not mixed just because their roots happen
       // to match. A+J may share a supply bank; C and its downstream recut G are
       // separate cutting operations, so G's valley set stays together.
       const sites=new Map<string,Offcut[]>();
       for(const o of stock){
         const siteBank=infos.find(i=>i.face.id===o.sourceFaceId)?.bank.id;
-        const key=siteBank===root?root:o.sourceFaceId;
+        const key=siteBank===rootFamily?root:o.sourceFaceId;
         const list=sites.get(key)??[];list.push(o);sites.set(key,list);
       }
       const pools:Offcut[][]=[];
@@ -131,21 +138,26 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
         if(valley.length)pools.push(valley);if(hips.length)pools.push(hips);
         if(valley.length&&hips.length)pools.push(site);
       }
-      for(const info of infos)if(!state.done.has(info.face.id) && !mains.has(info.face.id)){
-        const primary=info.bank.id===root;
+      for(const info of infos)if(!state.done.has(info.face.id)){
+        const anchor=infos.find(i=>i.face.id===state.layout.primarySequence?.[0]);
+        // Long opposing main banks remain independent in the longest-first
+        // layout. A perpendicular-bank variation may legitimately supply them.
+        if(anchor&&mains.has(info.face.id)&&Math.abs(dot(anchor.bank.flow,info.bank.flow))>.95)continue;
+        const primary=info.bank.id===rootFamily;
         const offsets=[...info.offsets];if(shift&&offsets.length>1)offsets.push(offsets.shift()!);
         const lapChoices:Lap[]=settings.optimiseLapDirections&&!info.face.lapLocked?[info.face.lap,info.face.lap===1?-1:1]:[info.face.lap];
         for(const phase of offsets)for(const lap of lapChoices){
           check();const ds=dsFor(info,phase,lap,primary,extend,primary);
           for(const pool of pools){
-            const sharedRegistration=primary && pool.every(o=>infos.find(i=>i.face.id===o.sourceFaceId)?.bank.id===root);
-            const match=matchCoherentSets(ds,pool,profile,check,sharedRegistration);
+            const sharedRegistration=primary && pool.every(o=>infos.find(i=>i.face.id===o.sourceFaceId)?.bank.id===rootFamily);
+            const match=matchSets(ds,pool,sharedRegistration);
             if(!match.used.size||!match.cutArea)continue;
             const coverage=match.reusedArea/match.cutArea;
             // Straight fillers do not dilute angled coverage. Partial reuse in
             // the same elevation bank may create the bank's next primary strip.
             const extension=sharedRegistration && pool.some(o=>match.used.has(o.id)&&o.cutKind==='broken_hip');
-            if(Math.max(coverage,(match.cutCount-match.newCutCount)/Math.max(1,match.cutCount))<(primary?.35:.60)||match.sourceUtilisation<.35)continue;
+            const positions=match.placements.filter(p=>p.kind==='reuse').length;
+            if(Math.max(coverage,positions/Math.max(1,ds.length))<(primary?.30:.45) || positions<Math.min(2,ds.length) || match.sourceUtilisation<.20)continue;
             if(sharedRegistration&&!extension&&(match.retainedFraction<.80||coverage<.70))continue;
             const score=(extension?2.5:0)+4*Math.min(1,coverage)+2*Math.min(1,match.sourceUtilisation)+2*Math.min(1,match.retainedFraction)
               +(match.newCutCount===0?.35:0)+Math.min(.25,match.reusedArea/Math.max(1,sorted[0].net)*.25)
@@ -167,11 +179,32 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     }
     return ranked[0];
   }
+  function selfSupply(info:Info,extend:boolean): {ds:Demand[];ps:Placement[];phase:number}|undefined {
+    if(!info.selfComplement)return undefined;
+    let best:{ds:Demand[];ps:Placement[];phase:number;cost:number;newCount:number}|undefined;
+    for(const phase of info.offsets){
+      check();const ds=dsFor(info,phase,info.face.lap,true,extend);
+      for(const donors of selfFillDonorWindows(ds,info.face,request)){
+        check();const targets=ds.filter(d=>!donors.has(d.id));
+        if(!targets.length)continue;
+        const stock=ds.filter(d=>donors.has(d.id)).flatMap(d=>offcutsFrom(d,profile));
+        const match=matchSets(targets,stock);
+        if(!match.used.size)continue;
+        const fits=new Map(match.placements.map(p=>[p.demandId,p]));
+        const ps=ds.map((d):Placement=>fits.get(d.id)??{demandId:d.id,kind:'new',rotation:0,translateY:0});
+        const fresh=new Set(ps.filter(p=>p.kind==='new').map(p=>p.demandId));
+        const cost=ds.filter(d=>fresh.has(d.id)).reduce((n,d)=>n+area(d.blank),0);
+        if(!best||cost<best.cost-1||Math.abs(cost-best.cost)<=1&&fresh.size<best.newCount)best={ds,ps,phase,cost,newCount:fresh.size};
+      }
+    }
+    return best;
+  }
   function selfFeed(state:State,onlyFace?:string):void {
     for(let pass=0;pass<2;pass++){
       let changed=false;
       for(const info of infos){
         if(onlyFace&&info.face.id!==onlyFace)continue;
+        if(state.layout.selfFillFaceIds?.includes(info.face.id))continue;
         check();
         const used=new Set(state.placements.filter(p=>p.kind==='reuse').map(p=>p.offcutId));
         const protectedDemand=new Set(state.inventory.filter(o=>used.has(o.id)).map(o=>o.sourceDemandId));
@@ -193,7 +226,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
           check();const targets=eligible.filter(d=>!donors.has(d.id)),targetIds=new Set(targets.map(d=>d.id));
           const stock=unused.filter(o=>!targetIds.has(o.sourceDemandId));
           if(!stock.length||!targets.length)continue;
-          const match=matchCoherentSets(targets,stock,profile,check), proposed=match.placements.filter(p=>p.kind==='reuse');
+          const match=matchSets(targets,stock), proposed=match.placements.filter(p=>p.kind==='reuse');
           const saving=targets.filter(d=>proposed.some(p=>p.demandId===d.id)).reduce((n,d)=>n+area(d.blank),0);
           if(saving>bestSaving+1e-3){best=proposed;bestSaving=saving;}
         }
@@ -206,6 +239,62 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
       if(!changed)break;
     }
   }
+  /** Revisit fresh gaps only with another useful ordered set. A face can receive
+   * two source blocks separated by fillers; alternating scraps are rejected.
+   * Already-consumed donor cuts protect their parent new sheets from removal. */
+  function topUp(state:State):void {
+    for(let pass=0;pass<2;pass++){
+      let changed=false;
+      for(const info of infos){
+        check();if(state.layout.selfFillFaceIds?.includes(info.face.id))continue;
+        const view=supplyView({...state,offcuts:state.inventory,bankLayout:state.layout});
+        const used=new Set(state.placements.filter(p=>p.kind==='reuse').map(p=>p.offcutId));
+        const protectedIds=new Set(state.inventory.filter(o=>used.has(o.id)).map(o=>o.sourceDemandId));
+        const fresh=new Set(state.placements.filter(p=>p.kind==='new').map(p=>p.demandId));
+        const targets=state.demands.filter(d=>d.faceId===info.face.id&&fresh.has(d.id)&&!protectedIds.has(d.id));
+        if(!targets.length)continue;
+        const targetIds=new Set(targets.map(d=>d.id));
+        const onFace=state.placements.filter(p=>state.demands.find(d=>d.id===p.demandId)?.faceId===info.face.id);
+        const existing=new Set(onFace.filter(p=>p.kind==='reuse').map(p=>view.blockByPlacement.get(p.demandId)).filter(Boolean));
+        const pools=new Map<string,Offcut[]>();
+        for(const o of state.inventory){
+          if(used.has(o.id)||o.sourceFaceId===info.face.id||targetIds.has(o.rootDemandId??o.sourceDemandId))continue;
+          const block=view.blockByRootDemand.get(o.rootDemandId??o.sourceDemandId);if(!block)continue;
+          if(!existing.has(block)&&existing.size>=(settings.maxSourceBlocksPerFace??2))continue;
+          const key=block+'|'+o.sourceFaceId, pool=pools.get(key)??[];pool.push(o);pools.set(key,pool);
+        }
+        let best:Placement[]|undefined,bestScore=0;
+        for(const stock of pools.values()){
+          check();const match=matchSets(targets,stock),reuse=match.placements.filter(p=>p.kind==='reuse');
+          const block=view.blockByRootDemand.get(stock[0].rootDemandId??stock[0].sourceDemandId)!;
+          const extraSource=existing.size>0&&!existing.has(block);
+          if(reuse.length<Math.min(extraSource?3:2,targets.length)||extraSource&&reuse.length<2)continue;
+          const proposed=new Map(reuse.map(p=>[p.demandId,p]));
+          let runs=0,last='',lastLane=-Infinity;const visits=new Map<string,number>();
+          const ds=state.demands.filter(d=>d.faceId===info.face.id).sort((a,b)=>a.laneIndex-b.laneIndex);
+          for(const d of ds){
+            const p=proposed.get(d.id)??onFace.find(p=>p.demandId===d.id)!;
+            if(p.kind==='new'){lastLane=-Infinity;continue;}
+            const id=proposed.has(d.id)?block:view.blockByPlacement.get(d.id)!;
+            if(id!==last||d.laneIndex!==lastLane+1){runs++;visits.set(id,(visits.get(id)??0)+1);}
+            last=id;lastLane=d.laneIndex;
+          }
+          if(runs>4||[...visits.values()].some(n=>n>2))continue;
+          const saving=targets.filter(d=>proposed.has(d.id)).reduce((n,d)=>n+area(d.blank),0);
+          const score=saving*(extraSource?.90:1);
+          if(score>bestScore+1){best=reuse;bestScore=score;}
+        }
+        if(!best?.length)continue;
+        const replacement=new Map(best.map(p=>[p.demandId,p]));
+        const placements=state.placements.map(p=>replacement.get(p.demandId)??p);
+        const rebuilt=rebuildInventory(state.demands,placements,profile);
+        if(rebuilt.unresolved.length)continue;
+        state.placements=placements;state.inventory=rebuilt.offcuts;
+        state.used=new Set(placements.filter(p=>p.kind==='reuse').map(p=>p.offcutId!));changed=true;
+      }
+      if(!changed)break;
+    }
+  }
   for(const trial of trials){
     const state=blankState();
     try{
@@ -213,18 +302,23 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
       while(state.done.size<faces.length){
         check();
         if(!next||state.done.has(next.face.id))next=sorted.find(i=>!state.done.has(i.face.id))!;
-        const phase=next.offsets[trial.shift%Math.min(2,next.offsets.length)];
-        const ds=dsFor(next,phase,next.face.lap,true,trial.extend);
-        commit(state,next,ds,ds.map(d=>({demandId:d.id,kind:'new',rotation:0,translateY:0})),phase,next.face.lap,true,trial.extend);
+        const self=selfSupply(next,trial.extend);
+        if(self){
+          commit(state,next,self.ds,self.ps,self.phase,next.face.lap,true,trial.extend);
+          state.layout.selfFillFaceIds!.push(next.face.id);
+        }else{
+          const phase=next.offsets[trial.shift%Math.min(2,next.offsets.length)];
+          const ds=dsFor(next,phase,next.face.lap,true,trial.extend);
+          commit(state,next,ds,ds.map(d=>({demandId:d.id,kind:'new',rotation:0,translateY:0})),phase,next.face.lap,true,trial.extend);
+        }
         state.layout.primarySequence!.push(next.face.id);
-        if(next.selfComplement)selfFeed(state,next.face.id);
         while(state.done.size<faces.length){
           const offer=bestOffer(state,trial.shift,trial.extend);if(!offer)break;
           commit(state,offer.info,offer.ds,offer.match.placements,offer.phase,offer.lap,offer.primary,trial.extend,offer.primary);
         }
         next=sorted.find(i=>!state.done.has(i.face.id))!;
       }
-      selfFeed(state);completed++;hooks.onProgress?.(completed,trials.length);candidates.push(state);
+      selfFeed(state);topUp(state);completed++;hooks.onProgress?.(completed,trials.length);candidates.push(state);
     }catch(error){
       if(error instanceof Deadline){budgetReached=true;completeNew(state);candidates.push(state);break;}
       if(error instanceof Error&&/exceeds the profile maximum/.test(error.message)){continue;}
@@ -239,7 +333,8 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   candidates.sort((a,b)=>cost(a)-cost(b)||relationshipCount(a)-relationshipCount(b));
   // Simplicity wins within a small material band; it never hides supplied metal.
   const cheapest=cost(candidates[0]);
-  const simple=[...candidates].filter(s=>cost(s)<=cheapest*1.03+1).sort((a,b)=>relationshipCount(a)-relationshipCount(b)||cost(a)-cost(b))[0];
+  const firstRun=(s:State)=>infos.find(i=>i.face.id===s.layout.primarySequence?.[0])?.ridgeLength??0;
+  const simple=[...candidates].filter(s=>cost(s)<=cheapest*1.03+1).sort((a,b)=>Math.round(firstRun(b))-Math.round(firstRun(a))||relationshipCount(a)-relationshipCount(b)||cost(a)-cost(b))[0];
   const ordered=[simple,...candidates.filter(c=>c!==simple)];
   const signatures=new Set<string>(), output:Solution[]=[];
   for(const state of ordered){
@@ -272,7 +367,7 @@ function toSolution(request:SolveRequest,state:State,inputIssues:Issue[],complet
   }
   if(budgetReached)issues.push({severity:'warning',code:'SEARCH_BUDGET',message:'Time budget reached. Unsolved positions have been supplied new; this complete draft is not proof that no better reuse exists.'});
   issues.push({severity:'warning',code:'PROTOTYPE_ONLY',message:'Draft material-bank plan. Verify profile, sheet registration and site lengths. No guaranteed minimum, manufacturer approval or spare sheets are implied.'});
-  return{schemaVersion:1,engineVersion:'2.4',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
+  return{schemaVersion:1,engineVersion:'2.5',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
     profile:structuredClone(profile),settings:structuredClone(settings),demands:state.demands,placements:state.placements.sort((a,b)=>a.demandId.localeCompare(b.demandId)),
     offcuts:state.inventory,lapByFace:state.laps,bankLayout:state.layout,
     metrics:{newMaterialMm2:cost,baselineNewMaterialMm2:baseline,netRoofMm2:state.demands.reduce((n,d)=>n+area(d.cover),0),installedPhysicalMm2:installed,

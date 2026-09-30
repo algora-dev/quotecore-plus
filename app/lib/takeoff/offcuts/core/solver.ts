@@ -6,6 +6,7 @@ export { findFit } from './fit';
 import { optimiseBankLayouts } from './banks';
 import { rebuildInventory, materialAtDestination } from './inventory';
 import { generateDemands, offcutsFrom, validateInputs } from './material';
+import { supplyView } from './supply';
 export function facesRevision(request: SolveRequest): string {
   return fingerprint({ faces: request.faces, profile: request.profile, settings: request.settings });
 }
@@ -131,7 +132,16 @@ export function validateSolution(s: Solution): Issue[] {
     counts.set(p.demandId, (counts.get(p.demandId) ?? 0) + 1);
     const d = demandMap.get(p.demandId); if (!d) { error('UNKNOWN_TARGET', 'A placement references an unknown sheet lane.', p.demandId); continue; }
     if (d.lap !== s.lapByFace[d.faceId]) error('FACE_LAP', 'All sheets on a face must have the same lap direction.', d.id);
-    if (p.kind === 'new') { freshArea += area(d.blank); continue; }
+    if (p.kind === 'new') {
+      const b=bounds(d.blank),width=s.profile.coverMm+s.profile.leftLapMm+s.profile.rightLapMm;
+      if(!Number.isFinite(area(d.blank)) || Math.abs(b.minX)>1e-6 || Math.abs(b.maxX-width)>1e-6 ||
+        b.maxY-b.minY>s.profile.maxLengthMm+1e-6 || b.maxY<=b.minY ||
+        Math.abs(area(d.blank)-width*(b.maxY-b.minY))>1e-3)
+        error('NEW_STOCK_SIZE','New supply must be a whole physical rectangular sheet within the profile length limit.',d.id);
+      if(area(subtract(d.required,d.blank))>Math.max(1e-3,area(d.required)*1e-9))
+        error('NEW_STOCK_COVERAGE','The ordered new sheet is too short for its required cut.',d.id);
+      freshArea += area(d.blank); continue;
+    }
     const o = offcutMap.get(p.offcutId ?? '');
     if (!o) { error('UNKNOWN_OFFCUT', 'The source offcut does not exist.', d.id); continue; }
     if (used.has(o.id)) error('DOUBLE_USE', 'The same physical offcut is assigned more than once.', o.id); used.add(o.id);
@@ -156,6 +166,17 @@ export function validateSolution(s: Solution): Issue[] {
       const roots=new Set(s.placements.filter(p=>p.kind==='reuse' && demandMap.get(p.demandId)?.faceId===faceId)
         .map(p=>offcutMap.get(p.offcutId??'')?.rootBankId).filter(id=>id && id!==bank));
       if (roots.size>1) error('MULTI_BANK_MOSAIC', 'A face cannot mix unrelated external material banks in the practical layout.',faceId);
+    }
+  }
+  if (s.engineVersion === '2.5') {
+    const view=supplyView(s);
+    for(const faceId of new Set(s.demands.map(d=>d.faceId))){
+      const external=new Set(s.placements.filter(p=>p.kind==='reuse'&&demandMap.get(p.demandId)?.faceId===faceId)
+        .map(p=>view.blockByPlacement.get(p.demandId)).filter(id=>id&&!view.blocks.find(b=>b.id===id)?.faceIds.includes(faceId)));
+      if(external.size>(s.settings.maxSourceBlocksPerFace??2)){
+        issues.push({severity:s.placements.some(p=>p.manual)?'warning':'error',code:'FRAGMENTED_SOURCES',faceId,
+          message:'This face uses more independent cutting blocks than the practical source limit. Review the grouped allocation.'});
+      }
     }
   }
   const installed = s.demands.reduce((n, d) => n + area(d.required), 0);

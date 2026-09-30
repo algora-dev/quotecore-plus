@@ -20,4 +20,6 @@ button:not(:disabled):active,summary:active{background:var(--of-color-orange-tin
 
 .qc-canvas-wait{height:100%;display:grid;place-items:center;color:var(--of-text-secondary);font-size:14px}
 .qc-layout-picker{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 16px}.qc-layout-picker>span{font-size:12px;color:var(--of-text-secondary)}
+
+.qc-material-key{font-size:12px;line-height:1.5}.qc-count-explanation{margin:12px 0;font-size:12px;line-height:1.5}.qc-count-explanation summary{font-weight:600}.qc-count-explanation p{margin:8px 0}
 `;

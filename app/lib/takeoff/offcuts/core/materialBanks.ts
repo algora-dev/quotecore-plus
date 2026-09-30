@@ -2,6 +2,7 @@ import type { MaterialBank, RoofFace, SolveRequest } from './types';
 import { dot, unit } from './math';
 import { area, bounds, fromRing, intersect } from './regions';
 import { frameFor, sceneToSurface, sheetCount } from './material';
+import { bankAnchorFaces } from './zones';
 
 /** Elevation-oriented SUPPLY families. Grouping does not move vertices, project
  * away hidden faces, join different planes or remove physical sheet demands.
@@ -25,7 +26,7 @@ export function buildMaterialBanks(request: SolveRequest): MaterialBank[] {
   }
   return groups.map(group => {
     const first = group.faces[0], flow = unit(first.flow!), u = {x:flow.y,y:-flow.x};
-    const xs = group.faces.flatMap(f=>f.polygon.map(p=>dot(p,u)*roof.mmPerSceneUnit));
+    const xs = bankAnchorFaces(group.faces,roof).flatMap(f=>f.polygon.map(p=>dot(p,u)*roof.mmPerSceneUnit));
     const length = Math.max(...group.faces.map(f=>{
       const frame=frameFor(f,roof), b=bounds(fromRing(f.polygon.map(p=>sceneToSurface(p,frame))));
       return b.maxY-b.minY;

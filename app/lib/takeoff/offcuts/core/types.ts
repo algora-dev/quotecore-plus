@@ -58,6 +58,11 @@ export interface SolveSettings {
   stockMode: 'bank-first' | 'per-lane' | 'face-envelope';
   /** Bounded, explicitly reported extra stock at the upstream end of cut lanes. */
   maxBankExtensionMm?: number;
+  /** Maximum distinct original cutting blocks on an automatic destination.
+   * One coherent source is preferred; two separated sets are allowed. */
+  maxSourceBlocksPerFace?: number;
+  /** Requested overlap into the valley for a self-fill donor run. Not spares. */
+  selfFillTransitionMm?: number;
   optimiseLapDirections: boolean;
   maxTrials: number; maxMilliseconds: number; maxSheets: number;
 }
@@ -68,6 +73,7 @@ export const DEFAULT_PROFILE: Profile = {
 };
 export const DEFAULT_SETTINGS: SolveSettings = {
   stockMode: 'bank-first', optimiseLapDirections: true, maxBankExtensionMm: 100,
+  maxSourceBlocksPerFace: 2, selfFillTransitionMm: 100,
   maxTrials: 32, maxMilliseconds: 4000, maxSheets: 600,
 };
 export interface FaceFrame {
@@ -87,7 +93,13 @@ export interface Demand {
   /** Approved cut boundaries in this physical sheet's local millimetres. */
   cutEdges?: RoofEdge[];
   materialBankId?: string;
+  /** Planning role is independent of whether the final sheet has angled cuts. */
+  zoneRole?: 'ridge-fill' | 'cut-zone';
+  ridgeOverlapMm?: number;
+  /** Portion of this cover cell lying on the face's actual spouting run. */
+  eaveOverlapMm?: number;
 }
+
 export interface Offcut {
   id: string; sourceDemandId: string; sourceFaceId: string; region: Region;
   widthMm: number; lap: Lap;
@@ -124,13 +136,15 @@ export interface BankLayout {
   extraLengthByFace: Record<string, number>;
   materialBanks?: MaterialBank[];
   cutLengthByFace?: Record<string, number>;
+  /** Geometry-derived donor-zone choices, reported instead of hidden allowances. */
+  selfFillFaceIds?: string[];
   /** Extra downstream stock only on lanes with an angled downstream boundary. */
   tailExtensionByFace?: Record<string, number>;
   primarySequence?: string[];
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4';
+  engineVersion?: '2.4' | '2.5';
   layoutId?: string;
   layoutLabel?: string;
   profile: Profile; settings: SolveSettings;

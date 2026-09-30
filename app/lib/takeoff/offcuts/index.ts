@@ -11,3 +11,6 @@ export * from './core/groupEditing';
 
 export * from './core/materialBanks';
 export * from './core/inventory';
+
+export * from './core/zones';
+export * from './core/supply';

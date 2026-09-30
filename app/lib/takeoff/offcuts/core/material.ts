@@ -31,6 +31,8 @@ export function validateInputs(roof: RoofInput, faces: RoofFace[], p: Profile, s
   if (![settings.maxSheets, settings.maxTrials, settings.maxMilliseconds].every(n => Number.isFinite(n) && n > 0) || settings.maxSheets > 2000 || settings.maxTrials > 64 || settings.maxMilliseconds > 30000) error('BUDGET', 'Use positive search limits: at most 2000 sheets, 64 trials and 30000 milliseconds.');
   if (!['bank-first', 'per-lane', 'face-envelope'].includes(settings.stockMode)) error('STOCK_MODE', 'Unknown sheet layout mode.');
   if (settings.maxBankExtensionMm !== undefined && (!Number.isFinite(settings.maxBankExtensionMm) || settings.maxBankExtensionMm < 0 || settings.maxBankExtensionMm > 300)) error('BANK_EXTENSION', 'Automatic extra stock must be between 0 and 300 mm.');
+  if (settings.maxSourceBlocksPerFace !== undefined && (!Number.isInteger(settings.maxSourceBlocksPerFace) || settings.maxSourceBlocksPerFace < 1 || settings.maxSourceBlocksPerFace > 2)) error('SOURCE_LIMIT', 'Practical automatic plans support one or two coherent external source blocks per face.');
+  if (settings.selfFillTransitionMm !== undefined && (!Number.isFinite(settings.selfFillTransitionMm) || settings.selfFillTransitionMm < 0 || settings.selfFillTransitionMm > p.coverMm)) error('SELF_FILL_MARGIN', 'Self-fill transition must be between zero and one sheet cover.');
   if (!p.rulesConfirmed) issues.push({ severity: 'warning', code: 'PROFILE_UNVERIFIED', message: 'Profile/side-lap allowances are unverified. This is a geometric prototype, not an order-ready material list.' });
   for (const f of faces) {
     const invalid = validateRing(f.polygon); if (invalid) { error('FACE_POLYGON', `${f.name}: ${invalid}`, f.id); continue; }
@@ -49,9 +51,9 @@ export function sheetCount(spanMm: number, coverMm: number, offsetMm = 0): numbe
   if (![spanMm, coverMm, offsetMm].every(Number.isFinite) || spanMm <= 0 || coverMm <= 0 || offsetMm < 0 || offsetMm >= coverMm) throw new Error('Invalid sheet span, cover or registration.');
   return Math.ceil((spanMm + offsetMm) / coverMm - 1e-10);
 }
-/** Conservative stepped-ridge rule: only genuinely straight, uninterrupted
- * top AND bottom edges can be fillers. A lane touching any angled cut stays
- * in the long-stock bank. Missing pieces between fillers are never invented. */
+/** Geometric rectangle predicate, NOT the definition of a planning filler.
+ * Kept for the safe short-stock check and legacy callers. A ridge filler may
+ * have valley/hip cuts; its role is recorded independently on the demand. */
 export function isStraightFiller(required: Demand['required']): boolean {
   return required.length > 0 && isMonotone(required) && required.every(b =>
     Math.abs(b.top1 - b.top0) < EPS && Math.abs(b.bottom1 - b.bottom0) < EPS) &&
@@ -63,6 +65,7 @@ export function validateBankLayout(faces: RoofFace[], profile: Profile, settings
   if (new Set(layout.primaryFaceIds).size !== layout.primaryFaceIds.length || layout.primaryFaceIds.some(id => !ids.has(id))) throw new Error('Invalid primary face selection.');
   if (Object.keys(layout.laneOffsetByFace).length !== faces.length || Object.keys(layout.extraLengthByFace).length !== faces.length ||
       [...Object.keys(layout.laneOffsetByFace), ...Object.keys(layout.extraLengthByFace)].some(id => !ids.has(id))) throw new Error('Bank layout does not match the reviewed faces.');
+  if(layout.selfFillFaceIds && (new Set(layout.selfFillFaceIds).size!==layout.selfFillFaceIds.length || layout.selfFillFaceIds.some(id=>!ids.has(id)||!layout.primaryFaceIds.includes(id)))) throw new Error('Invalid self-fill face selection.');
   if (layout.materialBanks) {
     const members = layout.materialBanks.flatMap(b => b.faceIds);
     if (members.length !== faces.length || new Set(members).size !== faces.length || members.some(id => !ids.has(id))) throw new Error('Material-bank membership does not match the approved faces.');
@@ -119,6 +122,17 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
     return out;
   };
   const planningLocal = continuousRunEnvelope(local);
+  const spans = (kind: 'ridge' | 'spouting', left: number, right: number): number => {
+    // Classified roof boundaries, not objects in the plan image. A ridge role
+    // survives a cut at the OTHER end of that same sheet (for example C's V).
+    const intervals=face.boundary.filter(e=>e.kind===kind).map(e=>{
+      const a=sceneToSurface(e.a,frame),b=sceneToSurface(e.b,frame);
+      return [Math.max(left,Math.min(a.x,b.x)),Math.min(right,Math.max(a.x,b.x))];
+    }).filter(([a,b])=>b>a).sort((a,b)=>a[0]-b[0]);
+    let length=0,end=-Infinity;
+    for(const [a,b] of intervals){length+=Math.max(0,b-Math.max(a,end));end=Math.max(end,b);}
+    return length;
+  };
   const start = box.minX - face.laneOffsetMm, count = sheetCount(box.maxX - box.minX, w, face.laneOffsetMm);
   if (count > settings.maxSheets) throw new Error(`Sheet limit exceeded (${settings.maxSheets}). Check the calibration/cover or reduce the selected roof scope.`);
   for (let i = 0; i < count; i++) {
@@ -138,7 +152,14 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
     // Elevation banks share a STOCK length, never merged roof footprints.
     // Every separate face/run still has its own real required and cover regions.
     const baseLength = Math.max(box.maxY - box.minY, cutLengthMm ?? 0);
-    const blankY0 = envelope ? box.maxY - baseLength - profile.endAllowanceMm - y - extra : 0;
+    // A LOWER ridge plateau can use its own shorter stock, even when a valley
+    // cuts the other end. The boundary-crossing lane retains full bank stock;
+    // we never shorten the one long sheet needed to cut through a broken hip.
+    const coverWidth=Math.min(x+w,box.maxX)-Math.max(x,box.minX);
+    const lowerRidgeShelf=bank && primary && spans('ridge',x,x+w)>=coverWidth-EPS &&
+      required.every(b=>Math.abs(b.top0)<EPS&&Math.abs(b.top1)<EPS) &&
+      y>box.minY+profile.endAllowanceMm+EPS;
+    const blankY0 = envelope && !lowerRidgeShelf ? box.maxY - baseLength - profile.endAllowanceMm - y - extra : 0;
     const lowerCut = cutEdges.some(e => {
       const x = Math.max(0, Math.min(physicalWidth, (e.a.x + e.b.x) / 2));
       if (Math.abs(e.b.x - e.a.x) < EPS) return false;
@@ -156,7 +177,9 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
       return Math.max(a.x, b.x) >= laneX - EPS && Math.min(a.x, b.x) <= laneX + physicalWidth + EPS;
     });
     result.push({ id: `${face.id}:sheet:${i + 1}`, faceId: face.id, laneIndex: i, lap: face.lap,
-      widthMm: physicalWidth, origin: { x: laneX, y }, frame, required, reusableCut, cutEdges, ...(materialBankId ? {materialBankId} : {}),
+      widthMm: physicalWidth, origin: { x: laneX, y }, frame, required, reusableCut, cutEdges,
+      zoneRole: spans('ridge',x,x+w)>EPS ? 'ridge-fill' : 'cut-zone',
+      ridgeOverlapMm: spans('ridge',x,x+w), eaveOverlapMm: spans('spouting',x,x+w), ...(materialBankId ? {materialBankId} : {}),
       cover: translate(cover, -laneX, -y), blank: rectangle(0, blankY0, physicalWidth, blankY0 + len),
       ...(bank ? { stockRole: primary ? filler ? 'filler' as const : 'primary-cut' as const : 'supplement' as const } : {}) });
   }
