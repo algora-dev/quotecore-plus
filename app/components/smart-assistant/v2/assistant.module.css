@@ -280,3 +280,18 @@
   font-weight: 500;
   cursor: pointer;
 }
+
+/* Measurement-first draft workflow */
+.draftWorkflow { display:grid; gap:14px; }
+.draftWorkflow summary { cursor:pointer; font-weight:650; }
+.briefSummary { display:grid; gap:6px; font-size:13px; color:var(--sa-muted, var(--qc-text-secondary)); margin-top:10px; }
+.briefSummary p,.briefIssues p {margin:0; overflow-wrap:anywhere;}
+.briefIssues {display:grid;gap:6px;padding:12px;border-left:3px solid var(--sa-orange,#ff6b35);background:var(--sa-raised,var(--qc-bg-subtle));border-radius:8px;font-size:13px;}
+.briefQuestion {border:0;padding:0;margin:0;min-width:0;display:grid;gap:8px;}
+.briefQuestion legend {font-weight:650;margin-bottom:8px;font-size:14px;}
+.briefOption {display:flex;align-items:center;gap:10px;min-height:48px;padding:12px;border:1px solid var(--sa-line,var(--qc-border-divider));border-radius:12px;background:var(--sa-surface,var(--qc-bg-surface));cursor:pointer;}
+.briefOption[data-selected='true'] {border-color:var(--sa-orange,#ff6b35);background:var(--sa-raised,var(--qc-bg-subtle));}
+.briefOption input {flex:0 0 auto;width:19px;height:19px;accent-color:var(--sa-orange,#ff6b35);}
+.briefOption small {display:block;color:var(--sa-muted,var(--qc-text-secondary));font-size:12px;margin-top:4px;}
+.briefQuestion:disabled {opacity:.65;}
+.cardFooter {display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;}

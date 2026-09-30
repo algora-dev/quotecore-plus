@@ -14,6 +14,7 @@ import { runModelLoop } from './speed/model-loop';
 import { OrchestratorExecutionError } from './speed/errors';
 import { displayResolutionMessage, isResolutionMessage } from './resolver/wire';
 import { displayTaskMessage, isTaskMessage } from './tasks/wire';
+import { displayDraftChoice, isDraftChoice } from './library-workflow/wire';
 export { OrchestratorExecutionError } from './speed/errors';
 
 export interface CompanyAssistantConfig {
@@ -227,7 +228,7 @@ export async function runOrchestratorTurn(
       }
     }
     // Even a complete V2 rollback must not send an opaque selection to Luna.
-    if (isResolutionMessage(executionMessage) || isTaskMessage(executionMessage)) {
+    if (isResolutionMessage(executionMessage) || isTaskMessage(executionMessage) || isDraftChoice(executionMessage)) {
       if (v2) await telemetry.measure('access_final', v2.guard);
       result = { content: 'That record selection is no longer available. Please ask again; nothing was selected or applied.', tokensIn: 0, tokensOut: 0 };
       return result;
@@ -255,7 +256,7 @@ export async function runOrchestratorTurn(
     }
     const messages: LlmMessage[] = [
       { role: 'system', content: buildSystemPrompt(config, !!v2) + (context ? `\n\n${context.prompt}` : '') },
-      ...priorReversed.reverse().filter(m => !context || context.visibleMessageIds.has(m.id)).map(m => ({ role: m.role, content: displayTaskMessage(displayResolutionMessage(m.content)) })),
+      ...priorReversed.reverse().filter(m => !context || context.visibleMessageIds.has(m.id)).map(m => ({ role: m.role, content: displayTaskMessage(displayResolutionMessage(displayDraftChoice(m.content))) })),
       { role: 'user', content: executionMessage },
     ];
     result = await runModelLoop({ messages, registry: v2?.tools ?? TOOL_REGISTRY,

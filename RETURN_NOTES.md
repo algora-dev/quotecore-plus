@@ -1,99 +1,117 @@
-# Return notes — Smart Assistant Visual Convergence
+# RETURN NOTES — Smart Assistant Library + Draft Workflow (2026-09-30)
 
-**29 September 2026 · SA-UX-V2 · not deployed**
+## Start here
 
-## Baseline and integration warning
+This package is built from the user-supplied `quotecore-plus-SA-fix-handoff-2026-09-29.zip`.
 
-Built directly from `quotecore-plus-SA-ux-shell-refresh-2026-09-28.zip`, the latest
-supplied UI source. No newer post-Gavin/P1.7.3 source archive was supplied alongside
-the failed UI screenshots. Consequently this full source archive is **not an
-instruction to overwrite Gavin's newer backend branch**. Integrate the UI-only
-delta, preserving his release-hardening and subsequent fixes.
+The objective is deliberately narrow: make **new draft creation** behave like a task-completing controller rather than requiring the user/model to manually assemble low-level component IDs.
 
-Read `docs/sa-visual-2026-09-29/AGENT_INTEGRATION_PROMPT.txt` and
-`docs/sa-visual-2026-09-29/HANDOFF.md`. Use `VISUAL_CHANGES.json` as this return's
-manifest. Earlier FILE_CHANGES/CHANGED_FILES/START_HERE documents remain historical.
-The previous root return notes are preserved in this phase's documentation folder.
+**NOT DEPLOYED. MIGRATION NOT APPLIED. Feature defaults OFF.**
 
-## What was corrected
+## What changed
 
-The previous assistant UI failed to follow the approved concept. Its responsive CSS
-stacked the mobile header, nested white panels consumed the conversation, and the
-voice controls used emoji instead of a coherent icon set. This return corrects
-those implementation choices rather than blaming the integration.
+### 1. Assistant-specific component-library setup
 
-- Assistant-local charcoal surfaces, quiet readable conversation, brighter orange/red
-  microphone, silver shared Type/Voice/Attach dock. Real Q logo is the menu button;
-  no duplicate hamburger and no literal "Ferrari mode" product copy.
-- Header stays one row, including 320px phones. Type/Voice are mutually exclusive;
-  Attach opens a focus-managed overlay, not a third selected mode or a tall block
-  pushing the conversation away. Desktop panel stays compact.
-- Large welcoming mic on an empty voice screen; compact mic when messages exist;
-  expanded capture only while recording/transcribing. Transcript review and explicit
-  Send remain. Tap/latch, press-hold/release and rapid-second-tap behaviour are covered.
-- Actual microphone analyser drives the waveform. Silence becomes dots. No synthetic
-  sine animation, whole-transcript 60fps React rendering or permanent microphone capture.
-- Consistent SVG icons, tactile focus/hover/press, reduced motion, forced colours,
-  safe-area padding and visual-viewport resizing. No custom/fake mobile keyboard.
-- Better entity/candidate/proposal presentation; task label once in the header;
-  Done / Move on / Not quite by the task result. Existing callback/proof/selection
-  payloads remain authoritative. Selecting a candidate is never edit approval.
-- Browser speech now plays only a newly completed locally requested answer when
-  enabled, or a manually selected Read aloud answer. Enabling/reopening does not
-  replay history. Pause/Resume/Stop remain independent of tasks. Recording/hiding/
-  account-lock/conversation changes stop audio and stale events cannot restart it.
-- Removed the previous fake attachment path which sent filenames as if attached
-  content might be available. Camera/image/PDF/text previews are explicitly local,
-  bounded and removable. Composer Send is blocked until previews are removed.
-  No uploaded file or image is claimed to have been read.
+A new additive migration adds:
+- `assistant_v2_library_profiles`
+- `assistant_v2_library_members`
+- `assistant_v2_draft_briefs`
 
-## Protected boundaries
+A workspace manager can enable a whole component library for Smart Assistant or make only selected components eligible. Eligible components can be assigned one of these structural roles:
 
-Only five existing assistant client/UI files are modified, plus new local UI helpers,
-asset, tests and documentation. All existing `app/api/`, `app/lib/`, shared UI,
-dependency manifests and **183 original migration SQL files** remain byte-identical
-to the supplied UI baseline. No migration, pricing, authentication, quota, model,
-retrieval, task-routing or domain-operation change is introduced.
+`roof_area`, `ridge`, `hip`, `valley`, `barge`, `spouting`, `underlay`, `fixings`.
 
-There is no new feature flag or new API. The visual correction applies to V2ChatClient
-where the existing V2 capability already selects it. Legacy assistant stays unchanged.
-Gavin must preserve newer branch fixes when merging V2ChatClient.
+One explicit default may be configured per role/library. Existing `takeoff_slot` values are surfaced as setup suggestions, but are not silently treated as execution authority.
 
-## Validation actually performed
+These settings control **new-work eligibility**. They do not hide components already placed on existing authorised quotes/drafts.
 
-- **121/121 isolated Chromium browser checks** using the actual edited TSX, shared
-  QcButton/styles and real React. Mock transport and simulated media; no live services.
-- **15/15 pure media/source checks** for real-signal behaviour, limits, speech text
-  preservation, CSS references and removal of fake attachment input.
-- **976 retained backend/task checks passed** before the existing historical file-hash
-  checker rejected the old UX-shell CSS drift. The same checker fails on the untouched
-  supplied baseline. The runner therefore exits nonzero; it is not claimed green.
-  That historical checker is untouched. A separate actual-baseline byte audit is included.
-- Actual component preview bundle: 26 modules transpiled. Screenshots cover Type,
-  Voice idle, recording, transcript, candidates, proposal, TTS, attachments, failure,
-  compact desktop and keyboard-sized viewports. These are real browser renders, not
-  image-generator concepts.
-- Full typecheck attempted on baseline and return; both blocked by missing dependencies.
-  Lint could not launch (eslint absent); production build could not launch Next.
-  Tooling installation attempt failed DNS. No successful full typecheck/lint/build claimed.
+### 2. Measurement-first working draft
 
-The preview used installed offline **React 18.2.0**, whereas this project declares
-18.3.1. This is an isolated component validation, not a replacement for the project's
-actual Next/React build. Full logs and limitations are in
-`docs/sa-visual-2026-09-29/validation/VALIDATION.md`.
+A new goal-level tool, `prepare_draft_from_brief`, accepts the user's job intent as:
+- customer/job/address
+- areas, including per-area pitch
+- structural measurements grouped by role
+- repeated individual measurements
 
-## Not implemented or certified
+It does **not** require the model/user to supply component-library UUIDs up front.
 
-No real phone/Safari/Android microphone, native keyboard, Bluetooth/car audio, production
-TTS quality, authenticated deployed browser, Supabase, Luna or live latency test ran here.
-No paid TTS, Realtime voice, vision/OCR, secure file upload or automatic draft creation
-is added. Browser voices vary and may use device-vendor services. Text always remains.
-Attachment preview is a foundation, not a usable image-understanding feature.
+Server code then:
+1. reads only assistant-enabled libraries/components;
+2. applies an explicit configured role default when there is exactly one;
+3. uses a sole compatible role candidate when there is only one;
+4. groups unresolved choices into a single server-authored card;
+5. preserves the job/measurements while the user answers choices;
+6. produces the existing P4 reviewed `draft_create` proposal only when the brief is complete.
 
-## Next handoff
+### 3. Grouped product choices
 
-Give Gavin the full ZIP plus the integration prompt. Prefer the surgical UI patch for
-his newer branch. Require actual mobile/desktop screenshots matching the included
-rendered reference, deployed backend regressions and physical-device recording tests
-before release. Do not silently replace the approved dark assistant with shared light
-styles or start another backend redesign during this merge.
+The new `draft_workflow` conversation card shows all current unresolved product choices at once. The user may select them in one interaction.
+
+A text/voice answer can also continue the same working draft through `continue_draft_workflow`; current server-owned choice IDs are supplied to the model context so it does not have to rediscover the job.
+
+Selecting components **never creates the draft**. The normal P4 proposal and Confirm button remain execution authority.
+
+### 4. Draft capability gaps closed
+
+The draft plan now supports:
+- `site_address`
+- per-area `pitch_degrees`
+- multiple raw measurement entries for one component
+
+Repeated measurements are intentionally preserved. Four 5m hips remain four entries because fixed-per-segment waste can produce a different result from one collapsed 20m entry.
+
+`createQuoteWithDetails` now accepts an optional `siteAddress` while retaining all existing caller behaviour.
+
+The additive migration overlays the existing trusted P4 checkpoint/finaliser so site address and repeated `quote_component_entries` are verified/inserted inside the existing confirmation path.
+
+## Feature flag
+
+Enable only after migration/security/live acceptance:
+
+`SMART_ASSISTANT_LIBRARY_WORKFLOW_ENABLED=true`
+
+With the flag OFF, the existing P4 `draft_creation_options` + `propose_draft_quote` path remains available.
+
+## Locked boundaries preserved
+
+- Existing admission/reservation/quota/replay/finish path unchanged.
+- Existing P3/P4 Confirm-button authority unchanged.
+- No arbitrary SQL/model-authored write path.
+- Existing pricing/pitch/waste engines remain authoritative.
+- Existing tenant and Smart Assistant permissions remain authoritative.
+- No voice/TTS/visual UX redesign in this pass.
+- No automatic quote send/finalisation.
+
+## Validation completed here
+
+- TypeScript/TSX syntax transpile check passed for 17 modified/new implementation files using the installed TypeScript compiler.
+- Source comparison confirms only the documented workflow/settings/creation/UI files plus one additive migration changed relative to the supplied baseline.
+- Final ZIP integrity and checksum are verified during packaging.
+
+## Not verified here
+
+No claim is made for:
+- clean dependency install
+- full project typecheck/lint/Next build
+- live Supabase migration/RLS behavior
+- live Luna planning quality
+- browser/device acceptance
+- actual quote creation against the testing database
+
+Gavin must run those gates.
+
+## Primary live acceptance
+
+Configure one assistant-enabled roofing library with real role assignments/defaults, then in one conversation request a draft such as:
+
+> Create a draft for James Smith at 123 Grand Lane. Main roof 100 m2 at 25 degrees, with four hips of 5 m each. Use my configured roofing library.
+
+Expected:
+1. The assistant does **not** ask for generic "component selections" or IDs.
+2. It retains customer, address, roof area, pitch and all four hip measurements.
+3. If products genuinely tie, one grouped card shows the real eligible choices.
+4. After choices, one full proposal is rendered.
+5. Only the existing Confirm button creates the draft.
+6. Database verification shows exactly one draft, correct site address/area/pitch/components, and four separate hip measurement entries.
+
+See `docs/sa-library-workflow-2026-09-30/AGENT_INTEGRATION_PROMPT.md` for the integration sequence.

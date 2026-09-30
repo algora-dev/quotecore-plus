@@ -22,7 +22,7 @@ const MAX_RULE_LENGTH = 500;
  * Also refuses when the rollout flag is off (no privileged work for
  * hidden/disabled companies).
  */
-async function requireAssistantManager(): Promise<
+export async function requireAssistantManager(): Promise<
   { ok: true; companyId: string; userId: string } | { ok: false; error: string }
 > {
   const profile = await requireCompanyContext();

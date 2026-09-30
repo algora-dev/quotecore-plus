@@ -4,6 +4,8 @@ import { SmartAssistantConfigPanel, type ConfigDoc } from './SmartAssistantConfi
 import { AddToPhone } from './AddToPhone';
 import { AssistantPermissionsPanel } from './AssistantPermissionsPanel';
 import { readSectionPermissions } from '@/app/lib/smart-assistant/section-permissions.server';
+import { AssistantLibrarySettings } from './AssistantLibrarySettings';
+import { ASSISTANT_LIBRARY_ROLES, type AssistantLibraryRole } from '@/app/lib/smart-assistant/library-workflow/contracts';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +47,24 @@ export default async function SmartAssistantConfigPage() {
     created_at: d.created_at,
   }));
 
+  let assistantLibraries: Array<{id:string;name:string;enabled:boolean;includeAll:boolean;components:Array<{id:string;name:string;takeoffSlot:string|null;included:boolean;role:AssistantLibraryRole|null;isDefault:boolean}>}> = [];
+  let libraryWorkflowAvailable = true;
+  try {
+    const db = supabase as any;
+    const [{ data: collections, error: collectionError }, { data: profiles, error: profileError }, { data: members, error: memberError }] = await Promise.all([
+      db.from('component_collections').select('id,name').eq('company_id', profile.company_id).order('name'),
+      db.from('assistant_v2_library_profiles').select('collection_id,enabled,include_all').eq('company_id', profile.company_id),
+      db.from('assistant_v2_library_members').select('collection_id,component_id,included,assistant_role,is_default').eq('company_id', profile.company_id),
+    ]);
+    if (collectionError || profileError || memberError) throw new Error('library workflow unavailable');
+    const ids = (collections ?? []).map((c:any)=>c.id);
+    const { data: components, error: componentError } = ids.length ? await db.from('component_library').select('id,collection_id,name,takeoff_slot,is_active').eq('company_id',profile.company_id).in('collection_id',ids).eq('is_active',true).order('sort_order') : {data:[],error:null};
+    if (componentError) throw new Error('component library unavailable');
+    const pMap=new Map((profiles??[]).map((x:any)=>[x.collection_id,x]));
+    const mMap=new Map((members??[]).map((x:any)=>[x.component_id,x]));
+    assistantLibraries=(collections??[]).map((c:any)=>{const profileRow:any=pMap.get(c.id);return {id:c.id,name:c.name,enabled:profileRow?.enabled===true,includeAll:profileRow?.include_all===true,components:(components??[]).filter((x:any)=>x.collection_id===c.id).map((x:any)=>{const m:any=mMap.get(x.id);const suggested=ASSISTANT_LIBRARY_ROLES.includes(x.takeoff_slot as any)?x.takeoff_slot:null;return {id:x.id,name:x.name,takeoffSlot:suggested,included:m?.included===true,role:(m?.assistant_role??suggested) as AssistantLibraryRole|null,isDefault:m?.is_default===true};})};});
+  } catch { libraryWorkflowAvailable=false; }
+
   return (
     <div className="space-y-6">
       <div>
@@ -61,6 +81,8 @@ export default async function SmartAssistantConfigPage() {
       </div>
 
       <AssistantPermissionsPanel key={profile.company_id} initialState={permissionState} />
+
+      <AssistantLibrarySettings libraries={assistantLibraries} available={libraryWorkflowAvailable} />
 
       <SmartAssistantConfigPanel
         initialName={config?.name ?? 'Assistant'}

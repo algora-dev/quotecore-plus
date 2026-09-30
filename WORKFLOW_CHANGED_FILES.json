@@ -1,0 +1,132 @@
+{
+  "baselineArchive": "quotecore-plus-SA-fix-handoff-2026-09-29.zip",
+  "counts": {
+    "added": 10,
+    "modified": 12,
+    "deleted": 0
+  },
+  "files": [
+    {
+      "path": "RETURN_NOTES.md",
+      "change": "modified",
+      "before": "ec6cc1f44a6e5be53ea142f9415f5356a64fb8c5e327802a5896d9b8e8bab329",
+      "after": "4d1ebcd9a8860cc1750a068ca8a58396a59f6834e61795eed8a9258359041f8c"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/smart-assistant/AssistantLibrarySettings.tsx",
+      "change": "added",
+      "after": "4378f811f2d9ef0151e21b154e815d1021c66602abcbd562d39ea8d4cc0440dc"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/smart-assistant/actions.ts",
+      "change": "modified",
+      "before": "e7159ca519ea6a244586b4e671de41cb44cff50d004a374b3c97d2e67c6038ea",
+      "after": "d714ebaf78db0f18b1c45e8dd323ddebe6c487f8b2c6389e1c93aab35bc97729"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/smart-assistant/library-actions.ts",
+      "change": "added",
+      "after": "e7f0b99dcd40dd13bd94e98ffad5fc2f1b62b6d691e4dc5517ddeda0990ca833"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/smart-assistant/page.tsx",
+      "change": "modified",
+      "before": "5f2d6a2448fb0fc3cf67111ac45d51808596b82b26b4cc746c6753180facf0f1",
+      "after": "bdcb3c62e2c3534291485c10f95ca979438db93c0b85f52e3d361376f6a2c400"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/new/actions.ts",
+      "change": "modified",
+      "before": "981b56bdb217d6fe1d0c55a23d53f0b202a86b29934f18fd6b4850b056bb0bae",
+      "after": "398d54c14f3f32ba6e63cd5dd17143972fde6b55817affc5bf9e8898f578c421"
+    },
+    {
+      "path": "app/components/smart-assistant/v2/ConversationCards.tsx",
+      "change": "modified",
+      "before": "268c49e56d6563c1c360b54651a1bbf87973d54392c8fe555b62dbaef56a4ff6",
+      "after": "26e8f79defa7d225a3982d729a0006f3aa48d524abcbafa3b22ff3a49c41b7a1"
+    },
+    {
+      "path": "app/components/smart-assistant/v2/DraftWorkflowCard.tsx",
+      "change": "added",
+      "after": "d8be930a7fa4f299b8318a36b9f3bd03c95502a2a246c80ffd471ccf358dbed9"
+    },
+    {
+      "path": "app/components/smart-assistant/v2/V2ChatClient.tsx",
+      "change": "modified",
+      "before": "a0572c3dc9f86622de06924fe1ee843383eca59a7419fe95395643da2c4a26bf",
+      "after": "60c738732f94b758e4da45e18b0f32bfe990cf09c00c1b2b1d022e2ce6712764"
+    },
+    {
+      "path": "app/components/smart-assistant/v2/assistant.module.css",
+      "change": "modified",
+      "before": "bd7c57259f27b9f250fb730cdb845db868e96038bb1ff2275feda06d8acbe11a",
+      "after": "b5307b814010069765b075a70b0a5142c03a0a42dbff93432ad6e7d6556c0c18"
+    },
+    {
+      "path": "app/lib/smart-assistant/library-workflow/config.ts",
+      "change": "added",
+      "after": "fadc8ce37c46e17427709c9366efbee60847aca0d41b925903a5fe9d40751b95"
+    },
+    {
+      "path": "app/lib/smart-assistant/library-workflow/contracts.ts",
+      "change": "added",
+      "after": "e1fef220927239ec5e204fcdbabce37f4cccbf6c74ba497f44c4a6faaaac9ecf"
+    },
+    {
+      "path": "app/lib/smart-assistant/library-workflow/service.server.ts",
+      "change": "added",
+      "after": "2bef1942c0d12f9fd27379d30aa3c5461bc5a2d81ea8f6b0e75788b812ca7f97"
+    },
+    {
+      "path": "app/lib/smart-assistant/library-workflow/wire.ts",
+      "change": "added",
+      "after": "34b02ada28fd1b00fdb1e28e0db0a97306e378969a97303bce23ba64b81d223c"
+    },
+    {
+      "path": "app/lib/smart-assistant/orchestrator.ts",
+      "change": "modified",
+      "before": "b454277a6dcaaad81e4990dc0bbc7a0077404d0c8293046d4dca2a7b1cb0e6b1",
+      "after": "20db848603dd57d8c47a38f3495f8fa1303107adef334f87b5b00d89411ec79b"
+    },
+    {
+      "path": "app/lib/smart-assistant/v2/contracts.ts",
+      "change": "modified",
+      "before": "dbef339c389fd525ddc4f9ef99f9c02c6533a3dafc17c252536b13f58e1d6d20",
+      "after": "71689c1cc987c7f6f57a8373c381216e085bca82720a9c89ea50fcb839b7f656"
+    },
+    {
+      "path": "app/lib/smart-assistant/v2/creation.server.ts",
+      "change": "modified",
+      "before": "eaf9607419ac29ecdff026872b1d067fecf172a0fe0bfc5fd3787574bfe40f13",
+      "after": "334059e64c6e5d16197cf83cb80b35b0c1044e15a298426344c6415cbf6b298f"
+    },
+    {
+      "path": "app/lib/smart-assistant/v2/draft-plan.ts",
+      "change": "modified",
+      "before": "3ae043ec843b2889b878a762ff68e36cc2d4f36cf06d08dc87b0b7c2e81a0b94",
+      "after": "26bba84898a8991916b7a8e07c33a9d4ab3213fd6ca9e684d8eeb4fd5c675094"
+    },
+    {
+      "path": "app/lib/smart-assistant/v2/tools.server.ts",
+      "change": "modified",
+      "before": "afe8d8366f60e0dc6e5452e602faf43aa436e2da7beb591ed2b968255b15c149",
+      "after": "638b101c5f37e57bf7bb981ca57a8bea45a2594909feecd1c88cbe3687b21365"
+    },
+    {
+      "path": "backend/supabase/migrations/20260930120000_sa_v2_library_workflow.sql",
+      "change": "added",
+      "after": "e4b4c28364ee391fbb74f05393a4f26db24a6dd51db37d2410b36a7ef1707112"
+    },
+    {
+      "path": "docs/sa-library-workflow-2026-09-30/AGENT_INTEGRATION_PROMPT.md",
+      "change": "added",
+      "after": "54c1f9f7968ea212176e549a4e0acd1e80cadf35b7eab60ae2117f3c7e67073d"
+    },
+    {
+      "path": "docs/sa-library-workflow-2026-09-30/validation/VALIDATION.md",
+      "change": "added",
+      "after": "e5c4fe570b77077b7db304364b199d423e947fb4c0b4475089c4e199a12e9ffb"
+    }
+  ]
+}

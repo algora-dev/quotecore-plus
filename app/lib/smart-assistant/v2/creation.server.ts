@@ -69,7 +69,7 @@ export async function confirmCreation(client: SupabaseClient, access: Access, id
         attempted = true;
         // This is the only parent creation call. It preserves the existing monthly
         // quota, subscription/feature checks, company lock and tax seeding.
-        const created = await createQuoteWithDetails({ customerName: params.customerName, jobName: params.jobName, templateId: null, entryMode: 'manual', measurementSystem: params.measurementSystem as DraftSpec['measurementSystem'], trade: params.trade as DraftSpec['trade'], componentCollectionId: params.componentCollectionId });
+        const created = await createQuoteWithDetails({ customerName: params.customerName, jobName: params.jobName, siteAddress: typeof params.siteAddress === 'string' ? params.siteAddress : null, templateId: null, entryMode: 'manual', measurementSystem: params.measurementSystem as DraftSpec['measurementSystem'], trade: params.trade as DraftSpec['trade'], componentCollectionId: params.componentCollectionId });
         if (!created.ok)
             return await mark(created.code);
         if (!isUuid(created.quoteId))

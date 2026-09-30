@@ -3,6 +3,7 @@ import { QcButton } from '@/app/components/ui/v2/QcButton';
 import type { ActionView, ConversationCard, RecordTarget, RecordOption } from '@/app/lib/smart-assistant/v2/contracts';
 import { encodeResolutionChoice } from '@/app/lib/smart-assistant/resolver/wire';
 import { targetKey } from '@/app/lib/smart-assistant/v2/navigation';
+import { DraftWorkflowCard } from './DraftWorkflowCard';
 import { AssistantIcon, type AssistantIconName } from './AssistantIcon';
 import s from './assistant.module.css';
 const icons: Record<RecordTarget['kind'], AssistantIconName> = { quote: 'quote', draft_quote: 'draft', order: 'order', invoice: 'invoice', component: 'component', customer: 'customer' };
@@ -45,6 +46,7 @@ export function ConversationCards({ cards, actions, busy, canConfirm, onOpen, on
           <QcButton disabled={busy || stale} onClick={() => onReply(encodeResolutionChoice({ version: 1, stateId: c.stateId, choice: 'cancel' }))}>Cancel search</QcButton>
         </div>
       </>}
+      {c.kind === 'draft_workflow' && <DraftWorkflowCard card={c} disabled={busy || stale} onReply={onReply} />}
       {c.kind === 'attention' && <><p className={s.detail}>{c.note} Checked {new Date(c.asOf).toLocaleString()}.</p>{c.groups.map(g => <div key={g.key}>
         <h4>{g.title}{g.state === 'available' ? ` (${g.count})` : ''}</h4><p className={s.detail}>{g.note}</p>
         <div className={s.actions}>{g.items.map(o => record(card, o))}</div>

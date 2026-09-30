@@ -42,6 +42,8 @@ export type CreateQuoteResult =
 interface CreateQuoteParams {
   customerName: string;
   jobName: string | null;
+  /** Optional job/site address. Existing callers may omit it. */
+  siteAddress?: string | null;
   templateId: string | null;
   /**
    * Entry method for the quote:
@@ -182,6 +184,7 @@ async function createQuoteWithDetailsInner(params: CreateQuoteParams): Promise<C
   const quoteId = await createQuoteAtomic(profile.company_id, profile.id, {
     customerName: params.customerName,
     jobName: params.jobName,
+    siteAddress: params.siteAddress?.trim().slice(0, 500) || null,
     taxRate: company.default_tax_rate ?? 0,
     measurementSystem: safeMeasurementSystem,
     entryMode: safeEntryMode,

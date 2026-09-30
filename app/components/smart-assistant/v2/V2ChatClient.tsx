@@ -6,6 +6,7 @@ import { createConversation, type ConversationRow } from '@/app/(auth)/[workspac
 import { displayTaskMessage } from '@/app/lib/smart-assistant/tasks/wire';
 import { failedTurns, staleTaskCard, awaitingProceed } from '@/app/lib/smart-assistant/tasks/presentation';
 import { displayResolutionMessage } from '@/app/lib/smart-assistant/resolver/wire';
+import { displayDraftChoice } from '@/app/lib/smart-assistant/library-workflow/wire';
 import { SafeMessage } from '../SafeMessage';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import type { Access, ActionView, ConversationCard, RecordTarget, SessionSnapshot } from '@/app/lib/smart-assistant/v2/contracts';
@@ -546,8 +547,8 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
 
           {snapshot?.messages.map(m => <div key={m.id} className={s.turn}>
             <div className={m.role === 'user' ? s.userMessage : s.assistantMessage}>
-              {m.role === 'assistant' && <div className={s.assistantHeading}><span className={s.messageLabel}>ASSISTANT</span>{speech.available && <QcButton className={s.readAloud} aria-label="Read this answer aloud" disabled={locked || voice.state !== 'off'} onClick={() => speech.play(displayTaskMessage(displayResolutionMessage(m.content)))}><AssistantIcon name="speaker"/></QcButton>}</div>}
-              <SafeMessage content={displayTaskMessage(displayResolutionMessage(m.content))}/>
+              {m.role === 'assistant' && <div className={s.assistantHeading}><span className={s.messageLabel}>ASSISTANT</span>{speech.available && <QcButton className={s.readAloud} aria-label="Read this answer aloud" disabled={locked || voice.state !== 'off'} onClick={() => speech.play(displayTaskMessage(displayResolutionMessage(displayDraftChoice(m.content))))}><AssistantIcon name="speaker"/></QcButton>}</div>}
+              <SafeMessage content={displayTaskMessage(displayResolutionMessage(displayDraftChoice(m.content)))}/>
             </div>
             {failureByMessage.has(m.id) && <div className={s.failure} role="status" data-sa-failed-run={m.runId ?? undefined}>
               <AssistantIcon name="alert"/><div><p>{failureByMessage.get(m.id)!.copy}</p>
