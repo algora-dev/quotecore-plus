@@ -190,17 +190,9 @@ export default function HeroVideo() {
           display: none !important;
         }
 
-        /* Make header more transparent over video when hero is active */
-        body.hero-video-active .hero-header-transparent {
-          background: rgba(255, 255, 255, 0.35) !important;
-          backdrop-blur: 8px !important;
-          border-color: rgba(255, 255, 255, 0.3) !important;
-          box-shadow: none !important;
-        }
-
-        /* Desktop: video fills viewport minus header (h-20 = 5rem) */
+        /* Desktop: video fills viewport minus the 72px marketing header */
         .hero-video-section {
-          height: calc(100vh - 5rem);
+          height: calc(100vh - 4.5rem);
         }
 
         /* Mobile: video fits screen with natural aspect ratio */

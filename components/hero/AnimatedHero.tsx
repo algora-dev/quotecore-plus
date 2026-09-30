@@ -361,13 +361,6 @@ const nzahShellCss = `
     transform: translateY(0);
     pointer-events: auto;
   }
-  /* Frosted state over the intro */
-  .nzah-hero-header header {
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    background-color: rgba(255, 255, 255, 0.72) !important;
-  }
-
   /* Intro handoff: whole intro slides up and out (homepage hero follows) */
   .nzah-intro-exit {
     animation: nzahIntroExit 750ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
