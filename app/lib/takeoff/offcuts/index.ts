@@ -8,3 +8,6 @@ export * from './adapters/quotecore';
 
 export * from './core/plan';
 export * from './core/groupEditing';
+
+export * from './core/materialBanks';
+export * from './core/inventory';

@@ -1,6 +1,6 @@
-import type { BankLayout, Demand, FaceFrame, Issue, Offcut, Point, Profile, RoofFace, RoofInput, SolveSettings } from './types';
+import type { BankLayout, Demand, FaceFrame, Issue, Offcut, Point, Profile, Region, RoofEdge, RoofFace, RoofInput, SolveSettings } from './types';
 import { EPS, add, dot, mul, sub, unit, validateRing } from './math';
-import { area, bounds, components, extendY, fromRing, intersect, isMonotone, rectangle, subtract, translate } from './regions';
+import { area, bounds, boundarySegments, components, extendY, fromRing, intersect, isMonotone, rectangle, subtract, translate } from './regions';
 import { validatePartition } from './partition';
 import { validateFaceDirections } from './reviewGeometry';
 export function frameFor(face: RoofFace, roof: RoofInput): FaceFrame {
@@ -63,7 +63,22 @@ export function validateBankLayout(faces: RoofFace[], profile: Profile, settings
   if (new Set(layout.primaryFaceIds).size !== layout.primaryFaceIds.length || layout.primaryFaceIds.some(id => !ids.has(id))) throw new Error('Invalid primary face selection.');
   if (Object.keys(layout.laneOffsetByFace).length !== faces.length || Object.keys(layout.extraLengthByFace).length !== faces.length ||
       [...Object.keys(layout.laneOffsetByFace), ...Object.keys(layout.extraLengthByFace)].some(id => !ids.has(id))) throw new Error('Bank layout does not match the reviewed faces.');
+  if (layout.materialBanks) {
+    const members = layout.materialBanks.flatMap(b => b.faceIds);
+    if (members.length !== faces.length || new Set(members).size !== faces.length || members.some(id => !ids.has(id))) throw new Error('Material-bank membership does not match the approved faces.');
+    if (new Set(layout.materialBanks.map(b=>b.id)).size !== layout.materialBanks.length || layout.materialBanks.some(b=>!Number.isFinite(b.cutLengthMm) || b.cutLengthMm<=0)) throw new Error('Invalid material-bank identity or stock length.');
+    for(const bank of layout.materialBanks){
+      const members=faces.filter(f=>bank.faceIds.includes(f.id));
+      if(!bank.flow || !Number.isFinite(bank.flow.x) || !Number.isFinite(bank.flow.y) || Math.hypot(bank.flow.x,bank.flow.y)<EPS ||
+        members.some(a=>!a.flow || a.pitchDeg===null || Math.abs(a.pitchDeg-bank.pitchDeg)>1e-6 || dot(unit(a.flow),unit(bank.flow))<Math.cos(2*Math.PI/180)) ||
+        members.some(a=>members.some(b=>a.flow && b.flow && dot(unit(a.flow),unit(b.flow))<Math.cos(2*Math.PI/180))))
+        throw new Error('Material banks must preserve compatible approved run directions and pitches.');
+    }
+  }
   for (const f of faces) {
+    const common = layout.cutLengthByFace?.[f.id], tail = layout.tailExtensionByFace?.[f.id] ?? 0;
+    if (common !== undefined && (!Number.isFinite(common) || common <= 0 || common > profile.maxLengthMm)) throw new Error(`${f.name}: invalid common stock length.`);
+    if (!Number.isFinite(tail) || tail < 0 || tail + layout.extraLengthByFace[f.id] > (settings.maxBankExtensionMm ?? 100) + EPS) throw new Error(`${f.name}: invalid total cutting extension.`);
     const offset = layout.laneOffsetByFace[f.id], extra = layout.extraLengthByFace[f.id];
     if (!Number.isFinite(offset) || offset < 0 || offset >= profile.coverMm ||
         f.laneOffsetLocked && Math.abs(offset - f.laneOffsetMm) > EPS) throw new Error(`${f.name}: invalid or locked sheet registration.`);
@@ -73,7 +88,7 @@ export function validateBankLayout(faces: RoofFace[], profile: Profile, settings
 }
 /** Validated once by the caller; used repeatedly by the bounded bank search. */
 export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Profile, settings: SolveSettings,
-  primary = true, extraLengthMm = 0): Demand[] {
+  primary = true, extraLengthMm = 0, cutLengthMm?: number, tailExtensionMm = 0, materialBankId?: string): Demand[] {
   const result: Demand[] = [], w = profile.coverMm, physicalWidth = w + profile.leftLapMm + profile.rightLapMm;
   const frame = frameFor(face, roof), local = fromRing(face.polygon.map(p => sceneToSurface(p, frame))), box = bounds(local);
   // V2.2 approval boundary: once the roofer confirms a face, its polygon and
@@ -117,8 +132,22 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
     const bank = settings.stockMode === 'bank-first', filler = isStraightFiller(required);
     const envelope = settings.stockMode === 'face-envelope' || bank && primary && !filler;
     const extra = bank && primary && !filler ? extraLengthMm : 0;
-    const blankY0 = envelope ? box.minY - profile.endAllowanceMm - y - extra : 0;
-    const rawY1 = envelope ? box.maxY + profile.endAllowanceMm - y : physicalBox.maxY - y;
+    const cutEdges: RoofEdge[] = face.boundary.filter(e => ['hip', 'valley', 'broken_hip'].includes(e.kind))
+      .map(e => ({ ...e, a: sub(sceneToSurface(e.a, frame), {x: laneX, y}), b: sub(sceneToSurface(e.b, frame), {x: laneX, y}) }))
+      .filter(e => Math.min(e.a.x, e.b.x) < physicalWidth - EPS && Math.max(e.a.x, e.b.x) > EPS);
+    // Elevation banks share a STOCK length, never merged roof footprints.
+    // Every separate face/run still has its own real required and cover regions.
+    const baseLength = Math.max(box.maxY - box.minY, cutLengthMm ?? 0);
+    const blankY0 = envelope ? box.maxY - baseLength - profile.endAllowanceMm - y - extra : 0;
+    const lowerCut = cutEdges.some(e => {
+      const x = Math.max(0, Math.min(physicalWidth, (e.a.x + e.b.x) / 2));
+      if (Math.abs(e.b.x - e.a.x) < EPS) return false;
+      const ey = e.a.y + (e.b.y-e.a.y) * (x-e.a.x)/(e.b.x-e.a.x);
+      return required.some(b => x >= b.x0-EPS && x <= b.x1+EPS &&
+        Math.abs(ey - (b.bottom0+(b.bottom1-b.bottom0)*(x-b.x0)/(b.x1-b.x0)) + profile.endAllowanceMm) < 1e-3);
+    });
+    const tail = envelope && lowerCut ? tailExtensionMm : 0;
+    const rawY1 = envelope ? box.maxY + profile.endAllowanceMm - y + tail : physicalBox.maxY - y;
     const len = Math.ceil((rawY1 - blankY0 - EPS) / profile.lengthIncrementMm) * profile.lengthIncrementMm;
     if (len > profile.maxLengthMm + EPS) throw new Error(`${face.name}, lane ${i + 1}: ${(len / 1000).toFixed(3)} m exceeds the profile maximum. The planner never inserts end laps to make it fit.`);
     const reusableCut = face.boundary.some(edge => {
@@ -127,7 +156,7 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
       return Math.max(a.x, b.x) >= laneX - EPS && Math.min(a.x, b.x) <= laneX + physicalWidth + EPS;
     });
     result.push({ id: `${face.id}:sheet:${i + 1}`, faceId: face.id, laneIndex: i, lap: face.lap,
-      widthMm: physicalWidth, origin: { x: laneX, y }, frame, required, reusableCut,
+      widthMm: physicalWidth, origin: { x: laneX, y }, frame, required, reusableCut, cutEdges, ...(materialBankId ? {materialBankId} : {}),
       cover: translate(cover, -laneX, -y), blank: rectangle(0, blankY0, physicalWidth, blankY0 + len),
       ...(bank ? { stockRole: primary ? filler ? 'filler' as const : 'primary-cut' as const : 'supplement' as const } : {}) });
   }
@@ -139,21 +168,68 @@ export function generateDemands(roof: RoofInput, faces: RoofFace[], profile: Pro
   if (layout) validateBankLayout(faces, profile, settings, layout);
   const result = faces.flatMap(face => generateFaceDemands(roof,
     layout ? { ...face, laneOffsetMm: layout.laneOffsetByFace[face.id] } : face,
-    profile, settings, layout ? layout.primaryFaceIds.includes(face.id) : true, layout?.extraLengthByFace[face.id] ?? 0));
+    profile, settings, layout ? layout.primaryFaceIds.includes(face.id) : true, layout?.extraLengthByFace[face.id] ?? 0,
+    layout?.cutLengthByFace?.[face.id], layout?.tailExtensionByFace?.[face.id] ?? 0,
+    layout?.materialBanks?.find(b => b.faceIds.includes(face.id))?.id));
   if (result.length > settings.maxSheets) throw new Error(`Sheet limit exceeded (${settings.maxSheets}). Check the calibration/cover or reduce the selected roof scope.`);
   return result;
 }
-export function offcutsFrom(d: Demand, profile: Profile): Offcut[] {
-  // QuoteCore Find Offcuts intentionally inventories only angled roof cuts.
-  // Ridge termination and barge/eave trimming are not reusable stock here.
+/** Produce inventory only at an approved hip/valley cut, from ACTUAL available
+ * metal. The same operation is used when a reused sheet is trimmed again.
+ * Parent identity is retained, and the validator rebuilds the entire cut tree. */
+export function offcutsFromMaterial(d: Demand, profile: Profile, available: Region, parent?: Offcut): Offcut[] {
   if (d.reusableCut === false) return [];
-  // Backward-compatible imported V2.1 drafts may omit reusableCut; regenerated
-  // V2.2 demands always set it from the approved face boundary semantics.
-  // Longitudinal clearance beyond the installed cut belongs to waste. It is
-  // never reintroduced to inventory as an apparently reusable polygon.
-  const left = subtract(d.blank, extendY(d.required, profile.cutGapMm));
-  return components(left).filter(r => area(r) > 1).map((region, i) => ({
-    id: `${d.id}:offcut:${i + 1}`, sourceDemandId: d.id, sourceFaceId: d.faceId,
-    region, widthMm: d.widthMm, lap: d.lap,
-  }));
+  const left = subtract(available, extendY(d.required, profile.cutGapMm));
+  const pieces = components(left).filter(r => area(r) > 1);
+  const result: Offcut[] = [];
+  for (let i = 0; i < pieces.length; i++) {
+    const region = pieces[i];
+    const classification = classifyCut(d, profile, region);
+    // Old externally constructed demands without boundary metadata retain the
+    // legacy path; all demands generated by V2.4 carry cutEdges, even if empty.
+    if (d.cutEdges && !classification) continue;
+    result.push({
+      id: `${d.id}:${parent ? 'recut' : 'offcut'}:${i+1}`,
+      sourceDemandId: d.id, sourceFaceId: d.faceId, region,
+      widthMm: d.widthMm, lap: d.lap,
+      rootDemandId: parent?.rootDemandId ?? parent?.sourceDemandId ?? d.id,
+      rootBankId: parent?.rootBankId ?? d.materialBankId ?? d.faceId,
+      ...(parent ? {parentOffcutId: parent.id} : {}),
+      generation: (parent?.generation ?? -1) + 1,
+      sourceLaneIndex: d.laneIndex,
+      sourceCrossMm: dot(d.frame.origin, d.frame.u)*d.frame.mmPerSceneUnit+d.origin.x,
+      ...(classification ?? {}),
+    });
+  }
+  return result;
+}
+export function offcutsFrom(d: Demand, profile: Profile): Offcut[] {
+  return offcutsFromMaterial(d, profile, d.blank);
+}
+function classifyCut(d: Demand, profile: Profile, region: Region): Pick<Offcut,'cutSetId'|'cutKind'> | undefined {
+  let best: {edge: RoofEdge; length: number; side: string; slope: number} | undefined;
+  const border = boundarySegments(region), margin = profile.cutGapMm + profile.endAllowanceMm;
+  for (const edge of d.cutEdges ?? []) {
+    const dx = edge.b.x - edge.a.x;
+    if (Math.abs(dx) < EPS) continue; // longitudinal barge-like trim is not a set
+    const slope = (edge.b.y-edge.a.y)/dx;
+    let length = 0, side = '';
+    for (const seg of border) {
+      const x0 = Math.max(Math.min(seg.a.x,seg.b.x),Math.min(edge.a.x,edge.b.x));
+      const x1 = Math.min(Math.max(seg.a.x,seg.b.x),Math.max(edge.a.x,edge.b.x));
+      if (x1-x0 < EPS || Math.abs(seg.b.x-seg.a.x)<EPS) continue;
+      const m = (seg.b.y-seg.a.y)/(seg.b.x-seg.a.x);
+      if (Math.abs(m-slope)>1e-5) continue;
+      const x=(x0+x1)/2, y=seg.a.y+m*(x-seg.a.x), ey=edge.a.y+slope*(x-edge.a.x);
+      if (Math.abs(Math.abs(y-ey)-margin) < 1e-3) { length += x1-x0; side = y<ey ? 'upper' : 'lower'; }
+    }
+    if (length > (best?.length ?? 0)) best={edge,length,side,slope};
+  }
+  if (!best) return undefined;
+  const cutKind = best.edge.kind as 'hip'|'valley'|'broken_hip';
+  // Both arms of an up-and-over valley are one ordered set. Hip halves retain
+  // their handedness; separate steps/fillers are split into contiguous runs by
+  // the coherent matcher instead of inventing missing sheets between them.
+  const shape = cutKind === 'valley' ? 'V' : best.slope < 0 ? 'left' : 'right';
+  return {cutKind, cutSetId:`${d.faceId}:${cutKind}:${best.side}:${shape}`};
 }

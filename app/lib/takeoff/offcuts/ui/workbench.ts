@@ -15,6 +15,7 @@ import { roofRevision } from '../adapters/quotecore';
 import { escapeHtml as esc, PALETTE, renderSvg, interiorAnchor } from './svg';
 import { styles } from './styles';
 import { icon } from './icons';
+import { sceneScale, watchSceneViewport } from './viewport';
 export interface WorkbenchOptions {
   initialDraft?: Draft;
   initialIssues?: Issue[];
@@ -45,10 +46,13 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let focusedDiagnosticId = '', validationAttempted = false, pendingSourceAck = false;
   let partitionKey = '', partitionCache: PartitionReport | null = null;
   let showSheets=false, showSources=false, showEnvelope=false, drawPoints: Point[]|null=null, drag:Drag|null=null;
-  let initialPaintQueued = false;
+  let layouts:Solution[] = draft.solution ? [draft.solution] : [], layoutIndex=0;
+  let backgroundFailed=false;
+  const viewport = watchSceneViewport(() => renderScene());
+  let background:HTMLImageElement|null=null;
   let viewBox = [-30,-30,roof.sceneWidth+60,roof.sceneHeight+60];
   const history: string[] = [], redoHistory: string[] = [];
-  function snapshot(): string { return JSON.stringify({ draft, issues, hiddenFaceIds: [...hiddenFaceIds], selectedFaceId, phase }); }
+  function snapshot(): string { return JSON.stringify({ draft, issues, hiddenFaceIds: [...hiddenFaceIds], selectedFaceId, phase, layoutIndex }); }
   function checkpoint(): void {
     const value = snapshot();
     if (history[history.length - 1] !== value) history.push(value);
@@ -57,7 +61,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   }
   function cancel(): void { worker?.terminate(); worker = null; busy = false; jobId = ''; }
   function invalidate(): void {
-    cancel(); draft.solution = null; phase = 'faces'; selectedOffcutId = ''; selectedGroupId = '';
+    cancel(); draft.solution = null; layouts=[];layoutIndex=0; phase = 'faces'; selectedOffcutId = ''; selectedGroupId = '';
     error = ''; pendingSourceAck = false; partitionKey = '';
   }
   function detect(record = true): void {
@@ -95,27 +99,21 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(matrix.inverse());return{x:p.x,y:p.y};
   }
   function renderScene(): void {
+    if(disposed)return;
     const canvas = shadow.querySelector<HTMLElement>('.qc-canvas'); if (!canvas) return;
-    const box = canvas.getBoundingClientRect();
+    viewport.observe(canvas);
+    const box = canvas.getBoundingClientRect(), scale = sceneScale(viewBox,box.width,box.height);
+    if(scale===null){canvas.innerHTML='<div class="qc-canvas-wait" role="status">Preparing plan…</div>';return;}
+    canvas.dataset.renderWidth=String(box.width);canvas.dataset.renderHeight=String(box.height);canvas.dataset.renderScale=String(scale);
     canvas.dataset.pan = String(panMode || spaceHeld);
     canvas.dataset.dragging = String(drag?.kind === 'pan');
     canvas.innerHTML = renderSvg(draft, { phase, selectedFaceId, selectedOffcutId, selectedGroupId, editPieces,
       showSheets, showSources, showEnvelope, viewBox: viewBox.join(' '), pendingPolygon: drawPoints ?? undefined,
       hiddenFaceIds, coverage: partition().regions, focusedDiagnosticId,
-      sceneUnitsPerPixel: Math.max(viewBox[2] / Math.max(1, box.width), viewBox[3] / Math.max(1, box.height)),
+      sceneUnitsPerPixel: scale,
     });
-    // Chromium can defer the first SVG external/blob image paint inside a newly
-    // mounted shadow root until another interaction invalidates the layer. Force
-    // two cold-open paint opportunities; this changes no geometry or view state.
-    if (!initialPaintQueued) {
-      initialPaintQueued = true;
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (disposed) return;
-        const scene = shadow.querySelector<SVGSVGElement>('svg.qc-scene');
-        if (scene) { scene.style.transform = 'translateZ(0)'; void scene.getBoundingClientRect(); scene.style.transform = ''; }
-      }));
-    }
   }
+
   function focusFace(id: string): void {
     const f = draft.faces.find(f => f.id === id); if (!f) return;
     selectedFaceId = id;
@@ -157,7 +155,16 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     const view = captureView();
     const f = face(), s = draft.solution, reported = allIssues(), errors = reported.filter(i => i.severity === 'error');
     const faceName = (id: string): string => draft.faces.find(g => g.id === id)?.name ?? id;
-    const color = (id: string): string => PALETTE[Math.max(0, draft.faces.findIndex(g => g.id === id)) % PALETTE.length];
+    const bankFor=(id:string)=>s?.bankLayout?.materialBanks?.find(b=>b.faceIds.includes(id));
+    const color = (id: string): string => PALETTE[Math.max(0, draft.faces.findIndex(g => g.id === (bankFor(id)?.faceIds[0]??id))) % PALETTE.length];
+    const bankName=(ids:string[])=>ids.map(id=>faceName(id)).join(' + ');
+    const rowColor=(faceId:string):string=>{
+      const ds=new Set(s?.demands.filter(d=>d.faceId===faceId).map(d=>d.id));
+      const placement=s?.placements.find(p=>ds.has(p.demandId)&&p.kind==='reuse');
+      const offcut=s?.offcuts.find(o=>o.id===placement?.offcutId);
+      const root=s?.bankLayout?.materialBanks?.find(b=>b.id===offcut?.rootBankId);
+      return color(root?.faceIds[0]??faceId);
+    };
     const pitch = draft.faces.length && draft.faces.every(g => g.pitchDeg === draft.faces[0].pitchDeg) ? draft.faces[0].pitchDeg : null;
     const smallIds = new Set(draft.faces.filter(g => !validateRing(g.polygon) && narrowFace(g, draft.roof)).map(g => g.id));
     const faceButtons = `<div class="qc-face-grid" aria-label="Roof faces">${draft.faces.map(g => `<button class="qc-face ${g.id === selectedFaceId ? 'active' : ''}" data-action="select-face" data-id="${esc(g.id)}" aria-pressed="${g.id === selectedFaceId}" data-hidden="${hiddenFaceIds.has(g.id)}"><span class="qc-face-label">${esc(g.name)}</span><span class="qc-face-meta">${smallIds.has(g.id) ? '<span class="qc-small-tag">Small</span>' : ''}${hiddenFaceIds.has(g.id) ? icon('eyeOff') + '<span class="qc-sr-only">Hidden</span>' : g.confirmed ? icon('check') + '<span class="qc-sr-only">Confirmed</span>' : ''}</span></button>`).join('')}</div>`;
@@ -180,10 +187,14 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if (s && phase === 'solution') {
       const rows = materialPlan(draft.faces, s), groups = reuseGroups(s), selectedGroup = groups.find(g => g.id === selectedGroupId);
       normal = `<h2>Sheet & offcut plan</h2><p class="qc-plan-total"><strong>${s.metrics.newSheetCount} new sheets</strong><span>${s.metrics.reusedPieceCount} positions filled with offcuts</span></p>
+        ${layouts.length>1 ? `<div class="qc-layout-picker"><span>Layout ${layoutIndex+1} of ${layouts.length}</span><button data-action="next-layout">Try another layout ${icon('arrow')}</button></div>` : ''}
         <div class="qc-material-plan">${rows.map(row => {
           const type = row.newCount === row.sheetCount ? `NEW · ${row.sheetCount} sheets` : row.newCount === 0 ? `OFFCUT · ${row.sheetCount} sheets` : `${row.newCount} NEW + ${row.reuseCount} OFFCUT`;
-          const source = row.sources.length ? `From ${row.sources.map(a => esc(faceName(a.faceId))).join(' + ')}` : row.feeds.length ? `Offcuts → ${row.feeds.map(a => esc(faceName(a.faceId))).join(', ')}` : 'New material';
-          return `<button class="qc-plan-row ${selectedFaceId === row.faceId ? 'selected' : ''}" data-action="select-plan-face" data-id="${esc(row.faceId)}" style="--source-color:${color(row.sources[0]?.faceId ?? row.faceId)}"><span><b>${esc(row.name)}</b><strong>${esc(type)}</strong></span><small>${source}</small>${row.extraLengthMm > 0 ? `<small class="qc-extra">Cut stock includes +${row.extraLengthMm.toFixed(1)} mm — verify length</small>` : ''}</button>`;
+          const sameBank=row.sources.length>1 && new Set(row.sources.map(a=>bankFor(a.faceId)?.id??a.faceId)).size===1;
+          const feeds=row.feeds.filter(a=>a.faceId!==row.faceId);
+          const source = row.sources.length ? sameBank ? `From ${esc(bankName(row.sources.map(a=>a.faceId).sort()))} bank` : `From ${row.sources.map(a => a.faceId===row.faceId ? 'this face’s own cuts' : esc(faceName(a.faceId))).join(' + ')}` : feeds.length ? `Offcuts → ${feeds.map(a => esc(faceName(a.faceId))).join(', ')}` : 'New material';
+          const onward=row.sources.length && feeds.length ? `<small>Next cuts → ${feeds.map(a=>esc(faceName(a.faceId))).join(', ')}</small>` : '';
+          return `<button class="qc-plan-row ${selectedFaceId === row.faceId ? 'selected' : ''}" data-action="select-plan-face" data-id="${esc(row.faceId)}" style="--source-color:${rowColor(row.faceId)}"><span><b>${esc(row.name)}</b><strong>${esc(type)}</strong></span><small>${source}</small>${onward}</button>`;
         }).join('')}</div>
         <label class="qc-check"><input data-display="showSheets" type="checkbox" ${showSheets ? 'checked' : ''}/>Show sheet lines</label>
         ${selectedGroup ? `<div class="qc-selection"><b>${esc(faceName(selectedGroup.sourceFaceId))} → ${esc(faceName(selectedGroup.destinationFaceId))}</b><p>${selectedGroup.sheetCount} offcut sheets. Drag the set to another face to try a valid fit.</p><button data-action="edit-group-pieces">Edit individual pieces</button><button data-action="clear-selection">Deselect</button></div>` : ''}
@@ -192,13 +203,13 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         ${s.search.budgetReached ? '<p class="qc-note">Search limit reached. This is the best complete plan found; some reuse may remain undiscovered.</p>' : ''}`;
       const selected = s.offcuts.find(o => o.id === selectedOffcutId);
       const placement = s.placements.find(p => p.kind === 'reuse' && p.offcutId === selectedOffcutId) ?? (selected ? { demandId: s.demands[0]?.id ?? '', rotation: 0 as const, translateY: 0 } : undefined);
-      const fresh = new Set(s.placements.filter(p => p.kind === 'new').map(p => p.demandId));
-      const unused = s.offcuts.filter(o => fresh.has(o.sourceDemandId) && !s.placements.some(p => p.kind === 'reuse' && p.offcutId === o.id));
+      const unused = s.offcuts.filter(o => !s.placements.some(p => p.kind === 'reuse' && p.offcutId === o.id));
       solutionTools = `<h3>Drawing & physical pieces</h3><label class="qc-check"><input data-display="editPieces" type="checkbox" ${editPieces ? 'checked' : ''}/>Edit individual offcuts instead of sets</label>
         <label class="qc-check"><input data-display="showSources" type="checkbox" ${showSources ? 'checked' : ''}/>Show offcuts at their source</label><label class="qc-check"><input data-display="showEnvelope" type="checkbox" ${showEnvelope ? 'checked' : ''}/>Show new-sheet envelopes</label>
         <details><summary>Individual assignments (${s.metrics.reusedPieceCount})</summary><div class="qc-list">${s.placements.filter(p => p.kind === 'reuse').map(p => `<button class="qc-assignment" data-action="select-offcut" data-id="${esc(p.offcutId)}">${esc(s.offcuts.find(o => o.id === p.offcutId)?.sourceDemandId)} → ${esc(p.demandId)}</button>`).join('')}</div></details>
         <details><summary>Unused source pieces (${unused.length})</summary><div class="qc-list">${unused.map(o => `<button class="qc-assignment" data-action="select-offcut" data-id="${esc(o.id)}">${esc(o.sourceDemandId)} · ${(area(o.region) / 1e6).toFixed(3)} m²</button>`).join('')}</div></details>
         ${placement ? `<h3>Selected physical offcut</h3><label class="qc-field">Destination sheet<select id="destination">${s.demands.map(d => `<option value="${esc(d.id)}" ${d.id === placement.demandId ? 'selected' : ''}>${esc(d.id)}</option>`).join('')}</select></label><div class="qc-fields"><label>Rotation<select id="offcut-rotation"><option value="0" ${placement.rotation === 0 ? 'selected' : ''}>0°</option><option value="180" ${placement.rotation === 180 ? 'selected' : ''}>180° end-for-end</option></select></label><label>Along-sheet shift, mm<input id="offcut-shift" type="number" value="${placement.translateY.toFixed(2)}"/></label></div><div class="qc-actions"><button data-action="fit-placement">Snap valid fit</button><button data-action="apply-placement">Apply placement</button><button data-action="rotate-offcut">Rotate 180°</button></div>` : ''}
+        <details><summary>Material banks & cutting sequence</summary><p class="qc-muted">Direction families share a planning frame, not a merged roof polygon. Every real face and sheet position is retained.</p>${s.bankLayout?.materialBanks?.map(b=>`<p><b>${esc(bankName(b.faceIds))}</b><br/><small>Parallel run family · longest bank ${(b.cutLengthMm/1000).toFixed(2)} m</small></p>`).join('')??''}<p class="qc-muted">New bank sequence: ${s.bankLayout?.primarySequence?.map(faceName).map(esc).join(' → ')??'Legacy plan'}</p></details>
         <details><summary>Plan-derived stock lengths</summary><p class="qc-muted">Replace with verified site-measured lengths before ordering. Includes reported extra stock. Spares are not included.</p><table class="qc-stock"><thead><tr><th>Face</th><th>Qty</th><th>Length</th></tr></thead><tbody>${newStockSchedule(s).map(g => `<tr><td>${esc(faceName(g.faceId))}<small>${esc(g.role)}</small></td><td>${g.count}</td><td>${(g.lengthMm / 1000).toFixed(3)} m</td></tr>`).join('')}</tbody></table></details>
         <details><summary>Material totals & search</summary><p class="qc-muted">New physical metal: ${(s.metrics.newMaterialMm2 / 1e6).toFixed(2)} m²<br/>Net roof surface: ${(s.metrics.netRoofMm2 / 1e6).toFixed(2)} m²<br/>Modelled waste: ${(s.metrics.wasteMm2 / 1e6).toFixed(2)} m²<br/>${s.search.completedTrials} completed trials · ${(s.search.elapsedMs / 1000).toFixed(2)} s<br/>Practical bounded search, not a proven minimum. Areas include pitch; physical overlaps differ from net cover. Waste is not a quoting allowance.</p></details>`;
     } else {
@@ -222,10 +233,10 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     const coverageAlert = focused ? `<div class="qc-note ${focused.severity === 'error' ? 'qc-error' : ''}"><div class="qc-check-title">${icon('warning')}${esc(coverageLabel)}</div><p>${(focused.areaMm2 / 1e6).toFixed(4)} m² · ${focused.severity === 'error' ? 'Check the highlighted region before calculating.' : 'Small drawing discrepancy. Shown in amber; draft calculation can continue.'}</p><div class="qc-view-issues"><button data-action="focus-issue" data-id="${focused.id}">${icon('focus')}Show on plan</button>${coverage.length > 1 ? `<button data-action="next-issue">Next (${focusedIndex + 1}/${coverage.length})</button>` : ''}</div></div>` : '';
     const otherError = errors.find(i => !coverage.some(r => r.id === i.objectId));
     const actionableError = otherError ? `<div class="qc-note qc-error" role="alert"><div class="qc-check-title">${icon('warning')}Check ${otherError.faceId ? esc(faceName(otherError.faceId)) : 'the review'}</div><p>${esc(otherError.message)}</p>${otherError.faceId ? `<button data-action="focus-face" data-id="${esc(otherError.faceId)}">Show face</button>` : ''}${errors.length > 1 ? '<small>Further checks are in Advanced.</small>' : ''}</div>` : '';
-    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.3 · Draft plan</span>${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.4 · Draft plan</span>${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
       <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Use the face list to select a face."></div><div class="qc-help">${drawPoints ? 'Click polygon vertices, then Finish polygon. Esc cancels.' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Solid = new · hatch = offcuts · middle mouse / Space + drag to pan'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
-      <aside class="qc-sidebar" aria-label="Offcut review controls">${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}</div>` : ''}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advanced}</aside></main>
+      <aside class="qc-sidebar" aria-label="Offcut review controls">${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${backgroundFailed ? '<div class="qc-note">The background image could not load. The approved roof outlines remain visible. Reopen the takeoff to refresh the image URL.</div>' : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}</div>` : ''}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advanced}</aside></main>
       <footer class="qc-footer"><span>Draft only — verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>`;
     renderScene(); restoreView(view, resetScroll);
   }
@@ -248,7 +259,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         if(disposed||event.data.id!==jobId||id!==jobId)return;
         if(event.data.kind==='progress'){progress=`${event.data.completed} / ${event.data.total} layout trials`;render();return;}
         if(event.data.kind==='result'){
-          draft.solution=event.data.solution as Solution;phase='solution';selectedOffcutId='';selectedGroupId='';advancedOpen=false;editPieces=false;
+          layouts=Array.isArray(event.data.layouts)?event.data.layouts as Solution[]:[event.data.solution as Solution];layoutIndex=0;draft.solution=layouts[0];phase='solution';selectedOffcutId='';selectedGroupId='';advancedOpen=false;editPieces=false;
           // Suggestions become visible arrows without mutating the locked input
           // face state used to fingerprint the original solve request.
           notice=''; cancel();render(true);
@@ -266,6 +277,11 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     try {
       if(action==='close'){options.onClose?.();return;}
       if(action==='cancel'){cancel();render();return;}
+      if(action==='next-layout'){
+        if(layouts.length<2)return;
+        checkpoint();layoutIndex=(layoutIndex+1)%layouts.length;draft.solution=structuredClone(layouts[layoutIndex]);
+        selectedGroupId='';selectedOffcutId='';notice=`Layout ${layoutIndex+1} of ${layouts.length}. All sheet positions are allocated; review the changed source relationships.`;render(true);return;
+      }
       if(action==='select-face'){selectedFaceId=target.dataset.id??'';notice='';render();return;}
       if(action==='focus-face'){focusFace(target.dataset.id ?? selectedFaceId);render();return;}
       if(action==='focus-issue'){
@@ -292,9 +308,11 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='undo'||action==='redo'){
         const from=action==='undo'?history:redoHistory,to=action==='undo'?redoHistory:history,item=from.pop();
         if(item){
-          to.push(snapshot());cancel();const saved=JSON.parse(item) as {draft:Draft;issues:Issue[];hiddenFaceIds:string[];selectedFaceId:string;phase:'faces'|'solution'};
+          to.push(snapshot());cancel();const saved=JSON.parse(item) as {draft:Draft;issues:Issue[];hiddenFaceIds:string[];selectedFaceId:string;phase:'faces'|'solution';layoutIndex?:number};
           draft=saved.draft;issues=saved.issues;hiddenFaceIds=new Set(saved.hiddenFaceIds);selectedFaceId=saved.selectedFaceId;
-          phase=saved.phase;selectedOffcutId='';selectedGroupId='';partitionKey='';drawPoints=null;pendingSourceAck=false;validationAttempted=false;
+          phase=saved.phase;layoutIndex=saved.layoutIndex??0;
+          if(draft.solution && !layouts.some(s=>s.layoutId===draft.solution?.layoutId)){layouts=[structuredClone(draft.solution)];layoutIndex=0;}
+          selectedOffcutId='';selectedGroupId='';partitionKey='';drawPoints=null;pendingSourceAck=false;validationAttempted=false;
           notice=action==='undo'?'Previous change undone.':'Change restored.';
         }render();return;
       }
@@ -344,9 +362,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         const o=draft.solution.offcuts.find(o=>o.id===selectedOffcutId);if(!o)throw new Error('Select an offcut.');
         const p=draft.solution.placements.find(p=>p.kind==='reuse'&&p.offcutId===selectedOffcutId) ?? {rotation:0 as const,translateY:0};
         const id=(shadow.querySelector('#destination') as HTMLSelectElement).value;
-        if(action==='fit-placement'){const d=draft.solution.demands.find(d=>d.id===id)!;const fit=findFit(o,d,draft.profile);if(!fit)throw new Error('No shape- and lap-compatible fit was found for this sheet lane.');checkpoint();draft.solution=editPlacement(draft.solution,selectedOffcutId,id,fit.rotation,fit.translateY);render();return;}
+        if(action==='fit-placement'){const d=draft.solution.demands.find(d=>d.id===id)!;const fit=findFit(o,d,draft.profile);if(!fit)throw new Error('No shape- and lap-compatible fit was found for this sheet lane.');checkpoint();layouts=[];layoutIndex=0;draft.solution=editPlacement(draft.solution,selectedOffcutId,id,fit.rotation,fit.translateY);render();return;}
         const rot=action==='rotate-offcut'?(p.rotation===0?180:0):Number((shadow.querySelector('#offcut-rotation') as HTMLSelectElement).value) as 0|180;
-        const y=Number((shadow.querySelector('#offcut-shift') as HTMLInputElement).value);checkpoint();draft.solution=editPlacement(draft.solution,selectedOffcutId,id,rot,y);render();return;
+        const y=Number((shadow.querySelector('#offcut-shift') as HTMLInputElement).value);checkpoint();layouts=[];layoutIndex=0;draft.solution=editPlacement(draft.solution,selectedOffcutId,id,rot,y);render();return;
       }
     }catch(e){error=message(e);if(busy)cancel();}render();
   }
@@ -458,7 +476,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         const target = draft.solution.demands.find(d => pointInRegion(d.cover, scenePointToDemand(p, d)));
         if (!target) throw new Error('Drop this offcut set onto a roof face.');
         const moved = moveReuseGroup(draft.solution, state.groupId!, target.faceId, target.laneIndex);
-        checkpoint(); draft.solution = moved; selectedGroupId = '';
+        checkpoint(); layouts=[];layoutIndex=0;draft.solution = moved; selectedGroupId = '';
       } else if (draft.solution) {
         const s = draft.solution, o = s.offcuts.find(o => o.id === state.offcutId); if (!o) throw new Error('Source offcut not found.');
         const placement = s.placements.find(a => a.offcutId === state.offcutId && a.kind === 'reuse') ?? { demandId: o.sourceDemandId, translateY: 0, rotation: 0 as const };
@@ -468,7 +486,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         let dy = placement.translateY;
         if (target.id === original.id) dy += scenePointToDemand(p, target).y - scenePointToDemand(state.start, original).y;
         else { const anchor = scenePointToDemand(state.start, original).y - placement.translateY; dy = scenePointToDemand(p, target).y - anchor; }
-        checkpoint(); draft.solution = editPlacement(s, state.offcutId!, target.id, placement.rotation, dy);
+        checkpoint(); layouts=[];layoutIndex=0;draft.solution = editPlacement(s, state.offcutId!, target.id, placement.rotation, dy);
       }
     } catch (e) { error = message(e); }
     render();
@@ -533,10 +551,17 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     catch { stale = true; cancel(); pointerCancel(); render(); }
   }, 1000) : null;
   render();
+  if(draft.roof.imageUrl && /^(https?:|blob:|data:image\/)/.test(draft.roof.imageUrl)){
+    background=new Image();
+    background.onload=()=>{if(!disposed){backgroundFailed=false;viewport.request();}};
+    background.onerror=()=>{if(!disposed){backgroundFailed=true;render();}};
+    background.src=draft.roof.imageUrl;
+    if(background.complete&&background.naturalWidth>0)viewport.request();
+  }
   return {
     getDraft: () => structuredClone(draft),
     destroy: () => {
-      disposed = true; cancel(); pointerCancel(); if (watch) clearInterval(watch);
+      disposed = true; viewport.destroy();if(background){background.onload=null;background.onerror=null;background=null;} cancel(); pointerCancel(); if (watch) clearInterval(watch);
       for (const [type, fn, config] of listeners) shadow.removeEventListener(type, fn, config);
       window.removeEventListener('keydown', globalKeyDown); window.removeEventListener('keyup', globalKeyUp); window.removeEventListener('blur', blur);
       shadow.innerHTML = '';

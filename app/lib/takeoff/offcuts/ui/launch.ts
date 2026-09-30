@@ -56,12 +56,14 @@ export function launchQuoteCoreOffcuts(readSnapshot: () => QuoteCoreSnapshot, op
   }
   modal.addEventListener('cancel', event => { event.preventDefault(); event.stopPropagation(); requestClose(); });
   try {
+    // Establish real layout dimensions BEFORE the first SVG/handle render.
+    modal.showModal();
     handle = mountWorkbench(host, captured.roof, {
       initialIssues: captured.issues, onClose: requestClose, onExport: options.onExport,
       readCurrentSourceRevision: () => fromQuoteCore(readSnapshot()).roof.sourceRevision,
       createWorker: options.createWorker ?? (() => new Worker(new URL('../worker.ts', import.meta.url), { type: 'module' })),
     });
-    modal.showModal(); host.shadowRoot?.querySelector<HTMLElement>('[data-action="close"]')?.focus();
+    host.shadowRoot?.querySelector<HTMLElement>('[data-action="close"]')?.focus();
   } catch (error) { destroy(); throw error; }
   return { destroy, getDraft: () => handle!.getDraft() };
 }

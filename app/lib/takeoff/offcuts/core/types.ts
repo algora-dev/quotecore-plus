@@ -84,10 +84,22 @@ export interface Demand {
   stockRole?: 'primary-cut' | 'filler' | 'supplement';
   /** Only hip/valley/broken-hip cuts enter reusable inventory. */
   reusableCut?: boolean;
+  /** Approved cut boundaries in this physical sheet's local millimetres. */
+  cutEdges?: RoofEdge[];
+  materialBankId?: string;
 }
 export interface Offcut {
   id: string; sourceDemandId: string; sourceFaceId: string; region: Region;
   widthMm: number; lap: Lap;
+  /** Immediate cutting operation; root identity survives subsequent reuse. */
+  rootDemandId?: string;
+  rootBankId?: string;
+  parentOffcutId?: string;
+  generation?: number;
+  cutSetId?: string;
+  cutKind?: 'hip' | 'valley' | 'broken_hip';
+  sourceLaneIndex?: number;
+  sourceCrossMm?: number;
 }
 export interface Placement {
   demandId: string;
@@ -99,14 +111,28 @@ export interface Placement {
   /** Geometric prototype edits are kept and visibly invalidated, never hidden. */
   manual?: boolean;
 }
+/** A purchasing/planning family, NOT a union of the physical roof polygons.
+ * Separate runs stay separate; no area is removed by projection/occlusion. */
+export interface MaterialBank {
+  id: string; faceIds: string[]; flow: Point; pitchDeg: number;
+  cutLengthMm: number; crossMinMm: number; crossMaxMm: number;
+}
 export interface BankLayout {
   primaryFaceIds: string[];
   laneOffsetByFace: Record<string, number>;
   /** Extra length applies to angled primary cuts, not short straight fillers. */
   extraLengthByFace: Record<string, number>;
+  materialBanks?: MaterialBank[];
+  cutLengthByFace?: Record<string, number>;
+  /** Extra downstream stock only on lanes with an angled downstream boundary. */
+  tailExtensionByFace?: Record<string, number>;
+  primarySequence?: string[];
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
+  engineVersion?: '2.4';
+  layoutId?: string;
+  layoutLabel?: string;
   profile: Profile; settings: SolveSettings;
   demands: Demand[]; offcuts: Offcut[]; placements: Placement[];
   lapByFace: Record<string, Lap>;
@@ -117,7 +143,7 @@ export interface Solution {
     netRoofMm2: number; installedPhysicalMm2: number; wasteMm2: number;
     savedMm2: number; newSheetCount: number; reusedPieceCount: number;
   };
-  search: { method: 'bounded-multistart' | 'bank-first'; completedTrials: number; elapsedMs: number; budgetReached: boolean; provenOptimal: false };
+  search: { method: 'bounded-multistart' | 'bank-first' | 'material-banks'; completedTrials: number; elapsedMs: number; budgetReached: boolean; provenOptimal: false };
   issues: Issue[];
   status: 'prototype-review' | 'invalid';
   /** V1 never produces an approved manufacturing/order list. */

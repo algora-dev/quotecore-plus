@@ -1,7 +1,7 @@
 import type { RoofFace, Solution } from './types';
 import { bounds } from './regions';
 export interface ReuseGroup {
-  id: string; sourceFaceId: string; destinationFaceId: string;
+  id: string; sourceFaceId: string; destinationFaceId: string; rootBankId?: string;
   offcutIds: string[]; demandIds: string[]; sheetCount: number;
 }
 export interface FacePlan {
@@ -14,11 +14,11 @@ export interface FacePlan {
  * material across straight fillers or another source's offcuts. */
 export function reuseGroups(solution: Solution): ReuseGroup[] {
   const demands = new Map(solution.demands.map(d => [d.id, d])), offcuts = new Map(solution.offcuts.map(o => [o.id, o]));
-  const buckets = new Map<string, { source: string; destination: string; members: { offcut: string; demand: string; lane: number }[] }>();
+  const buckets = new Map<string, { source: string; destination: string; root?: string; members: { offcut: string; demand: string; lane: number }[] }>();
   for (const p of solution.placements) {
     const d = demands.get(p.demandId), o = offcuts.get(p.offcutId ?? '');
     if (p.kind !== 'reuse' || !d || !o) continue;
-    const key = `${o.sourceFaceId}|${d.faceId}`, bucket = buckets.get(key) ?? { source: o.sourceFaceId, destination: d.faceId, members: [] };
+    const key = `${o.sourceFaceId}|${d.faceId}|${o.rootBankId ?? ""}`, bucket = buckets.get(key) ?? { source: o.sourceFaceId, destination: d.faceId, root: o.rootBankId, members: [] };
     bucket.members.push({ offcut: o.id, demand: d.id, lane: d.laneIndex }); buckets.set(key, bucket);
   }
   const groups: ReuseGroup[] = [];
@@ -27,7 +27,7 @@ export function reuseGroups(solution: Solution): ReuseGroup[] {
     let group: ReuseGroup | undefined, last = -Infinity;
     for (const member of bucket.members) {
       if (!group || member.lane !== last + 1) {
-        group = { id: `reuse:${bucket.source}:${bucket.destination}:${member.lane}`, sourceFaceId: bucket.source, destinationFaceId: bucket.destination, offcutIds: [], demandIds: [], sheetCount: 0 };
+        group = { id: `reuse:${bucket.source}:${bucket.destination}:${member.lane}`, sourceFaceId: bucket.source, destinationFaceId: bucket.destination, rootBankId: bucket.root, offcutIds: [], demandIds: [], sheetCount: 0 };
         groups.push(group);
       }
       group.offcutIds.push(member.offcut); group.demandIds.push(member.demand); group.sheetCount++; last = member.lane;
@@ -48,7 +48,7 @@ export function materialPlan(faces: RoofFace[], solution: Solution): FacePlan[] 
     return { faceId: face.id, name: face.name, sheetCount: target.length, newCount, reuseCount: target.length - newCount,
       primary: solution.bankLayout?.primaryFaceIds.includes(face.id) ?? newCount === target.length,
       sources: [...sources].map(([faceId, count]) => ({ faceId, count })), feeds: [...feeds].map(([faceId, count]) => ({ faceId, count })),
-      extraLengthMm: solution.bankLayout?.extraLengthByFace[face.id] ?? 0 };
+      extraLengthMm: (solution.bankLayout?.extraLengthByFace[face.id] ?? 0) + (solution.bankLayout?.tailExtensionByFace?.[face.id] ?? 0) };
   });
 }
 /** Lengths here include any selected extra stock. They are PLAN-derived lengths,

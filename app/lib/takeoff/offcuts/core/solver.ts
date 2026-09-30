@@ -3,20 +3,25 @@ import { fingerprint } from './math';
 import { area, bounds, rotate180, subtract, translate } from './regions';
 import { findFit } from './fit';
 export { findFit } from './fit';
-import { optimiseBanks } from './banks';
+import { optimiseBankLayouts } from './banks';
+import { rebuildInventory, materialAtDestination } from './inventory';
 import { generateDemands, offcutsFrom, validateInputs } from './material';
 export function facesRevision(request: SolveRequest): string {
   return fingerprint({ faces: request.faces, profile: request.profile, settings: request.settings });
 }
 export interface SearchHooks { onProgress?: (completed: number, total: number) => void; shouldCancel?: () => boolean; now?: () => number }
-export function optimise(request: SolveRequest, hooks: SearchHooks = {}): Solution {
-  if (request.settings.stockMode === 'bank-first') {
-    const solution = optimiseBanks(request, hooks);
+/** Returns distinct complete layouts, never random reruns of the same plan. */
+export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}): Solution[] {
+  const solutions = request.settings.stockMode === 'bank-first'
+    ? optimiseBankLayouts(request, hooks) : [optimiseLegacy(request, hooks)];
+  for (const solution of solutions) {
     solution.issues.push(...validateSolution(solution));
     if (solution.issues.some(i => i.severity === 'error')) solution.status = 'invalid';
-    return solution;
   }
-  return optimiseLegacy(request, hooks);
+  return solutions;
+}
+export function optimise(request: SolveRequest, hooks: SearchHooks = {}): Solution {
+  return optimiseLayouts(request, hooks)[0];
 }
 export function optimiseLegacy(request: SolveRequest, hooks: SearchHooks = {}): Solution {
   const clock = hooks.now ?? (() => performance.now()), started = clock();
@@ -102,16 +107,21 @@ export function placedRegion(s: Solution, p: Placement) {
 }
 export function validateSolution(s: Solution): Issue[] {
   const issues: Issue[] = [], demandMap = new Map(s.demands.map(d => [d.id, d])), offcutMap = new Map(s.offcuts.map(o => [o.id, o]));
-  const canonicalOffcuts = new Map(s.demands.flatMap(d => offcutsFrom(d, s.profile)).map(o => [o.id, o]));
+  const rebuilt = rebuildInventory(s.demands, s.placements, s.profile);
+  const canonicalOffcuts = new Map(rebuilt.offcuts.map(o => [o.id, o]));
   const counts = new Map<string, number>(), used = new Set<string>(), fresh = new Set(s.placements.filter(p => p.kind === 'new').map(p => p.demandId));
   const error = (code: string, message: string, id?: string): void => { issues.push({ severity: 'error', code, message, objectId: id }); };
+  if (rebuilt.unresolved.length) error('CUT_DEPENDENCY', 'A cut chain has a cycle or missing source operation.', rebuilt.unresolved[0]);
   if (demandMap.size !== s.demands.length || offcutMap.size !== s.offcuts.length) error('DUPLICATE_ID', 'Duplicate sheet or offcut IDs.');
   // Rebuild the physical inventory independently, including the configured cut
   // clearance. Matching a bounding box or forging a second ID cannot create metal.
   for (const o of s.offcuts) {
     const expected = canonicalOffcuts.get(o.id);
     if (!expected || o.sourceDemandId !== expected.sourceDemandId || o.sourceFaceId !== expected.sourceFaceId ||
-        o.lap !== expected.lap || Math.abs(o.widthMm - expected.widthMm) > 1e-6 ||
+        o.lap !== expected.lap || o.parentOffcutId !== expected.parentOffcutId ||
+        o.rootDemandId !== expected.rootDemandId || o.rootBankId !== expected.rootBankId ||
+        o.cutSetId !== expected.cutSetId || o.cutKind !== expected.cutKind || o.generation !== expected.generation ||
+        o.sourceLaneIndex !== expected.sourceLaneIndex || o.sourceCrossMm !== expected.sourceCrossMm || Math.abs(o.widthMm - expected.widthMm) > 1e-6 ||
         area(subtract(o.region, expected.region)) + area(subtract(expected.region, o.region)) > 1e-3) {
       error('INVENTORY_MISMATCH', 'The offcut does not match the source sheet and its actual cut-clearance inventory.', o.id);
     }
@@ -125,9 +135,13 @@ export function validateSolution(s: Solution): Issue[] {
     const o = offcutMap.get(p.offcutId ?? '');
     if (!o) { error('UNKNOWN_OFFCUT', 'The source offcut does not exist.', d.id); continue; }
     if (used.has(o.id)) error('DOUBLE_USE', 'The same physical offcut is assigned more than once.', o.id); used.add(o.id);
-    if (!fresh.has(o.sourceDemandId)) error('SOURCE_NOT_FRESH', 'This offcut depends on a source sheet which was not ordered new.', o.id);
     const source = demandMap.get(o.sourceDemandId);
-    if (!source || area(subtract(o.region, subtract(source.blank, source.required))) > 1e-3) error('INVALID_SOURCE_GEOMETRY', 'An offcut extends outside the actual unused source material.', o.id);
+    const sourcePlacement = s.placements.find(p => p.demandId === o.sourceDemandId);
+    const parent = offcutMap.get(sourcePlacement?.offcutId ?? '');
+    const stock = source && fresh.has(source.id) ? source.blank
+      : parent && sourcePlacement ? materialAtDestination(parent, sourcePlacement) : [];
+    if (!source || !stock.length || area(subtract(o.region, subtract(stock, source.required))) > 1e-3)
+      error('INVALID_SOURCE_GEOMETRY', 'An offcut extends outside its actual source metal / cut chain.', o.id);
     if (Math.abs(o.widthMm - d.widthMm) > 1e-6) error('PROFILE_WIDTH', 'Source and destination physical sheet widths differ.', d.id);
     if (p.rotation !== 0 && p.rotation !== 180) error('ROTATION', 'Only 0° or approved end-for-end rotation is allowed.', d.id);
     if (p.rotation === 180 && !s.profile.allowEndForEnd) error('ROTATION', 'End-for-end rotation is disabled for this profile.', d.id);
@@ -136,6 +150,14 @@ export function validateSolution(s: Solution): Issue[] {
     else if (area(subtract(d.required, placedRegion(s, p))) > Math.max(1e-3, area(d.required) * 1e-9)) error('PIECE_TOO_SMALL', 'The moved offcut leaves part of this sheet requirement uncovered.', d.id);
   }
   for (const d of s.demands) if (counts.get(d.id) !== 1) error('COVERAGE', 'Every required sheet lane must have exactly one new/reused allocation.', d.id);
+  if (s.engineVersion === '2.4') {
+    for (const faceId of new Set(s.demands.map(d=>d.faceId))) {
+      const bank=s.demands.find(d=>d.faceId===faceId)?.materialBankId;
+      const roots=new Set(s.placements.filter(p=>p.kind==='reuse' && demandMap.get(p.demandId)?.faceId===faceId)
+        .map(p=>offcutMap.get(p.offcutId??'')?.rootBankId).filter(id=>id && id!==bank));
+      if (roots.size>1) error('MULTI_BANK_MOSAIC', 'A face cannot mix unrelated external material banks in the practical layout.',faceId);
+    }
+  }
   const installed = s.demands.reduce((n, d) => n + area(d.required), 0);
   if (freshArea + 1e-3 < installed) error('MATERIAL_CONSERVATION', 'Installed physical material exceeds the new material supplied.');
   if (Math.abs(freshArea - s.metrics.newMaterialMm2) > Math.max(1e-3, freshArea * 1e-9)) error('STALE_TOTALS', 'Material totals do not match the current placements.');

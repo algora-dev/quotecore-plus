@@ -1,6 +1,6 @@
 import type { Solution } from './types';
 import { area } from './regions';
-import { offcutsFrom } from './material';
+import { rebuildInventory } from './inventory';
 import { reuseGroups } from './plan';
 import { matchFace } from './matching';
 import { validateSolution } from './solver';
@@ -29,7 +29,7 @@ export function moveReuseGroup(solution: Solution, groupId: string, destinationF
     // Preserve currently referenced source inventory so invalid dependencies are
     // detectable, and regenerate only real new-sheet inventory for valid moves.
     const usedIds = new Set(next.placements.filter(p => p.kind === 'reuse').map(p => p.offcutId));
-    const inventory = next.demands.filter(d => fresh.has(d.id)).flatMap(d => offcutsFrom(d, next.profile));
+    const inventory = rebuildInventory(next.demands, next.placements, next.profile).offcuts;
     for (const o of next.offcuts) if (usedIds.has(o.id) && !inventory.some(q => q.id === o.id)) inventory.push(o);
     next.offcuts = inventory;
     next.metrics.newMaterialMm2 = next.demands.filter(d => fresh.has(d.id)).reduce((n, d) => n + area(d.blank), 0);
