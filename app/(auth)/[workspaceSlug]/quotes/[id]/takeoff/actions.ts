@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { applyPitchAndWaste, rafterPitchFactor } from '@/app/lib/pricing/engine';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
+import { isCornerValueBasis } from '@/app/lib/takeoff/cornerCount';
 import { recalcAllQuoteComponents } from '../../actions';
 
 interface TakeoffMeasurement {
@@ -26,14 +27,17 @@ interface TakeoffMeasurement {
    *  re-entry hydration + re-save doesn't wipe it. */
   /** P3/P4 (spec 10.3): attached-area entries also carry value_basis/plan_value
    *  snapshots and the durable source_geometry_id provenance link; these DO
-   *  participate in calibration recomputation (no longer display-only). */
+   *  participate in calibration recomputation (no longer display-only).
+   *  Corner-derived point entries (2026-09-30) carry value_basis
+   *  'corner_all' | 'corner_external' | 'corner_internal' + corner_count. */
   entryInputs?: {
     height_m?: number | null;
     depth_m?: number | null;
-    value_basis?: 'pitched' | 'plan';
+    value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal';
     plan_value?: number;
     pitch_applied?: boolean;
     source_geometry_id?: string;
+    corner_count?: number;
   } | null;
 }
 
@@ -266,7 +270,7 @@ export async function saveTakeoffMeasurements(
           // reads entry_inputs for calculation).
           //  - preset height/depth: from component_library at save time
           //  - user height/depth: carried on the measurement (freestyle/volume_3d)
-          let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user' } | null = null;
+          let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user'; value_basis?: string; corner_count?: number; source_geometry_id?: string } | null = null;
           if (m.type === 'multi_lineal_lxh' && heightMm && heightM > 0) {
             entryInputs = { height_m: heightM, source: 'preset' };
           } else if (m.type === 'area' && libComp.measurement_type === 'volume' && depthM) {
@@ -275,6 +279,16 @@ export async function saveTakeoffMeasurements(
             entryInputs = { height_m: Number(m.entryInputs.height_m), source: 'user' };
           } else if (m.type === 'volume_3d' && m.entryInputs?.depth_m) {
             entryInputs = { depth_m: Number(m.entryInputs.depth_m), source: 'user' };
+          } else if (m.type === 'point' && isCornerValueBasis(m.entryInputs?.value_basis)) {
+            // Corner-derived entries (2026-09-30): keep the corner basis +
+            // count snapshot riding the same jsonb so hydration and the
+            // builder can show provenance.
+            const cei = m.entryInputs!;
+            entryInputs = {
+              value_basis: cei.value_basis,
+              corner_count: Number(cei.corner_count ?? m.value),
+              ...(cei.source_geometry_id ? { source_geometry_id: cei.source_geometry_id } : {}),
+            };
           }
 
           // All measurements are from the current page and share the same unit.
@@ -334,7 +348,7 @@ export async function saveTakeoffMeasurements(
           // pitch set/changed AFTER attaching always corrects the numbers:
           //   basis 'pitched' -> plan x live pitch factor (roof sheets etc.)
           //   basis 'plan'    -> plan, no pitch
-          const ei = (m as { entryInputs?: { value_basis?: 'pitched' | 'plan'; plan_value?: number; pitch_applied?: boolean; source_geometry_id?: string } | null }).entryInputs;
+          const ei = (m as { entryInputs?: { value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal'; plan_value?: number; pitch_applied?: boolean; source_geometry_id?: string; corner_count?: number } | null }).entryInputs;
           const hasLiveBasis = m.type === 'area' && ei && (ei.value_basis === 'pitched' || ei.value_basis === 'plan') && typeof ei.plan_value === 'number' && ei.plan_value > 0;
           if (hasLiveBasis) {
             metricValue = toMetricArea(ei!.plan_value!);
@@ -655,14 +669,16 @@ export interface TakeoffHydrationMeasurement {
    *  saved with this measurement. Display-only passthrough.
    *  P4 (spec 10.3): attached-area entries also hydrate value_basis/plan_value
    *  and the durable source_geometry_id provenance link (preferred by
-   *  calibration recompute over heuristic matching). */
+   *  calibration recompute over heuristic matching). Corner-derived point
+   *  entries (2026-09-30) hydrate their corner basis + count snapshot. */
   entryInputs: {
     height_m?: number | null;
     depth_m?: number | null;
-    value_basis?: 'pitched' | 'plan';
+    value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal';
     plan_value?: number;
     pitch_applied?: boolean;
     source_geometry_id?: string;
+    corner_count?: number;
   } | null;
 }
 
@@ -816,10 +832,11 @@ export async function loadTakeoffHydrationData(
       entryInputs: (m as { entry_inputs?: {
         height_m?: number | null;
         depth_m?: number | null;
-        value_basis?: 'pitched' | 'plan';
+        value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal';
         plan_value?: number;
         pitch_applied?: boolean;
         source_geometry_id?: string;
+        corner_count?: number;
       } | null }).entry_inputs ?? null,
     };
   });

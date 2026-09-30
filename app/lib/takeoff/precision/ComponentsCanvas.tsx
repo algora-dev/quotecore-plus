@@ -203,10 +203,13 @@ export function ComponentsCanvas(props: {
           </g>;
         }
         if (e.kind === 'point' && path.length >= 1) {
-          const p = path[0];
+          // Corner-derived entries (2026-09-30) carry every counted vertex as
+          // a marker; hand-drawn point entries have exactly one.
           return <g key={e.id} opacity={e.hidden ? 0.5 : 1}>
-            <circle cx={p.x} cy={p.y} r={highlighted ? 11 : 8} fill={stroke} fillOpacity={0.25} stroke={stroke} strokeWidth={highlighted ? 4 : 2.6} />
-            <circle cx={p.x} cy={p.y} r={highlighted ? 4.5 : 3} fill={stroke} />
+            {path.map((p, i) => <g key={`${e.id}-pt${i}`}>
+              <circle cx={p.x} cy={p.y} r={highlighted ? 11 : 8} fill={stroke} fillOpacity={0.25} stroke={stroke} strokeWidth={highlighted ? 4 : 2.6} />
+              <circle cx={p.x} cy={p.y} r={highlighted ? 4.5 : 3} fill={stroke} />
+            </g>)}
           </g>;
         }
         if (path.length === 2) {

@@ -62,6 +62,9 @@ export interface TouchOutlineAdapter {
   /** M11: attach a saved roof area to an area component instead of
    *  redrawing it (pitched value; recomputed live at save time). */
   addRoofAreaEntry?(target: TouchComponentTarget, area: SavedOutlineRecord): TouchComponentEntry | null;
+  /** Corner counting (2026-09-30): apply detected corner counts to a
+   *  count-based component (all/external/internal) as one entry. */
+  addCornerCountEntry?(target: TouchComponentTarget, basis: 'all' | 'external' | 'internal'): TouchComponentEntry | null;
   setEntryHidden?(id: string, hidden: boolean): void;
   deleteComponentEntry?(id: string): void;
   persistReviewedComponents?(): Promise<{ ok: true } | { ok: false; error: string }>;

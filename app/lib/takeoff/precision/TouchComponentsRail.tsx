@@ -10,14 +10,16 @@
 import type { ReactNode } from 'react';
 import { RailAction, RailNotice, RailTask, ScanProgress } from './TouchRailControls';
 import { unitSuffixForKind, type TouchComponentEntry, type TouchComponentGroup, type TouchComponentScanStage, type TouchDrawMode } from './touchComponents';
+import { cornerTotalsAcross, type CornerBasis } from '../cornerCount';
 
 export type TouchComponentsPhase = 'scanning' | 'disclaimer' | 'review' | 'error';
 
 /** Non-system components offered by "attach real component". */
 export interface TouchAttachOption { id: string; name: string; collectionId: string | null }
 
-/** Saved outlines offered by "use an existing roof area" (area components). */
-export interface TouchRoofAreaOption { geometryId: string; name: string; label: string }
+/** Saved outlines offered by "use an existing roof area" (area components).
+ *  Points ride along (2026-09-30) so the rail can compute corner counts. */
+export interface TouchRoofAreaOption { geometryId: string; name: string; label: string; points: { x: number; y: number }[] }
 
 const SELECT_CLASS = 'min-h-[72px] w-full rounded-xl border border-white/20 bg-white/10 px-2 text-base font-semibold text-white';
 
@@ -45,6 +47,7 @@ export interface TouchComponentsRailProps {
   drawMode: TouchDrawMode;
   roofAreas: TouchRoofAreaOption[];
   onAttachRoofArea: (geometryId: string) => void;
+  onAttachCorners: (basis: CornerBasis) => void;
   detailEntries: TouchComponentEntry[];
   highlightedEntryId: string | null;
   unitSystem: 'meters' | 'feet';
@@ -148,6 +151,22 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
           {p.roofAreas.map(ra => <option key={ra.geometryId} value={ra.geometryId}>{ra.name} - {ra.label}</option>)}
         </select>
       </>}
+      {p.drawMode === 'point' && (() => {
+        // Corner counting (2026-09-30): count components reuse the corners
+        // detected on saved outlines instead of tapping each point.
+        const ct = cornerTotalsAcross(p.roofAreas);
+        if (ct.totalCount === 0) return null;
+        return <>
+          <RailNotice>Count component - reuse the corners detected on your saved outlines.</RailNotice>
+          <select value="" aria-label="Use roof corners" className={SELECT_CLASS}
+            onChange={e => { if (e.target.value) p.onAttachCorners(e.target.value as CornerBasis); }}>
+            <option value="">Use roof corners...</option>
+            <option value="all">All corners ({ct.totalCount})</option>
+            <option value="external">External corners ({ct.externalCount})</option>
+            <option value="internal">Internal corners ({ct.internalCount})</option>
+          </select>
+        </>;
+      })()}
       {p.canDrawNew && <RailAction primary={p.detailEntries.length === 0} onClick={p.onStartNewEntry}>+ New entry</RailAction>}
       {p.detailEntries.length === 0
         ? <RailNotice>{p.canDrawNew

@@ -52,6 +52,12 @@ export interface TouchComponentEntry {
   quoteRoofAreaId?: string | null;
   /** Plan-space area snapshot for attached entries (entryInputs.plan_value). */
   planValue?: number;
+  /** Corner-derived entry (kind 'point'): which corner set was counted
+   * (2026-09-30). Persisted via entryInputs.value_basis 'corner_*'. */
+  cornerBasis?: 'all' | 'external' | 'internal';
+  cornerCount?: number;
+  /** Single-outline provenance for corner entries. */
+  sourceGeometryId?: string | null;
 }
 
 /** One colour swatch group in the components rail. */

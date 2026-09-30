@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { rafterPitchFactor } from '@/app/lib/pricing/engine';
 import type { TouchOutlineAdapter } from './TouchOutlineEditor';
 import { TouchComponentsRail, type TouchAttachOption, type TouchComponentsPhase, type TouchRoofAreaOption } from './TouchComponentsRail';
+import type { CornerBasis } from '../cornerCount';
 import { ComponentsCanvas, type EntryDraftPoint } from './ComponentsCanvas';
 import { usePrecisionCamera } from './usePrecisionCamera';
 import { FloatingCanvasSheet } from './FloatingCanvasSheet';
@@ -236,6 +237,20 @@ export function useTouchComponents(
     }
   }, [detail, refreshFromAdapter]);
 
+  // Corner counting (2026-09-30): count-based components reuse the corners
+  // detected on saved outlines instead of tapping each point. The adapter
+  // entry carries every counted vertex so the plan highlights exactly what
+  // was counted, and persist keeps the corner provenance on entryInputs.
+  const onAttachCorners = useCallback((basis: CornerBasis) => {
+    const current = adapterRef.current();
+    if (!current?.addCornerCountEntry || !detail) return;
+    const entry = current.addCornerCountEntry(detail, basis);
+    if (entry) {
+      refreshFromAdapter();
+      logTakeoffEvent('components.entry.corners.attached', { component: detail.displayName, basis, count: entry.value });
+    }
+  }, [detail, refreshFromAdapter]);
+
   // Drawing - the interaction follows the component's measurement type.
   const onStartNewEntry = useCallback(() => {
     if (!detail) return;
@@ -394,6 +409,7 @@ export function useTouchComponents(
         return {
           geometryId: a.geometryId as string,
           name: a.name,
+          points: a.points.map(p => ({ x: p.x, y: p.y })),
           label: `${pitched.toFixed(1)} ${unit2}${a.pitch ? ` (pitch ${Math.round(a.pitch)}°)` : ''}`,
         };
       });
@@ -421,6 +437,7 @@ export function useTouchComponents(
     drawMode={drawMode}
     roofAreas={roofAreas}
     onAttachRoofArea={onAttachRoofArea}
+    onAttachCorners={onAttachCorners}
     detailEntries={detailEntries}
     highlightedEntryId={highlighted} unitSystem={unitSystem}
     drawActive={draw != null} drawSlot={draw?.mode === 'line' ? draw.slot : null}

@@ -23,6 +23,11 @@ import type {
   AiOutlineScanResult,
 } from '@/app/lib/takeoff/precision/touchAiOutline';
 import { outlineDependentRecompute, type SavedOutlineRecord } from '@/app/lib/takeoff/precision/touchOutlines';
+import { cornerTotalsAcross, cornerSelection, cornerValueBasis, isCornerValueBasis, type CornerBasis } from '@/app/lib/takeoff/cornerCount';
+
+/** Measurement types whose entries are counts (draw mode = single-tap
+ *  point). Corner counting applies to these (2026-09-30). */
+const POINT_LIKE_MT = new Set(['count', 'quantity', 'fixed', 'hours_days', 'point']);
 import { drawModeForMeasurementType, groupsFromEntries, polygonAreaCanvas, type TouchComponentEntry, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage, type TouchComponentTarget } from '@/app/lib/takeoff/precision/touchComponents';
 import type { RecomputeMeasurementRecord } from '@/app/lib/takeoff/calibrationRecompute';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
@@ -169,10 +174,13 @@ interface ComponentMeasurement {
     /** P3 (spec 10.3): attached-entry provenance. value_basis + plan_value
      *  snapshot and the source-polygon link participate in calibration
      *  recompute - these are NOT display-only fields. */
-    value_basis?: 'plan' | 'pitched';
+    value_basis?: 'plan' | 'pitched' | 'corner_all' | 'corner_external' | 'corner_internal';
     plan_value?: number;
     pitch_applied?: boolean;
     source_geometry_id?: string;
+    /** Corner-derived point entries (2026-09-30): count snapshot at attach
+     *  time - verification reference, the value IS the count. */
+    corner_count?: number;
   } | null;
   /** AI Takeoff: true if this measurement was created by the AI scan. */
   aiOrigin?: boolean;
@@ -2425,6 +2433,51 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     setIsDirty(true);
   };
 
+  /** Corner counting (owner 2026-09-30): apply detected corner counts to a
+   *  count-based (point/quantity) component as one entry. Value = the live
+   *  count, points = the counted vertices (rendered as markers for visual
+   *  verification), provenance on entryInputs so the corner-derived basis
+   *  survives save/load. Mirrors the area-attach flow above. */
+  const handleApplyCornerCountToComponent = (componentId: string, basis: CornerBasis) => {
+    const selection = cornerSelection(cornerTotalsAcross(roofAreas), basis);
+    if (!selection.count) return;
+    const outlines = roofAreas.filter(ra => Array.isArray(ra.points) && ra.points.length >= 3);
+    const singleArea = outlines.length === 1 ? outlines[0] : null;
+    pushHistorySnapshot();
+    const newMeasurement: ComponentMeasurement = {
+      id: `corner-${typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now()}`,
+      type: 'point',
+      value: selection.count,
+      points: selection.points,
+      visible: true,
+      canvasObjects: [], // derived entry - markers render from points
+      // Stamp the DB area id when all corners come from ONE outline so the
+      // save path routes this group to its owning roof area (multi-outline
+      // totals stay unassigned, like any cross-area component).
+      quoteRoofAreaId: singleArea ? (singleArea.quoteRoofAreaId ?? singleArea.id) : null,
+      fromPageId: currentPageIdRef.current,
+      entryInputs: {
+        value_basis: cornerValueBasis(basis),
+        corner_count: selection.count,
+        ...(singleArea ? { source_geometry_id: singleArea.id } : {}),
+      },
+    };
+    const compData = componentMeasurements.find(c => c.componentId === componentId);
+    if (compData) {
+      setComponentMeasurements(componentMeasurements.map(c =>
+        c.componentId === componentId
+          ? { ...c, measurements: [...c.measurements, newMeasurement], expanded: true }
+          : c
+      ));
+    } else {
+      setComponentMeasurements([
+        ...componentMeasurements,
+        { componentId, measurements: [newMeasurement], expanded: true },
+      ]);
+    }
+    setIsDirty(true);
+  };
+
   const handleRemoveComponent = (componentId: string) => {
     pushHistorySnapshot();
     // Discard any in-progress drawing when removing a component
@@ -4082,6 +4135,36 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         touchBridgeListeners.current.forEach(listener => listener());
         return { ...entry };
       },
+      // Corner counting (2026-09-30): apply detected corner counts to a
+      // count-based component. The entry carries every counted vertex so
+      // the plan highlights exactly what was counted; provenance rides
+      // cornerBasis/cornerCount/sourceGeometryId into persist.
+      addCornerCountEntry: (target: TouchComponentTarget, basis: 'all' | 'external' | 'internal'): TouchComponentEntry | null => {
+        const areas = (touchOutlineAdapterRef.current?.getAreas() ?? [])
+          .filter(a => a.points && a.points.length >= 3);
+        if (!areas.length) return null;
+        const selection = cornerSelection(cornerTotalsAcross(areas), basis);
+        if (!selection.count) return null;
+        const singleArea = areas.length === 1 ? areas[0] : null;
+        const entry: TouchComponentEntry = {
+          id: crypto.randomUUID(),
+          key: target.componentId,
+          componentId: target.componentId,
+          displayName: target.displayName,
+          colour: target.colour,
+          value: selection.count,
+          kind: 'point',
+          hidden: false,
+          points: selection.points,
+          cornerBasis: basis,
+          cornerCount: selection.count,
+          sourceGeometryId: singleArea?.geometryId ?? null,
+          ...(singleArea?.quoteRoofAreaId ? { quoteRoofAreaId: singleArea.quoteRoofAreaId } : {}),
+        };
+        touchComponentEntriesRef.current.push(entry);
+        touchBridgeListeners.current.forEach(listener => listener());
+        return { ...entry };
+      },
       clearComponentOverlay: () => {
         touchComponentEntriesRef.current = [];
         touchBridgeListeners.current.forEach(listener => listener());
@@ -4142,6 +4225,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 visible: !e.hidden,
                 fromPageId: pageId,
                 quoteRoofAreaId: areaId,
+                // Corner-derived entries (2026-09-30) keep their provenance so
+                // hydration + the builder can show the corner basis.
+                ...(e.cornerBasis ? {
+                  entryInputs: {
+                    value_basis: cornerValueBasis(e.cornerBasis),
+                    corner_count: e.cornerCount ?? e.value,
+                    ...(e.sourceGeometryId ? { source_geometry_id: e.sourceGeometryId } : {}),
+                  },
+                } : {}),
               });
             } else {
               extraMeasurements.push({
@@ -7493,6 +7585,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                           <span className="qc-takeoff-area-name">{area.label}</span>
                           <span className="qc-takeoff-area-meta">
                             {displayValue > 0 && <span>{displayValue.toFixed(2)} {displayUnit}</span>}
+                            {(() => {
+                              // Corner readout (2026-09-30): detected external/internal
+                              // corner counts for this area's outlines.
+                              const ct = cornerTotalsAcross(matchingAreas);
+                              return ct.totalCount > 0
+                                ? <span>{ct.totalCount} corners: {ct.externalCount} ext / {ct.internalCount} int</span>
+                                : null;
+                            })()}
                             {isActive && <span className="qc-takeoff-selected-label"><QcIcon name="check" />Active</span>}
                           </span>
                         </button>
@@ -7782,6 +7882,35 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                     </div>
                                   )}
 
+                                  {/* Corner counting (2026-09-30): count-based
+                                      components reuse detected corner counts
+                                      (all / external / internal) - one pick,
+                                      one entry, priced rate x count. */}
+                                  {POINT_LIKE_MT.has(mt) && roofAreas.length > 0 && (() => {
+                                    const ct = cornerTotalsAcross(roofAreas);
+                                    if (ct.totalCount === 0) return null;
+                                    return (
+                                      <div className="mt-2">
+                                        <select
+                                          onChange={(e) => {
+                                            if (e.target.value) {
+                                              handleApplyCornerCountToComponent(comp.id, e.target.value as CornerBasis);
+                                              e.target.value = '';
+                                            }
+                                          }}
+                                          defaultValue=""
+                                          aria-label={`Use roof corners for ${comp.name}`}
+                                          className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
+                                        >
+                                          <option value="">Use roof corners...</option>
+                                          <option value="all">All corners ({ct.totalCount})</option>
+                                          <option value="external">External corners ({ct.externalCount})</option>
+                                          <option value="internal">Internal corners ({ct.internalCount})</option>
+                                        </select>
+                                      </div>
+                                    );
+                                  })()}
+
                                   {/* AI Placeholder: Attach real component */}
                                   {comp.is_system && compData && compData.measurements.length > 0 && (
                                     <div className="qc-takeoff-needs-component mt-2">AI measurement · Needs component</div>
@@ -7860,7 +7989,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                               {(m.type === 'line' || m.type === 'multi_lineal') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
                                               {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×-h`}
                                               {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
-                                              {m.type === 'point' && `1 item`}
+                                              {m.type === 'point' && `${m.value.toFixed(0)} item${Math.abs(m.value - 1) > 0.001 ? 's' : ''}${isCornerValueBasis(m.entryInputs?.value_basis) ? ' - corners' : ''}`}
                                               {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×-h`}
                                               {m.type === 'volume_3d' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                             </span>

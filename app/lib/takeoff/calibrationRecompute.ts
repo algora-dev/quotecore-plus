@@ -24,10 +24,14 @@ export type RecomputeMeasurementType =
 export interface RecomputeEntryInputs {
   height_m?: number | null;
   depth_m?: number | null;
-  value_basis?: 'plan' | 'pitched';
+  /** Corner bases (2026-09-30) ride point rows, which the recompute skips
+   *  as scale-independent counts - never triggers the derived-area path
+   *  (that still requires type 'area' + plan/pitched basis). */
+  value_basis?: 'plan' | 'pitched' | 'corner_all' | 'corner_external' | 'corner_internal';
   plan_value?: number;
   pitch_applied?: boolean;
   source_geometry_id?: string;
+  corner_count?: number;
 }
 
 export interface RecomputeMeasurementRecord {
