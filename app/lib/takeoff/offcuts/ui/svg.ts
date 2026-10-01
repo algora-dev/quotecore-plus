@@ -74,23 +74,25 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
     // Group fresh cover by source face. Reuse keeps physical IDs for editing,
     // while same-colour hatching provides the source-group visual relationship.
     for (const p of s.placements) {
-      if (p.kind === 'reuse' && !options.editPieces && s.status !== 'invalid') continue;
+      const continuation=supply!.continuationDemandIds.has(p.demandId)&&!options.editPieces;
+      if (p.kind === 'reuse' && !continuation && !options.editPieces && s.status !== 'invalid') continue;
       const d=demands.get(p.demandId); if(!d)continue;
       const o=s.offcuts.find(o=>o.id===p.offcutId), block=supply!.blockByPlacement.get(d.id);
       const filler=p.kind==='new'&&supply!.fillerDemandIds.has(d.id);
       const sourceColor=supply!.color(block);
       const map=(q:Point)=>demandPointToScene(q,d), selected=o?.id===options.selectedOffcutId;
-      const fill=p.kind==='reuse'?`url(#${hatch(block)})`:filler?FILLER_COLOR:sourceColor;
-      const label=p.kind==='reuse'?`${o?.id} → ${d.id}`:`${filler?'New filler (may be cut)':'New cutting stock'}: ${d.id}`;
+      const fill=p.kind==='reuse'&&!continuation?`url(#${hatch(block)})`:filler?FILLER_COLOR:sourceColor;
+      const label=continuation?`Same-bank continuation (already supplied): ${o?.id} → ${d.id}`:p.kind==='reuse'?`${o?.id} → ${d.id}`:`${filler?'New filler (may be cut)':'New cutting stock'}: ${d.id}`;
       // An invalid moved piece is rendered in its actual transformed position,
       // not disguised as the required target polygon.
       const invalid = s.issues.some(i => i.severity === 'error' && i.objectId === d.id);
       const region=p.kind==='reuse'&&invalid?placedRegion(s,p):d.cover;
-      shapes += `<g ${p.kind==='reuse'?`data-offcut="${escapeHtml(o?.id)}" data-demand="${escapeHtml(d.id)}"`:`data-demand="${escapeHtml(d.id)}"`} data-material-role="${p.kind==='reuse'?'offcut':filler?'filler':'new-cut'}" data-supply-block="${escapeHtml(block)}" class="${p.kind==='reuse'?'qc-reuse':''}"><title>${escapeHtml(label)}</title><path d="${regionFillPath(region,map)}" fill="${fill}" fill-opacity="${p.kind==='reuse'?'.60':filler?'.88':'.25'}"/>`;
-      if(p.kind==='reuse'||filler||options.showSheets)shapes+=`<path d="${regionOutlinePath(region,map)}" fill="none" stroke="${selected?'#122c3c':filler?'#303641':sourceColor}" stroke-width="${selected?3:1.1}" vector-effect="non-scaling-stroke"${p.kind==='reuse'?' stroke-dasharray="5 3"':filler?' stroke-dasharray="2 4"':''}/>`;
+      shapes += `<g ${p.kind==='reuse'?`data-offcut="${escapeHtml(o?.id)}" data-demand="${escapeHtml(d.id)}"`:`data-demand="${escapeHtml(d.id)}"`} data-material-role="${continuation?'bank-continuation':p.kind==='reuse'?'offcut':filler?'filler':'new-cut'}" data-supply-block="${escapeHtml(block)}" class="${p.kind==='reuse'?'qc-reuse':''}"><title>${escapeHtml(label)}</title><path d="${regionFillPath(region,map)}" fill="${fill}" fill-opacity="${p.kind==='reuse'&&!continuation?'.60':filler?'.75':'.25'}"/>`;
+      if(p.kind==='reuse'&&!continuation||filler||options.showSheets)shapes+=`<path d="${regionOutlinePath(region,map)}" fill="none" stroke="${selected?'#122c3c':filler?'#303641':sourceColor}" stroke-width="${selected?3:1.1}" vector-effect="non-scaling-stroke"${p.kind==='reuse'?' stroke-dasharray="5 3"':filler?' stroke-dasharray="2 4"':''}/>`;
       shapes+='</g>';
     }
     if (!options.editPieces && s.status !== 'invalid') for (const group of reuseGroups(s)) {
+      if(group.demandIds.every(id=>supply!.continuationDemandIds.has(id)))continue;
       // Union real cover cells in scene space. This removes lane boundaries from
       // normal view without turning absent/split pieces into fictitious triangles.
       const region = unionAll(group.demandIds.flatMap(id => {
@@ -124,7 +126,7 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
     const c=interiorAnchor(f.polygon), flow=f.flow;
     const col=lapColor(f.id);
     const row = plan.find(p => p.faceId === f.id);
-    const label = row ? row.newCount === row.sheetCount ? `NEW · ${row.sheetCount} sheets` : row.newCount === 0 ? `OFFCUT · ${row.sheetCount} sheets` : `${row.newCount} NEW + ${row.reuseCount} OFFCUT` : '';
+    const label = row?.primaryOperationFaceIds.length&&row.primaryOperationFaceIds.length>1 ? 'MAIN BANK · shared stock' : row ? row.newCount === row.sheetCount ? `NEW · ${row.sheetCount} sheets` : row.newCount === 0 ? `OFFCUT · ${row.sheetCount} sheets` : `${row.newCount} NEW + ${row.reuseCount} OFFCUT` : '';
     shapes+=`<text ${options.phase==='faces'?`data-face="${escapeHtml(f.id)}"`: ''} x="${n(c.x)}" y="${n(c.y-(row && options.phase==='solution'?26:14)*px)}" text-anchor="middle" font-size="${n(12*px)}" font-family="system-ui,sans-serif" fill="#191B20" font-weight="650" style="paint-order:stroke;stroke:#fff;stroke-width:${n(2.5*px)};stroke-opacity:.75">${escapeHtml(f.name)}</text>`;
     if (row && options.phase === 'solution') shapes += `<text data-plan-face="${escapeHtml(f.id)}" x="${n(c.x)}" y="${n(c.y-11*px)}" text-anchor="middle" font-size="${n(10*px)}" font-family="system-ui,sans-serif" fill="#303641" font-weight="600" style="paint-order:stroke;stroke:#fff;stroke-width:${n(2*px)};stroke-opacity:.6">${escapeHtml(label)}</text>`;
     if(flow){

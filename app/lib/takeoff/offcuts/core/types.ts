@@ -141,12 +141,17 @@ export interface BankLayout {
   /** Extra downstream stock only on lanes with an angled downstream boundary. */
   tailExtensionByFace?: Record<string, number>;
   primarySequence?: string[];
+  /** Real common-grid purchasing operations; not every parallel face is joined. */
+  primaryOperations?: { id: string; bankId: string; faceIds: string[]; phaseMm: number; stockLengthMm: number }[];
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5';
+  engineVersion?: '2.4' | '2.5' | '2.6';
   layoutId?: string;
   layoutLabel?: string;
+  objective?: PlanObjective;
+  comparison?: PlanComparison;
+  decisionTrace?: DecisionTrace;
   profile: Profile; settings: SolveSettings;
   demands: Demand[]; offcuts: Offcut[]; placements: Placement[];
   lapByFace: Record<string, Lap>;
@@ -169,4 +174,56 @@ export interface Draft {
   profile: Profile; settings: SolveSettings; solution: Solution | null;
   exportedAt?: string;
   reviewNotes?: Issue[];
+}
+
+
+/** Planner objectives, not AI confidence or manufacturing approval. */
+export type PlanObjective = 'recommended' | 'simpler' | 'less-material';
+export interface PlanQuality {
+  suppliedMm2: number; newSheets: number; reusedPositions: number;
+  sourceRelationships: number; reuseRuns: number; splitSets: number;
+  recutOperations: number; fillerSeparators: number; primaryOperations: number;
+  /** Explicit site-complexity proxy. Lower is simpler, not a measured labour time. */
+  complexity: number;
+}
+export interface PlanComparison {
+  objective: 'simpler' | 'less-material'; previousLayoutId: string;
+  previous: PlanQuality; proposed: PlanQuality;
+  suppliedDeltaMm2: number; newSheetDelta: number; complexityDelta: number;
+  changedFaceIds: string[];
+}
+export interface TraceEvent {
+  step: number; action: string; message: string;
+  faceIds?: string[];
+  /** Measured values, rule outcomes and actual enumerated candidates only. */
+  data?: Record<string, unknown>;
+}
+export interface TraceCandidate {
+  trial: number; seedFaceId: string; objective: PlanObjective;
+  signature: string; quality: PlanQuality; completed: boolean;
+  selected: boolean; reason: string;
+}
+export interface DecisionTrace {
+  schemaVersion: 1; engineVersion: '2.6'; requestFingerprint: string;
+  objective: PlanObjective; selectedTrial: number | null;
+  events: TraceEvent[]; candidates: TraceCandidate[];
+  truncated: boolean; droppedEvents: number;
+  budgetReached: boolean; elapsedMs: number;
+  scope: 'actual-selected-search';
+  /** A trace describes the generated plan; later manual edits make it historic. */
+  historic?: boolean;
+}
+export interface AlternativePlanOptions {
+  objective: 'simpler' | 'less-material';
+  previous: Solution;
+  /** Full solutions are not needed to exclude plans already shown. */
+  excludedSignatures?: string[];
+  attempt?: number;
+  /** Simpler may buy more material, but never without an explicit bounded cap. */
+  maxExtraMaterialPercent?: number;
+}
+export interface AlternativePlanResult {
+  status: 'found' | 'no-better-distinct-plan';
+  solution: Solution | null; comparison: PlanComparison | null;
+  trace: DecisionTrace; message: string;
 }

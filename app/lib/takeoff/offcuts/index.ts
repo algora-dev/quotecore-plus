@@ -14,3 +14,5 @@ export * from './core/inventory';
 
 export * from './core/zones';
 export * from './core/supply';
+
+export * from './core/diagnostics';

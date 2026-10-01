@@ -78,6 +78,20 @@ export function validateBankLayout(faces: RoofFace[], profile: Profile, settings
         throw new Error('Material banks must preserve compatible approved run directions and pitches.');
     }
   }
+  const operationMembers=new Set<string>(),operationIds=new Set<string>();
+  for(const op of layout.primaryOperations??[]){
+    const bank=layout.materialBanks?.find(b=>b.id===op.bankId);
+    if(!op.id||operationIds.has(op.id)||!bank||!op.faceIds?.length||!Number.isFinite(op.phaseMm)||op.phaseMm<0||op.phaseMm>=profile.coverMm||
+      !Number.isFinite(op.stockLengthMm)||op.stockLengthMm<=0||op.stockLengthMm>profile.maxLengthMm)
+      throw new Error('Invalid common-stock operation metadata.');
+    operationIds.add(op.id);
+    for(const id of op.faceIds){
+      if(operationMembers.has(id)||!bank.faceIds.includes(id)||!layout.primaryFaceIds.includes(id)||
+        Math.abs((layout.cutLengthByFace?.[id]??0)-op.stockLengthMm)>.01)
+        throw new Error('Common-stock operations cannot join unrelated or differently supplied faces.');
+      operationMembers.add(id);
+    }
+  }
   for (const f of faces) {
     const common = layout.cutLengthByFace?.[f.id], tail = layout.tailExtensionByFace?.[f.id] ?? 0;
     if (common !== undefined && (!Number.isFinite(common) || common <= 0 || common > profile.maxLengthMm)) throw new Error(`${f.name}: invalid common stock length.`);

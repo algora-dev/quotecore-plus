@@ -23,7 +23,7 @@ export interface CoherentMatch extends FaceMatch {
  * This matcher does not decide source policy. The bank search provides one or
  * two coherent pools; it does not offer every scrap from the whole roof. */
 export function matchCoherentSets(demands: Demand[], inventory: Offcut[], profile: Profile,
-  check:()=>void=()=>{}, preserveBankRegistration=false): CoherentMatch {
+  check:()=>void=()=>{}, preserveBankRegistration=false, maxRuns=4): CoherentMatch {
   const cuts=demands.filter(d=>!isStraightFiller(d.required));
   const cutArea=cuts.reduce((n,d)=>n+area(d.required),0);
   const byLane=new Map(demands.map(d=>[d.laneIndex,d]));
@@ -123,7 +123,7 @@ export function matchCoherentSets(demands: Demand[], inventory: Offcut[], profil
         if(lane!==lastLane+1||set!==lastSet)runs++;
         lastLane=lane;lastSet=set;
       }
-      if(runs>4)return null;
+      if(runs>maxRuns)return null;
       return{placements,ids:new Set([...state.ids,...p.ids]),offcuts:new Set([...state.offcuts,...p.offcuts]),
         area:state.area+p.area,saving:state.saving+p.saving,sourceArea:state.sourceArea+p.sourceArea,
         key:state.key+';'+p.key,groups:new Set([...state.groups,...p.groups]),runs};

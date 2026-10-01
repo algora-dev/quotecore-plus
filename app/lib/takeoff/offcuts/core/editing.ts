@@ -20,7 +20,8 @@ export function splitFace(face: RoofFace, axis: 'x' | 'y', coordinate: number): 
     boundary: [], confirmed: false, provenance: 'edited' }));
 }
 export function editPlacement(solution: Solution, offcutId: string, destinationId: string, rotation: 0 | 180, translateY: number): Solution {
-  const next = structuredClone(solution), previous = next.placements.find(p => p.kind === 'reuse' && p.offcutId === offcutId);
+  const next = structuredClone(solution); if(next.decisionTrace)next.decisionTrace.historic=true; delete next.comparison;
+  const previous = next.placements.find(p => p.kind === 'reuse' && p.offcutId === offcutId);
   const target = next.placements.find(p => p.demandId === destinationId);
   if (!next.offcuts.some(o => o.id === offcutId) || !target) throw new Error('Select an existing offcut and target sheet lane.');
   if (previous && previous.demandId !== target.demandId) {

@@ -10,6 +10,7 @@ export interface FacePlan {
   sources: { faceId: string; count: number }[]; feeds: { faceId: string; count: number }[];
   extraLengthMm: number;
   newFillerCount: number; newCutCount: number; selfFill: boolean;
+  continuationCount: number; primaryOperationFaceIds: string[];
   projectedSpanMm: number; eaveSpanMm: number; ridgeSpanMm: number;
 }
 /** The roofer sees face-to-face sets; physical identities stay underneath.
@@ -56,6 +57,8 @@ export function materialPlan(faces: RoofFace[], solution: Solution): FacePlan[] 
     const newFillerCount=target.filter(p=>p.kind==='new'&&supply.fillerDemandIds.has(p.demandId)).length;
     return { faceId: face.id, name: face.name, sheetCount: target.length, newCount, reuseCount: target.length - newCount,
       primary: solution.bankLayout?.primaryFaceIds.includes(face.id) ?? newCount === target.length,
+      continuationCount:target.filter(p=>supply.continuationDemandIds.has(p.demandId)).length,
+      primaryOperationFaceIds:solution.bankLayout?.primaryOperations?.find(op=>op.faceIds.includes(face.id))?.faceIds??[],
       newFillerCount, newCutCount:newCount-newFillerCount, selfFill:solution.bankLayout?.selfFillFaceIds?.includes(face.id)??false,
       projectedSpanMm:xs.length?Math.max(...xs)-Math.min(...xs):0,
       eaveSpanMm:ds.reduce((n,d)=>n+(d.eaveOverlapMm??0),0),ridgeSpanMm:ds.reduce((n,d)=>n+(d.ridgeOverlapMm??0),0),

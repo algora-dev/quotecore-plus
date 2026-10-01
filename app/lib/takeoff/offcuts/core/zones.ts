@@ -52,7 +52,10 @@ export function projectBank(bank: MaterialBank, request: SolveRequest): BankProj
   const footprintIntervals=mergeIntervals(members.map(f=>{
     const xs=f.polygon.map(p=>dot(p,u)*scale);return [Math.min(...xs),Math.max(...xs)];
   }));
-  const eaveIntervals=mergeIntervals(members.flatMap(f=>f.boundary.filter(e=>e.kind==='spouting').map(e=>{
+  const eaveFaces=request.faces.filter(f=>bank.faceIds.includes(f.id)&&f.boundary.some(e=>e.kind==='hip')&&!isSelfFillCandidate(f,request.roof));
+  // Receiving projections can complete the elevation's spouting span without
+  // becoming additional new-stock anchors (C + E still spans the same width).
+  const eaveIntervals=mergeIntervals((eaveFaces.length?eaveFaces:members).flatMap(f=>f.boundary.filter(e=>e.kind==='spouting').map(e=>{
     const a=dot(e.a,u)*scale,b=dot(e.b,u)*scale;return [Math.min(a,b),Math.max(a,b)] as Interval;
   })));
   const spanMm=footprintIntervals.reduce((n,[a,b])=>n+b-a,0);
@@ -67,7 +70,17 @@ export function projectBank(bank: MaterialBank, request: SolveRequest): BankProj
  * anchor selection, never removal of approved roof geometry. */
 export function bankAnchorFaces(members: RoofFace[], roof: RoofInput): RoofFace[] {
   const main=members.filter(f=>f.boundary.some(e=>e.kind==='hip')&&!isSelfFillCandidate(f,roof));
-  return main.length?main:members;
+  if(!main.length)return members;
+  // A small hip receiver wholly inside a larger same-direction projection is
+  // a destination, not another purchasing anchor (the C valley -> E case).
+  // A/J both extend the elevation envelope, so neither is removed. This changes
+  // supply grouping only; EVERY approved face still has real physical demand.
+  const span=(f:RoofFace)=>{const u=frameFor(f,roof).u,x=f.polygon.map(p=>dot(p,u)*roof.mmPerSceneUnit);return [Math.min(...x),Math.max(...x)];};
+  const anchors=main.filter(f=>{const [a,b]=span(f);return !main.some(g=>{
+    if(g===f)return false;const [c,d]=span(g);
+    return d-c>(b-a)*1.02&&c<=a+.01&&d>=b-.01;
+  });});
+  return anchors.length?anchors:main;
 }
 
 /** A hip end and a parallel valley/broken hip enclose a shifted strip. The

@@ -8,7 +8,7 @@ export const MATERIAL_PALETTE = [
   '#087D8B','#915133','#486A22','#88479A','#28696E','#A34543',
   '#4960A0','#9B591A','#467064','#863D62',
 ];
-export const FILLER_COLOR='#E2E5E9';
+export const FILLER_COLOR='#B5BAC2';
 export function materialColors(s:Solution) {
   const view=supplyView(s);
   const consumed=new Set(s.placements.filter(p=>p.kind==='reuse').map(p=>p.offcutId));

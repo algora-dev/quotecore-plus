@@ -1,4 +1,4 @@
-import type { Demand, Issue, Lap, Offcut, Placement, Solution, SolveRequest } from './types';
+import type { AlternativePlanOptions, AlternativePlanResult, DecisionTrace, PlanObjective, PlanQuality, Demand, Issue, Lap, Offcut, Placement, Solution, SolveRequest } from './types';
 import { fingerprint } from './math';
 import { area, bounds, rotate180, subtract, translate } from './regions';
 import { findFit } from './fit';
@@ -7,10 +7,18 @@ import { optimiseBankLayouts } from './banks';
 import { rebuildInventory, materialAtDestination } from './inventory';
 import { generateDemands, offcutsFrom, validateInputs } from './material';
 import { supplyView } from './supply';
+import { planQuality, planSignature, comparePlans } from './diagnostics';
 export function facesRevision(request: SolveRequest): string {
   return fingerprint({ faces: request.faces, profile: request.profile, settings: request.settings });
 }
-export interface SearchHooks { onProgress?: (completed: number, total: number) => void; shouldCancel?: () => boolean; now?: () => number }
+export interface SearchHooks {
+  onProgress?: (completed: number, total: number) => void;
+  shouldCancel?: () => boolean; now?: () => number;
+  onDecisionTrace?: (trace: DecisionTrace) => void;
+  /** Advanced programmatic search policy; profile/face locks remain unchanged. */
+  planSearch?: { objective: PlanObjective; attempt?: number; referenceQuality?: PlanQuality;
+    excludeSignatures?: string[]; maxExtraMaterialPercent?: number; referenceSolution?: Solution };
+}
 /** Returns distinct complete layouts, never random reruns of the same plan. */
 export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}): Solution[] {
   const solutions = request.settings.stockMode === 'bank-first'
@@ -23,6 +31,47 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
 }
 export function optimise(request: SolveRequest, hooks: SearchHooks = {}): Solution {
   return optimiseLayouts(request, hooks)[0];
+}
+/** Search again with a deliberate objective and exclusions. Existing geometry,
+ * stock limits, laps and previous accepted plan are not mutated. A repeated or
+ * non-improving result is reported honestly rather than relabelled as a new plan. */
+export function optimiseAlternative(request: SolveRequest, options: AlternativePlanOptions, hooks: SearchHooks = {}): AlternativePlanResult {
+  const { previous, objective } = options;
+  if (!['simpler', 'less-material'].includes(objective)) throw new Error('Choose Simpler cut plan or Less material.');
+  if (request.settings.stockMode !== 'bank-first') throw new Error('Alternative strategies require primary-bank mode.');
+  if (previous.sourceRevision !== request.roof.sourceRevision || previous.facesRevision !== facesRevision(request))
+    throw new Error('The previous plan is stale. Confirm the changed roof/settings and calculate a new plan first.');
+  if (validateSolution(previous).some(i => i.severity === 'error')) throw new Error('Correct the invalid previous plan before requesting an alternative.');
+  if(!previous.bankLayout)throw new Error('Previous plan has no verifiable bank layout.');
+  const expected=generateDemands(request.roof,request.faces,request.profile,request.settings,previous.bankLayout)
+    .map(d=>({...d,lap:previous.lapByFace[d.faceId]}));
+  if(fingerprint(expected)!==fingerprint(previous.demands))throw new Error('Previous sheet geometry does not match the reviewed roof.');
+  const cap=options.maxExtraMaterialPercent??15, attempt=options.attempt??0;
+  if(!Number.isFinite(cap)||cap<0||cap>100)throw new Error('Simpler-plan material cap must be between 0% and 100%.');
+  if(!Number.isInteger(attempt)||attempt<0||attempt>10000)throw new Error('Invalid alternative attempt number.');
+  const exclusions=[...new Set([planSignature(previous),...(options.excludedSignatures??[])])];
+  if(exclusions.length>128)throw new Error('Too many previous layouts in one search session.');
+  const previousQuality=planQuality(previous);
+  let trace:DecisionTrace|undefined;
+  const solutions=optimiseLayouts(request,{...hooks,planSearch:{objective,attempt,referenceQuality:previousQuality,
+    excludeSignatures:exclusions,maxExtraMaterialPercent:cap,referenceSolution:previous},onDecisionTrace:t=>{trace=t;hooks.onDecisionTrace?.(t);}});
+  const solution=solutions.find(s=>s.status!=='invalid'&&!exclusions.includes(planSignature(s)));
+  if(solution){
+    const comparison=comparePlans(previous,solution,objective);
+    // Independent result gate: objective labels must describe a real improvement.
+    const improved=objective==='simpler'?comparison.complexityDelta<0&&solution.metrics.newMaterialMm2<=previousQuality.suppliedMm2*(1+cap/100)+1
+      :comparison.suppliedDeltaMm2 < -1;
+    if(improved&&comparison.changedFaceIds.length){
+      solution.comparison=comparison;
+      return{status:'found',solution,comparison,trace:solution.decisionTrace!,message:objective==='simpler'
+        ?'Found a distinct plan with a lower site-complexity score. Review its material difference.'
+        :'Found a distinct plan requiring less purchased material. Review the changed cutting sequence.'};
+    }
+  }
+  if(!trace)throw new Error('Alternative search produced no diagnostic trace.');
+  return{status:'no-better-distinct-plan',solution:null,comparison:null,trace,
+    message:objective==='simpler'?`No distinct simpler plan was found within the search budget and ${cap}% extra-material limit. Your current plan has been kept.`
+      :'No distinct lower-material plan was found within the search budget. Your current plan has been kept. This is not proof of an optimum.'};
 }
 export function optimiseLegacy(request: SolveRequest, hooks: SearchHooks = {}): Solution {
   const clock = hooks.now ?? (() => performance.now()), started = clock();
@@ -168,7 +217,7 @@ export function validateSolution(s: Solution): Issue[] {
       if (roots.size>1) error('MULTI_BANK_MOSAIC', 'A face cannot mix unrelated external material banks in the practical layout.',faceId);
     }
   }
-  if (s.engineVersion === '2.5') {
+  if (s.engineVersion === '2.5' || s.engineVersion === '2.6') {
     const view=supplyView(s);
     for(const faceId of new Set(s.demands.map(d=>d.faceId))){
       const external=new Set(s.placements.filter(p=>p.kind==='reuse'&&demandMap.get(p.demandId)?.faceId===faceId)

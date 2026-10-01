@@ -1,4 +1,4 @@
-import type { Draft, Issue, Point, RoofFace, RoofInput, Solution } from '../core/types';
+import type { AlternativePlanResult, DecisionTrace, Draft, Issue, Point, RoofFace, RoofInput, Solution } from '../core/types';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../core/types';
 import { deriveFaces } from '../core/graph';
 import { analysePartition, type PartitionReport } from '../core/partition';
@@ -9,6 +9,7 @@ import { scenePointToDemand, validateInputs } from '../core/material';
 import { findFit } from '../core/solver';
 import { materialPlan, newStockSchedule, reuseGroups } from '../core/plan';
 import { materialSummary } from '../core/supply';
+import { planSignature, traceText } from '../core/diagnostics';
 import { projectBank } from '../core/zones';
 import { materialColors } from './materialColors';
 import { moveReuseGroup } from '../core/groupEditing';
@@ -51,6 +52,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let showSheets=false, showSources=false, showEnvelope=false, drawPoints: Point[]|null=null, drag:Drag|null=null;
   let layouts:Solution[] = draft.solution ? [draft.solution] : [], layoutIndex=0;
   let backgroundFailed=false;
+  let alternativeMenu=false, alternativeAttempt=0, extraMaterialCap=15;
+  let lastSearchTrace:DecisionTrace|null=null;
   const viewport = watchSceneViewport(() => renderScene());
   let background:HTMLImageElement|null=null;
   let viewBox = [-30,-30,roof.sceneWidth+60,roof.sceneHeight+60];
@@ -65,7 +68,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function cancel(): void { worker?.terminate(); worker = null; busy = false; jobId = ''; }
   function invalidate(): void {
     cancel(); draft.solution = null; layouts=[];layoutIndex=0; phase = 'faces'; selectedOffcutId = ''; selectedGroupId = '';
-    error = ''; pendingSourceAck = false; partitionKey = '';
+    error = ''; pendingSourceAck = false; partitionKey = ''; alternativeMenu=false;lastSearchTrace=null;alternativeAttempt=0;
   }
   function detect(record = true): void {
     if (record) checkpoint();
@@ -153,6 +156,12 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if (main) main.scrollTop = resetScroll ? 0 : view.mainScroll;
   }
   function inputField(label:string,field:string,value:number|null,step='1'):string {return `<label>${esc(label)}<input data-field="${field}" type="number" step="${step}" value="${value===null?'':value}"/></label>`;}
+  function tracePanel(trace:DecisionTrace):string {
+    return `<p class="qc-muted">V${trace.engineVersion} · ${esc(trace.objective)} · selected trial ${trace.selectedTrial??'none'} · ${trace.candidates.length} candidate trials${trace.budgetReached?' · budget reached':''}${trace.historic?' · historic (manually edited plan)':''}</p>
+      <ol class="qc-trace-events">${trace.events.slice(0,100).map(e=>`<li><details><summary>${esc(e.action)} — ${esc(e.message)}</summary>${e.faceIds?.length?`<p>${e.faceIds.map(id=>esc(draft.faces.find(f=>f.id===id)?.name??id)).join(', ')}</p>`:''}${e.data?`<pre>${esc(JSON.stringify(e.data,null,2))}</pre>`:''}</details></li>`).join('')}</ol>
+      <details><summary>Why this candidate was selected</summary><pre>${esc(JSON.stringify(trace.candidates,null,2))}</pre></details>
+      ${trace.truncated||trace.events.length>100?'<p class="qc-muted">Detailed events are bounded; export the trace for all retained events and truncation counts.</p>':''}`;
+  }
   function render(resetScroll = false): void {
     if (disposed) return;
     const view = captureView();
@@ -183,22 +192,28 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     let normal = '', solutionTools = '';
     if (s && phase === 'solution') {
       const rows = materialPlan(draft.faces, s), summary=materialSummary(s), groups = reuseGroups(s), selectedGroup = groups.find(g => g.id === selectedGroupId);
-      normal = `<h2>Sheet & offcut plan</h2><p class="qc-plan-total"><strong>${s.metrics.newSheetCount} new sheets</strong><span>${summary.newCutCount} cutting sheets + ${summary.newFillerCount} fillers<br/>${s.metrics.reusedPieceCount} positions filled with offcuts</span></p>
-        <p class="qc-muted qc-material-key">Colour = new cutting stock · matching hatch = its offcuts · <b>grey / dotted = new fillers (may be cut)</b>.</p>
-        ${layouts.length>1 ? `<div class="qc-layout-picker"><span>Layout ${layoutIndex+1} of ${layouts.length}</span><button data-action="next-layout">Try another layout ${icon('arrow')}</button></div>` : ''}
+      normal = `<h2>Sheet & offcut plan</h2><p class="qc-plan-total"><strong>${s.metrics.newSheetCount} new sheets</strong><span>${summary.newCutCount} bank sheets + ${summary.newFillerCount} filler separators<br/>${s.metrics.reusedPieceCount} positions filled with offcuts</span></p>
+        <p class="qc-muted qc-material-key">Colour = one cutting operation · matching hatch = its offcuts · <b>darker grey / dotted = filler separators</b>.</p>
+        <div class="qc-plan-variants">
+          ${layouts.length>1?`<label class="qc-field">Saved in this session<select data-plan-index aria-label="Choose saved cut plan">${layouts.map((layout,i)=>`<option value="${i}" ${i===layoutIndex?'selected':''}>Plan ${i+1} — ${esc(layout.layoutLabel??'Cut plan')}</option>`).join('')}</select></label>`:`<p class="qc-muted">Plan 1 — ${esc(s.layoutLabel??'Recommended')}</p>`}
+          <button data-action="alternative-menu" class="qc-wide" aria-expanded="${alternativeMenu}" ${busy||stale||s.status==='invalid'||layouts.length>=12?'disabled':''}>Create another cut plan ${icon('arrow')}</button>
+          ${alternativeMenu?`<div class="qc-alternative-options"><button data-action="alternative-simpler" ${busy?'disabled':''}><b>Simpler offcuts</b><small>Fewer sets, transfers and recuts. May buy extra material.</small></button><button data-action="alternative-material" ${busy?'disabled':''}><b>Less material / waste</b><small>Try another sequence to buy less metal. May require more cutting.</small></button><p class="qc-muted">Your current plan is kept. A new version appears only if a different valid plan improves the chosen goal.</p></div>`:''}
+          ${s.comparison?`<p class="qc-plan-comparison" role="status">Compared with its previous plan: ${s.comparison.newSheetDelta>0?'+':''}${s.comparison.newSheetDelta} new sheets; ${s.comparison.suppliedDeltaMm2>0?'+':''}${(s.comparison.suppliedDeltaMm2/1e6).toFixed(2)} m² purchased material. ${s.comparison.changedFaceIds.length} faces changed.${s.objective==='simpler'?' Lower cutting-complexity score; review the trade-off.':''}</p>`:''}
+          ${layouts.length>=12?'<p class="qc-muted">Session limit reached: 12 saved plans. Export the plan you want to keep.</p>':''}
+        </div>
         <div class="qc-material-plan">${rows.map(row => {
-          const type = row.selfFill ? `${row.newCount} NEW + ${row.reuseCount} SELF-FILL` : row.newCount === row.sheetCount ? `NEW · ${row.sheetCount} sheets` : row.newCount === 0 ? `OFFCUT · ${row.sheetCount} sheets` : `${row.newCount} NEW + ${row.reuseCount} OFFCUT`;
+          const type = row.primaryOperationFaceIds.length>1 ? 'MAIN BANK' : row.selfFill ? `${row.newCount} NEW + ${row.reuseCount} SELF-FILL` : row.newCount === row.sheetCount ? `NEW · ${row.sheetCount} sheets` : row.newCount === 0 ? `OFFCUT · ${row.sheetCount} sheets` : `${row.newCount} NEW + ${row.reuseCount} OFFCUT`;
           const sourceBlocks=new Set(s.placements.filter(p=>p.kind==='reuse'&&s.demands.find(d=>d.id===p.demandId)?.faceId===row.faceId).map(p=>sourceStyle!.blockByPlacement.get(p.demandId)));
           const sameBank=row.sources.length>1 && sourceBlocks.size===1;
           const feeds=row.feeds.filter(a=>a.faceId!==row.faceId);
           const source = row.sources.length ? sameBank ? `From ${esc(bankName(row.sources.map(a=>a.faceId).sort()))} bank` : `From ${row.sources.map(a => a.faceId===row.faceId ? 'this face’s own cuts' : esc(faceName(a.faceId))).join(' + ')}` : feeds.length ? `Offcuts → ${feeds.map(a => esc(faceName(a.faceId))).join(', ')}` : 'New material · no reuse assigned from this block';
           const onward=row.sources.length && feeds.length ? `<small>Next cuts → ${feeds.map(a=>esc(faceName(a.faceId))).join(', ')}</small>` : '';
-          return `<button class="qc-plan-row ${selectedFaceId === row.faceId ? 'selected' : ''}" data-action="select-plan-face" data-id="${esc(row.faceId)}" style="--source-color:${rowColor(row.faceId)}"><span><b>${esc(row.name)}</b><strong>${esc(type)}</strong></span><small>${source}</small>${row.newFillerCount?`<small>${row.newFillerCount} new filler${row.newFillerCount===1?'':'s'} shown in grey · ${row.sheetCount} positions total</small>`:`<small>${row.sheetCount} positions total</small>`}${onward}</button>`;
+          return `<button class="qc-plan-row ${selectedFaceId === row.faceId ? 'selected' : ''}" data-action="select-plan-face" data-id="${esc(row.faceId)}" style="--source-color:${rowColor(row.faceId)}"><span><b>${esc(row.name)}</b><strong>${esc(type)}</strong></span><small>${row.primaryOperationFaceIds.length>1?`Part of ${esc(bankName(row.primaryOperationFaceIds))} · common stock`:source}</small>${row.newFillerCount?`<small>${row.newFillerCount} new filler${row.newFillerCount===1?'':'s'} shown in grey · ${row.sheetCount} positions total</small>`:`<small>${row.sheetCount} positions total</small>`}${onward}</button>`;
         }).join('')}</div>
-        ${rows.filter(row=>row.faceId===selectedFaceId).map(row=>`<details class="qc-count-explanation"><summary>How ${esc(row.name)} is counted</summary><p>Whole-face span across the sheets: ${(row.projectedSpanMm/1000).toFixed(3)} m. Effective cover: ${s.profile.coverMm} mm. Minimum ${Math.ceil(row.projectedSpanMm/s.profile.coverMm-1e-10)} positions; this registered layout uses ${row.sheetCount}.</p><p>Actual spouting span: ${(row.eaveSpanMm/1000).toFixed(3)} m. Ridge span: ${(row.ridgeSpanMm/1000).toFixed(3)} m.</p>${row.selfFill?`<p>Self-fill: the new bank starts on the spouting span, then its hip cuts supply the valley side. Transition target: ${s.settings.selfFillTransitionMm??100} mm; extra donor positions are included where the physical fit needs them. These are not spare sheets.</p>`:''}<p>${row.newCount} sheets purchased here (${row.newFillerCount} fillers); ${row.reuseCount} positions use existing cuts. Shared source sheets are not ordered again at their destination.</p></details>`).join('')}
+        ${rows.filter(row=>row.faceId===selectedFaceId).map(row=>`<details class="qc-count-explanation"><summary>How ${esc(row.name)} is counted</summary><p>Whole-face span across the sheets: ${(row.projectedSpanMm/1000).toFixed(3)} m. Effective cover: ${s.profile.coverMm} mm. Minimum ${Math.ceil(row.projectedSpanMm/s.profile.coverMm-1e-10)} positions; this registered layout uses ${row.sheetCount}.</p><p>Actual spouting span: ${(row.eaveSpanMm/1000).toFixed(3)} m. Ridge span: ${(row.ridgeSpanMm/1000).toFixed(3)} m.</p>${row.selfFill?`<p>Self-fill: the new bank starts on the spouting span, then its hip cuts supply the valley side. Transition target: ${s.settings.selfFillTransitionMm??100} mm; extra donor positions are included where the physical fit needs them. These are not spare sheets.</p>`:''}<p>${row.newCount} sheets purchased here (${row.newFillerCount} visible filler separators); ${row.reuseCount} positions use existing cuts.${row.continuationCount?` ${row.continuationCount} are same-bank continuations, shown solid because they belong to the same cutting operation.`:''} Shared source sheets are not ordered again at their destination.</p></details>`).join('')}
         <label class="qc-check"><input data-display="showSheets" type="checkbox" ${showSheets ? 'checked' : ''}/>Show sheet lines</label>
         ${selectedGroup ? `<div class="qc-selection"><b>${esc(faceName(selectedGroup.sourceFaceId))} → ${esc(faceName(selectedGroup.destinationFaceId))}</b><p>${selectedGroup.sheetCount} offcut sheets. Drag the set to another face to try a valid fit.</p><button data-action="edit-group-pieces">Edit individual pieces</button><button data-action="clear-selection">Deselect</button></div>` : ''}
-        <div class="qc-actions"><button data-action="back">Review faces</button><button data-action="run" class="primary" ${busy || stale ? 'disabled' : ''}>Recalculate</button></div>
+        <div class="qc-actions"><button data-action="back">Review faces</button></div>
         ${!draft.profile.allowEndForEnd ? '<p class="qc-note">End-for-end reuse is disabled. Check the profile setting in Review faces if the expected hip offcuts are missing.</p>' : ''}
         ${s.search.budgetReached ? '<p class="qc-note">Search limit reached. This is the best complete plan found; some reuse may remain undiscovered.</p>' : ''}`;
       const selected = s.offcuts.find(o => o.id === selectedOffcutId);
@@ -211,7 +226,14 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         ${placement ? `<h3>Selected physical offcut</h3><label class="qc-field">Destination sheet<select id="destination">${s.demands.map(d => `<option value="${esc(d.id)}" ${d.id === placement.demandId ? 'selected' : ''}>${esc(d.id)}</option>`).join('')}</select></label><div class="qc-fields"><label>Rotation<select id="offcut-rotation"><option value="0" ${placement.rotation === 0 ? 'selected' : ''}>0°</option><option value="180" ${placement.rotation === 180 ? 'selected' : ''}>180° end-for-end</option></select></label><label>Along-sheet shift, mm<input id="offcut-shift" type="number" value="${placement.translateY.toFixed(2)}"/></label></div><div class="qc-actions"><button data-action="fit-placement">Snap valid fit</button><button data-action="apply-placement">Apply placement</button><button data-action="rotate-offcut">Rotate 180°</button></div>` : ''}
         <details><summary>Material banks & cutting sequence</summary><p class="qc-muted">Direction families share a planning frame, not a merged roof polygon. Every real face and sheet position is retained.</p>${s.bankLayout?.materialBanks?.map(b=>{const projection=projectBank(b,{roof:draft.roof,faces:draft.faces,profile:draft.profile,settings:draft.settings});return `<p><b>${esc(bankName(b.faceIds))}</b><br/><small>Parallel run family · longest bank ${(b.cutLengthMm/1000).toFixed(2)} m<br/>Projected cross-sheet span ${(projection.spanMm/1000).toFixed(3)} m / ${s.profile.coverMm} mm = ${projection.minimumColumns} minimum columns. This is an elevation-grid count, not an order count; separate physical faces remain accounted for.</small></p>`;}).join('')??''}<p class="qc-muted">New bank sequence: ${s.bankLayout?.primarySequence?.map(faceName).map(esc).join(' → ')??'Legacy plan'}</p></details>
         <details><summary>Plan-derived stock lengths</summary><p class="qc-muted">Replace with verified site-measured lengths before ordering. Includes reported extra stock. Spares are not included.</p><table class="qc-stock"><thead><tr><th>Face</th><th>Qty</th><th>Length</th></tr></thead><tbody>${newStockSchedule(s).map(g => `<tr><td>${esc(faceName(g.faceId))}<small>${esc(g.role)}</small></td><td>${g.count}</td><td>${(g.lengthMm / 1000).toFixed(3)} m</td></tr>`).join('')}</tbody></table></details>
-        <details><summary>Material totals & search</summary><p class="qc-muted">Net roof surface (pitch included): ${(summary.netRoofMm2/1e6).toFixed(2)} m²<br/>New physical metal supplied: ${(summary.suppliedMm2/1e6).toFixed(2)} m²<br/><b>Supply above net roof: +${summary.supplyUpliftPercent?.toFixed(1)??'—'}%</b><br/>Laps / end allowances / reserved run envelopes: ${(summary.overlapAndEnvelopeMm2/1e6).toFixed(2)} m²<br/>Cutting remainder: ${(summary.cuttingRemainderMm2/1e6).toFixed(2)} m²</p><p class="qc-muted">Draft geometry quantities, not a verified quote or order. Supply uplift is relative to net roof area, not a markup on supplied stock. No site spares, damage allowance or supplier minimums are added. Reusable but unassigned pieces are included in the remainder; it is not all necessarily discarded.</p><p class="qc-muted">${s.search.completedTrials} completed trials · ${(s.search.elapsedMs/1000).toFixed(2)} s. Practical bounded search, not a proven minimum.</p></details>`;
+        <details><summary>Material totals & search</summary><p class="qc-muted">Net roof surface (pitch included): ${(summary.netRoofMm2/1e6).toFixed(2)} m²<br/>New physical metal supplied: ${(summary.suppliedMm2/1e6).toFixed(2)} m²<br/><b>Supply above net roof: +${summary.supplyUpliftPercent?.toFixed(1)??'—'}%</b><br/>Laps / end allowances / reserved run envelopes: ${(summary.overlapAndEnvelopeMm2/1e6).toFixed(2)} m²<br/>Cutting remainder: ${(summary.cuttingRemainderMm2/1e6).toFixed(2)} m²</p><p class="qc-muted">Draft geometry quantities, not a verified quote or order. Supply uplift is relative to net roof area, not a markup on supplied stock. No site spares, damage allowance or supplier minimums are added. Reusable but unassigned pieces are included in the remainder; it is not all necessarily discarded.</p><p class="qc-muted">${s.search.completedTrials} completed trials · ${(s.search.elapsedMs/1000).toFixed(2)} s. Practical bounded search, not a proven minimum.</p></details>
+        <details class="qc-trace"><summary>Optimiser decision trace</summary>
+          <p class="qc-muted">Actual search decisions, not AI narration. Includes candidate scores, rejected fits, cut inventory, order and material comparisons. Exports include this roof’s geometry but no plan-image URL; share only with your trusted agent.</p>
+          <div class="qc-actions"><button data-action="copy-trace">Copy trace</button><button data-action="export-trace">Export debug bundle</button></div>
+          ${s.decisionTrace?tracePanel(s.decisionTrace):'<p>No trace was stored for this older plan. Calculate a new plan to record one.</p>'}
+          ${lastSearchTrace&&lastSearchTrace!==s.decisionTrace?`<details><summary>Most recent alternative search</summary>${tracePanel(lastSearchTrace)}</details>`:''}
+        </details>
+        <details><summary>Alternative search limits</summary><label class="qc-field">Maximum extra material for a simpler plan, %<input type="number" data-alt-cap min="0" max="100" value="${extraMaterialCap}"/></label><p class="qc-muted">Default 15%. This is a ceiling on alternative purchased material, not added waste or spares. “Less material” must strictly reduce purchased metal. Both searches keep the same physical rules and locks.</p></details>`;
     } else {
       normal = `<h2>Review roof faces</h2><p class="qc-muted">${draft.faces.length} faces. Check each outline and water arrow.</p>${quickTools}${faceButtons}
         ${hiddenFaceIds.size ? `<div class="qc-hidden-summary"><span>${hiddenFaceIds.size} hidden · still included</span><button data-action="show-all">Show all</button></div>` : ''}
@@ -233,7 +255,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     const coverageAlert = focused ? `<div class="qc-note ${focused.severity === 'error' ? 'qc-error' : ''}"><div class="qc-check-title">${icon('warning')}${esc(coverageLabel)}</div><p>${(focused.areaMm2 / 1e6).toFixed(4)} m² · ${focused.severity === 'error' ? 'Check the highlighted region before calculating.' : 'Small drawing discrepancy. Shown in amber; draft calculation can continue.'}</p><div class="qc-view-issues"><button data-action="focus-issue" data-id="${focused.id}">${icon('focus')}Show on plan</button>${coverage.length > 1 ? `<button data-action="next-issue">Next (${focusedIndex + 1}/${coverage.length})</button>` : ''}</div></div>` : '';
     const otherError = errors.find(i => !coverage.some(r => r.id === i.objectId));
     const actionableError = otherError ? `<div class="qc-note qc-error" role="alert"><div class="qc-check-title">${icon('warning')}Check ${otherError.faceId ? esc(faceName(otherError.faceId)) : 'the review'}</div><p>${esc(otherError.message)}</p>${otherError.faceId ? `<button data-action="focus-face" data-id="${esc(otherError.faceId)}">Show face</button>` : ''}${errors.length > 1 ? '<small>Further checks are in Advanced.</small>' : ''}</div>` : '';
-    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.5 · Draft plan</span>${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.6 · Draft plan</span>${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
       <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Use the face list to select a face."></div><div class="qc-help">${drawPoints ? 'Click polygon vertices, then Finish polygon. Esc cancels.' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Colour = cutting stock · hatch = reused · grey / dotted = new fillers · middle mouse / Space + drag to pan'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
       <aside class="qc-sidebar" aria-label="Offcut review controls">${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${backgroundFailed ? '<div class="qc-note">The background image could not load. The approved roof outlines remain visible. Reopen the takeoff to refresh the image URL.</div>' : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}</div>` : ''}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advanced}</aside></main>
@@ -245,13 +267,17 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     const blob=new Blob([contents],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   function ensureCurrent():void { if(stale||options.readCurrentSourceRevision&&options.readCurrentSourceRevision()!==capturedRevision)throw new Error('Takeoff changed. Reopen this review from the current canvas.'); }
-  function run():void {
+  function run(objective?:'simpler'|'less-material'):void {
     ensureCurrent();
     validationAttempted = true;
     const detected = currentDetectionIssues(issues, draft.faces);
     if (detected.some(i => i.severity === 'error')) { pendingSourceAck = true; render(true); return; }
     if (validateInputs(draft.roof, draft.faces, draft.profile, draft.settings).some(i => i.severity === 'error')) { render(true); return; }
-    checkpoint();cancel();error='';selectedOffcutId='';busy=true;progress='Testing primary banks and complete offcut sets…';jobId=localId();
+    if(objective&&!draft.solution)throw new Error('Create a first plan before asking for an alternative.');
+    if(objective&&layouts.length>=12)throw new Error('Export the chosen plan; this session already has 12 alternatives.');
+    const previous=objective?structuredClone(draft.solution!):null;
+    checkpoint();cancel();error='';selectedOffcutId='';busy=true;alternativeMenu=false;
+    progress=objective==='simpler'?'Searching for a simpler distinct plan…':objective==='less-material'?'Searching for a distinct plan using less material…':'Testing longest banks and complete offcut sets…';jobId=localId();
     const id=jobId;
     try {
       worker=options.createWorker?.()??new Worker(new URL('../worker.ts',import.meta.url),{type:'module'});
@@ -259,14 +285,25 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         if(disposed||event.data.id!==jobId||id!==jobId)return;
         if(event.data.kind==='progress'){progress=`${event.data.completed} / ${event.data.total} layout trials`;render();return;}
         if(event.data.kind==='result'){
-          layouts=Array.isArray(event.data.layouts)?event.data.layouts as Solution[]:[event.data.solution as Solution];layoutIndex=0;draft.solution=layouts[0];phase='solution';selectedOffcutId='';selectedGroupId='';advancedOpen=false;editPieces=false;
+          try{ensureCurrent();}catch(e){error=message(e);cancel();render();return;}layouts=[structuredClone(event.data.solution as Solution)];layoutIndex=0;draft.solution=structuredClone(layouts[0]);lastSearchTrace=null;alternativeAttempt=0;phase='solution';selectedOffcutId='';selectedGroupId='';advancedOpen=false;editPieces=false;
           // Suggestions become visible arrows without mutating the locked input
           // face state used to fingerprint the original solve request.
           notice=''; cancel();render(true);
+        }else if(event.data.kind==='alternative-result'){
+          try{ensureCurrent();}catch(e){error=message(e);cancel();render();return;}
+          const result=event.data.result as AlternativePlanResult;lastSearchTrace=result.trace;
+          if(result.status==='found'&&result.solution){
+            const signature=planSignature(result.solution);
+            if(layouts.some(s=>planSignature(s)===signature))notice='The search returned an already-saved plan. Your current plan has been kept.';
+            else {layouts.push(structuredClone(result.solution));layoutIndex=layouts.length-1;draft.solution=structuredClone(result.solution);phase='solution';notice=result.message;lastSearchTrace=null;}
+          }else notice=result.message;
+          selectedOffcutId='';selectedGroupId='';cancel();render(true);
         }else if(event.data.kind==='error'){error=event.data.message;cancel();render();}
       };
       worker.onerror=(e)=>{error=`Worker failed: ${e.message}. Check the module-worker path / Content Security Policy.`;cancel();render();};
-      worker.postMessage({id,request:{roof:draft.roof,faces:draft.faces,profile:draft.profile,settings:draft.settings}});
+      worker.postMessage({id,request:{roof:draft.roof,faces:draft.faces,profile:draft.profile,settings:draft.settings},
+        ...(objective&&previous?{alternative:{objective,previous,attempt:++alternativeAttempt,
+          excludedSignatures:layouts.map(planSignature),maxExtraMaterialPercent:extraMaterialCap}}:{})});
     } catch(e){error=message(e);cancel();}
     render();
   }
@@ -277,6 +314,26 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     try {
       if(action==='close'){options.onClose?.();return;}
       if(action==='cancel'){cancel();render();return;}
+      if(action==='alternative-menu'){alternativeMenu=!alternativeMenu;render();return;}
+      if(action==='alternative-simpler'){run('simpler');return;}
+      if(action==='alternative-material'){run('less-material');return;}
+      if(action==='export-trace'||action==='copy-trace'){
+        if(!draft.solution)throw new Error('There is no cut plan to diagnose.');
+        const trace=draft.solution.decisionTrace;
+        if(action==='export-trace'){
+          const safe=JSON.parse(exportDraft(draft)) as Draft;
+          download(`quotecore-offcuts-v2.6-debug.json`,JSON.stringify({schemaVersion:1,kind:'quotecore-offcut-debug',engineVersion:'2.6',
+            selectedPlanIndex:layoutIndex,approvedDraft:safe,selectedTrace:trace??null,lastAlternativeSearch:lastSearchTrace,
+            sessionPlans:layouts.map(p=>({layoutId:p.layoutId,objective:p.objective,metrics:p.metrics,comparison:p.comparison,decisionTrace:p.decisionTrace??null}))},null,2),'application/json');
+          notice='Debug bundle exported locally. It contains roof geometry and decisions, not the source image.';render();return;
+        }
+        const parts=[trace?traceText(trace):'No generation trace was stored for this plan.',
+          lastSearchTrace?'\nMOST RECENT ALTERNATIVE SEARCH\n'+traceText(lastSearchTrace):''];
+        const text=parts.join('\n');
+        const fallback=()=>{download('quotecore-offcuts-trace.txt',text,'text/plain');notice='Clipboard unavailable; trace downloaded as text instead.';render();};
+        if(navigator.clipboard?.writeText)void navigator.clipboard.writeText(text).then(()=>{if(!disposed){notice='Decision trace copied.';render();}},()=>{if(!disposed)fallback();});
+        else fallback();return;
+      }
       if(action==='next-layout'){
         if(layouts.length<2)return;
         checkpoint();layoutIndex=(layoutIndex+1)%layouts.length;draft.solution=structuredClone(layouts[layoutIndex]);
@@ -371,6 +428,14 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function change(event:Event):void {
     const target=event.target as HTMLInputElement|HTMLSelectElement;
     try{
+      if(target.hasAttribute('data-plan-index')){
+        const index=Number(target.value);if(busy||!Number.isInteger(index)||!layouts[index])return;
+        checkpoint();layoutIndex=index;draft.solution=structuredClone(layouts[index]);lastSearchTrace=null;selectedGroupId='';selectedOffcutId='';notice=`Showing saved Plan ${index+1}; no recalculation performed.`;render();return;
+      }
+      if(target.hasAttribute('data-alt-cap')){
+        const cap=Number(target.value);if(!Number.isFinite(cap)||cap<0||cap>100)throw new Error('Extra material limit must be between 0% and 100%.');
+        extraMaterialCap=cap;return;
+      }
       if(target.dataset.display){const checked=(target as HTMLInputElement).checked;if(target.dataset.display==='showSheets')showSheets=checked;if(target.dataset.display==='showSources')showSources=checked;if(target.dataset.display==='showEnvelope')showEnvelope=checked;if(target.dataset.display==='editPieces'){editPieces=checked;selectedOffcutId='';selectedGroupId='';render();return;}renderScene();return;}
       if(target.dataset.outline){checkpoint();invalidate();const ids=new Set(draft.roof.outlines.map(o=>o.id));if((target as HTMLInputElement).checked)ids.add(target.dataset.outline);else ids.delete(target.dataset.outline);draft.roof.outlines=sourceOutlines.filter(o=>ids.has(o.id));draft.roof.sourceRevision=roofRevision(draft.roof);detect();render();return;}
       const field=target.dataset.field;if(!field)return;
