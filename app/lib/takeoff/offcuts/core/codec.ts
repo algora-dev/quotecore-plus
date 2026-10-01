@@ -1,7 +1,7 @@
 import type { Draft, RoofInput, RoofFace } from './types';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from './types';
 import { validateRing } from './math';
-import { roofRevision } from '../adapters/quotecore';
+import { isBoundaryMeaning, roofRevision } from '../adapters/quotecore';
 /** Browser-local interchange only. Auth/tenant ownership MUST be established by
  * the server if an agent later adds persistence. Serialized IDs prove nothing. */
 export function exportDraft(draft: Draft): string {
@@ -32,8 +32,10 @@ export function parseDraft(text: string): Draft {
     f.boundary = Array.isArray(f.boundary) ? f.boundary : [];
     delete f.directionApproval; f.confirmed = false; // imported geometry always needs fresh human review
   }
+  const mappings=data.componentBoundaryOverrides;
+  if(mappings!==undefined&&(!mappings||typeof mappings!=='object'||Array.isArray(mappings)||Object.keys(mappings).length>1000||Object.values(mappings).some(v=>!isBoundaryMeaning(v))))throw new Error('Invalid line type overrides.');
   // Do NOT hydrate executable URLs or trust precomputed material allocations.
   delete roof.imageUrl; roof.sourceRevision = roofRevision(roof);
   return { schemaVersion: 1, roof, faces, profile: { ...DEFAULT_PROFILE, ...(data.profile as object ?? {}), rulesConfirmed: false },
-    settings: { ...DEFAULT_SETTINGS, ...(data.settings as object ?? {}) }, solution: null };
+    settings: { ...DEFAULT_SETTINGS, ...(data.settings as object ?? {}) }, ...(mappings?{componentBoundaryOverrides:{...mappings} as Draft['componentBoundaryOverrides']}:{ }), solution: null };
 }

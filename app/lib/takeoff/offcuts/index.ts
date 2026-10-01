@@ -30,3 +30,7 @@ export * from './core/alternatives';
 
 export { applyLocalFaceRepair } from './core/faceRepair';
 export type { LocalRepairResult } from './core/faceRepair';
+
+export * from './adapters/liveSnapshot';
+export * from './adapters/snapshotStore';
+export * from './adapters/canvasSnapshot';

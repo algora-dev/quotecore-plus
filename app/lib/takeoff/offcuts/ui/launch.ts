@@ -1,16 +1,39 @@
 import { fromQuoteCore, type QuoteCoreSnapshot } from '../adapters/quotecore';
+import { captureLiveTakeoff, prepareLiveCapture, type CaptureHooks, type LiveInputCapture } from '../adapters/liveSnapshot';
+import { checkpointLiveCapture, type SnapshotStorage } from '../adapters/snapshotStore';
 import { mountWorkbench, type WorkbenchHandle } from './workbench';
 import type { QuoteQuantityProposal } from '../core/quantities';
 import type { Draft } from '../core/types';
 import { tokenFallbacks } from './theme';
-export interface LaunchOptions { createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void }
+export interface LaunchOptions { createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void;
+  snapshotStorage?:SnapshotStorage|null; onCapture?:(capture:LiveInputCapture)=>void;
+}
+export interface LiveLaunchOptions extends LaunchOptions, CaptureHooks {}
+const openingReaders=new WeakSet<()=>QuoteCoreSnapshot>();
+/** Preferred integration entry: commit live edits -> settle -> capture ->
+ * checkpoint -> derive. Never loads ai_scan_result or saved measurements. */
+export async function launchLiveQuoteCoreOffcuts(readSnapshot:()=>QuoteCoreSnapshot,options:LiveLaunchOptions={}):Promise<WorkbenchHandle> {
+  if(openingReaders.has(readSnapshot))throw new Error('Find offcuts is already opening.');
+  openingReaders.add(readSnapshot);
+  try {
+    const capture=checkpointLiveCapture(await prepareLiveCapture(readSnapshot,options),options.snapshotStorage);
+    options.onCapture?.(capture);
+    return mountCapturedLive(readSnapshot,capture,options);
+  } finally {openingReaders.delete(readSnapshot);}
+}
 
 /** Native top-layer dialog: background inertness, focus containment and nested
  * Escape behaviour are provided by the browser, not arbitrary z-indexes. This
  * is a scoped optical adapter to the supplied QcDialog G-A/IF-01 contracts; the
  * host's existing React dialog/controller must not be replaced globally. */
 export function launchQuoteCoreOffcuts(readSnapshot: () => QuoteCoreSnapshot, options: LaunchOptions = {}): WorkbenchHandle {
-  const captured = fromQuoteCore(readSnapshot());
+  const capture=checkpointLiveCapture(captureLiveTakeoff(readSnapshot()),options.snapshotStorage);
+  options.onCapture?.(capture);
+  return mountCapturedLive(readSnapshot,capture,options);
+}
+/** The synchronous API remains for hosts that already flush edits themselves. */
+function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputCapture,options:LaunchOptions):WorkbenchHandle {
+  const captured=capture.adapted;
   let previousFocus = document.activeElement as HTMLElement | null;
   while (previousFocus?.shadowRoot?.activeElement instanceof HTMLElement) previousFocus = previousFocus.shadowRoot.activeElement;
   const modal = document.createElement('dialog'), host = document.createElement('div'), css = document.createElement('style');
@@ -60,11 +83,11 @@ export function launchQuoteCoreOffcuts(readSnapshot: () => QuoteCoreSnapshot, op
     // Establish real layout dimensions BEFORE the first SVG/handle render.
     modal.showModal();
     handle = mountWorkbench(host, captured.roof, {
-      initialIssues: captured.issues, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal,
+      inputCapture: capture, initialIssues: captured.issues, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal,
       readCurrentSourceRevision: () => fromQuoteCore(readSnapshot()).roof.sourceRevision,
       createWorker: options.createWorker ?? (() => new Worker(new URL('../worker.ts', import.meta.url), { type: 'module' })),
     });
     host.shadowRoot?.querySelector<HTMLElement>('[data-action="close"]')?.focus();
   } catch (error) { destroy(); throw error; }
-  return { destroy, getDraft: () => handle!.getDraft() };
+  return { destroy, getDraft: () => handle!.getDraft(), getDebugBundle:()=>handle!.getDebugBundle!() };
 }

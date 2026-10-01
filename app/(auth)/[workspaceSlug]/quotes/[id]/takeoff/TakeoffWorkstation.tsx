@@ -36,8 +36,10 @@ import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
 // Offcuts V1: isolated review module; no quote/persistence changes.
 import type { QuoteCoreSnapshot } from '@/app/lib/takeoff/offcuts/adapters/quotecore';
+import { reconcileCanvasSnapshot, type SceneMeasurementObject } from '@/app/lib/takeoff/offcuts/adapters/canvasSnapshot';
 import type { WorkbenchHandle } from '@/app/lib/takeoff/offcuts/ui/workbench';
 import { fingerprint as offcutFingerprint } from '@/app/lib/takeoff/offcuts/core/math';
+import { flushSync } from 'react-dom';
 import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
@@ -7207,6 +7209,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // ref stays current after every render while honouring react-hooks/refs.)
   const offcutsLiveSnapshotRef = useRef<QuoteCoreSnapshot | null>(null);
   const offcutsModalRef = useRef<WorkbenchHandle | null>(null);
+  const [openingOffcuts, setOpeningOffcuts] = useState(false);
+  const [, forceOffcutsCommit] = useState(0);
+  const offcutsCaptureAbortRef = useRef<AbortController | null>(null);
   useEffect(() => {
     offcutsLiveSnapshotRef.current = {
       quoteId: quote.id,
@@ -7238,9 +7243,36 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       })),
     };
   });
-  useEffect(() => () => {
-    offcutsModalRef.current?.destroy();
-    offcutsModalRef.current = null;
+  // Offcuts V2.9: the reader runs while opening, after blur/flushSync commits,
+  // so it reads the refs above only (never a stale render closure).
+  const readCurrentOffcutsSnapshot = useCallback((): QuoteCoreSnapshot => {
+    const snapshot = offcutsLiveSnapshotRef.current;
+    if (!snapshot) throw new Error('The takeoff workspace is not ready.');
+    // The existing touch bridge refreshes image metadata in an effect. Read its
+    // latest same-page revision at use time, not a previous-render revision.
+    const image = touchOutlineLiveRef.current;
+    const live: QuoteCoreSnapshot = {
+      ...snapshot,
+      imageRevision: image?.pageId === snapshot.pageId && image.pageImageRevision
+        ? image.pageImageRevision
+        : snapshot.imageRevision,
+    };
+    const canvas = fabricRef.current;
+    if (!canvas) throw new Error('Wait for the drawing canvas to finish loading.');
+    const captured = reconcileCanvasSnapshot(live, canvas.getObjects() as unknown as SceneMeasurementObject[]);
+    if (captured.unmatchedSceneMeasurementIds.length) {
+      throw new Error('The drawing and takeoff are still synchronising. Finish the current edit, then try Find offcuts again.');
+    }
+    return captured.snapshot;
+  }, []);
+  useEffect(() => {
+    setOpeningOffcuts(false);
+    return () => {
+      offcutsCaptureAbortRef.current?.abort();
+      offcutsCaptureAbortRef.current = null;
+      offcutsModalRef.current?.destroy();
+      offcutsModalRef.current = null;
+    };
   }, [pages[currentPageIndex]?.id, activeAreaId]);
 
   return (
@@ -8245,31 +8277,59 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       <button
                         data-copilot="takeoff-tool-offcuts"
                         className="px-3 py-2 rounded-full text-sm bg-slate-900 text-white disabled:opacity-40"
-                        disabled={!calibrationConfirmed || !pages[currentPageIndex]?.id || roofAreas.length === 0 || isSaving}
-                        title="Review faces and prototype offcut reuse. Does not change pricing or saved takeoff measurements."
+                        disabled={openingOffcuts || !calibrationConfirmed || !pages[currentPageIndex]?.id || roofAreas.length === 0 || isSaving || aiScanning}
+                        aria-busy={openingOffcuts}
+                        title="Review faces and prototype offcut reuse. Reads the current unsaved takeoff; does not change pricing or saved measurements."
                         onClick={async () => {
+                          if (offcutsCaptureAbortRef.current) return;
+                          const abort = new AbortController();
+                          offcutsCaptureAbortRef.current = abort;
+                          setOpeningOffcuts(true);
                           try {
-                            const { launchQuoteCoreOffcuts } = await import('@/app/lib/takeoff/offcuts/ui/launch');
+                            const { launchLiveQuoteCoreOffcuts } = await import('@/app/lib/takeoff/offcuts/ui/launch');
+                            if (abort.signal.aborted) return;
                             offcutsModalRef.current?.destroy();
-                            offcutsModalRef.current = launchQuoteCoreOffcuts(() => {
-                              const snapshot = offcutsLiveSnapshotRef.current;
-                              if (!snapshot) throw new Error('The takeoff workspace is not ready.');
-                              // The existing touch bridge refreshes image metadata in
-                              // an effect. Read its latest same-page revision at use
-                              // time rather than freezing a previous-render revision.
-                              const live = touchOutlineLiveRef.current;
-                              return {
-                                ...snapshot,
-                                imageRevision: live?.pageId === snapshot.pageId && live.pageImageRevision
-                                  ? live.pageImageRevision
-                                  : snapshot.imageRevision,
-                              };
+                            offcutsModalRef.current = null;
+                            offcutsModalRef.current = await launchLiveQuoteCoreOffcuts(readCurrentOffcutsSnapshot, {
+                              signal: abort.signal,
+                              readContext: () => {
+                                const live = offcutsLiveSnapshotRef.current;
+                                if (!live) throw new Error('The takeoff workspace is not ready.');
+                                const image = touchOutlineLiveRef.current;
+                                return {
+                                  ...live,
+                                  imageRevision: image?.pageId === live.pageId && image.pageImageRevision
+                                    ? image.pageImageRevision
+                                    : live.imageRevision,
+                                };
+                              },
+                              prepareSnapshot: () => {
+                                // Commit blur-driven numeric edits and pending React
+                                // updates into the live model refs. This is an
+                                // application-state commit, NOT Save & continue, and
+                                // performs no database write.
+                                const active = document.activeElement;
+                                if (active instanceof HTMLElement) active.blur();
+                                flushSync(() => forceOffcutsCommit(value => value + 1));
+                                if (aiScanning) throw new Error('Wait for the AI scan to finish before opening Find offcuts.');
+                                if (isSaving) throw new Error('Wait for the current save to finish before opening Find offcuts.');
+                                if (calibrationMode) throw new Error('Finish or cancel calibration first, then open Find offcuts.');
+                                if (areaPoints.length || linePoints.length || multiLinealPoints.length || showAreaNamePrompt || showFreestyleHeightPrompt || showVolumeDepthPrompt) {
+                                  throw new Error('Finish the current drawing or measurement entry before opening Find offcuts.');
+                                }
+                                fabricRef.current?.requestRenderAll();
+                              },
                             });
                           } catch (error) {
-                            window.alert(error instanceof Error ? error.message : String(error));
+                            if (!abort.signal.aborted) window.alert(error instanceof Error ? error.message : String(error));
+                          } finally {
+                            if (offcutsCaptureAbortRef.current === abort) {
+                              offcutsCaptureAbortRef.current = null;
+                              setOpeningOffcuts(false);
+                            }
                           }
                         }}
-                      >Find offcuts (V1)</button>
+                      >{openingOffcuts ? 'Preparing current takeoff…' : 'Find offcuts'}</button>
                     )}</QcCanvasToolGroup>
                 </div>
                 <div className="qc-takeoff-toolbar-context">
