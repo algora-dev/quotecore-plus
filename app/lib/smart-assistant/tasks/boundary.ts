@@ -123,6 +123,13 @@ export function decideTask(message: string, snapshot: TaskSnapshot, now = new Da
                 return { disposition: 'continue', reason: ordinal ? 'candidate_ordinal' : 'expected_slot_answer', message: text, refinement };
         }
     }
+    // Owner 2026-10-01 (voice): the model asks "plan or actual measurements?"
+    // per the prompt contract, but that question leaves no resolver-level
+    // pending state, so a short basis-only answer used to fall into the
+    // boundary fallback ("existing task or new task?"). Bind it to the LIVE
+    // task as an expected answer instead.
+    if (live && /^(?:plan|actual)(?:\s+(?:measurements?|sizes?|figures?|numbers?|dimensions?|values?|basis))?[.!?]*$/i.test(text))
+        return { disposition: 'continue', reason: 'expected_basis_answer', message: text };
     // Unparsed complete questions/statements use the EXISTING first model pass.
     // They do not inherit an old unresolved search or consume its retry budget.
     if (text.length > 140 || text.split(/\s+/).length > 8 || /^(?:I\s+(?:just\s+)?(?:want|need)|what|whats|what's|how|why|when|where|who|please|can|could|would|show|list|open|find|set|change|send|delete|compare|tell|give|pull)\b/i.test(text))

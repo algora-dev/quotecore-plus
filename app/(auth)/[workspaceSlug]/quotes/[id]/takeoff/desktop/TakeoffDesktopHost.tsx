@@ -7,11 +7,11 @@ import './takeoff-desktop.css';
  * shell's legacy desktop widening wrapper is corrected via scoped CSS, without
  * editing app/lib or moving the workstation's canvas ancestors.
  */
-export function TakeoffDesktopHost({ active, children }: { active: boolean; children: ReactNode }) {
+export function TakeoffDesktopHost({ active, fill = false, children }: { active: boolean; fill?: boolean; children: ReactNode }) {
   const hostRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const host = hostRef.current;
-    if (!active || !host) return;
+    if (!active || fill || !host) return;
     let frame = 0;
     const measure = () => {
       // Document position, not scroll position, prevents scroll/resize feedback.
@@ -32,5 +32,5 @@ export function TakeoffDesktopHost({ active, children }: { active: boolean; chil
     window.addEventListener('resize', queue);
     return () => { cancelAnimationFrame(frame); observer?.disconnect(); window.removeEventListener('resize', queue); };
   }, [active]);
-  return <div ref={hostRef} className="qc-takeoff-host" data-qc-desktop={active ? 'true' : 'false'}>{children}</div>;
+  return <div ref={hostRef} className="qc-takeoff-host" data-qc-desktop={active ? 'true' : 'false'} {...(fill ? { 'data-qc-fill': 'true' } : {})}>{children}</div>;
 }

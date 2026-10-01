@@ -168,6 +168,15 @@ function TakeoffPhase({
   const [, refreshBridge] = useState(0);
   useEffect(() => outlineAdapter?.subscribe?.(() => refreshBridge((n) => n + 1)), [outlineAdapter]);
 
+  // Owner 2026-10-01: the free takeoff overlay is fixed inset-0; lock body
+  // scroll while it is mounted so the landing page behind cannot scroll or
+  // leak its position into document-based measures.
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, []);
+
   const backHref = '/free-roof-takeoff';
   const [pitch, setPitch] = useState(DEFAULT_ROOF_PITCH);
   const [resolvedPage1Id, setResolvedPage1Id] = useState<string | null>(null);
@@ -291,7 +300,7 @@ function TakeoffPhase({
 
   return (
     <TakeoffSessionProvider actions={FREE_SESSION_BUNDLE}>
-      <TakeoffDesktopHost active={!touchActive}>
+      <TakeoffDesktopHost active={!touchActive} fill>
         <TouchWorkspaceShell
           active={touchActive}
           planLabel="Plan"
@@ -493,7 +502,7 @@ export function FreeTakeoffApp() {
     // Full-screen like the app's takeoff page: the workstation's own header
     // provides the chrome; marketing page furniture is covered while measuring.
     return (
-      <div className="fixed inset-0 z-40 overflow-auto bg-slate-50">
+      <div className="fixed inset-0 z-40 overflow-hidden flex flex-col bg-slate-50">
         <TakeoffPhase
           key={stage.run}
           planDataUrl={stage.planDataUrl}

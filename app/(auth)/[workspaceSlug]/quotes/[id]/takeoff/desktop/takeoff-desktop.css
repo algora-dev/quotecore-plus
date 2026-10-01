@@ -11,6 +11,13 @@
   margin:0; padding:0; color:var(--qc-text-body); background:var(--qc-bg-app);
   font:400 14px/20px var(--qc-font-sans); container:takeoff / inline-size;
 }
+/* Owner 2026-10-01 (free tool): the free takeoff runs inside a fixed inset-0
+   overlay with no page chrome. Fill mode skips the document-position measure
+   (landing-page body scroll must not shrink the canvas) and stretches the
+   host chain to the full viewport instead. */
+.qc-takeoff-host[data-qc-fill='true'] { height:100%; }
+.qc-takeoff-host[data-qc-fill='true'] > div { height:100%; }
+.qc-takeoff-host[data-qc-fill='true'] .qc-takeoff-workstation { height:100%; }
 .qc-takeoff-workstation .qc-takeoff-surface { border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-card); box-shadow:none; }
 .qc-takeoff-workstation .qc-takeoff-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:8px 16px; flex-shrink:0; background:var(--qc-bg-surface); }
 .qc-takeoff-workstation .qc-takeoff-identity { display:flex; align-items:center; gap:12px; min-width:0; }
