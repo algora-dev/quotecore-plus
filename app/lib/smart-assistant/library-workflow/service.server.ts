@@ -122,7 +122,7 @@ async function evaluate(client:SupabaseClient,access:Access,conversationId:strin
     const stored=await persist(access,conversationId,brief,stateId,expectedRevision);
     const card:WorkflowCard={kind:'draft_workflow',title:'Finish this draft',stateId:stored.id,revision:stored.revision,taskId:conversationId,summary:summary(brief),issues:decision.issues,questions:decision.questions};
     await addCard(runId,access,`draft-workflow-${stored.id}-${stored.revision}`,WORKFLOW_SECTIONS,card as any);
-    return {state:'awaiting_input',answer:decision.questions.length?'I kept the job and measurements. Choose the remaining product options below.':'I kept the job and measurements, but the selected library is missing an assistant component assignment.',card};
+    return {state:'awaiting_input',answer:decision.questions.length?'Choose the remaining options below.':'The selected library is missing an assistant component assignment.',card};
   }
   const stored=await persist(access,conversationId,brief,stateId,expectedRevision);
   const action=await proposeDraft(client,access,runId,proposalArgs(brief,decision.catalog));
@@ -131,7 +131,7 @@ async function evaluate(client:SupabaseClient,access:Access,conversationId:strin
   // active task so correction turns can revise it instead of asking which
   // record to update.
   await admin().from('assistant_v2_draft_briefs').update({status:'proposal',updated_at:new Date().toISOString()}).eq('id',stored.id).eq('company_id',access.companyId).eq('user_id',access.userId);
-  return {state:'proposal',answer:'I have enough information. Review the complete draft proposal below. It is not created until you press Confirm these changes.',actionId:action.id};
+  return {state:'proposal',answer:'Ready — review and confirm below.',actionId:action.id};
 }
 
 export async function prepareDraftWorkflow(client:SupabaseClient,access:Access,conversationId:string,runId:string,args:Record<string,unknown>){const {data}=await creationContext(client,access);return evaluate(client,access,conversationId,runId,cleanBrief(args,data));}
