@@ -1,3 +1,4 @@
+import { planningBoundary } from './directions';
 import type { Demand, MaterialBank, RoofFace, RoofInput, SolveRequest } from './types';
 import { dot, EPS } from './math';
 import { frameFor, sceneToSurface, sheetCount } from './material';
@@ -19,7 +20,7 @@ export function intervalOverlap(intervals: Interval[], a: number, b: number): nu
 }
 export function edgeIntervals(face: RoofFace, roof: RoofInput, kind: 'ridge' | 'spouting'): Interval[] {
   const frame = frameFor(face,roof);
-  return mergeIntervals(face.boundary.filter(e=>e.kind===kind).map(e=>{
+  return mergeIntervals(planningBoundary(face).filter(e=>e.kind===kind).map(e=>{
     const a=sceneToSurface(e.a,frame).x,b=sceneToSurface(e.b,frame).x;
     return [Math.min(a,b),Math.max(a,b)];
   }));
@@ -55,7 +56,7 @@ export function projectBank(bank: MaterialBank, request: SolveRequest): BankProj
   const eaveFaces=request.faces.filter(f=>bank.faceIds.includes(f.id)&&f.boundary.some(e=>e.kind==='hip')&&!isSelfFillCandidate(f,request.roof));
   // Receiving projections can complete the elevation's spouting span without
   // becoming additional new-stock anchors (C + E still spans the same width).
-  const eaveIntervals=mergeIntervals((eaveFaces.length?eaveFaces:members).flatMap(f=>f.boundary.filter(e=>e.kind==='spouting').map(e=>{
+  const eaveIntervals=mergeIntervals((eaveFaces.length?eaveFaces:members).flatMap(f=>planningBoundary(f).filter(e=>e.kind==='spouting').map(e=>{
     const a=dot(e.a,u)*scale,b=dot(e.b,u)*scale;return [Math.min(a,b),Math.max(a,b)] as Interval;
   })));
   const spanMm=footprintIntervals.reduce((n,[a,b])=>n+b-a,0);
@@ -89,7 +90,7 @@ export function bankAnchorFaces(members: RoofFace[], roof: RoofInput): RoofFace[
  * the new donor run. Ordinary two-hip/two-valley main faces are NOT self-fill. */
 export function isSelfFillCandidate(face: RoofFace, roof: RoofInput): boolean {
   if (!face.flow || face.pitchDeg===null) return false;
-  if (!face.boundary.some(e=>e.kind==='ridge') || edgeIntervals(face,roof,'spouting').length!==1) return false;
+  if (!planningBoundary(face).some(e=>e.kind==='ridge') || edgeIntervals(face,roof,'spouting').length!==1) return false;
   const frame=frameFor(face,roof);
   const edges=face.boundary.filter(e=>['hip','valley','broken_hip'].includes(e.kind));
   if(edges.length<2 || !edges.some(e=>e.kind==='hip') || !edges.some(e=>e.kind==='valley'||e.kind==='broken_hip'))return false;

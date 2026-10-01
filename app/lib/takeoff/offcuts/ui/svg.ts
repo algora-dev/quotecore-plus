@@ -1,3 +1,6 @@
+import { materialSections, type MaterialSection } from '../core/sections';
+import { hasFlow } from '../core/directions';
+import { quantitySummary } from '../core/quantities';
 import type { Draft, Point, Region, Ring } from '../core/types';
 import { centroid, projection, validateRing } from '../core/math';
 import { bandRing, boundarySegments, fromRing, unionAll, pointInRegion, bounds } from '../core/regions';
@@ -42,7 +45,8 @@ function containedArrow(polygon: Ring, start: Point, direction: Point, length: n
 export interface RenderOptions {
   phase: 'faces' | 'solution'; selectedFaceId?: string; selectedOffcutId?: string;
   showSheets?: boolean; showSources?: boolean; showEnvelope?: boolean;
-  editPieces?: boolean; selectedGroupId?: string;
+  editPieces?: boolean; editGroups?: boolean; selectedGroupId?: string;
+  selectedSectionId?: string; sections?: MaterialSection[]; showDetailedLabels?: boolean;
   print?: boolean; viewBox?: string; pendingPolygon?: Point[];
   hiddenFaceIds?: ReadonlySet<string>;
   coverage?: CoverageRegion[]; focusedDiagnosticId?: string;
@@ -58,6 +62,9 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
   const hidden = (id: string): boolean => options.phase === 'faces' && !options.print && !!options.hiddenFaceIds?.has(id);
   const ids = new Map(faces.map((f,i)=>[f.id,i]));
   const plan = s ? materialPlan(faces, s) : [];
+  const sections = s ? options.sections ?? materialSections(s) : [];
+  const selectedSection = sections.find(a=>a.id===options.selectedSectionId);
+  const activeFaces = new Set(selectedSection ? [selectedSection.faceId,...selectedSection.sourceFaceIds] : []);
   let shapes = '';
   // Export excludes signed plan URLs. A reviewer may attach their source plan
   // separately; external image URLs must never leak in downloadable drawings.
@@ -71,6 +78,37 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
   if (s && options.phase === 'solution') {
     const demands = new Map(s.demands.map(d=>[d.id,d]));
     if (options.showEnvelope) for (const d of s.demands) if (s.placements.some(p=>p.demandId===d.id&&p.kind==='new')) shapes += `<path d="${regionFillPath(d.blank,p=>demandPointToScene(p,d))}" fill="${supply!.color(supply!.blockByPlacement.get(d.id))}" fill-opacity=".06" stroke="${supply!.color(supply!.blockByPlacement.get(d.id))}" stroke-width=".6" vector-effect="non-scaling-stroke"/>`;
+    if (!options.editPieces && !options.editGroups && s.status !== 'invalid') {
+      const sourceDemands=new Set(selectedSection?.offcutIds.map(id=>s.offcuts.find(o=>o.id===id)?.sourceDemandId).filter(Boolean)??[]);
+      for (const section of sections) {
+        const reused = section.role==='offcut'||section.role==='self-fill';
+        const filler = section.role==='new-filler', selected = section.id===selectedSection?.id;
+        const related = selectedSection && ((selectedSection.role==='new-bank'||selectedSection.role==='new-filler')
+          ? section.rootDemandIds.some(id=>selectedSection.rootDemandIds.includes(id))
+          : section.demandIds.some(id=>sourceDemands.has(id)));
+        if(related)activeFaces.add(section.faceId);
+        const dim = !!selectedSection && !selected && !related;
+        const col=supply!.color(section.supplyBlockId), name=faces.find(f=>f.id===section.faceId)?.name??section.faceId;
+        const role=section.role==='bank-continuation'?'Common-bank stock':filler?'New filler':reused?section.role==='self-fill'?'Self-fill offcuts':'Offcuts':'New bank';
+        const materialRole=section.role==='bank-continuation'?'bank-continuation':reused?'offcut':filler?'filler':'new-cut';
+        const label=`${name} — ${role}, ${section.positionCount} sheet positions. Select for source and lengths.`;
+        shapes+=`<g data-section="${escapeHtml(section.id)}" data-demand="${escapeHtml(section.demandIds[0])}" data-material-role="${materialRole}" data-supply-block="${escapeHtml(section.supplyBlockId)}" opacity="${dim?'.18':'1'}" ${options.print?'':`role="button" tabindex="0" aria-pressed="${selected}" aria-label="${escapeHtml(label)}" style="cursor:pointer"`}><title>${escapeHtml(label)}</title>
+          <path d="${regionFillPath(section.region,p=>p)}" fill="${reused?`url(#${hatch(section.supplyBlockId)})`:filler?FILLER_COLOR:col}" fill-opacity="${reused?'.92':filler?'.64':'.16'}"/>
+          <path d="${regionOutlinePath(section.region,p=>p)}" fill="none" stroke="${selected?'#191B20':filler?'#46505E':col}" stroke-width="${selected?3:reused?1.6:1.1}" ${reused?'stroke-dasharray="6 4"':filler?'stroke-dasharray="2 4"':''} vector-effect="non-scaling-stroke"/>`;
+        if(options.showSheets||filler)for(const id of section.demandIds){
+          const d=demands.get(id)!;
+          shapes+=`<path d="${regionOutlinePath(d.cover,p=>demandPointToScene(p,d))}" fill="none" stroke="${filler?'#46505E':col}" stroke-width=".75" ${filler?'stroke-dasharray="2 4"':''} vector-effect="non-scaling-stroke" pointer-events="none"/>`;
+        }
+        shapes+='</g>';
+      }
+      // Focus tells the physical story: show the actual available cut at its
+      // immediately preceding cutting site, not an imaginary whole triangle.
+      if(selectedSection&&!options.print)for(const id of selectedSection.offcutIds){
+        const o=s.offcuts.find(o=>o.id===id),d=o&&demands.get(o.sourceDemandId);if(!o||!d)continue;
+        const col=supply!.color(selectedSection.supplyBlockId);
+        shapes+=`<g data-source-highlight="${escapeHtml(o.sourceDemandId)}" pointer-events="none"><title>Source cut before any further trimming: ${escapeHtml(o.sourceDemandId)}</title><path d="${regionFillPath(o.region,p=>demandPointToScene(p,d))}" fill="${col}" fill-opacity=".10"/><path d="${regionOutlinePath(o.region,p=>demandPointToScene(p,d))}" fill="none" stroke="${col}" stroke-width="2.5" stroke-dasharray="8 3" vector-effect="non-scaling-stroke"/></g>`;
+      }
+    } else {
     // Group fresh cover by source face. Reuse keeps physical IDs for editing,
     // while same-colour hatching provides the source-group visual relationship.
     for (const p of s.placements) {
@@ -112,6 +150,7 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
         shapes += `<path d="${regionOutlinePath(d.cover, p => demandPointToScene(p, d))}" fill="none" stroke="${groupColor}" stroke-width=".7" vector-effect="non-scaling-stroke" pointer-events="none"/>`;
       }
     }
+    }
     for (const f of faces) shapes += `<polygon data-plan-face="${escapeHtml(f.id)}" points="${points(f.polygon)}" fill="none" stroke="#334e5a" stroke-width="1.3" vector-effect="non-scaling-stroke" pointer-events="stroke"/>`;
     if(options.showSources||options.selectedOffcutId)for(const o of s.offcuts){
       if(!options.showSources&&o.id!==options.selectedOffcutId)continue;
@@ -123,13 +162,14 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
   const arrowLength=Math.min(roof.sceneWidth,roof.sceneHeight)*0.075;
   for (const f of faces) {
     if (hidden(f.id)) continue;
+    shapes+=`<g data-face-annotation="${escapeHtml(f.id)}" opacity="${selectedSection&&!activeFaces.has(f.id)?'.22':'1'}">`;
     const c=interiorAnchor(f.polygon), flow=f.flow;
     const col=lapColor(f.id);
     const row = plan.find(p => p.faceId === f.id);
     const label = row?.primaryOperationFaceIds.length&&row.primaryOperationFaceIds.length>1 ? 'MAIN BANK · shared stock' : row ? row.newCount === row.sheetCount ? `NEW · ${row.sheetCount} sheets` : row.newCount === 0 ? `OFFCUT · ${row.sheetCount} sheets` : `${row.newCount} NEW + ${row.reuseCount} OFFCUT` : '';
-    shapes+=`<text ${options.phase==='faces'?`data-face="${escapeHtml(f.id)}"`: ''} x="${n(c.x)}" y="${n(c.y-(row && options.phase==='solution'?26:14)*px)}" text-anchor="middle" font-size="${n(12*px)}" font-family="system-ui,sans-serif" fill="#191B20" font-weight="650" style="paint-order:stroke;stroke:#fff;stroke-width:${n(2.5*px)};stroke-opacity:.75">${escapeHtml(f.name)}</text>`;
-    if (row && options.phase === 'solution') shapes += `<text data-plan-face="${escapeHtml(f.id)}" x="${n(c.x)}" y="${n(c.y-11*px)}" text-anchor="middle" font-size="${n(10*px)}" font-family="system-ui,sans-serif" fill="#303641" font-weight="600" style="paint-order:stroke;stroke:#fff;stroke-width:${n(2*px)};stroke-opacity:.6">${escapeHtml(label)}</text>`;
-    if(flow){
+    shapes+=`<text ${options.phase==='faces'?`data-face="${escapeHtml(f.id)}"`: ''} x="${n(c.x)}" y="${n(c.y-(row && options.phase==='solution'&&options.showDetailedLabels?26:14)*px)}" text-anchor="middle" font-size="${n(12*px)}" font-family="system-ui,sans-serif" fill="#191B20" font-weight="650" style="paint-order:stroke;stroke:#fff;stroke-width:${n(2.5*px)};stroke-opacity:.75">${escapeHtml(f.name)}</text>`;
+    if (row && options.phase === 'solution' && options.showDetailedLabels) shapes += `<text data-plan-face="${escapeHtml(f.id)}" x="${n(c.x)}" y="${n(c.y-11*px)}" text-anchor="middle" font-size="${n(10*px)}" font-family="system-ui,sans-serif" fill="#303641" font-weight="600" style="paint-order:stroke;stroke:#fff;stroke-width:${n(2*px)};stroke-opacity:.6">${escapeHtml(label)}</text>`;
+    if(hasFlow(flow)){
       // Keep solution arrows beneath the face name/count, not through them.
       // Face-review drag handles retain their original centroid-based geometry.
       const length=options.phase==='solution'?Math.min(arrowLength,36*px):arrowLength;
@@ -149,7 +189,9 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
           <line x1="${n(a.x)}" y1="${n(a.y)}" x2="${n(b.x)}" y2="${n(b.y)}" stroke="${col}" stroke-width="2" marker-end="url(#lap-arrow-${ids.get(f.id)})" vector-effect="non-scaling-stroke"/><text x="${n(b.x+u.x*5)}" y="${n(b.y+u.y*5)}" font-size="${n(9*px)}" fill="${col}" pointer-events="none">LAP</text></g>`;
       }
     }
+    if(options.phase==='faces'&&!hasFlow(flow)&&!options.print)shapes+=`<g data-action="choose-flow" data-id="${escapeHtml(f.id)}" role="button" tabindex="0" aria-label="Set water direction for ${escapeHtml(f.name)}" style="cursor:pointer"><rect x="${n(c.x-36*px)}" y="${n(c.y-5*px)}" width="${n(72*px)}" height="${n(26*px)}" rx="${n(5*px)}" fill="#FFF1E7" stroke="#B63D0A" vector-effect="non-scaling-stroke"/><text x="${n(c.x)}" y="${n(c.y+12*px)}" text-anchor="middle" font-size="${n(11*px)}" fill="#9F3509">Set flow</text></g>`;
     if(options.phase==='faces'&&options.selectedFaceId===f.id&&!options.print)f.polygon.forEach((p,i)=>{shapes+=`<circle data-vertex="${i}" data-face-id="${escapeHtml(f.id)}" cx="${n(p.x)}" cy="${n(p.y)}" r="${n(5*px)}" fill="#fff" stroke="#B63D0A" stroke-width="2"/>`;});
+    shapes+='</g>';
   }
   if(options.pendingPolygon?.length)shapes+=`<polyline points="${points(options.pendingPolygon)}" fill="#FF6B35" fill-opacity=".2" stroke="#B63D0A" stroke-dasharray="4 3"/>`;
   for (const issue of options.coverage ?? []) {
@@ -163,6 +205,7 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
   }
   const defs=faces.map((f,i)=>`<pattern id="hatch-${i}" patternUnits="userSpaceOnUse" width="8" height="8"><rect width="8" height="8" fill="${color(f.id)}" fill-opacity=".12"/><path d="M0 0L8 8M8 0L0 8" stroke="${color(f.id)}" stroke-width="1"/></pattern><marker id="lap-arrow-${i}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="${lapColor(f.id)}"/></marker>`).join('');
   const hasReviewGaps = !!options.coverage?.length;
-  const padding=options.print && hasReviewGaps ? 55 : 30;
-  return `<svg xmlns="http://www.w3.org/2000/svg" class="qc-scene" role="${options.print ? 'img' : 'group'}" aria-label="Roof faces and offcut review" viewBox="${options.viewBox??`${-padding} ${-padding} ${roof.sceneWidth+padding*2} ${roof.sceneHeight+padding*2}`}" style="background:#fff;touch-action:none;user-select:none;width:100%;height:100%"><defs>${supply?.blocks.map(b=>`<pattern id="${hatch(b.id)}" patternUnits="userSpaceOnUse" width="${n(7*px)}" height="${n(7*px)}"><path d="M0 0L${n(7*px)} ${n(7*px)}M${n(7*px)} 0L0 ${n(7*px)}" stroke="${supply.color(b.id)}" stroke-width="${n(.9*px)}"/><rect width="${n(7*px)}" height="${n(7*px)}" fill="${supply.color(b.id)}" fill-opacity=".12"/></pattern>`).join('')??''}<marker id="water-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#191B20"/></marker>${defs}</defs>${shapes}${options.print?`<text x="16" y="-12" font-family="system-ui" font-size="11" fill="#303641">Colour: new cutting stock · matching hatch: reused · grey / dotted: new fillers (may be cut)</text>`:''}${options.print?`<text x="16" y="${roof.sceneHeight+20}" font-family="system-ui" font-size="12" fill="#B63D0A">DRAFT CUT / REUSE PLAN — VERIFY PROFILE AND SITE LENGTHS — NOT AN ORDER</text>${hasReviewGaps ? `<text x="16" y="${roof.sceneHeight+40}" font-family="system-ui" font-size="11" fill="#825000">AMBER AREAS: drawing discrepancies remain; no missing area was filled by this plan.</text>` : ''}`:''}</svg>`;
+  const padding=options.print ? 75 : 30;
+  const quantities=s&&options.print?quantitySummary(s,sections):null;
+  return `<svg xmlns="http://www.w3.org/2000/svg" class="qc-scene" role="${options.print ? 'img' : 'group'}" aria-label="Roof faces and offcut review" viewBox="${options.viewBox??`${-padding} ${-padding} ${roof.sceneWidth+padding*2} ${roof.sceneHeight+padding*2}`}" style="background:#fff;touch-action:none;user-select:none;width:100%;height:100%"><defs>${supply?.blocks.map(b=>`<pattern id="${hatch(b.id)}" patternUnits="userSpaceOnUse" width="${n(10*px)}" height="${n(10*px)}"><path d="M0 0L${n(10*px)} ${n(10*px)}M${n(10*px)} 0L0 ${n(10*px)}" stroke="${supply.color(b.id)}" stroke-width="${n(1.0*px)}"/><rect width="${n(10*px)}" height="${n(10*px)}" fill="${supply.color(b.id)}" fill-opacity=".12"/></pattern>`).join('')??''}<marker id="water-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#191B20"/></marker>${defs}</defs>${shapes}${options.print?`<text x="16" y="-12" font-family="system-ui" font-size="11" fill="#303641">Colour: new cutting stock · matching hatch: reused · grey / dotted: new fillers (may be cut)</text>`:''}${options.print?`<text x="16" y="${roof.sceneHeight+20}" font-family="system-ui" font-size="12" fill="#B63D0A">DRAFT CUT / REUSE PLAN — VERIFY PROFILE AND SITE LENGTHS — NOT AN ORDER</text>${quantities?`<text x="16" y="${roof.sceneHeight+40}" font-family="system-ui" font-size="12" fill="#303641">${quantities.newSheetCount} new sheets · ${quantities.purchasedLinealM.toFixed(2)} lm · ${quantities.suppliedCoverAreaM2.toFixed(2)} m² cover-based supply · selected scope only · no spares</text>`:''}${hasReviewGaps ? `<text x="16" y="${roof.sceneHeight+60}" font-family="system-ui" font-size="11" fill="#825000">AMBER AREAS: drawing discrepancies remain; no missing area was filled by this plan.</text>` : ''}`:''}</svg>`;
 }

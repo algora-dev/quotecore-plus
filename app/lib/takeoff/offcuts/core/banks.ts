@@ -1,3 +1,5 @@
+import { adjacentValleyParents } from './valleyReceivers';
+import { planningBoundary } from './directions';
 import type { BankLayout, Demand, Issue, Lap, MaterialBank, Offcut, Placement, RoofFace, Solution, SolveRequest } from './types';
 import type { SearchHooks } from './solver';
 import { fingerprint, dot } from './math';
@@ -40,6 +42,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const policy=hooks.planSearch, objective=policy?.objective??'recommended', attempt=policy?.attempt??0;
   const simpleMode=objective==='simpler';
   const banks=buildMaterialBanks(request);
+  const valleyParents=adjacentValleyParents(faces,roof);
   const baseLayout:BankLayout={primaryFaceIds:[],laneOffsetByFace:Object.fromEntries(faces.map(f=>[f.id,f.laneOffsetMm])),
     extraLengthByFace:Object.fromEntries(faces.map(f=>[f.id,0])),tailExtensionByFace:Object.fromEntries(faces.map(f=>[f.id,0])),
     cutLengthByFace:Object.fromEntries(faces.map(f=>[f.id,Math.min(profile.maxLengthMm,banks.find(b=>b.faceIds.includes(f.id))!.cutLengthMm)])),
@@ -49,7 +52,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     const ds=base.filter(d=>d.faceId===face.id), bank=banks.find(b=>b.faceIds.includes(face.id))!;
     const frame=frameFor(face,roof), points=face.polygon.map(p=>sceneToSurface(p,frame));
     const minY=Math.min(...points.map(p=>p.y)),maxY=Math.max(...points.map(p=>p.y));
-    const ridges=face.boundary.filter(e=>e.kind==='ridge');
+    const ridges=planningBoundary(face).filter(e=>e.kind==='ridge');
     // The longest run TO A RIDGE is the purchasing anchor. A long hip point
     // on an end face must not outrank a main face's actual long ridge bank.
     const ridgeLength=ridges.length?Math.max(...ridges.map(e=>maxY-(sceneToSurface(e.a,frame).y+sceneToSurface(e.b,frame).y)/2)):0;
@@ -110,6 +113,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     if(state.demands.length>settings.maxSheets)throw new Error(`Sheet limit exceeded (${settings.maxSheets}).`);
     const created=state.inventory.filter(o=>!previousInventory.has(o.id));
     state.record.add('commit-face', `Allocated ${info.face.name}; generated cuts from the actual supplied material.`, [info.face.id], {
+      valleyReceivingParent:valleyParents.get(info.face.id)??null,bargeFillerDemandIds:[...receivingFillers(info,ds)],
       newSheets:placements.filter(p=>p.kind==='new').length,reusedPositions:placements.filter(p=>p.kind==='reuse').length,
       phaseMm:phase,lap,primary,orderedLengthMm:state.layout.cutLengthByFace?.[info.face.id],
       incoming:placements.filter(p=>p.kind==='reuse').map(p=>({demandId:p.demandId,offcutId:p.offcutId,rotation:p.rotation})),
@@ -140,6 +144,21 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     shift:Math.floor(i/seeds.length)+Math.floor(attempt/Math.max(1,seeds.length)),extend:true}));
   const reservedSelf=new Set(infos.filter(i=>i.selfComplement).map(i=>i.face.id));
 
+  function receivingFillers(info:Info,ds:Demand[]):Set<string> {
+    if(!valleyParents.has(info.face.id))return new Set();
+    // Fresh barge-base rectangles are distinct from the valley transition.
+    // A crossing lane may use a long enough real offcut; do not impose the
+    // self-fill DONOR margin here and accidentally buy an extra receiver sheet.
+    return new Set(ds.filter(d=>(d.eaveOverlapMm??0)>1e-7&&isStraightFiller(d.required)).map(d=>d.id));
+  }
+  function matchReceiver(info:Info,ds:Demand[],stock:Offcut[],preserve:boolean):CoherentMatch {
+    const fillers=receivingFillers(info,ds);
+    if(!fillers.size)return matchSets(ds,stock,preserve);
+    const match=matchSets(ds.filter(d=>!fillers.has(d.id)),stock,preserve);
+    const placements=new Map(match.placements.map(p=>[p.demandId,p]));
+    return {...match,freshArea:match.freshArea+ds.filter(d=>fillers.has(d.id)).reduce((n,d)=>n+area(d.blank),0),
+      placements:ds.map((d):Placement=>placements.get(d.id)??{demandId:d.id,kind:'new',rotation:0,translateY:0})};
+  }
   function bestOffer(state:State,shift:number,extend:boolean):Offer|undefined {
     const unused=state.inventory.filter(o=>!state.used.has(o.id));
     const rejected:Record<string,Record<string,number>>={};
@@ -166,6 +185,8 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
         if(valley.length&&hips.length)pools.push(site);
       }
       for(const info of infos)if(!state.done.has(info.face.id)){
+        const localParent=valleyParents.get(info.face.id);
+        if(localParent&&!state.done.has(localParent)){reject(info.face.id,'waiting-for-adjacent-valley-cuts');continue;}
         const anchor=infos.find(i=>i.face.id===state.layout.primarySequence?.[0]);
         const keepMain=objective!=='less-material'||!anchor||mainBanks.has(anchor.bank.id);
         if(keepMain&&mainMembers.has(info.face.id)){reject(info.face.id,'reserved-longest-bank');continue;}
@@ -177,7 +198,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
           check();const ds=dsFor(info,phase,lap,primary,extend,primary);
           for(const pool of pools){
             const sharedRegistration=primary && pool.every(o=>infos.find(i=>i.face.id===o.sourceFaceId)?.bank.id===rootFamily);
-            const match=matchSets(ds,pool,sharedRegistration);
+            const match=matchReceiver(info,ds,pool,sharedRegistration);
             if(!match.used.size||!match.cutArea){
               reject(info.face.id,pool.every(o=>o.lap!==lap&&(!profile.allowEndForEnd||-o.lap!==lap))?'lap-rule':'no-containment-or-registration-fit');continue;
             }
@@ -189,7 +210,8 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
             if(Math.max(coverage,positions/Math.max(1,ds.length))<(primary?.30:.45) || positions<Math.min(2,ds.length) || match.sourceUtilisation<.20){reject(info.face.id,'insufficient-coherent-contribution');continue;}
             if(sharedRegistration&&!extension&&(match.retainedFraction<.80||coverage<.70)){reject(info.face.id,'incomplete-common-bank-continuation');continue;}
             const exactValley=pool.every(o=>o.cutKind==='valley')&&match.newCutCount===0&&match.retainedFraction>.90;
-            const score=(extension?2.5:0)+(exactValley?2:0)+4*Math.min(1,coverage)+2*Math.min(1,match.sourceUtilisation)+2*Math.min(1,match.retainedFraction)
+            const adjacentValley=localParent&&pool.every(o=>o.sourceFaceId===localParent&&o.cutKind==='valley');
+            const score=(adjacentValley?1.25:0)+(extension?2.5:0)+(exactValley?2:0)+4*Math.min(1,coverage)+2*Math.min(1,match.sourceUtilisation)+2*Math.min(1,match.retainedFraction)
               +(match.newCutCount===0?.35:0)+Math.min(.25,match.reusedArea/Math.max(1,sorted[0].net)*.25)
               -(match.groupsUsed-1)*.015;
             const best=offers.get(info.face.id);
@@ -251,6 +273,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
       let changed=false;
       for(const info of infos){
         if(onlyFace&&info.face.id!==onlyFace)continue;
+        if(valleyParents.has(info.face.id))continue;
         if(state.layout.selfFillFaceIds?.includes(info.face.id)||state.layout.primaryOperations?.some(op=>op.faceIds.includes(info.face.id)))continue;
         check();
         const used=new Set(state.placements.filter(p=>p.kind==='reuse').map(p=>p.offcutId));
@@ -299,7 +322,8 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
         const used=new Set(state.placements.filter(p=>p.kind==='reuse').map(p=>p.offcutId));
         const protectedIds=new Set(state.inventory.filter(o=>used.has(o.id)).map(o=>o.sourceDemandId));
         const fresh=new Set(state.placements.filter(p=>p.kind==='new').map(p=>p.demandId));
-        const targets=state.demands.filter(d=>d.faceId===info.face.id&&fresh.has(d.id)&&!protectedIds.has(d.id));
+        const localFillers=receivingFillers(info,state.demands.filter(d=>d.faceId===info.face.id));
+        const targets=state.demands.filter(d=>d.faceId===info.face.id&&fresh.has(d.id)&&!protectedIds.has(d.id)&&!localFillers.has(d.id));
         if(!targets.length)continue;
         const targetIds=new Set(targets.map(d=>d.id));
         const onFace=state.placements.filter(p=>state.demands.find(d=>d.id===p.demandId)?.faceId===info.face.id);
@@ -329,7 +353,8 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
           }
           if(runs>(simpleMode?2:4)||[...visits.values()].some(n=>n>2))continue;
           const saving=targets.filter(d=>proposed.has(d.id)).reduce((n,d)=>n+area(d.blank),0);
-          const score=saving*(extraSource?.90:1);
+          const localValley=stock.every(o=>o.sourceFaceId===valleyParents.get(info.face.id)&&o.cutKind==='valley');
+          const score=saving*(extraSource?.90:1)*(localValley?1.10:1);
           if(score>bestScore+1){best=reuse;bestScore=score;}
         }
         if(!best?.length)continue;
@@ -436,13 +461,13 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     const state=blankState();state.trial=candidates.length+1;state.seedFaceId=trial.seed.face.id;
     state.record.add('trial-start','Started an independently searched strategy.',undefined,{
       objective,trial:state.trial,seedFaceId:trial.seed.face.id,registrationVariant:trial.shift,
-      protectedMainFaces:[...mainMembers],selfFillCandidates:[...reservedSelf],attempt
+      protectedMainFaces:[...mainMembers],selfFillCandidates:[...reservedSelf],valleyReceivingParents:Object.fromEntries(valleyParents),attempt
     });
     try{
       check();let next=trial.seed;
       while(state.done.size<faces.length){
         check();
-        if(!next||state.done.has(next.face.id))next=sorted.find(i=>!state.done.has(i.face.id))!;
+        if(!next||state.done.has(next.face.id))next=(sorted.find(i=>!state.done.has(i.face.id)&&(!valleyParents.has(i.face.id)||state.done.has(valleyParents.get(i.face.id)!)))??sorted.find(i=>!state.done.has(i.face.id)))!;
         const self=selfSupply(next,trial.extend);
         if(next.selfComplement)state.record.add('evaluate-self-fill','Tested real eave-donor windows and the resulting hip cuts against this valley side.',[next.face.id],{windows:selfDiagnostics.get(next.face.id)??[],result:self?'physical-self-fill-found':'no-valid-self-fill-new-stock-fallback'});
         const main=mainBanks.has(next.bank.id)&&mainMembers.has(next.face.id);
@@ -461,7 +486,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
           const offer=bestOffer(state,trial.shift,trial.extend);if(!offer)break;
           commit(state,offer.info,offer.ds,offer.match.placements,offer.phase,offer.lap,offer.primary,trial.extend,offer.primary);
         }
-        next=sorted.find(i=>!state.done.has(i.face.id))!;
+        next=(sorted.find(i=>!state.done.has(i.face.id)&&(!valleyParents.has(i.face.id)||state.done.has(valleyParents.get(i.face.id)!)))??sorted.find(i=>!state.done.has(i.face.id)))!;
       }
       selfFeed(state);topUp(state);state.completed=true;completed++;hooks.onProgress?.(completed,totalProgress);candidates.push(state);
     }catch(error){
@@ -495,7 +520,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const summaries=candidates.map(state=>({trial:state.trial,seedFaceId:state.seedFaceId,objective,
     signature:signatures.get(state)!,quality:quality(state),completed:state.completed,selected:false,
     reason:excluded.has(signatures.get(state)!)?'already-shown-physical-layout':!eligible.includes(state)?'does-not-improve-requested-objective-within-material-cap':'eligible-candidate'}));
-  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.6' as const,
+  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.7' as const,
     requestFingerprint:fingerprint({faces,profile,settings}),objective,selectedTrial:state?.trial??null,
     events:state?.record.events??[{step:1,action:'no-selection',message:'No unseen candidate improved the requested objective within its material cap. The previous plan is retained.',data:{objective,referenceQuality:reference,excludedSignatures:[...excluded],maxExtraMaterialPercent:maxExtra}}],candidates:summaries.map(c=>({...c,selected:c.trial===state?.trial,
       reason:c.trial===state?.trial?'selected-by-'+objective:c.reason})),
@@ -528,7 +553,7 @@ function toSolution(request:SolveRequest,state:State,inputIssues:Issue[],complet
   }
   if(budgetReached)issues.push({severity:'warning',code:'SEARCH_BUDGET',message:'Time budget reached. Unsolved positions have been supplied new; this complete draft is not proof that no better reuse exists.'});
   issues.push({severity:'warning',code:'PROTOTYPE_ONLY',message:'Draft material-bank plan. Verify profile, sheet registration and site lengths. No guaranteed minimum, manufacturer approval or spare sheets are implied.'});
-  return{schemaVersion:1,engineVersion:'2.6',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
+  return{schemaVersion:1,engineVersion:'2.7',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
     profile:structuredClone(profile),settings:structuredClone(settings),demands:state.demands,placements:state.placements.sort((a,b)=>a.demandId.localeCompare(b.demandId)),
     offcuts:state.inventory,lapByFace:state.laps,bankLayout:state.layout,
     metrics:{newMaterialMm2:cost,baselineNewMaterialMm2:baseline,netRoofMm2:state.demands.reduce((n,d)=>n+area(d.cover),0),installedPhysicalMm2:installed,

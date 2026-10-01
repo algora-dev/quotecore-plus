@@ -16,3 +16,10 @@ export * from './core/zones';
 export * from './core/supply';
 
 export * from './core/diagnostics';
+
+export * from './core/directions';
+
+export * from './core/sections';
+export * from './core/quantities';
+
+export * from './core/valleyReceivers';

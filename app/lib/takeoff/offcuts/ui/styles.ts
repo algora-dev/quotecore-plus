@@ -24,4 +24,28 @@ button:not(:disabled):active,summary:active{background:var(--of-color-orange-tin
 .qc-material-key{font-size:12px;line-height:1.5}.qc-count-explanation{margin:12px 0;font-size:12px;line-height:1.5}.qc-count-explanation summary{font-weight:600}.qc-count-explanation p{margin:8px 0}
 
 .qc-plan-variants{margin:12px 0 18px}.qc-alternative-options{display:grid;gap:8px;margin:10px 0}.qc-alternative-options button{display:grid;text-align:left;white-space:normal;padding:12px;gap:5px;height:auto}.qc-alternative-options small{font-weight:400;line-height:1.45;color:var(--of-text-secondary)}.qc-plan-comparison{font-size:12px;line-height:1.5;padding:10px;background:var(--of-surface-secondary,#F4F5F7);border-radius:8px}.qc-trace pre{font:11px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;background:#F3F4F6;color:#191B20;padding:10px;border-radius:6px}.qc-trace-events{padding-left:22px;font-size:12px}.qc-trace-events>li{margin:8px 0}.qc-trace-events summary{line-height:1.45;overflow-wrap:anywhere}
+/* V2.7: inspect first, numeric detail only on request. */
+.qc-direction{margin-top:12px;padding-top:12px;border-top:1px solid var(--of-border-divider)}
+.qc-direction-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
+.qc-direction-heading small{color:var(--of-text-secondary);font-variant-numeric:tabular-nums}
+.qc-direction-buttons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.qc-direction-buttons button{font-size:23px;padding:4px;min-height:42px}
+.qc-direction-custom{margin-top:7px;padding:4px 8px;min-height:32px;font-size:12px;background:transparent}
+.qc-direction-required,.qc-flow-missing{font-size:11px;color:var(--of-color-orange-ink);font-weight:600}.qc-flow-missing{white-space:nowrap}
+.qc-plan-total .qc-lineal-total{display:block;font-size:26px;color:var(--of-text-primary);font-variant-numeric:tabular-nums;line-height:1.35}
+.qc-lineal-total small{font-weight:500;font-size:14px;color:var(--of-text-secondary)}
+.qc-quantities{margin:14px 0;font-size:12px;border:1px solid var(--of-border-divider);border-radius:var(--of-radius-control);padding:10px}
+.qc-quantity-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 12px;font-size:12px;align-items:start}
+.qc-quantity-grid dt{color:var(--of-text-secondary)}.qc-quantity-grid dd{margin:0;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.qc-quantity-proposal{border-top:1px solid var(--of-border-divider);margin-top:12px;padding-top:12px;overflow-wrap:anywhere}
+.qc-section-detail{padding:12px;border:1px solid var(--of-border-control);border-radius:var(--of-radius-control);font-size:13px;margin:12px 0;background:var(--of-bg-surface)}
+.qc-section-heading{display:flex;justify-content:space-between;align-items:center;gap:8px}.qc-section-heading h3{margin:0;font-size:15px}.qc-section-heading button{padding:4px;min-width:32px;min-height:32px}
+.qc-section-detail p{margin:8px 0}.qc-section-detail details{font-size:12px}.qc-section-quantity strong{font-size:20px;display:block;font-variant-numeric:tabular-nums}
+.qc-selection-hint{padding:10px 12px;margin:12px 0;background:var(--of-bg-app);border-radius:8px;font-size:12px;color:var(--of-text-secondary);line-height:1.6}
+.qc-section-list{display:grid;gap:6px;margin:0 0 12px 12px}.qc-section-list button{display:flex;align-items:flex-start;flex-direction:column;gap:4px;text-align:left;padding:8px 10px;font-size:12px}.qc-section-list small{font-size:11px;color:var(--of-text-secondary);font-weight:400}
+.qc-faces-summary{margin:12px 0}.qc-faces-summary>.qc-material-plan{margin-top:12px}
+svg [data-section]:focus-visible{outline:none}svg [data-section]:focus-visible>path{stroke:#B63D0A;stroke-width:3}
+@media(max-width:700px){.qc-direction-buttons button{min-height:44px}.qc-direction-custom,.qc-section-heading button{min-height:44px}.qc-section-list button{min-height:48px}.qc-quantity-grid{gap:8px}.qc-plan-total .qc-lineal-total{font-size:24px}}
+@media(forced-colors:active){.qc-section-detail,.qc-quantities{border-color:CanvasText}svg [data-section]:focus-visible>path{stroke:Highlight}.qc-flow-missing{color:CanvasText}}
+
 `;

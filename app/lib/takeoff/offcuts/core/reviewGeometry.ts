@@ -1,6 +1,7 @@
 /** Review tolerances are NOT cutting tolerances. Coordinates are never rounded,
  * rotated or projected into an ideal roof by these checks. Small discrepancies
  * stay measurable/visible; actual stock/containment maths stays unchanged. */
+import { directionApproved } from './directions';
 import type { Issue, Point, Ring, RoofEdge, RoofFace, RoofInput } from './types';
 import { EPS, cross, distance, dot, projection, signedArea, sub, unit } from './math';
 
@@ -97,7 +98,7 @@ export function inferredFlow(face: Pick<RoofFace, 'boundary'>): Point | null {
 
 /** Old detector warnings are observations, not perpetual validation errors.
  * Recompute partition checks; forget deleted face IDs; a supplied direction
- * resolves inference failure, but does NOT waive genuine flow contradictions. */
+ * resolves inference failure; explicit review acknowledgements are checked below. */
 export function currentDetectionIssues(issues: Issue[], faces: RoofFace[]): Issue[] {
   const byId = new Map(faces.map(f => [f.id, f]));
   const recomputed = /^(UNCOVERED_ROOF|FACE_OUTSIDE_ROOF|FACE_OVERLAP|OUTLINE_OVERLAP|INVALID_POLYGON|DRAWING_SLIVER|NARROW_FACE)$/;
@@ -119,7 +120,11 @@ export function validateFaceDirections(face: RoofFace, roof: RoofInput): Issue[]
   const flow = unit(v), across = { x: flow.y, y: -flow.x }, toDeg = 180 / Math.PI;
   const angleBetween = (a: Point, b: Point): number => Math.acos(Math.max(-1, Math.min(1, dot(a, b)))) * toDeg;
   let maxAcceptableDeviation = 0;
-  const hard = (code: string, message: string, objectId?: string): void => { issues.push({ severity: 'error', code, message, faceId: face.id, objectId }); };
+  const hard = (code: string, message: string, objectId?: string): void => {
+    const approved = directionApproved(face);
+    issues.push({ severity: approved ? 'warning' : 'error', code, faceId: face.id, objectId,
+      message: approved ? `${message} User-confirmed direction and polygon used; inferred boundary expectations do not block this draft. Verify site measurements.` : message });
+  };
   const boundary = boundaryForPolygon(face.polygon, face.boundary ?? [], 1e-4);
   for (const e of boundary) {
     const d = unit(sub(e.b, e.a));

@@ -217,7 +217,7 @@ export function validateSolution(s: Solution): Issue[] {
       if (roots.size>1) error('MULTI_BANK_MOSAIC', 'A face cannot mix unrelated external material banks in the practical layout.',faceId);
     }
   }
-  if (s.engineVersion === '2.5' || s.engineVersion === '2.6') {
+  if (s.engineVersion === '2.5' || s.engineVersion === '2.6' || s.engineVersion === '2.7') {
     const view=supplyView(s);
     for(const faceId of new Set(s.demands.map(d=>d.faceId))){
       const external=new Set(s.placements.filter(p=>p.kind==='reuse'&&demandMap.get(p.demandId)?.faceId===faceId)

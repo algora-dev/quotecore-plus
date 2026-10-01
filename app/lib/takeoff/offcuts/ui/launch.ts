@@ -1,8 +1,9 @@
 import { fromQuoteCore, type QuoteCoreSnapshot } from '../adapters/quotecore';
 import { mountWorkbench, type WorkbenchHandle } from './workbench';
+import type { QuoteQuantityProposal } from '../core/quantities';
 import type { Draft } from '../core/types';
 import { tokenFallbacks } from './theme';
-export interface LaunchOptions { createWorker?: () => Worker; onExport?: (draft: Draft) => void }
+export interface LaunchOptions { createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void }
 
 /** Native top-layer dialog: background inertness, focus containment and nested
  * Escape behaviour are provided by the browser, not arbitrary z-indexes. This
@@ -59,7 +60,7 @@ export function launchQuoteCoreOffcuts(readSnapshot: () => QuoteCoreSnapshot, op
     // Establish real layout dimensions BEFORE the first SVG/handle render.
     modal.showModal();
     handle = mountWorkbench(host, captured.roof, {
-      initialIssues: captured.issues, onClose: requestClose, onExport: options.onExport,
+      initialIssues: captured.issues, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal,
       readCurrentSourceRevision: () => fromQuoteCore(readSnapshot()).roof.sourceRevision,
       createWorker: options.createWorker ?? (() => new Worker(new URL('../worker.ts', import.meta.url), { type: 'module' })),
     });

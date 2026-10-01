@@ -2,6 +2,7 @@ import type { BankLayout, Demand, FaceFrame, Issue, Offcut, Point, Profile, Regi
 import { EPS, add, dot, mul, sub, unit, validateRing } from './math';
 import { area, bounds, boundarySegments, components, extendY, fromRing, intersect, isMonotone, rectangle, subtract, translate } from './regions';
 import { validatePartition } from './partition';
+import { planningBoundary } from './directions';
 import { validateFaceDirections } from './reviewGeometry';
 export function frameFor(face: RoofFace, roof: RoofInput): FaceFrame {
   if (!face.flow || face.pitchDeg === null) throw new Error(`${face.name}: confirm water direction and pitch first.`);
@@ -139,7 +140,7 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
   const spans = (kind: 'ridge' | 'spouting', left: number, right: number): number => {
     // Classified roof boundaries, not objects in the plan image. A ridge role
     // survives a cut at the OTHER end of that same sheet (for example C's V).
-    const intervals=face.boundary.filter(e=>e.kind===kind).map(e=>{
+    const intervals=planningBoundary(face).filter(e=>e.kind===kind).map(e=>{
       const a=sceneToSurface(e.a,frame),b=sceneToSurface(e.b,frame);
       return [Math.max(left,Math.min(a.x,b.x)),Math.min(right,Math.max(a.x,b.x))];
     }).filter(([a,b])=>b>a).sort((a,b)=>a[0]-b[0]);

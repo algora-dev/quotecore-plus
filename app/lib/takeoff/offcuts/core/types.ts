@@ -28,8 +28,10 @@ export interface RoofFace {
   flow: Point | null;
   lap: Lap; lapLocked: boolean;
   pitchDeg: number | null;
-  /** Explicit manual direction resolves inference warnings, never physical contradictions. */
+  /** Origin of the displayed vector; approval below is bound to exact reviewed geometry. */
   flowSource?: 'inferred' | 'manual';
+  /** Explicit review acknowledgement. Invalidated by changes to polygon/vector/labels. */
+  directionApproval?: string;
   /** Phase measured from the local minimum cross-slope coordinate. */
   laneOffsetMm: number;
   /** Manual registration locks are respected by the bank search. */
@@ -146,7 +148,7 @@ export interface BankLayout {
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5' | '2.6';
+  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7';
   layoutId?: string;
   layoutLabel?: string;
   objective?: PlanObjective;
@@ -204,7 +206,7 @@ export interface TraceCandidate {
   selected: boolean; reason: string;
 }
 export interface DecisionTrace {
-  schemaVersion: 1; engineVersion: '2.6'; requestFingerprint: string;
+  schemaVersion: 1; engineVersion: '2.7'; requestFingerprint: string;
   objective: PlanObjective; selectedTrial: number | null;
   events: TraceEvent[]; candidates: TraceCandidate[];
   truncated: boolean; droppedEvents: number;
