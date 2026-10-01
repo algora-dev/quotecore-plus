@@ -63,6 +63,23 @@ test('P3 compound source provenance survives rate-only edits', () => { const bas
     }[];
 }; assert.equal(audit.entries[0].combinedFrom[1].raw, 60); });
 test('P4 creates a concrete, engine-priced proposal, not a quote row', () => { const args = draftArgs(); const spec = parseDraft(args, creationContext, false); const result = buildDraft(spec, creationContext, [library]); assert.equal(result.params.entryMode, 'manual'); assert.equal(result.params.measurementSystem, 'metric'); assert.equal(result.currency, 'GBP'); assert.equal(result.children.components.length, 1); assert.equal(result.children.components[0].final_quantity, storageNumber(applyPitchAndWaste(100, true, 'rafter', 25, 'percent', 10, 0).afterWaste)); assert.ok(result.changes.some(c => c.label.startsWith('Engine costs'))); });
+test('P4 blanket pitch: explicit role pitch_type overrides library default', () => {
+  // Library row misconfigured with pitch_type 'none' (the owner smoke symptom):
+  // the workflow's explicit role-based override must still apply pitch.
+  const flat = { ...library, id: '44444444-4444-4444-8444-444444444444', name: 'Hip flashing', measurement_type: 'lineal', default_pitch_type: 'none' };
+  const args = { ...draftArgs(), components: [{ library_id: flat.id, quantity: 10, unit: 'm', basis: 'plan', area_index: 0, pitch_type: 'valley_hip' }] };
+  const result = buildDraft(parseDraft(args, creationContext, false), creationContext, [flat]);
+  const hip = result.children.components[0];
+  assert.equal(hip.pitch_type, 'valley_hip');
+  assert.equal(hip.calc_pitch_degrees, 25);
+  assert.equal(hip.final_quantity, storageNumber(applyPitchAndWaste(10, true, 'valley_hip', 25, 'percent', 10, 0).afterWaste));
+  // 'none' override forces no pitch even when the library row says rafter:
+  const none = { ...draftArgs(), components: [{ library_id: library.id, quantity: 100, unit: 'm2', basis: 'plan', area_index: 0, pitch_type: 'none' }] };
+  const result2 = buildDraft(parseDraft(none, creationContext, false), creationContext, [library]);
+  assert.equal(result2.children.components[0].calc_pitch_degrees, 0);
+  // Invalid override is rejected at parse time:
+  assert.throws(() => parseDraft({ ...draftArgs(), components: [{ library_id: library.id, quantity: 100, unit: 'm2', basis: 'plan', area_index: 0, pitch_type: 'steep' }] }, creationContext, false), /pitch type/);
+});
 // Owner evidence 2026-09-29 18:49 UTC: the creation flow stalled because a
 // component-price lookup was refused mid-creation (customer-context gate). The
 // gate fix lives in resolver/anchors.ts + resolver/sources.ts; this proves the

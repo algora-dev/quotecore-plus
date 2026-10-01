@@ -3,6 +3,24 @@ import type { AssistantSection } from '../section-permissions';
 export const ASSISTANT_LIBRARY_ROLES = ['roof_area','ridge','hip','valley','barge','spouting','underlay','fixings'] as const;
 export type AssistantLibraryRole = typeof ASSISTANT_LIBRARY_ROLES[number];
 
+/**
+ * Blanket pitch rule (owner directive 2026-10-01): when a job's component
+ * measurements are PLAN basis, pitch applies to every pitched role in one
+ * sweep. Only ridge and spouting never take pitch. The workflow passes this
+ * as an explicit per-component override so library-level default_pitch_type
+ * misconfiguration cannot silently drop pitch from a role.
+ */
+export const ROLE_PITCH_TYPE: Record<AssistantLibraryRole, 'none' | 'rafter' | 'valley_hip'> = {
+  roof_area: 'rafter',
+  ridge: 'none',
+  hip: 'valley_hip',
+  valley: 'valley_hip',
+  barge: 'rafter',
+  spouting: 'none',
+  underlay: 'rafter',
+  fixings: 'rafter',
+};
+
 export type DraftMeasurement = {
   role: AssistantLibraryRole;
   entries: Array<{ quantity: number; unit: string }>;

@@ -26,7 +26,9 @@ export function parseDraft(value: Record<string, unknown>, context: Record<strin
   const siteAddress = value.site_address == null ? null : boundedText(value.site_address, 500);
   if (value.site_address != null && !siteAddress) throw new ProposalError('Site address must be valid text of at most 500 characters.');
   if (!MEASUREMENT_SYSTEMS.includes(value.measurement_system as DraftSpec['measurementSystem'])) throw new ProposalError('Ask the user to confirm metric, square feet or roofing squares.');
-  const pitch = storageNumber(finite(value.pitch_degrees ?? 0, 'pitch', 0, 89));
+  // Missing pitch is a clarification, never a silent 0: flat roofs still
+  // work (the model sends 0 explicitly once the user confirms "flat").
+  const pitch = storageNumber(finite(value.pitch_degrees, 'pitch', 0, 89));
   const trade = String(value.trade ?? '');
   if (!Object.prototype.hasOwnProperty.call(TRADE_ALLOWED_MEASUREMENT_TYPES, trade)) throw new ProposalError('Choose a supported trade.');
   if (!generic && trade !== 'roofing') throw new ProposalError('This workspace build does not enable generic-trade quote creation.');
@@ -47,6 +49,10 @@ export function parseDraft(value: Record<string, unknown>, context: Record<strin
   let entryCount = 0;
   for (const c of components) {
     if (!isUuid(c.library_id) || !['plan', 'actual'].includes(String(c.basis))) throw new ProposalError('Each component needs a library match and plan/actual measurement basis.');
+    // Blanket pitch rule (owner 2026-10-01): optional explicit pitch type so
+    // the library workflow can apply pitch by structural role regardless of
+    // the library row's default configuration.
+    if (c.pitch_type !== undefined && !['none', 'rafter', 'valley_hip'].includes(String(c.pitch_type))) throw new ProposalError('Component pitch type must be none, rafter or valley_hip.');
     if (c.area_index !== null && (!Number.isInteger(c.area_index) || Number(c.area_index) < 0 || Number(c.area_index) >= areas.length)) throw new ProposalError('A component area reference does not match the proposed areas.');
     if (c.entries !== undefined) {
       const entries = rows(c.entries, 'component entries', 200);
@@ -95,7 +101,7 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
 
     const basis = input.basis === 'plan';
     const measurements = input.entries === undefined ? [input] : rows(input.entries, 'component entries', 200);
-    const pitchType = String(lib.default_pitch_type ?? 'none'), wasteType = String(lib.default_waste_type ?? 'none'), strategy = String(lib.pricing_strategy ?? 'per_unit');
+    const pitchType = input.pitch_type !== undefined ? String(input.pitch_type) : String(lib.default_pitch_type ?? 'none'), wasteType = String(lib.default_waste_type ?? 'none'), strategy = String(lib.pricing_strategy ?? 'per_unit');
     if (!['none', 'rafter', 'valley_hip'].includes(pitchType) || !['none', 'percent', 'fixed', 'fixed_per_segment'].includes(wasteType) || !['per_unit', 'per_pack_area', 'per_pack_length', 'per_pack_coverage', 'per_pack_volume'].includes(strategy)) throw new ProposalError('A component uses an unsupported calculation configuration.');
     const waste = fieldNumber(lib.default_waste_percent, 'waste', 0), fixed = fieldNumber(lib.default_waste_fixed, 'fixed waste', 0);
     const areaIndex = input.area_index === null ? null : Number(input.area_index);

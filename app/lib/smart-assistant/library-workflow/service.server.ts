@@ -5,7 +5,7 @@ import { boundedText, isUuid, type Access } from '../v2/contracts';
 import { ProposalError } from '../v2/action-domain';
 import { addCard } from '../v2/session.server';
 import { creationContext, proposeDraft } from '../v2/creation.server';
-import { ASSISTANT_LIBRARY_ROLES, type AssistantLibraryRole, type DraftBrief, type DraftChoiceWire, type LibraryCatalogItem, type WorkflowCard, type WorkflowQuestion, type WorkflowResult, WORKFLOW_SECTIONS } from './contracts';
+import { ASSISTANT_LIBRARY_ROLES, ROLE_PITCH_TYPE, type AssistantLibraryRole, type DraftBrief, type DraftChoiceWire, type LibraryCatalogItem, type WorkflowCard, type WorkflowQuestion, type WorkflowResult, WORKFLOW_SECTIONS } from './contracts';
 
 const q=(client:SupabaseClient)=>client as any;
 const admin=()=>createAdminClient() as any;
@@ -105,7 +105,12 @@ function chooseCatalog(brief:DraftBrief,catalog:LibraryCatalogItem[]){
 
 function proposalArgs(brief:DraftBrief,catalog:LibraryCatalogItem[]){
   if(!brief.collectionId)throw new ProposalError('Choose a component library first.');
-  const components=brief.measurements.map(m=>{const id=brief.selections[`role:${m.role}`];const item=catalog.find(c=>c.id===id&&c.collectionId===brief.collectionId);if(!item)throw new ProposalError(`Choose a current ${m.role.replace('_',' ')} component.`);return {library_id:id,basis:m.basis,area_index:m.areaIndex,entries:m.entries,source:{role:m.role}};});
+  const components=brief.measurements.map(m=>{const id=brief.selections[`role:${m.role}`];const item=catalog.find(c=>c.id===id&&c.collectionId===brief.collectionId);if(!item)throw new ProposalError(`Choose a current ${m.role.replace('_',' ')} component.`);return {library_id:id,basis:m.basis,area_index:m.areaIndex,entries:m.entries,
+    // Blanket pitch rule (owner 2026-10-01): PLAN-basis measurements carry
+    // their role's pitch factor explicitly so library-level
+    // default_pitch_type cannot silently drop pitch from a role.
+    pitch_type:m.basis==='plan'?ROLE_PITCH_TYPE[m.role]:'none',
+    source:{role:m.role}};});
   return {customer_name:brief.customerName,job_name:brief.jobName,site_address:brief.siteAddress,measurement_system:brief.measurementSystem,pitch_degrees:brief.defaultPitchDegrees,trade:brief.trade,collection_id:brief.collectionId,areas:brief.areas.map(a=>({label:a.label,quantity:a.quantity,unit:a.unit,basis:a.basis,pitch_degrees:a.pitchDegrees})),components};
 }
 
@@ -119,9 +124,13 @@ async function evaluate(client:SupabaseClient,access:Access,conversationId:strin
     await addCard(runId,access,`draft-workflow-${stored.id}-${stored.revision}`,WORKFLOW_SECTIONS,card as any);
     return {state:'awaiting_input',answer:decision.questions.length?'I kept the job and measurements. Choose the remaining product options below.':'I kept the job and measurements, but the selected library is missing an assistant component assignment.',card};
   }
+  const stored=await persist(access,conversationId,brief,stateId,expectedRevision);
   const action=await proposeDraft(client,access,runId,proposalArgs(brief,decision.catalog));
   await addCard(runId,access,`draft-proposal-${action.id}`,WORKFLOW_SECTIONS,{kind:'proposal',title:action.title,actionId:action.id});
-  if(stateId)await admin().from('assistant_v2_draft_briefs').update({status:'proposal',updated_at:new Date().toISOString()}).eq('id',stateId).eq('company_id',access.companyId).eq('user_id',access.userId);
+  // Sticky task: the proposed brief stays queryable as the conversation's
+  // active task so correction turns can revise it instead of asking which
+  // record to update.
+  await admin().from('assistant_v2_draft_briefs').update({status:'proposal',updated_at:new Date().toISOString()}).eq('id',stored.id).eq('company_id',access.companyId).eq('user_id',access.userId);
   return {state:'proposal',answer:'I have enough information. Review the complete draft proposal below. It is not created until you press Confirm these changes.',actionId:action.id};
 }
 
@@ -140,10 +149,14 @@ export async function applyDraftChoice(client:SupabaseClient,access:Access,conve
 }
 
 export async function pendingDraftWorkflowContext(client:SupabaseClient,access:Access,conversationId:string){
-  const {data,error}=await admin().from('assistant_v2_draft_briefs').select('id,revision,brief,status,permission_revision').eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).eq('status','open').maybeSingle();
+  // Sticky task (owner 2026-10-01): a draft awaiting choices (open) OR one
+  // proposed within the last 30 minutes stays the conversation's active
+  // task, so correction turns continue it instead of starting over.
+  const {data,error}=await admin().from('assistant_v2_draft_briefs').select('id,revision,brief,status,permission_revision,updated_at').eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).in('status',['open','proposal']).order('updated_at',{ascending:false}).limit(1).maybeSingle();
   if(error||!data||data.permission_revision!==access.permissionRevision)return null;
+  if(Date.parse(String(data.updated_at))<Date.now()-30*60*1000)return null;
   const brief=data.brief as DraftBrief;
   const catalog=await readAssistantLibraryCatalog(client,access,null).catch(()=>[]);
   const decision=chooseCatalog(brief,catalog);
-  return {stateId:data.id,revision:data.revision,summary:summary(brief),questions:decision.questions.map(q=>({key:q.key,label:q.label,options:q.options.map(o=>({id:o.id,label:o.label}))})),issues:decision.issues};
+  return {stateId:data.id,revision:data.revision,status:data.status,summary:summary(brief),brief:{customerName:brief.customerName,jobName:brief.jobName,siteAddress:brief.siteAddress,measurementSystem:brief.measurementSystem,defaultPitchDegrees:brief.defaultPitchDegrees,trade:brief.trade,collectionId:brief.collectionId,collectionName:brief.collectionName,areas:brief.areas,measurements:brief.measurements,selections:brief.selections},questions:decision.questions.map(q=>({key:q.key,label:q.label,options:q.options.map(o=>({id:o.id,label:o.label}))})),issues:decision.issues};
 }
