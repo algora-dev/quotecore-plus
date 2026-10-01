@@ -22,6 +22,8 @@ export function parseDraft(text: string): Draft {
     const error = validateRing(o.polygon); if (error) throw new Error(error);
   }
   for (const e of roof.edges) if (!e || !e.a || !e.b || ![e.a.x, e.a.y, e.b.x, e.b.y].every(Number.isFinite) || !['ridge','hip','valley','broken_hip','barge','spouting','unknown'].includes(e.kind)) throw new Error('Invalid roof edge.');
+  if(roof.draftingTolerance!==undefined&&!['tight','balanced','relaxed'].includes(roof.draftingTolerance))throw new Error('Unknown drawing tolerance.');
+  if(roof.faceDetectionIgnoredEdgeIds!==undefined&&(!Array.isArray(roof.faceDetectionIgnoredEdgeIds)||roof.faceDetectionIgnoredEdgeIds.length>1200||roof.faceDetectionIgnoredEdgeIds.some(id=>typeof id!=='string'||!roof.edges.some(e=>e.id===id))))throw new Error('Invalid excluded face boundary references.');
   const faces = (Array.isArray(data.faces) ? data.faces : []) as RoofFace[];
   if (faces.length > 200) throw new Error('Too many faces.');
   for (const f of faces) {

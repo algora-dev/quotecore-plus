@@ -24,7 +24,7 @@ button:not(:disabled):active,summary:active{background:var(--of-color-orange-tin
 .qc-material-key{font-size:12px;line-height:1.5}.qc-count-explanation{margin:12px 0;font-size:12px;line-height:1.5}.qc-count-explanation summary{font-weight:600}.qc-count-explanation p{margin:8px 0}
 
 .qc-plan-variants{margin:12px 0 18px}.qc-alternative-options{display:grid;gap:8px;margin:10px 0}.qc-alternative-options button{display:grid;text-align:left;white-space:normal;padding:12px;gap:5px;height:auto}.qc-alternative-options small{font-weight:400;line-height:1.45;color:var(--of-text-secondary)}.qc-plan-comparison{font-size:12px;line-height:1.5;padding:10px;background:var(--of-surface-secondary,#F4F5F7);border-radius:8px}.qc-trace pre{font:11px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;background:#F3F4F6;color:#191B20;padding:10px;border-radius:6px}.qc-trace-events{padding-left:22px;font-size:12px}.qc-trace-events>li{margin:8px 0}.qc-trace-events summary{line-height:1.45;overflow-wrap:anywhere}
-/* V2.7: inspect first, numeric detail only on request. */
+/* V2.8: inspect first, numeric detail only on request. */
 .qc-direction{margin-top:12px;padding-top:12px;border-top:1px solid var(--of-border-divider)}
 .qc-direction-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
 .qc-direction-heading small{color:var(--of-text-secondary);font-variant-numeric:tabular-nums}
@@ -48,4 +48,8 @@ svg [data-section]:focus-visible{outline:none}svg [data-section]:focus-visible>p
 @media(max-width:700px){.qc-direction-buttons button{min-height:44px}.qc-direction-custom,.qc-section-heading button{min-height:44px}.qc-section-list button{min-height:48px}.qc-quantity-grid{gap:8px}.qc-plan-total .qc-lineal-total{font-size:24px}}
 @media(forced-colors:active){.qc-section-detail,.qc-quantities{border-color:CanvasText}svg [data-section]:focus-visible>path{stroke:Highlight}.qc-flow-missing{color:CanvasText}}
 
+
+.qc-canvas[data-drawing=true]:not([data-pan=true]),.qc-canvas[data-drawing=true]:not([data-pan=true]) *{cursor:crosshair!important}
+.qc-simple-section{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;font-size:13px;margin:14px 0}.qc-simple-section dt{color:var(--of-text-secondary)}.qc-simple-section dd{margin:0;font-weight:600;text-align:right}.qc-section-heading button{font-size:12px;min-height:32px}
+.qc-advisory{border:1px solid var(--of-border-divider);border-radius:var(--of-radius-small);padding:8px 10px;margin:12px 0;font-size:12px}.qc-advisory summary{font-weight:600}.qc-advisory button{min-height:32px;padding:4px 12px}.qc-repair-card{background:var(--of-bg-surface);padding:10px;border-radius:var(--of-radius-small)}#qc-drawing-settings pre{font-size:11px;max-height:200px;overflow:auto} .qc-note small{display:block;margin-top:8px}
 `;

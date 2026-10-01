@@ -4,6 +4,10 @@ import { quantitySummary, quoteQuantityProposal, type QuantitySummary, type Quot
 import type { AlternativePlanResult, DecisionTrace, Draft, Issue, Point, RoofFace, RoofInput, Solution } from '../core/types';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../core/types';
 import { deriveFaces } from '../core/graph';
+import { applyLocalFaceRepair } from '../core/faceRepair';
+import { alignReviewedFaces, draftingPolicy, snapDrawingPoint, type DrawingSnap, type BoundaryRepair, type DrawingAdjustment } from '../core/drafting';
+import { dismissWarning, warningDismissed, warningKey, issueTitle } from '../core/reviewIssues';
+import { alternativeReference, differentSavedPlan } from '../core/alternatives';
 import { analysePartition, type PartitionReport } from '../core/partition';
 import { currentDetectionIssues, narrowFace, refreshFaceBoundary, validateFaceDirections } from '../core/reviewGeometry';
 import { centroid, distance, unit, sub, validateRing, fingerprint } from '../core/math';
@@ -51,6 +55,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let phase: 'faces'|'solution' = draft.solution?'solution':'faces';
   let selectedFaceId='', selectedOffcutId='', selectedGroupId='', advancedOpen=false, editPieces=false, worker: Worker|null=null, jobId='', busy=false, progress='', disposed=false;
   let issues: Issue[] = [...(options.initialIssues??[])], error='', stale=false, notice='';
+  let repairs:BoundaryRepair[]=[], drawingAdjustments:DrawingAdjustment[]=[], selectedRepairId='';
+  let drawHover:Point|undefined, snapHint:DrawingSnap|null=null, drawingFrame:number|null=null;
   let hiddenFaceIds = new Set<string>(), panMode = false, spaceHeld = false, pointerOverCanvas = false;
   let focusedDiagnosticId = '', validationAttempted = false, pendingSourceAck = false;
   let partitionKey = '', partitionCache: PartitionReport | null = null;
@@ -78,7 +84,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let background:HTMLImageElement|null=null;
   let viewBox = [-30,-30,roof.sceneWidth+60,roof.sceneHeight+60];
   const history: string[] = [], redoHistory: string[] = [];
-  function snapshot(): string { return JSON.stringify({ draft, issues, hiddenFaceIds: [...hiddenFaceIds], selectedFaceId, phase, layoutIndex }); }
+  function snapshot(): string { return JSON.stringify({ draft, issues, repairs, drawingAdjustments, hiddenFaceIds: [...hiddenFaceIds], selectedFaceId, phase, layoutIndex }); }
   function checkpoint(): void {
     const value = snapshot();
     if (history[history.length - 1] !== value) history.push(value);
@@ -98,6 +104,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       const result = deriveFaces(draft.roof);
       draft.faces = result.faces.map(f => ({ ...f, flowSource: 'inferred' }));
       issues = [...(options.initialIssues ?? []), ...result.issues];
+      repairs=result.repairs;drawingAdjustments=result.adjustments;selectedRepairId='';
       selectedFaceId = draft.faces[0]?.id ?? '';
     } catch (e) { error = message(e); draft.faces = []; }
   }
@@ -105,7 +112,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   if (!draft.faces.length) detect(false); else selectedFaceId = draft.faces[0]?.id ?? '';
   function face(): RoofFace | undefined { return draft.faces.find(f => f.id === selectedFaceId); }
   function partition(): PartitionReport {
-    const key = fingerprint([draft.roof.outlines, draft.roof.mmPerSceneUnit, draft.roof.calibrationConfirmed, draft.faces.map(f => [f.id, f.polygon])]);
+    const key = fingerprint([draft.roof.outlines, draft.roof.mmPerSceneUnit, draft.roof.calibrationConfirmed, draft.faces.map(f => [f.id, f.polygon]), draft.roof.draftingTolerance]);
     if (!partitionCache || key !== partitionKey) { partitionCache = analysePartition(draft.roof, draft.faces); partitionKey = key; }
     return partitionCache;
   }
@@ -117,8 +124,38 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       severity: 'warning' as const, code: 'NARROW_FACE', faceId: f.id,
       message: `${f.name}: narrow face. Hide it to inspect what lies underneath; delete only if it is a false face. It still participates in the calculation while hidden.`,
     }));
-    const reported: Issue[] = [...currentDetectionIssues(issues, draft.faces), ...current, ...small, ...(draft.solution?.issues ?? [])];
+    const extras:Issue[]=[];
+    if(backgroundFailed)extras.push({severity:'warning',code:'BACKGROUND_IMAGE',message:'The plan image did not load. Reviewed vector faces remain available; reopen the takeoff to refresh the image.'});
+    if(draft.solution?.search.budgetReached)extras.push({severity:'warning',code:'SEARCH_LIMIT',message:'Search time limit reached. This is the best complete plan found in that search, not proof of the minimum.'});
+    if(!draft.profile.allowEndForEnd)extras.push({severity:'warning',code:'END_FOR_END_DISABLED',message:'End-for-end reuse is disabled for this profile. Check this setting if expected hip cuts are missing.'});
+    const reported: Issue[] = [...currentDetectionIssues(issues, draft.faces), ...current, ...small, ...(draft.solution?.issues ?? []),...extras];
     return reported.filter((i, index, a) => a.findIndex(j => j.code === i.code && j.message === i.message && j.faceId === i.faceId && j.objectId === i.objectId) === index);
+  }
+  function visibleCoverage() {
+    const report=partition();
+    return report.regions.filter(r=>{
+      const issue=report.issues.find(i=>i.objectId===r.id);
+      return (!issue||!warningDismissed(issue,draft)) && (!r.quiet||r.id===focusedDiagnosticId);
+    });
+  }
+  function drawingSnap(p:Point,excludePoint?:Point):DrawingSnap|null {
+    const canvas=shadow.querySelector<HTMLElement>('.qc-canvas'),box=canvas?.getBoundingClientRect();
+    const scale=box?sceneScale(viewBox,box.width,box.height):null;
+    return scale? snapDrawingPoint(p,draft.roof,draft.faces,{sceneUnitsPerPixel:scale,pending:drawPoints??undefined,excludePoint}):null;
+  }
+  function finishPolygon():void {
+    if(!drawPoints||drawPoints.length<3)throw new Error('Add at least three corners, then click the first point or Finish.');
+    const invalid=validateRing(drawPoints);if(invalid)throw new Error('The outline crosses itself or has a repeated corner. Backspace removes the last point; Escape cancels.');
+    const id=`manual-${localId().slice(0,8)}`;
+    draft.faces.push(refreshFaceBoundary({id,name:`Face ${draft.faces.length+1}`,polygon:drawPoints,boundary:[],flow:null,lap:1,lapLocked:false,pitchDeg:face()?.pitchDeg??draft.faces[0]?.pitchDeg??draft.roof.outlines[0]?.suggestedPitchDeg??null,laneOffsetMm:0,confirmed:false,provenance:'manual'},draft.roof));
+    selectedFaceId=id;drawPoints=null;drawHover=undefined;snapHint=null;
+    notice='Face added. Choose its water direction below.';
+  }
+  function applyAlignment():void {
+    const aligned=alignReviewedFaces(draft.roof,draft.faces);
+    if(!aligned.adjustments.length){notice='No unambiguous small alignments found. Use Show on plan, then adjust or redraw the affected area.';return;}
+    checkpoint();invalidate();draft.faces=aligned.faces.map(f=>refreshFaceBoundary(f,draft.roof));
+    drawingAdjustments.push(...aligned.adjustments);notice=`Aligned ${aligned.adjustments.length} nearby points in this review. Check the faces; Undo restores the previous drawing. Takeoff measurements are unchanged.`;
   }
   function scenePoint(e:PointerEvent|MouseEvent|WheelEvent):Point {
     const svg=shadow.querySelector('svg.qc-scene') as SVGSVGElement|null;
@@ -133,11 +170,15 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if(scale===null){canvas.innerHTML='<div class="qc-canvas-wait" role="status">Preparing plan…</div>';return;}
     canvas.dataset.renderWidth=String(box.width);canvas.dataset.renderHeight=String(box.height);canvas.dataset.renderScale=String(scale);
     canvas.dataset.pan = String(panMode || spaceHeld);
+    canvas.dataset.drawing=String(drawPoints!==null);
     canvas.dataset.dragging = String(drag?.kind === 'pan');
     const focussedSection = shadow.activeElement?.getAttribute('data-section');
     canvas.innerHTML = renderSvg(draft, { phase, selectedFaceId, selectedOffcutId, selectedGroupId, editPieces,
       showSheets, showSources, showEnvelope, editGroups, selectedSectionId, sections:quantities()?.sections, showDetailedLabels, viewBox: viewBox.join(' '), pendingPolygon: drawPoints ?? undefined,
-      hiddenFaceIds, coverage: partition().regions, focusedDiagnosticId,
+      hiddenFaceIds, coverage: visibleCoverage(), focusedDiagnosticId,
+      pendingCursor:drawHover,snapHint:snapHint??undefined,
+      boundaryRepair:repairs.find(r=>r.id===selectedRepairId),
+      boundaryIssues:allIssues().filter(i=>i.location&&i.severity==='error'&&!warningDismissed(i,draft)),
       sceneUnitsPerPixel: scale,
     });
     // Resize/image observers can repaint after full render has restored focus.
@@ -191,6 +232,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if (disposed) return;
     const view = captureView();
     const f = face(), s = draft.solution, reported = allIssues(), errors = reported.filter(i => i.severity === 'error');
+    const visibleIssues=reported.filter(i=>!warningDismissed(i,draft));
+    const ignored=reported.filter(i=>warningDismissed(i,draft));
     const faceName = (id: string): string => draft.faces.find(g => g.id === id)?.name ?? id;
         const bankName=(ids:string[])=>ids.map(id=>faceName(id)).join(' + ');
     const sourceStyle=s?materialColors(s):null;
@@ -203,7 +246,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       <button data-action="rotate-flow" title="Cycle up → right → down → left" aria-label="Rotate water direction clockwise">↻</button></div>
       <button class="qc-direction-custom" data-action="custom-flow" aria-expanded="${customFlowOpen}">Custom angle</button>${customFlowOpen?`<div class="qc-fields">${inputField('Angle ° (0 right, 90 down)','flowAngle',flowAngle(f.flow),'0.1')}</div><p class="qc-muted">Screen directions, not compass bearings. Drag the plan arrow for fine adjustment.</p>`:''}
       ${!hasFlow(f.flow)?'<p class="qc-direction-required">Choose a direction. No direction has been assumed.</p>':''}</div>`:'';
-    const faceButtons = `<div class="qc-face-grid" aria-label="Roof faces">${draft.faces.map(g => `<button class="qc-face ${g.id === selectedFaceId ? 'active' : ''}" data-action="select-face" data-id="${esc(g.id)}" aria-pressed="${g.id === selectedFaceId}" data-hidden="${hiddenFaceIds.has(g.id)}"><span class="qc-face-label">${esc(g.name)}</span><span class="qc-face-meta">${!hasFlow(g.flow)?'<span class="qc-flow-missing" title="Water direction needed">! Flow</span>':''}${smallIds.has(g.id) ? '<span class="qc-small-tag">Small</span>' : ''}${hiddenFaceIds.has(g.id) ? icon('eyeOff') + '<span class="qc-sr-only">Hidden</span>' : g.confirmed ? icon('check') + '<span class="qc-sr-only">Confirmed</span>' : ''}</span></button>`).join('')}</div>`;
+    const faceButtons = `<div class="qc-face-grid" aria-label="Roof faces">${draft.faces.map(g => `<button class="qc-face ${g.id === selectedFaceId ? 'active' : ''}" data-action="select-face" data-id="${esc(g.id)}" aria-pressed="${g.id === selectedFaceId}" data-hidden="${hiddenFaceIds.has(g.id)}"><span class="qc-face-label">${esc(g.name)}</span><span class="qc-face-meta">${!hasFlow(g.flow)?'<span class="qc-flow-missing" title="Water direction needed">! Flow</span>':''}${reported.some(i=>i.faceId===g.id&&i.severity==='error')?'<span class="qc-small-tag">Review</span>':smallIds.has(g.id) ? '<span class="qc-small-tag">Small</span>' : ''}${hiddenFaceIds.has(g.id) ? icon('eyeOff') + '<span class="qc-sr-only">Hidden</span>' : g.confirmed ? icon('check') + '<span class="qc-sr-only">Confirmed</span>' : ''}</span></button>`).join('')}</div>`;
     const quickTools = f ? `<div class="qc-face-tools"><div class="qc-face-tools-head"><strong>${esc(f.name)}</strong>${hiddenFaceIds.has(f.id) ? '<span class="qc-badge">Hidden</span>' : smallIds.has(f.id) ? '<span class="qc-small-tag">Narrow face</span>' : ''}</div><small>${hiddenFaceIds.has(f.id) ? 'Hidden on screen only — still part of the roof.' : smallIds.has(f.id) ? 'Hide to inspect underneath, or delete if incorrect.' : 'Select a face to inspect, hide or remove it.'}</small><div class="qc-quick-actions"><button data-action="focus-face" data-id="${esc(f.id)}" title="Zoom to ${esc(f.name)}">${icon('focus')}Locate</button><button data-action="toggle-face" aria-label="${hiddenFaceIds.has(f.id) ? 'Show' : 'Hide'} ${esc(f.name)}">${icon(hiddenFaceIds.has(f.id) ? 'eye' : 'eyeOff')}${hiddenFaceIds.has(f.id) ? 'Show' : 'Hide'}</button><button data-action="delete-face" class="quiet-danger" aria-label="Delete ${esc(f.name)}">${icon('trash')}Delete</button></div>${directionControl}</div>` : '';
     const faceTools = f ? `<h3>${esc(f.name)} — face tools</h3><label class="qc-field">Name<input data-field="name" value="${esc(f.name)}"/></label>
       <div class="qc-fields">${inputField('This face’s pitch °', 'pitch', f.pitchDeg, '0.5')}${inputField('Lane start offset, mm', 'laneOffset', f.laneOffsetMm)}<label>Lap direction<select data-field="lap"><option value="1" ${f.lap === 1 ? 'selected' : ''}>Along +cross-slope</option><option value="-1" ${f.lap === -1 ? 'selected' : ''}>Along −cross-slope</option></select></label></div>
@@ -227,33 +270,36 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       const scopeLabel='Selected roof / page scope';
       const sectionNumber=(a:MaterialSection)=>sections.filter(b=>b.faceId===a.faceId).findIndex(b=>b.id===a.id)+1;
       const sectionButtons=(id:string)=>`<div class="qc-section-list" aria-label="Sections of ${esc(faceName(id))}">${sections.filter(a=>a.faceId===id).map(a=>`<button data-action="select-section" data-id="${esc(a.id)}" aria-pressed="${a.id===selectedSectionId}"><span>${sectionNumber(a)} · ${sectionLabel(a)}</span><small>${a.purchasedDemandIds.length?`${a.purchasedDemandIds.length} new · ${a.purchasedLinealM.toFixed(2)} lm`:`${a.positionCount} positions · already supplied`}</small></button>`).join('')}</div>`;
-      const sectionDetail=section?`<div class="qc-section-detail" aria-live="polite"><div class="qc-section-heading"><h3>${esc(faceName(section.faceId))} · Section ${sectionNumber(section)}</h3><button data-action="clear-selection" aria-label="Clear section selection">${icon('close')}</button></div><b>${sectionLabel(section)}</b>
-        <p>${section.sourceFaceIds.length?`Cut at ${section.sourceFaceIds.map(id=>esc(faceName(id))).join(' + ')}${section.cutKinds.length?` · ${section.cutKinds.map(esc).join(' / ')}`:''}`:'Full sheets supplied for this section.'}</p>
-        <p class="qc-section-quantity"><strong>${section.purchasedLinealM.toFixed(2)} lm</strong> new purchase here${section.purchasedDemandIds.length?` · ${section.purchasedDemandIds.length} sheets`:''}</p>
-        ${!section.purchasedDemandIds.length?'<p class="qc-muted">Already counted at the source. This does not add more purchased lineal metres.</p>':''}
-        <p>${section.positionCount} sheet positions · ${section.netCoverAreaM2.toFixed(2)} m² covered</p><p><b>${section.cutPieceRunLinealM.toFixed(2)} lm</b> of cut-piece run lengths <span class="qc-muted">(not an additional purchase)</span></p>
+      const lap=section?(s.lapByFace[section.faceId]??draft.faces.find(f=>f.id===section.faceId)?.lap):1;
+      const sectionDetail=section?`<div class="qc-section-detail" aria-live="polite"><div class="qc-section-heading"><h3>${esc(faceName(section.faceId))} · Section ${sectionNumber(section)}</h3><button data-action="clear-selection" aria-label="Deselect section">Deselect</button></div>
+        <dl class="qc-simple-section"><dt>Material</dt><dd>${sectionLabel(section)}</dd><dt>Sheets</dt><dd>${section.positionCount}${section.role==='offcut'||section.role==='self-fill'?' offcuts':' positions'}</dd>
+        ${section.sourceFaceIds.length?`<dt>From</dt><dd>${section.sourceFaceIds.map(id=>id===section.faceId?'This face’s own cuts':esc(faceName(id))).join(' + ')}</dd>`:''}
+        <dt>New purchase</dt><dd>${section.purchasedLinealM.toFixed(2)} lm${section.purchasedDemandIds.length?` · ${section.purchasedDemandIds.length} sheets`:' (already bought at source)'}</dd>
+        <dt>Suggested lap</dt><dd>${lap===1?'Left → right':'Right → left'}</dd></dl>
+        <p class="qc-muted">Lap viewed from the spouting, looking up the roof. Follow the lap arrow on the plan.</p>
         <details><summary>Lengths & material origin</summary><p>Net cut-piece run lengths: ${section.cutPieceRunLinealM.toFixed(2)} lm (sum of each piece’s maximum sheet-run extent; <b>not</b> a purchased quantity).</p><p>Original supplied bank: ${sourceStyle!.blocks.find(b=>b.id===section.supplyBlockId)?.faceIds.map(id=>esc(faceName(id))).join(' + ')??'See physical trace'}.</p>
           ${section.sharedPurchasedDemandIds.length?'<p>A full sheet also crosses another visible section. Its purchase is counted only once in that section.</p>':''}
           ${section.purchasedDemandIds.length?`<table class="qc-stock"><thead><tr><th>New sheet</th><th>Supply length</th></tr></thead><tbody>${q.purchaseRows.filter(r=>section.purchasedDemandIds.includes(r.rootDemandId)).map(r=>`<tr><td>${esc(r.rootDemandId.split(':').slice(-1)[0])}</td><td>${r.lengthM.toFixed(3)} m</td></tr>`).join('')}</tbody></table>`:''}
           <p class="qc-muted">Lengths already include pitch, configured allowances and length rounding. Verify on site before ordering.</p></details></div>`:
-        '<p class="qc-selection-hint">Select a solid, grey or hatched section to see its source and lengths. Other sections dim while it is selected.</p>';
+        '<p class="qc-selection-hint">Select a coloured or hatched section for sheets, source and lap direction.</p>';
       const basisValue=quantityBasis==='lineal-metres'?q.purchasedLinealM:quantityBasis==='cover-square-metres'?q.suppliedCoverAreaM2:q.suppliedProfileAreaM2;
-      const quantityPanel=`<details class="qc-quantities"><summary>Quantities & quote basis</summary><p class="qc-muted">${scopeLabel}. Totals do not include other pages or spare sheets.</p><dl class="qc-quantity-grid"><dt>Purchased length</dt><dd>${q.purchasedLinealM.toFixed(2)} lm</dd><dt>Supply at ${s.profile.coverMm} mm cover</dt><dd>${q.suppliedCoverAreaM2.toFixed(2)} m²</dd><dt>Supply at configured profile width</dt><dd>${q.suppliedProfileAreaM2.toFixed(2)} m²</dd><dt>Net pitched roof</dt><dd>${q.netRoofAreaM2.toFixed(2)} m²</dd><dt>Cover-basis supply above roof</dt><dd>${q.coverUpliftPercent?.toFixed(1)??'—'}%</dd></dl>
+      const quantityPanel=`<details class="qc-quantities"><summary>Use this material quantity in a quote</summary><p class="qc-muted">${scopeLabel}. Totals do not include other pages or spare sheets.</p><dl class="qc-quantity-grid"><dt>Purchased length</dt><dd>${q.purchasedLinealM.toFixed(2)} lm</dd><dt>Supply at ${s.profile.coverMm} mm cover</dt><dd>${q.suppliedCoverAreaM2.toFixed(2)} m²</dd><dt>Supply at configured profile width</dt><dd>${q.suppliedProfileAreaM2.toFixed(2)} m²</dd><dt>Measured roof (pitch included)</dt><dd>${q.netRoofAreaM2.toFixed(2)} m²</dd><dt>Extra material above net roof (cover basis)</dt><dd>${q.coverUpliftPercent?.toFixed(1)??'—'}%</dd></dl>
         <p class="qc-muted">Lineals count each new sheet once. Offcuts and recuts add no second purchase. Profile-width area includes configured side laps; neither area is developed coil area. Cutting remainder may include reusable stock.</p>
         <label class="qc-field">Rate / quantity basis<select data-quantity-basis><option value="lineal-metres" ${quantityBasis==='lineal-metres'?'selected':''}>Lineal metres</option><option value="cover-square-metres" ${quantityBasis==='cover-square-metres'?'selected':''}>Square metres — effective cover</option><option value="profile-square-metres" ${quantityBasis==='profile-square-metres'?'selected':''}>Square metres — configured profile width</option></select></label>
         <button data-action="preview-quantity" class="qc-wide" ${s.status==='invalid'||stale?'disabled':''}>Review material quantity</button>
         ${quotePreviewOpen?`<div class="qc-quantity-proposal"><b>${basisValue.toFixed(2)} ${quantityBasis==='lineal-metres'?'lm':'m²'} for the selected material scope</b><p>Keep the measured roof area and labour quantities. This plan already includes cutting stock and configured allowances; do not apply the old waste factor again automatically. Spares are separate.</p><p class="qc-muted">Match this basis to the quote line’s rate. No quote is changed by this preview or export.</p><div class="qc-actions"><button data-action="export-quantity">Export quantity proposal</button>${options.onQuantityProposal?'<button data-action="send-quantity" class="primary">Send to quote review</button>':''}</div></div>`:''}
         <details><summary>Purchase breakdown by section</summary><table class="qc-stock"><thead><tr><th>Section</th><th>Sheets</th><th>New lm</th></tr></thead><tbody>${sections.filter(a=>a.purchasedDemandIds.length).map(a=>`<tr><td>${esc(faceName(a.faceId))}.${sectionNumber(a)}</td><td>${a.purchasedDemandIds.length}</td><td>${a.purchasedLinealM.toFixed(2)}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><td>${q.newSheetCount}</td><td>${q.purchasedLinealM.toFixed(2)}</td></tr></tfoot></table></details></details>`;
-      normal = `<h2>Sheet & offcut plan</h2><p class="qc-plan-total"><strong>${q.newSheetCount} new sheets</strong><strong class="qc-lineal-total">${q.purchasedLinealM.toFixed(2)} <small>lineal metres</small></strong><span>${q.suppliedCoverAreaM2.toFixed(2)} m² cover-based supply · ${s.metrics.reusedPieceCount} reused positions<br/>Estimated for this roof scope · no spares</span></p>
-        <p class="qc-muted qc-material-key">Solid = new bank · matching hatch = offcuts · grey = new filler.</p>${sectionDetail}${quantityPanel}
+      normal = `<h2>Sheet & offcut plan</h2><p class="qc-plan-total"><strong>${q.newSheetCount} new sheets</strong><strong class="qc-lineal-total">${q.purchasedLinealM.toFixed(2)} <small>purchased lineal metres</small></strong><span>${q.suppliedCoverAreaM2.toFixed(2)} m² material required (cover basis)<br/>${q.netRoofAreaM2.toFixed(2)} m² net roof · ${(q.suppliedCoverAreaM2-q.netRoofAreaM2).toFixed(2)} m² extra (${q.coverUpliftPercent?.toFixed(1)??'—'}%)<br/>This roof scope only · no spares</span></p>
+        <p class="qc-muted qc-material-key">Solid = new bank · matching hatch = offcuts · grey = new filler.</p>${sectionDetail}
         <div class="qc-plan-variants">
           ${layouts.length>1?`<label class="qc-field">Saved in this session<select data-plan-index aria-label="Choose saved cut plan">${layouts.map((layout,i)=>`<option value="${i}" ${i===layoutIndex?'selected':''}>Plan ${i+1} — ${esc(layout.layoutLabel??'Cut plan')}</option>`).join('')}</select></label>`:`<p class="qc-muted">Plan 1 — ${esc(s.layoutLabel??'Recommended')}</p>`}
           <button data-action="alternative-menu" class="qc-wide" aria-expanded="${alternativeMenu}" ${busy||stale||s.status==='invalid'||layouts.length>=12?'disabled':''}>Create another cut plan ${icon('arrow')}</button>
-          ${alternativeMenu?`<div class="qc-alternative-options"><button data-action="alternative-simpler" ${busy?'disabled':''}><b>Simpler offcuts</b><small>Fewer sets, transfers and recuts. May buy extra material.</small></button><button data-action="alternative-material" ${busy?'disabled':''}><b>Less material / waste</b><small>Try another sequence to buy less metal. May require more cutting.</small></button><p class="qc-muted">Your current plan is kept. A new version appears only if a different valid plan improves the chosen goal.</p></div>`:''}
-          ${s.comparison?`<p class="qc-plan-comparison" role="status">Compared with its previous plan: ${s.comparison.newSheetDelta>0?'+':''}${s.comparison.newSheetDelta} new sheets; ${(s.comparison.suppliedDeltaMm2/(s.profile.coverMm+s.profile.leftLapMm+s.profile.rightLapMm)/1000).toFixed(2)} lm; ${s.comparison.suppliedDeltaMm2>0?'+':''}${(s.comparison.suppliedDeltaMm2/1e6).toFixed(2)} m² purchased material. ${s.comparison.changedFaceIds.length} faces changed.${s.objective==='simpler'?' Lower cutting-complexity score; review the trade-off.':''}</p>`:''}
+          ${alternativeMenu?`<div class="qc-alternative-options"><button data-action="alternative-simpler" ${busy?'disabled':''}><b>Simpler offcuts</b><small>Fewer sets, transfers and recuts. May buy extra material.</small></button><button data-action="alternative-material" ${busy?'disabled':''}><b>Less material / waste</b><small>Try to beat the lowest-material plan saved in this session.</small></button><p class="qc-muted">Your current plan is kept. A new version appears only if a different valid plan improves the chosen goal.</p></div>`:''}
+          ${s.comparison?`<p class="qc-plan-comparison" role="status">Compared with ${esc(layouts.findIndex(p=>p.layoutId===s.comparison?.previousLayoutId)>=0?'Plan '+(layouts.findIndex(p=>p.layoutId===s.comparison?.previousLayoutId)+1):'its reference plan')}: ${s.comparison.newSheetDelta>0?'+':''}${s.comparison.newSheetDelta} new sheets; ${(s.comparison.suppliedDeltaMm2/(s.profile.coverMm+s.profile.leftLapMm+s.profile.rightLapMm)/1000).toFixed(2)} lm; ${s.comparison.suppliedDeltaMm2>0?'+':''}${(s.comparison.suppliedDeltaMm2/1e6).toFixed(2)} m² purchased material. ${s.comparison.changedFaceIds.length} faces changed.${s.objective==='simpler'?' Lower cutting-complexity score; review the trade-off.':''}</p>`:''}
           ${layouts.length>=12?'<p class="qc-muted">Session limit reached: 12 saved plans. Export the plan you want to keep.</p>':''}
         </div>
-        <details class="qc-faces-summary"><summary>Faces & sections (${rows.length})</summary><div class="qc-material-plan">${rows.map(row => {
+        ${differentSavedPlan(s,alternativeReference(s,layouts,'less-material'))?`<button data-action="show-lowest-plan" class="qc-wide">Show lowest-material saved plan · ${quantitySummary(alternativeReference(s,layouts,'less-material')).purchasedLinealM.toFixed(2)} lm</button>`:''}
+        ${quantityPanel}<details class="qc-faces-summary"><summary>Faces & sections (${rows.length})</summary><div class="qc-material-plan">${rows.map(row => {
           const type = row.primaryOperationFaceIds.length>1 ? 'MAIN BANK' : row.selfFill ? `${row.newCount} NEW + ${row.reuseCount} SELF-FILL` : row.newCount === row.sheetCount ? `NEW · ${row.sheetCount} sheets` : row.newCount === 0 ? `OFFCUT · ${row.sheetCount} sheets` : `${row.newCount} NEW + ${row.reuseCount} OFFCUT`;
           const sourceBlocks=new Set(s.placements.filter(p=>p.kind==='reuse'&&s.demands.find(d=>d.id===p.demandId)?.faceId===row.faceId).map(p=>sourceStyle!.blockByPlacement.get(p.demandId)));
           const sameBank=row.sources.length>1 && sourceBlocks.size===1;
@@ -266,8 +312,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         </details><label class="qc-check"><input data-display="showSheets" type="checkbox" ${showSheets ? 'checked' : ''}/>Show sheet lines</label>
         ${selectedGroup ? `<div class="qc-selection"><b>${esc(faceName(selectedGroup.sourceFaceId))} → ${esc(faceName(selectedGroup.destinationFaceId))}</b><p>${selectedGroup.sheetCount} offcut sheets. Drag the set to another face to try a valid fit.</p><button data-action="edit-group-pieces">Edit individual pieces</button><button data-action="clear-selection">Deselect</button></div>` : ''}
         <div class="qc-actions"><button data-action="back">Review faces</button></div>
-        ${!draft.profile.allowEndForEnd ? '<p class="qc-note">End-for-end reuse is disabled. Check the profile setting in Review faces if the expected hip offcuts are missing.</p>' : ''}
-        ${s.search.budgetReached ? '<p class="qc-note">Search limit reached. This is the best complete plan found; some reuse may remain undiscovered.</p>' : ''}`;
+`;
       const selected = s.offcuts.find(o => o.id === selectedOffcutId);
       const placement = s.placements.find(p => p.kind === 'reuse' && p.offcutId === selectedOffcutId) ?? (selected ? { demandId: s.demands[0]?.id ?? '', rotation: 0 as const, translateY: 0 } : undefined);
       const unused = s.offcuts.filter(o => !s.placements.some(p => p.kind === 'reuse' && p.offcutId === o.id));
@@ -298,19 +343,30 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
 
     }
     const advanced = `<details id="qc-advanced" ${advancedOpen ? 'open' : ''}><summary>Advanced</summary>${phase === 'solution' ? solutionTools : `<details><summary>Selected roof outlines</summary>${sourceOutlines.map(o => `<label class="qc-check"><input data-outline="${esc(o.id)}" type="checkbox" ${draft.roof.outlines.some(a => a.id === o.id) ? 'checked' : ''}/>${esc(o.name)}</label>`).join('')}<button data-action="detect">Rebuild from linework</button></details><div class="qc-actions"><button data-action="confirm-all">Confirm reviewed faces</button></div>${faceTools}${materialTools}`}
-      ${reported.length ? `<details ${errors.length ? 'open' : ''}><summary>Checks / notes (${reported.length})</summary>${reported.slice(0, 35).map(i => `<div class="qc-note ${i.severity === 'error' ? 'qc-error' : ''}"><b>${esc(i.code)}</b><br/>${esc(i.message)}</div>`).join('')}</details>` : ''}
+      <details id="qc-checks"><summary>Review notes (${visibleIssues.length}${ignored.length?` · ${ignored.length} ignored`:''})</summary>
+        ${visibleIssues.slice(0,50).map(i=>`<div class="qc-note ${i.severity==='error'?'qc-error':''}"><b>${esc(issueTitle(i,draft.faces))}</b><p>${esc(i.message)}</p>${i.location?`<button data-action="focus-boundary" data-id="${warningKey(i,draft)}">Show boundary</button>`:i.faceId?`<button data-action="focus-face" data-id="${esc(i.faceId)}">Show face</button>`:''}${i.severity==='warning'?`<button data-action="ignore-warning" data-id="${warningKey(i,draft)}">Ignore</button>`:''}</div>`).join('')}
+        ${ignored.length?`<button data-action="restore-warnings">Restore ignored notes (${ignored.length})</button>`:''}</details>
+      ${phase==='faces'?`<details id="qc-drawing-settings"><summary>Drawing tolerance & repairs</summary><label class="qc-field">Drawing precision<select data-tolerance><option value="tight" ${draft.roof.draftingTolerance==='tight'?'selected':''}>Tight · 10 mm</option><option value="balanced" ${!draft.roof.draftingTolerance||draft.roof.draftingTolerance==='balanced'?'selected':''}>Balanced · 30 mm</option><option value="relaxed" ${draft.roof.draftingTolerance==='relaxed'?'selected':''}>Relaxed · 50 mm</option></select></label><p class="qc-muted">Calibrated plan distance, not screen pixels. Larger uncertain connections are offered for review, never auto-joined. Cut-fit precision is unchanged.</p><button data-action="align-review">Align small gaps</button>${draft.roof.faceDetectionIgnoredEdgeIds?.length?`<button data-action="restore-boundaries">Restore excluded boundaries (${draft.roof.faceDetectionIgnoredEdgeIds.length})</button>`:''}<details><summary>Alignment log (${drawingAdjustments.length})</summary><pre>${esc(JSON.stringify(drawingAdjustments,null,2))}</pre></details></details>`:''}
       <div class="qc-actions"><button data-action="export-json">Export draft</button></div><p class="qc-muted">Page: ${esc(draft.roof.pageId)}<br/>Scope: ${esc(draft.roof.areaScopeId ?? 'selected page')}<br/>${draft.roof.mmPerSceneUnit.toFixed(3)} mm / scene unit<br/>Export a draft to keep it; this review does not save to the database.</p></details>`;
-    const coverage = partition().regions;
+    const coverage = visibleCoverage();
     const focused = coverage.find(r => r.id === focusedDiagnosticId) ?? coverage.find(r => r.severity === 'error') ?? coverage[0];
     const focusedIndex = focused ? coverage.indexOf(focused) : 0;
     const coverageLabel = focused?.kind === 'gap' ? 'Uncovered roof area' : focused?.kind === 'outside' ? 'Face outside the roof' : focused?.kind === 'overlap' ? 'Faces overlap' : 'Roof outlines overlap';
-    const coverageAlert = focused ? `<div class="qc-note ${focused.severity === 'error' ? 'qc-error' : ''}"><div class="qc-check-title">${icon('warning')}${esc(coverageLabel)}</div><p>${(focused.areaMm2 / 1e6).toFixed(4)} m² · ${focused.severity === 'error' ? 'Check the highlighted region before calculating.' : 'Small drawing discrepancy. Shown in amber; draft calculation can continue.'}</p><div class="qc-view-issues"><button data-action="focus-issue" data-id="${focused.id}">${icon('focus')}Show on plan</button>${coverage.length > 1 ? `<button data-action="next-issue">Next (${focusedIndex + 1}/${coverage.length})</button>` : ''}</div></div>` : '';
-    const otherError = errors.find(i => !coverage.some(r => r.id === i.objectId));
-    const actionableError = otherError ? `<div class="qc-note qc-error" role="alert"><div class="qc-check-title">${icon('warning')}Check ${otherError.faceId ? esc(faceName(otherError.faceId)) : 'the review'}</div><p>${esc(otherError.message)}</p>${otherError.faceId ? `<button data-action="focus-face" data-id="${esc(otherError.faceId)}">Show face</button>` : ''}${errors.length > 1 ? '<small>Further checks are in Advanced.</small>' : ''}</div>` : '';
-    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.7 · Draft plan</span>${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    const coverageAlert = focused ? `<div class="qc-note ${focused.severity === 'error' ? 'qc-error' : ''}"><div class="qc-check-title">${icon('warning')}${esc(coverageLabel)}</div><p>${(focused.areaMm2 / 1e6).toFixed(4)} m² · ${focused.severity === 'error' ? 'Check the highlighted region before calculating.' : 'Small drawing discrepancy. Shown in amber; draft calculation can continue.'}</p><div class="qc-view-issues"><button data-action="focus-issue" data-id="${focused.id}">${icon('focus')}Show on plan</button>${coverage.length > 1 ? `<button data-action="next-issue">Next (${focusedIndex + 1}/${coverage.length})</button>` : ''}${focused.severity==='warning'?`<button data-action="ignore-warning" data-id="${warningKey(partition().issues.find(i=>i.objectId===focused.id)!,draft)}">Ignore</button>`:`<button data-action="align-review">Align small gaps</button><button data-action="add-face">Draw missing face</button>`}</div></div>` : '';
+    const otherError = errors.find(i => !partition().regions.some(r => r.id === i.objectId));
+    const activeRepair=repairs.find(r=>r.id===selectedRepairId)??repairs.find(r=>r.edgeId===otherError?.objectId);
+    const actionableError = otherError ? `<div class="qc-note qc-error" role="alert"><div class="qc-check-title">${icon('warning')}${esc(issueTitle(otherError,draft.faces))}</div>
+      <p>${activeRepair?`${esc(activeRepair.message)} Gap: ${activeRepair.distanceMm.toFixed(0)} mm.`:esc(otherError.message)}</p>
+      <div class="qc-actions">${activeRepair?`<button data-action="connect-repair" data-id="${activeRepair.id}">Connect & find faces</button><button data-action="preview-repair" data-id="${activeRepair.id}">Show connection</button>`:otherError.location?`<button data-action="focus-boundary" data-id="${warningKey(otherError,draft)}">Show boundary</button>`:otherError.faceId?`<button data-action="focus-face" data-id="${esc(otherError.faceId)}">Show face</button>`:''}</div>
+      ${otherError.code==='DANGLING_LINE'?`<details class="qc-repair-options"><summary>Other options</summary><p>Keep this line separate only if it does not divide roof planes. Or draw/split the affected face yourself.</p>${activeRepair&&repairs.filter(r=>r.edgeId===activeRepair.edgeId).length>1?`<button data-action="next-repair" data-id="${activeRepair.id}">Other connection</button>`:''}<button data-action="keep-separate" data-id="${esc(otherError.objectId)}">Not a face boundary</button><button data-action="add-face">Draw missing face</button></details>`:''}
+      ${!otherError.location&&!otherError.faceId?'<button data-action="review-inputs">Review settings</button>':''}
+      ${errors.length>1?`<small>${errors.length} checks remain. Other valid faces are preserved.</small>`:''}</div>`:'';
+    const advisory=visibleIssues.find(i=>i.code==='BACKGROUND_IMAGE'&&i.severity==='warning')??visibleIssues.find(i=>i.severity==='warning'&&!partition().regions.some(r=>r.id===i.objectId)&&!['SNAPPED_ENDPOINTS','NARROW_FACE','FLOW_REVIEW'].includes(i.code));
+    const advisoryCard=advisory?`<details class="qc-advisory"><summary>${esc(issueTitle(advisory,draft.faces))}</summary><p>${esc(advisory.message)}</p><button data-action="ignore-warning" data-id="${warningKey(advisory,draft)}">Ignore</button></details>`:'';
+    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.8 · Draft plan</span>${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
-      <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${drawPoints ? 'Click polygon vertices, then Finish polygon. Esc cancels.' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
-      <aside class="qc-sidebar" aria-label="Offcut review controls">${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${backgroundFailed ? '<div class="qc-note">The background image could not load. The approved roof outlines remain visible. Reopen the takeoff to refresh the image URL.</div>' : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}</div>` : ''}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advanced}</aside></main>
+      <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${drawPoints ? 'Click corners · click first point / Enter to finish · Backspace removes last · Esc cancels · Alt bypasses snap' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
+      <aside class="qc-sidebar" aria-label="Offcut review controls">${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}</div>` : ''}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advisoryCard}${advanced}</aside></main>
       <footer class="qc-footer"><span>Draft only — verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>`;
     renderScene(); restoreView(view, resetScroll);
   }
@@ -327,9 +383,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if (validateInputs(draft.roof, draft.faces, draft.profile, draft.settings).some(i => i.severity === 'error')) { render(true); return; }
     if(objective&&!draft.solution)throw new Error('Create a first plan before asking for an alternative.');
     if(objective&&layouts.length>=12)throw new Error('Export the chosen plan; this session already has 12 alternatives.');
-    const previous=objective?structuredClone(draft.solution!):null;
+    const previous=objective?structuredClone(alternativeReference(draft.solution!,layouts,objective)):null;
     checkpoint();cancel();error='';selectedSectionId='';quotePreviewOpen=false;selectedOffcutId='';busy=true;alternativeMenu=false;
-    progress=objective==='simpler'?'Searching for a simpler distinct plan…':objective==='less-material'?'Searching for a distinct plan using less material…':'Testing longest banks and complete offcut sets…';jobId=localId();
+    progress=objective==='simpler'?'Searching for a simpler distinct plan…':objective==='less-material'?'Searching below the lowest purchased-material total saved…':'Testing longest banks and complete offcut sets…';jobId=localId();
     const id=jobId;
     try {
       worker=options.createWorker?.()??new Worker(new URL('../worker.ts',import.meta.url),{type:'module'});
@@ -374,8 +430,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         const trace=draft.solution.decisionTrace;
         if(action==='export-trace'){
           const safe=JSON.parse(exportDraft(draft)) as Draft;
-          download(`quotecore-offcuts-v2.7-debug.json`,JSON.stringify({schemaVersion:1,kind:'quotecore-offcut-debug',engineVersion:'2.7',
-            selectedPlanIndex:layoutIndex,approvedDraft:safe,quantitySummary:quantities(),selectedSectionId,selectedTrace:trace??null,lastAlternativeSearch:lastSearchTrace,
+          download(`quotecore-offcuts-v2.8-debug.json`,JSON.stringify({schemaVersion:1,kind:'quotecore-offcut-debug',engineVersion:'2.8',
+            selectedPlanIndex:layoutIndex,approvedDraft:safe,reviewDiagnostics:{issues:allIssues(),repairs,drawingAdjustments,ignoredWarnings:draft.dismissedWarnings??[],policy:draftingPolicy(draft.roof)},quantitySummary:quantities(),selectedSectionId,selectedTrace:trace??null,lastAlternativeSearch:lastSearchTrace,
             sessionPlans:layouts.map(p=>({layoutId:p.layoutId,objective:p.objective,metrics:p.metrics,quantities:{purchasedLinealM:quantitySummary(p).purchasedLinealM,suppliedCoverAreaM2:quantitySummary(p).suppliedCoverAreaM2},comparison:p.comparison,decisionTrace:p.decisionTrace??null}))},null,2),'application/json');
           notice='Debug bundle exported locally. It contains roof geometry and decisions, not the source image.';render();return;
         }
@@ -385,6 +441,43 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         const fallback=()=>{download('quotecore-offcuts-trace.txt',text,'text/plain');notice='Clipboard unavailable; trace downloaded as text instead.';render();};
         if(navigator.clipboard?.writeText)void navigator.clipboard.writeText(text).then(()=>{if(!disposed){notice='Decision trace copied.';render();}},()=>{if(!disposed)fallback();});
         else fallback();return;
+      }
+      if(action==='show-lowest-plan'&&draft.solution){
+        const best=alternativeReference(draft.solution,layouts,'less-material');layoutIndex=layouts.findIndex(s=>planSignature(s)===planSignature(best));draft.solution=structuredClone(best);selectedSectionId='';selectedFaceId='';notice='Showing the lowest purchased-material plan saved in this session.';render(true);return;
+      }
+      if(action==='ignore-warning'){
+        const issue=allIssues().find(i=>warningKey(i,draft)===target.dataset.id);if(!issue)return;
+        checkpoint();dismissWarning(draft,issue);focusedDiagnosticId='';notice='Review note ignored for these inputs. Restore it under Advanced.';render();return;
+      }
+      if(action==='restore-warnings'){checkpoint();draft.dismissedWarnings=[];notice='Ignored review notes restored.';render();return;}
+      if(action==='review-inputs'){advancedOpen=true;render();shadow.querySelector<HTMLElement>('[data-field="coverMm"]')?.focus();return;}
+      if(action==='align-review'){applyAlignment();render();return;}
+      if(action==='focus-boundary'){
+        const issue=allIssues().find(i=>warningKey(i,draft)===target.dataset.id);if(!issue?.location)return;
+        const p=issue.location;selectedFaceId=issue.faceId??selectedFaceId;fitBounds(p.x-15,p.y-15,p.x+15,p.y+15);selectedRepairId=issue.suggestionId??'';render();return;
+      }
+      if(action==='preview-repair'||action==='next-repair'){
+        let repair=repairs.find(r=>r.id===target.dataset.id);if(!repair)return;
+        if(action==='next-repair'){const choices=repairs.filter(r=>r.edgeId===repair!.edgeId);repair=choices[(choices.findIndex(r=>r.id===repair!.id)+1)%choices.length];}
+        selectedRepairId=repair.id;fitBounds(Math.min(repair.from.x,repair.to.x)-10,Math.min(repair.from.y,repair.to.y)-10,Math.max(repair.from.x,repair.to.x)+10,Math.max(repair.from.y,repair.to.y)+10);render();return;
+      }
+      if(action==='connect-repair'){
+        const repair=repairs.find(r=>r.id===target.dataset.id),edge=draft.roof.edges.find(e=>e.id===repair?.edgeId);if(!repair||!edge)return;
+        const result=applyLocalFaceRepair(draft.roof,draft.faces,repair);
+        checkpoint();invalidate();draft.roof=result.roof;draft.roof.sourceRevision=roofRevision(draft.roof);draft.faces=result.faces;
+        issues=[...(options.initialIssues??[]),...result.issues];repairs=result.repairs;drawingAdjustments.push(...result.adjustments);selectedRepairId='';
+        hiddenFaceIds=new Set([...hiddenFaceIds].filter(id=>result.preservedFaceIds.includes(id)));
+        selectedFaceId=result.faces.find(f=>!result.preservedFaceIds.includes(f.id))?.id??result.faces[0]?.id??'';
+        notice=`Connection applied to this review. ${result.preservedFaceIds.length} other faces kept unchanged; check the repaired area. Undo restores the previous review. Main takeoff unchanged.`;render();return;
+      }
+      if(action==='restore-boundaries'){checkpoint();draft.roof.faceDetectionIgnoredEdgeIds=[];draft.roof.sourceRevision=roofRevision(draft.roof);detect(false);notice='All measurement boundaries are included again. Review the detected faces.';render();return;}
+      if(action==='keep-separate'){
+        if(!target.dataset.id)return;checkpoint();invalidate();draft.roof.faceDetectionIgnoredEdgeIds=[...new Set([...(draft.roof.faceDetectionIgnoredEdgeIds??[]),target.dataset.id])];draft.roof.sourceRevision=roofRevision(draft.roof);
+        // This action is offered only for a diagnosed dangling bridge. Such a
+        // line is not part of any closed cell, so exclusion must not reset
+        // unrelated hand-drawn faces or manually approved water arrows.
+        issues=issues.filter(i=>i.objectId!==target.dataset.id);repairs=repairs.filter(r=>r.edgeId!==target.dataset.id);selectedRepairId='';
+        notice='Line retained in the takeoff but excluded from this face search. Your reviewed faces are unchanged; Undo restores it.';render();return;
       }
       if(action==='select-section'){selectSection(target.dataset.id??'');return;}
       if(action==='choose-flow'){selectedFaceId=target.dataset.id??selectedFaceId;customFlowOpen=false;notice='Choose the water direction below.';focusFace(selectedFaceId);render(true);return;}
@@ -426,17 +519,17 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
 
       if(action==='select-offcut'){selectedOffcutId=target.dataset.id??'';selectedGroupId='';advancedOpen=true;editPieces=true;render();return;}
       if(action==='select-plan-face'){selectedFaceId=target.dataset.id??'';selectedSectionId='';selectedGroupId='';render();return;}
-      if(action==='clear-selection'){selectedSectionId='';selectedGroupId='';selectedOffcutId='';render();return;}
+      if(action==='clear-selection'){selectedFaceId='';selectedSectionId='';selectedGroupId='';selectedOffcutId='';render();return;}
       if(action==='edit-group-pieces'&&draft.solution){selectedOffcutId=reuseGroups(draft.solution).find(g=>g.id===selectedGroupId)?.offcutIds[0]??'';editPieces=true;advancedOpen=true;render();return;}
       if(action==='flip-lap'&&draft.solution){const f=draft.faces.find(f=>f.id===target.dataset.id);if(!f)return;const lap=draft.solution.lapByFace[f.id];checkpoint();invalidate();f.lap=lap===1?-1:1;f.lapLocked=true;run();return;}
       if(action==='undo'||action==='redo'){
         const from=action==='undo'?history:redoHistory,to=action==='undo'?redoHistory:history,item=from.pop();
         if(item){
-          to.push(snapshot());cancel();const saved=JSON.parse(item) as {draft:Draft;issues:Issue[];hiddenFaceIds:string[];selectedFaceId:string;phase:'faces'|'solution';layoutIndex?:number};
-          draft=saved.draft;issues=saved.issues;hiddenFaceIds=new Set(saved.hiddenFaceIds);selectedFaceId=saved.selectedFaceId;
+          to.push(snapshot());cancel();const saved=JSON.parse(item) as {draft:Draft;issues:Issue[];repairs?:BoundaryRepair[];drawingAdjustments?:DrawingAdjustment[];hiddenFaceIds:string[];selectedFaceId:string;phase:'faces'|'solution';layoutIndex?:number};
+          draft=saved.draft;issues=saved.issues;repairs=saved.repairs??[];drawingAdjustments=saved.drawingAdjustments??[];hiddenFaceIds=new Set(saved.hiddenFaceIds);selectedFaceId=saved.selectedFaceId;
           phase=saved.phase;layoutIndex=saved.layoutIndex??0;
           if(draft.solution && !layouts.some(s=>s.layoutId===draft.solution?.layoutId)){layouts=[structuredClone(draft.solution)];layoutIndex=0;}
-          selectedOffcutId='';selectedGroupId='';partitionKey='';drawPoints=null;pendingSourceAck=false;validationAttempted=false;
+          selectedOffcutId='';selectedGroupId='';partitionKey='';drawPoints=null;drawHover=undefined;snapHint=null;pendingSourceAck=false;validationAttempted=false;
           notice=action==='undo'?'Previous change undone.':'Change restored.';
         }render();return;
       }
@@ -451,13 +544,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='run'){run();return;}
       if(action==='back'){cancel();phase='faces';render();return;}
       if(action==='detect'){detect();render();return;}
-      if(action==='add-face'){checkpoint();invalidate();drawPoints=[];render();return;}
-      if(action==='cancel-polygon'){drawPoints=null;render();return;}
-      if(action==='finish-polygon'){
-        if(!drawPoints||drawPoints.length<3)throw new Error('Add at least three polygon vertices.');
-        const invalid=validateRing(drawPoints);if(invalid)throw new Error(invalid);
-        const id=`manual-${localId().slice(0,8)}`;draft.faces.push(refreshFaceBoundary({id,name:`Face ${draft.faces.length+1}`,polygon:drawPoints,boundary:[],flow:null,lap:1,lapLocked:false,pitchDeg:face()?.pitchDeg??null,laneOffsetMm:0,confirmed:false,provenance:'manual'},draft.roof));selectedFaceId=id;drawPoints=null;render();return;
-      }
+      if(action==='add-face'){checkpoint();invalidate();panMode=false;drawPoints=[];drawHover=undefined;snapHint=null;notice='Draw the missing face. Click the first point to close, then choose water direction.';render();shadow.querySelector<HTMLElement>('.qc-canvas')?.focus({preventScroll:true});return;}
+      if(action==='cancel-polygon'){drawPoints=null;drawHover=undefined;snapHint=null;render();return;}
+      if(action==='finish-polygon'){finishPolygon();render();return;}
       if(action==='cancel-acknowledge'){pendingSourceAck=false;render();return;}
       if(action==='confirm-all'||action==='confirm-run'||action==='acknowledge-run'){
         if(hiddenFaceIds.size){checkpoint();hiddenFaceIds.clear();notice='Hidden faces are visible again. Review the whole roof, then confirm to calculate.';render(true);return;}
@@ -497,6 +586,10 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function change(event:Event):void {
     const target=event.target as HTMLInputElement|HTMLSelectElement;
     try{
+      if(target.hasAttribute('data-tolerance')){
+        const value=target.value;if(!['tight','balanced','relaxed'].includes(value))throw new Error('Choose Tight, Balanced or Relaxed.');
+        checkpoint();invalidate();draft.roof.draftingTolerance=value as 'tight'|'balanced'|'relaxed';draft.roof.sourceRevision=roofRevision(draft.roof);notice='Review tolerance updated. Existing faces are kept. Align small gaps or rebuild from linework to apply connection changes.';render();return;
+      }
       if(target.hasAttribute('data-plan-index')){
         const index=Number(target.value);if(busy||!Number.isInteger(index)||!layouts[index])return;
         checkpoint();layoutIndex=index;draft.solution=structuredClone(layouts[index]);lastSearchTrace=null;selectedSectionId='';selectedGroupId='';selectedOffcutId='';notice=`Showing saved Plan ${index+1}; no recalculation performed.`;render();return;
@@ -545,8 +638,12 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       canvas.focus({ preventScroll: true }); canvas.dataset.dragging = 'true';
     } else {
       if (e.button !== 0 || busy || stale) return;
+      if (drawPoints) {
+        e.preventDefault();canvas.focus({preventScroll:true});snapHint=e.altKey?null:drawingSnap(p);
+        if(snapHint?.kind==='close'){try{finishPolygon();}catch(err){error=message(err);}render();return;}
+        const point=snapHint?.point??p;if(!drawPoints.length||distance(point,drawPoints[drawPoints.length-1])>1e-6)drawPoints.push({...point});drawHover=point;renderScene();return;
+      }
       if (target.closest('[data-action]')) return; // lap/diagnostic buttons own clicks
-      if (drawPoints) { drawPoints.push(p); renderScene(); return; }
       const section=target.closest<SVGElement>('[data-section]');
       if(section&&phase==='solution'&&!editPieces&&!editGroups){e.preventDefault();canvas.focus({preventScroll:true});selectSection(section.dataset.section??'');return;}
       const vertex = target.closest<SVGElement>('[data-vertex]'), flow = target.closest<SVGElement>('[data-flow]');
@@ -563,6 +660,10 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   }
   function pointerMove(event: Event): void {
     const e = event as PointerEvent;
+    if(drawPoints&&!drag&&(e.target as Element).closest('.qc-canvas')){
+      const p=scenePoint(e);snapHint=e.altKey?null:drawingSnap(p);drawHover=snapHint?.point??p;
+      if(drawingFrame===null)drawingFrame=requestAnimationFrame(()=>{drawingFrame=null;renderScene();});return;
+    }
     if (!drag || e.pointerId !== drag.pointerId) return;
     if (drag.kind === 'pan') {
       const dx = e.clientX - drag.clientStart.x, dy = e.clientY - drag.clientStart.y, m = drag.inverse!, initial = drag.initialView!;
@@ -572,7 +673,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       shadow.querySelector('svg.qc-scene')?.setAttribute('viewBox', viewBox.join(' '));
       e.preventDefault(); return;
     }
-    drag.last = scenePoint(e);
+    const raw=scenePoint(e);snapHint=drag.kind==='vertex'&&!e.altKey?drawingSnap(raw,drag.original):null;drag.last=snapHint?.point??raw;
     if (drag.kind === 'group') {
       const group = [...shadow.querySelectorAll<SVGGElement>('[data-group]')].find(g => g.dataset.group === drag!.groupId);
       group?.setAttribute('transform', `translate(${drag.last.x - drag.start.x} ${drag.last.y - drag.start.y})`);
@@ -599,7 +700,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     const state = drag; drag = null; releasePointer(e.pointerId);
     if (state.kind === 'pan') { renderScene(); return; }
     try {
-      const p = scenePoint(e);
+      const raw=scenePoint(e), snapped=state.kind==='vertex'&&!e.altKey?drawingSnap(raw,state.original):null,p=snapped?.point??raw;
+      snapHint=null;
       if (distance({ x: e.clientX, y: e.clientY }, state.clientStart) < 3) { render(); return; }
       if (state.kind === 'vertex') {
         checkpoint(); invalidate();
@@ -651,8 +753,11 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if (isEditing(e)) return;
     const section=(e.target as Element).closest<SVGElement>('[data-section]');
     if(section&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.stopPropagation();selectSection(section.dataset.section??'');return;}
+    if(drawPoints&&(e.key==='Backspace'||e.key==='Delete')){e.preventDefault();e.stopPropagation();drawPoints.pop();drawHover=undefined;snapHint=null;renderScene();return;}
+    if(drawPoints&&e.key==='Enter'){e.preventDefault();e.stopPropagation();try{finishPolygon();}catch(err){error=message(err);}render();return;}
+    if(e.key==='Escape'&&selectedSectionId){e.preventDefault();e.stopPropagation();selectedSectionId='';selectedFaceId='';render();return;}
     if (e.key === 'Escape' && (drag || drawPoints || pendingSourceAck)) {
-      e.preventDefault(); e.stopPropagation(); pointerCancel(); drawPoints = null; pendingSourceAck = false; render(); return;
+      e.preventDefault(); e.stopPropagation(); pointerCancel(); drawPoints = null; drawHover=undefined;snapHint=null; pendingSourceAck = false; render(); return;
     }
     if ((e.ctrlKey || e.metaKey) && !e.altKey && ['z', 'y'].includes(e.key.toLowerCase())) {
       e.preventDefault(); e.stopPropagation(); invoke(e.key.toLowerCase() === 'y' || e.shiftKey ? 'redo' : 'undo'); return;
@@ -702,7 +807,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   return {
     getDraft: () => structuredClone(draft),
     destroy: () => {
-      disposed = true; viewport.destroy();if(background){background.onload=null;background.onerror=null;background=null;} cancel(); pointerCancel(); if (watch) clearInterval(watch);
+      disposed = true; if(drawingFrame!==null)cancelAnimationFrame(drawingFrame); viewport.destroy();if(background){background.onload=null;background.onerror=null;background=null;} cancel(); pointerCancel(); if (watch) clearInterval(watch);
       for (const [type, fn, config] of listeners) shadow.removeEventListener(type, fn, config);
       window.removeEventListener('keydown', globalKeyDown); window.removeEventListener('keyup', globalKeyUp); window.removeEventListener('blur', blur);
       shadow.innerHTML = '';

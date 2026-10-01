@@ -23,3 +23,10 @@ export * from './core/sections';
 export * from './core/quantities';
 
 export * from './core/valleyReceivers';
+
+export * from './core/drafting';
+export * from './core/reviewIssues';
+export * from './core/alternatives';
+
+export { applyLocalFaceRepair } from './core/faceRepair';
+export type { LocalRepairResult } from './core/faceRepair';

@@ -2,12 +2,14 @@
  * rotated or projected into an ideal roof by these checks. Small discrepancies
  * stay measurable/visible; actual stock/containment maths stays unchanged. */
 import { directionApproved } from './directions';
+import { draftingPolicy } from './drafting';
 import type { Issue, Point, Ring, RoofEdge, RoofFace, RoofInput } from './types';
 import { EPS, cross, distance, dot, projection, signedArea, sub, unit } from './math';
 
 export const REVIEW_LIMITS = Object.freeze({
   exactAngleDeg: 1.5,
   maxAngleDeviationDeg: 7.5,
+  /** @deprecated Legacy V2.7 constants; draftingPolicy(roof) is authoritative. */
   maxDraftingWidthMm: 15,
   maxTotalDraftingAreaMm2: 50_000, // 0.05 m² across ALL coverage discrepancies
   maxRoofAreaFraction: 0.0005,    // also at most 0.05% of the reviewed plan area
@@ -15,9 +17,8 @@ export const REVIEW_LIMITS = Object.freeze({
 });
 
 export function drawingToleranceMm(roof: RoofInput): number {
-  if (!roof.calibrationConfirmed || !Number.isFinite(roof.mmPerSceneUnit) || roof.mmPerSceneUnit <= 0) return 0;
-  // One source scene unit, bounded in physical units; independent of zoom/pan.
-  return Math.min(REVIEW_LIMITS.maxDraftingWidthMm, Math.max(1, roof.mmPerSceneUnit));
+  const policy = draftingPolicy(roof);
+  return policy.calibrated ? policy.snapMm : 0;
 }
 
 /** Minimum width of the convex hull, not screen-axis bounds or area/perimeter.
@@ -110,7 +111,8 @@ export function currentDetectionIssues(issues: Issue[], faces: RoofFace[]): Issu
       if (flow && Number.isFinite(flow.x) && Number.isFinite(flow.y) && Math.hypot(flow.x, flow.y) > EPS) return false;
     }
     return true;
-  });
+  }).map(i => i.code === 'DANGLING_LINE' && i.faceId && directionApproved(byId.get(i.faceId)!)
+    ? { ...i, severity: 'warning' as const, code: 'REVIEWED_BOUNDARY', message: 'An open measurement line remains inside the face you confirmed. Your reviewed face is used; the original takeoff is unchanged.' } : i);
 }
 
 /** Shared plan/direction checks. Useful before a worker is launched. */
@@ -123,7 +125,7 @@ export function validateFaceDirections(face: RoofFace, roof: RoofInput): Issue[]
   const hard = (code: string, message: string, objectId?: string): void => {
     const approved = directionApproved(face);
     issues.push({ severity: approved ? 'warning' : 'error', code, faceId: face.id, objectId,
-      message: approved ? `${message} User-confirmed direction and polygon used; inferred boundary expectations do not block this draft. Verify site measurements.` : message });
+      message: approved ? `${face.name}: User-confirmed water direction is used. An inferred boundary label differs; this does not prevent calculation.` : message });
   };
   const boundary = boundaryForPolygon(face.polygon, face.boundary ?? [], 1e-4);
   for (const e of boundary) {

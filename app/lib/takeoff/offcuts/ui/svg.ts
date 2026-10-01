@@ -1,7 +1,8 @@
+import type { DrawingSnap, BoundaryRepair } from '../core/drafting';
 import { materialSections, type MaterialSection } from '../core/sections';
 import { hasFlow } from '../core/directions';
 import { quantitySummary } from '../core/quantities';
-import type { Draft, Point, Region, Ring } from '../core/types';
+import type { Draft, Issue, Point, Region, Ring } from '../core/types';
 import { centroid, projection, validateRing } from '../core/math';
 import { bandRing, boundarySegments, fromRing, unionAll, pointInRegion, bounds } from '../core/regions';
 import { demandPointToScene } from '../core/material';
@@ -49,6 +50,7 @@ export interface RenderOptions {
   selectedSectionId?: string; sections?: MaterialSection[]; showDetailedLabels?: boolean;
   print?: boolean; viewBox?: string; pendingPolygon?: Point[];
   hiddenFaceIds?: ReadonlySet<string>;
+  pendingCursor?:Point; snapHint?:DrawingSnap; boundaryRepair?:BoundaryRepair; boundaryIssues?:Issue[];
   coverage?: CoverageRegion[]; focusedDiagnosticId?: string;
   sceneUnitsPerPixel?: number;
 }
@@ -193,7 +195,16 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
     if(options.phase==='faces'&&options.selectedFaceId===f.id&&!options.print)f.polygon.forEach((p,i)=>{shapes+=`<circle data-vertex="${i}" data-face-id="${escapeHtml(f.id)}" cx="${n(p.x)}" cy="${n(p.y)}" r="${n(5*px)}" fill="#fff" stroke="#B63D0A" stroke-width="2"/>`;});
     shapes+='</g>';
   }
-  if(options.pendingPolygon?.length)shapes+=`<polyline points="${points(options.pendingPolygon)}" fill="#FF6B35" fill-opacity=".2" stroke="#B63D0A" stroke-dasharray="4 3"/>`;
+  if(options.pendingPolygon?.length){
+    const p=options.pendingPolygon,preview=options.pendingCursor?[...p,options.pendingCursor]:p;
+    shapes+=`<g pointer-events="none" data-draw-preview><polyline points="${points(preview)}" fill="#FF6B35" fill-opacity=".12" stroke="#B63D0A" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>${p.map((q,i)=>`<circle cx="${n(q.x)}" cy="${n(q.y)}" r="${n((i===0?6:3)*px)}" fill="${i===0?'#fff':'#B63D0A'}" stroke="#B63D0A" vector-effect="non-scaling-stroke"/>`).join('')}</g>`;
+  }
+  if(options.snapHint){const h=options.snapHint;shapes+=`<g data-snap-hint="${h.kind}" pointer-events="none"><circle cx="${n(h.point.x)}" cy="${n(h.point.y)}" r="${n(9*px)}" fill="#fff" fill-opacity=".65" stroke="#B63D0A" stroke-width="2" vector-effect="non-scaling-stroke"/><text x="${n(h.point.x+12*px)}" y="${n(h.point.y-10*px)}" fill="#B63D0A" font-size="${n(11*px)}">${h.kind==='close'?'Click to close':'Snap'}</text></g>`;}
+  for(const issue of options.boundaryIssues??[]){
+    const p=issue.location;if(!p)continue;
+    shapes+=`<g data-boundary-issue="${escapeHtml(issue.objectId??issue.code)}" pointer-events="none"><circle cx="${n(p.x)}" cy="${n(p.y)}" r="${n(10*px)}" fill="#fff" stroke="#C72B3D" stroke-width="2" vector-effect="non-scaling-stroke"/><text x="${n(p.x)}" y="${n(p.y+4*px)}" text-anchor="middle" font-size="${n(13*px)}" fill="#C72B3D">!</text></g>`;
+  }
+  if(options.boundaryRepair){const r=options.boundaryRepair;shapes+=`<g data-repair-preview pointer-events="none"><line x1="${n(r.from.x)}" y1="${n(r.from.y)}" x2="${n(r.to.x)}" y2="${n(r.to.y)}" stroke="#B63D0A" stroke-width="4" stroke-dasharray="5 3" vector-effect="non-scaling-stroke"/><circle cx="${n(r.to.x)}" cy="${n(r.to.y)}" r="${n(7*px)}" fill="#fff" stroke="#B63D0A" stroke-width="2" vector-effect="non-scaling-stroke"/></g>`;}
   for (const issue of options.coverage ?? []) {
     const col = issue.severity === 'error' ? '#C72B3D' : '#825000';
     const band = [...issue.region].sort((a,b)=>(b.x1-b.x0)*((b.bottom0-b.top0)+(b.bottom1-b.top1))-(a.x1-a.x0)*((a.bottom0-a.top0)+(a.bottom1-a.top1)))[0];

@@ -16,10 +16,14 @@ export interface RoofInput {
   calibrationConfirmed: boolean;
   outlines: Outline[]; edges: RoofEdge[];
   sourceRevision: string;
+  /** Face-review only; physical cut tolerances are unchanged. */
+  draftingTolerance?: 'tight' | 'balanced' | 'relaxed';
+  faceDetectionIgnoredEdgeIds?: string[];
 }
 export interface Issue {
   severity: 'error' | 'warning'; code: string; message: string;
   faceId?: string; objectId?: string;
+  location?: Point; suggestionId?: string;
 }
 export type Lap = -1 | 1; // relative to +u = {flow.y, -flow.x}: right when water points down
 export interface RoofFace {
@@ -148,7 +152,7 @@ export interface BankLayout {
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7';
+  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8';
   layoutId?: string;
   layoutLabel?: string;
   objective?: PlanObjective;
@@ -176,6 +180,8 @@ export interface Draft {
   profile: Profile; settings: SolveSettings; solution: Solution | null;
   exportedAt?: string;
   reviewNotes?: Issue[];
+  /** UI acknowledgements, bound to geometry/rules; never bypass errors. */
+  dismissedWarnings?: string[];
 }
 
 
@@ -206,7 +212,7 @@ export interface TraceCandidate {
   selected: boolean; reason: string;
 }
 export interface DecisionTrace {
-  schemaVersion: 1; engineVersion: '2.7'; requestFingerprint: string;
+  schemaVersion: 1; engineVersion: '2.8'; requestFingerprint: string;
   objective: PlanObjective; selectedTrial: number | null;
   events: TraceEvent[]; candidates: TraceCandidate[];
   truncated: boolean; droppedEvents: number;

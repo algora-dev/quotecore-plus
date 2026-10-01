@@ -17,6 +17,8 @@ export interface QuantitySummary {
   /** Sum(length × configured cover + side allowances); not developed coil area. */
   suppliedProfileAreaM2: number;
   netRoofAreaM2: number;
+  /** Extra supply above net roof; includes allowances/unassigned material, NOT all discarded waste. */
+  extraCoverMaterialM2: number; extraProfileMaterialM2: number;
   reservedOnRoofAreaM2: number;
   cuttingRemainderAreaM2: number;
   coverUpliftPercent: number | null;
@@ -44,7 +46,7 @@ export function quantitySummary(s: Solution, sections=materialSections(s)): Quan
   const cover=sum(r=>r.lengthM*r.effectiveCoverM),physical=sum(r=>r.lengthM*r.profileWidthM);
   return {newSheetCount:purchaseRows.length,reusedPositions:s.placements.filter(p=>p.kind==='reuse').length,
     purchasedLinealM:sum(r=>r.lengthM),suppliedCoverAreaM2:cover,suppliedProfileAreaM2:physical,
-    netRoofAreaM2:net,reservedOnRoofAreaM2:reserved,cuttingRemainderAreaM2:physical-reserved,
+    netRoofAreaM2:net,extraCoverMaterialM2:cover-net,extraProfileMaterialM2:physical-net,reservedOnRoofAreaM2:reserved,cuttingRemainderAreaM2:physical-reserved,
     coverUpliftPercent:net>0?(cover/net-1)*100:null,profileUpliftPercent:net>0?(physical/net-1)*100:null,
     purchaseRows,sections,sparesIncluded:false,method:'unique-purchased-roots'};
 }
