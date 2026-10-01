@@ -341,6 +341,8 @@ export function TakeoffWorkstation({
   // Free-tool / MCP-plugin seam: persistence resolves through context.
   // No provider mounted = exactly the real server actions, unchanged.
   const takeoffActions = useTakeoffActions();
+  // Free-tool / MCP surface: app chrome copy + library UI adapt.
+  const freeToolMode = onFreeFinish !== undefined;
   const [componentLibraryOpen, setComponentLibraryOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Zoom ownership: when set, the zoom was applied by auto-fit (initial load,
@@ -564,6 +566,7 @@ export function TakeoffWorkstation({
   // pinned library if it still exists, otherwise "All components". "All" shows
   // every company component regardless of which named library it belongs to.
   const [selectedLibraryId, setSelectedLibraryId] = useState<string>(() => {
+    if (onFreeFinish) return ALL_LIBRARIES; // free tool: flat component list, no library picker
     const pinned = (quote as { component_collection_id?: string | null }).component_collection_id ?? null;
     if (pinned && collections.some((c) => c.id === pinned)) return pinned;
     return ALL_LIBRARIES;
@@ -7336,9 +7339,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 disabled={calibrations.length === 0 || isSaving}
                 data-copilot="takeoff-save" variant="primary" size="sm" aria-busy={isSaving}
                 className="qc-takeoff-finish-btn"
-                title={calibrations.length === 0 ? 'Calibrate the plan first' : 'Save and continue to Measurements & Pricing'}>
-                <span className="qc-takeoff-finish-main">{isSaving ? 'Saving…' : 'Finish & save'}<QcIcon name="arrow" /></span>
-                <span className="qc-takeoff-finish-next">Next: Measurements &amp; Pricing</span>
+                title={calibrations.length === 0 ? 'Calibrate the plan first' : freeToolMode ? 'Finish and view your measurement report' : 'Save and continue to Measurements & Pricing'}>
+                <span className="qc-takeoff-finish-main">{isSaving ? 'Saving…' : freeToolMode ? 'Finish & view report' : 'Finish & save'}<QcIcon name="arrow" /></span>
+                <span className="qc-takeoff-finish-next">{freeToolMode ? 'Next: Measurement report & download' : 'Next: Measurements & Pricing'}</span>
               </QcHostedButton>
             </div>
           </div>
@@ -7391,7 +7394,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           } else if (activeComponentIds.length === 0) {
             guidance = 'Area measured - now add components: AI scan for components or add them manually.';
           } else {
-            guidance = "Add more components, or Finish & save when you're ready for Measurements & Pricing.";
+            guidance = freeToolMode ? "Add more components, or Finish when you're ready to view your report." : "Add more components, or Finish & save when you're ready for Measurements & Pricing.";
           }
         }
         // Stable status row: never resize the canvas when a drawing tool changes.
@@ -7746,7 +7749,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                     hidden={!componentLibraryOpen}>
 
                     {/* Library selector */}
-                    {collections.length > 0 && (
+                    {!freeToolMode && collections.length > 0 && (
                       <div className="mb-3">
                         <p className="text-[11px] font-medium text-gray-500 mb-1.5">Select Library</p>
                         <select

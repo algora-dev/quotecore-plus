@@ -490,8 +490,10 @@ export function FreeTakeoffApp() {
   }
 
   if (stage.phase === 'takeoff') {
+    // Full-screen like the app's takeoff page: the workstation's own header
+    // provides the chrome; marketing page furniture is covered while measuring.
     return (
-      <div className="mx-auto max-w-5xl px-4">
+      <div className="fixed inset-0 z-40 overflow-auto bg-slate-50">
         <TakeoffPhase
           key={stage.run}
           planDataUrl={stage.planDataUrl}
