@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <rect width="760" height="470" fill="#ffffff"/>
+  <text x="40" y="34" font-size="17" font-weight="600" fill="#18181b">Interior wall takeoff from a floor plan</text>
+  <text x="40" y="56" font-size="13" fill="#71717a">Sample two-bedroom apartment — grey walls are exterior; orange partitions are the interior walls to measure and total by type.</text>
+
+  <!-- exterior walls -->
+  <rect x="90" y="80" width="580" height="310" fill="#fafafa" stroke="#52525b" stroke-width="8"/>
+
+  <!-- interior partitions (orange) with door gaps -->
+  <!-- vertical main partition x=380: gap for door 150..225 -->
+  <line x1="380" y1="80" x2="380" y2="150" stroke="#FF6B35" stroke-width="6"/>
+  <line x1="380" y1="225" x2="380" y2="250" stroke="#FF6B35" stroke-width="6"/>
+  <line x1="380" y1="325" x2="380" y2="390" stroke="#FF6B35" stroke-width="6"/>
+  <!-- horizontal partition y=250: from x=90 to x=380 with door gap 180..255 -->
+  <line x1="90" y1="250" x2="180" y2="250" stroke="#FF6B35" stroke-width="6"/>
+  <line x1="255" y1="250" x2="380" y2="250" stroke="#FF6B35" stroke-width="6"/>
+  <!-- short partition bottom right: x=520 from y=250 to y=390, door gap 300..375 -->
+  <line x1="520" y1="250" x2="520" y2="300" stroke="#FF6B35" stroke-width="6"/>
+  <line x1="520" y1="375" x2="520" y2="390" stroke="#FF6B35" stroke-width="6"/>
+
+  <!-- door swings (thin grey arcs) -->
+  <g stroke="#a1a1aa" stroke-width="1.5" fill="none">
+    <path d="M 380 225 A 75 75 0 0 0 305 150"/>
+    <path d="M 255 250 A 75 75 0 0 1 180 175"/>
+    <path d="M 520 375 A 75 75 0 0 1 445 300"/>
+  </g>
+
+  <!-- room labels -->
+  <g font-size="14" fill="#71717a" text-anchor="middle">
+    <text x="235" y="170">Bedroom 2</text>
+    <text x="495" y="170">Bedroom 1</text>
+    <text x="235" y="330">Living</text>
+    <text x="620" y="330">Bath</text>
+  </g>
+
+  <!-- dimension along the main partition -->
+  <line x1="356" y1="90" x2="356" y2="390" stroke="#BD4A1A" stroke-width="1.5"/>
+  <line x1="350" y1="90" x2="362" y2="90" stroke="#BD4A1A" stroke-width="1.5"/>
+  <line x1="350" y1="390" x2="362" y2="390" stroke="#BD4A1A" stroke-width="1.5"/>
+  <text x="340" y="245" font-size="12" fill="#BD4A1A" text-anchor="end" transform="rotate(-90 340 245)">measure every run</text>
+
+  <!-- legend -->
+  <rect x="40" y="418" width="26" height="8" fill="#52525b"/>
+  <text x="74" y="426" font-size="12" fill="#3f3f46">Exterior wall (elevations)</text>
+  <rect x="250" y="416" width="26" height="10" fill="#FF6B35"/>
+  <text x="284" y="426" font-size="12" fill="#3f3f46">Interior partitions — total length by wall type</text>
+  <text x="40" y="452" font-size="12" fill="#71717a">This example: 18.0 m of 90 mm stud partitions &#215; 2.4 m height &#8722; 3 doors &#215; 2 faces + 7.5% waste &#8776; 81 m&#178; of board.</text>
+</svg>

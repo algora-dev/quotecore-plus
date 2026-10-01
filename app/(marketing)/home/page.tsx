@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import SetupHelpModal from "@/components/SetupHelpModal";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import DemoCTACard from "@/components/DemoCTACard";
+import DemoToolCard from "@/components/DemoToolCard";
 import DoneForYouBanner from "@/components/DoneForYouBanner";
 import VideoShowcase from "@/components/VideoShowcase";
 import FreeTakeoffCTACard from "@/components/FreeTakeoffCTACard";
@@ -326,7 +326,7 @@ export default function HomePage() {
               {/* Right: interactive demo card + free takeoff tool card (two-tier funnel) */}
               <div className="relative z-10 flex flex-1 flex-col items-center justify-start gap-4 overflow-hidden lg:flex-1 lg:items-start lg:gap-5">
                 <div className="w-full max-w-xl">
-                  <DemoCTACard location="homepage_hero" />
+                  <DemoToolCard />
                 </div>
                 <div className="w-full max-w-xl">
                   <FreeTakeoffCTACard />
