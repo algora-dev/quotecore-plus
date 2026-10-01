@@ -41,6 +41,8 @@ export interface TouchOutlineAdapter {
   updateOutline(intent: Extract<OutlineSaveIntent, { kind: 'update-in-place' }>): Promise<
     { ok: true } | { ok: false; error: string; staleVersion?: boolean }>;
   createOutline(name: string, pitch: number, points: ScenePoint[]): Promise<TouchCreateResult>;
+  /** Free-tool / MCP surfaces: emit the completed takeoff as data. */
+  buildFinishPayload?(): import('../finishPayload').TakeoffFinishPayload | null;
   getAiOutlineScanInfo(): AiOutlineScanInfo | null;
   startOutlineOnlyScan(): Promise<AiOutlineScanResult>;
   cancelOutlineOnlyScan(): void;
@@ -75,7 +77,8 @@ export interface TouchOutlineEditorParts {
   exitGuard: { dirty: boolean; onSave: () => void; onDiscard: () => void; saveLabel?: string };
   requestExternalExit: (label: string, proceed: () => void) => void;
 }
-interface EditorOptions { finishHref?: string; pitch?: number; onPitchChange?: (pitch: number) => void;
+interface EditorOptions {
+  onFinish?: () => void; finishHref?: string; pitch?: number; onPitchChange?: (pitch: number) => void;
   /** M10: called instead of navigating away when the user chooses a
    * components path on the finish screen (outline is already saved). */
   onEnterComponents?: (mode: 'ai' | 'manual') => void }
@@ -279,7 +282,8 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
       // flow (outline already saved); a stale pendingLeave is dropped.
       if (choice !== 'finish') options.onEnterComponents?.(choice === 'components-ai' ? 'ai' : 'manual');
       else if (leave) leave.proceed();
-      else if (options.finishHref) router.push(options.finishHref);
+      else if (options.onFinish) options.onFinish();
+        else if (options.finishHref) router.push(options.finishHref);
       else if (backHref) router.push(backHref);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'The roof could not be saved.';

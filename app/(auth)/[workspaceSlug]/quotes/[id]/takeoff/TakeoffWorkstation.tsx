@@ -9,7 +9,6 @@ import { QcStatusBadge } from '@/app/components/ui/v2/QcSurface';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion, batchCreateAiRoofAreas, persistPageCalibration, updateTakeoffAreaGeometry } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { applyAiResults, computeAreaValue, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
@@ -34,18 +33,16 @@ import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
+import { useTakeoffActions } from '@/app/lib/takeoff/actionsContext';
+import type { TakeoffFinishPayload } from '@/app/lib/takeoff/finishPayload';
 // Offcuts V1: isolated review module; no quote/persistence changes.
 import type { QuoteCoreSnapshot } from '@/app/lib/takeoff/offcuts/adapters/quotecore';
 import type { WorkbenchHandle } from '@/app/lib/takeoff/offcuts/ui/workbench';
 import { fingerprint as offcutFingerprint } from '@/app/lib/takeoff/offcuts/core/math';
-import { uploadCanvasImage } from './uploadCanvasImage';
 import { AlertModal } from '@/app/components/AlertModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import { getTradeLabels } from '@/app/lib/trades/labels';
-import { createClient as createSupabaseBrowserClient } from '@/app/lib/supabase/client';
-import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
-import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
 import { rafterPitchFactor } from '@/app/lib/pricing/engine';
 // F-15: Extracted modal components
@@ -205,7 +202,7 @@ interface Props {
   hydrationData: TakeoffHydrationData | null;
   /** P1-1b: re-entry mode. 'add' = continue on page-1; 'new-page' = fresh area. */
   takeoffMode?: 'add' | 'new-page';
-  /** P1-1b: pre-created page ID for new-area entries. Skips initializeTakeoffPage. */
+  /** P1-1b: pre-created page ID for new-area entries. Skips takeoffActions.initializeTakeoffPage. */
   initialPageId?: string;
   /** P1-1b: human-readable label for the new page. */
   initialPageName?: string;
@@ -226,6 +223,11 @@ interface Props {
   aiCalibrationEnabled?: boolean;
   /** M5: registers the touch-outline bridge adapter (single data owner stays
    *  this workstation — the touch presentation only reads/calls back, R14). */
+  /** Free-tool / MCP-plugin mode: emit the completed takeoff as data instead
+   *  of navigating into the app quote-build step. Absent = app behaviour. */
+  onFreeFinish?: (payload: TakeoffFinishPayload) => void;
+  /** Free-tool mode: replaces the app back-link target. */
+  onExitFree?: () => void;
   onTouchOutlineAdapter?: (adapter: TouchOutlineAdapter) => void;
   /** M7 (O16, closing the M5 deviation-4 gap): when provided (touch view
    *  active with a live outline editor), user-initiated page/area switches
@@ -329,11 +331,16 @@ export function TakeoffWorkstation({
   aiTakeoffAvailable = false,
   aiAssistPoints = null,
   aiCalibrationEnabled = false,
+  onFreeFinish,
+  onExitFree,
   onTouchOutlineAdapter,
   touchExitGuard,
   onPage1Resolved,
 }: Props) {
   const router = useRouter();
+  // Free-tool / MCP-plugin seam: persistence resolves through context.
+  // No provider mounted = exactly the real server actions, unchanged.
+  const takeoffActions = useTakeoffActions();
   const [componentLibraryOpen, setComponentLibraryOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Zoom ownership: when set, the zoom was applied by auto-fit (initial load,
@@ -445,7 +452,7 @@ export function TakeoffWorkstation({
 
   // Phase 7: multi-page takeoff state.
   // P1-1b: when initialPageId is provided (new-area mode), seed pages with that page
-  // instead of page-1; the initializeTakeoffPage effect is skipped.
+  // instead of page-1; the takeoffActions.initializeTakeoffPage effect is skipped.
   const [pages, setPages] = useState<Array<{ id?: string; url: string; name: string; order: number }>>(
     initialPageId
       ? [{ id: initialPageId, url: planUrl, name: initialPageName || 'New Area', order: 1 }]
@@ -540,7 +547,7 @@ export function TakeoffWorkstation({
     setSessionVersion(next);
   }, []);
   // Sync ref whenever sessionVersion state changes from external sources
-  // (e.g. hydration, getTakeoffSessionVersion sync).
+  // (e.g. hydration, takeoffActions.getTakeoffSessionVersion sync).
   useEffect(() => { sessionVersionRef.current = sessionVersion; }, [sessionVersion]);
   // Guard so the one-shot hydration effect only fires on first mount.
   const hydrationAppliedRef = useRef<boolean>(false);
@@ -704,14 +711,14 @@ export function TakeoffWorkstation({
   }, [componentMeasurements, roofAreas]);
 
   // M-04 (Gerald round-5): ensure page-1 has a real DB row on mount.
-  // initializeTakeoffPage is idempotent so repeated mounts are safe.
+  // takeoffActions.initializeTakeoffPage is idempotent so repeated mounts are safe.
   // P1-1b: skipped when initialPageId is provided (new-area flow already created the page).
   useEffect(() => {
     if (initialPageId) return; // page already exists - skip
     let cancelled = false;
     async function ensurePage1() {
       try {
-        const result = await initializeTakeoffPage(quote.id);
+        const result = await takeoffActions.initializeTakeoffPage(quote.id);
         if (!cancelled && result.ok && result.pageId) {
           onPage1ResolvedRef.current?.(result.pageId);
           setPages(prev => {
@@ -735,7 +742,7 @@ export function TakeoffWorkstation({
         }
       } catch (err) {
         // Non-fatal: single-page save still works via quote-wide delete.
-        console.warn('[TakeoffWorkstation] initializeTakeoffPage failed:', err);
+        console.warn('[TakeoffWorkstation] takeoffActions.initializeTakeoffPage failed:', err);
       }
     }
     ensurePage1();
@@ -1070,7 +1077,7 @@ export function TakeoffWorkstation({
   }, []);
 
   // U1 (2026-09-22): sync a touch-committed calibration into local state.
-  // The touch calibration path persists via persistPageCalibration +
+  // The touch calibration path persists via takeoffActions.persistPageCalibration +
   // router.refresh(); the server re-hydrates this component with the saved
   // calibration, but the one-shot effect above never re-runs, so `calibrations`
   // stayed empty and the desktop presentation wrongly showed the first-time
@@ -1414,7 +1421,7 @@ export function TakeoffWorkstation({
         });
 
         if (allMeasurements.length > 0) {
-          const switchSaveResult = await saveTakeoffMeasurements(
+          const switchSaveResult = await takeoffActions.saveTakeoffMeasurements(
             quote.id, allMeasurements,
             calibrations[0]?.unit || 'feet',
             undefined, undefined, // no canvas snapshot on auto-save
@@ -1593,7 +1600,7 @@ export function TakeoffWorkstation({
         });
 
         if (allMeasurements.length > 0) {
-          const pageSaveResult = await saveTakeoffMeasurements(
+          const pageSaveResult = await takeoffActions.saveTakeoffMeasurements(
             quote.id, allMeasurements,
             calibrations[0]?.unit || 'feet',
             undefined, undefined,
@@ -1757,7 +1764,7 @@ export function TakeoffWorkstation({
   // or drew anything. Areas are now created only when the user draws their
   // first area (named via AreaNameModal) or via the "+ New Area" flow.
 
-  // Phase 5: Area delete - opens ConfirmModal, then calls deleteTakeoffArea server action.
+  // Phase 5: Area delete - opens ConfirmModal, then calls takeoffActions.deleteTakeoffArea server action.
   const handleDeleteArea = (areaId: string) => {
     const area = areaList.find(a => a.id === areaId);
     if (!area) return;
@@ -1770,7 +1777,7 @@ export function TakeoffWorkstation({
     if (!pendingDeleteAreaId) return;
     setIsDeletingArea(true);
     try {
-      const result = await deleteTakeoffArea(pendingDeleteAreaId);
+      const result = await takeoffActions.deleteTakeoffArea(pendingDeleteAreaId);
       if (!result.ok) {
         showAlert('Failed to delete area', result.error || 'Unknown error', 'error');
         return;
@@ -1891,7 +1898,7 @@ export function TakeoffWorkstation({
       // Touch Save & finish must also acknowledge pre-created/existing-area
       // branches. Keep the original page/area snapshot; never replace another
       // page's measurements or create a second parent row on a retry.
-      const persistTouchArea = (targetAreaId: string, prior: Parameters<typeof saveTakeoffMeasurements>[1]) => {
+      const persistTouchArea = (targetAreaId: string, prior: Parameters<typeof takeoffActions.saveTakeoffMeasurements>[1]) => {
         const pageAtStart = newArea.fromPageId;
         const sourceUrl = touchOutlineLiveRef.current?.currentImageUrl;
         const perform = async (nextName: string, nextPitch: number, nextPoints: { x: number; y: number }[]): Promise<TouchCreateResult> => {
@@ -1901,7 +1908,7 @@ export function TakeoffWorkstation({
           try {
             const value = calculatePolygonArea(nextPoints);
             if (!(value > 0)) return { ok: false, message: 'A valid calibrated roof area is required.', retryable: true };
-            const result = await saveTakeoffMeasurements(quote.id, [...prior, {
+            const result = await takeoffActions.saveTakeoffMeasurements(quote.id, [...prior, {
               componentId: null, type: 'area', value, pitch: nextPitch, name: nextName,
               points: nextPoints, visible: true, pageId: pageAtStart, quoteRoofAreaId: targetAreaId,
             }], calibrationsRef.current[0]?.unit ?? 'meters', undefined, undefined,
@@ -1941,7 +1948,7 @@ export function TakeoffWorkstation({
         const outgoingCalibrationConfirmed = calibrationConfirmed;
         (async () => {
           try {
-            const result = await createNewTakeoffArea(quote.id, name || undefined);
+            const result = await takeoffActions.createNewTakeoffArea(quote.id, name || undefined);
             if (!(result.ok && result.areaId)) {
               // U4: surfaced, never a silent hang - the touch create awaits
               // this outcome.
@@ -2012,7 +2019,7 @@ export function TakeoffWorkstation({
                     });
                   });
                   if (outgoingMeasurements.length > 0) {
-                    const persistResult = await saveTakeoffMeasurements(
+                    const persistResult = await takeoffActions.saveTakeoffMeasurements(
                       quote.id, outgoingMeasurements,
                       outgoingCalibrations[0]?.unit || 'feet',
                       undefined, undefined, currentPageDbId, sessionVersionRef.current,
@@ -2064,7 +2071,7 @@ export function TakeoffWorkstation({
                 // Preserve the desktop new-area immediate-persist path.
                 try {
                   const pageDbId = pages[currentPageIndex]?.id ?? null;
-                  const persisted = await saveTakeoffMeasurements(quote.id, [{
+                  const persisted = await takeoffActions.saveTakeoffMeasurements(quote.id, [{
                     componentId: null, type: 'area', value: stampedNewArea.area,
                     pitch: stampedNewArea.pitch, name: stampedNewArea.name,
                     points: stampedNewArea.points, visible: true, pageId: pageDbId,
@@ -2176,7 +2183,7 @@ export function TakeoffWorkstation({
           const pageId = newArea.fromPageId;
           const owns = (row: { fromPageId?: string | null; quoteRoofAreaId?: string | null }) =>
             (!row.fromPageId || row.fromPageId === pageId) && (!row.quoteRoofAreaId || row.quoteRoofAreaId === drawTimeAreaId);
-          const prior: Parameters<typeof saveTakeoffMeasurements>[1] = [];
+          const prior: Parameters<typeof takeoffActions.saveTakeoffMeasurements>[1] = [];
           priorComponents.forEach((component: ComponentWithMeasurements) => component.measurements.filter(owns).forEach(m => prior.push({
             componentId: component.componentId, type: m.type, value: m.value, points: m.points,
             visible: m.visible, pageId, quoteRoofAreaId: drawTimeAreaId, entryInputs: m.entryInputs ?? null,
@@ -2404,7 +2411,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // Postgres, so a client row id ("area-...") fails with invalid uuid.
       quoteRoofAreaId: ra.quoteRoofAreaId ?? ra.id,
       fromPageId: currentPageIdRef.current,
-      // 2026-09-03: value basis + plan snapshot. saveTakeoffMeasurements
+      // 2026-09-03: value basis + plan snapshot. takeoffActions.saveTakeoffMeasurements
       // recomputes from the LIVE area pitch at save time:
       //   basis 'pitched' -> plan x pitch factor   (roof sheets etc.)
       //   basis 'plan'    -> plan, no pitch        (flat/plan takeoff)
@@ -2994,7 +3001,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         // navigateAfter=true means the user clicked "Save & Continue" with no
         // new data drawn - also fine to navigate, but we do NOT mark dirty=false.
         if (navigateAfter) {
-          router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+          if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
         }
         return true;
       }
@@ -3018,7 +3025,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         });
         
         try {
-          const uploadResult = await uploadCanvasImage(quote.id, fullDataUrl);
+          const uploadResult = await takeoffActions.uploadCanvasImage(quote.id, fullDataUrl);
           if (uploadResult.ok) {
             canvasImagePath = uploadResult.path;
             console.log('[SaveTakeoff] Full canvas image uploaded (path):', canvasImagePath);
@@ -3098,7 +3105,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           canvas.renderAll();
           
           // Upload lines-only image
-          const linesResult = await uploadCanvasImage(quote.id, linesDataUrl, 'lines');
+          const linesResult = await takeoffActions.uploadCanvasImage(quote.id, linesDataUrl, 'lines');
           if (linesResult.ok) {
             linesImagePath = linesResult.path;
             console.log('[SaveTakeoff] Lines-only image uploaded (path):', linesImagePath);
@@ -3118,7 +3125,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (currentPageDbId) {
         allMeasurements.forEach(m => { m.pageId = currentPageDbId; });
       }
-      const saveResult = await saveTakeoffMeasurements(
+      const saveResult = await takeoffActions.saveTakeoffMeasurements(
         quote.id,
         allMeasurements,
         calibrations[0]?.unit || 'feet',
@@ -3149,11 +3156,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           // bumped the DB version without the client knowing (e.g. a
           // page-switch save that succeeded but whose response was lost).
           try {
-            const authoritativeVersion = await getTakeoffSessionVersion(quote.id);
+            const authoritativeVersion = await takeoffActions.getTakeoffSessionVersion(quote.id);
             if (authoritativeVersion != null) {
               updateSessionVersion(() => authoritativeVersion);
               // Retry the save with the correct version.
-              const retryResult = await saveTakeoffMeasurements(
+              const retryResult = await takeoffActions.saveTakeoffMeasurements(
                 quote.id,
                 allMeasurements,
                 calibrations[0]?.unit || 'feet',
@@ -3266,7 +3273,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         for (const [pid, group] of byPage.entries()) {
           if (group.length === 0) continue;
           try {
-            const flushResult = await saveTakeoffMeasurements(
+            const flushResult = await takeoffActions.saveTakeoffMeasurements(
               quote.id, group, flushUnit,
               undefined, undefined,
               pid,
@@ -3295,7 +3302,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // the DB instead of trusting a local cursor - cursor drift caused the
       // false "Takeoff edited in another tab" (STALE_TAKEOFF_VERSION) errors.
       try {
-        const authoritativeVersion = await getTakeoffSessionVersion(quote.id);
+        const authoritativeVersion = await takeoffActions.getTakeoffSessionVersion(quote.id);
         updateSessionVersion(() => authoritativeVersion ?? versionCursor);
       } catch {
         updateSessionVersion(() => versionCursor);
@@ -3310,7 +3317,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // flow stays inside the workstation and reloads to the new page.
       if (navigateAfter) {
         console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
-        router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+        if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
       } else {
         console.log('[SaveTakeoff] Save complete (no navigation).');
       }
@@ -3398,25 +3405,26 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       }
       const companyId = quote.company_id;
       // 2. Storage quota check.
-      const hasQuota = await checkStorageQuota(companyId, uploadAnotherFile.size);
+      const hasQuota = await takeoffActions.checkStorageQuota(companyId, uploadAnotherFile.size);
       if (!hasQuota) { setUploadAnotherError('Storage quota exceeded. Please upgrade your plan.'); return; }
       // 3. Mint signed upload URL and upload new plan file.
-      const mint = await mintQuoteDocumentUploadUrl({
+      const mint = await takeoffActions.mintQuoteDocumentUploadUrl({
         scope: { kind: 'quote', quoteId: quote.id },
         filename: uploadAnotherFile.name,
         contentType: uploadAnotherFile.type || 'application/octet-stream',
         claimedSize: uploadAnotherFile.size,
       });
       if (!mint.ok) { setUploadAnotherError(mint.message || 'Failed to prepare upload.'); return; }
-      const supabase = createSupabaseBrowserClient();
-      const { error: uploadStorageError } = await supabase.storage
-        .from(mint.bucket)
-        .uploadToSignedUrl(mint.storagePath, mint.token, uploadAnotherFile, {
-          contentType: uploadAnotherFile.type || undefined,
-        });
-      if (uploadStorageError) { setUploadAnotherError(uploadStorageError.message); return; }
+      const storageUpload = await takeoffActions.uploadToStorageFromBlob({
+        bucket: mint.bucket,
+        storagePath: mint.storagePath,
+        token: mint.token,
+        file: uploadAnotherFile,
+        contentType: uploadAnotherFile.type || undefined,
+      });
+      if (!storageUpload.ok) { setUploadAnotherError(storageUpload.error || 'Upload failed.'); return; }
       // 4. Register in quote_files so it appears in Files & Documents.
-      await saveFileMetadata({
+      await takeoffActions.saveFileMetadata({
         companyId, quoteId: quote.id, fileType: 'plan',
         fileName: uploadAnotherFile.name, fileSize: uploadAnotherFile.size,
         mimeType: uploadAnotherFile.type || 'image/png', storagePath: mint.storagePath,
@@ -3429,14 +3437,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (uploadAnotherTarget === 'new') {
         // Phase 7: create page only (no area row yet - area created after drawing)
         const pageName = `Plan ${pages.length + 1}`;
-        const pageResult = await createTakeoffPage(quote.id, pageName);
+        const pageResult = await takeoffActions.createTakeoffPage(quote.id, pageName);
         if (!pageResult.ok || !pageResult.pageId) { setUploadAnotherError(pageResult.error || 'Failed to create page.'); return; }
         newPageId = pageResult.pageId; newPageName = pageName;
         newRoofAreaId = null; // will be set after user draws + names the area
       } else {
         // Existing area: create only the page row, link to selected area
         const pageName = `Plan ${pages.length + 1}`;
-        const pageResult = await createTakeoffPage(quote.id, pageName);
+        const pageResult = await takeoffActions.createTakeoffPage(quote.id, pageName);
         if (!pageResult.ok || !pageResult.pageId) { setUploadAnotherError(pageResult.error || 'Failed to create page.'); return; }
         newPageId = pageResult.pageId; newPageName = pageName;
         // Phase 7: use the selected area from the dropdown
@@ -3447,7 +3455,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           : null;
       }
       // 6. Persist image path on the new page row.
-      await finalizeTakeoffPageImage(newPageId, mint.storagePath);
+      await takeoffActions.finalizeTakeoffPageImage(newPageId, mint.storagePath);
       // 7+8. Parent/child plans (2026-07-05): switch canvas client-side.
       // createObjectURL is immediate and doesn't require re-signing.
       // P0-2 (audit 2026-09-20): the AI calibration session belongs to the
@@ -3628,7 +3636,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const activeAreaIdRef = useRef<string | null>(null);
   // Stale-closure fix (2026-07-05): the canvas mouse:down handler is bound
   // ONCE on mount and never re-binds. It captured the initial `pages` state
-  // where pages[0].id was undefined (fetched async by initializeTakeoffPage).
+  // where pages[0].id was undefined (fetched async by takeoffActions.initializeTakeoffPage).
   // So fromPageId at draw time was always null. This ref stays in sync so
   // draw-time handlers can read the real current page id.
   const currentPageIdRef = useRef<string | null>(null);
@@ -3694,6 +3702,62 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const onPage1ResolvedRef = useRef<((pageId: string) => void) | null>(null);
   onPage1ResolvedRef.current = onPage1Resolved ?? null;
 
+  /** Ported from the free-tool output contract: merges live + cached area
+   *  state into the finish payload (dedupes restored measurements, remaps
+   *  shared roof-area stamps to unique report ids). */
+  const buildFinishPayload = (): TakeoffFinishPayload => {
+    const mergedByComponent = new Map<string, typeof componentMeasurements[number]>();
+    const pushGroup = (g: typeof componentMeasurements[number]) => {
+      const existing = mergedByComponent.get(g.componentId);
+      if (existing) {
+        for (const m of g.measurements) {
+          if (m.id && existing.measurements.some(x => x.id === m.id)) continue;
+          existing.measurements.push(m);
+        }
+      } else {
+        mergedByComponent.set(g.componentId, { ...g, measurements: [...g.measurements] });
+      }
+    };
+    componentMeasurements.forEach(pushGroup);
+    areaCanvasStatesRef.current.forEach((cached, areaId) => {
+      if (areaId === activeAreaId) return;
+      cached.componentMeasurements.forEach(pushGroup);
+    });
+
+    const mergedRoofAreas: { id: string; name: string; area: number; pitch: number }[] = [];
+    const seenAreaIds = new Set<string>();
+    const stampToFirstId = new Map<string, string>();
+    const pushArea = (ra: { id: string; name: string; area: number; pitch: number; quoteRoofAreaId?: string | null }) => {
+      if (seenAreaIds.has(ra.id)) return;
+      seenAreaIds.add(ra.id);
+      const stamp = ra.quoteRoofAreaId ?? ra.id;
+      if (!stampToFirstId.has(stamp)) stampToFirstId.set(stamp, ra.id);
+      mergedRoofAreas.push({ id: ra.id, name: ra.name, area: ra.area, pitch: ra.pitch });
+    };
+    areaCanvasStatesRef.current.forEach((cached, areaId) => {
+      if (areaId === activeAreaId) return;
+      cached.roofAreas.forEach((ra: any) => pushArea(ra));
+    });
+    roofAreas.forEach(ra => pushArea(ra));
+
+    return {
+      roofAreas: mergedRoofAreas,
+      componentGroups: [...mergedByComponent.values()].map(g => {
+        const comp = components.find(c => c.id === g.componentId);
+        return {
+          componentId: g.componentId,
+          name: comp?.name ?? g.componentId,
+          isSystem: !!comp?.is_system,
+          semantic: comp ? resolveSemanticKey(comp.name) : null,
+          count: g.measurements.length,
+          total: g.measurements.reduce((s, m) => s + m.value, 0),
+          measurementType: comp?.measurement_type ?? undefined,
+          measurements: g.measurements.map(m => ({ value: m.value, quoteRoofAreaId: m.quoteRoofAreaId ? (stampToFirstId.get(m.quoteRoofAreaId) ?? m.quoteRoofAreaId) : null })),
+        };
+      }),
+      calibrationUnit: calibrations[0]?.unit ?? 'meters',
+    };
+  };
   const touchOutlineAdapterRef = useRef<TouchOutlineAdapter | null>(null);
   // M7: hydration snapshot for the adapter's scale fallback — a calibration
   // saved by the touch calibration layer updates the SERVER data (and, via
@@ -3726,6 +3790,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         touchBridgeListeners.current.forEach(listener => listener());
         return true;
       },
+      buildFinishPayload: () => buildFinishPayload(),
       getAreas: () => {
         const live = touchOutlineLiveRef.current;
         const pageId = currentPageIdRef.current;
@@ -3802,7 +3867,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         const pageId = currentPageIdRef.current;
         if (!live || !pageId) return { ok: false, error: 'No page selected.' };
         const target = live.roofAreas.find((ra) => ra.id === intent.geometryId);
-        const result = await updateTakeoffAreaGeometry({
+        const result = await takeoffActions.updateTakeoffAreaGeometry({
           quoteId: quote.id,
           measurementId: intent.geometryId,
           pageId,
@@ -4109,7 +4174,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // M11: attach a SAVED roof area to an area component - no redraw on
       // mobile. Mirrors the desktop area-attach persist shape: the entry
       // carries no canvas geometry, entryInputs hold the basis + plan
-      // snapshot + source link, and saveTakeoffMeasurements recomputes the
+      // snapshot + source link, and takeoffActions.saveTakeoffMeasurements recomputes the
       // value from the LIVE pitch at save time.
       addRoofAreaEntry: (target: TouchComponentTarget, area: SavedOutlineRecord): TouchComponentEntry | null => {
         const scale = touchOutlineAdapterRef.current?.getScale() ?? null;
@@ -6582,7 +6647,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (!opts.areasAlreadyApplied) {
     let realAreaIds: string[];
     if (areaInputs.length > 0) {
-      const createResult = await batchCreateAiRoofAreas(quote.id, areaInputs);
+      const createResult = await takeoffActions.batchCreateAiRoofAreas(quote.id, areaInputs);
       if (!createResult.ok || !createResult.areaIds) {
         setAiScanError(createResult.error || 'Failed to create roof areas.');
         return;
@@ -7050,7 +7115,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (!pageId) {
         return rollback('COMMIT_FAILED: no takeoff page exists for this plan yet. Draw the calibration again after the page is created.');
       }
-      const res = await persistPageCalibration(quote.id, pageId, legacy, calMetadata);
+      const res = await takeoffActions.persistPageCalibration(quote.id, pageId, legacy, calMetadata);
       if (!res.success) {
         return rollback(`COMMIT_FAILED: ${res.error}`);
       }
