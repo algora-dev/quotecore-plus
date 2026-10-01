@@ -1,6 +1,6 @@
 'use client';
 import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export function PointMeasurementModal({
   componentName,
@@ -11,6 +11,17 @@ export function PointMeasurementModal({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  // Owner 2026-10-01: same as LineMeasurementModal — capture-phase window
+  // listener so Enter/Esc work regardless of where focus sits.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); onConfirm(); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onCancel(); }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [onConfirm, onCancel]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       onConfirm();

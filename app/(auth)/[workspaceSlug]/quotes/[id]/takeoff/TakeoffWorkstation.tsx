@@ -2719,7 +2719,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
       // Auto-fit on page switch (viewport pattern): element tracks the
       // viewport, plan fits + centres via the transform.
-      const viewportWrapper = canvasRef.current?.parentElement;
+      const viewportWrapper = canvasViewportWrapper();
       if (viewportWrapper) {
         canvas.setDimensions({
           width: Math.max(160, viewportWrapper.clientWidth),
@@ -4616,7 +4616,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
       // Auto-fit (viewport pattern): size the element to the visible area,
       // then fit + centre the plan via the viewport transform.
-      const viewportWrapper = canvasRef.current?.parentElement;
+      const viewportWrapper = canvasViewportWrapper();
       if (viewportWrapper) {
         canvas.setDimensions({
           width: Math.max(160, viewportWrapper.clientWidth),
@@ -5739,9 +5739,17 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // zoomed"). The canvas element is sized to the visible viewport and the
   // plan is placed entirely by the viewportTransform, so every zoom/pan path
   // shares the same clamping rules (see ./canvasViewport).
+  // Owner 2026-10-01 (free tool width / canvas stuck at 800x600): Fabric wraps
+  // the <canvas> in a .canvas-container div, so parentElement is the Fabric
+  // wrapper — which is sized BY the canvas itself. Measuring it makes sizing
+  // self-referential (800x600 forever). Always measure the real viewport
+  // wrapper (the plan border), falling back to parentElement only if missing.
+  const canvasViewportWrapper = (): HTMLElement | null =>
+    canvasRef.current?.closest('.qc-takeoff-plan-border') ?? canvasRef.current?.parentElement ?? null;
+
   const sizeCanvasToViewport = () => {
     const canvas = fabricRef.current;
-    const wrapper = canvasRef.current?.parentElement;
+    const wrapper = canvasViewportWrapper();
     if (!canvas || !wrapper) return;
     const w = Math.max(160, wrapper.clientWidth);
     const h = Math.max(160, wrapper.clientHeight);
@@ -5824,8 +5832,17 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       }, 150);
     };
     window.addEventListener('resize', onResize);
+    // Owner 2026-10-01 (free tool width): a data-URL plan can finish loading
+    // before the layout settles, leaving the canvas at Fabric's default
+    // 800x600 even though its wrapper is full-size. A wrapper ResizeObserver
+    // re-applies viewport sizing whenever the WRAPPER changes size (fill
+    // layouts, sidebar toggles) - not only on window resizes.
+    const wrapper = canvasViewportWrapper();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => onResize());
+    if (wrapper) observer?.observe(wrapper);
     return () => {
       window.removeEventListener('resize', onResize);
+      observer?.disconnect();
       clearTimeout(timer);
     };
   }, [canvasDims]);
@@ -5862,7 +5879,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           });
           canvas.backgroundImage = fabricImg;
           // Viewport pattern: element tracks the viewport, plan fits + centres.
-          const viewportWrapper = canvasRef.current?.parentElement;
+          const viewportWrapper = canvasViewportWrapper();
           if (viewportWrapper) {
             canvas.setDimensions({
               width: Math.max(160, viewportWrapper.clientWidth),

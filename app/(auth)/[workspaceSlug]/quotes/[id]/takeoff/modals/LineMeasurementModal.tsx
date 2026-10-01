@@ -1,6 +1,6 @@
 'use client';
 import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export function LineMeasurementModal({
   length,
@@ -13,6 +13,19 @@ export function LineMeasurementModal({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  // Owner 2026-10-01: the modeless card keeps the canvas interactive, so focus
+  // usually sits on the canvas and the div-level keydown below never fires.
+  // A capture-phase window listener makes Enter/Esc work regardless of focus,
+  // and stops the canvas's own Escape handling from double-firing.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); onConfirm(); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onCancel(); }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [onConfirm, onCancel]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       onConfirm();
