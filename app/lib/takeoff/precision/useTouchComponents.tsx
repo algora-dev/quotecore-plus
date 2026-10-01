@@ -37,6 +37,8 @@ import { logTakeoffEvent } from './takeoffDiagnostics';
 
 export interface TouchComponentsOptions {
   finishHref: string;
+  /** Free-tool mode: finish callback instead of navigation. */
+  onFinish?: () => void;
   mode: 'ai' | 'manual';
   components: { id: string; name: string; collection_id?: string | null; is_system?: boolean; measurement_type?: string | null }[];
   collections: { id: string; name: string }[];
@@ -379,7 +381,8 @@ export function useTouchComponents(
         return;
       }
       logTakeoffEvent('components.save.succeeded', { rows });
-      router.push(options.finishHref);
+      if (options.onFinish) options.onFinish();
+      else router.push(options.finishHref);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'The save failed. Your entries are kept.';
       setError(message);

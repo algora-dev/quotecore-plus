@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FreeRoofTakeoff } from './FreeRoofTakeoff';
+import { FreeTakeoffApp } from './FreeTakeoffApp';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { buildFaqSchema } from '@/lib/schema';
@@ -134,7 +135,15 @@ const COMPARISON: [string, string, string][] = [
   ['Save takeoffs & manage jobs', 'No - session only', 'Yes'],
 ];
 
-export default function FreeRoofTakeoffPage() {
+export default async function FreeRoofTakeoffPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ engine?: string }>;
+}) {
+  const params = (await searchParams) ?? {};
+  // v2 = the app-engine tool (default). ?engine=v1 keeps the legacy engine
+  // reachable for A/B comparison during the review loop.
+  const tool = params.engine === 'v1' ? <FreeRoofTakeoff /> : <FreeTakeoffApp />;
   return (
     <div className="bg-slate-50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }} />
@@ -172,7 +181,7 @@ export default function FreeRoofTakeoffPage() {
 
       {/* The tool */}
       <div id="free-roof-takeoff" className="scroll-mt-24">
-        <FreeRoofTakeoff />
+        {tool}
       </div>
 
       {/* Example output */}
