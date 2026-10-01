@@ -36,7 +36,7 @@ const STATUS_TONE: Record<string, string> = {
  *   /admin/support-tickets?status=open
  *   /admin/support-tickets?priority=urgent
  *
- * Detail view is a follow-up; for now this is the triage list.
+ * Detail/reply view lives at /admin/support-tickets/[id].
  */
 export default async function SupportTicketsPage({ searchParams }: Props) {
   const { status, priority } = await searchParams;
@@ -52,6 +52,14 @@ export default async function SupportTicketsPage({ searchParams }: Props) {
   if (priority) query = query.eq('priority', priority);
 
   const { data: tickets, error } = await query;
+
+  // Company names for the "From" column (separate lookup: the typed
+  // client has no nested-select typing for the FK here).
+  const companyIds = [...new Set((tickets ?? []).map((t) => t.company_id).filter(Boolean))];
+  const { data: companyRows } = companyIds.length
+    ? await supabase.from('companies').select('id, name').in('id', companyIds)
+    : { data: [] as Array<{ id: string; name: string }> };
+  const companyNames = new Map((companyRows ?? []).map((c) => [c.id, c.name]));
 
   return (
     <div className="space-y-5">
@@ -104,6 +112,7 @@ export default async function SupportTicketsPage({ searchParams }: Props) {
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="text-left px-4 py-2">Subject</th>
+                <th className="text-left px-4 py-2">From</th>
                 <th className="text-left px-4 py-2">Category</th>
                 <th className="text-left px-4 py-2">Priority</th>
                 <th className="text-left px-4 py-2">Status</th>
@@ -114,9 +123,15 @@ export default async function SupportTicketsPage({ searchParams }: Props) {
               {(tickets ?? []).map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3">
-                    {/* Detail page is a follow-up; for now we render the row
-                        but the link points at a placeholder. */}
-                    <span className="font-medium text-slate-900">{t.subject}</span>
+                    <Link
+                      href={`/admin/support-tickets/${t.id}`}
+                      className="font-medium text-slate-900 hover:underline"
+                    >
+                      {t.subject}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {companyNames.get(t.company_id) ?? <span className="text-slate-400">(unknown)</span>}
                   </td>
                   <td className="px-4 py-3 text-slate-600">{t.category}</td>
                   <td className="px-4 py-3">
@@ -154,8 +169,8 @@ export default async function SupportTicketsPage({ searchParams }: Props) {
       </div>
 
       <p className="text-xs text-slate-400">
-        Showing {(tickets ?? []).length} ticket{(tickets ?? []).length === 1 ? '' : 's'}.
-        Detail/reply view is a follow-up; this list is the triage entry point.
+        Showing {(tickets ?? []).length} ticket{(tickets ?? []).length === 1 ? '' : 's'}. Click a
+        subject to read the full ticket, reply and manage status.
       </p>
     </div>
   );
