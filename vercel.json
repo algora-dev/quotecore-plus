@@ -28,6 +28,10 @@
     {
       "path": "/api/cron/integrations",
       "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/cron/free-ai-scan-budget",
+      "schedule": "23 * * * *"
     }
   ]
 }
