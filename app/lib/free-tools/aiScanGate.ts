@@ -3,6 +3,8 @@ import { createHmac, createHash } from 'crypto';
 import type { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
+// NOTE: checkRateLimit retained for future use; per-stage admission is now
+// handled by p_free_ai_scan_admission for every model call.
 
 /**
  * Free-tool AI scan gate (2026-10-02, Darren).
@@ -11,9 +13,9 @@ import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
  * check-doc-limit): server-side enforcement only, Postgres-backed counters
  * shared across all Vercel instances, opaque identity keys, fail-closed.
  *
- * Credits: one credit per scan SESSION (charged at scan1 admission; scans
- * 2+3 are continuations and only pass a cheaper stage allowance). Failed
- * scans are refunded so errors never burn a visitor's credits.
+ * Credits: EVERY model call costs one credit (outline scan = 1,
+ * component detection = 2, full job = 3). Failed calls are refunded so
+ * errors never burn a visitor's credits.
  *
  * Identity: HMAC of the client IP today. When the tool runs hosted inside
  * ChatGPT/Claude, the `x-plugin-client-id` header takes precedence and keys
@@ -30,8 +32,8 @@ export interface FreeAiScanConfig {
 
 export function freeAiScanConfig(): FreeAiScanConfig {
   return {
-    perIdentityCap: Number(process.env.FREE_AI_SCAN_PER_IDENTITY) || 3,
-    globalDailyCap: Number(process.env.FREE_AI_SCAN_GLOBAL_DAILY) || 40,
+    perIdentityCap: Number(process.env.FREE_AI_SCAN_PER_IDENTITY) || 9,
+    globalDailyCap: Number(process.env.FREE_AI_SCAN_GLOBAL_DAILY) || 75,
     warnPct: Number(process.env.FREE_AI_SCAN_WARN_PCT) || 70,
     enabled: process.env.FREE_AI_SCAN_ENABLED !== 'false',
   };
@@ -128,15 +130,15 @@ export async function refundFreeAiScan(identityKey: string): Promise<void> {
 }
 
 /**
- * Bound on TOTAL model calls per identity per day (3 sessions x 3 stages).
- * Applies to every stage including continuations, so scan2/scan3 cannot be
- * hammered directly without a scan1 admission.
+ * Bound on TOTAL model calls per identity per day. Kept for callers that
+ * want a hard per-call limit independent of the credit ledger (currently
+ * unused: per-call admission in p_free_ai_scan_admission covers it).
  */
 export async function consumeStageAllowance(identityKey: string): Promise<boolean> {
   const cfg = freeAiScanConfig();
   return checkRateLimit(
     `free-ai-scan-stage:${identityKey}`,
-    cfg.perIdentityCap * 3,
+    cfg.perIdentityCap,
     24 * 60 * 60 * 1000,
     { failClosed: true },
   );

@@ -40,7 +40,6 @@ import {
   freeAiScanIdentityKey,
   admitFreeAiScan,
   refundFreeAiScan,
-  consumeStageAllowance,
 } from '@/app/lib/free-tools/aiScanGate';
 
 /**
@@ -52,12 +51,12 @@ import {
  *
  * Gating (see app/lib/free-tools/aiScanGate + migration
  * 20261002090000_free_ai_scan_gate):
- *   - 3 credits per device per UTC day (1 credit per scan session, charged at
- *     scan1; scans 2+3 are continuations)
+ *   - 9 credits per device per UTC day - EVERY model call costs 1 credit
+ *     (outline scan = 1, component detection = 2, full job = 3)
  *   - global daily cap across ALL anonymous users - when hit, the tool
  *     degrades to manual-only with a generic message until UTC midnight
  *   - failures after admission are refunded so errors never burn credits
- *   - stage-level allowance bounds direct scan2/scan3 hammering
+ *   - High quality is rejected server-side (main app only - cost control)
  *   - kill switch: FREE_AI_SCAN_ENABLED=false disables AI for the free tool
  */
 
@@ -137,20 +136,20 @@ export async function POST(req: NextRequest) {
 
     identity = freeAiScanIdentityKey(req);
 
-    // ── Stage allowance (all stages; bounds total model calls per device) ──
-    const stageAllowed = await consumeStageAllowance(identity);
-    if (!stageAllowed) {
-      return NextResponse.json({
-        success: false,
-        code: 'rate_limited',
-        error: 'Too many scan requests today. Please try again tomorrow or continue with manual measurement.',
-      }, { status: 429 });
-    }
-
     // Quality level from client (low / medium / high). Default: medium.
     const qualityLevel = typeof body.qualityLevel === 'string' && ['low', 'medium', 'high'].includes(body.qualityLevel)
       ? body.qualityLevel
       : 'medium';
+
+    // High quality is main-app only on the free tool (cost control + upsell).
+    // The UI greys the button out; this is the server-side backstop.
+    if (qualityLevel === 'high') {
+      return NextResponse.json({
+        success: false,
+        code: 'quality_restricted',
+        error: 'High quality is only available in the main QuoteCore+ app.',
+      }, { status: 400 });
+    }
 
     // Model per quality level - identical to the paid route:
     // low = GPT-5.6 Luna (fastest), medium = GPT-6 Astra on low reasoning,
@@ -196,38 +195,62 @@ export async function POST(req: NextRequest) {
 
     const originalDataUrl = `data:image/png;base64,${processedBuffer.toString('base64')}`;
 
+    // ── Per-stage param pre-check (BEFORE charging a credit) ──
+    if (stage === 'scan2') {
+      const preOutline = body.outlinePoints as V3Point[] | undefined;
+      const preDims = body.analysisDimensions as { width: number; height: number } | undefined;
+      if (!preOutline || !preDims) {
+        return NextResponse.json({ success: false, error: 'Missing outlinePoints or analysisDimensions.' }, { status: 400 });
+      }
+    }
+    if (stage === 'scan3') {
+      const preOutline = body.outlinePoints as V3Point[] | undefined;
+      const preLines = body.lines as V3Line[] | undefined;
+      const preDims = body.analysisDimensions as { width: number; height: number } | undefined;
+      if (!preOutline || !preLines || !preDims) {
+        return NextResponse.json({ success: false, error: 'Missing outlinePoints, lines, or analysisDimensions.' }, { status: 400 });
+      }
+    }
+
+    // ── Credit admission: EVERY model call costs 1 credit ──
+    const admission = await admitFreeAiScan(identity);
+    if (admission === null) {
+      return NextResponse.json({
+        success: false,
+        code: 'gate_error',
+        error: 'Could not verify scan availability. Please try again.',
+      }, { status: 500 });
+    }
+    if (!admission.allowed) {
+      if (admission.reason === 'global_cap') {
+        usage(false, 'global_cap');
+        return NextResponse.json({
+          success: false,
+          code: 'global_cap',
+          error: 'AI scan is temporarily unavailable right now. Manual measurement is still fully available.',
+        }, { status: 429 });
+      }
+      usage(false, 'identity_cap');
+      return NextResponse.json({
+        success: false,
+        code: 'identity_cap',
+        error: `You've used all ${admission.identityCap} free AI scans for today. Create a free account for full AI takeoffs, or continue with manual measurement.`,
+        limit: admission.identityCap,
+        remaining: Math.max(0, admission.identityCap - (admission.identityUsed ?? admission.identityCap)),
+      }, { status: 429 });
+    }
+    admitted = true;
+    const usedCreditsNow = admission.identityUsed ?? admission.identityCap;
+    const creditsPayload = {
+      used: usedCreditsNow,
+      limit: admission.identityCap,
+      remaining: Math.max(0, admission.identityCap - usedCreditsNow),
+    };
+
     // ════════════════════════════════════════════════════════════════════
     // SCAN 1: OUTLINE ONLY
     // ════════════════════════════════════════════════════════════════════
     if (stage === 'scan1') {
-      // Validate the image BEFORE consuming a credit.
-      const admission = await admitFreeAiScan(identity);
-      if (admission === null) {
-        return NextResponse.json({
-          success: false,
-          code: 'gate_error',
-          error: 'Could not verify scan availability. Please try again.',
-        }, { status: 500 });
-      }
-      if (!admission.allowed) {
-        if (admission.reason === 'global_cap') {
-          usage(false, 'global_cap');
-          return NextResponse.json({
-            success: false,
-            code: 'global_cap',
-            error: 'AI scan is temporarily unavailable right now. Manual measurement is still fully available.',
-          }, { status: 429 });
-        }
-        usage(false, 'identity_cap');
-        return NextResponse.json({
-          success: false,
-          code: 'identity_cap',
-          error: `You've used all ${admission.identityCap} free AI scans for today. Create a free account for full AI takeoffs, or continue with manual measurement.`,
-          limit: admission.identityCap,
-          remaining: Math.max(0, admission.identityCap - (admission.identityUsed ?? admission.identityCap)),
-        }, { status: 429 });
-      }
-      admitted = true;
 
       timer.mark('scan1_call_start');
       let result;
@@ -304,11 +327,7 @@ export async function POST(req: NextRequest) {
         analysisDimensions: { width: imgW, height: imgH },
         canvasDimensions: { width: canvasW, height: canvasH },
         summary: { areas: roofAreasCanvas.length, vertices: roofAreasCanvas[0]?.points.length ?? 0, notes },
-        credits: {
-          used: usedCredits,
-          limit: admission.identityCap,
-          remaining: Math.max(0, admission.identityCap - usedCredits),
-        },
+        credits: creditsPayload,
       });
     }
 
@@ -351,6 +370,7 @@ export async function POST(req: NextRequest) {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         usage(false, message);
+        await refundFreeAiScan(identity); // failed call - credit back
         return NextResponse.json({ success: false, error: `Line detection failed: ${message}` }, { status: 502 });
       }
       timer.mark('scan2_call_done');
@@ -423,6 +443,7 @@ export async function POST(req: NextRequest) {
         analysisDimensions: { width: imgW, height: imgH },
         canvasDimensions: { width: canvasW, height: canvasH },
         summary: { rawLines: rawLines.length, finalLines: finalLines.length, dashedRemoved: dashedRawIds.size, preHealedMerges: healResult.merges.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, notes },
+        credits: creditsPayload,
       });
     }
 
@@ -492,6 +513,7 @@ export async function POST(req: NextRequest) {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         usage(false, message);
+        await refundFreeAiScan(identity); // failed call - credit back
         return NextResponse.json({ success: false, error: `Classification failed: ${message}` }, { status: 502 });
       }
       timer.mark('scan3_call_done');
@@ -619,6 +641,7 @@ export async function POST(req: NextRequest) {
         },
         classificationDetails: finalClassifications,
         enforcementCorrections: enforcementCorrections.length > 0 ? enforcementCorrections : undefined,
+        credits: creditsPayload,
       });
     }
 

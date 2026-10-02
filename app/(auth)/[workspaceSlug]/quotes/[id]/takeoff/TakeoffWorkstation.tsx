@@ -443,6 +443,10 @@ export function TakeoffWorkstation({
   useEffect(() => { if (aiStagedPageId == null) { setOutlineTool(null); setOutlineSelectedVertex(null); setOutlineHistory(null); } }, [aiStagedPageId]);
   const aiAbortRef = useRef<AbortController | null>(null);
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
+  // Free tool: High quality is main-app only (cost control + gentle upsell).
+  useEffect(() => {
+    if (freeToolMode && aiQualityLevel === 'high') setAiQualityLevel('medium');
+  }, [freeToolMode, aiQualityLevel]);
   // AI Assist points: track locally so we can update after a scan without a page reload.
   const [aiPoints, setAiPoints] = useState(aiAssistPoints);
   // Free tool (anonymous) AI scan credits + exhaustion modal. Populated from
@@ -4408,6 +4412,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           });
           const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
           if (!scan2Response.ok || !scan2Result.success) {
+            if (scan2Response.status === 429 && scan2Result.code === 'identity_cap') {
+              setShowFreeScanExhaustion(true);
+              return { ok: false, error: 'No free AI scans left today - finish measuring manually, or create a free account.' };
+            }
             return { ok: false, error: scan2Result.error || `Line detection failed (HTTP ${scan2Response.status}).` };
           }
           const detectedLines = scan2Result.data?.lines ?? [];
@@ -4438,9 +4446,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           });
           const scan3Result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
           if (!scan3Response.ok || !scan3Result.success) {
+            if (scan3Response.status === 429 && scan3Result.code === 'identity_cap') {
+              setShowFreeScanExhaustion(true);
+              return { ok: false, error: 'No free AI scans left today - finish measuring manually, or create a free account.' };
+            }
             const violations = Array.isArray(scan3Result.topologyViolations) ? ` ${scan3Result.topologyViolations.join(' ')}` : '';
             return { ok: false, error: `${scan3Result.error || `AI scan failed (HTTP ${scan3Response.status}).`}${violations}` };
           }
+          if (freeToolMode && scan3Result.credits) setFreeScanCredits(scan3Result.credits);
           // Shared post-processing (perimeter accounting, snapping,
           // clustering, calibration lengths) then a dedicated overlay
           // layer grouped by semantic key.
@@ -6364,9 +6377,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       });
       const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
       if (!scan2Response.ok || !scan2Result.success) {
+        if (scan2Response.status === 429 && scan2Result.code === 'identity_cap') {
+          setShowFreeScanExhaustion(true);
+          setAiScanError(scan2Result.error || 'Out of free AI scans for today.');
+          return { completed: false };
+        }
         setAiScanError(scan2Result.error || `Line detection failed (HTTP ${scan2Response.status}).`);
         return { completed: false };
       }
+      if (freeToolMode && scan2Result.credits) setFreeScanCredits(scan2Result.credits);
 
       const detectedLines = scan2Result.data?.lines ?? [];
       // Review lines (previously dropped candidates) feed Scan 3's corner
@@ -6399,11 +6418,17 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       });
       const result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
       if (!scan3Response.ok || !result.success) {
+        if (scan3Response.status === 429 && result.code === 'identity_cap') {
+          setShowFreeScanExhaustion(true);
+          setAiScanError(result.error || 'Out of free AI scans for today.');
+          return { completed: false };
+        }
         const violations = Array.isArray(result.topologyViolations)
           ? ` ${result.topologyViolations.join(' ')}` : '';
         setAiScanError(`${result.error || `AI scan failed (HTTP ${scan3Response.status}).`}${violations}`);
         return { completed: false };
       }
+      if (freeToolMode && result.credits) setFreeScanCredits(result.credits);
 
       if (!silent) {
         setAiScanRaw(result.data);
@@ -8780,9 +8805,9 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                   {/* Points display (free tool: daily scan credits) */}
                   {freeToolMode ? (
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600">Free AI scans</span>
+                      <span className="text-slate-600" title="Outline scan uses 1 scan; component detection uses 2">Free AI scans</span>
                       <span className="font-semibold text-slate-900">
-                        {freeScanCredits ? `${freeScanCredits.remaining} of ${freeScanCredits.limit} left today` : '3 per day'}
+                        {freeScanCredits ? `${freeScanCredits.remaining} of ${freeScanCredits.limit} left today` : '9 per day'}
                       </span>
                     </div>
                   ) : aiPoints && !aiPoints.isBlocked && (
@@ -8812,7 +8837,8 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                           { value: 'high', label: 'High', hint: freeToolMode ? 'Larger, complex roofs' : 'Larger, complex roofs · 12 points' },
                         ] as const).map(opt => {
                           const cost = opt.value === 'low' ? 2 : opt.value === 'medium' ? 4 : 8;
-                          const canAfford = freeToolMode || !aiPoints || aiPoints.remaining >= cost;
+                          const freeHighLock = freeToolMode && opt.value === 'high';
+                          const canAfford = freeToolMode ? !freeHighLock : (!aiPoints || aiPoints.remaining >= cost);
                           return (
                             <QcHostedButton aria-pressed={aiQualityLevel === opt.value} variant={aiQualityLevel === opt.value ? 'secondary' : 'ghost'}
                               key={opt.value}
@@ -8825,7 +8851,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                                     ? 'text-slate-600 border-slate-300 hover:bg-slate-50'
                                     : 'text-slate-300 border-slate-200 cursor-not-allowed'
                               }`}
-                              title={opt.hint}
+                              title={freeHighLock ? 'Only available in the main QuoteCore+ app' : opt.hint}
                             >
                               {opt.label}
                             </QcHostedButton>
@@ -8868,7 +8894,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">You've used your free AI scans</h2>
             <p className="text-sm text-slate-500 mb-4">
-              That's all 3 free AI scans for today. Create a free QuoteCore+ account for full AI takeoffs on
+              That's all 9 free AI scans for today. Create a free QuoteCore+ account for full AI takeoffs on
               every plan, or keep measuring manually below - no limits.
             </p>
             <div className="flex flex-col gap-3">
@@ -9619,10 +9645,14 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                         key={opt.value}
                         type="button"
                         onClick={() => setAiQualityLevel(opt.value)}
+                        disabled={freeToolMode && opt.value === 'high'}
+                        title={freeToolMode && opt.value === 'high' ? 'Only available in the main QuoteCore+ app' : undefined}
                         className={`flex-1 justify-center py-1.5 text-xs font-medium rounded-full border transition-colors ${
                           aiQualityLevel === opt.value
                             ? 'bg-slate-900 text-white border-slate-900'
-                            : 'text-slate-600 border-slate-300 hover:bg-slate-50'
+                            : freeToolMode && opt.value === 'high'
+                              ? 'text-slate-300 border-slate-200 cursor-not-allowed'
+                              : 'text-slate-600 border-slate-300 hover:bg-slate-50'
                         }`}>
                         {opt.label}
                       </QcHostedButton>
