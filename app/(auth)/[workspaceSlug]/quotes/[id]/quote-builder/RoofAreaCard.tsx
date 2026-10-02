@@ -34,6 +34,12 @@ export function RoofAreaCard({
   const [adding, setAdding] = useState(false);
   const [widthInput, setWidthInput] = useState('');
   const [lengthInput, setLengthInput] = useState('');
+  // Direct-entry mode (owner 2026-10-02): entering the finished total is the
+  // primary way to set an area; width × length stays as the secondary path.
+  const [directOpen, setDirectOpen] = useState(false);
+  const [directInput, setDirectInput] = useState('');
+  const directRef = useRef<HTMLInputElement>(null);
+  const isMetric = normalizeMeasurementSystem(quote.measurement_system) === 'metric';
   // Track in-flight submission so two near-simultaneous onBlur events
   // (e.g. width blur firing while length is autofilled) don't double-fire.
   const submittingRef = useRef(false);
@@ -73,6 +79,25 @@ export function RoofAreaCard({
       // Defer one tick so React state from the blurring input is committed
       // (otherwise the trailing edit on the just-blurred field may be lost).
       setTimeout(() => { void handleSubmit(); }, 0);
+    }
+  }
+
+  /**
+   * Direct entry: set the area total as the final figure. Storage is metric
+   * m²; imperial users type ft² (converted here).
+   */
+  async function handleDirectSubmit() {
+    if (submittingRef.current) return;
+    const raw = Number(directInput);
+    if (!raw || raw <= 0) return;
+    const sqm = isMetric ? raw : raw * 0.09290304;
+    submittingRef.current = true;
+    try {
+      await onUpdate(area.id, { input_mode: 'final', final_value_sqm: sqm });
+      setDirectInput('');
+      setDirectOpen(false);
+    } finally {
+      submittingRef.current = false;
     }
   }
 
@@ -122,20 +147,30 @@ export function RoofAreaCard({
           <div>
               {areaPitchVisible && <p className="qce-basis-help" style={{ marginTop: 8 }}>
                 Width × length is plan area; the pitch below adjusts it to the surface.
-                Already have a surface total? Enter it on a component as an Actual measurement instead.
+                Already have the total? Use \"+ Enter area total\" - it sets the finished surface figure directly.
               </p>}
               {areaPitchVisible && <div className="mb-2" data-copilot="quote-pitch">
                 <PitchInput
                   appearance="v2"
                   degrees={area.calc_pitch_degrees}
                   onSave={(deg) => {
-                    onUpdate(area.id, {
-                      input_mode: 'calculated',
-                      calc_width_m: area.calc_width_m,
-                      calc_length_m: area.calc_length_m,
-                      calc_plan_sqm: area.calc_plan_sqm,
-                      calc_pitch_degrees: deg,
-                    });
+                    if ((area as { input_mode?: string }).input_mode === 'final') {
+                      // Direct-entry total: the figure IS the surface area; store
+                      // pitch for component maths without rescaling it.
+                      onUpdate(area.id, {
+                        input_mode: 'final',
+                        final_value_sqm: area.computed_sqm ?? 0,
+                        calc_pitch_degrees: deg,
+                      });
+                    } else {
+                      onUpdate(area.id, {
+                        input_mode: 'calculated',
+                        calc_width_m: area.calc_width_m,
+                        calc_length_m: area.calc_length_m,
+                        calc_plan_sqm: area.calc_plan_sqm,
+                        calc_pitch_degrees: deg,
+                      });
+                    }
                   }}
                   label={areaPitchLabel}
                   showMax
@@ -167,7 +202,33 @@ export function RoofAreaCard({
                   </QcButton>
                 </div>
               ))}
-              {adding ? (
+              {directOpen ? (
+                <div className="qb-measurement-row" data-copilot="quote-area-direct-input">
+                  <div className="qb-dimension-field">
+                    <label htmlFor={`${fieldId}-direct`} className="qc-label">Area ({isMetric ? 'm²' : 'ft²'})</label>
+                    <QcInput
+                      ref={directRef}
+                      id={`${fieldId}-direct`}
+                      type="number"
+                      step="0.01"
+                      value={directInput}
+                      onChange={e => setDirectInput(e.target.value)}
+                      placeholder={isMetric ? 'Total area (m²)' : 'Total area (ft²)'}
+                      inputMode="decimal"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleDirectSubmit();
+                        if (e.key === 'Escape') {
+                          setDirectOpen(false);
+                          setDirectInput('');
+                        }
+                      }}
+                      className="qb-full-width"
+                    />
+                  </div>
+                  <QcButton onClick={handleDirectSubmit} variant="primary">Set area</QcButton>
+                  <QcButton onClick={() => { setDirectOpen(false); setDirectInput(''); }} variant="ghost">Done</QcButton>
+                </div>
+              ) : adding ? (
                 <div className="qb-measurement-row" data-copilot="quote-measurement-inputs">
                   <div className="qb-dimension-field">
                     <label htmlFor={`${fieldId}-width`} className="qc-label">Width ({normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? 'm' : 'ft'})</label>
@@ -233,13 +294,21 @@ export function RoofAreaCard({
                   </QcButton>
                 </div>
               ) : (
-                <QcButton
-                  onClick={startAdding}
-                  data-copilot="quote-add-measurement"
-                  variant="ghost"
-                >
-                  + Add area measurement
-                </QcButton>
+                <div className="flex flex-wrap gap-2">
+                  <QcButton
+                    onClick={() => { setDirectOpen(true); setTimeout(() => directRef.current?.focus(), 50); }}
+                    data-copilot="quote-add-measurement"
+                    variant="primary"
+                  >
+                    + Enter area total
+                  </QcButton>
+                  <QcButton
+                    onClick={startAdding}
+                    variant="ghost"
+                  >
+                    + Width × Length
+                  </QcButton>
+                </div>
               )}
             </div>
           <div className="qb-area-footer">

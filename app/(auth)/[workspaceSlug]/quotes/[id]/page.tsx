@@ -29,8 +29,11 @@ export default async function QuoteBuilderPage({
   if (quote.entry_mode === 'blank') {
     redirect(`/${workspaceSlug}/quotes/${id}/blank-build`);
   }
-  // Load remaining data for v1 (manual mode)
-  const [roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData, ent, collections] = await Promise.all([
+  // Load remaining data for v1 (manual mode). Company defaults + plan file
+  // join the parallel batch (owner 2026-10-02: they ran sequentially after
+  // it, which was the visible blank gap while opening a quote).
+  const supabase = await createSupabaseServerClient();
+  const [roofAreas, roofAreaEntries, components, libraryComponents, entries, takeoffData, ent, collections, companyRes, planFileRes] = await Promise.all([
     loadQuoteRoofAreas(id),
     loadAllRoofAreaEntriesForQuote(id),
     loadQuoteComponents(id),
@@ -39,31 +42,29 @@ export default async function QuoteBuilderPage({
     loadTakeoffMeasurements(id),
     loadCompanyEntitlements(quote.company_id),
     loadComponentCollections(),
+    supabase
+      .from('companies')
+      .select('default_currency, default_measurement_system, default_trade')
+      .eq('id', quote.company_id)
+      .single(),
+    supabase
+      .from('quote_files')
+      .select('storage_path, file_name')
+      .eq('quote_id', id)
+      .eq('file_type', 'plan')
+      .order('uploaded_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
   
   console.log('[QuoteBuilderPage] Loaded components:', components.length, components.map(c => c.name));
   
-  const supabase = await createSupabaseServerClient();
-  
-  // Load company defaults (currency, measurement system, trade)
-  const { data: company } = await supabase
-    .from('companies')
-    .select('default_currency, default_measurement_system, default_trade')
-    .eq('id', quote.company_id)
-    .single();
+  const company = companyRes.data;
   const companyDefaultCurrency = company?.default_currency || 'NZD';
   const companyMeasurementSystem = (company as { default_measurement_system?: string } | null)?.default_measurement_system || 'metric';
   const companyDefaultTrade = (company as { default_trade?: string } | null)?.default_trade || 'roofing';
   
-  // Load roof plan (if exists)
-  const { data: planFile } = await supabase
-    .from('quote_files')
-    .select('storage_path, file_name')
-    .eq('quote_id', id)
-    .eq('file_type', 'plan')
-    .order('uploaded_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const planFile = planFileRes.data;
   
   // QUOTE-DOCUMENTS is private; mint signed URLs at render time.
   let planUrl: string | null = null;

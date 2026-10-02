@@ -2,7 +2,6 @@
 import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 import { useState } from 'react';
 import { PitchInput } from '@/app/components/PitchInput';
-import { RoofPitchEstimatorModal } from './RoofPitchEstimatorModal';
 
 export function AreaNameModal({
   isRoofing,
@@ -28,7 +27,6 @@ export function AreaNameModal({
 }) {
   const [name, setName] = useState(initialName);
   const [pitchDegrees, setPitchDegrees] = useState<number | null>(null);
-  const [showPitchEstimator, setShowPitchEstimator] = useState(false);
 
   // P1-1b: when initialName is pre-filled (new-page mode), name is locked -
   // only pitch is needed from the user.
@@ -99,24 +97,13 @@ export function AreaNameModal({
               )}
               {isRoofing && (
                 <>
-                  <div className="flex items-end gap-2">
-                    <PitchInput
-                      degrees={pitchDegrees}
-                      onSave={setPitchDegrees}
-                      label="Roof Pitch"
-                      className="block"
-                      autoFocus={nameIsLocked}
-                    />
-                    <QcHostedButton variant="ghost"
-                      type="button"
-                      onClick={() => setShowPitchEstimator(true)}
-                      className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/40 transition mb-0.5"
-                      title="Estimate roof pitch from a photo"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
-                      Pitch Finder
-                    </QcHostedButton>
-                  </div>
+                  <PitchInput
+                    degrees={pitchDegrees}
+                    onSave={setPitchDegrees}
+                    label="Roof Pitch"
+                    className="block"
+                    autoFocus={nameIsLocked}
+                  />
                   <p className="text-xs text-gray-600 -mt-2">
                     Used to calculate component lengths (rafters, hips, valleys)
                   </p>
@@ -157,12 +144,6 @@ export function AreaNameModal({
           </div>
         </form>
       </div>
-      {showPitchEstimator && (
-        <RoofPitchEstimatorModal
-          onClose={() => setShowPitchEstimator(false)}
-          onApply={(deg) => { setPitchDegrees(deg); setShowPitchEstimator(false); }}
-        />
-      )}
     </QcHostedDialog>
   );
 }

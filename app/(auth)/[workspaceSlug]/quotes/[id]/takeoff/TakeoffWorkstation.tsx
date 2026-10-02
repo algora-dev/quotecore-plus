@@ -8594,7 +8594,9 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       aria-label="Zoom out" title="Zoom out" className="qc-canvas-icon-tool"><QcIcon name="minus" /></QcToolButton>
                       <span className="qc-takeoff-zoom-value" aria-label="Current zoom">{Math.round(zoom * 100)}%</span><QcToolButton
                         onClick={handleZoomIn}
-                        aria-label="Zoom in" title="Zoom in" className="qc-canvas-icon-tool"><QcIcon name="plus" /></QcToolButton>
+                        aria-label="Zoom in" title="Zoom in" className="qc-canvas-icon-tool"><QcIcon name="plus" /></QcToolButton><QcToolButton
+                        onClick={() => fitPlanToViewport(true)}
+                        aria-label="Fit to plan" title="Fit to plan - show the whole image" className="qc-canvas-icon-tool"><svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></svg></QcToolButton>
                     </QcCanvasToolGroup>
                   </div>
                 </div>
