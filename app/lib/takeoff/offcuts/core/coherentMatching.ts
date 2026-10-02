@@ -30,7 +30,7 @@ export function matchCoherentSets(demands: Demand[], inventory: Offcut[], profil
   const stockById=new Map(inventory.map(o=>[o.id,o]));
   const buckets=new Map<string,Offcut[]>();
   for(const o of inventory){
-    const key=o.cutSetId??`${o.sourceFaceId}:legacy`;
+    const key=(o.cutSetId??`${o.sourceFaceId}:legacy`)+(o.cutKind==='valley'?`:${o.cutArm??'legacy'}`:'');
     const list=buckets.get(key)??[];list.push(o);buckets.set(key,list);
   }
   const groups:Offcut[][]=[];

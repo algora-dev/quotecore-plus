@@ -1,3 +1,5 @@
+import { adjacentValleyParents } from './valleyReceivers';
+import { receiverFreshOrder } from './receiverSafety';
 import type { Draft, Issue, Placement, RoofFace, RoofInput, Solution } from './types';
 import { deriveFaces, validatePartition } from './graph';
 import { fromRing, intersect, rectangle, rings, subtract, union, area } from './regions';
@@ -55,6 +57,12 @@ export function validateDraft(draft: Draft): Issue[] {
     const expected = generateDemands(draft.roof, draft.faces, draft.profile, draft.settings, s.bankLayout).map(d => ({ ...d, lap: s.lapByFace[d.faceId] }));
     if (fingerprint(expected) !== fingerprint(s.demands)) issues.push({ severity: 'error', code: 'DEMAND_TAMPER', message: 'The sheet requirements no longer match the current reviewed roof.' });
   } catch (error) { issues.push({ severity: 'error', code: 'INPUTS', message: String(error) }); }
+  if(s.engineVersion==='2.12'&&draft.settings.stockMode==='bank-first'){
+    const expected=[...adjacentValleyParents(draft.faces,draft.roof)].filter(([id])=>receiverFreshOrder(s.demands.filter(d=>d.faceId===id)))
+      .map(([id,parent])=>`${parent}/${id}`).sort();
+    const actual=s.receiverSafety?.families.flatMap(f=>f.faceIds.map(id=>`${f.sourceFaceId}/${id}`)).sort();
+    if(JSON.stringify(actual)!==JSON.stringify(expected))issues.push({severity:'error',code:'RECEIVER_SAFETY',message:'Receiver families do not match the approved roof. Recalculate the plan.'});
+  }
   issues.push(...validateSolution(s)); return issues;
 }
 export function resetFaces(roof: RoofInput): RoofFace[] { return deriveFaces(roof).faces; }

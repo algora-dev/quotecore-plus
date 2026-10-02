@@ -7,6 +7,8 @@ import { optimiseBankLayouts } from './banks';
 import { rebuildInventory, materialAtDestination } from './inventory';
 import { generateDemands, offcutsFrom, validateInputs } from './material';
 import { supplyView } from './supply';
+import { protectValleyReceivers, validateReceiverSafety } from './receiverSafety';
+import { rootSheetLedger } from './purchaseLedger';
 import { planQuality, planSignature, comparePlans } from './diagnostics';
 export function facesRevision(request: SolveRequest): string {
   return fingerprint({ faces: request.faces, profile: request.profile, settings: request.settings });
@@ -24,10 +26,29 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
   const solutions = request.settings.stockMode === 'bank-first'
     ? optimiseBankLayouts(request, hooks) : [optimiseLegacy(request, hooks)];
   for (const solution of solutions) {
+    if(request.settings.stockMode==='bank-first')protectValleyReceivers(request,solution,hooks.shouldCancel);
+    solution.engineVersion='2.12';
+    solution.layoutId=planSignature(solution);
     solution.issues.push(...validateSolution(solution));
     if (solution.issues.some(i => i.severity === 'error')) solution.status = 'invalid';
   }
-  return solutions;
+  // The bank search retains coherent macro candidates first. Compare the actual
+  // protected purchase cost of those retained candidates, never the stale
+  // pre-allowance cost or the number of sheets alone.
+  const goal=hooks.planSearch?.objective??'recommended';
+  solutions.sort((a,b)=>Number(a.status==='invalid')-Number(b.status==='invalid') ||
+    (goal==='simpler'?planQuality(a).complexity-planQuality(b).complexity||a.metrics.newMaterialMm2-b.metrics.newMaterialMm2
+      :a.metrics.newMaterialMm2-b.metrics.newMaterialMm2||planQuality(a).complexity-planQuality(b).complexity));
+  for(const s of solutions)if(s.decisionTrace){
+    const quality=planQuality(s);
+    s.decisionTrace.candidates=s.decisionTrace.candidates.map(c=>c.selected
+      ?{...c,quality,signature:s.layoutId!,reason:'selected-final-physical-plan-after-receiver-check'}
+      :{...c,reason:c.reason+'; bank-search score before receiver safety'});
+    s.decisionTrace.events.push({step:s.decisionTrace.events.length+1,action:'final-purchase-ledger',message:'Final quantities after receiver safety. The selected score is final; other bank-search candidate scores are identified as pre-refinement.',data:{quality,quantities:rootSheetLedger(s).totals}});
+  }
+  if(solutions[0]?.decisionTrace)hooks.onDecisionTrace?.(solutions[0].decisionTrace);
+  const seen=new Set<string>();
+  return solutions.filter(s=>{const k=planSignature(s);if(seen.has(k))return false;seen.add(k);return true;});
 }
 export function optimise(request: SolveRequest, hooks: SearchHooks = {}): Solution {
   return optimiseLayouts(request, hooks)[0];
@@ -55,8 +76,7 @@ export function optimiseAlternative(request: SolveRequest, options: AlternativeP
   let trace:DecisionTrace|undefined;
   const solutions=optimiseLayouts(request,{...hooks,planSearch:{objective,attempt,referenceQuality:previousQuality,
     excludeSignatures:exclusions,maxExtraMaterialPercent:cap,referenceSolution:previous},onDecisionTrace:t=>{trace=t;hooks.onDecisionTrace?.(t);}});
-  const solution=solutions.find(s=>s.status!=='invalid'&&!exclusions.includes(planSignature(s)));
-  if(solution){
+  for(const solution of solutions.filter(s=>s.status!=='invalid'&&!exclusions.includes(planSignature(s)))){
     const comparison=comparePlans(previous,solution,objective);
     // Independent result gate: objective labels must describe a real improvement.
     const improved=objective==='simpler'?comparison.complexityDelta<0&&solution.metrics.newMaterialMm2<=previousQuality.suppliedMm2*(1+cap/100)+1
@@ -170,7 +190,7 @@ export function validateSolution(s: Solution): Issue[] {
     if (!expected || o.sourceDemandId !== expected.sourceDemandId || o.sourceFaceId !== expected.sourceFaceId ||
         o.lap !== expected.lap || o.parentOffcutId !== expected.parentOffcutId ||
         o.rootDemandId !== expected.rootDemandId || o.rootBankId !== expected.rootBankId ||
-        o.cutSetId !== expected.cutSetId || o.cutKind !== expected.cutKind || o.generation !== expected.generation ||
+        o.cutArm !== expected.cutArm || o.cutSetId !== expected.cutSetId || o.cutKind !== expected.cutKind || o.generation !== expected.generation ||
         o.sourceLaneIndex !== expected.sourceLaneIndex || o.sourceCrossMm !== expected.sourceCrossMm || Math.abs(o.widthMm - expected.widthMm) > 1e-6 ||
         area(subtract(o.region, expected.region)) + area(subtract(expected.region, o.region)) > 1e-3) {
       error('INVENTORY_MISMATCH', 'The offcut does not match the source sheet and its actual cut-clearance inventory.', o.id);
@@ -246,5 +266,6 @@ export function validateSolution(s: Solution): Issue[] {
       error('STALE_TOTALS', `The ${key} total does not match the current physical allocations.`);
     }
   }
+  issues.push(...rootSheetLedger(s).issues,...validateReceiverSafety(s));
   return issues;
 }

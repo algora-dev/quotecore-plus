@@ -70,6 +70,12 @@ export interface SolveSettings {
   maxSourceBlocksPerFace?: number;
   /** Requested overlap into the valley for a self-fill donor run. Not spares. */
   selfFillTransitionMm?: number;
+  /** Quoting sensitivity: one COMMON cross-sheet phase band per valley parent.
+   * Fixed registration is an explicit site-setout assumption, not a silent default. */
+  receiverPhaseMode?: 'quote-safe' | 'fixed-registration';
+  /** Total source phase band as a fraction of one effective cover (0..1).
+   * The default is +/- half a cover, not two unrelated full-cover allowances. */
+  receiverPhaseCoverFraction?: number;
   optimiseLapDirections: boolean;
   maxTrials: number; maxMilliseconds: number; maxSheets: number;
 }
@@ -80,7 +86,7 @@ export const DEFAULT_PROFILE: Profile = {
 };
 export const DEFAULT_SETTINGS: SolveSettings = {
   stockMode: 'bank-first', optimiseLapDirections: true, maxBankExtensionMm: 100,
-  maxSourceBlocksPerFace: 2, selfFillTransitionMm: 100,
+  maxSourceBlocksPerFace: 2, selfFillTransitionMm: 100, receiverPhaseMode: 'quote-safe', receiverPhaseCoverFraction: 1,
   maxTrials: 32, maxMilliseconds: 4000, maxSheets: 600,
 };
 export interface FaceFrame {
@@ -119,6 +125,9 @@ export interface Offcut {
   cutKind?: 'hip' | 'valley' | 'broken_hip';
   sourceLaneIndex?: number;
   sourceCrossMm?: number;
+  /** Geometric arm of the lower cut, in the source's local sheet frame.
+   * An apex-spanning physical piece remains ONE piece, not two ideal triangles. */
+  cutArm?: 'negative' | 'positive' | 'apex';
 }
 export interface Placement {
   demandId: string;
@@ -145,15 +154,17 @@ export interface BankLayout {
   cutLengthByFace?: Record<string, number>;
   /** Geometry-derived donor-zone choices, reported instead of hidden allowances. */
   selfFillFaceIds?: string[];
-  /** Extra downstream stock only on lanes with an angled downstream boundary. */
+  /** Downstream stock extension is shared by every angled lane in the cutting block. */
   tailExtensionByFace?: Record<string, number>;
   primarySequence?: string[];
+  /** Dedicated local receiver starter length; not a new main elevation bank. */
+  receiverStockLengthByFace?: Record<string, number>;
   /** Real common-grid purchasing operations; not every parallel face is joined. */
   primaryOperations?: { id: string; bankId: string; faceIds: string[]; phaseMm: number; stockLengthMm: number }[];
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11';
+  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12';
   layoutId?: string;
   layoutLabel?: string;
   objective?: PlanObjective;
@@ -174,6 +185,7 @@ export interface Solution {
   status: 'prototype-review' | 'invalid';
   /** V1 never produces an approved manufacturing/order list. */
   orderReady: false;
+  receiverSafety?: import('./receiverSafety').ReceiverSafetyReport;
 }
 export interface SolveRequest { roof: RoofInput; faces: RoofFace[]; profile: Profile; settings: SolveSettings }
 export interface Draft {
@@ -215,7 +227,7 @@ export interface TraceCandidate {
   selected: boolean; reason: string;
 }
 export interface DecisionTrace {
-  schemaVersion: 1; engineVersion: '2.11'; requestFingerprint: string;
+  schemaVersion: 1; engineVersion: '2.12'; requestFingerprint: string;
   objective: PlanObjective; selectedTrial: number | null;
   events: TraceEvent[]; candidates: TraceCandidate[];
   truncated: boolean; droppedEvents: number;

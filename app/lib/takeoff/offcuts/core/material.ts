@@ -34,6 +34,8 @@ export function validateInputs(roof: RoofInput, faces: RoofFace[], p: Profile, s
   if (settings.maxBankExtensionMm !== undefined && (!Number.isFinite(settings.maxBankExtensionMm) || settings.maxBankExtensionMm < 0 || settings.maxBankExtensionMm > 300)) error('BANK_EXTENSION', 'Automatic extra stock must be between 0 and 300 mm.');
   if (settings.maxSourceBlocksPerFace !== undefined && (!Number.isInteger(settings.maxSourceBlocksPerFace) || settings.maxSourceBlocksPerFace < 1 || settings.maxSourceBlocksPerFace > 2)) error('SOURCE_LIMIT', 'Practical automatic plans support one or two coherent external source blocks per face.');
   if (settings.selfFillTransitionMm !== undefined && (!Number.isFinite(settings.selfFillTransitionMm) || settings.selfFillTransitionMm < 0 || settings.selfFillTransitionMm > p.coverMm)) error('SELF_FILL_MARGIN', 'Self-fill transition must be between zero and one sheet cover.');
+  if(settings.receiverPhaseMode!==undefined&&!['quote-safe','fixed-registration'].includes(settings.receiverPhaseMode)) error('RECEIVER_PHASE','Choose quote-safe or fixed-registration receiver planning.');
+  if(settings.receiverPhaseCoverFraction!==undefined&&(!Number.isFinite(settings.receiverPhaseCoverFraction)||settings.receiverPhaseCoverFraction<0||settings.receiverPhaseCoverFraction>1))error('RECEIVER_PHASE','Source phase band must be between zero and one sheet cover.');
   if (!p.rulesConfirmed) issues.push({ severity: 'warning', code: 'PROFILE_UNVERIFIED', message: 'Profile/side-lap allowances are unverified. This is a geometric prototype, not an order-ready material list.' });
   for (const f of faces) {
     const invalid = validateRing(f.polygon); if (invalid) { error('FACE_POLYGON', `${f.name}: ${invalid}`, f.id); continue; }
@@ -94,6 +96,9 @@ export function validateBankLayout(faces: RoofFace[], profile: Profile, settings
       operationMembers.add(id);
     }
   }
+  for(const [id,length] of Object.entries(layout.receiverStockLengthByFace??{})){
+    if(!ids.has(id)||!Number.isFinite(length)||length<=0||length>profile.maxLengthMm)throw new Error('Invalid local receiver stock length.');
+  }
   for (const f of faces) {
     const common = layout.cutLengthByFace?.[f.id], tail = layout.tailExtensionByFace?.[f.id] ?? 0;
     if (common !== undefined && (!Number.isFinite(common) || common <= 0 || common > profile.maxLengthMm)) throw new Error(`${f.name}: invalid common stock length.`);
@@ -107,7 +112,7 @@ export function validateBankLayout(faces: RoofFace[], profile: Profile, settings
 }
 /** Validated once by the caller; used repeatedly by the bounded bank search. */
 export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Profile, settings: SolveSettings,
-  primary = true, extraLengthMm = 0, cutLengthMm?: number, tailExtensionMm = 0, materialBankId?: string): Demand[] {
+  primary = true, extraLengthMm = 0, cutLengthMm?: number, tailExtensionMm = 0, materialBankId?: string, receiverStockLengthMm?: number): Demand[] {
   const result: Demand[] = [], w = profile.coverMm, physicalWidth = w + profile.leftLapMm + profile.rightLapMm;
   const boundary = planningBoundary(face);
   const frame = frameFor(face, roof), local = fromRing(face.polygon.map(p => sceneToSurface(p, frame))), box = bounds(local);
@@ -161,30 +166,24 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
     const expanded = extendY(physical, profile.endAllowanceMm), physicalBox = bounds(expanded);
     const y = physicalBox.minY, required = translate(expanded, -laneX, -y);
     const bank = settings.stockMode === 'bank-first', filler = isStraightFiller(required);
-    const envelope = settings.stockMode === 'face-envelope' || bank && primary && !filler;
+    const receiverStock=bank&&receiverStockLengthMm!==undefined;
+    const envelope = settings.stockMode === 'face-envelope' || bank && (primary||receiverStock) && !filler;
     const extra = bank && primary && !filler ? extraLengthMm : 0;
     const cutEdges: RoofEdge[] = boundary.filter(e => ['hip', 'valley', 'broken_hip'].includes(e.kind))
       .map(e => ({ ...e, a: sub(sceneToSurface(e.a, frame), {x: laneX, y}), b: sub(sceneToSurface(e.b, frame), {x: laneX, y}) }))
       .filter(e => Math.min(e.a.x, e.b.x) < physicalWidth - EPS && Math.max(e.a.x, e.b.x) > EPS);
     // Elevation banks share a STOCK length, never merged roof footprints.
     // Every separate face/run still has its own real required and cover regions.
-    const baseLength = Math.max(box.maxY - box.minY, cutLengthMm ?? 0);
-    // A LOWER ridge plateau can use its own shorter stock, even when a valley
-    // cuts the other end. The boundary-crossing lane retains full bank stock;
+    const baseLength = Math.max(box.maxY - box.minY, receiverStockLengthMm ?? cutLengthMm ?? 0);
+    // A LOWER ridge plateau uses shorter stock only when no reusable angled cut
+    // crosses that physical lane. A valley at the other end keeps long stock. The boundary-crossing lane retains full bank stock;
     // we never shorten the one long sheet needed to cut through a broken hip.
     const coverWidth=Math.min(x+w,box.maxX)-Math.max(x,box.minX);
-    const lowerRidgeShelf=bank && primary && spans('ridge',x,x+w)>=coverWidth-EPS &&
+    const lowerRidgeShelf=bank && primary && cutEdges.length===0 && spans('ridge',x,x+w)>=coverWidth-EPS &&
       required.every(b=>Math.abs(b.top0)<EPS&&Math.abs(b.top1)<EPS) &&
       y>box.minY+profile.endAllowanceMm+EPS;
     const blankY0 = envelope && !lowerRidgeShelf ? box.maxY - baseLength - profile.endAllowanceMm - y - extra : 0;
-    const lowerCut = cutEdges.some(e => {
-      const x = Math.max(0, Math.min(physicalWidth, (e.a.x + e.b.x) / 2));
-      if (Math.abs(e.b.x - e.a.x) < EPS) return false;
-      const ey = e.a.y + (e.b.y-e.a.y) * (x-e.a.x)/(e.b.x-e.a.x);
-      return required.some(b => x >= b.x0-EPS && x <= b.x1+EPS &&
-        Math.abs(ey - (b.bottom0+(b.bottom1-b.bottom0)*(x-b.x0)/(b.x1-b.x0)) + profile.endAllowanceMm) < 1e-3);
-    });
-    const tail = envelope && lowerCut ? tailExtensionMm : 0;
+    const tail = envelope && !lowerRidgeShelf ? tailExtensionMm : 0;
     const rawY1 = envelope ? box.maxY + profile.endAllowanceMm - y + tail : physicalBox.maxY - y;
     const len = Math.ceil((rawY1 - blankY0 - EPS) / profile.lengthIncrementMm) * profile.lengthIncrementMm;
     if (len > profile.maxLengthMm + EPS) throw new Error(`${face.name}, lane ${i + 1}: ${(len / 1000).toFixed(3)} m exceeds the profile maximum. The planner never inserts end laps to make it fit.`);
@@ -210,7 +209,7 @@ export function generateDemands(roof: RoofInput, faces: RoofFace[], profile: Pro
     layout ? { ...face, laneOffsetMm: layout.laneOffsetByFace[face.id] } : face,
     profile, settings, layout ? layout.primaryFaceIds.includes(face.id) : true, layout?.extraLengthByFace[face.id] ?? 0,
     layout?.cutLengthByFace?.[face.id], layout?.tailExtensionByFace?.[face.id] ?? 0,
-    layout?.materialBanks?.find(b => b.faceIds.includes(face.id))?.id));
+    layout?.materialBanks?.find(b => b.faceIds.includes(face.id))?.id, layout?.receiverStockLengthByFace?.[face.id]));
   if (result.length > settings.maxSheets) throw new Error(`Sheet limit exceeded (${settings.maxSheets}). Check the calibration/cover or reduce the selected roof scope.`);
   return result;
 }
@@ -246,8 +245,9 @@ export function offcutsFromMaterial(d: Demand, profile: Profile, available: Regi
 export function offcutsFrom(d: Demand, profile: Profile): Offcut[] {
   return offcutsFromMaterial(d, profile, d.blank);
 }
-function classifyCut(d: Demand, profile: Profile, region: Region): Pick<Offcut,'cutSetId'|'cutKind'> | undefined {
+function classifyCut(d: Demand, profile: Profile, region: Region): Pick<Offcut,'cutSetId'|'cutKind'|'cutArm'> | undefined {
   let best: {edge: RoofEdge; length: number; side: string; slope: number} | undefined;
+  const touchedSlopes:number[]=[];
   const border = boundarySegments(region), margin = profile.cutGapMm + profile.endAllowanceMm;
   for (const edge of d.cutEdges ?? []) {
     const dx = edge.b.x - edge.a.x;
@@ -263,6 +263,7 @@ function classifyCut(d: Demand, profile: Profile, region: Region): Pick<Offcut,'
       const x=(x0+x1)/2, y=seg.a.y+m*(x-seg.a.x), ey=edge.a.y+slope*(x-edge.a.x);
       if (Math.abs(Math.abs(y-ey)-margin) < 1e-3) { length += x1-x0; side = y<ey ? 'upper' : 'lower'; }
     }
+    if(length>EPS)touchedSlopes.push(slope);
     if (length > (best?.length ?? 0)) best={edge,length,side,slope};
   }
   if (!best) return undefined;
@@ -271,5 +272,6 @@ function classifyCut(d: Demand, profile: Profile, region: Region): Pick<Offcut,'
   // their handedness; separate steps/fillers are split into contiguous runs by
   // the coherent matcher instead of inventing missing sheets between them.
   const shape = cutKind === 'valley' ? 'V' : best.slope < 0 ? 'left' : 'right';
-  return {cutKind, cutSetId:`${d.faceId}:${cutKind}:${best.side}:${shape}`};
+  return {cutKind, cutSetId:`${d.faceId}:${cutKind}:${best.side}:${shape}`,
+    cutArm:touchedSlopes.some(m=>m<0)&&touchedSlopes.some(m=>m>0)?'apex':best.slope<0?'negative':'positive'};
 }

@@ -2,6 +2,7 @@ import { validateDraft } from './editing';
 import type { Draft, Solution } from './types';
 import { area } from './regions';
 import { fingerprint } from './math';
+import { rootSheetLedger } from './purchaseLedger';
 import { materialSections, purchasedLengthMm, type MaterialSection } from './sections';
 
 export interface PurchaseRow {
@@ -72,6 +73,7 @@ export function quoteQuantityProposal(draft: Draft, basis:QuoteQuantityBasis):Qu
   if(s.sourceRevision!==draft.roof.sourceRevision||fingerprint(s.profile)!==fingerprint(draft.profile)||fingerprint(s.settings)!==fingerprint(draft.settings))throw new Error('The quantity plan is stale. Recalculate first.');
   const errors=validateDraft(draft).filter(i=>i.severity==='error');
   if(errors.length)throw new Error(errors.map(i=>i.message).join('\n'));
+  const ledger=rootSheetLedger(s);if(!ledger.valid)throw new Error('Purchased material does not reconcile with physical parent sheets.');
   const q=quantitySummary(s);
   const quantity=basis==='lineal-metres'?q.purchasedLinealM:basis==='cover-square-metres'?q.suppliedCoverAreaM2:q.suppliedProfileAreaM2;
   return {schemaVersion:1,kind:'quotecore-offcut-quantity-proposal',engineVersion:s.engineVersion??'unknown',
@@ -83,7 +85,7 @@ export function quoteQuantityProposal(draft: Draft, basis:QuoteQuantityBasis):Qu
     quantityFingerprint:fingerprint([draft.roof.sourceRevision,s.facesRevision,s.profile,s.settings,s.placements,basis,q.purchaseRows]),
     assumptions:['Current selected page/roof scope only; not other roofs in this quote.','Pitch is already included once in surface blank lengths.',
       'Cutting stock, selected extension, end allowances and order-length rounding are already included. Do not add them twice.',
-      'No spare sheets, installation contingency or supplier-specific developed coil width included.',
+      'No general spare sheets or supplier-specific developed coil width included. Any valley receiver starter allowance is already part of the new-sheet schedule; do not add it twice.',
       'Offcuts and later recuts are not purchased again. Remainders can include reusable stock, not just rubbish.',
       'Replace only an explicitly selected material quantity with a matching rate basis. Preserve measured roof area and labour quantities.'],
     warnings:s.issues.filter(i=>i.severity==='warning').map(i=>i.message),action:'propose-material-quantity',orderReady:false,sparesIncluded:false};
