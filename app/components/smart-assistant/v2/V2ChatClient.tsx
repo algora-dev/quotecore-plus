@@ -65,6 +65,18 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const [attachments, setAttachments] = useState<LocalAttachment[]>([]);
   const [unresolved, setUnresolved] = useState(false);
   const [locked, setLocked] = useState(false);
+  // Auto-speak reads a short spoken line, never the full detail block:
+  // label lines ("Confirmed:") and bullet lists stay on screen as text for
+  // reading, while voice users get a concise confirmation (owner 2026-10-02).
+  const spokenReplyLine = (content: string): string => {
+    const text = displayTaskMessage(content).trim();
+    if (text.length <= 140) return text;
+    const meaningful = text
+      .split(/\n+/)
+      .map(l => l.trim())
+      .find(l => l.length > 3 && !l.endsWith(':') && !l.startsWith('-') && !l.startsWith('•') && !l.startsWith('*'));
+    return meaningful && meaningful.length <= 160 ? meaningful : 'Ready. Review the details on screen.';
+  };
   const pending = useRef(new Map<string, Pending>());
   const current = useRef(active);
   current.current = active;
@@ -193,7 +205,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         setNotice(null);
         if (outcome.status === 'completed' && !capturing.current) {
           const reply = next.messages.filter(m => m.role === 'assistant' && m.runId === outcome.id).at(-1);
-          if (reply) speech.autoSpeak(reply.id, displayTaskMessage(displayResolutionMessage(reply.content)));
+          if (reply) speech.autoSpeak(reply.id, spokenReplyLine(displayResolutionMessage(reply.content)));
         }
         setInput(value => value.trim() === p?.message.trim() ? '' : value);
       }
