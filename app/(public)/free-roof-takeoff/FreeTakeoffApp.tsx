@@ -116,7 +116,9 @@ function toComponents(list: TakeoffPlaceholderComponent[]): ToolComponent[] {
     id: c.id,
     name: c.name,
     measurement_type: c.measurement_type,
-    is_system: true,
+    // These are the free tool's real manual targets, not AI-only placeholders.
+    // The workstation hides `is_system` components from manual selectors.
+    is_system: false,
     collection_id: 'tool-builtin',
   }));
 }
