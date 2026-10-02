@@ -34,6 +34,7 @@ export interface RoofFace {
   pitchDeg: number | null;
   /** Origin of the displayed vector; approval below is bound to exact reviewed geometry. */
   flowSource?: 'inferred' | 'manual';
+  flowSuggestionBasis?: 'spouting-hint' | 'outer-boundary' | 'needs-review';
   /** Explicit review acknowledgement. Invalidated by changes to polygon/vector/labels. */
   directionApproval?: string;
   /** Phase measured from the local minimum cross-slope coordinate. */
@@ -96,7 +97,7 @@ export interface Demand {
   stockRole?: 'primary-cut' | 'filler' | 'supplement';
   /** Only hip/valley/broken-hip cuts enter reusable inventory. */
   reusableCut?: boolean;
-  /** Approved cut boundaries in this physical sheet's local millimetres. */
+  /** Shape-derived upper/lower cuts in this physical sheet's local millimetres. */
   cutEdges?: RoofEdge[];
   materialBankId?: string;
   /** Planning role is independent of whether the final sheet has angled cuts. */
@@ -152,7 +153,7 @@ export interface BankLayout {
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10';
+  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11';
   layoutId?: string;
   layoutLabel?: string;
   objective?: PlanObjective;
@@ -214,7 +215,7 @@ export interface TraceCandidate {
   selected: boolean; reason: string;
 }
 export interface DecisionTrace {
-  schemaVersion: 1; engineVersion: '2.10'; requestFingerprint: string;
+  schemaVersion: 1; engineVersion: '2.11'; requestFingerprint: string;
   objective: PlanObjective; selectedTrial: number | null;
   events: TraceEvent[]; candidates: TraceCandidate[];
   truncated: boolean; droppedEvents: number;

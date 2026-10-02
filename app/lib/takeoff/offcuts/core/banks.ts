@@ -1,5 +1,6 @@
 import { describeCutStrategy, chooseCutCommitments, type CutStrategy } from './cutStrategy';
 import { adjacentValleyParents } from './valleyReceivers';
+import { auditFaceBehaviour, FACE_GEOMETRY_MODEL } from './faceGeometry';
 import { planningBoundary } from './directions';
 import type { BankLayout, Demand, Issue, Lap, MaterialBank, Offcut, Placement, RoofFace, Solution, SolveRequest } from './types';
 import type { SearchHooks } from './solver';
@@ -72,8 +73,9 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const mainMembers=new Set(banks.filter(b=>mainBanks.has(b.id)).flatMap(b=>bankAnchorFaces(faces.filter(f=>b.faceIds.includes(f.id)),roof).map(f=>f.id)));
   const check=()=>{if(hooks.shouldCancel?.())throw new Error('Offcut search cancelled.');if(clock()-started>settings.maxMilliseconds)throw new Deadline();};
   const defaultLaps=Object.fromEntries(faces.map(f=>[f.id,f.lap])) as Record<string,Lap>;
+  const newRecorder=():DecisionRecorder=>{const record=new DecisionRecorder();record.add('approved-geometry-model','Cut boundaries derived from polygons and water arrows; input component names are not constraints.',faces.map(f=>f.id),{model:FACE_GEOMETRY_MODEL,faces:auditFaceBehaviour(faces)});return record;};
   const blankState=():State=>({demands:[],placements:[],inventory:[],used:new Set(),done:new Set(),layout:structuredClone(baseLayout),laps:{...defaultLaps},
-    commitments:[],committedFaces:new Set(),record:new DecisionRecorder(),trial:0,completed:false,seedFaceId:''});
+    commitments:[],committedFaces:new Set(),record:newRecorder(),trial:0,completed:false,seedFaceId:''});
   const cache=new Map<string,Demand[]>();
   const matchCache=new Map<string,CoherentMatch>();
   function matchSets(ds:Demand[],stock:Offcut[],preserve=false):CoherentMatch {
@@ -545,7 +547,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const summaries=candidates.map(state=>({trial:state.trial,seedFaceId:state.seedFaceId,objective,
     signature:signatures.get(state)!,quality:quality(state),completed:state.completed,selected:false,
     reason:excluded.has(signatures.get(state)!)?'already-shown-physical-layout':!eligible.includes(state)?'does-not-improve-requested-objective-within-material-cap':'eligible-candidate'}));
-  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.10' as const,
+  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.11' as const,
     requestFingerprint:fingerprint({faces,profile,settings}),objective,selectedTrial:state?.trial??null,
     events:state?.record.events??[{step:1,action:'no-selection',message:'No unseen candidate improved the requested objective within its material cap. The previous plan is retained.',data:{objective,referenceQuality:reference,excludedSignatures:[...excluded],maxExtraMaterialPercent:maxExtra}}],candidates:summaries.map(c=>({...c,selected:c.trial===state?.trial,
       reason:c.trial===state?.trial?'selected-by-'+objective:c.reason})),
@@ -578,7 +580,7 @@ function toSolution(request:SolveRequest,state:State,inputIssues:Issue[],complet
   }
   if(budgetReached)issues.push({severity:'warning',code:'SEARCH_BUDGET',message:'Time budget reached. Unsolved positions have been supplied new; this complete draft is not proof that no better reuse exists.'});
   issues.push({severity:'warning',code:'PROTOTYPE_ONLY',message:'Draft material-bank plan. Verify profile, sheet registration and site lengths. No guaranteed minimum, manufacturer approval or spare sheets are implied.'});
-  return{schemaVersion:1,engineVersion:'2.10',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
+  return{schemaVersion:1,engineVersion:'2.11',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
     profile:structuredClone(profile),settings:structuredClone(settings),demands:state.demands,placements:state.placements.sort((a,b)=>a.demandId.localeCompare(b.demandId)),
     offcuts:state.inventory,lapByFace:state.laps,bankLayout:state.layout,
     metrics:{newMaterialMm2:cost,baselineNewMaterialMm2:baseline,netRoofMm2:state.demands.reduce((n,d)=>n+area(d.cover),0),installedPhysicalMm2:installed,

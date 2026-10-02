@@ -39,3 +39,5 @@ export * from './persistence/reviews';
 export * from './persistence/browserReviewStore';
 
 export * from './core/cutStrategy';
+
+export * from './core/faceGeometry';

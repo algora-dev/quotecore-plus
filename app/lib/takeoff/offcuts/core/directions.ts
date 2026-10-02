@@ -1,5 +1,6 @@
 import type { Point, RoofEdge, RoofFace } from './types';
-import { EPS, dot, fingerprint, projection, signedArea, sub, unit, validateRing } from './math';
+import { EPS, fingerprint, validateRing } from './math';
+import { geometricBoundary, FACE_GEOMETRY_MODEL } from './faceGeometry';
 
 /** Screen directions: right = 0, down = 90. They are not geographic bearings. */
 export const SCREEN_DIRECTIONS = [
@@ -22,7 +23,7 @@ export function nextFlowAngle(flow: Point | null | undefined): number {
   const a = flowAngle(flow); return a === null ? 270 : ((Math.floor((a + 1e-7) / 90) + 1) * 90) % 360;
 }
 export function directionRevision(face: RoofFace): string {
-  return fingerprint([face.id, face.polygon, face.flow, face.boundary]);
+  return fingerprint([FACE_GEOMETRY_MODEL, face.id, face.polygon, face.flow]);
 }
 export function directionApproved(face: RoofFace): boolean {
   return face.confirmed && hasFlow(face.flow) && face.directionApproval === directionRevision(face);
@@ -35,33 +36,9 @@ export function confirmReviewedFace(face: RoofFace): RoofFace {
   if (!hasFlow(face.flow)) throw new Error(`${face.name}: choose a water direction before confirming.`);
   return { ...face, confirmed: true, directionApproval: directionRevision(face) };
 }
-/** After approval, bad inferred eave/ridge/barge labels cannot dictate the run
- * or seed a false purchasing window. Preserve the original labels for review;
- * use only compatible ones for planning heuristics. Never alter the polygon,
- * pitch, cut edges, physical containment or side-lap rules. */
+/** Cutting roles always come from the shape and its water vector. Unknown,
+ * absent or misleading catalogue names have no effect. Approval is checked
+ * separately by validateInputs; deriving roles never approves a face. */
 export function planningBoundary(face: RoofFace): RoofEdge[] {
-  if (!directionApproved(face) || !hasFlow(face.flow)) return face.boundary;
-  const v = unit(face.flow), limit = Math.cos(7.5 * Math.PI / 180), perpendicular = Math.sin(7.5 * Math.PI / 180);
-  return face.boundary.filter(e => {
-    if (!['spouting', 'ridge', 'barge'].includes(e.kind)) return true;
-    const delta = sub(e.b, e.a); if (Math.hypot(delta.x, delta.y) <= EPS) return false;
-    const d = unit(delta), along = Math.abs(dot(d, v));
-    if(e.kind==='barge')return along>=limit;
-    if(along>perpendicular)return false;
-    if(e.kind==='spouting'){
-      // An approved reversed vector must not keep an inward-facing inferred
-      // eave as a purchasing anchor. Use the actual polygon's outward normal,
-      // independent of the measurement segment's endpoint order.
-      const mid={x:(e.a.x+e.b.x)/2,y:(e.a.y+e.b.y)/2};
-      const ring=signedArea(face.polygon)>0?face.polygon:[...face.polygon].reverse();
-      for(let i=0;i<ring.length;i++){
-        const a=ring[i],b=ring[(i+1)%ring.length];
-        if(projection(mid,a,b).distance>1e-4)continue;
-        const edge=unit(sub(b,a));
-        return dot(v,{x:edge.y,y:-edge.x})>=limit;
-      }
-      return false;
-    }
-    return true;
-  });
+  return geometricBoundary(face);
 }

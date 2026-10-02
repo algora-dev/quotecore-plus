@@ -2,6 +2,10 @@ import { tokenFallbacks } from './theme';
 /** Scoped optical composition of the supplied QcButton/QcDialog/IF-01 recipes.
  * Kept in Shadow DOM so no takeoff, pricing or document styles are changed. */
 export const styles = `
+.qc-boundary-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:12px;}
+.qc-boundary-row button{white-space:nowrap;}
+.qc-approval-note{margin:12px 0 8px;}
+
 :host{${tokenFallbacks}display:block;height:100%;box-sizing:border-box;color:var(--of-text-body);background:var(--of-bg-app);font:var(--of-font-size-body)/var(--of-line-body) var(--of-font-sans)}
 *{box-sizing:border-box}button,input,select,textarea{font:inherit}button{display:inline-flex;align-items:center;justify-content:center;gap:var(--of-space-2);min-height:var(--of-control-md);padding:8px 12px;border:1px solid var(--of-border-control);border-radius:var(--of-radius-control);background:var(--of-bg-surface);color:var(--of-text-primary);cursor:pointer;font-weight:600;transition:background var(--of-motion-fast),color var(--of-motion-fast),border-color var(--of-motion-fast),box-shadow var(--of-motion-fast)}
 button.primary{background:var(--of-gradient-primary);border-color:var(--of-color-orange-ink);color:var(--of-action-primary-text)}button.secondary{background:var(--of-action-secondary-bg);color:var(--of-action-secondary-text);border-color:var(--of-action-secondary-bg)}button.quiet-danger{color:var(--of-color-danger);border-color:var(--of-color-danger);background:var(--of-bg-surface)}button.active,button[aria-pressed=true]{background:var(--of-selected-bg);color:var(--of-selected-text);border-color:var(--of-focus-ring);box-shadow:inset 0 0 0 1px var(--of-focus-ring)}button.qc-icon-button{padding:8px;width:40px;flex-shrink:0}.qc-icon{flex-shrink:0;pointer-events:none}

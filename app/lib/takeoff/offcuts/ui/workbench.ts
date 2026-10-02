@@ -5,6 +5,7 @@ import { quantitySummary, quoteQuantityProposal, type QuantitySummary, type Quot
 import type { AlternativePlanResult, DecisionTrace, Draft, Issue, Point, RoofFace, RoofInput, Solution } from '../core/types';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../core/types';
 import { deriveFaces } from '../core/graph';
+import { auditFaceBehaviour, FACE_GEOMETRY_MODEL } from '../core/faceGeometry';
 import { applyLocalFaceRepair } from '../core/faceRepair';
 import { revertAutomaticJoins, alignReviewedFaces, draftingPolicy, snapDrawingPoint, type DrawingSnap, type BoundaryRepair, type DrawingAdjustment } from '../core/drafting';
 import { dismissWarning, warningDismissed, warningKey, issueTitle } from '../core/reviewIssues';
@@ -23,7 +24,7 @@ import { materialColors } from './materialColors';
 import { moveReuseGroup } from '../core/groupEditing';
 import { editPlacement, mergeFaces, splitFace, validateDraft } from '../core/editing';
 import { exportDraft } from '../core/codec';
-import { roofRevision, fromQuoteCore, isBoundaryMeaning, type BoundaryMeaning } from '../adapters/quotecore';
+import { roofRevision } from '../adapters/quotecore';
 import { exportLiveCapture, type LiveInputCapture } from '../adapters/liveSnapshot';
 import { escapeHtml as esc, renderSvg, interiorAnchor } from './svg';
 import { styles } from './styles';
@@ -75,19 +76,22 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if(!draft.faces.some(f=>f.id===id))return;
     selectedFaceId=id;customFlowOpen=false;phase='faces';notice='';error='';panelTarget='#qc-water-direction';render();
   }
-  const pendingMeanings:Record<string,BoundaryMeaning>=Object.create(null);
+  
   function adapterIssues():Issue[] {
-    return (options.initialIssues??[]).filter(i=>i.code!=='UNMAPPED_COMPONENT'||!Object.hasOwn(draft.componentBoundaryOverrides??{},i.objectId??''));
+    return (options.initialIssues??[]).filter(i=>i.code!=='UNMAPPED_COMPONENT');
   }
-  function mappingPanel(advanced=false):string {
-    const components=options.inputCapture?.adapted.audit.unresolvedComponents??[];
-    const shown=advanced?components:components.filter(c=>!Object.hasOwn(draft.componentBoundaryOverrides??{},c.componentId));
-    if(!shown.length)return '';
-    const labels:Record<BoundaryMeaning,string>={ridge:'Ridge',hip:'Hip',valley:'Valley',broken_hip:'Broken hip',barge:'Barge',spouting:'Spouting / eave',unknown:'Other roof boundary',ignore:'Not a roof boundary'};
-    return `<div class="qc-note qc-line-types"><b>Check line types</b><p>These drawn lines are included. Tell us what they are so their cuts are identified correctly.</p>${shown.map(c=>{
-      const value=pendingMeanings[c.componentId]??draft.componentBoundaryOverrides?.[c.componentId]??'';
-      return `<label class="qc-field">${esc(c.name)} · ${c.lineCount} line${c.lineCount===1?'':'s'}<select data-component-meaning="${esc(c.componentId)}"><option value="">Choose roof type…</option>${Object.entries(labels).map(([kind,label])=>`<option value="${kind}" ${value===kind?'selected':''}>${label}</option>`).join('')}</select></label>`;
-    }).join('')}<button data-action="apply-line-types">Apply types &amp; find faces</button><p class="qc-muted">This rebuilds this review’s faces. Undo restores your edits. It does not change the takeoff or your component library.</p></div>`;
+  function boundaryPanel():string {
+    const audit=options.inputCapture?.adapted.audit;
+    if(!audit)return '';
+    const groups=new Map<string,{name:string;edges:string[]}>();
+    for(const row of audit.lines.filter(r=>r.included)){
+      const g=groups.get(row.componentId)??{name:row.componentName,edges:[]};
+      g.edges.push(...row.topologyEdgeIds);groups.set(row.componentId,g);
+    }
+    return `<p class="qc-muted">Every selected line is a boundary, regardless of its component name. Exclude only annotations or lines that do not separate roof planes. Water arrows determine cuts after review.</p>${[...groups].map(([id,g])=>{
+      const excluded=g.edges.every(e=>draft.roof.faceDetectionIgnoredEdgeIds?.includes(e));
+      return `<div class="qc-boundary-row"><span>${esc(g.name)} · ${g.edges.length} lines</span><button data-action="toggle-boundary-group" data-id="${esc(id)}">${excluded?'Include lines':'Exclude lines'}</button></div>`;
+    }).join('')}`;
   }
   let phase: 'faces'|'solution' = draft.solution?'solution':'faces';
   let selectedFaceId='', selectedOffcutId='', selectedGroupId='', advancedOpen=false, editPieces=false, worker: Worker|null=null, jobId='', busy=false, progress='', disposed=false;
@@ -407,14 +411,14 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         </details>
         <details><summary>Alternative search limits</summary><label class="qc-field">Maximum extra material for a simpler plan, %<input type="number" data-alt-cap min="0" max="100" value="${extraMaterialCap}"/></label><p class="qc-muted">Default 15%. This is a ceiling on alternative purchased material, not added waste or spares. “Less material” must strictly reduce purchased metal. Both searches keep the same physical rules and locks.</p></details>`;
     } else {
-      normal = `${mappingPanel()}<h2>Review roof faces</h2><p class="qc-muted">${draft.faces.length} faces. Check each outline and water arrow.</p>${missing.length?`<div class="qc-note" role="status"><b>${missing.length} water direction${missing.length===1?'':'s'} needed</b><p>${missing.map(g=>esc(g.name)).join(', ')}</p><button data-action="choose-flow" data-id="${esc(missing[0].id)}">Set next direction</button></div>`:''}${quickTools}${faceButtons}
+      normal = `<h2>Review roof faces</h2><p class="qc-muted qc-geometry-summary">${draft.faces.length} shapes from ${draft.roof.edges.filter(e=>!draft.roof.faceDetectionIgnoredEdgeIds?.includes(e.id)).length} drawing lines${drawingAdjustments.length?` · ${drawingAdjustments.length} small joins aligned`:''}. Check the shapes and water arrows. Component names are not required.</p>${missing.length?`<div class="qc-note" role="status"><b>${missing.length} water direction${missing.length===1?'':'s'} needed</b><p>${missing.map(g=>esc(g.name)).join(', ')}</p><button data-action="choose-flow" data-id="${esc(missing[0].id)}">Set next direction</button></div>`:''}${quickTools}${faceButtons}
         ${hiddenFaceIds.size ? `<div class="qc-hidden-summary"><span>${hiddenFaceIds.size} hidden · still included</span><button data-action="show-all">Show all</button></div>` : ''}
         <div class="qc-actions"><button data-action="add-face">${icon('plus')}Add face</button></div>
         <div class="qc-fields">${inputField('Sheet cover, mm', 'coverMm', draft.profile.coverMm)}${inputField('Pitch ° — all faces', 'allPitch', pitch, '0.5')}</div>
         ${draft.faces.some(g => g.pitchDeg !== pitch) ? '<p class="qc-muted">Mixed pitches: keep them, or enter a common pitch. Individual pitches are in Advanced.</p>' : ''}
         ${!draft.profile.allowEndForEnd ? '<div class="qc-note">End-for-end reuse is off. This may reduce matches; change it under Advanced → Material rules.</div>' : ''}
         ${drawPoints ? '<div class="qc-actions"><button data-action="finish-polygon">Finish polygon</button><button data-action="cancel-polygon">Cancel polygon</button></div>' : ''}
-        <button data-action="confirm-run" class="primary qc-wide" ${busy || stale || drawPoints ? 'disabled' : ''}>Faces correct — find offcuts ${icon('arrow')}</button>`;
+        <p class="qc-muted qc-approval-note">These shapes and water arrows will be used for the cut plan. The original takeoff will not be changed.</p><button data-action="confirm-run" class="primary qc-wide" ${busy || stale || drawPoints ? 'disabled' : ''}>Faces correct — find offcuts ${icon('arrow')}</button>`;
 
     }
     const advanced = `<details id="qc-advanced" ${advancedOpen ? 'open' : ''}><summary>Advanced</summary>${phase === 'solution' ? solutionTools : `<details><summary>Selected roof outlines</summary>${sourceOutlines.map(o => `<label class="qc-check"><input data-outline="${esc(o.id)}" type="checkbox" ${draft.roof.outlines.some(a => a.id === o.id) ? 'checked' : ''}/>${esc(o.name)}</label>`).join('')}<button data-action="detect">Rebuild from linework</button></details><div class="qc-actions"><button data-action="confirm-all">Confirm reviewed faces</button></div>${faceTools}${materialTools}`}
@@ -422,7 +426,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         ${visibleIssues.slice(0,50).map(i=>`<div class="qc-note ${i.severity==='error'?'qc-error':''}"><b>${esc(issueTitle(i,draft.faces))}</b><p>${esc(i.message)}</p>${i.location?`<button data-action="focus-boundary" data-id="${warningKey(i,draft)}">Show boundary</button>`:i.faceId?`<button data-action="focus-face" data-id="${esc(i.faceId)}">Show face</button>`:''}${i.severity==='warning'?`<button data-action="ignore-warning" data-id="${warningKey(i,draft)}">Ignore</button>`:''}</div>`).join('')}
         ${ignored.length?`<button data-action="restore-warnings">Restore ignored notes (${ignored.length})</button>`:''}</details>
       ${phase==='faces'?`<details id="qc-drawing-settings"><summary>Drawing tolerance & repairs</summary><label class="qc-field">Drawing precision<select data-tolerance><option value="tight" ${draft.roof.draftingTolerance==='tight'?'selected':''}>Tight · auto-connect up to 50 mm</option><option value="balanced" ${!draft.roof.draftingTolerance||draft.roof.draftingTolerance==='balanced'?'selected':''}>Balanced · auto-connect up to 150 mm</option><option value="relaxed" ${draft.roof.draftingTolerance==='relaxed'?'selected':''}>Relaxed · auto-connect up to 150 mm</option></select></label><p class="qc-muted">Calibrated plan distance. Unique, aligned connections are repaired in a review copy; competing junctions stay separate. Thin parallel edges and the original takeoff are preserved. Coverage and physical cut-fit tolerances are unchanged.</p><button data-action="align-review">Align small gaps</button>${draft.roof.faceDetectionIgnoredEdgeIds?.length?`<button data-action="restore-boundaries">Restore excluded boundaries (${draft.roof.faceDetectionIgnoredEdgeIds.length})</button>`:''}<details><summary>Alignment log (${drawingAdjustments.length})</summary><pre>${esc(JSON.stringify(drawingAdjustments,null,2))}</pre></details></details>`:''}
-      ${options.inputCapture?`<details id="qc-captured-input"><summary>Captured takeoff</summary><p class="qc-muted">Captured from the live workspace at ${esc(options.inputCapture.capturedAt)}. ${options.inputCapture.adapted.audit.counts.includedEdges} edges; ${options.inputCapture.adapted.audit.counts.bySemantic.valley} valley edges; ${options.inputCapture.adapted.audit.counts.unmappedLines} lines needed a type. ${esc(options.inputCapture.storage?.message??'Input is held in this review.')}</p><p class="qc-muted">Capture ${esc(options.inputCapture.captureId)} · ${esc(options.inputCapture.inputFingerprint)}</p>${mappingPanel(true)}<button data-action="export-input">Export captured takeoff</button></details>`:''}
+      ${options.inputCapture?`<details id="qc-captured-input"><summary>Captured takeoff</summary><p class="qc-muted">Captured from the live workspace at ${esc(options.inputCapture.capturedAt)}. ${options.inputCapture.adapted.audit.counts.includedEdges} boundary segments, including ${options.inputCapture.adapted.audit.counts.unmappedLines} lines with custom names. All are usable without classifying them. ${esc(options.inputCapture.storage?.message??'Input is held in this review.')}</p><p class="qc-muted">Capture ${esc(options.inputCapture.captureId)} · ${esc(options.inputCapture.inputFingerprint)}</p><details id="qc-boundary-lines"><summary>Included drawing lines</summary>${boundaryPanel()}</details><button data-action="export-input">Export captured takeoff</button></details>`:''}
       <div class="qc-actions"><button data-action="export-trace">Export debug bundle</button><button data-action="export-json">Export draft</button></div><p class="qc-muted">Page: ${esc(draft.roof.pageId)}<br/>Scope: ${esc(draft.roof.areaScopeId ?? 'selected page')}<br/>${draft.roof.mmPerSceneUnit.toFixed(3)} mm / scene unit<br/>${options.reviewRepository?'Structured review autosave is connected. Takeoff measurements and quote prices are never changed by saving here.':'Account saving is not connected. Export a draft to keep these changes.'}</p></details>`;
     const savedMatches=storedReview?.document.sourceFingerprint===sourceFingerprint(capturedRoof,options.inputCapture);
     const storageCard=storedReview?`<div class="qc-note qc-resume"><b>Saved review available</b><p>${savedMatches?'Your saved faces and cut plans match this takeoff.':'The saved review belongs to an older takeoff. It will not replace your current drawing automatically.'}</p><div class="qc-actions">${savedMatches?'<button data-action="resume-review" class="primary">Resume saved review</button>':''}<button data-action="start-fresh-review">Use current takeoff</button><button data-action="export-saved-review">Export saved review</button></div></div>`:
@@ -435,6 +439,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     const otherError = errors.find(i => !partition().regions.some(r => r.id === i.objectId));
     const directFix=(i:Issue):string=>{
       const id=i.faceId??selectedFaceId;
+      if(i.code==='DANGLING_LINE'&&i.faceId)return `<button data-action="approve-direction" data-id="${esc(id)}">${draft.faces.some(f=>f.id===id&&hasFlow(f.flow))?'Use this shape as drawn':'Choose its water direction'}</button><button data-action="edit-face-outline" data-id="${esc(id)}">Edit shape</button>`;
       if(/^(FLOW|MISSING_FLOW|FLOW_REVIEW|FLOW_EAVE_CONFLICT|RIDGE_DIRECTION|BARGE_DIRECTION|UNSUPPORTED_ANGLE)$/.test(i.code))return `<button data-action="choose-flow" data-id="${esc(id)}">Set water direction</button>${draft.faces.some(f=>f.id===id&&hasFlow(f.flow))?`<button data-action="approve-direction" data-id="${esc(id)}">Use my reviewed direction</button>`:''}`;
       if(i.code==='NO_FACES')return '<button data-action="detect">Find faces again</button><button data-action="add-face">Draw a face</button>';
       if(i.code==='NO_OUTLINE')return '<p>Close this review, select or draw the roof outline in the takeoff, then reopen Find offcuts.</p><button data-action="close">Back to takeoff</button>';
@@ -442,7 +447,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(['DEMAND_TAMPER','STALE_TOTALS','MISSING_BANK_LAYOUT','SOLUTION_RULES'].includes(i.code))return '<button data-action="run">Recalculate reviewed faces</button>';
       if(i.code==='PITCH')return `<button data-action="fix-field" data-id="${esc(id)}" data-field-target="pitch">Set pitch</button>`;
       if(/^(FACE_POLYGON|INVALID_POLYGON|LOCAL_REPAIR_REVIEW|OPEN_TOPOLOGY)$/.test(i.code))return `<button data-action="edit-face-outline" data-id="${esc(id)}">Edit this outline</button><button data-action="add-face">Draw missing face</button>`;
-      if(i.code==='FACE_UNCONFIRMED')return `<button data-action="approve-direction" data-id="${esc(id)}">Confirm this face</button>`;
+      if(['FACE_UNCONFIRMED','FACE_REVIEW_CHANGED'].includes(i.code))return `<button data-action="approve-direction" data-id="${esc(id)}">Confirm this face</button>`;
       if(/^(PROFILE|ASYMMETRIC_PROFILE|LANE_PHASE|LAP|BUDGET|BANK_EXTENSION|SELF_FILL_MARGIN|SOURCE_LIMIT|STOCK_MODE)$/.test(i.code))return `<button data-action="fix-field" data-id="${esc(id)}" data-field-target="${({LANE_PHASE:'laneOffset',LAP:'lap',BANK_EXTENSION:'maxBankExtensionMm',SELF_FILL_MARGIN:'selfFillTransitionMm',SOURCE_LIMIT:'maxSourceBlocksPerFace',STOCK_MODE:'stockMode',PROFILE:'coverMm',ASYMMETRIC_PROFILE:'leftLapMm'} as Record<string,string>)[i.code]??'coverMm'}">Review these settings</button>`;
       if(i.code==='CALIBRATION')return '<p>Close this review and calibrate the current plan in the takeoff, then reopen Find offcuts.</p><button data-action="close">Back to takeoff</button>';
       return '';
@@ -451,12 +456,12 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     const actionableError = otherError ? `<div class="qc-note qc-error" role="alert"><div class="qc-check-title">${icon('warning')}${esc(issueTitle(otherError,draft.faces))}</div>
       <p>${activeRepair?`${esc(activeRepair.message)} Gap: ${activeRepair.distanceMm.toFixed(0)} mm.`:esc(otherError.message)}</p>
       <div class="qc-actions">${directFix(otherError)}${activeRepair?`<button data-action="connect-repair" data-id="${activeRepair.id}">Connect & find faces</button><button data-action="preview-repair" data-id="${activeRepair.id}">Show connection</button>`:otherError.location?`<button data-action="focus-boundary" data-id="${warningKey(otherError,draft)}">Show boundary</button>`:otherError.faceId?`<button data-action="focus-face" data-id="${esc(otherError.faceId)}">Show face</button>`:''}</div>
-      ${otherError.code==='DANGLING_LINE'?`<details class="qc-repair-options"><summary>Other options</summary><p>Keep this line separate only if it does not divide roof planes. Or draw/split the affected face yourself.</p>${activeRepair&&repairs.filter(r=>r.edgeId===activeRepair.edgeId).length>1?`<button data-action="next-repair" data-id="${activeRepair.id}">Other connection</button>`:''}<button data-action="keep-separate" data-id="${esc(otherError.objectId)}">Not a face boundary</button><button data-action="add-face">Draw missing face</button>${otherError.faceId?`<button data-action="approve-direction" data-id="${esc(otherError.faceId)}">Use this reviewed face</button>`:''}</details>`:''}
+      ${otherError.code==='DANGLING_LINE'?`<details class="qc-repair-options"><summary>Other options</summary><p>Keep this line separate only if it does not divide roof planes. Or draw/split the affected face yourself.</p>${activeRepair&&repairs.filter(r=>r.edgeId===activeRepair.edgeId).length>1?`<button data-action="next-repair" data-id="${activeRepair.id}">Other connection</button>`:''}<button data-action="keep-separate" data-id="${esc(otherError.objectId)}">Not a face boundary</button><button data-action="add-face">Draw missing face</button></details>`:''}
       ${!otherError.location&&!otherError.faceId?'<button data-action="review-inputs">Review settings</button>':''}
       ${errors.length>1?`<small>${errors.length} checks remain. Other valid faces are preserved.</small>`:''}</div>`:'';
     const advisory=visibleIssues.find(i=>i.code==='BACKGROUND_IMAGE'&&i.severity==='warning')??visibleIssues.find(i=>i.severity==='warning'&&!partition().regions.some(r=>r.id===i.objectId)&&!['SNAPPED_ENDPOINTS','NARROW_FACE','FLOW_REVIEW'].includes(i.code));
     const advisoryCard=advisory?`<details class="qc-advisory"><summary>${esc(issueTitle(advisory,draft.faces))}</summary><p>${esc(advisory.message)}</p><button data-action="ignore-warning" data-id="${warningKey(advisory,draft)}">Ignore</button></details>`:'';
-    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.10 · Draft plan</span>${saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.11 · Draft plan</span>${saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
       <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${drawPoints ? 'Click corners · click first point / Enter to finish · Backspace removes last · Esc cancels · Alt bypasses snap' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
       <aside class="qc-sidebar" aria-label="Offcut review controls">${storageCard}${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}<button data-action="dismiss-action-error">Dismiss message</button></div>` : ''}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advisoryCard}${advanced}</aside></main>
@@ -473,7 +478,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     let currentIssues:Issue[]=issues;
     try{currentIssues=allIssues();}catch(e){currentIssues=[...issues,{severity:'error',code:'DIAGNOSTIC_CHECK_FAILED',message:message(e)}];}
     const source=structuredClone(capturedRoof);delete source.imageUrl;
-    return JSON.stringify({schemaVersion:1,kind:'quotecore-offcut-debug',engineVersion:'2.10',phase,
+    return JSON.stringify({schemaVersion:1,kind:'quotecore-offcut-debug',engineVersion:'2.11',phase,planningModel:FACE_GEOMETRY_MODEL,
+      boundaryBehaviour:auditFaceBehaviour(draft.faces),
       liveInputSnapshot:options.inputCapture?JSON.parse(exportLiveCapture(options.inputCapture)):null,
       persistence:{kind:options.reviewRepository?.kind??'not-connected',state:saveState},
       sourceRoofAtOpen:source,initialDetection,
@@ -545,21 +551,18 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         if(!options.inputCapture)throw new Error('This direct-geometry review has no host input snapshot. Export the debug bundle instead.');
         download('quotecore-offcuts-live-input.json',exportLiveCapture(options.inputCapture),'application/json');notice='Captured live takeoff exported. The source image URL and pricing data are excluded.';render();return;
       }
-      if(action==='apply-line-types'){
-        if(!options.inputCapture)throw new Error('Reopen from the live takeoff to map component lines.');
-        if(!Object.keys(pendingMeanings).length)throw new Error('Choose a roof type first.');
-        checkpoint();
-        draft.componentBoundaryOverrides={...draft.componentBoundaryOverrides,...pendingMeanings};
-        const source=options.inputCapture.snapshot;
-        const mapped=fromQuoteCore({...source,semanticByComponentId:{...source.semanticByComponentId,...draft.componentBoundaryOverrides}});
-        draft.roof.edges=structuredClone(mapped.roof.edges);draft.roof.faceDetectionIgnoredEdgeIds=[];
-        draft.roof.sourceRevision=roofRevision(draft.roof);
-        for(const key of Object.keys(pendingMeanings))delete pendingMeanings[key];
-        detect(false);notice='Line types applied in this review. Check the regenerated faces; Undo restores the previous review.';render();return;
+      if(action==='toggle-boundary-group'){
+        const ids=options.inputCapture?.adapted.audit.lines.filter(r=>r.componentId===target.dataset.id&&r.included).flatMap(r=>r.topologyEdgeIds)??[];
+        if(!ids.length)return;
+        checkpoint();invalidate();
+        const ignored=new Set(draft.roof.faceDetectionIgnoredEdgeIds??[]),allIgnored=ids.every(id=>ignored.has(id));
+        for(const id of ids)if(allIgnored)ignored.delete(id);else ignored.add(id);
+        draft.roof.faceDetectionIgnoredEdgeIds=[...ignored];draft.roof.sourceRevision=roofRevision(draft.roof);
+        detect(false);notice='Review copy rebuilt from the included drawing lines. Undo restores the previous shapes and arrows.';render();return;
       }
       if(action==='export-trace'||action==='copy-trace'){
         if(action==='export-trace'){
-          download('quotecore-offcuts-v2.10-debug.json',debugBundle(),'application/json');
+          download('quotecore-offcuts-v2.11-debug.json',debugBundle(),'application/json');
           notice='Debug bundle exported with the captured input and face diagnostics. No cut plan is required.';render();return;
         }
         if(!draft.solution)throw new Error('No cut-plan trace exists yet. Export the debug bundle for face-detection diagnostics.');
@@ -583,7 +586,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='review-inputs'){advancedOpen=true;panelTarget='[data-field="coverMm"]';render();return;}
       if(action==='dismiss-action-error'){error='';render();return;}
       if(action==='fix-field'||action==='edit-face-outline'){selectedFaceId=target.dataset.id??selectedFaceId;phase='faces';advancedOpen=true;panelTarget=action==='edit-face-outline'?'#polygon-points':`[data-field="${target.dataset.fieldTarget??'coverMm'}"]`;render();return;}
-      if(action==='approve-direction'){const f=draft.faces.find(f=>f.id===(target.dataset.id??selectedFaceId));if(!f)return;const confirmed=confirmReviewedFace(f);checkpoint();invalidate();Object.assign(f,confirmed);selectedFaceId=f.id;notice='Your reviewed direction is used.';panelTarget='#qc-water-direction';render();return;}
+      if(action==='approve-direction'){const f=draft.faces.find(f=>f.id===(target.dataset.id??selectedFaceId));if(!f)return;if(!hasFlow(f.flow)){chooseFlow(f.id);return;}const confirmed=confirmReviewedFace(f);checkpoint();invalidate();Object.assign(f,confirmed);selectedFaceId=f.id;notice='Your reviewed direction is used.';panelTarget='#qc-water-direction';render();return;}
       if(action==='align-review'){applyAlignment();render();return;}
       if(action==='focus-boundary'){
         const issue=allIssues().find(i=>warningKey(i,draft)===target.dataset.id);if(!issue?.location)return;
@@ -683,16 +686,19 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='cancel-acknowledge'){pendingSourceAck=false;render();return;}
       if(action==='confirm-all'||action==='confirm-run'||action==='acknowledge-run'){
         if(hiddenFaceIds.size){checkpoint();hiddenFaceIds.clear();notice='Hidden faces are visible again. Review the whole roof, then confirm to calculate.';render(true);return;}
-        const sourceProblems=currentDetectionIssues(issues,draft.faces).filter(i=>i.severity==='error');
-        if(sourceProblems.length&&action!=='acknowledge-run'){pendingSourceAck=true;render(true);return;}
-        checkpoint();
-        if(sourceProblems.length){
-          draft.reviewNotes=[...(draft.reviewNotes??[]),...sourceProblems];
-          issues=currentDetectionIssues(issues,draft.faces).map(i=>i.severity==='error'?{...i,severity:'warning',code:`REVIEWED_${i.code}`,message:`Acknowledged against manually reviewed faces: ${i.message}`}:i);
-        }
         const missing=draft.faces.filter(f=>!hasFlow(f.flow));
         if(missing.length){chooseFlow(missing[0].id);return;}
-        pendingSourceAck=false;draft.faces=draft.faces.map(confirmReviewedFace);
+        // The approved partition is the solver input. Unresolved raw linework
+        // does not veto that explicit decision, but missing roof/overlap still can.
+        const proposed=draft.faces.map(confirmReviewedFace);
+        const blockers=validateInputs(draft.roof,proposed,draft.profile,draft.settings).filter(i=>i.severity==='error');
+        if(blockers.length){validationAttempted=true;error='Review the highlighted shapes or required settings before calculating.';render();return;}
+        checkpoint();draft.faces=proposed;pendingSourceAck=false;
+        const sourceProblems=issues.filter(i=>['DANGLING_LINE','OPEN_TOPOLOGY'].includes(i.code));
+        if(sourceProblems.length){
+          draft.reviewNotes=[...(draft.reviewNotes??[]),...sourceProblems];
+          issues=issues.map(i=>['DANGLING_LINE','OPEN_TOPOLOGY'].includes(i.code)?{...i,severity:'warning',code:`REVIEWED_${i.code}`,message:'Original linework was incomplete here. Your approved shape and water arrow are used.'}:i);
+        }
         if(action!=='confirm-all'){run();return;}render();return;
       }
       const f=face();
@@ -719,11 +725,6 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function change(event:Event):void {
     const target=event.target as HTMLInputElement|HTMLSelectElement;
     try{
-      if(target.hasAttribute('data-component-meaning')){
-        const id=target.getAttribute('data-component-meaning')!;
-        if(isBoundaryMeaning(target.value))pendingMeanings[id]=target.value;else delete pendingMeanings[id];
-        return;
-      }
       if(target.hasAttribute('data-tolerance')){
         const value=target.value;if(!['tight','balanced','relaxed'].includes(value))throw new Error('Choose Tight, Balanced or Relaxed.');
         checkpoint();invalidate();draft.roof.draftingTolerance=value as 'tight'|'balanced'|'relaxed';draft.roof.sourceRevision=roofRevision(draft.roof);notice='Review tolerance updated. Existing faces are kept. Align small gaps or rebuild from linework to apply connection changes.';render();return;

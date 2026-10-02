@@ -2,7 +2,7 @@ import type { BankLayout, Demand, FaceFrame, Issue, Offcut, Point, Profile, Regi
 import { EPS, add, dot, mul, sub, unit, validateRing } from './math';
 import { area, bounds, boundarySegments, components, extendY, fromRing, intersect, isMonotone, rectangle, subtract, translate } from './regions';
 import { validatePartition } from './partition';
-import { planningBoundary } from './directions';
+import { directionApproved, planningBoundary } from './directions';
 import { validateFaceDirections } from './reviewGeometry';
 export function frameFor(face: RoofFace, roof: RoofInput): FaceFrame {
   if (!face.flow || face.pitchDeg === null) throw new Error(`${face.name}: confirm water direction and pitch first.`);
@@ -37,6 +37,7 @@ export function validateInputs(roof: RoofInput, faces: RoofFace[], p: Profile, s
   if (!p.rulesConfirmed) issues.push({ severity: 'warning', code: 'PROFILE_UNVERIFIED', message: 'Profile/side-lap allowances are unverified. This is a geometric prototype, not an order-ready material list.' });
   for (const f of faces) {
     const invalid = validateRing(f.polygon); if (invalid) { error('FACE_POLYGON', `${f.name}: ${invalid}`, f.id); continue; }
+    if (f.directionApproval && !directionApproved(f)) error('FACE_REVIEW_CHANGED', `${f.name}: its shape or water arrow changed. Confirm this face again.`, f.id);
     if (!f.confirmed) error('FACE_UNCONFIRMED', `${f.name}: review and confirm this face.`, f.id);
     if (f.pitchDeg === null || !Number.isFinite(f.pitchDeg) || f.pitchDeg < 0 || f.pitchDeg >= 80) error('PITCH', `${f.name}: enter a confirmed pitch from 0° to less than 80°. A 45° plan hip does not remove pitch from surface geometry.`, f.id);
     if (!f.flow || !Number.isFinite(f.flow.x) || !Number.isFinite(f.flow.y) || Math.hypot(f.flow.x, f.flow.y) < EPS) { error('FLOW', `${f.name}: water direction is missing.`, f.id); continue; }
@@ -108,6 +109,7 @@ export function validateBankLayout(faces: RoofFace[], profile: Profile, settings
 export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Profile, settings: SolveSettings,
   primary = true, extraLengthMm = 0, cutLengthMm?: number, tailExtensionMm = 0, materialBankId?: string): Demand[] {
   const result: Demand[] = [], w = profile.coverMm, physicalWidth = w + profile.leftLapMm + profile.rightLapMm;
+  const boundary = planningBoundary(face);
   const frame = frameFor(face, roof), local = fromRing(face.polygon.map(p => sceneToSurface(p, frame))), box = bounds(local);
   // V2.2 approval boundary: once the roofer confirms a face, its polygon and
   // run direction are authoritative cut-planning input. A concave/notched face
@@ -140,7 +142,7 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
   const spans = (kind: 'ridge' | 'spouting', left: number, right: number): number => {
     // Classified roof boundaries, not objects in the plan image. A ridge role
     // survives a cut at the OTHER end of that same sheet (for example C's V).
-    const intervals=planningBoundary(face).filter(e=>e.kind===kind).map(e=>{
+    const intervals=boundary.filter(e=>e.kind===kind).map(e=>{
       const a=sceneToSurface(e.a,frame),b=sceneToSurface(e.b,frame);
       return [Math.max(left,Math.min(a.x,b.x)),Math.min(right,Math.max(a.x,b.x))];
     }).filter(([a,b])=>b>a).sort((a,b)=>a[0]-b[0]);
@@ -161,7 +163,7 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
     const bank = settings.stockMode === 'bank-first', filler = isStraightFiller(required);
     const envelope = settings.stockMode === 'face-envelope' || bank && primary && !filler;
     const extra = bank && primary && !filler ? extraLengthMm : 0;
-    const cutEdges: RoofEdge[] = face.boundary.filter(e => ['hip', 'valley', 'broken_hip'].includes(e.kind))
+    const cutEdges: RoofEdge[] = boundary.filter(e => ['hip', 'valley', 'broken_hip'].includes(e.kind))
       .map(e => ({ ...e, a: sub(sceneToSurface(e.a, frame), {x: laneX, y}), b: sub(sceneToSurface(e.b, frame), {x: laneX, y}) }))
       .filter(e => Math.min(e.a.x, e.b.x) < physicalWidth - EPS && Math.max(e.a.x, e.b.x) > EPS);
     // Elevation banks share a STOCK length, never merged roof footprints.
@@ -186,7 +188,7 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
     const rawY1 = envelope ? box.maxY + profile.endAllowanceMm - y + tail : physicalBox.maxY - y;
     const len = Math.ceil((rawY1 - blankY0 - EPS) / profile.lengthIncrementMm) * profile.lengthIncrementMm;
     if (len > profile.maxLengthMm + EPS) throw new Error(`${face.name}, lane ${i + 1}: ${(len / 1000).toFixed(3)} m exceeds the profile maximum. The planner never inserts end laps to make it fit.`);
-    const reusableCut = face.boundary.some(edge => {
+    const reusableCut = boundary.some(edge => {
       if (!['hip', 'valley', 'broken_hip'].includes(edge.kind)) return false;
       const a = sceneToSurface(edge.a, frame), b = sceneToSurface(edge.b, frame);
       return Math.max(a.x, b.x) >= laneX - EPS && Math.min(a.x, b.x) <= laneX + physicalWidth + EPS;

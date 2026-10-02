@@ -2,7 +2,7 @@ import type { Issue, Point, RoofEdge, RoofFace, RoofInput } from './types';
 import { EPS, distance, projection, segmentHits, signedArea, validateRing, containsPoint } from './math';
 import { area, fromRing, intersect, subtract, unionAll } from './regions';
 import { validatePartition } from './partition';
-import { inferredFlow } from './reviewGeometry';
+import { suggestGeometryFlow } from './faceGeometry';
 import { normaliseLinework, type BoundaryRepair, type DrawingAdjustment } from './drafting';
 export { validatePartition } from './partition';
 export interface FaceDetection { faces: RoofFace[]; issues: Issue[]; repairs: BoundaryRepair[]; adjustments: DrawingAdjustment[]; normalisedEdges?: RoofEdge[] }
@@ -41,9 +41,9 @@ export function deriveFaces(roof: RoofInput, snapTolerance?: number): FaceDetect
       const a=idx(ps[j]),b=idx(ps[j+1]);if(a===b)continue;
       const k=key(a,b),prev=links.get(k);
       if(prev&&prev.edge.kind!=='unknown'&&e.kind!=='unknown'&&prev.edge.kind!==e.kind){
-        issues.push({severity:'warning',code:'CONFLICTING_EDGE',objectId:e.id,location:pts[a],message:`Two overlapping boundaries have different labels (${prev.edge.kind} / ${e.kind}). Review that boundary in the takeoff; its geometry is retained.`});
+        // Different labels on the same separator do not change its geometry.
         // Preserve the geometric separator, without inventing a reliable cut
-        // classification. User review must settle an ambiguous material label.
+        // classification. Reviewed shapes and drainage supply material roles instead.
         conflictingKeys.add(k);prev.edge={...prev.edge,kind:'unknown'};continue;
       }
       if(conflictingKeys.has(k))continue;
@@ -87,8 +87,8 @@ export function deriveFaces(roof: RoofInput, snapTolerance?: number): FaceDetect
       const invalid=validateRing(polygon);
       if(invalid){issues.push({severity:'error',code:'OPEN_TOPOLOGY',location:polygon[0],message:'This local boundary could not form a simple roof face. Split or redraw the highlighted area.'});continue;}
       const region=fromRing(polygon);if(area(subtract(region,outlineRegion))>Math.max(1e-5,area(region)*1e-10))continue;
-      const owner=roof.outlines.find(o=>area(intersect(region,fromRing(o.polygon)))>area(region)*.99),id=`face-${faces.length+1}`,flow=inferredFlow({boundary});
-      faces.push({id,name:`Face ${String.fromCharCode(65+faces.length%26)}${faces.length>=26?Math.floor(faces.length/26):''}`,polygon,boundary,flow,lap:1,lapLocked:false,pitchDeg:owner?.suggestedPitchDeg??null,laneOffsetMm:0,confirmed:false,provenance:'derived'});
+      const owner=roof.outlines.find(o=>area(intersect(region,fromRing(o.polygon)))>area(region)*.99),id=`face-${faces.length+1}`,suggestion=suggestGeometryFlow(polygon,roof),flow=suggestion.flow;
+      faces.push({id,name:`Face ${String.fromCharCode(65+faces.length%26)}${faces.length>=26?Math.floor(faces.length/26):''}`,polygon,boundary,flow,flowSource:'inferred',flowSuggestionBasis:suggestion.basis,lap:1,lapLocked:false,pitchDeg:owner?.suggestedPitchDeg??null,laneOffsetMm:0,confirmed:false,provenance:'derived'});
       if(!flow)issues.push({severity:'warning',code:'FLOW_REVIEW',faceId:id,message:'Choose the water direction for this face.'});
     }
   }
@@ -103,7 +103,7 @@ export function deriveFaces(roof: RoofInput, snapTolerance?: number): FaceDetect
     const location=adjacent[l.a].length===1?e.a:adjacent[l.b].length===1?e.b:mid;
     const repair=prepared.repairs.find(r=>r.edgeId===e.id);
     issues.push({severity:'error',code:'DANGLING_LINE',faceId:f?.id,objectId:e.id,location,suggestionId:repair?.id,
-      message:`A ${e.kind==='unknown'?'boundary':e.kind.replace('_',' ')} stops before closing ${f?.name??'this area'}. Connect the suggested end, split/draw the missing face, or confirm this face if the line is not a roof-plane boundary.`});
+      message:`A drawn line ends inside ${f?.name??'this area'}. Connect it if it separates two planes, or approve the face as drawn.`});
   }
   issues.push(...validatePartition(roof,faces));
   return{faces,issues,repairs:prepared.repairs,adjustments:prepared.adjustments,normalisedEdges:roof.edges.map(e=>structuredClone(prepared.edges.find(n=>n.id===e.id)??e))};

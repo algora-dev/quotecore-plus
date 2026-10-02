@@ -21,8 +21,8 @@ export function adjacentValleyParents(faces:RoofFace[],roof:RoofInput):Map<strin
   for(const target of faces){
     const edges=planningBoundary(target),valleys=edges.filter(e=>e.kind==='valley');
     if(!valleys.length||!edges.some(e=>e.kind==='barge')||!edges.some(e=>e.kind==='spouting')||!edges.some(e=>e.kind==='ridge')||edges.some(e=>e.kind==='hip'||e.kind==='broken_hip'))continue;
-    const candidates=faces.filter(f=>f.id!==target.id&&f.boundary.some(e=>e.kind==='hip')&&f.boundary.filter(e=>e.kind==='valley').length>=2)
-      .map(source=>({id:source.id,overlap:valleys.reduce((n,e)=>n+Math.max(0,...source.boundary.filter(e=>e.kind==='valley').map(v=>sharedBoundaryLength(v,e,tol))),0)}))
+    const candidates=faces.filter(f=>f.id!==target.id&&planningBoundary(f).some(e=>e.kind==='hip')&&planningBoundary(f).filter(e=>e.kind==='valley').length>=2)
+      .map(source=>({id:source.id,overlap:valleys.reduce((n,e)=>n+Math.max(0,...planningBoundary(source).filter(e=>e.kind==='valley').map(v=>sharedBoundaryLength(v,e,tol))),0)}))
       .filter(c=>c.overlap>tol).sort((a,b)=>b.overlap-a.overlap||a.id.localeCompare(b.id));
     // Ambiguous equal parents are not silently assigned by label order.
     if(candidates.length&&(!candidates[1]||candidates[0].overlap>candidates[1].overlap+tol))result.set(target.id,candidates[0].id);

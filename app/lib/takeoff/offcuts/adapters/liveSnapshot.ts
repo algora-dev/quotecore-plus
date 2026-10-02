@@ -3,7 +3,7 @@ import { fingerprint } from '../core/math';
 import { fromQuoteCore, type AdaptedTakeoff, type QuoteCoreSnapshot } from './quotecore';
 
 export interface LiveInputCapture {
-  schemaVersion: 1; kind: 'quotecore-live-takeoff-snapshot'; adapterVersion: '2.9';
+  schemaVersion: 1; kind: 'quotecore-live-takeoff-snapshot'; adapterVersion: '2.9'|'2.11';
   captureId: string; capturedAt: string; source: 'live-workspace';
   inputFingerprint: string;
   /** Detached plain data. Never a Fabric instance, database row cache or screenshot. */
@@ -51,7 +51,7 @@ export function captureLiveTakeoff(input: QuoteCoreSnapshot): LiveInputCapture {
   if(!adapted.roof.outlines.length)throw new Error('Draw or select a roof outline in the current page and area first. No old scan outline will be substituted.');
   const incomplete=adapted.issues.find(i=>i.severity==='error');
   if(incomplete)throw new Error(incomplete.message);
-  return freezeSnapshot({schemaVersion:1,kind:'quotecore-live-takeoff-snapshot',adapterVersion:'2.9',
+  return freezeSnapshot({schemaVersion:1,kind:'quotecore-live-takeoff-snapshot',adapterVersion:'2.11',
     captureId:globalThis.crypto?.randomUUID?.()??`capture-${Date.now()}-${++captureCounter}`,
     capturedAt:new Date().toISOString(),source:'live-workspace',inputFingerprint:liveInputFingerprint(snapshot),snapshot,adapted});
 }

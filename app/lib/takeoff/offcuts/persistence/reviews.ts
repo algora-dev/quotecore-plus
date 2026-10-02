@@ -12,7 +12,7 @@ import { roofRevision } from '../adapters/quotecore';
 
 export interface ReviewScope { quoteId:string; pageId:string; areaScopeId:string|null }
 export interface ReviewDocument {
-  schemaVersion:1; kind:'quotecore-offcut-review'; engineVersion:'2.10';
+  schemaVersion:1; kind:'quotecore-offcut-review'; engineVersion:'2.10'|'2.11';
   scope:ReviewScope; sourceFingerprint:string; sourceRevision:string;
   savedAt:string; capture:LiveInputCapture|null; sourceRoof:RoofInput;
   draft:Draft; plans:Solution[]; selectedPlanIndex:number;
@@ -37,7 +37,7 @@ export function createReviewDocument(args:{draft:Draft;sourceRoof:RoofInput;capt
   const draft=structuredClone(args.draft),sourceRoof=structuredClone(args.sourceRoof);delete draft.roof.imageUrl;delete sourceRoof.imageUrl;
   // Store each potentially large plan once; selectedPlanIndex restores the view.
   draft.solution=null;
-  const result:ReviewDocument={schemaVersion:1,kind:'quotecore-offcut-review',engineVersion:'2.10',scope:reviewScope(sourceRoof),
+  const result:ReviewDocument={schemaVersion:1,kind:'quotecore-offcut-review',engineVersion:'2.11',scope:reviewScope(sourceRoof),
     sourceFingerprint:sourceFingerprint(sourceRoof,args.capture),sourceRevision:sourceRoof.sourceRevision,savedAt:new Date().toISOString(),
     capture:args.capture?JSON.parse(exportLiveCapture(args.capture)) as LiveInputCapture:null,sourceRoof,draft,
     plans:structuredClone(args.plans).slice(0,12),selectedPlanIndex:args.selectedPlanIndex,diagnostics:structuredClone(args.diagnostics)};
@@ -49,10 +49,12 @@ export function createReviewDocument(args:{draft:Draft;sourceRoof:RoofInput;capt
 export function restoreReviewDocument(value:unknown,scope:ReviewScope):{document:ReviewDocument;draft:Draft;plans:Solution[];warnings:string[]}{
   const text=JSON.stringify(value);if(!text||text.length>REVIEW_MAX_BYTES)throw new Error('Invalid or oversized saved review.');
   const d=JSON.parse(text) as ReviewDocument;
-  if(d?.schemaVersion!==1||d.kind!=='quotecore-offcut-review'||d.engineVersion!=='2.10'||!d.scope||!sameReviewScope(d.scope,scope)||
+  if(d?.schemaVersion!==1||d.kind!=='quotecore-offcut-review'||!['2.10','2.11'].includes(d.engineVersion)||!d.scope||!sameReviewScope(d.scope,scope)||
     !d.draft?.roof||!sameReviewScope(reviewScope(d.draft.roof),scope)||!d.sourceRoof||!sameReviewScope(reviewScope(d.sourceRoof),scope)||
     !Array.isArray(d.plans)||d.plans.length>12||typeof d.sourceFingerprint!=='string')throw new Error('Saved review does not belong to this quote, page and roof area.');
   const warnings:string[]=[];
+  const legacy=d.engineVersion!=='2.11';
+  if(legacy)warnings.push('Your saved shapes and water arrows were kept. Confirm them once to use geometry-based cutting; old cut plans were not reused.');
   // The original saved capture is data too: rebuild its adapter output rather
   // than allowing a forged cached `.adapted` object to enter the face builder.
   const source=parseDraft(JSON.stringify({schemaVersion:1,roof:d.sourceRoof,faces:[],profile:d.draft.profile,settings:d.draft.settings})).roof;
@@ -68,7 +70,7 @@ export function restoreReviewDocument(value:unknown,scope:ReviewScope):{document
   const raw=d.draft;
   for(const face of draft.faces){
     const old=raw.faces.find(f=>f.id===face.id);
-    if(old&&directionApproved(old)){face.confirmed=true;face.directionApproval=old.directionApproval;}
+    if(!legacy&&old&&directionApproved(old)){face.confirmed=true;face.directionApproval=old.directionApproval;}
   }
   draft.dismissedWarnings=Array.isArray(raw.dismissedWarnings)?raw.dismissedWarnings.filter(x=>typeof x==='string').slice(-500):[];
   draft.reviewNotes=Array.isArray(raw.reviewNotes)?raw.reviewNotes:[];
@@ -76,7 +78,7 @@ export function restoreReviewDocument(value:unknown,scope:ReviewScope):{document
   draft.profile.rulesConfirmed=raw.profile.rulesConfirmed===true;
   draft.roof.sourceRevision=roofRevision(draft.roof);
   const plans:Solution[]=[];
-  for(const plan of d.plans){
+  for(const plan of legacy?[]:d.plans){
     try{
       const candidate={...draft,solution:plan};
       const checks=validateDraft(candidate);
@@ -88,7 +90,7 @@ export function restoreReviewDocument(value:unknown,scope:ReviewScope):{document
   draft.solution=plans.find(p=>p.layoutId===chosen?.layoutId)??null;
   delete d.sourceRoof.imageUrl;delete d.draft.roof.imageUrl;
   if(d.capture){delete d.capture.snapshot.imageUrl;delete d.capture.adapted.roof.imageUrl;}
-  d.draft=draft;d.plans=plans;d.selectedPlanIndex=draft.solution?plans.indexOf(draft.solution):0;
+  d.engineVersion='2.11';d.draft=draft;d.plans=plans;d.selectedPlanIndex=draft.solution?plans.indexOf(draft.solution):0;
   return{document:d,draft,plans,warnings};
 }
 export type SaveState={status:'loading'|'ready'|'dirty'|'saving'|'saved'|'error'|'conflict';revision:number;message:string};
