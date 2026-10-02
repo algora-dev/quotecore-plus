@@ -54,6 +54,10 @@
 .welcome > p { margin: 0 0 24px; color: var(--sa-muted); line-height: 1.65; max-width: 39ch; font-size: 14px; }
 .quickActions { display: grid; gap: 9px; max-width: 460px; }
 .root .quickActions button { text-align: left; display: grid; grid-template-columns: 20px 1fr 16px; justify-content: start; font-size: 14px; font-weight: 500; padding: 13px 14px; min-height: 50px; background: linear-gradient(120deg,#2a2c34,#22242a); border-color: #464a55; border-radius: 15px; }
+/* Quick replies contain plain text, not icon | label | chevron children. Keep
+   their labels horizontal and normal-height while welcome actions retain the
+   three-column grid above. */
+.root .quickActions[data-sa-quick-replies='true'] button { display: flex; align-items: center; white-space: nowrap; }
 .quickActions svg:first-child { color: #dfd5d2; }
 .quickActions svg:last-child { width: 15px; color: #a7aab4; }
 .turn { margin: 0 0 18px; }

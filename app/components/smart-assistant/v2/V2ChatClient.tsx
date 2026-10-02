@@ -77,6 +77,9 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const root = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
+  // Tracks the assistant message that was visible on the previous snapshot so
+  // completed tasks can anchor at their beginning instead of the chat bottom.
+  const lastAssistantAnchor = useRef<string | null | undefined>(undefined);
   const attachmentUrls = useRef(new Set<string>());
   const attachmentCount = useRef(0);
   attachmentCount.current = attachments.length;
@@ -223,9 +226,28 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     return () => clearInterval(timer);
   }, [visible, active, refresh, snapshot?.activeRunId]);
 
+  // When an assistant turn completes, show the beginning of that answer so
+  // the user can read the instruction and review the draft from the top.
+  // Interim updates still follow the bottom while the user is already there.
   useEffect(() => {
-    if (nearBottom.current && visible) end.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
-  }, [snapshot?.messages.length, snapshot?.cards.length, busy, visible]);
+    if (!visible) return;
+    const lastAssistantId = [...(snapshot?.messages ?? [])].reverse().find(m => m.role === 'assistant')?.id ?? null;
+    if (lastAssistantAnchor.current === undefined) {
+      // Initial load keeps the existing chat behaviour.
+      lastAssistantAnchor.current = lastAssistantId;
+      if (nearBottom.current) end.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
+      return;
+    }
+    if (lastAssistantId && lastAssistantId !== lastAssistantAnchor.current) {
+      lastAssistantAnchor.current = lastAssistantId;
+      const assistantTurn = scroll.current?.querySelector('[data-sa-assistant-turn="true"]');
+      if (assistantTurn) {
+        assistantTurn.scrollIntoView({ block: 'start', behavior: 'auto' });
+        return;
+      }
+    }
+    if (nearBottom.current) end.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
+  }, [snapshot, busy, visible]);
 
   // Streamed provisional text follows the same bottom-anchored scroll as
   // persisted messages (answers stream token-by-token when enabled).
@@ -559,7 +581,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             {access.historyAfter && <p className={s.detail}>Earlier messages may be withheld after an access change.</p>}
           </section>}
 
-          {snapshot?.messages.map(m => <div key={m.id} className={s.turn}>
+          {snapshot?.messages.map(m => <div key={m.id} className={s.turn} data-sa-assistant-turn={m.role === 'assistant' && m.id === lastAssistantMessage?.id ? 'true' : undefined}>
             <div className={m.role === 'user' ? s.userMessage : s.assistantMessage}>
               {m.role === 'assistant' && <div className={s.assistantHeading}><span className={s.messageLabel}>ASSISTANT</span>{speech.available && <QcButton className={s.readAloud} aria-label="Read this answer aloud" disabled={locked || voice.state !== 'off'} onClick={() => speech.play(displayTaskMessage(displayResolutionMessage(displayDraftChoice(m.content))))}><AssistantIcon name="speaker"/></QcButton>}</div>}
               <SafeMessage content={displayTaskMessage(displayResolutionMessage(displayDraftChoice(m.content)))}/>
