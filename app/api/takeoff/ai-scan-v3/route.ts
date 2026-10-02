@@ -53,6 +53,7 @@ import {
 } from '@/app/lib/takeoff/outlineGeometry';
 import { computeScanTolerances, pxPerMmToImageSpace, roofDiagonalPx } from '@/app/lib/takeoff/scanTolerances';
 import { cornerCompletenessPass, nearPairReviewRule } from '@/app/lib/takeoff/cornerCompleteness';
+import { topologyCompletionPass } from '@/app/lib/takeoff/topologyCompletion';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -1385,10 +1386,37 @@ export async function POST(req: NextRequest) {
       }
       const surfacedReviewIds = new Set(corner.reviewSurfaced.map(s => s.line.id));
 
+      // AI output is a proposal, not a complete roof. Recover obvious
+      // missing boundaries from the approved outline and retained network.
+      const topology = topologyCompletionPass({
+        outlinePoints,
+        lines,
+        cornerMarkers: corner.cornerMarkers,
+        snapTolerance: tolerances3.snap,
+      });
+      if (topology.promoted.length || topology.reviewCandidates.length) {
+        console.log(`[ai-scan-v3:${requestId}] topology completion: auto=${topology.promoted.length} review=${topology.reviewCandidates.length} origins=${topology.stats.origins} candidates=${topology.stats.candidates}`);
+      }
+      for (const p of topology.promoted) {
+        lines.push(p.line);
+        finalClassifications.push({ line_id: p.line.id, type: p.type, confidence: p.score, reason: p.reason });
+      }
+      const topologyCornerKeys = new Set([
+        ...topology.promoted.map(p => `${Math.round(p.line.start.x)},${Math.round(p.line.start.y)}`),
+        ...topology.reviewCandidates.map(p => `${Math.round(p.line.start.x)},${Math.round(p.line.start.y)}`),
+      ]);
+      const remainingCornerMarkers = corner.cornerMarkers.filter(m =>
+        !topologyCornerKeys.has(`${Math.round(m.x)},${Math.round(m.y)}`));
+
       const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
 
       // Build AiScanResult
       const components = classificationsToComponents(lines, outlinePoints, finalClassifications);
+      // Deterministic recovery candidates remain visible as pink uncertain
+      // lines and use the existing assign/delete review UX.
+      for (const candidate of topology.reviewCandidates) {
+        components.uncertain.push({ points: [{ x: candidate.line.start.x, y: candidate.line.start.y }, { x: candidate.line.end.x, y: candidate.line.end.y }] });
+      }
       // No silent losses: corner-surfaced review lines anchor their corner;
       // any remaining unconsumed review lines surface as plain uncertain.
       for (const s of corner.reviewSurfaced) {
@@ -1405,8 +1433,11 @@ export async function POST(req: NextRequest) {
         pitch: { detected: false, global_degrees: null },
         roof_areas: [{ name: 'Area 1', points: outlinePoints, pitch_degrees: null }],
         components,
-        unresolved_corners: corner.cornerMarkers.map(m => ({ x: m.x, y: m.y, cornerType: m.cornerType, reason: m.reason })),
-        notes,
+        unresolved_corners: remainingCornerMarkers.map(m => ({ x: m.x, y: m.y, cornerType: m.cornerType, reason: m.reason })),
+        notes: [
+          ...notes,
+          ...topology.reviewCandidates.map(c => c.reason),
+        ],
       };
 
       // Run perimeter accounting pass (barge/spouting correction)
@@ -1430,7 +1461,8 @@ export async function POST(req: NextRequest) {
           reviewLinesIn: reviewLines.length,
           cornerPromoted: corner.promoted.length,
           cornerSurfaced: corner.reviewSurfaced.length,
-          cornerMarkers: corner.cornerMarkers.length,
+          cornerMarkers: remainingCornerMarkers.length,
+          topologyCompletion: topology.stats,
         },
       };
 
