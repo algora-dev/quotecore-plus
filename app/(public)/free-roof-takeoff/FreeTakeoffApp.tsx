@@ -288,7 +288,7 @@ function TakeoffPhase({
       components={components}
       collections={TOOL_COLLECTIONS}
       hydrationData={null}
-      aiTakeoffAvailable={false}
+      aiTakeoffAvailable={true}
       aiAssistPoints={null}
       aiCalibrationEnabled={false}
       onTouchOutlineAdapter={registerAdapter}

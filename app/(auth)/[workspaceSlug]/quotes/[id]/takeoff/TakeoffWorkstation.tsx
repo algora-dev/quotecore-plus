@@ -445,11 +445,17 @@ export function TakeoffWorkstation({
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
   // AI Assist points: track locally so we can update after a scan without a page reload.
   const [aiPoints, setAiPoints] = useState(aiAssistPoints);
+  // Free tool (anonymous) AI scan credits + exhaustion modal. Populated from
+  // the free endpoint's scan1 responses (see /api/free-tools/ai-scan).
+  const [freeScanCredits, setFreeScanCredits] = useState<{ used: number; limit: number; remaining: number } | null>(null);
+  const [showFreeScanExhaustion, setShowFreeScanExhaustion] = useState(false);
   // Owner 2026-09-25 (13:20): which uncertain row currently shows its
   // "assign to component" dropdown.
   const [uncertainAssignOpenFor, setUncertainAssignOpenFor] = useState<string | null>(null);
   // V3: 3-scan pipeline (outline → line detection → classification)
-  const aiScanEndpoint = '/api/takeoff/ai-scan-v3';
+  // Free tool (anonymous) runs the same 3-scan pipeline through the gated free
+  // endpoint (per-device daily credits + global daily cap).
+  const aiScanEndpoint = freeToolMode ? '/api/free-tools/ai-scan' : '/api/takeoff/ai-scan-v3';
   // Once the user dismisses the "Calibration complete" popup, never show it again
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
@@ -3973,7 +3979,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         return {
           available: true,
           blocked: ai.blocked,
-          cost: getAiScanPointCost('low'),
+          // Free tool: credits replace points (display shows free scans, not point costs).
+          cost: freeToolMode ? 0 : getAiScanPointCost('low'),
           qualityLevel: 'low',
         };
       },
@@ -4034,6 +4041,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               );
               return { ok: false, error: 'Out of AI points — draw the outline manually.', pointsExhausted: true };
             }
+            if (response.status === 429 && result.code === 'identity_cap') {
+              setShowFreeScanExhaustion(true);
+              return { ok: false, error: 'No free AI scans left today - draw the outline manually, or create a free account.', pointsExhausted: true };
+            }
             let errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
             if (response.status === 413) {
               errMsg = 'Your plan image is too large for AI Assist. Please try a smaller or compressed image, or draw the outline manually.';
@@ -4054,6 +4065,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               ? { ...prev, used: prev.used + cost, remaining: Math.max(prev.remaining - cost, 0) }
               : null,
           );
+          if (freeToolMode && result.credits) setFreeScanCredits(result.credits);
           return { ok: true, data: result.data };
         } catch (err) {
           if (err instanceof DOMException && err.name === 'AbortError') {
@@ -6202,6 +6214,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         if (response.status === 402 && result.pointsExhausted) {
           setAiPoints(prev => prev ? { ...prev, remaining: result.pointsRemaining ?? 0, isBlocked: true } : null);
         }
+        if (response.status === 429 && result.code === 'identity_cap') {
+          // Free tool: daily credits exhausted. Show the signup/continue-manual
+          // modal instead of the choice modal (finally-block reopen suppressed).
+          scanCompleted = true;
+          setShowFreeScanExhaustion(true);
+          return;
+        }
         setAiScanError(errMsg);
         return;
       }
@@ -6226,6 +6245,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             : null,
         };
       });
+
+      // Free tool: the anonymous endpoint reports remaining daily credits.
+      if (freeToolMode && result.credits) setFreeScanCredits(result.credits);
 
       // Points were deducted server-side on scan1; update local state.
       // Costs come from the shared canonical constant (2/6/12).
@@ -8755,8 +8777,15 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
               </div>
               {aiTakeoffAvailable && (
                 <div className="space-y-2 rounded-xl border-2 border-[#FF6B35]/30 p-3 bg-[#FF6B35]/5">
-                  {/* Points display */}
-                  {aiPoints && !aiPoints.isBlocked && (
+                  {/* Points display (free tool: daily scan credits) */}
+                  {freeToolMode ? (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-600">Free AI scans</span>
+                      <span className="font-semibold text-slate-900">
+                        {freeScanCredits ? `${freeScanCredits.remaining} of ${freeScanCredits.limit} left today` : '3 per day'}
+                      </span>
+                    </div>
+                  ) : aiPoints && !aiPoints.isBlocked && (
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-600">AI Assist points</span>
                       <span className={`font-semibold ${aiPoints.remaining <= 4 ? 'text-orange-600' : 'text-slate-900'}`}>
@@ -8778,12 +8807,12 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                     <>
                       <div className="flex gap-1.5">
                         {([
-                          { value: 'low', label: 'Low', hint: 'Small, simple roofs · 2 points' },
-                          { value: 'medium', label: 'Medium', hint: 'Medium size & complexity · 6 points' },
-                          { value: 'high', label: 'High', hint: 'Larger, complex roofs · 12 points' },
+                          { value: 'low', label: 'Low', hint: freeToolMode ? 'Small, simple roofs' : 'Small, simple roofs · 2 points' },
+                          { value: 'medium', label: 'Medium', hint: freeToolMode ? 'Medium size & complexity' : 'Medium size & complexity · 6 points' },
+                          { value: 'high', label: 'High', hint: freeToolMode ? 'Larger, complex roofs' : 'Larger, complex roofs · 12 points' },
                         ] as const).map(opt => {
                           const cost = opt.value === 'low' ? 2 : opt.value === 'medium' ? 4 : 8;
-                          const canAfford = !aiPoints || aiPoints.remaining >= cost;
+                          const canAfford = freeToolMode || !aiPoints || aiPoints.remaining >= cost;
                           return (
                             <QcHostedButton aria-pressed={aiQualityLevel === opt.value} variant={aiQualityLevel === opt.value ? 'secondary' : 'ghost'}
                               key={opt.value}
@@ -8827,6 +8856,38 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 className="py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
                 Skip
+              </QcHostedButton>
+            </div>
+          </div>
+        </QcHostedDialog>
+      )}
+
+      {/* Free tool: daily AI scan credits exhausted */}
+      {freeToolMode && showFreeScanExhaustion && (
+        <QcHostedDialog label="Free AI scans used" size="md" className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm border border-gray-200 shadow-xl">
+            <h2 className="text-lg font-semibold mb-1">You've used your free AI scans</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              That's all 3 free AI scans for today. Create a free QuoteCore+ account for full AI takeoffs on
+              every plan, or keep measuring manually below - no limits.
+            </p>
+            <div className="flex flex-col gap-3">
+              <a
+                href="https://app.quote-core.com/signup"
+                className="w-full py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-full hover:bg-[#E55A2B] transition-colors text-center"
+              >
+                Create free account
+              </a>
+              <QcHostedButton variant="ghost"
+                onClick={() => {
+                  setShowFreeScanExhaustion(false);
+                  // Re-offer the manual measurement choices (polygon / rectangle).
+                  roofAreaInstructionsDismissedRef.current = false;
+                  setShowRoofAreaInstructions(true);
+                }}
+                className="py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Continue with manual measurement
               </QcHostedButton>
             </div>
           </div>
