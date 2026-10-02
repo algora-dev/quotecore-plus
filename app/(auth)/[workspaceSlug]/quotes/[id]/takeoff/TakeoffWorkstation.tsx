@@ -7449,6 +7449,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     };
   }, [pages[currentPageIndex]?.id, activeAreaId]);
 
+  // Free tool (owner rule 2026-10-02): the Finish CTA must ALWAYS be visible,
+  // greyed out only until the user has at least one measurement (roof area or
+  // component line/point) - never hidden by any flow state. Offcuts buttons
+  // stay hidden in the free tool (functionality untouched, just not offered).
+  const freeToolMeasurementCount =
+    roofAreas.length + componentMeasurements.reduce((n, c) => n + c.measurements.length, 0);
+
   return (
     <QcHostedDialogScope enabled={desktopAppearance}>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
@@ -7474,10 +7481,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             </QcHostedButton>
             <div className="qc-takeoff-finish">
               <QcHostedButton onClick={handleSaveTakeoff}
-                disabled={calibrations.length === 0 || isSaving}
+                disabled={freeToolMode ? (isSaving || freeToolMeasurementCount === 0) : (calibrations.length === 0 || isSaving)}
                 data-copilot="takeoff-save" variant="primary" size="sm" aria-busy={isSaving}
                 className="qc-takeoff-finish-btn"
-                title={calibrations.length === 0 ? 'Calibrate the plan first' : freeToolMode ? 'Finish and view your measurement report' : 'Save and continue to Measurements & Pricing'}>
+                title={(freeToolMode && freeToolMeasurementCount === 0) ? 'Measure at least one roof area or component to finish' : calibrations.length === 0 ? 'Calibrate the plan first' : freeToolMode ? 'Finish and view your measurement report' : 'Save and continue to Measurements & Pricing'}>
                 <span className="qc-takeoff-finish-main">{isSaving ? 'Saving…' : freeToolMode ? 'Finish & view report' : 'Finish & save'}<QcIcon name="arrow" /></span>
                 <span className="qc-takeoff-finish-next">{freeToolMode ? 'Next: Measurement report & download' : 'Next: Measurements & Pricing'}</span>
               </QcHostedButton>
@@ -7546,7 +7553,17 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 {calibrationMode ? 'Calibrating' : calibrationConfirmed ? 'Calibrated' : 'Needs calibration'}
               </QcStatusBadge>
             </div>
-            <p className="qc-takeoff-guidance">{guidance}</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="qc-takeoff-guidance">{guidance}</p>
+              {freeToolMode && (
+                <QcHostedButton onClick={handleSaveTakeoff}
+                  disabled={isSaving || freeToolMeasurementCount === 0}
+                  data-copilot="takeoff-save-free" variant="primary" size="sm" className="flex-shrink-0"
+                  title={freeToolMeasurementCount === 0 ? 'Measure at least one roof area or component to finish' : 'Finish and view your measurement report'}>
+                  <span className="flex items-center gap-1.5">{isSaving ? 'Saving.' : 'Finish & view report'}<QcIcon name="arrow" /></span>
+                </QcHostedButton>
+              )}
+            </div>
           </div>
         );
       })()}
@@ -8447,7 +8464,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       data-copilot="takeoff-tool-pitch-estimator"
                       title="Estimate roof pitch from a photo"
                     ><QcIcon name="pitch" />Estimate pitch</QcToolButton>
-                    {process.env.NEXT_PUBLIC_TAKEOFF_OFFCUTS_V1 === 'true' && (
+                    {process.env.NEXT_PUBLIC_TAKEOFF_OFFCUTS_V1 === 'true' && !freeToolMode && (
                       <>
                       <button
                         data-copilot="takeoff-tool-offcuts"
