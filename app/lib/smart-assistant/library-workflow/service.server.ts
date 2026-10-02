@@ -59,11 +59,11 @@ function cleanBrief(input:Record<string,unknown>,context:Record<string,unknown>)
 async function persist(access:Access,conversationId:string,brief:DraftBrief,stateId?:string,expectedRevision?:number){
   const db=admin();
   if(stateId){
-    const {data,error}=await db.from('assistant_v2_draft_briefs').update({brief,revision:(expectedRevision??0)+1,updated_at:new Date().toISOString()}).eq('id',stateId).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).eq('revision',expectedRevision).select('id,revision').maybeSingle();
-    if(error||!data)throw new ProposalError('Those draft choices changed or expired. Please review the current draft again.');return {id:data.id,revision:data.revision};
+    const {data,error}=await db.from('assistant_v2_draft_briefs').update({brief,revision:(expectedRevision??0)+1,updated_at:new Date().toISOString()}).eq('id',stateId).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).eq('revision',expectedRevision).select('id,revision,produced_quote_id').maybeSingle();
+    if(error||!data)throw new ProposalError('Those draft choices changed or expired. Please review the current draft again.');return {id:data.id,revision:data.revision,produced_quote_id:data.produced_quote_id??null};
   }
-  const {data,error}=await db.from('assistant_v2_draft_briefs').upsert({company_id:access.companyId,user_id:access.userId,conversation_id:conversationId,brief,revision:1,status:'open',permission_revision:access.permissionRevision,updated_at:new Date().toISOString()},{onConflict:'company_id,user_id,conversation_id'}).select('id,revision').single();
-  if(error||!data)throw new ProposalError('Could not save the working draft.');return {id:data.id,revision:data.revision};
+  const {data,error}=await db.from('assistant_v2_draft_briefs').upsert({company_id:access.companyId,user_id:access.userId,conversation_id:conversationId,brief,revision:1,status:'open',permission_revision:access.permissionRevision,updated_at:new Date().toISOString()},{onConflict:'company_id,user_id,conversation_id'}).select('id,revision,produced_quote_id').single();
+  if(error||!data)throw new ProposalError('Could not save the working draft.');return {id:data.id,revision:data.revision,produced_quote_id:data.produced_quote_id??null};
 }
 
 async function loadState(access:Access,conversationId:string,stateId:string,revision:number){
@@ -125,7 +125,18 @@ async function evaluate(client:SupabaseClient,access:Access,conversationId:strin
     return {state:'awaiting_input',answer:decision.questions.length?'Choose the remaining options below.':'The selected library is missing an assistant component assignment.',card};
   }
   const stored=await persist(access,conversationId,brief,stateId,expectedRevision);
-  const action=await proposeDraft(client,access,runId,proposalArgs(brief,decision.catalog));
+  // Edit-in-place (owner 2026-10-02): when this brief already produced a
+  // quote and that quote is still an editable manual draft, later confirms
+  // write back to the same quote instead of spawning a new one.
+  let producedQuoteId=stored.produced_quote_id??null;
+  if(producedQuoteId){
+    const {data:bound}=await admin().from('quotes').select('id,status,entry_mode').eq('id',producedQuoteId).eq('company_id',access.companyId).maybeSingle();
+    if(!bound||bound.status!=='draft'||bound.entry_mode!=='manual'){
+      producedQuoteId=null;
+      await admin().from('assistant_v2_draft_briefs').update({produced_quote_id:null}).eq('id',stored.id);
+    }
+  }
+  const action=await proposeDraft(client,access,runId,proposalArgs(brief,decision.catalog),{briefStateId:stored.id,producedQuoteId});
   await addCard(runId,access,`draft-proposal-${action.id}`,WORKFLOW_SECTIONS,{kind:'proposal',title:action.title,actionId:action.id});
   // Sticky task: the proposed brief stays queryable as the conversation's
   // active task so correction turns can revise it instead of asking which
@@ -152,11 +163,11 @@ export async function pendingDraftWorkflowContext(client:SupabaseClient,access:A
   // Sticky task (owner 2026-10-01): a draft awaiting choices (open) OR one
   // proposed within the last 30 minutes stays the conversation's active
   // task, so correction turns continue it instead of starting over.
-  const {data,error}=await admin().from('assistant_v2_draft_briefs').select('id,revision,brief,status,permission_revision,updated_at').eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).in('status',['open','proposal']).order('updated_at',{ascending:false}).limit(1).maybeSingle();
+  const {data,error}=await admin().from('assistant_v2_draft_briefs').select('id,revision,brief,status,permission_revision,updated_at,produced_quote_id').eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).in('status',['open','proposal']).order('updated_at',{ascending:false}).limit(1).maybeSingle();
   if(error||!data||data.permission_revision!==access.permissionRevision)return null;
   if(Date.parse(String(data.updated_at))<Date.now()-30*60*1000)return null;
   const brief=data.brief as DraftBrief;
   const catalog=await readAssistantLibraryCatalog(client,access,null).catch(()=>[]);
   const decision=chooseCatalog(brief,catalog);
-  return {stateId:data.id,revision:data.revision,status:data.status,summary:summary(brief),brief:{customerName:brief.customerName,jobName:brief.jobName,siteAddress:brief.siteAddress,measurementSystem:brief.measurementSystem,defaultPitchDegrees:brief.defaultPitchDegrees,trade:brief.trade,collectionId:brief.collectionId,collectionName:brief.collectionName,areas:brief.areas,measurements:brief.measurements,selections:brief.selections},questions:decision.questions.map(q=>({key:q.key,label:q.label,options:q.options.map(o=>({id:o.id,label:o.label}))})),issues:decision.issues};
+  return {stateId:data.id,revision:data.revision,status:data.status,boundQuoteId:data.produced_quote_id??null,summary:summary(brief),brief:{customerName:brief.customerName,jobName:brief.jobName,siteAddress:brief.siteAddress,measurementSystem:brief.measurementSystem,defaultPitchDegrees:brief.defaultPitchDegrees,trade:brief.trade,collectionId:brief.collectionId,collectionName:brief.collectionName,areas:brief.areas,measurements:brief.measurements,selections:brief.selections},questions:decision.questions.map(q=>({key:q.key,label:q.label,options:q.options.map(o=>({id:o.id,label:o.label}))})),issues:decision.issues};
 }
