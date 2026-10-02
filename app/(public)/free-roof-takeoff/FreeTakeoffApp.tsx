@@ -27,6 +27,7 @@ import {
 } from './tradeConfig';
 import { TakeoffOutputView, type TakeoffOutputExtras } from './TakeoffOutputView';
 import { ComponentBuilderModal } from './ComponentBuilderModal';
+import { AI_PLACEHOLDER_COMPONENTS } from './aiPlaceholders';
 import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import type { QuoteRow } from '@/app/lib/types';
@@ -405,9 +406,17 @@ export function FreeTakeoffApp() {
     [componentChoice, specs],
   );
 
-  const toolComponents = useMemo<ToolComponent[]>(
+  const userComponents = useMemo<ToolComponent[]>(
     () => [...(componentChoice === 'ours' ? toComponents(CONFIG.placeholderComponents) : []), ...specComponents],
     [componentChoice, specComponents],
+  );
+
+  // Keep AI-only system rows alongside the real manual targets. The
+  // workstation hides these from manual pickers but requires them to apply
+  // AI results and support the existing reassign/review flow.
+  const toolComponents = useMemo<ToolComponent[]>(
+    () => [...userComponents, ...AI_PLACEHOLDER_COMPONENTS],
+    [userComponents],
   );
 
   const activeSpecs = componentChoice === 'own' ? specs : [];
@@ -703,12 +712,12 @@ export function FreeTakeoffApp() {
 
             <button
               onClick={() => setStep(3)}
-              disabled={toolComponents.length === 0}
+              disabled={userComponents.length === 0}
               className="w-full py-2.5 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-40"
             >
               Continue
             </button>
-            {toolComponents.length === 0 && (
+            {userComponents.length === 0 && (
               <p className="text-xs text-[#BD4A1A] text-center">Build at least one component to continue.</p>
             )}
           </div>
@@ -718,7 +727,7 @@ export function FreeTakeoffApp() {
           <div className="mt-4">
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
               Unit: <span className="font-semibold text-slate-800">{unitOption.label}</span> &middot; Components:{' '}
-              <span className="font-semibold text-slate-800">{toolComponents.length}</span>
+              <span className="font-semibold text-slate-800">{userComponents.length}</span>
               {componentChoice === 'own' && <> (your own{specs.length > 0 ? `, ${specs.length} built` : ''})</>}
             </div>
             <label
