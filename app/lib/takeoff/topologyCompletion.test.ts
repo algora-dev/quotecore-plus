@@ -8,7 +8,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { topologyCompletionPass } from './topologyCompletion';
+import { topologyCompletionPass, AUTO_PROMOTE_OVERRIDE_SCORE } from './topologyCompletion';
 import { cornerCompletenessPass } from './cornerCompleteness';
 import type { V3Point, V3Line } from './ai-prompt-v3';
 import type { CornerMarker } from './cornerCompleteness';
@@ -214,4 +214,76 @@ test('complete Roof #4 (with both valleys present) stays unchanged', () => {
     `expected zero promotions on a complete roof, got: ${result.promoted.map(p => p.reason).join(' | ')}`);
   assert.equal(result.reviewCandidates.length, 0,
     `expected zero review candidates on a complete roof, got: ${result.reviewCandidates.map(p => p.reason).join(' | ')}`);
+});
+
+// ── 9. A diagonal heal is never auto-typed a ridge (owner 2026-10-02) ────
+
+test('a 45-degree dangling heal surfaces as pink review, never an auto ridge', () => {
+  // A diagonal line ends mid-roof; the nearest junction lies at +45deg.
+  // Before the guard this auto-promoted as a "ridge" sitting at 45deg to
+  // the spouting frame - geometrically impossible on a real roof.
+  const outline = [P(100, 100), P(600, 100), P(600, 500), P(100, 500)];
+  const lines = [
+    L('D1', 150, 100, 350, 300),   // 45deg diagonal, start on the top edge, end dangling mid-roof
+    L('J2', 450, 400, 590, 400),   // junction target at (450,400), far end on the right edge
+  ];
+  const result = run(outline, lines);
+  assert.equal(result.promoted.length, 0,
+    `no auto-promotion expected, got: ${result.promoted.map(p => p.reason).join(' | ')}`);
+  assert.equal(result.reviewCandidates.length, 1,
+    `exactly one review candidate expected, got: ${result.reviewCandidates.map(c => c.reason).join(' | ')}`);
+  const c = result.reviewCandidates[0];
+  assert.ok(
+    (near(c.line.start, 350, 300, 10) && near(c.line.end, 450, 400, 10))
+    || (near(c.line.start, 450, 400, 10) && near(c.line.end, 350, 300, 10)),
+    `the diagonal heal (350,300)<->(450,400) must be the review candidate, got (${c.line.start.x},${c.line.start.y})->(${c.line.end.x},${c.line.end.y})`,
+  );
+  assert.ok(c.score >= 0.72, `sanity: it would have auto-promoted before the guard (score ${c.score.toFixed(2)})`);
+});
+
+// ── 10. Redundant dangling heal is dropped entirely (owner 2026-10-02) ──
+
+test('a dangling heal whose endpoints both become junctions is dropped entirely', () => {
+  // Notched outline: the concave corner recovers a valley onto a diagonal
+  // line's dangling end, while that same end also heals toward a junction.
+  // Once the corner recovery connects the end, the heal joins two
+  // already-connected junctions and must vanish - no line, no pink.
+  const outline = [P(100, 100), P(900, 100), P(900, 900), P(600, 900), P(600, 600), P(100, 600)];
+  const lines = [
+    L('V1', 100, 250, 400, 400),   // end (400,400) starts the pass dangling
+    L('L2', 683, 117, 900, 117),   // junction at (683,117), far end on the right edge
+    L('L3', 683, 117, 683, 100),   // second junction leg, far end on the top edge
+  ];
+  const result = run(outline, lines);
+  const valley = result.promoted.find(p => near(p.line.start, 600, 600, 5) && near(p.line.end, 400, 400, 10));
+  assert.ok(valley, `concave corner must recover its valley, got: ${result.promoted.map(p => p.reason).join(' | ')}`);
+  const chord = [...result.promoted, ...result.reviewCandidates].find(c =>
+    (near(c.line.start, 400, 400, 10) && near(c.line.end, 683, 117, 10))
+    || (near(c.line.start, 683, 117, 10) && near(c.line.end, 400, 400, 10)));
+  assert.ok(!chord, `the redundant junction-to-junction heal must be dropped entirely, found: ${chord?.reason}`);
+  assert.equal(result.stats.redundantDropped, 1);
+  assert.equal(result.reviewCandidates.length, 0,
+    `no pink expected, got: ${result.reviewCandidates.map(c => c.reason).join(' | ')}`);
+});
+
+// ── 11. High confidence promotes without the margin (owner 2026-10-02) ──
+
+test('a 0.94-scored corner recovery promotes despite a zero margin', () => {
+  // Symmetric twins: the concave corner sees two 45deg junction targets,
+  // each with a parallel twin converging on it - both score 0.94, margin 0.
+  // The old margin gate held this pink; high confidence now promotes.
+  const outline = [P(100, 100), P(900, 100), P(900, 900), P(500, 500), P(100, 900)];
+  const lines = [
+    L('A1', 100, 100, 300, 300),
+    L('B1', 100, 500, 300, 300),
+    L('A2', 900, 100, 700, 300),
+    L('B2', 900, 500, 700, 300),
+  ];
+  const result = run(outline, lines);
+  const fromCorner = result.promoted.filter(p => near(p.line.start, 500, 500, 5));
+  assert.equal(fromCorner.length, 1,
+    `the high-confidence corner recovery must auto-promote, got: ${result.promoted.map(p => p.reason).join(' | ')}`);
+  assert.equal(fromCorner[0].type, 'valley');
+  assert.ok(fromCorner[0].score >= AUTO_PROMOTE_OVERRIDE_SCORE,
+    `promotion must be justified by the override score, got ${fromCorner[0].score.toFixed(2)}`);
 });

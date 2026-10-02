@@ -39,6 +39,16 @@
  *    (never a silent false negative, never a blind auto-line);
  *  - nothing plausible -> the corner keeps its existing pink circle marker.
  *
+ * Owner directives 2026-10-02 (live Roof #4 follow-up):
+ *  - score >= AUTO_PROMOTE_OVERRIDE_SCORE promotes WITHOUT the margin
+ *    requirement (a direction this dominant is not ambiguity in practice);
+ *  - a diagonal (45/135deg) boundary is never auto-typed 'ridge': ridges run
+ *    with the H/V spouting frame, so a diagonal heal with no corner evidence
+ *    to pick hip vs valley surfaces as a pink review line instead;
+ *  - a dangling heal whose BOTH endpoints are already junctions without it
+ *    is dropped entirely (no line, no pink): another accepted recovery made
+ *    it redundant, so it adds no connectivity.
+ *
  * False-positive guards:
  *  - ordinary convex corners are never origins by themselves;
  *  - candidates duplicating an existing line or an OUTLINE EDGE corridor
@@ -62,6 +72,11 @@ export const AUTO_PROMOTE_SCORE = 0.72;
  *  (corner origins only - a corner with two plausible boundaries is
  *  ambiguous and goes to review). */
 export const AUTO_PROMOTE_MARGIN = 0.12;
+/** Owner directive 2026-10-02: a candidate scoring at least this promotes
+ *  without the margin requirement - high-confidence recoveries must not
+ *  stall at the ambiguity gate (live Roof #4: a 0.94 valley was held pink
+ *  by a margin that landed exactly on the threshold). */
+export const AUTO_PROMOTE_OVERRIDE_SCORE = 0.85;
 /** Minimum score for a candidate to surface as a pink review line. */
 export const REVIEW_THRESHOLD = 0.5;
 /** Candidate length bounds, as a fraction of the roof bbox diagonal. */
@@ -97,6 +112,9 @@ export interface TopologyCompletionStats {
   candidates: number;
   autoPromoted: number;
   reviewCandidates: number;
+  /** Owner 2026-10-02: dangling heals dropped because both endpoints were
+   *  already connected junctions without them (redundant chords). */
+  redundantDropped: number;
 }
 
 export interface TopologyCompletionResult {
@@ -174,7 +192,7 @@ export function topologyCompletionPass(params: {
   snapTolerance: number;
 }): TopologyCompletionResult {
   const { outlinePoints, lines, cornerMarkers, snapTolerance } = params;
-  const stats: TopologyCompletionStats = { origins: 0, candidates: 0, autoPromoted: 0, reviewCandidates: 0 };
+  const stats: TopologyCompletionStats = { origins: 0, candidates: 0, autoPromoted: 0, reviewCandidates: 0, redundantDropped: 0 };
   const empty: TopologyCompletionResult = { promoted: [], reviewCandidates: [], stats };
   if (outlinePoints.length < 3 || lines.length === 0) return empty;
 
@@ -427,7 +445,20 @@ export function topologyCompletionPass(params: {
     const margin = nextDistinct ? best.score - nextDistinct.score : Infinity;
     const needMargin = origin.kind !== 'dangling';
 
-    if (best.score >= AUTO_PROMOTE_SCORE && (!needMargin || margin >= AUTO_PROMOTE_MARGIN)) {
+    // Owner directives 2026-10-02 (live Roof #4 follow-up):
+    //  (a) high confidence (>= AUTO_PROMOTE_OVERRIDE_SCORE) promotes without
+    //      the margin requirement;
+    //  (b) a diagonal boundary is never auto-typed 'ridge'. Ridges run with
+    //      the H/V spouting frame; a diagonal heal with no corner evidence
+    //      to pick hip vs valley becomes a pink review line instead.
+    const highConfidence = best.score >= AUTO_PROMOTE_OVERRIDE_SCORE;
+    const diagonal = Math.min(acuteAngleDiff(best.angleDeg, 45), acuteAngleDiff(best.angleDeg, 135))
+      < Math.min(acuteAngleDiff(best.angleDeg, 0), acuteAngleDiff(best.angleDeg, 90));
+    const diagonalRidge = best.suggestedType === 'ridge' && diagonal;
+
+    if (!diagonalRidge
+      && (highConfidence || best.score >= AUTO_PROMOTE_SCORE)
+      && (!needMargin || highConfidence || margin >= AUTO_PROMOTE_MARGIN)) {
       accepted.push({
         ...best,
         reason: `${best.reason} [auto: score ${best.score.toFixed(2)}, margin ${margin === Infinity ? 'sole' : margin.toFixed(2)}]`,
@@ -436,7 +467,7 @@ export function topologyCompletionPass(params: {
     } else if (best.score >= REVIEW_THRESHOLD) {
       accepted.push({
         ...best,
-        reason: `${best.reason} [review: score ${best.score.toFixed(2)}, margin ${margin === Infinity ? 'sole' : margin.toFixed(2)} - confirm, reclassify or delete]`,
+        reason: `${best.reason} [review: score ${best.score.toFixed(2)}, margin ${margin === Infinity ? 'sole' : margin.toFixed(2)}${diagonalRidge ? ' - a diagonal is never auto-typed a ridge' : ''} - confirm, reclassify or delete]`,
         review: true,
       });
     }
@@ -451,17 +482,57 @@ export function topologyCompletionPass(params: {
       && pointToSegmentDistance(l.end, a, b) <= corridor);
   };
 
+  const entries: Array<{
+    line: V3Line;
+    origin: Origin;
+    review: boolean;
+    type: 'valley' | 'hip' | 'ridge';
+    reason: string;
+    score: number;
+  }> = [];
   for (const c of accepted) {
     if (duplicateOfTaken(c.line.start, c.line.end)) continue;
     const line: V3Line = { ...c.line, id: `TC${++tcSeq}` };
     taken.push(line);
-    if (c.review) {
-      reviewCandidates.push({ line, suggestedType: c.suggestedType, reason: c.reason, score: c.score });
+    entries.push({ line, origin: c.origin, review: c.review, type: c.suggestedType, reason: c.reason, score: c.score });
+  }
+
+  // Owner directive 2026-10-02: drop redundant dangling heals. A heal that
+  // was justified by a dangling endpoint becomes pointless the moment
+  // another accepted recovery connects that same endpoint: when BOTH of its
+  // endpoints are already junctions without the heal, it adds no
+  // connectivity and is removed entirely - no line, no pink. Corner
+  // recoveries are never dropped: they resolve an outline corner regardless
+  // of network connectivity.
+  const junctionWithout = (p: V3Point, excludeId: string): boolean => {
+    let degree = 0;
+    for (const l of [...structural, ...taken]) {
+      if (l.id === excludeId) continue;
+      if (dist(l.start, p) <= snapTolerance
+        || dist(l.end, p) <= snapTolerance
+        || pointToSegmentDistance(p, l.start, l.end) <= snapTolerance) {
+        degree++;
+        if (degree >= 2) return true;
+      }
+    }
+    return false;
+  };
+  let redundantDropped = 0;
+  for (const e of entries) {
+    if (e.origin.kind === 'dangling'
+      && junctionWithout(e.line.start, e.line.id)
+      && junctionWithout(e.line.end, e.line.id)) {
+      redundantDropped++;
+      continue;
+    }
+    if (e.review) {
+      reviewCandidates.push({ line: e.line, suggestedType: e.type, reason: e.reason, score: e.score });
     } else {
-      promoted.push({ line, type: c.suggestedType, reason: c.reason, score: c.score });
+      promoted.push({ line: e.line, type: e.type, reason: e.reason, score: e.score });
     }
   }
 
+  stats.redundantDropped = redundantDropped;
   stats.autoPromoted = promoted.length;
   stats.reviewCandidates = reviewCandidates.length;
   return { promoted, reviewCandidates, stats };
