@@ -17,7 +17,7 @@ import { area, bandRing, extendY, subtract, translate, unionAll } from './region
 import { matchCoherentSets } from './coherentMatching';
 import { materialAtDestination, rebuildInventory } from './inventory';
 import { findFit } from './fit';
-import { frameFor, sceneToSurface, generateFaceDemands } from './material';
+import { frameFor, sceneToSurface, generateFaceDemands, sheetCount } from './material';
 
 export const RECEIVER_SAFETY_MODEL='coupled-valley-phase-envelope-v2' as const;
 export interface ReceiverFreshAssignment {rootDemandId:string;demandId:string;rotation:0|180;translateY:number}
@@ -164,7 +164,7 @@ export function recalculateMetrics(s:Solution):void {
 }
 /** Refine a few small adjoining receivers, not the main bank strategy. This runs
  * after the bounded bank search and before final ranking and quantity export. */
-export function protectValleyReceivers(request:SolveRequest,s:Solution,cancel?:()=>boolean):void {
+function protectFixedReceiverGrids(request:SolveRequest,s:Solution,cancel?:()=>boolean):void {
   const refinementStarted=performance.now();
   const mode=request.settings.receiverPhaseMode??'quote-safe';
   const report:ReceiverSafetyReport={model:RECEIVER_SAFETY_MODEL,mode,basis:'fixed-purchased-parents-and-receiver-grid',families:[],orderReady:false};
@@ -221,9 +221,13 @@ export function protectValleyReceivers(request:SolveRequest,s:Solution,cancel?:(
       }
       options=next.sort((a,b)=>a.cost-b.cost||a.freshIds.size-b.freshIds.size).slice(0,256);
     }
+    // Equal-price starter arrangements should keep both valley halves useful,
+    // instead of showing one entire receiver new and the other reused only due
+    // to enumeration order. Physical fit/coupled phase checks still decide.
+    const balance=(o:Option)=>Math.max(0,...faces.map(id=>ds.filter(d=>d.faceId===id&&o.freshIds.has(d.id)).length));
     // Full new material is a real, deterministic fallback even beyond the option budget.
     const allNew:Option={freshIds:new Set(ds.map(d=>d.id)),targets:[],laps:Object.fromEntries(faces.map(id=>[id,s.lapByFace[id]])),cost:ds.reduce((n,d)=>n+area(d.blank),0)};
-    options.push(allNew);options.sort((a,b)=>a.cost-b.cost||a.freshIds.size-b.freshIds.size);
+    options.push(allNew);options.sort((a,b)=>a.cost-b.cost||a.freshIds.size-b.freshIds.size||balance(a)-balance(b));
     const cache=new Map<string,Placement[]|null>();
     function fitTogether(opt:Option,pool:Offcut[],interval:number):Placement[]|null {
       if(!opt.targets.length)return [];
@@ -291,6 +295,65 @@ export function protectValleyReceivers(request:SolveRequest,s:Solution,cancel?:(
     if(s.decisionTrace)s.decisionTrace.events.push({step:s.decisionTrace.events.length+1,action:'coupled-valley-receiver-check',message:'Both sides were checked together using actual inherited stock. New starter sheets counted once; final quantities follow this refinement.',data:{mode,model:RECEIVER_SAFETY_MODEL,families:report.families}});
   }
 }
+/** Compare a few barge-anchored receiving grids before finalising starters.
+ * Source parents remain fixed. A phase audit is run again for EVERY candidate;
+ * changing the grid is not permission to keep an old certificate or invent cuts.
+ * We only alter terminal receiver families with no outgoing commitments. */
+export function protectValleyReceivers(request:SolveRequest,s:Solution,cancel?:()=>boolean):void {
+  protectFixedReceiverGrids(request,s,cancel);
+  if(s.objective==='simpler'||!s.bankLayout)return;
+  const started=performance.now();
+  const budget=Math.max(1000,Math.min(6000,request.settings.maxMilliseconds));
+  const families=new Map<string,string[]>();
+  for(const [id,parent] of adjacentValleyParents(request.faces,request.roof)){
+    const ids=families.get(parent)??[];ids.push(id);families.set(parent,ids);
+  }
+  for(const [parent,ids] of families){
+    if(ids.length>2||performance.now()-started>budget)continue;
+    const outgoing=s.placements.some(p=>p.kind==='reuse'&&!ids.includes(s.demands.find(d=>d.id===p.demandId)?.faceId??'')&&ids.includes(s.offcuts.find(o=>o.id===p.offcutId)?.sourceFaceId??''));
+    if(outgoing)continue;
+    let combinations:Record<string,number>[]=[{}];
+    for(const id of ids){
+      const face=request.faces.find(f=>f.id===id)!,frame=frameFor(face,request.roof),xs=face.polygon.map(p=>sceneToSurface(p,frame).x);
+      const span=Math.max(...xs)-Math.min(...xs),slack=sheetCount(span,s.profile.coverMm)*s.profile.coverMm-span;
+      const offsets=face.laneOffsetLocked?[face.laneOffsetMm]:[0,Math.max(0,slack)];
+      combinations=combinations.flatMap(c=>offsets.map(phase=>({...c,[id]:phase})));
+    }
+    const original=structuredClone(s);let best=s;
+    const assessed:Record<string,unknown>[]=[];
+    for(const offsets of combinations){
+      if(cancel?.())throw new Error('Offcut search cancelled.');
+      if(performance.now()-started>budget)break;
+      if(ids.every(id=>Math.abs(offsets[id]-original.bankLayout!.laneOffsetByFace[id])<1e-5))continue;
+      const trial=structuredClone(original),targetIds=new Set(trial.demands.filter(d=>ids.includes(d.faceId)).map(d=>d.id));
+      trial.demands=trial.demands.filter(d=>!ids.includes(d.faceId));
+      trial.placements=trial.placements.filter(p=>!targetIds.has(p.demandId));
+      for(const id of ids){
+        const face=request.faces.find(f=>f.id===id)!,frame=frameFor(face,request.roof),points=face.polygon.map(p=>sceneToSurface(p,frame));
+        const length=Math.max(...points.map(p=>p.y))-Math.min(...points.map(p=>p.y));
+        trial.bankLayout!.laneOffsetByFace[id]=offsets[id];
+        trial.bankLayout!.receiverStockLengthByFace={...trial.bankLayout!.receiverStockLengthByFace,[id]:length};
+        const ds=generateFaceDemands(request.roof,{...face,lap:trial.lapByFace[id],laneOffsetMm:offsets[id]},trial.profile,trial.settings,false,0,length,0,trial.bankLayout!.materialBanks?.find(b=>b.faceIds.includes(id))?.id,length);
+        trial.demands.push(...ds);trial.placements.push(...ds.map(d=>fresh(d.id)));
+      }
+      const inventory=rebuildInventory(trial.demands,trial.placements,trial.profile);
+      if(inventory.unresolved.length)continue;trial.offcuts=inventory.offcuts;
+      trial.receiverSafety=undefined;
+      protectFixedReceiverGrids(request,trial,cancel);
+      const valid=!validateReceiverSafety(trial).some(i=>i.severity==='error');
+      assessed.push({phaseByFace:offsets,valid,purchasedMm2:trial.metrics.newMaterialMm2,newSheets:trial.metrics.newSheetCount});
+      if(valid&&trial.metrics.newMaterialMm2<best.metrics.newMaterialMm2-1)best=trial;
+    }
+    if(best!==s)Object.assign(s,best);
+    if(s.decisionTrace)s.decisionTrace.events.push({step:s.decisionTrace.events.length+1,action:'receiver-barge-grid-search',message:'Compared barge-anchored grids using the same purchased source stock and a newly checked coupled phase certificate.',faceIds:ids,data:{parent,assessed,selectedOffsets:Object.fromEntries(ids.map(id=>[id,s.bankLayout!.laneOffsetByFace[id]]))}});
+  }
+  // Refining a terminal grid must preserve canonical face/lane ordering as well
+  // as geometry; imports/alternatives independently regenerate this exact array.
+  const order=new Map(request.faces.map((f,i)=>[f.id,i]));
+  s.demands.sort((a,b)=>(order.get(a.faceId)??0)-(order.get(b.faceId)??0)||a.laneIndex-b.laneIndex);
+  const demandOrder=new Map(s.demands.map((d,i)=>[d.id,i]));
+  s.placements.sort((a,b)=>(demandOrder.get(a.demandId)??0)-(demandOrder.get(b.demandId)??0));
+}
 /** Independently check every reported phase certificate against current physical
  * source pieces, one common interval and the same fixed fresh starter plan. */
 export function validateReceiverSafety(s:Solution):Issue[] {
@@ -300,7 +363,7 @@ export function validateReceiverSafety(s:Solution):Issue[] {
 }
 function validateReceiverCertificate(s:Solution):Issue[] {
   const issues:Issue[]=[],r=s.receiverSafety;
-  if(!r)return s.engineVersion==='2.12'&&s.settings.stockMode==='bank-first'
+  if(!r)return s.engineVersion==='2.13'&&s.settings.stockMode==='bank-first'
     ?[{severity:'error',code:'RECEIVER_SAFETY',message:'This plan is missing its receiver check. Recalculate from the reviewed roof.'}]:issues;
   const error=(message:string,faceId?:string)=>issues.push({severity:'error' as const,code:'RECEIVER_SAFETY',message,faceId});
   if(r.model!==RECEIVER_SAFETY_MODEL||!Array.isArray(r.families)||r.mode!==(s.settings.receiverPhaseMode??'quote-safe')||r.basis!=='fixed-purchased-parents-and-receiver-grid'){error('Unknown valley receiver safety model.');return issues;}

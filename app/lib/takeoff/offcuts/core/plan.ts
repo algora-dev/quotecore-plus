@@ -1,9 +1,10 @@
 import type { RoofFace, Solution } from './types';
 import { bounds } from './regions';
 import { supplyView } from './supply';
+import { reuseDepth } from './reuseDepth';
 export interface ReuseGroup {
   id: string; sourceFaceId: string; destinationFaceId: string; rootBankId?: string; supplyBlockId?: string;
-  offcutIds: string[]; demandIds: string[]; sheetCount: number;
+  offcutIds: string[]; demandIds: string[]; sheetCount: number; reuseGeneration:number;
 }
 export interface FacePlan {
   faceId: string; name: string; sheetCount: number; newCount: number; reuseCount: number; primary: boolean;
@@ -18,13 +19,13 @@ export interface FacePlan {
  * material across straight fillers or another source's offcuts. */
 export function reuseGroups(solution: Solution): ReuseGroup[] {
   const demands = new Map(solution.demands.map(d => [d.id, d])), offcuts = new Map(solution.offcuts.map(o => [o.id, o]));
-  const supply=supplyView(solution);
-  const buckets = new Map<string, { source: string; destination: string; root?: string; block?: string; members: { offcut: string; demand: string; lane: number }[] }>();
+  const supply=supplyView(solution),depths=reuseDepth(solution);
+  const buckets = new Map<string, { source: string; destination: string; root?: string; block?: string; depth:number; members: { offcut: string; demand: string; lane: number }[] }>();
   for (const p of solution.placements) {
     const d = demands.get(p.demandId), o = offcuts.get(p.offcutId ?? '');
     if (p.kind !== 'reuse' || !d || !o) continue;
     const block=supply.blockByPlacement.get(d.id);
-    const key = `${o.sourceFaceId}|${d.faceId}|${block ?? o.rootBankId ?? ""}`, bucket = buckets.get(key) ?? { source: o.sourceFaceId, destination: d.faceId, root: o.rootBankId, block, members: [] };
+    const key = `${o.sourceFaceId}|${d.faceId}|${block ?? o.rootBankId ?? ""}|${depths.get(d.id)??1}`, bucket = buckets.get(key) ?? { source: o.sourceFaceId, destination: d.faceId, root: o.rootBankId, block, depth:depths.get(d.id)??1, members: [] };
     bucket.members.push({ offcut: o.id, demand: d.id, lane: d.laneIndex }); buckets.set(key, bucket);
   }
   const groups: ReuseGroup[] = [];
@@ -33,7 +34,7 @@ export function reuseGroups(solution: Solution): ReuseGroup[] {
     let group: ReuseGroup | undefined, last = -Infinity;
     for (const member of bucket.members) {
       if (!group || member.lane !== last + 1) {
-        group = { id: `reuse:${bucket.source}:${bucket.destination}:${bucket.block??"legacy"}:${member.lane}`, sourceFaceId: bucket.source, destinationFaceId: bucket.destination, rootBankId: bucket.root, supplyBlockId: bucket.block, offcutIds: [], demandIds: [], sheetCount: 0 };
+        group = { id: `reuse:${bucket.source}:${bucket.destination}:${bucket.block??"legacy"}:g${bucket.depth}:${member.lane}`, sourceFaceId: bucket.source, destinationFaceId: bucket.destination, rootBankId: bucket.root, supplyBlockId: bucket.block, offcutIds: [], demandIds: [], sheetCount: 0,reuseGeneration:bucket.depth };
         groups.push(group);
       }
       group.offcutIds.push(member.offcut); group.demandIds.push(member.demand); group.sheetCount++; last = member.lane;

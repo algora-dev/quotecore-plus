@@ -165,10 +165,10 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
     const physical = intersect(planningLocal, rectangle(laneX, box.minY - 1, laneX + physicalWidth, box.maxY + 1));
     const expanded = extendY(physical, profile.endAllowanceMm), physicalBox = bounds(expanded);
     const y = physicalBox.minY, required = translate(expanded, -laneX, -y);
-    const bank = settings.stockMode === 'bank-first', filler = isStraightFiller(required);
+    const bank = settings.stockMode === 'bank-first';
     const receiverStock=bank&&receiverStockLengthMm!==undefined;
-    const envelope = settings.stockMode === 'face-envelope' || bank && (primary||receiverStock) && !filler;
-    const extra = bank && primary && !filler ? extraLengthMm : 0;
+    const envelope = settings.stockMode === 'face-envelope' || bank && (primary||receiverStock);
+    const extra = bank && primary ? extraLengthMm : 0;
     const cutEdges: RoofEdge[] = boundary.filter(e => ['hip', 'valley', 'broken_hip'].includes(e.kind))
       .map(e => ({ ...e, a: sub(sceneToSurface(e.a, frame), {x: laneX, y}), b: sub(sceneToSurface(e.b, frame), {x: laneX, y}) }))
       .filter(e => Math.min(e.a.x, e.b.x) < physicalWidth - EPS && Math.max(e.a.x, e.b.x) > EPS);
@@ -197,7 +197,7 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
       zoneRole: spans('ridge',x,x+w)>EPS ? 'ridge-fill' : 'cut-zone',
       ridgeOverlapMm: spans('ridge',x,x+w), eaveOverlapMm: spans('spouting',x,x+w), ...(materialBankId ? {materialBankId} : {}),
       cover: translate(cover, -laneX, -y), blank: rectangle(0, blankY0, physicalWidth, blankY0 + len),
-      ...(bank ? { stockRole: primary ? filler ? 'filler' as const : 'primary-cut' as const : 'supplement' as const } : {}) });
+      ...(bank ? { stockRole: primary ? lowerRidgeShelf || !boundary.some(e=>['hip','valley','broken_hip'].includes(e.kind)) ? 'filler' as const : 'primary-cut' as const : 'supplement' as const } : {}) });
   }
   return result;
 }

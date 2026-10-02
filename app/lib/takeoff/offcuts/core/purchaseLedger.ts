@@ -4,6 +4,7 @@
  * Areas (not sums of angled maximum lengths) conserve material through cuts. */
 import type { Issue, Lap, Placement, Point, Region, Solution } from './types';
 import { isStraightFiller } from './material';
+import { bankLaneAudit } from './bankLanes';
 import { area, bounds, intersect, rotate180, subtract, translate, unionAll } from './regions';
 
 export const PURCHASE_LEDGER_MODEL='root-sheet-ledger-v1' as const;
@@ -69,6 +70,12 @@ export function rootSheetLedger(s:Solution):PurchaseLedger {
     const requiredLength=length+2*s.profile.endAllowanceMm+(s.bankLayout.extraLengthByFace[d.faceId]??0)+(s.bankLayout.tailExtensionByFace?.[d.faceId]??0);
     const actual=bounds(d.blank).maxY-bounds(d.blank).minY;
     if(actual+1e-5<requiredLength)error('CUT_STOCK_CONTINUITY','An angled primary lane was shortened below its controlling stock length, breaking its reusable cut set.',d.id);
+  }
+  for(const bank of bankLaneAudit(s)){
+    const op=s.bankLayout!.primaryOperations!.find(o=>o.id===bank.operationId)!;
+    if(bank.invalidReason)error('BANK_COVER_STATIONS',bank.invalidReason,bank.operationId);
+    if(op.oneRootPerColumn&&(bank.duplicateColumns.length||bank.newRoots>bank.registeredColumns))
+      error('BANK_COLUMN_PURCHASE','A shared bank column claims one parent but purchases multiple sheets. Recalculate the bank.',bank.operationId);
   }
   const roots:PurchasedRoot[]=[];
   for(const [id,p] of placements)if(p.kind==='new'){

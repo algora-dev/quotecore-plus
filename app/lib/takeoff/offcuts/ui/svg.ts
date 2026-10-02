@@ -1,3 +1,5 @@
+import { eaveCoverPoints } from '../core/bankLanes';
+import { reuseDepth } from '../core/reuseDepth';
 import type { DrawingSnap, BoundaryRepair } from '../core/drafting';
 import { materialSections, type MaterialSection } from '../core/sections';
 import { hasFlow } from '../core/directions';
@@ -45,7 +47,7 @@ function containedArrow(polygon: Ring, start: Point, direction: Point, length: n
 }
 export interface RenderOptions {
   phase: 'faces' | 'solution'; selectedFaceId?: string; selectedOffcutId?: string;
-  showSheets?: boolean; showSources?: boolean; showEnvelope?: boolean;
+  showSheets?: boolean; showCoverMarks?: boolean; showSources?: boolean; showEnvelope?: boolean;
   editPieces?: boolean; editGroups?: boolean; selectedGroupId?: string;
   selectedSectionId?: string; sections?: MaterialSection[]; showDetailedLabels?: boolean;
   print?: boolean; viewBox?: string; pendingPolygon?: Point[];
@@ -59,7 +61,8 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
   const supply=s?materialColors(s):null;
   const color=(id:string):string=>supply?.face(id)??colors.get(id)??PALETTE[0];
   const lapColor=(id:string):string=>color(id);
-  const hatch=(block:string|undefined):string=>`material-hatch-${block?supply?.index.get(block)??0:0}`;
+  const hatch=(block:string|undefined,generation=1):string=>`material-hatch-${block?supply?.index.get(block)??0:0}${generation>=2?"-recut":""}`;
+  const depths=s?reuseDepth(s):new Map<string,number>();
   const px = options.print ? 1 : options.sceneUnitsPerPixel ?? 1;
   const hidden = (id: string): boolean => options.phase === 'faces' && !options.print && !!options.hiddenFaceIds?.has(id);
   const ids = new Map(faces.map((f,i)=>[f.id,i]));
@@ -91,12 +94,12 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
         if(related)activeFaces.add(section.faceId);
         const dim = !!selectedSection && !selected && !related;
         const col=supply!.color(section.supplyBlockId), name=faces.find(f=>f.id===section.faceId)?.name??section.faceId;
-        const role=section.role==='bank-continuation'?'Common-bank stock':filler?'New filler':reused?section.role==='self-fill'?'Self-fill offcuts':'Offcuts':'New bank';
+        const role=section.role==='bank-continuation'?'Common-bank stock':filler?'New filler':reused?section.role==='self-fill'?'Self-fill offcuts':section.reuseGeneration>=2?'Recut offcuts (generation '+section.reuseGeneration+')':'Offcuts':'New bank';
         const materialRole=section.role==='bank-continuation'?'bank-continuation':reused?'offcut':filler?'filler':'new-cut';
         const label=`${name} — ${role}, ${section.positionCount} sheet positions. Select for source and lengths.`;
-        shapes+=`<g data-section="${escapeHtml(section.id)}" data-demand="${escapeHtml(section.demandIds[0])}" data-material-role="${materialRole}" data-supply-block="${escapeHtml(section.supplyBlockId)}" opacity="${dim?'.18':'1'}" ${options.print?'':`role="button" tabindex="0" aria-pressed="${selected}" aria-label="${escapeHtml(label)}" style="cursor:pointer"`}><title>${escapeHtml(label)}</title>
-          <path d="${regionFillPath(section.region,p=>p)}" fill="${reused?`url(#${hatch(section.supplyBlockId)})`:filler?FILLER_COLOR:col}" fill-opacity="${reused?'.92':filler?'.64':'.16'}"/>
-          <path d="${regionOutlinePath(section.region,p=>p)}" fill="none" stroke="${selected?'#191B20':filler?'#46505E':col}" stroke-width="${selected?3:reused?1.6:1.1}" ${reused?'stroke-dasharray="6 4"':filler?'stroke-dasharray="2 4"':''} vector-effect="non-scaling-stroke"/>`;
+        shapes+=`<g data-section="${escapeHtml(section.id)}" data-reuse-generation="${section.reuseGeneration}" data-demand="${escapeHtml(section.demandIds[0])}" data-material-role="${materialRole}" data-supply-block="${escapeHtml(section.supplyBlockId)}" opacity="${dim?'.18':'1'}" ${options.print?'':`role="button" tabindex="0" aria-pressed="${selected}" aria-label="${escapeHtml(label)}" style="cursor:pointer"`}><title>${escapeHtml(label)}</title>
+          <path d="${regionFillPath(section.region,p=>p)}" fill="${reused?`url(#${hatch(section.supplyBlockId,section.reuseGeneration)})`:filler?FILLER_COLOR:col}" fill-opacity="${reused?'.92':filler?'.64':'.16'}"/>
+          <path d="${regionOutlinePath(section.region,p=>p)}" fill="none" stroke="${selected?'#191B20':filler?'#46505E':col}" stroke-width="${selected?3:reused?1.6:1.1}" stroke-opacity="${selected||reused||filler||options.showSheets?1:0}" ${reused?'stroke-dasharray="6 4"':filler?'stroke-dasharray="2 4"':''} vector-effect="non-scaling-stroke"/>`;
         if(options.showSheets||filler)for(const id of section.demandIds){
           const d=demands.get(id)!;
           shapes+=`<path d="${regionOutlinePath(d.cover,p=>demandPointToScene(p,d))}" fill="none" stroke="${filler?'#46505E':col}" stroke-width=".75" ${filler?'stroke-dasharray="2 4"':''} vector-effect="non-scaling-stroke" pointer-events="none"/>`;
@@ -121,7 +124,7 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
       const filler=p.kind==='new'&&supply!.fillerDemandIds.has(d.id);
       const sourceColor=supply!.color(block);
       const map=(q:Point)=>demandPointToScene(q,d), selected=o?.id===options.selectedOffcutId;
-      const fill=p.kind==='reuse'&&!continuation?`url(#${hatch(block)})`:filler?FILLER_COLOR:sourceColor;
+      const fill=p.kind==='reuse'&&!continuation?`url(#${hatch(block,depths.get(d.id)??1)})`:filler?FILLER_COLOR:sourceColor;
       const label=continuation?`Same-bank continuation (already supplied): ${o?.id} → ${d.id}`:p.kind==='reuse'?`${o?.id} → ${d.id}`:`${filler?'New filler (may be cut)':'New cutting stock'}: ${d.id}`;
       // An invalid moved piece is rendered in its actual transformed position,
       // not disguised as the required target polygon.
@@ -146,12 +149,16 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
       const selected = options.selectedGroupId === group.id;
       const groupColor=supply!.color(group.supplyBlockId);
       const sourceName = faces.find(f => f.id === group.sourceFaceId)?.name ?? group.sourceFaceId;
-      shapes += `<g data-group="${escapeHtml(group.id)}" data-material-role="offcut" data-supply-block="${escapeHtml(group.supplyBlockId)}" class="qc-reuse"><title>${escapeHtml(sourceName)} offcuts · ${group.sheetCount} sheets · drag this set to another face</title><path d="${regionFillPath(region, p => p)}" fill="url(#${hatch(group.supplyBlockId)})" fill-opacity=".70"/><path d="${regionOutlinePath(region, p => p)}" fill="none" stroke="${selected ? '#122c3c' : groupColor}" stroke-width="${selected ? 3 : 1.6}" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/></g>`;
+      shapes += `<g data-group="${escapeHtml(group.id)}" data-reuse-generation="${group.reuseGeneration}" data-material-role="offcut" data-supply-block="${escapeHtml(group.supplyBlockId)}" class="qc-reuse"><title>${escapeHtml(sourceName)} offcuts · ${group.sheetCount} sheets · drag this set to another face</title><path d="${regionFillPath(region, p => p)}" fill="url(#${hatch(group.supplyBlockId,group.reuseGeneration)})" fill-opacity=".70"/><path d="${regionOutlinePath(region, p => p)}" fill="none" stroke="${selected ? '#122c3c' : groupColor}" stroke-width="${selected ? 3 : 1.6}" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/></g>`;
       if (options.showSheets) for (const id of group.demandIds) {
         const d = demands.get(id)!;
         shapes += `<path d="${regionOutlinePath(d.cover, p => demandPointToScene(p, d))}" fill="none" stroke="${groupColor}" stroke-width=".7" vector-effect="non-scaling-stroke" pointer-events="none"/>`;
       }
     }
+    }
+    if(options.showCoverMarks!==false&&!options.editPieces&&!options.editGroups)for(const face of faces){
+      const ds=s.demands.filter(d=>d.faceId===face.id),col=color(face.id);
+      for(const p of eaveCoverPoints(face,roof,ds,s.profile.coverMm,s.profile.leftLapMm))shapes+=`<circle data-cover-mark="${escapeHtml(face.id)}" cx="${n(p.x)}" cy="${n(p.y)}" r="${n(2*px)}" fill="${col}" stroke="white" stroke-width=".7" vector-effect="non-scaling-stroke" pointer-events="none"><title>${s.profile.coverMm} mm cover station</title></circle>`;
     }
     for (const f of faces) shapes += `<polygon data-plan-face="${escapeHtml(f.id)}" points="${points(f.polygon)}" fill="none" stroke="#334e5a" stroke-width="1.3" vector-effect="non-scaling-stroke" pointer-events="stroke"/>`;
     if(options.showSources||options.selectedOffcutId)for(const o of s.offcuts){
@@ -218,5 +225,5 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
   const hasReviewGaps = !!options.coverage?.length;
   const padding=options.print ? 75 : 30;
   const quantities=s&&options.print?quantitySummary(s,sections):null;
-  return `<svg xmlns="http://www.w3.org/2000/svg" class="qc-scene" role="${options.print ? 'img' : 'group'}" aria-label="Roof faces and offcut review" viewBox="${options.viewBox??`${-padding} ${-padding} ${roof.sceneWidth+padding*2} ${roof.sceneHeight+padding*2}`}" style="background:#fff;touch-action:none;user-select:none;width:100%;height:100%"><defs>${supply?.blocks.map(b=>`<pattern id="${hatch(b.id)}" patternUnits="userSpaceOnUse" width="${n(10*px)}" height="${n(10*px)}"><path d="M0 0L${n(10*px)} ${n(10*px)}M${n(10*px)} 0L0 ${n(10*px)}" stroke="${supply.color(b.id)}" stroke-width="${n(1.0*px)}"/><rect width="${n(10*px)}" height="${n(10*px)}" fill="${supply.color(b.id)}" fill-opacity=".12"/></pattern>`).join('')??''}<marker id="water-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#191B20"/></marker>${defs}</defs>${shapes}${options.print?`<text x="16" y="-12" font-family="system-ui" font-size="11" fill="#303641">Colour: new cutting stock · matching hatch: reused · grey / dotted: new fillers (may be cut)</text>`:''}${options.print?`<text x="16" y="${roof.sceneHeight+20}" font-family="system-ui" font-size="12" fill="#B63D0A">DRAFT CUT / REUSE PLAN — VERIFY PROFILE AND SITE LENGTHS — NOT AN ORDER</text>${quantities?`<text x="16" y="${roof.sceneHeight+40}" font-family="system-ui" font-size="12" fill="#303641">${quantities.newSheetCount} new sheets · ${quantities.purchasedLinealM.toFixed(2)} lm · ${quantities.suppliedCoverAreaM2.toFixed(2)} m² cover-based supply · selected scope only · no spares</text>`:''}${hasReviewGaps ? `<text x="16" y="${roof.sceneHeight+60}" font-family="system-ui" font-size="11" fill="#825000">AMBER AREAS: drawing discrepancies remain; no missing area was filled by this plan.</text>` : ''}`:''}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" class="qc-scene" role="${options.print ? 'img' : 'group'}" aria-label="Roof faces and offcut review" viewBox="${options.viewBox??`${-padding} ${-padding} ${roof.sceneWidth+padding*2} ${roof.sceneHeight+padding*2}`}" style="background:#fff;touch-action:none;user-select:none;width:100%;height:100%"><defs>${supply?.blocks.map(b=>`<pattern id="${hatch(b.id)}" patternUnits="userSpaceOnUse" width="${n(10*px)}" height="${n(10*px)}"><path d="M0 0L${n(10*px)} ${n(10*px)}M${n(10*px)} 0L0 ${n(10*px)}" stroke="${supply.color(b.id)}" stroke-width="${n(1.0*px)}"/><rect width="${n(10*px)}" height="${n(10*px)}" fill="${supply.color(b.id)}" fill-opacity=".12"/></pattern><pattern id="${hatch(b.id,2)}" patternUnits="userSpaceOnUse" width="${n(10*px)}" height="${n(10*px)}"><rect width="${n(10*px)}" height="${n(10*px)}" fill="${supply.color(b.id)}" fill-opacity=".12"/><path d="M0 ${n(5*px)}H${n(10*px)}" stroke="${supply.color(b.id)}" stroke-width="${n(1.15*px)}"/></pattern>`).join('')??''}<marker id="water-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#191B20"/></marker>${defs}</defs>${shapes}${options.print?`<text x="16" y="-12" font-family="system-ui" font-size="11" fill="#303641">Solid: new · crosshatch: reused · parallel hatch: recut · grey: fillers · dots: cover stations</text>`:''}${options.print?`<text x="16" y="${roof.sceneHeight+20}" font-family="system-ui" font-size="12" fill="#B63D0A">DRAFT CUT / REUSE PLAN — VERIFY PROFILE AND SITE LENGTHS — NOT AN ORDER</text>${quantities?`<text x="16" y="${roof.sceneHeight+40}" font-family="system-ui" font-size="12" fill="#303641">${quantities.newSheetCount} new sheets · ${quantities.purchasedLinealM.toFixed(2)} lm · ${quantities.suppliedCoverAreaM2.toFixed(2)} m² cover-based supply · selected scope only · no spares</text>`:''}${hasReviewGaps ? `<text x="16" y="${roof.sceneHeight+60}" font-family="system-ui" font-size="11" fill="#825000">AMBER AREAS: drawing discrepancies remain; no missing area was filled by this plan.</text>` : ''}`:''}</svg>`;
 }

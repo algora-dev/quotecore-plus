@@ -27,7 +27,7 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
     ? optimiseBankLayouts(request, hooks) : [optimiseLegacy(request, hooks)];
   for (const solution of solutions) {
     if(request.settings.stockMode==='bank-first')protectValleyReceivers(request,solution,hooks.shouldCancel);
-    solution.engineVersion='2.12';
+    solution.engineVersion='2.13';
     solution.layoutId=planSignature(solution);
     solution.issues.push(...validateSolution(solution));
     if (solution.issues.some(i => i.severity === 'error')) solution.status = 'invalid';

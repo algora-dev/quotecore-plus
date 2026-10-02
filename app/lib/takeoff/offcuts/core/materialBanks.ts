@@ -44,7 +44,7 @@ export function bankOffsets(face: RoofFace, bank: MaterialBank, request: SolveRe
   const xs=face.polygon.map(p=>sceneToSurface(p,frame).x), min=Math.min(...xs), span=Math.max(...xs)-min;
   const mod=(n:number):number=>{const r=((n%w)+w)%w;return r<1e-6||w-r<1e-6?0:r;};
   const globalMin=Math.min(...face.polygon.map(p=>dot(p,frame.u)*request.roof.mmPerSceneUnit));
-  const phases=[face.laneOffsetMm,mod(globalMin-bank.crossMinMm),0,...xs.map(x=>mod(-(x-min)))];
+  const phases=[0,mod(sheetCount(span,w)*w-span),face.laneOffsetMm,mod(globalMin-bank.crossMinMm),...xs.map(x=>mod(-(x-min)))];
   return phases.filter((p,i,a)=>a.findIndex(q=>Math.abs(p-q)<1e-5)===i)
     .filter(p=>sheetCount(span,w,p)<=sheetCount(span,w)+1).slice(0,8);
 }

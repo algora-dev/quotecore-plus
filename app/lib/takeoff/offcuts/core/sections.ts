@@ -3,10 +3,13 @@ import { area, bandRing, bounds, components, fromRing, intersect, unionAll } fro
 import { demandPointToScene, scenePointToDemand } from './material';
 import { fingerprint } from './math';
 import { supplyView } from './supply';
+import { reuseDepth } from './reuseDepth';
 
 export type SectionRole = 'new-bank' | 'new-filler' | 'offcut' | 'self-fill' | 'bank-continuation';
 export interface MaterialSection {
   id: string; faceId: string; role: SectionRole; supplyBlockId: string;
+  /** External reuse generation; shared-bank continuations stay at generation 0. */
+  reuseGeneration: number;
   /** Contiguous visible region in scene coordinates. Never an invented envelope. */
   region: Region;
   demandIds: string[]; offcutIds: string[]; rootDemandIds: string[];
@@ -33,7 +36,7 @@ export function purchasedLengthMm(demand: Demand): number {
 }
 interface Member {
   demand: Demand; scene: Region; root: string; offcutId?: string;
-  source?: string; cutKind?: string; cutSet?: string; role: SectionRole; block: string;
+  source?: string; cutKind?: string; cutSet?: string; role: SectionRole; block: string; depth: number;
 }
 /** View-model derived from the selected physical allocation. Sections do not
  * change cuts, purchase sheets, merge source identities or rerun the optimiser.
@@ -42,6 +45,7 @@ interface Member {
  * disconnected regions or multiple faces. */
 export function materialSections(s: Solution): MaterialSection[] {
   const ds = new Map(s.demands.map(d => [d.id,d])), os = new Map(s.offcuts.map(o => [o.id,o]));
+  const depths=reuseDepth(s);
   const supply = supplyView(s), buckets = new Map<string, Member[]>();
   const seen = new Set<string>();
   for (const p of s.placements) {
@@ -50,10 +54,10 @@ export function materialSections(s: Solution): MaterialSection[] {
     const role: SectionRole = p.kind==='new' ? supply.fillerDemandIds.has(d.id) ? 'new-filler' : 'new-bank' :
       supply.continuationDemandIds.has(d.id) ? 'bank-continuation' : o?.sourceFaceId===d.faceId ? 'self-fill' : 'offcut';
     const block = supply.blockByPlacement.get(d.id) ?? `unresolved:${d.id}`;
-    const key = JSON.stringify([d.faceId,role,block,p.kind==='reuse'?o?.sourceFaceId:'',p.kind==='reuse'?o?.cutSetId:'',
+    const key = JSON.stringify([d.faceId,role,block,depths.get(d.id)??0,p.kind==='reuse'?o?.sourceFaceId:'',p.kind==='reuse'?o?.cutSetId:'',
       p.kind==='reuse'?p.rotation:'purchased-operation']);
     const member: Member = { demand:d, scene:mapRegion(d.cover,q=>demandPointToScene(q,d)), root:p.kind==='new'?d.id:o?.rootDemandId??o?.sourceDemandId??'',
-      role,block,offcutId:p.kind==='reuse'?o?.id:undefined,source:o?.sourceFaceId,cutKind:o?.cutKind,cutSet:o?.cutSetId };
+      role,block,depth:depths.get(d.id)??0,offcutId:p.kind==='reuse'?o?.id:undefined,source:o?.sourceFaceId,cutKind:o?.cutKind,cutSet:o?.cutSetId };
     const bucket=buckets.get(key)??[]; bucket.push(member); buckets.set(key,bucket);
   }
   const sections: MaterialSection[]=[];
@@ -68,7 +72,7 @@ export function materialSections(s: Solution): MaterialSection[] {
         const b=bounds(local); netCoverAreaM2+=area(local)/1e6;cutPieceRunLinealM+=(b.maxY-b.minY)/1000;
       }
       sections.push({id:`section:${first.demand.faceId}:${fingerprint([key,index,included.map(i=>i.m.demand.id)])}`,
-        faceId:first.demand.faceId,role:first.role,supplyBlockId:first.block,region,
+        faceId:first.demand.faceId,role:first.role,supplyBlockId:first.block,reuseGeneration:first.depth,region,
         demandIds:unique(included.map(i=>i.m.demand.id)),offcutIds:unique(included.map(i=>i.m.offcutId)),
         rootDemandIds:unique(included.map(i=>i.m.root)),sourceFaceIds:unique(included.map(i=>i.m.source)),
         cutKinds:unique(included.map(i=>i.m.cutKind)),cutSetIds:unique(included.map(i=>i.m.cutSet)),
