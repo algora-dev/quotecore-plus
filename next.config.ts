@@ -78,6 +78,15 @@ const APP_CSP_REPORT_ONLY = [
 
 const nextConfig: NextConfig = {
   pageExtensions: ["ts", "tsx", "md", "mdx"],
+  // Full-scene takeoff snapshots are exported at the plan's native
+  // resolution (capped at 2400px long side) and reach the uploadCanvasImage
+  // server action as base64 data URLs - the default 1MB action body limit
+  // would reject them (2026-10-02).
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '8mb',
+    },
+  },
   // Client build stamp for stale-bundle detection: the assistant compares its
   // baked NEXT_PUBLIC_BUILD_ID against /api/build-id and reloads when the
   // deployed build differs (open PWAs otherwise keep running the old bundle).

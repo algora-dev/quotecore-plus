@@ -23,6 +23,7 @@ import type {
 } from '@/app/lib/takeoff/precision/touchAiOutline';
 import { outlineDependentRecompute, type SavedOutlineRecord } from '@/app/lib/takeoff/precision/touchOutlines';
 import { cornerTotalsAcross, cornerSelection, cornerValueBasis, isCornerValueBasis, type CornerBasis } from '@/app/lib/takeoff/cornerCount';
+import { snapshotSceneAtImageBounds } from './canvasSnapshot';
 
 /** Measurement types whose entries are counts (draw mode = single-tap
  *  point). Corner counting applies to these (2026-09-30). */
@@ -3021,36 +3022,35 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (fabricRef.current) {
         const canvas = fabricRef.current;
         
-        // 1. Export FULL canvas (plan image + drawings)
+        // 1. Export FULL canvas (plan image + drawings) at the plan image's
+        // own bounds and native resolution - NOT the user's current view
+        // (owner rule 2026-10-02: viewport snapshots stored zoomed-in crops).
         console.log('[SaveTakeoff] Exporting full canvas image...');
-        const fullDataUrl = canvas.toDataURL({
-          format: 'png',
-          quality: 0.9,
-          multiplier: 1,
-        });
-        
-        try {
-          const uploadResult = await takeoffActions.uploadCanvasImage(quote.id, fullDataUrl);
-          if (uploadResult.ok) {
-            canvasImagePath = uploadResult.path;
-            console.log('[SaveTakeoff] Full canvas image uploaded (path):', canvasImagePath);
-          } else {
-            console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadResult.error);
+        const fullDataUrl = snapshotSceneAtImageBounds(canvas, { includeBackground: true });
+
+        if (fullDataUrl) {
+          try {
+            const uploadResult = await takeoffActions.uploadCanvasImage(quote.id, fullDataUrl);
+            if (uploadResult.ok) {
+              canvasImagePath = uploadResult.path;
+              console.log('[SaveTakeoff] Full canvas image uploaded (path):', canvasImagePath);
+            } else {
+              console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadResult.error);
+            }
+          } catch (uploadError) {
+            console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadError);
           }
-        } catch (uploadError) {
-          console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadError);
         }
-        
-        // 2. Export LINES-ONLY (hide bg image + area fills, convert all to black)
+        // 2. Export LINES-ONLY (drawings only, full plan bounds - helper hides bg)
         console.log('[SaveTakeoff] Exporting lines-only image...');
         try {
           const objects = canvas.getObjects();
           const bgImage = canvas.backgroundImage;
           
-          // Store original state for all objects
-          const originalBg = canvas.backgroundColor;
+          // Store original state for all objects (styles only - the
+          // snapshot helper owns background visibility + canvas colour).
           const originalStates: { obj: any; fill: any; stroke: any; visible: boolean }[] = [];
-          
+
           objects.forEach((obj: any) => {
             originalStates.push({
               obj,
@@ -3059,65 +3059,60 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               visible: obj.visible !== false,
             });
           });
-          
-          // Hide background image
-          const originalBgVisible = bgImage ? (bgImage as any).visible : true;
-          if (bgImage) (bgImage as any).set('visible', false);
-          canvas.backgroundColor = '#ffffff';
-          
-          // Convert all drawable objects to black, remove area fills
-          objects.forEach((obj: any) => {
-            if (obj === bgImage) return;
-            
-            // Polygons: remove fill overlay, black stroke
-            if (obj.type === 'polygon') {
-              obj.set({ fill: 'transparent', stroke: '#000000' });
-            }
-            // Lines: black stroke
-            else if (obj.type === 'line') {
-              obj.set({ stroke: '#000000' });
-            }
-            // Circles (markers): black fill and stroke
-            else if (obj.type === 'circle') {
-              obj.set({ fill: '#000000', stroke: '#000000' });
-            }
-            // Triangles (arrow markers): black
-            else if (obj.type === 'triangle') {
-              obj.set({ fill: '#000000', stroke: '#000000' });
-            }
-            // Any other drawn object: try black
-            else if (obj !== bgImage) {
-              if (obj.stroke) obj.set({ stroke: '#000000' });
-              if (obj.fill && obj.fill !== 'transparent') obj.set({ fill: '#000000' });
-            }
-          });
-          
-          canvas.renderAll();
-          
-          // Export
-          const linesDataUrl = canvas.toDataURL({
-            format: 'png',
-            quality: 0.9,
-            multiplier: 1,
-          });
-          
-          // Restore ALL original states
-          originalStates.forEach(({ obj, fill, stroke, visible }) => {
-            obj.set({ fill, stroke, visible });
-          });
-          if (bgImage) (bgImage as any).set('visible', originalBgVisible);
-          canvas.backgroundColor = originalBg as string;
-          canvas.renderAll();
-          
-          // Upload lines-only image
-          const linesResult = await takeoffActions.uploadCanvasImage(quote.id, linesDataUrl, 'lines');
-          if (linesResult.ok) {
-            linesImagePath = linesResult.path;
-            console.log('[SaveTakeoff] Lines-only image uploaded (path):', linesImagePath);
-          } else {
-            console.error('[SaveTakeoff] Failed to upload lines-only image:', linesResult.error);
+
+          // Convert all drawable objects to black, remove area fills, then
+          // export at the plan image's bounds - full plan extent,
+          // independent of the user's zoom/pan (owner rule 2026-10-02).
+          let linesDataUrl: string | null = null;
+          try {
+            objects.forEach((obj: any) => {
+              if (obj === bgImage) return;
+
+              // Polygons: remove fill overlay, black stroke
+              if (obj.type === 'polygon') {
+                obj.set({ fill: 'transparent', stroke: '#000000' });
+              }
+              // Lines: black stroke
+              else if (obj.type === 'line') {
+                obj.set({ stroke: '#000000' });
+              }
+              // Circles (markers): black fill and stroke
+              else if (obj.type === 'circle') {
+                obj.set({ fill: '#000000', stroke: '#000000' });
+              }
+              // Triangles (arrow markers): black
+              else if (obj.type === 'triangle') {
+                obj.set({ fill: '#000000', stroke: '#000000' });
+              }
+              // Any other drawn object: try black
+              else if (obj !== bgImage) {
+                if (obj.stroke) obj.set({ stroke: '#000000' });
+                if (obj.fill && obj.fill !== 'transparent') obj.set({ fill: '#000000' });
+              }
+            });
+
+            canvas.renderAll();
+            linesDataUrl = snapshotSceneAtImageBounds(canvas, { includeBackground: false });
+          } finally {
+            // Restore ALL original states. finally: never leave the live
+            // canvas restyled if the export throws.
+            originalStates.forEach(({ obj, fill, stroke, visible }) => {
+              obj.set({ fill, stroke, visible });
+            });
+            canvas.renderAll();
           }
-        } catch (linesError) {
+
+          // Upload lines-only image
+          if (linesDataUrl) {
+            const linesResult = await takeoffActions.uploadCanvasImage(quote.id, linesDataUrl, 'lines');
+            if (linesResult.ok) {
+              linesImagePath = linesResult.path;
+              console.log('[SaveTakeoff] Lines-only image uploaded (path):', linesImagePath);
+            } else {
+              console.error('[SaveTakeoff] Failed to upload lines-only image:', linesResult.error);
+            }
+          }
+          } catch (linesError) {
           console.error('[SaveTakeoff] Failed to export lines-only image:', linesError);
         }
       }
