@@ -51,6 +51,8 @@ import {
   enforceHipValleyAngleRule,
   type AugmentedLine,
 } from '@/app/lib/takeoff/outlineGeometry';
+import { computeScanTolerances, pxPerMmToImageSpace, roofDiagonalPx } from '@/app/lib/takeoff/scanTolerances';
+import { cornerCompletenessPass, nearPairReviewRule } from '@/app/lib/takeoff/cornerCompleteness';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -61,6 +63,9 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'placeholder' 
 
 interface LineEntry { points: Array<{ x: number; y: number }> }
 interface RoofAreaEntry { name: string; points: Array<{ x: number; y: number }>; pitch_degrees: number | null }
+/** Corner with no line and no review candidate: rendered as a pink circle so
+ *  the user sees exactly which internal/external corner needs attention. */
+interface CornerMarkerEntry { x: number; y: number; cornerType: 'concave' | 'convex'; reason: string }
 interface AiScanResult {
   scale: { detected: boolean; ratio: string | null; dimension_line: { p1: { x: number; y: number }; p2: { x: number; y: number }; real_length: number; unit: string } | null };
   pitch: { detected: boolean; global_degrees: number | null };
@@ -70,6 +75,10 @@ interface AiScanResult {
     broken_hips: LineEntry[]; barges: LineEntry[]; spouting: LineEntry[];
     uncertain: LineEntry[];
   };
+  /** Corners the completeness pass could not resolve (pink circle markers). */
+  unresolved_corners?: CornerMarkerEntry[];
+  /** Stage statistics persisted through the Scan 3 save for diagnosis. */
+  stats?: Record<string, unknown>;
   notes: string[];
   error?: string;
 }
@@ -947,6 +956,14 @@ export async function POST(req: NextRequest) {
         y: Math.round(p.y * scaleY),
       }));
 
+      // Calibration-aware tolerances (owner rule 2026-10-02): fixed pixel
+      // limits are replaced by real-world 150mm distances derived from the
+      // user's own calibration when available; legacy pixel behaviour is the
+      // fallback so uncalibrated scans are neither blocked nor loosened.
+      const pxPerMmCanvas2 = typeof body.pxPerMm === 'number' && Number.isFinite(body.pxPerMm) ? body.pxPerMm : null;
+      const tolerances2 = computeScanTolerances(pxPerMmToImageSpace(pxPerMmCanvas2, imgW, canvasW), roofDiagonalPx(outlinePoints));
+      console.log(`[ai-scan-v3:${requestId}] scan2 tolerances: ${tolerances2.legacy ? 'legacy px (no calibration supplied)' : `calibration snap=${Math.round(tolerances2.snap)}px (150mm)`}`);
+
       const outlineOverlayBuffer = await renderOutlineOverlay(processedBuffer, outlinePoints, imgW, imgH);
       timer.mark('overlay_done');
 
@@ -1014,7 +1031,7 @@ export async function POST(req: NextRequest) {
       const strokeFilteredLines = rawLines.filter(l => !dashedRawIds.has(l.id));
 
       const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(strokeFilteredLines);
-      const { connected: connectedLines, floating: floatingLines } = validateConnectivity(angleValidLines, outlinePoints);
+      const { connected: connectedLines, floating: floatingLines } = validateConnectivity(angleValidLines, outlinePoints, tolerances2.connectivity);
 
       // ── Pre-Scan-3 artificial split healing (classification-independent) ──
       // After dashed removal, merge collinear fragments that meet where no other
@@ -1036,13 +1053,27 @@ export async function POST(req: NextRequest) {
       }
       const scan2aLines: V3Line[] = clusterResult.lines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
       const finalLines: V3Line[] = scan2aLines;
+      // Owner rule: no silent losses. Angle-rejected and floating candidates
+      // are carried to Scan 3 as review lines instead of disappearing - they
+      // feed the corner completeness pass or surface as pink review lines.
+      const reviewLines: V3Line[] = [...angleRejectedLines, ...floatingLines]
+        .filter(l => {
+          const len = Math.hypot(l.end.x - l.start.x, l.end.y - l.start.y);
+          return len >= 5;
+        })
+        .map((l, i) => ({ id: `R${i + 1}`, start: l.start, end: l.end, confidence: l.confidence }));
       timer.mark('postprocess_done');
 
-      console.log(`[ai-scan-v3:${requestId}] scan2 postprocess: raw=${rawLines.length} dashedRemoved=${dashedRawIds.size} ambiguous=${ambiguousStrokeCount} angleValid=${angleValidLines.length} connected=${connectedLines.length} preHealed=${healResult.merges.length} rejected(angle)=${angleRejectedLines.length} floating=${floatingLines.length}`);
+      console.log(`[ai-scan-v3:${requestId}] scan2 postprocess: raw=${rawLines.length} dashedRemoved=${dashedRawIds.size} ambiguous=${ambiguousStrokeCount} angleValid=${angleValidLines.length} connected=${connectedLines.length} preHealed=${healResult.merges.length} rejected(angle)=${angleRejectedLines.length} floating=${floatingLines.length} reviewLines=${reviewLines.length}`);
 
       const canvasScaleX = canvasW / imgW;
       const canvasScaleY = canvasH / imgH;
       const linesCanvas = finalLines.map(l => ({
+        ...l,
+        start: scalePoint(l.start, canvasScaleX, canvasScaleY),
+        end: scalePoint(l.end, canvasScaleX, canvasScaleY),
+      }));
+      const reviewLinesCanvas = reviewLines.map(l => ({
         ...l,
         start: scalePoint(l.start, canvasScaleX, canvasScaleY),
         end: scalePoint(l.end, canvasScaleX, canvasScaleY),
@@ -1053,10 +1084,11 @@ export async function POST(req: NextRequest) {
         const scan2Data = {
           roof_areas: [{ name: 'Area 1', points: outlineCanvas, pitch_degrees: null }],
           lines: linesCanvas,
+          review_lines: reviewLinesCanvas,
           analysisDimensions: { width: imgW, height: imgH },
           canvasDimensions: { width: canvasW, height: canvasH },
           notes,
-          stats: { rawLines: rawLines.length, dashedRemoved: dashedRawIds.size, ambiguousStrokes: ambiguousStrokeCount, preHealedMerges: healResult.merges.length, angleValid: angleValidLines.length, connected: connectedLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length },
+          stats: { rawLines: rawLines.length, dashedRemoved: dashedRawIds.size, ambiguousStrokes: ambiguousStrokeCount, preHealedMerges: healResult.merges.length, angleValid: angleValidLines.length, connected: connectedLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, reviewLines: reviewLines.length },
         };
         await supabase.from('takeoff_pages')
           .update({ ai_scan_result: JSON.parse(JSON.stringify(scan2Data)) })
@@ -1082,10 +1114,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         stage: 'scan2',
-        data: { lines: linesCanvas, outlinePoints: outlineCanvas, notes },
+        data: { lines: linesCanvas, reviewLines: reviewLinesCanvas, outlinePoints: outlineCanvas, notes },
         analysisDimensions: { width: imgW, height: imgH },
         canvasDimensions: { width: canvasW, height: canvasH },
-        summary: { rawLines: rawLines.length, finalLines: finalLines.length, dashedRemoved: dashedRawIds.size, preHealedMerges: healResult.merges.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, notes },
+        summary: { rawLines: rawLines.length, finalLines: finalLines.length, dashedRemoved: dashedRawIds.size, preHealedMerges: healResult.merges.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, reviewLines: reviewLines.length, notes },
         debugImages: scan2DebugUrls,
       });
     }
@@ -1123,6 +1155,21 @@ export async function POST(req: NextRequest) {
         confidence: l.confidence,
       }));
 
+      // Calibration-aware tolerances + review lines from Scan 2 (owner rule:
+      // no silent losses - angle-rejected and floating candidates feed the
+      // corner completeness pass or surface as pink review lines).
+      const pxPerMmCanvas3 = typeof body.pxPerMm === 'number' && Number.isFinite(body.pxPerMm) ? body.pxPerMm : null;
+      const tolerances3 = computeScanTolerances(pxPerMmToImageSpace(pxPerMmCanvas3, imgW, canvasW), roofDiagonalPx(outlinePoints));
+      const reviewLines: V3Line[] = (Array.isArray(body.reviewLines) ? body.reviewLines : [])
+        .filter((l): l is V3Line => !!l && typeof l === 'object' && !!l.start && !!l.end)
+        .map(l => ({
+          id: typeof l.id === 'string' && l.id ? l.id : `R${Math.random().toString(36).slice(2, 6)}`,
+          start: { x: Math.round(l.start.x * scaleX), y: Math.round(l.start.y * scaleY) },
+          end: { x: Math.round(l.end.x * scaleX), y: Math.round(l.end.y * scaleY) },
+          confidence: typeof l.confidence === 'number' ? l.confidence : 0.5,
+        }));
+      console.log(`[ai-scan-v3:${requestId}] scan3 tolerances: ${tolerances3.legacy ? 'legacy px (no calibration supplied)' : `calibration snap=${Math.round(tolerances3.snap)}px (150mm)`}; reviewLines=${reviewLines.length}`);
+
       const edgeLines = outlineToEdgeLines(outlinePoints);
       const allLines = [...lines, ...edgeLines];
 
@@ -1138,7 +1185,7 @@ export async function POST(req: NextRequest) {
           id: v.id, index: v.index, x: v.x, y: v.y, cornerType: v.cornerType,
         }));
         // Only match internal lines (not edge lines) - edges ARE the outline
-        augmentedLines = matchEndpointsToVertices(allLines, classifiedVertices, 15);
+        augmentedLines = matchEndpointsToVertices(allLines, classifiedVertices, tolerances3.snap);
         console.log(`[ai-scan-v3:${requestId}] scan3: vertex classification: ${classifiedVertices.length} vertices (${classifiedVertices.filter(v => v.cornerType === 'convex').length} convex, ${classifiedVertices.filter(v => v.cornerType === 'concave').length} concave, ${classifiedVertices.filter(v => v.cornerType === 'collinear').length} collinear)`);
       } catch (vertexError) {
         console.warn(`[ai-scan-v3:${requestId}] scan3: vertex classification failed:`, vertexError instanceof Error ? vertexError.message : vertexError);
@@ -1303,16 +1350,62 @@ export async function POST(req: NextRequest) {
         finalClassifications = mergeResult.classifications as typeof finalClassifications;
       }
 
+      // ── Near-pair review rule (owner rule, calibration-based 150mm) ──
+      // Two parallel-ish internal lines closer than the calibration distance
+      // at any point are surfaced for review instead of being trusted; a hip
+      // next to a valley further apart than 150mm keeps its classification.
+      const classificationByLineId = new Map(finalClassifications.map(c => [c.line_id, { type: c.type }]));
+      if (tolerances3.nearPair !== null) {
+        const nearPair = nearPairReviewRule({ lines, classificationByLineId, nearPairTolerance: tolerances3.nearPair });
+        if (nearPair.reviewIds.size > 0) {
+          console.log(`[ai-scan-v3:${requestId}] scan3 near-pair review: ${[...nearPair.reviewIds].join(', ')}`);
+          finalClassifications = finalClassifications.map(c =>
+            nearPair.reviewIds.has(c.line_id) && c.type !== 'uncertain'
+              ? { ...c, type: 'uncertain' as const, reason: nearPair.reasons.get(c.line_id) ?? c.reason }
+              : c);
+        }
+      }
+
+      // ── Corner completeness pass (owner hard rule 2026-10-02) ──
+      // Every concave corner (and qualifying convex spouting corners) must
+      // have a line: promote review candidates that reconnect to the network
+      // (valley/hip), surface others as pink review lines, and mark corners
+      // with no candidate at all (pink circle markers).
+      const edgeLineById = new Map(edgeLines.map(e => [e.id, { start: e.start, end: e.end, type: classificationByLineId.get(e.id)?.type ?? '' }]));
+      const corner = cornerCompletenessPass({
+        outlinePoints, lines, classificationByLineId, edgeLineById,
+        reviewLines, snapTolerance: tolerances3.snap,
+      });
+      if (corner.promoted.length || corner.reviewSurfaced.length || corner.cornerMarkers.length) {
+        console.log(`[ai-scan-v3:${requestId}] scan3 corner completeness: promoted=${corner.promoted.length} surfaced=${corner.reviewSurfaced.length} markers=${corner.cornerMarkers.length}`);
+      }
+      for (const p of corner.promoted) {
+        lines.push(p.line);
+        finalClassifications.push({ line_id: p.line.id, type: p.type, confidence: 0.6, reason: p.reason });
+      }
+      const surfacedReviewIds = new Set(corner.reviewSurfaced.map(s => s.line.id));
+
       const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
 
       // Build AiScanResult
       const components = classificationsToComponents(lines, outlinePoints, finalClassifications);
+      // No silent losses: corner-surfaced review lines anchor their corner;
+      // any remaining unconsumed review lines surface as plain uncertain.
+      for (const s of corner.reviewSurfaced) {
+        components.uncertain.push({ points: [{ x: s.line.start.x, y: s.line.start.y }, { x: s.line.end.x, y: s.line.end.y }] });
+      }
+      for (const rl of reviewLines) {
+        if (surfacedReviewIds.has(rl.id)) continue;
+        if (corner.promoted.some(p => p.line.id === rl.id)) continue;
+        components.uncertain.push({ points: [{ x: rl.start.x, y: rl.start.y }, { x: rl.end.x, y: rl.end.y }] });
+      }
 
       const aiResult: AiScanResult = {
         scale: { detected: false, ratio: null, dimension_line: null },
         pitch: { detected: false, global_degrees: null },
         roof_areas: [{ name: 'Area 1', points: outlinePoints, pitch_degrees: null }],
         components,
+        unresolved_corners: corner.cornerMarkers.map(m => ({ x: m.x, y: m.y, cornerType: m.cornerType, reason: m.reason })),
         notes,
       };
 
@@ -1323,6 +1416,23 @@ export async function POST(req: NextRequest) {
       // Scale to canvas dimensions
       const canvasResult = scaleResult(correctedResult, canvasW / imgW, canvasH / imgH);
       canvasResult.roof_areas = [{ name: 'Area 1', points: outlinePointsCanvas, pitch_degrees: null }];
+
+      // Persist scan-stage stats through the Scan 3 save (observability: the
+      // next occurrence of a missing-valley scan is diagnosable from the DB).
+      const scan2Summary = body.scan2Summary && typeof body.scan2Summary === 'object'
+        ? body.scan2Summary as Record<string, unknown>
+        : null;
+      canvasResult.stats = {
+        scan2: scan2Summary,
+        scan3: {
+          totalLines: lines.length,
+          classified: finalClassifications.length,
+          reviewLinesIn: reviewLines.length,
+          cornerPromoted: corner.promoted.length,
+          cornerSurfaced: corner.reviewSurfaced.length,
+          cornerMarkers: corner.cornerMarkers.length,
+        },
+      };
 
       // Persist final result
       if (pageId) {
@@ -1354,6 +1464,7 @@ export async function POST(req: NextRequest) {
         data: canvasResult,
         summary: {
           areas: canvasResult.roof_areas.length,
+          unresolvedCorners: canvasResult.unresolved_corners?.length ?? 0,
           components: canvasResult.components.ridges.length + canvasResult.components.hips.length + canvasResult.components.valleys.length + canvasResult.components.broken_hips.length + canvasResult.components.barges.length + canvasResult.components.spouting.length + canvasResult.components.uncertain.length,
           ridges: canvasResult.components.ridges.length,
           hips: canvasResult.components.hips.length,

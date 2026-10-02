@@ -29,6 +29,9 @@ import { mergeArtificialCollinearSplits, removeIslandMicroClusters, findIsolated
 
 export interface LineEntry { points: Array<{ x: number; y: number }> }
 export interface RoofAreaEntry { name: string; points: Array<{ x: number; y: number }>; pitch_degrees: number | null }
+/** Corner with no line and no review candidate: rendered as a pink circle so
+ *  the user sees exactly which internal/external corner needs attention. */
+export interface CornerMarkerEntry { x: number; y: number; cornerType: 'concave' | 'convex'; reason: string }
 export interface AiScanResult {
   scale: { detected: boolean; ratio: string | null; dimension_line: { p1: { x: number; y: number }; p2: { x: number; y: number }; real_length: number; unit: string } | null };
   pitch: { detected: boolean; global_degrees: number | null };
@@ -38,6 +41,10 @@ export interface AiScanResult {
     broken_hips: LineEntry[]; barges: LineEntry[]; spouting: LineEntry[];
     uncertain: LineEntry[];
   };
+  /** Corners the completeness pass could not resolve (pink circle markers). */
+  unresolved_corners?: CornerMarkerEntry[];
+  /** Stage statistics persisted through the Scan 3 save for diagnosis. */
+  stats?: Record<string, unknown>;
   notes: string[];
   error?: string;
 }
@@ -77,6 +84,11 @@ function scaleResult(result: AiScanResult, scaleX: number, scaleY: number): AiSc
       spouting: result.components.spouting.map(scaleLine),
       uncertain: result.components.uncertain.map(scaleLine),
     },
+    unresolved_corners: result.unresolved_corners?.map(c => ({
+      ...c,
+      x: scalePoint(c, scaleX, scaleY).x,
+      y: scalePoint(c, scaleX, scaleY).y,
+    })),
   };
 }
 

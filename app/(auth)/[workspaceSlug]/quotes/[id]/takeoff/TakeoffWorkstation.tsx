@@ -4365,6 +4365,21 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             reader.readAsDataURL(imgBlob);
           });
           const compressed = await compressImageForAiScan(dataUrl);
+          // Calibration-derived scale (owner rule 2026-10-02): the scan
+          // pipeline converts its pixel tolerances to real-world 150mm
+          // distances using the user's own calibration for this page.
+          const scanPxPerMm = (() => {
+            try {
+              if (!calibrations.length) return null;
+              const scale = effectiveScaleFromLegacyCalibrations(calibrations);
+              if (!Number.isFinite(scale) || scale <= 0) return null;
+              const metersPerPx = (calibrations[0]?.unit ?? 'feet') === 'meters' ? scale : scale * 0.3048;
+              const mmPerPx = metersPerPx * 1000;
+              return mmPerPx > 0 ? 1 / mmPerPx : null;
+            } catch {
+              return null;
+            }
+          })();
           // scan2: line detection on the corrected outline (canvas space).
           onStage?.('lines');
           const scan2Response = await fetch(aiScanEndpoint, {
@@ -4380,6 +4395,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               outlinePoints,
               analysisDimensions: dims,
               qualityLevel,
+              pxPerMm: scanPxPerMm,
             }),
             signal: abortController.signal,
           });
@@ -4388,6 +4404,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             return { ok: false, error: scan2Result.error || `Line detection failed (HTTP ${scan2Response.status}).` };
           }
           const detectedLines = scan2Result.data?.lines ?? [];
+          // Review lines (previously dropped candidates) feed Scan 3's corner
+          // completeness pass or surface as pink review lines - never lost.
+          const scan2ReviewLines = scan2Result.data?.reviewLines ?? [];
           // scan3: classification of the detected lines.
           onStage?.('classify');
           const scan3Response = await fetch(aiScanEndpoint, {
@@ -4402,8 +4421,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               pageId,
               outlinePoints,
               lines: detectedLines,
+              reviewLines: scan2ReviewLines,
+              scan2Summary: scan2Result.summary ?? null,
               analysisDimensions: dims,
               qualityLevel,
+              pxPerMm: scanPxPerMm,
             }),
             signal: abortController.signal,
           });
@@ -6289,6 +6311,21 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
     const confirmedAreas = outlineData.roof_areas;
     setAiScanStage('lines');
+    // Calibration-derived scale (owner rule 2026-10-02): pixel tolerances in
+    // the scan pipeline become real-world 150mm distances via the user's own
+    // calibration for this page.
+    const scanPxPerMm = (() => {
+      try {
+        if (!calibrations.length) return null;
+        const scale = effectiveScaleFromLegacyCalibrations(calibrations);
+        if (!Number.isFinite(scale) || scale <= 0) return null;
+        const metersPerPx = (calibrations[0]?.unit ?? 'feet') === 'meters' ? scale : scale * 0.3048;
+        const mmPerPx = metersPerPx * 1000;
+        return mmPerPx > 0 ? 1 / mmPerPx : null;
+      } catch {
+        return null;
+      }
+    })();
     try {
       // ── Scan 2: Internal line detection ──
       const scan2Response = await fetch(aiScanEndpoint, {
@@ -6304,6 +6341,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           outlinePoints: confirmedAreas[0]?.points ?? [],
           analysisDimensions,
           qualityLevel,
+          pxPerMm: scanPxPerMm,
         }),
         signal: abortController.signal,
       });
@@ -6314,6 +6352,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       }
 
       const detectedLines = scan2Result.data?.lines ?? [];
+      // Review lines (previously dropped candidates) feed Scan 3's corner
+      // completeness pass or surface as pink review lines - never lost.
+      const scan2ReviewLines = scan2Result.data?.reviewLines ?? [];
       const outlinePoints = scan2Result.data?.outlinePoints ?? confirmedAreas[0]?.points ?? [];
       console.log(`[AI Takeoff V3] scan2 complete: ${detectedLines.length} lines detected (raw=${scan2Result.summary?.rawLines}, rejected=${scan2Result.summary?.angleRejected}, floating=${scan2Result.summary?.floating})`);
 
@@ -6331,8 +6372,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           pageId,
           outlinePoints: outlinePoints,
           lines: detectedLines,
+          reviewLines: scan2ReviewLines,
+          scan2Summary: scan2Result.summary ?? null,
           analysisDimensions,
           qualityLevel,
+          pxPerMm: scanPxPerMm,
         }),
         signal: abortController.signal,
       });
