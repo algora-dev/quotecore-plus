@@ -5,7 +5,7 @@ import { validatePartition } from './partition';
 import { inferredFlow } from './reviewGeometry';
 import { normaliseLinework, type BoundaryRepair, type DrawingAdjustment } from './drafting';
 export { validatePartition } from './partition';
-export interface FaceDetection { faces: RoofFace[]; issues: Issue[]; repairs: BoundaryRepair[]; adjustments: DrawingAdjustment[] }
+export interface FaceDetection { faces: RoofFace[]; issues: Issue[]; repairs: BoundaryRepair[]; adjustments: DrawingAdjustment[]; normalisedEdges?: RoofEdge[] }
 /** Node real crossings, conservatively repair near misses, and polygonise the
  * cyclic graph. Dangling bridges are diagnosed LOCALLY, not walked twice into
  * an invalid outer cycle that discards otherwise closed neighbouring cells. */
@@ -106,5 +106,5 @@ export function deriveFaces(roof: RoofInput, snapTolerance?: number): FaceDetect
       message:`A ${e.kind==='unknown'?'boundary':e.kind.replace('_',' ')} stops before closing ${f?.name??'this area'}. Connect the suggested end, split/draw the missing face, or confirm this face if the line is not a roof-plane boundary.`});
   }
   issues.push(...validatePartition(roof,faces));
-  return{faces,issues,repairs:prepared.repairs,adjustments:prepared.adjustments};
+  return{faces,issues,repairs:prepared.repairs,adjustments:prepared.adjustments,normalisedEdges:roof.edges.map(e=>structuredClone(prepared.edges.find(n=>n.id===e.id)??e))};
 }

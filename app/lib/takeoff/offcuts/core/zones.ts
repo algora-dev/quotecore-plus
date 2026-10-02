@@ -90,7 +90,9 @@ export function bankAnchorFaces(members: RoofFace[], roof: RoofInput): RoofFace[
  * the new donor run. Ordinary two-hip/two-valley main faces are NOT self-fill. */
 export function isSelfFillCandidate(face: RoofFace, roof: RoofInput): boolean {
   if (!face.flow || face.pitchDeg===null) return false;
-  if (!planningBoundary(face).some(e=>e.kind==='ridge') || edgeIntervals(face,roof,'spouting').length!==1) return false;
+  if (edgeIntervals(face,roof,'spouting').length!==1) return false;
+  // A barge-ended parallel hip/valley strip can self-fill without a ridge.
+  // The exact donor-window/fit test below still decides whether it actually can.
   const frame=frameFor(face,roof);
   const edges=face.boundary.filter(e=>['hip','valley','broken_hip'].includes(e.kind));
   if(edges.length<2 || !edges.some(e=>e.kind==='hip') || !edges.some(e=>e.kind==='valley'||e.kind==='broken_hip'))return false;

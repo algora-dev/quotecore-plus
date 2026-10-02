@@ -34,3 +34,8 @@ export type { LocalRepairResult } from './core/faceRepair';
 export * from './adapters/liveSnapshot';
 export * from './adapters/snapshotStore';
 export * from './adapters/canvasSnapshot';
+
+export * from './persistence/reviews';
+export * from './persistence/browserReviewStore';
+
+export * from './core/cutStrategy';

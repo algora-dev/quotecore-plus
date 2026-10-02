@@ -1,3 +1,4 @@
+import { describeCutStrategy, chooseCutCommitments, type CutStrategy } from './cutStrategy';
 import { adjacentValleyParents } from './valleyReceivers';
 import { planningBoundary } from './directions';
 import type { BankLayout, Demand, Issue, Lap, MaterialBank, Offcut, Placement, RoofFace, Solution, SolveRequest } from './types';
@@ -16,9 +17,10 @@ interface Info { face:RoofFace; bank:MaterialBank; offsets:number[]; net:number;
 interface State {
   demands:Demand[]; placements:Placement[]; inventory:Offcut[]; used:Set<string>;
   done:Set<string>; layout:BankLayout; laps:Record<string,Lap>;
+  commitments:Offer[]; committedFaces:Set<string>;
   record:DecisionRecorder; trial:number; completed:boolean; seedFaceId:string;
 }
-interface Offer { info:Info; ds:Demand[]; phase:number; lap:Lap; primary:boolean; match:CoherentMatch; score:number }
+interface Offer { info:Info; ds:Demand[]; phase:number; lap:Lap; primary:boolean; match:CoherentMatch; score:number; strategy:CutStrategy }
 class Deadline extends Error {}
 
 /** V2.6 longest-useful-bank search with eave-anchored self-fill. Physical faces are never collapsed.
@@ -71,7 +73,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const check=()=>{if(hooks.shouldCancel?.())throw new Error('Offcut search cancelled.');if(clock()-started>settings.maxMilliseconds)throw new Deadline();};
   const defaultLaps=Object.fromEntries(faces.map(f=>[f.id,f.lap])) as Record<string,Lap>;
   const blankState=():State=>({demands:[],placements:[],inventory:[],used:new Set(),done:new Set(),layout:structuredClone(baseLayout),laps:{...defaultLaps},
-    record:new DecisionRecorder(),trial:0,completed:false,seedFaceId:''});
+    commitments:[],committedFaces:new Set(),record:new DecisionRecorder(),trial:0,completed:false,seedFaceId:''});
   const cache=new Map<string,Demand[]>();
   const matchCache=new Map<string,CoherentMatch>();
   function matchSets(ds:Demand[],stock:Offcut[],preserve=false):CoherentMatch {
@@ -160,6 +162,15 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
       placements:ds.map((d):Placement=>placements.get(d.id)??{demandId:d.id,kind:'new',rotation:0,translateY:0})};
   }
   function bestOffer(state:State,shift:number,extend:boolean):Offer|undefined {
+    while(state.commitments.length){
+      const reserved=state.commitments.shift()!;
+      if(!state.done.has(reserved.info.face.id)&&[...reserved.match.used].every(id=>!state.used.has(id)&&state.inventory.some(o=>o.id===id))){
+        state.committedFaces.add(reserved.info.face.id);
+        state.record.add('honour-cut-set-commitment','Use the reserved whole-set destination before distributing residual pieces.',[reserved.info.face.id],{strategy:reserved.strategy,offcutIds:[...reserved.match.used]});
+        return reserved;
+      }
+      state.record.add('release-invalid-reservation','A changed inventory invalidated this reservation; it will be evaluated again.',[reserved.info.face.id]);
+    }
     const unused=state.inventory.filter(o=>!state.used.has(o.id));
     const rejected:Record<string,Record<string,number>>={};
     const reject=(id:string,reason:string)=>{const entry=rejected[id]??{};entry[reason]=(entry[reason]??0)+1;rejected[id]=entry;};
@@ -214,31 +225,42 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
             const score=(adjacentValley?1.25:0)+(extension?2.5:0)+(exactValley?2:0)+4*Math.min(1,coverage)+2*Math.min(1,match.sourceUtilisation)+2*Math.min(1,match.retainedFraction)
               +(match.newCutCount===0?.35:0)+Math.min(.25,match.reusedArea/Math.max(1,sorted[0].net)*.25)
               -(match.groupsUsed-1)*.015;
-            const best=offers.get(info.face.id);
-            if(!best||score>best.score+1e-8||Math.abs(score-best.score)<1e-8&&match.reusedArea>best.match.reusedArea)
-              offers.set(info.face.id,{info,ds,phase,lap,primary,match,score});
+            const strategy=describeCutStrategy(ds,pool,match);
+            // Keep distinct source/cut families for each receiver until whole
+            // sets are allocated. The previous one-offer-per-face map erased
+            // an alternative that could coexist with another strong receiver.
+            const offerKey=info.face.id+'|'+strategy.sourceFaceIds.sort().join('+')+'|'+strategy.usedSetIds.sort().join('+');
+            const best=offers.get(offerKey);
+            if(!best||strategy.tier>best.strategy.tier||strategy.tier===best.strategy.tier&&(score>best.score+1e-8||Math.abs(score-best.score)<1e-8&&match.reusedArea>best.match.reusedArea))
+              offers.set(offerKey,{info,ds,phase,lap,primary,match,score,strategy});
           }
         }
       }
     }
-    const ranked=[...offers.values()].sort((a,b)=>b.score-a.score||b.match.reusedArea-a.match.reusedArea||a.info.face.id.localeCompare(b.info.face.id));
-    let selected=ranked[0];
-    if(objective!=='recommended' && shift%2 && ranked.length>1){
-      const first=ranked[0], stockIds=first.match.used;
-      const exactValley=state.inventory.filter(o=>stockIds.has(o.id)).every(o=>o.cutKind==='valley') && first.match.newCutCount===0 && first.match.retainedFraction>.95;
-      // A variation changes an actual destination relationship, not just labels
-      // or a random seed. Do not disturb near-exact valley complements.
-      if(!exactValley && ranked[1].score>=first.score-.45)selected=ranked[1];
+    const ranked=[...offers.values()].sort((a,b)=>b.strategy.tier-a.strategy.tier||b.score-a.score||b.match.reusedArea-a.match.reusedArea||a.info.face.id.localeCompare(b.info.face.id));
+    const batch=chooseCutCommitments(ranked.map((offer,i)=>({id:`offer-${i}`,faceId:offer.info.face.id,pieceIds:[...offer.match.used],strategy:offer.strategy,score:offer.score,offer})));
+    let selected=batch[0]?.offer;
+    // Deliberate alternatives may change a near-equal partial relationship, not
+    // break an already superior whole hip pair or valley complement.
+    if(objective!=='recommended'&&shift%2&&selected&&selected.strategy.tier<2&&ranked.length>1&&ranked[1].strategy.tier===selected.strategy.tier&&ranked[1].score>=selected.score-.3){
+      selected=ranked[1];
     }
+    state.commitments=batch.map(x=>x.offer).filter(o=>o!==selected&&!selected?.match.placements.some(p=>p.kind==='reuse'&&o.match.used.has(p.offcutId!))&&o.info.face.id!==selected?.info.face.id);
+    if(selected)state.committedFaces.add(selected.info.face.id);
+    state.record.add('reserve-complementary-sets','Reserve compatible whole-set relationships together before allocating residual pieces.',batch.map(x=>x.faceId),{
+      commitments:[...(selected?[selected]:[]),...state.commitments].map(o=>({faceId:o.info.face.id,strategy:o.strategy,offcutIds:[...o.match.used],phaseMm:o.phase,lap:o.lap})),
+      rule:'whole-valley-and-paired-hip-sets-before-partial-reuse',
+      rejectedConflicts:ranked.filter(o=>!batch.some(b=>b.offer===o)).slice(0,12).map(o=>({faceId:o.info.face.id,relationship:o.strategy.relationship,reason:'inferior-or-conflicts-with-reserved-face/pieces'}))
+    });
     state.record.add('evaluate-destinations','Compared coherent sets against remaining faces; scores are ranking terms, not confidence.',undefined,{
       unusedPieces:unused.length,consumedPieces:state.used.size,rejections:rejected,
       candidates:ranked.slice(0,16).map(o=>({faceId:o.info.face.id,score:o.score,selected:o===selected,
         newSheets:o.match.placements.filter(p=>p.kind==='new').length,reusedPositions:o.match.used.size,
         reuseToAngledAreaRatio:o.match.cutArea?o.match.reusedArea/o.match.cutArea:0,retainedFraction:o.match.retainedFraction,
-        sourceUtilisation:o.match.sourceUtilisation,groups:o.match.groupsUsed,phaseMm:o.phase,lap:o.lap,
+        sourceUtilisation:o.match.sourceUtilisation,groups:o.match.groupsUsed,phaseMm:o.phase,lap:o.lap,strategy:o.strategy,
         sourceFaces:[...new Set(state.inventory.filter(c=>o.match.used.has(c.id)).map(c=>c.sourceFaceId))],
         offcutIds:[...o.match.used]})),
-      selectedFaceId:selected?.info.face.id??null,reason:selected?(selected===ranked[0]?'highest-measured-offer-score':'near-best-destination-variation'):'no-eligible-coherent-offer'
+      selectedFaceId:selected?.info.face.id??null,reason:selected?(selected===ranked[0]?'whole-cut-set-strategy':'compatible-batch-or-partial-variation'):'no-eligible-coherent-offer'
     });
     return selected;
   }
@@ -273,6 +295,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
       let changed=false;
       for(const info of infos){
         if(onlyFace&&info.face.id!==onlyFace)continue;
+        if(state.committedFaces.has(info.face.id))continue;
         if(valleyParents.has(info.face.id))continue;
         if(state.layout.selfFillFaceIds?.includes(info.face.id)||state.layout.primaryOperations?.some(op=>op.faceIds.includes(info.face.id)))continue;
         check();
@@ -332,6 +355,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
         for(const o of state.inventory){
           if(used.has(o.id)||o.sourceFaceId===info.face.id||targetIds.has(o.rootDemandId??o.sourceDemandId))continue;
           const block=view.blockByRootDemand.get(o.rootDemandId??o.sourceDemandId);if(!block)continue;
+          if(state.committedFaces.has(info.face.id)&&objective!=='less-material'&&!existing.has(block))continue;
           if(!existing.has(block)&&existing.size>=(simpleMode?1:(settings.maxSourceBlocksPerFace??2)))continue;
           const key=block+'|'+o.sourceFaceId, pool=pools.get(key)??[];pool.push(o);pools.set(key,pool);
         }
@@ -513,14 +537,15 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     ?quality(a).complexity-quality(b).complexity||cost(a)-cost(b)
     :cost(a)-cost(b)||quality(a).complexity-quality(b).complexity);
   // Recommended preserves longest banks/self-fill before preferring simplicity
-  // within a 3% material band. Lower-material has a separate explicit objective.
-  const suggested=objective==='recommended'?[...sortedCandidates].filter(s=>cost(s)<=cheapest*1.03+1)
-    .sort((a,b)=>sorted.findIndex(i=>i.face.id===a.seedFaceId)-sorted.findIndex(i=>i.face.id===b.seedFaceId)||quality(a).complexity-quality(b).complexity||cost(a)-cost(b))[0]:sortedCandidates[0];
+  // within an 8% material band. Lower-material has a separate explicit objective.
+  const macroCount=(state:State)=>state.record.events.filter(e=>['reserve-complementary-sets','honour-cut-set-commitment'].includes(e.action)).reduce((n,e)=>n+(e.action==='honour-cut-set-commitment'?(Number((e.data?.strategy as CutStrategy|undefined)?.tier??0)>=2?1:0):((e.data?.commitments??[]) as {strategy:CutStrategy}[]).slice(0,1).filter(x=>x.strategy.tier>=2).length),0);
+  const suggested=objective==='recommended'?[...sortedCandidates].filter(s=>cost(s)<=cheapest*1.08+1)
+    .sort((a,b)=>macroCount(b)-macroCount(a)||sorted.findIndex(i=>i.face.id===a.seedFaceId)-sorted.findIndex(i=>i.face.id===b.seedFaceId)||quality(a).complexity-quality(b).complexity||cost(a)-cost(b))[0]:sortedCandidates[0];
   const ordered=suggested?[suggested,...sortedCandidates.filter(s=>s!==suggested)]:[];
   const summaries=candidates.map(state=>({trial:state.trial,seedFaceId:state.seedFaceId,objective,
     signature:signatures.get(state)!,quality:quality(state),completed:state.completed,selected:false,
     reason:excluded.has(signatures.get(state)!)?'already-shown-physical-layout':!eligible.includes(state)?'does-not-improve-requested-objective-within-material-cap':'eligible-candidate'}));
-  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.9' as const,
+  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.10' as const,
     requestFingerprint:fingerprint({faces,profile,settings}),objective,selectedTrial:state?.trial??null,
     events:state?.record.events??[{step:1,action:'no-selection',message:'No unseen candidate improved the requested objective within its material cap. The previous plan is retained.',data:{objective,referenceQuality:reference,excludedSignatures:[...excluded],maxExtraMaterialPercent:maxExtra}}],candidates:summaries.map(c=>({...c,selected:c.trial===state?.trial,
       reason:c.trial===state?.trial?'selected-by-'+objective:c.reason})),
@@ -553,7 +578,7 @@ function toSolution(request:SolveRequest,state:State,inputIssues:Issue[],complet
   }
   if(budgetReached)issues.push({severity:'warning',code:'SEARCH_BUDGET',message:'Time budget reached. Unsolved positions have been supplied new; this complete draft is not proof that no better reuse exists.'});
   issues.push({severity:'warning',code:'PROTOTYPE_ONLY',message:'Draft material-bank plan. Verify profile, sheet registration and site lengths. No guaranteed minimum, manufacturer approval or spare sheets are implied.'});
-  return{schemaVersion:1,engineVersion:'2.9',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
+  return{schemaVersion:1,engineVersion:'2.10',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
     profile:structuredClone(profile),settings:structuredClone(settings),demands:state.demands,placements:state.placements.sort((a,b)=>a.demandId.localeCompare(b.demandId)),
     offcuts:state.inventory,lapByFace:state.laps,bankLayout:state.layout,
     metrics:{newMaterialMm2:cost,baselineNewMaterialMm2:baseline,netRoofMm2:state.demands.reduce((n,d)=>n+area(d.cover),0),installedPhysicalMm2:installed,

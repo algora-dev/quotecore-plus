@@ -2,14 +2,14 @@
  * All limits are in calibrated plan millimetres, never zoomed screen pixels.
  * No measurements or saved takeoff objects are mutated by these helpers. */
 import type { Point, RoofEdge, RoofInput, RoofFace } from './types';
-import { EPS, distance, projection, sub, unit, validateRing, fingerprint } from './math';
+import { EPS, distance, projection, sub, unit, validateRing, fingerprint, containsPoint, dot, segmentHits } from './math';
 import { area, fromRing, subtract } from './regions';
 
 export type DraftingLevel = 'tight' | 'balanced' | 'relaxed';
 const POLICIES = {
-  tight: { snapMm: 10, suggestMm: 35, maxAreaMm2: 150_000, totalAreaMm2: 400_000, fraction: .001 },
-  balanced: { snapMm: 30, suggestMm: 90, maxAreaMm2: 350_000, totalAreaMm2: 1_000_000, fraction: .003 },
-  relaxed: { snapMm: 50, suggestMm: 150, maxAreaMm2: 600_000, totalAreaMm2: 1_500_000, fraction: .005 },
+  tight: { snapMm: 10, autoJoinMm: 50, suggestMm: 90, maxAreaMm2: 150_000, totalAreaMm2: 400_000, fraction: .001 },
+  balanced: { snapMm: 30, autoJoinMm: 150, suggestMm: 200, maxAreaMm2: 350_000, totalAreaMm2: 1_000_000, fraction: .003 },
+  relaxed: { snapMm: 50, autoJoinMm: 150, suggestMm: 250, maxAreaMm2: 600_000, totalAreaMm2: 1_500_000, fraction: .005 },
 } as const;
 export function draftingPolicy(roof: RoofInput) {
   const level: DraftingLevel = roof.draftingTolerance && roof.draftingTolerance in POLICIES ? roof.draftingTolerance : 'balanced';
@@ -17,6 +17,7 @@ export function draftingPolicy(roof: RoofInput) {
   const scale = calibrated ? roof.mmPerSceneUnit : 1;
   return { level, ...POLICIES[level], calibrated, scale,
     snapScene: calibrated ? POLICIES[level].snapMm / scale : 0,
+    autoJoinScene: calibrated ? POLICIES[level].autoJoinMm / scale : 0,
     suggestScene: calibrated ? POLICIES[level].suggestMm / scale : 0 };
 }
 export interface BoundaryRepair {
@@ -27,69 +28,99 @@ export interface BoundaryRepair {
 export interface DrawingAdjustment {
   objectId: string; from: Point; to: Point; distanceMm: number; reason: string;
 }
-interface Candidate { point: Point; target: RoofEdge; distance: number; kind: BoundaryRepair['kind'] }
-/** A ray along the existing line is preferred over bending an edge sideways.
- * Nearby parallel barge/hip lines are never collapsed just because they are close. */
-function candidates(edge: RoofEdge, end: 'a'|'b', targets: RoofEdge[], limit: number): Candidate[] {
+interface Candidate { point: Point; target: RoofEdge; distance: number; kind: BoundaryRepair['kind']; rank: number }
+/** Face PROPOSAL recovery only. Never used to accept a short physical offcut.
+ * Collinear continuation or an along-line intersection is preferable to bending
+ * a line toward a nearby feature. Parallel offset lines remain distinct. */
+function candidates(edge: RoofEdge, end: 'a'|'b', targets: RoofEdge[], limit: number, micro: number): Candidate[] {
   const p=edge[end], other=edge[end==='a'?'b':'a'], delta=sub(p,other), len=Math.hypot(delta.x,delta.y);
   if(len<EPS||limit<=0)return[];
   const u=unit(delta), out:Candidate[]=[];
+  const add=(q:Point,target:RoofEdge,kind:BoundaryRepair['kind']):void=>{
+    const d=distance(p,q), next=sub(q,other), nextLen=Math.hypot(next.x,next.y);
+    if(d<=EPS||d>limit+EPS||nextLen<Math.max(1e-5,len*.5))return;
+    const alignment=dot(u,unit(next));
+    if(alignment<Math.cos(7.5*Math.PI/180))return;
+    // Do not collapse a real short step into its other endpoint. The old len*.2
+    // rule also rejected a 3 mm repair on a tiny barge; use direction and retained
+    // length instead of that arbitrary ratio.
+    const bend=Math.abs((q.x-p.x)*u.y-(q.y-p.y)*u.x);
+    if(kind==='join'&&bend>micro&&bend>d*.15)return;
+    out.push({point:{...q},target,distance:d,kind,rank:d+bend*3});
+  };
   for(const target of targets){
     if(target.id===edge.id||distance(target.a,target.b)<EPS)continue;
     const v=unit(sub(target.b,target.a)), sine=Math.abs(u.x*v.y-u.y*v.x);
-    // Exactly collinear continuation endpoints can connect. Offset parallel
-    // lines denote different boundaries (e.g. a genuine narrow step).
-    const collinear= Math.abs((target.a.x-p.x)*u.y-(target.a.y-p.y)*u.x)<1e-6;
+    const collinear=Math.abs((target.a.x-p.x)*u.y-(target.a.y-p.y)*u.x)<1e-6;
     if(sine<.20&&!collinear)continue;
-    for(const q of [target.a,target.b]){
-      const d=distance(p,q);if(d>EPS&&d<=limit&&d<len*.2)
-        out.push({point:q,target,distance:d,kind:'join'});
-    }
+    for(const q of [target.a,target.b])add(q,target,'join');
     if(sine>=.20){
-      const a=sub(target.a,p), w=sub(target.b,target.a), den=u.x*w.y-u.y*w.x;
-      const t=(a.x*w.y-a.y*w.x)/den, s=(a.x*u.y-a.y*u.x)/den;
-      if(s>=-EPS&&s<=1+EPS&&Math.abs(t)>EPS&&Math.abs(t)<=limit&&Math.abs(t)<len*.2)
-        out.push({point:{x:p.x+t*u.x,y:p.y+t*u.y},target,distance:Math.abs(t),kind:t>=0?'extend':'trim'});
-      const hit=projection(p,target.a,target.b);
-      if(hit.distance>EPS&&hit.distance<=limit&&hit.distance<len*.1)
-        out.push({point:hit.point,target,distance:hit.distance,kind:'join'});
+      const a=sub(target.a,p),w=sub(target.b,target.a),den=u.x*w.y-u.y*w.x;
+      const t=(a.x*w.y-a.y*w.x)/den,s=(a.x*u.y-a.y*u.x)/den;
+      if(s>=-EPS&&s<=1+EPS)add({x:p.x+t*u.x,y:p.y+t*u.y},target,t>=0?'extend':'trim');
     }
   }
-  return out.sort((a,b)=>a.distance-b.distance||a.point.x-b.point.x||a.point.y-b.point.y||a.target.id.localeCompare(b.target.id));
+  return out.sort((a,b)=>a.rank-b.rank||a.distance-b.distance||a.point.x-b.point.x||a.point.y-b.point.y||a.target.id.localeCompare(b.target.id));
 }
-function connected(edge: RoofEdge, end:'a'|'b', targets: RoofEdge[]):boolean {
+function connected(edge:RoofEdge,end:'a'|'b',targets:RoofEdge[]):boolean {
   return targets.some(t=>t.id!==edge.id&&projection(edge[end],t.a,t.b).distance<1e-6);
 }
 function uniqueCandidates(cs:Candidate[]):Candidate[]{
   const out:Candidate[]=[];for(const c of cs)if(!out.some(x=>distance(c.point,x.point)<1e-5))out.push(c);return out;
 }
-export function normaliseLinework(roof:RoofInput, outlineEdges:RoofEdge[], overrideScene?:number):{
-  edges:RoofEdge[]; adjustments:DrawingAdjustment[]; repairs:BoundaryRepair[];
+export function normaliseLinework(roof:RoofInput,outlineEdges:RoofEdge[],overrideScene?:number):{
+  edges:RoofEdge[];adjustments:DrawingAdjustment[];repairs:BoundaryRepair[];
 }{
-  const policy=draftingPolicy(roof), snap=overrideScene??policy.snapScene, suggest=Math.max(snap,policy.suggestScene);
+  const policy=draftingPolicy(roof),snap=overrideScene??policy.autoJoinScene,suggest=Math.max(snap,policy.suggestScene);
+  const micro=policy.calibrated?5/policy.scale:1e-5;
   const edges=roof.edges.filter(e=>!roof.faceDetectionIgnoredEdgeIds?.includes(e.id)&&distance(e.a,e.b)>EPS).map(e=>structuredClone(e));
-  const adjustments:DrawingAdjustment[]=[], repairs:BoundaryRepair[]=[];
+  const adjustments:DrawingAdjustment[]=[],repairs:BoundaryRepair[]=[];
   const all=()=>[...outlineEdges,...edges];
-  // Two bounded passes resolve a junction without unbounded chain-snapping.
   const start=new Map(edges.map(e=>[e.id,structuredClone(e)]));
-  for(let pass=0;pass<2;pass++)for(const edge of edges)for(const end of ['a','b'] as const){
-    if(connected(edge,end,all()))continue;
-    const options=uniqueCandidates(candidates(edge,end,all(),snap));if(!options.length)continue;
-    const best=options[0];
-    // Distinct nearby alternatives are proposed, not guessed. Exact T/corner
-    // junctions usually coalesce to the same point here.
-    const ambiguous=options.some(c=>c.distance<=best.distance*1.2+EPS&&distance(c.point,best.point)>Math.max(1e-5,snap*.3));
-    if(ambiguous||distance(start.get(edge.id)![end],best.point)>snap+EPS)continue;
-    const from={...edge[end]};edge[end]={...best.point};
-    adjustments.push({objectId:edge.id,from,to:{...best.point},distanceMm:distance(from,best.point)*policy.scale,reason:`${best.kind} endpoint to ${best.target.kind} boundary`});
+  // Geometry order is invariant to source order and AI/manual component names.
+  const ordered=[...edges].sort((a,b)=>Math.min(a.a.x,a.b.x)-Math.min(b.a.x,b.b.x)||Math.min(a.a.y,a.b.y)-Math.min(b.a.y,b.b.y)||distance(b.a,b.b)-distance(a.a,a.b)||a.id.localeCompare(b.id));
+  const inside=(p:Point):boolean=>roof.outlines.some(o=>containsPoint(o.polygon,p))||outlineEdges.some(e=>projection(p,e.a,e.b).distance<1e-5);
+  const safe=(edge:RoofEdge,end:'a'|'b',c:Candidate):boolean=>{
+    const original=start.get(edge.id)![end];
+    if(distance(original,c.point)>snap+EPS)return false;
+    // Never bridge two separate roof outlines or cross an exterior courtyard.
+    for(const t of [.25,.5,.75,1])if(!inside({x:edge[end].x+(c.point.x-edge[end].x)*t,y:edge[end].y+(c.point.y-edge[end].y)*t})){
+      // An overshoot is allowed to return INTO the roof, but not cut across an
+      // exterior gap. Its pre-existing outside portion must be shortened.
+      if(c.kind!=='trim'||!inside(c.point))return false;
+    }
+    // Stop at the first intervening real boundary, not a farther attractive node.
+    const move={a:edge[end],b:c.point};
+    for(const t of all())if(t.id!==edge.id&&t.id!==c.target.id){
+      for(const hit of segmentHits(move,t))if(distance(hit,move.a)>micro&&distance(hit,move.b)>micro)return false;
+    }
+    return true;
+  };
+  const ambiguous=(opts:Candidate[]):boolean=>{
+    if(opts.length<2)return false;
+    const best=opts[0];
+    // Two mathematical projections within 5 mm of the same endpoint are one
+    // join, not twenty prompts. Distinct competing junctions are NOT guessed.
+    return opts.slice(1).some(c=>c.rank<=best.rank*1.25+1e-6&&distance(c.point,best.point)>micro);
+  };
+  for(let pass=0;pass<3;pass++){
+    let changed=false;
+    for(const edge of ordered)for(const end of ['a','b'] as const){
+      if(connected(edge,end,all()))continue;
+      const options=uniqueCandidates(candidates(edge,end,all(),snap,micro)).filter(c=>safe(edge,end,c));
+      if(!options.length||ambiguous(options))continue;
+      const best=options[0],from={...edge[end]};edge[end]={...best.point};changed=true;
+      adjustments.push({objectId:edge.id,from,to:{...best.point},distanceMm:distance(from,best.point)*policy.scale,reason:`Automatic ${best.kind} to a unique ${best.target.kind} boundary (face proposal only)`});
+    }
+    if(!changed)break;
   }
-  for(const edge of edges)for(const end of ['a','b'] as const){
+  for(const edge of ordered)for(const end of ['a','b'] as const){
     if(connected(edge,end,all()))continue;
-    const opts=uniqueCandidates(candidates(edge,end,all(),suggest)).slice(0,3);
-    for(const c of opts)repairs.push({id:`repair-${fingerprint([edge.id,end,edge[end],c.point])}`,edgeId:edge.id,end,from:{...edge[end]},to:{...c.point},targetEdgeId:c.target.id,kind:c.kind,distanceMm:c.distance*policy.scale,ambiguous:opts.length>1,
-      message:`This ${edge.kind==='unknown'?'boundary':edge.kind.replace('_',' ')} ends near a ${c.target.kind==='unknown'?'roof boundary':c.target.kind.replace('_',' ')}. Connect them?`});
+    const opts=uniqueCandidates(candidates(edge,end,all(),suggest,micro)).slice(0,3);
+    for(const c of opts)repairs.push({id:`repair-${fingerprint([edge.id,end,edge[end],c.point])}`,edgeId:edge.id,end,from:{...edge[end]},to:{...c.point},targetEdgeId:c.target.id,kind:c.kind,distanceMm:c.distance*policy.scale,ambiguous:ambiguous(opts),
+      message:`This ${edge.kind==='unknown'?'boundary':edge.kind.replace('_',' ')} has ${ambiguous(opts)?'more than one possible connection':'a connection outside automatic recovery limits'}. Review the highlighted join.`});
   }
-  return {edges,adjustments,repairs};
+  return{edges,adjustments,repairs};
 }
 export interface DrawingSnap { point:Point; kind:'vertex'|'edge'|'close'; distanceMm:number }
 /** Drawing snap is user-intent assisted, bounded in both screen pixels and real
@@ -146,4 +177,17 @@ export function alignReviewedFaces(roof:RoofInput,faces:RoofFace[]):{faces:RoofF
     if(changed>EPS){f.polygon=proposed;f.confirmed=false;delete f.directionApproval;f.provenance='edited';}
   }
   return{faces:out,adjustments};
+}
+
+/** Explicit Rebuild can reconsider the previous AUTO proposals under a new
+ * tolerance. Accepted manual connections and changed endpoints are untouched.
+ * The user's original takeoff is never modified. */
+export function revertAutomaticJoins(roof:RoofInput,adjustments:DrawingAdjustment[]):RoofInput {
+  const next=structuredClone(roof);
+  for(const change of [...adjustments].reverse()){
+    if(!change.reason.startsWith('Automatic '))continue;
+    const edge=next.edges.find(e=>e.id===change.objectId);if(!edge)continue;
+    for(const end of ['a','b'] as const)if(distance(edge[end],change.to)<1e-6){edge[end]={...change.from};break;}
+  }
+  return next;
 }

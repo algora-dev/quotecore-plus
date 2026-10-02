@@ -7355,7 +7355,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     return () => {
       offcutsCaptureAbortRef.current?.abort();
       offcutsCaptureAbortRef.current = null;
-      offcutsModalRef.current?.destroy();
+      // Best-effort flush of a pending review save before teardown; the
+      // network write continues in the background after the UI is gone.
+      const modal = offcutsModalRef.current;
+      if (modal) { void modal.flushReview?.().catch(() => {}); modal.destroy(); }
       offcutsModalRef.current = null;
     };
   }, [pages[currentPageIndex]?.id, activeAreaId]);
@@ -8359,6 +8362,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       title="Estimate roof pitch from a photo"
                     ><QcIcon name="pitch" />Estimate pitch</QcToolButton>
                     {process.env.NEXT_PUBLIC_TAKEOFF_OFFCUTS_V1 === 'true' && (
+                      <>
                       <button
                         data-copilot="takeoff-tool-offcuts"
                         className="px-3 py-2 rounded-full text-sm bg-slate-900 text-white disabled:opacity-40"
@@ -8372,11 +8376,15 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                           setOpeningOffcuts(true);
                           try {
                             const { launchLiveQuoteCoreOffcuts } = await import('@/app/lib/takeoff/offcuts/ui/launch');
+                            const { getAccountReviewRepository } = await import('@/app/lib/takeoff/offcutReviewPersistence');
                             if (abort.signal.aborted) return;
-                            offcutsModalRef.current?.destroy();
-                            offcutsModalRef.current = null;
+                            const reviewRepository = await getAccountReviewRepository();
+                            if (abort.signal.aborted) return;
+                            const previous = offcutsModalRef.current;
+                            if (previous) { void previous.flushReview?.().catch(() => {}); previous.destroy(); offcutsModalRef.current = null; }
                             offcutsModalRef.current = await launchLiveQuoteCoreOffcuts(readCurrentOffcutsSnapshot, {
                               signal: abort.signal,
+                              reviewRepository: reviewRepository ?? undefined,
                               readContext: () => {
                                 const live = offcutsLiveSnapshotRef.current;
                                 if (!live) throw new Error('The takeoff workspace is not ready.');
@@ -8415,6 +8423,56 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                           }
                         }}
                       >{openingOffcuts ? 'Preparing current takeoff…' : 'Find offcuts'}</button>
+                      <button
+                        data-copilot="takeoff-tool-offcuts-resume"
+                        className="px-3 py-2 rounded-full text-sm border border-slate-300 bg-white text-slate-700 hover:border-orange-200 hover:bg-orange-50/40 disabled:opacity-40"
+                        disabled={openingOffcuts || !pages[currentPageIndex]?.id || isSaving || aiScanning}
+                        title="Open the saved offcut review for this roof area, even after closing the tab or losing the current takeoff. Does not read or change the current takeoff."
+                        onClick={async () => {
+                          if (offcutsCaptureAbortRef.current) return;
+                          const pageId = pages[currentPageIndex]?.id;
+                          if (!pageId) return;
+                          const abort = new AbortController();
+                          offcutsCaptureAbortRef.current = abort;
+                          setOpeningOffcuts(true);
+                          try {
+                            const scope = { quoteId: quote.id, pageId, areaScopeId: activeAreaId };
+                            const { getAccountReviewRepository } = await import('@/app/lib/takeoff/offcutReviewPersistence');
+                            const { launchStoredQuoteCoreOffcuts } = await import('@/app/lib/takeoff/offcuts/ui/launch');
+                            if (abort.signal.aborted) return;
+                            const reviewRepository = await getAccountReviewRepository();
+                            if (!reviewRepository) throw new Error('Account draft saving is not connected. Sign in again and retry.');
+                            if (abort.signal.aborted) return;
+                            let stored = null;
+                            try { stored = await reviewRepository.load(scope); }
+                            catch (error) { throw new Error(error instanceof Error ? error.message : 'Could not read the saved offcut review.'); }
+                            if (abort.signal.aborted) return;
+                            if (!stored) { window.alert('No saved offcut review exists for this roof area yet.'); return; }
+                            const previous = offcutsModalRef.current;
+                            if (previous) { void previous.flushReview?.().catch(() => {}); previous.destroy(); offcutsModalRef.current = null; }
+                            const image = pages[currentPageIndex]?.url ?? planUrl;
+                            const handle = await launchStoredQuoteCoreOffcuts(scope, {
+                              reviewRepository,
+                              imageUrl: /^https?:/i.test(image) ? image : undefined,
+                            });
+                            offcutsModalRef.current = handle;
+                            const live = offcutsLiveSnapshotRef.current;
+                            if (!live || live.pageId !== scope.pageId || (live.areaScopeId ?? null) !== (scope.areaScopeId ?? null)) {
+                              handle.destroy();
+                              offcutsModalRef.current = null;
+                              throw new Error('The selected roof changed while opening the saved review.');
+                            }
+                          } catch (error) {
+                            if (!abort.signal.aborted) window.alert(error instanceof Error ? error.message : String(error));
+                          } finally {
+                            if (offcutsCaptureAbortRef.current === abort) {
+                              offcutsCaptureAbortRef.current = null;
+                              setOpeningOffcuts(false);
+                            }
+                          }
+                        }}
+                      >{openingOffcuts ? 'Opening…' : 'Resume offcuts'}</button>
+                      </>
                     )}</QcCanvasToolGroup>
                 </div>
                 <div className="qc-takeoff-toolbar-context">
