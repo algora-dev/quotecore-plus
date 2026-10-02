@@ -29,7 +29,7 @@ const MAX_EXPORT_LONG_SIDE = 2400;
  */
 export function snapshotSceneAtImageBounds(
   canvas: Canvas,
-  opts: { includeBackground: boolean },
+  opts: { includeBackground: boolean; format?: 'png' | 'jpeg'; quality?: number },
 ): string | null {
   const bg = canvas.backgroundImage as FabricImage | undefined;
 
@@ -70,7 +70,15 @@ export function snapshotSceneAtImageBounds(
     canvas.setDimensions({ width: outW, height: outH });
     canvas.setViewportTransform([multiplier, 0, 0, multiplier, -left * multiplier, -top * multiplier]);
     canvas.renderAll();
-    return canvas.toDataURL({ format: 'png', multiplier: 1 });
+    // JPEG for the full-canvas variant: a native-resolution plan PNG is
+    // multiple MB as base64 and breaks the server-action body limit; JPEG
+    // at q0.92 is visually identical for plan imagery and a fraction of
+    // the size. Lines-only stays lossless PNG (tiny linework).
+    return canvas.toDataURL({
+      format: opts.format === 'jpeg' ? 'jpeg' : 'png',
+      quality: opts.quality ?? 0.92,
+      multiplier: 1,
+    });
   } catch (error) {
     console.error('[canvasSnapshot] export failed:', error);
     return null;

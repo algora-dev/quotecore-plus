@@ -3026,7 +3026,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         // own bounds and native resolution - NOT the user's current view
         // (owner rule 2026-10-02: viewport snapshots stored zoomed-in crops).
         console.log('[SaveTakeoff] Exporting full canvas image...');
-        const fullDataUrl = snapshotSceneAtImageBounds(canvas, { includeBackground: true });
+        const fullDataUrl = snapshotSceneAtImageBounds(canvas, { includeBackground: true, format: 'jpeg', quality: 0.92 });
 
         if (fullDataUrl) {
           try {
