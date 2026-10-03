@@ -77,7 +77,7 @@ BEGIN
  IF original_task IS NULL THEN RETURN; END IF; -- Task-context feature was off.
  SELECT * INTO t FROM public.assistant_v2_task_context WHERE conversation_id=b.conversation_id AND user_id=b.user_id AND company_id=b.company_id FOR SHARE;
  IF NOT FOUND OR t.task_id IS DISTINCT FROM original_task OR t.status='closed' OR t.expires_at<=clock_timestamp()
- THEN RAISE EXCEPTION 'workflow_task_changed' USING ERRCODE='40001'; END IF;
+ THEN RAISE EXCEPTION 'workflow_task_changed' USING ERRCODE='23505'; END IF;
 END; $$;
 REVOKE ALL ON FUNCTION public.sa_v2_workflow_assert_task(public.assistant_v2_draft_briefs) FROM PUBLIC,anon,authenticated,service_role;
 
@@ -89,7 +89,7 @@ BEGIN
  PERFORM pg_advisory_xact_lock(hashtextextended('sa-workflow:'||p_user_id::text,0));
  v:=public.sa_v2_workflow_run_actor(p_user_id,p_conversation_id,p_run_id); cid:=(v->>'company_id')::uuid;
  SELECT epoch INTO current_epoch FROM public.assistant_v2_workflow_epochs WHERE company_id=cid FOR SHARE;
- IF current_epoch IS DISTINCT FROM p_epoch THEN RAISE EXCEPTION 'workflow_config_changed' USING ERRCODE='40001'; END IF;
+ IF current_epoch IS DISTINCT FROM p_epoch THEN RAISE EXCEPTION 'workflow_config_changed' USING ERRCODE='23505'; END IF;
  IF p_state NOT IN ('collecting','needs_choices','ready_to_review') OR p_state IS NULL
    OR jsonb_typeof(p_brief) IS DISTINCT FROM 'object' OR p_brief->>'version' IS DISTINCT FROM '1'
    OR jsonb_typeof(p_brief->'areas') IS DISTINCT FROM 'array' OR jsonb_array_length(p_brief->'areas')>12
@@ -98,7 +98,7 @@ BEGIN
  THEN RAISE EXCEPTION 'invalid_working_brief' USING ERRCODE='22023'; END IF;
  IF p_state_id IS NULL THEN
    IF p_expected_revision IS NOT NULL OR EXISTS(SELECT 1 FROM public.assistant_v2_draft_briefs WHERE start_run_id=p_run_id)
-   THEN RAISE EXCEPTION 'workflow_already_started' USING ERRCODE='40001'; END IF;
+   THEN RAISE EXCEPTION 'workflow_already_started' USING ERRCODE='23505'; END IF;
    -- New goals get a NEW brief. Never reuse a previously produced quote ID.
    FOR previous_id IN SELECT id FROM public.assistant_v2_draft_briefs WHERE company_id=cid AND user_id=p_user_id AND conversation_id=p_conversation_id
      AND workflow_state NOT IN ('cancelled','closed') FOR UPDATE
@@ -112,7 +112,7 @@ BEGIN
    SELECT * INTO b FROM public.assistant_v2_draft_briefs WHERE id=p_state_id AND company_id=cid AND user_id=p_user_id AND conversation_id=p_conversation_id FOR UPDATE;
    IF NOT FOUND OR b.revision IS DISTINCT FROM p_expected_revision OR b.workflow_state IN ('cancelled','closed')
      OR b.permission_revision IS DISTINCT FROM (v->>'revision')::integer OR b.brief->>'version' IS DISTINCT FROM '1'
-   THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='40001'; END IF;
+   THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='23505'; END IF;
    IF (b.produced_quote_id IS NOT NULL AND (b.committed_plan IS NULL OR b.committed_snapshot IS NULL)) OR (b.produced_quote_id IS NULL AND (b.committed_plan IS NOT NULL OR b.committed_snapshot IS NOT NULL))
    THEN RAISE EXCEPTION 'bound_draft_needs_review' USING ERRCODE='P0004'; END IF;
    PERFORM public.sa_v2_workflow_assert_task(b);
@@ -143,7 +143,7 @@ BEGIN
    OR (a.payload->>'briefRevision')::integer IS DISTINCT FROM b.revision
    OR (a.payload->>'workflowEpoch')::bigint IS DISTINCT FROM current_epoch OR current_epoch IS DISTINCT FROM b.catalog_epoch
    OR (a.payload->>'editQuoteId')::uuid IS DISTINCT FROM b.produced_quote_id
- THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='40001'; END IF;
+ THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='23505'; END IF;
  UPDATE public.assistant_v2_draft_briefs SET action_id=a.id,workflow_state='proposal_pending_confirmation',status='proposal',updated_at=clock_timestamp() WHERE id=b.id;
 END; $$;
 REVOKE ALL ON FUNCTION public.sa_v2_workflow_attach(uuid,uuid,uuid,integer,uuid) FROM PUBLIC,anon,authenticated;
@@ -159,7 +159,7 @@ BEGIN
  FOR b IN SELECT * FROM public.assistant_v2_draft_briefs WHERE company_id=(v->>'company_id')::uuid AND user_id=p_user_id AND conversation_id=p_conversation_id
    AND (p_state_id IS NULL OR id=p_state_id) AND workflow_state NOT IN ('cancelled','closed') FOR UPDATE
  LOOP
-   IF p_state_id IS NOT NULL AND b.revision IS DISTINCT FROM p_revision THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='40001'; END IF;
+   IF p_state_id IS NOT NULL AND b.revision IS DISTINCT FROM p_revision THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='23505'; END IF;
    IF p_close AND EXISTS(SELECT 1 FROM public.assistant_v2_actions a WHERE a.user_id=b.user_id AND a.company_id=b.company_id AND a.payload->>'briefStateId'=b.id::text AND a.status IN ('applying','needs_review')) THEN CONTINUE; END IF;
    PERFORM public.sa_v2_workflow_expire_proposal(b.id);
    UPDATE public.assistant_v2_draft_briefs SET workflow_state=CASE WHEN p_close THEN 'closed' ELSE 'cancelled' END,
@@ -201,7 +201,7 @@ DECLARE b public.assistant_v2_draft_briefs%rowtype; current_epoch bigint; cutoff
 BEGIN
  IF a.payload->>'controllerVersion' IS DISTINCT FROM '1' THEN
    IF a.payload->>'briefStateId' IS NOT NULL OR a.payload->>'editQuoteId' IS NOT NULL
-   THEN RAISE EXCEPTION 'legacy_workflow_requires_review' USING ERRCODE='40001'; END IF;
+   THEN RAISE EXCEPTION 'legacy_workflow_requires_review' USING ERRCODE='23505'; END IF;
    RETURN; -- Existing, non-workflow P4 creation retains its original safeguards.
  END IF;
  SELECT epoch INTO current_epoch FROM public.assistant_v2_workflow_epochs WHERE company_id=a.company_id FOR SHARE;
@@ -213,7 +213,7 @@ BEGIN
    OR current_epoch IS DISTINCT FROM (a.payload->>'workflowEpoch')::bigint OR b.catalog_epoch IS DISTINCT FROM current_epoch
    OR b.produced_quote_id IS DISTINCT FROM (a.payload->>'editQuoteId')::uuid OR b.created_at<cutoff OR a.created_at<cutoff
    OR (b.produced_quote_id IS NOT NULL AND (b.committed_snapshot IS DISTINCT FROM a.snapshot->'quoteSnapshot' OR b.committed_plan IS DISTINCT FROM a.snapshot->'previousPlan'))
- THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='40001'; END IF;
+ THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='23505'; END IF;
  IF a.status='proposed' THEN PERFORM public.sa_v2_workflow_assert_task(b); END IF;
 END; $$;
 REVOKE ALL ON FUNCTION public.sa_v2_workflow_assert_proposal(public.assistant_v2_actions) FROM PUBLIC,anon,authenticated,service_role;
@@ -245,14 +245,14 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $$
 DECLARE matched integer;
 BEGIN
  IF a.payload->>'controllerVersion' IS DISTINCT FROM '1' THEN RETURN; END IF;
- IF a.status<>'committed' OR a.result_quote_id IS NULL THEN RAISE EXCEPTION 'not_committed' USING ERRCODE='40001'; END IF;
+ IF a.status<>'committed' OR a.result_quote_id IS NULL THEN RAISE EXCEPTION 'not_committed' USING ERRCODE='23505'; END IF;
  UPDATE public.assistant_v2_draft_briefs SET produced_quote_id=a.result_quote_id,committed_plan=a.payload,
    committed_snapshot=public.sa_v2_workflow_snapshot_private(a.company_id,a.result_quote_id),
    workflow_state='committed',status='closed',conflict_reason=NULL,updated_at=clock_timestamp()
  WHERE id=(a.payload->>'briefStateId')::uuid AND company_id=a.company_id AND user_id=a.user_id
    AND revision=(a.payload->>'briefRevision')::integer AND action_id=a.id;
  GET DIAGNOSTICS matched=ROW_COUNT;
- IF matched<>1 THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='40001'; END IF;
+ IF matched<>1 THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='23505'; END IF;
 END; $$;
 REVOKE ALL ON FUNCTION public.sa_v2_workflow_bind_committed(public.assistant_v2_actions) FROM PUBLIC,anon,authenticated,service_role;
 
@@ -313,13 +313,13 @@ BEGIN
  -- or rebasing them invisibly. Identity comparisons include every repeated entry.
  SELECT array_agg((value->>'id')::uuid ORDER BY value->>'id') INTO expected FROM jsonb_array_elements(p_before->'areas');
  SELECT array_agg(id ORDER BY id) INTO actual FROM public.quote_roof_areas WHERE quote_id=p_quote_id;
- IF coalesce(expected,'{}') IS DISTINCT FROM coalesce(actual,'{}') THEN RAISE EXCEPTION 'area_identity_changed' USING ERRCODE='40001'; END IF;
+ IF coalesce(expected,'{}') IS DISTINCT FROM coalesce(actual,'{}') THEN RAISE EXCEPTION 'area_identity_changed' USING ERRCODE='23505'; END IF;
  SELECT array_agg((value->>'id')::uuid ORDER BY value->>'id') INTO expected FROM jsonb_array_elements(p_before->'components');
  SELECT array_agg(id ORDER BY id) INTO actual FROM public.quote_components WHERE quote_id=p_quote_id;
- IF coalesce(expected,'{}') IS DISTINCT FROM coalesce(actual,'{}') THEN RAISE EXCEPTION 'component_identity_changed' USING ERRCODE='40001'; END IF;
+ IF coalesce(expected,'{}') IS DISTINCT FROM coalesce(actual,'{}') THEN RAISE EXCEPTION 'component_identity_changed' USING ERRCODE='23505'; END IF;
  SELECT array_agg((value->>'id')::uuid ORDER BY value->>'id') INTO expected FROM jsonb_array_elements(before_entries);
  SELECT array_agg(e.id ORDER BY e.id) INTO actual FROM public.quote_component_entries e JOIN public.quote_components c ON c.id=e.quote_component_id WHERE c.quote_id=p_quote_id;
- IF coalesce(expected,'{}') IS DISTINCT FROM coalesce(actual,'{}') THEN RAISE EXCEPTION 'entry_identity_changed' USING ERRCODE='40001'; END IF;
+ IF coalesce(expected,'{}') IS DISTINCT FROM coalesce(actual,'{}') THEN RAISE EXCEPTION 'entry_identity_changed' USING ERRCODE='23505'; END IF;
  IF EXISTS(SELECT id FROM (
     SELECT value->>'id' id FROM jsonb_array_elements(p_after->'areas') UNION ALL
     SELECT value->>'id' FROM jsonb_array_elements(p_after->'components') UNION ALL
@@ -392,7 +392,7 @@ BEGIN
    OR q.acceptance_token IS NOT NULL OR q.accepted_at IS NOT NULL OR q.withdrawn_at IS NOT NULL OR q.declined_at IS NOT NULL
    OR q.measurement_system::text IS DISTINCT FROM a.payload->'params'->>'measurementSystem'
    OR q.currency IS DISTINCT FROM a.payload->>'currency' OR q.trade::text IS DISTINCT FROM a.payload->'params'->>'trade'
- THEN RAISE EXCEPTION 'edit_target_changed' USING ERRCODE='40001'; END IF;
+ THEN RAISE EXCEPTION 'edit_target_changed' USING ERRCODE='23505'; END IF;
  -- Parent locks also block new FK-referencing child inserts. Lock existing
  -- descendants against independent builder updates before taking the baseline.
  PERFORM 1 FROM public.quote_roof_areas WHERE quote_id=q.id ORDER BY id FOR UPDATE;
@@ -401,11 +401,11 @@ BEGIN
  PERFORM 1 FROM public.quote_roof_area_entries e JOIN public.quote_roof_areas r ON r.id=e.quote_roof_area_id WHERE r.quote_id=q.id ORDER BY e.id FOR UPDATE OF e;
  snapshot:=public.sa_v2_workflow_snapshot_private(a.company_id,q.id);
  IF snapshot IS DISTINCT FROM a.snapshot->'quoteSnapshot' OR jsonb_array_length(snapshot->'area_entries')<>0
- THEN RAISE EXCEPTION 'draft_snapshot_changed' USING ERRCODE='40001'; END IF;
+ THEN RAISE EXCEPTION 'draft_snapshot_changed' USING ERRCODE='23505'; END IF;
  FOR lib IN SELECT value FROM jsonb_array_elements(a.snapshot->'libraries') LOOP
    PERFORM 1 FROM public.component_library WHERE id=(lib->>'id')::uuid AND company_id=a.company_id FOR SHARE;
    IF public.sa_v2_snapshot_private(a.company_id,'library',(lib->>'id')::uuid)->'library' IS DISTINCT FROM lib
-   THEN RAISE EXCEPTION 'library_changed' USING ERRCODE='40001'; END IF;
+   THEN RAISE EXCEPTION 'library_changed' USING ERRCODE='23505'; END IF;
  END LOOP;
  PERFORM public.sa_v2_workflow_apply_children(q.id,a.company_id,a.snapshot->'previousPlan'->'children',a.payload->'children');
  UPDATE public.quotes SET customer_name=a.payload->'params'->>'customerName',job_name=a.payload->'params'->>'jobName',
@@ -414,7 +414,7 @@ BEGIN
  UPDATE public.sa_action_log SET status='committed',entity_type='quote',entity_id=q.id::text,
    payload_after=payload_after||jsonb_build_object('updated_quote_id',q.id,'mutation','structural_incremental_v1') WHERE id=a.log_id AND status='confirmed';
  GET DIAGNOSTICS matched=ROW_COUNT;
- IF matched<>1 THEN RAISE EXCEPTION 'proof_not_committed' USING ERRCODE='40001'; END IF;
+ IF matched<>1 THEN RAISE EXCEPTION 'proof_not_committed' USING ERRCODE='23505'; END IF;
  UPDATE public.assistant_v2_actions SET status='committed',result_quote_id=q.id,updated_at=clock_timestamp() WHERE id=a.id RETURNING * INTO a;
  PERFORM public.sa_v2_workflow_bind_committed(a);
  RETURN public.sa_v2_action_view(a);
@@ -439,7 +439,7 @@ BEGIN
  v:=public.sa_v2_workflow_run_actor(p_user_id,p_conversation_id,p_run_id);
  SELECT * INTO b FROM public.assistant_v2_draft_briefs WHERE id=p_state_id AND user_id=p_user_id AND company_id=(v->>'company_id')::uuid AND conversation_id=p_conversation_id FOR UPDATE;
  IF NOT FOUND OR b.revision IS DISTINCT FROM p_revision OR b.committed_snapshot IS DISTINCT FROM p_baseline OR b.workflow_state IN ('closed','cancelled')
- THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='40001'; END IF;
+ THEN RAISE EXCEPTION 'workflow_changed' USING ERRCODE='23505'; END IF;
  PERFORM public.sa_v2_workflow_expire_proposal(b.id);
  UPDATE public.assistant_v2_draft_briefs SET workflow_state='needs_review',conflict_reason='The saved draft changed outside this working brief. Review it in the builder; no automatic rebase or duplicate creation is allowed.',updated_at=clock_timestamp() WHERE id=b.id;
 END; $$;

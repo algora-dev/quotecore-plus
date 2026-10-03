@@ -183,7 +183,7 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $$
 DECLARE cid uuid:=public.sa_v2_settings_actor(p_user_id); current_epoch bigint; concept jsonb; aliases text[];
 BEGIN
  SELECT epoch INTO current_epoch FROM public.assistant_v2_workflow_epochs WHERE company_id=cid FOR UPDATE;
- IF current_epoch IS DISTINCT FROM p_expected_epoch THEN RAISE EXCEPTION 'workflow_config_changed' USING ERRCODE='40001'; END IF;
+ IF current_epoch IS DISTINCT FROM p_expected_epoch THEN RAISE EXCEPTION 'workflow_config_changed' USING ERRCODE='23505'; END IF;
  IF jsonb_typeof(p_concepts) IS DISTINCT FROM 'array' OR jsonb_array_length(p_concepts) NOT BETWEEN 8 AND 20
  THEN RAISE EXCEPTION 'invalid_vocabulary' USING ERRCODE='22023'; END IF;
  IF (SELECT count(DISTINCT value->>'key') FROM jsonb_array_elements(p_concepts))<>jsonb_array_length(p_concepts)
@@ -215,7 +215,7 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $$
 DECLARE cid uuid:=public.sa_v2_settings_actor(p_user_id); current_epoch bigint; member jsonb;
 BEGIN
  SELECT epoch INTO current_epoch FROM public.assistant_v2_workflow_epochs WHERE company_id=cid FOR UPDATE;
- IF current_epoch IS DISTINCT FROM p_expected_epoch THEN RAISE EXCEPTION 'workflow_config_changed' USING ERRCODE='40001'; END IF;
+ IF current_epoch IS DISTINCT FROM p_expected_epoch THEN RAISE EXCEPTION 'workflow_config_changed' USING ERRCODE='23505'; END IF;
  IF p_enabled IS NULL OR p_include_all IS NULL OR jsonb_typeof(p_members) IS DISTINCT FROM 'array' OR jsonb_array_length(p_members)>500
  THEN RAISE EXCEPTION 'invalid_library_config' USING ERRCODE='22023'; END IF;
  PERFORM 1 FROM public.component_collections WHERE id=p_collection_id AND company_id=cid FOR SHARE;

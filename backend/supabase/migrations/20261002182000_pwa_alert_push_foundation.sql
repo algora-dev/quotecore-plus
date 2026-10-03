@@ -73,7 +73,7 @@ BEGIN
  ON CONFLICT(endpoint) DO UPDATE SET p256dh=EXCLUDED.p256dh,auth_secret=EXCLUDED.auth_secret,vapid_public=EXCLUDED.vapid_public,categories=EXCLUDED.categories,
   enabled=true,consent_at=now(),last_seen_at=now(),revoked_at=NULL,updated_at=now()
  WHERE pwa_push_subscriptions.company_id=u.company_id AND pwa_push_subscriptions.user_id=u.id RETURNING id INTO result;
- IF result IS NULL THEN RAISE EXCEPTION 'Subscription ownership changed' USING ERRCODE='40001'; END IF;
+ IF result IS NULL THEN RAISE EXCEPTION 'Subscription ownership changed' USING ERRCODE='23505'; END IF;
  RETURN result;
 END $$;
 CREATE FUNCTION public.pwa_push_manage(p_operation text,p_subscription_id uuid DEFAULT NULL,p_endpoint text DEFAULT NULL,p_categories text[] DEFAULT NULL) RETURNS boolean
