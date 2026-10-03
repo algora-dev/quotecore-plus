@@ -304,8 +304,8 @@ BEGIN
    OR jsonb_typeof(p_before->'components') IS DISTINCT FROM 'array' OR jsonb_typeof(p_after->'components') IS DISTINCT FROM 'array'
    OR jsonb_array_length(p_after->'areas')>12 OR jsonb_array_length(p_after->'components') NOT BETWEEN 1 AND 24
  THEN RAISE EXCEPTION 'invalid_structural_plan' USING ERRCODE='22023'; END IF;
- SELECT coalesce(jsonb_agg(e),'[]'::jsonb) INTO before_entries FROM jsonb_array_elements(p_before->'components') c CROSS JOIN LATERAL jsonb_array_elements(c->'entries') e;
- SELECT coalesce(jsonb_agg(e),'[]'::jsonb) INTO after_entries FROM jsonb_array_elements(p_after->'components') c CROSS JOIN LATERAL jsonb_array_elements(c->'entries') e;
+ SELECT coalesce(jsonb_agg(je),'[]'::jsonb) INTO before_entries FROM jsonb_array_elements(p_before->'components') c CROSS JOIN LATERAL jsonb_array_elements(c->'entries') je;
+ SELECT coalesce(jsonb_agg(je),'[]'::jsonb) INTO after_entries FROM jsonb_array_elements(p_after->'components') c CROSS JOIN LATERAL jsonb_array_elements(c->'entries') je;
  IF jsonb_array_length(after_entries) NOT BETWEEN 1 AND 600 OR EXISTS(SELECT 1 FROM jsonb_array_elements(p_after->'components') c
    WHERE jsonb_typeof(c->'entries') IS DISTINCT FROM 'array' OR jsonb_array_length(c->'entries') NOT BETWEEN 1 AND 200)
  THEN RAISE EXCEPTION 'invalid_measurement_entries' USING ERRCODE='22023'; END IF;
@@ -318,7 +318,7 @@ BEGIN
  SELECT array_agg(id ORDER BY id) INTO actual FROM public.quote_components WHERE quote_id=p_quote_id;
  IF coalesce(expected,'{}') IS DISTINCT FROM coalesce(actual,'{}') THEN RAISE EXCEPTION 'component_identity_changed' USING ERRCODE='23505'; END IF;
  SELECT array_agg((value->>'id')::uuid ORDER BY value->>'id') INTO expected FROM jsonb_array_elements(before_entries);
- SELECT array_agg(e.id ORDER BY e.id) INTO actual FROM public.quote_component_entries e JOIN public.quote_components c ON c.id=e.quote_component_id WHERE c.quote_id=p_quote_id;
+ SELECT array_agg(ent.id ORDER BY ent.id) INTO actual FROM public.quote_component_entries ent JOIN public.quote_components c ON c.id=ent.quote_component_id WHERE c.quote_id=p_quote_id;
  IF coalesce(expected,'{}') IS DISTINCT FROM coalesce(actual,'{}') THEN RAISE EXCEPTION 'entry_identity_changed' USING ERRCODE='23505'; END IF;
  IF EXISTS(SELECT id FROM (
     SELECT value->>'id' id FROM jsonb_array_elements(p_after->'areas') UNION ALL
@@ -337,10 +337,10 @@ BEGIN
    END IF;
  END LOOP;
  -- Delete only explicitly removed entry identities, scoped through this quote.
- DELETE FROM public.quote_component_entries e USING public.quote_components c
+ DELETE FROM public.quote_component_entries ent USING public.quote_components c
  WHERE e.quote_component_id=c.id AND c.quote_id=p_quote_id
-   AND EXISTS(SELECT 1 FROM jsonb_array_elements(before_entries) j WHERE (j->>'id')::uuid=e.id)
-   AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(after_entries) j WHERE (j->>'id')::uuid=e.id);
+   AND EXISTS(SELECT 1 FROM jsonb_array_elements(before_entries) j WHERE (j->>'id')::uuid=ent.id)
+   AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(after_entries) j WHERE (j->>'id')::uuid=ent.id);
 
  FOR x IN SELECT value FROM jsonb_array_elements(p_after->'components') LOOP
    SELECT value INTO previous FROM jsonb_array_elements(p_before->'components') WHERE value->>'id'=x->>'id';
