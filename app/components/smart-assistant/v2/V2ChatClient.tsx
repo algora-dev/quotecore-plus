@@ -327,7 +327,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   };
 
   const newChat = async () => {
-    if (operation.current || unresolved) return;
+    if (operation.current) return;
     operation.current = true;
     setBusy(true);
     voice.cancel();
@@ -656,7 +656,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     {sheet && <AssistantSheet title={sheet === 'menu' ? 'Your assistant' : 'Add an attachment'} background={frame} onClose={() => setSheet(null)}>
       {sheet === 'menu' ? <>
         <div className={s.menuActions}>
-          <QcButton disabled={controlsBusy} onClick={() => void newChat()}><AssistantIcon name="plus"/>New conversation</QcButton>
+          <QcButton disabled={busy || locked || !!snapshot?.activeRunId} onClick={() => void newChat()}><AssistantIcon name="plus"/>New conversation</QcButton>
           <QcButton onClick={() => { voice.cancel(); speech.stop(); router.push(settingsHref); hide(); }}><AssistantIcon name="settings"/>Assistant settings</QcButton>
         </div>
         <div className={s.voicePreference}>
