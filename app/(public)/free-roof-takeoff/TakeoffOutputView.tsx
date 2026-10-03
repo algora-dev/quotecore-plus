@@ -10,7 +10,7 @@ import { buildConvertUrl } from '../shared/convertLines';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import { getStoredPitchMode } from '@/app/components/PitchInput';
 import { fromDegrees } from '@/app/lib/pitch-inputs';
-import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/DemoWorkstation';
+import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/demo-data/baseline';
 import type { TakeoffUnitSystem, TakeoffComponentSpec } from './tradeConfig';
 
 /** Trade variant for shared report copy (default roofing). Cladding switches

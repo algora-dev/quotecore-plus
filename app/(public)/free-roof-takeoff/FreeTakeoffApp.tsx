@@ -383,8 +383,8 @@ function TakeoffPhase({
       components={components}
       collections={collections}
       hydrationData={seededHydration}
-      aiTakeoffAvailable={true}
-      aiAssistPoints={seed?.aiAssistPoints ?? null}
+      aiTakeoffAvailable={config.aiScan}
+      aiAssistPoints={config.aiScan ? seed?.aiAssistPoints ?? null : null}
       seededScan={seededScan}
       aiCalibrationEnabled={false}
       onTouchOutlineAdapter={registerAdapter}
@@ -567,10 +567,11 @@ export function FreeTakeoffApp({
 
   // Keep AI-only system rows alongside the real manual targets. The
   // workstation hides these from manual pickers but requires them to apply
-  // AI results and support the existing reassign/review flow.
+  // AI results and support the existing reassign/review flow. Roof-trained
+  // placeholders are appended only for trades whose config offers the scan.
   const toolComponents = useMemo<ToolComponent[]>(
-    () => [...userComponents, ...AI_PLACEHOLDER_COMPONENTS],
-    [userComponents],
+    () => (config.aiScan ? [...userComponents, ...AI_PLACEHOLDER_COMPONENTS] : userComponents),
+    [userComponents, config],
   );
 
   // Seeded runs thread the seed (calibration, scan replay, collections)
@@ -754,6 +755,8 @@ export function FreeTakeoffApp({
     {builderOpen && <ComponentBuilderModal key={editingSpecId ?? 'new'}
       initial={editingSpecId ? specs.find((s) => s.id === editingSpecId) ?? null : null}
       measurementSystem={unitOption.lengthUnit === 'meters' ? 'metric' : 'imperial_ft'}
+      trade={config.tradeName as 'roofing' | 'cladding' | 'flooring'}
+      showPitchRules={config.requiresPitch}
       onSave={handleBuilderSave} onClose={() => setBuilderOpen(false)} />}
   </FreeTakeoffEntry>;
 }

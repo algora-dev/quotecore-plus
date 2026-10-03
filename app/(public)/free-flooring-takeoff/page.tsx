@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { FlooringTakeoff } from './FlooringTakeoff';
+import { FreeTakeoffApp } from '../free-roof-takeoff/FreeTakeoffApp';
+import { FLOORING_TAKEOFF_CONFIG } from '../free-roof-takeoff/tradeConfig';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { buildFaqSchema } from '@/lib/schema';
@@ -140,7 +141,7 @@ export default function FreeFlooringTakeoffPage() {
 
       {/* The tool */}
       <div id="free-flooring-takeoff" className="scroll-mt-24">
-        <FlooringTakeoff />
+        <FreeTakeoffApp config={FLOORING_TAKEOFF_CONFIG} />
       </div>
 
       {/* What can you measure */}

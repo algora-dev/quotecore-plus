@@ -7,7 +7,7 @@
  * resolves against in-memory session state. Nothing survives a page reload —
  * that is the product spec for the free tool (session-only, no database).
  *
- * Modeled on the proven takeoff-demo/demoActions.ts boundary. If the real
+ * Modeled on the proven takeoff demo's original server-action boundary. If the real
  * action signatures change, TS fails here — that's the deliberate
  * fail-obvious seam the demo fork established.
  *
