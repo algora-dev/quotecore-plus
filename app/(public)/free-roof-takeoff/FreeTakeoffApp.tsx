@@ -19,11 +19,13 @@ import dynamic from 'next/dynamic';
 import { TOOL_COLLECTIONS } from '@/app/(marketing)/takeoff-demo/demo-data/baseline';
 import {
   ROOFING_TAKEOFF_CONFIG,
+  EMPTY_SPEC,
   resolveUnitOption,
   type TakeoffTradeConfig,
   type TakeoffUnitSystem,
   type TakeoffPlaceholderComponent,
   type TakeoffComponentSpec,
+  type TakeoffComponentChoice,
 } from './tradeConfig';
 import { TakeoffOutputView, type TakeoffOutputExtras, type TakeoffTrade } from './TakeoffOutputView';
 import { ComponentBuilderModal } from './ComponentBuilderModal';
@@ -480,7 +482,7 @@ export function FreeTakeoffApp({
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [unitSystem, setUnitSystem] = useState<TakeoffUnitSystem>('metric');
-  const [componentChoice, setComponentChoice] = useState<'ours' | 'own'>('ours');
+  const [componentChoice, setComponentChoice] = useState<TakeoffComponentChoice>('ours');
   const [specs, setSpecs] = useState<TakeoffComponentSpec[]>([]);
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editingSpecId, setEditingSpecId] = useState<string | null>(null);
@@ -549,11 +551,26 @@ export function FreeTakeoffApp({
     setBuilderOpen(false);
   };
 
+  // 'edit-standard' starts from the trade's standard set, editable like 'own'.
+  // Seeded only while the list is empty so edits survive step navigation.
+  const handleChoiceChange = (choice: TakeoffComponentChoice) => {
+    setComponentChoice(choice);
+    if (choice === 'edit-standard' && specs.length === 0) {
+      setSpecs(config.placeholderComponents.map((c, index) => ({
+        id: `custom-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+        name: c.name,
+        ...EMPTY_SPEC,
+        measurementType: c.measurement_type,
+        pitchEnabled: config.requiresPitch && c.measurement_type === 'area',
+      })));
+    }
+  };
+
   const unitOption = resolveUnitOption(unitSystem, config);
 
   const specComponents = useMemo<ToolComponent[]>(
     () =>
-      componentChoice !== 'own'
+      componentChoice === 'ours'
         ? []
         : specs.map((s) => ({
             id: s.id,
@@ -584,7 +601,7 @@ export function FreeTakeoffApp({
   const activeSeed = seed ?? null;
   const seedCollections = seed?.collections;
 
-  const activeSpecs = useMemo(() => (componentChoice === 'own' ? specs : []), [componentChoice, specs]);
+  const activeSpecs = useMemo(() => (componentChoice === 'ours' ? [] : specs), [componentChoice, specs]);
 
   const pdfPicker = usePdfPagePicker();
 
@@ -752,7 +769,7 @@ export function FreeTakeoffApp({
   return <FreeTakeoffEntry config={config} step={step} unitSystem={unitSystem} unitOption={unitOption}
     componentChoice={componentChoice} specs={specs} componentCount={userComponents.length} error={error}
     orientationNoticeOpen={orientationNoticeOpen} onDismissOrientation={() => setOrientationNoticeOpen(false)}
-    onUnitChange={setUnitSystem} onChoiceChange={setComponentChoice}
+    onUnitChange={setUnitSystem} onChoiceChange={handleChoiceChange}
     onBack={() => setStep((s) => (s === 3 ? 2 : 1) as 1 | 2)}
     onContinue={() => setStep(step === 1 ? 2 : 3)}
     onCreateComponent={openBuilder} onEditComponent={openEditBuilder}
