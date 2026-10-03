@@ -551,7 +551,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   return <div ref={root} className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true" data-sa-experience="visual-v2" data-mode={mode}>
     <div className={s.frame} ref={frame}>
       <header className={s.header}>
-        <QcButton autoFocus className={s.brandButton} aria-label="Assistant menu" aria-haspopup="dialog" aria-expanded={sheet === 'menu'} onClick={() => { voice.cancel(); setSheet('menu'); }}>
+        <QcButton className={s.brandButton} aria-label="Assistant menu" aria-haspopup="dialog" aria-expanded={sheet === 'menu'} onClick={() => { voice.cancel(); setSheet('menu'); }}>
           <img src="/smart-assistant/q-menu.webp" alt="" width="44" height="44" draggable="false" />
         </QcButton>
         <div className={s.headerCopy}><h1>{assistantName || 'Smart Assistant'}</h1><p title={taskLabel}>{taskLabel}</p></div>
@@ -614,6 +614,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
       </div>
 
       <div className={s.bottomArea}>
+        <div className={s.extras}>
         {notice && <div className={s.notice} role="alert"><AssistantIcon name="alert"/><span>{notice}</span>{locked && active ? <QcButton size="sm" disabled={busy} onClick={() => void refresh(active)}>Check status</QcButton> : <QcButton className={s.iconButton} aria-label="Dismiss notice" onClick={() => setNotice(null)}><AssistantIcon name="close"/></QcButton>}</div>}
         {speech.state !== 'off' && <div className={s.playback}>
           <AssistantIcon name="speaker"/><div className={s.playbackCopy}><strong>{speech.state === 'error' ? 'Audio unavailable' : speech.state === 'paused' ? 'Paused' : speech.state === 'loading' ? 'Preparing audio…' : 'Speaking response'}</strong><span>{speech.error || 'Your text answer stays in the conversation'}</span></div>
@@ -626,6 +627,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
           <div className={s.transcriptHeader}><span>{draftOrigin === 'voice' ? 'YOUR VOICE NOTE' : 'YOUR MESSAGE'}</span><QcButton className={s.quietButton} onClick={() => changeMode('text', true)}><AssistantIcon name="edit"/>Edit</QcButton></div>
           <p>{input}</p><div className={s.transcriptActions}><QcButton disabled={controlsBusy} onClick={() => setInput('')}>Discard</QcButton><QcButton variant="primary" disabled={controlsBusy || !!attachments.length} onClick={() => void send()}><AssistantIcon name="send"/>Send message</QcButton></div>
         </section>}
+        </div>
 
         <div className={s.dock}>
           {attachments.length > 0 && <div className={s.attachments}>
