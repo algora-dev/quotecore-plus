@@ -561,7 +561,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const hide = () => { voice.cancel(); speech.stop(); setSheet(null); onHide(); };
   const openAttachmentSheet = () => { voice.cancel(); speech.stop(); setSheet('attach'); };
 
-  return <div ref={root} className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true" data-sa-experience="visual-v2" data-mode={mode}>
+  return <div ref={root} data-sa-root="true" className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true" data-sa-experience="visual-v2" data-mode={mode}>
     <div className={s.frame} ref={frame}>
       <header className={s.header}>
         <QcButton className={s.brandButton} aria-label="Assistant menu" aria-haspopup="dialog" aria-expanded={sheet === 'menu'} onClick={() => { voice.cancel(); setSheet('menu'); }}>
@@ -642,7 +642,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         </section>}
         </div>
 
-        <div className={s.dock}>
+        <div className={s.dock} data-sa-dock="true">
           {attachments.length > 0 && <div className={s.attachments}>
             <div className={s.attachmentList}>{attachments.map(item => <div key={item.id} className={s.attachmentItem}>
               {item.previewUrl ? <img src={item.previewUrl} alt="Local attachment preview" width="40" height="40"/> : <AssistantIcon name="file"/>}
