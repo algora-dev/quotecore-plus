@@ -49,3 +49,15 @@ v5 (current commit) extends the orange badge with `s:` (visualViewport.scale), `
 - Badge: v5 ih:699 vv:699@0 s:1.00 p:699 t:0 w:390 scr:390x844. NO zoom, NO offset, panel obeys all APIs exactly.
 - Conclusion: on iPhone Safari bottom-bar mode, EVERY height source (dvh, -webkit-fill-available, innerHeight, visualViewport) reports 699 on a 390x844 device while displaying more. Unit APIs under-report; only the fixed containing-block EDGES are correct (header at top:0 renders perfectly).
 - v6: .standalone = position:fixed; top:0; left:0; right:0; bottom:0; height:auto — anchored to both edges, NO height value. If the address bar overlaps the dock slightly in v6, the finisher is a small dock bottom-padding.
+
+## v7 (current live, d96ce725 / 4tu3ous60) + FINAL DATA — all units report 699
+- v7: .standalone = position:fixed; top:0; left:0; right:0; height:100vh + @media (display-mode: browser) .standalone .dock { padding-bottom: 56px } (bar clearance; PWA unaffected).
+- Owner's v7 screenshot badge: **v7 ih:699 vv:699@60 s:1.00 p:699 t:0 w:390 scr:390x844** — .root (height:100% of .standalone) STILL 699 => **100vh ALSO computes to 699**. Complete pathology: innerHeight, visualViewport.height, dvh, -webkit-fill-available, the fixed containing block, AND 100vh ALL = 699 on a 390x844 device while the visible area is visibly larger (dark band below the panel). v7's 56px dock clearance reduced the visual band (owner screenshot: band gone/reduced, bar fully visible) but owner still unsatisfied — bar 'floating with space below' the dock before Safari's floating address pill.
+## WHERE TO GO FROM HERE (ranked)
+1. **Remote-debug on the real device** (Mac + Safari > Develop > [iPhone]) — inspect the actual computed height of .standalone and what CSS value chain yields 699. Everything so far is inferred from badge readouts.
+2. **In-flow instead of fixed**: the one layer never tried — a position:static .standalone with scrollable body CAN render below the 699 fixed-frame boundary (document flow reaches the full scrollable area; Safari bars collapse on scroll). Requires page/body restructuring of /assistant.
+3. **viewport meta**: try interactive-widget=resizes-content on the /assistant layout; also compare 'Show Website Address Bar' vs 'Single Tab' iOS Safari settings on the device.
+4. **Scroll-trigger recalc**: tiny JS scroll nudge on mount (window.scrollTo(0,1)) can force Safari to re-evaluate bar state and vh values.
+5. **Accept + tune**: current v7 visual is close (band reduced); if the residual is only the Safari pill zone, tune the 56px clearance and ship.
+## TEST ACCOUNT
+e2e account on quotecore-plus-testing.vercel.app (see memory/CREDENTIALS.md in the agent workspace, not this zip). Remove the geo badges (orange: V2ChatClient geo effect; blue: ChatClient host badge) after the fix lands.
