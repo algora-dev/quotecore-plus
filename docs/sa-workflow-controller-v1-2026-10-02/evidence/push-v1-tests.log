@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: RFC 8291 Section 5 known-answer ciphertext exactly matches (full body)
+ok 1 - RFC 8291 Section 5 known-answer ciphertext exactly matches (full body)
+  ---
+  duration_ms: 2.821553
+  type: 'test'
+  ...
+# Subtest: randomized production encryption independently decrypts using Node HKDF and unique entropy
+ok 2 - randomized production encryption independently decrypts using Node HKDF and unique entropy
+  ---
+  duration_ms: 15.062866
+  type: 'test'
+  ...
+# Subtest: tampered ciphertext does not authenticate
+ok 3 - tampered ciphertext does not authenticate
+  ---
+  duration_ms: 0.804142
+  type: 'test'
+  ...
+# Subtest: oversized payloads, malformed secrets and off-curve public keys are refused
+ok 4 - oversized payloads, malformed secrets and off-curve public keys are refused
+  ---
+  duration_ms: 0.515057
+  type: 'test'
+  ...
+# Subtest: VAPID JWT is a verifiable P-256 signature with an exact origin audience and bounded expiry
+ok 5 - VAPID JWT is a verifiable P-256 signature with an exact origin audience and bounded expiry
+  ---
+  duration_ms: 2.147967
+  type: 'test'
+  ...
+# Subtest: VAPID refuses mismatched keys and header-injection contact
+ok 6 - VAPID refuses mismatched keys and header-injection contact
+  ---
+  duration_ms: 0.24513
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: http://fcm.googleapis.com/send/x
+ok 7 - endpoint SSRF refusal: http://fcm.googleapis.com/send/x
+  ---
+  duration_ms: 0.141583
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://127.0.0.1/admin
+ok 8 - endpoint SSRF refusal: https://127.0.0.1/admin
+  ---
+  duration_ms: 0.11938
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://169.254.169.254/latest/meta-data
+ok 9 - endpoint SSRF refusal: https://169.254.169.254/latest/meta-data
+  ---
+  duration_ms: 0.235064
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://localhost/x
+ok 10 - endpoint SSRF refusal: https://localhost/x
+  ---
+  duration_ms: 0.290829
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://fcm.googleapis.com.evil.test/x
+ok 11 - endpoint SSRF refusal: https://fcm.googleapis.com.evil.test/x
+  ---
+  duration_ms: 0.135804
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://evil.test@fcm.googleapis.com/x
+ok 12 - endpoint SSRF refusal: https://evil.test@fcm.googleapis.com/x
+  ---
+  duration_ms: 0.078439
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://fcm.googleapis.com:444/x
+ok 13 - endpoint SSRF refusal: https://fcm.googleapis.com:444/x
+  ---
+  duration_ms: 0.136726
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://fcm.googleapis.com/x\#secret
+ok 14 - endpoint SSRF refusal: https://fcm.googleapis.com/x\#secret
+  ---
+  duration_ms: 0.089725
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://updates.push.services.mozilla.com.evil.test/x
+ok 15 - endpoint SSRF refusal: https://updates.push.services.mozilla.com.evil.test/x
+  ---
+  duration_ms: 0.05939
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://[::1]/x
+ok 16 - endpoint SSRF refusal: https://[::1]/x
+  ---
+  duration_ms: 0.091057
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: file:///etc/passwd
+ok 17 - endpoint SSRF refusal: file:///etc/passwd
+  ---
+  duration_ms: 0.057296
+  type: 'test'
+  ...
+# Subtest: only the reviewed browser push providers are accepted
+ok 18 - only the reviewed browser push providers are accepted
+  ---
+  duration_ms: 0.121504
+  type: 'test'
+  ...
+# Subtest: delivery outcomes bound retries and revoke gone subscriptions
+ok 19 - delivery outcomes bound retries and revoke gone subscriptions
+  ---
+  duration_ms: 0.280973
+  type: 'test'
+  ...
+# Subtest: push payload never carries customer text, prices, or a client-authored URL
+ok 20 - push payload never carries customer text, prices, or a client-authored URL
+  ---
+  duration_ms: 0.216186
+  type: 'test'
+  ...
+# Subtest: deep links are server-built from entity IDs and an encoded workspace slug
+ok 21 - deep links are server-built from entity IDs and an encoded workspace slug
+  ---
+  duration_ms: 0.187543
+  type: 'test'
+  ...
+# Subtest: worker displays only fixed minimal text, coalesces duplicate deliveries, and never caches business data
+ok 22 - worker displays only fixed minimal text, coalesces duplicate deliveries, and never caches business data
+  ---
+  duration_ms: 1.374952
+  type: 'test'
+  ...
+# Subtest: malformed push still shows a safe notification and cannot navigate off-origin
+ok 23 - malformed push still shows a safe notification and cannot navigate off-origin
+  ---
+  duration_ms: 0.68947
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 40.459999

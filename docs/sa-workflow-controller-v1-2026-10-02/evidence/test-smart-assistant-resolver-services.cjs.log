@@ -1,0 +1,328 @@
+TAP version 13
+# Subtest: exact quote 1014 resolves no model, header domain and official saved total
+ok 1 - exact quote 1014 resolves no model, header domain and official saved total
+  ---
+  duration_ms: 18.282348
+  type: 'test'
+  ...
+# Subtest: exact-number miss does not substitute named same-number job
+ok 2 - exact-number miss does not substitute named same-number job
+  ---
+  duration_ms: 2.4014
+  type: 'test'
+  ...
+# Subtest: complete unique direct name resolves and labels source price correctly
+ok 3 - complete unique direct name resolves and labels source price correctly
+  ---
+  duration_ms: 4.96236
+  type: 'test'
+  ...
+# Subtest: same item across genuinely relevant namespaces yields real bound choices
+ok 4 - same item across genuinely relevant namespaces yields real bound choices
+  ---
+  duration_ms: 2.797036
+  type: 'test'
+  ...
+# Subtest: click reauthorizes and rereads exact source, gives fresh price and no proposal
+ok 5 - click reauthorizes and rereads exact source, gives fresh price and no proposal
+  ---
+  duration_ms: 5.578509
+  type: 'test'
+  ...
+# Subtest: one imperfect typo suggestion is shown but never silently selected
+ok 6 - one imperfect typo suggestion is shown but never silently selected
+  ---
+  duration_ms: 2.951729
+  type: 'test'
+  ...
+# Subtest: best weak hit is withheld, not manufactured into a candidate
+ok 7 - best weak hit is withheld, not manufactured into a candidate
+  ---
+  duration_ms: 2.537705
+  type: 'test'
+  ...
+# Subtest: six equally named matches ask discriminator rather than arbitrary five
+ok 8 - six equally named matches ask discriminator rather than arbitrary five
+  ---
+  duration_ms: 1.905793
+  type: 'test'
+  ...
+# Subtest: none marks all shown IDs rejected, no immediate expensive rescan
+ok 9 - none marks all shown IDs rejected, no immediate expensive rescan
+  ---
+  duration_ms: 2.504054
+  type: 'test'
+  ...
+# Subtest: none followed by a same-name search never reoffers rejected records
+ok 10 - none followed by a same-name search never reoffers rejected records
+  ---
+  duration_ms: 3.862001
+  type: 'test'
+  ...
+# Subtest: one useful customer refinement filters the complete prior candidate space first
+ok 11 - one useful customer refinement filters the complete prior candidate space first
+  ---
+  duration_ms: 3.239203
+  type: 'test'
+  ...
+# Subtest: refined query changing item cannot reuse prior complete candidate space
+ok 12 - refined query changing item cannot reuse prior complete candidate space
+  ---
+  duration_ms: 0.082725
+  type: 'test'
+  ...
+# Subtest: none plus a new job clue searches a different parent, including drafts
+ok 13 - none plus a new job clue searches a different parent, including drafts
+  ---
+  duration_ms: 4.516648
+  type: 'test'
+  ...
+# Subtest: explicit parent is searched first and children are ID-constrained
+ok 14 - explicit parent is searched first and children are ID-constrained
+  ---
+  duration_ms: 1.784219
+  type: 'test'
+  ...
+# Subtest: ambiguous parent gives parent choices before any child search
+ok 15 - ambiguous parent gives parent choices before any child search
+  ---
+  duration_ms: 0.839385
+  type: 'test'
+  ...
+# Subtest: selected parent resumes child lookup without model or mutation
+ok 16 - selected parent resumes child lookup without model or mutation
+  ---
+  duration_ms: 2.072925
+  type: 'test'
+  ...
+# Subtest: current quote precedes account-wide search for vague item
+ok 17 - current quote precedes account-wide search for vague item
+  ---
+  duration_ms: 1.256874
+  type: 'test'
+  ...
+# Subtest: explicit parent beats contradictory current page hint
+ok 18 - explicit parent beats contradictory current page hint
+  ---
+  duration_ms: 1.530628
+  type: 'test'
+  ...
+# Subtest: source timeout leaves uncertainty, never claims not found or sole winner
+ok 19 - source timeout leaves uncertainty, never claims not found or sole winner
+  ---
+  duration_ms: 1.796949
+  type: 'test'
+  ...
+# Subtest: all reads failing produces read_failed rather than absence
+ok 20 - all reads failing produces read_failed rather than absence
+  ---
+  duration_ms: 1.522025
+  type: 'test'
+  ...
+# Subtest: permission revocation during a read aborts rather than issuing cards
+ok 21 - permission revocation during a read aborts rather than issuing cards
+  ---
+  duration_ms: 1.343526
+  type: 'test'
+  ...
+# Subtest: hidden domain is not queried or reported as empty
+ok 22 - hidden domain is not queried or reported as empty
+  ---
+  duration_ms: 0.595938
+  type: 'test'
+  ...
+# Subtest: deleted selected row is not replaced by another candidate
+ok 23 - deleted selected row is not replaced by another candidate
+  ---
+  duration_ms: 5.463304
+  type: 'test'
+  ...
+# Subtest: renamed selected identity is rejected before price/read navigation
+ok 24 - renamed selected identity is rejected before price/read navigation
+  ---
+  duration_ms: 1.735797
+  type: 'test'
+  ...
+# Subtest: child moved to another quote cannot continue a stored selection
+ok 25 - child moved to another quote cannot continue a stored selection
+  ---
+  duration_ms: 1.660904
+  type: 'test'
+  ...
+# Subtest: forged candidate UUID does not select arbitrary source
+ok 26 - forged candidate UUID does not select arbitrary source
+  ---
+  duration_ms: 1.249894
+  type: 'test'
+  ...
+# Subtest: foreign or older resolution ID has same expired result
+ok 27 - foreign or older resolution ID has same expired result
+  ---
+  duration_ms: 1.354252
+  type: 'test'
+  ...
+# Subtest: expired choices do not reexecute read or proposal
+ok 28 - expired choices do not reexecute read or proposal
+  ---
+  duration_ms: 1.191175
+  type: 'test'
+  ...
+# Subtest: Cancel closes pending identity without selecting or mutating
+ok 29 - Cancel closes pending identity without selecting or mutating
+  ---
+  duration_ms: 1.354562
+  type: 'test'
+  ...
+# Subtest: two unhelpful clarification replies stop a repeated interrogation
+ok 30 - two unhelpful clarification replies stop a repeated interrogation
+  ---
+  duration_ms: 2.161308
+  type: 'test'
+  ...
+# Subtest: a fresh command ignores previous unresolved identity
+ok 31 - a fresh command ignores previous unresolved identity
+  ---
+  duration_ms: 1.762988
+  type: 'test'
+  ...
+# Subtest: third party generic statement not a command can fall back to model
+ok 32 - third party generic statement not a command can fall back to model
+  ---
+  duration_ms: 0.11303
+  type: 'test'
+  ...
+# Subtest: zero stored rates are shown as zero, missing ones are not invented
+ok 33 - zero stored rates are shown as zero, missing ones are not invented
+  ---
+  duration_ms: 0.605913
+  type: 'test'
+  ...
+# Subtest: incomplete price preserves selected identity and says price is unavailable
+ok 34 - incomplete price preserves selected identity and says price is unavailable
+  ---
+  duration_ms: 0.926156
+  type: 'test'
+  ...
+# Subtest: component rate reports pricing unit rather than assuming measurement unit
+ok 35 - component rate reports pricing unit rather than assuming measurement unit
+  ---
+  duration_ms: 1.44568
+  type: 'test'
+  ...
+# Subtest: saved customer line is distinct from internal material cost
+ok 36 - saved customer line is distinct from internal material cost
+  ---
+  duration_ms: 1.04831
+  type: 'test'
+  ...
+# Subtest: registered component edit prepares P3 proposal only, verifies exact parent
+ok 37 - registered component edit prepares P3 proposal only, verifies exact parent
+  ---
+  duration_ms: 1.049962
+  type: 'test'
+  ...
+# Subtest: ambiguous edit waits for identity selection then proposal still needs Confirm
+ok 38 - ambiguous edit waits for identity selection then proposal still needs Confirm
+  ---
+  duration_ms: 1.382303
+  type: 'test'
+  ...
+# Subtest: existing P3 eligibility refusal stays authoritative
+ok 39 - existing P3 eligibility refusal stays authoritative
+  ---
+  duration_ms: 0.810331
+  type: 'test'
+  ...
+# Subtest: disabled proposal callback cannot mutate even after exact selection
+ok 40 - disabled proposal callback cannot mutate even after exact selection
+  ---
+  duration_ms: 0.736941
+  type: 'test'
+  ...
+# Subtest: one admitted run cannot produce conflicting resolution outcomes
+ok 41 - one admitted run cannot produce conflicting resolution outcomes
+  ---
+  duration_ms: 1.601413
+  type: 'test'
+  ...
+# Subtest: trusted terminal cannot be spoofed by a model-shaped object
+ok 42 - trusted terminal cannot be spoofed by a model-shaped object
+  ---
+  duration_ms: 1.178967
+  type: 'test'
+  ...
+# Subtest: ordered-last-week refinement resolves both order-line layouts through authoritative dates
+ok 43 - ordered-last-week refinement resolves both order-line layouts through authoritative dates
+  ---
+  duration_ms: 2.416523
+  type: 'test'
+  ...
+# Subtest: date range with more than ten orders refuses sampled line discovery
+ok 44 - date range with more than ten orders refuses sampled line discovery
+  ---
+  duration_ms: 1.73819
+  type: 'test'
+  ...
+# Subtest: composite quote list uses content EXISTS and expands linked statuses
+ok 45 - composite quote list uses content EXISTS and expands linked statuses
+  ---
+  duration_ms: 1.537438
+  type: 'test'
+  ...
+# Subtest: missing state migration returns setup_required without another doomed save
+ok 46 - missing state migration returns setup_required without another doomed save
+  ---
+  duration_ms: 1.401833
+  type: 'test'
+  ...
+# Subtest: operational logs contain counts/timings, not names, prices, customer text
+ok 47 - operational logs contain counts/timings, not names, prices, customer text
+  ---
+  duration_ms: 1.524818
+  type: 'test'
+  ...
+# Subtest: a shared quote URL may hold a draft; context is not status authority
+ok 48 - a shared quote URL may hold a draft; context is not status authority
+  ---
+  duration_ms: 0.685143
+  type: 'test'
+  ...
+# Subtest: explicit this quote also resolves a permitted draft behind the shared URL
+ok 49 - explicit this quote also resolves a permitted draft behind the shared URL
+  ---
+  duration_ms: 0.880046
+  type: 'test'
+  ...
+# Subtest: model refinement preserves original item/task and cached candidate constraints
+ok 50 - model refinement preserves original item/task and cached candidate constraints
+  ---
+  duration_ms: 2.104442
+  type: 'test'
+  ...
+# Subtest: model refinement of pending edit cannot change requested rate or approval
+ok 51 - model refinement of pending edit cannot change requested rate or approval
+  ---
+  duration_ms: 1.497096
+  type: 'test'
+  ...
+# Subtest: refinement cannot silently replace exact parent or original subject
+ok 52 - refinement cannot silently replace exact parent or original subject
+  ---
+  duration_ms: 0.918515
+  type: 'test'
+  ...
+# Subtest: rejecting candidates plus a useful clue consumes a clarification round
+ok 53 - rejecting candidates plus a useful clue consumes a clarification round
+  ---
+  duration_ms: 1.483766
+  type: 'test'
+  ...
+1..53
+# tests 53
+# suites 0
+# pass 53
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 131.764345

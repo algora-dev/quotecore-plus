@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createConversation, type ConversationRow } from '@/app/(auth)/[workspaceSlug]/assistant/actions';
 import { displayTaskMessage } from '@/app/lib/smart-assistant/tasks/wire';
-import { failedTurns, staleTaskCard, awaitingProceed } from '@/app/lib/smart-assistant/tasks/presentation';
+import { failedTurns, staleTaskCard } from '@/app/lib/smart-assistant/tasks/presentation';
 import { displayResolutionMessage } from '@/app/lib/smart-assistant/resolver/wire';
 import { displayDraftChoice } from '@/app/lib/smart-assistant/library-workflow/wire';
 import { SafeMessage } from '../SafeMessage';
@@ -524,7 +524,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const failures = failedTurns(snapshot?.messages ?? [], snapshot?.runs ?? []);
   const failureByMessage = new Map(failures.map(f => [f.messageId, f]));
   const latestUser = snapshot?.messages.filter(m => m.role === 'user').at(-1)?.id;
-  const staleChoice = (card: ConversationCard) => staleTaskCard(card, snapshot?.task);
+  const staleChoice = (card: ConversationCard) => staleTaskCard(card, snapshot?.task) || (card.content.kind === 'draft_workflow' && (snapshot?.cards ?? []).some(newer => newer.content.kind === 'draft_workflow' && card.content.kind === 'draft_workflow' && newer.content.stateId === card.content.stateId && newer.content.revision > card.content.revision));
   const canConfirm = (action: ActionView) => {
     const live = snapshot?.access ?? access;
     return live.phases.p3 && (action.actionKind !== 'draft_create' || live.phases.p4) && action.sections.every(section => live.permissions[section] === 'edit');
@@ -535,20 +535,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const orphanCards = lastCardOnly(snapshot?.cards.filter(c => !replies.has(c.runId)) ?? []);
 
   const controlsBusy = busy || locked || unresolved || !!snapshot?.activeRunId;
-  // Owner 2026-10-01 (voice): questions with a known finite answer set get
-  // tappable replies instead of forcing a typed/voice answer. A tap sends
-  // ordinary text through send(), so the server binds it like any answer and
-  // nothing here is ever write authority (Confirm cards keep their protocol).
-  const quickRepliesFor = (text: string): { label: string; answer: string }[] => {
-    if (!text) return [];
-    if (/\b(?:plan|actual)[^.?!]{0,60}?\bor\b[^.?!]{0,60}?\b(?:plan|actual)\b/i.test(text)) return [
-      { label: 'Plan measurements', answer: 'Plan measurements' },
-      { label: 'Actual measurements', answer: 'Actual measurements' },
-    ];
-    return [];
-  };
   const lastAssistantMessage = [...(snapshot?.messages ?? [])].reverse().find(m => m.role === 'assistant');
-  const quickReplies = !streamText && lastAssistantMessage ? quickRepliesFor(lastAssistantMessage.content) : [];
   const hasMessages = !!snapshot?.messages.length;
   const currentAccess = snapshot?.access ?? access;
   const task = snapshot?.task;
@@ -605,9 +592,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             {m.role === 'assistant' && <>
               <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={cardsFor(m.runId)} actions={snapshot.actions} busy={controlsBusy || voice.state !== 'off'} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>
             </>}
-            {m.role === 'assistant' && m.id === lastAssistantMessage?.id && quickReplies.length > 0 && <div className={s.quickActions} data-sa-quick-replies="true">
-              {quickReplies.map(reply => <QcButton key={reply.answer} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void send(reply.answer)}>{reply.label}</QcButton>)}
-            </div>}
+
           </div>)}
           <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={orphanCards} actions={snapshot?.actions ?? []} busy={controlsBusy || voice.state !== 'off'} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>
           {streamText && <div className={s.turn} data-sa-streaming="true">
@@ -617,14 +602,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             </div>
           </div>}
           {task && <div className={s.taskFooter} data-sa-task={task.id}>
-            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task closed. Ask something new whenever you’re ready.</p> : awaitingProceed(task, snapshot?.messages ?? []) ? <>
-              {/* Assistant asked for confirmation to continue: Proceed is UX sugar over
-                  sending "Yes, proceed." through the normal turn pipeline. Never a write
-                  confirmation — action cards keep their own Confirm/Cancel protocol. */}
-              <QcButton variant="primary" disabled={controlsBusy || voice.state !== 'off'} onClick={() => void send('Yes, proceed.')}><AssistantIcon name="chevron"/><span>Proceed</span></QcButton>
-              <QcButton className={s.quietButton} disabled={controlsBusy || voice.state !== 'off'} onClick={refineAnswer}>Not quite</QcButton>
-              <QcButton className={s.doneButton} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void finishTask('done')}><AssistantIcon name="check"/><span>Done</span></QcButton>
-            </> : <>
+            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task closed. Ask something new whenever you’re ready.</p> : <>
               <QcButton className={s.doneButton} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void finishTask(task.status === 'answered' ? 'done' : 'move_on')}><AssistantIcon name={task.status === 'answered' ? 'check' : 'chevron'}/>{task.status === 'answered' ? 'Done' : 'Move on'}</QcButton>
               {task.status === 'answered' && <QcButton className={s.quietButton} disabled={controlsBusy || voice.state !== 'off'} onClick={refineAnswer}>Not quite</QcButton>}
             </>}

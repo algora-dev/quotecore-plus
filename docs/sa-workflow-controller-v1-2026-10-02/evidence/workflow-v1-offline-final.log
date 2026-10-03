@@ -1,0 +1,492 @@
+
+=== test-smart-assistant-workflow-v1.cjs ===
+TAP version 13
+# Subtest: built-in aliases and singular/plural variants retain stable concepts
+ok 1 - built-in aliases and singular/plural variants retain stable concepts
+  ---
+  duration_ms: 1.541954
+  type: 'test'
+  ...
+# Subtest: ambiguous custom aliases and changed built-in behavior are refused
+ok 2 - ambiguous custom aliases and changed built-in behavior are refused
+  ---
+  duration_ms: 0.508837
+  type: 'test'
+  ...
+# Subtest: custom concepts inherit a finite supported behavior, never invented rules
+ok 3 - custom concepts inherit a finite supported behavior, never invented rules
+  ---
+  duration_ms: 0.335636
+  type: 'test'
+  ...
+# Subtest: James Smith brief retains address, pitch, basis and three individual hips
+ok 4 - James Smith brief retains address, pitch, basis and three individual hips
+  ---
+  duration_ms: 1.741445
+  type: 'test'
+  ...
+# Subtest: missing pitch stays missing; a flat roof must be explicit
+ok 5 - missing pitch stays missing; a flat roof must be explicit
+  ---
+  duration_ms: 0.799485
+  type: 'test'
+  ...
+# Subtest: defaults resolve only inside the selected library
+ok 6 - defaults resolve only inside the selected library
+  ---
+  duration_ms: 1.070643
+  type: 'test'
+  ...
+# Subtest: all genuine choices are grouped without losing brief fields
+ok 7 - all genuine choices are grouped without losing brief fields
+  ---
+  duration_ms: 1.040788
+  type: 'test'
+  ...
+# Subtest: an explicitly requested product outranks a default; an unknown request is not replaced
+ok 8 - an explicitly requested product outranks a default; an unknown request is not replaced
+  ---
+  duration_ms: 0.438671
+  type: 'test'
+  ...
+# Subtest: stale explicit product is not silently exchanged for a new default
+ok 9 - stale explicit product is not silently exchanged for a new default
+  ---
+  duration_ms: 0.584561
+  type: 'test'
+  ...
+# Subtest: measurement correction preserves all untouched IDs, area basis and other entries
+ok 10 - measurement correction preserves all untouched IDs, area basis and other entries
+  ---
+  duration_ms: 1.46591
+  type: 'test'
+  ...
+# Subtest: typed reducer is atomic on an invalid later delta and rejects arbitrary fields
+ok 11 - typed reducer is atomic on an invalid later delta and rejects arbitrary fields
+  ---
+  duration_ms: 0.78322
+  type: 'test'
+  ...
+# Subtest: cannot delete a referenced area or mutate a linked covering as an independent measurement
+ok 12 - cannot delete a referenced area or mutate a linked covering as an independent measurement
+  ---
+  duration_ms: 0.35172
+  type: 'test'
+  ...
+# Subtest: duplicate-group addition needs an exact group identity
+ok 13 - duplicate-group addition needs an exact group identity
+  ---
+  duration_ms: 0.944334
+  type: 'test'
+  ...
+# Subtest: canonical QuoteCore engines recalculate only intended changed groups
+ok 14 - canonical QuoteCore engines recalculate only intended changed groups
+  ---
+  duration_ms: 6.540728
+  type: 'test'
+  ...
+# Subtest: measurement corrections retain saved rates and waste despite changed library defaults
+ok 15 - measurement corrections retain saved rates and waste despite changed library defaults
+  ---
+  duration_ms: 1.646041
+  type: 'test'
+  ...
+# Subtest: individual fixed waste is not the same as collapsing three hips into one entry
+ok 16 - individual fixed waste is not the same as collapsing three hips into one entry
+  ---
+  duration_ms: 0.858644
+  type: 'test'
+  ...
+# Subtest: a changed 200th measurement remains visible in the human review
+ok 17 - a changed 200th measurement remains visible in the human review
+  ---
+  duration_ms: 12.859711
+  type: 'test'
+  ...
+# Subtest: safe units, identity uniqueness, oversized and nonfinite measurements fail closed
+ok 18 - safe units, identity uniqueness, oversized and nonfinite measurements fail closed
+  ---
+  duration_ms: 1.370075
+  type: 'test'
+  ...
+# Subtest: active workflow correction stays in the same task: Actually make the roof 110 square and add another 2 metres ridge.
+ok 19 - active workflow correction stays in the same task: Actually make the roof 110 square and add another 2 metres ridge.
+  ---
+  duration_ms: 6.157189
+  type: 'test'
+  ...
+# Subtest: active workflow correction stays in the same task: Garage should be 20 degrees and add another 3m valley.
+ok 20 - active workflow correction stays in the same task: Garage should be 20 degrees and add another 3m valley.
+  ---
+  duration_ms: 2.210692
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: Create a new quote for Alice
+ok 21 - a self-contained request escapes the working brief: Create a new quote for Alice
+  ---
+  duration_ms: 1.422935
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: Show my overdue invoices
+ok 22 - a self-contained request escapes the working brief: Show my overdue invoices
+  ---
+  duration_ms: 0.658121
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: Find James Smith
+ok 23 - a self-contained request escapes the working brief: Find James Smith
+  ---
+  duration_ms: 1.111215
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: What is my quote total?
+ok 24 - a self-contained request escapes the working brief: What is my quote total?
+  ---
+  duration_ms: 0.121082
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: New task: create Bob at 10 Street
+ok 25 - a self-contained request escapes the working brief: New task: create Bob at 10 Street
+  ---
+  duration_ms: 0.066521
+  type: 'test'
+  ...
+# Subtest: grouped text choices carry only the live task brief
+ok 26 - grouped text choices carry only the live task brief
+  ---
+  duration_ms: 0.312971
+  type: 'test'
+  ...
+# Subtest: Done closes a task; yes does not confer mutation authority
+ok 27 - Done closes a task; yes does not confer mutation authority
+  ---
+  duration_ms: 0.156266
+  type: 'test'
+  ...
+# Subtest: refresh batches retain every cookie chunk across response replacement and redirects
+ok 28 - refresh batches retain every cookie chunk across response replacement and redirects
+  ---
+  duration_ms: 0.335064
+  type: 'test'
+  ...
+# Subtest: cookie batch keeps distinct domain/path removals without extending expiry
+ok 29 - cookie batch keeps distinct domain/path removals without extending expiry
+  ---
+  duration_ms: 0.200151
+  type: 'test'
+  ...
+# Subtest: temporary auth failure is distinct from legitimate expiry/refusal
+ok 30 - temporary auth failure is distinct from legitimate expiry/refusal
+  ---
+  duration_ms: 0.166
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 61.572418
+
+=== test-smart-assistant-workflow-v1-services.cjs ===
+TAP version 13
+# Subtest: service persists brief before preparing and attaching explicit review; no parent mutation RPC
+ok 1 - service persists brief before preparing and attaching explicit review; no parent mutation RPC
+  ---
+  duration_ms: 4.562166
+  type: 'test'
+  ...
+# Subtest: genuine alternatives returned in ONE grouped card without proposal
+ok 2 - genuine alternatives returned in ONE grouped card without proposal
+  ---
+  duration_ms: 1.084445
+  type: 'test'
+  ...
+# Subtest: partial then remaining product choices keep same brief and three separate hips
+ok 3 - partial then remaining product choices keep same brief and three separate hips
+  ---
+  duration_ms: 2.638716
+  type: 'test'
+  ...
+# Subtest: bound typed revision prepares same quote with stable identities and snapshot
+ok 4 - bound typed revision prepares same quote with stable identities and snapshot
+  ---
+  duration_ms: 1.932402
+  type: 'test'
+  ...
+# Subtest: stale revision rejected before persistence or proposal
+ok 5 - stale revision rejected before persistence or proposal
+  ---
+  duration_ms: 1.148241
+  type: 'test'
+  ...
+# Subtest: fresh permission refusal stops all workflow transport
+ok 6 - fresh permission refusal stops all workflow transport
+  ---
+  duration_ms: 0.211148
+  type: 'test'
+  ...
+# Subtest: View permission cannot invoke edit workflow
+ok 7 - View permission cannot invoke edit workflow
+  ---
+  duration_ms: 0.22597
+  type: 'test'
+  ...
+# Subtest: foreign company state cannot be read through workflow service
+ok 8 - foreign company state cannot be read through workflow service
+  ---
+  duration_ms: 0.706865
+  type: 'test'
+  ...
+# Subtest: old product choices are discarded after settings epoch changes
+ok 9 - old product choices are discarded after settings epoch changes
+  ---
+  duration_ms: 1.217175
+  type: 'test'
+  ...
+# Subtest: changed default does NOT reassign an existing bound draft product
+ok 10 - changed default does NOT reassign an existing bound draft product
+  ---
+  duration_ms: 1.271526
+  type: 'test'
+  ...
+# Subtest: missing committed baseline refuses replacement of bound draft
+ok 11 - missing committed baseline refuses replacement of bound draft
+  ---
+  duration_ms: 0.866005
+  type: 'test'
+  ...
+# Subtest: deleted bound quote with cleared FK never falls back to new creation
+ok 12 - deleted bound quote with cleared FK never falls back to new creation
+  ---
+  duration_ms: 0.91581
+  type: 'test'
+  ...
+# Subtest: external builder changes mark conflict without overwriting or creating a proposal
+ok 13 - external builder changes mark conflict without overwriting or creating a proposal
+  ---
+  duration_ms: 0.711813
+  type: 'test'
+  ...
+# Subtest: sent quote never becomes an editable workflow draft
+ok 14 - sent quote never becomes an editable workflow draft
+  ---
+  duration_ms: 0.797051
+  type: 'test'
+  ...
+# Subtest: legacy brief is not rebuilt or rebound
+ok 15 - legacy brief is not rebuilt or rebound
+  ---
+  duration_ms: 0.662618
+  type: 'test'
+  ...
+# Subtest: cancel stops preparation but does not delete or confirm the bound quote
+ok 16 - cancel stops preparation but does not delete or confirm the bound quote
+  ---
+  duration_ms: 0.534776
+  type: 'test'
+  ...
+# Subtest: context from a different task is not exposed
+ok 17 - context from a different task is not exposed
+  ---
+  duration_ms: 0.668477
+  type: 'test'
+  ...
+# Subtest: bounded context has a paginated reader for omitted individual entry IDs
+ok 18 - bounded context has a paginated reader for omitted individual entry IDs
+  ---
+  duration_ms: 0.9622
+  type: 'test'
+  ...
+# Subtest: configuration changing mid-read refuses partial preparation
+ok 19 - configuration changing mid-read refuses partial preparation
+  ---
+  duration_ms: 0.363779
+  type: 'test'
+  ...
+# Subtest: feature flag rollback refuses even an already bound workflow
+ok 20 - feature flag rollback refuses even an already bound workflow
+  ---
+  duration_ms: 0.644331
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 47.871189
+
+=== test-pwa-push-v1.cjs ===
+TAP version 13
+# Subtest: RFC 8291 Section 5 known-answer ciphertext exactly matches (full body)
+ok 1 - RFC 8291 Section 5 known-answer ciphertext exactly matches (full body)
+  ---
+  duration_ms: 2.241818
+  type: 'test'
+  ...
+# Subtest: randomized production encryption independently decrypts using Node HKDF and unique entropy
+ok 2 - randomized production encryption independently decrypts using Node HKDF and unique entropy
+  ---
+  duration_ms: 13.905437
+  type: 'test'
+  ...
+# Subtest: tampered ciphertext does not authenticate
+ok 3 - tampered ciphertext does not authenticate
+  ---
+  duration_ms: 0.795679
+  type: 'test'
+  ...
+# Subtest: oversized payloads, malformed secrets and off-curve public keys are refused
+ok 4 - oversized payloads, malformed secrets and off-curve public keys are refused
+  ---
+  duration_ms: 0.567536
+  type: 'test'
+  ...
+# Subtest: VAPID JWT is a verifiable P-256 signature with an exact origin audience and bounded expiry
+ok 5 - VAPID JWT is a verifiable P-256 signature with an exact origin audience and bounded expiry
+  ---
+  duration_ms: 1.955047
+  type: 'test'
+  ...
+# Subtest: VAPID refuses mismatched keys and header-injection contact
+ok 6 - VAPID refuses mismatched keys and header-injection contact
+  ---
+  duration_ms: 0.241484
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: http://fcm.googleapis.com/send/x
+ok 7 - endpoint SSRF refusal: http://fcm.googleapis.com/send/x
+  ---
+  duration_ms: 0.107112
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://127.0.0.1/admin
+ok 8 - endpoint SSRF refusal: https://127.0.0.1/admin
+  ---
+  duration_ms: 0.078799
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://169.254.169.254/latest/meta-data
+ok 9 - endpoint SSRF refusal: https://169.254.169.254/latest/meta-data
+  ---
+  duration_ms: 0.242506
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://localhost/x
+ok 10 - endpoint SSRF refusal: https://localhost/x
+  ---
+  duration_ms: 0.321053
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://fcm.googleapis.com.evil.test/x
+ok 11 - endpoint SSRF refusal: https://fcm.googleapis.com.evil.test/x
+  ---
+  duration_ms: 0.173962
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://evil.test@fcm.googleapis.com/x
+ok 12 - endpoint SSRF refusal: https://evil.test@fcm.googleapis.com/x
+  ---
+  duration_ms: 0.085639
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://fcm.googleapis.com:444/x
+ok 13 - endpoint SSRF refusal: https://fcm.googleapis.com:444/x
+  ---
+  duration_ms: 0.114453
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://fcm.googleapis.com/x\#secret
+ok 14 - endpoint SSRF refusal: https://fcm.googleapis.com/x\#secret
+  ---
+  duration_ms: 0.083326
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://updates.push.services.mozilla.com.evil.test/x
+ok 15 - endpoint SSRF refusal: https://updates.push.services.mozilla.com.evil.test/x
+  ---
+  duration_ms: 0.058649
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://[::1]/x
+ok 16 - endpoint SSRF refusal: https://[::1]/x
+  ---
+  duration_ms: 0.065329
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: file:///etc/passwd
+ok 17 - endpoint SSRF refusal: file:///etc/passwd
+  ---
+  duration_ms: 0.081673
+  type: 'test'
+  ...
+# Subtest: only the reviewed browser push providers are accepted
+ok 18 - only the reviewed browser push providers are accepted
+  ---
+  duration_ms: 0.117747
+  type: 'test'
+  ...
+# Subtest: delivery outcomes bound retries and revoke gone subscriptions
+ok 19 - delivery outcomes bound retries and revoke gone subscriptions
+  ---
+  duration_ms: 0.415125
+  type: 'test'
+  ...
+# Subtest: push payload never carries customer text, prices, or a client-authored URL
+ok 20 - push payload never carries customer text, prices, or a client-authored URL
+  ---
+  duration_ms: 0.216887
+  type: 'test'
+  ...
+# Subtest: deep links are server-built from entity IDs and an encoded workspace slug
+ok 21 - deep links are server-built from entity IDs and an encoded workspace slug
+  ---
+  duration_ms: 0.255335
+  type: 'test'
+  ...
+# Subtest: worker displays only fixed minimal text, coalesces duplicate deliveries, and never caches business data
+ok 22 - worker displays only fixed minimal text, coalesces duplicate deliveries, and never caches business data
+  ---
+  duration_ms: 1.289584
+  type: 'test'
+  ...
+# Subtest: malformed push still shows a safe notification and cannot navigate off-origin
+ok 23 - malformed push still shows a safe notification and cannot navigate off-origin
+  ---
+  duration_ms: 0.77008
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 39.246771
+
+=== check-smart-assistant-workflow-v1-source.cjs ===
+PASS (static): destructive clear is disabled and revoked
+PASS (static): exact snapshot, stable children and original creation are wired
+PASS (static): repeat-edit index excludes edits, not new-parent replay
+PASS (static): brief CAS and epoch/proof bindings exist
+PASS (static): task controls close preparation without mutation authority
+PASS (static): typed workflow tools replace low-level correction orchestration
+PASS (static): UI choices derive from server state; prose Proceed removed
+PASS (static): cookie batching and workspace-scoped launch exist
+PASS (static): push tables are tenant/user scoped and direct writes revoked
+PASS (static): outbox dedup, leases, retries, cleanup and authenticated subscriptions exist
+PASS (static): worker is flag/secret gated and does not cache app data
+PASS (static): push route scheduled without changing existing crons
+PASS (byte comparison): 367 protected baseline files unchanged.
+Static source assertions passed. No SQL or browser was executed.
+
+New OFFLINE suites passed. Mocks/static checks do not establish live correctness.

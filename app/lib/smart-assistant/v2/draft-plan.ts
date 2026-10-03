@@ -68,7 +68,13 @@ export function parseDraft(value: Record<string, unknown>, context: Record<strin
   return { customerName, jobName, ...(value.site_address !== undefined ? { siteAddress } : {}), measurementSystem: value.measurement_system as DraftSpec['measurementSystem'], pitch, trade: trade as Trade, collectionId, areas, components };
 }
 
-export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, libraries: Record<string, unknown>[]) {
+export type DraftIdentities = { areas: string[]; components: Array<{id: string; entries: string[]}> };
+export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, libraries: Record<string, unknown>[], identities?: DraftIdentities, retainedComponents?: Record<string, unknown>[]) {
+  if (identities && (identities.areas.length !== spec.areas.length || identities.components.length !== spec.components.length)) throw new ProposalError('The working draft identity map changed.');
+  if (identities) {
+    const all = [...identities.areas, ...identities.components.flatMap(c => [c.id, ...c.entries])];
+    if (all.some(id => !isUuid(id)) || new Set(all).size !== all.length) throw new ProposalError('Working draft identities must be unique server-owned IDs.');
+  }
   const currency = boundedText(context.currency, 8);
   if (!currency || !/^[A-Z]{3}$/.test(currency)) throw new ProposalError('The workspace currency must be configured first.');
   const changes: ChangeRow[] = [
@@ -82,7 +88,7 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
     { label: 'Default pitch (degrees)', before: '', after: String(spec.pitch) },
   ];
   const areas = spec.areas.map((a, index) => {
-    const id = randomUUID();
+    const id = identities?.areas[index] ?? randomUUID();
     const quantity = storedMeasurement(canonicalQuantity(Number(a.quantity), a.unit, 'area'));
     const surface = a.basis === 'surface';
     const areaPitch = a.pitch_degrees == null ? spec.pitch : storageNumber(finite(a.pitch_degrees, 'area pitch', 0, 89));
@@ -93,8 +99,10 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
   });
 
   const components = spec.components.map((input, index) => {
-    const lib = libraries.find(x => x.id === input.library_id);
-    if (!lib) throw new ProposalError('A chosen component is no longer available.');
+    const configured = libraries.find(x => x.id === input.library_id);
+    if (!configured) throw new ProposalError('A chosen component is no longer available.');
+    const retained = identities ? retainedComponents?.find(c => c.id === identities.components[index].id && c.library_id === input.library_id) : undefined;
+    const lib = retained ? retainCalculationSettings(configured, retained) : configured;
     if (lib.is_active !== true || lib.collection_id !== spec.collectionId) throw new ProposalError('Use active components from the chosen collection.');
     if (!TRADE_ALLOWED_MEASUREMENT_TYPES[spec.trade].has(String(lib.measurement_type) as MeasurementType)) throw new ProposalError('A selected component is incompatible with this trade.');
     if (!['area', 'lineal', 'linear', 'count', 'quantity', 'fixed', 'volume_3d'].includes(String(lib.measurement_type))) throw new ProposalError('This component requires a specialised dimensional or segment editor. Open the builder for it.');
@@ -121,9 +129,10 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
       totalQuantity, materialRate: rate, labourRate: labour, pricingStrategy: strategy as PricingStrategy, packPrice: lib.pack_price == null ? null : fieldNumber(lib.pack_price, 'pack price'), packSize: lib.pack_size == null ? null : fieldNumber(lib.pack_size, 'pack size'), packCoverageM2: lib.pack_coverage_m2 == null ? null : fieldNumber(lib.pack_coverage_m2, 'pack coverage'),
       wasteType, wastePercent: waste, wasteFixed: fixed, pitchType, pitchDegrees: deg, source: 'manual' });
     if (audit.packDataMissing || ![audit.materialCost, audit.labourCost, totalQuantity].every(Number.isFinite)) throw new ProposalError('A library pack is missing its pricing data. Fix it before creating this draft.');
-    const id = randomUUID(), unit = baseUnit(lib.measurement_type);
+    const id = identities?.components[index].id ?? randomUUID(), unit = baseUnit(lib.measurement_type);
     changes.push({ label: `Component: ${String(lib.name)}`, before: 'New', after: `${measurementSummary(measurements)} (${input.basis}, ${measurements.length} ${measurements.length === 1 ? 'entry' : 'entries'}, before waste); ${deg} degrees; waste ${wasteType === 'percent' ? waste + '%' : wasteType === 'none' ? 'none' : fixed + ' ' + unit}; engine quantity ${totalQuantity} ${unit}; ${currency} material ${audit.materialCost.toFixed(2)}, labour ${audit.labourCost.toFixed(2)}` });
-    const entries = calculated.map(e => ({ id: randomUUID(), raw_value: e.rawValue, value_after_waste: e.afterWaste, pitch_degrees: deg > 0 ? deg : null, sort_order: e.sortOrder }));
+    if (identities && identities.components[index].entries.length !== calculated.length) throw new ProposalError('The measurement identity map changed.');
+    const entries = calculated.map((e, entryIndex) => ({ id: identities?.components[index].entries[entryIndex] ?? randomUUID(), raw_value: e.rawValue, value_after_waste: e.afterWaste, pitch_degrees: deg > 0 ? deg : null, sort_order: e.sortOrder }));
     return { id, library_id: lib.id, area_id: areaIndex === null ? null : areas[areaIndex].id, name: lib.name, component_type: lib.component_type, measurement_type: lib.measurement_type === 'linear' ? 'lineal' : lib.measurement_type === 'quantity' ? 'count' : lib.measurement_type, input_mode: basis ? 'calculated' : 'final',
       material_rate: rate, labour_rate: labour, waste_type: wasteType, waste_percent: waste, waste_fixed: fixed, pitch_type: pitchType, calc_pitch_degrees: deg,
       final_quantity: totalQuantity, material_cost: storageNumber(audit.materialCost), labour_cost: storageNumber(audit.labourCost), priced_quantity: audit.pricedQuantity, pack_size_snapshot: strategy !== 'per_unit' && fieldNumber(lib.pack_size, 'pack size', 0) > 0 ? lib.pack_size : null,
@@ -140,4 +149,21 @@ function measurementSummary(entries: Record<string, unknown>[]): string {
   for (const e of entries) { const key = `${e.quantity} ${e.unit}`; groups.set(key, (groups.get(key) ?? 0) + 1); }
   const labels = [...groups].map(([key, count]) => count > 1 ? `${count} × ${key}` : key);
   return labels.length <= 12 ? labels.join(' + ') : `${labels.slice(0, 12).join(' + ')}; ${labels.length - 12} more distinct measurements (${entries.length} entries in total)`;
+}
+
+/** Keep a saved draft's pricing/waste settings when only its measurements change.
+ * New/reassigned products use the current library defaults. The current library
+ * snapshot still supplies eligibility and is revalidated at confirmation. */
+function retainCalculationSettings(current: Record<string, unknown>, previous: Record<string, unknown>): Record<string, unknown> {
+  const normalize = (v: unknown) => v === 'linear' ? 'lineal' : v === 'quantity' ? 'count' : v;
+  if (normalize(current.measurement_type) !== normalize(previous.measurement_type))
+    throw new ProposalError('A selected product changed measurement behavior. Review it in the builder before revising this draft.');
+  const audit = previous.calc_audit;
+  if (!audit || typeof audit !== 'object' || Array.isArray(audit)) throw new ProposalError('The saved calculation settings need review.');
+  const saved = audit as Record<string, unknown>;
+  if (typeof saved.pricingStrategy !== 'string') throw new ProposalError('The saved pricing strategy is unavailable.');
+  return { ...current, name: previous.name, component_type: previous.component_type,
+    default_material_rate: previous.material_rate, default_labour_rate: previous.labour_rate,
+    default_waste_type: previous.waste_type, default_waste_percent: previous.waste_percent, default_waste_fixed: previous.waste_fixed,
+    pricing_strategy: saved.pricingStrategy, pack_size: saved.packSize ?? null, pack_price: saved.packPrice ?? null, pack_coverage_m2: saved.packCoverageM2 ?? null };
 }

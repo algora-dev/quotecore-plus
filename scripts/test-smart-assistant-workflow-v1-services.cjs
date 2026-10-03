@@ -1,0 +1,69 @@
+/** Offline orchestration tests of the REAL workflow service with explicit DB,
+ * access and proposal-transport mocks. Not SQL/RLS/concurrency/model evidence. */
+const { root, mocks } = require('./sa-speed-test-loader.cjs');
+const path = require('node:path'), test = require('node:test'), assert = require('node:assert/strict');
+const load = file => require(path.join(root, file));
+const { BUILTIN_CONCEPTS: concepts } = load('app/lib/smart-assistant/workflow-controller/vocabulary.ts');
+const { ProposalError } = load('app/lib/smart-assistant/v2/action-domain.ts');
+const uuid = n => `30000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+const clone = value => structuredClone(value);
+const access = { userId:uuid(1), companyId:uuid(2), permissionRevision:7, phases:{p4:true}, permissions:{draft_quotes:'edit',customers:'edit',components:'edit'}, historyAfter:null };
+const conversation = uuid(3), run = uuid(4), quoteId = uuid(90);
+const context = {currency:'NZD',measurement_system:'metric',bootstrap_collection_id:uuid(10),collections:[{id:uuid(10),name:'Corrugate',currency:'NZD'}]};
+const products = ['roof_area','ridge','hip','valley','spouting'].map((role,i) => ({id:uuid(20+i),collectionId:uuid(10),collectionName:'Corrugate',name:role==='roof_area'?'Corrugate .42':role==='spouting'?'Quad Spouting':role,role,conceptKey:role,isDefault:true,measurementType:role==='roof_area'?'area':'lineal',takeoffSlot:null,unit:role==='roof_area'?'m2':'m',active:true}));
+const input = () => ({customer_name:'James Smith',site_address:'123 Grand Lane',collection_name:'Corrugate',areas:[{label:'Main roof',quantity:100,unit:'m2',basis:'plan',pitch_degrees:25}],measurements:[{concept:'ridging',entries:[{quantity:8,unit:'m'}],basis:'plan',area_index:0},{concept:'hips',entries:[{quantity:5,unit:'m'},{quantity:5,unit:'m'},{quantity:5,unit:'m'}],basis:'plan',area_index:0},{concept:'valleys',entries:[{quantity:12,unit:'m'}],basis:'plan',area_index:0},{concept:'guttering',entries:[{quantity:20,unit:'m'}],basis:'plan',area_index:0}]});
+let s;
+function reset(){process.env.SMART_ASSISTANT_LIBRARY_WORKFLOW_ENABLED='true'; s={state:null,epoch:1,epochRead:1,catalog:clone(products),calls:[],proposals:[],cards:[],revoked:false,snapshot:null};}
+const db = {
+ from(table){assert.equal(table,'assistant_v2_draft_briefs');const filters=[];const q={select(){return q;},eq(k,v){filters.push([k,v]);return q;},not(){return q;},order(){return q;},limit(){return q;},async maybeSingle(){s.calls.push({read:filters});return {data:s.state&&filters.every(([k,v])=>s.state[k]===v)?clone(s.state):null,error:null};}};return q;},
+ async rpc(name,args){s.calls.push({name,args:clone(args)});
+  if(name==='sa_v2_workflow_save'){
+   const old=s.state;
+   // CAS contract mocked here. Its actual transactional behavior requires SQL tests.
+   if(args.p_state_id&&(!old||old.revision!==args.p_expected_revision))return {data:null,error:{code:'40001'}};
+   s.state={id:args.p_state_id??uuid(50),company_id:access.companyId,user_id:access.userId,conversation_id:conversation,permission_revision:access.permissionRevision,revision:old&&args.p_state_id?old.revision+1:1,produced_quote_id:old&&args.p_state_id?old.produced_quote_id:null,committed_plan:old&&args.p_state_id?old.committed_plan:null,committed_snapshot:old&&args.p_state_id?old.committed_snapshot:null,start_run_id:old&&args.p_state_id?old.start_run_id:args.p_run_id,last_run_id:args.p_run_id,action_id:null,created_at:old?.created_at??'2026-10-02T12:00:00Z',updated_at:'2026-10-02T12:01:00Z',conflict_reason:null,brief:clone(args.p_brief),workflow_state:args.p_state,catalog_epoch:args.p_epoch};return {data:clone(s.state),error:null};
+  }
+  if(name==='sa_v2_workflow_attach'){s.state.action_id=args.p_action_id;s.state.workflow_state='proposal_pending_confirmation';return {data:null,error:null};}
+  if(name==='sa_v2_workflow_quote_snapshot')return {data:clone(s.snapshot),error:null};
+  if(name==='sa_v2_workflow_conflict'){s.state.workflow_state='needs_review';return {data:null,error:null};}
+  if(name==='sa_v2_workflow_cancel'){s.state.workflow_state=args.p_close?'closed':'cancelled';return {data:null,error:null};}
+  throw new Error('Unexpected RPC '+name);
+ }
+};
+mocks.set('@/app/lib/supabase/admin',{createAdminClient:()=>db});
+mocks.set('../v2/actions.server',{requireEdits:(a,sections)=>{if(sections.some(key=>a.permissions[key]!=='edit'))throw new ProposalError('Edit permission required.');}});
+mocks.set('../v2/runtime.server',{freshAccess:async()=>{if(s.revoked)throw new ProposalError('Permissions changed.');},rpcError:error=>new ProposalError('RPC refused '+(error?.code??'invalid response'))});
+mocks.set('../v2/database',{batchClient:x=>x,toJson:x=>x});
+mocks.set('../v2/session.server',{addCard:async(_run,_access,_key,_sections,card)=>{s.cards.push(clone(card));return uuid(70);}});
+mocks.set('../v2/creation.server',{creationContext:async()=>({data:context}),proposeDraft:async(_client,_access,runId,args,meta)=>{s.proposals.push({runId,args:clone(args),meta:clone(meta)});return {id:uuid(60+s.proposals.length),title:'Review draft'};}});
+mocks.set('../workflow-controller/configuration.server',{readWorkflowVocabulary:async()=>({concepts,epoch:s.epoch}),readWorkflowCatalog:async()=>clone(s.catalog),readWorkflowEpoch:async()=>s.epochRead});
+const svc=load('app/lib/smart-assistant/library-workflow/service.server.ts');
+const prepare=()=>svc.prepareDraftWorkflow(db,access,conversation,run,input());
+const revise=deltas=>svc.reviseDraftWorkflow(db,access,conversation,uuid(5),{state_id:s.state.id,revision:s.state.revision,deltas});
+const rpcNames=()=>s.calls.filter(c=>c.name).map(c=>c.name);
+function bind(){s.state.produced_quote_id=quoteId;s.state.committed_plan={params:{},children:{areas:[],components:[]}};s.state.committed_snapshot={quote:{id:quoteId,company_id:access.companyId,created_by_user_id:access.userId,status:'draft',entry_mode:'manual',acceptance_token:null},area_entries:[],areas:[],components:[],entries:[]};s.snapshot=clone(s.state.committed_snapshot);s.state.workflow_state='committed';}
+function ambiguous(){s.catalog=s.catalog.map(p=>['roof_area','spouting'].includes(p.role)?{...p,isDefault:false}:p);s.catalog.push({...s.catalog[0],id:uuid(31),name:'Corrugate .48',isDefault:false},{...s.catalog[4],id:uuid(32),name:'Half Round',isDefault:false});}
+
+test('service persists brief before preparing and attaching explicit review; no parent mutation RPC',async()=>{reset();const result=await prepare();assert.equal(result.state,'proposal');assert.deepEqual(rpcNames(),['sa_v2_workflow_save','sa_v2_workflow_attach']);assert.equal(s.state.produced_quote_id,null);assert.equal(s.state.workflow_state,'proposal_pending_confirmation');assert.equal(s.proposals[0].meta.controllerVersion,1);assert.equal(s.proposals[0].meta.briefRevision,s.state.revision);assert.equal(s.state.brief.siteAddress,'123 Grand Lane');});
+test('genuine alternatives returned in ONE grouped card without proposal',async()=>{reset();ambiguous();const result=await prepare();assert.equal(result.state,'awaiting_input');assert.equal(result.card.questions.length,2);assert.equal(s.cards.length,1);assert.equal(s.proposals.length,0);assert.equal(s.state.workflow_state,'needs_choices');});
+test('partial then remaining product choices keep same brief and three separate hips',async()=>{reset();ambiguous();await prepare();const id=s.state.id,hips=clone(s.state.brief.measurements.find(m=>m.role==='hip'));
+ for(let n=0;n<2;n++){const q=s.cards.at(-1).questions[0];await svc.applyDraftChoice(db,access,conversation,uuid(5+n),{version:1,stateId:id,revision:s.state.revision,selections:{[q.key]:q.options.at(-1).id}});}
+ assert.equal(s.state.id,id);assert.equal(s.state.workflow_state,'proposal_pending_confirmation');assert.deepEqual(s.state.brief.measurements.find(m=>m.role==='hip'),hips);assert.equal(s.proposals.length,1);});
+test('bound typed revision prepares same quote with stable identities and snapshot',async()=>{reset();await prepare();bind();const area=s.state.brief.areas[0],hips=clone(s.state.brief.measurements.find(m=>m.role==='hip'));
+ await revise([{op:'change_area',area_id:area.id,quantity:110}]);const p=s.proposals.at(-1);assert.equal(p.meta.producedQuoteId,quoteId);assert.equal(p.meta.identities.areas[0],area.id);assert.equal(p.args.areas[0].quantity,110);assert.deepEqual(s.state.brief.measurements.find(m=>m.role==='hip'),hips);assert.deepEqual(p.meta.quoteSnapshot,s.snapshot);});
+test('stale revision rejected before persistence or proposal',async()=>{reset();await prepare();const before=s.proposals.length;await assert.rejects(svc.reviseDraftWorkflow(db,access,conversation,run,{state_id:s.state.id,revision:99,deltas:[]}),/changed/);assert.equal(s.proposals.length,before);});
+test('fresh permission refusal stops all workflow transport',async()=>{reset();s.revoked=true;await assert.rejects(prepare(),/Permissions changed/);assert.deepEqual(s.calls,[]);});
+test('View permission cannot invoke edit workflow',async()=>{reset();await assert.rejects(svc.prepareDraftWorkflow(db,{...access,permissions:{...access.permissions,components:'read_only'}},conversation,run,input()),/Edit permission/);assert.deepEqual(s.calls,[]);});
+test('foreign company state cannot be read through workflow service',async()=>{reset();await prepare();s.state.company_id=uuid(999);await assert.rejects(revise([{op:'set_job_details',job_name:'Updated job'}]),/changed/);const reads=s.calls.filter(c=>c.read);assert.ok(reads.at(-1).read.some(([k,v])=>k==='company_id'&&v===access.companyId));});
+test('old product choices are discarded after settings epoch changes',async()=>{reset();ambiguous();await prepare();const choice=s.cards.at(-1).questions[0];s.epoch=s.epochRead=2;const r=await svc.applyDraftChoice(db,access,conversation,run,{version:1,stateId:s.state.id,revision:s.state.revision,selections:{[choice.key]:choice.options[0].id}});assert.match(r.answer,/old choices were not applied/);assert.equal(s.proposals.length,0);assert.equal(s.state.workflow_state,'needs_choices');});
+test('changed default does NOT reassign an existing bound draft product',async()=>{reset();await prepare();bind();const before=clone(s.state.brief.selections);s.epoch=s.epochRead=2;s.catalog[0].isDefault=false;s.catalog.push({...s.catalog[0],id:uuid(31),name:'Corrugate .48',isDefault:true});await revise([{op:'change_area',area_id:s.state.brief.areas[0].id,quantity:110}]);assert.deepEqual(s.state.brief.selections,before);});
+test('missing committed baseline refuses replacement of bound draft',async()=>{reset();await prepare();bind();s.state.committed_plan=null;await assert.rejects(revise([{op:'set_job_details',job_name:'Updated job'}]),/outside this working brief/);assert.equal(s.proposals.length,1);assert.equal(s.state.workflow_state,'needs_review');});
+test('deleted bound quote with cleared FK never falls back to new creation',async()=>{reset();await prepare();bind();s.state.produced_quote_id=null;await assert.rejects(revise([{op:'set_job_details',job_name:'Updated job'}]),/cannot create a replacement/);assert.equal(s.proposals.length,1);});
+test('external builder changes mark conflict without overwriting or creating a proposal',async()=>{reset();await prepare();bind();s.snapshot.quote.job_name='Changed externally';await assert.rejects(revise([{op:'set_job_details',job_name:'Updated job'}]),/Nothing was overwritten/);assert.equal(s.proposals.length,1);assert.equal(s.state.workflow_state,'needs_review');});
+test('sent quote never becomes an editable workflow draft',async()=>{reset();await prepare();bind();s.snapshot.quote.acceptance_token=uuid(999);await assert.rejects(revise([{op:'set_job_details',job_name:'Updated job'}]),/no longer editable/);assert.equal(s.proposals.length,1);});
+test('legacy brief is not rebuilt or rebound',async()=>{reset();await prepare();delete s.state.brief.version;await assert.rejects(revise([{op:'set_job_details',job_name:'Updated job'}]),/older working brief/);assert.equal(s.proposals.length,1);});
+test('cancel stops preparation but does not delete or confirm the bound quote',async()=>{reset();await prepare();bind();const r=await svc.applyDraftChoice(db,access,conversation,run,{version:1,stateId:s.state.id,revision:s.state.revision,selections:{},choice:'cancel'});assert.equal(r.state,'cancelled');assert.equal(s.state.produced_quote_id,quoteId);assert.equal(rpcNames().at(-1),'sa_v2_workflow_cancel');assert.equal(s.proposals.length,1);});
+test('context from a different task is not exposed',async()=>{reset();await prepare();assert.equal(await svc.pendingDraftWorkflowContext(db,access,conversation,()=>false),null);});
+test('bounded context has a paginated reader for omitted individual entry IDs',async()=>{reset();await prepare();const m=s.state.brief.measurements.find(m=>m.role==='hip');m.entries=Array.from({length:70},(_,i)=>({id:uuid(200+i),quantity:5,unit:'m'}));const c=await svc.pendingDraftWorkflowContext(db,access,conversation,()=>true);const shown=c.brief.measurements.find(x=>x.id===m.id);assert.equal(shown.entries.length,20);assert.equal(shown.entryCount,70);const r=await svc.readWorkingMeasurements(db,access,conversation,{state_id:s.state.id,revision:s.state.revision,measurement_id:m.id,offset:50});assert.equal(r.entries.length,20);assert.equal(r.entries[0].id,uuid(250));assert.equal(r.nextOffset,null);});
+test('configuration changing mid-read refuses partial preparation',async()=>{reset();s.epochRead=2;await assert.rejects(prepare(),/settings changed/);assert.equal(s.proposals.length,0);assert.equal(s.calls.length,0);});
+test('feature flag rollback refuses even an already bound workflow',async()=>{reset();await prepare();bind();process.env.SMART_ASSISTANT_LIBRARY_WORKFLOW_ENABLED='false';await assert.rejects(revise([{op:'set_job_details',job_name:'Updated job'}]),/disabled/);assert.equal(s.proposals.length,1);});

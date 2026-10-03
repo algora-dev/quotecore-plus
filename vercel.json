@@ -1,37 +1,41 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "crons": [
-    {
-      "path": "/api/cron/prune-rate-limits",
-      "schedule": "17 4 * * *"
-    },
-    {
-      "path": "/api/cron/sweep-orphan-objects",
-      "schedule": "33 5 * * *"
-    },
-    {
-      "path": "/api/cron/process-billing-lifecycle",
-      "schedule": "22 6 * * *"
-    },
-    {
-      "path": "/api/cron/expire-quotes",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/dispatch-scheduled-messages",
-      "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/cron/process-ai-scan-queue",
-      "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/cron/integrations",
-      "schedule": "*/2 * * * *"
-    },
-    {
-      "path": "/api/cron/free-ai-scan-budget",
-      "schedule": "23 * * * *"
-    }
-  ]
+﻿{
+    "$schema":  "https://openapi.vercel.sh/vercel.json",
+    "crons":  [
+                  {
+                      "path":  "/api/cron/prune-rate-limits",
+                      "schedule":  "17 4 * * *"
+                  },
+                  {
+                      "path":  "/api/cron/sweep-orphan-objects",
+                      "schedule":  "33 5 * * *"
+                  },
+                  {
+                      "path":  "/api/cron/process-billing-lifecycle",
+                      "schedule":  "22 6 * * *"
+                  },
+                  {
+                      "path":  "/api/cron/expire-quotes",
+                      "schedule":  "0 * * * *"
+                  },
+                  {
+                      "path":  "/api/cron/dispatch-scheduled-messages",
+                      "schedule":  "*/30 * * * *"
+                  },
+                  {
+                      "path":  "/api/cron/process-ai-scan-queue",
+                      "schedule":  "*/30 * * * *"
+                  },
+                  {
+                      "path":  "/api/cron/integrations",
+                      "schedule":  "*/2 * * * *"
+                  },
+                  {
+                      "path":  "/api/cron/free-ai-scan-budget",
+                      "schedule":  "23 * * * *"
+                  },
+                  {
+                      "path":  "/api/cron/dispatch-push",
+                      "schedule":  "*/2 * * * *"
+                  }
+              ]
 }

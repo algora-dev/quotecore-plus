@@ -1,0 +1,778 @@
+TAP version 13
+# Subtest: immutable clues: quote 1014
+ok 1 - immutable clues: quote 1014
+  ---
+  duration_ms: 2.944869
+  type: 'test'
+  ...
+# Subtest: immutable clues: quote number 1014
+ok 2 - immutable clues: quote number 1014
+  ---
+  duration_ms: 0.227082
+  type: 'test'
+  ...
+# Subtest: immutable clues: \#1014
+ok 3 - immutable clues: \#1014
+  ---
+  duration_ms: 0.167613
+  type: 'test'
+  ...
+# Subtest: immutable clues: Invoice INV-104
+ok 4 - immutable clues: Invoice INV-104
+  ---
+  duration_ms: 0.096426
+  type: 'test'
+  ...
+# Subtest: immutable clues: material order 287
+ok 5 - immutable clues: material order 287
+  ---
+  duration_ms: 0.234304
+  type: 'test'
+  ...
+# Subtest: immutable clues: quote "1014"
+ok 6 - immutable clues: quote "1014"
+  ---
+  duration_ms: 0.194594
+  type: 'test'
+  ...
+# Subtest: immutable clues: draft quote 1014
+ok 7 - immutable clues: draft quote 1014
+  ---
+  duration_ms: 0.089175
+  type: 'test'
+  ...
+# Subtest: immutable clues: my 9th canvas test draft
+ok 8 - immutable clues: my 9th canvas test draft
+  ---
+  duration_ms: 0.07259
+  type: 'test'
+  ...
+# Subtest: immutable clues: 5 quote
+ok 9 - immutable clues: 5 quote
+  ---
+  duration_ms: 0.251108
+  type: 'test'
+  ...
+# Subtest: immutable clues: quote 0
+ok 10 - immutable clues: quote 0
+  ---
+  duration_ms: 0.350909
+  type: 'test'
+  ...
+# Subtest: immutable clues: quote 1014 and quote 1042
+ok 11 - immutable clues: quote 1014 and quote 1042
+  ---
+  duration_ms: 0.19236
+  type: 'test'
+  ...
+# Subtest: conservative grammar: Open quote 1014
+ok 12 - conservative grammar: Open quote 1014
+  ---
+  duration_ms: 2.464164
+  type: 'test'
+  ...
+# Subtest: conservative grammar: Open quote "1014"
+ok 13 - conservative grammar: Open quote "1014"
+  ---
+  duration_ms: 0.924303
+  type: 'test'
+  ...
+# Subtest: conservative grammar: Open my 5 quote
+ok 14 - conservative grammar: Open my 5 quote
+  ---
+  duration_ms: 0.160301
+  type: 'test'
+  ...
+# Subtest: conservative grammar: Show the 9th canvas test draft
+ok 15 - conservative grammar: Show the 9th canvas test draft
+  ---
+  duration_ms: 0.140902
+  type: 'test'
+  ...
+# Subtest: conservative grammar: Find the Maple Ridge quote for John Smith
+ok 16 - conservative grammar: Find the Maple Ridge quote for John Smith
+  ---
+  duration_ms: 0.19939
+  type: 'test'
+  ...
+# Subtest: conservative grammar: How much does Ridge cost?
+ok 17 - conservative grammar: How much does Ridge cost?
+  ---
+  duration_ms: 0.9093
+  type: 'test'
+  ...
+# Subtest: conservative grammar: What did I charge for Velux on the Smith quote?
+ok 18 - conservative grammar: What did I charge for Velux on the Smith quote?
+  ---
+  duration_ms: 0.458321
+  type: 'test'
+  ...
+# Subtest: conservative grammar: Find Ridge in my component library
+ok 19 - conservative grammar: Find Ridge in my component library
+  ---
+  duration_ms: 0.122845
+  type: 'test'
+  ...
+# Subtest: conservative grammar: Show quote \#1014
+ok 20 - conservative grammar: Show quote \#1014
+  ---
+  duration_ms: 0.127021
+  type: 'test'
+  ...
+# Subtest: conservative grammar: How much is Ridge on this draft?
+ok 21 - conservative grammar: How much is Ridge on this draft?
+  ---
+  duration_ms: 0.180242
+  type: 'test'
+  ...
+# Subtest: conservative grammar: Find the Smith job
+ok 22 - conservative grammar: Find the Smith job
+  ---
+  duration_ms: 0.091137
+  type: 'test'
+  ...
+# Subtest: do not drop unsupported qualifier: Open quote 1014 and email it
+ok 23 - do not drop unsupported qualifier: Open quote 1014 and email it
+  ---
+  duration_ms: 0.165109
+  type: 'test'
+  ...
+# Subtest: do not drop unsupported qualifier: Open the latest draft for Smith
+ok 24 - do not drop unsupported qualifier: Open the latest draft for Smith
+  ---
+  duration_ms: 0.060371
+  type: 'test'
+  ...
+# Subtest: do not drop unsupported qualifier: Open quote 1014; delete it
+ok 25 - do not drop unsupported qualifier: Open quote 1014; delete it
+  ---
+  duration_ms: 0.041632
+  type: 'test'
+  ...
+# Subtest: do not drop unsupported qualifier: Show drafts except Smith
+ok 26 - do not drop unsupported qualifier: Show drafts except Smith
+  ---
+  duration_ms: 0.041513
+  type: 'test'
+  ...
+# Subtest: do not drop unsupported qualifier: How much does Ridge cost before tax?
+ok 27 - do not drop unsupported qualifier: How much does Ridge cost before tax?
+  ---
+  duration_ms: 0.040111
+  type: 'test'
+  ...
+# Subtest: do not drop unsupported qualifier: Compare Ridge with Velux
+ok 28 - do not drop unsupported qualifier: Compare Ridge with Velux
+  ---
+  duration_ms: 0.068493
+  type: 'test'
+  ...
+# Subtest: do not drop unsupported qualifier: Show the five most expensive quotes
+ok 29 - do not drop unsupported qualifier: Show the five most expensive quotes
+  ---
+  duration_ms: 0.044688
+  type: 'test'
+  ...
+# Subtest: do not drop unsupported qualifier: What did I charge them?
+ok 30 - do not drop unsupported qualifier: What did I charge them?
+  ---
+  duration_ms: 0.060311
+  type: 'test'
+  ...
+# Subtest: do not drop unsupported qualifier: Find Ridge from an unknown system
+ok 31 - do not drop unsupported qualifier: Find Ridge from an unknown system
+  ---
+  duration_ms: 0.120992
+  type: 'test'
+  ...
+# Subtest: do not drop unsupported qualifier: How much is that thing?
+ok 32 - do not drop unsupported qualifier: How much is that thing?
+  ---
+  duration_ms: 0.066039
+  type: 'test'
+  ...
+# Subtest: numeric suffix remains a name while explicitly numbered suffix is number
+ok 33 - numeric suffix remains a name while explicitly numbered suffix is number
+  ---
+  duration_ms: 0.141163
+  type: 'test'
+  ...
+# Subtest: job parent can include drafts but explicit quote scope stays quotes
+ok 34 - job parent can include drafts but explicit quote scope stays quotes
+  ---
+  duration_ms: 2.29532
+  type: 'test'
+  ...
+# Subtest: contained items become EXISTS, not quote-name search
+ok 35 - contained items become EXISTS, not quote-name search
+  ---
+  duration_ms: 0.728568
+  type: 'test'
+  ...
+# Subtest: bare Ridge quotes with linked status searches name OR contents
+ok 36 - bare Ridge quotes with linked status searches name OR contents
+  ---
+  duration_ms: 0.284058
+  type: 'test'
+  ...
+# Subtest: one-field rate is a proposal only and retains units and exact parent
+ok 37 - one-field rate is a proposal only and retains units and exact parent
+  ---
+  duration_ms: 0.167954
+  type: 'test'
+  ...
+# Subtest: unsafe/incomplete rate grammar falls through: Set Ridge to 30
+ok 38 - unsafe/incomplete rate grammar falls through: Set Ridge to 30
+  ---
+  duration_ms: 0.071628
+  type: 'test'
+  ...
+# Subtest: unsafe/incomplete rate grammar falls through: Set Ridge material rate to 30 on quote 1014
+ok 39 - unsafe/incomplete rate grammar falls through: Set Ridge material rate to 30 on quote 1014
+  ---
+  duration_ms: 0.043375
+  type: 'test'
+  ...
+# Subtest: unsafe/incomplete rate grammar falls through: Set Ridge material rate to -30 per m on quote 1014
+ok 40 - unsafe/incomplete rate grammar falls through: Set Ridge material rate to -30 per m on quote 1014
+  ---
+  duration_ms: 0.038708
+  type: 'test'
+  ...
+# Subtest: unsafe/incomplete rate grammar falls through: Set Ridge material rate to 30 per box on quote 1014
+ok 41 - unsafe/incomplete rate grammar falls through: Set Ridge material rate to 30 per box on quote 1014
+  ---
+  duration_ms: 0.035924
+  type: 'test'
+  ...
+# Subtest: unsafe/incomplete rate grammar falls through: Set Ridge material rate to 30 per m on quote 1014 and approve it
+ok 42 - unsafe/incomplete rate grammar falls through: Set Ridge material rate to 30 per m on quote 1014 and approve it
+  ---
+  duration_ms: 0.044787
+  type: 'test'
+  ...
+# Subtest: public intent rejects server/unknown field company_id
+ok 43 - public intent rejects server/unknown field company_id
+  ---
+  duration_ms: 0.3715
+  type: 'test'
+  ...
+# Subtest: public intent rejects server/unknown field sql
+ok 44 - public intent rejects server/unknown field sql
+  ---
+  duration_ms: 0.081092
+  type: 'test'
+  ...
+# Subtest: public intent rejects server/unknown field permission
+ok 45 - public intent rejects server/unknown field permission
+  ---
+  duration_ms: 0.059489
+  type: 'test'
+  ...
+# Subtest: public intent rejects server/unknown field confirm
+ok 46 - public intent rejects server/unknown field confirm
+  ---
+  duration_ms: 0.090106
+  type: 'test'
+  ...
+# Subtest: public intent rejects server/unknown field commit
+ok 47 - public intent rejects server/unknown field commit
+  ---
+  duration_ms: 0.055203
+  type: 'test'
+  ...
+# Subtest: public intent rejects server/unknown field proposal
+ok 48 - public intent rejects server/unknown field proposal
+  ---
+  duration_ms: 0.050737
+  type: 'test'
+  ...
+# Subtest: public intent rejects server/unknown field nameOrContents
+ok 49 - public intent rejects server/unknown field nameOrContents
+  ---
+  duration_ms: 0.047382
+  type: 'test'
+  ...
+# Subtest: public intent rejects server/unknown field access
+ok 50 - public intent rejects server/unknown field access
+  ---
+  duration_ms: 0.106611
+  type: 'test'
+  ...
+# Subtest: public task cannot propose a mutation
+ok 51 - public task cannot propose a mutation
+  ---
+  duration_ms: 0.100822
+  type: 'test'
+  ...
+# Subtest: draft number, contradictory identities and unbounded field fail
+ok 52 - draft number, contradictory identities and unbounded field fail
+  ---
+  duration_ms: 0.226522
+  type: 'test'
+  ...
+# Subtest: UTC range rejects impossible calendar date and reversed bounds
+ok 53 - UTC range rejects impossible calendar date and reversed bounds
+  ---
+  duration_ms: 0.57742
+  type: 'test'
+  ...
+# Subtest: calendar weeks are explicitly UTC Monday intervals
+ok 54 - calendar weeks are explicitly UTC Monday intervals
+  ---
+  duration_ms: 0.227473
+  type: 'test'
+  ...
+# Subtest: quote exact number changes model fuzzy plan into an equality constraint
+ok 55 - quote exact number changes model fuzzy plan into an equality constraint
+  ---
+  duration_ms: 0.467024
+  type: 'test'
+  ...
+# Subtest: exact parent applies through registered quote relation on orders
+ok 56 - exact parent applies through registered quote relation on orders
+  ---
+  duration_ms: 0.126831
+  type: 'test'
+  ...
+# Subtest: plan cannot evade explicit parent {"source":"quotes","filters":[{"field":"quote_number","op":"eq","value":1042}]}
+ok 57 - plan cannot evade explicit parent {"source":"quotes","filters":[{"field":"quote_number","op":"eq","value":1042}]}
+  ---
+  duration_ms: 0.144047
+  type: 'test'
+  ...
+# Subtest: plan cannot evade explicit parent {"source":"quotes","filters":[{"field":"quote_number","op":"gt","value":1}]}
+ok 58 - plan cannot evade explicit parent {"source":"quotes","filters":[{"field":"quote_number","op":"gt","value":1}]}
+  ---
+  duration_ms: 0.075604
+  type: 'test'
+  ...
+# Subtest: plan cannot evade explicit parent {"source":"component_library"}
+ok 59 - plan cannot evade explicit parent {"source":"component_library"}
+  ---
+  duration_ms: 0.065098
+  type: 'test'
+  ...
+# Subtest: model customer qualifier is bound separately and not searched as a whole sentence
+ok 60 - model customer qualifier is bound separately and not searched as a whole sentence
+  ---
+  duration_ms: 0.312181
+  type: 'test'
+  ...
+# Subtest: creation-time standalone component-library query is allowed
+ok 61 - creation-time standalone component-library query is allowed
+  ---
+  duration_ms: 0.149025
+  type: 'test'
+  ...
+# Subtest: creation-time customer anchor does not gate company-scoped component_collections
+ok 62 - creation-time customer anchor does not gate company-scoped component_collections
+  ---
+  duration_ms: 0.201293
+  type: 'test'
+  ...
+# Subtest: creation-time customer anchor does not gate company-scoped catalogues
+ok 63 - creation-time customer anchor does not gate company-scoped catalogues
+  ---
+  duration_ms: 0.0599
+  type: 'test'
+  ...
+# Subtest: creation-time customer anchor does not gate company-scoped catalogue_rows
+ok 64 - creation-time customer anchor does not gate company-scoped catalogue_rows
+  ---
+  duration_ms: 0.045358
+  type: 'test'
+  ...
+# Subtest: quote-scoped customer behaviour is unchanged by the library fix
+ok 65 - quote-scoped customer behaviour is unchanged by the library fix
+  ---
+  duration_ms: 0.229646
+  type: 'test'
+  ...
+# Subtest: non-library parentless sources still refuse a customer qualifier
+ok 66 - non-library parentless sources still refuse a customer qualifier
+  ---
+  duration_ms: 0.177358
+  type: 'test'
+  ...
+# Subtest: resolver library discovery skips (not refuses) the customer qualifier
+ok 67 - resolver library discovery skips (not refuses) the customer qualifier
+  ---
+  duration_ms: 0.492352
+  type: 'test'
+  ...
+# Subtest: explicit quote number still cannot be satisfied by a library plan
+ok 68 - explicit quote number still cannot be satisfied by a library plan
+  ---
+  duration_ms: 0.117226
+  type: 'test'
+  ...
+# Subtest: conflicting intent number or customer is rejected
+ok 69 - conflicting intent number or customer is rejected
+  ---
+  duration_ms: 0.239481
+  type: 'test'
+  ...
+# Subtest: multiple numbers cannot be arbitrarily narrowed to one entity
+ok 70 - multiple numbers cannot be arbitrarily narrowed to one entity
+  ---
+  duration_ms: 0.094332
+  type: 'test'
+  ...
+# Subtest: absolute evidence Ridge / Ridge
+ok 71 - absolute evidence Ridge / Ridge
+  ---
+  duration_ms: 0.071067
+  type: 'test'
+  ...
+# Subtest: absolute evidence Ridge / Main Ridge tile
+ok 72 - absolute evidence Ridge / Main Ridge tile
+  ---
+  duration_ms: 0.151408
+  type: 'test'
+  ...
+# Subtest: absolute evidence lead flashing / Flashing lead
+ok 73 - absolute evidence lead flashing / Flashing lead
+  ---
+  duration_ms: 0.097367
+  type: 'test'
+  ...
+# Subtest: absolute evidence Rigdge / Ridge
+ok 74 - absolute evidence Rigdge / Ridge
+  ---
+  duration_ms: 0.291279
+  type: 'test'
+  ...
+# Subtest: absolute evidence tiles / tile
+ok 75 - absolute evidence tiles / tile
+  ---
+  duration_ms: 0.224929
+  type: 'test'
+  ...
+# Subtest: absolute evidence solar chimney Thompson / Chimney Flashing Jones
+ok 76 - absolute evidence solar chimney Thompson / Chimney Flashing Jones
+  ---
+  duration_ms: 0.136586
+  type: 'test'
+  ...
+# Subtest: absolute evidence ridge solar / Ridge
+ok 77 - absolute evidence ridge solar / Ridge
+  ---
+  duration_ms: 0.101252
+  type: 'test'
+  ...
+# Subtest: absolute evidence 9th canvas / 5th canvas
+ok 78 - absolute evidence 9th canvas / 5th canvas
+  ---
+  duration_ms: 0.103176
+  type: 'test'
+  ...
+# Subtest: absolute evidence abc / abcd
+ok 79 - absolute evidence abc / abcd
+  ---
+  duration_ms: 0.054042
+  type: 'test'
+  ...
+# Subtest: absolute evidence Velux Thompson / Velux|Thompson
+ok 80 - absolute evidence Velux Thompson / Velux|Thompson
+  ---
+  duration_ms: 0.122795
+  type: 'test'
+  ...
+# Subtest: no recency manufactures confidence for equally named candidates
+ok 81 - no recency manufactures confidence for equally named candidates
+  ---
+  duration_ms: 6.31625
+  type: 'test'
+  ...
+# Subtest: weak spelling suggestion never auto-selects, even alone
+ok 82 - weak spelling suggestion never auto-selects, even alone
+  ---
+  duration_ms: 0.166802
+  type: 'test'
+  ...
+# Subtest: incomplete scan never auto-selects single candidate
+ok 83 - incomplete scan never auto-selects single candidate
+  ---
+  duration_ms: 0.134163
+  type: 'test'
+  ...
+# Subtest: six equal candidates require a discriminator not five arbitrary choices
+ok 84 - six equal candidates require a discriminator not five arbitrary choices
+  ---
+  duration_ms: 0.326042
+  type: 'test'
+  ...
+# Subtest: exact whole name can outrank a weaker all-word match on complete scan
+ok 85 - exact whole name can outrank a weaker all-word match on complete scan
+  ---
+  duration_ms: 0.113581
+  type: 'test'
+  ...
+# Subtest: same source/parent/id deduplicates but order text parent IDs distinguish
+ok 86 - same source/parent/id deduplicates but order text parent IDs distinguish
+  ---
+  duration_ms: 0.141263
+  type: 'test'
+  ...
+# Subtest: differing customer candidates produce a customer discriminator
+ok 87 - differing customer candidates produce a customer discriminator
+  ---
+  duration_ms: 0.198389
+  type: 'test'
+  ...
+# Subtest: hidden sources are omitted and existing quote identity policy is preserved
+ok 88 - hidden sources are omitted and existing quote identity policy is preserved
+  ---
+  duration_ms: 0.265941
+  type: 'test'
+  ...
+# Subtest: price projections compile against the actual registry
+ok 89 - price projections compile against the actual registry
+  ---
+  duration_ms: 0.92864
+  type: 'test'
+  ...
+# Subtest: no fabricated child ordered_at: unsupported date requires parent IDs
+ok 90 - no fabricated child ordered_at: unsupported date requires parent IDs
+  ---
+  duration_ms: 0.144167
+  type: 'test'
+  ...
+# Subtest: child query preserves name and supplied parent id in same query
+ok 91 - child query preserves name and supplied parent id in same query
+  ---
+  duration_ms: 0.280363
+  type: 'test'
+  ...
+# Subtest: exact header price chooses header source, not a line with a similar number
+ok 92 - exact header price chooses header source, not a line with a similar number
+  ---
+  duration_ms: 0.15916
+  type: 'test'
+  ...
+# Subtest: reread retains identity and parent even for non-UUID order line ids
+ok 93 - reread retains identity and parent even for non-UUID order line ids
+  ---
+  duration_ms: 0.335405
+  type: 'test'
+  ...
+# Subtest: stored state round trip validates actual produced identity metadata
+ok 94 - stored state round trip validates actual produced identity metadata
+  ---
+  duration_ms: 0.458431
+  type: 'test'
+  ...
+# Subtest: state rejects unexpected or unbounded metadata prices
+ok 95 - state rejects unexpected or unbounded metadata prices
+  ---
+  duration_ms: 0.077887
+  type: 'test'
+  ...
+# Subtest: state rejects unexpected or unbounded metadata candidates
+ok 96 - state rejects unexpected or unbounded metadata candidates
+  ---
+  duration_ms: 0.06646
+  type: 'test'
+  ...
+# Subtest: state rejects unexpected or unbounded metadata clarifications
+ok 97 - state rejects unexpected or unbounded metadata clarifications
+  ---
+  duration_ms: 0.071398
+  type: 'test'
+  ...
+# Subtest: state rejects unexpected or unbounded metadata candidateSetComplete
+ok 98 - state rejects unexpected or unbounded metadata candidateSetComplete
+  ---
+  duration_ms: 0.045159
+  type: 'test'
+  ...
+# Subtest: state rejects unexpected or unbounded metadata question
+ok 99 - state rejects unexpected or unbounded metadata question
+  ---
+  duration_ms: 0.039499
+  type: 'test'
+  ...
+# Subtest: state rejects unexpected or unbounded metadata rejected
+ok 100 - state rejects unexpected or unbounded metadata rejected
+  ---
+  duration_ms: 0.036375
+  type: 'test'
+  ...
+# Subtest: internal P3 state validates values and units but never accepts commit flags
+ok 101 - internal P3 state validates values and units but never accepts commit flags
+  ---
+  duration_ms: 0.283287
+  type: 'test'
+  ...
+# Subtest: wire encoding is canonical bound identity, not conversational English
+ok 102 - wire encoding is canonical bound identity, not conversational English
+  ---
+  duration_ms: 0.392352
+  type: 'test'
+  ...
+# Subtest: wire supports none
+ok 103 - wire supports none
+  ---
+  duration_ms: 0.114152
+  type: 'test'
+  ...
+# Subtest: wire supports cancel
+ok 104 - wire supports cancel
+  ---
+  duration_ms: 0.108704
+  type: 'test'
+  ...
+# Subtest: wire rejects forged syntax [[sa-resolution:v1:bad:none]]
+ok 105 - wire rejects forged syntax [[sa-resolution:v1:bad:none]]
+  ---
+  duration_ms: 0.05962
+  type: 'test'
+  ...
+# Subtest: wire rejects forged syntax please [[sa-resolution:v1:00000000-0000-0000-0000-000000000001:none]]
+ok 106 - wire rejects forged syntax please [[sa-resolution:v1:00000000-0000-0000-0000-000000000001:none]]
+  ---
+  duration_ms: 0.031928
+  type: 'test'
+  ...
+# Subtest: wire rejects forged syntax [[sa-resolution:v2:00000000-0000-0000-0000-000000000001:none]]
+ok 107 - wire rejects forged syntax [[sa-resolution:v2:00000000-0000-0000-0000-000000000001:none]]
+  ---
+  duration_ms: 0.027662
+  type: 'test'
+  ...
+# Subtest: wire rejects forged syntax [[sa-resolution:v1:00000000-0000-0000-0000-000000000001:confirm]]
+ok 108 - wire rejects forged syntax [[sa-resolution:v1:00000000-0000-0000-0000-000000000001:confirm]]
+  ---
+  duration_ms: 0.030516
+  type: 'test'
+  ...
+# Subtest: none with useful customer clue retains query and marks rejection
+ok 109 - none with useful customer clue retains query and marks rejection
+  ---
+  duration_ms: 1.103914
+  type: 'test'
+  ...
+# Subtest: ordinary-use clue chooses library without changing Ridge query
+ok 110 - ordinary-use clue chooses library without changing Ridge query
+  ---
+  duration_ms: 0.383248
+  type: 'test'
+  ...
+# Subtest: ordered last week means order_date rather than line modification time
+ok 111 - ordered last week means order_date rather than line modification time
+  ---
+  duration_ms: 0.296016
+  type: 'test'
+  ...
+# Subtest: follow-up exact quote is a child parent, not a new vague query
+ok 112 - follow-up exact quote is a child parent, not a new vague query
+  ---
+  duration_ms: 0.109274
+  type: 'test'
+  ...
+# Subtest: new independent command does not inherit a pending identity
+ok 113 - new independent command does not inherit a pending identity
+  ---
+  duration_ms: 0.071248
+  type: 'test'
+  ...
+# Subtest: second ordinal identifies server candidate index, not a model UUID
+ok 114 - second ordinal identifies server candidate index, not a model UUID
+  ---
+  duration_ms: 0.07304
+  type: 'test'
+  ...
+# Subtest: unhelpful reply does not replace query with yes/okay
+ok 115 - unhelpful reply does not replace query with yes/okay
+  ---
+  duration_ms: 0.284249
+  type: 'test'
+  ...
+# Subtest: customer refinement does not replace exact parent with fuzzy name
+ok 116 - customer refinement does not replace exact parent with fuzzy name
+  ---
+  duration_ms: 0.139961
+  type: 'test'
+  ...
+# Subtest: P3 selection fixes numeric text from actual user, not arbitrary UUID
+ok 117 - P3 selection fixes numeric text from actual user, not arbitrary UUID
+  ---
+  duration_ms: 0.529739
+  type: 'test'
+  ...
+# Subtest: P3 owner qualifier is never dropped
+ok 118 - P3 owner qualifier is never dropped
+  ---
+  duration_ms: 0.145519
+  type: 'test'
+  ...
+# Subtest: multi-purpose requests stay on normal reasoning path
+ok 119 - multi-purpose requests stay on normal reasoning path
+  ---
+  duration_ms: 0.42502
+  type: 'test'
+  ...
+# Subtest: resolver gate requires all rollout switches and SQL capability
+ok 120 - resolver gate requires all rollout switches and SQL capability
+  ---
+  duration_ms: 0.167202
+  type: 'test'
+  ...
+# Subtest: bare quote hash plus explicit invoice keeps both independent anchors
+ok 121 - bare quote hash plus explicit invoice keeps both independent anchors
+  ---
+  duration_ms: 0.221013
+  type: 'test'
+  ...
+# Subtest: typed order hash never manufactures a quote reference
+ok 122 - typed order hash never manufactures a quote reference
+  ---
+  duration_ms: 0.10657
+  type: 'test'
+  ...
+# Subtest: exact component clue constrains a model-provided component id
+ok 123 - exact component clue constrains a model-provided component id
+  ---
+  duration_ms: 0.177658
+  type: 'test'
+  ...
+# Subtest: explicit Ridge rate request cannot be planned against a different named component
+ok 124 - explicit Ridge rate request cannot be planned against a different named component
+  ---
+  duration_ms: 0.189345
+  type: 'test'
+  ...
+# Subtest: quoted record-name for is not an external customer qualifier
+ok 125 - quoted record-name for is not an external customer qualifier
+  ---
+  duration_ms: 0.226481
+  type: 'test'
+  ...
+# Subtest: external qualifier after a quoted job is retained
+ok 126 - external qualifier after a quoted job is retained
+  ---
+  duration_ms: 0.090957
+  type: 'test'
+  ...
+# Subtest: quoted customer qualifier binds its actual unquoted value
+ok 127 - quoted customer qualifier binds its actual unquoted value
+  ---
+  duration_ms: 0.070887
+  type: 'test'
+  ...
+# Subtest: model refinement exact parent replaces fuzzy selector but retains customer
+ok 128 - model refinement exact parent replaces fuzzy selector but retains customer
+  ---
+  duration_ms: 6.364023
+  type: 'test'
+  ...
+1..128
+# tests 128
+# suites 0
+# pass 128
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 79.654865

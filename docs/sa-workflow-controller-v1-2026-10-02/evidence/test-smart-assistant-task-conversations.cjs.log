@@ -1,0 +1,154 @@
+TAP version 13
+# Subtest: owner verbatim sequence in ONE conversation: list, restatement, exact number, latest customer
+ok 1 - owner verbatim sequence in ONE conversation: list, restatement, exact number, latest customer
+  ---
+  duration_ms: 28.957068
+  type: 'test'
+  ...
+# Subtest: empty component list does not repeat identical discovery as broadening
+ok 2 - empty component list does not repeat identical discovery as broadening
+  ---
+  duration_ms: 2.656765
+  type: 'test'
+  ...
+# Subtest: a cost clarification preserves Ridge when user supplies quote 1014
+ok 3 - a cost clarification preserves Ridge when user supplies quote 1014
+  ---
+  duration_ms: 6.764065
+  type: 'test'
+  ...
+# Subtest: short customer clarification adds a constraint, does not drop component membership
+ok 4 - short customer clarification adds a constraint, does not drop component membership
+  ---
+  duration_ms: 5.54603
+  type: 'test'
+  ...
+# Subtest: Done closes task without deleting history or doing a business read
+ok 5 - Done closes task without deleting history or doing a business read
+  ---
+  duration_ms: 1.861756
+  type: 'test'
+  ...
+# Subtest: Move on closes an unsuccessful question and does not require successful resolution
+ok 6 - Move on closes an unsuccessful question and does not require successful resolution
+  ---
+  duration_ms: 1.610998
+  type: 'test'
+  ...
+# Subtest: typed thanks also closes without a model and next request is independent
+ok 7 - typed thanks also closes without a model and next request is independent
+  ---
+  duration_ms: 1.640303
+  type: 'test'
+  ...
+# Subtest: forgotten Done does not make unrelated short explicit numbers inherit filters
+ok 8 - forgotten Done does not make unrelated short explicit numbers inherit filters
+  ---
+  duration_ms: 1.444597
+  type: 'test'
+  ...
+# Subtest: unclear fragment after pause asks task boundary, not a fake data search
+ok 9 - unclear fragment after pause asks task boundary, not a fake data search
+  ---
+  duration_ms: 2.702954
+  type: 'test'
+  ...
+# Subtest: boundary Continue reuses the saved message without asking user to repeat it
+ok 10 - boundary Continue reuses the saved message without asking user to repeat it
+  ---
+  duration_ms: 2.530835
+  type: 'test'
+  ...
+# Subtest: boundary New excludes previous task history and constraints
+ok 11 - boundary New excludes previous task history and constraints
+  ---
+  duration_ms: 1.058886
+  type: 'test'
+  ...
+# Subtest: stale boundary buttons cannot reopen a closed task
+ok 12 - stale boundary buttons cannot reopen a closed task
+  ---
+  duration_ms: 0.91516
+  type: 'test'
+  ...
+# Subtest: stale candidate buttons cannot reopen a closed task or propose
+ok 13 - stale candidate buttons cannot reopen a closed task or propose
+  ---
+  duration_ms: 2.32883
+  type: 'test'
+  ...
+# Subtest: candidate selection in active task rereads price rather than cached label
+ok 14 - candidate selection in active task rereads price rather than cached label
+  ---
+  duration_ms: 2.757677
+  type: 'test'
+  ...
+# Subtest: deleted selected candidate never becomes the other same-name record
+ok 15 - deleted selected candidate never becomes the other same-name record
+  ---
+  duration_ms: 1.776999
+  type: 'test'
+  ...
+# Subtest: complex correction delegates interpretation, not literal-name search
+ok 16 - complex correction delegates interpretation, not literal-name search
+  ---
+  duration_ms: 0.803712
+  type: 'test'
+  ...
+# Subtest: latest explicit customer filter never falls back to matching job name
+ok 17 - latest explicit customer filter never falls back to matching job name
+  ---
+  duration_ms: 0.947398
+  type: 'test'
+  ...
+# Subtest: ambiguous colloquial latest NAME quote can try name after complete empty customer set
+ok 18 - ambiguous colloquial latest NAME quote can try name after complete empty customer set
+  ---
+  duration_ms: 1.199418
+  type: 'test'
+  ...
+# Subtest: latest fallback never runs after incomplete customer read
+ok 19 - latest fallback never runs after incomplete customer read
+  ---
+  duration_ms: 0.707347
+  type: 'test'
+  ...
+# Subtest: component-specific qualifier is preserved after plural normalization
+ok 20 - component-specific qualifier is preserved after plural normalization
+  ---
+  duration_ms: 0.616309
+  type: 'test'
+  ...
+# Subtest: empty read is not exposed as permission denial; hidden source is not exposed as absent
+ok 21 - empty read is not exposed as permission denial; hidden source is not exposed as absent
+  ---
+  duration_ms: 3.780319
+  type: 'test'
+  ...
+# Subtest: permission revocation terminates before a proposal or data release
+ok 22 - permission revocation terminates before a proposal or data release
+  ---
+  duration_ms: 1.016802
+  type: 'test'
+  ...
+# Subtest: closing while a run is unresolved is refused by fixture contract
+ok 23 - closing while a run is unresolved is refused by fixture contract
+  ---
+  duration_ms: 0.186061
+  type: 'test'
+  ...
+# Subtest: canonical latest bypasses old updated-at shortcut and uses creation order
+ok 24 - canonical latest bypasses old updated-at shortcut and uses creation order
+  ---
+  duration_ms: 0.65027
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 87.599921

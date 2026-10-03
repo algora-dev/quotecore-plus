@@ -1,117 +1,40 @@
-# RETURN NOTES — Smart Assistant Library + Draft Workflow (2026-09-30)
+# RETURN NOTES — Smart Assistant Workflow Controller V1 integration candidate
+
+**Date: 2 October 2026. Source implementation delivered; NOT deployed, NOT live-validated.**
 
 ## Start here
 
-This package is built from the user-supplied `quotecore-plus-SA-fix-handoff-2026-09-29.zip`.
+Read `AGENT_INTEGRATION_WORKFLOW_V1.md`, then this return's `TEST_RESULTS.md`, `MIGRATIONS.md`, and `LIVE_ACCEPTANCE.md` in `docs/sa-workflow-controller-v1-2026-10-02/`.
 
-The objective is deliberately narrow: make **new draft creation** behave like a task-completing controller rather than requiring the user/model to manually assemble low-level component IDs.
+This return is based on the supplied **October 2 lean ZIP**, not on the abandoned previous agent's environment. The old September 30 return notes are preserved as `PREVIOUS_RETURN_NOTES.md` in that folder. Older root and documentation claims about live testing refer to earlier releases, **not this return**. `WORKFLOW_V1_CHANGED_FILES.json` is this return's change manifest; the older root manifests remain historical.
 
-**NOT DEPLOYED. MIGRATION NOT APPLIED. Feature defaults OFF.**
+## Implemented
 
-## What changed
+**A — Workspace vocabulary and explicit library mappings.** Eight stable built-in concepts; editable names/aliases; normalized singular/plural variants; up to twelve custom concepts inheriting an existing safe measurement behavior. Existing library profiles/members are extended, not replaced by a second product catalogue. Settings saves are transactional and epoch-checked; one default per concept/library; deliberate mappings override Takeoff suggestions. The server resolves requested product → configured default → sole compatible product → grouped real alternatives.
 
-### 1. Assistant-specific component-library setup
+**B — Workflow Controller V1.** Durable versioned working briefs with server-generated stable area, component-group and individual-entry IDs. Separate intent-to-brief and typed-correction tools; paginated measurement reader; grouped partial choices; explicit workflow/card states; task visibility and closure checks. The model cannot rebuild an active brief through the new-job tool or bypass it through registered legacy low-level correction tools. Clear new goals use the existing task-boundary system, rather than attaching to an old produced quote. Correct rollout therefore includes the existing task-context/resolver capability.
 
-A new additive migration adds:
-- `assistant_v2_library_profiles`
-- `assistant_v2_library_members`
-- `assistant_v2_draft_briefs`
+**C — Same-draft incremental revision.** Existing parent creation, quota/admission and P4 explicit confirmation remain in place. A committed quote, canonical plan and exact quote snapshot are bound to the brief in the finalizer transaction. Revisions use stable-ID structural differences and an atomic trusted child writer, retaining unchanged rows, rates/waste settings and audit timestamps. The old clear/rebuild helper is explicitly disabled and revoked. The unique result-quote index is corrected to allow multiple edit actions without allowing duplicate parent creation. External edits, sent/accepted/deleted drafts, stale revisions/configuration and uncertain creation outcomes fail closed; no silent rebase or replacement draft.
 
-A workspace manager can enable a whole component library for Smart Assistant or make only selected components eligible. Eligible components can be assigned one of these structural roles:
+**D — PWA authentication/launch.** Supabase SSR 0.9.0 batched cookies preserve every refreshed chunk/deletion across normal, demo and redirect responses. No cookie lifetime extension or indefinite session policy was introduced. Transient authentication verification failures return a retryable unavailable response instead of treating the request as authenticated. The global `/assistant` launch route resolves the authenticated workspace; no tenant is hard-coded into the manifest. Login redirects retain safe deep-link query parameters.
 
-`roof_area`, `ridge`, `hip`, `valley`, `barge`, `spouting`, `underlay`, `fixings`.
+**E — Opt-in alert-backed push.** Subscription settings, per-device categories, owner/tenant RLS, current membership/MFA checks, alert-triggered durable outbox, leased dispatch, bounded retries/cleanup and authenticated tap resolution. Lock-screen payloads contain an opaque delivery ID, not customer names or amounts. The push-only service worker does not cache application/auth responses or navigate an open unsaved builder away. Native Node Web Push transport is covered by the RFC known-answer vector and independent decryption/signature tests; real provider/device interoperability still requires testing. No new npm dependencies or key material were added.
 
-One explicit default may be configured per role/library. Existing `takeoff_slot` values are surfaced as setup suggestions, but are not silently treated as execution authority.
+## Actual verification in this environment
 
-These settings control **new-work eligibility**. They do not hide components already placed on existing authorised quotes/drafts.
+- New offline tests: **30 controller/engine/cookie tests, 20 service orchestration tests using mocked transport/access, 23 push/protocol/service-worker tests — all pass.**
+- New static source assertions pass. **367 protected baseline files are byte-identical**, including pricing/billing/trade helpers, quote creation actions, retrieval/resolver implementations, dependency manifests, and all original SQL migrations.
+- Syntax transpilation: **42 new/changed TypeScript/TSX files**, zero syntax diagnostics. This is not a semantic typecheck or a Next build.
+- Selected existing offline suites pass; others could not run or failed their harness checks because this environment lacks installed dependencies or the lean archive omits historical fixtures. Full command-level results are included.
+- `npm ci` attempted but network/DNS failures prevented dependency installation. Full typecheck was attempted and blocked by missing packages/types. Lint and build were attempted but `eslint`/`next` executables are unavailable. No clean build claim is made.
+- **No SQL migration was applied. No live database/RLS/race, real model conversation, browser/device, push-provider delivery or latency acceptance was run.**
 
-### 2. Measurement-first working draft
+## Integration controls
 
-A new goal-level tool, `prepare_draft_from_brief`, accepts the user's job intent as:
-- customer/job/address
-- areas, including per-area pitch
-- structural measurements grouped by role
-- repeated individual measurements
+Keep `SMART_ASSISTANT_LIBRARY_WORKFLOW_ENABLED=false` and `PWA_PUSH_ENABLED=false` during integration. Inventory existing migrations across the repository's migration directories. Apply the four new migrations in the documented order on staging, review the renamed/wrapped RPCs, regenerate database types, complete dependency/type/lint/build gates and live acceptance, then enable a test workspace deliberately.
 
-It does **not** require the model/user to supply component-library UUIDs up front.
+Do not run the old `supabase/migrations/20261002150000_draft_brief_edit_in_place.sql` after the new controller migration: it would recreate a destructive legacy helper. Do not downgrade the database helpers during an application rollback.
 
-Server code then:
-1. reads only assistant-enabled libraries/components;
-2. applies an explicit configured role default when there is exactly one;
-3. uses a sole compatible role candidate when there is only one;
-4. groups unresolved choices into a single server-authored card;
-5. preserves the job/measurements while the user answers choices;
-6. produces the existing P4 reviewed `draft_create` proposal only when the brief is complete.
+## Scope and limits
 
-### 3. Grouped product choices
-
-The new `draft_workflow` conversation card shows all current unresolved product choices at once. The user may select them in one interaction.
-
-A text/voice answer can also continue the same working draft through `continue_draft_workflow`; current server-owned choice IDs are supplied to the model context so it does not have to rediscover the job.
-
-Selecting components **never creates the draft**. The normal P4 proposal and Confirm button remain execution authority.
-
-### 4. Draft capability gaps closed
-
-The draft plan now supports:
-- `site_address`
-- per-area `pitch_degrees`
-- multiple raw measurement entries for one component
-
-Repeated measurements are intentionally preserved. Four 5m hips remain four entries because fixed-per-segment waste can produce a different result from one collapsed 20m entry.
-
-`createQuoteWithDetails` now accepts an optional `siteAddress` while retaining all existing caller behaviour.
-
-The additive migration overlays the existing trusted P4 checkpoint/finaliser so site address and repeated `quote_component_entries` are verified/inserted inside the existing confirmation path.
-
-## Feature flag
-
-Enable only after migration/security/live acceptance:
-
-`SMART_ASSISTANT_LIBRARY_WORKFLOW_ENABLED=true`
-
-With the flag OFF, the existing P4 `draft_creation_options` + `propose_draft_quote` path remains available.
-
-## Locked boundaries preserved
-
-- Existing admission/reservation/quota/replay/finish path unchanged.
-- Existing P3/P4 Confirm-button authority unchanged.
-- No arbitrary SQL/model-authored write path.
-- Existing pricing/pitch/waste engines remain authoritative.
-- Existing tenant and Smart Assistant permissions remain authoritative.
-- No voice/TTS/visual UX redesign in this pass.
-- No automatic quote send/finalisation.
-
-## Validation completed here
-
-- TypeScript/TSX syntax transpile check passed for 17 modified/new implementation files using the installed TypeScript compiler.
-- Source comparison confirms only the documented workflow/settings/creation/UI files plus one additive migration changed relative to the supplied baseline.
-- Final ZIP integrity and checksum are verified during packaging.
-
-## Not verified here
-
-No claim is made for:
-- clean dependency install
-- full project typecheck/lint/Next build
-- live Supabase migration/RLS behavior
-- live Luna planning quality
-- browser/device acceptance
-- actual quote creation against the testing database
-
-Gavin must run those gates.
-
-## Primary live acceptance
-
-Configure one assistant-enabled roofing library with real role assignments/defaults, then in one conversation request a draft such as:
-
-> Create a draft for James Smith at 123 Grand Lane. Main roof 100 m2 at 25 degrees, with four hips of 5 m each. Use my configured roofing library.
-
-Expected:
-1. The assistant does **not** ask for generic "component selections" or IDs.
-2. It retains customer, address, roof area, pitch and all four hip measurements.
-3. If products genuinely tie, one grouped card shows the real eligible choices.
-4. After choices, one full proposal is rendered.
-5. Only the existing Confirm button creates the draft.
-6. Database verification shows exactly one draft, correct site address/area/pitch/components, and four separate hip measurement entries.
-
-See `docs/sa-library-workflow-2026-09-30/AGENT_INTEGRATION_PROMPT.md` for the integration sequence.
+This is an integration candidate, not a production-release certification. Same-draft continuation starts with a controller-created manual draft; it does not adopt arbitrary old drafts or automatically rebase external builder edits. Initial push is generic event delivery, not AI-written notifications or a proactive attention digest. Voice/text/TTS are preserved; no Realtime/WebRTC or image understanding was added. See `KNOWN_LIMITATIONS.md` for operating bounds, recovery guidance and unverified gates.

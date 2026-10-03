@@ -1,5 +1,5 @@
 import { cookies, headers } from 'next/headers';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { authCookieOptions } from './cookie-config';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { cache } from 'react';
@@ -45,21 +45,13 @@ export async function createSupabaseServerClient() {
     {
       cookieOptions: authCookieOptions(host),
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
+        getAll() { return cookieStore.getAll(); },
+        setAll(changes) {
           try {
-            cookieStore.set({ name, value, ...options });
+            for (const {name,value,options} of changes) cookieStore.set({name,value,...options});
           } catch {
-            // ignore in contexts where cookies cannot be mutated
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: '', ...options });
-          } catch {
-            // ignore in contexts where cookies cannot be mutated
+            // Server Components cannot mutate cookies. Middleware handles the
+            // complete refreshed batch; Server Actions/Route Handlers can write.
           }
         },
       },

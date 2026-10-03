@@ -1,0 +1,466 @@
+TAP version 13
+# Subtest: fresh message escapes unresolved filters: show me my quotes with ridges
+ok 1 - fresh message escapes unresolved filters: show me my quotes with ridges
+  ---
+  duration_ms: 5.412829
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: I just want to see the quotes that contain ridge components
+ok 2 - fresh message escapes unresolved filters: I just want to see the quotes that contain ridge components
+  ---
+  duration_ms: 1.710799
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: quote 1014
+ok 3 - fresh message escapes unresolved filters: quote 1014
+  ---
+  duration_ms: 0.579524
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: show invoices
+ok 4 - fresh message escapes unresolved filters: show invoices
+  ---
+  duration_ms: 1.289654
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: whats the most recent john smith quote
+ok 5 - fresh message escapes unresolved filters: whats the most recent john smith quote
+  ---
+  duration_ms: 0.678963
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: show me all of John's quotes
+ok 6 - fresh message escapes unresolved filters: show me all of John's quotes
+  ---
+  duration_ms: 0.250297
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: Open order 184
+ok 7 - fresh message escapes unresolved filters: Open order 184
+  ---
+  duration_ms: 0.266011
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: Compare my quotes this month
+ok 8 - fresh message escapes unresolved filters: Compare my quotes this month
+  ---
+  duration_ms: 2.844497
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: What's my largest accepted quote?
+ok 9 - fresh message escapes unresolved filters: What's my largest accepted quote?
+  ---
+  duration_ms: 1.211867
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: I need to find the other invoice for the Smith job
+ok 10 - fresh message escapes unresolved filters: I need to find the other invoice for the Smith job
+  ---
+  duration_ms: 0.734017
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: Thanks, now show invoices
+ok 11 - fresh message escapes unresolved filters: Thanks, now show invoices
+  ---
+  duration_ms: 0.222425
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: Thanks now show invoices
+ok 12 - fresh message escapes unresolved filters: Thanks now show invoices
+  ---
+  duration_ms: 0.104127
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: New question: quote 1014
+ok 13 - fresh message escapes unresolved filters: New question: quote 1014
+  ---
+  duration_ms: 0.091197
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: How many quotes do I have?
+ok 14 - fresh message escapes unresolved filters: How many quotes do I have?
+  ---
+  duration_ms: 0.100752
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: done
+ok 15 - typed explicit closure: done
+  ---
+  duration_ms: 0.154053
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: Task complete
+ok 16 - typed explicit closure: Task complete
+  ---
+  duration_ms: 0.05963
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: thanks
+ok 17 - typed explicit closure: thanks
+  ---
+  duration_ms: 0.04628
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: thank you
+ok 18 - typed explicit closure: thank you
+  ---
+  duration_ms: 0.042053
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: move on
+ok 19 - typed explicit closure: move on
+  ---
+  duration_ms: 0.03961
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: new question
+ok 20 - typed explicit closure: new question
+  ---
+  duration_ms: 0.067231
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: cancel this search
+ok 21 - typed explicit closure: cancel this search
+  ---
+  duration_ms: 0.045879
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: never mind
+ok 22 - typed explicit closure: never mind
+  ---
+  duration_ms: 0.044056
+  type: 'test'
+  ...
+# Subtest: acknowledgement is not confirmation or record name: yes
+ok 23 - acknowledgement is not confirmation or record name: yes
+  ---
+  duration_ms: 0.188243
+  type: 'test'
+  ...
+# Subtest: acknowledgement is not confirmation or record name: confirmed
+ok 24 - acknowledgement is not confirmation or record name: confirmed
+  ---
+  duration_ms: 0.171669
+  type: 'test'
+  ...
+# Subtest: acknowledgement is not confirmation or record name: approve
+ok 25 - acknowledgement is not confirmation or record name: approve
+  ---
+  duration_ms: 0.106471
+  type: 'test'
+  ...
+# Subtest: acknowledgement is not confirmation or record name: confirm
+ok 26 - acknowledgement is not confirmation or record name: confirm
+  ---
+  duration_ms: 0.134633
+  type: 'test'
+  ...
+# Subtest: dependent follow-up retains task: what about its labour?
+ok 27 - dependent follow-up retains task: what about its labour?
+  ---
+  duration_ms: 0.145129
+  type: 'test'
+  ...
+# Subtest: dependent follow-up retains task: How much is its labour?
+ok 28 - dependent follow-up retains task: How much is its labour?
+  ---
+  duration_ms: 0.111798
+  type: 'test'
+  ...
+# Subtest: dependent follow-up retains task: the other one
+ok 29 - dependent follow-up retains task: the other one
+  ---
+  duration_ms: 0.077437
+  type: 'test'
+  ...
+# Subtest: exact quote can answer a cost parent question
+ok 30 - exact quote can answer a cost parent question
+  ---
+  duration_ms: 1.163964
+  type: 'test'
+  ...
+# Subtest: five-minute elapsed time changes ambiguous fragment, not a clear new request
+ok 31 - five-minute elapsed time changes ambiguous fragment, not a clear new request
+  ---
+  duration_ms: 0.322466
+  type: 'test'
+  ...
+# Subtest: expired task is not resurrected by a vague fragment
+ok 32 - expired task is not resurrected by a vague fragment
+  ---
+  duration_ms: 0.127271
+  type: 'test'
+  ...
+# Subtest: Done is optional for a complete new request after an answer
+ok 33 - Done is optional for a complete new request after an answer
+  ---
+  duration_ms: 0.109546
+  type: 'test'
+  ...
+# Subtest: closed task provides no inherited constraints
+ok 34 - closed task provides no inherited constraints
+  ---
+  duration_ms: 0.104548
+  type: 'test'
+  ...
+# Subtest: normal short answer can fill the expected customer slot
+ok 35 - normal short answer can fill the expected customer slot
+  ---
+  duration_ms: 0.656269
+  type: 'test'
+  ...
+# Subtest: same-subject morphology correction: ridge?
+ok 36 - same-subject morphology correction: ridge?
+  ---
+  duration_ms: 0.235375
+  type: 'test'
+  ...
+# Subtest: same-subject morphology correction: ridges?
+ok 37 - same-subject morphology correction: ridges?
+  ---
+  duration_ms: 0.167893
+  type: 'test'
+  ...
+# Subtest: same-subject morphology correction: ridging?
+ok 38 - same-subject morphology correction: ridging?
+  ---
+  duration_ms: 0.085769
+  type: 'test'
+  ...
+# Subtest: variant correction does not remove specific component qualifiers
+ok 39 - variant correction does not remove specific component qualifiers
+  ---
+  duration_ms: 0.274043
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: show me my quotes with ridges
+ok 40 - whole-request interpretation: show me my quotes with ridges
+  ---
+  duration_ms: 0.392312
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: I just want to see the quotes that contain ridge components
+ok 41 - whole-request interpretation: I just want to see the quotes that contain ridge components
+  ---
+  duration_ms: 0.111357
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: quote 1014
+ok 42 - whole-request interpretation: quote 1014
+  ---
+  duration_ms: 0.063365
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: whats the most recent john smith quote
+ok 43 - whole-request interpretation: whats the most recent john smith quote
+  ---
+  duration_ms: 0.305641
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: show me all of John's quotes
+ok 44 - whole-request interpretation: show me all of John's quotes
+  ---
+  duration_ms: 0.156576
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: Show the latest quote for John Smith
+ok 45 - whole-request interpretation: Show the latest quote for John Smith
+  ---
+  duration_ms: 0.14613
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: Open quote 1014 and email it
+ok 46 - unconsumed intent goes to model: Open quote 1014 and email it
+  ---
+  duration_ms: 0.07308
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: How much is its labour?
+ok 47 - unconsumed intent goes to model: How much is its labour?
+  ---
+  duration_ms: 0.050026
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: Show latest quote for Smith without Ridge
+ok 48 - unconsumed intent goes to model: Show latest quote for Smith without Ridge
+  ---
+  duration_ms: 0.04019
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: Show latest accepted quote
+ok 49 - unconsumed intent goes to model: Show latest accepted quote
+  ---
+  duration_ms: 0.037076
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: Show latest quote since January
+ok 50 - unconsumed intent goes to model: Show latest quote since January
+  ---
+  duration_ms: 0.035714
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: Show my most expensive quote
+ok 51 - unconsumed intent goes to model: Show my most expensive quote
+  ---
+  duration_ms: 0.041152
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: quote 1014 but not Smith
+ok 52 - unconsumed intent goes to model: quote 1014 but not Smith
+  ---
+  duration_ms: 0.037236
+  type: 'test'
+  ...
+# Subtest: only known complete component words normalize
+ok 53 - only known complete component words normalize
+  ---
+  duration_ms: 0.062354
+  type: 'test'
+  ...
+# Subtest: task wire is strict and readable without model interpretation
+ok 54 - task wire is strict and readable without model interpretation
+  ---
+  duration_ms: 0.714106
+  type: 'test'
+  ...
+# Subtest: acknowledgement prefix keeps a genuinely dependent follow-up
+ok 55 - acknowledgement prefix keeps a genuinely dependent follow-up
+  ---
+  duration_ms: 0.122555
+  type: 'test'
+  ...
+# Subtest: Okay prefix preserves a typed parent clarification
+ok 56 - Okay prefix preserves a typed parent clarification
+  ---
+  duration_ms: 0.15263
+  type: 'test'
+  ...
+# Subtest: explicit New question bypasses even a valid old parent slot
+ok 57 - explicit New question bypasses even a valid old parent slot
+  ---
+  duration_ms: 0.108353
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: most recent
+ok 58 - temporal word is an instruction, not a record name: most recent
+  ---
+  duration_ms: 0.101252
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: newest
+ok 59 - temporal word is an instruction, not a record name: newest
+  ---
+  duration_ms: 0.050286
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: latest
+ok 60 - temporal word is an instruction, not a record name: latest
+  ---
+  duration_ms: 0.040391
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: last
+ok 61 - temporal word is an instruction, not a record name: last
+  ---
+  duration_ms: 0.0397
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: first
+ok 62 - temporal word is an instruction, not a record name: first
+  ---
+  duration_ms: 0.040751
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: earliest
+ok 63 - temporal word is an instruction, not a record name: earliest
+  ---
+  duration_ms: 0.038748
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: oldest
+ok 64 - temporal word is an instruction, not a record name: oldest
+  ---
+  duration_ms: 0.037216
+  type: 'test'
+  ...
+# Subtest: quoted temporal name is still a name
+ok 65 - quoted temporal name is still a name
+  ---
+  duration_ms: 0.090988
+  type: 'test'
+  ...
+# Subtest: proceed-style confirmation continues the task (strip Proceed button): Yes, proceed.
+ok 66 - proceed-style confirmation continues the task (strip Proceed button): Yes, proceed.
+  ---
+  duration_ms: 0.116816
+  type: 'test'
+  ...
+# Subtest: proceed-style confirmation continues the task (strip Proceed button): yes please proceed
+ok 67 - proceed-style confirmation continues the task (strip Proceed button): yes please proceed
+  ---
+  duration_ms: 0.081222
+  type: 'test'
+  ...
+# Subtest: proceed-style confirmation continues the task (strip Proceed button): Proceed
+ok 68 - proceed-style confirmation continues the task (strip Proceed button): Proceed
+  ---
+  duration_ms: 0.097738
+  type: 'test'
+  ...
+# Subtest: proceed-style confirmation continues the task (strip Proceed button): please proceed
+ok 69 - proceed-style confirmation continues the task (strip Proceed button): please proceed
+  ---
+  duration_ms: 0.071848
+  type: 'test'
+  ...
+# Subtest: proceed-style confirmation continues the task (strip Proceed button): go ahead
+ok 70 - proceed-style confirmation continues the task (strip Proceed button): go ahead
+  ---
+  duration_ms: 0.08012
+  type: 'test'
+  ...
+# Subtest: proceed-style confirmation continues the task (strip Proceed button): okay, go ahead
+ok 71 - proceed-style confirmation continues the task (strip Proceed button): okay, go ahead
+  ---
+  duration_ms: 0.073942
+  type: 'test'
+  ...
+# Subtest: proceed-style confirmation continues the task (strip Proceed button): carry on, please
+ok 72 - proceed-style confirmation continues the task (strip Proceed button): carry on, please
+  ---
+  duration_ms: 0.070326
+  type: 'test'
+  ...
+# Subtest: proceed-style confirmation continues the task (strip Proceed button): continue
+ok 73 - proceed-style confirmation continues the task (strip Proceed button): continue
+  ---
+  duration_ms: 0.069425
+  type: 'test'
+  ...
+# Subtest: over-specific follow-ups are not bare acknowledgements: continue with 120 square metres
+ok 74 - over-specific follow-ups are not bare acknowledgements: continue with 120 square metres
+  ---
+  duration_ms: 0.110026
+  type: 'test'
+  ...
+# Subtest: over-specific follow-ups are not bare acknowledgements: proceed to create the draft without checking
+ok 75 - over-specific follow-ups are not bare acknowledgements: proceed to create the draft without checking
+  ---
+  duration_ms: 0.093561
+  type: 'test'
+  ...
+# Subtest: over-specific follow-ups are not bare acknowledgements: yes and also change the pitch
+ok 76 - over-specific follow-ups are not bare acknowledgements: yes and also change the pitch
+  ---
+  duration_ms: 0.131989
+  type: 'test'
+  ...
+1..76
+# tests 76
+# suites 0
+# pass 76
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 44.639797

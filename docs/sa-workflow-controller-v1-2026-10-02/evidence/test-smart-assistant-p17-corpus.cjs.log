@@ -1,0 +1,22 @@
+node:fs:442
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open '/mnt/data/quotecore_v1_build/docs/sa-p17-2026-09-26/ACCEPTANCE_CASES.json'
+    at Object.readFileSync (node:fs:442:20)
+    at Object.<anonymous> (/mnt/data/quotecore_v1_build/scripts/test-smart-assistant-p17-corpus.cjs:7:28)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/mnt/data/quotecore_v1_build/docs/sa-p17-2026-09-26/ACCEPTANCE_CASES.json'
+}
+
+Node.js v22.16.0

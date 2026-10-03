@@ -161,6 +161,7 @@ const nextConfig: NextConfig = {
     ];
 
     return [
+      { source: '/qcp-push-sw.js', headers: [{ key: 'Cache-Control', value: 'no-store' }, { key: 'Service-Worker-Allowed', value: '/' }] },
       // Global defence-in-depth headers for every route.
       {
         source: '/(.*)',

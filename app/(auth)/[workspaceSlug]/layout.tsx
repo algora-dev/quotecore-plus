@@ -1,3 +1,4 @@
+import { PushSessionBridge } from '@/app/components/pwa/PushSessionBridge';
 import { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 
@@ -131,6 +132,7 @@ export default async function WorkspaceLayout({
 
   return (
     <HelpDrawerProvider>
+      {process.env.PWA_PUSH_ENABLED === 'true' && <PushSessionBridge />}
       <HelpDrawerPanel />
       <HelpDrawerLayout>
         <QcAppShell

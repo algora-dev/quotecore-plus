@@ -1,173 +1,187 @@
 import 'server-only';
-import { createAdminClient } from '@/app/lib/supabase/admin';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { boundedText, isUuid, type Access } from '../v2/contracts';
-import { ProposalError } from '../v2/action-domain';
+import { createAdminClient } from '@/app/lib/supabase/admin';
+import { isUuid, type Access } from '../v2/contracts';
+import { canonical, ProposalError } from '../v2/action-domain';
+import { requireEdits } from '../v2/actions.server';
+import { freshAccess, rpcError } from '../v2/runtime.server';
+import { batchClient, toJson } from '../v2/database';
 import { addCard } from '../v2/session.server';
 import { creationContext, proposeDraft } from '../v2/creation.server';
-import { ASSISTANT_LIBRARY_ROLES, ROLE_PITCH_TYPE, type AssistantLibraryRole, type DraftBrief, type DraftChoiceWire, type LibraryCatalogItem, type WorkflowCard, type WorkflowQuestion, type WorkflowResult, WORKFLOW_SECTIONS } from './contracts';
+import { WORKFLOW_SECTIONS, type DraftChoiceWire, type WorkflowCard, type WorkflowResult } from './contracts';
+import type { WorkingBrief, WorkflowState } from '../workflow-controller/contracts';
+import type { PlannedDraft } from '../workflow-controller/structural-diff';
+import { createWorkingBrief, applyWorkingDeltas, validateWorkingBrief } from '../workflow-controller/brief';
+import { resolveWorkingBrief, workingBriefSummary, workingProposalArgs } from '../workflow-controller/decisions';
+import { readWorkflowCatalog, readWorkflowEpoch, readWorkflowVocabulary } from '../workflow-controller/configuration.server';
+import { libraryWorkflowEnabled } from './config';
 
-const q=(client:SupabaseClient)=>client as any;
 const admin=()=>createAdminClient() as any;
-const roleSet=new Set<string>(ASSISTANT_LIBRARY_ROLES);
+type StoredBrief={id:string;revision:number;company_id:string;user_id:string;conversation_id:string;permission_revision:number;
+  brief:WorkingBrief;workflow_state:WorkflowState;catalog_epoch:number;produced_quote_id:string|null;action_id:string|null;
+  committed_plan:PlannedDraft|null;committed_snapshot:Record<string,unknown>|null;start_run_id:string|null;last_run_id:string|null;created_at:string;updated_at:string;conflict_reason:string|null};
+const FIELDS='id,revision,company_id,user_id,conversation_id,permission_revision,brief,workflow_state,catalog_epoch,produced_quote_id,action_id,committed_plan,committed_snapshot,start_run_id,last_run_id,created_at,updated_at,conflict_reason';
 
-function unitFor(measurement:string){return ['area'].includes(measurement)?'m2':['count','quantity','fixed'].includes(measurement)?'each':'m';}
-
-export async function readAssistantLibraryCatalog(client:SupabaseClient, access:Access, collectionId?:string|null):Promise<LibraryCatalogItem[]>{
-  let profilesQuery=q(client).from('assistant_v2_library_profiles').select('collection_id,enabled,include_all').eq('company_id',access.companyId).eq('enabled',true);
-  if(collectionId)profilesQuery=profilesQuery.eq('collection_id',collectionId);
-  const {data:profiles,error:pErr}=await profilesQuery;
-  if(pErr)throw new ProposalError('Smart Assistant library setup is unavailable. Ask an admin to review Assistant library access.');
-  const ids=(profiles??[]).map((p:any)=>p.collection_id).filter(isUuid);
-  if(!ids.length)return [];
-  const [{data:collections,error:cErr},{data:members,error:mErr},{data:components,error:compErr}]=await Promise.all([
-    q(client).from('component_collections').select('id,name').eq('company_id',access.companyId).in('id',ids),
-    q(client).from('assistant_v2_library_members').select('collection_id,component_id,included,assistant_role,is_default').eq('company_id',access.companyId).in('collection_id',ids),
-    q(client).from('component_library').select('id,collection_id,name,measurement_type,takeoff_slot,is_takeoff_default,is_active').eq('company_id',access.companyId).in('collection_id',ids).eq('is_active',true).order('sort_order',{ascending:true}),
-  ]);
-  if(cErr||mErr||compErr)throw new ProposalError('Smart Assistant could not read the configured component libraries.');
-  const pMap=new Map<string,any>((profiles??[]).map((p:any)=>[p.collection_id,p]));
-  const cMap=new Map<string,string>((collections??[]).map((c:any)=>[c.id,String(c.name)]));
-  const mMap=new Map<string,any>((members??[]).map((m:any)=>[m.component_id,m]));
-  const out:LibraryCatalogItem[]=[];
-  for(const comp of components??[]){
-    const profile=pMap.get(comp.collection_id); if(!profile)continue;
-    const member=mMap.get(comp.id);
-    const included=profile.include_all===true||member?.included===true;
-    if(!included)continue;
-    const roleRaw=member?.assistant_role??(roleSet.has(String(comp.takeoff_slot))?comp.takeoff_slot:null);
-    const role=roleSet.has(String(roleRaw))?roleRaw as AssistantLibraryRole:null;
-    out.push({id:comp.id,collectionId:comp.collection_id,collectionName:String(cMap.get(comp.collection_id)??'Library'),name:String(comp.name),role,isDefault:member?.is_default===true,measurementType:String(comp.measurement_type),takeoffSlot:comp.takeoff_slot??null,unit:unitFor(String(comp.measurement_type)),active:comp.is_active===true});
+async function workflowAccess(client:SupabaseClient,access:Access){
+  if(!libraryWorkflowEnabled())throw new ProposalError('The draft workflow is disabled on this deployment. Nothing was changed.');
+  await freshAccess(client,access,'p4'); requireEdits(access,WORKFLOW_SECTIONS);
+}
+async function environment(client:SupabaseClient,access:Access){
+  const config=await readWorkflowVocabulary(client,access.companyId);
+  const catalog=await readWorkflowCatalog(client,access,config.concepts);
+  if(await readWorkflowEpoch(client,access.companyId)!==config.epoch)throw new ProposalError('Assistant settings changed while preparing this brief. Review it again.');
+  return {...config,catalog};
+}
+// Kept as an exported seam for existing callers; resolution always uses the new
+// deliberate concept mapping, never a Takeoff role fallback.
+export async function readAssistantLibraryCatalog(client:SupabaseClient,access:Access,collectionId?:string|null){
+  await workflowAccess(client,access);
+  const config=await readWorkflowVocabulary(client,access.companyId);
+  const catalog=await readWorkflowCatalog(client,access,config.concepts,collectionId);
+  if(await readWorkflowEpoch(client,access.companyId)!==config.epoch)throw new ProposalError('Assistant settings changed. Read the library again.');
+  return catalog;
+}
+function assertCurrent(state:StoredBrief|null,access:Access,revision?:number):asserts state is StoredBrief{
+  if(!state||state.company_id!==access.companyId||state.user_id!==access.userId||state.permission_revision!==access.permissionRevision
+    ||revision!==undefined&&state.revision!==revision||['cancelled','closed'].includes(state.workflow_state)
+    ||access.historyAfter&&Date.parse(state.created_at)<Date.parse(access.historyAfter))
+    throw new ProposalError('That working brief changed or is no longer active. Reopen the current task; nothing was created or changed.');
+  if(state.brief?.version!==1)throw new ProposalError('This older working brief has no safe revision baseline. Review its existing draft in the builder; do not recreate it automatically.');
+}
+async function loadState(access:Access,conversationId:string,stateId:string,revision:number):Promise<StoredBrief>{
+  if(!isUuid(stateId)||!Number.isSafeInteger(revision)||revision<1)throw new ProposalError('A current working-brief identity and revision are required.');
+  const {data,error}=await admin().from('assistant_v2_draft_briefs').select(FIELDS).eq('id',stateId).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).maybeSingle();
+  if(error)throw rpcError(error);
+  const state=data as StoredBrief|null; assertCurrent(state,access,revision); return state;
+}
+async function snapshot(client:SupabaseClient,access:Access,state:StoredBrief,runId:string){
+  if(!state.produced_quote_id) {
+    if(state.committed_plan || state.committed_snapshot) throw new ProposalError('The original draft is no longer available. This brief cannot create a replacement. Nothing changed.');
+    return null;
   }
-  return out;
-}
-
-function cleanBrief(input:Record<string,unknown>,context:Record<string,unknown>):DraftBrief{
-  const customerName=boundedText(input.customer_name,200),jobName=boundedText(input.job_name,200);
-  if(!customerName||!jobName)throw new ProposalError('Tell me the customer and job name.');
-  const address=input.site_address==null?null:boundedText(input.site_address,500); if(input.site_address!=null&&!address)throw new ProposalError('The site address is not valid.');
-  const contextSystem=String(context.measurement_system??'metric');
-  const measurementSystem=['metric','imperial_ft','imperial_rs'].includes(String(input.measurement_system))?String(input.measurement_system) as DraftBrief['measurementSystem']:(['metric','imperial_ft','imperial_rs'].includes(contextSystem)?contextSystem as DraftBrief['measurementSystem']:'metric');
-  const pitch=Number(input.pitch_degrees??0); if(!Number.isFinite(pitch)||pitch<0||pitch>89)throw new ProposalError('Pitch must be between 0 and 89 degrees.');
-  const areasRaw=Array.isArray(input.areas)?input.areas:[]; if(areasRaw.length>12)throw new ProposalError('This draft has too many areas for one assistant task.');
-  const areas=areasRaw.map((v:any)=>{const label=boundedText(v?.label,120);const quantity=Number(v?.quantity);const unit=String(v?.unit??'m2');const basis=String(v?.basis??'plan');const p=v?.pitch_degrees==null?null:Number(v.pitch_degrees);if(!label||!Number.isFinite(quantity)||quantity<=0||!['m2','ft2','rs'].includes(unit)||!['plan','surface'].includes(basis)||p!=null&&(!Number.isFinite(p)||p<0||p>89))throw new ProposalError('Each area needs a valid label, size, unit, basis and optional pitch.');return {label,quantity,unit:unit as 'm2'|'ft2'|'rs',basis:basis as 'plan'|'surface',pitchDegrees:p};});
-  const msRaw=Array.isArray(input.measurements)?input.measurements:[]; if(msRaw.length>40)throw new ProposalError('This draft has too many component measurement groups for one assistant task.');
-  const measurements=msRaw.map((v:any)=>{const role=String(v?.role);if(!roleSet.has(role))throw new ProposalError(`Unsupported measurement role: ${role}.`);const entries=(Array.isArray(v?.entries)?v.entries:[]).map((e:any)=>{const quantity=Number(e?.quantity),unit=String(e?.unit??(role==='roof_area'?'m2':'m'));if(!Number.isFinite(quantity)||quantity<=0)throw new ProposalError(`Invalid ${role} measurement.`);return {quantity,unit};});if(!entries.length)throw new ProposalError(`${role} needs at least one measurement.`);const basis=String(v?.basis??(role==='roof_area'?'plan':'plan'));const areaIndex=v?.area_index==null?null:Number(v.area_index);if(!['plan','actual'].includes(basis)||areaIndex!=null&&(!Number.isInteger(areaIndex)||areaIndex<0||areaIndex>=areas.length))throw new ProposalError(`Invalid ${role} measurement context.`);return {role:role as AssistantLibraryRole,entries,basis:basis as 'plan'|'actual',areaIndex};});
-  return {customerName,jobName,siteAddress:address,measurementSystem,defaultPitchDegrees:pitch,trade:String(input.trade??'roofing'),collectionId:isUuid(input.collection_id)?String(input.collection_id):null,collectionName:boundedText(input.collection_name,200),areas,measurements,selections:{}};
-}
-
-async function persist(access:Access,conversationId:string,brief:DraftBrief,stateId?:string,expectedRevision?:number){
-  const db=admin();
-  if(stateId){
-    const {data,error}=await db.from('assistant_v2_draft_briefs').update({brief,revision:(expectedRevision??0)+1,updated_at:new Date().toISOString()}).eq('id',stateId).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).eq('revision',expectedRevision).select('id,revision,produced_quote_id').maybeSingle();
-    if(error||!data)throw new ProposalError('Those draft choices changed or expired. Please review the current draft again.');return {id:data.id,revision:data.revision,produced_quote_id:data.produced_quote_id??null};
+  const {data,error}=await batchClient(createAdminClient()).rpc('sa_v2_workflow_quote_snapshot',{p_user_id:access.userId,p_quote_id:state.produced_quote_id});
+  if(error)throw rpcError(error);
+  const found=data as Record<string,unknown>|null;
+  const quote=found?.quote as Record<string,unknown>|undefined;
+  if(!state.committed_plan||!state.committed_snapshot||!found||canonical(found)!==canonical(state.committed_snapshot)
+    ||quote?.status!=='draft'||quote?.entry_mode!=='manual'||quote?.acceptance_token!=null||quote?.accepted_at!=null||quote?.withdrawn_at!=null||quote?.declined_at!=null
+    ||!Array.isArray(found.area_entries)||found.area_entries.length){
+    const conflict=await batchClient(createAdminClient()).rpc('sa_v2_workflow_conflict',{p_user_id:access.userId,p_conversation_id:state.conversation_id,p_run_id:runId,p_state_id:state.id,p_revision:state.revision,p_baseline:toJson(state.committed_snapshot)});
+    if(conflict.error)throw rpcError(conflict.error);
+    throw new ProposalError('The saved draft changed outside this working brief or is no longer editable. Review the same draft in the builder. Nothing was overwritten and no replacement draft was created.');
   }
-  const {data,error}=await db.from('assistant_v2_draft_briefs').upsert({company_id:access.companyId,user_id:access.userId,conversation_id:conversationId,brief,revision:1,status:'open',permission_revision:access.permissionRevision,updated_at:new Date().toISOString()},{onConflict:'company_id,user_id,conversation_id'}).select('id,revision,produced_quote_id').single();
-  if(error||!data)throw new ProposalError('Could not save the working draft.');return {id:data.id,revision:data.revision,produced_quote_id:data.produced_quote_id??null};
+  return found;
+}
+function refreshAutomaticSelections(brief:WorkingBrief){
+  const copy=structuredClone(brief);
+  for(const key of Object.keys(copy.selections))if(copy.selectionSources[key]!=='explicit'){delete copy.selections[key];delete copy.selectionSources[key];}
+  return copy;
+}
+async function persist(access:Access,conversationId:string,runId:string,brief:WorkingBrief,epoch:number,state:WorkflowState,previous?:StoredBrief):Promise<StoredBrief>{
+  const {data,error}=await batchClient(createAdminClient()).rpc('sa_v2_workflow_save',{p_user_id:access.userId,p_conversation_id:conversationId,p_run_id:runId,
+    p_state_id:previous?.id??null,p_expected_revision:previous?.revision??null,p_epoch:epoch,p_brief:toJson(brief),p_state:state});
+  if(error)throw rpcError(error);
+  if(!data||typeof data!=='object'||Array.isArray(data)||!isUuid(data.id))throw rpcError(null);
+  return data as unknown as StoredBrief;
 }
 
-async function loadState(access:Access,conversationId:string,stateId:string,revision:number){
-  const {data,error}=await admin().from('assistant_v2_draft_briefs').select('id,revision,brief,status,permission_revision').eq('id',stateId).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).maybeSingle();
-  if(error||!data||data.status!=='open'||data.revision!==revision||data.permission_revision!==access.permissionRevision)throw new ProposalError('Those draft choices are no longer current. Ask me to review the draft again.');
-  return data as {id:string;revision:number;brief:DraftBrief;status:string;permission_revision:number};
-}
-
-function summary(brief:DraftBrief){
-  const lines=[`${brief.customerName} — ${brief.jobName}`];if(brief.siteAddress)lines.push(brief.siteAddress);
-  for(const a of brief.areas)lines.push(`${a.label}: ${a.quantity} ${a.unit}, ${a.basis}${a.pitchDegrees!=null?`, ${a.pitchDegrees}°`:''}`);
-  for(const m of brief.measurements)lines.push(`${m.role.replace('_',' ')}: ${m.entries.map(e=>`${e.quantity} ${e.unit}`).join(' + ')}`);
-  return lines;
-}
-
-function chooseCatalog(brief:DraftBrief,catalog:LibraryCatalogItem[]){
-  const collectionCandidates=[...new Map(catalog.map(c=>[c.collectionId,c.collectionName])).entries()];
-  if(!brief.collectionId){
-    if(collectionCandidates.length===1){brief.collectionId=collectionCandidates[0][0];brief.collectionName=collectionCandidates[0][1];}
-  }
-  const filtered=brief.collectionId?catalog.filter(c=>c.collectionId===brief.collectionId):catalog;
-  const questions:WorkflowQuestion[]=[];const issues:string[]=[];
-  if(!brief.collectionId){
-    if(collectionCandidates.length>1)questions.push({key:'collection',label:'Which Smart Assistant library should I use?',role:'roof_area',options:collectionCandidates.slice(0,5).map(([id,name])=>({id,label:name,detail:'Assistant-enabled component library'}))});
-    else issues.push('No Smart Assistant component library is enabled.');
-  }
-  const roles=[...new Set(brief.measurements.map(m=>m.role))];
-  for(const role of roles){
-    const key=`role:${role}`; if(brief.selections[key])continue;
-    const candidates=filtered.filter(c=>c.role===role);
-    const defaults=candidates.filter(c=>c.isDefault);
-    if(defaults.length===1){brief.selections[key]=defaults[0].id;continue;}
-    if(candidates.length===1){brief.selections[key]=candidates[0].id;continue;}
-    if(candidates.length===0){issues.push(`No assistant-enabled ${role.replace('_',' ')} component is assigned in ${brief.collectionName??'the selected library'}.`);continue;}
-    questions.push({key,label:`Which ${role.replace('_',' ')} component should I use?`,role,options:candidates.slice(0,5).map(c=>({id:c.id,label:c.name,detail:`${c.collectionName} · ${c.measurementType}`}))});
-  }
-  return {questions,issues,catalog:filtered};
-}
-
-function proposalArgs(brief:DraftBrief,catalog:LibraryCatalogItem[]){
-  if(!brief.collectionId)throw new ProposalError('Choose a component library first.');
-  const components=brief.measurements.map(m=>{const id=brief.selections[`role:${m.role}`];const item=catalog.find(c=>c.id===id&&c.collectionId===brief.collectionId);if(!item)throw new ProposalError(`Choose a current ${m.role.replace('_',' ')} component.`);return {library_id:id,basis:m.basis,area_index:m.areaIndex,entries:m.entries,
-    // Blanket pitch rule (owner 2026-10-01): PLAN-basis measurements carry
-    // their role's pitch factor explicitly so library-level
-    // default_pitch_type cannot silently drop pitch from a role.
-    pitch_type:m.basis==='plan'?ROLE_PITCH_TYPE[m.role]:'none',
-    source:{role:m.role}};});
-  return {customer_name:brief.customerName,job_name:brief.jobName,site_address:brief.siteAddress,measurement_system:brief.measurementSystem,pitch_degrees:brief.defaultPitchDegrees,trade:brief.trade,collection_id:brief.collectionId,areas:brief.areas.map(a=>({label:a.label,quantity:a.quantity,unit:a.unit,basis:a.basis,pitch_degrees:a.pitchDegrees})),components};
-}
-
-async function evaluate(client:SupabaseClient,access:Access,conversationId:string,runId:string,brief:DraftBrief,stateId?:string,expectedRevision?:number):Promise<WorkflowResult>{
-  const catalog=await readAssistantLibraryCatalog(client,access,brief.collectionId);
-  if(!catalog.length){const all=await readAssistantLibraryCatalog(client,access,null);if(!all.length)return {state:'blocked',answer:'No component library is enabled for Smart Assistant yet. Ask a workspace admin to enable a library and assign component roles first.'};catalog.push(...all);}
-  const decision=chooseCatalog(brief,catalog);
+async function evaluate(client:SupabaseClient,access:Access,conversationId:string,runId:string,source:WorkingBrief,previous?:StoredBrief):Promise<WorkflowResult>{
+  await workflowAccess(client,access);
+  const env=await environment(client,access);
+  validateWorkingBrief(source,env.concepts);
+  const brief=previous&&!previous.produced_quote_id&&Number(previous.catalog_epoch)!==env.epoch?refreshAutomaticSelections(source):source;
+  // A bound draft can NEVER become an unbound creation merely because it was
+  // deleted, sent or edited. This check runs even while collecting choices.
+  const quoteSnapshot=previous?await snapshot(client,access,previous,runId):null;
+  const decision=resolveWorkingBrief(brief,env.catalog,env.concepts);
+  const state:WorkflowState=decision.questions.length?'needs_choices':decision.issues.length?'collecting':'ready_to_review';
+  const stored=await persist(access,conversationId,runId,decision.brief,env.epoch,state,previous);
   if(decision.questions.length||decision.issues.length){
-    const stored=await persist(access,conversationId,brief,stateId,expectedRevision);
-    const card:WorkflowCard={kind:'draft_workflow',title:'Finish this draft',stateId:stored.id,revision:stored.revision,taskId:conversationId,summary:summary(brief),issues:decision.issues,questions:decision.questions};
-    await addCard(runId,access,`draft-workflow-${stored.id}-${stored.revision}`,WORKFLOW_SECTIONS,card as any);
-    return {state:'awaiting_input',answer:decision.questions.length?'Choose the remaining options below.':'The selected library is missing an assistant component assignment.',card};
+    const card:WorkflowCard={kind:'draft_workflow',title:stored.produced_quote_id?'Revise this draft':'Finish this draft',workflowState:state,
+      stateId:stored.id,revision:stored.revision,taskId:conversationId,summary:workingBriefSummary(decision.brief,env.concepts),issues:decision.issues,questions:decision.questions};
+    await addCard(runId,access,`draft-workflow-${stored.id}-${stored.revision}`,WORKFLOW_SECTIONS,card);
+    return {state:'awaiting_input',answer:decision.questions.length?'Choose the remaining options together below. Your job details and separate measurements are retained.':'Your brief is saved. Please provide the missing details listed below.',card};
   }
-  const stored=await persist(access,conversationId,brief,stateId,expectedRevision);
-  // Edit-in-place (owner 2026-10-02): when this brief already produced a
-  // quote and that quote is still an editable manual draft, later confirms
-  // write back to the same quote instead of spawning a new one.
-  let producedQuoteId=stored.produced_quote_id??null;
-  if(producedQuoteId){
-    const {data:bound}=await admin().from('quotes').select('id,status,entry_mode').eq('id',producedQuoteId).eq('company_id',access.companyId).maybeSingle();
-    if(!bound||bound.status!=='draft'||bound.entry_mode!=='manual'){
-      producedQuoteId=null;
-      await admin().from('assistant_v2_draft_briefs').update({produced_quote_id:null}).eq('id',stored.id);
-    }
-  }
-  const action=await proposeDraft(client,access,runId,proposalArgs(brief,decision.catalog),{briefStateId:stored.id,producedQuoteId});
+  const action=await proposeDraft(client,access,runId,workingProposalArgs(decision.brief,decision.catalog),{
+    controllerVersion:1,briefStateId:stored.id,briefRevision:stored.revision,workflowEpoch:env.epoch,producedQuoteId:stored.produced_quote_id,
+    identities:{areas:decision.brief.areas.map(a=>a.id),components:decision.brief.measurements.map(m=>({id:m.id,entries:m.entries.map(e=>e.id)}))},
+    previousPlan:stored.committed_plan,quoteSnapshot,
+  });
+  const attached=await batchClient(createAdminClient()).rpc('sa_v2_workflow_attach',{p_user_id:access.userId,p_run_id:runId,p_state_id:stored.id,p_revision:stored.revision,p_action_id:action.id});
+  if(attached.error)throw rpcError(attached.error);
   await addCard(runId,access,`draft-proposal-${action.id}`,WORKFLOW_SECTIONS,{kind:'proposal',title:action.title,actionId:action.id});
-  // Sticky task: the proposed brief stays queryable as the conversation's
-  // active task so correction turns can revise it instead of asking which
-  // record to update.
-  await admin().from('assistant_v2_draft_briefs').update({status:'proposal',updated_at:new Date().toISOString()}).eq('id',stored.id).eq('company_id',access.companyId).eq('user_id',access.userId);
-  return {state:'proposal',answer:'Ready — review and confirm below.',actionId:action.id};
+  return {state:'proposal',answer:stored.produced_quote_id?'Review the changes to the same draft, then use Confirm. Nothing has been applied yet.':'Review the job and calculated quantities below, then use Confirm to create the draft.',actionId:action.id};
 }
-
-export async function prepareDraftWorkflow(client:SupabaseClient,access:Access,conversationId:string,runId:string,args:Record<string,unknown>){const {data}=await creationContext(client,access);return evaluate(client,access,conversationId,runId,cleanBrief(args,data));}
-
+export async function prepareDraftWorkflow(client:SupabaseClient,access:Access,conversationId:string,runId:string,args:Record<string,unknown>){
+  await workflowAccess(client,access);
+  const [{data},config]=await Promise.all([creationContext(client,access),readWorkflowVocabulary(client,access.companyId)]);
+  return evaluate(client,access,conversationId,runId,createWorkingBrief(args,data,config.concepts));
+}
+export async function reviseDraftWorkflow(client:SupabaseClient,access:Access,conversationId:string,runId:string,args:Record<string,unknown>){
+  await workflowAccess(client,access);
+  const state=await loadState(access,conversationId,String(args.state_id),Number(args.revision));
+  const config=await readWorkflowVocabulary(client,access.companyId);
+  return evaluate(client,access,conversationId,runId,applyWorkingDeltas(state.brief,args.deltas,config.concepts),state);
+}
 export async function applyDraftChoice(client:SupabaseClient,access:Access,conversationId:string,runId:string,choice:DraftChoiceWire):Promise<WorkflowResult>{
-  const state=await loadState(access,conversationId,choice.stateId,choice.revision);const brief=structuredClone(state.brief);
-  if(choice.choice==='cancel'){await admin().from('assistant_v2_draft_briefs').update({status:'cancelled',updated_at:new Date().toISOString()}).eq('id',state.id);return {state:'cancelled',answer:'Draft preparation cancelled. Nothing was created.'};}
-  const catalog=await readAssistantLibraryCatalog(client,access,null);
-  for(const [key,id] of Object.entries(choice.selections)){
-    if(key==='collection'){const name=catalog.find(c=>c.collectionId===id)?.collectionName;if(!name)throw new ProposalError('That library is no longer available to Smart Assistant.');brief.collectionId=id;brief.collectionName=name;brief.selections={};continue;}
-    if(!key.startsWith('role:')||!isUuid(id))continue;
-    const role=key.slice(5);const item=catalog.find(c=>c.id===id&&c.role===role&&(!brief.collectionId||c.collectionId===brief.collectionId));if(!item)throw new ProposalError('That component is no longer available for this draft.');brief.selections[key]=id;
+  await workflowAccess(client,access);
+  const state=await loadState(access,conversationId,choice.stateId,choice.revision);
+  if(choice.choice==='cancel'){
+    const {error}=await batchClient(createAdminClient()).rpc('sa_v2_workflow_cancel',{p_user_id:access.userId,p_conversation_id:conversationId,p_run_id:runId,p_state_id:state.id,p_revision:state.revision,p_close:false});
+    if(error)throw rpcError(error);
+    return {state:'cancelled',answer:state.produced_quote_id?'Draft preparation stopped. The existing draft was not deleted or changed.':'Draft preparation stopped. No draft was created.'};
   }
-  return evaluate(client,access,conversationId,runId,brief,state.id,state.revision);
+  const env=await environment(client,access);
+  if(Number(state.catalog_epoch)!==env.epoch){
+    const result=await evaluate(client,access,conversationId,runId,state.produced_quote_id?state.brief:refreshAutomaticSelections(state.brief),state);
+    return {...result,answer:`Assistant settings changed, so the old choices were not applied. ${result.answer}`};
+  }
+  const decision=resolveWorkingBrief(state.brief,env.catalog,env.concepts),brief=decision.brief;
+  if(!choice.selections||Array.isArray(choice.selections)||!Object.keys(choice.selections).length||Object.keys(choice.selections).length>25)
+    throw new ProposalError('Choose at least one of the current product options. Selecting an option is not confirmation.');
+  for(const [key,id] of Object.entries(choice.selections)){
+    const question=decision.questions.find(q=>q.key===key);
+    if(!question||!isUuid(id)||!question.options.some(o=>o.id===id))throw new ProposalError('Those options are not current for this working brief. Review the current choices again.');
+    if(key==='collection'){brief.collectionId=id;brief.collectionName=question.options.find(o=>o.id===id)!.label;brief.selections={};brief.selectionSources={};}
+    else{brief.selections[key]=id;brief.selectionSources[key]='explicit';}
+  }
+  return evaluate(client,access,conversationId,runId,brief,state);
+}
+export async function closeDraftWorkflow(client:SupabaseClient,access:Access,conversationId:string,runId:string){
+  await workflowAccess(client,access);
+  const {error}=await batchClient(createAdminClient()).rpc('sa_v2_workflow_cancel',{p_user_id:access.userId,p_conversation_id:conversationId,p_run_id:runId,p_state_id:null,p_revision:null,p_close:true});
+  if(error)throw rpcError(error);
+}
+export async function readWorkingMeasurements(client:SupabaseClient,access:Access,conversationId:string,args:Record<string,unknown>){
+  await workflowAccess(client,access);
+  const state=await loadState(access,conversationId,String(args.state_id),Number(args.revision));
+  const m=state.brief.measurements.find(m=>m.id===args.measurement_id),offset=Number(args.offset??0);
+  if(!m||!Number.isInteger(offset)||offset<0||offset>=m.entries.length)throw new ProposalError('Choose a current measured component and entry offset.');
+  return {stateId:state.id,revision:state.revision,measurementId:m.id,entries:m.entries.slice(offset,offset+50),total:m.entries.length,nextOffset:offset+50<m.entries.length?offset+50:null};
+}
+export async function pendingDraftWorkflowContext(client:SupabaseClient,access:Access,conversationId:string,visibleRun?:(id:string|null)=>boolean){
+  if(!access.phases.p4||WORKFLOW_SECTIONS.some(s=>access.permissions[s]!=='edit'))return null;
+  await workflowAccess(client,access);
+  const {data,error}=await admin().from('assistant_v2_draft_briefs').select(FIELDS).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId)
+    .not('workflow_state','in','(cancelled,closed)').order('updated_at',{ascending:false}).limit(1).maybeSingle();
+  if(error)throw rpcError(error);
+  const state=data as StoredBrief|null;
+  if(!state||visibleRun&&!visibleRun(state.last_run_id)&&!visibleRun(state.start_run_id)||access.historyAfter&&Date.parse(state.created_at)<Date.parse(access.historyAfter))return null;
+  assertCurrent(state,access);
+  const env=await environment(client,access),decision=resolveWorkingBrief(state.brief,env.catalog,env.concepts);
+  return {stateId:state.id,revision:state.revision,workflowState:state.workflow_state,boundQuoteId:state.produced_quote_id,actionId:state.action_id,
+    settingsChanged:Number(state.catalog_epoch)!==env.epoch,summary:workingBriefSummary(state.brief,env.concepts),
+    brief:{...state.brief,measurements:state.brief.measurements.map(m=>({...m,entries:m.entries.slice(0,20),entryCount:m.entries.length,moreEntriesAvailable:m.entries.length>20}))},
+    vocabulary:env.concepts,questions:decision.questions,issues:state.conflict_reason?[state.conflict_reason,...decision.issues]:decision.issues};
 }
 
-export async function pendingDraftWorkflowContext(client:SupabaseClient,access:Access,conversationId:string){
-  // Sticky task (owner 2026-10-01): a draft awaiting choices (open) OR one
-  // proposed within the last 30 minutes stays the conversation's active
-  // task, so correction turns continue it instead of starting over.
-  const {data,error}=await admin().from('assistant_v2_draft_briefs').select('id,revision,brief,status,permission_revision,updated_at,produced_quote_id').eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).in('status',['open','proposal']).order('updated_at',{ascending:false}).limit(1).maybeSingle();
-  if(error||!data||data.permission_revision!==access.permissionRevision)return null;
-  if(Date.parse(String(data.updated_at))<Date.now()-30*60*1000)return null;
-  const brief=data.brief as DraftBrief;
-  const catalog=await readAssistantLibraryCatalog(client,access,null).catch(()=>[]);
-  const decision=chooseCatalog(brief,catalog);
-  return {stateId:data.id,revision:data.revision,status:data.status,boundQuoteId:data.produced_quote_id??null,summary:summary(brief),brief:{customerName:brief.customerName,jobName:brief.jobName,siteAddress:brief.siteAddress,measurementSystem:brief.measurementSystem,defaultPitchDegrees:brief.defaultPitchDegrees,trade:brief.trade,collectionId:brief.collectionId,collectionName:brief.collectionName,areas:brief.areas,measurements:brief.measurements,selections:brief.selections},questions:decision.questions.map(q=>({key:q.key,label:q.label,options:q.options.map(o=>({id:o.id,label:o.label}))})),issues:decision.issues};
+export async function readDraftTaskHint(client:SupabaseClient,access:Access,conversationId:string){
+  if(!libraryWorkflowEnabled()||!access.phases.p4||WORKFLOW_SECTIONS.some(s=>access.permissions[s]!=='edit'))return null;
+  await workflowAccess(client,access);
+  const {data,error}=await admin().from('assistant_v2_draft_briefs').select(FIELDS).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId)
+    .not('workflow_state','in','(cancelled,closed)').order('updated_at',{ascending:false}).limit(1).maybeSingle();
+  if(error)throw rpcError(error);
+  const state=data as StoredBrief|null;
+  if(!state||state.brief?.version!==1||state.permission_revision!==access.permissionRevision||access.historyAfter&&Date.parse(state.created_at)<Date.parse(access.historyAfter))return null;
+  return {startRunId:state.start_run_id,lastRunId:state.last_run_id,areaLabels:state.brief.areas.map(a=>a.label),state:state.workflow_state};
 }

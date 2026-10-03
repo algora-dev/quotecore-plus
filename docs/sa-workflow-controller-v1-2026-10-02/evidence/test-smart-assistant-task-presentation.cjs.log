@@ -1,0 +1,220 @@
+TAP version 13
+# Subtest: canonical failed gets one inline failure, not a fake assistant message
+ok 1 - canonical failed gets one inline failure, not a fake assistant message
+  ---
+  duration_ms: 1.163133
+  type: 'test'
+  ...
+# Subtest: canonical timed_out gets one inline failure, not a fake assistant message
+ok 2 - canonical timed_out gets one inline failure, not a fake assistant message
+  ---
+  duration_ms: 0.222376
+  type: 'test'
+  ...
+# Subtest: canonical aborted gets one inline failure, not a fake assistant message
+ok 3 - canonical aborted gets one inline failure, not a fake assistant message
+  ---
+  duration_ms: 0.085769
+  type: 'test'
+  ...
+# Subtest: canonical cancelled gets one inline failure, not a fake assistant message
+ok 4 - canonical cancelled gets one inline failure, not a fake assistant message
+  ---
+  duration_ms: 0.186401
+  type: 'test'
+  ...
+# Subtest: no invented failure for accepted
+ok 5 - no invented failure for accepted
+  ---
+  duration_ms: 0.546794
+  type: 'test'
+  ...
+# Subtest: no invented failure for running
+ok 6 - no invented failure for running
+  ---
+  duration_ms: 0.094463
+  type: 'test'
+  ...
+# Subtest: no invented failure for completed
+ok 7 - no invented failure for completed
+  ---
+  duration_ms: 0.119
+  type: 'test'
+  ...
+# Subtest: existing canonical reply suppresses extra failure object
+ok 8 - existing canonical reply suppresses extra failure object
+  ---
+  duration_ms: 0.111228
+  type: 'test'
+  ...
+# Subtest: no orphan fake message for hidden or absent user row
+ok 9 - no orphan fake message for hidden or absent user row
+  ---
+  duration_ms: 0.262505
+  type: 'test'
+  ...
+# Subtest: opaque failed button cannot be automatically reexecuted: [[sa-task:v1:invalid]]
+ok 10 - opaque failed button cannot be automatically reexecuted: [[sa-task:v1:invalid]]
+  ---
+  duration_ms: 0.393733
+  type: 'test'
+  ...
+# Subtest: opaque failed button cannot be automatically reexecuted: [[sa-resolution:v1:invalid]]
+ok 11 - opaque failed button cannot be automatically reexecuted: [[sa-resolution:v1:invalid]]
+  ---
+  duration_ms: 0.129845
+  type: 'test'
+  ...
+# Subtest: choices becomes inert after task closes or expires
+ok 12 - choices becomes inert after task closes or expires
+  ---
+  duration_ms: 0.217598
+  type: 'test'
+  ...
+# Subtest: resolution becomes inert after task closes or expires
+ok 13 - resolution becomes inert after task closes or expires
+  ---
+  duration_ms: 0.071117
+  type: 'test'
+  ...
+# Subtest: new task cannot reuse old candidate cards but keeps actual navigation
+ok 14 - new task cannot reuse old candidate cards but keeps actual navigation
+  ---
+  duration_ms: 0.09923
+  type: 'test'
+  ...
+# Subtest: flag-off session retains baseline card presentation
+ok 15 - flag-off session retains baseline card presentation
+  ---
+  duration_ms: 0.098269
+  type: 'test'
+  ...
+# Subtest: current candidate is interactive
+ok 16 - current candidate is interactive
+  ---
+  duration_ms: 0.077828
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"version":0}
+ok 17 - untrusted task metadata rejected: {"version":0}
+  ---
+  duration_ms: 0.189886
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"version":"1"}
+ok 18 - untrusted task metadata rejected: {"version":"1"}
+  ---
+  duration_ms: 0.098238
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"label":"bad\\nlabel"}
+ok 19 - untrusted task metadata rejected: {"label":"bad\\nlabel"}
+  ---
+  duration_ms: 0.073651
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"label":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ok 20 - untrusted task metadata rejected: {"label":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  ---
+  duration_ms: 0.04641
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"boundary":"yes"}
+ok 21 - untrusted task metadata rejected: {"boundary":"yes"}
+  ---
+  duration_ms: 0.094743
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"lastRunId":"wrong"}
+ok 22 - untrusted task metadata rejected: {"lastRunId":"wrong"}
+  ---
+  duration_ms: 0.05981
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"expiresAt":"tomorrow"}
+ok 23 - untrusted task metadata rejected: {"expiresAt":"tomorrow"}
+  ---
+  duration_ms: 0.05315
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"closure":"confirm"}
+ok 24 - untrusted task metadata rejected: {"closure":"confirm"}
+  ---
+  duration_ms: 0.050096
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"status":"committed"}
+ok 25 - untrusted task metadata rejected: {"status":"committed"}
+  ---
+  duration_ms: 0.115594
+  type: 'test'
+  ...
+# Subtest: valid task checkpoint survives public parsing
+ok 26 - valid task checkpoint survives public parsing
+  ---
+  duration_ms: 0.13942
+  type: 'test'
+  ...
+# Subtest: provider diagnostic rate_limit
+ok 27 - provider diagnostic rate_limit
+  ---
+  duration_ms: 0.113882
+  type: 'test'
+  ...
+# Subtest: provider diagnostic authentication
+ok 28 - provider diagnostic authentication
+  ---
+  duration_ms: 0.043716
+  type: 'test'
+  ...
+# Subtest: provider diagnostic provider_server
+ok 29 - provider diagnostic provider_server
+  ---
+  duration_ms: 0.129725
+  type: 'test'
+  ...
+# Subtest: provider diagnostic request_rejected
+ok 30 - provider diagnostic request_rejected
+  ---
+  duration_ms: 0.043957
+  type: 'test'
+  ...
+# Subtest: provider diagnostic timeout
+ok 31 - provider diagnostic timeout
+  ---
+  duration_ms: 0.040892
+  type: 'test'
+  ...
+# Subtest: provider diagnostic never leaks arbitrary body/message/key/code
+ok 32 - provider diagnostic never leaks arbitrary body/message/key/code
+  ---
+  duration_ms: 0.199691
+  type: 'test'
+  ...
+# Subtest: confirm-to-continue reply shows the Proceed affordance
+ok 33 - confirm-to-continue reply shows the Proceed affordance
+  ---
+  duration_ms: 0.952386
+  type: 'test'
+  ...
+# Subtest: ordinary answers keep the current strip
+ok 34 - ordinary answers keep the current strip
+  ---
+  duration_ms: 0.325561
+  type: 'test'
+  ...
+# Subtest: resolver input, closed tasks and missing replies never offer Proceed
+ok 35 - resolver input, closed tasks and missing replies never offer Proceed
+  ---
+  duration_ms: 0.107923
+  type: 'test'
+  ...
+1..35
+# tests 35
+# suites 0
+# pass 35
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 37.905906

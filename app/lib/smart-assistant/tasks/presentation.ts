@@ -29,7 +29,7 @@ export function failedTurns(messages: ChatMessage[], runs: RunOutcome[]): Failed
 /** Old navigation stays useful. Only resolution/clarification buttons can revive
  * a task; those become inert when it is closed or superseded. SQL is authoritative. */
 export function staleTaskCard(card: ConversationCard, task: TaskView | null | undefined): boolean {
-    if (task === undefined || !['resolution', 'choices'].includes(card.content.kind))
+    if (task === undefined || !['resolution', 'choices', 'draft_workflow'].includes(card.content.kind))
         return false;
     if (!task || task.status === 'closed' || Date.parse(task.expiresAt) <= Date.now())
         return true;

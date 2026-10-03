@@ -76,6 +76,12 @@ export type AssistantBatchDatabase = Omit<Database, 'public'> & {
                 p_digest: string;
                 p_version: number;
             }>;
+            sa_v2_workflow_save: Rpc<{p_user_id:string;p_conversation_id:string;p_run_id:string;p_state_id:string|null;p_expected_revision:number|null;p_epoch:number;p_brief:Json;p_state:string}>;
+            sa_v2_workflow_attach: Rpc<{p_user_id:string;p_run_id:string;p_state_id:string;p_revision:number;p_action_id:string}>;
+            sa_v2_workflow_cancel: Rpc<{p_user_id:string;p_conversation_id:string;p_run_id:string;p_state_id:string|null;p_revision:number|null;p_close:boolean}>;
+            sa_v2_workflow_quote_snapshot: Rpc<{p_user_id:string;p_quote_id:string}>;
+            sa_v2_workflow_edit_confirm: Rpc<{p_action_id:string;p_user_id:string;p_digest:string;p_version:number}>;
+            sa_v2_workflow_conflict: Rpc<{p_user_id:string;p_conversation_id:string;p_run_id:string;p_state_id:string;p_revision:number;p_baseline:Json}>;
             sa_v2_creation_context: Rpc<Record<string, never>>;
             sa_v2_creation_claim: Rpc<{
                 p_action_id: string;

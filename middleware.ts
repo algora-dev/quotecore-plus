@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createAuthCookieBatch, temporaryAuthFailure } from '@/app/lib/supabase/cookie-batch';
+import { createServerClient } from '@supabase/ssr';
 import {
   AUTH_COOKIE_NAME,
   authCookieOptions,
@@ -165,6 +166,7 @@ function isStaticAsset(pathname: string): boolean {
     pathname.startsWith('/api') ||
     // P9: Next's public metadata response must not be redirected to HTML login.
     pathname === '/manifest.webmanifest' ||
+    pathname === '/assistant-manifest.webmanifest' || pathname === '/qcp-push-sw.js' ||
         pathname === '/favicon.ico' ||
     pathname === '/favicon.png' ||
     pathname === '/logo.png' ||
@@ -331,6 +333,7 @@ export async function middleware(request: NextRequest) {
   const isDemoWorkspace = firstSegment.startsWith('demo-');
 
   // Create Supabase client for middleware
+  const cookieUpdates = createAuthCookieBatch();
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -341,43 +344,25 @@ export async function middleware(request: NextRequest) {
       // refreshed here must stay valid on all quote-core.com subdomains.
       cookieOptions: isDemoWorkspace ? demoAuthCookieOptions(hostname) : authCookieOptions(hostname),
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options });
-          response = NextResponse.next({ request });
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options });
-          response = NextResponse.next({ request });
-          response.cookies.set({ name, value: '', ...options });
+        getAll() { return request.cookies.getAll(); },
+        setAll(changes) {
+          for (const {name,value} of changes) request.cookies.set(name,value);
+          cookieUpdates.record(changes);
+          response=cookieUpdates.apply(NextResponse.next({request}));
         },
       },
     }
   );
 
-  let { data: { user } } = await supabase.auth.getUser();
-
-  // If getUser() returned null but auth cookies exist, the JWT likely
-  // expired while the user was on a page without a client-side Supabase
-  // client (e.g. /onboarding after Google OAuth from free tools). The
-  // server client has autoRefreshToken: false, so it won't auto-refresh.
-  // Try an explicit refreshSession() — if the refresh token is still
-  // valid, this mintes a new access token and updates the cookies on the
-  // response. Only redirect to login if the refresh also fails.
-  if (!user) {
-    const hasAuthCookies = request.cookies
-      .getAll()
-      .some(c => c.name.startsWith(isDemoWorkspace ? DEMO_COOKIE_NAME : AUTH_COOKIE_NAME));
-    if (hasAuthCookies) {
-      const { data: refreshData } = await supabase.auth.refreshSession();
-      user = refreshData.user ?? null;
-    }
+  const {data:{user},error:authError}=await supabase.auth.getUser();
+  // SSR refreshes expired tokens itself. Do not rotate a second time after an
+  // auth-network outage, and do not turn an unverified/offline request into an
+  // authenticated response or a destructive sign-out.
+  if (!user && temporaryAuthFailure(authError)) {
+    return cookieUpdates.apply(new NextResponse('Your session could not be verified. Reconnect and reload this page.',{status:503,headers:{'Cache-Control':'private, no-store','Retry-After':'5','Content-Type':'text/plain; charset=utf-8'}}));
   }
 
-  // No user (and refresh failed) — redirect to login
+  // No verified user (including legitimate expiry/revocation) — redirect to login
   // (demo workspaces bounce to /demo for a fresh sandbox instead)
   if (!user) {
     const url = request.nextUrl.clone();
@@ -386,9 +371,10 @@ export async function middleware(request: NextRequest) {
       url.search = '';
     } else {
       url.pathname = '/login';
-      url.searchParams.set('redirect', pathname);
+      url.search = '';
+      url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''));
     }
-    return expireLegacyAuthCookies(request, NextResponse.redirect(url));
+    return expireLegacyAuthCookies(request, cookieUpdates.apply(NextResponse.redirect(url)));
   }
 
   // Demo workspace cookie-view rewrite (Architecture V2 §5, testing-phase
@@ -407,7 +393,7 @@ export async function middleware(request: NextRequest) {
     for (const c of demoChunks) {
       request.cookies.set(c.name.replace(DEMO_COOKIE_NAME, AUTH_COOKIE_NAME), c.value);
     }
-    response = NextResponse.next({ request });
+    response = cookieUpdates.apply(NextResponse.next({ request }));
   }
 
   // 2FA gate. getAuthenticatorAssuranceLevel() is a local JWT decode, not a
@@ -438,7 +424,7 @@ export async function middleware(request: NextRequest) {
         url.pathname = '/2fa';
         // Preserve where they were trying to go so we can bounce them back.
         url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''));
-        return NextResponse.redirect(url);
+        return cookieUpdates.apply(NextResponse.redirect(url));
       }
     }
   }

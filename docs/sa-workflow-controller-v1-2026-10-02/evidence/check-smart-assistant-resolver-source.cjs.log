@@ -1,0 +1,23 @@
+P1.7.1 SQL verified; registry feaff3719950d5d17cd163326b06d5641f1b03a915fe947aa9b9abfa94b6eaad; NOT APPLIED.
+node:fs:442
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open '/mnt/data/quotecore_v1_build/docs/sa-p171-2026-09-27/validation/LOCKED_FILES.json'
+    at Object.readFileSync (node:fs:442:20)
+    at read (/mnt/data/quotecore_v1_build/scripts/check-smart-assistant-resolver-source.cjs:3:52)
+    at Object.<anonymous> (/mnt/data/quotecore_v1_build/scripts/check-smart-assistant-resolver-source.cjs:27:27)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/mnt/data/quotecore_v1_build/docs/sa-p171-2026-09-27/validation/LOCKED_FILES.json'
+}
+
+Node.js v22.16.0

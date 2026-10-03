@@ -1,0 +1,190 @@
+TAP version 13
+# Subtest: built-in aliases and singular/plural variants retain stable concepts
+ok 1 - built-in aliases and singular/plural variants retain stable concepts
+  ---
+  duration_ms: 1.75096
+  type: 'test'
+  ...
+# Subtest: ambiguous custom aliases and changed built-in behavior are refused
+ok 2 - ambiguous custom aliases and changed built-in behavior are refused
+  ---
+  duration_ms: 0.551041
+  type: 'test'
+  ...
+# Subtest: custom concepts inherit a finite supported behavior, never invented rules
+ok 3 - custom concepts inherit a finite supported behavior, never invented rules
+  ---
+  duration_ms: 0.360884
+  type: 'test'
+  ...
+# Subtest: James Smith brief retains address, pitch, basis and three individual hips
+ok 4 - James Smith brief retains address, pitch, basis and three individual hips
+  ---
+  duration_ms: 1.840815
+  type: 'test'
+  ...
+# Subtest: missing pitch stays missing; a flat roof must be explicit
+ok 5 - missing pitch stays missing; a flat roof must be explicit
+  ---
+  duration_ms: 0.46421
+  type: 'test'
+  ...
+# Subtest: defaults resolve only inside the selected library
+ok 6 - defaults resolve only inside the selected library
+  ---
+  duration_ms: 0.975891
+  type: 'test'
+  ...
+# Subtest: all genuine choices are grouped without losing brief fields
+ok 7 - all genuine choices are grouped without losing brief fields
+  ---
+  duration_ms: 1.13465
+  type: 'test'
+  ...
+# Subtest: an explicitly requested product outranks a default; an unknown request is not replaced
+ok 8 - an explicitly requested product outranks a default; an unknown request is not replaced
+  ---
+  duration_ms: 0.413183
+  type: 'test'
+  ...
+# Subtest: stale explicit product is not silently exchanged for a new default
+ok 9 - stale explicit product is not silently exchanged for a new default
+  ---
+  duration_ms: 0.617221
+  type: 'test'
+  ...
+# Subtest: measurement correction preserves all untouched IDs, area basis and other entries
+ok 10 - measurement correction preserves all untouched IDs, area basis and other entries
+  ---
+  duration_ms: 1.069031
+  type: 'test'
+  ...
+# Subtest: typed reducer is atomic on an invalid later delta and rejects arbitrary fields
+ok 11 - typed reducer is atomic on an invalid later delta and rejects arbitrary fields
+  ---
+  duration_ms: 0.821028
+  type: 'test'
+  ...
+# Subtest: cannot delete a referenced area or mutate a linked covering as an independent measurement
+ok 12 - cannot delete a referenced area or mutate a linked covering as an independent measurement
+  ---
+  duration_ms: 0.347514
+  type: 'test'
+  ...
+# Subtest: duplicate-group addition needs an exact group identity
+ok 13 - duplicate-group addition needs an exact group identity
+  ---
+  duration_ms: 0.897002
+  type: 'test'
+  ...
+# Subtest: canonical QuoteCore engines recalculate only intended changed groups
+ok 14 - canonical QuoteCore engines recalculate only intended changed groups
+  ---
+  duration_ms: 6.9324
+  type: 'test'
+  ...
+# Subtest: measurement corrections retain saved rates and waste despite changed library defaults
+ok 15 - measurement corrections retain saved rates and waste despite changed library defaults
+  ---
+  duration_ms: 1.721354
+  type: 'test'
+  ...
+# Subtest: individual fixed waste is not the same as collapsing three hips into one entry
+ok 16 - individual fixed waste is not the same as collapsing three hips into one entry
+  ---
+  duration_ms: 0.847858
+  type: 'test'
+  ...
+# Subtest: a changed 200th measurement remains visible in the human review
+ok 17 - a changed 200th measurement remains visible in the human review
+  ---
+  duration_ms: 14.988463
+  type: 'test'
+  ...
+# Subtest: safe units, identity uniqueness, oversized and nonfinite measurements fail closed
+ok 18 - safe units, identity uniqueness, oversized and nonfinite measurements fail closed
+  ---
+  duration_ms: 1.24713
+  type: 'test'
+  ...
+# Subtest: active workflow correction stays in the same task: Actually make the roof 110 square and add another 2 metres ridge.
+ok 19 - active workflow correction stays in the same task: Actually make the roof 110 square and add another 2 metres ridge.
+  ---
+  duration_ms: 5.882357
+  type: 'test'
+  ...
+# Subtest: active workflow correction stays in the same task: Garage should be 20 degrees and add another 3m valley.
+ok 20 - active workflow correction stays in the same task: Garage should be 20 degrees and add another 3m valley.
+  ---
+  duration_ms: 2.056691
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: Create a new quote for Alice
+ok 21 - a self-contained request escapes the working brief: Create a new quote for Alice
+  ---
+  duration_ms: 1.141871
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: Show my overdue invoices
+ok 22 - a self-contained request escapes the working brief: Show my overdue invoices
+  ---
+  duration_ms: 0.655428
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: Find James Smith
+ok 23 - a self-contained request escapes the working brief: Find James Smith
+  ---
+  duration_ms: 1.09468
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: What is my quote total?
+ok 24 - a self-contained request escapes the working brief: What is my quote total?
+  ---
+  duration_ms: 0.115965
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: New task: create Bob at 10 Street
+ok 25 - a self-contained request escapes the working brief: New task: create Bob at 10 Street
+  ---
+  duration_ms: 0.065048
+  type: 'test'
+  ...
+# Subtest: grouped text choices carry only the live task brief
+ok 26 - grouped text choices carry only the live task brief
+  ---
+  duration_ms: 0.306011
+  type: 'test'
+  ...
+# Subtest: Done closes a task; yes does not confer mutation authority
+ok 27 - Done closes a task; yes does not confer mutation authority
+  ---
+  duration_ms: 0.161223
+  type: 'test'
+  ...
+# Subtest: refresh batches retain every cookie chunk across response replacement and redirects
+ok 28 - refresh batches retain every cookie chunk across response replacement and redirects
+  ---
+  duration_ms: 0.336246
+  type: 'test'
+  ...
+# Subtest: cookie batch keeps distinct domain/path removals without extending expiry
+ok 29 - cookie batch keeps distinct domain/path removals without extending expiry
+  ---
+  duration_ms: 0.17253
+  type: 'test'
+  ...
+# Subtest: temporary auth failure is distinct from legitimate expiry/refusal
+ok 30 - temporary auth failure is distinct from legitimate expiry/refusal
+  ---
+  duration_ms: 0.188764
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63.555803

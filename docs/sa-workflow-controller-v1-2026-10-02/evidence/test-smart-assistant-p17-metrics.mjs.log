@@ -1,0 +1,162 @@
+TAP version 13
+# Subtest: empty telemetry is unknown, not a zero-ms successful turn
+ok 1 - empty telemetry is unknown, not a zero-ms successful turn
+  ---
+  duration_ms: 1.427111
+  type: 'test'
+  ...
+# Subtest: prefixed JSON and Vercel message envelopes retain P17 fields
+ok 2 - prefixed JSON and Vercel message envelopes retain P17 fields
+  ---
+  duration_ms: 0.161824
+  type: 'test'
+  ...
+# Subtest: model result without canonical finish is not successful
+ok 3 - model result without canonical finish is not successful
+  ---
+  duration_ms: 0.469638
+  type: 'test'
+  ...
+# Subtest: finish uncertain is not successful
+ok 4 - finish uncertain is not successful
+  ---
+  duration_ms: 0.220002
+  type: 'test'
+  ...
+# Subtest: P17 requires both server activation and RPC version
+ok 5 - P17 requires both server activation and RPC version
+  ---
+  duration_ms: 0.801047
+  type: 'test'
+  ...
+# Subtest: actual joined events produce measured percentiles and distinct repair counters
+ok 6 - actual joined events produce measured percentiles and distinct repair counters
+  ---
+  duration_ms: 0.27194
+  type: 'test'
+  ...
+# Subtest: duplicate terminal exports are deduplicated by run, not counted as extra users
+ok 7 - duplicate terminal exports are deduplicated by run, not counted as extra users
+  ---
+  duration_ms: 0.939827
+  type: 'test'
+  ...
+# Subtest: composite without duration is not a zero-duration SQL observation
+ok 8 - composite without duration is not a zero-duration SQL observation
+  ---
+  duration_ms: 0.179751
+  type: 'test'
+  ...
+# Subtest: HTTP benchmark offline plan displays all 50 cases
+not ok 9 - HTTP benchmark offline plan displays all 50 cases
+  ---
+  duration_ms: 35.904866
+  type: 'test'
+  location: '/mnt/data/quotecore_v1_build/scripts/test-smart-assistant-p17-metrics.mjs:15:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/quotecore_v1_build/scripts/test-smart-assistant-p17-metrics.mjs:15:179)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: HTTP benchmark refuses live work without explicit paid-turn opt-in
+not ok 10 - HTTP benchmark refuses live work without explicit paid-turn opt-in
+  ---
+  duration_ms: 32.43787
+  type: 'test'
+  location: '/mnt/data/quotecore_v1_build/scripts/test-smart-assistant-p17-metrics.mjs:16:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/quotecore_v1_build/scripts/test-smart-assistant-p17-metrics.mjs:16:236)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: scale probes default to an offline plan
+not ok 11 - scale probes default to an offline plan
+  ---
+  duration_ms: 28.807863
+  type: 'test'
+  location: '/mnt/data/quotecore_v1_build/scripts/test-smart-assistant-p17-metrics.mjs:17:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/quotecore_v1_build/scripts/test-smart-assistant-p17-metrics.mjs:17:165)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: scale probe refuses live work without isolated-fixture opt-in
+not ok 12 - scale probe refuses live work without isolated-fixture opt-in
+  ---
+  duration_ms: 27.840255
+  type: 'test'
+  location: '/mnt/data/quotecore_v1_build/scripts/test-smart-assistant-p17-metrics.mjs:18:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/quotecore_v1_build/scripts/test-smart-assistant-p17-metrics.mjs:18:229)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 8
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 140.201552
