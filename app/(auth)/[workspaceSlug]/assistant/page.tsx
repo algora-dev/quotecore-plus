@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { ChatClient } from './ChatClient';
 import type { ConversationRow } from './actions';
@@ -13,6 +13,17 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   manifest: '/assistant-manifest.webmanifest',
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'QC Assistant' },
+};
+
+// v14 (2026-10-03): the owner's v13 shot proved Safari paints the zone below the
+// layout viewport itself (page canvas stops at 699) - the black band is Safari's
+// dark-mode under-page. Per the external agent's Step 3 ("route-specific Safari
+// theme colour"), declaring a light page scheme + silver theme-color makes Safari
+// render that zone light instead of black. The assistant surface keeps its own
+// local color-scheme: dark on .root, so the app's look is unchanged.
+export const viewport: Viewport = {
+  colorScheme: 'light',
+  themeColor: '#e9ebef',
 };
 
 /**
