@@ -550,7 +550,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     const read = () => {
       const vv = window.visualViewport;
       const r = root.current?.getBoundingClientRect();
-      setGeo(`v7 ih:${window.innerHeight} vv:${Math.round(vv?.height ?? 0)}@${Math.round(vv?.offsetTop ?? 0)} s:${vv?.scale?.toFixed(2) ?? '?'} p:${Math.round(r?.height ?? 0)} t:${Math.round(r?.top ?? 0)} w:${Math.round(r?.width ?? 0)} scr:${window.screen.width}x${window.screen.height}`);
+      setGeo(`v9 ih:${window.innerHeight} vv:${Math.round(vv?.height ?? 0)}@${Math.round(vv?.offsetTop ?? 0)} s:${vv?.scale?.toFixed(2) ?? '?'} p:${Math.round(r?.height ?? 0)} t:${Math.round(r?.top ?? 0)} w:${Math.round(r?.width ?? 0)} scr:${window.screen.width}x${window.screen.height}`);
     };
     read();
     window.visualViewport?.addEventListener('resize', read);
