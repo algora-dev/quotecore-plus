@@ -26,11 +26,18 @@ const MEASUREMENT_TYPES: { value: TakeoffComponentSpec['measurementType']; label
   { value: 'quantity', label: 'Quantity', hint: 'Screws, brackets, fixings - counted by click' },
 ];
 
-/** Flooring variant: area / lineal / single item only, no roofing hints. */
+/** Flooring variant: floor-area / lineal / single item only, no roofing hints. */
 const FLOORING_MEASUREMENT_TYPES: typeof MEASUREMENT_TYPES = [
   { value: 'area', label: 'Floor Area', hint: 'Plank, carpet, tile, underlay - measured by area' },
   { value: 'lineal', label: 'Lineal', hint: 'Skirting, scotia, transition strips - measured by length' },
   { value: 'quantity', label: 'Single Item', hint: 'Glue buckets, sundries, trims - counted by click' },
+];
+
+/** Cladding variant: wall terminology instead of roofing hints. */
+const CLADDING_MEASUREMENT_TYPES: typeof MEASUREMENT_TYPES = [
+  { value: 'area', label: 'Area', hint: 'Wall areas, wrap, soffits, cladding sheets' },
+  { value: 'lineal', label: 'Lineal', hint: 'Trims, battens, flashings, junctions - measured by length' },
+  { value: 'quantity', label: 'Quantity', hint: 'Openings, brackets, fixings - counted by click' },
 ];
 
 const WASTE_TYPES: { value: TakeoffComponentSpec['wasteType']; label: string }[] = [
@@ -44,6 +51,7 @@ export function ComponentBuilderModal({
   initial,
   measurementSystem = 'metric',
   trade = 'roofing',
+  showPitchRules = true,
   onSave,
   onClose,
 }: {
@@ -52,10 +60,14 @@ export function ComponentBuilderModal({
   measurementSystem?: MeasurementSystemLite;
   /** Trade variant: flooring swaps measurement-type labels/hints and hides pitch. */
   trade?: 'roofing' | 'cladding' | 'flooring';
+  /** Whether the pitch-calculation rules section is offered at all.
+   *  Driven by the trade config (requiresPitch) - flat trades never see it. */
+  showPitchRules?: boolean;
   onSave: (spec: TakeoffComponentSpec, isNew: boolean) => void;
   onClose: () => void;
 }) {
-  const typeOptions = trade === 'flooring' ? FLOORING_MEASUREMENT_TYPES : MEASUREMENT_TYPES;
+  const typeOptions =
+    trade === 'flooring' ? FLOORING_MEASUREMENT_TYPES : trade === 'cladding' ? CLADDING_MEASUREMENT_TYPES : MEASUREMENT_TYPES;
   const metric = measurementSystem === 'metric';
   const lengthUnit = metric ? 'm' : 'ft';
   const areaUnit = metric ? 'm\u00b2' : 'ft\u00b2';
@@ -114,7 +126,7 @@ export function ComponentBuilderModal({
     <div className="qc-free-component-form">
       <QcField label="Component name" htmlFor={`${fieldId}-name`} help="Use a name you will recognise when measuring.">
         <QcInput id={`${fieldId}-name`} ref={nameRef} value={name} aria-required="true"
-          onChange={e => setName(e.target.value)} placeholder={trade === 'flooring' ? 'e.g. Skirting' : 'e.g. Ridge Flashing'} />
+          onChange={e => setName(e.target.value)} placeholder={trade === 'flooring' ? 'e.g. Skirting' : trade === 'cladding' ? 'e.g. Window Trim' : 'e.g. Ridge Flashing'} />
       </QcField>
       <fieldset className="qc-free-choices"><legend>How is it measured?</legend>
         {typeOptions.map(t => <label key={t.value} className="qc-free-choice" data-selected={measurementType === t.value || undefined}>
@@ -170,7 +182,7 @@ export function ComponentBuilderModal({
               onChange={e => setWasteValue(e.target.value)} placeholder={wasteType === 'percent' ? '%' : rateUnit} />
           </QcField>}
         </div>
-        {measurementType !== 'quantity' && trade !== 'flooring' && <div className="qc-free-pitch-settings">
+        {showPitchRules && measurementType !== 'quantity' && <div className="qc-free-pitch-settings">
           <label className="qc-free-check-label"><input type="checkbox" checked={pitchEnabled} onChange={e => setPitchEnabled(e.target.checked)} />
             <span>Apply pitch calculation</span></label>
           {pitchEnabled && <>

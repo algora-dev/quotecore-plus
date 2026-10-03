@@ -42,6 +42,9 @@ export interface TouchComponentsOptions {
   mode: 'ai' | 'manual';
   components: { id: string; name: string; collection_id?: string | null; is_system?: boolean; measurement_type?: string | null }[];
   collections: { id: string; name: string }[];
+  /** P4 trade wording: noun for saved outlines in area/count copy
+   *  ("roof", "wall", "floor"). Default keeps the historical roof copy. */
+  planNoun?: string;
 }
 
 /** Active drawing draft. Line = two confirm-locked endpoints; polygon =
@@ -452,7 +455,8 @@ export function useTouchComponents(
     onStartNewEntry={onStartNewEntry} onConfirmPoint={onConfirmPoint}
     onUndoPolygonPoint={onUndoPolygonPoint} onClosePolygon={onClosePolygon} onCancelDraw={cancelDraw}
     onRetry={onRetry} onCancelScan={onCancelScan}
-    onSaveContinue={onSaveContinue} /> : null;
+    onSaveContinue={onSaveContinue}
+    planNoun={options.planNoun} /> : null;
 
   // F1: the canvas is mounted for the ENTIRE step - the plan (raster +
   // outline + entries) is the source of truth and never goes blank. The

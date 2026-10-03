@@ -14,23 +14,27 @@
  * exactly like the testing app.
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { TOOL_COLLECTIONS } from '@/app/(marketing)/takeoff-demo/demo-data/baseline';
 import {
   ROOFING_TAKEOFF_CONFIG,
   resolveUnitOption,
+  type TakeoffTradeConfig,
   type TakeoffUnitSystem,
   type TakeoffPlaceholderComponent,
   type TakeoffComponentSpec,
 } from './tradeConfig';
-import { TakeoffOutputView, type TakeoffOutputExtras } from './TakeoffOutputView';
+import { TakeoffOutputView, type TakeoffOutputExtras, type TakeoffTrade } from './TakeoffOutputView';
 import { ComponentBuilderModal } from './ComponentBuilderModal';
 import { FreeTakeoffEntry } from './FreeTakeoffEntry';
 import { AI_PLACEHOLDER_COMPONENTS } from './aiPlaceholders';
 import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import type { QuoteRow } from '@/app/lib/types';
+import type { Calibration } from '@/app/lib/takeoff/reconstructTypes';
+import type { AiScanData } from '@/app/lib/takeoff/applyAiResults';
+import type { TakeoffHydrationData } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/actions';
 import * as freeSessionActions from './freeSessionActions';
 import { TakeoffSessionProvider, type TakeoffActionsBundle } from '@/app/lib/takeoff/actionsContext';
 import type { TakeoffFinishPayload } from '@/app/lib/takeoff/finishPayload';
@@ -50,22 +54,28 @@ import { decodeCalibrationMetadata } from '@/app/lib/takeoff/calibrationCodec';
 import { DEFAULT_ROOF_PITCH } from '@/app/lib/takeoff/precision/touchNumberEntry';
 import type { CalibrationCommitPayload } from '@/app/lib/takeoff/precision/touchCalibration';
 
-const CONFIG = ROOFING_TAKEOFF_CONFIG;
 
-const TakeoffWorkstation = dynamic(
-  () =>
-    import('@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffWorkstation').then(
-      (mod) => ({ default: mod.TakeoffWorkstation }),
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-white text-sm">Loading canvas...</div>
-      </div>
-    ),
-  },
-);
+function loadTakeoffWorkstation() {
+  return import('@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffWorkstation').then(
+    (mod) => ({ default: mod.TakeoffWorkstation }),
+  );
+}
+
+const TakeoffWorkstation = dynamic(loadTakeoffWorkstation, {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="text-white text-sm">Loading canvas...</div>
+    </div>
+  ),
+});
+
+/** Kicks off the (large) workstation chunk download. Seeded hosts (the
+ *  marketing demo) call this on mount so the takeoff canvas is warm by the
+ *  time the user clicks in - visitors are measuring in ~5 seconds. */
+export function prewarmTakeoffWorkstation() {
+  void loadTakeoffWorkstation();
+}
 
 type Stage =
   | { phase: 'landing' }
@@ -84,6 +94,7 @@ type Stage =
       run: number;
       planDataUrl: string;
       startedAt: number;
+      finishedAt: number;
       unitSystem: TakeoffUnitSystem;
       components: ToolComponent[];
       specs: TakeoffComponentSpec[];
@@ -112,6 +123,43 @@ interface ToolComponent {
   is_system?: boolean;
 }
 
+// ─── Generic seeded entry (hosts pre-load a plan + captured state) ───────────
+
+/** Component row a seed may preload. Same shape the workstation consumes;
+ *  `is_system: true` rows are AI-scan targets, exactly like saved libraries. */
+export interface FreeTakeoffSeedComponent {
+  id: string;
+  name: string;
+  measurement_type?: string;
+  collection_id?: string | null;
+  is_system?: boolean;
+}
+
+/** Seed = everything a host wants to pre-load so visitors skip the wizard:
+ *  a plan image, a baked calibration, an optional captured AI scan replay
+ *  and optional component/collection overrides. Trade-agnostic - the
+ *  marketing demo, embeds and future forks all use the same mechanism. */
+export interface FreeTakeoffSeed {
+  /** Plan image URL (same-origin or CORS-enabled; PNG/JPG/WebP up to 10 MB). */
+  planUrl: string;
+  /** Defaults to metric. */
+  unitSystem?: TakeoffUnitSystem;
+  /** Replaces the wizard's default component list when provided. */
+  components?: FreeTakeoffSeedComponent[];
+  /** Component collections for the selector (defaults to the shell's). */
+  collections?: { id: string; name: string }[];
+  /** Baked calibration - the exact shape saved sessions hydrate (Calibration[]). */
+  calibration?: Calibration[];
+  /** AI Assist points display override. */
+  aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean };
+  /** Captured AI scan replay: replaces every live endpoint scan and applies
+   *  automatically once the canvas + calibration are ready. */
+  autoScan?: { data: AiScanData; pitch?: number };
+}
+
+/** Stable id for the page the seeded plan is hydrated as. */
+const SEED_PAGE_ID = 'seeded-page-1';
+
 function toComponents(list: TakeoffPlaceholderComponent[]): ToolComponent[] {
   return list.map((c) => ({
     id: c.id,
@@ -134,32 +182,39 @@ const FREE_SESSION_BUNDLE = {
 // ─── Takeoff phase (mirrors the app's TakeoffPage composition) ──────────────
 
 function TakeoffPhase({
+  config,
   planDataUrl,
   unitSystem,
   components,
+  collections = TOOL_COLLECTIONS,
+  seed = null,
   onFinish,
   onExit,
 }: {
+  config: TakeoffTradeConfig;
   planDataUrl: string;
   unitSystem: TakeoffUnitSystem;
   components: ToolComponent[];
+  collections?: { id: string; name: string }[];
+  seed?: FreeTakeoffSeed | null;
   onFinish: (payload: TakeoffFinishPayload) => void;
   onExit: () => void;
 }) {
-  const unitOption = resolveUnitOption(unitSystem, CONFIG);
+  const unitOption = resolveUnitOption(unitSystem, config);
 
+  const planLabel = `${config.planNoun[0].toUpperCase()}${config.planNoun.slice(1)} Plan`;
   const quote = useMemo<QuoteRow>(
     () =>
       ({
         id: 'tool-quote',
         company_id: 'tool-company',
-        customer_name: 'Roof Plan',
+        customer_name: planLabel,
         quote_number: 1,
         measurement_system: unitOption.lengthUnit === 'meters' ? 'metric' : 'imperial_ft',
-        trade: 'roofing',
+        trade: config.tradeName,
         currency: 'NZD',
       }) as unknown as QuoteRow,
-    [unitOption.lengthUnit],
+    [unitOption.lengthUnit, planLabel, config.tradeName],
   );
 
   // Touch-first: the free tool always ships the new engine (no server flag).
@@ -180,8 +235,10 @@ function TakeoffPhase({
     return () => { document.body.style.overflow = previous; };
   }, []);
 
-  const backHref = '/free-roof-takeoff';
-  const [pitch, setPitch] = useState(DEFAULT_ROOF_PITCH);
+  const backHref = `/${config.slug}`;
+  // Pitch is a roofing-only input: non-pitch trades start at 0 (flat), which
+  // also keeps every pitch-factor path neutral (0 = no adjustment applied).
+  const [pitch, setPitch] = useState(config.requiresPitch ? DEFAULT_ROOF_PITCH : 0);
   const [resolvedPage1Id, setResolvedPage1Id] = useState<string | null>(null);
   const [confirmedCalibration, setConfirmedCalibration] = useState<{
     pageId: string;
@@ -198,13 +255,15 @@ function TakeoffPhase({
       id: activePageId,
       imageRevision: acknowledged?.metadata.imageRevision || null,
       calibrationMetadata: acknowledged?.metadata ?? null,
-      scaleCalibration: acknowledged?.legacy ?? null,
+      scaleCalibration: acknowledged?.legacy ?? seed?.calibration ?? null,
     };
-  }, [activePageId, confirmedCalibration]);
+  }, [activePageId, confirmedCalibration, seed]);
 
   const pageHasDependents = (outlineAdapter?.getAreas().length ?? 0) > 0;
 
   const [touchTool, setTouchTool] = useState<'outline' | 'calibrate' | 'components'>(() => {
+    // Seeded plans arrive pre-calibrated - visitors start at the outline.
+    if (seed?.calibration) return 'outline';
     const decoded = decodeCalibrationMetadata(
       calibrationPage?.calibrationMetadata ?? calibrationPage?.scaleCalibration,
     );
@@ -267,7 +326,9 @@ function TakeoffPhase({
     () => outlineAdapter,
     backHref,
     () => setTouchTool('calibrate'),
-    { pitch, onPitchChange: setPitch, onEnterComponents: enterComponents, onFinish: emitFinish },
+    { pitch, onPitchChange: setPitch, onEnterComponents: enterComponents, onFinish: emitFinish,
+      planNoun: config.planNoun, requiresPitch: config.requiresPitch,
+      defaultAreaName: `Main ${config.planNoun[0].toUpperCase()}${config.planNoun.slice(1)}` },
   );
 
   const componentsStep = useTouchComponents(
@@ -276,10 +337,46 @@ function TakeoffPhase({
     {
       mode: componentsMode,
       components,
-      collections: TOOL_COLLECTIONS,
+      collections,
       finishHref: backHref,
       onFinish: emitFinish,
+      planNoun: config.planNoun,
     },
+  );
+
+  // Seeded entry: hydrate the seeded plan as a saved-session page so the
+  // real calibration-restoration path (P0-5) bakes the scale exactly like a
+  // re-entered takeoff - calibrationConfirmed + suppressed entry popups.
+  const seededHydration = useMemo<TakeoffHydrationData | null>(
+    () =>
+      seed
+        ? {
+            sessionId: null,
+            sessionVersion: 1,
+            pages: [
+              {
+                id: SEED_PAGE_ID,
+                pageOrder: 1,
+                pageName: null,
+                imagePath: null,
+                imageUrl: planDataUrl,
+                scaleCalibration: seed.calibration ?? null,
+                calibrationMetadata: null,
+                imageRevision: null,
+                aiScanResult: null,
+              },
+            ],
+            measurements: [],
+          }
+        : null,
+    [seed, planDataUrl],
+  );
+
+  // Captured scan replay: only when the host seeded one. autoRun fires the
+  // replay the moment the canvas + baked calibration are ready.
+  const seededScan = useMemo(
+    () => (seed?.autoScan ? { data: seed.autoScan.data, pitch: seed.autoScan.pitch, autoRun: true } : undefined),
+    [seed],
   );
 
   const workstation = (
@@ -289,10 +386,11 @@ function TakeoffPhase({
       quote={quote}
       planUrl={planDataUrl}
       components={components}
-      collections={TOOL_COLLECTIONS}
-      hydrationData={null}
-      aiTakeoffAvailable={true}
-      aiAssistPoints={null}
+      collections={collections}
+      hydrationData={seededHydration}
+      aiTakeoffAvailable={config.aiScan}
+      aiAssistPoints={config.aiScan ? seed?.aiAssistPoints ?? null : null}
+      seededScan={seededScan}
       aiCalibrationEnabled={false}
       onTouchOutlineAdapter={registerAdapter}
       onPage1Resolved={setResolvedPage1Id}
@@ -358,11 +456,27 @@ function TakeoffPhase({
 
 // ─── Wizard + stage machine ─────────────────────────────────────────────────
 
-export function FreeTakeoffApp() {
+export function FreeTakeoffApp({
+  config = ROOFING_TAKEOFF_CONFIG,
+  seed,
+  onFinish,
+  onExit,
+}: {
+  config?: TakeoffTradeConfig;
+  /** Seeded entry: skips the wizard, fetches the plan to a data URL (the
+   *  same path as handleFile) and jumps straight into the takeoff stage. */
+  seed?: FreeTakeoffSeed;
+  /** Host mode: when provided, the finished payload is emitted to the host
+   *  instead of rendering the shell's own output view. */
+  onFinish?: (payload: TakeoffFinishPayload) => void;
+  /** Host mode: overrides the internal restart-on-exit behaviour. */
+  onExit?: () => void;
+}) {
   const [stage, setStage] = useState<Stage>({ phase: 'landing' });
-  const [device, setDevice] = useState<Device>('desktop');
   const [orientationNoticeOpen, setOrientationNoticeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [seedState, setSeedState] = useState<'idle' | 'loading' | 'error'>(seed ? 'loading' : 'idle');
+  const [seedError, setSeedError] = useState<string | null>(null);
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [unitSystem, setUnitSystem] = useState<TakeoffUnitSystem>('metric');
@@ -371,11 +485,56 @@ export function FreeTakeoffApp() {
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editingSpecId, setEditingSpecId] = useState<string | null>(null);
 
+  // Post-hydration device check: deriving this in render would mismatch the
+  // SSR HTML (server has no window), so it must stay an effect.
   useEffect(() => {
-    const d = detectDevice();
-    setDevice(d);
-    if (d === 'mobile') setOrientationNoticeOpen(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (detectDevice() === 'mobile') setOrientationNoticeOpen(true);
   }, []);
+
+  // Seeded entry: fetch the plan image, convert it to a data URL (the same
+  // path as handleFile) and jump straight to the takeoff stage. Applied once
+  // per mount - hosts keep the seed object referentially stable.
+  const seedAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!seed || seedAppliedRef.current) return;
+    seedAppliedRef.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(seed.planUrl);
+        if (!response.ok) throw new Error(`Could not load the plan image (HTTP ${response.status}).`);
+        const blob = await response.blob();
+        if (blob.size > MAX_IMAGE_BYTES) throw new Error('Plan image too large - maximum 10 MB.');
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(new Error('Could not read the plan image.'));
+          reader.readAsDataURL(blob);
+        });
+        if (cancelled) return;
+        setStage({
+          phase: 'takeoff',
+          run: 1,
+          planDataUrl: dataUrl,
+          startedAt: Date.now(),
+          unitSystem: seed.unitSystem ?? 'metric',
+          components: (seed.components ?? toolComponents) as ToolComponent[],
+          specs: [],
+        });
+        setSeedState('idle');
+      } catch (err) {
+        if (cancelled) return;
+        setSeedError(err instanceof Error ? err.message : 'Could not start the seeded takeoff.');
+        setSeedState('error');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // toolComponents is the no-override default, captured once at apply time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed]);
 
   const openBuilder = () => {
     setEditingSpecId(null);
@@ -390,7 +549,7 @@ export function FreeTakeoffApp() {
     setBuilderOpen(false);
   };
 
-  const unitOption = resolveUnitOption(unitSystem, CONFIG);
+  const unitOption = resolveUnitOption(unitSystem, config);
 
   const specComponents = useMemo<ToolComponent[]>(
     () =>
@@ -407,19 +566,25 @@ export function FreeTakeoffApp() {
   );
 
   const userComponents = useMemo<ToolComponent[]>(
-    () => [...(componentChoice === 'ours' ? toComponents(CONFIG.placeholderComponents) : []), ...specComponents],
-    [componentChoice, specComponents],
+    () => [...(componentChoice === 'ours' ? toComponents(config.placeholderComponents) : []), ...specComponents],
+    [componentChoice, specComponents, config],
   );
 
   // Keep AI-only system rows alongside the real manual targets. The
   // workstation hides these from manual pickers but requires them to apply
-  // AI results and support the existing reassign/review flow.
+  // AI results and support the existing reassign/review flow. Roof-trained
+  // placeholders are appended only for trades whose config offers the scan.
   const toolComponents = useMemo<ToolComponent[]>(
-    () => [...userComponents, ...AI_PLACEHOLDER_COMPONENTS],
-    [userComponents],
+    () => (config.aiScan ? [...userComponents, ...AI_PLACEHOLDER_COMPONENTS] : userComponents),
+    [userComponents, config],
   );
 
-  const activeSpecs = componentChoice === 'own' ? specs : [];
+  // Seeded runs thread the seed (calibration, scan replay, collections)
+  // through every takeoff stage entry.
+  const activeSeed = seed ?? null;
+  const seedCollections = seed?.collections;
+
+  const activeSpecs = useMemo(() => (componentChoice === 'own' ? specs : []), [componentChoice, specs]);
 
   const pdfPicker = usePdfPagePicker();
 
@@ -482,13 +647,47 @@ export function FreeTakeoffApp() {
     if (typeof window !== 'undefined') window.scrollTo(0, 0);
   }, []);
 
+  // Host-mode exits go to the host; the internal default restarts the wizard.
+  const exitToStart = onExit ?? restart;
+
+  // Seeded entry splash: while the plan downloads the wizard is NOT shown
+  // (seeded visitors skip it entirely); a failed load gets a clean retry path.
+  if (seed && seedState === 'loading' && stage.phase === 'landing') {
+    return (
+      <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-[3px] border-slate-200 border-t-[#FF6B35]" />
+          <p className="mt-3 text-sm font-medium text-slate-600">Loading plan…</p>
+        </div>
+      </div>
+    );
+  }
+  if (seed && seedState === 'error' && stage.phase === 'landing') {
+    return (
+      <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-50 px-4">
+        <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-lg">
+          <h2 className="text-base font-semibold text-slate-900">Could not load the plan</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">{seedError}</p>
+          <button
+            onClick={exitToStart}
+            className="mt-6 inline-flex items-center justify-center rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+          >
+            Go back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (stage.phase === 'output') {
     const extras: TakeoffOutputExtras = {
       planDataUrl: stage.planDataUrl,
-      elapsedMs: Date.now() - stage.startedAt,
+      elapsedMs: stage.finishedAt - stage.startedAt,
     };
     return (
       <TakeoffOutputView
+        trade={config.tradeName as TakeoffTrade}
+        reportNote={config.reportNote}
         payload={{ ...stage.payload, unitSystem: stage.unitSystem, componentSpecs: stage.specs }}
         extras={extras}
         unitSystem={stage.unitSystem}
@@ -516,23 +715,33 @@ export function FreeTakeoffApp() {
       <div className="fixed inset-0 z-40 overflow-hidden flex flex-col bg-slate-50">
         <TakeoffPhase
           key={stage.run}
+          config={config}
           planDataUrl={stage.planDataUrl}
           unitSystem={stage.unitSystem}
           components={stage.components}
+          collections={seedCollections}
+          seed={activeSeed}
           onFinish={(payload) => {
+            if (onFinish) {
+              // Host mode: the host owns the finished-takeoff presentation
+              // (the demo maps the payload into its own quote view).
+              onFinish(payload);
+              return;
+            }
             setStage({
               phase: 'output',
               payload,
               run: stage.run,
               planDataUrl: stage.planDataUrl,
               startedAt: stage.startedAt,
+              finishedAt: Date.now(),
               unitSystem: stage.unitSystem,
               components: stage.components,
               specs: stage.specs,
             });
             if (typeof window !== 'undefined') window.scrollTo(0, 0);
           }}
-          onExit={restart}
+          onExit={exitToStart}
         />
       </div>
     );
@@ -540,7 +749,7 @@ export function FreeTakeoffApp() {
 
   // The entry presentation consumes existing state; the measuring owner above
   // is deliberately unchanged (including the stable desktop/touch bridge).
-  return <FreeTakeoffEntry step={step} unitSystem={unitSystem} unitOption={unitOption}
+  return <FreeTakeoffEntry config={config} step={step} unitSystem={unitSystem} unitOption={unitOption}
     componentChoice={componentChoice} specs={specs} componentCount={userComponents.length} error={error}
     orientationNoticeOpen={orientationNoticeOpen} onDismissOrientation={() => setOrientationNoticeOpen(false)}
     onUnitChange={setUnitSystem} onChoiceChange={setComponentChoice}
@@ -552,6 +761,8 @@ export function FreeTakeoffApp() {
     {builderOpen && <ComponentBuilderModal key={editingSpecId ?? 'new'}
       initial={editingSpecId ? specs.find((s) => s.id === editingSpecId) ?? null : null}
       measurementSystem={unitOption.lengthUnit === 'meters' ? 'metric' : 'imperial_ft'}
+      trade={config.tradeName as 'roofing' | 'cladding' | 'flooring'}
+      showPitchRules={config.requiresPitch}
       onSave={handleBuilderSave} onClose={() => setBuilderOpen(false)} />}
   </FreeTakeoffEntry>;
 }

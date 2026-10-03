@@ -10,7 +10,7 @@ import { buildConvertUrl } from '../shared/convertLines';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import { getStoredPitchMode } from '@/app/components/PitchInput';
 import { fromDegrees } from '@/app/lib/pitch-inputs';
-import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/DemoWorkstation';
+import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/demo-data/baseline';
 import type { TakeoffUnitSystem, TakeoffComponentSpec } from './tradeConfig';
 
 /** Trade variant for shared report copy (default roofing). Cladding switches
@@ -34,7 +34,6 @@ export interface TakeoffOutputExtras {
 }
 
 const FT2_PER_M2 = 10.7639104;
-const SQM_PER_SQ = 9.290304; // 1 roofing square = 100 ft2
 
 /** Format a raw (already-in-unit) number. */
 const fmt = (n: number, dp = 2) => n.toLocaleString('en-NZ', { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -74,18 +73,13 @@ function placeholderPitchType(row: { semantic: string | null; name: string }): '
   return 'none';
 }
 
-function isHipOrValley(row: ComponentRow): boolean {
-  if (row.semantic && (HIP_SEMANTICS.includes(row.semantic) || VALLEY_SEMANTICS.includes(row.semantic))) return true;
-  const n = row.name.toLowerCase();
-  return n.startsWith('hip') || n.startsWith('valley');
-}
-
 export function TakeoffOutputView({
   payload,
-  extras,
+  extras: _extras,
   unitSystem = 'metric',
   specs = [],
   trade = 'roofing',
+  reportNote = null,
   onRestart,
   onBackToCanvas,
 }: {
@@ -99,6 +93,9 @@ export function TakeoffOutputView({
   /** Trade copy variant: roofing (default) or cladding (wall terminology,
    *  no pitch language). */
   trade?: TakeoffTrade;
+  /** Trade-config note appended under the report footer paragraph (P4).
+   *  Null (roofing) leaves the roof footer byte-identical. */
+  reportNote?: string | null;
   onRestart: () => void;
   onBackToCanvas: () => void;
 }) {
@@ -107,7 +104,6 @@ export function TakeoffOutputView({
   // Non-roof trades: no pitch language anywhere.
   const isFlat = isCladding || isFlooring;
   const toolSlug = trade === 'cladding' ? 'free-cladding-takeoff' : trade === 'flooring' ? 'free-flooring-takeoff' : 'free-roof-takeoff';
-  const areaNoun = isFlooring ? 'Floor' : 'Wall';
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   // Show pitch in the mode the user entered it (degrees / ratio / gradient).
@@ -136,7 +132,6 @@ export function TakeoffOutputView({
     return system === 'squares' ? ft2 / 100 : ft2;
   };
   const areaUnitLabel = system === 'metric' ? 'm\u00b2' : system === 'squares' ? 'sq' : 'ft\u00b2';
-  const areaUnitSup = system === 'metric' ? 'm\u00b2' : system === 'squares' ? 'squares' : 'ft\u00b2';
 
   const areas: AreaRow[] = useMemo(
     () =>
@@ -192,7 +187,7 @@ export function TakeoffOutputView({
           if (spec && g.measurementType !== 'quantity') {
             // Waste applies PER ENTRY on top of the pitch-adjusted length
             // (pitch was already applied per-entry above, from that entry's area).
-            const adjusted = entries.reduce((sum, e, i) => {
+            const adjusted = entries.reduce((sum, e) => {
               const r = applyPitchAndWaste(
                 e.adjusted ?? e.value,
                 false, // pitch already applied - only waste runs here
@@ -417,7 +412,7 @@ export function TakeoffOutputView({
         <div id="takeoff-report" className="qc-free-report">
           <div className="qc-free-report-heading">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/MainQCP.png" alt="QuoteCore+ Roofing" className="qc-free-report-logo" />
+            <img src="/MainQCP.png" alt={`QuoteCore+ ${isCladding ? 'Cladding' : isFlooring ? 'Flooring' : 'Roofing'}`} className="qc-free-report-logo" />
             <h1 className="qc-free-report-title">{isCladding ? 'WALL & CLADDING TAKEOFF REPORT' : isFlooring ? 'FLOORING TAKEOFF REPORT' : 'ROOF TAKEOFF REPORT'}</h1>
             <p className="mt-1 text-sm text-black">Generated {today} - QuoteCore+ free digital takeoff</p>
             <p className="mt-1 text-xs text-black/60">
@@ -502,12 +497,11 @@ export function TakeoffOutputView({
 
           <div className="qc-free-report-note">
             <p className="text-sm text-black italic">
-              {isFlooring
-                ? 'Measurements taken with the QuoteCore+ digital takeoff system. Floor areas are measured as drawn - no pitch adjustment applies. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
-                : isCladding
-                ? 'Measurements taken with the QuoteCore+ digital takeoff system. Wall areas are measured as drawn - no pitch adjustment applies. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
+              {isFlat
+                ? 'Measurements taken with the QuoteCore+ digital takeoff system. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
                 : 'Measurements taken with the QuoteCore+ digital takeoff system. Roof areas use the rafter pitch factor for each area. Hips and valleys are adjusted using the hip and valley pitch calculated from the pitch of their roof area; barges use the rafter pitch factor. Ridge and spouting require no pitch adjustment. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'}
             </p>
+            {reportNote && <p className="mt-1 text-sm italic text-black/70">{reportNote}</p>}
           </div>
         </div>
 

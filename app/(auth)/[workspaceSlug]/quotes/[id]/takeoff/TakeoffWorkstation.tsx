@@ -222,6 +222,17 @@ interface Props {
   aiTakeoffAvailable?: boolean;
   /** AI Assist points: current usage for UI display. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
+  /** Seeded replay mode (demo/preview hosts): when provided, every AI Assist
+   *  scan replays this captured AiScanData instead of calling the network
+   *  endpoints, and when `autoRun` is set the replay fires once as soon as
+   *  the canvas and a calibration are ready. Absent = live scans, unchanged. */
+  seededScan?: {
+    data: AiScanData;
+    autoRun?: boolean;
+    /** Fixed pitch applied to every detected area (replays default to the
+     *  captured per-area pitch when omitted). */
+    pitch?: number;
+  };
   /** P2/P6 AI-assisted calibration: per-company flag read server-side. */
   aiCalibrationEnabled?: boolean;
   /** M5: registers the touch-outline bridge adapter (single data owner stays
@@ -333,6 +344,7 @@ export function TakeoffWorkstation({
   allRoofAreas = [],
   aiTakeoffAvailable = false,
   aiAssistPoints = null,
+  seededScan,
   aiCalibrationEnabled = false,
   onFreeFinish,
   onExitFree,
@@ -4367,6 +4379,54 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         const dims = live?.canvasDims ?? { width: 2000, height: 1700 };
         const abortController = new AbortController();
         touchComponentScanAbortRef.current = abortController;
+        // Seeded replay (demo/preview hosts): no network - stage the same
+        // progress animation, classify from the captured scan, and feed the
+        // exact same data-only entry mapping the live tail produces below.
+        if (seededScan) {
+          const wait = (ms: number) => new Promise<void>((resolve, reject) => {
+            const id = setTimeout(resolve, ms);
+            abortController.signal.addEventListener('abort', () => {
+              clearTimeout(id);
+              reject(new DOMException('Scan cancelled.', 'AbortError'));
+            }, { once: true });
+          });
+          try {
+            onStage?.('lines');
+            await wait(900);
+            onStage?.('classify');
+            await wait(700);
+            const systemComponentIds = buildSystemComponentIds(components);
+            const applied = applyAiResults({
+              aiData: seededScan.data,
+              calibrations: calibrationsNow,
+              systemComponentIds,
+              canvasWidth: dims.width,
+              canvasHeight: dims.height,
+            });
+            touchComponentEntriesRef.current = applied.measurements.map(m => ({
+              id: m.id,
+              key: m.componentId ?? 'uncertain',
+              componentId: m.componentId ?? null,
+              displayName: AI_COMPONENT_REGISTRY[m.semanticKey].displayName,
+              colour: getSemanticColour(m.semanticKey),
+              value: m.value,
+              kind: 'line' as const,
+              hidden: false,
+              points: m.canvasPoints.map(p => ({ x: p.x, y: p.y })),
+            }));
+            touchBridgeListeners.current.forEach(listener => listener());
+            return { ok: true, data: seededScan.data };
+          } catch (err) {
+            if (err instanceof DOMException && err.name === 'AbortError') {
+              return { ok: false, error: 'cancelled', cancelled: true };
+            }
+            return { ok: false, error: err instanceof Error ? err.message : 'Scan replay failed.' };
+          } finally {
+            if (touchComponentScanAbortRef.current === abortController) {
+              touchComponentScanAbortRef.current = null;
+            }
+          }
+        }
         try {
           const imgResponse = await fetch(imageUrl, { signal: abortController.signal });
           if (!imgResponse.ok) return { ok: false, error: 'Failed to load plan image for AI scan.' };
@@ -6222,8 +6282,88 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     }
   };
 
+  // ── AI Takeoff: seeded replay (demo/preview hosts) ─────────────
+  // Replays a CAPTURED scan instead of calling the network endpoints: the
+  // same staged progress animation the live pipeline shows, then the same
+  // handleApplyAiResults path the results modal uses (auto-applied with the
+  // captured area names, skipping the confirmation modal). Abort works at
+  // every stage exactly like a live scan.
+  const runSeededScan = async () => {
+    if (!seededScan || !quote) return;
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const bgImage = canvas.backgroundImage;
+    if (!bgImage) { setAiScanError('No plan image loaded.'); return; }
+
+    const abortController = new AbortController();
+    aiAbortRef.current = abortController;
+    setAiScanning(true);
+    setAiScanStage('outline');
+    setAiScanError(null);
+    setAiResults(null);
+    setAiScanRaw(null);
+    setAiStagedPageId(null);
+
+    const wait = (ms: number) => new Promise<void>((resolve, reject) => {
+      const id = setTimeout(resolve, ms);
+      abortController.signal.addEventListener('abort', () => {
+        clearTimeout(id);
+        reject(new DOMException('Scan cancelled.', 'AbortError'));
+      }, { once: true });
+    });
+
+    try {
+      await wait(900);
+      setAiScanStage('lines');
+      await wait(900);
+      setAiScanStage('classify');
+      await wait(700);
+
+      const data = seededScan.data;
+      setAiScanRaw(data);
+      // Skip the AiResultsModal confirmation entirely - apply the captured
+      // scan straight to the canvas with its area names and the fixed pitch.
+      const autoOverrides: Record<number, { name: string; pitch: number }> = {};
+      (data.roof_areas ?? []).forEach((area, idx) => {
+        autoOverrides[idx] = {
+          name: area.name || `Roof Area ${idx + 1}`,
+          pitch: seededScan.pitch ?? area.pitch_degrees ?? 0,
+        };
+      });
+      await handleApplyAiResults(autoOverrides, { aiDataOverride: data });
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === 'AbortError')) {
+        setAiScanError('Scan replay failed.');
+      }
+    } finally {
+      setAiScanning(false);
+      setAiScanStage('outline');
+      if (aiAbortRef.current === abortController) aiAbortRef.current = null;
+    }
+  };
+
+  // Seeded hosts with autoRun: fire the replay once, as soon as the canvas
+  // and a calibration are both ready (visitors land on a measured plan).
+  const seededAutoRunRef = useRef(false);
+  useEffect(() => {
+    if (!seededScan?.autoRun || seededAutoRunRef.current) return;
+    if (!canvasReady || calibrations.length === 0) return;
+    seededAutoRunRef.current = true;
+    const timer = setTimeout(() => {
+      void runSeededScan();
+    }, 400);
+    return () => clearTimeout(timer);
+  // runSeededScan closes over current scan state by design (same as the
+  // button handler); the ref guard makes this strictly one-shot.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seededScan, canvasReady, calibrations.length]);
+
   // ── AI Takeoff: scan handler (direct 3-scan pipeline) ──────────
   const handleAiScan = async () => {
+    if (seededScan) {
+      await runSeededScan();
+      return;
+    }
     const canvas = fabricRef.current;
     if (!canvas || !quote) return;
 
@@ -7553,7 +7693,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 disabled={freeToolMode ? (isSaving || freeToolMeasurementCount === 0) : (calibrations.length === 0 || isSaving)}
                 data-copilot="takeoff-save" variant="primary" size="sm" aria-busy={isSaving}
                 className="qc-takeoff-finish-btn"
-                title={(freeToolMode && freeToolMeasurementCount === 0) ? 'Measure at least one roof area or component to finish' : calibrations.length === 0 ? 'Calibrate the plan first' : freeToolMode ? 'Finish and view your measurement report' : 'Save and continue to Measurements & Pricing'}>
+                title={(freeToolMode && freeToolMeasurementCount === 0) ? `Measure at least one ${tradeConfig.areaSingularLabel.toLowerCase()} or component to finish` : calibrations.length === 0 ? 'Calibrate the plan first' : freeToolMode ? 'Finish and view your measurement report' : 'Save and continue to Measurements & Pricing'}>
                 <span className="qc-takeoff-finish-main">{isSaving ? 'Saving…' : freeToolMode ? 'Finish & view report' : 'Finish & save'}<QcIcon name="arrow" /></span>
                 <span className="qc-takeoff-finish-next">{freeToolMode ? 'Next: Measurement report & download' : 'Next: Measurements & Pricing'}</span>
               </QcHostedButton>
@@ -7604,7 +7744,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           } else if (!calibrationConfirmed) {
             guidance = 'Set a known distance before measuring this plan.';
           } else if (roofAreas.length === 0 && activeComponentIds.length === 0) {
-            guidance = 'Calibrated - trace the roof area next: AI Assist or draw it manually.';
+            guidance = aiTakeoffAvailable
+              ? `Calibrated - trace the ${tradeConfig.areaSingularLabel.toLowerCase()} next: AI Assist or draw it manually.`
+              : `Calibrated - trace the ${tradeConfig.areaSingularLabel.toLowerCase()} next: draw it manually.`;
           } else if (activeComponentIds.length === 0) {
             guidance = 'Area measured - now add components: AI scan for components or add them manually.';
           } else {
@@ -7628,7 +7770,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 <QcHostedButton onClick={handleSaveTakeoff}
                   disabled={isSaving || freeToolMeasurementCount === 0}
                   data-copilot="takeoff-save-free" variant="primary" size="sm" className="flex-shrink-0"
-                  title={freeToolMeasurementCount === 0 ? 'Measure at least one roof area or component to finish' : 'Finish and view your measurement report'}>
+                  title={freeToolMeasurementCount === 0 ? `Measure at least one ${tradeConfig.areaSingularLabel.toLowerCase()} or component to finish` : 'Finish and view your measurement report'}>
                   <span className="flex items-center gap-1.5">{isSaving ? 'Saving.' : 'Finish & view report'}<QcIcon name="arrow" /></span>
                 </QcHostedButton>
               )}
@@ -8207,10 +8349,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                             }
                                           }}
                                           defaultValue=""
-                                          aria-label={`Use roof corners for ${comp.name}`}
+                                          aria-label={`Use ${tradeConfig.areaSingularLabel.split(' ')[0].toLowerCase()} corners for ${comp.name}`}
                                           className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
                                         >
-                                          <option value="">Use roof corners...</option>
+                                          <option value="">Use {tradeConfig.areaSingularLabel.split(' ')[0].toLowerCase()} corners...</option>
                                           <option value="all">All corners ({ct.totalCount})</option>
                                           <option value="external">External corners ({ct.externalCount})</option>
                                           <option value="internal">Internal corners ({ct.internalCount})</option>
@@ -8513,7 +8655,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                     }}
                     disabled={calibrationMode || calibrations.length === 0}
                     data-copilot="takeoff-tool-area"
-                    title={calibrations.length === 0 ? 'Calibrate first' : 'Measure roof area'}
+                    title={calibrations.length === 0 ? 'Calibrate first' : `Measure ${tradeConfig.areaSingularLabel.toLowerCase()}`}
                     selected={areaMode}><QcIcon name="polygon" />Area</QcToolButton><QcToolButton
                       onClick={() => {
                         const isActive = lineMode || multiLinealMode;

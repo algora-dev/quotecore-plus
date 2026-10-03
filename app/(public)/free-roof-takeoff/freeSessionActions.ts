@@ -7,7 +7,7 @@
  * resolves against in-memory session state. Nothing survives a page reload —
  * that is the product spec for the free tool (session-only, no database).
  *
- * Modeled on the proven takeoff-demo/demoActions.ts boundary. If the real
+ * Modeled on the proven takeoff demo's original server-action boundary. If the real
  * action signatures change, TS fails here — that's the deliberate
  * fail-obvious seam the demo fork established.
  *
@@ -67,7 +67,6 @@ export type SaveTakeoffMeasurementInput = {
 let nextPageNum = 1;
 let nextAreaNum = 1;
 let sessionVersion = 1;
-let lastSaved: SaveTakeoffMeasurementInput[] = [];
 
 function sessionUuid(prefix: string, n: number): string {
   const hex = (n % 0xffff).toString(16).padStart(4, '0');
@@ -79,18 +78,16 @@ export function __resetFreeSession() {
   nextPageNum = 1;
   nextAreaNum = 1;
   sessionVersion = 1;
-  lastSaved = [];
 }
 
 // ─── Action stubs (same signatures as the real modules) ─────────────────────
 
 export async function saveTakeoffMeasurements(
   _quoteId: string,
-  measurements: SaveTakeoffMeasurementInput[],
+  _measurements: SaveTakeoffMeasurementInput[],
 ): Promise<{ success: boolean; error?: string }> {
-  // Session-only: remember the latest batch so in-session reads stay
-  // consistent. Dropped entirely on unload — by design.
-  lastSaved = measurements;
+  // Session-only: bump the version so in-session reads stay consistent.
+  // Dropped entirely on unload — by design.
   sessionVersion += 1;
   return { success: true };
 }
