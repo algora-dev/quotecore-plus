@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { BuilderComponent, MeasurementType, UnitSystem } from './types';
 import { makeId, lenLabel, areaLabel } from './types';
-import { ComponentEditorModal } from './ComponentEditorModal';
+import { GuidedComponentEditor } from './GuidedComponentEditor';
 import { TestingPriceListModal } from './TestingPriceListModal';
 import {
   guessMapping, parseCsvText, componentsFromRows,
@@ -42,6 +42,7 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [testingOpen, setTestingOpen] = useState(false);
+  const [guidedEntry, setGuidedEntry] = useState(false);
 
   const full = components.length >= MAX_COMPONENTS;
   const len = lenLabel(unitSystem);
@@ -50,11 +51,20 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
   function openBuilder() {
     setError(null);
     setEditingId(null);
+    setGuidedEntry(false);
+    setBuilderOpen(true);
+  }
+  /** "Show me how it works" - same editor, opens with the test panel up. */
+  function openGuided() {
+    setError(null);
+    setEditingId(null);
+    setGuidedEntry(true);
     setBuilderOpen(true);
   }
   function openEditBuilder(id: string) {
     setError(null);
     setEditingId(id);
+    setGuidedEntry(false);
     setBuilderOpen(true);
   }
   function handleBuilderSave(c: BuilderComponent, isNew: boolean) {
@@ -93,6 +103,21 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
       {!full ? (
         components.length === 0 ? (
           <div className="grid gap-3">
+            <button type="button" onClick={openGuided} className={OPTION_CARD}>
+              <span className={OPTION_ICON}>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.65} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                </svg>
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-slate-900">Show me how it works</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
+                  Build your first pricing component step-by-step - tips for every section, plus a live
+                  test panel that shows exactly how the pricing is calculated.
+                </span>
+              </span>
+              {OPTION_ARROW}
+            </button>
             <button type="button" onClick={openBuilder} className={OPTION_CARD}>
               <span className={OPTION_ICON}>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.65} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -177,10 +202,11 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
       </div>
 
       {builderOpen && (
-        <ComponentEditorModal
-          key={editingId ?? 'new'}
+        <GuidedComponentEditor
+          key={editingId ?? (guidedEntry ? 'guided' : 'new')}
           initial={editingId ? components.find(c => c.id === editingId) ?? null : null}
           unitSystem={unitSystem}
+          guided={guidedEntry}
           onSave={handleBuilderSave}
           onClose={() => setBuilderOpen(false)}
         />

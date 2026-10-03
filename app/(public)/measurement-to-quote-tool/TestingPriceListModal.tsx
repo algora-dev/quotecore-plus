@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { BuilderComponent, UnitSystem } from './types';
 import { lenLabel, areaLabel } from './types';
-import { ComponentEditorModal } from './ComponentEditorModal';
+import { GuidedComponentEditor } from './GuidedComponentEditor';
 import { TESTING_PRICE_LIST, toComponent, type TestingPriceItem } from './testingPriceList';
 
 interface TestingPriceListModalProps {
@@ -104,10 +104,11 @@ export function TestingPriceListModal({ unitSystem, hasExisting, onUse, onClose 
       </div>
 
       {editingIndex != null && (
-        <ComponentEditorModal
+        <GuidedComponentEditor
           key={items[editingIndex].id}
           initial={items[editingIndex]}
           unitSystem={unitSystem}
+          guided
           onSave={(c) => handleEditSave(c)}
           onClose={() => setEditingIndex(null)}
         />
