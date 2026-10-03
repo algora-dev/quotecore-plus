@@ -7,7 +7,7 @@ import { QcDialog } from '@/app/components/ui/v2/QcDialog';
 import { QcIcon } from '@/app/components/ui/v2/QcIcon';
 import { QcJourney, QcJourneySteps } from '@/app/components/ui/v2/QcJourney';
 import { QcHostedDialogScope } from '@/app/components/ui/v2/QcHostedDialog';
-import { type TakeoffComponentSpec, type TakeoffTradeConfig, type TakeoffUnitOption, type TakeoffUnitSystem } from './tradeConfig';
+import { type TakeoffComponentChoice, type TakeoffComponentSpec, type TakeoffTradeConfig, type TakeoffUnitOption, type TakeoffUnitSystem } from './tradeConfig';
 import './free-takeoff-ui.css';
 
 /** Presentation only. The existing free-tool owner keeps every stage, upload,
@@ -16,9 +16,9 @@ export function FreeTakeoffEntry({ config, step, unitSystem, unitOption, compone
   orientationNoticeOpen, onDismissOrientation, onUnitChange, onChoiceChange, onBack, onContinue,
   onCreateComponent, onEditComponent, onRemoveComponent, onFile, children, pdfModal }: {
   config: TakeoffTradeConfig; step: 1 | 2 | 3; unitSystem: TakeoffUnitSystem; unitOption: TakeoffUnitOption;
-  componentChoice: 'ours' | 'own'; specs: TakeoffComponentSpec[]; componentCount: number;
+  componentChoice: TakeoffComponentChoice; specs: TakeoffComponentSpec[]; componentCount: number;
   error: string | null; orientationNoticeOpen: boolean; onDismissOrientation: () => void;
-  onUnitChange: (unit: TakeoffUnitSystem) => void; onChoiceChange: (choice: 'ours' | 'own') => void;
+  onUnitChange: (unit: TakeoffUnitSystem) => void; onChoiceChange: (choice: TakeoffComponentChoice) => void;
   onBack: () => void; onContinue: () => void; onCreateComponent: () => void;
   onEditComponent: (id: string) => void; onRemoveComponent: (id: string) => void;
   onFile: (file: File) => void; children?: ReactNode; pdfModal: ReactNode;
@@ -31,7 +31,7 @@ export function FreeTakeoffEntry({ config, step, unitSystem, unitOption, compone
   }, [step]);
   const title = step === 1 ? 'Which units do you use?' : step === 2 ? 'What would you like to measure?' : `Add your ${config.planNoun} plan`;
   const description = step === 1 ? 'Choose the units you want to measure and report in.'
-    : step === 2 ? `Use the standard ${config.tradeName} items, or add your own with rates.`
+    : step === 2 ? `Use the standard ${config.tradeName} items as-is, open them to add pricing, or build your own.`
       : 'Choose an image or a page from a PDF. You’ll set its scale on the canvas next.';
 
   const unitsSummary = (() => {
@@ -79,8 +79,12 @@ export function FreeTakeoffEntry({ config, step, unitSystem, unitOption, compone
               <input type="radio" name="component-choice" checked={componentChoice === 'own'} onChange={() => onChoiceChange('own')} />
               <span><strong>Build my own components</strong><span>Add names, material and labour rates, purchasing, waste and pitch rules. Up to {config.maxCustomComponents} components.</span></span>
             </label>
+            <label className="qc-free-choice" data-selected={componentChoice === 'edit-standard' || undefined}>
+              <input type="radio" name="component-choice" checked={componentChoice === 'edit-standard'} onChange={() => onChoiceChange('edit-standard')} />
+              <span><strong>Standard components, my pricing</strong><span>{config.standardComponentsSummary} Open the set, edit names, rates and rules, then measure with your version.</span></span>
+            </label>
           </fieldset>
-          {componentChoice === 'own' && <div className="qc-free-custom-components">
+          {componentChoice !== 'ours' && <div className="qc-free-custom-components">
             {specs.length > 0 && <ul>{specs.map(spec => <li key={spec.id}>
               <div><strong>{spec.name}</strong><span>{spec.measurementType === 'lineal' ? 'Length' : spec.measurementType === 'area' ? 'Area' : 'Quantity'}
                 {spec.materialRate > 0 || spec.labourRate > 0 ? ` · $${spec.materialRate} material / $${spec.labourRate} labour` : ''}
@@ -98,7 +102,7 @@ export function FreeTakeoffEntry({ config, step, unitSystem, unitOption, compone
         </>}
         {step === 3 && <>
           <div className="qc-free-setup-summary"><span><strong>{unitOption.label}</strong> measurements</span>
-            <span><strong>{componentCount}</strong> {componentChoice === 'own' ? 'custom' : 'standard'} components</span></div>
+            <span><strong>{componentCount}</strong> {componentChoice === 'ours' ? 'standard' : componentChoice === 'own' ? 'custom' : 'standard, edited'} components</span></div>
           <label className="qc-free-upload" onDragOver={event => event.preventDefault()} onDrop={event => {
             event.preventDefault(); const file = event.dataTransfer.files?.[0]; if (file) onFile(file);
           }}>
@@ -111,6 +115,12 @@ export function FreeTakeoffEntry({ config, step, unitSystem, unitOption, compone
               onChange={event => { const file = event.target.files?.[0]; if (file) onFile(file); }} />
           </label>
           {error && <p id="qc-free-upload-error" role="alert" className="qc-free-error">{error}</p>}
+          {config.samplePlan && <div className="qc-free-sample-row">
+            <a className="qc-button" href={config.samplePlan.href} download={config.samplePlan.download}>
+              <QcIcon name="download" />Get a test {config.planNoun} plan
+            </a>
+            <p className="qc-free-sample-help">No {config.planNoun} plan to hand? Save our test plan, then upload it above.</p>
+          </div>}
           <details className="qc-free-help-details"><summary>What makes a good plan?</summary>
             <ul><li>A clear, high-quality image with sharp lines.</li><li>A straight, overhead view, square to the page.</li>
               <li>At least one known dimension, such as a wall length, to set the scale.</li></ul>

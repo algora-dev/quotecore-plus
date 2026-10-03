@@ -54,6 +54,11 @@
 .qc-free-upload:focus-within { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; }
 .qc-free-upload:active { background: var(--qc-color-orange-tint); }
 .qc-free-upload .qc-free-upload-limits { font-size: 12px; line-height: 1.7; }
+/* One-click test plan download (roofing first; trades follow as assets land). */
+.qc-free-sample-row { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 14px; }
+.qc-free-sample-row .qc-button { min-height: 44px; text-decoration: none; }
+.qc-free-sample-row .qc-button svg { width: 16px; height: 16px; }
+.qc-free-sample-help { color: var(--qc-text-secondary); font-size: 12px; text-align: center; }
 .qc-free-error { color: var(--qc-color-danger); background: var(--qc-color-danger-bg); border: 1px solid var(--qc-color-danger); padding: 12px 16px; font-size: 13px; line-height: 1.6; border-radius: var(--qc-radius-control); overflow-wrap: anywhere; }
 .qc-free-help-details { margin-top: 16px; color: var(--qc-text-secondary); font-size: 13px; }
 .qc-free-help-details summary { cursor: pointer; color: var(--qc-text-primary); min-height: 44px; padding-block: 12px; font-weight: 600; border-radius: var(--qc-radius-small); }

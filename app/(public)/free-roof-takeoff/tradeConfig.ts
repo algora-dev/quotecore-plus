@@ -55,7 +55,13 @@ export interface TakeoffTradeConfig {
    *  roofing: the roof note paragraph in TakeoffOutputView already carries
    *  the hip/valley true-length detail, so the roof footer stays unchanged. */
   reportNote: string | null;
+  /** One-click test-plan download offered under the step-3 upload target.
+   *  Trades gain it as their plan assets land (roofing first). */
+  samplePlan?: { href: string; download: string };
 }
+
+/** Step-2 component source: standard set as-is / standard set made editable / fully custom. */
+export type TakeoffComponentChoice = 'ours' | 'edit-standard' | 'own';
 
 /** Metric: lengths in m, areas in m2. */
 const METRIC: TakeoffUnitOption = {
@@ -93,6 +99,7 @@ export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   ],
   maxCustomComponents: 7,
   reportNote: null,
+  samplePlan: { href: '/takeoff-demo/roofplan-baseline.png', download: 'QuoteCore-test-roof-plan.png' },
 };
 
 export const CLADDING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
