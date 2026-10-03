@@ -115,3 +115,12 @@ Authority is fragmented: six root `START_HERE_*` entry points from different era
 5. `SMART_ASSISTANT_P1_P4_FILE_MANIFEST.json` deletion after script-reference verification â€” approved?
 
 *Non-repo phase 2 (separate effort): agent workspace context slimming (MEMORY.md is 114KB and injected every session) and side-project/zip retirement.*
+
+## Owner Decisions (2026-10-03 11:57, voice)
+1. UX fixtures: **keep current standard (v2.14) only** in repo; history moves to the design workspace archive. APPROVED.
+2. Screenshots + docs/archive out of the working tree: APPROVED (with per-item reference checks at execution).
+3. Real root AGENTS.md drafted by Gavin: APPROVED.
+4. Branch pruning (12 dead branches): APPROVED — everything remains recoverable: all pruned branches are fully merged into or superseded by ux/phase-4, so git history retains every commit; only pointers are deleted. Owner will have smoke-tested offcuts before execution.
+5. SMART_ASSISTANT_P1_P4_FILE_MANIFEST.json deletion after final script-reference check: APPROVED.
+
+Execution: tomorrow (2026-10-04), after the main push, starting with a delta re-audit of anything landed overnight.
