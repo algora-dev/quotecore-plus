@@ -98,10 +98,10 @@ export function ToolEntryChoice() {
             </svg>
           </span>
           <span>
-            <span className={titleClass}>I need to measure a plan</span>
+            <span className={titleClass}>I need to measure the roof from a drawing</span>
             <span className={descClass}>
-              Upload a roof plan, drawing or aerial image, set the scale, and measure areas, ridges, hips,
-              valleys and eaves in your browser.
+              Upload a roof drawing, plan image or aerial photo, set the scale, and measure areas, ridges,
+              hips, valleys and eaves in your browser.
             </span>
           </span>
           {arrow}

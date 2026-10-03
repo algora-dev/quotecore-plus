@@ -4,12 +4,23 @@ import { useEffect, useRef, useState } from 'react';
 import type { BuilderComponent, MeasurementType, UnitSystem } from './types';
 import { makeId, lenLabel, areaLabel } from './types';
 import { ComponentEditorModal } from './ComponentEditorModal';
+import { TestingPriceListModal } from './TestingPriceListModal';
 import {
   guessMapping, parseCsvText, componentsFromRows,
   type ColumnMapping, type ParsedCsv,
 } from './csv-import';
 
 const MAX_COMPONENTS = 7;
+
+/** Shared option-card styling for the step-2 entry options (matches the
+ * tool landing cards; the external UX agent restyles to the v2 standard). */
+const OPTION_CARD = 'group flex w-full items-start gap-4 rounded-xl border-2 border-slate-200 bg-white p-4 text-left transition-colors hover:border-orange-400 hover:bg-orange-50/40';
+const OPTION_ICON = 'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white';
+const OPTION_ARROW = (
+  <svg className="ml-auto mt-3 h-5 w-5 shrink-0 text-slate-300 transition-colors group-hover:text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16m-6-6 6 6-6 6" />
+  </svg>
+);
 
 interface ComponentStepProps {
   components: BuilderComponent[];
@@ -30,6 +41,7 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [testingOpen, setTestingOpen] = useState(false);
 
   const full = components.length >= MAX_COMPONENTS;
   const len = lenLabel(unitSystem);
@@ -79,20 +91,65 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
       )}
 
       {!full ? (
-        <div className="space-y-2">
-          <button
-            onClick={openBuilder}
-            className="w-full px-3 py-2.5 rounded-xl border border-dashed border-gray-300 hover:border-[#FF6B35] hover:bg-orange-50/40 text-sm text-gray-600 hover:text-gray-800 transition-all"
-          >
-            + Create component {components.length > 0 ? `(${components.length}/${MAX_COMPONENTS})` : ''}
-          </button>
-          <CsvImport
-            components={components}
-            setComponents={setComponents}
-            maxComponents={MAX_COMPONENTS}
-            onError={setError}
-          />
-        </div>
+        components.length === 0 ? (
+          <div className="grid gap-3">
+            <button type="button" onClick={openBuilder} className={OPTION_CARD}>
+              <span className={OPTION_ICON}>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.65} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-slate-900">Create a pricing component</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
+                  Price one thing at a time: material + labour rates, waste and pitch rules for a single
+                  item (e.g. longrun roofing per m²).
+                </span>
+              </span>
+              {OPTION_ARROW}
+            </button>
+            <button type="button" onClick={() => { setError(null); setTestingOpen(true); }} className={OPTION_CARD}>
+              <span className={OPTION_ICON}>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.65} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                </svg>
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-slate-900">Use the QuoteCore+ testing price list</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
+                  Six ready-made roofing pricing components with testing rates. See exactly how each is
+                  built, change anything, then start from there.
+                </span>
+              </span>
+              {OPTION_ARROW}
+            </button>
+            <CsvImport
+              cardMode
+              components={components}
+              setComponents={setComponents}
+              maxComponents={MAX_COMPONENTS}
+              onError={setError}
+            />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <button
+              onClick={openBuilder}
+              className="w-full px-3 py-2.5 rounded-xl border border-dashed border-gray-300 hover:border-[#FF6B35] hover:bg-orange-50/40 text-sm text-gray-600 hover:text-gray-800 transition-all"
+            >
+              + Create pricing component ({components.length}/{MAX_COMPONENTS})
+            </button>
+            <button type="button" onClick={() => { setError(null); setTestingOpen(true); }} className="w-full px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800">
+              Use the QuoteCore+ testing price list instead
+            </button>
+            <CsvImport
+              components={components}
+              setComponents={setComponents}
+              maxComponents={MAX_COMPONENTS}
+              onError={setError}
+            />
+          </div>
+        )
       ) : (
         <p className="text-xs text-slate-400 text-center">
           {MAX_COMPONENTS} components max - a free account saves unlimited components permanently.
@@ -128,6 +185,15 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
           onClose={() => setBuilderOpen(false)}
         />
       )}
+
+      {testingOpen && (
+        <TestingPriceListModal
+          unitSystem={unitSystem}
+          hasExisting={components.length > 0}
+          onUse={(list) => { setComponents(list); setTestingOpen(false); }}
+          onClose={() => setTestingOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -137,11 +203,12 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
 
 type CsvStep = 'upload' | 'map-columns' | 'select-rows';
 
-function CsvImport({ components, setComponents, maxComponents, onError }: {
+function CsvImport({ components, setComponents, maxComponents, onError, cardMode }: {
   components: BuilderComponent[];
   setComponents: (c: BuilderComponent[]) => void;
   maxComponents: number;
   onError: (msg: string | null) => void;
+  cardMode?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
@@ -200,6 +267,24 @@ function CsvImport({ components, setComponents, maxComponents, onError }: {
   }
 
   if (!open && step === 'upload') {
+    if (cardMode) {
+      return (
+        <button type="button" onClick={() => setOpen(true)} className={OPTION_CARD}>
+          <span className={OPTION_ICON}>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.65} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 7.5m0 0L7.5 12m4.5-4.5v12.75" />
+            </svg>
+          </span>
+          <span>
+            <span className="block text-sm font-semibold text-slate-900">Import from a CSV price list</span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
+              Bring your own price list: map columns, pick rows, then edit anything before you continue.
+            </span>
+          </span>
+          {OPTION_ARROW}
+        </button>
+      );
+    }
     return (
       <button
         onClick={() => setOpen(true)}
