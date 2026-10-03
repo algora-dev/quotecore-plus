@@ -16,11 +16,12 @@ export function ChatClient(props:Props){
  const [vpDebug, setVpDebug] = useState(!!props.viewportDebug);
  useEffect(() => { const el = hostRef.current; if (!el) return; const ro = new ResizeObserver(() => setHostH(Math.round(el.getBoundingClientRect().height))); ro.observe(el); return () => ro.disconnect(); }, []);
  useEffect(() => { try {
+   const onTestingHost = window.location.hostname.includes('quotecore-plus-testing');
    const urlHas = new URLSearchParams(window.location.search).has('saViewportDebug');
    const stored = sessionStorage.getItem('saViewportDebug') === '1';
    if (urlHas) sessionStorage.setItem('saViewportDebug', '1');
-   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-shot post-mount URL/session flag read (debug-only; SSR prop is primary)
-   if (urlHas || stored) setVpDebug(true);
+   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-shot post-mount hostname/URL/session flag read (debug-only; SSR prop is primary)
+   if (onTestingHost || urlHas || stored) setVpDebug(true);
  } catch { /* debug stays off */ } }, []);
  if(!state.ready)return <p role="status">Opening assistant...</p>;
  if(state.error)return <p role="alert">{state.error}</p>;
