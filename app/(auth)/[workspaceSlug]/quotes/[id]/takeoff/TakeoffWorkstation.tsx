@@ -425,6 +425,11 @@ export function TakeoffWorkstation({
   // mouse correction before scans 2+3 run on the corrected points
   // (desktop parity with the touch flow).
   const [aiStagedPageId, setAiStagedPageId] = useState<string | null>(null);
+  // 2026-10-03: the outline editor is open for THIS area id (null = closed).
+  // Single source of truth for the review/edit card and vertex-marker arming:
+  // the staged AI flow opens it automatically, the area-card pencil re-opens
+  // it any time later. While null, NO vertex markers stay on the canvas.
+  const [outlineEditingAreaId, setOutlineEditingAreaId] = useState<string | null>(null);
   // Owner 2026-09-25: guided desktop outline review - point tools alongside
   // drag. 'add' inserts a vertex on the nearest outline edge (click),
   // 'remove' deletes a clicked vertex (minimum 3 kept). Armed only while the
@@ -439,8 +444,8 @@ export function TakeoffWorkstation({
   const outlineHighlightRef = useRef<Array<Line>>([]);
   useEffect(() => { outlineToolRef.current = outlineTool; }, [outlineTool]);
   useEffect(() => { outlineSelectedRef.current = outlineSelectedVertex; }, [outlineSelectedVertex]);
-  useEffect(() => { outlineReviewActiveRef.current = aiStagedPageId != null && !aiResults; }, [aiStagedPageId, aiResults]);
-  useEffect(() => { if (aiStagedPageId == null) { setOutlineTool(null); setOutlineSelectedVertex(null); setOutlineHistory(null); } }, [aiStagedPageId]);
+  useEffect(() => { outlineReviewActiveRef.current = (aiStagedPageId != null || outlineEditingAreaId != null) && !aiResults; }, [aiStagedPageId, outlineEditingAreaId, aiResults]);
+  useEffect(() => { if (aiStagedPageId == null && outlineEditingAreaId == null) { setOutlineTool(null); setOutlineSelectedVertex(null); setOutlineHistory(null); } }, [aiStagedPageId, outlineEditingAreaId]);
   const aiAbortRef = useRef<AbortController | null>(null);
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
   // Free tool: High quality is main-app only (cost control + gentle upsell).
@@ -5505,7 +5510,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // points array (used by add/remove point; drag keeps the object:modified
   // path above). Mirrors the same tagging contract: measurementId = area id,
   // vertexIndex = sequential position.
-  const applyStagedAreaPoints = useCallback((areaId: string, pts: Array<{ x: number; y: number }>) => {
+  const applyStagedAreaPoints = useCallback((areaId: string, pts: Array<{ x: number; y: number }>, opts?: { markDirty?: boolean }) => {
     const canvas = fabricRef.current;
     if (!canvas || pts.length < 3) return;
     canvas.getObjects()
@@ -5542,7 +5547,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       ? { ...ra, points: pts, polygon, markers, area: calculatePolygonArea(pts) }
       : ra));
     setAreaList(prev => prev.map(a => a.id === areaId ? { ...a, area: calculatePolygonArea(pts) } : a));
-    setIsDirty(true);
+    // markDirty:false = canvas-only re-arm (merely opening the editor) - the
+    // user has not changed anything yet, so no unsaved-work flag.
+    if (opts?.markDirty !== false) setIsDirty(true);
   }, []);
 
   // ── Owner 2026-09-25: outline vertex selection (mobile parity) ──────────
@@ -5597,13 +5604,73 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     canvas.requestRenderAll();
   }, [outlineSelectedVertex, roofAreas]);
 
-  // Auto-select the first staged vertex once the outline is on the canvas so
-  // the stepper always has a live selection to walk.
+  // Auto-select the first vertex once the editor opens so the stepper
+  // always has a live selection to walk.
   useEffect(() => {
-    if (aiStagedPageId == null || outlineSelectedVertex) return;
+    if (outlineEditingAreaId == null || outlineSelectedVertex) return;
+    const ra = roofAreas.find(r => (r.quoteRoofAreaId ?? r.id) === outlineEditingAreaId && r.points.length >= 3);
+    if (ra) setOutlineSelectedVertex({ areaId: outlineEditingAreaId, vertexIndex: 0 });
+  }, [outlineEditingAreaId, roofAreas, outlineSelectedVertex]);
+
+  // 2026-10-03: the staged AI review opens the outline editor automatically
+  // for the staged area (the area-card pencil opens it manually any time).
+  useEffect(() => {
+    if (aiStagedPageId == null || outlineEditingAreaId != null) return;
+    if (aiStagedPageId !== (pages[currentPageIndex]?.id ?? null)) return;
     const ra = roofAreas.find(r => r.fromPageId === aiStagedPageId && r.quoteRoofAreaId && r.points.length >= 3);
-    if (ra) setOutlineSelectedVertex({ areaId: ra.quoteRoofAreaId ?? ra.id, vertexIndex: 0 });
-  }, [aiStagedPageId, roofAreas, outlineSelectedVertex]);
+    if (ra) setOutlineEditingAreaId(ra.quoteRoofAreaId ?? ra.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiStagedPageId, roofAreas, outlineEditingAreaId, currentPageIndex, pages]);
+
+  // 2026-10-03 (fixes AI outlines fighting component measuring): vertex
+  // markers live ONLY while the editor is open. Closing it strips every
+  // marker from the canvas (the polygon stays, passive like manual areas);
+  // opening it re-arms the editing area's markers and removes any other
+  // area's markers.
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    if (outlineEditingAreaId == null) {
+      let removed = false;
+      canvas.getObjects().forEach(o => {
+        if ((o as { vertexIndex?: number }).vertexIndex != null) { canvas.remove(o); removed = true; }
+      });
+      if (removed) {
+        canvas.requestRenderAll();
+        setRoofAreas(prev => prev.map(ra => ra.markers?.length ? { ...ra, markers: [] } : ra));
+      }
+      return;
+    }
+    const ra = roofAreas.find(r => (r.quoteRoofAreaId ?? r.id) === outlineEditingAreaId);
+    if (!ra || ra.points.length < 3) { setOutlineEditingAreaId(null); return; }
+    const editingId = ra.quoteRoofAreaId ?? ra.id;
+    // Rebuild the editing area's polygon + armed markers from state (manual
+    // areas never had markers; AI areas get fresh ones). markDirty:false.
+    applyStagedAreaPoints(editingId, ra.points, { markDirty: false });
+    canvas.getObjects().forEach(o => {
+      const t = o as { measurementId?: string; vertexIndex?: number };
+      if (t.vertexIndex == null) return;
+      if (t.measurementId !== editingId) canvas.remove(o);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outlineEditingAreaId]);
+
+  // Safety net: arming ANY measurement mode closes the outline editor and
+  // the staged review so vertex markers can never steal clicks meant for
+  // component placement.
+  const measureModeActive = !!(calibrationMode || areaMode || lineMode || pointMode || multiLinealMode);
+  useEffect(() => {
+    if (!measureModeActive) return;
+    setOutlineEditingAreaId(null);
+    setAiStagedPageId(null);
+    setOutlineTool(null);
+    setOutlineSelectedVertex(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [measureModeActive]);
+
+  // Switching plan pages closes the editor (markers belong to that page's
+  // canvas; going back re-opens via the staged mirror or the pencil).
+  useEffect(() => { setOutlineEditingAreaId(null); }, [currentPageIndex]);
 
   const stepOutlineSelection = useCallback((dir: 1 | -1) => {
     setOutlineSelectedVertex(sel => {
@@ -5644,14 +5711,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // while the outline review is open (it would restore a pre-AI snapshot
   // and wipe the outline while the area row stays live).
   useEffect(() => {
-    if (aiStagedPageId == null) return;
-    const ra = roofAreas.find(r => r.fromPageId === aiStagedPageId && r.quoteRoofAreaId && r.points.length >= 3);
-    if (!ra) return;
-    const areaId = ra.quoteRoofAreaId ?? ra.id;
-    setOutlineHistory(h => (h && h.areaId === areaId)
+    if (outlineEditingAreaId == null) return;
+    const ra = roofAreas.find(r => (r.quoteRoofAreaId ?? r.id) === outlineEditingAreaId);
+    if (!ra || ra.points.length < 3) return;
+    setOutlineHistory(h => (h && h.areaId === outlineEditingAreaId)
       ? h
-      : { areaId, stack: [ra.points.map(p => ({ x: p.x, y: p.y }))], index: 0 });
-  }, [aiStagedPageId, roofAreas]);
+      : { areaId: outlineEditingAreaId, stack: [ra.points.map(p => ({ x: p.x, y: p.y }))], index: 0 });
+  }, [outlineEditingAreaId, roofAreas]);
 
   const handleOutlineUndo = useCallback(() => {
     if (!outlineHistory || outlineHistory.index <= 0) return;
@@ -5685,9 +5751,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (!tool) {
         // Owner 2026-09-25, mobile parity: clicking a blue vertex selects it.
         // The selection drives the enlarged orange vertex, the adjacent-edge
-        // highlight and the prev/next stepper in the review card.
+        // highlight and the prev/next stepper in the review card. Only while
+        // the editor is open (2026-10-03) - locked markers never re-select.
         const t = opt.target as { measurementId?: string; vertexIndex?: number } | undefined;
-        if (t && t.vertexIndex != null && t.measurementId) {
+        if (t && t.vertexIndex != null && t.measurementId && outlineReviewActiveRef.current) {
           setOutlineSelectedVertex({ areaId: t.measurementId, vertexIndex: t.vertexIndex });
         }
         return;
@@ -6510,6 +6577,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // Apply ONLY the components: the outline areas are already applied.
       await handleApplyAiResults({}, { areasAlreadyApplied: true, aiDataOverride: outcome.data });
       setAiStagedPageId(null);
+      setOutlineEditingAreaId(null);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       setAiScanError(err instanceof Error ? err.message : 'Network error.');
@@ -6540,6 +6608,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // quote builder (Measurements & Pricing).
   const handleOutlineFinishAndSave = async () => {
     setAiStagedPageId(null);
+    setOutlineEditingAreaId(null);
     setOutlineTool(null);
     setOutlineSelectedVertex(null);
     await handleSaveTakeoff();
@@ -7821,6 +7890,22 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                         </button>
                         <div className="qc-takeoff-row-actions">
                           {matchingAreas.length > 0 && <>
+                            {/* 2026-10-03: outline editor entry point. Pencil
+                                re-arms this area's vertex markers and opens the
+                                edit card; Done locks them again. Only for
+                                geometry that lives on the current page. */}
+                            {matchingAreas.some(ra => (ra.fromPageId ?? pages[currentPageIndex]?.id) === (pages[currentPageIndex]?.id ?? '')) && (
+                              <button type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setLineMode(false); setPointMode(false); setAreaMode(false); setMultiLinealMode(false);
+                                  setOutlineEditingAreaId(area.id);
+                                  setOutlineTool(null);
+                                }}
+                                className="qc-takeoff-icon-action" aria-label={`Edit ${area.label} outline`} aria-pressed={outlineEditingAreaId === area.id} title="Edit outline points">
+                                <QcIcon name="edit" />
+                              </button>
+                            )}
                             <button type="button"
                               onClick={(e) => { e.stopPropagation(); handleToggleAreaVisibility(area.id); }}
                               className="qc-takeoff-icon-action" aria-label={`${matchingAreas[0].visible ? 'Hide' : 'Show'} ${area.label}`}
@@ -9575,20 +9660,25 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
           guided, draggable, NON-modal card (canvas stays interactive so points
           can be dragged/added/removed while it is open); touch keeps the
           original bottom banner - the mobile flow is locked. */}
-      {aiStagedPageId === (pages[currentPageIndex]?.id ?? null) && !aiScanning && !aiResults && (
+      {outlineEditingAreaId != null && !aiScanning && !aiResults && (
         desktopAppearance ? (() => {
-          const stagedAreas = roofAreas.filter(ra => ra.fromPageId === (pages[currentPageIndex]?.id ?? null) && ra.quoteRoofAreaId);
+          // Staged AI review and manual re-edit (pencil) share this card.
+          const stagedFlow = aiStagedPageId != null;
+          const editorAreas = roofAreas.filter(ra => (ra.quoteRoofAreaId ?? ra.id) === outlineEditingAreaId);
+          if (editorAreas.length === 0) return null;
           const selArea = outlineSelectedVertex
-            ? stagedAreas.find(ra => ra.id === outlineSelectedVertex.areaId || ra.quoteRoofAreaId === outlineSelectedVertex.areaId)
-            : undefined;
+            ? editorAreas.find(ra => ra.id === outlineSelectedVertex.areaId || ra.quoteRoofAreaId === outlineSelectedVertex.areaId)
+            : editorAreas[0];
           const selN = selArea?.points.length ?? 0;
           const selIdx = outlineSelectedVertex ? Math.min(outlineSelectedVertex.vertexIndex, Math.max(selN - 1, 0)) : 0;
           return (
             <QcHostedDialog label="Check the AI outline" modeless>
               <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xl">
-                <h2 className="text-base font-semibold mb-1 text-slate-900">Check the AI outline</h2>
+                <h2 className="text-base font-semibold mb-1 text-slate-900">{stagedFlow ? 'Check the AI outline' : 'Edit outline'}</h2>
                 <p className="text-xs text-slate-500 mb-3">
-                  Drag the blue points to fix the shape - your next step runs on the corrected outline.
+                  {stagedFlow
+                    ? 'Drag the blue points to fix the shape - your next step runs on the corrected outline.'
+                    : 'Drag the blue points to adjust the shape. Done locks the outline so it will not interfere with measuring.'}
                 </p>
                 {/* Vertex stepper (mobile parity): the selected point renders
                     enlarged in orange on the canvas with its two edges lit. */}
@@ -9651,8 +9741,9 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 {/* Owner 2026-09-25 (12:46): component-scan quality. Defaults
                     to the level used for the area scan; the user can bump it
                     up or down before running (scans 2+3 are free
-                    continuations - only scan1 charges points). */}
-                <div className="mb-2">
+                    continuations - only scan1 charges points). Staged flow
+                    only - a manual re-edit has no component scan to run. */}
+                {stagedFlow && <div className="mb-2">
                   <div className="text-[11px] font-medium text-slate-500 mb-1">Component scan quality</div>
                   <div className="flex gap-1.5">
                     {([
@@ -9677,20 +9768,28 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       </QcHostedButton>
                     ))}
                   </div>
-                </div>
+                </div>}
                 {/* Owner 2026-09-25: three real next steps - scan components,
                     add them manually, or finish with the area measured so far. */}
+                {stagedFlow ? (
                 <QcHostedButton variant="primary" type="button"
                   onClick={handleContinueAiScan}
                   className="w-full justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e55a28] transition-colors">
                   AI scan for components
                 </QcHostedButton>
+                ) : (
+                <QcHostedButton variant="primary" type="button"
+                  onClick={() => { setOutlineEditingAreaId(null); setOutlineTool(null); setOutlineSelectedVertex(null); }}
+                  className="w-full justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e55a28] transition-colors">
+                  Done
+                </QcHostedButton>
+                )}
                 <div className="flex gap-2 mt-2">
-                  <QcHostedButton variant="ghost" type="button"
-                    onClick={() => { setAiStagedPageId(null); setOutlineTool(null); setOutlineSelectedVertex(null); }}
+                  {stagedFlow && <QcHostedButton variant="ghost" type="button"
+                    onClick={() => { setAiStagedPageId(null); setOutlineEditingAreaId(null); setOutlineTool(null); setOutlineSelectedVertex(null); }}
                     className="flex-1 justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">
                     Add components manually
-                  </QcHostedButton>
+                  </QcHostedButton>}
                   <QcHostedButton variant="ghost" type="button"
                     onClick={handleOutlineFinishAndSave}
                     className="flex-1 justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">
@@ -9712,7 +9811,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 Detect components
               </QcHostedButton>
               <QcHostedButton variant="ghost"
-                onClick={() => setAiStagedPageId(null)}
+                onClick={() => { setAiStagedPageId(null); setOutlineEditingAreaId(null); }}
                 className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Not now
