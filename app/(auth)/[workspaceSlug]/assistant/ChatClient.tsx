@@ -15,15 +15,14 @@ export function ChatClient(props:Props){
  const [hostH, setHostH] = useState(0);
  const [vpDebug, setVpDebug] = useState(!!props.viewportDebug);
  useEffect(() => { const el = hostRef.current; if (!el) return; const ro = new ResizeObserver(() => setHostH(Math.round(el.getBoundingClientRect().height))); ro.observe(el); return () => ro.disconnect(); }, []);
- useEffect(() => { try { // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-shot hostname gate, isolated from storage access which can throw in Safari private mode
-   if (window.location.hostname.includes('quotecore-plus-testing')) setVpDebug(true);
- } catch { /* hostname read cannot throw; kept for symmetry */ } try {
+ useEffect(() => { try {
    const urlHas = new URLSearchParams(window.location.search).has('saViewportDebug');
    const stored = sessionStorage.getItem('saViewportDebug') === '1';
    if (urlHas) sessionStorage.setItem('saViewportDebug', '1');
+   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-shot post-mount URL/session flag read (debug-only; owner-smoke runs with debug off)
    if (urlHas || stored) setVpDebug(true);
- } catch { /* private mode / storage blocked: hostname gate above already ran */ } }, []);
- useEffect(() => { if (vpDebug) return; const el = document.documentElement; const prev = el.style.background; el.style.background = '#e9ebef'; return () => { el.style.background = prev; }; }, [vpDebug]);
+ } catch { /* private mode / storage blocked: debug stays off */ } }, []);
+ useEffect(() => { const el = document.documentElement; const prev = el.style.background; el.style.background = '#e9ebef'; return () => { el.style.background = prev; }; }, []);
  if(!state.ready)return <p role="status">Opening assistant...</p>;
  if(state.error)return <p role="alert">{state.error}</p>;
  if(!state.access)return <LegacyChatClient {...props}/>;

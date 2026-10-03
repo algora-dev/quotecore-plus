@@ -209,14 +209,16 @@
 .dialog { padding: 0; margin: 0; position: fixed; inset: auto 18px 18px auto; width: min(468px,calc(100vw - 36px)); height: min(820px,calc(var(--sa-viewport-height,100dvh) - 36px)); max-width: none; max-height: none; border: 1px solid #50525a; border-radius: 24px; box-shadow: 0 24px 70px #0005; background: #111216; color: #f5f6f8; overflow: hidden; }
 .dialog::backdrop { background: #080c1018; }
 .launcher { position: fixed; right: max(16px,env(safe-area-inset-right)); bottom: max(16px,env(safe-area-inset-bottom)); z-index: 45; }
-/* v12 (2026-10-03 21:40): v11's anchor line never shipped (batch-edit rollback;
-   only the badge landed - owner's 21:30 shot exposed it via unchanged p:699).
-   Actual fix now: anchor the panel to BOTH real viewport edges. Evidence: the
-   magenta in-host sentinel (absolute bottom:0) PAINTS at the real window bottom
-   (~870) while vh/innerHeight report 699 - bottom anchoring resolves against
-   the real viewport in both layout and paint. top:0+bottom:0+height:auto makes
-   .root 100% = real height; dock lands just above Safari's bar. vh retired. */
-.standalone { position: fixed; top: 0; left: 0; right: 0; bottom: 0; height: auto; z-index: 45; background: #111216; }
+/* v13 (2026-10-03 21:45): v12 shot settled it - even top:0+bottom:0 anchoring
+   computes layout at 699 (p:699, anchor verified shipped) while paint reaches
+   the real ~870. Layout/paint divergence inside the fixed layer is
+   irreconcilable on this WebKit build. Definitive route (external agent Step 4
+   + Step 3): standalone panel in NORMAL DOCUMENT FLOW - layout == paint ==
+   hit-test by construction, immune to the divergence. height:100dvh is just
+   the app's own height (the 699 lie is harmless); the region below is the page
+   canvas, which ChatClient paints dock-silver so it reads as the dock
+   continuing to Safari's bar. Interactive controls stay in the verified zone. */
+.standalone { position: static; height: 100dvh; background: #111216; }
 
 @media (hover:hover) and (pointer:fine) {
   .root button[data-qc-component]:hover:not(:disabled) { background: #343740; border-color: #8f8a86; }

@@ -22,11 +22,6 @@ const HOST_SENTINEL_BG = '#ff00ff'; /* magenta = app-frame bottom (vs lime brows
 export function saDebugHostEnabled(): boolean {
   let on = false;
   try {
-    const h = window.location.hostname;
-    on = h.endsWith('.vercel.app') || h === 'localhost' || h.endsWith('localhost');
-  } catch { /* off */ }
-  if (on) return true;
-  try {
     on = new URLSearchParams(window.location.search).has('saViewportDebug');
     if (on) sessionStorage.setItem('saViewportDebug', '1');
   } catch { /* off */ }

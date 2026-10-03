@@ -53,7 +53,7 @@ export default async function SmartAssistantChatPage({
   // Mobile three-destination bar (Assistant / Messages / Settings): keeps the
   // phone experience to the three surfaces that matter, per the V1.5 spec.
   const mobileNav = (
-    <nav className="md:hidden sticky top-0 z-10 flex border-b border-slate-200 bg-white">
+    <nav className="!hidden sticky top-0 z-10 flex border-b border-slate-200 bg-white">
       <span className="flex flex-1 items-center justify-center gap-1.5 border-b-2 border-slate-900 py-2.5 text-xs font-semibold text-slate-900">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
         Assistant
