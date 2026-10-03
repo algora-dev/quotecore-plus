@@ -89,3 +89,43 @@ Mobile = real phone (or touch emulation) — not just narrow viewport.
 - **R3:** `DemoWorkstation` deletion churn — separate push, grep gate first.
 - **R4:** Owner fix list (P0) scope unknown until Shaun sends it.
 - **R5:** Baseline may move while waiting — always re-pin at branch cut.
+
+## 7. P4 QA + owner smoke checklist (added 2026-10-03)
+
+Run after Gavin folds + deploys the `darren/parity-p1..p4` chain. ~10 min desktop + ~10 min phone. Anything wrong: screenshot + tool + step. All four takeoff tools share one shell, so most fixes land once for all of them.
+
+### Roof (`/free-roof-takeoff` ? "I need to measure")
+- [ ] Landing offers both starts; "already have measurements" sub-choice routes to m2q `?mode=actual|plan`.
+- [ ] Wizard: Metric / Imperial / Roofing Squares; pitch help line under units (roof only).
+- [ ] Upload a PNG and a multi-page PDF (page picker converts one page).
+- [ ] Calibrate from a known dimension, then outline: draw, close, finish screen asks to CONFIRM PITCH before next steps unlock (roof-only gate - must be unchanged).
+- [ ] Components: add a lineal + an area manually; AI scan entry points visible (roof only).
+- [ ] Report: "ROOF TAKEOFF REPORT", hip/valley note paragraph, NO extra note line under it; Print/Save PDF gives clean pages.
+- [ ] "Create a quote" opens the free quote generator with lines prefilled.
+
+### Cladding (`/free-cladding-takeoff`)
+- [ ] Wizard identical but NO pitch help line, NO roofing-squares unit.
+- [ ] NO AI scan anywhere (manual only), desktop AND touch rail.
+- [ ] Outline finish screen: NO pitch control - "Add components manually" / "Save & finish" enabled immediately after closing the outline.
+- [ ] Wording says wall throughout (rail: "Wall outline controls", "Existing wall outlines"; report: "WALL & CLADDING TAKEOFF REPORT").
+- [ ] Report footer carries the extra note line "Wall areas are measured as drawn - no pitch adjustment applies in this tool."
+- [ ] Attach an area component to a saved wall area: value equals the drawn plan area (no pitch inflation).
+
+### Flooring (`/free-flooring-takeoff`)
+- [ ] Same checks as cladding, floor wording (report "FLOORING TAKEOFF REPORT", floor note line).
+
+### Demo (`/takeoff-demo`)
+- [ ] Landing loads fast; "Scan plan with AI" ? plan visible + pretend scan applied ? measuring within ~5 s.
+- [ ] Play with the scan result, finish, demo quote view renders; TrialCTA conversion moment present.
+- [ ] `?mode=manual` deep link starts in manual mode.
+
+### m2q (`/measurement-to-quote-tool`)
+- [ ] Direct URL loads to mode selection; manual entry ? guided pricing editor ("Show me how it works") ? output.
+- [ ] `?mode=actual` and `?mode=plan` skip mode selection; plan mode applies pitch factors.
+- [ ] Roof-landing handoff ("I already have measurements") lands in the right mode.
+
+### Phone (each takeoff tool + demo)
+- [ ] Orientation notice appears once; rotate works.
+- [ ] Touch flow: calibrate ? outline (finger taps + press-and-drag fine-tune) ? components ? finish & report.
+- [ ] Cladding/flooring finish screen has NO pitch step on phone either.
+- [ ] Report scrolls cleanly; print/PDF from the phone share sheet produces the report only.

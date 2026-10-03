@@ -7693,7 +7693,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 disabled={freeToolMode ? (isSaving || freeToolMeasurementCount === 0) : (calibrations.length === 0 || isSaving)}
                 data-copilot="takeoff-save" variant="primary" size="sm" aria-busy={isSaving}
                 className="qc-takeoff-finish-btn"
-                title={(freeToolMode && freeToolMeasurementCount === 0) ? 'Measure at least one roof area or component to finish' : calibrations.length === 0 ? 'Calibrate the plan first' : freeToolMode ? 'Finish and view your measurement report' : 'Save and continue to Measurements & Pricing'}>
+                title={(freeToolMode && freeToolMeasurementCount === 0) ? `Measure at least one ${tradeConfig.areaSingularLabel.toLowerCase()} or component to finish` : calibrations.length === 0 ? 'Calibrate the plan first' : freeToolMode ? 'Finish and view your measurement report' : 'Save and continue to Measurements & Pricing'}>
                 <span className="qc-takeoff-finish-main">{isSaving ? 'Saving…' : freeToolMode ? 'Finish & view report' : 'Finish & save'}<QcIcon name="arrow" /></span>
                 <span className="qc-takeoff-finish-next">{freeToolMode ? 'Next: Measurement report & download' : 'Next: Measurements & Pricing'}</span>
               </QcHostedButton>
@@ -7744,7 +7744,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           } else if (!calibrationConfirmed) {
             guidance = 'Set a known distance before measuring this plan.';
           } else if (roofAreas.length === 0 && activeComponentIds.length === 0) {
-            guidance = 'Calibrated - trace the roof area next: AI Assist or draw it manually.';
+            guidance = aiTakeoffAvailable
+              ? `Calibrated - trace the ${tradeConfig.areaSingularLabel.toLowerCase()} next: AI Assist or draw it manually.`
+              : `Calibrated - trace the ${tradeConfig.areaSingularLabel.toLowerCase()} next: draw it manually.`;
           } else if (activeComponentIds.length === 0) {
             guidance = 'Area measured - now add components: AI scan for components or add them manually.';
           } else {
@@ -7768,7 +7770,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 <QcHostedButton onClick={handleSaveTakeoff}
                   disabled={isSaving || freeToolMeasurementCount === 0}
                   data-copilot="takeoff-save-free" variant="primary" size="sm" className="flex-shrink-0"
-                  title={freeToolMeasurementCount === 0 ? 'Measure at least one roof area or component to finish' : 'Finish and view your measurement report'}>
+                  title={freeToolMeasurementCount === 0 ? `Measure at least one ${tradeConfig.areaSingularLabel.toLowerCase()} or component to finish` : 'Finish and view your measurement report'}>
                   <span className="flex items-center gap-1.5">{isSaving ? 'Saving.' : 'Finish & view report'}<QcIcon name="arrow" /></span>
                 </QcHostedButton>
               )}
@@ -8347,10 +8349,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                             }
                                           }}
                                           defaultValue=""
-                                          aria-label={`Use roof corners for ${comp.name}`}
+                                          aria-label={`Use ${tradeConfig.areaSingularLabel.split(' ')[0].toLowerCase()} corners for ${comp.name}`}
                                           className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
                                         >
-                                          <option value="">Use roof corners...</option>
+                                          <option value="">Use {tradeConfig.areaSingularLabel.split(' ')[0].toLowerCase()} corners...</option>
                                           <option value="all">All corners ({ct.totalCount})</option>
                                           <option value="external">External corners ({ct.externalCount})</option>
                                           <option value="internal">Internal corners ({ct.internalCount})</option>
@@ -8653,7 +8655,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                     }}
                     disabled={calibrationMode || calibrations.length === 0}
                     data-copilot="takeoff-tool-area"
-                    title={calibrations.length === 0 ? 'Calibrate first' : 'Measure roof area'}
+                    title={calibrations.length === 0 ? 'Calibrate first' : `Measure ${tradeConfig.areaSingularLabel.toLowerCase()}`}
                     selected={areaMode}><QcIcon name="polygon" />Area</QcToolButton><QcToolButton
                       onClick={() => {
                         const isActive = lineMode || multiLinealMode;

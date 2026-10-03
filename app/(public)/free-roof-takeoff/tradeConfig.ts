@@ -51,7 +51,9 @@ export interface TakeoffTradeConfig {
   placeholderComponents: TakeoffPlaceholderComponent[];
   /** Max custom components a guest can build before signup. */
   maxCustomComponents: number;
-  /** Extra note line appended to the report footer. */
+  /** Extra note line appended to the report footer (P4 wiring). Null for
+   *  roofing: the roof note paragraph in TakeoffOutputView already carries
+   *  the hip/valley true-length detail, so the roof footer stays unchanged. */
   reportNote: string | null;
 }
 
@@ -90,8 +92,7 @@ export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
     { id: 'b2d33024-e32b-4809-b0ed-3b5e90babcba', name: 'Roof Area', measurement_type: 'area' },
   ],
   maxCustomComponents: 7,
-  reportNote:
-    'Hip and valley entries are calculated as true lengths: the system derives the hip/valley pitch from the roof pitch you entered for each area.',
+  reportNote: null,
 };
 
 export const CLADDING_TAKEOFF_CONFIG: TakeoffTradeConfig = {

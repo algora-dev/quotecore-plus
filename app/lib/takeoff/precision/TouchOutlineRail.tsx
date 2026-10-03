@@ -24,14 +24,27 @@ export interface TouchOutlineRailProps {
   onRearm: () => void; onUndo: () => void; onRedo: () => void; onConfirmPoint: () => void;
   onClose: () => void; onDone: () => void; onEdit: () => void; onCancel: () => void;
   onSave: (choice: OutlineFinishChoice) => void; onPitchChange: (value: number) => void; onTypePitch: () => void;
+  /** P4 trade wording: noun for the thing being outlined ("roof", "wall",
+ *  "floor"). Optional + additive - defaults keep the historical roof copy
+ *  (main app callers pass nothing). */
+  planNoun?: string;
+  /** P4: gate the finish-stage pitch confirmation on trades that use pitch
+ *  (roofing). Default true = unchanged roof behaviour. */
+  requiresPitch?: boolean;
+  /** P4: default display name for a NEW outline on the finish screen
+ *  (roof default: "Main Roof"). */
+  defaultAreaName?: string;
 }
 
 export function TouchOutlineRail(p: TouchOutlineRailProps) {
   const editing = p.stage === 'draw' || p.stage === 'edit';
+  const noun = p.planNoun ?? 'roof';
+  const nounCap = `${noun[0].toUpperCase()}${noun.slice(1)}`;
+  const requiresPitch = p.requiresPitch !== false;
   // M11 r3: ONE PANEL - stage actions render at the END of the scrollable
   // content (finish-stage buttons are already inline in the flow above).
   const stageButtons = (() => {
-    if (p.stage === 'saving') return <RailAction primary disabled>Saving roof...</RailAction>;
+    if (p.stage === 'saving') return <RailAction primary disabled>Saving {noun}...</RailAction>;
     if (p.stage === 'scanning') return <RailAction onClick={p.onCancelScan}>Cancel scan</RailAction>;
     if (p.stage === 'finish') return null;
     if (p.stage === 'edit' || p.stage === 'ai-review') return <RailAction primary disabled={!p.ready || !!p.validation || p.gestureBusy} onClick={p.onDone}>Done</RailAction>;
@@ -41,42 +54,45 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
     </div>;
     return null;
   })();
-  return <RailTask label="Roof outline controls">
+  return <RailTask label={`${nounCap} outline controls`}>
     {p.error && <RailNotice error>{p.error}</RailNotice>}
     {!p.calibrated ? <><RailNotice>Calibrate this plan before drawing or scanning.</RailNotice><RailAction primary onClick={p.onCalibrate}>Calibrate plan</RailAction></>
       : p.stage === 'choose' ? <>
-        <RailNotice>How would you like to create the roof outline?</RailNotice>
+        <RailNotice>How would you like to create the {noun} outline?</RailNotice>
         <RailAction primary disabled={!p.ready} onClick={p.onManual}>Manual Outline</RailAction>
         {p.scanInfo ? <>
           <RailAction disabled={!p.ready || p.scanInfo.blocked} onClick={p.onScan}>AI Scan Assist</RailAction>
           <RailNotice>{p.scanInfo.blocked ? 'No AI points available. Manual outlining is always available.' : `Uses ${p.scanInfo.cost} AI Assist points. You can edit the result.`}</RailNotice>
         </> : <RailNotice>AI Scan Assist is not enabled for this account. Draw manually to continue.</RailNotice>}
         {p.viewControls}
-        {p.areas.length > 0 && <details><summary className="min-h-12 py-3 text-xs">Existing roof outlines</summary>
+        {p.areas.length > 0 && <details><summary className="min-h-12 py-3 text-xs">Existing {noun} outlines</summary>
           <div className="flex flex-col gap-1">{p.areas.map((area, index) => <RailAction key={area.geometryId ?? `saved-area-${index}`} onClick={() => p.onArea(area)}>{area.name}</RailAction>)}</div>
         </details>}
       </> : p.stage === 'scanning' ? <>
-            <ScanProgress label="Scanning the roof outline" />
+            <ScanProgress label={`Scanning the ${noun} outline`} />
             <RailNotice>Your calibration and draft are kept until the scan succeeds.</RailNotice>
           </>
-        : p.stage === 'saving' ? <RailNotice>Saving the roof area. Please keep this page open. You will return to the quote builder after it is saved.</RailNotice>
+        : p.stage === 'saving' ? <RailNotice>Saving the {noun} area. Please keep this page open. You will return to the quote builder after it is saved.</RailNotice>
           : p.stage === 'finish' ? <>
-            <div className="text-base font-semibold">{p.savedArea?.name || 'Main Roof'}</div>
+            <div className="text-base font-semibold">{p.savedArea?.name || p.defaultAreaName || 'Main Roof'}</div>
             <RailNotice>Add components before you finish, or save and go straight to the quote builder.</RailNotice>
             {p.planArea && <RailNotice>{p.planArea}</RailNotice>}
-            {p.savedArea ? <RailNotice>Pitch {p.savedArea.pitch}°. The saved roof&rsquo;s name and pitch are retained.</RailNotice>
-              : <>
+            {p.savedArea
+              ? <RailNotice>{requiresPitch
+                  ? <>Pitch {p.savedArea.pitch}°. The saved roof&rsquo;s name and pitch are retained.</>
+                  : <>The saved {noun}&rsquo;s name is retained.</>}</RailNotice>
+              : requiresPitch ? <>
                 <PitchControl pitch={p.pitch} onChange={p.onPitchChange} onType={p.onTypePitch} />
                 <RailAction primary={!p.pitchConfirmed} disabled={p.pitchConfirmed} onClick={p.onConfirmPitch}>
                   {p.pitchConfirmed ? 'Pitch confirmed ✓' : `Confirm pitch ${p.pitch}°`}
                 </RailAction>
                 {!p.pitchConfirmed && <RailNotice>Confirm the pitch above to unlock the next step.</RailNotice>}
-              </>}
+              </> : null}
             {/* M11: the three next-step actions sit right below the pitch -
                 one scroll: set pitch, confirm it, then choose the next step. */}
             {(() => {
               const aiReady = !!p.scanInfo && !p.scanInfo.blocked;
-              const pitchGate = !!p.savedArea || p.pitchConfirmed;
+              const pitchGate = !requiresPitch || !!p.savedArea || p.pitchConfirmed;
               const disabled = !p.ready || !!p.validation || !pitchGate;
               return <div className="flex flex-col gap-1 pt-1">
                 {aiReady && <RailAction primary disabled={disabled} onClick={() => p.onSave('components-ai')}>AI scan components</RailAction>}
@@ -90,7 +106,7 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
               <RailNotice>Check the outline and its points. Tap Done to use it, or edit any point.</RailNotice>
               <RailAction onClick={p.onEdit}>Edit points</RailAction>
               {p.candidateCount > 1 && <div className="flex flex-col gap-1">{Array.from({ length: p.candidateCount }, (_, index) =>
-                <RailAction key={index} primary={index === p.candidateIndex} onClick={() => p.onCandidate(index)}>Roof suggestion {index + 1}</RailAction>)}</div>}
+                <RailAction key={index} primary={index === p.candidateIndex} onClick={() => p.onCandidate(index)}>{nounCap} suggestion {index + 1}</RailAction>)}</div>}
             </>}
             {editing && <>
               <RailAction label="Rearm selected outline point" disabled={p.index < 0 || p.gestureBusy} primary={p.armed} onClick={p.onRearm}>

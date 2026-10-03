@@ -75,14 +75,19 @@ export interface TouchComponentsRailProps {
   onRetry: () => void;
   onCancelScan: () => void;
   onSaveContinue: () => void;
+  /** P4 trade wording: noun for saved outlines offered to area/count
+   *  components ("roof", "wall", "floor"). Optional + additive - default
+   *  keeps the historical roof copy. */
+  planNoun?: string;
 }
 
-function entryValueLabel(e: TouchComponentEntry, unitSystem: 'meters' | 'feet'): string {
+function entryValueLabel(e: TouchComponentEntry, unitSystem: 'meters' | 'feet', planNoun: string): string {
   if (e.kind === 'point') return `${e.value.toFixed(0)} item${Math.abs(e.value - 1) > 0.001 ? 's' : ''}`;
-  return `${e.value.toFixed(1)} ${unitSuffixForKind(e.kind, unitSystem)}${e.fromRoofAreaId ? ' (roof area)' : ''}`;
+  return `${e.value.toFixed(1)} ${unitSuffixForKind(e.kind, unitSystem)}${e.fromRoofAreaId ? ` (${planNoun} area)` : ''}`;
 }
 
 export function TouchComponentsRail(p: TouchComponentsRailProps) {
+  const noun = p.planNoun ?? 'roof';
   // ── Component detail view (one group's entries) ─────────────────────
   if (p.detailKey && p.phase === 'review') {
     const detailGroup = p.groups.find(g => g.key === p.detailKey);
@@ -144,10 +149,10 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
         </select>
       </>}
       {p.drawMode === 'polygon' && p.roofAreas.length > 0 && <>
-        <RailNotice>Area component - reuse a saved roof area instead of drawing it again.</RailNotice>
-        <select value="" aria-label="Use an existing roof area" className={SELECT_CLASS}
+        <RailNotice>Area component - reuse a saved {noun} area instead of drawing it again.</RailNotice>
+        <select value="" aria-label={`Use an existing ${noun} area`} className={SELECT_CLASS}
           onChange={e => { if (e.target.value) p.onAttachRoofArea(e.target.value); }}>
-          <option value="">Use an existing roof area...</option>
+          <option value="">Use an existing {noun} area...</option>
           {p.roofAreas.map(ra => <option key={ra.geometryId} value={ra.geometryId}>{ra.name} - {ra.label}</option>)}
         </select>
       </>}
@@ -158,9 +163,9 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
         if (ct.totalCount === 0) return null;
         return <>
           <RailNotice>Count component - reuse the corners detected on your saved outlines.</RailNotice>
-          <select value="" aria-label="Use roof corners" className={SELECT_CLASS}
+          <select value="" aria-label={`Use ${noun} corners`} className={SELECT_CLASS}
             onChange={e => { if (e.target.value) p.onAttachCorners(e.target.value as CornerBasis); }}>
-            <option value="">Use roof corners...</option>
+            <option value="">Use {noun} corners...</option>
             <option value="all">All corners ({ct.totalCount})</option>
             <option value="external">External corners ({ct.externalCount})</option>
             <option value="internal">Internal corners ({ct.internalCount})</option>
@@ -181,7 +186,7 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
             className="flex min-h-12 w-full items-center justify-between px-1 text-left text-sm font-semibold text-white"
             onClick={() => p.onHighlight(p.highlightedEntryId === e.id ? null : e.id)}>
             <span>{e.hidden ? `${index + 1}. Hidden` : `Entry ${index + 1}`}</span>
-            <span>{entryValueLabel(e, p.unitSystem)}</span>
+            <span>{entryValueLabel(e, p.unitSystem, noun)}</span>
           </button>
           <div className="grid grid-cols-2 gap-1">
             <RailAction label={e.hidden ? `Show entry ${index + 1}` : `Hide entry ${index + 1}`}

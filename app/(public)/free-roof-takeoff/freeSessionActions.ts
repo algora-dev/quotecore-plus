@@ -67,7 +67,6 @@ export type SaveTakeoffMeasurementInput = {
 let nextPageNum = 1;
 let nextAreaNum = 1;
 let sessionVersion = 1;
-let lastSaved: SaveTakeoffMeasurementInput[] = [];
 
 function sessionUuid(prefix: string, n: number): string {
   const hex = (n % 0xffff).toString(16).padStart(4, '0');
@@ -79,18 +78,16 @@ export function __resetFreeSession() {
   nextPageNum = 1;
   nextAreaNum = 1;
   sessionVersion = 1;
-  lastSaved = [];
 }
 
 // ─── Action stubs (same signatures as the real modules) ─────────────────────
 
 export async function saveTakeoffMeasurements(
   _quoteId: string,
-  measurements: SaveTakeoffMeasurementInput[],
+  _measurements: SaveTakeoffMeasurementInput[],
 ): Promise<{ success: boolean; error?: string }> {
-  // Session-only: remember the latest batch so in-session reads stay
-  // consistent. Dropped entirely on unload — by design.
-  lastSaved = measurements;
+  // Session-only: bump the version so in-session reads stay consistent.
+  // Dropped entirely on unload — by design.
   sessionVersion += 1;
   return { success: true };
 }

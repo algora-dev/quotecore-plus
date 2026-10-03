@@ -236,7 +236,9 @@ function TakeoffPhase({
   }, []);
 
   const backHref = `/${config.slug}`;
-  const [pitch, setPitch] = useState(DEFAULT_ROOF_PITCH);
+  // Pitch is a roofing-only input: non-pitch trades start at 0 (flat), which
+  // also keeps every pitch-factor path neutral (0 = no adjustment applied).
+  const [pitch, setPitch] = useState(config.requiresPitch ? DEFAULT_ROOF_PITCH : 0);
   const [resolvedPage1Id, setResolvedPage1Id] = useState<string | null>(null);
   const [confirmedCalibration, setConfirmedCalibration] = useState<{
     pageId: string;
@@ -324,7 +326,9 @@ function TakeoffPhase({
     () => outlineAdapter,
     backHref,
     () => setTouchTool('calibrate'),
-    { pitch, onPitchChange: setPitch, onEnterComponents: enterComponents, onFinish: emitFinish },
+    { pitch, onPitchChange: setPitch, onEnterComponents: enterComponents, onFinish: emitFinish,
+      planNoun: config.planNoun, requiresPitch: config.requiresPitch,
+      defaultAreaName: `Main ${config.planNoun[0].toUpperCase()}${config.planNoun.slice(1)}` },
   );
 
   const componentsStep = useTouchComponents(
@@ -336,6 +340,7 @@ function TakeoffPhase({
       collections,
       finishHref: backHref,
       onFinish: emitFinish,
+      planNoun: config.planNoun,
     },
   );
 
@@ -682,6 +687,7 @@ export function FreeTakeoffApp({
     return (
       <TakeoffOutputView
         trade={config.tradeName as TakeoffTrade}
+        reportNote={config.reportNote}
         payload={{ ...stage.payload, unitSystem: stage.unitSystem, componentSpecs: stage.specs }}
         extras={extras}
         unitSystem={stage.unitSystem}
