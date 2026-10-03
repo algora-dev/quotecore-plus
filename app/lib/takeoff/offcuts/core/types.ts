@@ -164,7 +164,7 @@ export interface BankLayout {
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13';
+  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14';
   layoutId?: string;
   layoutLabel?: string;
   objective?: PlanObjective;
@@ -209,11 +209,32 @@ export interface PlanQuality {
   /** Explicit site-complexity proxy. Lower is simpler, not a measured labour time. */
   complexity: number;
 }
+/** V2.14 workflow proxy: repeated sheet cuts are grouped into runs.
+ * These are observable operation groups, NOT measured labour time. */
+export interface WorkflowQuality {
+  model: 'site-workflow-v1';
+  sourceRelationships: number; splitSets: number; reuseRuns: number;
+  recutRuns: number; freshCutRuns: number; fillerSeparators: number;
+  primaryOperations: number; stockLengthGroups: number; score: number;
+}
+export interface SimplerAssessment {
+  accepted: boolean;
+  reason: 'within-policy' | 'material-limit' | 'extra-sheet-limit' | 'no-workflow-benefit' | 'insufficient-workflow-improvement';
+  baselineLayoutId: string;
+  maxExtraPercent: number; maxExtraCoverAreaM2: number; maxExtraNewSheets: number;
+  baselineLinealM: number; proposedLinealM: number; extraLinealM: number;
+  extraCoverAreaM2: number; extraNewSheets: number;
+  previousWorkflow: WorkflowQuality; proposedWorkflow: WorkflowQuality;
+  minimumScoreReduction: number; scoreReduction: number;
+  benefits: string[];
+}
 export interface PlanComparison {
   objective: 'simpler' | 'less-material'; previousLayoutId: string;
   previous: PlanQuality; proposed: PlanQuality;
   suppliedDeltaMm2: number; newSheetDelta: number; complexityDelta: number;
   changedFaceIds: string[];
+  /** Final, physically checked trade-off against Recommended, never an accumulating allowance. */
+  simplification?: SimplerAssessment;
 }
 export interface TraceEvent {
   step: number; action: string; message: string;
@@ -225,9 +246,11 @@ export interface TraceCandidate {
   trial: number; seedFaceId: string; objective: PlanObjective;
   signature: string; quality: PlanQuality; completed: boolean;
   selected: boolean; reason: string;
+  evaluationStage?: 'bank-search' | 'final-physical';
+  simplification?: SimplerAssessment;
 }
 export interface DecisionTrace {
-  schemaVersion: 1; engineVersion: '2.13'; requestFingerprint: string;
+  schemaVersion: 1; engineVersion: '2.14'; requestFingerprint: string;
   objective: PlanObjective; selectedTrial: number | null;
   events: TraceEvent[]; candidates: TraceCandidate[];
   truncated: boolean; droppedEvents: number;
@@ -242,7 +265,7 @@ export interface AlternativePlanOptions {
   /** Full solutions are not needed to exclude plans already shown. */
   excludedSignatures?: string[];
   attempt?: number;
-  /** Simpler may buy more material, but never without an explicit bounded cap. */
+  /** Optional tighter limit (0–3%). Also capped at 10 m² effective cover and a small sheet increase. */
   maxExtraMaterialPercent?: number;
 }
 export interface AlternativePlanResult {

@@ -15,6 +15,7 @@ import { rebuildInventory } from './inventory';
 import { isSelfFillCandidate, selfFillDonorWindows, bankAnchorFaces } from './zones';
 import { DecisionRecorder, planSignature, planQuality } from './diagnostics';
 import { supplyView } from './supply';
+import { simplerAssessment, SIMPLER_POLICY } from './simplerPolicy';
 
 interface Info { face:RoofFace; bank:MaterialBank; offsets:number[]; net:number; length:number; ridgeLength:number; selfComplement:boolean }
 interface State {
@@ -539,7 +540,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
         }
         if(rebuilt.unresolved.length)continue;
         state.inventory=rebuilt.offcuts;state.used=new Set(state.placements.filter(p=>p.kind==='reuse').map(p=>p.offcutId!));state.completed=true;
-        state.record.add('reference-plan','Started with the currently displayed physical plan.',undefined,{layoutId:previous.layoutId,quality:planQuality(previous),primarySequence:previous.bankLayout?.primarySequence});
+        state.record.add('reference-plan','Started with the Recommended physical plan; alternative allowances do not accumulate.',undefined,{layoutId:previous.layoutId,quality:planQuality(previous),primarySequence:previous.bankLayout?.primarySequence});
         state.record.add('simplify-relationship','Replaced selected offcut relationships with full new sheets to reduce site complexity.',
           [...new Set([...replaced].map(id=>dm.get(id)!.faceId))],{requestedNewDemandIds:targets,
             dependentNewDemandIds:[...replaced].filter(id=>!targets.includes(id)),rule:'count-every-new-sheet-and-retire-old-cut-identities'});
@@ -593,14 +594,19 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const cost=(state:State)=>quality(state).suppliedMm2;
   const cheapest=Math.min(...candidates.map(cost));
   const reference=policy?.referenceQuality;
-  const maxExtra=policy?.maxExtraMaterialPercent??15;
+  const maxExtra=policy?.maxExtraMaterialPercent??SIMPLER_POLICY.maxExtraPercent;
+  const assessments=new Map(simpleMode&&policy?.referenceSolution?candidates.map(state=>[state,simplerAssessment(policy.referenceSolution!,asPlan(state),profile,maxExtra)]):[]);
   const excluded=new Set(policy?.excludeSignatures??[]);
   const distinct=candidates.filter(state=>!excluded.has(signatures.get(state)!));
   let eligible=distinct;
-  if(reference&&objective==='simpler')eligible=eligible.filter(s=>quality(s).complexity<reference.complexity&&cost(s)<=reference.suppliedMm2*(1+maxExtra/100)+1);
+  // Simpler uses a bounded final shortlist. These are provisional costs: receiver
+  // refinement can change them, so the authoritative gate is AFTER physical checks.
+  // Never discard a modest-cost candidate merely because an expensive one has
+  // a slightly lower legacy score.
   if(reference&&objective==='less-material')eligible=eligible.filter(s=>cost(s)<reference.suppliedMm2-1);
   const sortedCandidates=[...eligible].sort((a,b)=>objective==='simpler'
-    ?quality(a).complexity-quality(b).complexity||cost(a)-cost(b)
+    ?Number(!assessments.get(a)?.accepted)-Number(!assessments.get(b)?.accepted)||
+      (assessments.get(a)?.proposedWorkflow.score??quality(a).complexity)-(assessments.get(b)?.proposedWorkflow.score??quality(b).complexity)||cost(a)-cost(b)
     :cost(a)-cost(b)||quality(a).complexity-quality(b).complexity);
   // Recommended preserves longest banks/self-fill before preferring simplicity
   // within an 8% material band. Lower-material has a separate explicit objective.
@@ -610,8 +616,9 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const ordered=suggested?[suggested,...sortedCandidates.filter(s=>s!==suggested)]:[];
   const summaries=candidates.map(state=>({trial:state.trial,seedFaceId:state.seedFaceId,objective,
     signature:signatures.get(state)!,quality:quality(state),completed:state.completed,selected:false,
+    evaluationStage:'bank-search' as const,...(assessments.has(state)?{simplification:assessments.get(state)}:{}),
     reason:excluded.has(signatures.get(state)!)?'already-shown-physical-layout':!eligible.includes(state)?'does-not-improve-requested-objective-within-material-cap':'eligible-candidate'}));
-  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.13' as const,
+  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.14' as const,
     requestFingerprint:fingerprint({faces,profile,settings}),objective,selectedTrial:state?.trial??null,
     events:state?.record.events??[{step:1,action:'no-selection',message:'No unseen candidate improved the requested objective within its material cap. The previous plan is retained.',data:{objective,referenceQuality:reference,excludedSignatures:[...excluded],maxExtraMaterialPercent:maxExtra}}],candidates:summaries.map(c=>({...c,selected:c.trial===state?.trial,
       reason:c.trial===state?.trial?'selected-by-'+objective:c.reason})),
@@ -623,7 +630,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     const solution=toSolution(request,state,issues,completed,clock()-started,budgetReached);
     solution.layoutId=signature;solution.layoutLabel=objective==='recommended'?'Recommended':objective==='simpler'?'Simpler cut plan':'Less material';
     solution.objective=objective;solution.decisionTrace=traceFor(state);output.push(solution);
-    if(output.length===3)break;
+    if(output.length===(simpleMode?SIMPLER_POLICY.finalCandidateLimit:3))break;
   }
   hooks.onDecisionTrace?.(output[0]?.decisionTrace??traceFor(null));
   return output;
@@ -644,7 +651,7 @@ function toSolution(request:SolveRequest,state:State,inputIssues:Issue[],complet
   }
   if(budgetReached)issues.push({severity:'warning',code:'SEARCH_BUDGET',message:'Time budget reached. Unsolved positions have been supplied new; this complete draft is not proof that no better reuse exists.'});
   issues.push({severity:'warning',code:'PROTOTYPE_ONLY',message:'Draft material-bank plan. Verify profile, sheet registration and site lengths. No guaranteed minimum, manufacturer approval or spare sheets are implied.'});
-  return{schemaVersion:1,engineVersion:'2.13',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
+  return{schemaVersion:1,engineVersion:'2.14',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
     profile:structuredClone(profile),settings:structuredClone(settings),demands:state.demands,placements:state.placements.sort((a,b)=>a.demandId.localeCompare(b.demandId)),
     offcuts:state.inventory,lapByFace:state.laps,bankLayout:state.layout,
     metrics:{newMaterialMm2:cost,baselineNewMaterialMm2:baseline,netRoofMm2:state.demands.reduce((n,d)=>n+area(d.cover),0),installedPhysicalMm2:installed,
