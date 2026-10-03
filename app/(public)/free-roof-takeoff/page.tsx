@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { FreeRoofTakeoff } from './FreeRoofTakeoff';
-import { FreeTakeoffApp } from './FreeTakeoffApp';
+import { redirect } from 'next/navigation';
+import { ToolEntryChoice } from './ToolEntryChoice';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { buildFaqSchema } from '@/lib/schema';
@@ -140,10 +140,11 @@ export default async function FreeRoofTakeoffPage({
 }: {
   searchParams?: Promise<{ engine?: string }>;
 }) {
+  // Legacy engine links (?engine=v1) pointed at this URL when the takeoff
+  // tool lived here - forward them to the tool's new home so A/B links
+  // keep working.
   const params = (await searchParams) ?? {};
-  // v2 = the app-engine tool (default). ?engine=v1 keeps the legacy engine
-  // reachable for A/B comparison during the review loop.
-  const tool = params.engine === 'v1' ? <FreeRoofTakeoff /> : <FreeTakeoffApp />;
+  if (params.engine) redirect(`/free-roof-takeoff/measure?engine=${params.engine}`);
   return (
     <div className="bg-slate-50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }} />
@@ -179,9 +180,11 @@ export default async function FreeRoofTakeoffPage({
         </ul>
       </section>
 
-      {/* The tool */}
+      {/* Entry choice (owner 2026-10-03): price from existing measurements
+          (actual vs plan) or measure a plan in the browser. The takeoff tool
+          itself now lives at /free-roof-takeoff/measure. */}
       <div id="free-roof-takeoff" className="scroll-mt-24">
-        {tool}
+        <ToolEntryChoice />
       </div>
 
       {/* Example output */}
