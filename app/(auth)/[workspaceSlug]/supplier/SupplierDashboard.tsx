@@ -59,7 +59,7 @@ function Chevron({ open }: { open: boolean }) {
 }
 
 function Hint({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] text-slate-400 mt-0.5">{children}</p>;
+  return <p className="text-xs text-slate-600 mt-1 leading-relaxed">{children}</p>;
 }
 
 function TipBanner({ children }: { children: React.ReactNode }) {
@@ -457,13 +457,13 @@ export function SupplierDashboard({
           </div>
         </div>
 
-        {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{error}</div>}
-        {uploadError && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{uploadError}</div>}
+        {error && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{error}</div>}
+        {uploadError && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{uploadError}</div>}
 
         {/* === SUPPLIER PROFILE (collapsible) === */}
         {profile ? (
           <div className="rounded-xl border border-slate-200 bg-white mb-4 overflow-hidden">
-            <button data-qc-variant="ghost" onClick={() => setProfileExpanded(!profileExpanded)} className="qc-button qc-flow-control qc-library-control w-full justify-between">
+            <button type="button" data-qc-variant="ghost" aria-expanded={profileExpanded} onClick={() => setProfileExpanded(!profileExpanded)} className="qc-button qc-flow-control qc-library-control w-full justify-between">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Chevron open={profileExpanded} />
                 {logoUrl || profile.logo_url ? (
@@ -519,7 +519,7 @@ export function SupplierDashboard({
                       {bannerUrl ? (
                         <div className="mt-1 relative rounded-lg overflow-hidden border border-slate-200">
                           <img src={bannerUrl} alt="Banner" className="w-full h-24 object-cover" />
-                          <button data-qc-variant="primary" type="button" onClick={() => setBannerUrl('')} className="qc-button qc-flow-control qc-library-control absolute top-1 right-1">
+                          <button data-qc-variant="ghost" type="button" aria-label="Remove banner image" onClick={() => setBannerUrl('')} className="qc-button qc-flow-control qc-library-control absolute top-1 right-1">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
                         </div>
@@ -558,7 +558,7 @@ export function SupplierDashboard({
                         {ROOFING_TYPES.map(rt => {
                           const selected = roofingTypes.includes(rt);
                           return (
-                            <button key={rt} type="button" onClick={() => setRoofingTypes(selected ? roofingTypes.filter(x => x !== rt) : [...roofingTypes, rt])}
+                            <button key={rt} type="button" aria-pressed={selected} onClick={() => setRoofingTypes(selected ? roofingTypes.filter(x => x !== rt) : [...roofingTypes, rt])}
                               className={"qc-flow-control qc-library-choice " + (`cursor-pointer rounded-full border px-3 py-1 text-xs transition ${selected ? 'bg-slate-900 border-slate-900 text-white' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`)}>{rt}</button>
                           );
                         })}
@@ -570,8 +570,13 @@ export function SupplierDashboard({
                           <label className="text-xs font-medium text-slate-700">Allow custom pricing on takeoff tool</label>
                           <Hint>When enabled, users on your branded takeoff tool can enter their own known prices.</Hint>
                         </div>
-                        <button type="button" onClick={() => setAllowCustomPricing(!allowCustomPricing)} className={"qc-flow-control qc-library-choice " + (`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${allowCustomPricing ? 'bg-[#FF6B35]' : 'bg-slate-300'}`)}>
-                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${allowCustomPricing ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                        <button type="button" role="switch" aria-checked={allowCustomPricing}
+                          aria-label="Allow custom pricing on takeoff tool"
+                          onClick={() => setAllowCustomPricing(!allowCustomPricing)}
+                          className="qc-library-toggle qc-flow-control">
+                          <span aria-hidden="true" className={`qc-library-toggle-track h-6 w-11 p-0.5 ${allowCustomPricing ? 'bg-[var(--qc-color-orange-ink)]' : 'bg-slate-400'}`}>
+                            <span className={`block h-5 w-5 rounded-full bg-white shadow transition-transform ${allowCustomPricing ? 'translate-x-5' : 'translate-x-0'}`} />
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -829,7 +834,7 @@ export function SupplierDashboard({
         {/* === SUPPLIER PUBLIC URLS (collapsible) === */}
         {profile?.slug && (
           <div className="rounded-xl border border-slate-200 bg-white mb-4 overflow-hidden">
-            <button data-qc-variant="ghost" onClick={() => setUrlsExpanded(!urlsExpanded)} className="qc-button qc-flow-control qc-library-control w-full justify-between">
+            <button type="button" data-qc-variant="ghost" aria-expanded={urlsExpanded} onClick={() => setUrlsExpanded(!urlsExpanded)} className="qc-button qc-flow-control qc-library-control w-full justify-between">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Chevron open={urlsExpanded} />
                 <div className="flex items-center gap-2 min-w-0 flex-wrap">
@@ -888,7 +893,7 @@ export function SupplierDashboard({
 
         {/* === ROOFING CALCULATOR (collapsible) === */}
         <div className="rounded-xl border border-slate-200 bg-white mb-4 overflow-hidden">
-          <button data-qc-variant="ghost" onClick={() => setCalculatorExpanded(!calculatorExpanded)} className="qc-button qc-flow-control qc-library-control w-full justify-between">
+          <button type="button" data-qc-variant="ghost" aria-expanded={calculatorExpanded} onClick={() => setCalculatorExpanded(!calculatorExpanded)} className="qc-button qc-flow-control qc-library-control w-full justify-between">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <Chevron open={calculatorExpanded} />
               <div className="flex items-center gap-2 min-w-0 flex-wrap">
@@ -1007,7 +1012,7 @@ export function SupplierDashboard({
 
         {/* === VISIBILITY & PUBLISHING (collapsible) === */}
         <div className="rounded-xl border border-slate-200 bg-white mb-4 overflow-hidden">
-          <button data-qc-variant="ghost" onClick={() => { setVisibilityExpanded(!visibilityExpanded); if (!visibilityExpanded) handleCheckReadiness(); }} className="qc-button qc-flow-control qc-library-control w-full justify-between">
+          <button type="button" data-qc-variant="ghost" aria-expanded={visibilityExpanded} onClick={() => { setVisibilityExpanded(!visibilityExpanded); if (!visibilityExpanded) handleCheckReadiness(); }} className="qc-button qc-flow-control qc-library-control w-full justify-between">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <Chevron open={visibilityExpanded} />
               <div className="flex items-center gap-2 min-w-0 flex-wrap">

@@ -1,5 +1,6 @@
 'use client';
 
+import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect, useCallback } from 'react';
 import {
@@ -231,17 +232,13 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
 
         <div className="p-2 md:p-6">
           {/* Tab bar */}
-          <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit mb-5">
+          <div role="group" aria-label="Catalogue settings" className="flex flex-wrap gap-2 mb-5">
             {(['rename', 'remap', 'maps'] as Tab[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => { setTab(t); setError(null); setEditingMap(null); }}
-                className={"qc-flow-control " + (`px-4 py-1.5 text-sm font-medium rounded-full transition ${
-                  tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                }`)}
-              >
+              <QcButton key={t} aria-pressed={tab === t} variant={tab === t ? 'secondary' : 'ghost'}
+                onClick={() => { setTab(t); setError(null); setEditingMap(null); }}>
+
                 {t === 'rename' ? 'Rename' : t === 'remap' ? 'Column mapping' : 'Maps'}
-              </button>
+              </QcButton>
             ))}
           </div>
 
@@ -357,7 +354,7 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
             </div>
           )}
 
-          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+          {error && <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}
 
           <div className="mt-6 flex gap-3 justify-end">
             <button data-qc-variant="ghost"

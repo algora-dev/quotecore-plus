@@ -1,0 +1,79 @@
+{
+  "baseline": "quotecore-plus-ux-lean-20261003-7e5f5c05.zip",
+  "baselineSha256": "659532586a2d08c4e00cf991d46181541c5185512fd62d0e1ebf60f78ee0ff7e",
+  "originalFiles": 3508,
+  "retainedFiles": 3508,
+  "missing": [],
+  "unexpectedModifiedFiles": [],
+  "modifiedProductionFiles": 10,
+  "newProductionFiles": 7,
+  "unchangedOriginalFiles": 3498,
+  "groups": [
+    {
+      "group": "All app/lib modules",
+      "baselineFiles": 388,
+      "changed": [],
+      "passed": true
+    },
+    {
+      "group": "Smart Assistant modules by path",
+      "baselineFiles": 226,
+      "changed": [],
+      "passed": true
+    },
+    {
+      "group": "Shared authenticated takeoff paths",
+      "baselineFiles": 184,
+      "changed": [],
+      "passed": true
+    },
+    {
+      "group": "API routes",
+      "baselineFiles": 104,
+      "changed": [],
+      "passed": true
+    },
+    {
+      "group": "Existing action modules",
+      "baselineFiles": 83,
+      "changed": [],
+      "passed": true
+    },
+    {
+      "group": "All SQL migrations/functions",
+      "baselineFiles": 330,
+      "changed": [],
+      "passed": true
+    },
+    {
+      "group": "Marketing site/header",
+      "baselineFiles": 141,
+      "changed": [],
+      "passed": true
+    },
+    {
+      "group": "Configs/package/lock",
+      "baselineFiles": 5,
+      "changed": [],
+      "passed": true
+    },
+    {
+      "group": "Canonical recipient order renderer",
+      "baselineFiles": 1,
+      "changed": [],
+      "passed": true
+    },
+    {
+      "group": "Existing v2 primitives/tokens",
+      "baselineFiles": 29,
+      "changed": [],
+      "passed": true
+    }
+  ],
+  "localImports": {
+    "count": 104,
+    "failures": []
+  },
+  "newAnyTokens": [],
+  "passed": true
+}

@@ -1,0 +1,486 @@
+{
+  "count": 96,
+  "passed": 96,
+  "tests": [
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: toggleExpand",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: folderCounts",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: visible",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: allVisibleSelected",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: toggle",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: toggleAll",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: openHref",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: bulk",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: open",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: fmt",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: sel",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: selInVisible",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: eventOn",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: channelMasterOn",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: toggleEvent",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: toggleMaster",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: NOTIFICATION_MATRIX",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: categoryOf",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: CATEGORY_BADGE",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx :: TYPE_FILTERS",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: detectDevice",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: toComponents",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: TakeoffPhase",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: openBuilder",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: openEditBuilder",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: handleBuilderSave",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: unitOption",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: specComponents",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: userComponents",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: toolComponents",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: activeSpecs",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: pdfPicker",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: handleFile",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: onFileSelected",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx :: restart",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: placeholderPitchType",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: isHipOrValley",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: isCladding",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: isFlooring",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: isFlat",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: toolSlug",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: areaNoun",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: pitchMode",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: fmtPitch",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: calibUnit",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: system",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: lengthsInFeet",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: L",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: toDisplayArea",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: areaUnitLabel",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: areaUnitSup",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: areas",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: components",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: totalCost",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: hasAnyCost",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: convertToQuoteUrl",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: totalPlanArea",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: totalPitchedArea",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: today",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: hasMeasurements",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx :: handleSendToApp",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: typeOptions",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: metric",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: lengthUnit",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: areaUnit",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: unitLabelFor",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: isNew",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: isPack",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: packStrategies",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: canSave",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: handleSave",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx :: rateUnit",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/catalogs/edit-catalog-modal.tsx :: handleRename",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/catalogs/edit-catalog-modal.tsx :: handleRemap",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/catalogs/edit-catalog-modal.tsx :: handleSaveMap",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/catalogs/edit-catalog-modal.tsx :: handleDeleteMap",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/catalogs/replace-catalog-modal.tsx :: parsePrice",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/catalogs/replace-catalog-modal.tsx :: handleFile",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/catalogs/replace-catalog-modal.tsx :: handleReplace",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handleUpload",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handleCopyLink",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handleSaveProfile",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handleSaveTakeoffSettings",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handleCheckReadiness",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handleSaveVisibility",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handlePreview",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handlePublishUpdate",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handleRename",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handleDelete",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx :: handleCatalogPublish",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/material-orders/[orderId]/preview/order-preview.tsx :: handleBack",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/material-orders/[orderId]/preview/order-preview.tsx :: isOrdered",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "app/(auth)/[workspaceSlug]/material-orders/[orderId]/preview/order-preview.tsx :: fromInbox",
+      "passed": true,
+      "kind": "AST-equality"
+    },
+    {
+      "name": "FreeTakeoffApp branch stage.phase === 'output'",
+      "kind": "AST-equality",
+      "passed": true
+    },
+    {
+      "name": "FreeTakeoffApp branch stage.phase === 'takeoff'",
+      "kind": "AST-equality",
+      "passed": true
+    },
+    {
+      "name": "Saved order OrderBody props/renderer boundary",
+      "kind": "AST-equality",
+      "passed": true
+    }
+  ]
+}

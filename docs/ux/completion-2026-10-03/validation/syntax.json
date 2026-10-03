@@ -1,0 +1,19 @@
+{
+  "files": [
+    "app/(auth)/[workspaceSlug]/catalogs/replace-catalog-modal.tsx",
+    "app/(auth)/[workspaceSlug]/catalogs/edit-catalog-modal.tsx",
+    "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+    "app/(auth)/[workspaceSlug]/inbox/page.tsx",
+    "app/(auth)/[workspaceSlug]/inbox/MessageCenterPreferences.tsx",
+    "app/(auth)/[workspaceSlug]/inbox/MessageCenterRow.tsx",
+    "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx",
+    "app/(auth)/[workspaceSlug]/inbox/message-center-model.ts",
+    "app/(auth)/[workspaceSlug]/material-orders/[orderId]/preview/order-preview.tsx",
+    "app/(public)/free-roof-takeoff/page.tsx",
+    "app/(public)/free-roof-takeoff/TakeoffOutputView.tsx",
+    "app/(public)/free-roof-takeoff/FreeTakeoffApp.tsx",
+    "app/(public)/free-roof-takeoff/ComponentBuilderModal.tsx",
+    "app/(public)/free-roof-takeoff/FreeTakeoffEntry.tsx"
+  ],
+  "syntaxErrors": []
+}

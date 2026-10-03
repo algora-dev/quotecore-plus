@@ -1,0 +1,235 @@
+[
+  {
+    "state": "messages",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "messages-open",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "messages-empty",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "settings",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "settings-events",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "units",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "components",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "custom-components",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "upload",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "upload-error",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "component-dialog",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [
+        {
+          "x": 400,
+          "y": 16,
+          "right": 1040,
+          "bottom": 884
+        }
+      ],
+      "footers": [
+        {
+          "y": 802,
+          "bottom": 859
+        }
+      ],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "report",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "catalog-edit",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [
+        {
+          "x": 180,
+          "y": 296.5,
+          "right": 1260,
+          "bottom": 603.5
+        }
+      ],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "catalog-replace",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [
+        {
+          "x": 400,
+          "y": 246.5,
+          "right": 1040,
+          "bottom": 653.5
+        }
+      ],
+      "footers": [
+        {
+          "y": 571.5,
+          "bottom": 628.5
+        }
+      ],
+      "viewportHeight": 900
+    },
+    "errors": []
+  },
+  {
+    "state": "order-confirm",
+    "width": 1440,
+    "passed": true,
+    "layout": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "dialogs": [
+        {
+          "x": 500,
+          "y": 362,
+          "right": 940,
+          "bottom": 538
+        }
+      ],
+      "footers": [],
+      "viewportHeight": 900
+    },
+    "errors": []
+  }
+]

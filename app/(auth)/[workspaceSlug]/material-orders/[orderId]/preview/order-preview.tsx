@@ -1,5 +1,9 @@
 'use client';
 
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcDialog } from '@/app/components/ui/v2/QcDialog';
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
+import { useQcActionNotice } from '@/app/components/ui/v2/QcActionNotice';
 import { useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -77,6 +81,8 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
     else router.back();
   };
   const [markingOrdered, setMarkingOrdered] = useState(false);
+  const [markError, setMarkError] = useState<string | null>(null);
+  const { showNotice, notice } = useQcActionNotice();
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const isOrdered = order.status === 'ordered';
@@ -92,7 +98,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
     try {
       const el = document.querySelector('[data-print-root]') as HTMLElement | null;
       if (!el) {
-        alert('Could not find the order content to export. Please refresh and try again.');
+        showNotice({ title: 'PDF not created', description: 'Could not find the order content to export. Please refresh and try again.', tone: 'danger', focus: true });
         return;
       }
       const pdf = await elementToPdf(el);
@@ -100,7 +106,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
       pdf.save(`Order-${safe}.pdf`);
     } catch (err) {
       console.error('[OrderPreview] PDF download failed:', err);
-      alert(`Failed to generate PDF: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      showNotice({ title: 'PDF not created', description: `Failed to generate PDF: ${err instanceof Error ? err.message : 'Unknown error'}`, tone: 'danger', focus: true });
     } finally {
       setDownloadingPdf(false);
     }
@@ -115,7 +121,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
       setShowMarkModal(false);
       router.refresh();
     } catch {
-      alert('Failed to update status');
+      setMarkError('The order status could not be updated. Please try again.');
     } finally {
       setMarkingOrdered(false);
     }
@@ -128,18 +134,18 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
           below it. Non-sticky (scrolls with the page like Quotes). app
           chrome only: data-exclude-pdf keeps it off the printed order. */}
       <div className="max-w-7xl mx-auto px-2 sm:px-6 pt-4 md:pt-6 data-exclude-pdf">
-      <div className="bg-white border border-slate-200 rounded-2xl px-3 md:px-6 py-3 md:py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between shadow-sm">
+      <QcJourney className="bg-white border border-slate-200 rounded-2xl px-3 md:px-6 py-3 md:py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between shadow-sm">
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
-          <button
+          <QcButton variant="ghost"
             onClick={handleBack}
             title={fromInbox ? 'Back to Message Center' : 'Back'}
-            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors flex-shrink-0 min-h-[44px]"
+            className="flex-shrink-0"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back
-          </button>
+          </QcButton>
           <div className="min-w-0">
             <h1 className="text-base md:text-lg font-semibold text-slate-900">Order Preview</h1>
             <p className="text-xs md:text-sm text-slate-500 truncate">{order.order_number}</p>
@@ -147,17 +153,16 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {!isOrdered && (
-            <button
-              onClick={() => setShowMarkModal(true)}
+            <QcButton
+              onClick={() => { setMarkError(null); setShowMarkModal(true); }}
               disabled={markingOrdered}
-              className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition pill-shimmer disabled:opacity-50"
             >
-              Mark as Ordered
-            </button>
+              Mark as ordered
+            </QcButton>
           )}
           <Link
             href={`/${workspaceSlug}/material-orders/create?orderId=${order.id}`}
-            className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition pill-shimmer"
+            className="qc-button" data-qc-variant="secondary"
           >
             Edit Order
           </Link>
@@ -167,19 +172,17 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
           {order.acceptance_token ? (
             <ResetButton action={resetOrder} id={order.id} entityLabel="Order" />
           ) : null}
-          <button
+          <QcButton
             onClick={handleDownloadPdf}
-            disabled={downloadingPdf}
-            className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition pill-shimmer disabled:opacity-50"
+            disabled={downloadingPdf} aria-busy={downloadingPdf}
           >
-            {downloadingPdf ? 'Generating PDF...' : 'Download PDF'}
-          </button>
-          <button
+            {downloadingPdf ? 'Generating PDF…' : 'Download PDF'}
+          </QcButton>
+          <QcButton variant="ghost"
             onClick={() => window.print()}
-            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Print / Save PDF
-          </button>
+          </QcButton>
           <SendDocumentButton
             entityKind="order"
             entityId={order.id}
@@ -201,7 +204,8 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
             existingToken={order.acceptance_token ?? null}
           />
         </div>
-      </div>
+      </QcJourney>
+      {notice}
       </div>
 
       {/* Activity card sits completely above the body, at the same
@@ -220,19 +224,18 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
         <OrderBody order={order} lines={lines} flashings={flashings} currency={currency} />
       </div>
 
-      {/* Mark as Ordered Modal */}
-      {showMarkModal && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50 data-exclude-pdf">
-          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Mark as Ordered</h3>
-            <p className="text-sm text-slate-500 mt-2">Confirm this order has been sent to the supplier.</p>
-            <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setShowMarkModal(false)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={markingOrdered}>Cancel</button>
-              <button onClick={handleMarkAsOrdered} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]" disabled={markingOrdered}>{markingOrdered ? 'Updating...' : 'Confirm'}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirmation is application chrome, never part of OrderBody/PDF. */}
+      <QcDialog open={showMarkModal} pending onRequestClose={() => setShowMarkModal(false)}
+        title="Mark as ordered" description="Confirm this order has been sent to the supplier."
+        className="data-exclude-pdf"
+        footer={<>
+          <QcButton onClick={() => setShowMarkModal(false)} disabled={markingOrdered}>Cancel</QcButton>
+          <QcButton variant="primary" onClick={handleMarkAsOrdered} disabled={markingOrdered} aria-busy={markingOrdered}>
+            {markingOrdered ? 'Updating…' : 'Confirm'}
+          </QcButton>
+        </>}>
+        {markError && <p role="alert" className="text-sm text-red-700">{markError}</p>}
+      </QcDialog>
     </div>
   );
 }

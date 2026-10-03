@@ -1,0 +1,327 @@
+[
+  {
+    "name": "Initial active rows",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Expand marks unread record read via existing bulk endpoint",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Expanded row shows full detail",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Quote open destination retains inbox return context",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Mark unread uses existing unread contract",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Search filters current folder",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Type filter selects invoice without routing",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Hidden selection count remains explicit",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Bulk action affects only selected visible IDs",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Partial bulk removes confirmed row only",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Partial failure has truthful result heading",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Failed records remain selected",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Network failure announces ambiguity",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Network failure restores rows and selected IDs",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Delete confirmation is native modal",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "No deletion before confirmation",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Cancel keeps archived row",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Confirmed deletion sends delete once",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Deleted folder shows specific empty state",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Settings view receives keyboard focus",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Four real notification categories retained",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Master channel controls retained (2 x 4)",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Quote event matrix retains ten child switches",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Preference failure restores the prior toggle",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Preference failure is visible",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Partial email master preserves ANY-on semantics",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Back restores focus to settings trigger",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Preference updates do not refresh routes",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Three supported unit choices",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Step progress follows owner state",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Next step heading receives focus",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Own component path requires at least one",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Create callback returns custom record",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "After creation next step is enabled",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Selected units retained at upload",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "PDF file handed to owner without changing parsing",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Remove custom component returns to guarded empty state",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Dialog focus starts on name",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Footer visible in short phone viewport",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Only form body scrolls",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Escape does not discard dirty form",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Save retains identity and pricing fields",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Existing save marked edit, not new",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Flooring retains no pitch controls",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Flooring supported three measurement options",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Quantity transition retains original per-unit and pitch guards",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Report contains roof and all measurement groups",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Print uses existing browser print",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Create quote keeps free-generator handoff",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Report save failure visible without clearing report",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Report save retains original draft type",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Report save payload retains components and specs",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Saved fallback link reuses returned ID",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Catalogue selected tab is announced",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Catalogue mapping capabilities retained",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Catalogue maps still load by existing action",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Replacement preview uses parsed row count",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Cannot dismiss during replacement",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Replacement completes existing callback",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Replacement preserves start, batch, finish sequence",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "PDF failure is persistent local feedback",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Order confirmation uses native top layer",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Order update failure stays inside confirmation",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Confirmed order update retains refresh callback",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "Order confirmation closes on success",
+    "passed": true,
+    "detail": ""
+  }
+]
