@@ -545,6 +545,19 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     if (item?.previewUrl) { URL.revokeObjectURL(item.previewUrl); attachmentUrls.current.delete(item.previewUrl); }
     setAttachments(prev => prev.filter(a => a.id !== id));
   };
+  const [geo, setGeo] = useState('');
+  useEffect(() => {
+    const read = () => {
+      const vv = window.visualViewport;
+      const r = root.current?.getBoundingClientRect();
+      setGeo(`v4 ih:${window.innerHeight} vv:${Math.round(vv?.height ?? 0)}@${Math.round(vv?.offsetTop ?? 0)} p:${Math.round(r?.height ?? 0)}`);
+    };
+    read();
+    window.visualViewport?.addEventListener('resize', read);
+    window.addEventListener('resize', read);
+    const t = window.setInterval(read, 1500);
+    return () => { window.visualViewport?.removeEventListener('resize', read); window.removeEventListener('resize', read); window.clearInterval(t); };
+  }, []);
   const hide = () => { voice.cancel(); speech.stop(); setSheet(null); onHide(); };
   const openAttachmentSheet = () => { voice.cancel(); speech.stop(); setSheet('attach'); };
 
@@ -649,6 +662,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             <QcButton className={s.modeButton} aria-pressed={mode === 'voice'} onClick={() => changeMode('voice')}><AssistantIcon name="mic"/><span>Voice</span></QcButton>
             <QcButton className={s.modeButton} aria-haspopup="dialog" aria-expanded={sheet === 'attach'} aria-label="Attach a photo or file" onClick={openAttachmentSheet}><AssistantIcon name="attach"/><span>Attach</span></QcButton>
           </div>
+          <div aria-hidden="true" style={{ position: 'absolute', right: 6, bottom: 3, zIndex: 5, fontSize: 9, fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace', color: '#c56a3f', opacity: 0.9, pointerEvents: 'none' }}>{geo}</div>
         </div>
       </div>
     </div>

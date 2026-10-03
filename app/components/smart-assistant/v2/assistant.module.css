@@ -209,11 +209,11 @@
 .dialog { padding: 0; margin: 0; position: fixed; inset: auto 18px 18px auto; width: min(468px,calc(100vw - 36px)); height: min(820px,calc(var(--sa-viewport-height,100dvh) - 36px)); max-width: none; max-height: none; border: 1px solid #50525a; border-radius: 24px; box-shadow: 0 24px 70px #0005; background: #111216; color: #f5f6f8; overflow: hidden; }
 .dialog::backdrop { background: #080c1018; }
 .launcher { position: fixed; right: max(16px,env(safe-area-inset-right)); bottom: max(16px,env(safe-area-inset-bottom)); z-index: 45; }
-/* Native dvh only: in-app browsers (Telegram etc.) report phantom-smaller
-   visualViewport heights to JS, which shortened the panel (the dark gap) and
-   re-measured on every mic interaction (the dynamic collapse). The webview's
-   own viewport units are authoritative — nothing JS-measured here. */
-.standalone { position: fixed; inset: 0; z-index: 45; height: 100dvh; background: #111216; }
+/* v4: dvh confirmed insufficient in iOS Safari (panel lands 170-190px short
+   even as the only rule). -webkit-fill-available is the pre-dvh iOS-native
+   unit that tracks the true visible webview area incl. bar show/hide.
+   Order matters: dvh first, fill-available overrides on WebKit. */
+.standalone { position: fixed; top: 0; left: 0; right: 0; height: 100dvh; height: -webkit-fill-available; z-index: 45; background: #111216; }
 
 @media (hover:hover) and (pointer:fine) {
   .root button[data-qc-component]:hover:not(:disabled) { background: #343740; border-color: #8f8a86; }
