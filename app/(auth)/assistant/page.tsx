@@ -5,10 +5,12 @@ import { getCurrentProfile } from '@/app/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 
 /**
- * /assistant - PWA start_url for the assistant home-screen icon. Sends an
- * anonymous visitor to login (and back here), then redirects into their
- * workspace's assistant page. The installed icon therefore opens straight
- * into the assistant-only experience, never the main app.
+ * /assistant - stable global PWA start_url for the assistant home-screen icon.
+ * Sends an anonymous visitor to login (and back here), then redirects into
+ * their workspace's assistant page. The installed icon therefore opens
+ * straight into the assistant-only experience, never the main app. No tenant
+ * slug is stored in the global manifest or accepted from query text; the
+ * authenticated company owns the destination.
  */
 export default async function AssistantEntryPoint() {
   const profile = await getCurrentProfile();
@@ -16,5 +18,9 @@ export default async function AssistantEntryPoint() {
     redirect('/login?next=/assistant');
   }
   const { company } = await loadCompanyContext();
-  redirect(`/${company.slug}/assistant`);
+  const slug = company?.slug;
+  if (!slug) {
+    redirect('/onboarding');
+  }
+  redirect(`/${encodeURIComponent(slug)}/assistant`);
 }

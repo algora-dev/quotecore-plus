@@ -33,6 +33,7 @@ const db = {
 mocks.set('@/app/lib/supabase/admin',{createAdminClient:()=>db});
 mocks.set('../v2/actions.server',{requireEdits:(a,sections)=>{if(sections.some(key=>a.permissions[key]!=='edit'))throw new ProposalError('Edit permission required.');}});
 mocks.set('../v2/runtime.server',{freshAccess:async()=>{if(s.revoked)throw new ProposalError('Permissions changed.');},rpcError:error=>new ProposalError('RPC refused '+(error?.code??'invalid response'))});
+mocks.set('./runtime.server', mocks.get('../v2/runtime.server')); // workflow-conflict.ts resolves the same module relatively
 mocks.set('../v2/database',{batchClient:x=>x,toJson:x=>x});
 mocks.set('../v2/session.server',{addCard:async(_run,_access,_key,_sections,card)=>{s.cards.push(clone(card));return uuid(70);}});
 mocks.set('../v2/creation.server',{creationContext:async()=>({data:context}),proposeDraft:async(_client,_access,runId,args,meta)=>{s.proposals.push({runId,args:clone(args),meta:clone(meta)});return {id:uuid(60+s.proposals.length),title:'Review draft'};}});
