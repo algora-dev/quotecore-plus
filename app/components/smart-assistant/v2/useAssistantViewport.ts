@@ -19,8 +19,10 @@ export function useAssistantViewport(root: RefObject<HTMLDivElement>, visible: b
       raf = requestAnimationFrame(() => {
         // Don't turn accessibility pinch-zoom into a miniature unzoomed interface.
         if (viewport && Math.abs(viewport.scale - 1) > 0.05) return;
-        const height = Math.round(viewport?.height ?? window.innerHeight);
-        const width = Math.round(viewport?.width ?? window.innerWidth);
+        // Clamp so a transient visualViewport glitch (keyboard opening,
+        // URL-bar mid-animation, focus shift) can never collapse the panel.
+        const height = Math.max(320, Math.round(viewport?.height ?? window.innerHeight));
+        const width = Math.max(280, Math.round(viewport?.width ?? window.innerWidth));
         for (const t of targets) {
           t.style.setProperty(names[0], `${height}px`);
           t.style.setProperty(names[1], `${Math.round(viewport?.offsetTop ?? 0)}px`);

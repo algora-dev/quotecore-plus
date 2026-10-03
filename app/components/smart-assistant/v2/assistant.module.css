@@ -106,7 +106,9 @@
 .working { display: flex; gap: 10px; align-items: center; color: #cbcdd5; padding: 4px 0 14px; font-size: 13px; }
 .spinner { width: 20px; height: 20px; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(255, 138, 77, 0.65)); }
 
-.bottomArea { flex: 0 0 auto; width: 100%; max-width: 780px; max-height: 65%; margin-inline: auto; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.bottomArea { flex: 0 0 auto; width: 100%; max-width: 780px; margin-inline: auto; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+/* Notice/playback/voice/transcript scroll here, capped; the dock below stays pinned to the bottom at all times. */
+.extras { flex: 0 1 auto; min-height: 0; max-height: 42%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .notice { display: flex; align-items: center; gap: 8px; background: #312327; color: #ffd6c5; padding: 8px 12px; border-top: 1px solid #7c4d45; font-size: 12px; }
 .notice > span { flex: 1; }
 .notice > svg { width: 18px; height: 18px; flex: 0 0 auto; }
@@ -117,7 +119,7 @@
 .playbackCopy span { display: block; font-size: 10px; line-height: 1.5; color: var(--sa-muted); }
 
 /* Silver input dock is the sole light surface, matching the approved concept. */
-.dock { position: relative; color-scheme: light; padding: 10px max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); border-radius: 25px 25px 0 0; background: linear-gradient(135deg,#f8f8fa,#e4e6eb); border-top: 1px solid #ffffff; box-shadow: 0 -8px 24px #00000018; color: #22242b; }
+.dock { flex: 0 0 auto; position: relative; color-scheme: light; padding: 10px max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); border-radius: 25px 25px 0 0; background: linear-gradient(135deg,#f8f8fa,#e4e6eb); border-top: 1px solid #ffffff; box-shadow: 0 -8px 24px #00000018; color: #22242b; }
 .root .dock button[data-qc-component] { color: #373943; background: transparent; border-color: transparent; }
 .modeBar { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
 .root button.modeButton { display: flex; flex-direction: column; gap: 5px; padding: 9px 8px; min-height: 60px; font-size: 11px; font-weight: 650; border-radius: 17px; line-height: 1.1; }

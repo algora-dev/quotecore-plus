@@ -10,10 +10,17 @@ export function AssistantSheet({ title, onClose, background, children }: {
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef<HTMLButtonElement>(null);
+  // Ghost-click guard: on touch browsers the tap that opened this sheet can
+  // land on the freshly-rendered backdrop as a synthetic click and instantly
+  // close it (reads as "the menu never opens / closes the app"). Ignore
+  // backdrop taps in the first 350ms after mount; the X button and Escape
+  // always work.
+  const openedAt = useRef(Date.now());
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const id = useId();
   useEffect(() => {
+    openedAt.current = Date.now();
     const origin = document.activeElement as HTMLElement | null;
     const behind = background.current;
     const previousInert = behind?.inert ?? false;
@@ -36,7 +43,7 @@ export function AssistantSheet({ title, onClose, background, children }: {
       if (origin?.isConnected && !origin.closest('[inert]')) origin.focus({ preventScroll: true });
     };
   }, [background]);
-  return <div className={s.sheetBackdrop} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+  return <div className={s.sheetBackdrop} onClick={e => { if (e.target === e.currentTarget && Date.now() - openedAt.current > 350) onClose(); }}>
     <div className={s.sheet} role="dialog" aria-modal="true" aria-labelledby={id} ref={panel}>
       <div className={s.sheetHandle} aria-hidden="true" />
       <div className={s.sheetHeader}><h2 id={id}>{title}</h2><QcButton ref={close} className={s.iconButton} aria-label={`Close ${title.toLowerCase()}`} onClick={onClose}><AssistantIcon name="close" /></QcButton></div>
