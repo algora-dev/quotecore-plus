@@ -44,3 +44,8 @@ v5 (current commit) extends the orange badge with `s:` (visualViewport.scale), `
 ## Working deployment
 
 `rg5g6z5f8` (v4). v5 = one commit above it.
+
+## v5 VERDICT (owner screenshot 19:31) + v6 FIX (shipped after)
+- Badge: v5 ih:699 vv:699@0 s:1.00 p:699 t:0 w:390 scr:390x844. NO zoom, NO offset, panel obeys all APIs exactly.
+- Conclusion: on iPhone Safari bottom-bar mode, EVERY height source (dvh, -webkit-fill-available, innerHeight, visualViewport) reports 699 on a 390x844 device while displaying more. Unit APIs under-report; only the fixed containing-block EDGES are correct (header at top:0 renders perfectly).
+- v6: .standalone = position:fixed; top:0; left:0; right:0; bottom:0; height:auto — anchored to both edges, NO height value. If the address bar overlaps the dock slightly in v6, the finisher is a small dock bottom-padding.
