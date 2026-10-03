@@ -14,9 +14,16 @@
 
 import type { AiScanData } from '@/app/lib/takeoff/applyAiResults';
 import type { Calibration } from '@/app/lib/takeoff/reconstructTypes';
+import type { TakeoffFinishPayload } from '@/app/lib/takeoff/finishPayload';
 import scanJson from './scan.json';
 
 export type DemoMode = 'scan' | 'manual';
+
+/** Finished-takeoff payload the demo quote view renders. The shell emits the
+ *  structurally identical TakeoffFinishPayload (finishPayload.ts is a
+ *  structural clone of the original demo contract), so the seeded wrapper
+ *  hands the shell payload straight to DemoQuoteView. */
+export type DemoFinishPayload = TakeoffFinishPayload;
 
 /** Canned scan output (real AI geometry from the captured session). */
 export const DEMO_SCAN: AiScanData = scanJson as unknown as AiScanData;

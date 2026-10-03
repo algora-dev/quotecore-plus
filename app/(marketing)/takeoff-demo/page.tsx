@@ -32,6 +32,11 @@ const FAQS = [
       'The demo uses a sample roof plan with the pitch fixed at 25 degrees, and the AI scan result was captured from a real QuoteCore+ takeoff session. You can scan it with AI Scan Assist or measure it manually with the drawing tools.',
   },
   {
+    question: 'Does the takeoff demo work on mobile?',
+    answer:
+      'Yes. The demo runs the same workstation the app uses, including the precision touch tools - measure with your finger on a phone or tablet. The demo replays a scan captured from a real QuoteCore+ takeoff session, so you see exactly what the tool produces.',
+  },
+  {
     question: 'Can I upload my own plans in the full app?',
     answer:
       'Yes. In the full QuoteCore+ app you upload your own roof plans (PDF or image), scan them with AI Scan Assist, measure manually, and price them with your own components. The demo uses a fixed sample plan so it needs no sign-in.',
@@ -50,7 +55,7 @@ const webAppSchema = {
   '@type': 'WebApplication',
   name: 'QuoteCore+ Roof Takeoff Demo',
   applicationCategory: 'BusinessApplication',
-  operatingSystem: 'Web browser (desktop)',
+  operatingSystem: 'Web browser (desktop, tablet, mobile)',
   url: 'https://quote-core.com/takeoff-demo',
   description:
     'Free interactive demo of the QuoteCore+ digital roof takeoff workstation. Scan a sample roof plan with AI or measure manually and produce a real customer quote. No sign-in required.',
@@ -89,18 +94,18 @@ export default function TakeoffDemoPage() {
         <p className="mt-1 text-sm font-medium text-[#BD4A1A]">The QuoteCore Plus Takeoff Demo - free, no sign-in required.</p>
         <p className="mt-4 text-base leading-relaxed text-slate-600">
           An interactive demo of the QuoteCore+ takeoff workstation. Scan a sample roof plan with AI or measure it
-          manually, and the demo produces a real customer quote from your measurements. Free, no sign-in - best on a
-          desktop computer.
+          manually, and the demo produces a real customer quote from your measurements. Free, no sign-in - works on
+          desktop, tablet and mobile with touch precision tools.
         </p>
       </section>
 
-      {/* Mobile fallback: interactive demo needs a desktop; show product video instead */}
+      {/* Product video: extra context for visitors (SEO) - the interactive demo above now works on every device */}
       <section className="mx-auto max-w-2xl px-4 py-10 md:hidden">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">See the product in action</h2>
           <p className="mt-2 text-sm text-slate-600">
-            The interactive demo needs a desktop - here&apos;s the product in action instead: a full quote created from
-            start to finish in under 3 minutes.
+            Prefer to watch first? Here&apos;s the product in action: a full quote created from start to finish in
+            under 3 minutes.
           </p>
           <div className="mt-4">
             <YouTubeLite videoId="pqIfx-rOcmo" title="Create a Quote from Start to Finish with QuoteCore+" showTitle rounded />

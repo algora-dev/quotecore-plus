@@ -222,6 +222,17 @@ interface Props {
   aiTakeoffAvailable?: boolean;
   /** AI Assist points: current usage for UI display. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
+  /** Seeded replay mode (demo/preview hosts): when provided, every AI Assist
+   *  scan replays this captured AiScanData instead of calling the network
+   *  endpoints, and when `autoRun` is set the replay fires once as soon as
+   *  the canvas and a calibration are ready. Absent = live scans, unchanged. */
+  seededScan?: {
+    data: AiScanData;
+    autoRun?: boolean;
+    /** Fixed pitch applied to every detected area (replays default to the
+     *  captured per-area pitch when omitted). */
+    pitch?: number;
+  };
   /** P2/P6 AI-assisted calibration: per-company flag read server-side. */
   aiCalibrationEnabled?: boolean;
   /** M5: registers the touch-outline bridge adapter (single data owner stays
@@ -333,6 +344,7 @@ export function TakeoffWorkstation({
   allRoofAreas = [],
   aiTakeoffAvailable = false,
   aiAssistPoints = null,
+  seededScan,
   aiCalibrationEnabled = false,
   onFreeFinish,
   onExitFree,
@@ -4367,6 +4379,54 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         const dims = live?.canvasDims ?? { width: 2000, height: 1700 };
         const abortController = new AbortController();
         touchComponentScanAbortRef.current = abortController;
+        // Seeded replay (demo/preview hosts): no network - stage the same
+        // progress animation, classify from the captured scan, and feed the
+        // exact same data-only entry mapping the live tail produces below.
+        if (seededScan) {
+          const wait = (ms: number) => new Promise<void>((resolve, reject) => {
+            const id = setTimeout(resolve, ms);
+            abortController.signal.addEventListener('abort', () => {
+              clearTimeout(id);
+              reject(new DOMException('Scan cancelled.', 'AbortError'));
+            }, { once: true });
+          });
+          try {
+            onStage?.('lines');
+            await wait(900);
+            onStage?.('classify');
+            await wait(700);
+            const systemComponentIds = buildSystemComponentIds(components);
+            const applied = applyAiResults({
+              aiData: seededScan.data,
+              calibrations: calibrationsNow,
+              systemComponentIds,
+              canvasWidth: dims.width,
+              canvasHeight: dims.height,
+            });
+            touchComponentEntriesRef.current = applied.measurements.map(m => ({
+              id: m.id,
+              key: m.componentId ?? 'uncertain',
+              componentId: m.componentId ?? null,
+              displayName: AI_COMPONENT_REGISTRY[m.semanticKey].displayName,
+              colour: getSemanticColour(m.semanticKey),
+              value: m.value,
+              kind: 'line' as const,
+              hidden: false,
+              points: m.canvasPoints.map(p => ({ x: p.x, y: p.y })),
+            }));
+            touchBridgeListeners.current.forEach(listener => listener());
+            return { ok: true, data: seededScan.data };
+          } catch (err) {
+            if (err instanceof DOMException && err.name === 'AbortError') {
+              return { ok: false, error: 'cancelled', cancelled: true };
+            }
+            return { ok: false, error: err instanceof Error ? err.message : 'Scan replay failed.' };
+          } finally {
+            if (touchComponentScanAbortRef.current === abortController) {
+              touchComponentScanAbortRef.current = null;
+            }
+          }
+        }
         try {
           const imgResponse = await fetch(imageUrl, { signal: abortController.signal });
           if (!imgResponse.ok) return { ok: false, error: 'Failed to load plan image for AI scan.' };
@@ -6222,8 +6282,88 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     }
   };
 
+  // ── AI Takeoff: seeded replay (demo/preview hosts) ─────────────
+  // Replays a CAPTURED scan instead of calling the network endpoints: the
+  // same staged progress animation the live pipeline shows, then the same
+  // handleApplyAiResults path the results modal uses (auto-applied with the
+  // captured area names, skipping the confirmation modal). Abort works at
+  // every stage exactly like a live scan.
+  const runSeededScan = async () => {
+    if (!seededScan || !quote) return;
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const bgImage = canvas.backgroundImage;
+    if (!bgImage) { setAiScanError('No plan image loaded.'); return; }
+
+    const abortController = new AbortController();
+    aiAbortRef.current = abortController;
+    setAiScanning(true);
+    setAiScanStage('outline');
+    setAiScanError(null);
+    setAiResults(null);
+    setAiScanRaw(null);
+    setAiStagedPageId(null);
+
+    const wait = (ms: number) => new Promise<void>((resolve, reject) => {
+      const id = setTimeout(resolve, ms);
+      abortController.signal.addEventListener('abort', () => {
+        clearTimeout(id);
+        reject(new DOMException('Scan cancelled.', 'AbortError'));
+      }, { once: true });
+    });
+
+    try {
+      await wait(900);
+      setAiScanStage('lines');
+      await wait(900);
+      setAiScanStage('classify');
+      await wait(700);
+
+      const data = seededScan.data;
+      setAiScanRaw(data);
+      // Skip the AiResultsModal confirmation entirely - apply the captured
+      // scan straight to the canvas with its area names and the fixed pitch.
+      const autoOverrides: Record<number, { name: string; pitch: number }> = {};
+      (data.roof_areas ?? []).forEach((area, idx) => {
+        autoOverrides[idx] = {
+          name: area.name || `Roof Area ${idx + 1}`,
+          pitch: seededScan.pitch ?? area.pitch_degrees ?? 0,
+        };
+      });
+      await handleApplyAiResults(autoOverrides, { aiDataOverride: data });
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === 'AbortError')) {
+        setAiScanError('Scan replay failed.');
+      }
+    } finally {
+      setAiScanning(false);
+      setAiScanStage('outline');
+      if (aiAbortRef.current === abortController) aiAbortRef.current = null;
+    }
+  };
+
+  // Seeded hosts with autoRun: fire the replay once, as soon as the canvas
+  // and a calibration are both ready (visitors land on a measured plan).
+  const seededAutoRunRef = useRef(false);
+  useEffect(() => {
+    if (!seededScan?.autoRun || seededAutoRunRef.current) return;
+    if (!canvasReady || calibrations.length === 0) return;
+    seededAutoRunRef.current = true;
+    const timer = setTimeout(() => {
+      void runSeededScan();
+    }, 400);
+    return () => clearTimeout(timer);
+  // runSeededScan closes over current scan state by design (same as the
+  // button handler); the ref guard makes this strictly one-shot.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seededScan, canvasReady, calibrations.length]);
+
   // ── AI Takeoff: scan handler (direct 3-scan pipeline) ──────────
   const handleAiScan = async () => {
+    if (seededScan) {
+      await runSeededScan();
+      return;
+    }
     const canvas = fabricRef.current;
     if (!canvas || !quote) return;
 
