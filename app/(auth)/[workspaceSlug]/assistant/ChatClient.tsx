@@ -35,5 +35,5 @@ export function ChatClient(props:Props){
    router.push(destination);
  }}/>
  {vpDebug ? <SaViewportDebug hostRef={hostRef}/> : null}
- <div aria-hidden="true" style={{ position: 'absolute', left: 6, bottom: 3, zIndex: 99, fontSize: 9, fontFamily: 'ui-monospace,monospace', color: '#7dd3fc', opacity: 0.9, pointerEvents: 'none' }}>host:{hostH}</div></div>;
+ <div aria-hidden="true" style={{ position: 'absolute', left: 6, bottom: 3, zIndex: 99, fontSize: 9, fontFamily: 'ui-monospace,monospace', color: '#7dd3fc', opacity: 0.9, pointerEvents: 'none' }}>host:{hostH}{vpDebug?' D1':' D0'}</div></div>;
 }

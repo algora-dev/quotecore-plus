@@ -20,6 +20,7 @@ import { useVoiceNote } from './useVoiceNote';
 import { useSpeechPlayback } from './useSpeechPlayback';
 import { useBuildVersion } from './useBuildVersion';
 import { AssistantIcon } from './AssistantIcon';
+import { SaViewportDebugInline, saDebugHostEnabled } from './SaViewportDebug';
 import { AssistantSpinner } from './AssistantSpinner';
 import { AssistantSheet } from './AssistantSheet';
 import { VoiceCapture } from './VoiceCapture';
@@ -550,7 +551,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     const read = () => {
       const vv = window.visualViewport;
       const r = root.current?.getBoundingClientRect();
-      setGeo(`v9 ih:${window.innerHeight} vv:${Math.round(vv?.height ?? 0)}@${Math.round(vv?.offsetTop ?? 0)} s:${vv?.scale?.toFixed(2) ?? '?'} p:${Math.round(r?.height ?? 0)} t:${Math.round(r?.top ?? 0)} w:${Math.round(r?.width ?? 0)} scr:${window.screen.width}x${window.screen.height}`);
+      setGeo(`v10 ih:${window.innerHeight} vv:${Math.round(vv?.height ?? 0)}@${Math.round(vv?.offsetTop ?? 0)} s:${vv?.scale?.toFixed(2) ?? '?'} p:${Math.round(r?.height ?? 0)} t:${Math.round(r?.top ?? 0)} w:${Math.round(r?.width ?? 0)} scr:${window.screen.width}x${window.screen.height}`);
     };
     read();
     window.visualViewport?.addEventListener('resize', read);
@@ -558,10 +559,16 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     const t = window.setInterval(read, 1500);
     return () => { window.visualViewport?.removeEventListener('resize', read); window.removeEventListener('resize', read); window.clearInterval(t); };
   }, []);
+  const [saDbg, setSaDbg] = useState(false);
+  useEffect(() => {
+    const gate = () => { if (saDebugHostEnabled()) setSaDbg(true); };
+    gate();
+  }, []);
   const hide = () => { voice.cancel(); speech.stop(); setSheet(null); onHide(); };
   const openAttachmentSheet = () => { voice.cancel(); speech.stop(); setSheet('attach'); };
 
   return <div ref={root} data-sa-root="true" className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true" data-sa-experience="visual-v2" data-mode={mode}>
+    {saDbg ? <SaViewportDebugInline/> : null}
     <div className={s.frame} ref={frame}>
       <header className={s.header}>
         <QcButton className={s.brandButton} aria-label="Assistant menu" aria-haspopup="dialog" aria-expanded={sheet === 'menu'} onClick={() => { voice.cancel(); setSheet('menu'); }}>
