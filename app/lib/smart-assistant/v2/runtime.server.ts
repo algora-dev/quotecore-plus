@@ -7,15 +7,9 @@ export class AssistantV2Error extends Error {
     constructor(public readonly code: string, message: string, public readonly status = 400) { super(message); }
 }
 export function v2SwitchOn(): boolean { return process.env.SMART_ASSISTANT_V2_ENABLED === 'true'; }
-// Platform adaptation (Supabase PostgREST retries serialization-class 40001 indefinitely):
-// deterministic workflow conflicts raise 23505 with these exact messages and must
-// map to 'conflict' (as the original 40001 design intended), not 'pending_creation'.
-const WORKFLOW_CONFLICT_MESSAGE = /^(workflow_changed|workflow_config_changed|workflow_task_changed|workflow_already_started|legacy_workflow_requires_review|not_committed|area_identity_changed|component_identity_changed|entry_identity_changed|edit_target_changed|draft_snapshot_changed|library_changed|proof_not_committed|Subscription ownership changed)$/;
 export function rpcError(error: {
     code?: string;
-    message?: string;
 } | null): AssistantV2Error {
-    if (error?.code === '23505' && WORKFLOW_CONFLICT_MESSAGE.test(error.message ?? '')) return new AssistantV2Error('conflict', 'The record changed. Review a fresh proposal before confirming.', 409);
     switch (error?.code) {
         case '42501': return new AssistantV2Error('forbidden', 'This action is not available with your current access.', 403);
         case 'P0004':

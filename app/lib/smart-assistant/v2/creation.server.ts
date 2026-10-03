@@ -8,7 +8,8 @@ import { TRADE_ALLOWED_MEASUREMENT_TYPES } from '@/app/lib/trades/measurement-ty
 import { isRecord, type AssistantSection } from '../section-permissions';
 import { batchClient, toJson } from './database';
 import { isUuid, parseActionView, type Access, type ActionView } from './contracts';
-import { AssistantV2Error, freshAccess, rpcError } from './runtime.server';
+import { AssistantV2Error, freshAccess } from './runtime.server';
+import { workflowRpcError } from './workflow-conflict';
 import { ProposalError, row, rows } from './action-domain';
 import { parseDraft, buildDraft, type DraftSpec, type DraftIdentities } from './draft-plan';
 import { draftReviewDiff, retainUnchangedAudits, type PlannedDraft } from '../workflow-controller/structural-diff';
@@ -18,9 +19,9 @@ export async function creationContext(client: SupabaseClient, access: Access) {
     await freshAccess(client, access, 'p4');
     const { data, error } = await batchClient(client).rpc('sa_v2_creation_context', {});
     if (error)
-        throw rpcError(error);
+        throw workflowRpcError(error);
     if (!isRecord(data))
-        throw rpcError(null);
+        throw workflowRpcError(null);
     return { data, genericTradesEnabled: process.env.GENERIC_TRADES_V1_ENABLED === 'true' };
 }
 export async function creationOptions(client: SupabaseClient, access: Access) {
@@ -73,33 +74,33 @@ export async function proposeDraft(client: SupabaseClient, access: Access, runId
         permissionRevision:access.permissionRevision },{kind:'draft_create',spec,editQuoteId:editing,briefStateId:meta?.briefStateId??null,briefRevision:meta?.briefRevision??null});
 }
 function parsedAction(value: unknown): ActionView { const action = parseActionView(value); if (!action)
-    throw rpcError(null); return action; }
+    throw workflowRpcError(null); return action; }
 export async function confirmCreation(client: SupabaseClient, access: Access, id: string, digest: string, version: number): Promise<ActionView> {
     await freshAccess(client, access, 'p4');
     const trusted = batchClient(createAdminClient());
     // The private row only selects a registered execution path. The RPC still
     // revalidates actor, digest, version, run, epoch, binding and all snapshots.
     const {data:stored,error:readError}=await (createAdminClient() as any).from('assistant_v2_actions').select('payload').eq('id',id).eq('company_id',access.companyId).eq('user_id',access.userId).maybeSingle();
-    if(readError)throw rpcError(readError);
-    if(!stored||!isRecord(stored.payload))throw rpcError({code:'P0002'});
+    if(readError)throw workflowRpcError(readError);
+    if(!stored||!isRecord(stored.payload))throw workflowRpcError({code:'P0002'});
     if(stored.payload.controllerVersion===1 && !libraryWorkflowEnabled())throw new ProposalError('The draft workflow is disabled on this deployment. Nothing was changed.');
     if(stored.payload.editQuoteId!=null){
         if(stored.payload.controllerVersion!==1 || !isUuid(stored.payload.editQuoteId))throw new ProposalError('This old draft-edit proposal is not safe to execute. Review the same draft again using the new controller.');
         if(stored.payload.genericTradesEnabled!==(process.env.GENERIC_TRADES_V1_ENABLED==='true'))throw new ProposalError('The creation configuration changed. Review a fresh proposal.');
         const outcome=await trusted.rpc('sa_v2_workflow_edit_confirm',{p_action_id:id,p_user_id:access.userId,p_digest:digest,p_version:version});
-        if(outcome.error)throw rpcError(outcome.error);
+        if(outcome.error)throw workflowRpcError(outcome.error);
         return parsedAction(outcome.data);
     }
     const claim = await trusted.rpc('sa_v2_creation_claim', { p_action_id: id, p_user_id: access.userId, p_digest: digest, p_version: version });
     if (claim.error)
-        throw rpcError(claim.error);
+        throw workflowRpcError(claim.error);
     if (!isRecord(claim.data))
-        throw rpcError(null);
+        throw workflowRpcError(null);
     if (claim.data.claimed !== true)
         return parsedAction(claim.data.action);
     let attempted = false;
     const mark = async (code: string) => { const outcome = await trusted.rpc('sa_v2_creation_uncertain', { p_action_id: id, p_user_id: access.userId, p_code: code }); if (outcome.error)
-        throw rpcError(outcome.error); return parsedAction(outcome.data); };
+        throw workflowRpcError(outcome.error); return parsedAction(outcome.data); };
     try {
         const payload = row(claim.data.payload, 'creation payload'), params = row(payload.params, 'creation parameters');
         const children = row(payload.children, 'creation children');
@@ -124,7 +125,7 @@ export async function confirmCreation(client: SupabaseClient, access: Access, id
             checkpoint = await trusted.rpc('sa_v2_creation_checkpoint', checkpointArgs);
         if (checkpoint.error) {
             console.error('[sa-v2] creation checkpoint needs reconciliation', { actionId: id, quoteId });
-            throw rpcError(checkpoint.error);
+            throw workflowRpcError(checkpoint.error);
         }
         await freshAccess(client, access, 'p4');
         // The canonical creation wrapper currently defaults currency. Use the
@@ -139,7 +140,7 @@ export async function confirmCreation(client: SupabaseClient, access: Access, id
         await freshAccess(client, access, 'p4');
         const finished = await trusted.rpc('sa_v2_creation_finish', { p_action_id: id, p_user_id: access.userId, p_children: toJson(children) });
         if (finished.error)
-            throw rpcError(finished.error);
+            throw workflowRpcError(finished.error);
         // The SQL finisher binds the quote and committed snapshot to the brief
         // in the SAME transaction as child creation/audit. No best-effort update.
         return parsedAction(finished.data);

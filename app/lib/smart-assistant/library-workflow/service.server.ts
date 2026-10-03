@@ -4,7 +4,8 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 import { isUuid, type Access } from '../v2/contracts';
 import { canonical, ProposalError } from '../v2/action-domain';
 import { requireEdits } from '../v2/actions.server';
-import { freshAccess, rpcError } from '../v2/runtime.server';
+import { freshAccess } from '../v2/runtime.server';
+import { workflowRpcError } from '../v2/workflow-conflict';
 import { batchClient, toJson } from '../v2/database';
 import { addCard } from '../v2/session.server';
 import { creationContext, proposeDraft } from '../v2/creation.server';
@@ -51,7 +52,7 @@ function assertCurrent(state:StoredBrief|null,access:Access,revision?:number):as
 async function loadState(access:Access,conversationId:string,stateId:string,revision:number):Promise<StoredBrief>{
   if(!isUuid(stateId)||!Number.isSafeInteger(revision)||revision<1)throw new ProposalError('A current working-brief identity and revision are required.');
   const {data,error}=await admin().from('assistant_v2_draft_briefs').select(FIELDS).eq('id',stateId).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId).maybeSingle();
-  if(error)throw rpcError(error);
+  if(error)throw workflowRpcError(error);
   const state=data as StoredBrief|null; assertCurrent(state,access,revision); return state;
 }
 async function snapshot(client:SupabaseClient,access:Access,state:StoredBrief,runId:string){
@@ -60,14 +61,14 @@ async function snapshot(client:SupabaseClient,access:Access,state:StoredBrief,ru
     return null;
   }
   const {data,error}=await batchClient(createAdminClient()).rpc('sa_v2_workflow_quote_snapshot',{p_user_id:access.userId,p_quote_id:state.produced_quote_id});
-  if(error)throw rpcError(error);
+  if(error)throw workflowRpcError(error);
   const found=data as Record<string,unknown>|null;
   const quote=found?.quote as Record<string,unknown>|undefined;
   if(!state.committed_plan||!state.committed_snapshot||!found||canonical(found)!==canonical(state.committed_snapshot)
     ||quote?.status!=='draft'||quote?.entry_mode!=='manual'||quote?.acceptance_token!=null||quote?.accepted_at!=null||quote?.withdrawn_at!=null||quote?.declined_at!=null
     ||!Array.isArray(found.area_entries)||found.area_entries.length){
     const conflict=await batchClient(createAdminClient()).rpc('sa_v2_workflow_conflict',{p_user_id:access.userId,p_conversation_id:state.conversation_id,p_run_id:runId,p_state_id:state.id,p_revision:state.revision,p_baseline:toJson(state.committed_snapshot)});
-    if(conflict.error)throw rpcError(conflict.error);
+    if(conflict.error)throw workflowRpcError(conflict.error);
     throw new ProposalError('The saved draft changed outside this working brief or is no longer editable. Review the same draft in the builder. Nothing was overwritten and no replacement draft was created.');
   }
   return found;
@@ -80,8 +81,8 @@ function refreshAutomaticSelections(brief:WorkingBrief){
 async function persist(access:Access,conversationId:string,runId:string,brief:WorkingBrief,epoch:number,state:WorkflowState,previous?:StoredBrief):Promise<StoredBrief>{
   const {data,error}=await batchClient(createAdminClient()).rpc('sa_v2_workflow_save',{p_user_id:access.userId,p_conversation_id:conversationId,p_run_id:runId,
     p_state_id:previous?.id??null,p_expected_revision:previous?.revision??null,p_epoch:epoch,p_brief:toJson(brief),p_state:state});
-  if(error)throw rpcError(error);
-  if(!data||typeof data!=='object'||Array.isArray(data)||!isUuid(data.id))throw rpcError(null);
+  if(error)throw workflowRpcError(error);
+  if(!data||typeof data!=='object'||Array.isArray(data)||!isUuid(data.id))throw workflowRpcError(null);
   return data as unknown as StoredBrief;
 }
 
@@ -108,7 +109,7 @@ async function evaluate(client:SupabaseClient,access:Access,conversationId:strin
     previousPlan:stored.committed_plan,quoteSnapshot,
   });
   const attached=await batchClient(createAdminClient()).rpc('sa_v2_workflow_attach',{p_user_id:access.userId,p_run_id:runId,p_state_id:stored.id,p_revision:stored.revision,p_action_id:action.id});
-  if(attached.error)throw rpcError(attached.error);
+  if(attached.error)throw workflowRpcError(attached.error);
   await addCard(runId,access,`draft-proposal-${action.id}`,WORKFLOW_SECTIONS,{kind:'proposal',title:action.title,actionId:action.id});
   return {state:'proposal',answer:stored.produced_quote_id?'Review the changes to the same draft, then use Confirm. Nothing has been applied yet.':'Review the job and calculated quantities below, then use Confirm to create the draft.',actionId:action.id};
 }
@@ -128,7 +129,7 @@ export async function applyDraftChoice(client:SupabaseClient,access:Access,conve
   const state=await loadState(access,conversationId,choice.stateId,choice.revision);
   if(choice.choice==='cancel'){
     const {error}=await batchClient(createAdminClient()).rpc('sa_v2_workflow_cancel',{p_user_id:access.userId,p_conversation_id:conversationId,p_run_id:runId,p_state_id:state.id,p_revision:state.revision,p_close:false});
-    if(error)throw rpcError(error);
+    if(error)throw workflowRpcError(error);
     return {state:'cancelled',answer:state.produced_quote_id?'Draft preparation stopped. The existing draft was not deleted or changed.':'Draft preparation stopped. No draft was created.'};
   }
   const env=await environment(client,access);
@@ -150,7 +151,7 @@ export async function applyDraftChoice(client:SupabaseClient,access:Access,conve
 export async function closeDraftWorkflow(client:SupabaseClient,access:Access,conversationId:string,runId:string){
   await workflowAccess(client,access);
   const {error}=await batchClient(createAdminClient()).rpc('sa_v2_workflow_cancel',{p_user_id:access.userId,p_conversation_id:conversationId,p_run_id:runId,p_state_id:null,p_revision:null,p_close:true});
-  if(error)throw rpcError(error);
+  if(error)throw workflowRpcError(error);
 }
 export async function readWorkingMeasurements(client:SupabaseClient,access:Access,conversationId:string,args:Record<string,unknown>){
   await workflowAccess(client,access);
@@ -164,7 +165,7 @@ export async function pendingDraftWorkflowContext(client:SupabaseClient,access:A
   await workflowAccess(client,access);
   const {data,error}=await admin().from('assistant_v2_draft_briefs').select(FIELDS).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId)
     .not('workflow_state','in','(cancelled,closed)').order('updated_at',{ascending:false}).limit(1).maybeSingle();
-  if(error)throw rpcError(error);
+  if(error)throw workflowRpcError(error);
   const state=data as StoredBrief|null;
   if(!state||visibleRun&&!visibleRun(state.last_run_id)&&!visibleRun(state.start_run_id)||access.historyAfter&&Date.parse(state.created_at)<Date.parse(access.historyAfter))return null;
   assertCurrent(state,access);
@@ -180,7 +181,7 @@ export async function readDraftTaskHint(client:SupabaseClient,access:Access,conv
   await workflowAccess(client,access);
   const {data,error}=await admin().from('assistant_v2_draft_briefs').select(FIELDS).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId)
     .not('workflow_state','in','(cancelled,closed)').order('updated_at',{ascending:false}).limit(1).maybeSingle();
-  if(error)throw rpcError(error);
+  if(error)throw workflowRpcError(error);
   const state=data as StoredBrief|null;
   if(!state||state.brief?.version!==1||state.permission_revision!==access.permissionRevision||access.historyAfter&&Date.parse(state.created_at)<Date.parse(access.historyAfter))return null;
   return {startRunId:state.start_run_id,lastRunId:state.last_run_id,areaLabels:state.brief.areas.map(a=>a.label),state:state.workflow_state};
