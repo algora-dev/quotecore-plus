@@ -33,6 +33,11 @@ export interface TakeoffTradeConfig {
   slug: string;
   /** Human trade name shown in copy. */
   tradeName: string;
+  /** Noun for the thing being measured, used in entry copy
+   *  ("Add your roof plan" / "Add your wall plan"). */
+  planNoun: string;
+  /** Entry step-2 summary of the standard components (exact copy). */
+  standardComponentsSummary: string;
   /** Whether areas need a pitch/slope entry. Roofing only, for now. */
   requiresPitch: boolean;
   /** Unit choices offered in step 1. */
@@ -66,6 +71,8 @@ const SQUARES: TakeoffUnitOption = {
 export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   slug: 'free-roof-takeoff',
   tradeName: 'roofing',
+  planNoun: 'roof',
+  standardComponentsSummary: 'Roof area, ridge, hip, valley, barge and spouting.',
   requiresPitch: true,
   unitOptions: [METRIC, IMPERIAL, SQUARES],
   placeholderComponents: [
@@ -84,6 +91,8 @@ export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
 export const CLADDING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   slug: 'free-cladding-takeoff',
   tradeName: 'cladding',
+  planNoun: 'wall',
+  standardComponentsSummary: 'Building wrap, cavity battens, cladding, trims, soffits and openings.',
   requiresPitch: false,
   unitOptions: [METRIC, IMPERIAL],
   placeholderComponents: [
@@ -104,6 +113,8 @@ export const CLADDING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
 export const FLOORING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   slug: 'free-flooring-takeoff',
   tradeName: 'flooring',
+  planNoun: 'floor',
+  standardComponentsSummary: 'Timber plank, carpet, tile, underlay, skirting, scotia and transitions.',
   requiresPitch: false,
   unitOptions: [METRIC, IMPERIAL],
   placeholderComponents: [

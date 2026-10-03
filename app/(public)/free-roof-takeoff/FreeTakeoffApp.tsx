@@ -20,11 +20,12 @@ import { TOOL_COLLECTIONS } from '@/app/(marketing)/takeoff-demo/demo-data/basel
 import {
   ROOFING_TAKEOFF_CONFIG,
   resolveUnitOption,
+  type TakeoffTradeConfig,
   type TakeoffUnitSystem,
   type TakeoffPlaceholderComponent,
   type TakeoffComponentSpec,
 } from './tradeConfig';
-import { TakeoffOutputView, type TakeoffOutputExtras } from './TakeoffOutputView';
+import { TakeoffOutputView, type TakeoffOutputExtras, type TakeoffTrade } from './TakeoffOutputView';
 import { ComponentBuilderModal } from './ComponentBuilderModal';
 import { FreeTakeoffEntry } from './FreeTakeoffEntry';
 import { AI_PLACEHOLDER_COMPONENTS } from './aiPlaceholders';
@@ -50,7 +51,6 @@ import { decodeCalibrationMetadata } from '@/app/lib/takeoff/calibrationCodec';
 import { DEFAULT_ROOF_PITCH } from '@/app/lib/takeoff/precision/touchNumberEntry';
 import type { CalibrationCommitPayload } from '@/app/lib/takeoff/precision/touchCalibration';
 
-const CONFIG = ROOFING_TAKEOFF_CONFIG;
 
 const TakeoffWorkstation = dynamic(
   () =>
@@ -84,6 +84,7 @@ type Stage =
       run: number;
       planDataUrl: string;
       startedAt: number;
+      finishedAt: number;
       unitSystem: TakeoffUnitSystem;
       components: ToolComponent[];
       specs: TakeoffComponentSpec[];
@@ -134,32 +135,35 @@ const FREE_SESSION_BUNDLE = {
 // ─── Takeoff phase (mirrors the app's TakeoffPage composition) ──────────────
 
 function TakeoffPhase({
+  config,
   planDataUrl,
   unitSystem,
   components,
   onFinish,
   onExit,
 }: {
+  config: TakeoffTradeConfig;
   planDataUrl: string;
   unitSystem: TakeoffUnitSystem;
   components: ToolComponent[];
   onFinish: (payload: TakeoffFinishPayload) => void;
   onExit: () => void;
 }) {
-  const unitOption = resolveUnitOption(unitSystem, CONFIG);
+  const unitOption = resolveUnitOption(unitSystem, config);
 
+  const planLabel = `${config.planNoun[0].toUpperCase()}${config.planNoun.slice(1)} Plan`;
   const quote = useMemo<QuoteRow>(
     () =>
       ({
         id: 'tool-quote',
         company_id: 'tool-company',
-        customer_name: 'Roof Plan',
+        customer_name: planLabel,
         quote_number: 1,
         measurement_system: unitOption.lengthUnit === 'meters' ? 'metric' : 'imperial_ft',
-        trade: 'roofing',
+        trade: config.tradeName,
         currency: 'NZD',
       }) as unknown as QuoteRow,
-    [unitOption.lengthUnit],
+    [unitOption.lengthUnit, planLabel, config.tradeName],
   );
 
   // Touch-first: the free tool always ships the new engine (no server flag).
@@ -180,7 +184,7 @@ function TakeoffPhase({
     return () => { document.body.style.overflow = previous; };
   }, []);
 
-  const backHref = '/free-roof-takeoff';
+  const backHref = `/${config.slug}`;
   const [pitch, setPitch] = useState(DEFAULT_ROOF_PITCH);
   const [resolvedPage1Id, setResolvedPage1Id] = useState<string | null>(null);
   const [confirmedCalibration, setConfirmedCalibration] = useState<{
@@ -358,9 +362,8 @@ function TakeoffPhase({
 
 // ─── Wizard + stage machine ─────────────────────────────────────────────────
 
-export function FreeTakeoffApp() {
+export function FreeTakeoffApp({ config = ROOFING_TAKEOFF_CONFIG }: { config?: TakeoffTradeConfig }) {
   const [stage, setStage] = useState<Stage>({ phase: 'landing' });
-  const [device, setDevice] = useState<Device>('desktop');
   const [orientationNoticeOpen, setOrientationNoticeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -371,10 +374,11 @@ export function FreeTakeoffApp() {
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editingSpecId, setEditingSpecId] = useState<string | null>(null);
 
+  // Post-hydration device check: deriving this in render would mismatch the
+  // SSR HTML (server has no window), so it must stay an effect.
   useEffect(() => {
-    const d = detectDevice();
-    setDevice(d);
-    if (d === 'mobile') setOrientationNoticeOpen(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (detectDevice() === 'mobile') setOrientationNoticeOpen(true);
   }, []);
 
   const openBuilder = () => {
@@ -390,7 +394,7 @@ export function FreeTakeoffApp() {
     setBuilderOpen(false);
   };
 
-  const unitOption = resolveUnitOption(unitSystem, CONFIG);
+  const unitOption = resolveUnitOption(unitSystem, config);
 
   const specComponents = useMemo<ToolComponent[]>(
     () =>
@@ -407,8 +411,8 @@ export function FreeTakeoffApp() {
   );
 
   const userComponents = useMemo<ToolComponent[]>(
-    () => [...(componentChoice === 'ours' ? toComponents(CONFIG.placeholderComponents) : []), ...specComponents],
-    [componentChoice, specComponents],
+    () => [...(componentChoice === 'ours' ? toComponents(config.placeholderComponents) : []), ...specComponents],
+    [componentChoice, specComponents, config],
   );
 
   // Keep AI-only system rows alongside the real manual targets. The
@@ -419,7 +423,7 @@ export function FreeTakeoffApp() {
     [userComponents],
   );
 
-  const activeSpecs = componentChoice === 'own' ? specs : [];
+  const activeSpecs = useMemo(() => (componentChoice === 'own' ? specs : []), [componentChoice, specs]);
 
   const pdfPicker = usePdfPagePicker();
 
@@ -485,10 +489,11 @@ export function FreeTakeoffApp() {
   if (stage.phase === 'output') {
     const extras: TakeoffOutputExtras = {
       planDataUrl: stage.planDataUrl,
-      elapsedMs: Date.now() - stage.startedAt,
+      elapsedMs: stage.finishedAt - stage.startedAt,
     };
     return (
       <TakeoffOutputView
+        trade={config.tradeName as TakeoffTrade}
         payload={{ ...stage.payload, unitSystem: stage.unitSystem, componentSpecs: stage.specs }}
         extras={extras}
         unitSystem={stage.unitSystem}
@@ -516,6 +521,7 @@ export function FreeTakeoffApp() {
       <div className="fixed inset-0 z-40 overflow-hidden flex flex-col bg-slate-50">
         <TakeoffPhase
           key={stage.run}
+          config={config}
           planDataUrl={stage.planDataUrl}
           unitSystem={stage.unitSystem}
           components={stage.components}
@@ -526,6 +532,7 @@ export function FreeTakeoffApp() {
               run: stage.run,
               planDataUrl: stage.planDataUrl,
               startedAt: stage.startedAt,
+              finishedAt: Date.now(),
               unitSystem: stage.unitSystem,
               components: stage.components,
               specs: stage.specs,
@@ -540,7 +547,7 @@ export function FreeTakeoffApp() {
 
   // The entry presentation consumes existing state; the measuring owner above
   // is deliberately unchanged (including the stable desktop/touch bridge).
-  return <FreeTakeoffEntry step={step} unitSystem={unitSystem} unitOption={unitOption}
+  return <FreeTakeoffEntry config={config} step={step} unitSystem={unitSystem} unitOption={unitOption}
     componentChoice={componentChoice} specs={specs} componentCount={userComponents.length} error={error}
     orientationNoticeOpen={orientationNoticeOpen} onDismissOrientation={() => setOrientationNoticeOpen(false)}
     onUnitChange={setUnitSystem} onChoiceChange={setComponentChoice}
