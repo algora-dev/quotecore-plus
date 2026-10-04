@@ -763,14 +763,15 @@ export async function POST(req: NextRequest) {
       : { scan1: 5000, scan2: 8000, scan3: 8000 };
 
     // ── AI Assist points quota ──────────────────────────────────────
-    // Point cost per quality level: low=2, medium=4, high=8.
-    // Points are deducted once on scan1 (the full cost). Scans 2+3 are
-    // continuations of the same scan session - no additional deduction.
+    // Point cost per quality level: low=2, medium=6, high=12 (pointCost.ts).
+    // Per-scan billing (owner 2026-10-04): the AREA scan (scan1) charges its
+    // tier; the COMPONENT scan charges the tier chosen for it when it starts
+    // (scan2). Scan3 is the tail of the component pass - no deduction.
     // Canonical point costs (2/6/12) - shared constant, keep in sync with
     // pointCost.ts and the SQL queue path (see parity checklist).
     const pointsToSpend = getAiScanPointCost(qualityLevel);
 
-    if (stage === 'scan1') {
+    if (stage === 'scan1' || stage === 'scan2') {
       const admin = createServiceClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,

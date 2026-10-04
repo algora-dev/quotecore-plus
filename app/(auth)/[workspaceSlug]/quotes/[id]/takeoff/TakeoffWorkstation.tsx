@@ -4490,6 +4490,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           });
           const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
           if (!scan2Response.ok || !scan2Result.success) {
+            if (scan2Response.status === 402 && scan2Result.pointsExhausted) {
+              setAiPoints(prev =>
+                prev ? { ...prev, remaining: scan2Result.pointsRemaining ?? 0, isBlocked: true } : null,
+              );
+              return { ok: false, error: 'Out of AI points - measure the components manually.' };
+            }
             if (scan2Response.status === 429 && scan2Result.code === 'identity_cap') {
               setShowFreeScanExhaustion(true);
               return { ok: false, error: 'No free AI scans left today - finish measuring manually, or create a free account.' };
@@ -6597,6 +6603,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       });
       const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
       if (!scan2Response.ok || !scan2Result.success) {
+        if (scan2Response.status === 402 && scan2Result.pointsExhausted) {
+          setAiPoints(prev =>
+            prev ? { ...prev, remaining: scan2Result.pointsRemaining ?? 0, isBlocked: true } : null,
+          );
+          setAiScanError('Out of AI points - measure the components manually.');
+          return { completed: false };
+        }
         if (scan2Response.status === 429 && scan2Result.code === 'identity_cap') {
           setShowFreeScanExhaustion(true);
           setAiScanError(scan2Result.error || 'Out of free AI scans for today.');

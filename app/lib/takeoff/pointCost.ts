@@ -1,6 +1,9 @@
 // AI Assist point costs - SINGLE SOURCE OF TRUTH for client and server code.
 // Canonical policy (locked by Shaun 2026-09-11): Astra tiers consume more of
 // the customer's allowance. low=2, medium=6, high=12.
+// Per-scan billing (owner 2026-10-04): the area scan (scan1) charges its tier
+// AND the component scan charges the tier chosen for it when it starts
+// (scan2); scan3 is the tail of the component pass and never charges.
 // NOTE: the SQL queue path (create_ai_scan_job / check_and_deduct_ai_points
 // callers) cannot import this file - keep SQL values in sync manually and
 // see tests + migration comments that tie them to this constant.
