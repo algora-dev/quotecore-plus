@@ -44,3 +44,12 @@ export * from './core/faceGeometry';
 
 export * from './core/purchaseLedger';
 export * from './core/receiverSafety';
+
+export * from './core/simplerPolicy';
+export * from './core/lessMaterialPolicy';
+
+export { PROVISIONAL_REUSE_POLICY, fixedSourceFaces, displacedValleyReceivers, acceptsReplay, replayProvisionalDestinations } from './core/provisionalReuse';
+export type { ProvisionalReuseReport } from './core/provisionalReuse';
+
+export { searchSalvage, salvageEligibility, SALVAGE_POLICY, validateSalvageCertificate } from './core/salvage';
+export type { SalvageResult, SalvageSearchReport, SalvageCertificate, SalvageGroup } from './core/salvageModel';

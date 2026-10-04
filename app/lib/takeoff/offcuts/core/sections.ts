@@ -10,6 +10,7 @@ export interface MaterialSection {
   id: string; faceId: string; role: SectionRole; supplyBlockId: string;
   /** External reuse generation; shared-bank continuations stay at generation 0. */
   reuseGeneration: number;
+  salvagedFiller?: boolean;
   /** Contiguous visible region in scene coordinates. Never an invented envelope. */
   region: Region;
   demandIds: string[]; offcutIds: string[]; rootDemandIds: string[];
@@ -55,7 +56,7 @@ export function materialSections(s: Solution): MaterialSection[] {
       supply.continuationDemandIds.has(d.id) ? 'bank-continuation' : o?.sourceFaceId===d.faceId ? 'self-fill' : 'offcut';
     const block = supply.blockByPlacement.get(d.id) ?? `unresolved:${d.id}`;
     const key = JSON.stringify([d.faceId,role,block,depths.get(d.id)??0,p.kind==='reuse'?o?.sourceFaceId:'',p.kind==='reuse'?o?.cutSetId:'',
-      p.kind==='reuse'?p.rotation:'purchased-operation']);
+      p.kind==='reuse'?p.rotation:'purchased-operation'])+(s.salvage?.groups.some(g=>g.replacements.some(r=>r.demandId===d.id))?'|salvaged-filler':'');
     const member: Member = { demand:d, scene:mapRegion(d.cover,q=>demandPointToScene(q,d)), root:p.kind==='new'?d.id:o?.rootDemandId??o?.sourceDemandId??'',
       role,block,depth:depths.get(d.id)??0,offcutId:p.kind==='reuse'?o?.id:undefined,source:o?.sourceFaceId,cutKind:o?.cutKind,cutSet:o?.cutSetId };
     const bucket=buckets.get(key)??[]; bucket.push(member); buckets.set(key,bucket);
@@ -72,6 +73,7 @@ export function materialSections(s: Solution): MaterialSection[] {
         const b=bounds(local); netCoverAreaM2+=area(local)/1e6;cutPieceRunLinealM+=(b.maxY-b.minY)/1000;
       }
       sections.push({id:`section:${first.demand.faceId}:${fingerprint([key,index,included.map(i=>i.m.demand.id)])}`,
+        ...(s.salvage?.groups.some(g=>g.replacements.some(r=>r.demandId===first.demand.id))?{salvagedFiller:true}:{}),
         faceId:first.demand.faceId,role:first.role,supplyBlockId:first.block,reuseGeneration:first.depth,region,
         demandIds:unique(included.map(i=>i.m.demand.id)),offcutIds:unique(included.map(i=>i.m.offcutId)),
         rootDemandIds:unique(included.map(i=>i.m.root)),sourceFaceIds:unique(included.map(i=>i.m.source)),

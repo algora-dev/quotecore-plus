@@ -57,7 +57,7 @@ export function validateDraft(draft: Draft): Issue[] {
     const expected = generateDemands(draft.roof, draft.faces, draft.profile, draft.settings, s.bankLayout).map(d => ({ ...d, lap: s.lapByFace[d.faceId] }));
     if (fingerprint(expected) !== fingerprint(s.demands)) issues.push({ severity: 'error', code: 'DEMAND_TAMPER', message: 'The sheet requirements no longer match the current reviewed roof.' });
   } catch (error) { issues.push({ severity: 'error', code: 'INPUTS', message: String(error) }); }
-  if((s.engineVersion==='2.13'||s.engineVersion==='2.14')&&draft.settings.stockMode==='bank-first'){
+  if((s.engineVersion==='2.13'||s.engineVersion==='2.14'||s.engineVersion==='2.15'||s.engineVersion==='2.16'||s.engineVersion==='2.17')&&draft.settings.stockMode==='bank-first'){
     const expected=[...adjacentValleyParents(draft.faces,draft.roof)].filter(([id])=>receiverFreshOrder(s.demands.filter(d=>d.faceId===id)))
       .map(([id,parent])=>`${parent}/${id}`).sort();
     const actual=s.receiverSafety?.families.flatMap(f=>f.faceIds.map(id=>`${f.sourceFaceId}/${id}`)).sort();

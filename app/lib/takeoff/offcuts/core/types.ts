@@ -76,6 +76,10 @@ export interface SolveSettings {
   /** Total source phase band as a fraction of one effective cover (0..1).
    * The default is +/- half a cover, not two unrelated full-cover allowances. */
   receiverPhaseCoverFraction?: number;
+  /** Conservative destination-only replay. Missing = enabled; false keeps the V2.15 search. */
+  provisionalReuse?: boolean;
+  /** Additional replay budget, 0..20000 ms. Does not enlarge the bank-search budget. */
+  provisionalMaxMilliseconds?: number;
   optimiseLapDirections: boolean;
   maxTrials: number; maxMilliseconds: number; maxSheets: number;
 }
@@ -164,7 +168,7 @@ export interface BankLayout {
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14';
+  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14' | '2.15' | '2.16' | '2.17';
   layoutId?: string;
   layoutLabel?: string;
   objective?: PlanObjective;
@@ -186,6 +190,9 @@ export interface Solution {
   /** V1 never produces an approved manufacturing/order list. */
   orderReady: false;
   receiverSafety?: import('./receiverSafety').ReceiverSafetyReport;
+  provisionalReuse?: import('./provisionalReuse').ProvisionalReuseReport;
+  /** Optional terminal-filler substitutions; original plan remains a separate saved plan. */
+  salvage?: import('./salvageModel').SalvageCertificate;
 }
 export interface SolveRequest { roof: RoofInput; faces: RoofFace[]; profile: Profile; settings: SolveSettings }
 export interface Draft {
@@ -228,6 +235,29 @@ export interface SimplerAssessment {
   minimumScoreReduction: number; scoreReduction: number;
   benefits: string[];
 }
+/** Bounded material saving is measured in effective-cover m², never prices or
+ * percentage of the roof. These are product guardrails, not labour estimates. */
+export type MaterialSavingTier = 'equivalent' | 'very-small' | 'small' | 'moderate';
+export type WorkflowMetric = Exclude<keyof WorkflowQuality, 'model' | 'score'>;
+export interface MaterialSavingAssessment {
+  policy: 'material-trade-off-v1';
+  accepted: boolean;
+  reason: 'within-policy' | 'insufficient-material-saving' | 'workflow-budget' | 'workflow-limit' | 'reuse-depth-limit';
+  baselineLayoutId: string;
+  tier: MaterialSavingTier;
+  baselineCoverAreaM2: number; proposedCoverAreaM2: number;
+  baselineLinealM: number; proposedLinealM: number;
+  savedCoverAreaM2: number; savedLinealM: number; newSheetDelta: number;
+  minimumSavingM2: number; strongSavingM2: number;
+  previousWorkflow: WorkflowQuality; proposedWorkflow: WorkflowQuality;
+  workflowDelta: Record<WorkflowMetric, number>;
+  previousReuseDepth: number; proposedReuseDepth: number;
+  /** Increases cannot be cancelled out by improvements elsewhere. */
+  addedWorkPoints: number; maxAddedWorkPoints: number;
+  maxIncreases: Record<WorkflowMetric, number>;
+  maxAdditionalReuseDepth: number; maximumReuseDepth: number;
+  exceededLimits: string[];
+}
 export interface PlanComparison {
   objective: 'simpler' | 'less-material'; previousLayoutId: string;
   previous: PlanQuality; proposed: PlanQuality;
@@ -235,6 +265,7 @@ export interface PlanComparison {
   changedFaceIds: string[];
   /** Final, physically checked trade-off against Recommended, never an accumulating allowance. */
   simplification?: SimplerAssessment;
+  materialSaving?: MaterialSavingAssessment;
 }
 export interface TraceEvent {
   step: number; action: string; message: string;
@@ -248,9 +279,10 @@ export interface TraceCandidate {
   selected: boolean; reason: string;
   evaluationStage?: 'bank-search' | 'final-physical';
   simplification?: SimplerAssessment;
+  materialSaving?: MaterialSavingAssessment;
 }
 export interface DecisionTrace {
-  schemaVersion: 1; engineVersion: '2.14'; requestFingerprint: string;
+  schemaVersion: 1; engineVersion: '2.13' | '2.14' | '2.15' | '2.16' | '2.17'; requestFingerprint: string;
   objective: PlanObjective; selectedTrial: number | null;
   events: TraceEvent[]; candidates: TraceCandidate[];
   truncated: boolean; droppedEvents: number;
@@ -261,6 +293,7 @@ export interface DecisionTrace {
 }
 export interface AlternativePlanOptions {
   objective: 'simpler' | 'less-material';
+  /** Compatible Recommended anchor for either objective, not the currently displayed alternative. */
   previous: Solution;
   /** Full solutions are not needed to exclude plans already shown. */
   excludedSignatures?: string[];

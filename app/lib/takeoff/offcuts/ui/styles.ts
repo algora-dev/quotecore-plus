@@ -58,4 +58,27 @@ svg [data-section]:focus-visible{outline:none}svg [data-section]:focus-visible>p
 .qc-advisory{border:1px solid var(--of-border-divider);border-radius:var(--of-radius-small);padding:8px 10px;margin:12px 0;font-size:12px}.qc-advisory summary{font-weight:600}.qc-advisory button{min-height:32px;padding:4px 12px}.qc-repair-card{background:var(--of-bg-surface);padding:10px;border-radius:var(--of-radius-small)}#qc-drawing-settings pre{font-size:11px;max-height:200px;overflow:auto} .qc-note small{display:block;margin-top:8px}
 
 .qc-save-status{font-size:11px;color:var(--of-text-secondary);max-width:190px}.qc-resume .qc-actions{display:flex;flex-wrap:wrap;gap:6px}@media(max-width:700px){.qc-save-status{max-width:110px;font-size:10px}}
+
+/* V2.15: comparisons beside the plan selector, not below a scrolling inspector. */
+.qc-choice-title{font-size:14px;font-weight:650;margin:10px 0 4px}
+.qc-choice-description{margin:4px 0 10px}.qc-plan-variants .qc-field{margin-top:0}
+.qc-plan-comparison{padding:12px;border:1px solid var(--of-border-divider);background:var(--of-bg-surface)}
+.qc-plan-comparison>small{color:var(--of-text-secondary);display:block}
+.qc-plan-comparison .qc-comparison-amount{display:block;font-size:17px;line-height:1.4;color:var(--of-text-primary);margin:4px 0}
+.qc-plan-comparison p{margin:5px 0}.qc-plan-comparison .qc-work-changes{margin:6px 0 0}.qc-work-changes summary{padding-left:0}
+.qc-alternative-options button>span{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.qc-alternative-anchor{font-size:11px;margin:5px 0}.qc-result-dialog{${tokenFallbacks}background:var(--of-bg-surface);color:var(--of-text-body);border:1px solid var(--of-border-divider);border-radius:var(--of-radius-dialog);box-shadow:var(--of-shadow-dialog);padding:24px;width:min(440px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);overflow:auto;box-sizing:border-box}
+.qc-result-dialog::backdrop{background:rgba(25,27,32,.22)}
+.qc-result-dialog h2{margin:0 0 12px;font-size:20px;line-height:1.35;color:var(--of-text-primary)}
+.qc-result-dialog p{font-size:14px;line-height:1.55;margin:10px 0}.qc-result-dialog .qc-muted{font-size:12px}
+.qc-result-dialog button{width:100%;margin-top:12px}
+@media(forced-colors:active){.qc-result-dialog{background:Canvas;color:CanvasText;border-color:CanvasText}.qc-plan-comparison{border-color:CanvasText}}
+
+.qc-salvage-offer,.qc-salvage-summary{border:1px solid #d5dae3;border-radius:12px;padding:14px;margin:14px 0;background:#fff}
+.qc-salvage-offer p,.qc-salvage-summary p{font-size:13px;line-height:1.5;margin:8px 0}
+.qc-salvage-offer small{display:block;color:#596273;line-height:1.5;margin-top:8px}
+.qc-salvage-group{padding:12px 0;border-top:1px solid #e1e4ea;margin-top:12px}
+.qc-salvage-sequence{background:#fff5ed;padding:10px;border-radius:8px}
+.qc-salvage-table{overflow-x:auto}.qc-salvage-summary .qc-actions{flex-wrap:wrap;gap:8px}
+.qc-salvage-summary button[aria-pressed="true"]{border-color:#c2410c;background:#fff5ed}
 `;

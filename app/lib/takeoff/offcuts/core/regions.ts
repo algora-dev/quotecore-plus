@@ -132,7 +132,7 @@ export function components(r: Region): Region[] {
 }
 /** Fit with fixed rib registration (no sideways sliding). Piece shape, not its
  * bounding rectangle, controls acceptance. All interval endpoints are checked. */
-export function fitY(available: Region, required: Region): number | null {
+export function fitY(available: Region, required: Region, preference: 'centre'|'lower'|'upper' = 'centre'): number | null {
   if (!available.length || !required.length || !isMonotone(required)) return null;
   // A single physical remnant can be non-monotone (e.g. a rounded stock length
   // leaves a thin return strip joined around a cut). Rejecting the entire piece
@@ -164,7 +164,7 @@ export function fitY(available: Region, required: Region): number | null {
   }
   for (const [lo, hi] of feasible) {
     if (!Number.isFinite(lo) || !Number.isFinite(hi)) continue;
-    const dy = (lo + hi) / 2;
+    const dy = preference==='lower'?hi:preference==='upper'?lo:(lo + hi) / 2;
     if (area(subtract(required, translate(available, 0, dy))) <= Math.max(1e-4, area(required) * 1e-10)) return dy;
   }
   return null;

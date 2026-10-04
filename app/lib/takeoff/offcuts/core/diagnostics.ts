@@ -128,6 +128,7 @@ export function traceText(trace: DecisionTrace): string {
   const header = [`Find Offcuts ${trace.engineVersion} — ${trace.objective}`, `Request: ${trace.requestFingerprint}`,
     `Selected trial: ${trace.selectedTrial ?? 'none'}; budget reached: ${trace.budgetReached}`, 'Legacy ranking proxy (not site labour): 8×relationships + 3×reuse runs + 5×split sets + recut operations + 2×filler separators + 2×primary operations.'];
   if(trace.objective==='simpler')header.push('V2.14 simpler workflow: 12×relationships + 10×split sets + 4×reuse runs + 3×filler groups + 4×primary operations + 2×stock-length groups + recut runs + fresh-cut runs. Final acceptance also requires a bounded material/sheet increase and meaningful benefit.');
+  if(trace.objective==='less-material')header.push('V2.15 material trade-off: effective-cover m² saved versus additional grouped work. No percentage or money threshold. 10 m² is substantial; smaller savings require progressively fewer extra tasks. Positive increases, component limits and reuse depth are checked after physical validation.');
   if (trace.historic) header.push('HISTORIC: the plan was manually edited after this search.');
   for (const e of trace.events) header.push(`\n${String(e.step).padStart(3, '0')} ${e.action}: ${e.message}`, e.faceIds?.join(', ') ?? '', e.data ? JSON.stringify(e.data, null, 2) : '');
   header.push('\nCANDIDATE COMPARISON', JSON.stringify(trace.candidates, null, 2));

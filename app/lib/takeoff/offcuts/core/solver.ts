@@ -1,3 +1,5 @@
+import { validateSalvageCertificate } from './salvageModel';
+import { replayProvisionalDestinations } from './provisionalReuse';
 import type { AlternativePlanOptions, AlternativePlanResult, DecisionTrace, PlanObjective, PlanQuality, Demand, Issue, Lap, Offcut, Placement, Solution, SolveRequest } from './types';
 import { fingerprint } from './math';
 import { area, bounds, rotate180, subtract, translate } from './regions';
@@ -11,6 +13,7 @@ import { protectValleyReceivers, validateReceiverSafety } from './receiverSafety
 import { rootSheetLedger } from './purchaseLedger';
 import { planQuality, planSignature, comparePlans } from './diagnostics';
 import { simplerAssessment, simplerPercent, SIMPLER_POLICY } from './simplerPolicy';
+import { lessMaterialAssessment, rankMaterialCandidates, LESS_MATERIAL_POLICY } from './lessMaterialPolicy';
 export function facesRevision(request: SolveRequest): string {
   return fingerprint({ faces: request.faces, profile: request.profile, settings: request.settings });
 }
@@ -24,14 +27,30 @@ export interface SearchHooks {
 }
 /** Returns distinct complete layouts, never random reruns of the same plan. */
 export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}): Solution[] {
-  const solutions = request.settings.stockMode === 'bank-first'
+  let solutions = request.settings.stockMode === 'bank-first'
     ? optimiseBankLayouts(request, hooks) : [optimiseLegacy(request, hooks)];
   for (const solution of solutions) {
     if(request.settings.stockMode==='bank-first')protectValleyReceivers(request,solution,hooks.shouldCancel);
-    solution.engineVersion='2.14';
+    solution.engineVersion='2.17';
     solution.layoutId=planSignature(solution);
     solution.issues.push(...validateSolution(solution));
     if (solution.issues.some(i => i.severity === 'error')) solution.status = 'invalid';
+  }
+  // V2.16 leaves the proven sequential plans intact. Only the best physically
+  // checked Recommended incumbent is eligible for a transactional destination
+  // replay. Alternatives still use their existing bounded V2.15 policies.
+  if(request.settings.stockMode==='bank-first'&&(hooks.planSearch?.objective??'recommended')==='recommended'){
+    const incumbent=solutions.filter(s=>s.status!=='invalid').sort((a,b)=>a.metrics.newMaterialMm2-b.metrics.newMaterialMm2||planQuality(a).complexity-planQuality(b).complexity)[0];
+    if(incumbent){
+      const replay=replayProvisionalDestinations(request,incumbent,validateSolution,hooks);
+      const selected=replay.solution;
+      selected.provisionalReuse=replay.report;
+      selected.search.elapsedMs+=replay.report.elapsedMs;
+      if(selected.decisionTrace)selected.decisionTrace.events.push({step:selected.decisionTrace.events.length+1,action:'provisional-destination-replay',
+        message:replay.report.status==='improved'?'Committed one physically rechecked material tree; original main-bank stock is unchanged.':'Kept the incumbent; no unverified placeholder result can replace it.',
+        data:{report:replay.report}});
+      if(selected!==incumbent)solutions=[selected,...solutions.filter(s=>s!==incumbent)];
+    }
   }
   // The bank search retains coherent macro candidates first. Compare the actual
   // protected purchase cost of those retained candidates, never the stale
@@ -39,24 +58,32 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
   const goal=hooks.planSearch?.objective??'recommended';
   const reference=hooks.planSearch?.referenceSolution;
   const assessments=new Map(goal==='simpler'&&reference?solutions.map(s=>[s,simplerAssessment(reference,s,request.profile,hooks.planSearch?.maxExtraMaterialPercent)]):[]);
+  const materialAssessments=new Map(goal==='less-material'&&reference?solutions.map(s=>[s,lessMaterialAssessment(reference,s,request.profile)]):[]);
   solutions.sort((a,b)=>Number(a.status==='invalid')-Number(b.status==='invalid') ||
     (goal==='simpler'?Number(!assessments.get(a)?.accepted)-Number(!assessments.get(b)?.accepted)||
       (assessments.get(a)?.proposedWorkflow.score??planQuality(a).complexity)-(assessments.get(b)?.proposedWorkflow.score??planQuality(b).complexity)||a.metrics.newMaterialMm2-b.metrics.newMaterialMm2
       :a.metrics.newMaterialMm2-b.metrics.newMaterialMm2||planQuality(a).complexity-planQuality(b).complexity));
+  if(goal==='less-material'&&reference){
+    const valid=solutions.filter(s=>s.status!=='invalid');
+    solutions=[...rankMaterialCandidates(valid,s=>materialAssessments.get(s)!),...solutions.filter(s=>s.status==='invalid')];
+  }
   for(const s of solutions)if(s.decisionTrace){
     const quality=planQuality(s);
     s.decisionTrace.candidates=s.decisionTrace.candidates.map(c=>{
-      const final=goal==='simpler'?solutions.find(p=>p.decisionTrace?.selectedTrial===c.trial):c.selected?s:undefined;
+      const final=goal!=='recommended'?solutions.find(p=>p.decisionTrace?.selectedTrial===c.trial):c.selected?s:undefined;
       if(!final)return {...c,evaluationStage:'bank-search' as const,reason:c.reason+'; bank-search score before receiver safety'};
-      const assessment=assessments.get(final);
+      const assessment=assessments.get(final),materialSaving=materialAssessments.get(final);
       return {...c,quality:planQuality(final),signature:final.layoutId!,evaluationStage:'final-physical' as const,
-        ...(assessment?{simplification:assessment}:{}),
-        reason:final.status==='invalid'?'failed-final-physical-check':assessment&&!assessment.accepted?'rejected-final-'+assessment.reason:
+        ...(assessment?{simplification:assessment}:{}),...(materialSaving?{materialSaving}:{}),
+        reason:final.status==='invalid'?'failed-final-physical-check':assessment&&!assessment.accepted?'rejected-final-'+assessment.reason:materialSaving&&!materialSaving.accepted?'rejected-final-'+materialSaving.reason:
           c.selected?'selected-final-physical-plan-after-receiver-check':'eligible-final-physical-candidate'};
     });
     if(assessments.has(s))s.decisionTrace.events.push({step:s.decisionTrace.events.length+1,action:'simpler-trade-off',
       message:'Final workflow benefit and material/sheet limits compared against Recommended after all physical and receiver checks.',
       data:{assessment:assessments.get(s)}});
+    if(materialAssessments.has(s))s.decisionTrace.events.push({step:s.decisionTrace.events.length+1,action:'material-saving-trade-off',
+      message:'Absolute effective-cover saving and added grouped work compared against Recommended after physical and receiver checks.',
+      data:{assessment:materialAssessments.get(s)}});
     s.decisionTrace.events.push({step:s.decisionTrace.events.length+1,action:'final-purchase-ledger',message:'Final quantities after receiver safety. The selected score is final; other bank-search candidate scores are identified as pre-refinement.',data:{quality,quantities:rootSheetLedger(s).totals}});
   }
   if(solutions[0]?.decisionTrace)hooks.onDecisionTrace?.(solutions[0].decisionTrace);
@@ -80,8 +107,8 @@ export function optimiseAlternative(request: SolveRequest, options: AlternativeP
   const expected=generateDemands(request.roof,request.faces,request.profile,request.settings,previous.bankLayout)
     .map(d=>({...d,lap:previous.lapByFace[d.faceId]}));
   if(fingerprint(expected)!==fingerprint(previous.demands))throw new Error('Previous sheet geometry does not match the reviewed roof.');
-  if(objective==='simpler'&&previous.objective==='simpler')throw new Error('Use the Recommended plan as the simpler reference; extra-material allowances cannot accumulate.');
-  const cap=simplerPercent(options.maxExtraMaterialPercent), attempt=options.attempt??0;
+  if(previous.salvage||previous.objective&&previous.objective!=='recommended')throw new Error('Use the Recommended plan as the reference; material and workflow allowances cannot accumulate across alternatives.');
+  const cap=objective==='simpler'?simplerPercent(options.maxExtraMaterialPercent):SIMPLER_POLICY.maxExtraPercent, attempt=options.attempt??0;
   if(!Number.isInteger(attempt)||attempt<0||attempt>10000)throw new Error('Invalid alternative attempt number.');
   const exclusions=[...new Set([planSignature(previous),...(options.excludedSignatures??[])])];
   if(exclusions.length>128)throw new Error('Too many previous layouts in one search session.');
@@ -93,25 +120,27 @@ export function optimiseAlternative(request: SolveRequest, options: AlternativeP
     const comparison=comparePlans(previous,solution,objective);
     // Independent result gate: objective labels must describe a real improvement.
     const assessment=objective==='simpler'?simplerAssessment(previous,solution,request.profile,cap):undefined;
-    const improved=assessment?assessment.accepted:comparison.suppliedDeltaMm2 < -1;
+    const materialSaving=objective==='less-material'?lessMaterialAssessment(previous,solution,request.profile):undefined;
+    const improved=assessment?.accepted??materialSaving?.accepted??false;
     if(improved&&comparison.changedFaceIds.length){
       if(assessment)comparison.simplification=assessment;
+      if(materialSaving)comparison.materialSaving=materialSaving;
       solution.comparison=comparison;
       return{status:'found',solution,comparison,trace:solution.decisionTrace!,message:objective==='simpler'
         ?'Found a simpler workflow within the material limit. Review the changes below.'
-        :'Found a distinct plan requiring less purchased material. Review the changed cutting sequence.'};
+        :'Found a worthwhile material saving within the cutting-work limits. Review the trade-off below.'};
     }
   }
   if(!trace)throw new Error('Alternative search produced no diagnostic trace.');
-  if(objective==='simpler'){
-    trace={...trace,selectedTrial:null,candidates:trace.candidates.map(c=>({...c,selected:false})),
-      events:[...trace.events,{step:trace.events.length+1,action:'no-worthwhile-simplification',message:'No distinct, fully checked candidate met both the workflow benefit and bounded purchase limits. Existing plan unchanged.',
-        data:{baselineLayoutId:previous.layoutId,maxExtraPercent:cap,maxExtraCoverAreaM2:SIMPLER_POLICY.maxExtraCoverAreaM2}}]};
-    hooks.onDecisionTrace?.(trace);
-  }
+  trace={...trace,selectedTrial:null,candidates:trace.candidates.map(c=>({...c,selected:false})),
+    events:[...trace.events,{step:trace.events.length+1,action:objective==='simpler'?'no-worthwhile-simplification':'no-worthwhile-material-saving',
+      message:'No distinct, fully checked candidate met the requested trade-off limits. Existing plan unchanged.',
+      data:objective==='simpler'?{baselineLayoutId:previous.layoutId,maxExtraPercent:cap,maxExtraCoverAreaM2:SIMPLER_POLICY.maxExtraCoverAreaM2}:
+        {baselineLayoutId:previous.layoutId,policy:LESS_MATERIAL_POLICY.id,strongSavingM2:LESS_MATERIAL_POLICY.strongSavingM2,minimumSavingM2:LESS_MATERIAL_POLICY.minimumSavingM2}}]};
+  hooks.onDecisionTrace?.(trace);
   return{status:'no-better-distinct-plan',solution:null,comparison:null,trace,
     message:objective==='simpler'?`No worthwhile simpler plan was found within ${cap}% extra material (maximum 10 m² of cover). Your current plan has been kept. This is a bounded search, not proof that no alternative exists.`
-      :'No distinct lower-material plan was found within the search budget. Your current plan has been kept. This is not proof of an optimum.'};
+      :'No worthwhile lower-material plan was found within the cutting-work limits. Smaller savings need almost unchanged cutting work. Your current plan has been kept. This is a bounded search, not proof of an optimum.'};
 }
 export function optimiseLegacy(request: SolveRequest, hooks: SearchHooks = {}): Solution {
   const clock = hooks.now ?? (() => performance.now()), started = clock();
@@ -286,6 +315,6 @@ export function validateSolution(s: Solution): Issue[] {
       error('STALE_TOTALS', `The ${key} total does not match the current physical allocations.`);
     }
   }
-  issues.push(...rootSheetLedger(s).issues,...validateReceiverSafety(s));
+  issues.push(...rootSheetLedger(s).issues,...validateReceiverSafety(s),...validateSalvageCertificate(s));
   return issues;
 }
