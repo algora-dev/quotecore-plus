@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   const options = authCookieOptionsForLocation(url.hostname, url.pathname, request.headers.get('x-qcp-auth-namespace'));
   if (options.name !== AUTH_COOKIE_NAME) return finish({ status: 'disabled' }, 403);
   if (url.search.length > 4096) return finish({ status: 'disabled' }, 400);
-  const requested = safeReturnPath(url.searchParams.get('redirect')) ?? '/assistant';
+  const requested = safeReturnPath(url.searchParams.get('redirect')) ?? '/';
   // No cookie is not a reason to contact Auth, or to invent a new session.
   if (!authCookieInventory(request.headers.get('cookie') ?? '').normalCount) return finish({ status: 'anonymous', reason: 'missing' }, 401);
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return finish({ status: 'unavailable' }, 503);

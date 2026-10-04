@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'QuoteCore+',
     short_name: 'QuoteCore+',
     description: 'Measure, quote and manage jobs from one place.',
-    start_url: '/',
+    start_url: '/login',
     display: 'standalone',
     background_color: '#ffffff',
     theme_color: '#000000',

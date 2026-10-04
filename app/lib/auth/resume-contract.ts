@@ -32,7 +32,7 @@ export function safeReturnPath(value: unknown): string | null {
 }
 
 export function loginReturnPath(search: URLSearchParams): string {
-  return safeReturnPath(search.get('redirect')) ?? safeReturnPath(search.get('next')) ?? '/assistant';
+  return safeReturnPath(search.get('redirect')) ?? safeReturnPath(search.get('next')) ?? '/';
 }
 
 /** A resume decision can only choose this user's current workspace or the
@@ -40,16 +40,19 @@ export function loginReturnPath(search: URLSearchParams): string {
 export function workspaceResumeDestination(requested: string, slug: string): string | null {
   if (!/^[a-z0-9][a-z0-9_-]{0,119}$/i.test(slug) || slug.startsWith('demo-')) return null;
   const base = `/${encodeURIComponent(slug)}`;
-  const path = safeReturnPath(requested) ?? '/assistant';
+  const path = safeReturnPath(requested) ?? '/';
   const url = new URL(path, INTERNAL);
   url.searchParams.delete(RESUME_MARKER);
   if (url.pathname === '/pwa/open') {
     const delivery = url.searchParams.get('delivery');
-    return delivery && UUID.test(delivery) ? `/pwa/open?delivery=${encodeURIComponent(delivery)}` : `${base}/assistant`;
+    return delivery && UUID.test(delivery) ? `/pwa/open?delivery=${encodeURIComponent(delivery)}` : base;
   }
   if (url.pathname === '/') return base;
   if (url.pathname === base || url.pathname.startsWith(`${base}/`)) return url.pathname + url.search + url.hash;
-  return `${base}/assistant`;
+  // Owner 2026-10-04: resume lands on the workspace HOME by default; an
+  // explicit /assistant request still opens the assistant page.
+  if (url.pathname === '/assistant') return `${base}/assistant`;
+  return base;
 }
 
 export type ResumeResult =
