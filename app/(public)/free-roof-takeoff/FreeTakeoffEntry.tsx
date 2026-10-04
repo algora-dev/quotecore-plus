@@ -14,14 +14,15 @@ import './free-takeoff-ui.css';
  * session, device, component and canvas callback. No second wizard state. */
 export function FreeTakeoffEntry({ config, step, unitSystem, unitOption, componentChoice, specs, componentCount, error,
   orientationNoticeOpen, onDismissOrientation, onUnitChange, onChoiceChange, onBack, onContinue,
-  onCreateComponent, onEditComponent, onRemoveComponent, onFile, children, pdfModal }: {
+  onCreateComponent, onEditComponent, onRemoveComponent, onFile, onExamplePlan, exampleLoading, children, pdfModal }: {
   config: TakeoffTradeConfig; step: 1 | 2 | 3; unitSystem: TakeoffUnitSystem; unitOption: TakeoffUnitOption;
   componentChoice: TakeoffComponentChoice; specs: TakeoffComponentSpec[]; componentCount: number;
   error: string | null; orientationNoticeOpen: boolean; onDismissOrientation: () => void;
   onUnitChange: (unit: TakeoffUnitSystem) => void; onChoiceChange: (choice: TakeoffComponentChoice) => void;
   onBack: () => void; onContinue: () => void; onCreateComponent: () => void;
   onEditComponent: (id: string) => void; onRemoveComponent: (id: string) => void;
-  onFile: (file: File) => void; children?: ReactNode; pdfModal: ReactNode;
+  onFile: (file: File) => void; onExamplePlan: () => void; exampleLoading: boolean;
+  children?: ReactNode; pdfModal: ReactNode;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
   const previousStep = useRef(step);
@@ -114,6 +115,12 @@ export function FreeTakeoffEntry({ config, step, unitSystem, unitOption, compone
               aria-describedby={error ? 'qc-free-upload-help qc-free-upload-error' : 'qc-free-upload-help'} aria-invalid={!!error}
               onChange={event => { const file = event.target.files?.[0]; if (file) onFile(file); }} />
           </label>
+          <div className="qc-free-example-row">
+            <QcButton className="qc-free-example" onClick={onExamplePlan} disabled={exampleLoading}>
+              {exampleLoading ? 'Loading the example plan…' : 'Try the example plan'}
+            </QcButton>
+            <p className="qc-free-help">Loads straight into the tool — nothing to download.</p>
+          </div>
           {error && <p id="qc-free-upload-error" role="alert" className="qc-free-error">{error}</p>}
           {config.samplePlan && <div className="qc-free-sample-row">
             <a className="qc-button" href={config.samplePlan.href} download={config.samplePlan.download}>
@@ -127,7 +134,6 @@ export function FreeTakeoffEntry({ config, step, unitSystem, unitOption, compone
           </details>
         </>}
         <p className="qc-free-session-note"><QcIcon name="info" />Keep this page open while you work. Your takeoff stays in this session unless you choose to save it to QuoteCore+.</p>
-        <Link href="/takeoff-demo" className="qc-free-text-link qc-free-mobile-demo">No plan? Use a sample plan<QcIcon name="arrow" /></Link>
       </div>
     </div>
     {children}
