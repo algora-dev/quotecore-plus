@@ -193,6 +193,8 @@ interface ComponentWithMeasurements {
 }
 
 interface Props {
+  /** Demo presentation only; the real save + pricing still complete first. */
+  demoFinishHref?: string;
   /** Presentation only. False for the mounted desktop owner under touch. */
   desktopAppearance?: boolean;
   workspaceSlug: string;
@@ -328,6 +330,7 @@ interface TakeoffSnapshot {
 }
 
 export function TakeoffWorkstation({
+  demoFinishHref,
   desktopAppearance = true,
   workspaceSlug,
   quote,
@@ -3034,7 +3037,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         // navigateAfter=true means the user clicked "Save & Continue" with no
         // new data drawn - also fine to navigate, but we do NOT mark dirty=false.
         if (navigateAfter) {
-          if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+          if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(demoFinishHref ?? `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
         }
         return true;
       }
@@ -3344,7 +3347,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // flow stays inside the workstation and reloads to the new page.
       if (navigateAfter) {
         console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
-        if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+        if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(demoFinishHref ?? `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
       } else {
         console.log('[SaveTakeoff] Save complete (no navigation).');
       }

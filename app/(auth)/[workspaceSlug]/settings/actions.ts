@@ -1,4 +1,5 @@
 'use server';
+import { assertDemoExternalAllowed } from '@/app/lib/demo/egress';
 
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -21,6 +22,7 @@ export async function updateCompanySettings(
   settings: CompanySettings
 ) {
   const profile = await requireCompanyContext();
+  await assertDemoExternalAllowed(profile.company_id);
   const supabase = await createSupabaseServerClient();
 
   // Verify user owns this company (use server-side profile, not client params)
@@ -81,6 +83,7 @@ export async function updateCompanySettings(
 /** Toggle the per-user Chat Assistant (Q) visibility. */
 export async function updateAssistantEnabled(enabled: boolean): Promise<void> {
   const profile = await requireCompanyContext();
+  await assertDemoExternalAllowed(profile.company_id);
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase

@@ -1,0 +1,2 @@
+{"passed":true,"scope":"Seed orchestration/real pricing, mocked DB/storage/sharp; NOT a live database test","writes":43,"rows":81,"libraries":3,"components":20,"jobs":8}
+{"passed":true,"strictDomainModules":9,"typedSeedBatches":43,"scope":"Actual generated Insert types plus pure domain modules; not a full application typecheck"}

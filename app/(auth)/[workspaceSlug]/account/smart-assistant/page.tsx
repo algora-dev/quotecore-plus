@@ -8,6 +8,8 @@ import { readSectionPermissions } from '@/app/lib/smart-assistant/section-permis
 import { AssistantLibrarySettings } from './AssistantLibrarySettings';
 import { readWorkflowSettings } from '@/app/lib/smart-assistant/workflow-controller/settings.server';
 import type { WorkflowSettings } from '@/app/lib/smart-assistant/workflow-controller/settings-contracts';
+import { getActiveDemoContext } from '@/app/lib/demo/context';
+import { DemoFeatureGate } from '@/app/components/demo/DemoFeatureGate';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +17,13 @@ export const dynamic = 'force-dynamic';
  * Smart Assistant config portal (dark launch). Flag-off companies get a 404 -
  * the page must not exist for them, matching route/API refusal.
  */
-export default async function SmartAssistantConfigPage() {
+export default async function SmartAssistantConfigPage({ params }: { params: Promise<{ workspaceSlug: string }> }) {
   const profile = await requireCompanyContext();
+  const { workspaceSlug } = await params;
+  const demoContext = await getActiveDemoContext(profile.company_id);
+  if (demoContext && demoContext.tutorialState.chapter !== 'smart-assistant' && demoContext.tutorialState.chapter !== 'complete') {
+    return <DemoFeatureGate title="Try Smart Assistant" description="Smart Assistant is unlocked through the guided demo so its real actions stay inside the prepared scenario." chapter="smart-assistant" workspaceSlug={workspaceSlug} href={`/${workspaceSlug}/account/smart-assistant`} />;
+  }
   const supabase = await createSupabaseServerClient();
 
   // Exposure gate: refuse before reading anything.

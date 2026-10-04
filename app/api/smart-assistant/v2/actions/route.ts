@@ -1,3 +1,5 @@
+import { demoAssistantActor } from '@/app/lib/demo/assistant.server';
+import { demoAssistantCommitted } from '@/app/lib/demo/assistant-events';
 import type { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { body, exactKeys, failure, reply } from '@/app/lib/smart-assistant/v2/http.server';
@@ -8,6 +10,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 export async function POST(req: NextRequest) {
     try {
+        await demoAssistantActor();
         const data = await body(req);
         if (!exactKeys(data, ['actionId', 'command', 'proofDigest', 'version', 'companyId']) || !isUuid(data.actionId) || !isUuid(data.companyId) || !['confirm', 'cancel'].includes(String(data.command)) || typeof data.proofDigest !== 'string' || !/^[a-f0-9]{64}$/.test(data.proofDigest) || !Number.isSafeInteger(data.version) || Number(data.version) < 1)
             throw new AssistantV2Error('invalid', 'Invalid confirmation.');
@@ -19,6 +22,7 @@ export async function POST(req: NextRequest) {
             revalidatePath(`/${access.workspaceSlug}/quotes/${action.target.id}`, 'layout');
             revalidatePath(`/${access.workspaceSlug}/quotes`);
         }
+        await demoAssistantCommitted(access.companyId,action);
         return reply({ ok: true, action });
     }
     catch (error) {

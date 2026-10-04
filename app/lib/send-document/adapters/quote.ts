@@ -1,3 +1,4 @@
+import { assertDemoExternalAllowed } from '@/app/lib/demo/egress';
 /**
  * Quote adapter for the unified send-document pipeline.
  *
@@ -178,6 +179,7 @@ export async function ensureQuoteAcceptanceToken(
   quoteId: string,
   companyId: string,
 ): Promise<string | null> {
+  await assertDemoExternalAllowed(companyId);
   const token = crypto.randomUUID();
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 30);

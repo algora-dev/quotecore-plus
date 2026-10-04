@@ -1,3 +1,5 @@
+import { getActiveDemoContext } from '@/app/lib/demo/context';
+import { DemoFeatureGate } from '@/app/components/demo/DemoFeatureGate';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata, Viewport } from 'next';
@@ -40,6 +42,8 @@ export default async function SmartAssistantChatPage({
   const sp = searchParams ? await searchParams : {};
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
+  const demo = await getActiveDemoContext(profile.company_id);
+  if (demo && demo.tutorialState.chapter !== 'smart-assistant' && demo.tutorialState.chapter !== 'complete') return <DemoFeatureGate title="Try Smart Assistant" description="This is real account control, not Q. Start this guide chapter to use the demo's limited allowance." chapter="smart-assistant" workspaceSlug={workspaceSlug} href={`/${workspaceSlug}/assistant`} />;
 
   const { data: flagOn } = await supabase.rpc('smart_assistant_enabled', {
     p_company_id: profile.company_id,

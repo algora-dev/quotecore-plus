@@ -1,4 +1,6 @@
 'use server';
+import { isDemoCompany } from '@/app/lib/demo/context';
+
 
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { alertEnabled, emailAlertEnabled } from '@/app/lib/alerts/prefs';
@@ -43,6 +45,9 @@ export async function stampQuoteViewed(token: string): Promise<void> {
     .select('id, company_id, quote_number, customer_name, viewed_at, job_status, accepted_at, declined_at')
     .eq('acceptance_token', token)
     .maybeSingle();
+
+  // Demo documents use the separate expiring demo-token surface, never production notifications.
+  if (quote && await isDemoCompany(quote.company_id)) return;
 
   if (!quote || quote.viewed_at) return; // already stamped -> idempotent no-op
 
@@ -116,6 +121,9 @@ export async function stampOrderViewed(token: string): Promise<void> {
     .eq('acceptance_token', token)
     .maybeSingle();
 
+  // Demo documents use the separate expiring demo-token surface, never production notifications.
+  if (order && await isDemoCompany(order.company_id)) return;
+
   if (!order || order.viewed_at) return;
 
   const now = new Date().toISOString();
@@ -177,6 +185,9 @@ export async function stampInvoiceViewed(token: string): Promise<void> {
     .select('id, company_id, invoice_number, customer_name, status, viewed_at')
     .eq('public_token', token)
     .maybeSingle();
+
+  // Demo documents use the separate expiring demo-token surface, never production notifications.
+  if (invoice && await isDemoCompany(invoice.company_id)) return;
 
   if (!invoice) return;
   // Flip to 'viewed' on the first genuine open from EITHER 'draft' or 'sent'.

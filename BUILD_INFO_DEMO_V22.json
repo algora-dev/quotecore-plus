@@ -1,0 +1,18 @@
+{
+  "version": "demo-v2.2-testing-candidate",
+  "prepared": "2026-10-03",
+  "baseline_commit": "77e99efd",
+  "baseline_zip_sha256": "d055ae6c73fa9c8b73272961c2ecc7d9fc5287183bcb869034e75d7d76579c8b",
+  "patch_type": "cumulative_changed_files_only",
+  "supersedes": "quotecore-demo-v2-increment-1-changed-files.zip",
+  "runtime_tested": "Node v22.16.0 offline subsets",
+  "runtime_required": "Node 24",
+  "offline_demo_tests": 34,
+  "existing_geometry_tests": 217,
+  "typed_seed_batches": 43,
+  "seed_rows": 81,
+  "full_app_build_completed": false,
+  "live_integration_completed": false,
+  "deployed": false,
+  "read_first": "START_HERE_DEMO_V22_RETURN.md"
+}

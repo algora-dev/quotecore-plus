@@ -94,6 +94,9 @@ export default async function RootLayout({
 }>) {
   const headerSet = await headers();
   const host = headerSet.get('host') || '';
+  // Do not send disposable demo inputs, verification codes or customer previews
+  // to a third-party session replay service. Normal analytics are unchanged.
+  const demoRequest = headerSet.get('x-qcp-auth-namespace') === 'demo' || host.split(':')[0] === 'demo.quote-core.com';
   const lang = htmlLang(host);
 
   return (
@@ -109,13 +112,13 @@ export default async function RootLayout({
             pointerenter, plays to completion even if hover ends mid-sweep. */}
         <PillShimmerScript />
         {/* Microsoft Clarity analytics (heatmaps / session replay). */}
-        <Script id="ms-clarity" strategy="afterInteractive">
+        {!demoRequest && <Script id="ms-clarity" strategy="afterInteractive">
           {`(function(c,l,a,r,i,t,y){
             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
             t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
             y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           })(window, document, "clarity", "script", "yjsu5zv8xr");`}
-        </Script>
+        </Script>}
       </body>
     </html>
   );

@@ -1,4 +1,5 @@
 import 'server-only';
+import type { Database } from '@/app/lib/supabase/database.types';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { demoAuthCookieOptions } from '@/app/lib/supabase/cookie-config';
@@ -10,7 +11,7 @@ import { demoAuthCookieOptions } from '@/app/lib/supabase/cookie-config';
  */
 export async function createDemoRouteClient(hostname: string | null) {
   const cookieStore = await cookies();
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

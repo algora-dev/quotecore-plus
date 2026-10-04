@@ -1,11 +1,10 @@
+import { isDemoRequest, DEMO_NAMESPACE_HEADER } from '@/app/lib/demo/routing';
+import { guardDemoRequest } from '@/app/lib/demo/request-gate';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAuthCookieBatch, temporaryAuthFailure } from '@/app/lib/supabase/cookie-batch';
 import { createServerClient } from '@supabase/ssr';
 import {
-  AUTH_COOKIE_NAME,
-  authCookieOptions,
-  demoAuthCookieOptions,
-  DEMO_COOKIE_NAME,
+  authCookieOptionsForLocation,
   legacyAuthCookiePrefix,
 } from '@/app/lib/supabase/cookie-config';
 import {
@@ -142,13 +141,6 @@ function isAal1Allowed(pathname: string): boolean {
   return AAL1_ALLOWED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-/** AI-costing/assistant API routes (demo guard scope, Architecture V2 §11
- *  interim). Calls carrying a demo cookie are treated as demo-context:
- *  master-switch check + cookie-view rewrite so routes resolve the demo
- *  tenant. Normal users' calls (no demo cookie) are untouched. */
-const DEMO_AI_API_PATTERN =
-  /^\/api\/(smart-assistant(\/|$)|takeoff\/(ai-scan-v3|scan-jobs)|app\/(parse-document|ai-quota))/;
-
 function isPublicPath(pathname: string): boolean {
   // All /free-* paths are public (calculators, generators, hub page).
   // This covers all current and future free tool routes without needing
@@ -185,6 +177,25 @@ function isStaticAsset(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.nextUrl.hostname;
+  // These headers are derived here; ignore incoming copies from a caller.
+  request.headers.delete(DEMO_NAMESPACE_HEADER);
+  request.headers.delete('x-qcp-request-path');
+  const demoNamespace = isDemoRequest(hostname, pathname, request.nextUrl.origin, request.headers.get('referer'));
+  request.headers.set(DEMO_NAMESPACE_HEADER, demoNamespace ? 'demo' : 'normal');
+  request.headers.set('x-qcp-request-path', pathname);
+  if (hostname === 'demo.quote-core.com' && /^\/(login|signup|onboarding|2fa|auth)(\/|$)/.test(pathname)) {
+    return NextResponse.redirect(new URL(pathname + request.nextUrl.search, 'https://app.quote-core.com'), 307);
+  }
+  if ((hostname === 'quote-core.com' || hostname === 'app.quote-core.com') && (pathname === '/demo' || /^\/demo-[a-z0-9-]+(?:\/|$)/i.test(pathname))) {
+    return NextResponse.redirect(new URL(pathname + request.nextUrl.search, 'https://demo.quote-core.com'), 307);
+  }
+  if (hostname === 'demo.quote-core.com' && pathname === '/') return NextResponse.redirect(new URL('/demo', request.url));
+  // Static assets are shared. Dynamic demo routes/APIs cannot use the normal
+  // preview/public-domain shortcut, which previously skipped the demo guard.
+  if (demoNamespace && !pathname.startsWith('/_next') && !/\.(svg|png|jpg|jpeg|webp|ico|css|js|woff2?|ttf|mp4|pdf)$/.test(pathname)) {
+    return guardDemoRequest(request);
+  }
+
 
   // -- /var/* hard-404 (2026-09-25) ----------------------------------
   // Docs RSC payloads leaked absolute /var/task/... paths (AWS Lambda
@@ -247,17 +258,17 @@ export async function middleware(request: NextRequest) {
     // renders marketing (via shouldRenderMarketing in app/page.tsx) and
     // auth paths stay on the same origin.
     if (isStaticAsset(pathname)) {
-      return NextResponse.next();
+      return NextResponse.next({ request });
     }
     // Public paths and root are allowed without auth
     if (pathname === '/' || isPublicPath(pathname)) {
-      return NextResponse.next();
+      return NextResponse.next({ request });
     }
     // Fall through to auth check below (same as app domain)
   } else if (isPublicDomain) {
     // Allow static assets, API routes, and public paths on the public domain
     if (isStaticAsset(pathname)) {
-      return NextResponse.next();
+      return NextResponse.next({ request });
     }
     // Auth journey paths ALWAYS run on the app domain (2026-07-15).
     // Previously /login, /signup, /onboarding and /auth/* rendered on the
@@ -273,7 +284,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(appUrl, 308);
     }
     if (pathname === '/' || isPublicPath(pathname)) {
-      return NextResponse.next();
+      return NextResponse.next({ request });
     }
     // Redirect everything else to the app domain
     const appUrl = new URL(pathname, `https://app.quote-core.com`);
@@ -281,49 +292,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(appUrl, 308);
   }
 
-  // ── Demo AI guard (interim wiring; full route metering lands with the SA
-  // agent return). Runs before the static-asset skip because /api/* short-
-  // circuits there. Demo cookie present + AI route = demo-context call. ──
-  if (
-    DEMO_AI_API_PATTERN.test(pathname) &&
-    request.cookies.getAll().some(c => c.name.startsWith(DEMO_COOKIE_NAME))
-  ) {
-    const check = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/demo_ai_enabled`,
-      {
-        method: 'POST',
-        headers: {
-          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          'Content-Type': 'application/json',
-        },
-        body: '{}',
-      }
-    );
-    const enabled = check.ok ? (await check.json()) === true : false;
-    if (!enabled) {
-      return NextResponse.json({ error: 'Demo AI is currently switched off.' }, { status: 403 });
-    }
-    const legacyPrefix = legacyAuthCookiePrefix();
-    const demoChunks = request.cookies.getAll().filter(c => c.name.startsWith(DEMO_COOKIE_NAME));
-    for (const c of request.cookies.getAll()) {
-      if (c.name.startsWith(AUTH_COOKIE_NAME) || (legacyPrefix && c.name.startsWith(legacyPrefix))) {
-        request.cookies.delete(c.name);
-      }
-    }
-    for (const c of demoChunks) {
-      request.cookies.set(c.name.replace(DEMO_COOKIE_NAME, AUTH_COOKIE_NAME), c.value);
-    }
-    return NextResponse.next({ request });
-  }
-
   // Skip static assets and API routes
   if (isStaticAsset(pathname)) {
-    return NextResponse.next();
+    return NextResponse.next({ request });
   }
 
   // Skip public paths
   if (pathname === '/' || isPublicPath(pathname)) {
-    return NextResponse.next();
+    return NextResponse.next({ request });
   }
 
   // Demo workspace routes (slug prefix demo-) authenticate via the DEMO
@@ -342,7 +318,7 @@ export async function middleware(request: NextRequest) {
     {
       // Cross-subdomain auth cookies (see cookie-config.ts): sessions
       // refreshed here must stay valid on all quote-core.com subdomains.
-      cookieOptions: isDemoWorkspace ? demoAuthCookieOptions(hostname) : authCookieOptions(hostname),
+      cookieOptions: authCookieOptionsForLocation(hostname, pathname),
       cookies: {
         getAll() { return request.cookies.getAll(); },
         setAll(changes) {
@@ -375,25 +351,6 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''));
     }
     return expireLegacyAuthCookies(request, cookieUpdates.apply(NextResponse.redirect(url)));
-  }
-
-  // Demo workspace cookie-view rewrite (Architecture V2 §5, testing-phase
-  // path-based variant): make the demo session visible to the app's normal
-  // clients under the NORMAL cookie name for this request only, so workspace
-  // pages resolve the anon demo user transparently under normal RLS. A stale
-  // normal session in the same browser is masked while inside demo slugs.
-  if (isDemoWorkspace && user) {
-    const legacyPrefix = legacyAuthCookiePrefix();
-    const demoChunks = request.cookies.getAll().filter(c => c.name.startsWith(DEMO_COOKIE_NAME));
-    for (const c of request.cookies.getAll()) {
-      if (c.name.startsWith(AUTH_COOKIE_NAME) || (legacyPrefix && c.name.startsWith(legacyPrefix))) {
-        request.cookies.delete(c.name);
-      }
-    }
-    for (const c of demoChunks) {
-      request.cookies.set(c.name.replace(DEMO_COOKIE_NAME, AUTH_COOKIE_NAME), c.value);
-    }
-    response = cookieUpdates.apply(NextResponse.next({ request }));
   }
 
   // 2FA gate. getAuthenticatorAssuranceLevel() is a local JWT decode, not a

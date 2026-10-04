@@ -1,6 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
-import { authCookieOptions } from './cookie-config';
+import { authCookieOptionsForLocation } from './cookie-config';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { cache } from 'react';
 import type { Database } from './database.types';
@@ -31,9 +31,11 @@ export async function createSupabaseServerClient() {
   // request host so sessions minted here (OAuth code exchange, refresh)
   // are valid on all quote-core.com subdomains. See cookie-config.ts.
   let host: string | null = null;
+  let namespace: string | null = null;
   try {
     const headerStore = await headers();
     host = headerStore.get('host');
+    namespace = headerStore.get('x-qcp-auth-namespace');
   } catch {
     // headers() unavailable in some contexts (e.g. during static
     // generation) - fall back to host-only cookies.
@@ -43,7 +45,7 @@ export async function createSupabaseServerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: authCookieOptions(host),
+      cookieOptions: authCookieOptionsForLocation(host, null, namespace),
       cookies: {
         getAll() { return cookieStore.getAll(); },
         setAll(changes) {
@@ -93,6 +95,17 @@ export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Da
 
   if (!data) {
     throw new Error('Profile not found');
+  }
+
+  // Demo lifetime is enforced in the shared data-access layer as well as
+  // middleware. Never let an expired anonymous profile act like a paid user.
+  if (user.is_anonymous) {
+    const { readActiveDemoContext } = await import('@/app/lib/demo/context');
+    const { getDemoControl } = await import('@/app/lib/demo/control');
+    if (!(await getDemoControl()).demoEnabled || !(await readActiveDemoContext(data.company_id, user.id))) {
+      throw new Error('Demo expired or unavailable. Open /demo to start again.');
+    }
+    return data; // Demo sessions never inherit an admin impersonation cookie.
   }
 
   // Check if this is an impersonation session (admin viewing user's account)
