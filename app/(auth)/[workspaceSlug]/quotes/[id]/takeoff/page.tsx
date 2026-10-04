@@ -48,7 +48,7 @@ export default async function Page({
   // M2 §3.4/L08: compact required-notice lines for the touch top strip. The
   // full banners in layout.tsx remain untouched; the touch shell surfaces the
   // same required facts compactly while immersive.
-  const takeoffCompactNotices: string[] = demoContext ? ['PREPARED DEMO SCAN · No AI call · Example prices only'] : [];
+  const takeoffCompactNotices: string[] = demoContext ? ['PREPARED MEASURED PLAN · Already measured for you · Example prices only'] : [];
   if (isOverStorage) takeoffCompactNotices.push('Storage limit reached');
   if ('isBeingImpersonated' in profile && profile.isBeingImpersonated) {
     takeoffCompactNotices.push('Impersonation active');
@@ -62,7 +62,9 @@ export default async function Page({
     .single();
   const aiTakeoffEnabled = process.env.AI_TAKEOFF_ENABLED === 'true';
   const isRoofingCompany = companyRow?.default_trade === 'roofing';
-  const aiTakeoffAvailable = !!demoContext || (aiTakeoffEnabled && isRoofingCompany);
+  // Demo lands pre-measured (owner 2026-10-04): the staged scan walkthrough is
+  // gone and a fresh Scan would replace the seeded entries — no AI button.
+  const aiTakeoffAvailable = !demoContext && aiTakeoffEnabled && isRoofingCompany;
 
   // AI Assist points: fetch current usage for UI display.
   let aiAssistPoints: { used: number; limit: number; remaining: number; isBlocked: boolean } | null = null;

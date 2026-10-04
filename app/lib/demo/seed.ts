@@ -3,9 +3,9 @@ import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { applyPitchAndWaste, computeMaterialCostByStrategy } from '@/app/lib/pricing/engine';
+import { applyPitchAndWaste, computeMaterialCostByStrategy, rafterPitchFactor, hipValleyPitchFactor } from '@/app/lib/pricing/engine';
 import { DEMO_COMPONENTS, DEMO_JOBS, DEMO_PRICE_NOTICE, DEMO_FOOTER, QCP_DEMO_NAME } from './seed-data';
-import { DEMO_CALIBRATION } from './seed-plan';
+import { DEMO_CALIBRATION, DEMO_ROOF_AREA, DEMO_LINES, DEMO_PITCH_DEGREES, demoLineLengthM, demoTotalLengthM, demoRoofPlanAreaM2 } from './seed-plan';
 import type { DemoSeedManifest } from './model';
 import { DemoError } from './errors';
 function checked(result: { error: { message: string } | null }, step: string) {
@@ -114,6 +114,58 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
     page_name: 'Prepared QCP roof', page_order: 1, image_storage_path: planPath,
     scale_calibration: DEMO_CALIBRATION.map(entry => ({ ...entry })),
   }), 'takeoff page');
+  // Pre-applied measured state (owner direction 2026-10-04): the guided roof
+  // lands ALREADY measured — every entry drawn onto the real roofing library
+  // components, exactly as if the visitor had measured the plan themselves.
+  // Deterministic geometry from the captured plan; priced with the real engine.
+  {
+    const round4 = (n: number) => Math.round(n * 10000) / 10000;
+    const roofAreaId = randomUUID();
+    const planAreaM2 = demoRoofPlanAreaM2();
+    const pitchedAreaM2 = planAreaM2 * rafterPitchFactor(DEMO_PITCH_DEGREES);
+    checked(await db.from('quote_roof_areas').insert({ id: roofAreaId, quote_id: jobs.guided_roof_job,
+      label: DEMO_ROOF_AREA.name, input_mode: 'final', computed_sqm: round4(planAreaM2),
+      final_value_sqm: round4(pitchedAreaM2), calc_pitch_degrees: DEMO_PITCH_DEGREES, sort_order: 0 }), 'measured roof area');
+    const slotKeyByClass = { ridges: 'roof_ridge', hips: 'roof_hip', valleys: 'roof_valley', barges: 'roof_barge', spouting: 'roof_gutter' } as const;
+    const measurementRows = [
+      { quote_id: jobs.guided_roof_job, company_id: companyId, component_library_id: null,
+        measurement_type: 'area' as const, measurement_value: round4(planAreaM2), measurement_unit: 'meters',
+        canvas_points: DEMO_ROOF_AREA.points.map(p => ({ x: p.x, y: p.y })), is_visible: true, page_id: pageId,
+        quote_roof_area_id: roofAreaId },
+      ...DEMO_LINES.map(line => ({ quote_id: jobs.guided_roof_job, company_id: companyId,
+        component_library_id: ids[slotKeyByClass[line.cls]], measurement_type: 'line' as const,
+        measurement_value: round4(demoLineLengthM(line)), measurement_unit: 'meters',
+        canvas_points: [{ x: line.start.x, y: line.start.y }, { x: line.end.x, y: line.end.y }],
+        is_visible: true, page_id: pageId, quote_roof_area_id: null })),
+    ];
+    checked(await db.from('quote_takeoff_measurements').insert(measurementRows), 'measured canvas entries');
+    const pricedDefs: { key: string; qty: number; perEntry: number[]; pitch: 'rafter' | 'valley_hip' | 'none' }[] = [
+      { key: 'roof_covering', qty: pitchedAreaM2, perEntry: [planAreaM2], pitch: 'rafter' },
+      { key: 'roof_underlay', qty: pitchedAreaM2, perEntry: [planAreaM2], pitch: 'rafter' },
+      { key: 'roof_ridge', qty: demoTotalLengthM('ridges'), perEntry: DEMO_LINES.filter(l => l.cls === 'ridges').map(demoLineLengthM), pitch: 'none' },
+      { key: 'roof_hip', qty: demoTotalLengthM('hips') * hipValleyPitchFactor(DEMO_PITCH_DEGREES), perEntry: DEMO_LINES.filter(l => l.cls === 'hips').map(demoLineLengthM), pitch: 'valley_hip' },
+      { key: 'roof_valley', qty: demoTotalLengthM('valleys') * hipValleyPitchFactor(DEMO_PITCH_DEGREES), perEntry: DEMO_LINES.filter(l => l.cls === 'valleys').map(demoLineLengthM), pitch: 'valley_hip' },
+      { key: 'roof_barge', qty: demoTotalLengthM('barges') * rafterPitchFactor(DEMO_PITCH_DEGREES), perEntry: DEMO_LINES.filter(l => l.cls === 'barges').map(demoLineLengthM), pitch: 'rafter' },
+      { key: 'roof_gutter', qty: demoTotalLengthM('spouting'), perEntry: DEMO_LINES.filter(l => l.cls === 'spouting').map(demoLineLengthM), pitch: 'none' },
+    ];
+    for (const def of pricedDefs) {
+      const meta = DEMO_COMPONENTS.find(c => c.key === def.key)!;
+      const componentId = randomUUID();
+      const pricedQty = round4(def.qty);
+      checked(await db.from('quote_components').insert({ id: componentId, quote_id: jobs.guided_roof_job,
+        quote_roof_area_id: roofAreaId, component_library_id: ids[def.key], name: meta.name,
+        measurement_type: meta.type, component_type: 'main' as const, input_mode: 'final',
+        final_quantity: pricedQty, final_value: pricedQty, material_rate: meta.material, labour_rate: meta.labour,
+        material_cost: round4(pricedQty * meta.material), labour_cost: round4(pricedQty * meta.labour),
+        waste_type: 'none', pitch_type: def.pitch, priced_quantity: pricedQty, calc_pitch_degrees: DEMO_PITCH_DEGREES,
+      }), `measured component ${def.key}`);
+      const entryFactor = def.pitch === 'rafter' ? rafterPitchFactor(DEMO_PITCH_DEGREES)
+        : def.pitch === 'valley_hip' ? hipValleyPitchFactor(DEMO_PITCH_DEGREES) : 1;
+      checked(await db.from('quote_component_entries').insert(def.perEntry.map((raw, index) => ({
+        quote_component_id: componentId, raw_value: round4(raw),
+        value_after_waste: round4(raw * entryFactor), sort_order: index }))), `measured entries ${def.key}`);
+    }
+  }
   checked(await db.from('assistant_configs').insert({ company_id: companyId, enabled: true, name: 'Smart Assistant',
     greeting: 'Explore the fictional QCP workspace. Ask me to create a draft, change it, or find accepted quotes without an order.' }), 'assistant configuration');
   checked(await db.from('assistant_feature_flags').insert({ company_id: companyId, enabled: true, quota_monthly_turns: 100 }), 'assistant availability');

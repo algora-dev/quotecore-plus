@@ -43,3 +43,22 @@ export const DEMO_LINES: PreparedLine[] = (['ridges', 'hips', 'valleys', 'barges
     return { id: `${cls[0].toUpperCase()}${index + 1}`, cls, start: { x: a.x, y: a.y }, end: { x: b.x, y: b.y } };
   }),
 );
+
+/** Metric helpers for the pre-measured state (all derived from the real
+ * captured calibration — no hardcoded numbers). */
+export function demoLineLengthM(line: PreparedLine): number {
+  return Math.hypot(line.end.x - line.start.x, line.end.y - line.start.y) * DEMO_CALIBRATION[0].scale;
+}
+export function demoTotalLengthM(cls: PreparedLineClass): number {
+  return DEMO_LINES.filter(l => l.cls === cls).reduce((sum, l) => sum + demoLineLengthM(l), 0);
+}
+export function demoRoofPlanAreaM2(): number {
+  // Shoelace over the real captured polygon, scaled to metres.
+  const pts = DEMO_ROOF_AREA.points;
+  let px2 = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i], b = pts[(i + 1) % pts.length];
+    px2 += a.x * b.y - b.x * a.y;
+  }
+  return (Math.abs(px2) / 2) * DEMO_CALIBRATION[0].scale * DEMO_CALIBRATION[0].scale;
+}

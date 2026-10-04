@@ -911,7 +911,12 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         status={<QcDocumentSaveState saving={saving} dirty={isDirty} lastSaved={lastSaved} />}
         actions={<QcButton variant="primary" size="md" type="submit"
                 onClick={async () => {
-                  if (showMarginInPreview) {
+                  // Only warn when a margin actually exists (owner 2026-10-04): the
+                  // old gate fired for every quote with the preview flag on,
+                  // even when no margin was ever added.
+                  const hasActualMargin = globalMarginPercent > 0 || globalLaborMarginPercent > 0
+                    || lines.some(l => (l.lineMarginPercent ?? 0) > 0 || (l.lineLaborMarginPercent ?? 0) > 0);
+                  if (showMarginInPreview && hasActualMargin) {
                     setShowMarginSaveWarning(true);
                     return;
                   }

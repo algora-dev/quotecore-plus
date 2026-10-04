@@ -2,7 +2,7 @@
 export const DEMO_SEED_VERSION = 'qcp-v2.2-20261003';
 export const DEMO_SESSION_MS = 24 * 60 * 60 * 1000;
 export type DemoGuideChapter = 'pricing' | 'takeoff' | 'customer-quote' | 'smart-assistant' | 'complete';
-export type DemoEvent = 'component.created' | 'component.tested' | 'component.edited'
+export type DemoEvent = 'component.viewed' | 'component.created' | 'component.tested' | 'component.edited'
   | 'scan.loaded' | 'takeoff.saved' | 'quote.template' | 'quote.presentation'
   | 'quote.edited' | 'quote.previewed' | 'email.sent' | 'assistant.created'
   | 'assistant.edited' | 'assistant.found';
@@ -55,7 +55,7 @@ export function readGuide(value: unknown): DemoGuideState {
   result.mode = value.mode === 'guided' ? 'guided' : 'explore';
   const chapters: DemoGuideChapter[] = ['pricing','takeoff','customer-quote','smart-assistant','complete'];
   if (chapters.includes(value.chapter as DemoGuideChapter)) result.chapter = value.chapter as DemoGuideChapter;
-  const events: DemoEvent[] = ['component.created','component.tested','component.edited','scan.loaded','takeoff.saved','quote.template','quote.presentation','quote.edited','quote.previewed','email.sent','assistant.created','assistant.edited','assistant.found'];
+  const events: DemoEvent[] = ['component.viewed','component.created','component.tested','component.edited','scan.loaded','takeoff.saved','quote.template','quote.presentation','quote.edited','quote.previewed','email.sent','assistant.created','assistant.edited','assistant.found'];
   for (const event of events) {
     const entry = value.acknowledgements[event];
     if (!isRecord(entry) || typeof entry.at !== 'string' || !Number.isFinite(Date.parse(entry.at))) continue;

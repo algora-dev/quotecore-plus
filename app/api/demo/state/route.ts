@@ -15,9 +15,20 @@ export async function GET(request: NextRequest) {
       admin.from('companies').select('slug').eq('id', context.companyId).single(), getDemoControl(), getDemoAllowance(context),
     ]);
     if (co.error || !co.data.slug) throw new DemoError('Could not resolve the demo workspace.', 503);
+    // Live skylight signal: the visitor's created component already has a
+    // measurement entry on the guided job (covers saved state and reloads;
+    // in-canvas live detection rides the qc-demo-skylight client event).
+    let skylightAdded = false;
+    const guidedJob = context.tutorialState.seed.guided_roof_job;
+    const guidedComponent = context.tutorialState.guided_created_component_id;
+    if (guidedJob && guidedComponent) {
+      const found = await admin.from('quote_takeoff_measurements').select('id', { count: 'exact', head: true })
+        .eq('quote_id', guidedJob).eq('component_library_id', guidedComponent);
+      skylightAdded = !found.error && (found.count ?? 0) > 0;
+    }
     return demoJson({ sessionId: context.sessionId, expiresAt: context.expiresAt, slug: co.data.slug, tutorialState: context.tutorialState,
       progress: guideProgress(context.tutorialState), aiEnabled: control.aiEnabled && allowance.configured,
-      selfSendEnabled: process.env.DEMO_SELF_SEND_ENABLED === 'true', allowance });
+      selfSendEnabled: process.env.DEMO_SELF_SEND_ENABLED === 'true', skylightAdded, allowance });
   } catch (error) { return demoErrorResponse(error); }
 }
 export async function PATCH(request: NextRequest) {

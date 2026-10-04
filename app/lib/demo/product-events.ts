@@ -2,6 +2,7 @@ import 'server-only';
 import { readActiveDemoContext } from './context';
 import { mutateDemoGuide } from './progress';
 import { acknowledge } from './model';
+import { nextGuideStep } from './guide';
 /** Product actions call these only AFTER their real DB operation succeeds.
  * Guide failures never turn a successful product save into a false failure. */
 export async function demoComponentSaved(companyId: string, component: { id: string; name: string; measurement_type: string }, kind: 'create' | 'update'): Promise<void> {
@@ -42,8 +43,20 @@ export async function demoCustomerSaved(companyId:string,quoteId:string,kind:'br
  const q=await db.from('quotes').select('cq_company_name,cq_footer_text,hide_line_prices').eq('id',quoteId).eq('company_id',companyId).maybeSingle();if(q.error||!q.data)return;
  await mutateDemoGuide(context.sessionId,previous=>{let next=previous;
  if(kind==='branding'&&q.data!.cq_company_name==='QCP Roofing & Construction'&&(q.data!.cq_footer_text??'').includes('DEMO'))next=acknowledge(next,'quote.template',quoteId);
- if(kind==='lines'&&q.data!.hide_line_prices)next=acknowledge(next,'quote.presentation',quoteId);
- if(kind==='lines'&&textChanged)next=acknowledge(next,'quote.edited',quoteId);
+ if(kind==='lines'){
+ // Natural acknowledgements (owner direction 2026-10-04): any customer-line
+ // save completes whichever editor step is currently pending — visitors are
+ // told to “change something if you want, then Save & Return”, so requiring a
+ // hyper-specific change strung people up. Hiding line prices still fast-paths
+ // the presentation step; a text edit still fast-paths the description step.
+ const pending=nextGuideStep(previous);
+ if(pending?.event==='quote.presentation')next=acknowledge(next,'quote.presentation',quoteId);
+ else if(pending?.event==='quote.edited')next=acknowledge(next,'quote.edited',quoteId);
+ else{
+ if(q.data!.hide_line_prices&&!previous.acknowledgements['quote.presentation'])next=acknowledge(next,'quote.presentation',quoteId);
+ if(textChanged&&!previous.acknowledgements['quote.edited'])next=acknowledge(next,'quote.edited',quoteId);
+ }
+ }
  return next;});
  }catch{console.warn('[demo] customer document saved; guide refresh pending');}
 }

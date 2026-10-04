@@ -331,7 +331,7 @@ export async function loadComponentCollections() {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('component_collections')
-    .select('id, name, is_bootstrap, visibility, publication_status, published_at, public_title, public_description, roofing_types, product_categories, brands, keywords')
+    .select('id, name, is_bootstrap, is_default_takeoff_library, visibility, publication_status, published_at, public_title, public_description, roofing_types, product_categories, brands, keywords')
     .eq('company_id', profile.company_id)
     .order('is_bootstrap', { ascending: false })
     .order('name');

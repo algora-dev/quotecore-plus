@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { QcDialog } from '@/app/components/ui/v2/QcDialog';
-import { DEMO_GUIDE_CHAPTERS, guideHref, guideProgress, nextGuideStep, SKIP_REQUIRED_EVENTS, type DemoStep } from '@/app/lib/demo/guide';
+import { DEMO_GUIDE_CHAPTERS, guideHref, guideProgress, nextGuideStep, type DemoStep } from '@/app/lib/demo/guide';
 import type { DemoEvent, DemoGuideState } from '@/app/lib/demo/model';
 import type { GuideCommand } from '@/app/lib/demo/commands';
 import { normalAccountHref } from '@/app/lib/demo/routing';
@@ -21,7 +21,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const [state, setState] = useState(initialState); const [open, setOpen] = useState(initialState.mode === 'guided');
   const [mounted, setMounted] = useState(false); const [pending, setPending] = useState(false); const [error, setError] = useState('');
   const [resetOpen, setResetOpen] = useState(false); const [expired, setExpired] = useState(false); const [completeOpen, setCompleteOpen] = useState(false);
-  const [allowance, setAllowance] = useState<Allowance | null>(null); const [selfSendEnabled, setSelfSendEnabled] = useState(false);
+  const [allowance, setAllowance] = useState<Allowance | null>(null); const [selfSendEnabled, setSelfSendEnabled] = useState(false); const [skylightAdded, setSkylightAdded] = useState(false);
   const [position, setPosition] = useState<Position | null>(null); const widget = useRef<HTMLElement>(null);
   const drag = useRef<{ pointerId: number; dx: number; dy: number } | null>(null);
   const [justCompleted, setJustCompleted] = useState<DemoStep | null>(null);
@@ -34,7 +34,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
       if (response.status === 410 || response.status === 401) { setExpired(true); return; }
       if (!response.ok) { if (response.status === 503) setError(result.error ?? 'Demo verification is temporarily unavailable.'); return; }
       if (result.sessionId !== sessionId) { setExpired(true); return; }
-      setState(result.tutorialState); setAllowance(result.allowance); setSelfSendEnabled(result.selfSendEnabled === true);
+      setState(result.tutorialState); setAllowance(result.allowance); setSelfSendEnabled(result.selfSendEnabled === true); if (result.skylightAdded === true) setSkylightAdded(true);
     } catch (cause) { if (!(cause instanceof DOMException && cause.name === 'AbortError')) setError('Could not refresh demo progress. Your product edits are not changed.'); }
   }, [sessionId]);
   useEffect(() => { setMounted(true); const controller = new AbortController(); void refresh(controller.signal);
@@ -60,6 +60,17 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     const completed = DEMO_GUIDE_CHAPTERS.flatMap(chapter => chapter.steps).find(step => added.includes(step.event));
     if (completed) setJustCompleted(completed);
   }, [state.acknowledgements]);
+  // Live skylight signal: the takeoff canvas dispatches qc-demo-skylight the
+  // moment the visitor's created component gets an entry; the server state
+  // covers saved/reloaded sessions.
+  useEffect(() => {
+    const active = state.chapter === 'takeoff' && !state.acknowledgements['takeoff.saved'];
+    (window as unknown as { __qcDemoGuidedComponentId?: string | undefined }).__qcDemoGuidedComponentId = active ? state.guided_created_component_id : undefined;
+    if (!active || !state.guided_created_component_id) return;
+    const listener = () => setSkylightAdded(true);
+    window.addEventListener('qc-demo-skylight', listener);
+    return () => window.removeEventListener('qc-demo-skylight', listener);
+  }, [state]);
   const step = nextGuideStep(state); const progress = guideProgress(state);
   const chapterIndex = DEMO_GUIDE_CHAPTERS.findIndex(chapter => chapter.id === state.chapter);
   const chapter = DEMO_GUIDE_CHAPTERS[chapterIndex] ?? DEMO_GUIDE_CHAPTERS[0];
@@ -99,12 +110,13 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
       await refresh();
     } catch (cause) { tab?.close(); setError(cause instanceof Error ? cause.message : 'Preview could not open.'); } finally { setPending(false); }
   }
-  function startDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+  function startDrag(event: ReactPointerEvent<HTMLElement>) {
+    if ((event.target as HTMLElement).closest('button')) return;
     if (!window.matchMedia('(min-width: 768px)').matches || !widget.current) return;
     const rect = widget.current.getBoundingClientRect(); drag.current = { pointerId: event.pointerId, dx: event.clientX - rect.left, dy: event.clientY - rect.top };
     event.currentTarget.setPointerCapture(event.pointerId); setPosition({ x: rect.left, y: rect.top });
   }
-  function moveDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+  function moveDrag(event: ReactPointerEvent<HTMLElement>) {
     if (!drag.current || drag.current.pointerId !== event.pointerId || !widget.current) return;
     setPosition(clampPosition({ x: event.clientX - drag.current.dx, y: event.clientY - drag.current.dy }, widget.current));
   }
@@ -113,10 +125,10 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const guide = <>
     {!open && <button className="qc-demo-reopen" type="button" onClick={() => setOpen(true)} aria-label="Resume guided demo">QCP demo · {progress.done}/{progress.total}<span>Resume guide</span></button>}
     {open && <aside ref={widget} className="qc-demo-guide" aria-label="QuoteCore+ demo guide" style={position ? { left: position.x, top: position.y, right: 'auto', bottom: 'auto' } : undefined}>
-      <header className="qc-demo-guide-head"><button type="button" className="qc-demo-drag" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}
+      <header className="qc-demo-guide-head" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}><button type="button" className="qc-demo-drag"
         aria-label="Move guide. On desktop use arrow keys to reposition, Escape to reset." onKeyDown={event => { if (event.key === 'Escape') setPosition(null); const delta: Record<string, Position> = { ArrowLeft: {x:-20,y:0}, ArrowRight:{x:20,y:0},ArrowUp:{x:0,y:-20},ArrowDown:{x:0,y:20} }; if (delta[event.key] && widget.current) { event.preventDefault(); const rect = widget.current.getBoundingClientRect(); setPosition(clampPosition({ x: rect.left+delta[event.key].x, y: rect.top+delta[event.key].y }, widget.current)); } }}>⠿</button>
         <div><span>YOUR QCP DEMO · {Math.max(1, chapterIndex + 1)} OF 4</span><strong>{chapter.title}</strong></div>
-        <button className="qc-demo-icon" type="button" aria-label="Collapse guide" onClick={() => setOpen(false)}>−</button></header>
+        <button className="qc-demo-icon" type="button" aria-label="Hide guide" onClick={() => setOpen(false)}>−</button></header>
       <div className="qc-demo-progress" role="progressbar" aria-label="Completed demo actions" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.done}><i style={{ width: `${100 * progress.done / progress.total}%` }} /></div>
       <div className="qc-demo-guide-body">
         {justCompleted ? <><p className="qc-demo-eyebrow">NICE WORK — TASK COMPLETE</p><h2>{justCompleted.title} ✓</h2>
@@ -129,10 +141,16 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
           <button type="button" className="qc-demo-secondary-link" onClick={() => setJustCompleted(null)}>{step ? 'Show the next step here' : 'Stay on this chapter'}</button>
         </> : step ? <><p className="qc-demo-eyebrow">{onExpectedPage ? 'YOUR NEXT ACTION' : 'GUIDE PAUSED WHILE YOU EXPLORE'}</p><h2>{step.title}</h2>
           <p>{onExpectedPage ? step.copy : `Resume “${step.title}” on the correct page. You can keep exploring here without losing your saved progress.`}</p>
-          {state.guided_created_component_name && state.chapter === 'takeoff' && <p className="qc-demo-note">Your component: <strong>{state.guided_created_component_name}</strong>. Map scan measurements to priced roofing components before saving.</p>}
+          {step.target === 'takeoff' && onExpectedPage && (skylightAdded
+            ? <p className="qc-demo-note"><strong>Skylight added ✓</strong> Look around freely — add, edit or remove anything. Press <strong>Finish &amp; Save</strong> when you’re ready; you’ll land straight in the customer quote editor.</p>
+            : <p className="qc-demo-note"><strong>Your one job:</strong> add your component{state.guided_created_component_name ? <> (“{state.guided_created_component_name}”)</> : null} and draw a rectangle anywhere on the roof. Everything else is already measured and priced.</p>)}
           {state.chapter === 'smart-assistant' && <p className="qc-demo-note">{allowance?.configured ? `${allowance.turnsRemaining} of ${allowance.turnsLimit} user turns remain. Reset does not restore them.` : 'Real Smart Assistant requires calibrated cost controls on this deployment. The rest of the demo remains available.'}</p>}
-          {step.event === 'quote.previewed' && onExpectedPage ? <QcButton disabled={pending || expired} onClick={openPreview}>Open demo customer preview ↗</QcButton> : <a className="qc-demo-continue" href={destination}>{onExpectedPage ? 'Open this task' : 'Resume this task'} →</a>}
-          <button type="button" className="qc-demo-secondary-link" disabled={pending || expired} onClick={() => void skipStep()}>{SKIP_REQUIRED_EVENTS.includes(step.event) ? 'Skip this task (needed for later — may require doing it)' : 'Skip this task →'}</button>
+          {step.event === 'quote.previewed' && onExpectedPage ? <><QcButton variant="primary" disabled={pending || expired} onClick={openPreview}>View in browser ↗</QcButton>{selfSendEnabled && <a className="qc-demo-continue" href={`/${workspaceSlug}/demo-guide/send`}>Email it to myself →</a>}<p className="qc-demo-note">Save first (Save &amp; Return). Attachments and automatic follow-ups: available in the main app.</p></>
+            : !onExpectedPage ? <a className="qc-demo-continue" href={destination}>Resume this task →</a>
+            : step.event === 'component.created' ? <a className="qc-demo-continue" href={destination}>Open the component creator →</a>
+            : step.event === 'component.tested' || step.event === 'component.edited' ? <a className="qc-demo-continue" href={destination}>Open the component →</a>
+            : null}
+          <button type="button" className="qc-demo-secondary-link" disabled={pending || expired} onClick={() => void skipStep()}>Skip this task →</button>
           {state.chapter === 'customer-quote' && selfSendEnabled && <a className="qc-demo-secondary-link" href={`/${workspaceSlug}/demo-guide/send`}>Send this demo quote to yourself</a>}
         </> : <><h2>{chapter.title} complete</h2><p>Your successful saved actions have been recorded. Nicely done.</p>{state.chapter === 'customer-quote' && selfSendEnabled && <a className="qc-demo-secondary-link" href={`/${workspaceSlug}/demo-guide/send`}>Send this demo quote to yourself</a>}{nextChapter ? <QcButton variant="primary" disabled={pending} onClick={() => void command({action:'chapter',chapter:nextChapter},true)}>Continue to {DEMO_GUIDE_CHAPTERS[chapterIndex+1].title}</QcButton> : <QcButton variant="primary" onClick={() => setCompleteOpen(true)}>Review your demo</QcButton>}</>}
         {error && <p role="alert" className="qc-demo-error">{error}</p>}
@@ -151,5 +169,5 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     <QcDialog open={completeOpen} onRequestClose={() => setCompleteOpen(false)} title={progress.done === progress.total ? 'You’ve tried the QuoteCore+ workflow' : 'Keep exploring QuoteCore+'} description="Digital Takeoff and Smart Assistant are optional. Existing measurements can be entered directly. Orders, invoices and the rest of the sandbox are still here."
       footer={<><a className="qc-demo-continue" href={normalAccountHref(mounted ? window.location.hostname : '')}>Get your own account</a><a className="qc-demo-secondary-link" href="https://quote-core.com/done-for-you-setup">Ask about Done For You</a><QcButton variant="secondary" onClick={() => setCompleteOpen(false)}>Continue exploring</QcButton></>}><p>{progress.done} of {progress.total} guided actions completed. This is only part of what QuoteCore+ can do.</p></QcDialog>
   </>;
-  return <><div className="qc-demo-banner"><strong>DEMO</strong><span>Fictional · available until {expiryLabel}</span><button type="button" onClick={() => setOpen(true)}>Demo guide</button><button type="button" onClick={() => setResetOpen(true)}>Start again</button><a href={normalAccountHref(mounted ? window.location.hostname : '')}>Get your own account</a></div>{mounted && createPortal(guide, document.body)}</>;
+  return <><div className="qc-demo-banner"><strong>DEMO</strong><span>Fictional · available until {expiryLabel}</span><button type="button" onClick={() => setOpen(true)}>Demo guide</button><button type="button" onClick={() => setResetOpen(true)}>Start again</button><a href={normalAccountHref(mounted ? window.location.hostname : '')}>Get your own account</a></div>{mounted && createPortal(<div data-qc-ui="v2">{guide}</div>, document.body)}</>;
 }

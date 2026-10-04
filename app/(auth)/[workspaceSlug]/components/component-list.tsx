@@ -111,7 +111,9 @@ export function ComponentList({
   // Component collection (library) state
   const [collections, setCollections] = useState(componentCollections);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
-    componentCollections.find(c => c.is_bootstrap)?.id ?? componentCollections[0]?.id ?? ''
+    (componentCollections.find(c => (c as { is_default_takeoff_library?: boolean }).is_default_takeoff_library)
+      ?? componentCollections.find(c => c.is_bootstrap)
+      ?? componentCollections[0])?.id ?? ''
   );
   const [showCreateLibraryModal, setShowCreateLibraryModal] = useState(false);
   const [showCatalogModal, setShowCatalogModal] = useState(false);
@@ -353,6 +355,17 @@ export function ComponentList({
     void startEdit(component, demoSearch.get('demoTest') === '1');
     // Only an explicit navigation request opens the editor. Subsequent typing
     // must not re-open/reset it as component or editor state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoSearch, workspaceSlug]);
+
+  // Demo guide: ?demoCreate=1 opens the create form directly (guide CTA).
+  const openedDemoCreateRef = useRef(false);
+  useEffect(() => {
+    if (!workspaceSlug.startsWith('demo-')) return;
+    if (demoSearch.get('demoCreate') !== '1' || openedDemoCreateRef.current) return;
+    openedDemoCreateRef.current = true;
+    setEditingId(null);
+    setShowForm(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demoSearch, workspaceSlug]);
 

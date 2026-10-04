@@ -744,6 +744,12 @@ export function TakeoffWorkstation({
   // H-03: mark dirty whenever measurements or areas change.
   useEffect(() => {
     if (componentMeasurements.length > 0 || roofAreas.length > 0) setIsDirty(true);
+    // Demo guide: fire qc-demo-skylight the moment the visitor's created
+    // component gains an entry on this canvas (live hint switch, pre-save).
+    const guidedId = (window as unknown as { __qcDemoGuidedComponentId?: string }).__qcDemoGuidedComponentId;
+    if (guidedId && componentMeasurements.some(group => group.componentId === guidedId)) {
+      window.dispatchEvent(new CustomEvent('qc-demo-skylight'));
+    }
   }, [componentMeasurements, roofAreas]);
 
   // M-04 (Gerald round-5): ensure page-1 has a real DB row on mount.
