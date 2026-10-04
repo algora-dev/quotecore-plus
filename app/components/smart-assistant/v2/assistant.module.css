@@ -108,7 +108,7 @@
 
 .bottomArea { width: 100%; max-width: 780px; margin-inline: auto; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 /* Notice/playback/voice/transcript scroll here, capped; the dock below stays pinned to the bottom at all times. */
-.extras { flex: 0 1 auto; min-height: 0; max-height: 42%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.extras { flex: 0 1 auto; min-height: 0; max-height: 42dvh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .notice { display: flex; align-items: center; gap: 8px; background: #312327; color: #ffd6c5; padding: 8px 12px; border-top: 1px solid #7c4d45; font-size: 12px; }
 .notice > span { flex: 1; }
 .notice > svg { width: 18px; height: 18px; flex: 0 0 auto; }
