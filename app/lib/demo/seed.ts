@@ -1,10 +1,11 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
-import sharp from 'sharp';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { applyPitchAndWaste, computeMaterialCostByStrategy } from '@/app/lib/pricing/engine';
 import { DEMO_COMPONENTS, DEMO_JOBS, DEMO_PRICE_NOTICE, DEMO_FOOTER, QCP_DEMO_NAME } from './seed-data';
-import { DEMO_PLAN_SVG } from './seed-plan';
+import { DEMO_CALIBRATION } from './seed-plan';
 import type { DemoSeedManifest } from './model';
 import { DemoError } from './errors';
 function checked(result: { error: { message: string } | null }, step: string) {
@@ -102,7 +103,8 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
     body: 'Fictional demo reply: the roof work is accepted. Nothing has been ordered or sent.',
     created_at: new Date(now - 3600000).toISOString() }), 'fictional reply');
   // Only the asset is authored; the actual measurement/canvas engine remains unchanged.
-  const plan = await sharp(Buffer.from(DEMO_PLAN_SVG)).png().toBuffer();
+  // Real measured plan from the public takeoff demo (RS Roofing, captured 2026-08-16).
+  const plan = await readFile(path.join(process.cwd(), 'public', 'takeoff-demo', 'roofplan-baseline.png'));
   const planPath = `${companyId}/demo/prepared-roof.png`;
   checked(await db.storage.from('QUOTE-DOCUMENTS').upload(planPath, plan, { contentType: 'image/png', upsert: true }), 'roof plan upload');
   checked(await db.from('quote_files').insert({ company_id: companyId, quote_id: jobs.guided_roof_job,
@@ -110,7 +112,7 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
   checked(await db.from('takeoff_sessions').insert({ id: takeoffId, quote_id: jobs.guided_roof_job, version: 1 }), 'takeoff session');
   checked(await db.from('takeoff_pages').insert({ id: pageId, session_id: takeoffId, quote_id: jobs.guided_roof_job,
     page_name: 'Prepared QCP roof', page_order: 1, image_storage_path: planPath,
-    scale_calibration: [{ id: randomUUID(), point1: { x: 180, y: 760 }, point2: { x: 1020, y: 760 }, pixelDistance: 840, actualDistance: 16.8, unit: 'meters', scale: 0.02 }],
+    scale_calibration: DEMO_CALIBRATION.map(entry => ({ ...entry })),
   }), 'takeoff page');
   checked(await db.from('assistant_configs').insert({ company_id: companyId, enabled: true, name: 'Smart Assistant',
     greeting: 'Explore the fictional QCP workspace. Ask me to create a draft, change it, or find accepted quotes without an order.' }), 'assistant configuration');

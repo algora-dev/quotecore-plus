@@ -8,6 +8,7 @@ import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { MeasureJobButton } from './MeasureJobModal';
 import { WelcomeModal } from './tutorials/WelcomeModal';
 import { V2WelcomeModal } from './V2WelcomeModal';
+import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { DocDraftRestorer } from './DocDraftRestorer';
 import { TakeoffDraftNoteBanner } from './TakeoffDraftNoteBanner';
 import { CalcDraftImportBanner } from './CalcDraftImportBanner';
@@ -74,11 +75,14 @@ export default async function WorkspaceHome({
     .single();
 
   const firstName = user?.full_name?.split(' ')[0] || 'there';
+  // Demo sessions greet with their own welcome inside the guide widget; never
+  // stack the normal-account modals on top of it (owner direction 2026-10-04).
+  const demoContext = await getActiveDemoContext(company.id);
   // A personal help preference, not workspace pricing-readiness. No blocking tour.
-  const showWelcome = !user?.tutorials_seen_at;
+  const showWelcome = !demoContext && !user?.tutorials_seen_at;
   // One-time V2 welcome for every account (new and existing) on first sign-in
   // after the V2 rollout. Dismissal stamps v2_welcome_seen_at.
-  const showV2Welcome = !user?.v2_welcome_seen_at;
+  const showV2Welcome = !demoContext && !user?.v2_welcome_seen_at;
 
   // Check for calculator draft from signup flow (H-03: signup context preservation)
   const cookieStore = await cookies();

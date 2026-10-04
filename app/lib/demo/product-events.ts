@@ -20,7 +20,19 @@ export async function demoComponentSaved(companyId: string, component: { id: str
 export async function demoTakeoffSaved(companyId: string, quoteId: string): Promise<void> {
   try {
     const context = await readActiveDemoContext(companyId); if (!context || context.tutorialState.seed.guided_roof_job !== quoteId) return;
-    await mutateDemoGuide(context.sessionId, previous => ({ ...acknowledge(previous, 'takeoff.saved', quoteId), chapter: 'customer-quote' }));
+    const editedCustomerQuote = !!context.tutorialState.acknowledgements['quote.edited'] || !!context.tutorialState.acknowledgements['quote.presentation'];
+    // Acknowledge only. The chapter no longer flips silently: the guide widget
+    // celebrates the completed task and the visitor explicitly continues.
+    await mutateDemoGuide(context.sessionId, previous => acknowledge(previous, 'takeoff.saved', quoteId));
+    // The customer quote must mirror the final takeoff. Unless the visitor has
+    // already prepared their own customer lines, drop stale saved lines so the
+    // editor rebuilds from the CURRENT takeoff components on the next visit.
+    if (!editedCustomerQuote) {
+      const { createAdminClient } = await import('@/app/lib/supabase/admin');
+      const db = createAdminClient();
+      const removed = await db.from('customer_quote_lines').delete().eq('quote_id', quoteId);
+      if (removed.error) console.warn('[demo] customer line refresh pending', removed.error.message);
+    }
   } catch { console.warn('[demo] takeoff saved; guide refresh pending'); }
 }
 

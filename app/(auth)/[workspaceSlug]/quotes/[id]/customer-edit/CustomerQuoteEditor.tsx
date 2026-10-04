@@ -702,6 +702,18 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setCompanyLogoUrl(template.company_logo_url || defaultLogoUrl || '');
     setFooterText(template.footer_text || '');
 
+    // Persist immediately: applying a template used to be local state only, so
+    // navigating away (or re-opening the task) silently dropped it. A full Save
+    // still re-persists everything.
+    void saveCustomerQuoteBranding(quote.id, {
+      companyName: template.company_name || '',
+      companyAddress: template.company_address || '',
+      companyPhone: template.company_phone || '',
+      companyEmail: template.company_email || '',
+      companyLogoUrl: template.company_logo_url || defaultLogoUrl || '',
+      footerText: template.footer_text || '',
+    }).catch(() => undefined);
+
     setIsDirty(true);
   }
 

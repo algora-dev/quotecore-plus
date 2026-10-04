@@ -1,14 +1,17 @@
 import type { DemoGuideChapter, DemoGuideState, DemoEvent } from './model';
 export type DemoStep = { event: DemoEvent; title: string; copy: string; target: 'components' | 'takeoff' | 'customer' | 'assistant' };
+/** Steps that cannot be skipped: later chapters depend on the real records
+ * they create (the created component, the tested gate, the saved takeoff). */
+export const SKIP_REQUIRED_EVENTS: DemoEvent[] = ['component.created', 'component.tested', 'takeoff.saved'];
 export const DEMO_GUIDE_CHAPTERS: { id: DemoGuideChapter; title: string; summary: string; steps: DemoStep[] }[] = [
   { id: 'pricing', title: 'Build your pricing', summary: 'One reusable rule. Every future job.', steps: [
-    { event: 'component.created', title: 'Create your roofing component', target: 'components', copy: 'Create an area component for the skylight on our prepared roof. Name it anything. Try £80 material and £25 labour per m², with no pitch or waste. These are example prices only.' },
+    { event: 'component.created', title: 'Create your roofing component', target: 'components', copy: 'Create an area component — name it anything (e.g. “Skylight”), give it a price, then press Save. Try £80 material and £25 labour per m², with no pitch or waste. Bare minimum: a name, one price, Save — saving is what moves the demo forward. These are example prices only.' },
     { event: 'component.tested', title: 'Test your component', target: 'components', copy: 'Open the component you created and choose Test Component. Calculate a 2 m² example to see the real material and labour breakdown. Testing does not save edits.' },
     { event: 'component.edited', title: 'Update an existing price', target: 'components', copy: 'Open the seeded Roof covering component, make a small price change and save. The guide waits for the actual saved record.' },
   ] },
   { id: 'takeoff', title: 'Measure the job', summary: 'A prepared plan. Your actual measurements.', steps: [
-    { event: 'scan.loaded', title: 'Load the prepared scan', target: 'takeoff', copy: 'Open the prepared roof and press Scan. This demo loads an authored, precomputed scan without calling AI. Inspect the outline, then adjust or remove any detection.' },
-    { event: 'takeoff.saved', title: 'Add your component, then save', target: 'takeoff', copy: 'Add the component you created and draw a rectangle over the marked skylight. Experiment freely, then Finish & Save. Your final canvas—not a canned result—will price the quote.' },
+    { event: 'scan.loaded', title: 'Load the prepared scan', target: 'takeoff', copy: 'Open the prepared roof and press Scan. This demo replays a real captured AI scan without calling AI. Inspect the outline, then adjust or remove any detection.' },
+    { event: 'takeoff.saved', title: 'Add your component, then save', target: 'takeoff', copy: 'Add the component you created and draw a rectangle anywhere on the roof (a skylight, a section — your call). Experiment freely — add or remove anything — then Finish & Save. Your final canvas, not a canned result, will price the quote.' },
   ] },
   { id: 'customer-quote', title: 'Prepare the customer quote', summary: 'Your measurements, presented for a customer.', steps: [
     { event: 'quote.template', title: 'Apply the QCP template', target: 'customer', copy: 'Apply the QCP demo header/footer template in the customer quote editor. A real account uses your own branding.' },
