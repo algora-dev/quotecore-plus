@@ -2,7 +2,6 @@ import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections,
 import { ComponentList } from './component-list';
 import { PendingUpdatesBanner } from './PendingUpdatesBanner';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
-import { recordDemoEventBestEffort } from '@/app/lib/demo/progress';
 import { BackButton } from '@/app/components/BackButton';
 import { getPendingSupplierUpdates } from '../supplier-directory/actions';
 import { TakeoffDraftNoteBanner } from '../TakeoffDraftNoteBanner';
@@ -33,9 +32,9 @@ export default async function ComponentsPage(props: {
   // measured quantities use the company's preferred display system.
   const { company } = await loadCompanyContext();
 
-  // Demo guide: viewing the library acknowledges the orientation step (no-op
-  // for normal companies - readActiveDemoContext returns null immediately).
-  await recordDemoEventBestEffort(company.id, 'component.viewed');
+  // Demo guide: the orientation step is advanced explicitly by the visitor
+  // ("I've had a look" button in the helper), never by the page render
+  // (owner direction 2026-10-04: the human must have the say).
 
   // Personal guidance preference only, never a company-pricing readiness flag.
   const introSeen = await hasSeenComponentsIntro();

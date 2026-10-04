@@ -19,7 +19,7 @@ function clampPosition(position: Position, element: HTMLElement): Position {
 }
 export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialState }: Props) {
   const router = useRouter(); const pathname = usePathname();
-  const [state, setState] = useState(initialState); const [open, setOpen] = useState(initialState.mode === 'guided');
+  const [state, setState] = useState(initialState); const [open, setOpen] = useState(initialState.mode === 'guided' || !initialState.welcomed);
   const [mounted, setMounted] = useState(false); const [pending, setPending] = useState(false); const [error, setError] = useState('');
   const [resetOpen, setResetOpen] = useState(false); const [expired, setExpired] = useState(false); const [completeOpen, setCompleteOpen] = useState(false);
   const [allowance, setAllowance] = useState<Allowance | null>(null); const [selfSendEnabled, setSelfSendEnabled] = useState(false); const [skylightAdded, setSkylightAdded] = useState(false);
@@ -142,7 +142,11 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
         <button className="qc-demo-icon" type="button" aria-label="Hide guide" onClick={() => setOpen(false)}>−</button></header>
       <div className="qc-demo-progress" role="progressbar" aria-label="Completed demo actions" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.done}><i style={{ width: `${100 * progress.done / progress.total}%` }} /></div>
       <div className="qc-demo-guide-body">
-        {justCompleted ? <><p className="qc-demo-eyebrow">NICE WORK - TASK COMPLETE</p><h2>{justCompleted.title} ✓</h2>
+        {!state.welcomed && !expired ? <><p className="qc-demo-eyebrow">WELCOME TO YOUR DEMO</p><h2>Welcome to your workspace</h2>
+          <p>This is a fictional QCP Roofing &amp; Construction sandbox. Every price, job and measurement in here is part of the demo, and it is yours to try for up to 24 hours.</p>
+          <QcButton variant="primary" disabled={pending} onClick={() => void command({ action: 'welcome', mode: 'guided' }, true)}>Start the guided demo →</QcButton>
+          <button type="button" className="qc-demo-secondary-link" disabled={pending} onClick={() => void command({ action: 'welcome', mode: 'explore' })}>I&apos;ll explore myself</button>
+        </> : justCompleted ? <><p className="qc-demo-eyebrow">NICE WORK — TASK COMPLETE</p><h2>{justCompleted.title} ✓</h2>
           <p>{justCompleted.event === 'takeoff.saved'
             ? 'Saved. You can keep editing freely - add or remove anything - or continue to the next step. Your customer quote will use exactly what you saved.'
             : 'Saved and recorded - nice work. Ready for the next one?'}</p>
@@ -158,7 +162,8 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
             ? <p className="qc-demo-note"><strong>Skylight added ✓</strong> Look around freely - add, edit or remove anything. Press <strong>Finish &amp; Save</strong> when you’re ready; you’ll land straight in the customer quote editor.</p>
             : <p className="qc-demo-note"><strong>Your one job:</strong> add your component{state.guided_created_component_name ? <> (“{state.guided_created_component_name}”)</> : null} and draw a rectangle anywhere on the roof. Everything else is already measured and priced.</p>)}
           {state.chapter === 'smart-assistant' && <p className="qc-demo-note">{allowance?.configured ? `${allowance.turnsRemaining} of ${allowance.turnsLimit} user turns remain. Reset does not restore them.` : 'Real Smart Assistant requires calibrated cost controls on this deployment. The rest of the demo remains available.'}</p>}
-          {step.event === 'quote.previewed' && onExpectedPage ? <>
+          {step.event === 'component.viewed' && onExpectedPage ? <QcButton variant="primary" disabled={pending || expired} onClick={() => void skipStep()}>I&apos;ve had a look — next step →</QcButton>
+          : step.event === 'quote.previewed' && onExpectedPage ? <>
             <p className="qc-demo-note"><strong>1.</strong> Press <strong>Save &amp; Return</strong> (top right). Your quote is saved and you land in the Job Space.</p>
             <p className="qc-demo-note"><strong>2.</strong> Send it to your own email, or open it in a browser. In this demo the Send button only ever emails you.</p>
             {selfSendEnabled && <a className="qc-demo-continue" href={`/${workspaceSlug}/demo-guide/send`}>Email it to myself →</a>}
@@ -168,17 +173,13 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
             : step.event === 'component.created' ? <a className="qc-demo-continue" href={destination}>Open the component creator →</a>
             : step.event === 'component.tested' || step.event === 'component.edited' ? <a className="qc-demo-continue" href={destination}>Open the component →</a>
             : null}
-          <button type="button" className="qc-demo-secondary-link" disabled={pending || expired} onClick={() => void skipStep()}>Skip this task →</button>
+          {!(step.event === 'component.viewed' && onExpectedPage) && <button type="button" className="qc-demo-secondary-link" disabled={pending || expired} onClick={() => void skipStep()}>Skip this task →</button>}
           {state.chapter === 'customer-quote' && selfSendEnabled && <a className="qc-demo-secondary-link" href={`/${workspaceSlug}/demo-guide/send`}>Send this demo quote to yourself</a>}
         </> : <><h2>{chapter.title} complete</h2><p>Your successful saved actions have been recorded. Nicely done.</p>{state.chapter === 'customer-quote' && selfSendEnabled && <a className="qc-demo-secondary-link" href={`/${workspaceSlug}/demo-guide/send`}>Send this demo quote to yourself</a>}{nextChapter ? <QcButton variant="primary" disabled={pending} onClick={() => void command({action:'chapter',chapter:nextChapter},true)}>Continue to {DEMO_GUIDE_CHAPTERS[chapterIndex+1].title}</QcButton> : <QcButton variant="primary" onClick={() => setCompleteOpen(true)}>Review your demo</QcButton>}</>}
         {error && <p role="alert" className="qc-demo-error">{error}</p>}
         <div className="qc-demo-guide-links"><button type="button" disabled={pending} onClick={() => void command({action:'explore'})}>Explore / resume later</button><a href={`/${workspaceSlug}/demo-guide`}>All chapters</a><button type="button" onClick={() => setPosition(null)}>Reset position</button></div>
       </div>
     </aside>}
-    <QcDialog open={!state.welcomed && !expired} pending={pending} onRequestClose={() => void command({action:'welcome',mode:'explore'})} title="Welcome to the QuoteCore+ demo" description="QCP Roofing & Construction is fictional. This workspace is yours to experiment with for up to 24 hours."
-      footer={<><QcButton variant="primary" disabled={pending} onClick={() => void command({action:'welcome',mode:'guided'},true)}>Show me how it works</QcButton><QcButton disabled={pending} variant="secondary" onClick={() => void command({action:'welcome',mode:'explore'})}>I’ll explore myself</QcButton></>}>
-      <p className="qc-demo-copy">Build pricing, measure a prepared roof, prepare a customer quote and try real Smart Assistant. The prepared scan is precomputed; your edits and calculations are real. Prices are examples, not pricing advice. Arbitrary sending and integrations are disabled.</p>{error && <p role="alert" className="qc-demo-error">{error}</p>}
-    </QcDialog>
     <QcDialog open={resetOpen} pending={pending} onRequestClose={() => setResetOpen(false)} title="Start again from the QCP seed?" description="This removes your edits, created records, measurements and guide progress, and shows the welcome as a first-time visitor. It takes about 15 seconds - keep this tab open. AI and email allowances are not restored. Other open demo tabs will become invalid."
       footer={<><QcButton disabled={pending} variant="secondary" onClick={() => setResetOpen(false)}>Keep exploring</QcButton><QcButton disabled={pending} onClick={reset}>{pending ? 'Preparing your fresh demo…' : 'Reset demo'}</QcButton></>}>{error && <p role="alert" className="qc-demo-error">{error}</p>}</QcDialog>
     <QcDialog open={expired} onRequestClose={() => window.location.assign('/demo')} title="This demo has ended" description="It expired or was reset in another tab. Start again for a fresh fictional workspace. Your remaining resource allowances do not reset.">
