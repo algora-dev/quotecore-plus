@@ -1,5 +1,7 @@
 'use client';
 
+import { isDemoLocation } from '@/app/lib/demo/routing';
+
 /**
  * Shared client-side PDF rendering helper.
  *
@@ -370,6 +372,7 @@ async function rootToPdf(root: HTMLElement): Promise<jsPDF> {
  * Used by the single-download buttons (preview already mounted on screen).
  */
 export async function elementToPdf(element: HTMLElement): Promise<jsPDF> {
+  if (typeof window !== 'undefined' && isDemoLocation(window.location.hostname,window.location.pathname)) throw new Error('PDF export is not available in the demo. Use the demo customer preview.');
   await awaitFonts();
   await awaitImages(element);
   return rootToPdf(element);

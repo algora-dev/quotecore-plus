@@ -16,6 +16,8 @@
  * and the result is mapped to the existing AiScanData format for client compatibility.
  */
 
+import { isDemoCompany } from '@/app/lib/demo/context';
+import { servePreparedDemoScan } from '@/app/lib/demo/takeoff.server';
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import sharp from 'sharp';
@@ -706,6 +708,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
     const supabase = await createSupabaseServerClient();
+    if (await isDemoCompany(profile.company_id)) return servePreparedDemoScan(req, profile.company_id);
 
     if (process.env.AI_TAKEOFF_ENABLED !== 'true') {
       return NextResponse.json({ success: false, error: 'AI Takeoff is not enabled.' }, { status: 403 });

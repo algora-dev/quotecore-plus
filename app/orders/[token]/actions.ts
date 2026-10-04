@@ -1,4 +1,6 @@
 'use server';
+import { isDemoCompany } from '@/app/lib/demo/context';
+
 
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
@@ -70,6 +72,9 @@ export async function submitOrderResponse(
     )
     .eq('acceptance_token', input.token)
     .maybeSingle();
+
+  // Demo documents use the separate expiring demo-token surface, never production notifications.
+  if (order && await isDemoCompany(order.company_id)) throw new Error('This demonstration document is only available through its expiring demo link.');
 
   if (!order) return { ok: false, error: 'This link is no longer valid.' };
   if (order.acceptance_token_expires_at && new Date(order.acceptance_token_expires_at) < new Date()) {

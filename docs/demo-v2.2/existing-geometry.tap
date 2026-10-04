@@ -1,0 +1,1312 @@
+TAP version 13
+# Subtest: v1 round trip preserves accepted references
+ok 1 - v1 round trip preserves accepted references
+  ---
+  duration_ms: 4.625762
+  type: 'test'
+  ...
+# Subtest: v1 decode ignores tampered scale caches and recomputes
+ok 2 - v1 decode ignores tampered scale caches and recomputes
+  ---
+  duration_ms: 0.641329
+  type: 'test'
+  ...
+# Subtest: v1 decode quarantines corrupt references with diagnostics
+ok 3 - v1 decode quarantines corrupt references with diagnostics
+  ---
+  duration_ms: 0.52036
+  type: 'test'
+  ...
+# Subtest: v1 decode with all references corrupt is invalid, never silent
+ok 4 - v1 decode with all references corrupt is invalid, never silent
+  ---
+  duration_ms: 0.605226
+  type: 'test'
+  ...
+# Subtest: v1 envelope with >3 references reports, does not drop
+ok 5 - v1 envelope with >3 references reports, does not drop
+  ---
+  duration_ms: 0.59275
+  type: 'test'
+  ...
+# Subtest: legacy array decodes to accepted drafts with recomputed pixel distance
+ok 6 - legacy array decodes to accepted drafts with recomputed pixel distance
+  ---
+  duration_ms: 0.527979
+  type: 'test'
+  ...
+# Subtest: legacy corrupt entries are quarantined and reported
+ok 7 - legacy corrupt entries are quarantined and reported
+  ---
+  duration_ms: 0.466414
+  type: 'test'
+  ...
+# Subtest: legacy stale pixelDistance cache is diagnosed and recomputed
+ok 8 - legacy stale pixelDistance cache is diagnosed and recomputed
+  ---
+  duration_ms: 0.338461
+  type: 'test'
+  ...
+# Subtest: legacy all-corrupt array is invalid
+ok 9 - legacy all-corrupt array is invalid
+  ---
+  duration_ms: 0.576065
+  type: 'test'
+  ...
+# Subtest: unknown payload shapes are invalid with diagnostics
+ok 10 - unknown payload shapes are invalid with diagnostics
+  ---
+  duration_ms: 0.859015
+  type: 'test'
+  ...
+# Subtest: encode throws on empty accepted set
+ok 11 - encode throws on empty accepted set
+  ---
+  duration_ms: 0.592114
+  type: 'test'
+  ...
+# Subtest: mixed-unit v1 envelope decodes via shared unit-normalised mean
+ok 12 - mixed-unit v1 envelope decodes via shared unit-normalised mean
+  ---
+  duration_ms: 0.719698
+  type: 'test'
+  ...
+# Subtest: source <-> scene round trip with fractional coords, landscape
+ok 13 - source <-> scene round trip with fractional coords, landscape
+  ---
+  duration_ms: 2.575773
+  type: 'test'
+  ...
+# Subtest: portrait image keeps aspect with uniform scale
+ok 14 - portrait image keeps aspect with uniform scale
+  ---
+  duration_ms: 0.242247
+  type: 'test'
+  ...
+# Subtest: square-ish non-integer scene dims are not rounded or stretched
+ok 15 - square-ish non-integer scene dims are not rounded or stretched
+  ---
+  duration_ms: 0.16944
+  type: 'test'
+  ...
+# Subtest: source <-> analysis round trip: crop offsets and non-integer resize ratio
+ok 16 - source <-> analysis round trip: crop offsets and non-integer resize ratio
+  ---
+  duration_ms: 0.290176
+  type: 'test'
+  ...
+# Subtest: full-image analysis crop degenerates to identity
+ok 17 - full-image analysis crop degenerates to identity
+  ---
+  duration_ms: 0.164761
+  type: 'test'
+  ...
+# Subtest: compose/invert agree with direct application
+ok 18 - compose/invert agree with direct application
+  ---
+  duration_ms: 0.256201
+  type: 'test'
+  ...
+# Subtest: singular, NaN and zero-size transforms are rejected
+ok 19 - singular, NaN and zero-size transforms are rejected
+  ---
+  duration_ms: 1.221705
+  type: 'test'
+  ...
+# Subtest: out-of-raster points are rejected, not clamped
+ok 20 - out-of-raster points are rejected, not clamped
+  ---
+  duration_ms: 0.398306
+  type: 'test'
+  ...
+# Subtest: reversed endpoint order yields identical scene mapping
+ok 21 - reversed endpoint order yields identical scene mapping
+  ---
+  duration_ms: 0.357043
+  type: 'test'
+  ...
+# Subtest: viewport independence: scene result is a pure function of source geometry
+ok 22 - viewport independence: scene result is a pure function of source geometry
+  ---
+  duration_ms: 1.11904
+  type: 'test'
+  ...
+# Subtest: mobile defaults need neither text entry nor AI metadata
+ok 23 - mobile defaults need neither text entry nor AI metadata
+  ---
+  duration_ms: 1.722222
+  type: 'test'
+  ...
+# Subtest: keypad preserves fractional strings until confirmation
+ok 24 - keypad preserves fractional strings until confirmation
+  ---
+  duration_ms: 0.448947
+  type: 'test'
+  ...
+# Subtest: backspace, clear and digit limit are deterministic
+ok 25 - backspace, clear and digit limit are deterministic
+  ---
+  duration_ms: 0.256682
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number ""
+ok 26 - reject non-keypad number ""
+  ---
+  duration_ms: 0.347081
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number "."
+ok 27 - reject non-keypad number "."
+  ---
+  duration_ms: 0.246709
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number "-1"
+ok 28 - reject non-keypad number "-1"
+  ---
+  duration_ms: 0.12014
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number "+1"
+ok 29 - reject non-keypad number "+1"
+  ---
+  duration_ms: 0.188224
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number "1e3"
+ok 30 - reject non-keypad number "1e3"
+  ---
+  duration_ms: 0.10848
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number "NaN"
+ok 31 - reject non-keypad number "NaN"
+  ---
+  duration_ms: 0.487016
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number "Infinity"
+ok 32 - reject non-keypad number "Infinity"
+  ---
+  duration_ms: 0.535947
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number "1,25"
+ok 33 - reject non-keypad number "1,25"
+  ---
+  duration_ms: 0.205171
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number "4m"
+ok 34 - reject non-keypad number "4m"
+  ---
+  duration_ms: 0.103978
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number " 4"
+ok 35 - reject non-keypad number " 4"
+  ---
+  duration_ms: 0.084604
+  type: 'test'
+  ...
+# Subtest: reject non-keypad number "4.5.6"
+ok 36 - reject non-keypad number "4.5.6"
+  ---
+  duration_ms: 0.071881
+  type: 'test'
+  ...
+# Subtest: distance 0 cannot establish a scale
+ok 37 - distance 0 cannot establish a scale
+  ---
+  duration_ms: 0.115153
+  type: 'test'
+  ...
+# Subtest: distance 0.0 cannot establish a scale
+ok 38 - distance 0.0 cannot establish a scale
+  ---
+  duration_ms: 0.122413
+  type: 'test'
+  ...
+# Subtest: distance 00 cannot establish a scale
+ok 39 - distance 00 cannot establish a scale
+  ---
+  duration_ms: 0.076924
+  type: 'test'
+  ...
+# Subtest: valid exact pitch 0
+ok 40 - valid exact pitch 0
+  ---
+  duration_ms: 1.007193
+  type: 'test'
+  ...
+# Subtest: valid exact pitch 25
+ok 41 - valid exact pitch 25
+  ---
+  duration_ms: 0.11271
+  type: 'test'
+  ...
+# Subtest: valid exact pitch 25.5
+ok 42 - valid exact pitch 25.5
+  ---
+  duration_ms: 0.109801
+  type: 'test'
+  ...
+# Subtest: valid exact pitch 89.9
+ok 43 - valid exact pitch 89.9
+  ---
+  duration_ms: 0.086115
+  type: 'test'
+  ...
+# Subtest: reject pitch 90
+ok 44 - reject pitch 90
+  ---
+  duration_ms: 0.122707
+  type: 'test'
+  ...
+# Subtest: reject pitch 90.1
+ok 45 - reject pitch 90.1
+  ---
+  duration_ms: 0.074812
+  type: 'test'
+  ...
+# Subtest: reject pitch 999
+ok 46 - reject pitch 999
+  ---
+  duration_ms: 0.06722
+  type: 'test'
+  ...
+# Subtest: one-degree arrows preserve typed fractions and legal bounds
+ok 47 - one-degree arrows preserve typed fractions and legal bounds
+  ---
+  duration_ms: 0.209291
+  type: 'test'
+  ...
+# Subtest: find is view-only, never tap-to-place or remote-point-drag
+ok 48 - find is view-only, never tap-to-place or remote-point-drag
+  ---
+  duration_ms: 0.140418
+  type: 'test'
+  ...
+# Subtest: distance is view-only, never tap-to-place or remote-point-drag
+ok 49 - distance is view-only, never tap-to-place or remote-point-drag
+  ---
+  duration_ms: 0.067306
+  type: 'test'
+  ...
+# Subtest: references is view-only, never tap-to-place or remote-point-drag
+ok 50 - references is view-only, never tap-to-place or remote-point-drag
+  ---
+  duration_ms: 0.067765
+  type: 'test'
+  ...
+# Subtest: ai is view-only, never tap-to-place or remote-point-drag
+ok 51 - ai is view-only, never tap-to-place or remote-point-drag
+  ---
+  duration_ms: 0.060349
+  type: 'test'
+  ...
+# Subtest: A and B cannot be accidentally added before their explicit step
+ok 52 - A and B cannot be accidentally added before their explicit step
+  ---
+  duration_ms: 0.193213
+  type: 'test'
+  ...
+# Subtest: off-plan or non-finite taps are rejected
+ok 53 - off-plan or non-finite taps are rejected
+  ---
+  duration_ms: 0.265966
+  type: 'test'
+  ...
+# Subtest: initial fit contains whole plan in 636x390
+ok 54 - initial fit contains whole plan in 636x390
+  ---
+  duration_ms: 0.421391
+  type: 'test'
+  ...
+# Subtest: initial fit contains whole plan in 572x390
+ok 55 - initial fit contains whole plan in 572x390
+  ---
+  duration_ms: 0.111411
+  type: 'test'
+  ...
+# Subtest: initial fit contains whole plan in 296x320
+ok 56 - initial fit contains whole plan in 296x320
+  ---
+  duration_ms: 0.086487
+  type: 'test'
+  ...
+# Subtest: opening keypad refits an untouched fit but never rewrites geometry
+ok 57 - opening keypad refits an untouched fit but never rewrites geometry
+  ---
+  duration_ms: 0.2533
+  type: 'test'
+  ...
+# Subtest: keypad resize preserves user camera centre and zoom after exploration
+ok 58 - keypad resize preserves user camera centre and zoom after exploration
+  ---
+  duration_ms: 0.162158
+  type: 'test'
+  ...
+# Subtest: double save shares the same real acknowledgement
+ok 59 - double save shares the same real acknowledgement
+  ---
+  duration_ms: 0.350938
+  type: 'test'
+  ...
+# Subtest: settled failure releases save latch without inventing success
+ok 60 - settled failure releases save latch without inventing success
+  ---
+  duration_ms: 0.750043
+  type: 'test'
+  ...
+# Subtest: closed outline wraps: previous of first is last, next of last is first
+ok 61 - closed outline wraps: previous of first is last, next of last is first
+  ---
+  duration_ms: 1.483415
+  type: 'test'
+  ...
+# Subtest: open path does NOT wrap: missing neighbour is null at the ends
+ok 62 - open path does NOT wrap: missing neighbour is null at the ends
+  ---
+  duration_ms: 0.273639
+  type: 'test'
+  ...
+# Subtest: no selection: either arrow selects the FIRST vertex (deterministic)
+ok 63 - no selection: either arrow selects the FIRST vertex (deterministic)
+  ---
+  duration_ms: 0.180016
+  type: 'test'
+  ...
+# Subtest: stored order traversal is never positional (contract: index math only)
+ok 64 - stored order traversal is never positional (contract: index math only)
+  ---
+  duration_ms: 0.341697
+  type: 'test'
+  ...
+# Subtest: insert-after is enabled for every closed vertex (last uses first as successor)
+ok 65 - insert-after is enabled for every closed vertex (last uses first as successor)
+  ---
+  duration_ms: 0.195953
+  type: 'test'
+  ...
+# Subtest: insert-after on an open path requires a real successor — last vertex disabled
+ok 66 - insert-after on an open path requires a real successor — last vertex disabled
+  ---
+  duration_ms: 0.217476
+  type: 'test'
+  ...
+# Subtest: closed outline keeps a 3-point minimum for deletion; open path may shrink to zero
+ok 67 - closed outline keeps a 3-point minimum for deletion; open path may shrink to zero
+  ---
+  duration_ms: 0.193135
+  type: 'test'
+  ...
+# Subtest: nudge at zoom 2: 1 CSS px step = 0.5 scene px; 5 px step = 2.5 scene px
+ok 68 - nudge at zoom 2: 1 CSS px step = 0.5 scene px; 5 px step = 2.5 scene px
+  ---
+  duration_ms: 1.843194
+  type: 'test'
+  ...
+# Subtest: nudge zooms FINER with magnification and never applies camera translation (§5.2 linear-only)
+ok 69 - nudge zooms FINER with magnification and never applies camera translation (§5.2 linear-only)
+  ---
+  duration_ms: 0.570619
+  type: 'test'
+  ...
+# Subtest: minimalRevealTranslation pans just enough; already-visible point needs none; zoom untouched
+ok 70 - minimalRevealTranslation pans just enough; already-visible point needs none; zoom untouched
+  ---
+  duration_ms: 0.841798
+  type: 'test'
+  ...
+# Subtest: indexOfVertexId maps null/unknown to -1
+ok 71 - indexOfVertexId maps null/unknown to -1
+  ---
+  duration_ms: 0.267371
+  type: 'test'
+  ...
+# Subtest: rapid previous/next chains with current index resolve a full loop without skipping
+ok 72 - rapid previous/next chains with current index resolve a full loop without skipping
+  ---
+  duration_ms: 0.176462
+  type: 'test'
+  ...
+# Subtest: beginEdit copies saved primitives and retains an immutable base
+ok 73 - beginEdit copies saved primitives and retains an immutable base
+  ---
+  duration_ms: 2.780937
+  type: 'test'
+  ...
+# Subtest: selectVertex changes selection only; unknown id rejected
+ok 74 - selectVertex changes selection only; unknown id rejected
+  ---
+  duration_ms: 0.406746
+  type: 'test'
+  ...
+# Subtest: previewMove is transient: no draft write, no history, cancel restores
+ok 75 - previewMove is transient: no draft write, no history, cancel restores
+  ---
+  duration_ms: 0.344295
+  type: 'test'
+  ...
+# Subtest: commitMove: one vertex moves, all others unchanged, disarms, one history op
+ok 76 - commitMove: one vertex moves, all others unchanged, disarms, one history op
+  ---
+  duration_ms: 0.297207
+  type: 'test'
+  ...
+# Subtest: commitMove of unknown vertex rejected without change
+ok 77 - commitMove of unknown vertex rejected without change
+  ---
+  duration_ms: 0.148747
+  type: 'test'
+  ...
+# Subtest: insertAfter: midpoint, new id, after index, selected+armed, area preserved
+ok 78 - insertAfter: midpoint, new id, after index, selected+armed, area preserved
+  ---
+  duration_ms: 0.557213
+  type: 'test'
+  ...
+# Subtest: insertAfter on last vertex of an OPEN path is rejected
+ok 79 - insertAfter on last vertex of an OPEN path is rejected
+  ---
+  duration_ms: 0.179237
+  type: 'test'
+  ...
+# Subtest: insertAfter works mid-path on an open path
+ok 80 - insertAfter works mid-path on an open path
+  ---
+  duration_ms: 0.178841
+  type: 'test'
+  ...
+# Subtest: collinear midpoint survives: insert then undo restores it as the pre-move state
+ok 81 - collinear midpoint survives: insert then undo restores it as the pre-move state
+  ---
+  duration_ms: 0.413994
+  type: 'test'
+  ...
+# Subtest: deleteVertex reconnects neighbours, selects successor, disarmed
+ok 82 - deleteVertex reconnects neighbours, selects successor, disarmed
+  ---
+  duration_ms: 0.489607
+  type: 'test'
+  ...
+# Subtest: deleteVertex on a 3-vertex closed outline is rejected
+ok 83 - deleteVertex on a 3-vertex closed outline is rejected
+  ---
+  duration_ms: 0.183849
+  type: 'test'
+  ...
+# Subtest: delete on open path may reduce to zero points (returns to placement state)
+ok 84 - delete on open path may reduce to zero points (returns to placement state)
+  ---
+  duration_ms: 0.113202
+  type: 'test'
+  ...
+# Subtest: crossing draft from an edit stays editable with save blocked; undo available
+ok 85 - crossing draft from an edit stays editable with save blocked; undo available
+  ---
+  duration_ms: 1.025789
+  type: 'test'
+  ...
+# Subtest: appendVertex: open only, creates+selects+arms, undoable
+ok 86 - appendVertex: open only, creates+selects+arms, undoable
+  ---
+  duration_ms: 0.275977
+  type: 'test'
+  ...
+# Subtest: closeOutline needs >=3 distinct vertices and never duplicates the first point
+ok 87 - closeOutline needs >=3 distinct vertices and never duplicates the first point
+  ---
+  duration_ms: 0.354122
+  type: 'test'
+  ...
+# Subtest: undo restores exact primitives and metadata; redo replays; redo clears on new edit
+ok 88 - undo restores exact primitives and metadata; redo replays; redo clears on new edit
+  ---
+  duration_ms: 0.291618
+  type: 'test'
+  ...
+# Subtest: vertex ids are stable through moves, undo and redo
+ok 89 - vertex ids are stable through moves, undo and redo
+  ---
+  duration_ms: 0.386314
+  type: 'test'
+  ...
+# Subtest: selection and cancelled gestures never enter history
+ok 90 - selection and cancelled gestures never enter history
+  ---
+  duration_ms: 0.179826
+  type: 'test'
+  ...
+# Subtest: history is bounded at 100 logical operations
+ok 91 - history is bounded at 100 logical operations
+  ---
+  duration_ms: 0.68012
+  type: 'test'
+  ...
+# Subtest: discardEdit restores the saved base regardless of undo position
+ok 92 - discardEdit restores the saved base regardless of undo position
+  ---
+  duration_ms: 0.218744
+  type: 'test'
+  ...
+# Subtest: saveEdit: clean draft returns clean; stale context rejected
+ok 93 - saveEdit: clean draft returns clean; stale context rejected
+  ---
+  duration_ms: 0.128316
+  type: 'test'
+  ...
+# Subtest: saveEdit: valid edit returns a plan routed to update-in-place with recomputed primitives
+ok 94 - saveEdit: valid edit returns a plan routed to update-in-place with recomputed primitives
+  ---
+  duration_ms: 0.782209
+  type: 'test'
+  ...
+# Subtest: saveEdit: out-of-raster warning does not block; self-intersection does
+ok 95 - saveEdit: out-of-raster warning does not block; self-intersection does
+  ---
+  duration_ms: 0.526664
+  type: 'test'
+  ...
+# Subtest: saveEdit routes calibration targets to the existing calibration persist path
+ok 96 - saveEdit routes calibration targets to the existing calibration persist path
+  ---
+  duration_ms: 0.167216
+  type: 'test'
+  ...
+# Subtest: saveEdit routes component-line targets through the existing atomic save
+ok 97 - saveEdit routes component-line targets through the existing atomic save
+  ---
+  duration_ms: 0.184137
+  type: 'test'
+  ...
+# Subtest: square has area 10000, perimeter 400, winding preserved
+ok 98 - square has area 10000, perimeter 400, winding preserved
+  ---
+  duration_ms: 1.67049
+  type: 'test'
+  ...
+# Subtest: minimum closed outline constant is 3
+ok 99 - minimum closed outline constant is 3
+  ---
+  duration_ms: 0.327775
+  type: 'test'
+  ...
+# Subtest: collinear midpoint insertion is permitted (never an issue)
+ok 100 - collinear midpoint insertion is permitted (never an issue)
+  ---
+  duration_ms: 0.873589
+  type: 'test'
+  ...
+# Subtest: triangle (minimum valid closed outline) passes
+ok 101 - triangle (minimum valid closed outline) passes
+  ---
+  duration_ms: 0.231788
+  type: 'test'
+  ...
+# Subtest: concave polygon is valid
+ok 102 - concave polygon is valid
+  ---
+  duration_ms: 0.424291
+  type: 'test'
+  ...
+# Subtest: duplicate vertices are blocking
+ok 103 - duplicate vertices are blocking
+  ---
+  duration_ms: 0.337503
+  type: 'test'
+  ...
+# Subtest: zero-area degenerate outline is blocking
+ok 104 - zero-area degenerate outline is blocking
+  ---
+  duration_ms: 0.3294
+  type: 'test'
+  ...
+# Subtest: self-intersecting bowtie is blocking with vertex ids
+ok 105 - self-intersecting bowtie is blocking with vertex ids
+  ---
+  duration_ms: 0.248366
+  type: 'test'
+  ...
+# Subtest: adjacent edges sharing a joint never self-intersect
+ok 106 - adjacent edges sharing a joint never self-intersect
+  ---
+  duration_ms: 0.504986
+  type: 'test'
+  ...
+# Subtest: overlapping collinear edges are a self-intersection
+ok 107 - overlapping collinear edges are a self-intersection
+  ---
+  duration_ms: 0.737715
+  type: 'test'
+  ...
+# Subtest: non-finite coordinates are blocking and short-circuit
+ok 108 - non-finite coordinates are blocking and short-circuit
+  ---
+  duration_ms: 10.971973
+  type: 'test'
+  ...
+# Subtest: insufficient vertices on closed outline is blocking
+ok 109 - insufficient vertices on closed outline is blocking
+  ---
+  duration_ms: 0.237418
+  type: 'test'
+  ...
+# Subtest: open path with <3 points flags outline-open; empty open path is silent
+ok 110 - open path with <3 points flags outline-open; empty open path is silent
+  ---
+  duration_ms: 0.169508
+  type: 'test'
+  ...
+# Subtest: out-of-raster points produce a warning, not blocking
+ok 111 - out-of-raster points produce a warning, not blocking
+  ---
+  duration_ms: 0.214702
+  type: 'test'
+  ...
+# Subtest: distinctness uses tolerance
+ok 112 - distinctness uses tolerance
+  ---
+  duration_ms: 0.130331
+  type: 'test'
+  ...
+# Subtest: vertex ids are random and never coordinate-derived
+ok 113 - vertex ids are random and never coordinate-derived
+  ---
+  duration_ms: 1.08757
+  type: 'test'
+  ...
+# Subtest: worked example E: client delta maps through inverse linear part only
+ok 114 - worked example E: client delta maps through inverse linear part only
+  ---
+  duration_ms: 1.071743
+  type: 'test'
+  ...
+# Subtest: vertex type is plain data
+ok 115 - vertex type is plain data
+  ---
+  duration_ms: 0.35773
+  type: 'test'
+  ...
+# Subtest: idle pointerDown records pending press; NO selection/placement effect
+ok 116 - idle pointerDown records pending press; NO selection/placement effect
+  ---
+  duration_ms: 2.962764
+  type: 'test'
+  ...
+# Subtest: §5.3 idle pointer down in a control/sheet never reaches the machine (adapter contract)
+ok 117 - §5.3 idle pointer down in a control/sheet never reaches the machine (adapter contract)
+  ---
+  duration_ms: 0.27026
+  type: 'test'
+  ...
+# Subtest: pending + second touch cancels the tap and begins a two-pointer view gesture
+ok 118 - pending + second touch cancels the tap and begins a two-pointer view gesture
+  ---
+  duration_ms: 0.434366
+  type: 'test'
+  ...
+# Subtest: pending + slop-exceeding move while armed → remote move (beginMove + preview with FULL delta)
+ok 119 - pending + slop-exceeding move while armed → remote move (beginMove + preview with FULL delta)
+  ---
+  duration_ms: 0.549262
+  type: 'test'
+  ...
+# Subtest: pending + slop-exceeding move while disarmed → one-finger pan; NEVER appends a point
+ok 120 - pending + slop-exceeding move while disarmed → one-finger pan; NEVER appends a point
+  ---
+  duration_ms: 0.341654
+  type: 'test'
+  ...
+# Subtest: tap priority 1: marker hit selects/arms the existing point
+ok 121 - tap priority 1: marker hit selects/arms the existing point
+  ---
+  duration_ms: 0.486474
+  type: 'test'
+  ...
+# Subtest: tap priority 2: blank tap while armed creates/moves nothing; stays armed (T03)
+ok 122 - tap priority 2: blank tap while armed creates/moves nothing; stays armed (T03)
+  ---
+  duration_ms: 0.229046
+  type: 'test'
+  ...
+# Subtest: tap priority 3: explicit placement state, nothing armed → exactly one point placed (T01)
+ok 123 - tap priority 3: explicit placement state, nothing armed → exactly one point placed (T01)
+  ---
+  duration_ms: 0.307053
+  type: 'test'
+  ...
+# Subtest: tap priority 4: closed-outline review — blank taps NEVER add vertices
+ok 124 - tap priority 4: closed-outline review — blank taps NEVER add vertices
+  ---
+  duration_ms: 0.551743
+  type: 'test'
+  ...
+# Subtest: marker hit outranks an armed point: tapping a different marker selects it (priority order)
+ok 125 - marker hit outranks an armed point: tapping a different marker selects it (priority order)
+  ---
+  duration_ms: 0.855225
+  type: 'test'
+  ...
+# Subtest: moving + second touch rolls back the ENTIRE uncommitted move, then two-pointer (T05)
+ok 126 - moving + second touch rolls back the ENTIRE uncommitted move, then two-pointer (T05)
+  ---
+  duration_ms: 0.449672
+  type: 'test'
+  ...
+# Subtest: moving + release commits exactly one move; sequence completes (disarm is the adapter's command)
+ok 127 - moving + release commits exactly one move; sequence completes (disarm is the adapter's command)
+  ---
+  duration_ms: 0.335212
+  type: 'test'
+  ...
+# Subtest: moving + pointercancel rolls the move back and clears the gesture (T07)
+ok 128 - moving + pointercancel rolls the move back and clears the gesture (T07)
+  ---
+  duration_ms: 0.248498
+  type: 'test'
+  ...
+# Subtest: T08: lostpointercapture AFTER a completed pointer-up does NOT roll back the move
+ok 129 - T08: lostpointercapture AFTER a completed pointer-up does NOT roll back the move
+  ---
+  duration_ms: 0.542608
+  type: 'test'
+  ...
+# Subtest: twoPointer + moves emit viewGestureUpdate with the frozen start pair (pinch math is M2 pinchCamera)
+ok 130 - twoPointer + moves emit viewGestureUpdate with the frozen start pair (pinch math is M2 pinchCamera)
+  ---
+  duration_ms: 0.413784
+  type: 'test'
+  ...
+# Subtest: T06: remaining finger after pinch cannot place/move; input resumes only when ALL lift
+ok 131 - T06: remaining finger after pinch cannot place/move; input resumes only when ALL lift
+  ---
+  duration_ms: 0.309589
+  type: 'test'
+  ...
+# Subtest: third touch during twoPointer cancels and suppresses until every contact lifts
+ok 132 - third touch during twoPointer cancels and suppresses until every contact lifts
+  ---
+  duration_ms: 0.224299
+  type: 'test'
+  ...
+# Subtest: third touch during a move rolls the move back and suppresses (never guesses fingers)
+ok 133 - third touch during a move rolls the move back and suppresses (never guesses fingers)
+  ---
+  duration_ms: 0.480976
+  type: 'test'
+  ...
+# Subtest: layoutInterrupt during a move rolls back the uncommitted move (draft preserved by adapter)
+ok 134 - layoutInterrupt during a move rolls back the uncommitted move (draft preserved by adapter)
+  ---
+  duration_ms: 0.220529
+  type: 'test'
+  ...
+# Subtest: layoutInterrupt during twoPointer ends the view gesture without geometry effects
+ok 135 - layoutInterrupt during twoPointer ends the view gesture without geometry effects
+  ---
+  duration_ms: 0.182246
+  type: 'test'
+  ...
+# Subtest: layoutInterrupt while idle is a no-op
+ok 136 - layoutInterrupt while idle is a no-op
+  ---
+  duration_ms: 0.405341
+  type: 'test'
+  ...
+# Subtest: controller buttons live outside the machine (§5.3 row: buttons do not forward events)
+ok 137 - controller buttons live outside the machine (§5.3 row: buttons do not forward events)
+  ---
+  duration_ms: 0.137169
+  type: 'test'
+  ...
+# Subtest: slop decision reads the environment at EVENT time — arming between press and move switches to move
+ok 138 - slop decision reads the environment at EVENT time — arming between press and move switches to move
+  ---
+  duration_ms: 0.189626
+  type: 'test'
+  ...
+# Subtest: ghost syntheticClick after a drag produces no effects (suppression by sequence state)
+ok 139 - ghost syntheticClick after a drag produces no effects (suppression by sequence state)
+  ---
+  duration_ms: 0.220831
+  type: 'test'
+  ...
+# Subtest: D: insert after last vertex of square lands at (0,50), area+perimeter unchanged
+ok 140 - D: insert after last vertex of square lands at (0,50), area+perimeter unchanged
+  ---
+  duration_ms: 3.879698
+  type: 'test'
+  ...
+# Subtest: F: moving one vertex changes area to 11000; at 0.01 m/px plan area is 1.1 m²
+ok 141 - F: moving one vertex changes area to 11000; at 0.01 m/px plan area is 1.1 m²
+  ---
+  duration_ms: 1.44678
+  type: 'test'
+  ...
+# Subtest: closed navigation wraps; index display order, not coordinate order
+ok 142 - closed navigation wraps; index display order, not coordinate order
+  ---
+  duration_ms: 0.438645
+  type: 'test'
+  ...
+# Subtest: open path does not wrap at the ends
+ok 143 - open path does not wrap at the ends
+  ---
+  duration_ms: 0.453103
+  type: 'test'
+  ...
+# Subtest: insert then move is exactly two undo steps (worked D + §6.3)
+ok 144 - insert then move is exactly two undo steps (worked D + §6.3)
+  ---
+  duration_ms: 0.465321
+  type: 'test'
+  ...
+# Subtest: manual creation journey: append x4, close, save
+ok 145 - manual creation journey: append x4, close, save
+  ---
+  duration_ms: 0.639147
+  type: 'test'
+  ...
+# Subtest: sceneDimsFromSource: long edge capped at 2000, aspect preserved
+ok 146 - sceneDimsFromSource: long edge capped at 2000, aspect preserved
+  ---
+  duration_ms: 1.585272
+  type: 'test'
+  ...
+# Subtest: sceneDimsFromSource: small sources are NOT upscaled (scale min(1, ...))
+ok 147 - sceneDimsFromSource: small sources are NOT upscaled (scale min(1, ...))
+  ---
+  duration_ms: 0.313835
+  type: 'test'
+  ...
+# Subtest: sceneDimsFromSource rejects invalid sources
+ok 148 - sceneDimsFromSource rejects invalid sources
+  ---
+  duration_ms: 0.724468
+  type: 'test'
+  ...
+# Subtest: R11: scene dims are INDEPENDENT of viewport size (the §2.1 trap 1 regression)
+ok 149 - R11: scene dims are INDEPENDENT of viewport size (the §2.1 trap 1 regression)
+  ---
+  duration_ms: 1.03404
+  type: 'test'
+  ...
+# Subtest: R11: stored scene geometry is unchanged across camera/viewport/layout switches
+ok 150 - R11: stored scene geometry is unchanged across camera/viewport/layout switches
+  ---
+  duration_ms: 1.049737
+  type: 'test'
+  ...
+# Subtest: remote-drag delta uses the linear part only, DPR-independent (§17.4 E)
+ok 151 - remote-drag delta uses the linear part only, DPR-independent (§17.4 E)
+  ---
+  duration_ms: 0.251156
+  type: 'test'
+  ...
+# Subtest: sceneToClient composes the interaction-surface rect offset (§10.2)
+ok 152 - sceneToClient composes the interaction-surface rect offset (§10.2)
+  ---
+  duration_ms: 0.390265
+  type: 'test'
+  ...
+# Subtest: fitCamera: fits inside viewport with margin, centred, works at 568x320 (L03)
+ok 153 - fitCamera: fits inside viewport with margin, centred, works at 568x320 (L03)
+  ---
+  duration_ms: 0.226125
+  type: 'test'
+  ...
+# Subtest: fitCamera: portrait viewport still fits the same scene without changing scene dims
+ok 154 - fitCamera: portrait viewport still fits the same scene without changing scene dims
+  ---
+  duration_ms: 0.705839
+  type: 'test'
+  ...
+# Subtest: pinchCamera: anchor point stays fixed under the gesture midpoint (§5.4)
+ok 155 - pinchCamera: anchor point stays fixed under the gesture midpoint (§5.4)
+  ---
+  duration_ms: 0.763062
+  type: 'test'
+  ...
+# Subtest: pinchCamera: zoom clamps recompute translation so the anchor is stable
+ok 156 - pinchCamera: zoom clamps recompute translation so the anchor is stable
+  ---
+  duration_ms: 0.297184
+  type: 'test'
+  ...
+# Subtest: pinchCamera rejects near-zero starting distance
+ok 157 - pinchCamera rejects near-zero starting distance
+  ---
+  duration_ms: 0.320526
+  type: 'test'
+  ...
+# Subtest: O10: the touch AI outline action stops after scan1 (pure orchestration decision)
+ok 158 - O10: the touch AI outline action stops after scan1 (pure orchestration decision)
+  ---
+  duration_ms: 1.808816
+  type: 'test'
+  ...
+# Subtest: O10: billing is identical mobile vs desktop — full scan1 charge, no cheaper variant
+ok 159 - O10: billing is identical mobile vs desktop — full scan1 charge, no cheaper variant
+  ---
+  duration_ms: 0.375539
+  type: 'test'
+  ...
+# Subtest: O10: candidates read ONLY roof-area polygons; lines/classification data is never converted
+ok 160 - O10: candidates read ONLY roof-area polygons; lines/classification data is never converted
+  ---
+  duration_ms: 1.335608
+  type: 'test'
+  ...
+# Subtest: O10/AiScanData: malformed polygons are skipped, not repaired
+ok 161 - O10/AiScanData: malformed polygons are skipped, not repaired
+  ---
+  duration_ms: 0.323871
+  type: 'test'
+  ...
+# Subtest: O04: imported candidate enters the M5 draft closed, origin-flagged imported, client-local id
+ok 162 - O04: imported candidate enters the M5 draft closed, origin-flagged imported, client-local id
+  ---
+  duration_ms: 1.765739
+  type: 'test'
+  ...
+# Subtest: O04: AI-origin vertices are editable like manual ones (R02) — commit/undo work identically
+ok 163 - O04: AI-origin vertices are editable like manual ones (R02) — commit/undo work identically
+  ---
+  duration_ms: 0.568949
+  type: 'test'
+  ...
+# Subtest: O04: accept-unchanged hands the exact AI points to the create-new flow (no update-in-place, no duplicates)
+ok 164 - O04: accept-unchanged hands the exact AI points to the create-new flow (no update-in-place, no duplicates)
+  ---
+  duration_ms: 0.812623
+  type: 'test'
+  ...
+# Subtest: O04: edit-then-accept routes the SAME create-new path with the edited points
+ok 165 - O04: edit-then-accept routes the SAME create-new path with the edited points
+  ---
+  duration_ms: 1.83258
+  type: 'test'
+  ...
+# Subtest: O04: an unusable candidate imports as an INVALID editable draft — save blocked, repair possible (§8.2)
+ok 166 - O04: an unusable candidate imports as an INVALID editable draft — save blocked, repair possible (§8.2)
+  ---
+  duration_ms: 1.148294
+  type: 'test'
+  ...
+# Subtest: O04/O11: a stale-context import is rejected by the SAME M5 save boundary
+ok 167 - O04/O11: a stale-context import is rejected by the SAME M5 save boundary
+  ---
+  duration_ms: 1.266431
+  type: 'test'
+  ...
+# Subtest: O11: a matching context applies the result
+ok 168 - O11: a matching context applies the result
+  ---
+  duration_ms: 0.367787
+  type: 'test'
+  ...
+# Subtest: O11: manual edits since scan start discard the result with an explicit message
+ok 169 - O11: manual edits since scan start discard the result with an explicit message
+  ---
+  duration_ms: 0.179543
+  type: 'test'
+  ...
+# Subtest: O11: page switch discards the result
+ok 170 - O11: page switch discards the result
+  ---
+  duration_ms: 0.227758
+  type: 'test'
+  ...
+# Subtest: O11: image revision change discards the result
+ok 171 - O11: image revision change discards the result
+  ---
+  duration_ms: 0.144907
+  type: 'test'
+  ...
+# Subtest: O11: contextEpoch change (cancellation / later page change) discards the result
+ok 172 - O11: contextEpoch change (cancellation / later page change) discards the result
+  ---
+  duration_ms: 0.126241
+  type: 'test'
+  ...
+# Subtest: O11: manual edits take precedence over other staleness reasons
+ok 173 - O11: manual edits take precedence over other staleness reasons
+  ---
+  duration_ms: 0.257022
+  type: 'test'
+  ...
+# Subtest: M8 gate: scan is blocked while the page is uncalibrated (null scale)
+ok 174 - M8 gate: scan is blocked while the page is uncalibrated (null scale)
+  ---
+  duration_ms: 0.16515
+  type: 'test'
+  ...
+# Subtest: M8 gate: non-finite / non-positive scales also block (defensive)
+ok 175 - M8 gate: non-finite / non-positive scales also block (defensive)
+  ---
+  duration_ms: 0.193583
+  type: 'test'
+  ...
+# Subtest: M8 gate: a completed calibration (positive finite scale) allows the scan
+ok 176 - M8 gate: a completed calibration (positive finite scale) allows the scan
+  ---
+  duration_ms: 0.323291
+  type: 'test'
+  ...
+# Subtest: O05: editing a saved outline produces an update-in-place intent for the SAME id, metadata retained
+ok 177 - O05: editing a saved outline produces an update-in-place intent for the SAME id, metadata retained
+  ---
+  duration_ms: 2.483681
+  type: 'test'
+  ...
+# Subtest: O05: plan area of the moved square is derived from new points, not old area
+ok 178 - O05: plan area of the moved square is derived from new points, not old area
+  ---
+  duration_ms: 0.450305
+  type: 'test'
+  ...
+# Subtest: O05: a client-local outline id routes to create-new (existing handleSaveArea flow)
+ok 179 - O05: a client-local outline id routes to create-new (existing handleSaveArea flow)
+  ---
+  duration_ms: 0.351505
+  type: 'test'
+  ...
+# Subtest: isPersistedOutlineGeometryId distinguishes DB ids from client-local ids
+ok 180 - isPersistedOutlineGeometryId distinguishes DB ids from client-local ids
+  ---
+  duration_ms: 0.178766
+  type: 'test'
+  ...
+# Subtest: O03: manual creation is an open path; Close requires 3 distinct points; no double-tap needed
+ok 181 - O03: manual creation is an open path; Close requires 3 distinct points; no double-tap needed
+  ---
+  duration_ms: 0.471996
+  type: 'test'
+  ...
+# Subtest: O06: a move producing a bowtie blocks save; the draft stays editable and undo repairs it
+ok 182 - O06: a move producing a bowtie blocks save; the draft stays editable and undo repairs it
+  ---
+  duration_ms: 0.381771
+  type: 'test'
+  ...
+# Subtest: O06: a degenerate (collinear) outline blocks save — min 3 distinct, nonzero area
+ok 183 - O06: a degenerate (collinear) outline blocks save — min 3 distinct, nonzero area
+  ---
+  duration_ms: 0.425903
+  type: 'test'
+  ...
+# Subtest: O12: rebuilding the intent after a lost save response yields the SAME update (idempotent)
+ok 184 - O12: rebuilding the intent after a lost save response yields the SAME update (idempotent)
+  ---
+  duration_ms: 0.76139
+  type: 'test'
+  ...
+# Subtest: O13: STALE_TAKEOFF_VERSION is classified; the local draft is untouched
+ok 185 - O13: STALE_TAKEOFF_VERSION is classified; the local draft is untouched
+  ---
+  duration_ms: 0.947145
+  type: 'test'
+  ...
+# Subtest: O13: stale-context edits are rejected at the boundary (page/image/epoch changed)
+ok 186 - O13: stale-context edits are rejected at the boundary (page/image/epoch changed)
+  ---
+  duration_ms: 1.942665
+  type: 'test'
+  ...
+# Subtest: O07: geometry change at constant scale recomputes source-linked entries from the NEW points
+ok 187 - O07: geometry change at constant scale recomputes source-linked entries from the NEW points
+  ---
+  duration_ms: 1.083051
+  type: 'test'
+  ...
+# Subtest: O07 (disambiguation): recompute uses new geometry, not the scale ratio
+ok 188 - O07 (disambiguation): recompute uses new geometry, not the scale ratio
+  ---
+  duration_ms: 0.199132
+  type: 'test'
+  ...
+# Subtest: R13: cancel (discardEdit) restores the exact saved base; exit guard clears
+ok 189 - R13: cancel (discardEdit) restores the exact saved base; exit guard clears
+  ---
+  duration_ms: 0.657775
+  type: 'test'
+  ...
+# Subtest: R13: an approved checkpoint save is never rolled back by a later cancel
+ok 190 - R13: an approved checkpoint save is never rolled back by a later cancel
+  ---
+  duration_ms: 0.757968
+  type: 'test'
+  ...
+# Subtest: O16: exit guard tracks draft dirtiness; stay changes nothing, discard restores base
+ok 191 - O16: exit guard tracks draft dirtiness; stay changes nothing, discard restores base
+  ---
+  duration_ms: 0.903824
+  type: 'test'
+  ...
+# Subtest: M6 prep: an imported outline uses the identical edit/save path (origin is provenance only)
+ok 192 - M6 prep: an imported outline uses the identical edit/save path (origin is provenance only)
+  ---
+  duration_ms: 8.046019
+  type: 'test'
+  ...
+# Subtest: out-of-raster points are a warning (non-blocking); duplicate vertices are blocking
+ok 193 - out-of-raster points are a warning (non-blocking); duplicate vertices are blocking
+  ---
+  duration_ms: 0.274011
+  type: 'test'
+  ...
+# Subtest: L01: Auto recommends touch for coarse-pointer phones in both orientations
+ok 194 - L01: Auto recommends touch for coarse-pointer phones in both orientations
+  ---
+  duration_ms: 1.539239
+  type: 'test'
+  ...
+# Subtest: L01: Auto recommends desktop for fine pointers regardless of size
+ok 195 - L01: Auto recommends desktop for fine pointers regardless of size
+  ---
+  duration_ms: 0.258832
+  type: 'test'
+  ...
+# Subtest: L01: Auto recommends desktop for coarse pointers above the short-edge threshold
+ok 196 - L01: Auto recommends desktop for coarse pointers above the short-edge threshold
+  ---
+  duration_ms: 0.240617
+  type: 'test'
+  ...
+# Subtest: L01: boundary uses the SHORTER layout edge (landscape phone passes)
+ok 197 - L01: boundary uses the SHORTER layout edge (landscape phone passes)
+  ---
+  duration_ms: 0.241116
+  type: 'test'
+  ...
+# Subtest: L01: explicit preference always wins over the Auto recommendation
+ok 198 - L01: explicit preference always wins over the Auto recommendation
+  ---
+  duration_ms: 0.264031
+  type: 'test'
+  ...
+# Subtest: L01: malformed stored values fall back to Auto
+ok 199 - L01: malformed stored values fall back to Auto
+  ---
+  duration_ms: 0.18299
+  type: 'test'
+  ...
+# Subtest: L02: PWA display mode alone never flips the recommendation
+ok 200 - L02: PWA display mode alone never flips the recommendation
+  ---
+  duration_ms: 0.303361
+  type: 'test'
+  ...
+# Subtest: L04: heuristic consumes only the layout viewport — a keyboard-shrunk visual viewport is invisible
+ok 201 - L04: heuristic consumes only the layout viewport — a keyboard-shrunk visual viewport is invisible
+  ---
+  duration_ms: 0.225067
+  type: 'test'
+  ...
+# Subtest: readLayoutViewportCapabilities: pointer media failure degrades to fine pointer
+ok 202 - readLayoutViewportCapabilities: pointer media failure degrades to fine pointer
+  ---
+  duration_ms: 0.551854
+  type: 'test'
+  ...
+# Subtest: L01: preference persistence round-trips through a working store
+ok 203 - L01: preference persistence round-trips through a working store
+  ---
+  duration_ms: 0.684967
+  type: 'test'
+  ...
+# Subtest: storage failure falls back to session memory without throwing
+ok 204 - storage failure falls back to session memory without throwing
+  ---
+  duration_ms: 0.479832
+  type: 'test'
+  ...
+# Subtest: null store (no window) still supports session-memory persistence
+ok 205 - null store (no window) still supports session-memory persistence
+  ---
+  duration_ms: 0.153757
+  type: 'test'
+  ...
+# Subtest: no oscillation: hybrid device with fine primary pointer stays desktop even at phone width
+ok 206 - no oscillation: hybrid device with fine primary pointer stays desktop even at phone width
+  ---
+  duration_ms: 0.154237
+  type: 'test'
+  ...
+# Subtest: Roof \#4 golden fixture: recovers both missing valleys and nothing else
+ok 207 - Roof \#4 golden fixture: recovers both missing valleys and nothing else
+  ---
+  duration_ms: 5.8947
+  type: 'test'
+  ...
+# Subtest: concave outline vertex with no line recovers exactly one valley
+ok 208 - concave outline vertex with no line recovers exactly one valley
+  ---
+  duration_ms: 3.095174
+  type: 'test'
+  ...
+# Subtest: up-and-over with one valley missing recovers the twin without suppressing the parallel hip
+ok 209 - up-and-over with one valley missing recovers the twin without suppressing the parallel hip
+  ---
+  duration_ms: 1.45951
+  type: 'test'
+  ...
+# Subtest: nearby parallel hip + valley pair is untouched and not duplicated
+ok 210 - nearby parallel hip + valley pair is untouched and not duplicated
+  ---
+  duration_ms: 1.704703
+  type: 'test'
+  ...
+# Subtest: dangling internal endpoint connects onward to the network
+ok 211 - dangling internal endpoint connects onward to the network
+  ---
+  duration_ms: 0.831592
+  type: 'test'
+  ...
+# Subtest: two equally plausible targets surface as a review candidate only
+ok 212 - two equally plausible targets surface as a review candidate only
+  ---
+  duration_ms: 0.72358
+  type: 'test'
+  ...
+# Subtest: ordinary external (convex) corners never create lines
+ok 213 - ordinary external (convex) corners never create lines
+  ---
+  duration_ms: 0.295308
+  type: 'test'
+  ...
+# Subtest: complete Roof \#4 (with both valleys present) stays unchanged
+ok 214 - complete Roof \#4 (with both valleys present) stays unchanged
+  ---
+  duration_ms: 0.474423
+  type: 'test'
+  ...
+# Subtest: a 45-degree dangling heal surfaces as pink review, never an auto ridge
+ok 215 - a 45-degree dangling heal surfaces as pink review, never an auto ridge
+  ---
+  duration_ms: 0.737945
+  type: 'test'
+  ...
+# Subtest: a dangling heal whose endpoints both become junctions is dropped entirely
+ok 216 - a dangling heal whose endpoints both become junctions is dropped entirely
+  ---
+  duration_ms: 0.9424
+  type: 'test'
+  ...
+# Subtest: a 0.94-scored corner recovery promotes despite a zero margin
+ok 217 - a 0.94-scored corner recovery promotes despite a zero margin
+  ---
+  duration_ms: 0.404405
+  type: 'test'
+  ...
+1..217
+# tests 217
+# suites 0
+# pass 217
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3596.50952

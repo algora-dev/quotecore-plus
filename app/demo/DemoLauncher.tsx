@@ -21,15 +21,19 @@ export function DemoLauncher() {
     void (async () => {
       try {
         const demo = createDemoBrowserClient();
-        const { data: { session } } = await demo.auth.getSession();
-        if (!session) {
+        const { data: { user }, error: identityError } = await demo.auth.getUser();
+        if (user && user.is_anonymous !== true) throw new Error('The demo requires its own anonymous session. Your normal account has not been changed.');
+        if (identityError || !user) {
+          // Expiry cleanup may have deleted the old anonymous identity while its
+          // browser cookie still exists. Clear this namespace only, then remint.
+          await demo.auth.signOut({ scope: 'local' });
           const { error: signInError } = await demo.auth.signInAnonymously();
           if (signInError) throw new Error(signInError.message);
         }
         const res = await fetch('/api/demo/start', { method: 'POST' });
         const body = (await res.json().catch(() => ({}))) as { slug?: string; error?: string };
         if (!res.ok || !body.slug) throw new Error(body.error || 'Could not start the demo. Try again shortly.');
-        router.push('/' + body.slug);
+        router.replace('/' + body.slug);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Could not start the demo. Try again shortly.');
       }

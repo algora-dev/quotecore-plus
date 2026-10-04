@@ -1,0 +1,37 @@
+import 'server-only';
+import { readActiveDemoContext } from './context';
+import { mutateDemoGuide } from './progress';
+import { acknowledge } from './model';
+/** Product actions call these only AFTER their real DB operation succeeds.
+ * Guide failures never turn a successful product save into a false failure. */
+export async function demoComponentSaved(companyId: string, component: { id: string; name: string; measurement_type: string }, kind: 'create' | 'update'): Promise<void> {
+  try {
+    const context = await readActiveDemoContext(companyId); if (!context) return;
+    await mutateDemoGuide(context.sessionId, previous => {
+      if (kind === 'create' && component.measurement_type === 'area' && !previous.acknowledgements['component.tested']) {
+        return acknowledge({ ...previous, guided_created_component_id: component.id, guided_created_component_name: component.name }, 'component.created', component.id);
+      }
+      if (kind === 'update' && component.id === previous.seed.maintenance_component) return acknowledge(previous, 'component.edited', component.id);
+      if (component.id === previous.guided_created_component_id) return { ...previous, guided_created_component_name: component.name };
+      return previous;
+    });
+  } catch { console.warn('[demo] component saved; guide refresh pending'); }
+}
+export async function demoTakeoffSaved(companyId: string, quoteId: string): Promise<void> {
+  try {
+    const context = await readActiveDemoContext(companyId); if (!context || context.tutorialState.seed.guided_roof_job !== quoteId) return;
+    await mutateDemoGuide(context.sessionId, previous => ({ ...acknowledge(previous, 'takeoff.saved', quoteId), chapter: 'customer-quote' }));
+  } catch { console.warn('[demo] takeoff saved; guide refresh pending'); }
+}
+
+export async function demoCustomerSaved(companyId:string,quoteId:string,kind:'branding'|'lines',textChanged=false):Promise<void>{
+ try{const context=await readActiveDemoContext(companyId);if(!context||context.tutorialState.seed.guided_roof_job!==quoteId)return;
+ const {createAdminClient}=await import('@/app/lib/supabase/admin');const db=createAdminClient();
+ const q=await db.from('quotes').select('cq_company_name,cq_footer_text,hide_line_prices').eq('id',quoteId).eq('company_id',companyId).maybeSingle();if(q.error||!q.data)return;
+ await mutateDemoGuide(context.sessionId,previous=>{let next=previous;
+ if(kind==='branding'&&q.data!.cq_company_name==='QCP Roofing & Construction'&&(q.data!.cq_footer_text??'').includes('DEMO'))next=acknowledge(next,'quote.template',quoteId);
+ if(kind==='lines'&&q.data!.hide_line_prices)next=acknowledge(next,'quote.presentation',quoteId);
+ if(kind==='lines'&&textChanged)next=acknowledge(next,'quote.edited',quoteId);
+ return next;});
+ }catch{console.warn('[demo] customer document saved; guide refresh pending');}
+}

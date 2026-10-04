@@ -1,3 +1,4 @@
+import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { QuotePreview } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/QuotePreview';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadQuote, loadCustomerQuoteLines } from '../../actions';
@@ -13,7 +14,8 @@ export default async function CustomerQuotePage({
   params: Promise<{ workspaceSlug: string; id: string }>;
 }) {
   const { workspaceSlug, id } = await params;
-  await requireCompanyContext();
+  const profile = await requireCompanyContext();
+  const demo = await getActiveDemoContext(profile.company_id);
 
   const [quote, savedLines, quoteTaxes] = await Promise.all([
     loadQuote(id),
@@ -52,10 +54,10 @@ export default async function CustomerQuotePage({
             Back
           </Link>
           <div className="flex items-center gap-3">
-            <DownloadPDFButton 
+            {!demo && <DownloadPDFButton 
               quoteNumber={quote.quote_number}
               customerName={quote.customer_name}
-            />
+            />}
             <Link
               href={`/${workspaceSlug}/quotes/${id}/customer-edit`}
               className="px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 pill-shimmer"
@@ -67,6 +69,7 @@ export default async function CustomerQuotePage({
 
         {/* Quote Document */}
         <div data-pdf-content className="qc-recipient-paper bg-white border border-slate-200 shadow-sm">
+          {demo && <div className="border-b-2 border-orange-500 bg-orange-50 p-4 font-bold text-orange-900">DEMO — NOT A REAL QUOTE</div>}
           <QuotePreview quote={quote} lines={visibleLines.map(line => ({
             id: line.id, text: line.custom_text || '', quantityText: line.quantity_text,
             amount: line.custom_amount || 0, showPrice: line.show_price, showUnits: line.show_units ?? true,

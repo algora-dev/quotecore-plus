@@ -1,3 +1,4 @@
+import { withDemoSpeech } from '@/app/lib/demo/assistant.server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { TTS_CONFIG } from '@/app/lib/assistant/config';
@@ -19,7 +20,7 @@ export const runtime = 'nodejs';
  * never logs user text server-side, and streams the provider audio body
  * straight back as audio/mpeg with no-store.
  */
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   if (!TTS_CONFIG.enabled) {
     return NextResponse.json({ error: 'Not available' }, { status: 404 });
   }
@@ -98,3 +99,5 @@ export async function POST(req: NextRequest) {
     headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' },
   });
 }
+
+export async function POST(req: NextRequest): Promise<Response> { return withDemoSpeech(req, handlePost); }

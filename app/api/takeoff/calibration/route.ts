@@ -1,3 +1,4 @@
+import { rejectUnapprovedDemoPaidRoute } from '@/app/lib/demo/paid-route.server';
 // AI-assisted calibration search/refine endpoint (Phase P5 + Phase D hardening
 // audit 2026-09-20, P1-1..P1-5).
 //
@@ -81,6 +82,8 @@ function visionErrorHttp(code: string): number {
 }
 
 export async function POST(req: NextRequest) {
+  const demoDenied = await rejectUnapprovedDemoPaidRoute();
+  if (demoDenied) return demoDenied;
   // Track the admitted run so EVERY post-charge failure path can finalize +
   // refund in the ledger, including unexpected ones.
   let admitted: { runId: string; pointsRemaining: number } | null = null;

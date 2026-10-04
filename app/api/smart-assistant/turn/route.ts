@@ -1,3 +1,4 @@
+import { withDemoAssistantTurn } from '@/app/lib/demo/assistant.server';
 import { NextRequest, NextResponse } from 'next/server';
 import { isUuid } from '@/app/lib/smart-assistant/v2/contracts';
 import { isRecord } from '@/app/lib/smart-assistant/section-permissions';
@@ -33,7 +34,7 @@ export const runtime = 'nodejs';
  * trusted finalization uses the service-role client. The browser can
  * request runs but never certify model output or token usage.
  */
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   let payload: {
     conversationId?: string;
     message?: string;
@@ -254,3 +255,5 @@ async function classicTurn(input: {
   return NextResponse.json(body, { status: 200, headers: { 'Cache-Control': 'no-store',
     'Server-Timing': `sa;dur=${requestMs}, sa_admission;dur=${input.admissionMs}, sa_finish;dur=${finishMs}` } });
 }
+
+export async function POST(req: NextRequest) { return withDemoAssistantTurn(req, handlePost); }

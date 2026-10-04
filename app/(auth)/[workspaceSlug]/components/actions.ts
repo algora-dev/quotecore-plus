@@ -1,4 +1,5 @@
 'use server';
+import { demoComponentSaved } from '@/app/lib/demo/product-events';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext, requireUser } from '@/app/lib/supabase/server';
 import { pickFields } from '@/app/lib/security/pickFields';
@@ -19,6 +20,7 @@ const COMPONENTS_INTRO_SEEN_KEY = 'components-intro-seen';
 export async function hasSeenComponentsIntro(): Promise<boolean> {
   try {
     const user = await requireUser();
+    if (user.is_anonymous) return true; // The demo owns its own welcome and pricing guide.
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from('copilot_progress')
@@ -139,6 +141,18 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
     return { ok: false, code: 'internal_error', message: 'Account setup incomplete. Please log out and log back in.' };
   }
 
+  // Demo-only creation allowance; normal pricing/component behavior is unchanged.
+  try {
+    const { readActiveDemoContext } = await import('@/app/lib/demo/context');
+    const demo = await readActiveDemoContext(profile.company_id, profile.id);
+    if (demo) {
+      const { consumeDemoResource } = await import('@/app/lib/demo/budget');
+      await consumeDemoResource(demo, 'component-creates', 1, 80);
+    }
+  } catch (error) {
+    return { ok: false, code: 'internal_error', message: error instanceof Error ? error.message : 'Demo allowance unavailable.' };
+  }
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('component_library')
@@ -151,6 +165,7 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
     return { ok: false, code: 'internal_error', message: `${error.message} (Code: ${error.code})` };
   }
 
+  await demoComponentSaved(profile.company_id, data, 'create');
   revalidatePath('/[workspaceSlug]/components', 'page');
   return { ok: true, data };
 }
@@ -236,6 +251,7 @@ export async function updateComponent(id: string, input: Partial<ComponentLibrar
     .single();
   
   if (error) throw new Error(error.message);
+  await demoComponentSaved(profile.company_id, data, 'update');
   revalidatePath('/[workspaceSlug]/components', 'page');
   return data;
 }

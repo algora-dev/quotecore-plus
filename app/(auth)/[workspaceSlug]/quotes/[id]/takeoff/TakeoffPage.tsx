@@ -44,6 +44,7 @@ interface ComponentCollection {
 }
 
 interface Props {
+  demoFinishHref?: string;
   workspaceSlug: string;
   quoteId: string;
   quote: QuoteRow;
@@ -81,6 +82,7 @@ interface Props {
 }
 
 export function TakeoffPage({
+  demoFinishHref,
   workspaceSlug,
   quoteId,
   quote,
@@ -110,7 +112,7 @@ export function TakeoffPage({
   useEffect(() => outlineAdapter?.subscribe?.(() => refreshBridge((n) => n + 1)), [outlineAdapter]);
   const backHref = `/${workspaceSlug}/quotes/${quoteId}`;
   // Match the desktop Finish and Save destination, not the quote detail page.
-  const finishHref = `/${workspaceSlug}/quotes/${quoteId}/build?step=roof-areas`;
+  const finishHref = demoFinishHref ?? `/${workspaceSlug}/quotes/${quoteId}/build?step=roof-areas`;
   const [pitch, setPitch] = useState(DEFAULT_ROOF_PITCH);
   const [resolvedPage1Id, setResolvedPage1Id] = useState<string | null>(null);
   const [confirmedCalibration, setConfirmedCalibration] = useState<{ pageId: string; payload: CalibrationCommitPayload } | null>(null);
@@ -175,6 +177,7 @@ export function TakeoffPage({
   );
   const workstation = (
     <TakeoffWorkstation
+      demoFinishHref={demoFinishHref}
       desktopAppearance={!touchActive}
       workspaceSlug={workspaceSlug}
       quote={quote}

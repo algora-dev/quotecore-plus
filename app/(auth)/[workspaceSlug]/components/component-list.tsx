@@ -1,4 +1,6 @@
 'use client';
+import { demoComponentCalculated, refreshDemoGuide } from '@/app/lib/demo/client-events';
+import { useSearchParams } from 'next/navigation';
 import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { useQcActionNotice } from '@/app/components/ui/v2/QcActionNotice';
 import { SmartComponentEditor, type ComponentEditorSettings, type ComponentEditorInitial } from '@/app/components/pricing/SmartComponentEditor';
@@ -66,6 +68,8 @@ export function ComponentList({
   /** Whether this company is an approved supplier. Shows publishing controls. */
   isSupplier?: boolean;
 }) {
+  const demoSearch = useSearchParams();
+  const openedDemoTarget = useRef<string | null>(null);
   const { notify, ask, feedback } = useQcFeedback();
   const { notice, showNotice } = useQcActionNotice();
   const [learning, setLearning] = useState(showPricingIntroduction);
@@ -337,6 +341,21 @@ export function ComponentList({
     );
   }
 
+  useEffect(() => {
+    if (!workspaceSlug.startsWith('demo-')) return;
+    const id = demoSearch.get('demoComponent');
+    const key = `${id}:${demoSearch.get('demoTest')}`;
+    if (!id || openedDemoTarget.current === key) return;
+    const component = components.find(item => item.id === id);
+    if (!component) return;
+    openedDemoTarget.current = key;
+    setActiveLibraryId('');
+    void startEdit(component, demoSearch.get('demoTest') === '1');
+    // Only an explicit navigation request opens the editor. Subsequent typing
+    // must not re-open/reset it as component or editor state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoSearch, workspaceSlug]);
+
   function cancelEdit() {
     setEditorDirty(false);
     setShowForm(false);
@@ -515,7 +534,7 @@ export function ComponentList({
       setEditorDirty(false);
       setCreateDefaults(null);
       setCreatedInSession(true);
-      setLastCreatedId(result.data.id);
+      setLastCreatedId(result.data.id); refreshDemoGuide();
       setOwnTested(draftTested);
       setDraftTested(false);
       setActiveLibraryId(selectedCollectionId);
@@ -1097,6 +1116,7 @@ export function ComponentList({
             saving={saving} error={formError} onSubmit={editingComponent ? event => handleUpdate(event, editingComponent.id) : handleCreate}
             onCancel={() => { void mayLeaveEditor().then(leave => { if (leave) cancelEdit(); }); }}
             onDirty={() => { setEditorDirty(true); setDraftTested(false); }} onCalculated={() => {
+            void demoComponentCalculated(editingId);
               setTestedInSession(true);
               if (showForm) setDraftTested(true);
               if (editingId && editingId === lastCreatedId) setOwnTested(true);

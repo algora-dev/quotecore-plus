@@ -1,4 +1,7 @@
 'use server';
+import { assertDemoExternalAllowed } from '@/app/lib/demo/egress';
+import { demoCustomerSaved } from '@/app/lib/demo/product-events';
+import { readActiveDemoContext } from '@/app/lib/demo/context';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
@@ -207,6 +210,7 @@ export async function createQuoteFromTemplate(
 
 export async function generateAcceptanceToken(quoteId: string, expiryDays: number = 30, applyExpiry: boolean = true): Promise<string> {
   const profile = await requireCompanyContext();
+  await assertDemoExternalAllowed(profile.company_id);
   const supabase = await createSupabaseServerClient();
 
   // Check quote exists and belongs to company
@@ -299,6 +303,7 @@ export async function updateQuoteExpiry(
   days: number,
 ): Promise<void> {
   const profile = await requireCompanyContext();
+  await assertDemoExternalAllowed(profile.company_id);
   const supabase = await createSupabaseServerClient();
 
   const { data: quote } = await supabase
@@ -428,6 +433,7 @@ export async function withdrawQuote(quoteId: string): Promise<void> {
  */
 export async function reopenQuote(quoteId: string): Promise<{ ok: true; cancelledFollowUps: number } | { ok: false; error: string }> {
   const profile = await requireCompanyContext();
+  await assertDemoExternalAllowed(profile.company_id);
   const supabase = await createSupabaseServerClient();
 
   const { data: quote, error: loadErr } = await supabase
@@ -1893,6 +1899,9 @@ export async function saveCustomerQuoteLines(
     throw new Error('Quote not found');
   }
 
+  const demoForGuide = await readActiveDemoContext(profile.company_id,profile.id);
+  const previousDemoLines = demoForGuide?.tutorialState.seed.guided_roof_job === quoteId ? await supabase.from('customer_quote_lines').select('id,custom_text').eq('quote_id',quoteId) : null;
+
   // H-01: atomic delete+insert via RPC. The previous delete-then-insert was
   // non-transactional and could wipe customer quote lines if the insert failed
   // or two saves raced. replace_customer_quote_lines() does the whole replace
@@ -1983,6 +1992,8 @@ export async function saveCustomerQuoteLines(
     }
   }
 
+  const demoTextChanged = !!previousDemoLines?.data?.some(previous => lines.some(line => line.id === previous.id && line.text !== (previous.custom_text ?? '')));
+  if (demoForGuide) await demoCustomerSaved(profile.company_id,quoteId,'lines',demoTextChanged);
   revalidatePath(`/quotes/${quoteId}/customer-edit`);
 }
 
@@ -2085,6 +2096,7 @@ export async function saveCustomerQuoteBranding(
     .eq('id', quoteId);
 
   if (error) throw new Error(error.message);
+  await demoCustomerSaved(profile.company_id,quoteId,'branding');
 }
 
 export async function updateQuoteMargins(

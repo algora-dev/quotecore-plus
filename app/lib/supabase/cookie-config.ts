@@ -64,7 +64,7 @@ export function authCookieOptions(hostname: string | null | undefined): {
 /**
  * Demo auth cookie (Architecture V2 §5): the public live demo uses a SEPARATE
  * cookie namespace so a demo session can never collide with a normal session
- * in the same browser (and vice versa). Same lifetime rules as the app cookie.
+ * in the same browser (and vice versa). Demo auth expires with the 24-hour sandbox.
  */
 export const DEMO_COOKIE_NAME = 'sb-qcp-demo-auth';
 
@@ -75,7 +75,17 @@ export function demoAuthCookieOptions(hostname: string | null | undefined): {
   maxAge: number;
 } {
   const domain = authCookieDomain(hostname);
-  return { name: DEMO_COOKIE_NAME, maxAge: 60 * 60 * 24 * 180, ...(domain ? { domain } : {}) };
+  return { name: DEMO_COOKIE_NAME, maxAge: 60 * 60 * 24, ...(domain ? { domain } : {}) };
+}
+
+
+/** Host-based in production; path-based for the single-host testing deployment.
+ * Request APIs receive a namespace set by middleware, never by cookie presence. */
+export function authCookieOptionsForLocation(hostname: string | null | undefined, pathname?: string | null, namespace?: string | null) {
+  const host = (hostname ?? '').toLowerCase().split(':')[0];
+  const first = (pathname ?? '').split('/').filter(Boolean)[0] ?? '';
+  const demo = namespace === 'demo' || host === 'demo.quote-core.com' || first === 'demo' || first.startsWith('demo-');
+  return demo ? demoAuthCookieOptions(hostname) : authCookieOptions(hostname);
 }
 
 /**

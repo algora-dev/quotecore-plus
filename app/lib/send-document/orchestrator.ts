@@ -1,4 +1,5 @@
 'use server';
+import { isDemoCompany } from '@/app/lib/demo/context';
 
 /**
  * Unified send-document orchestrator.
@@ -45,6 +46,7 @@ export async function sendDocumentMessage(
   }
 
   const profile = await requireCompanyContext();
+  if (await isDemoCompany(profile.company_id)) return { ok: false, error: 'Arbitrary sending and public links are disabled in the demo. Use the guide.' };
 
   // ─── 1. Shared entitlement gate ───
   try {

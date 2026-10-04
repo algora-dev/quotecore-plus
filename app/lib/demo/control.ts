@@ -17,6 +17,7 @@ const OFF: DemoControl = { demoEnabled: false, aiEnabled: false, updatedAt: null
 
 export const getDemoControl = cache(async (): Promise<DemoControl> => {
   try {
+    if (process.env.DEMO_V2_TEST_ENABLED !== 'true') return OFF;
     const admin = createAdminClient();
     const { data, error } = await admin
       .from('demo_control')

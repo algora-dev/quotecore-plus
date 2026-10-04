@@ -1,3 +1,4 @@
+import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLines, loadCustomerQuoteTemplates } from '../../actions';
 import { loadQuoteTaxes, loadCompanyTaxes } from '@/app/lib/taxes/actions';
@@ -11,7 +12,8 @@ export default async function CustomerQuoteEditPage({
   params: Promise<{ workspaceSlug: string; id: string }>;
 }) {
   const { workspaceSlug, id } = await params;
-  await requireCompanyContext();
+  const profile = await requireCompanyContext();
+  const demo = await getActiveDemoContext(profile.company_id);
 
   const supabase = await createSupabaseServerClient();
   const { data: profileForCatalogs } = await supabase.from('users').select('company_id').single();
@@ -58,7 +60,7 @@ export default async function CustomerQuoteEditPage({
   }
 
   return (
-    <CustomerQuoteEditor
+    <>{demo && <div className="border-b border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-900">DEMO — NOT A REAL QUOTE · Example pricing only. Open the safe customer preview from the guide.</div>}<CustomerQuoteEditor
       quote={quote}
       roofAreas={roofAreas}
       components={components}
@@ -81,6 +83,6 @@ export default async function CustomerQuoteEditPage({
         collection_id: (c.collection_id as string | null) ?? null,
       }))}
       catalogs={catalogList.map((c) => ({ id: c.id, name: c.name }))}
-    />
+    /></>
   );
 }

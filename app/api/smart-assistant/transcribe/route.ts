@@ -1,3 +1,4 @@
+import { withDemoTranscription } from '@/app/lib/demo/assistant.server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 
@@ -12,7 +13,7 @@ const MAX_BYTES = 15 * 1024 * 1024; // 15MB upload cap (~2min compressed audio)
  * model. Auth + feature flag mirror the turn route; audio is discarded
  * immediately after transcription.
  */
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
@@ -82,3 +83,5 @@ export async function POST(req: NextRequest) {
   const data = (await res.json()) as { text?: string };
   return NextResponse.json({ text: (data.text ?? '').trim() });
 }
+
+export async function POST(req: NextRequest) { return withDemoTranscription(req, handlePost); }

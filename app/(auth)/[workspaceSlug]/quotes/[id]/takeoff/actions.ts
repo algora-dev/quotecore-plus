@@ -1,4 +1,6 @@
 'use server';
+import { assertDemoTakeoffQuote } from '@/app/lib/demo/takeoff.server';
+import { demoTakeoffSaved } from '@/app/lib/demo/product-events';
 
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -72,6 +74,8 @@ export async function saveTakeoffMeasurements(
    *  stamped on the same row update. */
   calibrationMetadata?: unknown,
 ): Promise<{ success: true } | { success: false; error: string }> {
+  const demoContext = await assertDemoTakeoffQuote(quoteId, currentPageId);
+  if (demoContext && measurements.length > 300) return { success: false, error: 'This demo accepts up to 300 measurements on its prepared plan.' };
   const supabase = await createSupabaseServerClient();
 
   // Ownership check (RLS still applies inside the RPC, but this gives us a clearer error
@@ -626,6 +630,8 @@ export async function saveTakeoffMeasurements(
     }
   }
 
+  if (demoContext) await demoTakeoffSaved(quote.company_id, quoteId);
+
   // revalidatePath removed: TakeoffWorkstation manages all state client-side.
   // Server re-render was causing the canvas/panels to reset during auto-save
   // on area/page switches.
@@ -697,6 +703,7 @@ export interface TakeoffHydrationData {
 export async function loadTakeoffHydrationData(
   quoteId: string,
 ): Promise<TakeoffHydrationData | null> {
+  await assertDemoTakeoffQuote(quoteId);
   const supabase = await createSupabaseServerClient();
   const { getSignedUrl } = await import('@/app/lib/storage/helpers');
   const { BUCKETS } = await import('@/app/lib/storage/buckets');
@@ -850,6 +857,7 @@ export async function loadTakeoffHydrationData(
 }
 
 export async function loadTakeoffMeasurements(quoteId: string) {
+  await assertDemoTakeoffQuote(quoteId);
   const supabase = await createSupabaseServerClient();
   
   const { data: measurements, error } = await supabase
@@ -922,6 +930,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
  * Returns null when no session row exists yet.
  */
 export async function getTakeoffSessionVersion(quoteId: string): Promise<number | null> {
+  await assertDemoTakeoffQuote(quoteId);
   const supabase = await createSupabaseServerClient();
   // RLS scopes this read to the caller's company via the quotes join policy.
   const { data, error } = await supabase
@@ -976,6 +985,7 @@ export async function loadTakeoffPages(quoteId: string): Promise<{
   page_name: string | null;
   scale_calibration: unknown;
 }[]> {
+  await assertDemoTakeoffQuote(quoteId);
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('takeoff_pages')
@@ -1501,6 +1511,7 @@ export async function persistPageCalibration(
   calibrations: unknown,
   calibrationMetadata?: unknown,
 ): Promise<{ success: true; imageRevision: string | null } | { success: false; error: string }> {
+  await assertDemoTakeoffQuote(quoteId);
   const supabase = await createSupabaseServerClient();
 
   const { data: quote, error: quoteError } = await supabase
