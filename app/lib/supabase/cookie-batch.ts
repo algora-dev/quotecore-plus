@@ -13,6 +13,7 @@ export function createAuthCookieBatch(){
    }
    if(changes.length){headers.set('cache-control','private, no-store, max-age=0');headers.set('pragma','no-cache');headers.set('expires','0');}
   },
+  summary(){return {names:[...pending.values()].map(c=>c.name),deletions:[...pending.values()].filter(c=>c.options.maxAge===0||c.value==='').length};},
   apply<T extends ResponseWithCookies>(response:T):T{
    for(const {name,value,options} of pending.values())response.cookies.set({name,value,...options});
    for(const [name,value] of headers)response.headers.set(name,value);

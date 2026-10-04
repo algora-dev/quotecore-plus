@@ -1,0 +1,85 @@
+{
+  "evidence_type": "Chromium with production controller/event bindings; fixture HTTP auth responses and simulated restoration events. NOT real React/Next/Supabase/WebKit/PWA/device testing.",
+  "passed": 0,
+  "failed": 13,
+  "cases": [
+    {
+      "case": "valid cookie sent; fresh server response navigates",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login?redirect=%2Fassistant\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login?redirect=%2Fassistant\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "anonymous stays on editable login",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "persisted pageshow triggers fresh verification",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "foreground checks after hidden document",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "credential entry suppresses restoration redirects",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "explicit logout cannot be undone",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login?signedOut=1\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login?signedOut=1\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "network error preserves sign-in fallback",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "storage denied: URL guard prevents loop and manual retry works",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "MFA challenge retains intended destination",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "unsafe response cannot navigate off-origin",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "rollback response disables repeated probes",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "simultaneous lifecycle signals coalesce",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login\", waiting until \"load\"\\n')",
+      "page_errors": []
+    },
+    {
+      "case": "notification destination survives login verification",
+      "status": "failed",
+      "error": "Error('Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:40793/login?redirect=%2Fpwa%2Fopen%3Fdelivery%3D12345678-1234-4234-9234-123456789abc\\nCall log:\\n  - navigating to \"http://127.0.0.1:40793/login?redirect=%2Fpwa%2Fopen%3Fdelivery%3D12345678-1234-4234-9234-123456789abc\", waiting until \"load\"\\n')",
+      "page_errors": []
+    }
+  ]
+}

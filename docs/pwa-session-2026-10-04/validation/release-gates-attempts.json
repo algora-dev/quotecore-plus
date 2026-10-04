@@ -1,0 +1,22 @@
+[
+  {
+    "name": "baseline-typecheck",
+    "exit": 2
+  },
+  {
+    "name": "updated-typecheck",
+    "exit": 2
+  },
+  {
+    "name": "build",
+    "exit": 127
+  },
+  {
+    "name": "lint",
+    "exit": 127
+  },
+  {
+    "name": "baseline-retained",
+    "exit": 1
+  }
+]

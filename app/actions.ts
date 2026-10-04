@@ -21,7 +21,7 @@ export async function logoutAction() {
   }
   cookieStore.delete(PUSH_DEVICE_COOKIE);
   await supabase.auth.signOut();
-  redirect('/login');
+  redirect('/login?signedOut=1');
 }
 
 export async function updateCompanyLanguage(language: string) {

@@ -1,3 +1,4 @@
+import { safeReturnPath } from '@/app/lib/auth/resume-contract';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { TwoFactorChallengeForm } from './TwoFactorChallengeForm';
@@ -22,13 +23,13 @@ export default async function TwoFactorPage({
 
   const { data: userRes } = await supabase.auth.getUser();
   if (!userRes?.user) {
-    redirect('/login');
+    redirect('/login?redirect=' + encodeURIComponent(safeReturnPath(redirectParam) ?? '/assistant'));
   }
 
   const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (aalData?.currentLevel === 'aal2') {
     // Already verified - bounce back to the original destination (or root).
-    redirect(redirectParam && redirectParam.startsWith('/') ? redirectParam : '/');
+    redirect(safeReturnPath(redirectParam) ?? '/');
   }
 
   const { data: factorsData } = await supabase.auth.mfa.listFactors();
@@ -36,7 +37,7 @@ export default async function TwoFactorPage({
 
   if (!verifiedTotp) {
     // No factor enrolled - nothing to challenge against. Send them through.
-    redirect(redirectParam && redirectParam.startsWith('/') ? redirectParam : '/');
+    redirect(safeReturnPath(redirectParam) ?? '/');
   }
 
   return (
@@ -60,7 +61,7 @@ export default async function TwoFactorPage({
             .
           </p>
 
-          <TwoFactorChallengeForm factorId={verifiedTotp.id} redirectTo={redirectParam} />
+          <TwoFactorChallengeForm factorId={verifiedTotp.id} redirectTo={safeReturnPath(redirectParam) ?? '/'} />
         </div>
       </div>
     </main>

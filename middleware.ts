@@ -1,7 +1,9 @@
+import { authFailureCategory } from '@/app/lib/auth/auth-errors';
+import { createSessionTrace, sessionNoStore } from '@/app/lib/auth/session-trace';
 import { isDemoRequest, DEMO_NAMESPACE_HEADER } from '@/app/lib/demo/routing';
 import { guardDemoRequest } from '@/app/lib/demo/request-gate';
 import { NextResponse, type NextRequest } from 'next/server';
-import { createAuthCookieBatch, temporaryAuthFailure } from '@/app/lib/supabase/cookie-batch';
+import { createAuthCookieBatch } from '@/app/lib/supabase/cookie-batch';
 import { createServerClient } from '@supabase/ssr';
 import {
   authCookieOptionsForLocation,
@@ -180,6 +182,7 @@ export async function middleware(request: NextRequest) {
   // These headers are derived here; ignore incoming copies from a caller.
   request.headers.delete(DEMO_NAMESPACE_HEADER);
   request.headers.delete('x-qcp-request-path');
+  request.headers.delete('x-qcp-session-trace');
   const demoNamespace = isDemoRequest(hostname, pathname, request.nextUrl.origin, request.headers.get('referer'));
   request.headers.set(DEMO_NAMESPACE_HEADER, demoNamespace ? 'demo' : 'normal');
   request.headers.set('x-qcp-request-path', pathname);
@@ -252,6 +255,16 @@ export async function middleware(request: NextRequest) {
   //   is fully self-contained.
   const isPreview = isPreviewHost(hostname);
   const isPublicDomain = isProductionMarketingHost(hostname);
+  const publicNext = () => {
+    const next = NextResponse.next({ request });
+    if (pathname === '/login') {
+      const trace = createSessionTrace(request, 'middleware');
+      trace.finish('public_login_document', { names: [], deletions: 0 });
+      if (trace.enabled) next.headers.set('X-QCP-Session-Trace', trace.id);
+      return sessionNoStore(next);
+    }
+    return next;
+  };
 
   if (isPreview) {
     // On preview hosts, skip all cross-domain redirects. The homepage
@@ -262,7 +275,7 @@ export async function middleware(request: NextRequest) {
     }
     // Public paths and root are allowed without auth
     if (pathname === '/' || isPublicPath(pathname)) {
-      return NextResponse.next({ request });
+      return publicNext();
     }
     // Fall through to auth check below (same as app domain)
   } else if (isPublicDomain) {
@@ -284,7 +297,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(appUrl, 308);
     }
     if (pathname === '/' || isPublicPath(pathname)) {
-      return NextResponse.next({ request });
+      return publicNext();
     }
     // Redirect everything else to the app domain
     const appUrl = new URL(pathname, `https://app.quote-core.com`);
@@ -299,7 +312,7 @@ export async function middleware(request: NextRequest) {
 
   // Skip public paths
   if (pathname === '/' || isPublicPath(pathname)) {
-    return NextResponse.next({ request });
+    return publicNext();
   }
 
   // Demo workspace routes (slug prefix demo-) authenticate via the DEMO
@@ -309,7 +322,15 @@ export async function middleware(request: NextRequest) {
   const isDemoWorkspace = firstSegment.startsWith('demo-');
 
   // Create Supabase client for middleware
+  const trace = createSessionTrace(request, 'middleware');
+  if (trace.enabled) request.headers.set('x-qcp-session-trace', trace.id);
   const cookieUpdates = createAuthCookieBatch();
+  const finishAuth = (result: NextResponse, outcome: string, destination?: string, authCategory?: string) => {
+    const finished = sessionNoStore(cookieUpdates.apply(result));
+    if (trace.enabled) finished.headers.set('X-QCP-Session-Trace', trace.id);
+    trace.finish(outcome, cookieUpdates.summary(), { destination, authCategory });
+    return finished;
+  };
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -319,23 +340,28 @@ export async function middleware(request: NextRequest) {
       // Cross-subdomain auth cookies (see cookie-config.ts): sessions
       // refreshed here must stay valid on all quote-core.com subdomains.
       cookieOptions: authCookieOptionsForLocation(hostname, pathname),
+      global: { fetch: trace.fetch(fetch) },
       cookies: {
         getAll() { return request.cookies.getAll(); },
-        setAll(changes) {
+        setAll(changes, sdkHeaders?: Record<string, string>) {
           for (const {name,value} of changes) request.cookies.set(name,value);
-          cookieUpdates.record(changes);
+          cookieUpdates.record(changes, sdkHeaders);
           response=cookieUpdates.apply(NextResponse.next({request}));
         },
       },
     }
   );
 
-  const {data:{user},error:authError}=await supabase.auth.getUser();
+  let verification;
+  try { verification = await supabase.auth.getUser(); }
+  catch { return finishAuth(new NextResponse('Your session could not be verified. Reconnect and reload.', { status: 503, headers: { 'Retry-After': '5' } }), 'auth_unavailable'); }
+  const {data:{user},error:authError}=verification;
   // SSR refreshes expired tokens itself. Do not rotate a second time after an
   // auth-network outage, and do not turn an unverified/offline request into an
   // authenticated response or a destructive sign-out.
-  if (!user && temporaryAuthFailure(authError)) {
-    return cookieUpdates.apply(new NextResponse('Your session could not be verified. Reconnect and reload this page.',{status:503,headers:{'Cache-Control':'private, no-store','Retry-After':'5','Content-Type':'text/plain; charset=utf-8'}}));
+  const authCategory = authFailureCategory(authError);
+  if (authError && (user || authCategory === 'temporary' || authCategory === 'unknown')) {
+    return finishAuth(new NextResponse('Your session could not be verified. Reconnect and reload this page.',{status:503,headers:{'Retry-After':'5','Content-Type':'text/plain; charset=utf-8'}}), 'auth_unavailable', undefined, authCategory);
   }
 
   // No verified user (including legitimate expiry/revocation) — redirect to login
@@ -350,7 +376,7 @@ export async function middleware(request: NextRequest) {
       url.search = '';
       url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''));
     }
-    return expireLegacyAuthCookies(request, cookieUpdates.apply(NextResponse.redirect(url)));
+    return finishAuth(expireLegacyAuthCookies(request, NextResponse.redirect(url)), 'login_required', url.pathname, authCategory);
   }
 
   // 2FA gate. getAuthenticatorAssuranceLevel() is a local JWT decode, not a
@@ -365,30 +391,32 @@ export async function middleware(request: NextRequest) {
   // 2FA off in settings doesn't get challenged. The DB read is one indexed PK
   // lookup; cheap and runs after we've already paid for getUser().
   if (!isAal1Allowed(pathname)) {
-    const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel().catch(() => null);
+    if (!aal?.data || aal.error) return finishAuth(new NextResponse('Two-factor status could not be verified. Reconnect and reload.', { status: 503 }), 'mfa_unavailable');
     const factorPending =
       aal.data?.nextLevel === 'aal2' && aal.data.currentLevel !== 'aal2';
 
     if (factorPending) {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('mfa_required')
         .eq('id', user.id)
         .maybeSingle();
 
+      if (profileError) return finishAuth(new NextResponse('Two-factor settings could not be verified. Reconnect and reload.', { status: 503 }), 'mfa_unavailable');
       if (profile?.mfa_required) {
         const url = request.nextUrl.clone();
         url.pathname = '/2fa';
         // Preserve where they were trying to go so we can bounce them back.
         url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''));
-        return cookieUpdates.apply(NextResponse.redirect(url));
+        return finishAuth(NextResponse.redirect(url), 'mfa_required', '/2fa');
       }
     }
   }
 
   // User exists (and 2FA, if applicable, has been satisfied). Page-level checks
   // continue to handle company context.
-  return expireLegacyAuthCookies(request, response);
+  return finishAuth(expireLegacyAuthCookies(request, response), 'verified');
 }
 
 export const config = {

@@ -1,0 +1,24 @@
+{
+  "baseline_files": 2501,
+  "unchanged_baseline_files": 2488,
+  "changed_existing_files": [
+    "RETURN_NOTES.md",
+    "middleware.ts",
+    "app/actions.ts",
+    "app/login/actions.ts",
+    "app/login/page.tsx",
+    "app/2fa/page.tsx",
+    "app/2fa/TwoFactorChallengeForm.tsx",
+    "app/components/auth/GoogleSignInButton.tsx",
+    "app/lib/supabase/cookie-config.ts",
+    "app/lib/supabase/cookie-batch.ts",
+    "app/auth/callback/route.ts",
+    "app/(auth)/assistant/page.tsx",
+    "app/api/auth-session-debug/route.ts"
+  ],
+  "deleted": [],
+  "protected_changes": [],
+  "unchanged_sql_files": 329,
+  "unchanged_dependency_manifests": true,
+  "note": "All baseline files except declared existing changes are byte-identical, not merely a selected protected subset."
+}

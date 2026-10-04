@@ -1,0 +1,8 @@
+COMMAND: npm ci --ignore-scripts --no-audit --no-fund --fetch-retries=0 --fetch-timeout=5000
+NOTE: install scripts disabled for inspection; Gavin must run the ordinary locked install.
+npm error Exit handler never called!
+npm error This is an error with npm itself. Please report this error at:
+npm error   <https://github.com/npm/cli/issues>
+npm error A complete log of this run can be found in: /mnt/data/pwa-session-npm-cache/_logs/2026-10-04T13_49_58_650Z-debug-0.log
+
+EXIT: 1

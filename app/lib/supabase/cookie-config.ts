@@ -51,10 +51,10 @@ export function authCookieDomain(hostname: string | null | undefined): string | 
 export function authCookieOptions(hostname: string | null | undefined): {
   name: string;
   domain?: string;
-  /** F5: persistent sessions (180 days). Without a maxAge the auth cookies
-   *  are session-scoped and die every time the browser/PWA closes - the
-   *  mobile "logged out again" pain. The session itself still rotates and
-   *  refreshes server-side; explicit logout clears the cookies as before. */
+  /** Cookie retention preference (180 days), NOT an Auth session timeout.
+   * @supabase/ssr also supplies persistent cookie defaults; verify the emitted
+   * Set-Cookie with this pinned SDK. Supabase Auth expiry/revocation/rotation
+   * remains authoritative. Closing the PWA is not a sign-out operation. */
   maxAge: number;
 } {
   const domain = authCookieDomain(hostname);

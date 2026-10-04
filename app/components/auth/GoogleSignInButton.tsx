@@ -1,10 +1,11 @@
 'use client';
 import '@/app/components/ui/v2/qc.css';
 import '@/app/components/ui/v2/qc-journeys.css';
+import { safeReturnPath } from '@/app/lib/auth/resume-contract';
 import { useState } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
 
-export function GoogleSignInButton() {
+export function GoogleSignInButton({ returnTo }: { returnTo?: string } = {}) {
   const [loading, setLoading] = useState(false);
 
   async function handleGoogleSignIn() {
@@ -14,10 +15,13 @@ export function GoogleSignInButton() {
       // (see cookie-config.ts). Never use raw createBrowserClient here.
       const supabase = createClient();
 
+      const callback = new URL('/auth/callback', window.location.origin);
+      const destination = safeReturnPath(returnTo);
+      if (destination) callback.searchParams.set('redirect', destination);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: callback.href,
         },
       });
 

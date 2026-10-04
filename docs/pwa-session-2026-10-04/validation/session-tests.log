@@ -1,0 +1,496 @@
+TAP version 13
+# Subtest: return path refuses "//evil.example"
+ok 1 - return path refuses "//evil.example"
+  ---
+  duration_ms: 2.008797
+  type: 'test'
+  ...
+# Subtest: return path refuses "/\\\\evil.example"
+ok 2 - return path refuses "/\\\\evil.example"
+  ---
+  duration_ms: 0.290233
+  type: 'test'
+  ...
+# Subtest: return path refuses "/%5cevil.example"
+ok 3 - return path refuses "/%5cevil.example"
+  ---
+  duration_ms: 0.447086
+  type: 'test'
+  ...
+# Subtest: return path refuses "/%2f%2fevil.example"
+ok 4 - return path refuses "/%2f%2fevil.example"
+  ---
+  duration_ms: 0.093874
+  type: 'test'
+  ...
+# Subtest: return path refuses "/%252f%252fevil.example"
+ok 5 - return path refuses "/%252f%252fevil.example"
+  ---
+  duration_ms: 0.089488
+  type: 'test'
+  ...
+# Subtest: return path refuses "/foo\\nbar"
+ok 6 - return path refuses "/foo\\nbar"
+  ---
+  duration_ms: 0.079444
+  type: 'test'
+  ...
+# Subtest: return path refuses "https://evil.example"
+ok 7 - return path refuses "https://evil.example"
+  ---
+  duration_ms: 0.078525
+  type: 'test'
+  ...
+# Subtest: return path refuses "javascript:alert(1)"
+ok 8 - return path refuses "javascript:alert(1)"
+  ---
+  duration_ms: 7.68885
+  type: 'test'
+  ...
+# Subtest: return path refuses "/auth/signout"
+ok 9 - return path refuses "/auth/signout"
+  ---
+  duration_ms: 0.591124
+  type: 'test'
+  ...
+# Subtest: return path refuses "/api/admin/run"
+ok 10 - return path refuses "/api/admin/run"
+  ---
+  duration_ms: 0.578125
+  type: 'test'
+  ...
+# Subtest: return path refuses "/demo-one/assistant"
+ok 11 - return path refuses "/demo-one/assistant"
+  ---
+  duration_ms: 0.166492
+  type: 'test'
+  ...
+# Subtest: return path refuses "/login?redirect=/login"
+ok 12 - return path refuses "/login?redirect=/login"
+  ---
+  duration_ms: 0.112407
+  type: 'test'
+  ...
+# Subtest: return path refuses "/2fa?redirect=//evil"
+ok 13 - return path refuses "/2fa?redirect=//evil"
+  ---
+  duration_ms: 0.170792
+  type: 'test'
+  ...
+# Subtest: return path refuses "/a/../login"
+ok 14 - return path refuses "/a/../login"
+  ---
+  duration_ms: 0.059388
+  type: 'test'
+  ...
+# Subtest: return path refuses "/%61uth/callback"
+ok 15 - return path refuses "/%61uth/callback"
+  ---
+  duration_ms: 0.052599
+  type: 'test'
+  ...
+# Subtest: return path refuses "/foo%00bar"
+ok 16 - return path refuses "/foo%00bar"
+  ---
+  duration_ms: 0.114424
+  type: 'test'
+  ...
+# Subtest: return path refuses "/foo%ZZ"
+ok 17 - return path refuses "/foo%ZZ"
+  ---
+  duration_ms: 0.079792
+  type: 'test'
+  ...
+# Subtest: return path refuses " /assistant"
+ok 18 - return path refuses " /assistant"
+  ---
+  duration_ms: 0.032926
+  type: 'test'
+  ...
+# Subtest: return path keeps /assistant
+ok 19 - return path keeps /assistant
+  ---
+  duration_ms: 0.133567
+  type: 'test'
+  ...
+# Subtest: return path keeps /acme/assistant
+ok 20 - return path keeps /acme/assistant
+  ---
+  duration_ms: 0.048684
+  type: 'test'
+  ...
+# Subtest: return path keeps /acme/quotes/123?tab=lines
+ok 21 - return path keeps /acme/quotes/123?tab=lines
+  ---
+  duration_ms: 0.051194
+  type: 'test'
+  ...
+# Subtest: return path keeps /pwa/open?delivery=12345678-1234-4234-9234-123456789abc
+ok 22 - return path keeps /pwa/open?delivery=12345678-1234-4234-9234-123456789abc
+  ---
+  duration_ms: 0.047768
+  type: 'test'
+  ...
+# Subtest: return path keeps /acme/quotes?q=Jim%20Smith
+ok 23 - return path keeps /acme/quotes?q=Jim%20Smith
+  ---
+  duration_ms: 0.041099
+  type: 'test'
+  ...
+# Subtest: redirect preferred; legacy next supported; invalid values fall back
+ok 24 - redirect preferred; legacy next supported; invalid values fall back
+  ---
+  duration_ms: 0.427424
+  type: 'test'
+  ...
+# Subtest: workspace destination never trusts a slug supplied by client
+ok 25 - workspace destination never trusts a slug supplied by client
+  ---
+  duration_ms: 0.65581
+  type: 'test'
+  ...
+# Subtest: malformed response/foreign redirect cannot navigate; MFA is bounded separately
+ok 26 - malformed response/foreign redirect cannot navigate; MFA is bounded separately
+  ---
+  duration_ms: 0.86829
+  type: 'test'
+  ...
+# Subtest: logout/errors/signup/credential callbacks suppress automatic recovery
+ok 27 - logout/errors/signup/credential callbacks suppress automatic recovery
+  ---
+  duration_ms: 0.585329
+  type: 'test'
+  ...
+# Subtest: verified normal session resolves once through user + tenant predicates
+ok 28 - verified normal session resolves once through user + tenant predicates
+  ---
+  duration_ms: 0.767507
+  type: 'test'
+  ...
+# Subtest: notification resumes via the protected resolver, never a payload-auth shortcut
+ok 29 - notification resumes via the protected resolver, never a payload-auth shortcut
+  ---
+  duration_ms: 0.407606
+  type: 'test'
+  ...
+# Subtest: invalid session never resumes {"name":"AuthSessionMissingError"}
+ok 30 - invalid session never resumes {"name":"AuthSessionMissingError"}
+  ---
+  duration_ms: 0.568882
+  type: 'test'
+  ...
+# Subtest: invalid session never resumes {"code":"refresh_token_not_found"}
+ok 31 - invalid session never resumes {"code":"refresh_token_not_found"}
+  ---
+  duration_ms: 0.079185
+  type: 'test'
+  ...
+# Subtest: invalid session never resumes {"code":"session_expired"}
+ok 32 - invalid session never resumes {"code":"session_expired"}
+  ---
+  duration_ms: 0.093257
+  type: 'test'
+  ...
+# Subtest: invalid session never resumes {"status":401}
+ok 33 - invalid session never resumes {"status":401}
+  ---
+  duration_ms: 0.051161
+  type: 'test'
+  ...
+# Subtest: unverified error is not logout {"name":"AuthRetryableFetchError"}
+ok 34 - unverified error is not logout {"name":"AuthRetryableFetchError"}
+  ---
+  duration_ms: 0.101448
+  type: 'test'
+  ...
+# Subtest: unverified error is not logout {"status":429}
+ok 35 - unverified error is not logout {"status":429}
+  ---
+  duration_ms: 0.098441
+  type: 'test'
+  ...
+# Subtest: unverified error is not logout {"status":503}
+ok 36 - unverified error is not logout {"status":503}
+  ---
+  duration_ms: 0.107067
+  type: 'test'
+  ...
+# Subtest: unverified error is not logout {"name":"UnknownProviderError","message":"SECRET"}
+ok 37 - unverified error is not logout {"name":"UnknownProviderError","message":"SECRET"}
+  ---
+  duration_ms: 0.341235
+  type: 'test'
+  ...
+# Subtest: demo/anonymous Auth user never resumes paid namespace
+ok 38 - demo/anonymous Auth user never resumes paid namespace
+  ---
+  duration_ms: 0.344656
+  type: 'test'
+  ...
+# Subtest: MFA not completed returns challenge with exact intended destination
+ok 39 - MFA not completed returns challenge with exact intended destination
+  ---
+  duration_ms: 0.226061
+  type: 'test'
+  ...
+# Subtest: completed MFA resumes; missing MFA data/config fails closed
+ok 40 - completed MFA resumes; missing MFA data/config fails closed
+  ---
+  duration_ms: 0.30087
+  type: 'test'
+  ...
+# Subtest: profile/company/MFA errors never become false unauthenticated results
+ok 41 - profile/company/MFA errors never become false unauthenticated results
+  ---
+  duration_ms: 0.321396
+  type: 'test'
+  ...
+# Subtest: verified user without onboarded membership goes to existing onboarding, not login
+ok 42 - verified user without onboarded membership goes to existing onboarding, not login
+  ---
+  duration_ms: 0.271578
+  type: 'test'
+  ...
+# Subtest: restored login with a valid session opens workspace without signIn or push
+ok 43 - restored login with a valid session opens workspace without signIn or push
+  ---
+  duration_ms: 0.972816
+  type: 'test'
+  ...
+# Subtest: anonymous login stays form; later foreground can verify newly available cookies
+ok 44 - anonymous login stays form; later foreground can verify newly available cookies
+  ---
+  duration_ms: 0.333777
+  type: 'test'
+  ...
+# Subtest: explicit logout does not get undone by resume, including manual
+ok 45 - explicit logout does not get undone by resume, including manual
+  ---
+  duration_ms: 0.122881
+  type: 'test'
+  ...
+# Subtest: no storage access is required to recover a valid existing session
+ok 46 - no storage access is required to recover a valid existing session
+  ---
+  duration_ms: 0.264495
+  type: 'test'
+  ...
+# Subtest: loop guard survives unavailable storage via redirect query marker
+ok 47 - loop guard survives unavailable storage via redirect query marker
+  ---
+  duration_ms: 0.408702
+  type: 'test'
+  ...
+# Subtest: storage-based loop guard applies even if a page dropped the return query
+ok 48 - storage-based loop guard applies even if a page dropped the return query
+  ---
+  duration_ms: 0.196479
+  type: 'test'
+  ...
+# Subtest: network failure/offline state never pretends the session has expired
+ok 49 - network failure/offline state never pretends the session has expired
+  ---
+  duration_ms: 0.296477
+  type: 'test'
+  ...
+# Subtest: duplicate lifecycle events do not start concurrent session refreshes
+ok 50 - duplicate lifecycle events do not start concurrent session refreshes
+  ---
+  duration_ms: 0.289638
+  type: 'test'
+  ...
+# Subtest: credential entry fences late verification and later auto recovery
+ok 51 - credential entry fences late verification and later auto recovery
+  ---
+  duration_ms: 0.317091
+  type: 'test'
+  ...
+# Subtest: hidden or unmounted page cannot navigate from late response
+ok 52 - hidden or unmounted page cannot navigate from late response
+  ---
+  duration_ms: 0.496307
+  type: 'test'
+  ...
+# Subtest: feature-disabled response stops repeated checks for the mounted login document
+ok 53 - feature-disabled response stops repeated checks for the mounted login document
+  ---
+  duration_ms: 0.141247
+  type: 'test'
+  ...
+# Subtest: inventory has no values or arbitrary client-supplied cookie names
+ok 54 - inventory has no values or arbitrary client-supplied cookie names
+  ---
+  duration_ms: 0.698765
+  type: 'test'
+  ...
+# Subtest: trace captures ORIGINAL cookies, not mutated refresh jar; no tokens/URLs/user IDs
+ok 55 - trace captures ORIGINAL cookies, not mutated refresh jar; no tokens/URLs/user IDs
+  ---
+  duration_ms: 3.755063
+  type: 'test'
+  ...
+# Subtest: resume flag off, cross-origin and demo namespace cannot query Auth
+ok 56 - resume flag off, cross-origin and demo namespace cannot query Auth
+  ---
+  duration_ms: 5.430089
+  type: 'test'
+  ...
+# Subtest: resume with no normal cookies does not contact provider or accept bearer auth
+ok 57 - resume with no normal cookies does not contact provider or accept bearer auth
+  ---
+  duration_ms: 1.155508
+  type: 'test'
+  ...
+# Subtest: resume preserves all refresh chunks/deletions on final response after profile failure
+ok 58 - resume preserves all refresh chunks/deletions on final response after profile failure
+  ---
+  duration_ms: 1.406474
+  type: 'test'
+  ...
+# Subtest: real route callback uses host/domain normal-cookie configuration and strips other tenant
+ok 59 - real route callback uses host/domain normal-cookie configuration and strips other tenant
+  ---
+  duration_ms: 0.664721
+  type: 'test'
+  ...
+# Subtest: middleware no-user redirect is private/no-store even without a cookie write
+ok 60 - middleware no-user redirect is private/no-store even without a cookie write
+  ---
+  duration_ms: 1.879425
+  type: 'test'
+  ...
+# Subtest: middleware login document is not evidence of logout and is not cacheable
+ok 61 - middleware login document is not evidence of logout and is not cacheable
+  ---
+  duration_ms: 0.745537
+  type: 'test'
+  ...
+# Subtest: middleware passes refreshed cookies upstream and to final response; legacy removal survives
+ok 62 - middleware passes refreshed cookies upstream and to final response; legacy removal survives
+  ---
+  duration_ms: 1.135395
+  type: 'test'
+  ...
+# Subtest: middleware MFA redirect preserves refresh cookies
+ok 63 - middleware MFA redirect preserves refresh cookies
+  ---
+  duration_ms: 0.810674
+  type: 'test'
+  ...
+# Subtest: middleware network exception does not clear auth or present login
+ok 64 - middleware network exception does not clear auth or present login
+  ---
+  duration_ms: 0.964417
+  type: 'test'
+  ...
+# Subtest: middleware discards forged namespace headers; demo route remains on demo guard
+ok 65 - middleware discards forged namespace headers; demo route remains on demo guard
+  ---
+  duration_ms: 1.36508
+  type: 'test'
+  ...
+# Subtest: middleware MFA status/profile lookup failure is a 503, never bypass
+ok 66 - middleware MFA status/profile lookup failure is a 503, never bypass
+  ---
+  duration_ms: 1.664602
+  type: 'test'
+  ...
+# Subtest: provider throttling/unknown error is unavailable, not an anonymous redirect
+ok 67 - provider throttling/unknown error is unavailable, not an anonymous redirect
+  ---
+  duration_ms: 1.208549
+  type: 'test'
+  ...
+# Subtest: malformed SDK setup returns bounded unavailable JSON rather than a login guess
+ok 68 - malformed SDK setup returns bounded unavailable JSON rather than a login guess
+  ---
+  duration_ms: 1.14281
+  type: 'test'
+  ...
+# Subtest: resume deadline/abort/cache policy applied to real fetch adapter arguments
+ok 69 - resume deadline/abort/cache policy applied to real fetch adapter arguments
+  ---
+  duration_ms: 0.883839
+  type: 'test'
+  ...
+# Subtest: login recovery timeout exposes fallback and rejects late completion
+ok 70 - login recovery timeout exposes fallback and rejects late completion
+  ---
+  duration_ms: 0.312057
+  type: 'test'
+  ...
+# Subtest: pause/reopen can start a new check; old pre-suspend result cannot redirect
+ok 71 - pause/reopen can start a new check; old pre-suspend result cannot redirect
+  ---
+  duration_ms: 0.313928
+  type: 'test'
+  ...
+# Subtest: existing OAuth callback preserves requested notification destination after verified exchange
+ok 72 - existing OAuth callback preserves requested notification destination after verified exchange
+  ---
+  duration_ms: 0.715355
+  type: 'test'
+  ...
+# Subtest: OAuth malicious return is ignored; normal existing-account destination retained
+ok 73 - OAuth malicious return is ignored; normal existing-account destination retained
+  ---
+  duration_ms: 0.36319
+  type: 'test'
+  ...
+# Subtest: OAuth existing free-tool draft handoff outranks generic requested assistant destination
+ok 74 - OAuth existing free-tool draft handoff outranks generic requested assistant destination
+  ---
+  duration_ms: 0.812337
+  type: 'test'
+  ...
+# Subtest: OAuth unsuccessful exchange does not use requested destination
+ok 75 - OAuth unsuccessful exchange does not use requested destination
+  ---
+  duration_ms: 0.255273
+  type: 'test'
+  ...
+# Subtest: legacy debug handler off by default and cross-origin requests cannot log or write DB
+ok 76 - legacy debug handler off by default and cross-origin requests cannot log or write DB
+  ---
+  duration_ms: 0.528674
+  type: 'test'
+  ...
+# Subtest: legacy diagnostic body is bounded and never logged even when enabled
+ok 77 - legacy diagnostic body is bounded and never logged even when enabled
+  ---
+  duration_ms: 4.257537
+  type: 'test'
+  ...
+# Subtest: immediate hide/show bypasses throttle only for the cancelled probe
+ok 78 - immediate hide/show bypasses throttle only for the cancelled probe
+  ---
+  duration_ms: 1.138709
+  type: 'test'
+  ...
+# Subtest: restored pre-navigation login cannot remain stuck in navigating state
+ok 79 - restored pre-navigation login cannot remain stuck in navigating state
+  ---
+  duration_ms: 0.375065
+  type: 'test'
+  ...
+# Subtest: credential interaction remains protected after quick hide/show
+ok 80 - credential interaction remains protected after quick hide/show
+  ---
+  duration_ms: 0.119094
+  type: 'test'
+  ...
+# Subtest: probe records only bounded stage outcomes; no profile/token identity in observations
+ok 81 - probe records only bounded stage outcomes; no profile/token identity in observations
+  ---
+  duration_ms: 0.321644
+  type: 'test'
+  ...
+1..81
+# tests 81
+# suites 0
+# pass 81
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 794.366499

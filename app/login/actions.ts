@@ -1,5 +1,6 @@
 'use server';
 
+import { safeReturnPath } from '@/app/lib/auth/resume-contract';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
@@ -100,9 +101,8 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
 
   // If a specific redirect was requested (e.g. from free tools Save to App),
   // send them there after login. Otherwise go to their workspace.
-  if (redirectPath && redirectPath.startsWith('/')) {
-    redirect(redirectPath);
-  }
+  const safeDestination = safeReturnPath(redirectPath);
+  if (safeDestination) redirect(safeDestination);
   redirect(`/${company?.slug || 'workspace'}`);
 }
 

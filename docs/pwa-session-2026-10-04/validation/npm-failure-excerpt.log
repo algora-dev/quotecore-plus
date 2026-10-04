@@ -1,0 +1,19 @@
+1042 http fetch GET https://registry.npmjs.org/zod-to-json-schema attempt 1 failed with EAI_AGAIN
+1043 http fetch GET https://registry.npmjs.org/zod-validation-error attempt 1 failed with EAI_AGAIN
+1044 http fetch GET https://registry.npmjs.org/yocto-queue attempt 1 failed with EAI_AGAIN
+1045 http fetch GET https://registry.npmjs.org/zod attempt 1 failed with EAI_AGAIN
+1046 http fetch GET https://registry.npmjs.org/zwitch attempt 1 failed with EAI_AGAIN
+1047 http fetch GET https://registry.npmjs.org/yallist attempt 1 failed with EAI_AGAIN
+1048 http fetch GET https://registry.npmjs.org/xmlchars attempt 1 failed with EAI_AGAIN
+1117 http fetch GET https://registry.npmjs.org/yaml attempt 1 failed with EAI_AGAIN
+1118 http fetch GET https://registry.npmjs.org/ws attempt 1 failed with EAI_AGAIN
+1119 http fetch GET https://registry.npmjs.org/word-wrap attempt 1 failed with EAI_AGAIN
+1120 http fetch GET https://registry.npmjs.org/wrappy attempt 1 failed with EAI_AGAIN
+1121 http fetch GET https://registry.npmjs.org/which-typed-array attempt 1 failed with EAI_AGAIN
+1122 http fetch GET https://registry.npmjs.org/which-builtin-type attempt 1 failed with EAI_AGAIN
+1123 http fetch GET https://registry.npmjs.org/which-collection attempt 1 failed with EAI_AGAIN
+1124 http fetch GET https://registry.npmjs.org/which-boxed-primitive attempt 1 failed with EAI_AGAIN
+1125 http fetch GET https://registry.npmjs.org/yargs/-/yargs-15.4.1.tgz attempt 1 failed with EAI_AGAIN
+1128 verbose node v22.16.0
+1129 verbose npm  v10.9.2
+1130 error Exit handler never called!

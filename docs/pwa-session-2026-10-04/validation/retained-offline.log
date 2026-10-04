@@ -1,0 +1,919 @@
+
+=== test-smart-assistant-workflow-v1.cjs ===
+TAP version 13
+# Subtest: built-in aliases and singular/plural variants retain stable concepts
+ok 1 - built-in aliases and singular/plural variants retain stable concepts
+  ---
+  duration_ms: 2.321269
+  type: 'test'
+  ...
+# Subtest: ambiguous custom aliases and changed built-in behavior are refused
+ok 2 - ambiguous custom aliases and changed built-in behavior are refused
+  ---
+  duration_ms: 1.045728
+  type: 'test'
+  ...
+# Subtest: custom concepts inherit a finite supported behavior, never invented rules
+ok 3 - custom concepts inherit a finite supported behavior, never invented rules
+  ---
+  duration_ms: 0.540688
+  type: 'test'
+  ...
+# Subtest: James Smith brief retains address, pitch, basis and three individual hips
+ok 4 - James Smith brief retains address, pitch, basis and three individual hips
+  ---
+  duration_ms: 2.45606
+  type: 'test'
+  ...
+# Subtest: missing pitch stays missing; a flat roof must be explicit
+ok 5 - missing pitch stays missing; a flat roof must be explicit
+  ---
+  duration_ms: 0.619574
+  type: 'test'
+  ...
+# Subtest: defaults resolve only inside the selected library
+ok 6 - defaults resolve only inside the selected library
+  ---
+  duration_ms: 1.252131
+  type: 'test'
+  ...
+# Subtest: all genuine choices are grouped without losing brief fields
+ok 7 - all genuine choices are grouped without losing brief fields
+  ---
+  duration_ms: 1.391004
+  type: 'test'
+  ...
+# Subtest: an explicitly requested product outranks a default; an unknown request is not replaced
+ok 8 - an explicitly requested product outranks a default; an unknown request is not replaced
+  ---
+  duration_ms: 0.539502
+  type: 'test'
+  ...
+# Subtest: stale explicit product is not silently exchanged for a new default
+ok 9 - stale explicit product is not silently exchanged for a new default
+  ---
+  duration_ms: 0.773493
+  type: 'test'
+  ...
+# Subtest: measurement correction preserves all untouched IDs, area basis and other entries
+ok 10 - measurement correction preserves all untouched IDs, area basis and other entries
+  ---
+  duration_ms: 1.375308
+  type: 'test'
+  ...
+# Subtest: typed reducer is atomic on an invalid later delta and rejects arbitrary fields
+ok 11 - typed reducer is atomic on an invalid later delta and rejects arbitrary fields
+  ---
+  duration_ms: 1.492416
+  type: 'test'
+  ...
+# Subtest: cannot delete a referenced area or mutate a linked covering as an independent measurement
+ok 12 - cannot delete a referenced area or mutate a linked covering as an independent measurement
+  ---
+  duration_ms: 0.657047
+  type: 'test'
+  ...
+# Subtest: duplicate-group addition needs an exact group identity
+ok 13 - duplicate-group addition needs an exact group identity
+  ---
+  duration_ms: 1.339803
+  type: 'test'
+  ...
+# Subtest: canonical QuoteCore engines recalculate only intended changed groups
+ok 14 - canonical QuoteCore engines recalculate only intended changed groups
+  ---
+  duration_ms: 9.991354
+  type: 'test'
+  ...
+# Subtest: measurement corrections retain saved rates and waste despite changed library defaults
+ok 15 - measurement corrections retain saved rates and waste despite changed library defaults
+  ---
+  duration_ms: 3.295613
+  type: 'test'
+  ...
+# Subtest: individual fixed waste is not the same as collapsing three hips into one entry
+ok 16 - individual fixed waste is not the same as collapsing three hips into one entry
+  ---
+  duration_ms: 1.678998
+  type: 'test'
+  ...
+# Subtest: a changed 200th measurement remains visible in the human review
+ok 17 - a changed 200th measurement remains visible in the human review
+  ---
+  duration_ms: 15.393785
+  type: 'test'
+  ...
+# Subtest: safe units, identity uniqueness, oversized and nonfinite measurements fail closed
+ok 18 - safe units, identity uniqueness, oversized and nonfinite measurements fail closed
+  ---
+  duration_ms: 2.898955
+  type: 'test'
+  ...
+# Subtest: active workflow correction stays in the same task: Actually make the roof 110 square and add another 2 metres ridge.
+ok 19 - active workflow correction stays in the same task: Actually make the roof 110 square and add another 2 metres ridge.
+  ---
+  duration_ms: 10.882087
+  type: 'test'
+  ...
+# Subtest: active workflow correction stays in the same task: Garage should be 20 degrees and add another 3m valley.
+ok 20 - active workflow correction stays in the same task: Garage should be 20 degrees and add another 3m valley.
+  ---
+  duration_ms: 2.85651
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: Create a new quote for Alice
+ok 21 - a self-contained request escapes the working brief: Create a new quote for Alice
+  ---
+  duration_ms: 1.894369
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: Show my overdue invoices
+ok 22 - a self-contained request escapes the working brief: Show my overdue invoices
+  ---
+  duration_ms: 0.875806
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: Find James Smith
+ok 23 - a self-contained request escapes the working brief: Find James Smith
+  ---
+  duration_ms: 1.601718
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: What is my quote total?
+ok 24 - a self-contained request escapes the working brief: What is my quote total?
+  ---
+  duration_ms: 0.147219
+  type: 'test'
+  ...
+# Subtest: a self-contained request escapes the working brief: New task: create Bob at 10 Street
+ok 25 - a self-contained request escapes the working brief: New task: create Bob at 10 Street
+  ---
+  duration_ms: 0.198639
+  type: 'test'
+  ...
+# Subtest: grouped text choices carry only the live task brief
+ok 26 - grouped text choices carry only the live task brief
+  ---
+  duration_ms: 0.366548
+  type: 'test'
+  ...
+# Subtest: Done closes a task; yes does not confer mutation authority
+ok 27 - Done closes a task; yes does not confer mutation authority
+  ---
+  duration_ms: 0.175408
+  type: 'test'
+  ...
+# Subtest: refresh batches retain every cookie chunk across response replacement and redirects
+ok 28 - refresh batches retain every cookie chunk across response replacement and redirects
+  ---
+  duration_ms: 0.443596
+  type: 'test'
+  ...
+# Subtest: cookie batch keeps distinct domain/path removals without extending expiry
+ok 29 - cookie batch keeps distinct domain/path removals without extending expiry
+  ---
+  duration_ms: 0.184589
+  type: 'test'
+  ...
+# Subtest: temporary auth failure is distinct from legitimate expiry/refusal
+ok 30 - temporary auth failure is distinct from legitimate expiry/refusal
+  ---
+  duration_ms: 0.163103
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 87.561056
+
+=== test-smart-assistant-workflow-v1-services.cjs ===
+TAP version 13
+# Subtest: service persists brief before preparing and attaching explicit review; no parent mutation RPC
+ok 1 - service persists brief before preparing and attaching explicit review; no parent mutation RPC
+  ---
+  duration_ms: 7.065547
+  type: 'test'
+  ...
+# Subtest: genuine alternatives returned in ONE grouped card without proposal
+ok 2 - genuine alternatives returned in ONE grouped card without proposal
+  ---
+  duration_ms: 1.47903
+  type: 'test'
+  ...
+# Subtest: partial then remaining product choices keep same brief and three separate hips
+ok 3 - partial then remaining product choices keep same brief and three separate hips
+  ---
+  duration_ms: 2.699701
+  type: 'test'
+  ...
+# Subtest: bound typed revision prepares same quote with stable identities and snapshot
+ok 4 - bound typed revision prepares same quote with stable identities and snapshot
+  ---
+  duration_ms: 2.734587
+  type: 'test'
+  ...
+# Subtest: stale revision rejected before persistence or proposal
+ok 5 - stale revision rejected before persistence or proposal
+  ---
+  duration_ms: 1.625154
+  type: 'test'
+  ...
+# Subtest: fresh permission refusal stops all workflow transport
+ok 6 - fresh permission refusal stops all workflow transport
+  ---
+  duration_ms: 0.334524
+  type: 'test'
+  ...
+# Subtest: View permission cannot invoke edit workflow
+ok 7 - View permission cannot invoke edit workflow
+  ---
+  duration_ms: 0.335061
+  type: 'test'
+  ...
+# Subtest: foreign company state cannot be read through workflow service
+ok 8 - foreign company state cannot be read through workflow service
+  ---
+  duration_ms: 1.082362
+  type: 'test'
+  ...
+# Subtest: old product choices are discarded after settings epoch changes
+ok 9 - old product choices are discarded after settings epoch changes
+  ---
+  duration_ms: 1.845319
+  type: 'test'
+  ...
+# Subtest: changed default does NOT reassign an existing bound draft product
+ok 10 - changed default does NOT reassign an existing bound draft product
+  ---
+  duration_ms: 2.154208
+  type: 'test'
+  ...
+# Subtest: missing committed baseline refuses replacement of bound draft
+ok 11 - missing committed baseline refuses replacement of bound draft
+  ---
+  duration_ms: 1.268019
+  type: 'test'
+  ...
+# Subtest: deleted bound quote with cleared FK never falls back to new creation
+ok 12 - deleted bound quote with cleared FK never falls back to new creation
+  ---
+  duration_ms: 1.359544
+  type: 'test'
+  ...
+# Subtest: external builder changes mark conflict without overwriting or creating a proposal
+ok 13 - external builder changes mark conflict without overwriting or creating a proposal
+  ---
+  duration_ms: 1.044616
+  type: 'test'
+  ...
+# Subtest: sent quote never becomes an editable workflow draft
+ok 14 - sent quote never becomes an editable workflow draft
+  ---
+  duration_ms: 0.96384
+  type: 'test'
+  ...
+# Subtest: legacy brief is not rebuilt or rebound
+ok 15 - legacy brief is not rebuilt or rebound
+  ---
+  duration_ms: 0.990032
+  type: 'test'
+  ...
+# Subtest: cancel stops preparation but does not delete or confirm the bound quote
+ok 16 - cancel stops preparation but does not delete or confirm the bound quote
+  ---
+  duration_ms: 0.870687
+  type: 'test'
+  ...
+# Subtest: context from a different task is not exposed
+ok 17 - context from a different task is not exposed
+  ---
+  duration_ms: 0.917848
+  type: 'test'
+  ...
+# Subtest: bounded context has a paginated reader for omitted individual entry IDs
+ok 18 - bounded context has a paginated reader for omitted individual entry IDs
+  ---
+  duration_ms: 1.377351
+  type: 'test'
+  ...
+# Subtest: configuration changing mid-read refuses partial preparation
+ok 19 - configuration changing mid-read refuses partial preparation
+  ---
+  duration_ms: 0.526993
+  type: 'test'
+  ...
+# Subtest: feature flag rollback refuses even an already bound workflow
+ok 20 - feature flag rollback refuses even an already bound workflow
+  ---
+  duration_ms: 1.00574
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 60.347011
+
+=== test-pwa-push-v1.cjs ===
+TAP version 13
+# Subtest: RFC 8291 Section 5 known-answer ciphertext exactly matches (full body)
+ok 1 - RFC 8291 Section 5 known-answer ciphertext exactly matches (full body)
+  ---
+  duration_ms: 4.595078
+  type: 'test'
+  ...
+# Subtest: randomized production encryption independently decrypts using Node HKDF and unique entropy
+ok 2 - randomized production encryption independently decrypts using Node HKDF and unique entropy
+  ---
+  duration_ms: 17.35229
+  type: 'test'
+  ...
+# Subtest: tampered ciphertext does not authenticate
+ok 3 - tampered ciphertext does not authenticate
+  ---
+  duration_ms: 1.219981
+  type: 'test'
+  ...
+# Subtest: oversized payloads, malformed secrets and off-curve public keys are refused
+ok 4 - oversized payloads, malformed secrets and off-curve public keys are refused
+  ---
+  duration_ms: 0.699563
+  type: 'test'
+  ...
+# Subtest: VAPID JWT is a verifiable P-256 signature with an exact origin audience and bounded expiry
+ok 5 - VAPID JWT is a verifiable P-256 signature with an exact origin audience and bounded expiry
+  ---
+  duration_ms: 3.424457
+  type: 'test'
+  ...
+# Subtest: VAPID refuses mismatched keys and header-injection contact
+ok 6 - VAPID refuses mismatched keys and header-injection contact
+  ---
+  duration_ms: 0.352672
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: http://fcm.googleapis.com/send/x
+ok 7 - endpoint SSRF refusal: http://fcm.googleapis.com/send/x
+  ---
+  duration_ms: 0.142106
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://127.0.0.1/admin
+ok 8 - endpoint SSRF refusal: https://127.0.0.1/admin
+  ---
+  duration_ms: 0.155441
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://169.254.169.254/latest/meta-data
+ok 9 - endpoint SSRF refusal: https://169.254.169.254/latest/meta-data
+  ---
+  duration_ms: 0.273458
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://localhost/x
+ok 10 - endpoint SSRF refusal: https://localhost/x
+  ---
+  duration_ms: 0.331108
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://fcm.googleapis.com.evil.test/x
+ok 11 - endpoint SSRF refusal: https://fcm.googleapis.com.evil.test/x
+  ---
+  duration_ms: 0.134365
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://evil.test@fcm.googleapis.com/x
+ok 12 - endpoint SSRF refusal: https://evil.test@fcm.googleapis.com/x
+  ---
+  duration_ms: 0.083081
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://fcm.googleapis.com:444/x
+ok 13 - endpoint SSRF refusal: https://fcm.googleapis.com:444/x
+  ---
+  duration_ms: 0.161089
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://fcm.googleapis.com/x\#secret
+ok 14 - endpoint SSRF refusal: https://fcm.googleapis.com/x\#secret
+  ---
+  duration_ms: 0.092758
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://updates.push.services.mozilla.com.evil.test/x
+ok 15 - endpoint SSRF refusal: https://updates.push.services.mozilla.com.evil.test/x
+  ---
+  duration_ms: 0.069522
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: https://[::1]/x
+ok 16 - endpoint SSRF refusal: https://[::1]/x
+  ---
+  duration_ms: 0.087836
+  type: 'test'
+  ...
+# Subtest: endpoint SSRF refusal: file:///etc/passwd
+ok 17 - endpoint SSRF refusal: file:///etc/passwd
+  ---
+  duration_ms: 0.054139
+  type: 'test'
+  ...
+# Subtest: only the reviewed browser push providers are accepted
+ok 18 - only the reviewed browser push providers are accepted
+  ---
+  duration_ms: 0.127974
+  type: 'test'
+  ...
+# Subtest: delivery outcomes bound retries and revoke gone subscriptions
+ok 19 - delivery outcomes bound retries and revoke gone subscriptions
+  ---
+  duration_ms: 0.440959
+  type: 'test'
+  ...
+# Subtest: push payload never carries customer text, prices, or a client-authored URL
+ok 20 - push payload never carries customer text, prices, or a client-authored URL
+  ---
+  duration_ms: 0.299807
+  type: 'test'
+  ...
+# Subtest: deep links are server-built from entity IDs and an encoded workspace slug
+ok 21 - deep links are server-built from entity IDs and an encoded workspace slug
+  ---
+  duration_ms: 0.220392
+  type: 'test'
+  ...
+# Subtest: worker displays only fixed minimal text, coalesces duplicate deliveries, and never caches business data
+ok 22 - worker displays only fixed minimal text, coalesces duplicate deliveries, and never caches business data
+  ---
+  duration_ms: 2.405574
+  type: 'test'
+  ...
+# Subtest: malformed push still shows a safe notification and cannot navigate off-origin
+ok 23 - malformed push still shows a safe notification and cannot navigate off-origin
+  ---
+  duration_ms: 1.432099
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 54.530283
+
+=== check-smart-assistant-workflow-v1-source.cjs ===
+PASS (static): destructive clear is disabled and revoked
+PASS (static): exact snapshot, stable children and original creation are wired
+PASS (static): repeat-edit index excludes edits, not new-parent replay
+PASS (static): brief CAS and epoch/proof bindings exist
+PASS (static): task controls close preparation without mutation authority
+PASS (static): typed workflow tools replace low-level correction orchestration
+PASS (static): UI choices derive from server state; prose Proceed removed
+node:assert:801
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /setAll\(changes\)/. Input:
+
+"import { authFailureCategory } from '@/app/lib/auth/auth-errors';\r\n" +
+  "import { createSessionTrace, sessionNoStore } from '@/app/lib/auth/session-trace';\r\n" +
+  "import { isDemoRequest, DEMO_NAMESPACE_HEADER } from '@/app/lib/demo/routing';\r\n" +
+  "import { guardDemoRequest } from '@/app/lib/demo/request-gate';\r\n" +
+  "import { NextResponse, type NextRequest } from 'next/server';\r\n" +
+  "import { createAuthCookieBatch } from '@/app/lib/supabase/cookie-batch';\r\n" +
+  "import { createServerClient } from '@supabase/ssr';\r\n" +
+  'import {\r\n' +
+  '  authCookieOptionsForLocation,\r\n' +
+  '  legacyAuthCookiePrefix,\r\n' +
+  "} from '@/app/lib/supabase/cookie-config';\r\n" +
+  'import {\r\n' +
+  '  isProductionMarketingHost,\r\n' +
+  '  isPreviewHost,\r\n' +
+  "} from '@/lib/app-url';\r\n" +
+  '\r\n' +
+  '// Canonical host for the public marketing site + free tools. Matches the\r\n' +
+  "// existing sitemap/robots canonical (apex, not www) so we don't churn\r\n" +
+  "// Google's index. www + .co.nz + app free-tool URLs 308 here.\r\n" +
+  "const CANONICAL_PUBLIC_ORIGIN = 'https://quote-core.com';\r\n" +
+  '\r\n' +
+  '/**\r\n' +
+  ' * Expire legacy default-named Supabase cookies (sb-<ref>-auth-token*).\r\n' +
+  ' * We migrated to a new cookie name + `.quote-core.com` domain (see\r\n' +
+  ' * cookie-config.ts); stale host-only cookies under the old name would\r\n' +
+  ' * otherwise linger for 400 days.\r\n' +
+  ' */\r\n' +
+  'function expireLegacyAuthCookies(request: NextRequest, response: NextResponse) {\r\n' +
+  '  const legacyPrefix = legacyAuthCookiePrefix();\r\n' +
+  '  if (!legacyPrefix) return response;\r\n' +
+  '  for (const cookie of request.cookies.getAll()) {\r\n' +
+  '    if (cookie.name.startsWith(legacyPrefix)) {\r\n' +
+  "      response.cookies.set({ name: cookie.name, value: '', path: '/', maxAge: 0 });\r\n" +
+  '    }\r\n' +
+  '  }\r\n' +
+  '  return response;\r\n' +
+  '}\r\n' +
+  '\r\n' +
+  '/**\r\n' +
+  ' * Stable Vercel production aliases that should redirect to quote-core.com.\r\n' +
+  ' *\r\n' +
+  ' * These are the permanent per-project URLs Vercel assigns (not the\r\n' +
+  ' * random per-deployment preview URLs). Google has indexed some of them,\r\n' +
+  ' * so we 308-redirect to the canonical production domain.\r\n' +
+  ' *\r\n' +
+  ' * IMPORTANT: This list is EXACTT-hostname only. Preview deployment URLs\r\n' +
+  ' * (e.g. quotecore-plus-dev-abc123.vercel.app) are NOT matched and remain\r\n' +
+  ' * usable for internal testing.\r\n' +
+  ' */\r\n' +
+  'const STABLE_VERCEL_ALIASES = new Set([\r\n' +
+  "  'quotecore-plus.vercel.app',\r\n" +
+  "  'quotecore-plus-dev.vercel.app',\r\n" +
+  "  'quotecore-plus-main.vercel.app',\r\n" +
+  "  'quotecore-git-main-algora-devs-projects.vercel.app',\r\n" +
+  ']);\r\n' +
+  '\r\n' +
+  "// Public paths that don't require authentication\r\n" +
+  'const PUBLIC_PATHS = [\r\n' +
+  "  '/login',\r\n" +
+  "  '/signup',\r\n" +
+  "  '/demo',        // Public live demo entry (Architecture V2, switch-aware)\r\n" +
+  "  '/accept',       // Quote acceptance (public)\r\n" +
+  "  '/auth/callback', // OAuth callback\r\n" +
+  "  '/auth/verify',   // Magic-link verification (impersonation flow)\r\n" +
+  "  '/auth/reset-password', // Password reset\r\n" +
+  "  '/onboarding',   // New user onboarding\r\n" +
+  "  '/privacy',      // Privacy Policy (legally required to be public)\r\n" +
+  "  '/cookies',      // Cookie Policy (legally required to be public)\r\n" +
+  "  '/cookie-policy', // Cookie policy (marketing variant)\r\n" +
+  "  '/terms',        // Terms of Service (legally required to be public)\r\n" +
+  "  '/docs',         // Public help library\r\n" +
+  "  '/about',        // Marketing pages\r\n" +
+  "  '/services',\r\n" +
+  "  '/contact',\r\n" +
+  "  '/suppliers',\r\n" +
+  "  '/suppliers-info',\r\n" +
+  "  '/affiliate-program', // Partner & Affiliate Program (public landing page)\r\n" +
+  "  '/affiliate-program-terms', // Partner Program Terms (public)\r\n" +
+  "  '/careers',       // Commission sales roles page (public)\r\n" +
+  "  '/supplier-partnership', // Hidden supplier partnership page (email outreach, not in nav)\r\n" +
+  "  '/supplier-pricing-tool', // Public supplier pricing tool (incl. /quote handoff page)\r\n" +
+  "  '/research',    // Original research/study pages (marketing)\r\n" +
+  "  '/blog',\r\n" +
+  "  '/resources',     // Resource hub pages (blog category hubs)\r\n" +
+  "  '/pricing',\r\n" +
+  "  '/trust',\r\n" +
+  "  '/customer-stories',\r\n" +
+  "  '/company',\r\n" +
+  "  '/coffee-terms',\r\n" +
+  "  '/tutorials',\r\n" +
+  "  '/features',     // Feature pages (marketing)\r\n" +
+  "  '/integrations', // Integration pages (Xero)\r\n" +
+  "  '/takeoff-demo', // Interactive public takeoff demo (client-only, no auth)\r\n" +
+  "  '/measurement-to-quote-tool', // Free measurement-to-pricing tool (renamed from /free-quote-builder)\r\n" +
+  "  '/done-for-you-setup',\r\n" +
+  "  '/custom-solutions',\r\n" +
+  "  '/free-trial',\r\n" +
+  "  '/construction-quoting-software',\r\n" +
+  "  '/construction-takeoff-software',\r\n" +
+  "  '/free-construction-takeoff-tools', // Free high-value takeoff tool discovery page\r\n" +
+  "  '/roofing-quoting-software',\r\n" +
+  "  '/roofing-estimating-software',\r\n" +
+  "  '/roofing-takeoff-software',\r\n" +
+  "  '/roofsnap-alternative',        // Competitor comparison pages (marketing)\r\n" +
+  "  '/eagleview-alternative',\r\n" +
+  "  '/planswift-alternative',\r\n" +
+  "  '/roofr-alternative',\r\n" +
+  "  '/stack-alternative-for-roofing',\r\n" +
+  "  '/hover-alternative',\r\n" +
+  "  '/bluebeam-alternative-for-roofing',\r\n" +
+  "  '/roof-measurement-cost-comparison', // Cost-per-quote comparison page (marketing)\r\n" +
+  "  '/free-construction-calculator', // Free public calculator (no auth)\r\n" +
+  "  '/free-roofing-calculator',     // Free roofing calculator (no auth)\r\n" +
+  "  '/free-quote-generator',        // Free AI quote generator (future)\r\n" +
+  "  '/free-purchase-order-generator', // Free AI order generator (future)\r\n" +
+  "  '/free-invoice-generator',       // Free AI invoice generator (future)\r\n" +
+  "  '/free-tools',                   // Free tools auth callback (future)\r\n" +
+  "  '/mcp',                          // Public roof takeoff MCP endpoint\r\n" +
+  "  '/llms.txt',                     // Public machine-discovery document\r\n" +
+  "  '/admin/login',  // Admin sign-in (the rest of /admin/* is gated by\r\n" +
+  '                   //  the requireAdmin() helper at the page boundary).\r\n' +
+  "  '/m',            // Public recipient reply pages (Messages pipeline).\r\n" +
+  '                   //  HMAC-signed token in the URL is the access gate.\r\n' +
+  "  '/unsubscribe',  // Public marketing unsubscribe confirm page. HMAC-signed\r\n" +
+  '                   //  per-recipient token in the URL is the access gate.\r\n' +
+  "  '/orders',       // Public supplier order pages. Random UUID token in\r\n" +
+  '                   //  the URL is the access gate.\r\n' +
+  "  '/invoice',      // Public customer invoice pages. Random UUID public_token\r\n" +
+  '                   //  in the URL is the access gate.\r\n' +
+  "  '/file',         // Hosted attachment downloads (token-gated). Already\r\n" +
+  '                   //  HMAC-verified at the route level.\r\n' +
+  "  '/feedback',     // Public feedback questionnaire (email campaign + site-wide).\r\n" +
+  '];\r\n' +
+  '\r\n' +
+  '// Paths reachable when the user has an AAL1 session but still needs to clear 2FA.\r\n' +
+  "// /2fa is the challenge page itself; logout/signout shouldn't be blocked behind 2FA.\r\n" +
+  'const AAL1_ALLOWED_PATHS = [\r\n' +
+  "  '/2fa',\r\n" +
+  "  '/auth/signout',\r\n" +
+  '];\r\n' +
+  '\r\n' +
+  'function isAal1Allowed(pathname: string): boolean {\r\n' +
+  '  return AAL1_ALLOWED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));\r\n' +
+  '}\r\n' +
+  '\r\n' +
+  'function isPublicPath(pathname: string): boolean {\r\n' +
+  '  // All /free-* paths are public (calculators, generators, hub page).\r\n' +
+  '  // This covers all current and future free tool routes without needing\r\n' +
+  '  // to update PUBLIC_PATHS each time we add a calculator or generator.\r\n' +
+  "  if (pathname.startsWith('/free-')) return true;\r\n" +
+  '\r\n' +
+  '  // Match on segment boundary: either exact match or the path continues\r\n' +
+  "  // with a '/'. This prevents '/m' from matching '/meadow-roofing/...' etc.\r\n" +
+  "  return PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));\r\n" +
+  '}\r\n' +
+  '\r\n' +
+  'function isStaticAsset(pathname: string): boolean {\r\n' +
+  '  return (\r\n' +
+  "    pathname.startsWith('/_next') ||\r\n" +
+  "    pathname.startsWith('/api') ||\r\n" +
+  "    // P9: Next's public metadata response must not be redirected to HTML login.\r\n" +
+  "    pathname === '/manifest.webmanifest' ||\r\n" +
+  "    pathname === '/assistant-manifest.webmanifest' || pathname === '/qcp-push-sw.js' ||\r\n" +
+  "        pathname === '/favicon.ico' ||\r\n" +
+  "    pathname === '/favicon.png' ||\r\n" +
+  "    pathname === '/logo.png' ||\r\n" +
+  '    // Gerald audit M-04: SEO/discovery metadata routes must be reachable\r\n' +
+  '    // without auth. Without this, middleware redirects them to /login and\r\n' +
+  '    // breaks crawlers + sitemap generators.\r\n' +
+  "    pathname === '/robots.txt' ||\r\n" +
+  "    pathname === '/sitemap.xml' ||\r\n" +
+  "    pathname === '/video-sitemap.xml' ||\r\n" +
+  '    // IndexNow key verification file\r\n' +
+  "    pathname.startsWith('/22ffbce37a69481c9841bddef9028097.txt') ||\r\n" +
+  '    /\\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|vtt|mp4|webm|ogg|mp3|wav|pdf|txt)$/.test(pathname)\r\n' +
+  '  );\r\n' +
+  '}\r\n' +
+  '\r\n' +
+  'export async function middleware(request: NextRequest) {\r\n' +
+  '  const { pathname } = request.nextUrl;\r\n' +
+  '  const hostname = request.nextUrl.hostname;\r\n' +
+  '  // These headers are derived here; ignore incoming copies from a caller.\r\n' +
+  '  request.headers.delete(DEMO_NAMESPACE_HEADER);\r\n' +
+  "  request.headers.delete('x-qcp-request-path');\r\n" +
+  "  request.headers.delete('x-qcp-session-trace');\r\n" +
+  "  const demoNamespace = isDemoRequest(hostname, pathname, request.nextUrl.origin, request.headers.get('referer'));\r\n" +
+  "  request.headers.set(DEMO_NAMESPACE_HEADER, demoNamespace ? 'demo' : 'normal');\r\n" +
+  "  request.headers.set('x-qcp-request-path', pathname);\r\n" +
+  "  if (hostname === 'demo.quote-core.com' && /^\\/(login|signup|onboarding|2fa|auth)(\\/|$)/.test(pathname)) {\r\n" +
+  "    return NextResponse.redirect(new URL(pathname + request.nextUrl.search, 'https://app.quote-core.com'), 307);\r\n" +
+  '  }\r\n' +
+  "  if ((hostname === 'quote-core.com' || hostname === 'app.quote-core.com') && (pathname === '/demo' || /^\\/demo-[a-z0-9-]+(?:\\/|$)/i.test(pathname))) {\r\n" +
+  "    return NextResponse.redirect(new URL(pathname + request.nextUrl.search, 'https://demo.quote-core.com'), 307);\r\n" +
+  '  }\r\n' +
+  "  if (hostname === 'demo.quote-core.com' && pathname === '/') return NextResponse.redirect(new URL('/demo', request.url));\r\n" +
+  '  // Static assets are shared. Dynamic demo routes/APIs cannot use the normal\r\n' +
+  '  // preview/public-domain shortcut, which previously skipped the demo guard.\r\n' +
+  "  if (demoNamespace && !pathname.startsWith('/_next') && !/\\.(svg|png|jpg|jpeg|webp|ico|css|js|woff2?|ttf|mp4|pdf)$/.test(pathname)) {\r\n" +
+  '    return guardDemoRequest(request);\r\n' +
+  '  }\r\n' +
+  '\r\n' +
+  '\r\n' +
+  '  // -- /var/* hard-404 (2026-09-25) ----------------------------------\r\n' +
+  '  // Docs RSC payloads leaked absolute /var/task/... paths (AWS Lambda\r\n' +
+  '  // root) into page HTML; Google indexed them via GSC and they dead-ended\r\n' +
+  '  '... 10829 more characters
+
+    at /mnt/data/session_hardening/scripts/check-smart-assistant-workflow-v1-source.cjs:19:106
+    at Object.<anonymous> (/mnt/data/session_hardening/scripts/check-smart-assistant-workflow-v1-source.cjs:25:36)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: "import { authFailureCategory } from '@/app/lib/auth/auth-errors';\r\n" +
+    "import { createSessionTrace, sessionNoStore } from '@/app/lib/auth/session-trace';\r\n" +
+    "import { isDemoRequest, DEMO_NAMESPACE_HEADER } from '@/app/lib/demo/routing';\r\n" +
+    "import { guardDemoRequest } from '@/app/lib/demo/request-gate';\r\n" +
+    "import { NextResponse, type NextRequest } from 'next/server';\r\n" +
+    "import { createAuthCookieBatch } from '@/app/lib/supabase/cookie-batch';\r\n" +
+    "import { createServerClient } from '@supabase/ssr';\r\n" +
+    'import {\r\n' +
+    '  authCookieOptionsForLocation,\r\n' +
+    '  legacyAuthCookiePrefix,\r\n' +
+    "} from '@/app/lib/supabase/cookie-config';\r\n" +
+    'import {\r\n' +
+    '  isProductionMarketingHost,\r\n' +
+    '  isPreviewHost,\r\n' +
+    "} from '@/lib/app-url';\r\n" +
+    '\r\n' +
+    '// Canonical host for the public marketing site + free tools. Matches the\r\n' +
+    "// existing sitemap/robots canonical (apex, not www) so we don't churn\r\n" +
+    "// Google's index. www + .co.nz + app free-tool URLs 308 here.\r\n" +
+    "const CANONICAL_PUBLIC_ORIGIN = 'https://quote-core.com';\r\n" +
+    '\r\n' +
+    '/**\r\n' +
+    ' * Expire legacy default-named Supabase cookies (sb-<ref>-auth-token*).\r\n' +
+    ' * We migrated to a new cookie name + `.quote-core.com` domain (see\r\n' +
+    ' * cookie-config.ts); stale host-only cookies under the old name would\r\n' +
+    ' * otherwise linger for 400 days.\r\n' +
+    ' */\r\n' +
+    'function expireLegacyAuthCookies(request: NextRequest, response: NextResponse) {\r\n' +
+    '  const legacyPrefix = legacyAuthCookiePrefix();\r\n' +
+    '  if (!legacyPrefix) return response;\r\n' +
+    '  for (const cookie of request.cookies.getAll()) {\r\n' +
+    '    if (cookie.name.startsWith(legacyPrefix)) {\r\n' +
+    "      response.cookies.set({ name: cookie.name, value: '', path: '/', maxAge: 0 });\r\n" +
+    '    }\r\n' +
+    '  }\r\n' +
+    '  return response;\r\n' +
+    '}\r\n' +
+    '\r\n' +
+    '/**\r\n' +
+    ' * Stable Vercel production aliases that should redirect to quote-core.com.\r\n' +
+    ' *\r\n' +
+    ' * These are the permanent per-project URLs Vercel assigns (not the\r\n' +
+    ' * random per-deployment preview URLs). Google has indexed some of them,\r\n' +
+    ' * so we 308-redirect to the canonical production domain.\r\n' +
+    ' *\r\n' +
+    ' * IMPORTANT: This list is EXACTT-hostname only. Preview deployment URLs\r\n' +
+    ' * (e.g. quotecore-plus-dev-abc123.vercel.app) are NOT matched and remain\r\n' +
+    ' * usable for internal testing.\r\n' +
+    ' */\r\n' +
+    'const STABLE_VERCEL_ALIASES = new Set([\r\n' +
+    "  'quotecore-plus.vercel.app',\r\n" +
+    "  'quotecore-plus-dev.vercel.app',\r\n" +
+    "  'quotecore-plus-main.vercel.app',\r\n" +
+    "  'quotecore-git-main-algora-devs-projects.vercel.app',\r\n" +
+    ']);\r\n' +
+    '\r\n' +
+    "// Public paths that don't require authentication\r\n" +
+    'const PUBLIC_PATHS = [\r\n' +
+    "  '/login',\r\n" +
+    "  '/signup',\r\n" +
+    "  '/demo',        // Public live demo entry (Architecture V2, switch-aware)\r\n" +
+    "  '/accept',       // Quote acceptance (public)\r\n" +
+    "  '/auth/callback', // OAuth callback\r\n" +
+    "  '/auth/verify',   // Magic-link verification (impersonation flow)\r\n" +
+    "  '/auth/reset-password', // Password reset\r\n" +
+    "  '/onboarding',   // New user onboarding\r\n" +
+    "  '/privacy',      // Privacy Policy (legally required to be public)\r\n" +
+    "  '/cookies',      // Cookie Policy (legally required to be public)\r\n" +
+    "  '/cookie-policy', // Cookie policy (marketing variant)\r\n" +
+    "  '/terms',        // Terms of Service (legally required to be public)\r\n" +
+    "  '/docs',         // Public help library\r\n" +
+    "  '/about',        // Marketing pages\r\n" +
+    "  '/services',\r\n" +
+    "  '/contact',\r\n" +
+    "  '/suppliers',\r\n" +
+    "  '/suppliers-info',\r\n" +
+    "  '/affiliate-program', // Partner & Affiliate Program (public landing page)\r\n" +
+    "  '/affiliate-program-terms', // Partner Program Terms (public)\r\n" +
+    "  '/careers',       // Commission sales roles page (public)\r\n" +
+    "  '/supplier-partnership', // Hidden supplier partnership page (email outreach, not in nav)\r\n" +
+    "  '/supplier-pricing-tool', // Public supplier pricing tool (incl. /quote handoff page)\r\n" +
+    "  '/research',    // Original research/study pages (marketing)\r\n" +
+    "  '/blog',\r\n" +
+    "  '/resources',     // Resource hub pages (blog category hubs)\r\n" +
+    "  '/pricing',\r\n" +
+    "  '/trust',\r\n" +
+    "  '/customer-stories',\r\n" +
+    "  '/company',\r\n" +
+    "  '/coffee-terms',\r\n" +
+    "  '/tutorials',\r\n" +
+    "  '/features',     // Feature pages (marketing)\r\n" +
+    "  '/integrations', // Integration pages (Xero)\r\n" +
+    "  '/takeoff-demo', // Interactive public takeoff demo (client-only, no auth)\r\n" +
+    "  '/measurement-to-quote-tool', // Free measurement-to-pricing tool (renamed from /free-quote-builder)\r\n" +
+    "  '/done-for-you-setup',\r\n" +
+    "  '/custom-solutions',\r\n" +
+    "  '/free-trial',\r\n" +
+    "  '/construction-quoting-software',\r\n" +
+    "  '/construction-takeoff-software',\r\n" +
+    "  '/free-construction-takeoff-tools', // Free high-value takeoff tool discovery page\r\n" +
+    "  '/roofing-quoting-software',\r\n" +
+    "  '/roofing-estimating-software',\r\n" +
+    "  '/roofing-takeoff-software',\r\n" +
+    "  '/roofsnap-alternative',        // Competitor comparison pages (marketing)\r\n" +
+    "  '/eagleview-alternative',\r\n" +
+    "  '/planswift-alternative',\r\n" +
+    "  '/roofr-alternative',\r\n" +
+    "  '/stack-alternative-for-roofing',\r\n" +
+    "  '/hover-alternative',\r\n" +
+    "  '/bluebeam-alternative-for-roofing',\r\n" +
+    "  '/roof-measurement-cost-comparison', // Cost-per-quote comparison page (marketing)\r\n" +
+    "  '/free-construction-calculator', // Free public calculator (no auth)\r\n" +
+    "  '/free-roofing-calculator',     // Free roofing calculator (no auth)\r\n" +
+    "  '/free-quote-generator',        // Free AI quote generator (future)\r\n" +
+    "  '/free-purchase-order-generator', // Free AI order generator (future)\r\n" +
+    "  '/free-invoice-generator',       // Free AI invoice generator (future)\r\n" +
+    "  '/free-tools',                   // Free tools auth callback (future)\r\n" +
+    "  '/mcp',                          // Public roof takeoff MCP endpoint\r\n" +
+    "  '/llms.txt',                     // Public machine-discovery document\r\n" +
+    "  '/admin/login',  // Admin sign-in (the rest of /admin/* is gated by\r\n" +
+    '                   //  the requireAdmin() helper at the page boundary).\r\n' +
+    "  '/m',            // Public recipient reply pages (Messages pipeline).\r\n" +
+    '                   //  HMAC-signed token in the URL is the access gate.\r\n' +
+    "  '/unsubscribe',  // Public marketing unsubscribe confirm page. HMAC-signed\r\n" +
+    '                   //  per-recipient token in the URL is the access gate.\r\n' +
+    "  '/orders',       // Public supplier order pages. Random UUID token in\r\n" +
+    '                   //  the URL is the access gate.\r\n' +
+    "  '/invoice',      // Public customer invoice pages. Random UUID public_token\r\n" +
+    '                   //  in the URL is the access gate.\r\n' +
+    "  '/file',         // Hosted attachment downloads (token-gated). Already\r\n" +
+    '                   //  HMAC-verified at the route level.\r\n' +
+    "  '/feedback',     // Public feedback questionnaire (email campaign + site-wide).\r\n" +
+    '];\r\n' +
+    '\r\n' +
+    '// Paths reachable when the user has an AAL1 session but still needs to clear 2FA.\r\n' +
+    "// /2fa is the challenge page itself; logout/signout shouldn't be blocked behind 2FA.\r\n" +
+    'const AAL1_ALLOWED_PATHS = [\r\n' +
+    "  '/2fa',\r\n" +
+    "  '/auth/signout',\r\n" +
+    '];\r\n' +
+    '\r\n' +
+    'function isAal1Allowed(pathname: string): boolean {\r\n' +
+    '  return AAL1_ALLOWED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));\r\n' +
+    '}\r\n' +
+    '\r\n' +
+    'function isPublicPath(pathname: string): boolean {\r\n' +
+    '  // All /free-* paths are public (calculators, generators, hub page).\r\n' +
+    '  // This covers all current and future free tool routes without needing\r\n' +
+    '  // to update PUBLIC_PATHS each time we add a calculator or generator.\r\n' +
+    "  if (pathname.startsWith('/free-')) return true;\r\n" +
+    '\r\n' +
+    '  // Match on segment boundary: either exact match or the path continues\r\n' +
+    "  // with a '/'. This prevents '/m' from matching '/meadow-roofing/...' etc.\r\n" +
+    "  return PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));\r\n" +
+    '}\r\n' +
+    '\r\n' +
+    'function isStaticAsset(pathname: string): boolean {\r\n' +
+    '  return (\r\n' +
+    "    pathname.startsWith('/_next') ||\r\n" +
+    "    pathname.startsWith('/api') ||\r\n" +
+    "    // P9: Next's public metadata response must not be redirected to HTML login.\r\n" +
+    "    pathname === '/manifest.webmanifest' ||\r\n" +
+    "    pathname === '/assistant-manifest.webmanifest' || pathname === '/qcp-push-sw.js' ||\r\n" +
+    "        pathname === '/favicon.ico' ||\r\n" +
+    "    pathname === '/favicon.png' ||\r\n" +
+    "    pathname === '/logo.png' ||\r\n" +
+    '    // Gerald audit M-04: SEO/discovery metadata routes must be reachable\r\n' +
+    '    // without auth. Without this, middleware redirects them to /login and\r\n' +
+    '    // breaks crawlers + sitemap generators.\r\n' +
+    "    pathname === '/robots.txt' ||\r\n" +
+    "    pathname === '/sitemap.xml' ||\r\n" +
+    "    pathname === '/video-sitemap.xml' ||\r\n" +
+    '    // IndexNow key verification file\r\n' +
+    "    pathname.startsWith('/22ffbce37a69481c9841bddef9028097.txt') ||\r\n" +
+    '    /\\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|vtt|mp4|webm|ogg|mp3|wav|pdf|txt)$/.test(pathname)\r\n' +
+    '  );\r\n' +
+    '}\r\n' +
+    '\r\n' +
+    'export async function middleware(request: NextRequest) {\r\n' +
+    '  const { pathname } = request.nextUrl;\r\n' +
+    '  const hostname = request.nextUrl.hostname;\r\n' +
+    '  // These headers are derived here; ignore incoming copies from a caller.\r\n' +
+    '  request.headers.delete(DEMO_NAMESPACE_HEADER);\r\n' +
+    "  request.headers.delete('x-qcp-request-path');\r\n" +
+    "  request.headers.delete('x-qcp-session-trace');\r\n" +
+    "  const demoNamespace = isDemoRequest(hostname, pathname, request.nextUrl.origin, request.headers.get('referer'));\r\n" +
+    "  request.headers.set(DEMO_NAMESPACE_HEADER, demoNamespace ? 'demo' : 'normal');\r\n" +
+    "  request.headers.set('x-qcp-request-path', pathname);\r\n" +
+    "  if (hostname === 'demo.quote-core.com' && /^\\/(login|signup|onboarding|2fa|auth)(\\/|$)/.test(pathname)) {\r\n" +
+    "    return NextResponse.redirect(new URL(pathname + request.nextUrl.search, 'https://app.quote-core.com'), 307);\r\n" +
+    '  }\r\n' +
+    "  if ((hostname === 'quote-core.com' || hostname === 'app.quote-core.com') && (pathname === '/demo' || /^\\/demo-[a-z0-9-]+(?:\\/|$)/i.test(pathname))) {\r\n" +
+    "    return NextResponse.redirect(new URL(pathname + request.nextUrl.search, 'https://demo.quote-core.com'), 307);\r\n" +
+    '  }\r\n' +
+    "  if (hostname === 'demo.quote-core.com' && pathname === '/') return NextResponse.redirect(new URL('/demo', request.url));\r\n" +
+    '  // Static assets are shared. Dynamic demo routes/APIs cannot use the normal\r\n' +
+    '  // preview/public-domain shortcut, which previously skipped the demo guard.\r\n' +
+    "  if (demoNamespace && !pathname.startsWith('/_next') && !/\\.(svg|png|jpg|jpeg|webp|ico|css|js|woff2?|ttf|mp4|pdf)$/.test(pathname)) {\r\n" +
+    '    return guardDemoRequest(request);\r\n' +
+    '  }\r\n' +
+    '\r\n' +
+    '\r\n' +
+    '  // -- /var/* hard-404 (2026-09-25) ----------------------------------\r\n' +
+    '  // Docs RSC payloads leaked absolute /var/task/... paths (AWS Lambda\r\n' +
+    '  // root) into page HTML; Google indexed them via GSC and they dead-ended\r\n' +
+    '  '... 10829 more characters,
+  expected: /setAll\(changes\)/,
+  operator: 'match'
+}
+
+Node.js v22.16.0

@@ -1,0 +1,8 @@
+{
+  "counts": {
+    "baseline-typecheck.log": 67138,
+    "updated-typecheck.log": 67187
+  },
+  "scope": "Full project; both fail without dependencies. Not proof of semantic correctness of framework-dependent code.",
+  "isolated_core_typecheck": "passed (resume-contract.ts and login-recovery.ts only)"
+}

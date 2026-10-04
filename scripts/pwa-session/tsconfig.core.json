@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "strict": true, "noEmit": true, "target": "ES2022", "module": "commonjs",
+    "lib": ["ES2022", "DOM"], "types": [], "skipLibCheck": true,
+    "noUnusedLocals": true, "noUnusedParameters": true
+  },
+  "files": ["../../app/lib/auth/resume-contract.ts", "../../app/lib/auth/login-recovery.ts"]
+}

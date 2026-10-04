@@ -1,0 +1,27 @@
+{
+  "check": "TypeScript syntax only",
+  "files": 20,
+  "paths": [
+    "middleware.ts",
+    "app/(auth)/assistant/page.tsx",
+    "app/login/page.tsx",
+    "app/login/actions.ts",
+    "app/actions.ts",
+    "app/2fa/page.tsx",
+    "app/2fa/TwoFactorChallengeForm.tsx",
+    "app/auth/callback/route.ts",
+    "app/components/auth/GoogleSignInButton.tsx",
+    "app/lib/supabase/cookie-config.ts",
+    "app/lib/supabase/cookie-batch.ts",
+    "app/api/auth-session-debug/route.ts",
+    "app/login/LoginClient.tsx",
+    "app/components/auth/LoginSessionRecovery.tsx",
+    "app/lib/auth/resume-contract.ts",
+    "app/lib/auth/login-recovery.ts",
+    "app/lib/auth/auth-errors.ts",
+    "app/lib/auth/session-probe.server.ts",
+    "app/lib/auth/session-trace.ts",
+    "app/api/auth/resume/route.ts"
+  ],
+  "issues": []
+}
