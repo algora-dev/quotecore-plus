@@ -8,7 +8,7 @@ export interface RecentWorkItem {
   statusLabel: string; statusTone: 'neutral' | 'success' | 'warning' | 'info'; updatedLabel: string;
 }
 interface Props {
-  workspaceSlug: string; firstName: string; newUser: boolean; notificationCount: number;
+  workspaceSlug: string; firstName: string; newUser: boolean; notificationCount: number; isDemo?: boolean;
   canCreateQuote: boolean; assistantAvailable: boolean; measureAction: ReactNode;
   /** undefined means not loaded, NOT an empty company. No demo rows in application code. */
   recentWork?: RecentWorkItem[];
@@ -17,7 +17,7 @@ interface Props {
   allowPricingInvitation?: boolean;
 }
 /** T01/C48. Read-only dashboard composition. Data is owned by the existing server page. */
-export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationCount,
+export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationCount, isDemo = false,
   canCreateQuote, assistantAvailable, measureAction, recentWork, allowPricingInvitation = true }: Props) {
   const base = `/${workspaceSlug}`;
   // Only a successful, empty recent-work read can select the getting-started
@@ -26,7 +26,7 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
   const resume = recentWork?.[0];
   return <div className="qc-home" data-qc-ui="v2">
     <header className="qc-home-heading">
-      <div><p className="qc-eyebrow">Your workspace</p><h1>Welcome {newUser ? '' : 'back, '}{firstName}</h1>
+      <div><p className="qc-eyebrow">{isDemo ? 'Your demo' : 'Your workspace'}</p><h1>{isDemo ? 'Welcome to your demo workspace' : <>Welcome {newUser ? '' : 'back, '}{firstName}</>}</h1>
         <p>Measure with confidence. Price your work. Send a great quote.</p></div>
       <Link href={`${base}/tutorials`} prefetch={false} className="qc-button" data-qc-variant="glass"><QcIcon name="help" /> Tutorials</Link>
     </header>
@@ -48,7 +48,7 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
           </Link>}
           <div className="qc-home-measure">{measureAction}</div>
         </div>
-        {pricingFirst && <p className="qc-home-pricing-note">Starter rates are examples, not recommended prices. Already using your company's pricing? Go straight to a job.</p>}
+        {pricingFirst && <p className="qc-home-pricing-note">Starter rates are examples, not recommended prices. Already using your company&apos;s pricing? Go straight to a job.</p>}
       </div>
       <div className="qc-home-process" aria-label={pricingFirst ? 'Check a component, make your own, price a job' : 'Measure, price, quote'}>
         {(pricingFirst ? (['pricing','library','quote'] as const) : (['measure','pricing','quote'] as const)).map((name, index) => <div key={name}>

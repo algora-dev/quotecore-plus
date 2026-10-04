@@ -137,7 +137,7 @@ export default async function WorkspaceHome({
       <TakeoffDraftNoteBanner />
       {/* HOME-01 wired: see recentWork mapping above. JOB-01 (related orders/invoices
           on Job Space) deferred to the next pass; its undefined state shows safe routes. */}
-      <HomeDashboard workspaceSlug={workspaceSlug} firstName={firstName} newUser={showWelcome}
+      <HomeDashboard workspaceSlug={workspaceSlug} firstName={firstName} newUser={showWelcome} isDemo={!!demoContext}
         notificationCount={unreadAlerts ?? 0} canCreateQuote={!monthlyQuoteAtCap}
         assistantAvailable={!!smartAssistantOn} recentWork={recentWork}
         allowPricingInvitation={!hasCalcDraft && !(company as { is_supplier?: boolean }).is_supplier}
