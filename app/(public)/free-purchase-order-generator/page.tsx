@@ -14,6 +14,8 @@ import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { FreeToolsAuthButton } from '../_components/FreeToolsAuthButton';
 import { useFreeToolsEmail } from '../_components/useFreeToolsEmail';
 import { FreeToolsSignupBanner } from '../_components/FreeToolsSignupBanner';
+import '../_components/free-tools-v2.css';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
 
 /**
  * Free Purchase Order Generator - no signup required.
@@ -318,7 +320,7 @@ function POGeneratorForm() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main data-qc-ui="v2" className="qc-ft min-h-screen">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
@@ -346,9 +348,9 @@ function POGeneratorForm() {
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Hero */}
         <section className="mb-8 print:hidden">
-          <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Purchase Order Generator</h1>
-          <p className="mt-1 text-sm font-medium text-[#BD4A1A]">QuoteCore Plus Free Purchase Order Generator - free, no signup required.</p>
-          <p className="mt-2 text-sm text-slate-500 max-w-xl">
+          <h1 className="qc-ft-title">Free Purchase Order Generator</h1>
+          <p className="qc-ft-eyebrow mt-1">QuoteCore Plus Free Purchase Order Generator - free, no signup required.</p>
+          <p className="mt-2 text-sm qc-ft-muted max-w-xl">
             Create a professional purchase order for your suppliers. Upload a photo of your existing
             PO and AI will fill in the form - or paste your details, or type it manually. No signup required.
           </p>
@@ -406,21 +408,21 @@ function POGeneratorForm() {
               </div>
 
               {/* Settings bar */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <h2 className="text-sm font-semibold text-slate-900 mb-4">Document settings</h2>
+              <div className="qc-ft-card p-5">
+                <h2 className="qc-ft-heading mb-4">Document settings</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Measurement system</label>
                     <div className="mt-1 flex rounded-lg border border-slate-300 overflow-hidden">
                       <button
                         onClick={() => handleMeasurementChange('metric', measurementType)}
-                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'metric' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'metric' ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
                       >
                         Metric
                       </button>
                       <button
                         onClick={() => handleMeasurementChange('imperial', measurementType)}
-                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'imperial' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'imperial' ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
                       >
                         Imperial
                       </button>
@@ -490,8 +492,8 @@ function POGeneratorForm() {
               </div>
 
               {/* Your details */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <h2 className="text-sm font-semibold text-slate-900 mb-4">Your business</h2>
+              <div className="qc-ft-card p-5">
+                <h2 className="qc-ft-heading mb-4">Your business</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Company name</label>
@@ -595,8 +597,8 @@ function POGeneratorForm() {
               </div>
 
               {/* Supplier details */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <h2 className="text-sm font-semibold text-slate-900 mb-4">Supplier</h2>
+              <div className="qc-ft-card p-5">
+                <h2 className="qc-ft-heading mb-4">Supplier</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Supplier name</label>
@@ -632,10 +634,10 @@ function POGeneratorForm() {
               </div>
 
               {/* Line items */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <div className="qc-ft-card p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-4">
-                    <h2 className="text-sm font-semibold text-slate-900">Line items</h2>
+                    <h2 className="qc-ft-heading">Line items</h2>
                     <label className="flex items-center gap-2 text-xs text-slate-600">
                       <input type="checkbox" checked={hideAllPrices} onChange={(e) => setHideAllPrices(e.target.checked)} className="rounded border-slate-300" />
                       Hide line prices
@@ -754,7 +756,7 @@ function POGeneratorForm() {
               </div>
 
               {/* Notes */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <div className="qc-ft-card p-5">
                 <label className="text-xs font-medium text-slate-600">Notes / delivery instructions</label>
                 <textarea
                   value={notes}
@@ -766,19 +768,19 @@ function POGeneratorForm() {
               </div>
 
               {/* Footer */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <div className="qc-ft-card p-5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-medium text-slate-600">Footer</label>
                   <div className="flex rounded-lg border border-slate-300 overflow-hidden">
                     <button
                       onClick={() => setFooterItalic(false)}
-                      className={`px-3 py-1 text-xs font-medium transition ${!footerItalic ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                      className={`px-3 py-1 text-xs font-medium transition ${!footerItalic ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
                     >
                       Normal
                     </button>
                     <button
                       onClick={() => setFooterItalic(true)}
-                      className={`px-3 py-1 text-xs font-medium transition ${footerItalic ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                      className={`px-3 py-1 text-xs font-medium transition ${footerItalic ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
                       style={{ fontStyle: 'italic' }}
                     >
                       Italic
@@ -796,24 +798,28 @@ function POGeneratorForm() {
               </div>
 
               {/* Generate */}
-              <button
+              <QcButton
+                variant="primary"
+                size="lg"
                 onClick={generatePO}
-                className="inline-flex items-center gap-1.5 rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                className="inline-flex items-center gap-1.5"
               >
                 Generate purchase order
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </button>
+              </QcButton>
               {docLimitError && (
                 <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
                   <p className="text-sm text-slate-700">{docLimitError}</p>
-                  <button
+                  <QcButton
+                    variant="primary"
+                    size="sm"
                     onClick={() => openAuthModal('signup')}
-                    className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#FF6B35] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#ff5722] transition-colors"
+                    className="mt-2"
                   >
                     Sign up free
-                  </button>
+                  </QcButton>
                 </div>
               )}
             </div>
@@ -924,15 +930,16 @@ function POGeneratorForm() {
 
             {/* Actions */}
             <div className="mt-6 flex flex-wrap gap-3 print:hidden">
-              <button
+              <QcButton
+                variant="primary"
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition"
+                className="inline-flex items-center gap-1.5"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
                 Download PDF
-              </button>
+              </QcButton>
               <span ref={saveToAppBtnRef} className="inline-flex">
               <SaveToAppButton
                 documentType="order"
@@ -990,7 +997,7 @@ function POGeneratorForm() {
         <section className="mt-16 space-y-8">
           {/* Usage guide (BRIEF-003 Phase 3) */}
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">How to use this purchase order generator</h2>
+            <h2 className="qc-ft-section">How to use this purchase order generator</h2>
             <div className="mt-4 space-y-4">
               <p className="text-sm text-slate-600 leading-relaxed">A purchase order (PO) is the document you send to a supplier to order materials at agreed prices. This generator produces a professional PO in about two minutes - no signup, no watermark on your first documents, and instant PDF download. Here is the fastest way to use it.</p>
               <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 1 - Enter your business details.</strong> Under &quot;Your business&quot;, add your company name, address, email and phone. These appear in the PO header and are what the supplier uses to identify the order. Set your currency and PO number in the document settings bar - a simple sequence like PO-001, PO-002 works fine.</p>
@@ -1003,7 +1010,7 @@ function POGeneratorForm() {
 
           {/* Related tools (BRIEF-003 Phase 3 cross-links) */}
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Related free tools</h2>
+            <h2 className="qc-ft-section">Related free tools</h2>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Link href="/free-flooring-calculator" prefetch={false} className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all">
                 <p className="font-semibold text-slate-900 text-sm">Free Flooring Calculator</p>
@@ -1025,29 +1032,29 @@ function POGeneratorForm() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Free purchase order generator FAQ</h2>
+            <h2 className="qc-ft-section">Free purchase order generator FAQ</h2>
             <div className="mt-4 space-y-2">
-              <details className="rounded-xl border border-slate-200 bg-white">
+              <details className="qc-ft-card">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Is this PO generator free?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes - completely free with no signup. Generate as many purchase orders as you need and download as PDF. You can also upload a photo of an existing PO and our AI will extract the details automatically, or paste your order text and let AI fill in the form.</p></div>
               </details>
-              <details className="rounded-xl border border-slate-200 bg-white">
+              <details className="qc-ft-card">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I upload a photo of my purchase order and have AI fill it in?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. Click the upload area to upload a photo or screenshot of an existing purchase order. Our AI will extract the supplier details, line items, quantities, and rates - then fill in the form for you to review and edit before generating. You get 5 free scans per day.</p></div>
               </details>
-              <details className="rounded-xl border border-slate-200 bg-white">
+              <details className="qc-ft-card">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Why use a purchase order?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">A purchase order (PO) is a formal document sent to a supplier requesting materials or services at agreed prices. It protects both parties - the supplier knows exactly what to deliver, and you have a written record of the order for your accounts.</p></div>
               </details>
-              <details className="rounded-xl border border-slate-200 bg-white">
+              <details className="qc-ft-card">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I manage suppliers in QuoteCore+?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. QuoteCore+ gives you a complete document and business management platform in one place - track and store all your purchase orders, quotes, and invoices, send automatic follow-ups to suppliers, and auto-update order statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), supplier database, and online order management. <Link href="/signup" className="text-[#BD4A1A] font-medium">Plans from $19/mo &rarr;</Link></p></div>
               </details>
-              <details className="rounded-xl border border-slate-200 bg-white">
+              <details className="qc-ft-card">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I use different currencies?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. The currency selector in the document settings bar supports GBP, USD, EUR, AUD, CAD, and NZD. All amounts in the form and the generated purchase order will use the selected currency symbol.</p></div>
               </details>
-              <details className="rounded-xl border border-slate-200 bg-white">
+              <details className="qc-ft-card">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">How do I remove the QuoteCore+ branding and create more free purchase orders?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free purchase orders and remove the QuoteCore+ branding, or subscribe to the full QuoteCore+ app (plans from $19/mo, 30-day money-back guarantee) for higher limits and loads of extra features.</p></div>
               </details>

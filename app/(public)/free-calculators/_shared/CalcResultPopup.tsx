@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { trackFreeToolEvent } from '../../lib/trackFreeToolEvent';
+import { QcButton, QcLinkButton } from '@/app/components/ui/v2/QcButton';
 
 /**
  * Conversion popup that shows the calculation result + a CTA to the next funnel stage.
@@ -91,7 +92,7 @@ export function CalcResultPopup({
             </svg>
             <span className="text-xs font-medium text-[#BD4A1A]">Your result</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900">{resultLabel}</p>
+          <p className="qc-ft-title">{resultLabel}</p>
           {resultDetails && (
             <p className="mt-1.5 text-sm text-slate-500">{resultDetails}</p>
           )}
@@ -99,8 +100,9 @@ export function CalcResultPopup({
 
         {/* CTA */}
         {onCta ? (
-          <button
-            type="button"
+          <QcButton
+            variant="primary"
+            className="block w-full text-center"
             disabled={busy}
             onClick={async () => {
               setBusy(true);
@@ -110,17 +112,17 @@ export function CalcResultPopup({
                 setBusy(false);
               }
             }}
-            className="block w-full text-center px-5 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] transition-all disabled:opacity-60"
           >
             {busy ? 'Saving...' : ctaText}
-          </button>
+          </QcButton>
         ) : (
-          <a
+          <QcLinkButton
             href={ctaHref}
-            className="block w-full text-center px-5 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] transition-all"
+            variant="primary"
+            className="block w-full text-center"
           >
             {ctaText}
-          </a>
+          </QcLinkButton>
         )}
 
         {/* Secondary text */}

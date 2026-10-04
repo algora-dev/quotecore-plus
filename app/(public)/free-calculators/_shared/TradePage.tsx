@@ -3,6 +3,7 @@ import type { TradeConfig } from './types';
 import { signupHref } from './types';
 import { TradeCalculator } from './TradeCalculator';
 import DemoCTACard from '@/components/DemoCTACard';
+import { QcLinkButton } from '@/app/components/ui/v2/QcButton';
 import { ROOFING_SLUGS } from '../../free-calculators/configs/roofingSlugRegistry';
 import { roofingConfig } from '../../free-calculators/configs/roofing';
 
@@ -25,8 +26,8 @@ export function TradePage({ config }: { config: TradeConfig }) {
       <section className="mb-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">{c.h1}</h1>
-            <p className="mt-2 text-sm text-slate-500 max-w-xl">{c.heroText}</p>
+            <h1 className="qc-ft-title">{c.h1}</h1>
+            <p className="mt-2 text-sm qc-ft-muted max-w-xl">{c.heroText}</p>
           </div>
         </div>
       </section>
@@ -60,27 +61,28 @@ export function TradePage({ config }: { config: TradeConfig }) {
               Pitch, angle, slope and rafter calculations in one click, from any tab. Free, no account.
             </p>
           </div>
-          <a
+          <QcLinkButton
             href={CHROME_EXTENSION_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
+            variant="primary"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center"
           >
             Add to Chrome
-          </a>
+          </QcLinkButton>
         </section>
       )}
 
       {/* Related Free tools */}
       <section className="mt-12">
-        <h2 className="text-lg font-semibold text-slate-900">Related Free tools</h2>
+        <h2 className="qc-ft-section">Related Free tools</h2>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {c.related?.map((r) => (
             <Link
               key={r.href}
               href={r.href}
               prefetch={false}
-              className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+              className="block w-full text-left p-5 bg-white border border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
@@ -99,7 +101,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
           <Link
             href="/free-quote-generator"
             prefetch={false}
-            className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+            className="block w-full text-left p-5 bg-white border border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
@@ -117,7 +119,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
           <Link
             href="/free-purchase-order-generator"
             prefetch={false}
-            className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+            className="block w-full text-left p-5 bg-white border border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
@@ -135,7 +137,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
           <Link
             href="/free-invoice-generator"
             prefetch={false}
-            className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+            className="block w-full text-left p-5 bg-white border border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
@@ -152,7 +154,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
 
           <Link
             href={signup}
-            className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+            className="block w-full text-left p-5 bg-white border border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
@@ -171,7 +173,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
 
       {/* Tips & Knowledge */}
       <section className="mt-12">
-        <h2 className="text-lg font-semibold text-slate-900">{c.tipsHeading}</h2>
+        <h2 className="qc-ft-section">{c.tipsHeading}</h2>
         <div className="mt-4 space-y-4">
           {c.tips.map((tip) => (
             <Tip key={tip.title} title={tip.title} body={tip.body} />
@@ -181,7 +183,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
 
       {/* Formula reference */}
       <section className="mt-12">
-        <h2 className="text-lg font-semibold text-slate-900">Formulas used</h2>
+        <h2 className="qc-ft-section">Formulas used</h2>
         <div className="mt-4 space-y-2">
           {c.formulas.map((f) => (
             <Formula key={f.name} name={f.name} formula={f.formula} />
@@ -192,8 +194,8 @@ export function TradePage({ config }: { config: TradeConfig }) {
       {/* Worked example */}
       {c.workedExample && (
         <section className="mt-12">
-          <h2 className="text-lg font-semibold text-slate-900">{c.workedExample.title}</h2>
-          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="qc-ft-section">{c.workedExample.title}</h2>
+          <div className="mt-4 qc-ft-card p-5">
             <ol className="space-y-2">
               {c.workedExample.steps.map((step, i) => (
                 <li key={i} className="flex gap-3">
@@ -211,7 +213,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
       {/* Assumptions & limitations */}
       {c.assumptions && c.assumptions.length > 0 && (
         <section className="mt-12">
-          <h2 className="text-lg font-semibold text-slate-900">Assumptions & limitations</h2>
+          <h2 className="qc-ft-section">Assumptions & limitations</h2>
           <ul className="mt-4 space-y-2">
             {c.assumptions.map((a, i) => (
               <li key={i} className="flex gap-2 text-sm text-slate-600">
@@ -244,7 +246,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
 
       {/* FAQ */}
       <section className="mt-12 mb-8">
-        <h2 className="text-lg font-semibold text-slate-900">Frequently asked questions</h2>
+        <h2 className="qc-ft-section">Frequently asked questions</h2>
         <div className="mt-4 space-y-4">
           {c.faqs.map((f) => (
             <FAQ key={f.q} question={f.q} answer={f.a} />
@@ -254,7 +256,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
 
       {/* Commercial bridge */}
       {c.commercialBridge && (
-        <section className="mt-8 mb-8 rounded-xl border border-slate-200 bg-white p-5">
+        <section className="mt-8 mb-8 qc-ft-card p-5">
           <p className="text-sm text-slate-600">
             {c.commercialBridge.text}{' '}
             <Link href={c.commercialBridge.href} className="font-medium text-[#BD4A1A] hover:underline">
