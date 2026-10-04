@@ -16,7 +16,7 @@ type Json = Database['public']['Tables']['demo_sessions']['Insert']['tutorial_st
  * Auth user remains stable through Reset, so it cannot replenish allowances.
  * The existing rate-limit RPC serializes provisioning admission; a persisted
  * provisioning row prevents a second attempt while the first is in progress. */
-export async function provisionDemo(anonUserId: string, ip: string | null, reset = false): Promise<{ slug: string; sessionId: string }> {
+export async function provisionDemo(anonUserId: string, ip: string | null, reset = false): Promise<{ slug: string; sessionId: string; resumed: boolean; expiresAt: string | null }> {
   if (!(await getDemoControl()).demoEnabled) throw new DemoError('The demo is currently switched off.', 503, 'demo_off');
   const admin = createAdminClient();
   const verified = await admin.auth.admin.getUserById(anonUserId);
@@ -35,7 +35,7 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
   if (!reset && old?.template_version === DEMO_SEED_VERSION && old?.status === 'active' && old.expires_at && old.expires_at > now && old.company_id) {
     const company = await admin.from('companies').select('slug,plan_code').eq('id', old.company_id).maybeSingle();
     if (company.error) throw new DemoError('Could not resume the demo.', 503);
-    if (company.data?.slug && company.data.plan_code === 'demo') return { slug: company.data.slug, sessionId: old.id };
+    if (company.data?.slug && company.data.plan_code === 'demo') return { slug: company.data.slug, sessionId: old.id, resumed: true, expiresAt: old.expires_at ?? null };
   }
   if (!await checkRateLimit(`demo:provision:user:${anonUserId}`, 1, 60_000, { failClosed: true }) ||
       !await checkRateLimit(`demo:provision:ip:${ipHmac}`, 5, 3_600_000, { failClosed: true })) {
@@ -86,7 +86,7 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
       .eq('id', sessionId).eq('status', 'provisioning').select('id').maybeSingle();
     if (activated.error || !activated.data) throw new Error('activation failed');
     if (old) await admin.from('demo_sessions').update({ status: 'cleanup_pending' }).eq('id', old.id);
-    return { slug, sessionId };
+    return { slug, sessionId, resumed: false, expiresAt: null };
   } catch (error) {
     console.error('[demo/provision] stage failed', error instanceof Error ? error.message : 'unknown');
     // Restore the old binding before its company is eligible for cleanup.
