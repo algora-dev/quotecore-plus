@@ -67,7 +67,7 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
     checked(await db.from('material_orders').insert({ id: orderId, company_id: companyId, quote_id: jobs[key], order_number: `DEMO-MO-${index + 1}`,
       job_name: DEMO_JOBS.find(j => j.key === key)!.job, from_company: QCP_DEMO_NAME,
       supplier_name: 'Fictional Demo Materials', to_supplier: 'Fictional Demo Materials',
-      status: 'draft', is_sent: false, header_notes: 'Demo order only. Nothing has been sent to a supplier.',
+      status: 'ready', is_sent: false, header_notes: 'Demo order only. Nothing has been sent to a supplier.',
     }), 'material orders');
     checked(await db.from('material_order_lines').insert({ order_id: orderId, item_name: 'Roof covering — demo material', quantity: index === 0 ? 48 : 30, unit: 'm²', sort_order: 0 }), 'order lines');
   }
