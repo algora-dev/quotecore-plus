@@ -4,14 +4,14 @@
  * The takeoff canvas follows the design-tool viewport pattern: the canvas
  * ELEMENT is sized to the visible viewport and the plan is placed by the
  * Fabric viewportTransform (zoom + pan). Exporting with toDataURL() on the
- * live element therefore captures whatever the user currently sees — a
+ * live element therefore captures whatever the user currently sees - a
  * cropped fragment when zoomed in, a tiny image with margins when zoomed
  * out. Quotes must instead always store the FULL plan image with the drawn
  * lines, independent of the view.
  *
  * This helper swaps the live canvas to the plan image's world bounds
  * (background image placement, native resolution, capped) with an identity
- * viewport, renders, captures, and restores everything synchronously —
+ * viewport, renders, captures, and restores everything synchronously -
  * the browser never paints mid-swap, so the user sees no flicker.
  */
 import type { Canvas, Image as FabricImage } from 'fabric';

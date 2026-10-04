@@ -3,7 +3,7 @@ import type { Database } from '@/app/lib/supabase/database.types';
 type ComponentInsert = Database['public']['Tables']['component_library']['Insert'];
 export const QCP_DEMO_NAME = 'QCP Roofing & Construction';
 export const DEMO_PRICE_NOTICE = 'Example/demo pricing only. Not recommended real-world prices.';
-export const DEMO_FOOTER = 'DEMO — NOT A REAL QUOTE. Fictional QCP Roofing & Construction example. No payment is due.';
+export const DEMO_FOOTER = 'DEMO - NOT A REAL QUOTE. Fictional QCP Roofing & Construction example. No payment is due.';
 export const DEMO_COMPONENTS: { key: string; library: 'roofing' | 'construction' | 'flooring'; name: string; type: ComponentInsert['measurement_type']; material: number; labour: number; slot?: string; pitch?: 'rafter' | 'valley_hip' }[] = [
   { key: 'roof_covering', library: 'roofing', name: 'Roof covering', type: 'area', material: 32, labour: 18, slot: 'roof_area', pitch: 'rafter' },
   { key: 'roof_underlay', library: 'roofing', name: 'Roofing underlay', type: 'area', material: 6, labour: 3, pitch: 'rafter' },
@@ -27,14 +27,14 @@ export const DEMO_COMPONENTS: { key: string; library: 'roofing' | 'construction'
   { key: 'floor_remove', library: 'flooring', name: 'Remove old floor covering', type: 'area', material: 2, labour: 6 },
 ];
 export const DEMO_JOBS: { key: string; job: string; customer: string; status: Database['public']['Enums']['quote_status']; area: number; days: number }[] = [
-  { key: 'guided_roof_job', job: 'Guided roof — the skylight project', customer: 'Alex Example', status: 'draft', area: 0, days: 0 },
-  { key: 'manual_job', job: 'Manual measurements — garden workshop', customer: 'Morgan Sample', status: 'draft', area: 36, days: 1 },
-  { key: 'pricing_job', job: 'Pricing in progress — studio roof', customer: 'Casey Example', status: 'draft', area: 52, days: 2 },
-  { key: 'customer_ready', job: 'Customer quote ready — porch roof', customer: 'Taylor Sample', status: 'confirmed', area: 24, days: 3 },
-  { key: 'sent_job', job: 'Awaiting response — cottage roof', customer: 'Jamie Example', status: 'sent', area: 88, days: 4 },
-  { key: 'accepted_without_order', job: 'Accepted — Maple demonstration roof', customer: 'Robin Sample', status: 'accepted', area: 72, days: 5 },
-  { key: 'ordered_job', job: 'Materials ordered — annex roof', customer: 'Jordan Example', status: 'accepted', area: 48, days: 6 },
-  { key: 'invoiced_job', job: 'Completed — fictional garage roof', customer: 'Cameron Sample', status: 'accepted', area: 30, days: 8 },
+  { key: 'guided_roof_job', job: 'Guided roof - the skylight project', customer: 'Alex Example', status: 'draft', area: 0, days: 0 },
+  { key: 'manual_job', job: 'Manual measurements - garden workshop', customer: 'Morgan Sample', status: 'draft', area: 36, days: 1 },
+  { key: 'pricing_job', job: 'Pricing in progress - studio roof', customer: 'Casey Example', status: 'draft', area: 52, days: 2 },
+  { key: 'customer_ready', job: 'Customer quote ready - porch roof', customer: 'Taylor Sample', status: 'confirmed', area: 24, days: 3 },
+  { key: 'sent_job', job: 'Awaiting response - cottage roof', customer: 'Jamie Example', status: 'sent', area: 88, days: 4 },
+  { key: 'accepted_without_order', job: 'Accepted - Maple demonstration roof', customer: 'Robin Sample', status: 'accepted', area: 72, days: 5 },
+  { key: 'ordered_job', job: 'Materials ordered - annex roof', customer: 'Jordan Example', status: 'accepted', area: 48, days: 6 },
+  { key: 'invoiced_job', job: 'Completed - fictional garage roof', customer: 'Cameron Sample', status: 'accepted', area: 30, days: 8 },
 ];
 export function fictionalCompany(id: string, slug: string, now: string): Database['public']['Tables']['companies']['Insert'] {
   return { id, slug, name: QCP_DEMO_NAME, plan_code: 'demo', subscription_status: 'active',

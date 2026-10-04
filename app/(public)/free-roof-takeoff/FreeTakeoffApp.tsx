@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Free Roof Takeoff — v2 engine.
+ * Free Roof Takeoff - v2 engine.
  *
  * Same product as the classic free tool (session-only, default components
  * or build your own, printout/download output, no AI scan) but running the
@@ -489,7 +489,7 @@ export function FreeTakeoffApp({
 
   // Rotate-for-canvas notice (2026-10-04): the setup wizard is comfortable in
   // portrait, so the notice now opens only when the user actually ENTERS the
-  // measuring canvas (stage 'takeoff') — once per visit, no re-entry nagging.
+  // measuring canvas (stage 'takeoff') - once per visit, no re-entry nagging.
   const orientationShownRef = useRef(false);
   useEffect(() => {
     if (stage.phase !== 'takeoff' || orientationShownRef.current) return;
@@ -665,7 +665,7 @@ export function FreeTakeoffApp({
   );
 
   // One-tap example plan (2026-10-04, mobile-first): loads the shared sample
-  // plan straight into the tool through the same File path as a user upload —
+  // plan straight into the tool through the same File path as a user upload -
   // no iOS download round-trip through Files/Photos, no re-upload.
   const EXAMPLE_PLAN_URL = '/takeoff-demo/roofplan-baseline.png';
   const [exampleLoading, setExampleLoading] = useState(false);

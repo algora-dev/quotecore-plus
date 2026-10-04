@@ -78,7 +78,7 @@ export function AreaTab() {
       return;
     }
 
-    // Actual mode: no pitch factor at all — just width × length or direct area
+    // Actual mode: no pitch factor at all - just width × length or direct area
     if (measureMode === 'actual') {
       let actualArea = 0;
       if (inputMode === 'dims') {
@@ -462,7 +462,7 @@ export function AreaTab() {
                 <p className="mt-1 text-xs text-slate-400">1 / cos({result.deg}°)</p>
               </div>
             )}
-            {/* In actual mode, just show the area — no pitch factor, no derived plan area */}
+            {/* In actual mode, just show the area - no pitch factor, no derived plan area */}
             <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
               <p className="text-xs text-slate-500">{cfg.actualLabel}</p>
               <p className="text-2xl font-bold text-slate-900">{result.actualArea.toFixed(2)} {areaUnit}</p>

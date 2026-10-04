@@ -4,13 +4,13 @@ import { trackEvent } from "@/lib/analytics";
 
 /**
  * Shared demo entry card. Deep-links into /takeoff-demo with the mode
- * pre-selected (?mode=ai | ?mode=manual — handled by DemoTakeoff).
+ * pre-selected (?mode=ai | ?mode=manual - handled by DemoTakeoff).
  *
- * variant="hero"   — full-width aspect-video card (homepage hero)
- * variant="inline" — compact horizontal card (blogs, calculators, CTA areas)
+ * variant="hero"   - full-width aspect-video card (homepage hero)
+ * variant="inline" - compact horizontal card (blogs, calculators, CTA areas)
  *
  * primaryMode lets a placement emphasise one button (e.g. AI on the
- * AI Scan Assist feature page) — the other stays as secondary.
+ * AI Scan Assist feature page) - the other stays as secondary.
  */
 export default function DemoCTACard({
   location,

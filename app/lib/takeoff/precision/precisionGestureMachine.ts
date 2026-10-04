@@ -1,5 +1,5 @@
 // Mobile takeoff M3: pure precision gesture state machine (spec 2026-09-21
-// §5.3 — the ENTIRE transition table, tap priority, slop).
+// §5.3 - the ENTIRE transition table, tap priority, slop).
 //
 // PURE module: no React, no DOM, no IO. The DOM Pointer Events adapter
 // (usePrecisionPointerInput.ts) dispatches events here and executes the
@@ -9,19 +9,19 @@
 //  - a single active pointer map (surface contacts only; toolbar/sheet
 //    controls own their input and never reach this machine);
 //  - one gesture owner with EXPLICIT phases (no scattered booleans):
-//      idle      — no surface contact
-//      pending   — one contact recorded, below slop, no commitment yet
-//      moving    — armed vertex remote-drag in progress (uncommitted preview)
-//      panning   — one-finger view pan (only when nothing is armed, §5.4)
-//      twoPointer— two-finger pinch/pan (view only)
-//      cancelled — a cancelled/suppressed gesture; ALL remaining contacts are
+//      idle      - no surface contact
+//      pending   - one contact recorded, below slop, no commitment yet
+//      moving    - armed vertex remote-drag in progress (uncommitted preview)
+//      panning   - one-finger view pan (only when nothing is armed, §5.4)
+//      twoPointer- two-finger pinch/pan (view only)
+//      cancelled - a cancelled/suppressed gesture; ALL remaining contacts are
 //                  ignored until every pointer has lifted (§5.3 two rows)
 //  - a base snapshot per gesture (press start position, marker hit, two-finger
 //    start pair) so rollbacks and full-delta-from-start math are exact.
 //
 // Placement NEVER happens on pointerdown (the contact may become a pinch);
 // exactly one placement per resolved tap sequence. Ghost synthetic clicks are
-// structurally inert (syntheticClick produces no effect ever) — suppression by
+// structurally inert (syntheticClick produces no effect ever) - suppression by
 // sequence state, not a timeout (§5.3/§5.6).
 //
 // A lostpointercapture arriving AFTER a completed pointer-up finds the pointer
@@ -84,7 +84,7 @@ export type GestureState = Readonly<{
   primaryPointerId: number | null;
   /** Press-start position (base snapshot) for slop + full-delta-from-start math. */
   pressStart: Point | null;
-  /** Marker hit captured at pointerdown — tap resolution uses it on release. */
+  /** Marker hit captured at pointerdown - tap resolution uses it on release. */
   pendingMarkerHit: string | null;
   /** Vertex being remote-dragged (uncommitted). */
   moveVertexId: string | null;
@@ -349,7 +349,7 @@ export function dispatchGesture(
             effects: [{ type: 'commitMove', vertexId: state.moveVertexId, totalClientDelta: total }],
           };
         }
-        // Defensive: another contact remains — commit, then suppress.
+        // Defensive: another contact remains - commit, then suppress.
         return {
           state: suppressed(next),
           effects: [{ type: 'commitMove', vertexId: state.moveVertexId, totalClientDelta: total }],
@@ -364,7 +364,7 @@ export function dispatchGesture(
 
       if (state.phase === 'twoPointer') {
         // One finger lifts: the remaining finger must NOT become a drag or a
-        // tap — suppress all contacts until every pointer has lifted.
+        // tap - suppress all contacts until every pointer has lifted.
         return {
           state: empty ? finish(next) : suppressed(next),
           effects: [{ type: 'viewGestureEnd', reason: 'released' }],

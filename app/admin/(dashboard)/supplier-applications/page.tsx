@@ -35,7 +35,7 @@ interface Application {
   created_at: string;
 }
 
-// Table is new and not yet in generated DB types — use untyped query
+// Table is new and not yet in generated DB types - use untyped query
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchApplications(status?: string): Promise<{ data: Application[] | null; error: string | null }> {
   const supabase = createAdminClient();

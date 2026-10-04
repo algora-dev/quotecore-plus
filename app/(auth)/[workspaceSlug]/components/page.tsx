@@ -34,7 +34,7 @@ export default async function ComponentsPage(props: {
   const { company } = await loadCompanyContext();
 
   // Demo guide: viewing the library acknowledges the orientation step (no-op
-  // for normal companies — readActiveDemoContext returns null immediately).
+  // for normal companies - readActiveDemoContext returns null immediately).
   await recordDemoEventBestEffort(company.id, 'component.viewed');
 
   // Personal guidance preference only, never a company-pricing readiness flag.

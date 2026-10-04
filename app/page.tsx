@@ -25,14 +25,14 @@ export async function generateMetadata(): Promise<Metadata> {
   if (isMarketingDomain) {
     return {
       title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
-      description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice — all in one platform. Free tools and paid plans from $19/mo (30-day money-back guarantee) for roofing and construction contractors.',
+      description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice - all in one platform. Free tools and paid plans from $19/mo (30-day money-back guarantee) for roofing and construction contractors.',
       alternates: {
         canonical: 'https://quote-core.com/',
         languages: hreflangLanguages('/'),
       },
       openGraph: {
         title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
-        description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice — all in one platform. Free tools and paid plans from $19/mo (30-day money-back guarantee) for roofing and construction contractors.',
+        description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice - all in one platform. Free tools and paid plans from $19/mo (30-day money-back guarantee) for roofing and construction contractors.',
         url: 'https://quote-core.com/',
         siteName: 'QuoteCore+',
         type: 'website',
@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
       twitter: {
         card: 'summary_large_image',
         title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
-        description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice — all in one platform.',
+        description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice - all in one platform.',
         images: ['/og-image.png'],
       },
     };

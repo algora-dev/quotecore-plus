@@ -1,6 +1,6 @@
 'use client';
 // Mobile takeoff M2: workspace view-mode hook (spec §3.1).
-// Resolves Auto/Desktop/Mobile-touch once at entry (frozen Auto decision —
+// Resolves Auto/Desktop/Mobile-touch once at entry (frozen Auto decision -
 // no oscillation on hybrid devices or keyboard-driven visual-viewport changes,
 // §14.6 L04), persists an explicit choice under the versioned takeoff-only
 // key with session-memory fallback, and NEVER re-resolves on resize/orientation
@@ -33,7 +33,7 @@ export function useTakeoffViewMode(flagEnabled: boolean): TakeoffViewModeState {
 
   useEffect(() => {
     if (!flagEnabled) {
-      // Flag off: defaults already are 'auto'/'desktop' — no state to reset
+      // Flag off: defaults already are 'auto'/'desktop' - no state to reset
       // (flag is a static server prop; it never flips mid-session).
       return;
     }

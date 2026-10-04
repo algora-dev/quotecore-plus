@@ -66,7 +66,7 @@ export function VoiceCapture({ voice, disabled, expanded, beforeStart }: {
     </div> : <>
       <div className={s.voiceHeading}>
         <strong>{recording ? 'Listening…' : 'Ready when you are'}</strong>
-        <p>{recording ? 'Your microphone is on — the screen stays awake while you talk' : 'Tap to talk'}</p>
+        <p>{recording ? 'Your microphone is on - the screen stays awake while you talk' : 'Tap to talk'}</p>
       </div>
       {recording && <><Waveform analyser={voice.analyser} active={recording}/><div className={s.recordingTime}><span className={s.recordingDot} aria-hidden="true"/>{recordingTime(voice.elapsedSeconds)}</div></>}
       <div className={s.voiceControls}>

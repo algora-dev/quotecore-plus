@@ -63,7 +63,7 @@ export default async function Page({
   const aiTakeoffEnabled = process.env.AI_TAKEOFF_ENABLED === 'true';
   const isRoofingCompany = companyRow?.default_trade === 'roofing';
   // Demo lands pre-measured (owner 2026-10-04): the staged scan walkthrough is
-  // gone and a fresh Scan would replace the seeded entries — no AI button.
+  // gone and a fresh Scan would replace the seeded entries - no AI button.
   const aiTakeoffAvailable = !demoContext && aiTakeoffEnabled && isRoofingCompany;
 
   // AI Assist points: fetch current usage for UI display.

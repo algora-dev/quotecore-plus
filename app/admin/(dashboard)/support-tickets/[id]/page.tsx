@@ -27,7 +27,7 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 function formatDateTime(iso: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   return d.toLocaleString('en-GB', {
     day: '2-digit',

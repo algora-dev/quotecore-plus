@@ -58,7 +58,7 @@ export default function TicketDetailPanel({ ticketId, status, priority }: Props)
       return;
     }
     setReply('');
-    setNotice('Reply sent — user emailed a copy.');
+    setNotice('Reply sent - user emailed a copy.');
     startTransition(() => router.refresh());
   }
 

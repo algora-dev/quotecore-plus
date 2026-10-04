@@ -2,7 +2,7 @@
 // Mobile takeoff M4: calibration sheet (spec §7.2/§7.3 + C-series). Compact
 // known-distance/unit entry, accept 1-3 references, disagreement warning with
 // explicit acknowledgement (C12), AI candidate review/repair actions and
-// provenance labels. Presentational only — all actions are props; the state
+// provenance labels. Presentational only - all actions are props; the state
 // lives in the calibration session reducer (via the shared controller).
 
 import type { ReactNode } from 'react';
@@ -74,7 +74,7 @@ export interface CalibrationSheetProps {
   /** C12 gate computed by the pure finishBlockers selector. */
   disagreementWarning: string | null;
   acknowledgementRequired: boolean;
-  /** AI entitlement: deliberate "Find with AI" only (§7.1 — never auto-spend). */
+  /** AI entitlement: deliberate "Find with AI" only (§7.1 - never auto-spend). */
   aiEnabled: boolean;
   canSearch: boolean;
   onFindWithAi: () => void;
@@ -84,7 +84,7 @@ export interface CalibrationSheetProps {
   repairMode: boolean;
   onDoneRepair: () => void;
   /** When the page already has measurements/areas, recalibration must run on
-   *  the desktop commit path (C13 atomicity) — surfaced, never bypassed. */
+   *  the desktop commit path (C13 atomicity) - surfaced, never bypassed. */
   pageHasDependents: boolean;
   onExit: () => void;
 }
@@ -160,7 +160,7 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
         </div>
       )}
 
-      {/* AI candidate review (§7.3): repair, accept, skip — accept what you
+      {/* AI candidate review (§7.3): repair, accept, skip - accept what you
           want, ignore the rest. Stable 1/2/3 numbering (C10). */}
       {state.candidates.length > 0 && active && !props.repairMode && (
         <div className="mb-2 rounded-xl border border-white/10 bg-white/5 p-2">
@@ -311,7 +311,7 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
           </SheetButton>
         )}
         {capReached && validCount < 3 && (
-          <span className="text-[11px] text-amber-300">Maximum 3 references — remove one to add another.</span>
+          <span className="text-[11px] text-amber-300">Maximum 3 references - remove one to add another.</span>
         )}
         <span className="flex-1" />
         {effective && (
@@ -328,7 +328,7 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
 
       {props.pageHasDependents && (
         <div className="mt-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-slate-300">
-          This page already has measurements. Saving a new scale here is disabled — switch the
+          This page already has measurements. Saving a new scale here is disabled - switch the
           workspace view to Desktop to recalibrate so every measurement is updated together.
         </div>
       )}

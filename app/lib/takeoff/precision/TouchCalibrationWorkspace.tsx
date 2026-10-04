@@ -45,7 +45,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
   // Persistence seam (2026-10-04): resolve through the actions context so the
   // free tool / demo (TakeoffSessionProvider) swap in the session-stub
   // persistPageCalibration. The previous direct import called the REAL
-  // authenticated server action on public pages — the mobile calibration
+  // authenticated server action on public pages - the mobile calibration
   // "server error". No provider mounted = real actions, unchanged in-app.
   const actions = useTakeoffActions();
   // Keyboardless fix (2026-09-22): the shared controller treats a CHANGED

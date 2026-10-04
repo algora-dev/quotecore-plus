@@ -49,7 +49,7 @@ test('O10: the touch AI outline action stops after scan1 (pure orchestration dec
   assert.equal(OUTLINE_ONLY_SCAN_STOP_AFTER_STAGE, 'scan1');
 });
 
-test('O10: billing is identical mobile vs desktop — full scan1 charge, no cheaper variant', () => {
+test('O10: billing is identical mobile vs desktop - full scan1 charge, no cheaper variant', () => {
   // Owner decision 2026-09-21: same canonical cost table as the desktop
   // pipeline's scan1 for every quality level.
   for (const [level, cost] of Object.entries(AI_SCAN_POINT_COST)) {
@@ -81,7 +81,7 @@ test('O10: candidates read ONLY roof-area polygons; lines/classification data is
   assert.equal(candidates[0].pitch, 30); // pitch_degrees absent → global fallback
   assert.equal(candidates[1].usable, false); // flagged, not fabricated/repaired
   assert.equal(candidates[1].name, 'Area 2'); // unnamed → stable default
-  // The extracted candidate shape structurally carries NO component data —
+  // The extracted candidate shape structurally carries NO component data -
   // an outline-only import cannot commit AI internal lines (O10).
   assert.deepEqual(
     Object.keys(candidates[0]).sort(),
@@ -115,7 +115,7 @@ test('O04: imported candidate enters the M5 draft closed, origin-flagged importe
   );
 });
 
-test('O04: AI-origin vertices are editable like manual ones (R02) — commit/undo work identically', () => {
+test('O04: AI-origin vertices are editable like manual ones (R02) - commit/undo work identically', () => {
   const s0 = beginImportedOutlineDraft(CANDIDATE, ctx());
   const armed = selectVertex(s0, s0.draft.vertices[1].id, true).session;
   const s1 = commitMove(armed, s0.draft.vertices[1].id, { x: 420, y: 120 }).session;
@@ -133,7 +133,7 @@ test('O04: accept-unchanged hands the exact AI points to the create-new flow (no
   const r = outlineSaveIntent(s, ctx(), SCALE);
   assert.equal(r.ok, false);
   if (r.ok) return;
-  assert.equal(r.reason, 'clean'); // nothing changed — never an update-in-place
+  assert.equal(r.reason, 'clean'); // nothing changed - never an update-in-place
   if (r.ok) return;
   assert.deepEqual(
     s.draft.vertices.map((v) => v.point),
@@ -153,7 +153,7 @@ test('O04: edit-then-accept routes the SAME create-new path with the edited poin
   assert.deepEqual(r.intent.points[2], { x: 500, y: 350 });
 });
 
-test('O04: an unusable candidate imports as an INVALID editable draft — save blocked, repair possible (§8.2)', () => {
+test('O04: an unusable candidate imports as an INVALID editable draft - save blocked, repair possible (§8.2)', () => {
   const degenerate: AiOutlineCandidate = {
     name: 'Bad', pitch: 0,
     points: [{ x: 0, y: 0 }, { x: 100, y: 100 }, { x: 200, y: 200 }], // collinear
@@ -196,7 +196,7 @@ test('O11: manual edits since scan start discard the result with an explicit mes
   assert.equal(d.action, 'discard');
   if (d.action !== 'discard') return;
   assert.equal(d.reason, 'manual-edits');
-  assert.ok(d.message.length > 0); // explicit offer/reason — never silent
+  assert.ok(d.message.length > 0); // explicit offer/reason - never silent
 });
 
 test('O11: page switch discards the result', () => {

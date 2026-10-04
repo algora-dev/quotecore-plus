@@ -475,7 +475,7 @@ export default async function CataloguePage({ params, searchParams }: PageProps)
   );
 }
 
-// Sort link (server-rendered <a> — no client JS needed)
+// Sort link (server-rendered <a> - no client JS needed)
 function SortButton({
   column,
   label,

@@ -26,7 +26,10 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
     .eq('anon_user_id', anonUserId).order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (previous.error) throw new DemoError('Could not verify the existing demo.', 503);
   const old = previous.data;
-  if (old?.status === 'provisioning' && Date.parse(old.created_at) > Date.now() - 15 * 60_000) {
+  // Owner 2026-10-04: a crashed provisioning attempt must not jam "Start again"
+  // for a quarter hour. Seeding completes well inside 3 minutes, so anything
+  // older than that is treated as dead and superseded by the new attempt.
+  if (old?.status === 'provisioning' && Date.parse(old.created_at) > Date.now() - 3 * 60_000) {
     throw new DemoError('Your demo is still being prepared. Please retry shortly.', 409, 'demo_provisioning');
   }
   if (!reset && old?.template_version === DEMO_SEED_VERSION && old?.status === 'active' && old.expires_at && old.expires_at > now && old.company_id) {

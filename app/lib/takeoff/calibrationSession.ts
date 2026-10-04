@@ -506,7 +506,7 @@ function applySearchSucceeded(
     // Prior decisions for surviving candidate ids are preserved; new ids start unreviewed.
   }
   // C10: human endpoint overrides for surviving candidate ids are preserved
-  // too — switching/searching must never discard a half-repaired pair.
+  // too - switching/searching must never discard a half-repaired pair.
   const endpointOverrides: Record<string, EndpointOverride> = {};
   for (const c of shown) {
     const o = state.endpointOverrides[c.id];
@@ -585,7 +585,7 @@ function invalidate(state: CalibrationSessionState): CalibrationSessionState {
 }
 
 /** M4 (spec §7.2): accept the manual A/B wizard pair as a manual reference.
- *  Distance/unit entry is the manual override path (C07) — it works for any
+ *  Distance/unit entry is the manual override path (C07) - it works for any
  *  unknown/absent AI value and shares the 3-cap and duplicate guard with AI
  *  acceptance. No AI call, no charge (R02/C05). */
 function applyAcceptManual(
@@ -809,7 +809,7 @@ export function calibrationSessionReducer(
     // ── M4 (spec §7.2/§7.4): manual wizard + human endpoint repair ─────────
 
     case 'BEGIN_MANUAL_REFERENCE': {
-      // Manual entry is always available (R01/C07) — including mid AI review
+      // Manual entry is always available (R01/C07) - including mid AI review
       // (mixed manual/AI accepted sets share the 3-cap).
       return {
         ...state,
@@ -889,7 +889,7 @@ export function calibrationSessionReducer(
       return { ...state, disagreementAcknowledged: true };
 
     case 'DETACH_REFERENCE': {
-      // C09 rule 3 (spec §7.4): "use as a different/manual reference" — the
+      // C09 rule 3 (spec §7.4): "use as a different/manual reference" - the
       // repaired span no longer belongs to the AI-detected physical
       // reference, so the detector link/label must not verify it.
       const target = state.accepted.find((r) => r.id === event.id);

@@ -62,7 +62,7 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
     company_name: QCP_DEMO_NAME, company_email: 'hello@qcp.example.invalid', company_address: 'Example Lane, Fictional Demo Town',
     company_logo_url: '/MainQCP.png', footer_text: DEMO_FOOTER }), 'quote template');
   checked(await db.from('email_templates').insert({ id: emailId, company_id: companyId, name: 'QCP demo customer message',
-    kind: 'quote_send', subject: 'QuoteCore+ Demo — your fictional quote', body: 'This is a fictional QuoteCore+ demonstration. It is not a real quote and no payment is due.', is_default: true }), 'message template');
+    kind: 'quote_send', subject: 'QuoteCore+ Demo - your fictional quote', body: 'This is a fictional QuoteCore+ demonstration. It is not a real quote and no payment is due.', is_default: true }), 'message template');
   for (const [index, key] of ['ordered_job', 'invoiced_job'].entries()) {
     const orderId = randomUUID();
     checked(await db.from('material_orders').insert({ id: orderId, company_id: companyId, quote_id: jobs[key], order_number: `DEMO-MO-${index + 1}`,
@@ -70,7 +70,7 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
       supplier_name: 'Fictional Demo Materials', to_supplier: 'Fictional Demo Materials',
       status: 'ready', is_sent: false, header_notes: 'Demo order only. Nothing has been sent to a supplier.',
     }), 'material orders');
-    checked(await db.from('material_order_lines').insert({ order_id: orderId, item_name: 'Roof covering — demo material', quantity: index === 0 ? 48 : 30, unit: 'm²', sort_order: 0 }), 'order lines');
+    checked(await db.from('material_order_lines').insert({ order_id: orderId, item_name: 'Roof covering - demo material', quantity: index === 0 ? 48 : 30, unit: 'm²', sort_order: 0 }), 'order lines');
   }
   const invoiceId = randomUUID();
   checked(await db.from('invoices').insert({ id: invoiceId, company_id: companyId, user_id: userId, source_id: jobs.invoiced_job, source_type: 'quote',
@@ -79,11 +79,11 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
     cq_footer_text: DEMO_FOOTER, payment_details: { instructions: 'No payment is due for this fictional invoice.' },
     business_snapshot: { name: QCP_DEMO_NAME }, customer_snapshot: { name: 'Cameron Sample' },
   }), 'invoice');
-  checked(await db.from('invoice_lines').insert({ company_id: companyId, invoice_id: invoiceId, title: 'Roof covering — fictional completed garage', quantity: 30, unit: 'm²', unit_price: 50, line_total: 1500, description: DEMO_PRICE_NOTICE }), 'invoice lines');
+  checked(await db.from('invoice_lines').insert({ company_id: companyId, invoice_id: invoiceId, title: 'Roof covering - fictional completed garage', quantity: 30, unit: 'm²', unit_price: 50, line_total: 1500, description: DEMO_PRICE_NOTICE }), 'invoice lines');
   checked(await db.from('invoice_number_sequences').upsert({ company_id: companyId, next_number: 2 }), 'invoice numbering');
   checked(await db.from('alerts').insert([
     { company_id: companyId, alert_type: 'quote_accepted', quote_id: jobs.accepted_without_order, title: 'Accepted quote needs materials', message: 'Fictional Maple demonstration roof has been accepted. No material order exists yet.', created_at: new Date(now - 3600000).toISOString() },
-    { company_id: companyId, alert_type: 'quote_viewed', quote_id: jobs.sent_job, title: 'Demo customer viewed a quote', message: 'Seeded example activity — no real message was sent.', created_at: new Date(now - 7200000).toISOString() },
+    { company_id: companyId, alert_type: 'quote_viewed', quote_id: jobs.sent_job, title: 'Demo customer viewed a quote', message: 'Seeded example activity - no real message was sent.', created_at: new Date(now - 7200000).toISOString() },
     { company_id: companyId, alert_type: 'general', title: 'Welcome to your QCP sandbox', message: 'Try the guide or explore. All prices and records are fictional.' },
   ]), 'activity');
   // Inert, explicitly labelled history. No queue row, send service or provider call.
@@ -108,14 +108,14 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
   const planPath = `${companyId}/demo/prepared-roof.png`;
   checked(await db.storage.from('QUOTE-DOCUMENTS').upload(planPath, plan, { contentType: 'image/png', upsert: true }), 'roof plan upload');
   checked(await db.from('quote_files').insert({ company_id: companyId, quote_id: jobs.guided_roof_job,
-    file_name: 'QCP prepared roof — demo.png', file_type: 'plan', file_size: plan.length, mime_type: 'image/png', storage_path: planPath, uploaded_by: userId }), 'plan reference');
+    file_name: 'QCP prepared roof - demo.png', file_type: 'plan', file_size: plan.length, mime_type: 'image/png', storage_path: planPath, uploaded_by: userId }), 'plan reference');
   checked(await db.from('takeoff_sessions').insert({ id: takeoffId, quote_id: jobs.guided_roof_job, version: 1 }), 'takeoff session');
   checked(await db.from('takeoff_pages').insert({ id: pageId, session_id: takeoffId, quote_id: jobs.guided_roof_job,
     page_name: 'Prepared QCP roof', page_order: 1, image_storage_path: planPath,
     scale_calibration: DEMO_CALIBRATION.map(entry => ({ ...entry })),
   }), 'takeoff page');
   // Pre-applied measured state (owner direction 2026-10-04): the guided roof
-  // lands ALREADY measured — every entry drawn onto the real roofing library
+  // lands ALREADY measured - every entry drawn onto the real roofing library
   // components, exactly as if the visitor had measured the plan themselves.
   // Deterministic geometry from the captured plan; priced with the real engine.
   {

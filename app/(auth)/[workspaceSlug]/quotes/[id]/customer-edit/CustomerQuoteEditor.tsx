@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
 import { LineEditForm } from './LineEditForm';
+import { refreshDemoGuide } from '@/app/lib/demo/client-events';
 import { QcStudioToolbar, QcStudioInspectorHeading, QcStudioOverview, QcStudioSection } from '@/app/components/ui/v2/QcDocumentStudio';
 import { AddLineItemModal, type LineItemPayload } from '@/app/components/AddLineItemModal';
 import { EditHeaderModal } from './EditHeaderModal';
@@ -804,6 +805,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       setLastSaved(new Date());
       setIsDirty(false);
       linesOverrideRef.current = null;
+      // Demo guide: server acks guide steps on this save - refresh the helper now
+      // so it reacts instantly instead of waiting for the next poll.
+      refreshDemoGuide();
     } catch (err) {
       console.error('Failed to save:', err);
       alert('Failed to save changes. Please try again.');
@@ -972,6 +976,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             {studioLine && <>
               <div className="qc-studio-line-controls"><div className="qc-document-line-toggles">
                 <label><input type="checkbox" checked={studioLine.isVisible} onChange={() => toggleVisibility(studioLine.id)} />Show item</label>
+                <label><input type="checkbox" checked={studioLine.showPrice} disabled={!studioLine.isVisible} onChange={() => toggleShowPrice(studioLine.id)} />Show price</label>
                 <label><input type="checkbox" checked={studioLine.includeInTotal} onChange={() => toggleIncludeInTotal(studioLine.id)} />In total</label>
                 <label><input type="checkbox" checked={studioLine.showUnits} disabled={!studioLine.isVisible} onChange={() => toggleShowUnits(studioLine.id)} />Show units</label>
               </div><p className="qc-document-help">Hidden items can still contribute to this quote's total when In total is selected.</p>

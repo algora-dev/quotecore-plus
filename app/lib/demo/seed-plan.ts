@@ -1,5 +1,5 @@
 /** Real captured plan fixtures. The plan image is the public asset served at
- * /takeoff-demo/roofplan-baseline.png — a real plan measured in QuoteCore+
+ * /takeoff-demo/roofplan-baseline.png - a real plan measured in QuoteCore+
  * (RS Roofing, quote 1015, captured 2026-08-16), the same plan visitors of the
  * free takeoff demo already know. Geometry below mirrors the real captured AI
  * scan (app/(marketing)/takeoff-demo/demo-data/scan.json); all coordinates are
@@ -45,7 +45,7 @@ export const DEMO_LINES: PreparedLine[] = (['ridges', 'hips', 'valleys', 'barges
 );
 
 /** Metric helpers for the pre-measured state (all derived from the real
- * captured calibration — no hardcoded numbers). */
+ * captured calibration - no hardcoded numbers). */
 export function demoLineLengthM(line: PreparedLine): number {
   return Math.hypot(line.end.x - line.start.x, line.end.y - line.start.y) * DEMO_CALIBRATION[0].scale;
 }

@@ -12,7 +12,7 @@ interface SupplierPageTrackerProps {
 
 /**
  * Fires GA4 events when supplier-related pages are viewed.
- * No PII is tracked — only supplier slug, page type, and calculator availability.
+ * No PII is tracked - only supplier slug, page type, and calculator availability.
  */
 export function SupplierPageTracker({
   supplierSlug,

@@ -62,7 +62,7 @@ a,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem; /* p-2 mobile — 44px hit area */
+  padding: 0.5rem; /* p-2 mobile - 44px hit area */
   border-radius: 9999px;
   border: 1px solid transparent;
   color: rgb(71 85 105); /* slate-600 */
@@ -515,7 +515,7 @@ a,
  * mobile gutters, scrollbar hiding, focus-visible baseline.
  * ============================================================ */
 
-/* iOS safe-area insets — use with pt-safe, pb-safe, etc. */
+/* iOS safe-area insets - use with pt-safe, pb-safe, etc. */
 .safe-top {
   padding-top: env(safe-area-inset-top);
 }
@@ -532,7 +532,7 @@ a,
 /* Dynamic viewport height with fallback */
 .dvh-screen {
   height: 100vh; /* fallback for older browsers */
-  height: 100dvh; /* dynamic viewport height — adjusts for mobile browser UI */
+  height: 100dvh; /* dynamic viewport height - adjusts for mobile browser UI */
 }
 .min-dvh-screen {
   min-height: 100vh;
@@ -575,7 +575,7 @@ a,
   background-color: rgba(255, 107, 53, 0.75);
 }
 
-/* Reduced motion — disable all animations and transitions */
+/* Reduced motion - disable all animations and transitions */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -587,7 +587,7 @@ a,
   }
 }
 
-/* Focus-visible baseline — clear orange ring for keyboard users */
+/* Focus-visible baseline - clear orange ring for keyboard users */
 :focus-visible {
   outline: 2px solid rgba(255, 107, 53, 0.55);
   outline-offset: 2px;
@@ -625,7 +625,7 @@ html[data-takeoff-immersive='touch'] [data-takeoff-chrome='assistant'] {
 
 /* Mobile takeoff M9: pressed/active feedback for EVERY interactive control in
    the touch presentation (owner prescription 2026-09-21). Scoped to the
-   immersive attribute — desktop/flag-off presentations are untouched. The
+   immersive attribute - desktop/flag-off presentations are untouched. The
    paired haptic (navigator.vibrate(10), no-op where unsupported) is applied
    by the delegated pointerdown listener in TouchWorkspaceShell. */
 html[data-takeoff-immersive='touch'] button:not(:disabled):active,

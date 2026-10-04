@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
     const confirmationHtml = `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
         <img src="https://quote-core.com/MainQCP.png" alt="QuoteCore+" style="height:36px;margin-bottom:24px;" />
-        <h2 style="color:#111;margin-bottom:8px;">Thanks, ${contactPerson} — we&apos;ve got your application.</h2>
+        <h2 style="color:#111;margin-bottom:8px;">Thanks, ${contactPerson} - we&apos;ve got your application.</h2>
         <p style="color:#444;line-height:1.6;">We&apos;ll review your details and get back to you within 1–2 business days. If approved, you&apos;ll receive instructions on how to access your supplier dashboard.</p>
         <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin:24px 0;">
           <p style="font-weight:700;margin:0 0 8px;color:#333;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">Your submission</p>
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
         <p style="color:#444;line-height:1.6;">If you have any questions in the meantime, just reply to this email.</p>
         <p style="color:#444;line-height:1.6;margin-top:24px;">Best regards,<br/><strong>The QuoteCore+ team</strong></p>
         <hr style="border:none;border-top:1px solid #eee;margin:32px 0;" />
-        <p style="font-size:12px;color:#999;margin:0;">QuoteCore+ — quoting software for contractors and trade businesses.<br/><a href="https://quote-core.com" style="color:#999;">quote-core.com</a></p>
+        <p style="font-size:12px;color:#999;margin:0;">QuoteCore+ - quoting software for contractors and trade businesses.<br/><a href="https://quote-core.com" style="color:#999;">quote-core.com</a></p>
       </div>
     `;
 
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           from: "QuoteCore+ <info@quote-core.com>",
           to: [contactEmail],
-          subject: "Your supplier application — QuoteCore+",
+          subject: "Your supplier application - QuoteCore+",
           html: confirmationHtml,
         }),
       });

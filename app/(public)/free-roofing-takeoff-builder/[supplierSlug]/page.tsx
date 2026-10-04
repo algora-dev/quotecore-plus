@@ -314,7 +314,7 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
         </ul>
       </section>
 
-      {/* Server-rendered SEO content — wraps the interactive calculator */}
+      {/* Server-rendered SEO content - wraps the interactive calculator */}
       <section className="mx-auto max-w-5xl px-4 pt-6 pb-2">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
           Free Roof Takeoff Calculator - {s.supplier_name} Pricing

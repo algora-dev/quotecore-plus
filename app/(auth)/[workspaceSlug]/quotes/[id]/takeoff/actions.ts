@@ -1614,7 +1614,7 @@ export async function updateTakeoffAreaGeometry(
     return { success: false, error: 'Quote not found.' };
   }
 
-  // The generated RPC name union does not know the patch_052 function yet —
+  // The generated RPC name union does not know the patch_052 function yet -
   // cast once at the boundary (same pattern as saveTakeoffMeasurements v2).
   const rpcFn = 'update_takeoff_area_geometry_v1' as 'save_takeoff_atomic';
   const { data, error } = await supabase.rpc(rpcFn, {

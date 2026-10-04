@@ -60,7 +60,7 @@ export default async function CustomerQuoteEditPage({
   }
 
   return (
-    <>{demo && <div className="border-b border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-900">DEMO — NOT A REAL QUOTE · Example pricing only. Open the safe customer preview from the guide.</div>}<CustomerQuoteEditor
+    <>{demo && <div className="border-b border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-900">DEMO - NOT A REAL QUOTE · Example pricing only. Open the safe customer preview from the guide.</div>}<CustomerQuoteEditor
       quote={quote}
       roofAreas={roofAreas}
       components={components}

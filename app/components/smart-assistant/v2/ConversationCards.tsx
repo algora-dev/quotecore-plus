@@ -54,7 +54,7 @@ export function ConversationCards({ cards, actions, busy, canConfirm, onOpen, on
       {c.kind === 'proposal' && (!action ? <p className={s.detail}>This proposal is no longer available with your current access. Ask for a fresh review.</p> : <>
         <p className={s.detail}>{action.note}</p>
         <dl className={s.proof}>{action.changes.map((change, i) => <div key={i}><dt>{change.label}</dt><dd>{change.before} <span aria-hidden="true">→</span><span className="sr-only"> changes to </span> <strong>{change.after}</strong></dd></div>)}</dl>
-        <p className={s.actionStatus} role="status" data-state={action.status}>{({ proposed: 'Not applied yet — review before confirming', applying: 'Saving. Do not submit a second action.', committed: 'Saved', cancelled: 'Cancelled. Nothing applied.', conflict: 'Not applied: the record changed. Ask for a fresh proposal.', needs_review: 'Save outcome needs review. Do not create a duplicate.', failed: 'Not applied.' })[action.status]}</p>
+        <p className={s.actionStatus} role="status" data-state={action.status}>{({ proposed: 'Not applied yet - review before confirming', applying: 'Saving. Do not submit a second action.', committed: 'Saved', cancelled: 'Cancelled. Nothing applied.', conflict: 'Not applied: the record changed. Ask for a fresh proposal.', needs_review: 'Save outcome needs review. Do not create a duplicate.', failed: 'Not applied.' })[action.status]}</p>
         {action.error && <p role="alert">{action.error}</p>}
         {action.status === 'proposed' && !canConfirm(action) && <p className={s.detail}>Edit access and the write phase must be enabled before you can confirm.</p>}
         <div className={s.actions}>

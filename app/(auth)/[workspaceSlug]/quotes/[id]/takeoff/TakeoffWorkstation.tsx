@@ -48,6 +48,7 @@ import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModa
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
 import { rafterPitchFactor } from '@/app/lib/pricing/engine';
+import { refreshDemoGuide } from '@/app/lib/demo/client-events';
 // F-15: Extracted modal components
 import { AreaNameModal } from './modals/AreaNameModal';
 import { PointMeasurementModal } from './modals/PointMeasurementModal';
@@ -238,7 +239,7 @@ interface Props {
   /** P2/P6 AI-assisted calibration: per-company flag read server-side. */
   aiCalibrationEnabled?: boolean;
   /** M5: registers the touch-outline bridge adapter (single data owner stays
-   *  this workstation — the touch presentation only reads/calls back, R14). */
+   *  this workstation - the touch presentation only reads/calls back, R14). */
   /** Free-tool / MCP-plugin mode: emit the completed takeoff as data instead
    *  of navigating into the app quote-build step. Absent = app behaviour. */
   onFreeFinish?: (payload: TakeoffFinishPayload) => void;
@@ -3351,6 +3352,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // P1-3: only navigate to Quote Builder when the user clicked the
       // primary "Save & Continue to Components" CTA. The multi-page upload
       // flow stays inside the workstation and reloads to the new page.
+      // Demo guide: the server acks takeoff.saved on this save - refresh the
+      // helper immediately so completion feedback lands without a poll wait.
+      refreshDemoGuide();
       if (navigateAfter) {
         console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
         if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(demoFinishHref ?? `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
@@ -3423,7 +3427,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (uploadAnotherTarget === 'existing' && !uploadAnotherAreaId) {
       setUploadAnotherError('Please select an area to add measurements to.'); return;
     }
-    // M7 (O16): uploading another plan switches the active page afterwards —
+    // M7 (O16): uploading another plan switches the active page afterwards -
     // resolve a dirty touch draft through the shared guard first.
     if (touchExitGuardRef.current?.isDirty()) {
       touchExitGuardRef.current.request('Upload another plan', () => {
@@ -3704,7 +3708,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const touchCreateRetryRef = useRef<((name: string, pitch: number, points: { x: number; y: number }[]) => Promise<TouchCreateResult>) | null>(null);
   const touchCreateFlight = useRef(createSingleFlight<TouchCreateResult>());
   const touchBridgeListeners = useRef(new Set<() => void>());
-  // M6 (O11): touch context epoch — bumped on page switch / image-revision
+  // M6 (O11): touch context epoch - bumped on page switch / image-revision
   // change / touch-scan cancellation so stale client/AI work is discarded
   // rather than silently applied. Safe for M5 saves: it only changes in
   // situations that already invalidate the M1 stale-context boundary.
@@ -3795,7 +3799,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     };
   };
   const touchOutlineAdapterRef = useRef<TouchOutlineAdapter | null>(null);
-  // M7: hydration snapshot for the adapter's scale fallback — a calibration
+  // M7: hydration snapshot for the adapter's scale fallback - a calibration
   // saved by the touch calibration layer updates the SERVER data (and, via
   // router.refresh, this prop) even though the workstation's own `calibrations`
   // state only restores on mount/reload.
@@ -3917,7 +3921,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         const serverVersion = result.sessionVersion;
         // Acknowledged save: apply the server-derived values to OUR state so
         // the next full save (delete+insert per page) rewrites exactly what
-        // the RPC committed — no silent rollback of the approved checkpoint.
+        // the RPC committed - no silent rollback of the approved checkpoint.
         setRoofAreas((prev) =>
           prev.map((ra) =>
             ra.id === intent.geometryId
@@ -3927,7 +3931,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         );
         // O07 client mirror: source-linked dependent entries follow the new
         // polygon; independent entries untouched (server recomputed the same
-        // values — this keeps the local panel consistent until the next save).
+        // values - this keeps the local panel consistent until the next save).
         const scale = touchOutlineAdapterRef.current?.getScale();
         if (scale && target) {
           const deps: RecomputeMeasurementRecord[] = [];
@@ -3997,11 +4001,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         if (result.ok) touchCreateRetryRef.current = null;
         return result;
       }),
-      // ── M6: AI outline scan (touch) — scan1 ONLY (O10), same billing as
+      // ── M6: AI outline scan (touch) - scan1 ONLY (O10), same billing as
       // desktop (owner decision 2026-09-21: full scan1 charge, no cheaper
       // outline-only variant). Client orchestration only: the same
       // authorised endpoint, entitlement gating and server-side ledger as
-      // the desktop pipeline — this path just STOPS after the outline stage
+      // the desktop pipeline - this path just STOPS after the outline stage
       // and never converts AI internal lines/classification into data.
       getAiOutlineScanInfo: (): AiOutlineScanInfo | null => {
         const ai = touchOutlineLiveRef.current?.ai ?? null;
@@ -4046,7 +4050,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           });
           const compressed = await compressImageForAiScan(dataUrl);
           // O10: the touch action requests ONLY the existing authorised scan1
-          // (outline) stage — scan2/scan3 never auto-run here.
+          // (outline) stage - scan2/scan3 never auto-run here.
           const response = await fetch(aiScanEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -4069,7 +4073,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               setAiPoints(prev =>
                 prev ? { ...prev, remaining: result.pointsRemaining ?? 0, isBlocked: true } : null,
               );
-              return { ok: false, error: 'Out of AI points — draw the outline manually.', pointsExhausted: true };
+              return { ok: false, error: 'Out of AI points - draw the outline manually.', pointsExhausted: true };
             }
             if (response.status === 429 && result.code === 'identity_cap') {
               setShowFreeScanExhaustion(true);
@@ -4575,7 +4579,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const hydratedPage = hydrationData?.pages.find((p) => p.id === pageId) ?? null;
     const pageImageRevision = (pageId ? aiCalMetadataRef.current.get(pageId)?.imageRevision : null) || hydratedPage?.imageRevision || null;
     // M6 (O11): bump the touch context epoch when the page identity or the
-    // immutable image revision changes — in-flight scan results and open
+    // immutable image revision changes - in-flight scan results and open
     // drafts are invalidated instead of silently applied. The first
     // observation seeds the key without bumping.
     const epochKey = `${pageId ?? 'none'}|${pageImageRevision ?? 'none'}`;
@@ -4697,8 +4701,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     // component once on mount. Without cleanup the remount created a SECOND
     // Canvas on the same DOM element; the orphaned first instance then threw
     // ("Cannot destructure property 'el' of 'this.lower'") inside its image
-    // onload, breaking every later fabricRef call — including the touch
-    // adapter's handleSaveArea — for the whole local session. Disposing on
+    // onload, breaking every later fabricRef call - including the touch
+    // adapter's handleSaveArea - for the whole local session. Disposing on
     // unmount + a disposed guard restores the one-instance invariant.
     let canvasDisposed = false;
 
@@ -5919,7 +5923,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // shares the same clamping rules (see ./canvasViewport).
   // Owner 2026-10-01 (free tool width / canvas stuck at 800x600): Fabric wraps
   // the <canvas> in a .canvas-container div, so parentElement is the Fabric
-  // wrapper — which is sized BY the canvas itself. Measuring it makes sizing
+  // wrapper - which is sized BY the canvas itself. Measuring it makes sizing
   // self-referential (800x600 forever). Always measure the real viewport
   // wrapper (the plan border), falling back to parentElement only if missing.
   const canvasViewportWrapper = (): HTMLElement | null =>

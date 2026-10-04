@@ -1,9 +1,9 @@
 'use client';
-// Mobile takeoff M8: touch presentation shell — OWNER PRESCRIPTION 2026-09-21
+// Mobile takeoff M8: touch presentation shell - OWNER PRESCRIPTION 2026-09-21
 // (refined 16:59: NO step-switching tab row).
 //
 // FULL-BLEED CANVAS: edge-to-edge, full height. No top strip and no bottom
-// strip — the plan canvas gets every pixel that is not the control rail.
+// strip - the plan canvas gets every pixel that is not the control rail.
 //
 // Single RIGHT-SIDE RAIL (208px normally, 272px during number entry,
 // still operable at 568×320) showing ONLY the current step's controls: the
@@ -23,7 +23,7 @@
 // children) is ALWAYS mounted, including in desktop presentation, so
 // switching Desktop ↔ Mobile/touch never remounts the workstation. In desktop
 // presentation every wrapper is `display: contents` / `hidden` and the root
-// carries the exact original `w-[125%] -ml-[12.5%]` widening classes — the
+// carries the exact original `w-[125%] -ml-[12.5%]` widening classes - the
 // desktop layout is bit-for-bit (extra contents-divs only, no layout effect).
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -48,7 +48,7 @@ interface TouchWorkspaceShellProps {
   children: ReactNode;
   /** e.g. "Plan page 1". */
   planLabel: string;
-  /** M8 (16:59 refinement): compact current-step label at the rail top — the
+  /** M8 (16:59 refinement): compact current-step label at the rail top - the
    *  flow, not a tab row, drives which control set is shown. */
   railTitle: string;
   /** Rail content for the CURRENT step (its own controls only). */
@@ -82,7 +82,7 @@ const VIEW_OPTIONS: readonly { value: WorkspaceViewPreference; label: string }[]
  *  M9: press feedback (scale + brightness, CSS in globals.css scoped to the
  *  immersive attribute) and haptics (navigator.vibrate(10) where supported,
  *  silent no-op otherwise) are applied document-wide while the touch
- *  workspace is active — see the delegated listener in the shell — so every
+ *  workspace is active - see the delegated listener in the shell - so every
  *  interactive control gets them, not only TouchButton. */
 function TouchButton({
   onClick,
@@ -147,21 +147,21 @@ export function TouchWorkspaceShell({
   const [backGuardOpen, setBackGuardOpen] = useState(false);
   const [portraitHintDismissed, setPortraitHintDismissed] = useState(false);
   const [showPortraitHint, setShowPortraitHint] = useState(false);
-  // M9: owner-run diagnostics — 'Send diagnostics' in the hamburger menu.
+  // M9: owner-run diagnostics - 'Send diagnostics' in the hamburger menu.
   const [diagState, setDiagState] = useState<
     { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; id: string } | { kind: 'failed'; error: string }
   >({ kind: 'idle' });
   useImmersiveTakeoffAttribute(active);
 
   // M9: diagnostics capture hooks (window errors, unhandled rejections,
-  // failed fetches) — installed once per page; intentionally never removed.
+  // failed fetches) - installed once per page; intentionally never removed.
   useEffect(() => {
     if (!active) return;
     installTakeoffDiagnostics();
   }, [active]);
 
   // M9 TOUCH FEEL: haptic feedback for every enabled button in the touch
-  // presentation via one delegated capture-phase listener — navigator.vibrate
+  // presentation via one delegated capture-phase listener - navigator.vibrate
   // is a no-op on platforms without support (iOS Safari), never throws.
   useEffect(() => {
     if (!active) return;
@@ -236,7 +236,7 @@ export function TouchWorkspaceShell({
   }, [exitGuard, router, backHref, busy]);
 
   // Desktop presentation: root keeps the EXACT original widening classes and
-  // every intermediate wrapper is display:contents — layout bit-for-bit.
+  // every intermediate wrapper is display:contents - layout bit-for-bit.
   return (
     <div
       className={
@@ -268,7 +268,7 @@ export function TouchWorkspaceShell({
           : undefined
       }
     >
-      {/* Canvas slot — FULL-BLEED (M8): every pixel left of the rail, full
+      {/* Canvas slot - FULL-BLEED (M8): every pixel left of the rail, full
           height. Stable mount position for the workstation. */}
       <div className={active ? 'relative min-w-0 flex-1 overflow-hidden bg-slate-950' : 'contents'}>
         {/* U1 (plan section 3.1): opaque, isolated touch presentation. While
@@ -286,7 +286,7 @@ export function TouchWorkspaceShell({
           {children}
         </div>
         {active && overlay}
-        {/* Portrait hint — dismissible, FLOATS over the canvas (M8), no CSS
+        {/* Portrait hint - dismissible, FLOATS over the canvas (M8), no CSS
             rotation (§3.2). z-40 keeps it visible above sheets/modals. */}
         {active && showPortraitHint && (
           <div className="absolute inset-x-2 top-2 z-40 flex items-center gap-2 rounded-xl bg-slate-800/95 px-3 py-2 text-xs text-slate-200 shadow-lg">
@@ -303,7 +303,7 @@ export function TouchWorkspaceShell({
             </button>
           </div>
         )}
-        {/* O16: dirty-draft Back guard — Save / Discard / Stay. */}
+        {/* O16: dirty-draft Back guard - Save / Discard / Stay. */}
         {active && backGuardOpen && exitGuard?.dirty && (
           <div className="absolute inset-0 z-30 flex items-center justify-center p-4" role="dialog" aria-label="Unsaved takeoff edits">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setBackGuardOpen(false)} aria-hidden="true" />
@@ -346,7 +346,7 @@ export function TouchWorkspaceShell({
         )}
       </div>
 
-      {/* M8 (16:59 refinement) FLOW-DRIVEN RAIL — no step-switching tabs.
+      {/* M8 (16:59 refinement) FLOW-DRIVEN RAIL - no step-switching tabs.
           Compact current-step label + Menu (⋯); only the current step's
           controls; content scrolls internally so the rail can never overflow
           the screen. */}
@@ -435,7 +435,7 @@ export function TouchWorkspaceShell({
               <div className="text-center text-[11px] text-slate-500">
                 Saved on this device for takeoff only.
               </div>
-              {/* M9: owner-run diagnostics — POST the recent-events buffer and
+              {/* M9: owner-run diagnostics - POST the recent-events buffer and
                   surface the stored reference id. */}
               <TouchButton
                 label="Send diagnostics"
@@ -448,7 +448,7 @@ export function TouchWorkspaceShell({
               </TouchButton>
               {diagState.kind === 'sent' && (
                 <div role="status" className="rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-2 text-[11px] text-emerald-200">
-                  Diagnostics sent — ref {diagState.id.slice(0, 8)}.
+                  Diagnostics sent - ref {diagState.id.slice(0, 8)}.
                 </div>
               )}
               {diagState.kind === 'failed' && (

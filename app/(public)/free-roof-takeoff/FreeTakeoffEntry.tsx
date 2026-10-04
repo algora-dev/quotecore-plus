@@ -119,7 +119,7 @@ export function FreeTakeoffEntry({ config, step, unitSystem, unitOption, compone
             <QcButton className="qc-free-example" onClick={onExamplePlan} disabled={exampleLoading}>
               {exampleLoading ? 'Loading the example plan…' : 'Try the example plan'}
             </QcButton>
-            <p className="qc-free-help">Loads straight into the tool — nothing to download.</p>
+            <p className="qc-free-help">Loads straight into the tool - nothing to download.</p>
           </div>
           {error && <p id="qc-free-upload-error" role="alert" className="qc-free-error">{error}</p>}
           {config.samplePlan && <div className="qc-free-sample-row">

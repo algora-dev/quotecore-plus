@@ -71,7 +71,7 @@ export interface ValidationResult {
 
 /**
  * Validate a supplier profile for placeholder contact details.
- * Returns issues array — empty means all good.
+ * Returns issues array - empty means all good.
  */
 export function validateSupplierContacts(profile: {
   supplier_name?: string | null;
@@ -140,7 +140,7 @@ export function validateSupplierContacts(profile: {
 
 /**
  * Validate catalogue rows for common data quality issues.
- * Returns issues array — empty means all good.
+ * Returns issues array - empty means all good.
  */
 export function validateCatalogueRows(
   rows: { raw_row: Record<string, unknown> }[],

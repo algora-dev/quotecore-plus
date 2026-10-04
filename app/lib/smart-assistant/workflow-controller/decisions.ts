@@ -72,7 +72,7 @@ export function resolveWorkingBrief(source: WorkingBrief, catalog: LibraryCatalo
 }
 
 export function workingBriefSummary(brief: WorkingBrief, concepts: readonly AssistantConcept[]): string[] {
-  const lines = [`${brief.customerName || 'Customer needed'} — ${brief.jobName || 'Job name needed'}`];
+  const lines = [`${brief.customerName || 'Customer needed'} - ${brief.jobName || 'Job name needed'}`];
   if (brief.siteAddress) lines.push(brief.siteAddress);
   if (brief.collectionName) lines.push(`Library: ${brief.collectionName}`);
   for (const a of brief.areas) lines.push(`${a.label}: ${a.quantity} ${a.unit}, ${a.basis}; pitch ${a.pitchDegrees ?? brief.defaultPitchDegrees ?? 'needed'}°`);

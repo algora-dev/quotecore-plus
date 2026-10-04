@@ -26,25 +26,25 @@ export function salvageGroupHtml(g:SalvageGroup,faces:RoofFace[],selectable=fals
 }
 export function salvageSummary(s:Solution,faces:RoofFace[],preview:boolean,viewingBase=false):string {
   const c=s.salvage;if(!c)return '';
-  return `<section class="qc-salvage-summary" id="qc-salvage-comparison" aria-label="Extra reuse comparison"><h3>${preview?'Extra reuse — preview only':'Extra reuse selected'}</h3>
+  return `<section class="qc-salvage-summary" id="qc-salvage-comparison" aria-label="Extra reuse comparison"><h3>${preview?'Extra reuse - preview only':'Extra reuse selected'}</h3>
     <p>Compared with <b>${esc(c.baseLabel)}</b></p><strong class="qc-comparison-amount">−${fmt(c.savedCoverAreaM2)} m² · −${fmt(c.savedLinealM)} lm</strong>
     <p>${c.savedSheets} fewer new sheets. ${c.groups.length} filler run${c.groups.length===1?'':'s'} changed. The rest of the cut plan is unchanged.</p>
     ${preview?`<div class="qc-actions"><button data-action="salvage-view-base" aria-pressed="${viewingBase}">Original plan</button><button data-action="salvage-view-candidate" aria-pressed="${!viewingBase}">Extra reuse preview</button></div>
     <p class="qc-muted">${viewingBase?'Showing the original on the canvas.':'Showing the optional reuse on the canvas.'} Nothing has been selected or saved yet.</p>`:''}
     ${c.groups.map(g=>salvageGroupHtml(g,faces,true)).join('')}
-    <p class="qc-muted">Finish the listed source cuts first and retain the pieces. Review this extra sequencing before removing the new fillers from your purchase list. Draft quantities—not a manufacturer-approved order.</p>
+    <p class="qc-muted">Finish the listed source cuts first and retain the pieces. Review this extra sequencing before removing the new fillers from your purchase list. Draft quantities-not a manufacturer-approved order.</p>
     ${preview?'<div class="qc-actions"><button data-action="salvage-keep">Keep original</button><button class="primary" data-action="salvage-accept">Use this version</button></div>':'<button data-action="salvage-export">Export reuse instructions</button>'}</section>`;
 }
 export function salvageResultDialog(result:SalvageResult,faces:RoofFace[]):string {
   const c=result.solution?.salvage;
   return `<dialog class="qc-result-dialog" aria-labelledby="qc-salvage-title" aria-describedby="qc-salvage-description"><h2 id="qc-salvage-title">${c?'A filler reuse option is ready to review':'No worthwhile filler reuse found'}</h2>
-    <p id="qc-salvage-description">${c?`Potential saving: <b>${fmt(c.savedCoverAreaM2)} m² · ${fmt(c.savedLinealM)} lm · ${c.savedSheets} new sheets</b>. ${c.groups.length} filler run${c.groups.length===1?'':'s'} would change. This adds a cut-first dependency—review it on the plan before choosing.`:'We checked unused cuts against non-donor straight fillers. No sizeable, compatible batch qualified in this limited search. Your current plan is unchanged.'}</p>
+    <p id="qc-salvage-description">${c?`Potential saving: <b>${fmt(c.savedCoverAreaM2)} m² · ${fmt(c.savedLinealM)} lm · ${c.savedSheets} new sheets</b>. ${c.groups.length} filler run${c.groups.length===1?'':'s'} would change. This adds a cut-first dependency-review it on the plan before choosing.`:'We checked unused cuts against non-donor straight fillers. No sizeable, compatible batch qualified in this limited search. Your current plan is unchanged.'}</p>
     ${c?`<p>Retain cuts from ${[...new Set(c.groups.map(g=>g.sourceFaceId))].map(id=>esc(faces.find(f=>f.id===id)?.name??id)).join(' / ')} before finishing the receiving fillers.</p>`:'<p class="qc-muted">This does not prove every leftover is unusable. The check does not replace main-bank donors, self-fill stock or valley starters.</p>'}
     <div class="qc-actions"><button data-action="salvage-keep" autofocus>${c?'Keep original':'Keep current plan'}</button>${c?'<button class="primary" data-action="salvage-review">Review on plan</button>':''}</div></dialog>`;
 }
 export function salvageReportText(s:Solution,faces:RoofFace[]):string {
   const c=s.salvage;if(!c)throw new Error('Select a more-reuse version first.');const name=(id:string)=>faces.find(f=>f.id===id)?.name??id;
-  const lines=['OPTIONAL FILLER REUSE — DRAFT',`Original plan: ${c.baseLabel} (${c.baseLayoutId})`,`Selected plan: ${s.layoutId}`,`Effective cover: ${s.profile.coverMm} mm`,
+  const lines=['OPTIONAL FILLER REUSE - DRAFT',`Original plan: ${c.baseLabel} (${c.baseLayoutId})`,`Selected plan: ${s.layoutId}`,`Effective cover: ${s.profile.coverMm} mm`,
     `Removed purchases: ${c.savedSheets} sheets; ${fmt(c.savedLinealM)} lm; ${fmt(c.savedCoverAreaM2)} m²`,
     'Keep the original source grids, cutting order and profile/lap rules. Do not turn sheets face-down. Verify site lengths before ordering.',''];
   for(const g of c.groups){lines.push(`${name(g.sourceFaceId)} → ${name(g.destinationFaceId)}`,`Cut first: ${g.prerequisiteFaceIds.map(name).join(' → ')}; then finish ${name(g.destinationFaceId)} fillers.`);

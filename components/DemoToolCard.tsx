@@ -3,9 +3,9 @@
 import { trackEvent } from "@/lib/analytics";
 
 /**
- * Interactive demo entry card — sits in the hero next to the copy.
+ * Interactive demo entry card - sits in the hero next to the copy.
  * Deep-links into the takeoff demo with the mode pre-selected
- * (?mode=ai | ?mode=manual — handled by DemoTakeoff).
+ * (?mode=ai | ?mode=manual - handled by DemoTakeoff).
  */
 export default function DemoToolCard() {
   const go = (mode: "ai" | "manual") => {

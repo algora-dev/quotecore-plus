@@ -69,7 +69,7 @@ export default async function CustomerQuotePage({
 
         {/* Quote Document */}
         <div data-pdf-content className="qc-recipient-paper bg-white border border-slate-200 shadow-sm">
-          {demo && <div className="border-b-2 border-orange-500 bg-orange-50 p-4 font-bold text-orange-900">DEMO — NOT A REAL QUOTE</div>}
+          {demo && <div className="border-b-2 border-orange-500 bg-orange-50 p-4 font-bold text-orange-900">DEMO - NOT A REAL QUOTE</div>}
           <QuotePreview quote={quote} lines={visibleLines.map(line => ({
             id: line.id, text: line.custom_text || '', quantityText: line.quantity_text,
             amount: line.custom_amount || 0, showPrice: line.show_price, showUnits: line.show_units ?? true,

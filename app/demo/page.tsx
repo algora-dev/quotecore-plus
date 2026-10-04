@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Public demo entry (Architecture V2). Owner direction 2026-09-28: no middle
- * step — /demo auto-starts the anonymous session + sandbox and routes the
+ * step - /demo auto-starts the anonymous session + sandbox and routes the
  * visitor straight into the workspace (the welcome popup greets them there).
  * Switch-aware: demo off = quiet coming-soon; on = auto-start transition.
  */

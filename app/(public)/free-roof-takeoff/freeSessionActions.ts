@@ -1,17 +1,17 @@
 /**
- * Free Roof Takeoff — session-state action adapter.
+ * Free Roof Takeoff - session-state action adapter.
  *
  * Mirrors the exact signatures of the server actions TakeoffWorkstation
  * consumes from the authenticated app ('./actions' + './uploadCanvasImage' +
  * the file/storage trio), but with NO Supabase / auth / network: every write
- * resolves against in-memory session state. Nothing survives a page reload —
+ * resolves against in-memory session state. Nothing survives a page reload -
  * that is the product spec for the free tool (session-only, no database).
  *
  * Modeled on the proven takeoff demo's original server-action boundary. If the real
- * action signatures change, TS fails here — that's the deliberate
+ * action signatures change, TS fails here - that's the deliberate
  * fail-obvious seam the demo fork established.
  *
- * MCP plugin note: this module is also the injection point for phase 2 —
+ * MCP plugin note: this module is also the injection point for phase 2 -
  * the plugin variant swaps in an allowance-gated AI scan while keeping the
  * same surface.
  */
@@ -87,7 +87,7 @@ export async function saveTakeoffMeasurements(
   _measurements: SaveTakeoffMeasurementInput[],
 ): Promise<{ success: boolean; error?: string }> {
   // Session-only: bump the version so in-session reads stay consistent.
-  // Dropped entirely on unload — by design.
+  // Dropped entirely on unload - by design.
   sessionVersion += 1;
   return { success: true };
 }

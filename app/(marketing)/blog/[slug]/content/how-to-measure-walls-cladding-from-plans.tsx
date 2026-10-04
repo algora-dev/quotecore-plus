@@ -69,8 +69,8 @@ export default function Post() {
       <h2>Working at 1/4&quot; = 1&apos;-0&quot; scale (worked example)</h2>
       <p>
         1/4&quot; = 1&apos;-0&quot; is the scale most commonly used on residential floor plans: every
-        1/4 inch on the paper represents 1 foot of the building. That is a scale factor of 1:48 —
-        48 quarter-inches per foot — so 1 inch on paper equals 4 feet on site. Metric plans work
+        1/4 inch on the paper represents 1 foot of the building. That is a scale factor of 1:48 -
+        48 quarter-inches per foot - so 1 inch on paper equals 4 feet on site. Metric plans work
         the same way at the near-equivalent 1:50 scale.
       </p>
       <table>
@@ -100,7 +100,7 @@ export default function Post() {
         className="rounded-xl border border-zinc-200"
       />
       <p>
-        A calibrated digital takeoff applies the scale for you — measure once on screen and read
+        A calibrated digital takeoff applies the scale for you - measure once on screen and read
         real lengths directly instead of converting each dimension. The same calibration-first
         workflow runs through{' '}
         <Link href="/roofing-takeoff-software" className={link}>
@@ -166,13 +166,13 @@ export default function Post() {
         Interior wall takeoff is the same discipline applied to floor plans instead of elevations:
         measure partition wall lengths by type, then convert them to areas and board quantities.
         The wall schedule or plan legend tags each partition type (for example 90 mm stud vs 70 mm
-        partition) — measure and total each type separately, because they order and price
+        partition) - measure and total each type separately, because they order and price
         differently.
       </p>
       <ul>
         <li>Run a linear measurement along every partition run, grouping totals by wall type.</li>
         <li>Multiply each type&rsquo;s total length by the floor-to-ceiling height for one face.</li>
-        <li>Drywall and paint cover both faces — double the net area.</li>
+        <li>Drywall and paint cover both faces - double the net area.</li>
         <li>Deduct door openings within the partitions (count them from the door schedule; a typical interior door is 0.9 × 2.1 m).</li>
         <li>Add 5–10% waste for cuts, breaks and defects before ordering board.</li>
       </ul>
@@ -197,7 +197,7 @@ export default function Post() {
         <Link href="/free-cladding-takeoff" className={link}>
           Free Wall &amp; Cladding Takeoff Tool
         </Link>{' '}
-        — it handles line measurements as well as areas — or browse the{' '}
+        - it handles line measurements as well as areas - or browse the{' '}
         <Link href="/free-tools" className={link}>
           full set of free tools
         </Link>
@@ -241,22 +241,22 @@ export default function Post() {
       <h2>Reading level changes in plans: step-ups, step-downs and thresholds</h2>
       <p>
         Level changes are shown with direction arrows and height markers, not 3D shapes. A step
-        or stair is drawn with treads and a direction arrow labelled UP or DN — the arrow starts
-        at the bottom riser and points in the direction of travel — usually annotated with the
+        or stair is drawn with treads and a direction arrow labelled UP or DN - the arrow starts
+        at the bottom riser and points in the direction of travel - usually annotated with the
         number of risers, e.g. UP 2R for a two-riser step or UP 14R for a full flight. The same
         flight appears as UP on the lower floor plan and DN on the upper one.
       </p>
       <p>
         Exact heights come from elevation markers: small circles or crosses carrying a level
         value such as +0.300, meaning 300 mm above the floor datum. At doorways between levels,
-        the threshold — the break in the wall line at the door opening — marks where the level
+        the threshold - the break in the wall line at the door opening - marks where the level
         changes and where threshold trim will sit.
       </p>
       <p>
         What to measure: riser count × riser height gives total rise; note the direction of
         travel (which side steps up); and take threshold widths from the door schedule for
         trims. Worked example: a doorway marked UP 2R beside a +0.300 elevation with a 0.9 m
-        door on the schedule — two risers × 150 mm = 300 mm step up, matching the +0.300 marker,
+        door on the schedule - two risers × 150 mm = 300 mm step up, matching the +0.300 marker,
         with a 0.9 m threshold to trim.
       </p>
 
@@ -352,7 +352,7 @@ export default function Post() {
 
       <h3>How do you measure walls at 1/4&quot; scale?</h3>
       <p>
-        At 1/4&quot; = 1&apos;-0&quot; scale, every 1/4 inch on paper is 1 foot on the building — a 1:48
+        At 1/4&quot; = 1&apos;-0&quot; scale, every 1/4 inch on paper is 1 foot on the building - a 1:48
         factor. Multiply the paper measurement in inches by 4 to get feet: a wall measuring 2 3/8&quot;
         on paper is 9.5 ft (2.375 × 4), or 76 ft² of face at an 8 ft height.
       </p>

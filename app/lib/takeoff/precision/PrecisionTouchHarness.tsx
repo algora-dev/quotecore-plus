@@ -1,5 +1,5 @@
 'use client';
-// Mobile takeoff M3: precision gesture harness — the DISPOSABLE geometry test
+// Mobile takeoff M3: precision gesture harness - the DISPOSABLE geometry test
 // bed the spec's M3 gate requires (§13 M3: "wire previous/next/insert/delete
 // to a disposable geometry harness containing dense 4/40/200-point examples").
 // Real quote/calibration/outline wiring is M4/M5; nothing here persists.
@@ -7,7 +7,7 @@
 // The M1 command engine (precisionEditor) is the ONLY geometry mutator: taps,
 // drags, arrows, +/− and nudges all dispatch commands; no direct state writes.
 // The camera uses M2's sceneViewport (fit/pinch/pan). The interaction surface
-// is the single gesture owner (§5.6) — a transparent overlay above the
+// is the single gesture owner (§5.6) - a transparent overlay above the
 // workstation canvas, mounted ONLY in touch presentation, so desktop and
 // flag-off paths are untouched (L09/L10).
 
@@ -131,7 +131,7 @@ export function usePrecisionTouchHarness(active: boolean): PrecisionTouchHarness
     return () => ro.disconnect();
   }, [active]);
 
-  // Initial fit (one-shot external-system sync — mirrors the M2 viewMode
+  // Initial fit (one-shot external-system sync - mirrors the M2 viewMode
   // pattern of deferring out of the effect body for react-hooks lint).
   useEffect(() => {
     if (!active) return;
@@ -370,7 +370,7 @@ export function usePrecisionTouchHarness(active: boolean): PrecisionTouchHarness
                 {isSelected && (
                   <circle cx={p.x} cy={p.y} r={14} fill="none" stroke="#FF6B35" strokeWidth={2.5} strokeDasharray={isArmed ? '5 3' : 'none'} />
                 )}
-                {/* Precise centre mark (crosshair — state is not colour-only, §3.5/L07). */}
+                {/* Precise centre mark (crosshair - state is not colour-only, §3.5/L07). */}
                 {isSelected ? (
                   <>
                     <line x1={p.x - 5} y1={p.y} x2={p.x + 5} y2={p.y} stroke="#FF6B35" strokeWidth={1.5} />

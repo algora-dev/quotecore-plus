@@ -51,7 +51,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       disallow: [
         '/api/',
         '/auth/',
-        // Build-runtime path leak (docs RSC payload, 2026-09-25) — never crawl
+        // Build-runtime path leak (docs RSC payload, 2026-09-25) - never crawl
         '/var/',
         // Supplier catalogue data files (machine-readable, no search value; GSC 404 noise)
         '/*catalogue.csv',

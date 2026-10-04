@@ -1,5 +1,5 @@
 /**
- * Hero video showcase — its own section below the Three Engines cards.
+ * Hero video showcase - its own section below the Three Engines cards.
  * Plain native YouTube embed: YouTube's own thumbnail, play button and
  * controls. Views count on the @quotecoreplus channel, no custom facade,
  * no local video payload.
@@ -18,7 +18,7 @@ export default function VideoShowcase() {
         <div className="mx-auto mt-8 aspect-video w-full overflow-hidden rounded-2xl border border-zinc-200 bg-black shadow-sm">
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0`}
-            title="QuoteCore+ — see how it works"
+            title="QuoteCore+ - see how it works"
             className="h-full w-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen

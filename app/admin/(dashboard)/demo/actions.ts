@@ -6,7 +6,7 @@ import { requireAdmin } from '@/app/lib/supabase/server';
 
 /**
  * Admin-only writes to the demo master switches (demo_control row 1).
- * These are the owner's emergency brakes — no deploy needed, effective on
+ * These are the owner's emergency brakes - no deploy needed, effective on
  * the next server read.
  */
 export async function setDemoSwitch(field: 'demo_enabled' | 'ai_enabled', value: boolean) {

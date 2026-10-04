@@ -64,9 +64,9 @@ export async function POST(req: NextRequest) {
           <tr><td style="padding:8px 0;font-weight:700;width:160px;color:#333;">Name / channel / business</td><td style="padding:8px 0;color:#111;">${escapeHtml(name)}</td></tr>
           <tr><td style="padding:8px 0;font-weight:700;color:#333;">Email</td><td style="padding:8px 0;"><a href="mailto:${escapeHtml(email)}" style="color:#FF6B35;">${escapeHtml(email)}</a></td></tr>
           <tr><td style="padding:8px 0;font-weight:700;color:#333;">Promotion methods</td><td style="padding:8px 0;color:#111;">${promotionMethods.map(escapeHtml).join(", ")}</td></tr>
-          <tr><td style="padding:8px 0;font-weight:700;color:#333;">Audience / reach</td><td style="padding:8px 0;color:#111;">${audienceRange ? escapeHtml(audienceRange) : "—"}</td></tr>
-          <tr><td style="padding:8px 0;font-weight:700;color:#333;">Link</td><td style="padding:8px 0;">${link ? `<a href="${escapeHtml(link)}" target="_blank" style="color:#FF6B35;">${escapeHtml(link)}</a>` : "—"}</td></tr>
-          <tr><td style="padding:8px 0;font-weight:700;color:#333;">Custom deal requested</td><td style="padding:8px 0;color:#111;">${customDeal ? "<strong style=\"color:#FF6B35;\">YES — review for bespoke terms</strong>" : "No"}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#333;">Audience / reach</td><td style="padding:8px 0;color:#111;">${audienceRange ? escapeHtml(audienceRange) : "-"}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#333;">Link</td><td style="padding:8px 0;">${link ? `<a href="${escapeHtml(link)}" target="_blank" style="color:#FF6B35;">${escapeHtml(link)}</a>` : "-"}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#333;">Custom deal requested</td><td style="padding:8px 0;color:#111;">${customDeal ? "<strong style=\"color:#FF6B35;\">YES - review for bespoke terms</strong>" : "No"}</td></tr>
         </table>
         ${message ? `
         <div style="background:#f8f8f8;border-radius:8px;padding:16px;">
@@ -91,10 +91,10 @@ export async function POST(req: NextRequest) {
       });
     } catch (err) {
       console.error("Resend error:", err);
-      // Still return ok — the applicant did their part; we get the retry signal from logs.
+      // Still return ok - the applicant did their part; we get the retry signal from logs.
     }
   } else {
-    console.warn("RESEND_API_KEY not set — distributor application not emailed:", { name, email });
+    console.warn("RESEND_API_KEY not set - distributor application not emailed:", { name, email });
   }
 
   return NextResponse.json({ ok: true });

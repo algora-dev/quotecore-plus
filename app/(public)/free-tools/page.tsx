@@ -14,7 +14,7 @@ export default function FreeToolsPage() {
       <main className="min-h-screen bg-white">
         <BlogHeader />
 
-        {/* Hero — short, Tool Finder becomes the visual focus below */}
+        {/* Hero - short, Tool Finder becomes the visual focus below */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
@@ -88,7 +88,7 @@ export default function FreeToolsPage() {
           </div>
         </section>
 
-        {/* Why free? — short */}
+        {/* Why free? - short */}
         <section className="mx-auto max-w-5xl px-2 md:px-6 py-10 md:py-14 text-center">
           <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Why are these tools free?</h2>
           <p className="mt-3 text-sm md:text-base font-medium text-slate-700">These free tools solve individual jobs. QuoteCore+ connects the whole workflow.</p>

@@ -3,7 +3,7 @@
  *
  * The workstation's AI apply path (desktop `handleApplyAiResults` and the
  * touch scan2/3 flow) requires system placeholder components for the lineal
- * semantic keys — `buildSystemComponentIds` only counts `is_system` rows and
+ * semantic keys - `buildSystemComponentIds` only counts `is_system` rows and
  * the apply guard rejects when fewer than 5 keys resolve
  * ("System components not fully seeded"). The app provisions these rows via
  * the `ensure_ai_system_components` DB seed; the free tool has no database,

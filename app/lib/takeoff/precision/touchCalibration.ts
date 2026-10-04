@@ -119,7 +119,7 @@ export function pageScopedDependents(
 
 /** Deterministic dependent recompute for a recalibration (existing service).
  *  `oldScale` is derived from the page's legacy calibrations via the shared
- *  effectiveScaleFromLegacyCalibrations — never a client-guessed number. */
+ *  effectiveScaleFromLegacyCalibrations - never a client-guessed number. */
 export function pageDependentRecompute(input: {
   pageId: string | null;
   dependents: PageDependents;

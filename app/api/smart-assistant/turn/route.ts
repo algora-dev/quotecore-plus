@@ -26,7 +26,7 @@ export const runtime = 'nodejs';
  * narration is invalidated with `discard`, and every stream ends with exactly
  * one labelled terminal event (`final` or `error`) carrying the same payload
  * shape the non-streaming client consumes. On any mid-stream failure the
- * client falls back to the existing session/pending flow — never a partial
+ * client falls back to the existing session/pending flow - never a partial
  * unlabelled payload.
  *
  * Authority split (patch 045): the authenticated user client handles

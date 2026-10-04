@@ -38,7 +38,7 @@ test('no selection: either arrow selects the FIRST vertex (deterministic)', () =
 });
 
 test('stored order traversal is never positional (contract: index math only)', () => {
-  // neighbourIndex works purely on indices — the controller passes the draft's
+  // neighbourIndex works purely on indices - the controller passes the draft's
   // stored array order, so concave corners/reordered inputs traverse exactly
   // as stored (R07). A 40-point concave outline needs no special casing:
   for (let i = 0; i < 40; i++) {
@@ -53,7 +53,7 @@ test('insert-after is enabled for every closed vertex (last uses first as succes
   for (let i = 0; i < 4; i++) assert.equal(canInsertAfter(4, true, i), true);
 });
 
-test('insert-after on an open path requires a real successor — last vertex disabled', () => {
+test('insert-after on an open path requires a real successor - last vertex disabled', () => {
   assert.equal(canInsertAfter(5, false, 3), true);
   assert.equal(canInsertAfter(5, false, 4), false);
   assert.equal(canInsertAfter(5, false, -1), false); // no selection
@@ -117,7 +117,7 @@ test('rapid previous/next chains with current index resolve a full loop without 
   assert.equal(ids[cur], 'a');
   // Insert after 'a' → ['a','new','b','c'], selection on 'new' (M1 command).
   const afterInsert = ['a', 'new', 'b', 'c'];
-  cur = afterInsert.indexOf('new'); // 1 — controller uses CURRENT ids
+  cur = afterInsert.indexOf('new'); // 1 - controller uses CURRENT ids
   cur = neighbourIndex(afterInsert.length, true, cur, 1);
   assert.equal(afterInsert[cur], 'b');
   cur = neighbourIndex(afterInsert.length, true, cur, -1);

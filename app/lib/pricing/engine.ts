@@ -55,7 +55,7 @@ export function rafterPitchFactor(degrees: number): number {
 /** Hip/Valley pitch factor: compound angle for 45° hip/valley
  *  hip_angle = arctan(tan(pitch) × cos(45°))
  *  hip_factor = 1 / cos(hip_angle)
- *  This is equivalent to sqrt(1 + tan²(pitch)/2) — a standard roofing formula. */
+ *  This is equivalent to sqrt(1 + tan²(pitch)/2) - a standard roofing formula. */
 export function hipValleyPitchFactor(degrees: number): number {
   if (!degrees || degrees <= 0 || degrees >= 90) return 1;
   const tangent = Math.tan(degrees * RAD);

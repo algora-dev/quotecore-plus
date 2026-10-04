@@ -104,7 +104,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/free-roofing-takeoff-builder`, changeFrequency: 'monthly', priority: 0.9 },
     // Free quote builder (smart components + manual measurements)
     { url: `${SITE_URL}/measurement-to-quote-tool`, changeFrequency: 'monthly', priority: 0.9 },
-    // Supplier-specific takeoff builder pages are noindex — excluded from sitemap
+    // Supplier-specific takeoff builder pages are noindex - excluded from sitemap
     // Roof pricing calculator (component-based pricing page)
     { url: `${SITE_URL}/free-roof-pricing-calculator`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/docs/roof-takeoff-api`, changeFrequency: 'monthly', priority: 0.6 },
@@ -153,9 +153,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
   // Supplier pages (dynamic, from public_supplier_directory RPC)
-  // Only HTML profile and catalogue pages are included — CSV/JSON data
+  // Only HTML profile and catalogue pages are included - CSV/JSON data
   // exports and versioned catalogue routes are excluded (non-indexable).
-  // Test supplier accounts are excluded (noindex) — they exist for
+  // Test supplier accounts are excluded (noindex) - they exist for
   // demo/Takeoff Builder purposes, not search (Tom brief 2026-08-20).
   const suppliers = await getSupplierDirectory();
   const supplierEntries: MetadataRoute.Sitemap = [];

@@ -45,7 +45,7 @@ export async function demoCustomerSaved(companyId:string,quoteId:string,kind:'br
  if(kind==='branding'&&q.data!.cq_company_name==='QCP Roofing & Construction'&&(q.data!.cq_footer_text??'').includes('DEMO'))next=acknowledge(next,'quote.template',quoteId);
  if(kind==='lines'){
  // Natural acknowledgements (owner direction 2026-10-04): any customer-line
- // save completes whichever editor step is currently pending — visitors are
+ // save completes whichever editor step is currently pending - visitors are
  // told to “change something if you want, then Save & Return”, so requiring a
  // hyper-specific change strung people up. Hiding line prices still fast-paths
  // the presentation step; a text edit still fast-paths the description step.

@@ -5,7 +5,7 @@ import { trackEvent } from '@/lib/analytics';
 
 export const TRIAL_HREF = '/pricing?utm_source=takeoff-demo&utm_medium=demo&utm_campaign=get-started';
 
-/** Get-started CTA for the takeoff-demo page — fires the get_started_click event. */
+/** Get-started CTA for the takeoff-demo page - fires the get_started_click event. */
 export function TrialCTA({ label = 'Get started with QuoteCore+', className }: { label?: string; className?: string }) {
   return (
     <Link

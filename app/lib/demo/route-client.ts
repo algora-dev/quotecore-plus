@@ -26,7 +26,7 @@ export async function createDemoRouteClient(hostname: string | null) {
               cookieStore.set({ name, value, ...options });
             }
           } catch {
-            // Called from a Server Component — cookies can't be set; the
+            // Called from a Server Component - cookies can't be set; the
             // browser client refreshes the demo session on its side.
           }
         },

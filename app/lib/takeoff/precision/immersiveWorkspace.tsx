@@ -2,7 +2,7 @@
 // Mobile takeoff M2: immersive-workspace cooperation contract (spec §3.4).
 //
 // The touch workspace sets `data-takeoff-immersive="touch"` on <html> while it
-// is mounted and removes it on unmount (cleanup guaranteed — no body-class
+// is mounted and removes it on unmount (cleanup guaranteed - no body-class
 // leaks). App-shell chrome tagged `data-takeoff-chrome` (global header,
 // assistant launcher) is hidden via the scoped rules in globals.css ONLY while
 // that attribute is present; required entitlement/impersonation notices stay

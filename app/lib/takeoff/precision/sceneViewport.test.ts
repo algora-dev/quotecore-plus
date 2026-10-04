@@ -98,7 +98,7 @@ test('fitCamera: portrait viewport still fits the same scene without changing sc
   const wideScene = { width: 2000, height: 1000 };
   const landscape = fitCamera(wideScene, { width: 568, height: 320 });
   const portrait = fitCamera(wideScene, { width: 320, height: 568 });
-  // Different cameras for the same scene — only the camera changed, never the scene.
+  // Different cameras for the same scene - only the camera changed, never the scene.
   assert.ok(Math.abs(landscape.zoom - 0.9 * 568 / 2000) < 1e-9);
   assert.ok(Math.abs(portrait.zoom - 0.9 * 320 / 2000) < 1e-9);
   assert.notEqual(landscape.zoom, portrait.zoom);

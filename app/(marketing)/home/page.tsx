@@ -281,7 +281,7 @@ export default function HomePage() {
               {/* Left: text */}
               <div className="relative z-20 flex-1 text-center lg:flex-[1.12] lg:text-left">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
-                  Built for roofing first — powerful enough for any job that needs measuring, pricing and quoting
+                  Built for roofing first - powerful enough for any job that needs measuring, pricing and quoting
                 </p>
                 <h1 className="mt-6 text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:text-6xl">
                   Measure the job. Calculate the price. Send the quote.
@@ -338,7 +338,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 1a. "Another piece of software" objection — directly below the hero */}
+        {/* 1a. "Another piece of software" objection - directly below the hero */}
         <DoneForYouBanner />
 
         {/* Trust band */}

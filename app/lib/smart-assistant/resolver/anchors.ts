@@ -8,7 +8,7 @@ export type Anchors = { numbers: NumberAnchor[]; customer?: string; component?: 
 /** Entity sources whose rows belong to the company workspace itself, not to a
  * quote/order/invoice parent. A customer/job qualifier names a parent record
  * (during draft creation it may not exist yet), never a row filter on these
- * sources: they stay queryable standalone (owner evidence 2026-09-29 18:49 UTC —
+ * sources: they stay queryable standalone (owner evidence 2026-09-29 18:49 UTC -
  * mid-creation component-price lookups were refused because the request carried
  * the draft's customer name). RLS still scopes every row to the company. */
 export const COMPANY_SCOPED_SOURCES = Object.freeze(['component_library', 'component_collections', 'catalogues', 'catalogue_rows'] as const);

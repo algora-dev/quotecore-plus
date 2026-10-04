@@ -1,10 +1,10 @@
 /**
- * Tool Registry — single source of truth for the free-tools hub.
+ * Tool Registry - single source of truth for the free-tools hub.
  *
  * Used by: Smart Tool Finder (deterministic matching), Browse All Tools
  * (search + filters), and the task accordions' link data.
  *
- * Base list derives from tools-data.ts (real routes only — never invent URLs).
+ * Base list derives from tools-data.ts (real routes only - never invent URLs).
  * Rich intent/alias data lives here for the finder.
  */
 
@@ -20,7 +20,7 @@ export interface FreeTool {
   keywords: string[];
   aliases?: string[];
   priority?: number;
-  /** Visibility flags — registry is the single source of truth (default: true) */
+  /** Visibility flags - registry is the single source of truth (default: true) */
   showInFinder?: boolean;
   showInDirectory?: boolean;
   showInSchema?: boolean;
@@ -70,7 +70,7 @@ const RICH: Record<string, Partial<FreeTool>> = {
     aliases: ['takeoff builder', 'manual takeoff'],
     priority: 95,
     categories: ['roofing', 'takeoff', 'measurement'],
-    // Hidden from the hub for now — route stays live and stays in schema
+    // Hidden from the hub for now - route stays live and stays in schema
     showInFinder: false,
     showInDirectory: false,
   },

@@ -59,7 +59,7 @@ export function getTakeoffDiagnosticsSnapshot(): TakeoffDiagnosticsSnapshot {
 
 /**
  * Install global capture hooks (window errors, unhandled rejections, failed
- * fetches with URL + status). Safe to call repeatedly — only installs once.
+ * fetches with URL + status). Safe to call repeatedly - only installs once.
  * Returns a no-op cleanup for symmetry; the hooks intentionally persist for
  * the page lifetime (diagnostics must survive the error that motivates them).
  */

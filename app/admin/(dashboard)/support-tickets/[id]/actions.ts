@@ -85,7 +85,7 @@ export async function replyToSupportTicket(
         '',
         trimmed,
         '',
-        '— QuoteCore+ Support',
+        '- QuoteCore+ Support',
         '',
         `You can also view this ticket in the app: Account > Support.`,
       ].join('\n');
@@ -101,7 +101,7 @@ export async function replyToSupportTicket(
         html: `<div style="font-family: system-ui, -apple-system, Segoe UI, sans-serif; color: #0f172a; line-height: 1.5;">
           <p style="font-weight:600; margin:0 0 12px;">Re: ${escape(ticket.subject)}</p>
           <p style="margin:0 0 16px; white-space:pre-wrap;">${escape(trimmed)}</p>
-          <p style="margin:0; color:#64748b; font-size:13px;">— QuoteCore+ Support${company?.name ? ` (ticket ${ticket.id.slice(0, 8)})` : ''}</p>
+          <p style="margin:0; color:#64748b; font-size:13px;">- QuoteCore+ Support${company?.name ? ` (ticket ${ticket.id.slice(0, 8)})` : ''}</p>
         </div>`,
         tags: [
           { name: 'kind', value: 'support_reply' },

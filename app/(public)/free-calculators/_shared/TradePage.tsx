@@ -34,7 +34,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
       {/* Calculator */}
       <TradeCalculator config={config} />
 
-      {/* Demo card — roofing calculators only (audience match). Includes the
+      {/* Demo card - roofing calculators only (audience match). Includes the
           main roofing config, which is not part of the SEO slug registry. */}
       {(ROOFING_SLUGS.includes(config.slug) || config.slug === roofingConfig.slug) && (
         <section className="mt-12">
@@ -42,7 +42,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
         </section>
       )}
 
-      {/* Chrome extension strip — pitch pages only */}
+      {/* Chrome extension strip - pitch pages only */}
       {PITCH_EXTENSION_SLUGS.includes(config.slug) && (
         <section className="mt-8 flex flex-col items-start gap-4 rounded-xl border-2 border-slate-200 bg-white p-5 sm:flex-row sm:items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}

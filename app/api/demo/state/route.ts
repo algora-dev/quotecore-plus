@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest) {
     const state = await mutateDemoGuide(context.sessionId, previous => {
       const next = applyGuideCommand(previous, command);
       if (!next) throw new DemoError(command.action === 'skip'
-        ? 'This task creates something the next step needs, so it can’t be skipped — but it only takes a moment. Open the task and follow the guide.'
+        ? 'This task creates something the next step needs, so it can’t be skipped - but it only takes a moment. Open the task and follow the guide.'
         : command.action === 'chapter' && command.chapter === 'takeoff'
         ? 'Create and test your component first. Continue with Build your pricing.' : 'Finish the preceding guided action first.', 409, command.action === 'skip' ? 'demo_skip_required' : 'demo_prerequisite');
       return next;
