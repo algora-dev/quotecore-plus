@@ -109,6 +109,21 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const visibility = useRef(visible);
   visibility.current = visible;
   const end = useRef<HTMLDivElement>(null);
+  // v16: scroll ONLY the conversation surface. scrollIntoView()/focus() scroll
+  // every scrollable ancestor - including the overflow panel root, which is
+  // what actually produced the bottom band (root.scrollTop !== 0).
+  const followThreadBottom = () => { const el = scroll.current; if (el) el.scrollTop = el.scrollHeight; };
+  // v16: on a normal-flow page (standalone route below the app header) reveal
+  // the whole panel once by scrolling the WINDOW directly - never
+  // scrollIntoView, which would also scroll the panel root and recreate the band.
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    if (getComputedStyle(el).position === 'fixed') return; // overlays never move the page
+    const rect = el.getBoundingClientRect();
+    if (rect.bottom <= window.innerHeight) return; // fully visible already
+    window.scrollTo({ top: rect.top + window.scrollY, behavior: 'auto' });
+  }, []);
   const composer = useRef<HTMLTextAreaElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
   const uploadInput = useRef<HTMLInputElement>(null);
@@ -248,24 +263,26 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     if (lastAssistantAnchor.current === undefined) {
       // Initial load keeps the existing chat behaviour.
       lastAssistantAnchor.current = lastAssistantId;
-      if (nearBottom.current) end.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
+      if (nearBottom.current) followThreadBottom();
       return;
     }
     if (lastAssistantId && lastAssistantId !== lastAssistantAnchor.current) {
       lastAssistantAnchor.current = lastAssistantId;
       const assistantTurn = scroll.current?.querySelector('[data-sa-assistant-turn="true"]');
-      if (assistantTurn) {
-        assistantTurn.scrollIntoView({ block: 'start', behavior: 'auto' });
+      if (assistantTurn instanceof HTMLElement && scroll.current) {
+        // v16: scope the jump to the conversation surface only.
+        const list = scroll.current;
+        list.scrollTop = assistantTurn.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop - 8;
         return;
       }
     }
-    if (nearBottom.current) end.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
+    if (nearBottom.current) followThreadBottom();
   }, [snapshot, busy, visible]);
 
   // Streamed provisional text follows the same bottom-anchored scroll as
   // persisted messages (answers stream token-by-token when enabled).
   useEffect(() => {
-    if (nearBottom.current && visible && streamText) end.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
+    if (nearBottom.current && visible && streamText) followThreadBottom();
   }, [streamText, visible]);
 
   useEffect(() => {
@@ -519,7 +536,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const refineAnswer = () => {
     changeMode('text');
     setInput(value => value || 'Not quite. ');
-    requestAnimationFrame(() => composer.current?.focus());
+    requestAnimationFrame(() => composer.current?.focus({ preventScroll: true }));
   };
 
   const failures = failedTurns(snapshot?.messages ?? [], snapshot?.runs ?? []);
@@ -553,7 +570,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
       const r = root.current?.getBoundingClientRect();
       const f = frame.current?.getBoundingClientRect();
       const d = root.current?.querySelector<HTMLElement>('[data-sa-dock="true"]')?.getBoundingClientRect();
-      setGeo(`v15 ih:${window.innerHeight} vv:${Math.round(vv?.height ?? 0)}@${Math.round(vv?.offsetTop ?? 0)} s:${vv?.scale?.toFixed(2) ?? '?'} p:${Math.round(r?.height ?? 0)} t:${Math.round(r?.top ?? 0)} f:${Math.round(f?.height ?? 0)} db:${Math.round(d?.bottom ?? 0)} rb:${Math.round(r?.bottom ?? 0)} w:${Math.round(r?.width ?? 0)} scr:${window.screen.width}x${window.screen.height}`);
+      setGeo(`v16 ih:${window.innerHeight} vv:${Math.round(vv?.height ?? 0)}@${Math.round(vv?.offsetTop ?? 0)} s:${vv?.scale?.toFixed(2) ?? '?'} p:${Math.round(r?.height ?? 0)} t:${Math.round(r?.top ?? 0)} f:${Math.round(f?.height ?? 0)} db:${Math.round(d?.bottom ?? 0)} rb:${Math.round(r?.bottom ?? 0)} w:${Math.round(r?.width ?? 0)} scr:${window.screen.width}x${window.screen.height}`);
     };
     read();
     window.visualViewport?.addEventListener('resize', read);
