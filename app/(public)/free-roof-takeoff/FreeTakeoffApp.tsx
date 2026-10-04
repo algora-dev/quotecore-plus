@@ -485,12 +485,18 @@ export function FreeTakeoffApp({
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editingSpecId, setEditingSpecId] = useState<string | null>(null);
 
-  // Post-hydration device check: deriving this in render would mismatch the
-  // SSR HTML (server has no window), so it must stay an effect.
+  // Rotate-for-canvas notice (2026-10-04): the setup wizard is comfortable in
+  // portrait, so the notice now opens only when the user actually ENTERS the
+  // measuring canvas (stage 'takeoff') — once per visit, no re-entry nagging.
+  const orientationShownRef = useRef(false);
   useEffect(() => {
+    if (stage.phase !== 'takeoff' || orientationShownRef.current) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (detectDevice() === 'mobile') setOrientationNoticeOpen(true);
-  }, []);
+    if (detectDevice() === 'mobile') {
+      orientationShownRef.current = true;
+      setOrientationNoticeOpen(true);
+    }
+  }, [stage.phase]);
 
   // Seeded entry: fetch the plan image, convert it to a data URL (the same
   // path as handleFile) and jump straight to the takeoff stage. Applied once
@@ -641,6 +647,28 @@ export function FreeTakeoffApp({
     [pdfPicker, handleFile],
   );
 
+  // One-tap example plan (2026-10-04, mobile-first): loads the shared sample
+  // plan straight into the tool through the same File path as a user upload —
+  // no iOS download round-trip through Files/Photos, no re-upload.
+  const EXAMPLE_PLAN_URL = '/takeoff-demo/roofplan-baseline.png';
+  const [exampleLoading, setExampleLoading] = useState(false);
+  const handleExamplePlan = useCallback(async () => {
+    if (exampleLoading) return;
+    setExampleLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(EXAMPLE_PLAN_URL);
+      if (!response.ok) throw new Error(`Could not load the example plan (HTTP ${response.status}).`);
+      const blob = await response.blob();
+      if (blob.size > MAX_IMAGE_BYTES) throw new Error('The example plan is too large to load.');
+      await onFileSelected(new File([blob], 'example-roof-plan.png', { type: 'image/png' }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load the example plan. Please try again.');
+    } finally {
+      setExampleLoading(false);
+    }
+  }, [exampleLoading, onFileSelected]);
+
   const restart = useCallback(() => {
     setStage({ phase: 'landing' });
     setStep(1);
@@ -757,7 +785,8 @@ export function FreeTakeoffApp({
     onContinue={() => setStep(step === 1 ? 2 : 3)}
     onCreateComponent={openBuilder} onEditComponent={openEditBuilder}
     onRemoveComponent={id => setSpecs(prev => prev.filter(spec => spec.id !== id))}
-    onFile={onFileSelected} pdfModal={pdfPicker.modal}>
+    onFile={onFileSelected} onExamplePlan={handleExamplePlan} exampleLoading={exampleLoading}
+    pdfModal={pdfPicker.modal}>
     {builderOpen && <ComponentBuilderModal key={editingSpecId ?? 'new'}
       initial={editingSpecId ? specs.find((s) => s.id === editingSpecId) ?? null : null}
       measurementSystem={unitOption.lengthUnit === 'meters' ? 'metric' : 'imperial_ft'}

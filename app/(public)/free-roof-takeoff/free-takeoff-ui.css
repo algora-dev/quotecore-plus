@@ -170,3 +170,8 @@
   .qc-free-output :is(.qc-free-report-total-row,.qc-free-report-entry) { display: flex; }
   .qc-free-output .qc-free-report-entry-value { text-align: right; }
 }
+
+/* One-tap example plan (2026-10-04): full-width secondary under the upload box. */
+.qc-free-example-row { margin-top: 0.75rem; display: grid; gap: 0.375rem; }
+.qc-free-example-row .qc-free-example { width: 100%; justify-content: center; }
+.qc-free-example-row .qc-free-help { margin: 0; text-align: center; }

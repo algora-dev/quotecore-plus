@@ -15,7 +15,7 @@ import { HIT_RADIUS_PX } from './precisionGestureMachine';
 import { pinchCamera, scenePointToViewport, type Camera } from './sceneViewport';
 import { usePrecisionPointerInput } from './usePrecisionPointerInput';
 import { useCalibrationController } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/calibration/useCalibrationController';
-import { persistPageCalibration } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/actions';
+import { useTakeoffActions } from '@/app/lib/takeoff/actionsContext';
 import { buildCalibrationCommit, calibrationDescriptorFromSource, finishBlockers, manualPairValid, type CalibrationCommitPayload } from './touchCalibration';
 import { logTakeoffEvent } from './takeoffDiagnostics';
 import { usePrecisionCamera } from './usePrecisionCamera';
@@ -42,6 +42,12 @@ const UNITS: DistanceUnit[] = ['m', 'mm', 'cm', 'ft', 'in', 'yd'];
 
 export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchCalibrationParts {
   const { active, quoteId, planUrl, page, aiEnabled, pageHasDependents, onExit } = options;
+  // Persistence seam (2026-10-04): resolve through the actions context so the
+  // free tool / demo (TakeoffSessionProvider) swap in the session-stub
+  // persistPageCalibration. The previous direct import called the REAL
+  // authenticated server action on public pages — the mobile calibration
+  // "server error". No provider mounted = real actions, unchanged in-app.
+  const actions = useTakeoffActions();
   // Keyboardless fix (2026-09-22): the shared controller treats a CHANGED
   // imageRevision as IMAGE_CHANGED and invalidates the session (wiping accepted
   // references). On touch, the only mid-session revision change is the server
@@ -93,7 +99,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
       if (pageHasDependents) return commitFailed('DEPENDENTS_PRESENT', 'This page already has measurements. Recalibrate in Desktop view so they are updated together.');
       try {
         const payload = buildCalibrationCommit(accepted, workingUnit, page.imageRevision ?? '', new Date().toISOString());
-        const result = await persistPageCalibration(quoteId, page.id, payload.legacy, payload.metadata);
+        const result = await actions.persistPageCalibration(quoteId, page.id, payload.legacy, payload.metadata);
         if (!result.success) return commitFailed('COMMIT_FAILED', result.error);
         if (result.imageRevision) payload.metadata.imageRevision = result.imageRevision;
         logTakeoffEvent('calibration.commit.succeeded', { pageId: page.id });
@@ -108,7 +114,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
     pendingCommit.current = task;
     void task.finally(() => { pendingCommit.current = null; });
     return task;
-  }, [page, pageHasDependents, quoteId, workingUnit, onCommitted]);
+  }, [page, pageHasDependents, quoteId, workingUnit, onCommitted, actions]);
   const controller = useCalibrationController({ quoteId, image: descriptor, workingUnit,
     startMode: { kind: 'new' }, autoStart: false, onFinish: commit, onCancel: () => setStep('find') });
   const { state, dispatch } = controller;
