@@ -20,8 +20,8 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
   const templateId = randomUUID(), emailId = randomUUID(), pageId = randomUUID(), takeoffId = randomUUID();
   checked(await db.from('component_collections').insert([
     { id: libraries.roofing, company_id: companyId, name: 'Roofing', currency: 'GBP', unit_system: 'metric', takeoff_enabled: true, is_default_takeoff_library: true },
-    { id: libraries.construction, company_id: companyId, name: 'General Construction', currency: 'GBP', unit_system: 'metric' },
-    { id: libraries.flooring, company_id: companyId, name: 'Flooring / Interiors', currency: 'GBP', unit_system: 'metric' },
+    { id: libraries.construction, company_id: companyId, name: 'General Construction', currency: 'GBP', unit_system: 'metric', takeoff_enabled: false, is_default_takeoff_library: false },
+    { id: libraries.flooring, company_id: companyId, name: 'Flooring / Interiors', currency: 'GBP', unit_system: 'metric', takeoff_enabled: false, is_default_takeoff_library: false },
   ]), 'libraries');
   checked(await db.from('component_library').insert(DEMO_COMPONENTS.map((c, index) => ({
     id: ids[c.key], company_id: companyId, collection_id: libraries[c.library], name: c.name,
@@ -29,7 +29,7 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
     default_labour_rate: c.labour, default_waste_type: 'none' as const, default_pitch_type: 'none' as const,
     default_waste_percent: 0, default_waste_fixed: 0, pricing_strategy: 'per_unit' as const,
     eligible_for_orders: true, is_active: true, is_system: false, sort_order: index, notes: DEMO_PRICE_NOTICE,
-    ...(c.slot ? { takeoff_slot: c.slot } : {}),
+    ...(c.slot ? { takeoff_slot: c.slot } : { takeoff_slot: null }),
   }))), 'components');
   checked(await db.from('quotes').insert(DEMO_JOBS.map((j, index) => ({
     id: jobs[j.key], company_id: companyId, customer_name: j.customer, customer_email: `customer-${index + 1}@example.invalid`,
