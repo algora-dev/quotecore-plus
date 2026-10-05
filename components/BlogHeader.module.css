@@ -16,11 +16,11 @@
 }
 
 .scrolled {
-  background: rgba(255, 255, 255, 0.64);
+  background: rgba(246, 248, 251, 0.78);
   border-bottom-color: rgba(255, 255, 255, 0.66);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76), 0 8px 28px rgba(25, 27, 32, 0.08);
-  -webkit-backdrop-filter: blur(18px) saturate(1.12);
-  backdrop-filter: blur(18px) saturate(1.12);
+  -webkit-backdrop-filter: blur(22px) saturate(1.14);
+  backdrop-filter: blur(22px) saturate(1.14);
 }
 
 .inner {
@@ -104,18 +104,10 @@
   width: 46px;
   height: 46px;
   min-width: 46px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(221, 225, 231, 0.95);
+  min-height: 46px;
+  padding: 0;
+  flex-shrink: 0;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.66);
-  color: #191b20;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 2px 8px rgba(25, 27, 32, 0.05);
-  -webkit-backdrop-filter: blur(14px) saturate(1.08);
-  backdrop-filter: blur(14px) saturate(1.08);
-  cursor: pointer;
-  transition: border-color 120ms cubic-bezier(0.2, 0, 0, 1), background-color 120ms cubic-bezier(0.2, 0, 0, 1), box-shadow 120ms cubic-bezier(0.2, 0, 0, 1), transform 120ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .menuButton svg { width: 20px; height: 20px; }
@@ -200,17 +192,11 @@
     filter: drop-shadow(0 3px 8px rgba(255, 107, 53, 0.18));
   }
 
-  .signIn:hover,
   .backLink:hover {
     color: var(--qc-header-orange-ink);
     background: rgba(255, 244, 235, 0.78);
   }
 
-  .menuButton:hover {
-    border-color: rgba(182, 61, 10, 0.45);
-    background: rgba(255, 244, 235, 0.76);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86), 0 4px 14px rgba(255, 107, 53, 0.14);
-  }
 
   .navItem:hover {
     color: var(--qc-header-orange-ink);
@@ -228,7 +214,7 @@
   .logo { height: 36px; }
   .desktopActions { display: none; }
   .mobileDemo { display: inline-flex; }
-  .menuButton { width: 44px; height: 44px; min-width: 44px; }
+  .menuButton { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
   .actions { gap: 8px; }
   .menuInner { padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); }
   .mobileMenuActions {
@@ -274,4 +260,26 @@
   .header, .menuPanel { border-color: CanvasText; }
   .menuButton, .countryLink { background: ButtonFace; color: ButtonText; border-color: ButtonText; }
   .signIn:focus-visible, .backLink:focus-visible, .menuButton:focus-visible, .logoLink:focus-visible { outline-color: Highlight; }
+}
+
+/* Homepage redesign: shared header structure retained; simplified CTA labels. */
+.signIn { padding: 9px 16px; }
+.menuPanel { max-height: calc(100dvh - 72px); overflow-y: auto; overscroll-behavior: contain; }
+.menuFooter > div { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.menuFooter > div a { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; min-height: 32px; color: #596273; }
+.menuFooter > div svg { width: 19px; height: 19px; }
+.navItem:focus-visible, .countryLink:focus-visible, .menuFooter a:focus-visible { outline: 2px solid var(--qc-header-orange-ink); outline-offset: 3px; }
+@media (max-width:767px) {
+  .mobileMenuActions { display: flex; }
+  .menuPanel { max-height: calc(100dvh - 64px); }
+  .logo { height: 33px; }
+}
+@media (max-width:359px) {
+  .logo { height: 30px; }
+  .inner { padding-inline: 12px; }
+  .actions { gap: 6px; }
+  .mobileDemo { padding-inline: 13px; }
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .scrolled, .menuPanel, .menuButton { background: #fff; }
 }
