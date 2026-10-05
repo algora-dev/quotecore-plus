@@ -183,16 +183,7 @@ const FREE_SESSION_BUNDLE = {
 
 // ─── Takeoff phase (mirrors the app's TakeoffPage composition) ──────────────
 
-function TakeoffPhase({
-  config,
-  planDataUrl,
-  unitSystem,
-  components,
-  collections = TOOL_COLLECTIONS,
-  seed = null,
-  onFinish,
-  onExit,
-}: {
+type TakeoffPhaseProps = {
   config: TakeoffTradeConfig;
   planDataUrl: string;
   unitSystem: TakeoffUnitSystem;
@@ -201,7 +192,38 @@ function TakeoffPhase({
   seed?: FreeTakeoffSeed | null;
   onFinish: (payload: TakeoffFinishPayload) => void;
   onExit: () => void;
-}) {
+};
+
+/**
+ * Touch-stub fix (2026-10-05, owner bug report): the touch hooks
+ * (useTouchCalibration / useTouchComponents / useTouchOutlineEditor) are
+ * called in TakeoffPhaseInner's body. React context only reaches hooks of
+ * components rendered BELOW a provider, so the provider previously mounted
+ * at the bottom of this component's own JSX could not serve those hooks -
+ * on touch devices every touch save resolved the DEFAULT bundle (the real
+ * authenticated server actions) and threw for logged-out visitors (the
+ * mobile calibration "Server Components render" error). Wrapping the phase
+ * makes every touch save resolve the session stub. The provider further
+ * down the tree is retained: same bundle, no behaviour change.
+ */
+function TakeoffPhase(props: TakeoffPhaseProps) {
+  return (
+    <TakeoffSessionProvider actions={FREE_SESSION_BUNDLE}>
+      <TakeoffPhaseInner {...props} />
+    </TakeoffSessionProvider>
+  );
+}
+
+function TakeoffPhaseInner({
+  config,
+  planDataUrl,
+  unitSystem,
+  components,
+  collections = TOOL_COLLECTIONS,
+  seed = null,
+  onFinish,
+  onExit,
+}: TakeoffPhaseProps) {
   const unitOption = resolveUnitOption(unitSystem, config);
 
   const planLabel = `${config.planNoun[0].toUpperCase()}${config.planNoun.slice(1)} Plan`;
