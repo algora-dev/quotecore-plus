@@ -81,7 +81,7 @@ export default function FreeToolsPage() {
               href="https://chromewebstore.google.com/detail/ldndmfncphniifbddcbkmamhpdnfmehm"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
+              className="qc-glint inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] bg-gradient-to-r from-[#FF6B35] to-[#FF8C1F] px-5 py-2 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(255,107,53,0.25)] transition-all hover:shadow-[0_14px_30px_rgba(255,107,53,0.4)] hover:brightness-105"
             >
               Add to Chrome
             </a>
@@ -108,7 +108,7 @@ export default function FreeToolsPage() {
             or{" "}
             <Link href="/roofing-takeoff-software" className="font-medium text-[#BD4A1A] underline underline-offset-4">roofing takeoff software</Link>.
           </p>
-          <Link href="/signup" className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#E55A2B] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] min-h-[44px]">
+          <Link href="/signup" className="qc-glint mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] bg-gradient-to-r from-[#FF6B35] to-[#FF8C1F] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(255,107,53,0.25)] transition-all hover:shadow-[0_16px_34px_rgba(255,107,53,0.4)] hover:brightness-105 min-h-[44px]">
             Explore QuoteCore+
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
           </Link>

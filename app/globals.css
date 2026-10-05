@@ -639,3 +639,25 @@ html[data-takeoff-immersive='touch'] a:not(:disabled):active {
 html[data-takeoff-immersive='touch'] input:not(:disabled):active {
   filter: brightness(1.15);
 }
+
+/* qc-glint: hover glint for shared free-tools buttons (v2.14, 2026-10-05).
+   Self-contained alternative to .pill-shimmer for buttons that are NOT solid
+   white (orange-gradient primaries, glass pills). No script dependency, no
+   background override - purely decorative, pointer-transparent. */
+.qc-glint { position: relative; overflow: hidden; }
+.qc-glint::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -70%;
+  width: 55%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.qc-glint:hover::after { left: 135%; }
+@media (prefers-reduced-motion: reduce) {
+  .qc-glint::after { transition: none; }
+}
