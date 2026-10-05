@@ -87,7 +87,10 @@ export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   planNoun: 'roof',
   standardComponentsSummary: 'Roof area, ridge, hip, valley, barge and spouting.',
   requiresPitch: true,
-  aiScan: true,
+  // Owner directive 2026-10-05: scan assist disabled for the free roofing
+  // tool (and the future MCP plugin version). The marketing demo overrides
+  // this to true - its scan is a captured replay, not a real API call.
+  aiScan: false,
   unitOptions: [METRIC, IMPERIAL, SQUARES],
   placeholderComponents: [
     { id: 'd711bd93-2225-467e-8278-80f26c838b38', name: 'Hip', measurement_type: 'lineal' },
