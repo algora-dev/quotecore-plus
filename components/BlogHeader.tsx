@@ -1,33 +1,28 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { appUrl } from "@/lib/app-url";
 import SocialIcons from "./SocialIcons";
 import { MarketingButton } from "./marketing/MarketingButton";
 import styles from "./BlogHeader.module.css";
+import controls from "./marketing/MarketingButton.module.css";
 
 function buildNavItems() {
   return [
     { label: "Features", href: "/features" },
-    { label: "Roofing Software", href: "/roofing-quoting-software" },
-    { label: "Suppliers", href: "/suppliers" },
     { label: "Pricing", href: "/pricing" },
+    { label: "Demo", href: "/takeoff-demo" },
     { label: "Free Tools", href: "/free-tools" },
     { label: "Blog", href: "/blog" },
-    { label: "Tutorials", href: "/tutorials" },
     { label: "Contact us", href: "/contact" },
   ];
 }
 
-const plusIcon = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-    <path d="M12 5v14M5 12h14" />
-  </svg>
-);
-
 export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: string; backHref?: string }) {
   const menuId = useId();
+  const headerRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [appLink, setAppLink] = useState("https://app.quote-core.com");
@@ -58,23 +53,35 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
   useEffect(() => {
     if (!menuOpen) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
+      if (event.key === "Escape") { setMenuOpen(false); menuButtonRef.current?.focus(); }
+    };
+    const onOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !headerRef.current?.contains(event.target)) setMenuOpen(false);
+    };
+    const onFocusOutside = (event: FocusEvent) => {
+      if (event.target instanceof Node && !headerRef.current?.contains(event.target)) setMenuOpen(false);
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onOutside);
+    document.addEventListener("focusin", onFocusOutside);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onOutside);
+      document.removeEventListener("focusin", onFocusOutside);
+    };
   }, [menuOpen]);
 
   const trackDemo = (location: string) => trackEvent("demo_tool_click", { location, mode: "takeoff" });
 
   return (
-    <header className={`${styles.header} ${scrolled ? styles.scrolled : ""}`}>
+    <header ref={headerRef} className={`${styles.header} ${scrolled ? styles.scrolled : ""}`}>
       <div className={styles.inner}>
         <a href="/" className={styles.logoLink} aria-label="QuoteCore+ home">
           <img
-            src="/logo.png"
+            src="/marketing/brand/quotecore-logo-transparent.png"
             alt="QuoteCore+"
-            width={189}
-            height={44}
+            width={481}
+            height={119}
             loading="eager"
             decoding="async"
             fetchPriority="high"
@@ -89,22 +96,21 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
                 ← {backLabel}
               </a>
             ) : null}
-            <a
+            <MarketingButton
               href={appLink || "/login"}
+              variant="glass"
               className={styles.signIn}
               onClick={() => trackEvent("app_click", { location: "nav" })}
             >
               Sign in
-            </a>
-            <span className={styles.divider} aria-hidden="true" />
+            </MarketingButton>
             <MarketingButton
               href="/takeoff-demo"
               variant="primary"
               size="large"
-              icon={plusIcon}
               onClick={() => trackDemo("nav")}
             >
-              Try the demo
+              Demo
             </MarketingButton>
           </div>
 
@@ -112,17 +118,16 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
             href="/takeoff-demo"
             variant="primary"
             className={styles.mobileDemo}
-            icon={plusIcon}
             onClick={() => trackDemo("nav-mobile")}
             ariaLabel="Try the QuoteCore+ interactive demo"
           >
-            <span data-long-label>Try the demo</span>
-            <span data-short-label>Demo</span>
+            Demo
           </MarketingButton>
 
           <button
+            ref={menuButtonRef}
             type="button"
-            className={styles.menuButton}
+            className={`${controls.button} ${controls.glass} ${styles.menuButton}`}
             onClick={() => setMenuOpen((previous) => !previous)}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
@@ -154,17 +159,6 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
                 }}
               >
                 Sign in
-              </MarketingButton>
-              <MarketingButton
-                href="/takeoff-demo"
-                variant="primary"
-                icon={plusIcon}
-                onClick={() => {
-                  trackDemo("nav-menu");
-                  setMenuOpen(false);
-                }}
-              >
-                Try the demo
               </MarketingButton>
             </div>
 

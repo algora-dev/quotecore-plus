@@ -1,3 +1,4 @@
+/** Shared marketing CTAs. Glass uses the pricing-selector G-C glint surface. */
 import type { ReactNode } from 'react';
 import styles from './MarketingButton.module.css';
 
