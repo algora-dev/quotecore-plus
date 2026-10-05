@@ -261,7 +261,7 @@
 .setupPoints svg { color: var(--orange-bright); }
 .setupCard { border-radius: 24px; padding: 44px 48px; border: 1px solid var(--focus-border); box-shadow: 0 24px 64px rgba(16,19,24,.14); }
 
-.reviewsSection { background: #fafbfc; }
+.reviewsSection { background: radial-gradient(ellipse at 50% 30%,rgba(255,107,53,.06),transparent 45%),var(--focus-canvas); }
 .reviewsGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 26px; }
 .testimonial { display: flex; flex-direction: column; padding: 28px 28px 26px; border: 1px solid #e0e4e9; border-radius: 16px; background: #fff; box-shadow: 0 4px 18px rgba(25,30,39,.018); }
 .testimonial blockquote { font-size: 14px; line-height: 1.8; color: #3e4653; margin-block: 18px 25px; }
@@ -269,6 +269,19 @@
 .testimonial strong { display: block; font-size: 13px; font-weight: 650; }
 .testimonial small { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; }
 .testimonial .avatar { width: 39px; height: 39px; flex-basis: 39px; }
+
+/* Reviews section dark mode (owner 2026-10-05): dark cards + hover lift/glow */
+.reviewsSection .testimonial { border-color: var(--focus-border); background: var(--focus-surface); box-shadow: 0 4px 18px rgba(0,0,0,.28); transition: transform 200ms var(--ease), border-color 200ms var(--ease), box-shadow 200ms var(--ease), background-color 200ms var(--ease); }
+.reviewsSection .testimonial blockquote { color: #d9dee5; }
+.reviewsSection .testimonial figcaption { border-top-color: var(--focus-border); }
+.reviewsSection .testimonial strong { color: var(--focus-text); }
+.reviewsSection .testimonial small { color: var(--focus-muted); }
+.reviewsSection .testimonial .avatar { color: #231304; background: linear-gradient(145deg,#ffdcc0,#ffb27a); }
+.reviewsSection .quoteMark { color: rgba(255,138,61,.85); }
+@media (hover:hover) {
+  .reviewsSection .testimonial:hover { transform: translateY(-4px); border-color: var(--focus-border-strong); background: var(--focus-raised); box-shadow: 0 20px 46px rgba(0,0,0,.4), 0 0 0 1px rgba(255,138,61,.14), 0 0 30px rgba(255,107,53,.1); }
+  .reviewsSection .testimonial:hover .quoteMark { color: var(--orange-bright); filter: drop-shadow(0 0 10px rgba(255,138,61,.4)); }
+}
 
 .differenceSection { background: var(--focus-canvas); }
 .comparisonWrap { overflow-x: auto; border: 1px solid var(--focus-border); border-radius: 16px; }

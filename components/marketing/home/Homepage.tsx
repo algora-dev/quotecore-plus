@@ -73,17 +73,20 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
         </div>
       </section>
 
-      <section id="reviews" tabIndex={-1} className={`${s.section} ${s.reviewsSection}`} aria-labelledby="reviews-title">
+      <section id="reviews" tabIndex={-1} className={`${s.section} ${s.dark} ${s.reviewsSection}`} aria-labelledby="reviews-title">
         <div className={s.container}><div className={s.sectionIntro}><div><p className={s.eyebrow}>From people doing the work</p><h2 id="reviews-title" className={s.sectionTitle}>Different businesses.<br />A familiar story.</h2></div><p className={s.introAside}>Less switching between tools.<br />More working the way that makes sense.</p></div>
           <div className={s.reviewsGrid}>{testimonials.map(review => <figure key={review.name} className={s.testimonial}><Icon name="quote" className={s.quoteMark} size={29} /><blockquote>“{review.quote}”</blockquote><figcaption><span className={s.avatar} aria-hidden="true">{review.initials}</span><span><strong>{review.name}</strong><small>{review.business}</small></span></figcaption></figure>)}</div>
         </div>
       </section>
 
+      {/* "The difference" comparison table — hidden for now (owner request 2026-10-05). Re-enable by removing this wrapper. */}
+      {false && (
       <section className={`${s.section} ${s.dark} ${s.differenceSection}`} aria-labelledby="difference-title">
         <div className={s.container}><div className={s.sectionIntro}><div><p className={s.eyebrow}>The difference</p><h2 id="difference-title" className={s.sectionTitle}>Keep the job moving.<br />Not the same data.</h2></div><p className={s.introAside}>Replace the hand-offs between spreadsheets, documents and email with one connected workflow.</p></div>
           <div className={s.comparisonWrap} tabIndex={0} role="region" aria-label="Workflow comparison, scroll horizontally on smaller screens"><table className={s.comparison}><caption className={s.srOnly}>Spreadsheets and email compared with QuoteCore+</caption><thead><tr><th scope="col">The task</th><th scope="col">Spreadsheets + email</th><th scope="col"><span className={s.comparisonBrand}>QuoteCore<span>+</span></span></th></tr></thead><tbody>{comparisonRows.map(([task, old, connected]) => <tr key={task}><th scope="row">{task}</th><td>{old}</td><td><span><Icon name="check" size={17} />{connected}</span></td></tr>)}</tbody></table></div>
         </div>
       </section>
+      )}
 
       <section id="free-tools" className={`${s.section} ${s.toolsSection}`} aria-labelledby="tools-title"><div className={s.container}>
         <div className={s.sectionIntro}><div><p className={s.eyebrow}>Start with something useful</p><h2 id="tools-title" className={s.sectionTitle}>Your plan. Our free tools.</h2></div><a href="/free-tools" className={s.textLink}>Explore all free tools<Icon name="arrow" size={18} /></a></div>
