@@ -325,11 +325,19 @@ function TakeoffPhaseInner({
   }, [confirmedCalibration, outlineAdapter, activePageId, touchTool]);
 
   // Free tool finish: pull the payload from the workstation's adapter.
+  // Never-silent finish (2026-10-05, owner bug report): if the payload cannot
+  // be built, show a toast instead of dead-ending the tap - the touch
+  // components "Save & continue" hit exactly that silent no-op.
+  const [finishError, setFinishError] = useState<string | null>(null);
   const emitFinish = useCallback(() => {
     const payload = outlineAdapter?.buildFinishPayload?.() ?? null;
     if (payload) {
+      setFinishError(null);
       trackFreeToolEvent('finish');
       onFinish(payload);
+    } else {
+      trackFreeToolEvent('finish-no-payload');
+      setFinishError('The report is not ready yet - nothing was lost. Tap Save & continue again.');
     }
   }, [outlineAdapter, onFinish]);
 
@@ -425,6 +433,11 @@ function TakeoffPhaseInner({
 
   return (
     <TakeoffSessionProvider actions={FREE_SESSION_BUNDLE}>
+      {finishError && (
+        <div role="alert" className="fixed left-1/2 top-3 z-[90] -translate-x-1/2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 shadow-lg">
+          {finishError}
+        </div>
+      )}
       <TakeoffDesktopHost active={!touchActive} fill>
         <TouchWorkspaceShell
           active={touchActive}
