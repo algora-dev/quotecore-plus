@@ -89,11 +89,11 @@ export function DemoLauncher() {
     return () => clearTimeout(timer);
   }, [error, startWithSystem]);
 
-  async function startFresh() {
+  async function startFresh(system?: DemoSystem) {
     if (!existing || resetting) return;
     setResetting(true); setError(null);
     try {
-      const res = await fetch('/api/demo/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId: existing.sessionId, confirm: 'RESET' }) });
+      const res = await fetch('/api/demo/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId: existing.sessionId, confirm: 'RESET', ...(system ? { system } : {}) }) });
       const body = (await res.json().catch(() => ({}))) as StartResult & { error?: string };
       if (!res.ok || !body.slug) throw new Error(body.error || 'Could not start a fresh demo. Try again shortly.');
       window.location.assign('/' + body.slug);
@@ -121,7 +121,12 @@ export function DemoLauncher() {
         <p className="text-xs text-slate-600">Continue where you left off, or start again with a completely fresh workspace. Your Smart Assistant and send allowances carry over either way.</p>
         <div className="flex flex-col gap-2">
           <button onClick={() => router.replace('/' + existing.slug)} className="qc-flow-control qc-button px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors">Continue my demo</button>
-          <button onClick={() => void startFresh()} className="qc-flow-control qc-button px-6 py-3 bg-white text-slate-800 font-semibold rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors">Start again - fresh workspace</button>
+        </div>
+        <p className="text-xs font-semibold text-slate-700 border-t border-amber-200 pt-3">Start again - fresh workspace, in your units:</p>
+        <div className="flex flex-col gap-2">
+          {([['metric', 'Metric (m, m²)'], ['imperial_ft', 'Imperial (ft, ft²)'], ['imperial_rs', 'Roofing squares (ft, RS)']] as const).map(([value, label]) => (
+            <button key={value} disabled={resetting} onClick={() => void startFresh(value)} className="qc-flow-control qc-button px-6 py-3 bg-white text-slate-800 font-semibold rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors">{label}</button>
+          ))}
         </div>
         {error && <p className="text-sm text-red-700" role="alert">{error.message}</p>}
       </div>

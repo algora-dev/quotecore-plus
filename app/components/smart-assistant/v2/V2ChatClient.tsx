@@ -48,11 +48,13 @@ export type V2ChatProps = {
   settingsHref: string;
   visible?: boolean;
   onHide: () => void;
+  /** Owner 2026-10-05 (pass 6): fired on access/permission changes so the launcher remounts with fresh access. */
+  onStaleAccess?: () => void;
 };
 
 const MAX_INPUT = 16000;
 
-export function V2ChatClient({ access, initialConversations, assistantName, greeting, settingsHref, visible = true, onHide }: V2ChatProps) {
+export function V2ChatClient({ access, initialConversations, assistantName, greeting, settingsHref, visible = true, onHide, onStaleAccess }: V2ChatProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [conversations, setConversations] = useState(initialConversations);
@@ -435,12 +437,14 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         }
         const code = isRecord(result) ? String(result.error_code ?? '') : '';
         const serverMessage = isRecord(result) && typeof result.error === 'string' ? result.error : '';
+        const staleAccess = ['access_changed', 'permissions_changed', 'workspace_changed'].includes(code);
+        if (staleAccess) onStaleAccess?.(); // Owner 2026-10-05 (pass 6): auto-reopen with fresh access instead of a dead end.
         throw new Error(code === 'quota_exceeded'
           ? 'This workspace has reached its assistant limit.'
           : code === 'migration_required'
             ? (serverMessage || 'Smart Assistant setup is incomplete on this deployment. Ask an administrator to finish setup.')
-            : ['access_changed', 'permissions_changed', 'workspace_changed'].includes(code)
-              ? (serverMessage || 'Your Smart Assistant access changed. Reopen the assistant.')
+            : staleAccess
+              ? (serverMessage || 'Your Smart Assistant access changed. Reopening the assistant…')
               : res.status === 409
                 ? 'A turn is already in progress or the request conflicts. Refresh before trying again.'
                 : 'The reply could not be verified. Retry the same message rather than send a duplicate.');

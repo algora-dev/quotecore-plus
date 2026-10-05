@@ -146,7 +146,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   // values with the stale initial state (e.g. 0 for old quotes where the
   // margin fields were null).
   const [marginsDirty, setMarginsDirty] = useState(false);
-  // Margin visibility warning: shown before "Save & Return" when showMarginInPreview is true.
+  // Margin visibility warning: shown before "Save Quote" when showMarginInPreview is true.
   const [showMarginSaveWarning, setShowMarginSaveWarning] = useState(false);
   // Used by handleApplyGlobalMargins to pass reset lines into handleSave without
   // fighting React's batched state updates.
@@ -719,7 +719,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   }
 
   // AGENT-TODO P5-SAVE-01 (Gavin): the existing save catches failures without
-  // returning a success result; Save & return still navigates after awaiting it.
+  // returning a success result; Save Quote still navigates after awaiting it.
   // Preserve this owned contract here; add an explicit success gate separately.
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -932,7 +932,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 data-copilot="cl-save-return"
                 
               >
-                {saving ? 'Saving...' : 'Save & return'}
+                {saving ? 'Saving...' : 'Save Quote'}
               </QcButton>}
       />
       <QcStudioToolbar section={studioSection} onSelect={selectStudioSection} options={studioOptions}
@@ -1668,7 +1668,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         }}
       />
 
-      {/* Margin visibility warning - shown before Save & Return when breakdown is customer-visible */}
+      {/* Margin visibility warning - shown before Save Quote when breakdown is customer-visible */}
       <ConfirmModal appearance="v2"
         open={showMarginSaveWarning}
         title="Margin breakdown is visible to the customer"

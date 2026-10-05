@@ -15,6 +15,10 @@ export async function POST(request: NextRequest) {
     if (!isRecord(body) || body.sessionId !== context.sessionId || body.confirm !== 'RESET') {
       throw new DemoError('Confirm the reset for the currently open demo.', 409);
     }
-    return demoJson(await provisionDemo(user.id, requestIp(request.headers), true));
+    // Owner 2026-10-05 (pass 6): "Start again" lets the visitor re-pick the
+    // measurement system; without one the previous demo's units carry over.
+    const system = ['metric', 'imperial_ft', 'imperial_rs'].includes(String(body.system))
+      ? String(body.system) as 'metric' | 'imperial_ft' | 'imperial_rs' : undefined;
+    return demoJson(await provisionDemo(user.id, requestIp(request.headers), true, system));
   } catch (error) { return demoErrorResponse(error); }
 }

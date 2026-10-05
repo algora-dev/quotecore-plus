@@ -21,7 +21,6 @@ import { UserImpersonationBanner } from '@/app/components/UserImpersonationBanne
 import { getAnnouncement } from '@/app/admin/(dashboard)/settings/actions';
 import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { DemoExperience } from '@/app/components/demo/DemoExperience';
-import { DemoFeatureGate } from '@/app/components/demo/DemoFeatureGate';
 
 export default async function WorkspaceLayout({
   children,
@@ -160,7 +159,7 @@ export default async function WorkspaceLayout({
           help={<HelpDrawerTrigger />}
           logout={<LogoutButton className="qc-button qc-shell-logout-button" />}
           assistant={demoContext && demoContext.tutorialState.chapter !== 'smart-assistant' && demoContext.tutorialState.chapter !== 'complete' ? (
-            <DemoFeatureGate title="Try Smart Assistant" description="Smart Assistant is available through the guided demo so its real account actions stay tied to the prepared fictional workspace." chapter="smart-assistant" workspaceSlug={slug} href={`/${slug}/assistant`} compact />
+            null
           ) : smartAssistantProps ? (
             <SmartAssistantLauncher workspaceSlug={slug} initialConversations={smartAssistantProps.conversations}
               assistantName={smartAssistantProps.name} greeting={smartAssistantProps.greeting} />

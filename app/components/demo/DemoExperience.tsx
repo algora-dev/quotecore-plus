@@ -89,7 +89,13 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   // The Smart Assistant popup opens from any workspace page; its only wrong
   // page is the standalone /assistant page (owner direction 2026-10-05).
   const assistantStep = step?.target === 'assistant';
-  const onExpectedPage = assistantStep ? pathname !== `/${workspaceSlug}/assistant` : pathname === destinationPath;
+  // The send task is valid on the Job Space AND the customer editor (its copy
+  // starts with "press Save Quote"): owner direction 2026-10-05.
+  const jobStep = step?.event === 'email.sent';
+  const editorPath = state.seed.guided_roof_job ? `/${workspaceSlug}/quotes/${state.seed.guided_roof_job}/customer-edit` : '';
+  const onExpectedPage = assistantStep ? pathname !== `/${workspaceSlug}/assistant`
+    : jobStep ? pathname === destinationPath || (!!editorPath && pathname === editorPath)
+    : pathname === destinationPath;
   // Owner 2026-10-05: when a completion card is showing but the visitor has
   // ALREADY arrived on the next task's page (Finish & Save lands straight in
   // the customer quote editor), skip the celebration card and show the actual
@@ -188,7 +194,6 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
             : <p className="qc-demo-note"><strong>Your one job:</strong> add your component{state.guided_created_component_name ? <> (“{state.guided_created_component_name}”)</> : null} and draw a rectangle anywhere on the roof. Everything else is already measured and priced.</p>)}
           {state.chapter === 'smart-assistant' && <p className="qc-demo-note">{allowance?.configured ? `${allowance.turnsRemaining} of ${allowance.turnsLimit} user turns remain. Reset does not restore them.` : 'Real Smart Assistant requires calibrated cost controls on this deployment. The rest of the demo remains available.'}</p>}
           {state.chapter === 'smart-assistant' && onExpectedPage && <div className="qc-demo-script"><span>{step.event === 'assistant.found' ? 'ASK THIS' : 'TRY THIS'}</span><p>{step.event === 'assistant.created' ? saCreateScript : step.event === 'assistant.edited' ? saEditScript : saFindScript}</p></div>}
-          {step.event === 'email.sent' && onExpectedPage && <p className="qc-demo-note"><strong>Then check your inbox.</strong> The email and its customer page are exactly what a real customer receives.</p>}
           {step.event === 'component.viewed' && onExpectedPage ? <QcButton variant="primary" disabled={pending || expired} onClick={() => void skipStep()}>I&apos;ve had a look - next step →</QcButton>
             : !onExpectedPage ? <a className="qc-demo-continue" href={destination}>Resume this task →</a>
             : step.event === 'component.created' ? <a className="qc-demo-continue" href={destination}>Open the component creator →</a>
