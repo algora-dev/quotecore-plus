@@ -43,7 +43,7 @@ export function ResultActions({ intent, result, options, catalog, disabled = fal
   function modalAction(kind: Modal) {
     const label = kind === 'book-demo' ? 'Choose a time' : 'Book my free consultation';
     const href = actionHref(kind, options);
-    if (href && !disabled && !pending) return <QcLinkButton variant="primary" className="qcp-modal-primary" href={href} onClick={save}>{label}<Icon name="arrow" size={18} /></QcLinkButton>;
+    if (href && !disabled && !pending) return <QcLinkButton variant="primary" className="qcp-modal-primary" href={href} target="_blank" rel="noopener noreferrer" onClick={save}>{label}<Icon name="arrow" size={18} /></QcLinkButton>;
     return <><QcButton variant="primary" className="qcp-modal-primary" pending={pending === kind} disabled={disabled || !!pending || !options.onAction} onClick={() => void invoke(kind)}>{pending === kind ? 'Opening…' : label}<Icon name="arrow" size={18} /></QcButton>
       {!options.onAction && !href && <p className="qcp-small-note">The {kind === 'book-demo' ? 'booking' : 'enquiry'} link has not been connected yet.</p>}</>;
   }
@@ -53,7 +53,7 @@ export function ResultActions({ intent, result, options, catalog, disabled = fal
       const className = 'qcp-clear qcp-action-card';
       const content = <><span className="qcp-card-top"><Icon name={card.icon} size={21} /><Icon name="arrow" size={16} /></span><span className="qcp-card-title">{card.title}</span><span className="qcp-card-subtitle">{card.subtitle}</span></>;
       const href = !card.dialog ? actionHref(card.key, options) : undefined;
-      if (href && !disabled && !pending) return <QcLinkButton key={card.key} data-action={card.key} href={href} onClick={save} variant="glass" className={className}>{content}</QcLinkButton>;
+      if (href && !disabled && !pending) return <QcLinkButton key={card.key} data-action={card.key} href={href} target="_blank" rel="noopener noreferrer" onClick={save} variant="glass" className={className}>{content}</QcLinkButton>;
       return <QcButton key={card.key} data-action={card.key} variant="glass" className={className}
         aria-haspopup={card.dialog ? 'dialog' : undefined} pending={pending === card.key}
         disabled={disabled || !!pending || (!card.dialog && !options.onAction)}

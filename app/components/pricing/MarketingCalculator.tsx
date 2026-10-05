@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 /**
  * Marketing mount for the V5 pricing calculator (Dark Focus, scoped .qcp).
  * Client wrapper because PricingCalculator takes function props
@@ -17,9 +19,13 @@ import { PricingCalculator, PREVIEW_CATALOG, buildSignupHref } from './calculato
 
 const CALENDLY = 'https://calendly.com/quote-core-info/15-minute-meeting';
 
+/** Sticky BlogHeader clearance for the marketing mount (px). */
+const SHELL_STYLE = { '--qcp-header-offset': '80px' } as CSSProperties;
+
 export function MarketingCalculator({ notice }: { notice?: string } = {}) {
   return (
-    <PricingCalculator
+    <div style={SHELL_STYLE}>
+      <PricingCalculator
       catalog={PREVIEW_CATALOG}
       variant="page"
       notice={notice}
@@ -37,6 +43,7 @@ export function MarketingCalculator({ notice }: { notice?: string } = {}) {
           'done-for-you': `${CALENDLY}?utm_source=quotecore&utm_medium=pricing_page&utm_content=done_for_you_consultation`,
         },
       }}
-    />
+      />
+    </div>
   );
 }

@@ -472,3 +472,9 @@
   .qcp .qcp-mobile-proposition p { font-size: 13px; color: var(--qcp-muted); }
   .qcp .qcp-mobile-proposition > span { font-size: 11px; color: var(--qcp-accent); }
 }
+
+/* Clickable completed progress steps (owner request 2026-10-05): jump back to any finished question. */
+.qcp button.qcp-progress-jump { background: none; border: 0; margin: 0; padding: 0; font: inherit; font-size: 10px; letter-spacing: inherit; line-height: inherit; color: inherit; text-align: inherit; cursor: pointer; }
+.qcp button.qcp-progress-jump:hover { color: var(--qcp-accent); }
+.qcp button.qcp-progress-jump:focus-visible { outline: 2px solid var(--qcp-accent); outline-offset: 2px; border-radius: 4px; }
+.qcp button.qcp-progress-jump:disabled { cursor: inherit; }

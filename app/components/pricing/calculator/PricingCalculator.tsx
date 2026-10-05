@@ -55,9 +55,19 @@ function CalculatorInner({ catalog, variant = 'page', initialAnswers, startAtRev
   useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   useEffect(() => {
     if (shouldFocus.current) {
-      // One document scroller. Host header offset is supplied as a scoped CSS variable.
-      frame.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
-      heading.current?.focus({ preventScroll: true }); shouldFocus.current = false;
+      // One document scroller: window.scrollTo ONLY. scrollIntoView() cascades
+      // through every scrollable ancestor and jumps the page around on tall
+      // hosts (owner-reported 2026-10-05). Align the flow top under the host's
+      // sticky header, smoothly, honouring reduced-motion.
+      shouldFocus.current = false;
+      const el = frame.current;
+      if (el) {
+        const headerOffset = parseFloat(getComputedStyle(el).getPropertyValue('--qcp-header-offset')) || 0;
+        const top = Math.max(0, el.getBoundingClientRect().top + window.scrollY - headerOffset - 8);
+        const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+        window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
+      }
+      heading.current?.focus({ preventScroll: true });
     }
   }, [screen]);
   function keepFocusVisible(event: FocusEvent<HTMLDivElement>) {
@@ -123,7 +133,10 @@ function CalculatorInner({ catalog, variant = 'page', initialAnswers, startAtRev
         <nav className="qcp-progress" aria-label="Setup progress">
           {screen === 'review' ? <p className="qcp-progress-ready"><Icon name="check" size={18} />Your setup is ready</p> :
             <ol style={{ gridTemplateColumns: `repeat(${progress.total},minmax(0,1fr))` }}>{progress.questions.map((step, index) => <li key={step} aria-current={index === stage ? 'step' : undefined} data-done={index < stage || undefined}>
-              <span className="qcp-progress-track" /><span className="qcp-progress-label">{index < stage ? <Icon name="check" size={12} /> : <span>{index + 1}</span>}{STAGES[stageFor(step)]}</span>
+              <span className="qcp-progress-track" />
+              {index < stage
+                ? <button type="button" className="qcp-progress-label qcp-progress-jump" onClick={() => { setEditing(false); navigate(step); }} disabled={pending} title={`Back to ${STAGES[stageFor(step)]}`}><Icon name="check" size={12} />{STAGES[stageFor(step)]}</button>
+                : <span className="qcp-progress-label"><span>{index + 1}</span>{STAGES[stageFor(step)]}</span>}
             </li>)}</ol>}
         </nav>
         <div className="qcp-question" key={screen}>
