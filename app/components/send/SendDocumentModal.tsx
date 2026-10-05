@@ -13,7 +13,7 @@ import type { SendDocumentProps } from './types';
 import type { useSendDocument } from './useSendDocument';
 import { AttachmentSendPicker } from '@/app/components/attachments/AttachmentSendPicker';
 import { isDemoLocation } from '@/app/lib/demo/routing';
-import { DemoSelfSend } from '@/app/components/demo/DemoSelfSend';
+import { DemoSendDialog } from '@/app/components/demo/DemoSendDialog';
 
 type Hook = ReturnType<typeof useSendDocument>;
 
@@ -61,18 +61,7 @@ export function SendDocumentModal(props: SendDocumentProps & { hook: Hook }) {
   // the self-send form - email + send. No attachments, follow-ups, templates,
   // editable email content or public links.
   if (typeof window !== 'undefined' && isDemoLocation(window.location.hostname, window.location.pathname) && props.entityKind === 'quote') {
-    return (
-      <QcJourneyDialog label="Send demo quote" size="md">
-        <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">Send your demo quote</h3>
-            <button aria-label="Close send dialog" onClick={() => setOpen(false)} className="qc-flow-control text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
-          </div>
-          <p className="text-sm text-slate-600">Sending in this demo only ever emails your own address - up to 3 times per day. Everything else you see in the main app (attachments, follow-ups, editable email) stays available there.</p>
-          <DemoSelfSend />
-        </div>
-      </QcJourneyDialog>
-    );
+    return <DemoSendDialog quoteId={props.entityId} workspaceSlug={props.workspaceSlug} onClose={() => setOpen(false)} />;
   }
 
   const showAttachments = config.attachments !== 'none';

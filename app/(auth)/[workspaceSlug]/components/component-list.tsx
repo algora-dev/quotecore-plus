@@ -352,7 +352,7 @@ export function ComponentList({
   useEffect(() => {
     if (!workspaceSlug.startsWith('demo-')) return;
     const id = demoSearch.get('demoComponent');
-    const key = `${id}:${demoSearch.get('demoTest')}`;
+    const key = `${id}:${demoSearch.get('demoTest')}:${demoSearch.get('demoVisit') ?? ''}`;
     if (!id || openedDemoTarget.current === key) return;
     const component = components.find(item => item.id === id);
     if (!component) return;
@@ -365,15 +365,43 @@ export function ComponentList({
   }, [demoSearch, workspaceSlug]);
 
   // Demo guide: ?demoCreate=1 opens the create form directly (guide CTA).
-  const openedDemoCreateRef = useRef(false);
+  const openedDemoCreateRef = useRef<string | null>(null);
   useEffect(() => {
     if (!workspaceSlug.startsWith('demo-')) return;
-    if (demoSearch.get('demoCreate') !== '1' || openedDemoCreateRef.current) return;
-    openedDemoCreateRef.current = true;
-    setEditingId(null);
-    setShowForm(true);
+    const visit = demoSearch.get('demoVisit') ?? 'initial';
+    if (demoSearch.get('demoCreate') !== '1' || openedDemoCreateRef.current === visit) return;
+    openedDemoCreateRef.current = visit;
+    // Same dirty-state protection as a normal editor switch. A guide link must
+    // never silently discard a visitor's in-progress component.
+    void (async () => {
+      if (!(await mayLeaveEditor()) || openedDemoCreateRef.current !== visit) return;
+      setEditorDirty(false); setEditingId(null); setTestOnOpen(false); setTestRequest(0);
+      // Keep demo rates illustrative; do not alter product calculation logic.
+      setRestoredName(''); setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false);
+      setFormPricingStrategy('per_unit'); setRestoredMaterialRate('10'); setRestoredLabourRate('5'); setRestoredWasteAmount('');
+      setSelectedCollectionId(demoDefaultLibraryId || activeLibraryId || collections.find(c => c.is_bootstrap)?.id || collections[0]?.id || '');
+      setEditorVersion(value => value + 1);
+      setShowForm(true);
+      requestAnimationFrame(() => editorAnchor.current?.scrollIntoView({ block: 'start', behavior: 'auto' }));
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demoSearch, workspaceSlug]);
+
+  // Demo-only surface signal: the helper follows the actual editor, not just
+  // a ?demoComponent URL that may remain after Cancel. No product save is implied.
+  useEffect(() => {
+    if (!workspaceSlug.startsWith('demo-')) return;
+    const report = () => window.dispatchEvent(new CustomEvent('qc-demo-component-surface', { detail: {
+      kind: editingId ? (testOnOpen ? 'test' : 'edit') : showForm ? 'create' : 'closed',
+      ...(editingId ? { componentId: editingId } : {}),
+    } }));
+    report();
+    window.addEventListener('qc-demo-component-surface-request', report);
+    return () => {
+      window.removeEventListener('qc-demo-component-surface-request', report);
+      window.dispatchEvent(new CustomEvent('qc-demo-component-surface', { detail: { kind: 'closed' } }));
+    };
+  }, [workspaceSlug, editingId, showForm, testOnOpen]);
 
   function cancelEdit() {
     setEditorDirty(false);

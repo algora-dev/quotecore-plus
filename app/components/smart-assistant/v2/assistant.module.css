@@ -206,8 +206,7 @@
 .root .conversationList button[aria-current='page'] { border-color: #bf8865; background: #373032; }
 @keyframes sa-sheet { from { transform: translateY(12px); opacity: .6; } to { transform: none; opacity: 1; } }
 
-.dialog { padding: 0; margin: 0; position: fixed; inset: auto 18px 18px auto; width: min(468px,calc(100vw - 36px)); height: min(820px,calc(var(--sa-viewport-height,100dvh) - 36px)); max-width: none; max-height: none; border: 1px solid #50525a; border-radius: 24px; box-shadow: 0 24px 70px #0005; background: #111216; color: #f5f6f8; overflow: hidden; }
-.dialog::backdrop { background: #080c1018; }
+.dialog { padding: 0; margin: 0; position: fixed; z-index: var(--qc-z-assistant,45); inset: auto 18px 18px auto; width: min(468px,calc(100vw - 36px)); height: min(820px,calc(var(--sa-viewport-height,100dvh) - 36px)); max-width: none; max-height: none; border: 1px solid #50525a; border-radius: 24px; box-shadow: 0 24px 70px #0005; background: #111216; color: #f5f6f8; overflow: hidden; }
 .launcher { position: fixed; right: max(16px,env(safe-area-inset-right)); bottom: max(16px,env(safe-area-inset-bottom)); z-index: 45; }
 /* v15 (2026-10-04): the band also reproduces in desktop Chrome, so this is
    not a Safari-only under-page problem. The assistant frame now uses an explicit
@@ -304,3 +303,18 @@
 .briefOption small {display:block;color:var(--sa-muted,var(--qc-text-secondary));font-size:12px;margin-top:4px;}
 .briefQuestion:disabled {opacity:.65;}
 .cardFooter {display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;}
+
+/* Non-modal host: explicit hidden guards prevent future display rules exposing
+   a parked conversation. These affect presentation, not assistant behavior. */
+.dialog[hidden], .launcher[hidden] { display: none !important; }
+.dialog:focus { outline: none; }
+.dialog:focus-visible { outline: 2px solid var(--qc-focus-ring,#ff862b); outline-offset: 3px; }
+.accessState { display: flex; flex-direction: column; gap: 16px; padding: 20px; min-height: 220px; color: #f5f6f8; }
+.accessState header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.accessState h2 { margin: 0; font-size: 18px; }
+.accessState p { margin: 0; font-size: 14px; line-height: 1.6; }
+.accessState header button { color: #f5f6f8; }
+.accessState .accessHint { color: #b9c0ca; font-size: 12px; }
+
+.chatMount { height: 100%; min-height: 0; }
+.chatMount[hidden] { display: none !important; }

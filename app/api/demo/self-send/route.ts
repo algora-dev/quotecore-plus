@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
     assertSameOrigin(request);
     const { context } = await requireDemoRequest(request);
     const body = await readSmallJson(request);
-    if (!isRecord(body) || typeof body.email !== 'string' || Object.keys(body).some(key => key !== 'email')) throw new DemoError('Enter your email address.');
+    if (!isRecord(body) || typeof body.email !== 'string' || Object.keys(body).some(key => !['email', 'quoteId'].includes(key))) throw new DemoError('Enter your email address.');
+    if (body.quoteId !== undefined && body.quoteId !== context.tutorialState.seed.guided_roof_job) throw new DemoError('Only the guided demo quote can be emailed. This quote was not sent.', 409);
     return demoJson(await sendDemoQuote(context, body.email));
   } catch (error) { return demoErrorResponse(error); }
 }

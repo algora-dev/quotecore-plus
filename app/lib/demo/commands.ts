@@ -1,4 +1,4 @@
-import { isRecord, acknowledge, type DemoGuideChapter, type DemoGuideState } from './model';
+import { isRecord, type DemoGuideChapter, type DemoGuideState } from './model';
 import { canEnterChapter, nextGuideStep, SKIP_REQUIRED_EVENTS } from './guide';
 export type GuideCommand = { action: 'welcome'; mode: 'guided' | 'explore' } | { action: 'explore' }
   | { action: 'chapter'; chapter: DemoGuideChapter } | { action: 'skip' };
@@ -17,12 +17,11 @@ export function applyGuideCommand(state: DemoGuideState, command: GuideCommand):
   if (command.action === 'welcome') return { ...state, welcomed: true, mode: command.mode };
   if (command.action === 'explore') return { ...state, welcomed: true, mode: 'explore' };
   if (command.action === 'skip') {
-    // Skippable steps are assumed complete. Hard-required steps (they create
-    // records later chapters depend on) must be done for real: applyGuideCommand
-    // returns null and the state route explains what to do instead.
+    // A skip only records a deferred lesson, never a successful business event.
+    // Record-producing prerequisite steps must still be completed for real.
     const step = nextGuideStep(state);
     if (!step || SKIP_REQUIRED_EVENTS.includes(step.event)) return null;
-    return acknowledge(state, step.event);
+    return { ...state, skipped: { ...state.skipped, [step.event]: { at: new Date().toISOString() } } };
   }
   if (!canEnterChapter(state, command.chapter)) return null;
   return { ...state, welcomed: true, mode: 'guided', chapter: command.chapter };

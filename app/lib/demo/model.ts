@@ -20,6 +20,8 @@ export type DemoGuideState = {
   chapter: DemoGuideChapter;
   seed: DemoSeedManifest;
   acknowledgements: Partial<Record<DemoEvent, DemoAcknowledgement>>;
+  /** Optional lessons deferred by the visitor; never evidence of a product save. */
+  skipped?: Partial<Record<DemoEvent, { at: string }>>;
   guided_created_component_id?: string;
   guided_created_component_name?: string;
   guided_takeoff_job_id?: string;
@@ -61,6 +63,18 @@ export function readGuide(value: unknown): DemoGuideState {
     if (!isRecord(entry) || typeof entry.at !== 'string' || !Number.isFinite(Date.parse(entry.at))) continue;
     result.acknowledgements[event] = { at: entry.at, ...(typeof entry.recordId === 'string' && UUID.test(entry.recordId) ? { recordId: entry.recordId } : {}) };
   }
+  if (isRecord(value.skipped)) {
+    for (const event of events) {
+      const entry = value.skipped[event];
+      if (isRecord(entry) && typeof entry.at === 'string' && Number.isFinite(Date.parse(entry.at))) {
+        (result.skipped ??= {})[event] = { at: entry.at };
+      }
+    }
+  }
+  for (const name of ['assistant_quote_updated_at', 'completed_at'] as const) {
+    const at = value[name];
+    if (typeof at === 'string' && Number.isFinite(Date.parse(at))) result[name] = at;
+  }
   for (const name of ['guided_created_component_id','guided_takeoff_job_id','guided_takeoff_plan_id','guided_quote_id','assistant_quote_id'] as const) {
     const id = value[name]; if (typeof id === 'string' && UUID.test(id)) result[name] = id;
   }
@@ -71,5 +85,6 @@ export function isSessionActive(status: string, expiresAt: string | null, now = 
   return status === 'active' && expiresAt !== null && Number.isFinite(Date.parse(expiresAt)) && Date.parse(expiresAt) > now;
 }
 export function acknowledge(state: DemoGuideState, event: DemoEvent, recordId?: string, now = new Date().toISOString()): DemoGuideState {
-  return { ...state, acknowledgements: { ...state.acknowledgements, [event]: { at: now, ...(recordId ? { recordId } : {}) } } };
+  const skipped = { ...state.skipped }; delete skipped[event];
+  return { ...state, skipped, acknowledgements: { ...state.acknowledgements, [event]: { at: now, ...(recordId ? { recordId } : {}) } } };
 }
