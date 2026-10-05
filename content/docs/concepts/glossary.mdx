@@ -48,7 +48,7 @@ Short definitions of the QuoteCore+ terms you will see in the app.
 
 **Dunning.** The process Stripe (and we) follow when a renewal payment fails: automatic card retries, status escalation through `past_due` - `grace` - `suspended`, with chances to recover by updating the card. See [Billing](/docs/account/billing#payment-failures-and-dunning).
 
-**Effective plan.** What your account can actually use today. Usually the same as your purchased plan, but collapses to **Starter** during grace periods or after the trial ends.
+**Effective plan.** What your account can actually use today. Usually the same as your purchased plan, but collapses to a lower tier during grace periods or after a cancellation.
 
 **Entitlement.** The bundle of features and caps your plan unlocks. Every gated action (creating a quote, drawing a flashing) checks the entitlement before allowing it.
 
@@ -60,8 +60,8 @@ Short definitions of the QuoteCore+ terms you will see in the app.
 
 **Purchased plan.** The plan you actually paid for. Stays constant during payment failures - only changes when you explicitly switch plans.
 
-**Tier.** Synonym for plan. Trial, Starter, Growth, Professional, Pro Plus, Premium.
+**Tier.** Synonym for plan. Starter, Professional, Pro Plus, Premium.
 
-**Trial.** A 14-day free taste of every feature, with tiny caps. One per account, ever. See [Free trial](/docs/account/trial).
+**Money-back guarantee.** Every paid plan is covered by a 30-day money-back guarantee from your first payment - if the product isn't right for you, you get a full refund. There is no free trial. See [Plans & billing](/docs/account/trial).
 
 **Winding down.** A paid subscription that's been cancelled but is still serving out the paid period. Status is technically still `active`, but it will collapse to Starter at the period end.

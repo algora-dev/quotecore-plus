@@ -1,10 +1,16 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+import { useQcActionNotice } from '@/app/components/ui/v2/QcActionNotice';
+import { SmartComponentEditor, type ComponentEditorSettings, type ComponentEditorInitial } from '@/app/components/pricing/SmartComponentEditor';
+import { PricingIntroduction } from '@/app/components/pricing/PricingIntroduction';
+import { canonicalUnit } from '@/app/components/pricing/componentTest';
+import { formatCurrency } from '@/app/lib/currency/currencies';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility, setComponentActive } from './actions';
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+import { useState, useEffect, useRef } from 'react';
+import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning } from './actions';
 import { AddFromCatalogModal } from './components/AddFromCatalogModal';
-import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
   ComponentLibraryRow,
   ComponentLibraryInsert,
@@ -16,32 +22,24 @@ import type {
   PricingStrategy,
   FlashingLibraryRow,
 } from '@/app/lib/types';
-import {
-  computePackCount,
-} from '@/app/lib/pricing/engine';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import type { MeasurementSystem } from '@/app/lib/types';
-import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import { loadFlashingLibrary } from '../drawings/actions';
 import { loadCalcDraftAsync, clearCalcDraft } from '@/app/(public)/free-calculators/_shared/types';
 
 /** Build the radio-button labels that decorate measurement type with the company's preferred unit. */
 // F-15: Extracted helpers + sub-components
-import { buildMeasurementLabels, allowedStrategiesFor, ROOFING_DEFAULT_TYPES, PRICING_STRATEGY_LABELS, WASTE_UNIT_LABELS, WASTE_LABELS, PITCH_LABELS } from './parts/helpers';
-import { TypeSpecificFields } from './parts/TypeSpecificFields';
+import { buildMeasurementLabels, allowedStrategiesFor, PITCH_LABELS } from './parts/helpers';
 import { PublishLibraryModal } from './components/PublishLibraryModal';
 export function ComponentList({
   initialComponents,
   workspaceSlug,
   companyMeasurementSystem = 'metric',
   companyDefaultTrade = 'roofing',
+  companyCurrency = 'NZD',
+  showPricingIntroduction = false,
+  reviewImported = false,
   componentCollections = [],
-  componentLimit,
-  componentCount,
-  effectivePlanCode,
-  flashingsFeatureEnabled,
-  subscriptionActive,
   editWarningDismissed = false,
   restoreDraftId,
   highlightComponentId,
@@ -53,25 +51,11 @@ export function ComponentList({
   companyMeasurementSystem?: MeasurementSystem;
   /** Company default trade; hides pitch for non-roofing trades. */
   companyDefaultTrade?: string;
+  companyCurrency?: string;
+  showPricingIntroduction?: boolean;
+  reviewImported?: boolean;
   /** Component collections for the company (for library assignment UI). */
   componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
-  /** Plan cap on lifetime active components. NULL = unlimited. */
-  componentLimit: number | null;
-  /** Lifetime active component count as of server render. Local state
-   *  tracks deltas during this page session. */
-  componentCount: number;
-  effectivePlanCode: string;
-  /** Whether the plan includes the flashings feature. Controls the
-   *  Flashings entry button on this page. */
-  flashingsFeatureEnabled: boolean;
-  /**
-   * Smoke #8 (2026-05-19): when the company's effective subscription is
-   * inactive (e.g. expired trial), block the + Add Component button at
-   * the click layer. DB triggers refuse the actual insert too
-   * (subscription_inactive via the H-04 cap trigger which fires P0001
-   * before reaching the cap check), so this is purely UX.
-   */
-  subscriptionActive: boolean;
   /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
   editWarningDismissed?: boolean;
   /** Draft ID from ?restore= query param - loads a saved calculator draft. */
@@ -82,6 +66,21 @@ export function ComponentList({
   /** Whether this company is an approved supplier. Shows publishing controls. */
   isSupplier?: boolean;
 }) {
+  const { notify, ask, feedback } = useQcFeedback();
+  const { notice, showNotice } = useQcActionNotice();
+  const [learning, setLearning] = useState(showPricingIntroduction);
+  const [testedInSession, setTestedInSession] = useState(false);
+  const [createdInSession, setCreatedInSession] = useState(false);
+  const [ownTested, setOwnTested] = useState(false);
+  const [draftTested, setDraftTested] = useState(false);
+  const [lastCreatedId, setLastCreatedId] = useState<string | null>(null);
+  const [testOnOpen, setTestOnOpen] = useState(false);
+  const [testRequest, setTestRequest] = useState(0);
+  const [editorDirty, setEditorDirty] = useState(false);
+  const [editorVersion, setEditorVersion] = useState(0);
+  const [createDefaults, setCreateDefaults] = useState<ComponentEditorInitial | null>(null);
+  const editorAnchor = useRef<HTMLDivElement>(null);
+  const [catalogueChanged, setCatalogueChanged] = useState(false);
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
   // Pitch is shown when the trade requires it (roofing) or opts in optionally
   // (landscaping, concrete, insulation, electrical). pitchOptional trades show
@@ -95,42 +94,10 @@ export function ComponentList({
   const pitchRafterLabel = _tradeLabels.pitchRafterLabel ?? 'Rafter Pitch';
   // Material orders image label - flashings terminology only applies to roofing.
   const isRoofingTrade = companyDefaultTrade === 'roofing';
-  // Drawing-library feature label: 'Flashings' for roofing, 'Drawings & Images' for all others.
-  const featureLabel = _tradeLabels.featureLabel ?? 'Flashings';
-  const featureLabelSingular = _tradeLabels.featureLabelSingular ?? 'Flashing';
-  const imageAssignLabel = 'Assign Images (Optional)';
-  const imageSelectPlaceholder = 'Select an image...';
   const imageHelperText = isRoofingTrade ? 'Add flashing drawings to use in material order forms' : 'Add images/drawings to use in material order forms';
-  /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
-  const unitForMeasurement = (mt: MeasurementType) =>
-    getUnitLabel(mt as 'area' | 'lineal' | 'quantity' | 'fixed', companyMeasurementSystem);
-  /** System-aware version of `wasteAmountSuffix(wt, mt)` from types.ts. Drives the
-   *  right-hand label next to the Waste Amount input on the component editor. */
-  const wasteAmountSuffix = (wt: WasteType, mt: MeasurementType): string => {
-    if (wt === 'percent') return '%';
-    if (wt === 'fixed') return unitForMeasurement(mt);
-    return '';
-  };
-  /** Placeholder text inside the Waste Amount input. Mirrors the suffix unit. */
-  const wasteAmountPlaceholder = (wt: WasteType, mt: MeasurementType): string => {
-    if (wt === 'percent') return '% e.g. 10';
-    return `e.g. 0.25 (${unitForMeasurement(mt)})`;
-  };
   const [components, setComponents] = useState(initialComponents);
   const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [flashingsUpgradeOpen, setFlashingsUpgradeOpen] = useState(false);
-  // Smoke #8 (2026-05-19): subscription-inactive upgrade modal. Mirrors
-  // the same pattern in QuotesList.
-  const [subBlockedOpen, setSubBlockedOpen] = useState(false);
-
-  // Active component allowance tracking. `componentCount` is the server-provided
-  // authoritative count; `activeCount` tracks local state for immediate UI feedback.
-  // We use the server count as the source of truth and update it after each action.
-  const [activeCountState, setActiveCountState] = useState(componentCount);
-  const atCap = componentLimit !== null && activeCountState >= componentLimit;
-  const [activatingId, setActivatingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | ComponentType>('all');
   const [measurementFilter, setMeasurementFilter] = useState<'all' | MeasurementType | 'rafter' | 'valley_hip'>('all');
@@ -153,7 +120,7 @@ export function ComponentList({
   // Initialise from localStorage so the user's last-set default is applied on landing.
   const LOCAL_KEY = `qc-default-lib-${workspaceSlug}`;
   const [activeLibraryId, setActiveLibraryId] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
+    if (reviewImported || typeof window === 'undefined') return '';
     const saved = localStorage.getItem(LOCAL_KEY);
     // Validate saved id still exists in collections list before applying.
     if (saved && componentCollections.some(c => c.id === saved)) return saved;
@@ -210,7 +177,8 @@ export function ComponentList({
   // type, snap back to per_unit. Keeps the dropdown honest under rapid
   // measurement-type changes.
   useEffect(() => {
-    if (!allowedStrategiesFor(formMeasurementType).includes(formPricingStrategy)) {
+    if (!allowedStrategiesFor(formMeasurementType).includes(formPricingStrategy) &&
+        !(formPricingStrategy === 'per_pack_coverage' && allowedStrategiesFor(formMeasurementType).includes('per_pack_area'))) {
       setFormPricingStrategy('per_unit');
     }
   }, [formMeasurementType, formPricingStrategy]);
@@ -323,15 +291,26 @@ export function ComponentList({
     filtered = filtered.filter(c => c.name.toLowerCase().includes(s));
   }
 
-  // Sort: active components first, then by name.
-  filtered = [...filtered].sort((a, b) => {
-    const aActive = a.is_active !== false ? 0 : 1;
-    const bActive = b.is_active !== false ? 0 : 1;
-    if (aActive !== bActive) return aActive - bActive;
-    return a.name.localeCompare(b.name);
-  });
+  // Sort by name.
+  filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
 
-  function startEdit(comp: ComponentLibraryRow) {
+  async function mayLeaveEditor() {
+    if (saving) return false;
+    if (!editorDirty) return true;
+    return ask({ title: 'Leave unsaved component settings?', description: 'Testing does not save your changes. Keep editing to save them first.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', destructive: true });
+  }
+
+  async function startEdit(comp: ComponentLibraryRow, openTest = false) {
+    if (editingId === comp.id) {
+      if (openTest) setTestRequest(value => value + 1);
+      editorAnchor.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+      return;
+    }
+    if (!(await mayLeaveEditor())) return;
+    setShowForm(false);
+    setEditorDirty(false);
+    setEditorVersion(value => value + 1);
+    setTestOnOpen(openTest); setTestRequest(0);
     setEditingId(comp.id);
     setFormError(null);
     setFormMeasurementType(comp.measurement_type);
@@ -359,6 +338,8 @@ export function ComponentList({
   }
 
   function cancelEdit() {
+    setEditorDirty(false);
+    setShowForm(false);
     setEditingId(null);
     setFormError(null);
     setFormWasteType('none');
@@ -369,32 +350,12 @@ export function ComponentList({
     setFormNotes('');
   }
 
-  async function handleToggleActive(compId: string, nextActive: boolean) {
-    setActivatingId(compId);
-    try {
-      const result = await setComponentActive(compId, nextActive);
-      if (result.ok) {
-        // Update local component state
-        setComponents(prev => prev.map(c =>
-          c.id === compId ? { ...c, is_active: nextActive } : c
-        ));
-        // Update authoritative count
-        setActiveCountState(result.activeCount);
-      } else if (result.code === 'component_limit_reached') {
-        // At cap - open upgrade modal
-        setUpgradeOpen(true);
-      }
-    } catch (err) {
-      console.error('[toggleActive] failed:', err);
-    } finally {
-      setActivatingId(null);
-    }
-  }
+
 
   function addFlashing() {
     if (!selectedFlashingId) return;
     if (assignedFlashings.includes(selectedFlashingId)) {
-      alert('This flashing is already assigned');
+      setFormError('This image is already assigned. Choose a different image.');
       return;
     }
     setAssignedFlashings(prev => [...prev, selectedFlashingId]);
@@ -411,7 +372,7 @@ export function ComponentList({
     const result = await deleteComponentCollection(deletingLibraryId);
     setDeleteLibraryLoading(false);
     if (!result.ok) {
-      alert(result.message);
+      await notify(result.message);
       setDeletingLibraryId(null);
       return;
     }
@@ -430,7 +391,7 @@ export function ComponentList({
     const result = await renameComponentCollection(renamingLibraryId, renameValue);
     setRenaming(false);
     if (!result.ok) {
-      alert(result.message);
+      await notify(result.message);
       return;
     }
     setCollections(prev => prev.map(c => c.id === renamingLibraryId ? { ...c, name: result.name } : c));
@@ -475,7 +436,7 @@ export function ComponentList({
     // Validate per_pack_coverage requires all three pack fields.
     if (formPricingStrategy === 'per_pack_coverage') {
       if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
-        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+        setFormError('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
         setSaving(false);
         return;
       }
@@ -490,7 +451,7 @@ export function ComponentList({
     if (wasteType === 'fixed' && wasteAmountRaw.includes('.')) {
       const decimals = wasteAmountRaw.split('.')[1];
       if (decimals && decimals.length > 2) {
-        alert('Reduce your decimal places to two or less (e.g. 0.25)');
+        setFormError('Reduce your decimal places to two or less (e.g. 0.25)');
         setSaving(false);
         return;
       }
@@ -547,22 +508,20 @@ export function ComponentList({
     try {
       const result = await createComponent(inputWithGenericTrades);
       if (!result.ok) {
-        if (result.code === 'subscription_inactive') {
-          setSubBlockedOpen(true);
-        } else {
-          setFormError(result.code === 'internal_error' ? result.message : 'Could not create component.');
-        }
+        setFormError(result.code === 'internal_error' ? result.message : 'Could not create component.');
         return;
       }
       setComponents((prev) => [...prev, result.data]);
-      // Update authoritative active count from the server response.
-      setActiveCountState(result.activeCount);
-      // If the component was created as inactive (at cap), show a brief message.
-      if (result.activeStatus === 'inactive') {
-        // Could use a toast here; for now, the inactive badge on the row
-        // plus the counter updating is sufficient feedback.
-        console.log('[createComponent] Component created as inactive (at cap).');
-      }
+      setEditorDirty(false);
+      setCreateDefaults(null);
+      setCreatedInSession(true);
+      setLastCreatedId(result.data.id);
+      setOwnTested(draftTested);
+      setDraftTested(false);
+      setActiveLibraryId(selectedCollectionId);
+      setFilter('all'); setMeasurementFilter('all'); setSearchQuery('');
+      showNotice({ title: 'Component saved', tone: 'success', focus: true,
+        description: `${result.data.name} is saved in your library. Check another component or price a job when your costs are ready.` });
       setShowForm(false);
       setFormWasteType('none');
       setFormMeasurementType('area');
@@ -612,7 +571,7 @@ export function ComponentList({
     // Validate per_pack_coverage requires all three pack fields.
     if (formPricingStrategy === 'per_pack_coverage') {
       if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
-        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+        setFormError('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
         return;
       }
     }
@@ -626,7 +585,7 @@ export function ComponentList({
     if (wasteType === 'fixed' && wasteAmountRaw.includes('.')) {
       const decimals = wasteAmountRaw.split('.')[1];
       if (decimals && decimals.length > 2) {
-        alert('Reduce your decimal places to two or less (e.g. 0.25)');
+        setFormError('Reduce your decimal places to two or less (e.g. 0.25)');
         return;
       }
     }
@@ -690,6 +649,7 @@ export function ComponentList({
       const updated = await updateComponent(id, input);
       setComponents((prev) => prev.map((c) => (c.id === id ? updated : c)));
       cancelEdit();
+      showNotice({ title: 'Component saved', tone: 'success', focus: true, description: `${updated.name} has been updated. Testing explains the calculation; you remain responsible for checking your business costs.` });
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to update component');
     } finally {
@@ -730,43 +690,106 @@ export function ComponentList({
     if (!deleteCompId) return;
     setDeleteLoading(true);
     try {
-      // Check if the component being deleted was active (to update count).
-      const comp = components.find(c => c.id === deleteCompId);
-      const wasActive = comp ? comp.is_active !== false : false;
       await deleteComponent(deleteCompId);
       setComponents((prev) => prev.filter((c) => c.id !== deleteCompId));
-      if (wasActive) {
-        setActiveCountState(prev => Math.max(0, prev - 1));
-      }
+      if (deleteCompId === editingId) cancelEdit();
       setDeleteCompId(null);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Failed to delete');
+      showNotice({ title: 'Component was not deleted', tone: 'danger', description: err instanceof Error ? err.message : 'Please try again.', focus: true });
     } finally {
       setDeleteLoading(false);
     }
   }
 
-  const wasteAmountLabel = wasteAmountSuffix(formWasteType, formMeasurementType);
-  const wasteAmountPlaceholderText = wasteAmountPlaceholder(formWasteType, formMeasurementType);
+
+  const editingComponent = components.find(component => component.id === editingId);
+  function initialForComponent(component: ComponentLibraryRow): ComponentEditorInitial {
+    const extra = component as unknown as Record<string, unknown>;
+    return { name: component.name, sku: component.sku ?? '', componentType: component.component_type,
+      materialRate: String(component.default_material_rate ?? 0), labourRate: String(component.default_labour_rate ?? 0),
+      wasteAmount: String(component.default_waste_type === 'percent' ? component.default_waste_percent ?? 0 : component.default_waste_fixed ?? 0),
+      pitchType: component.default_pitch_type, eligibleForOrders: component.eligible_for_orders ?? true,
+      storedStrategy: (extra.pricing_strategy as PricingStrategy) ?? 'per_unit',
+      storedPackPrice: String(extra.pack_price ?? ''), storedPackSize: String(extra.pack_size ?? ''), storedPackCoverage: String(extra.pack_coverage_m2 ?? ''),
+      storedHeightMm: String(extra.height_value_mm ?? ''), storedDepthMm: String(extra.depth_value_mm ?? '') };
+  }
+  const editorInitial: ComponentEditorInitial = editingComponent ? initialForComponent(editingComponent) : createDefaults ?? {
+    name: restoredName, sku: '', componentType: filter === 'extra' ? 'extra' : 'main', materialRate: restoredMaterialRate,
+    labourRate: restoredLabourRate, wasteAmount: restoredWasteAmount, pitchType: 'rafter', eligibleForOrders: true };
+  const editorSettings: ComponentEditorSettings = { measurementType: formMeasurementType, wasteType: formWasteType,
+    pitchEnabled: formPitchEnabled, pricingStrategy: formPricingStrategy, packPrice: formPackPrice, packSize: formPackSize,
+    packCoverage: formPackCoverageM2, heightMm: formHeightMm, depthMm: formDepthMm, hoursUnit: formHoursUnit,
+    wasteUnit: formWasteUnit, notes: formNotes };
+  function updateEditorSettings(patch: Partial<ComponentEditorSettings>) {
+    setEditorDirty(true); setDraftTested(false);
+    if (patch.measurementType !== undefined) setFormMeasurementType(patch.measurementType);
+    if (patch.wasteType !== undefined) setFormWasteType(patch.wasteType);
+    if (patch.pitchEnabled !== undefined) setFormPitchEnabled(patch.pitchEnabled);
+    if (patch.pricingStrategy !== undefined) setFormPricingStrategy(patch.pricingStrategy);
+    if (patch.packPrice !== undefined) setFormPackPrice(patch.packPrice);
+    if (patch.packSize !== undefined) setFormPackSize(patch.packSize);
+    if (patch.packCoverage !== undefined) setFormPackCoverageM2(patch.packCoverage);
+    if (patch.heightMm !== undefined) setFormHeightMm(patch.heightMm);
+    if (patch.depthMm !== undefined) setFormDepthMm(patch.depthMm);
+    if (patch.hoursUnit !== undefined) setFormHoursUnit(patch.hoursUnit);
+    if (patch.wasteUnit !== undefined) setFormWasteUnit(patch.wasteUnit);
+    if (patch.notes !== undefined) setFormNotes(patch.notes);
+  }
+  async function startNew(copy?: ComponentEditorInitial) {
+    // Explicitly making a copy preserves its draft values. Other navigation is
+    // confirmed first; never save implicitly or bypass subscription/cap guards.
+    if (!copy && !(await mayLeaveEditor())) return;
+    setEditingId(null); setShowForm(true); setFormError(null); setEditorDirty(!!copy); setDraftTested(false);
+    setCreateDefaults(copy ?? null); setEditorVersion(value => value + 1); setTestOnOpen(false); setTestRequest(0);
+    // A copied legacy row is a NEW record: use the canonical linear enum.
+    if (copy && formMeasurementType === 'linear') setFormMeasurementType('lineal');
+    if (!copy) {
+      setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false);
+      setFormPricingStrategy('per_unit'); setFormPackPrice(''); setFormPackSize(''); setFormPackCoverageM2('');
+      setFormHeightMm(''); setFormDepthMm(''); setFormHoursUnit('hr'); setFormWasteUnit('percent'); setFormNotes('');
+      setAssignedFlashings([]); setSelectedFlashingId('');
+      setRestoredName(''); setRestoredMaterialRate(''); setRestoredLabourRate(''); setRestoredWasteAmount('');
+      setSelectedCollectionId(activeLibraryId || collections.find(c => c.is_bootstrap)?.id || collections[0]?.id || '');
+    }
+  }
+  function componentCostSummary(component: ComponentLibraryRow) {
+    const values = initialForComponent(component);
+    if (values.storedStrategy && values.storedStrategy !== 'per_unit') {
+      if (!values.storedPackPrice || !(values.storedStrategy === 'per_pack_coverage' ? values.storedPackCoverage : values.storedPackSize)) return 'Materials: complete the pack settings';
+      return `Materials: ${formatCurrency(Number(values.storedPackPrice || 0), companyCurrency)} per pack (${values.storedStrategy === 'per_pack_coverage' ? values.storedPackCoverage : values.storedPackSize} ${canonicalUnit(component.measurement_type)})`;
+    }
+    return `Materials: ${formatCurrency(component.default_material_rate ?? 0, companyCurrency)}/${canonicalUnit(component.measurement_type)}`;
+  }
+  useEffect(() => {
+    if (showForm || editingId) editorAnchor.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+  }, [showForm, editingId, editorVersion]);
+  useEffect(() => {
+    if (!editorDirty) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [editorDirty]);
 
   return (
-    <div className="space-y-5">
+    <QcLibrary className="space-y-5">
+      {feedback}
+      {notice}
       {/* Create Library Modal */}
       {showCreateLibraryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+        <QcJourneyDialog label="Create New Library" size="sm">
+          <div className="p-6 w-full">
             <h2 className="text-base font-semibold text-slate-900 mb-4">Create New Library</h2>
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Library Name</label>
-                <input
+                <input aria-label="Library Name"
                   type="text"
                   value={newLibraryName}
                   onChange={e => setNewLibraryName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleCreateLibrary(); } }}
                   placeholder="e.g. Residential, Commercial"
                   maxLength={80}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="qc-input qc-library-control w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   autoFocus
                 />
               </div>
@@ -774,38 +797,51 @@ export function ComponentList({
                 <p className="text-xs text-red-600">{createLibraryError}</p>
               )}
               <div className="flex gap-2 pt-1">
-                <button
+                <button data-qc-variant="primary"
                   type="button"
                   onClick={() => void handleCreateLibrary()}
                   disabled={creatingLibrary || !newLibraryName.trim()}
-                  className="flex-1 px-3 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50"
+                  className="qc-button qc-flow-control qc-library-control flex-1"
                 >
                   {creatingLibrary ? 'Creating...' : 'Create Library'}
                 </button>
-                <button
+                <button data-qc-variant="ghost"
                   type="button"
                   onClick={() => { setShowCreateLibraryModal(false); setNewLibraryName(''); setCreateLibraryError(''); }}
-                  className="px-3 py-2 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
+                  className="qc-button qc-flow-control qc-library-control "
                 >
                   Cancel
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Header */}
       <div>
-        <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Smart Components™</h1>
-        <p className="text-xs md:text-sm text-slate-500 mt-1">Manage your Smart Components™ and extras for quotes.</p>
+        <h1 className="qc-library-title text-xl md:text-2xl font-semibold text-slate-900">Pricing library</h1>
+        <p className="text-xs md:text-sm text-slate-500 mt-1">Find and reuse Smart Components™: saved materials, labour and measurement settings for your quotes.</p>
       </div>
+      <PricingIntroduction open={learning} onOpen={() => setLearning(true)} onDismiss={() => setLearning(false)}
+        hasComponents={components.length > 0} tested={testedInSession} created={createdInSession} ownTested={ownTested}
+        workspaceSlug={workspaceSlug} onCreate={() => { void startNew(); }}
+        onTestCreated={() => {
+          const created = components.find(component => component.id === lastCreatedId);
+          if (created) void startEdit(created, true);
+          else void startNew();
+        }}
+        onChoose={() => {
+          setFilter('all'); setMeasurementFilter('all'); setSearchQuery(''); setActiveLibraryId('');
+          requestAnimationFrame(() => document.getElementById('qc-pricing-component-list')?.scrollIntoView({ block: 'start', behavior: 'auto' }));
+        }} />
+
 
       
 
       {/* Active library title + rename */}
       {collections.length > 0 && (
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex flex-wrap items-center gap-2 mb-1">
           {renamingLibraryId && renamingLibraryId === (activeLibraryId || null) ? (
             <div className="flex items-center gap-2">
               <input
@@ -817,21 +853,21 @@ export function ComponentList({
                   if (e.key === 'Escape') { setRenamingLibraryId(null); setRenameValue(''); }
                 }}
                 maxLength={80}
-                className="px-2 py-1 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                className="qc-input qc-library-control px-2 py-1 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
                 autoFocus
               />
-              <button
+              <button data-qc-variant="primary"
                 type="button"
                 onClick={() => void handleRenameLibrary()}
                 disabled={renaming || !renameValue.trim()}
-                className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 {renaming ? 'Saving...' : 'Save'}
               </button>
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => { setRenamingLibraryId(null); setRenameValue(''); }}
-                className="px-3 py-1 text-xs rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 Cancel
               </button>
@@ -860,10 +896,10 @@ export function ComponentList({
                         Unlisted
                       </span>
                     )}
-                    <button
+                    <button data-qc-variant="ghost"
                       type="button"
                       onClick={() => setShowPublishModal(activeLibraryId)}
-                      className="text-xs px-2.5 py-1 rounded-full border border-slate-300 hover:bg-slate-50 hover:border-orange-300 text-slate-600 transition"
+                      className="qc-button qc-flow-control qc-library-control "
                     >
                       {vis === 'private' ? 'Publish' : 'Settings'}
                     </button>
@@ -872,14 +908,14 @@ export function ComponentList({
               })()}
               {activeLibraryId && (
                 <>
-                  <button
+                  <button aria-label="Rename library" data-qc-variant="ghost"
                     type="button"
                     title="Rename library"
                     onClick={() => {
                       const col = collections.find(c => c.id === activeLibraryId);
                       if (col) { setRenamingLibraryId(activeLibraryId); setRenameValue(col.name); }
                     }}
-                    className="text-slate-400 hover:text-orange-500 transition-colors"
+                    className="qc-button qc-flow-control qc-library-control "
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -887,11 +923,11 @@ export function ComponentList({
                     </svg>
                   </button>
                   {!collections.find(c => c.id === activeLibraryId)?.is_bootstrap && (
-                    <button
+                    <button aria-label="Delete library" data-qc-variant="ghost"
                       type="button"
                       title="Delete library"
                       onClick={() => setDeletingLibraryId(activeLibraryId)}
-                      className="text-slate-400 hover:text-red-500 transition-colors"
+                      className="qc-button qc-flow-control qc-library-control "
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="3 6 5 6 21 6" />
@@ -909,86 +945,52 @@ export function ComponentList({
         </div>
       )}
       {/* Filter tabs + Action Buttons */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-fit max-w-full">
           {(['all', 'main', 'extra'] as const).map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 text-sm rounded-full font-medium transition whitespace-nowrap ${
+              aria-pressed={filter === f} onClick={() => setFilter(f)}
+              className={"qc-flow-control qc-library-choice " + (`px-4 py-1.5 text-sm rounded-full font-medium transition whitespace-nowrap ${
                 filter === f
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
-              }`}
+              }`)}
             >
               {f === 'all' ? 'All' : f === 'main' ? 'Main' : 'Extras'}
             </button>
           ))}
-          <Link
-            href={`/${workspaceSlug}/supplier-directory`}
-            prefetch={false}
-            className="px-4 py-1.5 text-sm rounded-full font-medium transition whitespace-nowrap text-slate-500 hover:text-slate-700"
-          >
-            Supplier Directory
-          </Link>
+          {/* Owner 2026-09-29: Supplier Directory tab hidden on the pricing
+              library page for now. Re-add the Link here when the supplier
+              feature returns. */}
         </div>
         
         <div className="flex flex-col gap-2 md:flex-row">
-          <button
-            onClick={() => {
-              if (!subscriptionActive) {
-                setSubBlockedOpen(true);
-                return;
-              }
-              // No cap block here - the DB trigger handles it.
-              // Components created at cap land as inactive.
-              setShowForm(true);
-            }}
+          <button data-qc-variant="primary"
+            onClick={() => { void startNew(); }}
             data-copilot="add-component"
-            className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
           >
-            + Add Smart Component™
+            + Create component
           </button>
-          <button
+          <button data-qc-variant="ghost"
             onClick={() => {
-              if (!subscriptionActive) {
-                setSubBlockedOpen(true);
-                return;
-              }
-              setShowCatalogModal(true);
+              void mayLeaveEditor().then(leave => { if (leave) { cancelEdit(); setShowCatalogModal(true); } });
             }}
-            className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
           >
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
             </svg>
-            Add from Catalog
+            Add from catalogue
           </button>
-          {flashingsFeatureEnabled ? (
-            <Link
-              href={`/${workspaceSlug}/drawings`}
-              className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-            >
-              {featureLabel}
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setFlashingsUpgradeOpen(true)}
-              title={`${featureLabel} requires a higher plan`}
-              className="inline-flex items-center justify-center rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500 cursor-pointer hover:bg-slate-300"
-            >
-              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              {featureLabel}
-            </button>
-          )}
+          {/* Owner 2026-09-29: Flashings entry button hidden on the pricing
+              library page for now, along with its upgrade modal and plan gate. */}
         </div>
       </div>
 
       {/* Measurement type filters */}
-      <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
+      <div className="qc-library-filters" role="group" aria-label="Filter by measurement">
         {[
           { key: 'all', label: 'All Types' },
           { key: 'area', label: 'Area' },
@@ -998,12 +1000,12 @@ export function ComponentList({
         ].map(f => (
           <button
             key={f.key}
-            onClick={() => setMeasurementFilter(f.key as any)}
-            className={`px-3 py-1 text-xs font-medium rounded-full border transition whitespace-nowrap ${
+            aria-pressed={measurementFilter === f.key} onClick={() => setMeasurementFilter(f.key as any)}
+            className={"qc-flow-control qc-library-choice " + (`px-3 py-1 text-xs font-medium rounded-full border transition whitespace-nowrap ${
               measurementFilter === f.key
                 ? 'bg-slate-900 text-white border-slate-900'
                 : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-            }`}
+            }`)}
           >
             {f.label}
           </button>
@@ -1011,13 +1013,13 @@ export function ComponentList({
       </div>
 
       {/* Library filter + Search row */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="qc-library-search-bar flex items-center gap-3 flex-wrap">
         {collections.length > 0 && (
-          <div className="flex items-center gap-2">
-            <select
+          <div className="qc-library-library-picker flex items-center gap-2">
+            <select aria-label="Component library"
               value={activeLibraryId}
               onChange={e => setActiveLibraryId(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
+              className="qc-select qc-library-control px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
             >
               <option value="">All Libraries</option>
               {collections.map(col => (
@@ -1028,7 +1030,7 @@ export function ComponentList({
             </select>
             {/* Set as default button - only shown when a specific library is selected */}
             {activeLibraryId && (
-              <button
+              <button aria-label={savedDefaultLibId === activeLibraryId ? 'This is your default library' : 'Set as default library'}
                 type="button"
                 title={savedDefaultLibId === activeLibraryId ? 'This is your default library' : 'Set as default library'}
                 onClick={() => {
@@ -1046,11 +1048,11 @@ export function ComponentList({
                   }
                   setTimeout(() => setDefaultLibraryFlash(null), 2000);
                 }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-full border transition-all ${
+                className={"qc-flow-control qc-library-choice " + (`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-full border transition-all ${
                   savedDefaultLibId === activeLibraryId
                     ? 'bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100'
                     : 'bg-white border-slate-300 text-slate-500 hover:border-orange-300 hover:text-orange-500'
-                }`}
+                }`)}
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill={savedDefaultLibId === activeLibraryId ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -1063,582 +1065,64 @@ export function ComponentList({
             )}
           </div>
         )}
-        <div className="relative flex-1 max-w-sm">
+        <div className="qc-library-component-search relative flex-1 max-w-sm">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search Smart Components™..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+            aria-label="Search components" placeholder="Search components…"
+            className="qc-input qc-flow-search qc-library-control w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">&times;</button>
+            <button type="button" aria-label="Clear component search" data-qc-variant="ghost" onClick={() => setSearchQuery('')} className="qc-button qc-flow-control qc-library-control qc-search-clear">&times;</button>
           )}
         </div>
       </div>
 
-           {showForm && (
-        <div className="mb-4 p-4 border border-slate-200 rounded-xl bg-white">
-          <h3 className="font-semibold text-slate-900 mb-3">New Smart Component™</h3>
-          {formError && (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
-          )}
-          <form onSubmit={handleCreate} className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div data-copilot="component-name">
-                <label className="block text-xs text-slate-500 mb-1">Name</label>
-                <input name="name" required defaultValue={restoredName} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-              </div>
-              <div data-copilot="component-sku">
-                <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
-                <input name="sku" defaultValue={''} placeholder="e.g. RDG-250-BLK" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none" />
-              </div>
-              <div data-copilot="component-type">
-                <label className="block text-xs text-slate-500 mb-1">Type</label>
-                <select 
-                  name="component_type" 
-                  required 
-                  defaultValue={filter === 'extra' ? 'extra' : 'main'}
-                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                >
-                  <option value="main">Main Component</option>
-                  <option value="extra">Extra</option>
-                </select>
-              </div>
-              <div data-copilot="component-measurement">
-                <label className="block text-xs text-slate-500 mb-1">Measurement</label>
-                <select
-                  name="measurement_type"
-                  required
-                  value={formMeasurementType}
-                  onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
-                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                >
-                  {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
-                    // Filter the dropdown down to roofing defaults when the
-                    // generic-trades flag is off; show every type when on.
-                    // The legacy `linear` alias stays hidden in both modes
-                    // because new rows must always use `lineal`.
-                    .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
-                    .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
-                    .map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
-                    ))}
-                </select>
-              </div>
-              <div data-copilot="component-labour">
-                <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
-                <input name="default_labour_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredLabourRate} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-              </div>
-
-              {/* Item Cost pricing: single source of truth.
-                  When generic trades on: pricing strategy dropdown drives whether
-                  we show per-unit Item Cost OR pack price/size fields.
-                  When flag off: always show the simple Item Cost field. */}
-              {genericTradesEnabled && (
-                <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
-                  <select
-                    value={formPricingStrategy}
-                    onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
-                    className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                  >
-                    {allowedStrategiesFor(formMeasurementType).map((s) => (
-                      <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
-                <div data-copilot="component-rates">
-                  <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
-                  <input name="default_material_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredMaterialRate} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                </div>
-              )}
-              {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
-                <>
-                  {/* hidden zero so the form submission always has default_material_rate */}
-                  <input type="hidden" name="default_material_rate" value="0" />
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
-                    <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">
-                      Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
-                    </label>
-                    <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                  </div>
-                  {formPricingStrategy === 'per_pack_coverage' && (
-                    <div className="col-span-2">
-                      <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
-                      <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                    </div>
-                  )}
-                </>
-              )}
-
-              <div data-copilot="component-waste">
-                <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
-                <select
-                  name="default_waste_type"
-                  value={formWasteType}
-                  onChange={(e) => setFormWasteType(e.target.value as WasteType)}
-                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                >
-                  {Object.entries(WASTE_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
-                </select>
-              </div>
-              {formWasteType !== 'none' && (
-                <div data-copilot="component-waste-amount">
-                  <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountLabel}</label>
-                  <input name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} defaultValue={restoredWasteAmount} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                </div>
-              )}
-
-            </div>
-
-            {/* Type-specific fields (generic trades only): height, depth, time unit. */}
-            {genericTradesEnabled && (
-              <TypeSpecificFields
-                measurementType={formMeasurementType}
-                heightMm={formHeightMm} setHeightMm={setFormHeightMm}
-                depthMm={formDepthMm} setDepthMm={setFormDepthMm}
-                hoursUnit={formHoursUnit} setHoursUnit={setFormHoursUnit}
-              />
-            )}
-
-            {pitchVisible && (
-              <>
-                <div className="flex items-center gap-2" data-copilot="component-pitch">
-                  <input type="checkbox" id="pitch-enabled" checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
-                  <label htmlFor="pitch-enabled" className="text-xs text-slate-700">{pitchCheckboxLabel}</label>
-                </div>
-                {formPitchEnabled && (
-                  <div data-copilot="component-pitch-type">
-                    <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                    <select name="default_pitch_type" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
-                      <option value="rafter">{pitchRafterLabel}</option>
-                      {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
-                    </select>
-                  </div>
-                )}
-              </>
-            )}
-            <div className="border-t border-slate-200 pt-3 mt-3" data-copilot="component-flashings">
-              <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
-              <div className="flex items-center gap-2 mb-2">
-                <input type="checkbox" id="eligible-orders" name="eligible_for_orders" defaultChecked className="rounded" />
-                <label htmlFor="eligible-orders" className="text-xs text-slate-700">Include in material orders</label>
-              </div>
-              <div>
-                <label className="block text-xs text-slate-500 mb-1">{imageAssignLabel}</label>
-                <div className="flex gap-2">
-                  <select 
-                    value={selectedFlashingId} 
-                    onChange={(e) => setSelectedFlashingId(e.target.value)}
-                    className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
-                  >
-                    <option value="">{imageSelectPlaceholder}</option>
-                    {flashings.map(flashing => (
-                      <option key={flashing.id} value={flashing.id}>
-                        {flashing.name} {flashing.description && `- ${flashing.description}`}
-                      </option>
-                    ))}
-                  </select>
-                  <button 
-                    type="button" 
-                    onClick={addFlashing}
-                    disabled={!selectedFlashingId}
-                    className="px-3 py-1 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  >
-                    Add
-                  </button>
-                </div>
-                {assignedFlashings.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {assignedFlashings.map(flashingId => {
-                      const flashing = flashings.find(f => f.id === flashingId);
-                      return (
-                        <div key={flashingId} className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded border border-slate-200">
-                          <span className="text-xs text-slate-700">
-                            {flashing?.name || 'Unknown'} {flashing?.description && `- ${flashing.description}`}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeFlashing(flashingId)}
-                            className="text-red-600 hover:text-red-700 text-xs font-medium"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
-              </div>
-            </div>
-            {/* Notes */}
-            <div className="border-t border-slate-200 pt-3 mt-3">
-              <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
-              <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
-              <textarea
-                value={formNotes}
-                onChange={e => setFormNotes(e.target.value)}
-                placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
-                rows={3}
-                maxLength={500}
-                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
-              />
-              {formNotes.length > 0 && (
-                <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
-              )}
-            </div>
-
-            {collections.length > 0 && (
-              <div className="border-t border-slate-200 pt-3 mt-3">
-                <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
-                <div className="flex gap-2">
-                  <select
-                    value={selectedCollectionId}
-                    onChange={e => {
-                      if (e.target.value === '__create_new__') {
-                        setShowCreateLibraryModal(true);
-                      } else {
-                        setSelectedCollectionId(e.target.value);
-                      }
-                    }}
-                    className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
-                  >
-                    {collections.map(col => (
-                      <option key={col.id} value={col.id}>
-                        {col.name}{col.is_bootstrap ? ' (default)' : ''}
-                      </option>
-                    ))}
-                    <option value="__create_new__">+ Create New Library</option>
-                  </select>
-                </div>
-              </div>
-            )}
-            <div className="flex gap-2 pt-2" data-copilot="component-save">
-              <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50">
-                {saving ? 'Saving...' : 'Create'}
-              </button>
-              <button type="button" onClick={() => { setShowForm(false); setFormWasteType('none'); setFormMeasurementType('area'); setFormPitchEnabled(false); }} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Active component allowance counter */}
-      <div className="flex items-center justify-between mb-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5">
-        <div className="flex items-center gap-3">
-          <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold ${atCap ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
-            {componentLimit !== null
-              ? `${activeCountState} / ${componentLimit} active`
-              : `${activeCountState} active`}
-          </span>
-          <span className="text-xs text-slate-500">
-            {componentLimit !== null
-              ? `Smart Components on your ${effectivePlanCode === 'trial' ? 'trial' : effectivePlanCode} plan`
-              : 'Smart Components - unlimited on your plan'}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {!atCap && componentLimit !== null && (
-            <span className="text-xs text-slate-400">
-              {componentLimit - activeCountState} slot{(componentLimit - activeCountState) !== 1 ? 's' : ''} free
-            </span>
-          )}
-          {atCap && (
-            <button
-              onClick={() => setUpgradeOpen(true)}
-              className="shrink-0 inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition"
-            >
-              Upgrade
-            </button>
-          )}
-        </div>
+      <div ref={editorAnchor} className="qc-pricing-editor-anchor">
+        {(showForm || editingComponent) && (
+          <SmartComponentEditor key={`${editingId ?? 'new'}-${editorVersion}`}
+            mode={editingComponent ? 'edit' : 'create'} initial={editorInitial} settings={editorSettings}
+            onSettingsChange={updateEditorSettings} measurementSystem={companyMeasurementSystem} currency={companyCurrency}
+            genericTradesEnabled={genericTradesEnabled} pitchVisible={pitchVisible} pitchHidesValleyHip={pitchHidesValleyHip}
+            pitchRafterLabel={pitchRafterLabel} pitchCheckboxLabel={pitchCheckboxLabel}
+            collections={collections} selectedCollectionId={selectedCollectionId}
+            onCollectionChange={value => { setEditorDirty(true); if (value === '__create_new__') setShowCreateLibraryModal(true); else setSelectedCollectionId(value); }}
+            flashings={flashings} assignedFlashings={assignedFlashings} selectedFlashingId={selectedFlashingId}
+            onFlashingSelection={setSelectedFlashingId} onAddFlashing={addFlashing} onRemoveFlashing={removeFlashing}
+            imageHelperText={imageHelperText} supplierSkuRequired={!!(isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published')}
+            saving={saving} error={formError} onSubmit={editingComponent ? event => handleUpdate(event, editingComponent.id) : handleCreate}
+            onCancel={() => { void mayLeaveEditor().then(leave => { if (leave) cancelEdit(); }); }}
+            onDirty={() => { setEditorDirty(true); setDraftTested(false); }} onCalculated={() => {
+              setTestedInSession(true);
+              if (showForm) setDraftTested(true);
+              if (editingId && editingId === lastCreatedId) setOwnTested(true);
+            }}
+            onCopy={copy => { void startNew(copy); }} openTestInitially={testOnOpen} testRequest={testRequest} learning={learning}
+          />
+        )}
       </div>
 
-      <div className="space-y-2">
+      <div id="qc-pricing-component-list" className="space-y-2">
         {filtered.map((comp) => (
           <div key={comp.id}>
-            {editingId === comp.id ? (
-              <div className="p-4 border border-slate-200 rounded-xl bg-white">
-                <h3 className="font-semibold text-slate-900 mb-3">Edit {comp.name}</h3>
-                {formError && (
-                  <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
-                )}
-                <form onSubmit={(e) => handleUpdate(e, comp.id)} className="space-y-3">
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                   <div>
-                     <label className="block text-xs text-slate-500 mb-1">Name</label>
-                     <input name="name" required defaultValue={comp.name} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                   </div>
-                   <div>
-                     <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
-                     <input name="sku" defaultValue={comp.sku ?? ''} placeholder="e.g. RDG-250-BLK" className={`w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none ${!!comp.sku ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`} readOnly={!!comp.sku} title={!!comp.sku ? 'SKU cannot be changed once set' : ''} />
-                   </div>
-                   <div>
-                     <label className="block text-xs text-slate-500 mb-1">Measurement</label>
-                     <select
-                       value={formMeasurementType}
-                       onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
-                       className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                     >
-                       {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
-                         .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
-                         .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
-                         .map(([k, v]) => (
-                           <option key={k} value={k}>{v}</option>
-                         ))}
-                     </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
-                      <input name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                    </div>
 
-                    {/* Item Cost - unified: strategy dropdown drives per-unit vs pack. */}
-                    {genericTradesEnabled && (
-                      <div className="col-span-2">
-                        <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
-                        <select
-                          value={formPricingStrategy}
-                          onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
-                          className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                        >
-                          {allowedStrategiesFor(formMeasurementType).map((s) => (
-                            <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
-                      <div>
-                        <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
-                        <input name="default_material_rate" type="number" step="0.01" defaultValue={comp.default_material_rate ?? 0} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                      </div>
-                    )}
-                    {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
-                      <>
-                        <input type="hidden" name="default_material_rate" value="0" />
-                        <div>
-                          <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
-                          <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-slate-500 mb-1">
-                            Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
-                          </label>
-                          <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                        </div>
-                        {formPricingStrategy === 'per_pack_coverage' && (
-                          <div className="col-span-2">
-                            <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
-                            <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
-                      <select
-                        name="default_waste_type"
-                        value={formWasteType}
-                        onChange={(e) => setFormWasteType(e.target.value as WasteType)}
-                        className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                      >
-                        {Object.entries(WASTE_LABELS).map(([k, v]) => (
-                          <option key={k} value={k}>{v}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {formWasteType !== 'none' && (
-                      <div>
-                        <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountSuffix(formWasteType, formMeasurementType)}</label>
-                        <input
-                          name="waste_amount"
-                          type="number"
-                          step="0.01"
-                          defaultValue={formWasteType === 'percent' ? comp.default_waste_percent : comp.default_waste_fixed}
-                          className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
-                        />
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* Type-specific fields (generic trades only). */}
-                  {genericTradesEnabled && (
-                    <TypeSpecificFields
-                      measurementType={formMeasurementType}
-                      heightMm={formHeightMm} setHeightMm={setFormHeightMm}
-                      depthMm={formDepthMm} setDepthMm={setFormDepthMm}
-                      hoursUnit={formHoursUnit} setHoursUnit={setFormHoursUnit}
-                    />
-                  )}
-
-                  {pitchVisible && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <input type="checkbox" id={`pitch-${comp.id}`} checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="rounded" />
-                        <label htmlFor={`pitch-${comp.id}`} className="text-xs text-slate-700">{pitchCheckboxLabel}</label>
-                      </div>
-                      {formPitchEnabled && (
-                        <div>
-                          <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                          <select name="default_pitch_type" defaultValue={comp.default_pitch_type} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
-                            <option value="rafter">{pitchRafterLabel}</option>
-                            {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
-                          </select>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  <div className="border-t border-slate-200 pt-3 mt-3">
-                    <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
-                    <div className="flex items-center gap-2 mb-2">
-                      <input type="checkbox" id={`eligible-orders-${comp.id}`} name="eligible_for_orders" defaultChecked={comp.eligible_for_orders ?? true} className="rounded" />
-                      <label htmlFor={`eligible-orders-${comp.id}`} className="text-xs text-slate-700">Include in material orders</label>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">{imageAssignLabel}</label>
-                      <div className="flex gap-2">
-                        <select 
-                          value={selectedFlashingId} 
-                          onChange={(e) => setSelectedFlashingId(e.target.value)}
-                          className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
-                        >
-                          <option value="">{imageSelectPlaceholder}</option>
-                          {flashings.map(flashing => (
-                            <option key={flashing.id} value={flashing.id}>
-                              {flashing.name} {flashing.description && `- ${flashing.description}`}
-                            </option>
-                          ))}
-                        </select>
-                        <button 
-                          type="button" 
-                          onClick={addFlashing}
-                          disabled={!selectedFlashingId}
-                          className="px-3 py-1 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                        >
-                          Add
-                        </button>
-                      </div>
-                      {assignedFlashings.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {assignedFlashings.map(flashingId => {
-                            const flashing = flashings.find(f => f.id === flashingId);
-                            return (
-                              <div key={flashingId} className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded border border-slate-200">
-                                <span className="text-xs text-slate-700">
-                                  {flashing?.name || 'Unknown'} {flashing?.description && `- ${flashing.description}`}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => removeFlashing(flashingId)}
-                                  className="text-red-600 hover:text-red-700 text-xs font-medium"
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
-                    </div>
-                  </div>
-                  {/* Notes */}
-                  <div className="border-t border-slate-200 pt-3 mt-3">
-                    <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
-                    <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
-                    <textarea
-                      value={formNotes}
-                      onChange={e => setFormNotes(e.target.value)}
-                      placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
-                      rows={3}
-                      maxLength={500}
-                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
-                    />
-                    {formNotes.length > 0 && (
-                      <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
-                    )}
-                  </div>
-
-                  {collections.length > 0 && (
-                    <div className="border-t border-slate-200 pt-3 mt-3">
-                      <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
-                      <div className="flex gap-2">
-                        <select
-                          value={selectedCollectionId}
-                          onChange={e => {
-                            if (e.target.value === '__create_new__') {
-                              setShowCreateLibraryModal(true);
-                            } else {
-                              setSelectedCollectionId(e.target.value);
-                            }
-                          }}
-                          className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
-                        >
-                          {collections.map(col => (
-                            <option key={col.id} value={col.id}>
-                              {col.name}{col.is_bootstrap ? ' (default)' : ''}
-                            </option>
-                          ))}
-                          <option value="__create_new__">+ Create New Library</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex gap-2 pt-2">
-                    <button type="submit" disabled={saving} className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
-                      {saving ? 'Saving...' : 'Save'}
-                    </button>
-                    <button type="button" onClick={cancelEdit} className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50">
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            ) : (
               <div
                 id={`component-row-${comp.id}`}
                 onClick={() => startEdit(comp)}
                 title="Click to view component"
-                className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${
+                className={`qc-component-row px-4 py-3 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${
                   highlightId === comp.id
                     ? 'border-orange-300 bg-orange-50 shadow-[0_0_12px_rgba(255,107,53,0.25)]'
-                    : comp.is_active === false
-                      ? 'border-slate-200 bg-slate-50/50'
-                      : 'border-slate-200 bg-white'
+                    : 'border-slate-200 bg-white'
                 }`}
               >
-                {/* Active/Inactive status badge */}
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium shrink-0 ${
-                    comp.is_active === false
-                      ? 'bg-slate-100 text-slate-400 border border-slate-200'
-                      : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${comp.is_active === false ? 'bg-slate-300' : 'bg-emerald-500'}`} />
-                  {comp.is_active === false ? 'Inactive' : 'Active'}
-                </span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className={`font-medium ${comp.is_active === false ? 'text-slate-500' : 'text-slate-900'}`}>{comp.name}</h3>
+                  <div className="qc-component-row-meta">
+                    <h3 className="font-medium text-slate-900"><button type="button" className="qc-library-action-name" onClick={(event) => { event.stopPropagation(); startEdit(comp); }}>{comp.name}</button></h3>
                     {comp.sku && (
                       <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-mono">{comp.sku}</span>
                     )}
@@ -1648,9 +1132,9 @@ export function ComponentList({
                     <span className="text-xs text-slate-400">{MEASUREMENT_LABELS[comp.measurement_type]}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Item Cost: ${(comp.default_material_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)} · Labour: ${(comp.default_labour_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)}
+                    {componentCostSummary(comp)} · Labour: {formatCurrency(comp.default_labour_rate ?? 0, companyCurrency)}/{canonicalUnit(comp.measurement_type)}
                     {comp.default_waste_type !== 'none' && (
-                      <> · Waste: {comp.default_waste_type === 'percent' ? `${comp.default_waste_percent}%` : `${comp.default_waste_fixed} ${unitForMeasurement(comp.measurement_type)}`}</>
+                      <> · Waste: {comp.default_waste_type === 'percent' ? `${comp.default_waste_percent}%` : `${comp.default_waste_fixed} ${canonicalUnit(comp.measurement_type)}`}</>
                     )}
                     {comp.default_pitch_type !== 'none' && <> · {PITCH_LABELS[comp.default_pitch_type]}</>}
                   </p>
@@ -1660,79 +1144,51 @@ export function ComponentList({
                     </p>
                   )}
                 </div>
-                {/* Activate/Deactivate toggle (hover) */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!activatingId || activatingId !== comp.id) {
-                      void handleToggleActive(comp.id, comp.is_active === false);
-                    }
-                  }}
-                  disabled={activatingId === comp.id}
-                  title={comp.is_active === false ? 'Activate component' : 'Deactivate component'}
-                  aria-pressed={comp.is_active !== false}
-                  className={`p-1.5 rounded-full transition opacity-0 group-hover:opacity-100 disabled:opacity-0 ${
-                    comp.is_active === false
-                      ? 'text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 hover:shadow-[0_0_10px_rgba(16,185,129,0.35)]'
-                      : 'text-slate-300 hover:text-red-500 hover:bg-red-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]'
-                  }`}
-                >
-                  {activatingId === comp.id ? (
-                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  ) : comp.is_active === false ? (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
-                  )}
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); startEdit(comp); }}
-                  title="Click to edit"
-                  className="p-1.5 rounded-full text-slate-400 hover:text-orange-600 hover:bg-orange-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)] transition opacity-0 group-hover:opacity-100"
+                <div className="qc-component-row-actions">
+                {/* The existing actions stay visible on touch and keyboard. */}
+                <button aria-label={`Open and test ${comp.name}`} data-qc-variant="ghost"
+                  onClick={(e) => { e.stopPropagation(); void startEdit(comp, true); }}
+                  title="Open and test this component"
+                  className="qc-button qc-flow-control qc-library-control "
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
+                  Open & test
                 </button>
-                <button 
+                <button aria-label={`Delete ${comp.name}`} data-qc-variant="ghost" 
                   onClick={(e) => { e.stopPropagation(); setDeleteCompId(comp.id); }} 
                   title="Click to delete"
-                  className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)] transition opacity-0 group-hover:opacity-100"
+                  className="qc-button qc-flow-control qc-library-control "
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
+                </div>
               </div>
-            )}
           </div>
         ))}
       </div>
 
       {/* Delete Modal */}
       {deleteCompId && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
+        <QcJourneyDialog label="Delete Smart Component™" size="sm">
+          <div className="p-4 md:p-6 w-full">
             <h3 className="text-lg font-semibold text-slate-900">Delete Smart Component™</h3>
             <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The Smart Component™ will be removed from your library.</p>
             <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setDeleteCompId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
-              <button onClick={confirmDeleteComp} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
+              <button data-qc-variant="ghost" onClick={() => setDeleteCompId(null)} className="qc-button qc-flow-control qc-library-control " disabled={deleteLoading}>Cancel</button>
+              <button data-qc-variant="danger" onClick={confirmDeleteComp} className="qc-button qc-flow-control qc-library-control " disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Delete Library Confirm Modal */}
       {deletingLibraryId && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
+        <QcJourneyDialog label="Delete Library" size="sm">
+          <div className="p-4 md:p-6 w-full">
             <h3 className="text-lg font-semibold text-slate-900">Delete Library</h3>
             <p className="text-sm text-slate-500 mt-2">
               Deleting this library will delete all components inside it. Move any components you want to keep to another library first, or delete them forever here.
@@ -1741,53 +1197,29 @@ export function ComponentList({
               This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end mt-6">
-              <button
+              <button data-qc-variant="ghost"
                 onClick={() => setDeletingLibraryId(null)}
                 disabled={deleteLibraryLoading}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="danger"
                 onClick={() => void handleDeleteLibrary()}
                 disabled={deleteLibraryLoading}
-                className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 {deleteLibraryLoading ? 'Deleting...' : 'Delete Library'}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
-
-      <UpgradeModal
-        open={upgradeOpen}
-        onClose={() => setUpgradeOpen(false)}
-        title={`Active Smart Component limit reached on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
-        description={`You can store unlimited Smart Components, but only ${componentLimit ?? 0} can be active at once. Deactivate components you don't need, or upgrade to activate more.`}
-        recommendedPlan="growth"
-      />
-
-      <UpgradeModal
-        open={flashingsUpgradeOpen}
-        onClose={() => setFlashingsUpgradeOpen(false)}
-        title={`${featureLabelSingular} drawings require a higher plan`}
-        description={`Upgrade your account to access the ${featureLabel.toLowerCase()} drawing tool and reusable library.`}
-        recommendedPlan="pro"
-      />
-      <UpgradeModal
-        open={subBlockedOpen}
-        onClose={() => setSubBlockedOpen(false)}
-        title="Your trial period has ended"
-        description="You need to subscribe to a plan to create more Smart Components™. Your existing Smart Components™ remain viewable on any plan."
-        ctaLabel="View plans"
-        recommendedPlan="starter"
-      />
 
       {/* Component Edit Warning Modal */}
       {editWarningOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
+        <QcJourneyDialog label="Heads up before saving" size="sm">
+          <div className="p-4 md:p-6 w-full">
             <h3 className="text-lg font-semibold text-slate-900">Heads up before saving</h3>
             <p className="text-sm text-slate-500 mt-2">
               Beware: edited changes will only affect new component entries moving forward, not previously saved component entries.
@@ -1797,32 +1229,32 @@ export function ComponentList({
                 type="checkbox"
                 checked={editWarningDontShow}
                 onChange={(e) => setEditWarningDontShow(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                className="qc-checkbox qc-library-control h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
               />
               Don’t show me this warning anymore
             </label>
             <div className="flex gap-3 justify-end mt-6">
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => {
                   setEditWarningOpen(false);
                   setPendingUpdateData(null);
                 }}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="primary"
                 type="button"
                 onClick={() => void handleConfirmEditWarning()}
                 disabled={saving}
-                className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 {saving ? 'Saving...' : 'Confirm and Save'}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Publish Library Modal (supplier-only) */}
@@ -1855,14 +1287,16 @@ export function ComponentList({
             is_bootstrap: c.is_bootstrap,
             component_count: undefined,
           }))}
-          onClose={() => setShowCatalogModal(false)}
-          onCreated={() => {
-            // Reload to pick up new components
-            window.location.reload();
+          onClose={() => {
+            setShowCatalogModal(false);
+            // Only refresh after the user has read the confirmed import result.
+            // Opening import is dirty-guarded; no active draft is discarded.
+            if (catalogueChanged) window.location.assign(`/${workspaceSlug}/components?reviewImport=1`);
           }}
+          onCreated={() => setCatalogueChanged(true)}
         />
       )}
-    </div>
+    </QcLibrary>
   );
 }
 

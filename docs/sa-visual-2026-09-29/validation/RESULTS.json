@@ -1,0 +1,60 @@
+{
+  "phase": "SA-UX-V2 visual convergence",
+  "date": "2026-09-29",
+  "browser": {
+    "runtime": "actual React 18.2.0 (installed offline JupyterLab runtime)",
+    "chromium": "144.0.7559.96",
+    "checks": 121,
+    "passed": 121,
+    "failed": 0,
+    "limitations": [
+      "Mock transport, not Supabase/RLS or Luna",
+      "Simulated audio input and speech output, not real microphone/TTS quality",
+      "Not a full Next build or authenticated deployed shell",
+      "Keyboard size simulation, not native iOS/Android keyboard certification"
+    ]
+  },
+  "pureChecks": {
+    "passed": 15,
+    "failed": 0
+  },
+  "retainedExecutableChecks": {
+    "passed": 976,
+    "failed": 0,
+    "overallRunnerExit": 1,
+    "overallRunnerReason": "Historical file-hash guard fails at assistant.module.css on both unchanged supplied UX baseline and return; guard preserved."
+  },
+  "previewCompilation": {
+    "actualModules": 26,
+    "syntaxDiagnostics": 0
+  },
+  "baselineIntegrity": {
+    "baselineFiles": 3362,
+    "unchanged": 3355,
+    "allowedModified": [
+      "START_HERE_RETURN.md",
+      "quotecore-plus/RETURN_NOTES.md",
+      "quotecore-plus/app/components/smart-assistant/v2/ConversationCards.tsx",
+      "quotecore-plus/app/components/smart-assistant/v2/V2ChatClient.tsx",
+      "quotecore-plus/app/components/smart-assistant/v2/assistant.module.css",
+      "quotecore-plus/app/components/smart-assistant/v2/useSpeechPlayback.ts",
+      "quotecore-plus/app/components/smart-assistant/v2/useVoiceNote.ts"
+    ],
+    "unexpectedChanges": [],
+    "migrations": {
+      "count": 183,
+      "allUnchanged": true
+    },
+    "protected": {
+      "applicationAPIsUnchanged": true,
+      "applicationLibrariesUnchanged": true,
+      "dependencyManifestsUnchanged": true,
+      "sharedUIUnchanged": true
+    }
+  },
+  "fullTypecheck": "attempted baseline and return, both blocked by absent project dependencies",
+  "lint": "attempted, eslint missing, exit 127",
+  "productionBuild": "attempted, prebuild check passed, next executable missing, exit 127",
+  "dependencyInstallation": "isolated tooling attempt blocked by DNS EAI_AGAIN; no project manifest change",
+  "liveDeviceOrServiceTests": "not run"
+}

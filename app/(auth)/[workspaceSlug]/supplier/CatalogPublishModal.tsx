@@ -1,5 +1,6 @@
 'use client';
 
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState } from 'react';
 import { updateCatalogVisibility, type SupplierCatalogData } from './actions';
 
@@ -55,7 +56,7 @@ export function CatalogPublishModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40" onClick={onClose}>
+    <QcLibrary className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-lg font-semibold text-slate-900">Publish Catalogue</h3>
@@ -76,18 +77,18 @@ export function CatalogPublishModal({
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-medium text-slate-600">Public Title</label>
-                <input type="text" value={publicTitle} onChange={e => setPublicTitle(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Public catalogue name" />
+                <input aria-label="Public Title" type="text" value={publicTitle} onChange={e => setPublicTitle(e.target.value)}
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Public catalogue name" />
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Public Description</label>
-                <textarea value={publicDescription} onChange={e => setPublicDescription(e.target.value)} rows={2}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Brief description of what's in this catalogue..." />
+                <textarea aria-label="Public Description" value={publicDescription} onChange={e => setPublicDescription(e.target.value)} rows={2}
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Brief description of what's in this catalogue..." />
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Locations / Service Areas (comma-separated)</label>
-                <input type="text" value={serviceAreas} onChange={e => setServiceAreas(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
+                <input aria-label="Locations / Service Areas (comma-separated)" type="text" value={serviceAreas} onChange={e => setServiceAreas(e.target.value)}
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
                   placeholder="Chicago, Illinois, United States" />
                 <p className="text-[11px] text-slate-400 mt-0.5">Users search by location to find suppliers near them.</p>
               </div>
@@ -99,7 +100,7 @@ export function CatalogPublishModal({
                     return (
                       <button key={rt} type="button"
                         onClick={() => setRoofingTypes(selected ? roofingTypes.filter(x => x !== rt) : [...roofingTypes, rt])}
-                        className={`rounded-full border px-3 py-1 text-xs transition ${selected ? 'bg-slate-900 border-slate-900 text-white' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`}>
+                        className={"qc-flow-control qc-library-choice " + (`rounded-full border px-3 py-1 text-xs transition ${selected ? 'bg-slate-900 border-slate-900 text-white' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`)}>
                         {rt}
                       </button>
                     );
@@ -108,23 +109,23 @@ export function CatalogPublishModal({
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Brands (comma-separated)</label>
-                <input type="text" value={brands} onChange={e => setBrands(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Colorsteel, Dimond, Steel & Tube..." />
+                <input aria-label="Brands (comma-separated)" type="text" value={brands} onChange={e => setBrands(e.target.value)}
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Colorsteel, Dimond, Steel & Tube..." />
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Keywords (comma-separated)</label>
-                <input type="text" value={keywords} onChange={e => setKeywords(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="flashing, ridge, valley, gutter..." />
+                <input aria-label="Keywords (comma-separated)" type="text" value={keywords} onChange={e => setKeywords(e.target.value)}
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="flashing, ridge, valley, gutter..." />
               </div>
             </div>
 
             <div className="flex items-center gap-2 pt-4 border-t border-slate-100 mt-4">
-              <button onClick={handlePublish} disabled={saving}
-                className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-40">
+              <button data-qc-variant="ghost" onClick={handlePublish} disabled={saving}
+                className="qc-button qc-flow-control qc-library-control ">
                 {saving ? 'Publishing...' : 'Publish Catalogue'}
               </button>
-              <button onClick={onClose}
-                className="cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
+              <button data-qc-variant="ghost" onClick={onClose}
+                className="qc-button qc-flow-control qc-library-control ">
                 Cancel
               </button>
             </div>
@@ -137,18 +138,18 @@ export function CatalogPublishModal({
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Public Title</label>
-                <input type="text" value={publicTitle} onChange={e => setPublicTitle(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
+                <input aria-label="Public Title" type="text" value={publicTitle} onChange={e => setPublicTitle(e.target.value)}
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Public Description</label>
-                <textarea value={publicDescription} onChange={e => setPublicDescription(e.target.value)} rows={2}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
+                <textarea aria-label="Public Description" value={publicDescription} onChange={e => setPublicDescription(e.target.value)} rows={2}
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Locations / Service Areas (comma-separated)</label>
-                <input type="text" value={serviceAreas} onChange={e => setServiceAreas(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
+                <input aria-label="Locations / Service Areas (comma-separated)" type="text" value={serviceAreas} onChange={e => setServiceAreas(e.target.value)}
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
                   placeholder="Chicago, Illinois, United States" />
               </div>
               <div>
@@ -159,7 +160,7 @@ export function CatalogPublishModal({
                     return (
                       <button key={rt} type="button"
                         onClick={() => setRoofingTypes(selected ? roofingTypes.filter(x => x !== rt) : [...roofingTypes, rt])}
-                        className={`rounded-full border px-3 py-1 text-xs transition ${selected ? 'bg-slate-900 border-slate-900 text-white' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`}>
+                        className={"qc-flow-control qc-library-choice " + (`rounded-full border px-3 py-1 text-xs transition ${selected ? 'bg-slate-900 border-slate-900 text-white' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`)}>
                         {rt}
                       </button>
                     );
@@ -168,33 +169,33 @@ export function CatalogPublishModal({
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Brands (comma-separated)</label>
-                <input type="text" value={brands} onChange={e => setBrands(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
+                <input aria-label="Brands (comma-separated)" type="text" value={brands} onChange={e => setBrands(e.target.value)}
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Keywords (comma-separated)</label>
-                <input type="text" value={keywords} onChange={e => setKeywords(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
+                <input aria-label="Keywords (comma-separated)" type="text" value={keywords} onChange={e => setKeywords(e.target.value)}
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
               </div>
             </div>
 
             <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
-              <button onClick={handlePublish} disabled={saving}
-                className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition disabled:opacity-40">
+              <button data-qc-variant="primary" onClick={handlePublish} disabled={saving}
+                className="qc-button qc-flow-control qc-library-control ">
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
-              <button onClick={handleUnpublish} disabled={saving}
-                className="cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-red-300 text-red-600 hover:bg-red-50 transition disabled:opacity-40">
+              <button data-qc-variant="ghost" onClick={handleUnpublish} disabled={saving}
+                className="qc-button qc-flow-control qc-library-control ">
                 {saving ? '...' : 'Unpublish'}
               </button>
-              <button onClick={onClose}
-                className="cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
+              <button data-qc-variant="ghost" onClick={onClose}
+                className="qc-button qc-flow-control qc-library-control ">
                 Close
               </button>
             </div>
           </>
         )}
       </div>
-    </div>
+    </QcLibrary>
   );
 }

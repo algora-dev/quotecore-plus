@@ -1,0 +1,49 @@
+{
+  "method": "TS AST statement/function comparison plus SHA256 source inventory, not behavioural/type validation.",
+  "baselineFiles": 2954,
+  "baselineSourceAvailable": true,
+  "missingOriginalPaths": [],
+  "protectedCount": 965,
+  "protectedViolations": [],
+  "unchangedFunctionBodies": 205,
+  "changedFunctions": [
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "name": "loadMyCatalogs"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+      "name": "handleSave"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/create/build/TemplateBuilder.tsx",
+      "name": "handleSave"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx",
+      "name": "handleSave"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+      "name": "handleCreateSubmit"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+      "name": "handleUpdateSubmit"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx",
+      "name": "handleSave"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+      "name": "handleSave"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplateEditor.tsx",
+      "name": "handleSave"
+    }
+  ],
+  "missingFunctions": [],
+  "removedFormFieldNames": []
+}

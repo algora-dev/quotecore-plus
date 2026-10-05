@@ -1,7 +1,22 @@
 'use client';
 import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
+import type { CalibrationCommitPayload } from '@/app/lib/takeoff/precision/touchCalibration';
+import { DEFAULT_ROOF_PITCH } from '@/app/lib/takeoff/precision/touchNumberEntry';
 import type { QuoteRow } from '@/app/lib/types';
 import type { TakeoffHydrationData } from './actions';
+import { TouchWorkspaceShell } from '@/app/lib/takeoff/precision/TouchWorkspaceShell';
+import { useTouchComponents } from '@/app/lib/takeoff/precision/useTouchComponents';
+import { useTakeoffViewMode } from '@/app/lib/takeoff/precision/useTakeoffViewMode';
+import {
+  useTouchOutlineEditor,
+  type TouchOutlineAdapter,
+} from '@/app/lib/takeoff/precision/TouchOutlineEditor';
+import { useTouchCalibration, type TouchCalibrationPageInfo } from '@/app/lib/takeoff/precision/TouchCalibrationWorkspace';
+import { TakeoffDesktopHost } from './desktop/TakeoffDesktopHost';
+import { decodeCalibrationMetadata } from '@/app/lib/takeoff/calibrationCodec';
 
 const TakeoffWorkstation = dynamic(
   () => import('./TakeoffWorkstation').then(mod => ({ default: mod.TakeoffWorkstation })),
@@ -20,6 +35,7 @@ interface Component {
   name: string;
   collection_id?: string | null;
   is_system?: boolean;
+  measurement_type?: string | null;
 }
 
 interface ComponentCollection {
@@ -54,10 +70,19 @@ interface Props {
   aiTakeoffAvailable?: boolean;
   /** AI Assist points: current usage for UI display. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
+  /** P2 AI-assisted calibration per-company flag (live integration via the
+   *  authenticated calibration API client). */
+  aiCalibrationEnabled?: boolean;
+  /** M2: mobile takeoff touch workspace per-company server flag. Off =
+   *  desktop experience renders bit-for-bit; no touch code paths execute. */
+  takeoffTouchEnabled?: boolean;
+  /** M2: compact required-notice lines for the touch top strip (§3.4/L08). */
+  takeoffCompactNotices?: string[];
 }
 
 export function TakeoffPage({
   workspaceSlug,
+  quoteId,
   quote,
   planUrl,
   components,
@@ -72,9 +97,85 @@ export function TakeoffPage({
   allRoofAreas,
   aiTakeoffAvailable,
   aiAssistPoints,
+  aiCalibrationEnabled,
+  takeoffTouchEnabled = false,
+  takeoffCompactNotices = [],
 }: Props) {
-  return (
+  const router = useRouter();
+  const { mode, preference, setPreference } = useTakeoffViewMode(takeoffTouchEnabled);
+  const touchActive = takeoffTouchEnabled && mode === 'mobile-touch';
+  const [outlineAdapter, setOutlineAdapter] = useState<TouchOutlineAdapter | null>(null);
+  const registerAdapter = useCallback((adapter: TouchOutlineAdapter) => setOutlineAdapter(adapter), []);
+  const [, refreshBridge] = useState(0);
+  useEffect(() => outlineAdapter?.subscribe?.(() => refreshBridge((n) => n + 1)), [outlineAdapter]);
+  const backHref = `/${workspaceSlug}/quotes/${quoteId}`;
+  // Match the desktop Finish and Save destination, not the quote detail page.
+  const finishHref = `/${workspaceSlug}/quotes/${quoteId}/build?step=roof-areas`;
+  const [pitch, setPitch] = useState(DEFAULT_ROOF_PITCH);
+  const [resolvedPage1Id, setResolvedPage1Id] = useState<string | null>(null);
+  const [confirmedCalibration, setConfirmedCalibration] = useState<{ pageId: string; payload: CalibrationCommitPayload } | null>(null);
+  const activePageId = outlineAdapter?.getEditContext()?.pageId ?? initialPageId ?? resolvedPage1Id ?? hydrationData?.pages[0]?.id ?? null;
+  const calibrationPage: TouchCalibrationPageInfo | null = useMemo(() => {
+    if (!activePageId) return null;
+    const acknowledged = confirmedCalibration?.pageId === activePageId ? confirmedCalibration.payload : null;
+    // Never relabel page one's calibration as the newly uploaded page's scale.
+    const page = hydrationData?.pages.find((p) => p.id === activePageId);
+    return { id: activePageId,
+      imageRevision: acknowledged?.metadata.imageRevision || page?.imageRevision || null,
+      calibrationMetadata: acknowledged?.metadata ?? page?.calibrationMetadata ?? null,
+      scaleCalibration: acknowledged?.legacy ?? page?.scaleCalibration ?? null };
+  }, [activePageId, hydrationData, confirmedCalibration]);
+  const pageHasDependents = (hydrationData?.measurements?.some((m) => !m.pageId || m.pageId === activePageId) ?? false)
+    || (outlineAdapter?.getAreas().length ?? 0) > 0;
+  const [touchTool, setTouchTool] = useState<'outline' | 'calibrate' | 'components'>(() => {
+    const decoded = decodeCalibrationMetadata(calibrationPage?.calibrationMetadata ?? calibrationPage?.scaleCalibration);
+    const count = decoded.kind === 'v1' ? decoded.metadata.references.length : decoded.kind === 'legacy' ? decoded.references.length : 0;
+    return count > 0 ? 'outline' : 'calibrate';
+  });
+  // M10: component phase entry mode chosen on the outline finish screen.
+  const [componentsMode, setComponentsMode] = useState<'ai' | 'manual'>('ai');
+  const enterComponents = useCallback((mode: 'ai' | 'manual') => {
+    setComponentsMode(mode);
+    setTouchTool('components');
+  }, []);
+  const onCommitted = useCallback((pageId: string, payload: CalibrationCommitPayload) => {
+    setConfirmedCalibration({ pageId, payload });
+  }, []);
+  // The server ACK is adopted into the existing measurement owner before
+  // advancing. No router.refresh race and no dependency on a second DB read.
+  useEffect(() => {
+    if (!confirmedCalibration || !outlineAdapter) return;
+    if (touchTool !== 'calibrate') return; // already advanced
+    // Keyboardless fix (2026-09-22): retryable. The workstation's page id can
+    // land AFTER the ACK (ensurePage1 race), so re-attempt when the active
+    // page id changes instead of one-shotting on the ACK alone.
+    if (outlineAdapter.applyConfirmedCalibration?.(confirmedCalibration.pageId, confirmedCalibration.payload)) {
+      queueMicrotask(() => setTouchTool('outline'));
+    }
+  }, [confirmedCalibration, outlineAdapter, activePageId, touchTool]);
+  const calib = useTouchCalibration({
+    active: touchActive && touchTool === 'calibrate', quoteId: quote.id,
+    planUrl: outlineAdapter?.getImageUrl() ?? planUrl, page: calibrationPage,
+    aiEnabled: false, // Retain the current mobile manual-first feature policy.
+    pageHasDependents,
+    defaultWorkingUnit: normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? 'meters' : 'feet',
+    onCommitted, onExit: () => router.push(backHref),
+  });
+  const outlineEditor = useTouchOutlineEditor(
+    touchActive && touchTool === 'outline', () => outlineAdapter, backHref,
+    () => setTouchTool('calibrate'), { finishHref, pitch, onPitchChange: setPitch, onEnterComponents: enterComponents },
+  );
+  // M10 P2: components step - AI component scan (scan2+scan3
+  // continuations on the corrected outline) + review rail with colour
+  // swatches (docs/MOBILE_COMPONENT_SCAN_PLAN.md).
+  const componentsStep = useTouchComponents(
+    touchActive && touchTool === 'components',
+    () => outlineAdapter,
+    { finishHref, mode: componentsMode, components, collections: collections ?? [] },
+  );
+  const workstation = (
     <TakeoffWorkstation
+      desktopAppearance={!touchActive}
       workspaceSlug={workspaceSlug}
       quote={quote}
       planUrl={planUrl}
@@ -90,6 +191,68 @@ export function TakeoffPage({
       allRoofAreas={allRoofAreas}
       aiTakeoffAvailable={aiTakeoffAvailable}
       aiAssistPoints={aiAssistPoints}
+      aiCalibrationEnabled={aiCalibrationEnabled}
+      onTouchOutlineAdapter={registerAdapter}
+      onPage1Resolved={setResolvedPage1Id}
+      touchExitGuard={
+        touchActive
+          ? {
+              isDirty: () => touchTool === 'calibrate' ? calib.exitGuard.dirty || calib.busy
+                : touchTool === 'components' ? componentsStep.busy || componentsStep.hasEntries
+                : outlineEditor.exitGuard.dirty || outlineEditor.busy,
+              request: (label: string, proceed: () => void) => {
+                // The hidden desktop cannot interrupt a calibration/commit.
+                if (touchTool !== 'calibrate') outlineEditor.requestExternalExit(label, proceed);
+              },
+            }
+          : undefined
+      }
     />
+  );
+
+  // Phase 4: desktop host geometry only; the workstation and all controllers
+  // remain the same mounted owners. No touch workflow or engine changes.
+  if (!takeoffTouchEnabled) {
+    return <TakeoffDesktopHost active>{workstation}</TakeoffDesktopHost>;
+  }
+
+  // FLAG ON: desktop presentation (explicit Desktop or Auto→desktop) renders
+  // the shell's inert skeleton. The presentation host neutralises its legacy
+  // widening classes ONLY on desktop; intermediates remain display:contents. The
+  // workstation stays mounted when the user switches Desktop ↔ Mobile/touch.
+  // M8: rail shows ONLY the current step's controls (16:59 refinement); a
+  // compact step label sits at the rail top (shell).
+  return (
+    <TakeoffDesktopHost active={!touchActive}>
+    <TouchWorkspaceShell
+      active={touchActive}
+      planLabel={initialPageName ?? 'Plan'}
+      railTitle={touchTool === 'calibrate' ? 'Calibration' : touchTool === 'components' ? 'Components' : 'Outline'}
+      viewPreference={preference}
+      onViewPreferenceChange={setPreference}
+      compactNotices={takeoffCompactNotices}
+      overlay={touchTool === 'calibrate' ? calib.overlay : touchTool === 'components' ? componentsStep.overlay : outlineEditor.overlay}
+      railContent={touchTool === 'calibrate' ? calib.rail : touchTool === 'components' ? componentsStep.rail : outlineEditor.rail}
+      wideRail={touchTool === 'calibrate' ? calib.wideRail : touchTool === 'components' ? true : outlineEditor.wideRail}
+      busy={touchTool === 'calibrate' ? calib.busy : touchTool === 'components' ? componentsStep.busy : outlineEditor.busy}
+      backHref={`/${workspaceSlug}/quotes/${quoteId}`}
+      exitGuard={touchTool === 'calibrate' ? calib.exitGuard
+        : touchTool === 'components' ? {
+            // M11: unsaved component entries (scan results, draws, attached
+            // roof areas) can never be silently vaporised by Exit again - the
+            // shell shows the same Save/Discard/Stay sheet the outline uses.
+            dirty: componentsStep.busy || componentsStep.hasEntries,
+            onSave: () => {},
+            onDiscard: () => {
+              outlineAdapter?.clearComponentOverlay?.();
+              router.push(backHref);
+            },
+            saveLabel: 'Return to components',
+          }
+        : outlineEditor.exitGuard}
+    >
+      {workstation}
+    </TouchWorkspaceShell>
+    </TakeoffDesktopHost>
   );
 }

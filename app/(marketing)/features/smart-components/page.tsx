@@ -72,6 +72,14 @@ const faqSchema = {
         text: "Yes. You can create Smart Components™ for any material, assembly, service, or workflow you use regularly. There is no limit to what can be a component - if it has a price and a measurement, it can be a Smart Component.",
       },
     },
+    {
+      "@type": "Question",
+      name: "How do Smart Components work with Smart Assistant?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Smart Assistant can work with the components, rates and rules saved in your account. Ask it to find jobs, quotes, orders and invoices, or carry out supported actions like adjusting a rate - important changes are proposed first and applied only when you confirm. Your pricing logic stays yours: the Assistant operates it, it does not invent it.",
+      },
+    },
   ],
 };
 
@@ -87,6 +95,7 @@ const faqs = [
   { q: "What measurement types do Smart Components™ support?", a: "Smart Components™ support area-based measurements (square metres, square feet, roofing squares), linear measurements (metres, feet), volume, per-unit counts, and fixed-cost items. You choose the measurement type that fits the component, and it calculates accordingly." },
   { q: "Can I import components from my supplier's price list?", a: "Yes. You can import components from supplier catalogs and price lists. You can also search for supplier component libraries by area or product type and add them to your account. This gives you a baseline pricing source even if you don't have your own prices yet." },
   { q: "Can I create my own Smart Components™?", a: "Yes. You can create Smart Components™ for any material, assembly, service, or workflow you use regularly. There is no limit to what can be a component - if it has a price and a measurement, it can be a Smart Component." },
+  { q: "How do Smart Components work with Smart Assistant?", a: "Smart Assistant can work with the components, rates and rules saved in your account. Ask it to find jobs, quotes, orders and invoices, or carry out supported actions like adjusting a rate - important changes are proposed first and applied only when you confirm. Your pricing logic stays yours: the Assistant operates it, it does not invent it." },
 ];
 
 export default function SmartComponentsPage() {
@@ -111,7 +120,7 @@ export default function SmartComponentsPage() {
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-                Start free trial
+                Get started
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
                 All features
@@ -224,6 +233,19 @@ export default function SmartComponentsPage() {
                 <p className="mt-2 leading-7 text-zinc-600">{step.text}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Smart Assistant synergy */}
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 sm:p-10">
+            <h2 className="text-2xl font-semibold tracking-tight">Your logic, reused - by you or Smart Assistant</h2>
+            <p className="mt-4 leading-7 text-zinc-600">
+              Smart Components™ are the engine underneath your account: saved materials, rates, waste rules and pricing logic. Smart Assistant works with that same engine - ask it to find jobs, quotes, orders and invoices, or adjust a rate on a quote, and it proposes the change using your saved rules for your confirmation. It does not invent pricing logic; it operates yours.
+            </p>
+            <p className="mt-3 leading-7 text-zinc-600">
+              The more complete your component library, the more both you and Smart Assistant can do with it.
+            </p>
           </div>
         </section>
 
@@ -362,7 +384,7 @@ export default function SmartComponentsPage() {
             </Link>
             <Link href="/pricing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Pricing</h3>
-              <p className="mt-1 text-sm text-zinc-600">Compare plans and start a 14-day free trial.</p>
+              <p className="mt-1 text-sm text-zinc-600">Compare plans - paid from $19/month with a 30-day money-back guarantee.</p>
             </Link>
           </div>
         </section>
@@ -376,9 +398,9 @@ export default function SmartComponentsPage() {
         <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Start building Smart Components™</h2>
-            <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
+            <p className="mt-2 text-zinc-600">Free tools, no signup. 30-day money-back guarantee on paid plans.</p>
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Start free trial
+              Get started
             </a>
             <p className="mt-4 text-sm text-zinc-500">
               <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>

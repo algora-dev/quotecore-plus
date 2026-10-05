@@ -1,0 +1,24 @@
+Integrate and validate the attached QuoteCore+ Smart Assistant P1.7.3 Release Hardening package.
+
+Treat your current branch as authoritative for anything newer than the ZIP; reconcile carefully rather than blindly overwriting. Start with `RETURN_NOTES.md`, then read `docs/SMART_ASSISTANT_P173_HANDOFF_2026-09-28.md`, the validation evidence, and database acceptance file.
+
+This is intentionally a small release-hardening pass. Do NOT redesign task context/retrieval, UX, voice, images, PWA, P4 or quota/billing/auth.
+
+Required work:
+1. Install dependencies and run real TypeScript, lint and production build.
+2. Run the retained task-quality and resolver offline suites.
+3. Review/test/apply ONLY `20260928190000_sa_v2_p173_release_hardening.sql` on the approved testing database. Do not mass-apply migrations.
+4. Prove `sa_v2_session_read` preserves existing output/security while exposing only the owning user's/company's bounded recent-run `error_code`.
+5. With task-context server flag on, test:
+   - approved/ready rollout: P1.7.2 works;
+   - missing rollout row: no blanket 503 and no accidental capability enablement;
+   - `enabled=false`: remains disabled and safely falls back;
+   - genuine incompatible setup: still fails closed with an explicit setup message.
+6. Repeat the owner continuous-conversation/task-boundary battery and live P3 proposal/Confirm regression.
+7. Test the common phrasing anchors: material/labour rate, quantity, waste, pitch and customer-qualified quote/order requests. Verify actual selected record/component IDs, not plausible wording.
+8. As an admin, run `/admin/smart-assistant/health`. Confirm the configured GPT-5.6 Luna/tool-schema request succeeds, the route is admin-only, no customer/company data is sent, and provider failures report degraded/unavailable cleanly.
+9. Inject or capture setup/access/ordinary failed turns and verify one canonical inline failure without misleading retry behavior.
+
+Return the complete latest source/handoff ZIP with exact migration/config state, build evidence, SQL/RLS results, canary output, live transcripts/selected IDs, P3 regression evidence, timings, failures and any fixes you made.
+
+If these gates pass, recommend freezing the Smart Assistant backend foundation and moving to the planned UX/multimodal phase. Do not add another speculative resolver layer unless live evidence identifies a concrete defect.

@@ -1,46 +1,53 @@
 'use client';
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createCustomerQuoteTemplate } from './actions';
 import { createClient } from '@/app/lib/supabase/client';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
+import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
 
 interface Props {
   workspaceSlug: string;
   templateName: string;
   /** When true the company is over storage - block logo upload. */
   isOverStorage?: boolean;
+  /** Optional source template - prefills the builder when copying an existing header. */
+  sourceTemplate?: CustomerQuoteTemplateRow | null;
 }
 
-export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: Props) {
+export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage, sourceTemplate }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [storageBlocked, setStorageBlocked] = useState(false);
 
-  // Company details (always start blank)
-  const [companyName, setCompanyName] = useState('');
-  const [companyAddress, setCompanyAddress] = useState('');
-  const [companyPhone, setCompanyPhone] = useState('');
-  const [companyEmail, setCompanyEmail] = useState('');
-  const [footerText, setFooterText] = useState('');
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  // Company details (prefilled when copying an existing template)
+  const [companyName, setCompanyName] = useState(sourceTemplate?.company_name ?? '');
+  const [companyAddress, setCompanyAddress] = useState(sourceTemplate?.company_address ?? '');
+  const [companyPhone, setCompanyPhone] = useState(sourceTemplate?.company_phone ?? '');
+  const [companyEmail, setCompanyEmail] = useState(sourceTemplate?.company_email ?? '');
+  const [footerText, setFooterText] = useState(sourceTemplate?.footer_text ?? '');
+  const [logoUrl, setLogoUrl] = useState<string | null>(sourceTemplate?.company_logo_url ?? null);
   const [uploading, setUploading] = useState(false);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLogoError(null);
     if (isOverStorage) { setStorageBlocked(true); return; }
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Validate file size (2MB max)
     if (file.size > 2 * 1024 * 1024) {
-      alert('File too large. Maximum size is 2MB.');
+      setLogoError('File too large. Maximum size is 2MB.');
       return;
     }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file.');
+      setLogoError('Please upload an image file.');
       return;
     }
 
@@ -67,17 +74,21 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
 
       setLogoUrl(urlData.publicUrl);
     } catch (error) {
-      alert('Logo upload failed: ' + (error as Error).message);
+      setLogoError('The logo could not be uploaded. Please try again.');
+      console.error('Logo upload failed:', error);
     } finally {
       setUploading(false);
     }
   };
 
   const handleLogoRemove = () => {
+    setLogoError(null);
     setLogoUrl(null);
   };
 
   const handleSave = async () => {
+    if (saving || uploading) return;
+    setSaveError(null);
     setSaving(true);
     try {
       const _templateId = await createCustomerQuoteTemplate({
@@ -90,9 +101,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
         companyLogoUrl: logoUrl,
       });
 
-      router.push(`/${workspaceSlug}/customer-quote-templates`);
+      // Successful explicit save only: refresh the library on return, never poll a workspace.
+      router.refresh();
+      router.push(`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`);
     } catch (error) {
-      alert('Failed to create template: ' + (error as Error).message);
+      setSaveError('The template could not be saved. Your changes are still here. Please try again.');
+      console.error('Failed to create template:', error);
       setSaving(false);
     }
   };
@@ -100,26 +114,28 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-5xl mx-auto p-6 space-y-6">
+    <QcLibrary className="qc-template-editor">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
         {/* Header */}
         <div>
           <Link
-            href={`/${workspaceSlug}/customer-quote-templates`}
-            className="text-sm text-slate-500 hover:text-slate-700"
+            href={`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`}
+            className="qc-page-back qc-flow-link qc-library-control text-sm text-slate-500 hover:text-slate-700"
           >
-            ← Back
+            ← Back to Document Templates
           </Link>
-          <h1 className="text-2xl font-semibold text-slate-900 mt-2">
+          <h1 className="qc-library-title text-2xl font-semibold text-slate-900 mt-2">
             {templateName}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Build your customer quote template
+            {sourceTemplate
+              ? `Started from "${sourceTemplate.name}" - adjust anything before saving. No quote prices or line items are saved here.`
+              : 'Add your company details, logo and footer. No quote prices or line items are saved here.'}
           </p>
         </div>
 
         {/* Company Details Section */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 space-y-4">
           <h2 className="text-lg font-semibold text-slate-900">Company Details</h2>
           <p className="text-sm text-slate-500">
             These details will appear on customer quotes created with this template
@@ -130,12 +146,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Company Name
               </label>
-              <input
+              <input aria-label="Company Name"
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Your Company Name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -143,12 +159,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Phone
               </label>
-              <input
+              <input aria-label="Phone"
                 type="tel"
                 value={companyPhone}
                 onChange={(e) => setCompanyPhone(e.target.value)}
                 placeholder="+64 21 123 4567"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -156,12 +172,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Email
               </label>
-              <input
+              <input aria-label="Email"
                 type="email"
                 value={companyEmail}
                 onChange={(e) => setCompanyEmail(e.target.value)}
                 placeholder="info@yourcompany.com"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
 
@@ -169,12 +185,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Address
               </label>
-              <input
+              <input aria-label="Address"
                 type="text"
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
                 placeholder="123 Main Street, City, Country"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -185,6 +201,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
               Company Logo
             </label>
             
+            {logoError && <p id="template-logo-error" role="alert" className="qc-flow-error">{logoError}</p>}
             {!logoUrl ? (
               <div className="space-y-2">
                 <label
@@ -206,8 +223,8 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
                     type="file"
                     accept="image/*"
                     onChange={handleLogoUpload}
-                    disabled={uploading}
-                    className="hidden"
+                    disabled={uploading || saving} aria-invalid={!!logoError} aria-describedby={logoError ? 'template-logo-error' : undefined}
+                    className="qc-flow-file qc-library-control"
                   />
                 </label>
               </div>
@@ -218,12 +235,12 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
                     <img 
                       src={logoUrl} 
                       alt="Company Logo" 
-                      className="h-16 w-auto object-contain"
+                      className="h-16 w-auto max-w-[60%] object-contain"
                     />
-                    <button
+                    <button data-qc-variant="ghost"
                       onClick={handleLogoRemove}
                       type="button"
-                      className="ml-auto px-3 py-1.5 text-xs font-medium text-red-600 border border-red-300 rounded-full hover:bg-red-50"
+                      className="qc-button qc-flow-control qc-library-control ml-auto"
                     >
                       Remove
                     </button>
@@ -235,28 +252,29 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
         </div>
 
         {/* Footer Section */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 space-y-4">
           <h2 className="text-lg font-semibold text-slate-900">Footer / Terms & Conditions</h2>
           <p className="text-sm text-slate-500">
             This text will appear at the bottom of customer quotes (disclaimers, payment terms, etc.)
           </p>
 
-          <textarea
+          <textarea aria-label="Footer text"
             value={footerText}
             onChange={(e) => setFooterText(e.target.value)}
             placeholder="e.g. Payment due within 30 days. Quote valid for 30 days. All work carried out to industry standards."
             rows={4}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
         </div>
 
         {/* Preview */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">Preview</h2>
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-slate-900">Example content preview</h2>
+          <p className="qc-flow-description">Sample values only. Final document styling is provided by Document Studio.</p>
           
           <div className="p-6 bg-slate-50 space-y-4">
             {/* Header */}
-            <div className="flex justify-between items-start border-b pb-4">
+            <div className="flex flex-wrap gap-4 justify-between items-start border-b pb-4">
               <div>
                 <h3 className="text-xl font-bold text-slate-900">QUOTE #1000</h3>
                 <div className="mt-2 space-y-1 text-sm text-slate-600">
@@ -265,7 +283,7 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
                   <p><span className="font-medium">Date:</span> {new Date().toLocaleDateString()}</p>
                 </div>
               </div>
-              <div className="text-right text-sm text-slate-700">
+              <div className="text-right text-sm text-slate-700 break-words min-w-0">
                 {logoUrl && (
                   <img src={logoUrl} alt="Company Logo" className="h-16 w-auto object-contain mb-3 ml-auto" />
                 )}
@@ -313,24 +331,25 @@ export function TemplateBuilder({ workspaceSlug, templateName, isOverStorage }: 
           </div>
         </div>
 
+        {saveError && <p role="alert" className="qc-flow-error">{saveError}</p>}
         {/* Actions */}
         <div className="flex gap-3 justify-end pt-4">
           <Link
-            href={`/${workspaceSlug}/customer-quote-templates`}
-            className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
+            href={`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`}
+            className="qc-button qc-flow-control"
           >
             Cancel
           </Link>
-          <button
+          <button data-qc-variant="primary"
             onClick={handleSave}
-            disabled={saving || !companyName.trim()}
-            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowe transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            disabled={saving || uploading || !companyName.trim()}
+            className="qc-button qc-flow-control qc-library-control "
           >
             {saving ? 'Saving...' : 'Save Template'}
           </button>
         </div>
       </div>
-    </div>
+    </QcLibrary>
     </>
   );
 }

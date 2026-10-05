@@ -1,0 +1,1866 @@
+{
+  "method": "Real Chromium on source-derived JSX/CSS static fixtures. Hook effects/actions/Fabric/Next hydration not executed. Native HTML focus containment only, not React focus restoration. Canvas overflow intentionally contained and exempt from page-wide overflow checks.",
+  "checks": [
+    {
+      "screen": "angle-dialog",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 304,
+          "top": 16,
+          "bottom": 624,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-floating-error",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "Angle calculator",
+          "left": 12,
+          "right": 308,
+          "top": 12,
+          "bottom": 628,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-floating-result",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "Angle calculator",
+          "left": 12,
+          "right": 308,
+          "top": 12,
+          "bottom": 628,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-help",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 16,
+          "right": 304,
+          "top": 97.015625,
+          "bottom": 542.96875,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-adjust-confirm",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 304,
+          "top": 179,
+          "bottom": 461,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-delete-error",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 304,
+          "top": 193,
+          "bottom": 447,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-edit-value",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 304,
+          "top": 145.5,
+          "bottom": 494.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-image-preview",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 304,
+          "top": 16,
+          "bottom": 624,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-load-error",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-loading",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 16,
+          "right": 304,
+          "top": 288.5,
+          "bottom": 351.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-select-all",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 304,
+          "top": 115,
+          "bottom": 525,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-upload-error",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-workspace",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawings-empty",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawings-library",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "inbox-partial-update",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "template-logo-error",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-dialog-long",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 16,
+          "right": 304,
+          "top": 16,
+          "bottom": 624,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-intro",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 16,
+          "right": 304,
+          "top": 89.40625,
+          "bottom": 550.578125,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorials-library",
+      "width": 320,
+      "height": 640,
+      "pass": true,
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-dialog",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 374,
+          "top": 106.5,
+          "bottom": 737.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-floating-error",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "Angle calculator",
+          "left": 12,
+          "right": 378,
+          "top": 12,
+          "bottom": 632,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-floating-result",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "Angle calculator",
+          "left": 12,
+          "right": 378,
+          "top": 12,
+          "bottom": 632,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-help",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 16,
+          "right": 374,
+          "top": 210.21875,
+          "bottom": 633.78125,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-adjust-confirm",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 374,
+          "top": 288,
+          "bottom": 556,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-delete-error",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 374,
+          "top": 305,
+          "bottom": 539,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-edit-value",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 374,
+          "top": 257.5,
+          "bottom": 586.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-image-preview",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 374,
+          "top": 95,
+          "bottom": 749,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-load-error",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-loading",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 16,
+          "right": 374,
+          "top": 390.5,
+          "bottom": 453.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-select-all",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 374,
+          "top": 251.5,
+          "bottom": 592.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-upload-error",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-workspace",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawings-empty",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawings-library",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "inbox-partial-update",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "template-logo-error",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-dialog-long",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 16,
+          "right": 374,
+          "top": 16,
+          "bottom": 828,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-intro",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 16,
+          "right": 374,
+          "top": 238.109375,
+          "bottom": 605.890625,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorials-library",
+      "width": 390,
+      "height": 844,
+      "pass": true,
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-dialog",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 164,
+          "right": 604,
+          "top": 142.5,
+          "bottom": 757.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-floating-error",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "Angle calculator",
+          "left": 32,
+          "right": 416,
+          "top": 80,
+          "bottom": 600,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-floating-result",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "Angle calculator",
+          "left": 32,
+          "right": 416,
+          "top": 80,
+          "bottom": 600,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-help",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 164,
+          "right": 604,
+          "top": 236.21875,
+          "bottom": 663.78125,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-adjust-confirm",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 164,
+          "right": 604,
+          "top": 338.5,
+          "bottom": 561.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-delete-error",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 164,
+          "right": 604,
+          "top": 345,
+          "bottom": 555,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-edit-value",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 164,
+          "right": 604,
+          "top": 299.5,
+          "bottom": 600.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-image-preview",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 16,
+          "right": 752,
+          "top": 39,
+          "bottom": 861,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-load-error",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-loading",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 164,
+          "right": 604,
+          "top": 418.5,
+          "bottom": 481.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-select-all",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 164,
+          "right": 604,
+          "top": 299,
+          "bottom": 601,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-upload-error",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-workspace",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawings-empty",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawings-library",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "inbox-partial-update",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "template-logo-error",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-dialog-long",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 64,
+          "right": 704,
+          "top": 16,
+          "bottom": 884,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-intro",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 164,
+          "right": 604,
+          "top": 280,
+          "bottom": 619.984375,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorials-library",
+      "width": 768,
+      "height": 900,
+      "pass": true,
+      "viewport": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-dialog",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 420,
+          "right": 860,
+          "top": 92.5,
+          "bottom": 707.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-floating-error",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "Angle calculator",
+          "left": 32,
+          "right": 416,
+          "top": 80,
+          "bottom": 600,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-floating-result",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "Angle calculator",
+          "left": 32,
+          "right": 416,
+          "top": 80,
+          "bottom": 600,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-help",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 420,
+          "right": 860,
+          "top": 186.21875,
+          "bottom": 613.78125,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-adjust-confirm",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 420,
+          "right": 860,
+          "top": 288.5,
+          "bottom": 511.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-delete-error",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 420,
+          "right": 860,
+          "top": 295,
+          "bottom": 505,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-edit-value",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 420,
+          "right": 860,
+          "top": 249.5,
+          "bottom": 550.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-image-preview",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 100,
+          "right": 1180,
+          "top": 61,
+          "bottom": 739,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-load-error",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-loading",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 420,
+          "right": 860,
+          "top": 368.5,
+          "bottom": 431.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-select-all",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 420,
+          "right": 860,
+          "top": 249,
+          "bottom": 551,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-upload-error",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-workspace",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawings-empty",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawings-library",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "inbox-partial-update",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "template-logo-error",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-dialog-long",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 320,
+          "right": 960,
+          "top": 16,
+          "bottom": 784,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-intro",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 420,
+          "right": 860,
+          "top": 230,
+          "bottom": 569.984375,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorials-library",
+      "width": 1280,
+      "height": 800,
+      "pass": true,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyWidth": 1280,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-dialog",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 500,
+          "right": 940,
+          "top": 192.5,
+          "bottom": 807.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-floating-error",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "Angle calculator",
+          "left": 32,
+          "right": 416,
+          "top": 80,
+          "bottom": 600,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-floating-result",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "Angle calculator",
+          "left": 32,
+          "right": 416,
+          "top": 80,
+          "bottom": 600,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "angle-help",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 500,
+          "right": 940,
+          "top": 286.21875,
+          "bottom": 713.78125,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-adjust-confirm",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 500,
+          "right": 940,
+          "top": 388.5,
+          "bottom": 611.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-delete-error",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 500,
+          "right": 940,
+          "top": 395,
+          "bottom": 605,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-edit-value",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 500,
+          "right": 940,
+          "top": 349.5,
+          "bottom": 650.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-image-preview",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 180,
+          "right": 1260,
+          "top": 101,
+          "bottom": 899,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-load-error",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-loading",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 500,
+          "right": 940,
+          "top": 468.5,
+          "bottom": 531.5,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-select-all",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "fixture-2",
+          "left": 500,
+          "right": 940,
+          "top": 349,
+          "bottom": 651,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-upload-error",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawing-workspace",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawings-empty",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "drawings-library",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "inbox-partial-update",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "template-logo-error",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-dialog-long",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 400,
+          "right": 1040,
+          "top": 16,
+          "bottom": 984,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-intro",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [
+        {
+          "name": "fixture-1",
+          "left": 500,
+          "right": 940,
+          "top": 330,
+          "bottom": 669.984375,
+          "fits": true
+        }
+      ],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorials-library",
+      "width": 1440,
+      "height": 1000,
+      "pass": true,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "dialogs": [],
+      "offscreen": []
+    },
+    {
+      "screen": "tutorial-dialog-long",
+      "check": "native HTML dialog blocks background control focus (browser chrome cycle allowed)",
+      "pass": true,
+      "focusTrail": [
+        {
+          "tag": "BUTTON",
+          "label": "Next",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Walk me through with Q",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Open Drawings / Images",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Build your reusable libraryCreate a new drawi",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Next",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Walk me through with Q",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Open Drawings / Images",
+          "inDialog": true,
+          "chromeCycle": false
+        }
+      ]
+    },
+    {
+      "screen": "drawing-delete-error",
+      "check": "native HTML dialog blocks background control focus (browser chrome cycle allowed)",
+      "pass": true,
+      "focusTrail": [
+        {
+          "tag": "BUTTON",
+          "label": "Delete",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Cancel",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Delete",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Cancel",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Delete",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Cancel",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Delete",
+          "inDialog": true,
+          "chromeCycle": false
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        }
+      ]
+    },
+    {
+      "screen": "drawing-loading",
+      "check": "native HTML dialog blocks background control focus (browser chrome cycle allowed)",
+      "pass": true,
+      "focusTrail": [
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        },
+        {
+          "tag": "BODY",
+          "label": "PHASE 9 SOURCE LAYOUT REVIEW \u00b7 sample records",
+          "inDialog": false,
+          "chromeCycle": true
+        }
+      ]
+    },
+    {
+      "screen": "tutorial-dialog-long",
+      "check": "scroll body/reachable footer",
+      "viewportHeight": 844,
+      "pass": true,
+      "top": 582,
+      "bottom": 807,
+      "height": 844
+    },
+    {
+      "screen": "tutorial-dialog-long",
+      "check": "scroll body/reachable footer",
+      "viewportHeight": 480,
+      "pass": true,
+      "top": 226,
+      "bottom": 443,
+      "height": 480
+    }
+  ],
+  "passed": 105,
+  "failed": 0
+}

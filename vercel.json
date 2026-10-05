@@ -10,10 +10,6 @@
       "schedule": "33 5 * * *"
     },
     {
-      "path": "/api/cron/expire-trials",
-      "schedule": "9 6 * * *"
-    },
-    {
       "path": "/api/cron/process-billing-lifecycle",
       "schedule": "22 6 * * *"
     },

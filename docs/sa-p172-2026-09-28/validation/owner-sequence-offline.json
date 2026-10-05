@@ -1,0 +1,322 @@
+{
+  "kind": "Real router/resolver/compiler; in-memory transport, no Luna/PostgreSQL",
+  "trace": [
+    {
+      "message": "show me my quotes with ridges",
+      "runId": "00000000-0000-0000-0000-000000000041",
+      "disposition": "new",
+      "reason": "no_live_task",
+      "taskId": "00000000-0000-0000-0000-000000000100",
+      "state": "resolved",
+      "answer": "Quote #1015 - Smith Roof\nMatched within your permitted data.\nNot these? Give a customer, job, or component detail to narrow this list.",
+      "plans": [
+        {
+          "version": 1,
+          "source": "quotes",
+          "mode": "rows",
+          "fields": [
+            "id",
+            "job_name",
+            "customer_name",
+            "quote_number",
+            "status",
+            "created_at",
+            "updated_at"
+          ],
+          "filters": [],
+          "related": [
+            {
+              "relation": "components",
+              "filters": [
+                {
+                  "field": "name",
+                  "op": "words",
+                  "value": "ridge"
+                }
+              ]
+            }
+          ],
+          "quoteScope": "quotes",
+          "owner": "workspace",
+          "groupBy": [],
+          "metrics": [],
+          "orderBy": [],
+          "limit": 10,
+          "resolve": false,
+          "current": false
+        }
+      ],
+      "cards": [
+        {
+          "kind": "records",
+          "title": "Matching records",
+          "options": [
+            {
+              "kind": "quote",
+              "id": "00000000-0000-0000-0000-000000000002",
+              "label": "Quote #1015 - Smith Roof",
+              "detail": "Quote or draft · John Smith"
+            }
+          ],
+          "note": "Matching records, not an inferred ranking. Opening does not approve a change.",
+          "autoOpen": false
+        }
+      ]
+    },
+    {
+      "message": "I just want to see the quotes that contain ridge components",
+      "runId": "00000000-0000-0000-0000-000000000042",
+      "disposition": "new",
+      "reason": "self_contained_request",
+      "taskId": "00000000-0000-0000-0000-000000000104",
+      "state": "resolved",
+      "answer": "Quote #1015 - Smith Roof\nMatched within your permitted data.\nNot these? Give a customer, job, or component detail to narrow this list.",
+      "plans": [
+        {
+          "version": 1,
+          "source": "quotes",
+          "mode": "rows",
+          "fields": [
+            "id",
+            "job_name",
+            "customer_name",
+            "quote_number",
+            "status",
+            "created_at",
+            "updated_at"
+          ],
+          "filters": [],
+          "related": [
+            {
+              "relation": "components",
+              "filters": [
+                {
+                  "field": "name",
+                  "op": "words",
+                  "value": "ridge"
+                }
+              ]
+            }
+          ],
+          "quoteScope": "quotes",
+          "owner": "workspace",
+          "groupBy": [],
+          "metrics": [],
+          "orderBy": [],
+          "limit": 10,
+          "resolve": false,
+          "current": false
+        }
+      ],
+      "cards": [
+        {
+          "kind": "records",
+          "title": "Matching records",
+          "options": [
+            {
+              "kind": "quote",
+              "id": "00000000-0000-0000-0000-000000000002",
+              "label": "Quote #1015 - Smith Roof",
+              "detail": "Quote or draft · John Smith"
+            }
+          ],
+          "note": "Matching records, not an inferred ranking. Opening does not approve a change.",
+          "autoOpen": false
+        }
+      ]
+    },
+    {
+      "message": "quote 1014",
+      "runId": "00000000-0000-0000-0000-000000000043",
+      "disposition": "new",
+      "reason": "self_contained_request",
+      "taskId": "00000000-0000-0000-0000-000000000108",
+      "state": "resolved",
+      "answer": "Found Quote #1014 - Smith Roof. Quote or draft · John Smith",
+      "plans": [
+        {
+          "version": 1,
+          "source": "quotes",
+          "mode": "rows",
+          "fields": [
+            "id",
+            "job_name",
+            "customer_name",
+            "quote_number",
+            "status",
+            "created_at",
+            "updated_at"
+          ],
+          "filters": [
+            {
+              "field": "quote_number",
+              "op": "eq",
+              "value": 1014
+            }
+          ],
+          "related": [],
+          "quoteScope": "quotes",
+          "owner": "workspace",
+          "groupBy": [],
+          "metrics": [],
+          "orderBy": [],
+          "limit": 10,
+          "resolve": false,
+          "current": false
+        },
+        {
+          "version": 1,
+          "source": "quotes",
+          "mode": "rows",
+          "fields": [
+            "id",
+            "job_name",
+            "customer_name",
+            "quote_number",
+            "status",
+            "created_at",
+            "updated_at"
+          ],
+          "filters": [
+            {
+              "field": "id",
+              "op": "eq",
+              "value": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+              "field": "quote_number",
+              "op": "eq",
+              "value": 1014
+            }
+          ],
+          "related": [],
+          "quoteScope": "quotes",
+          "owner": "workspace",
+          "groupBy": [],
+          "metrics": [],
+          "orderBy": [],
+          "limit": 2,
+          "resolve": false,
+          "current": false
+        }
+      ],
+      "cards": [
+        {
+          "kind": "records",
+          "title": "Quote #1014 - Smith Roof",
+          "options": [
+            {
+              "kind": "quote",
+              "id": "00000000-0000-0000-0000-000000000001",
+              "label": "Quote #1014 - Smith Roof",
+              "detail": "Quote or draft · John Smith"
+            }
+          ],
+          "note": "Opening a record does not approve a change. Your conversation stays available.",
+          "autoOpen": false
+        }
+      ]
+    },
+    {
+      "message": "whats the most recent john smith quote",
+      "runId": "00000000-0000-0000-0000-000000000044",
+      "disposition": "new",
+      "reason": "self_contained_request",
+      "taskId": "00000000-0000-0000-0000-000000000112",
+      "state": "resolved",
+      "answer": "Found Quote #1016 - Smith Roof. Quote or draft · John Smith\nNewest by creation date: 2026-09-27.",
+      "plans": [
+        {
+          "version": 1,
+          "source": "quotes",
+          "mode": "rows",
+          "fields": [
+            "id",
+            "job_name",
+            "customer_name",
+            "quote_number",
+            "status",
+            "created_at",
+            "updated_at"
+          ],
+          "filters": [
+            {
+              "field": "customer_name",
+              "op": "words",
+              "value": "john smith"
+            }
+          ],
+          "related": [],
+          "quoteScope": "quotes",
+          "owner": "workspace",
+          "groupBy": [],
+          "metrics": [],
+          "orderBy": [
+            {
+              "field": "created_at",
+              "direction": "desc"
+            },
+            {
+              "field": "id",
+              "direction": "asc"
+            }
+          ],
+          "limit": 1,
+          "resolve": false,
+          "current": false
+        },
+        {
+          "version": 1,
+          "source": "quotes",
+          "mode": "rows",
+          "fields": [
+            "id",
+            "job_name",
+            "customer_name",
+            "quote_number",
+            "status",
+            "created_at",
+            "updated_at"
+          ],
+          "filters": [
+            {
+              "field": "customer_name",
+              "op": "words",
+              "value": "john smith"
+            },
+            {
+              "field": "id",
+              "op": "eq",
+              "value": "00000000-0000-0000-0000-000000000003"
+            }
+          ],
+          "related": [],
+          "quoteScope": "quotes",
+          "owner": "workspace",
+          "groupBy": [],
+          "metrics": [],
+          "orderBy": [],
+          "limit": 2,
+          "resolve": false,
+          "current": false
+        }
+      ],
+      "cards": [
+        {
+          "kind": "records",
+          "title": "Quote #1016 - Smith Roof",
+          "options": [
+            {
+              "kind": "quote",
+              "id": "00000000-0000-0000-0000-000000000003",
+              "label": "Quote #1016 - Smith Roof",
+              "detail": "Quote or draft · John Smith"
+            }
+          ],
+          "note": "Opening a record does not approve a change. Your conversation stays available.",
+          "autoOpen": false
+        }
+      ]
+    }
+  ]
+}

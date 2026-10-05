@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { scheduleQuoteFollowUp } from '@/app/lib/messages/scheduled';
@@ -187,11 +188,11 @@ export function ScheduleFollowUpButton({
   ];
 
   return (
-    <>
-      <button
+    <QcJourney><>
+      <button data-qc-variant="ghost"
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+        className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -200,7 +201,7 @@ export function ScheduleFollowUpButton({
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <QcJourneyDialog label="Schedule follow-up" size="md">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900">Schedule a follow-up</h2>
@@ -208,7 +209,7 @@ export function ScheduleFollowUpButton({
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={isPending}
-                className="text-slate-400 hover:text-slate-700"
+                className="qc-icon-button qc-flow-control text-slate-400 hover:text-slate-700"
                 aria-label="Close"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,7 +221,7 @@ export function ScheduleFollowUpButton({
             <div className="px-6 py-4 space-y-4">
               {/* Template */}
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Email template</label>
+                <label className="qc-flow-label block text-xs font-medium text-slate-600 mb-1">Email template</label>
                 {emailTemplates.length === 0 ? (
                   <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
                     You don&apos;t have any email templates yet. Create one in Settings &rarr; Email templates first.
@@ -229,7 +230,7 @@ export function ScheduleFollowUpButton({
                   <select
                     value={form.templateId}
                     onChange={(e) => setForm((f) => ({ ...f, templateId: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    className="qc-select w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                   >
                     {emailTemplates.map((t) => (
                       <option key={t.id} value={t.id}>
@@ -242,11 +243,11 @@ export function ScheduleFollowUpButton({
 
               {/* Trigger */}
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Trigger</label>
-                <select
+                <label className="qc-flow-label block text-xs font-medium text-slate-600 mb-1">Trigger</label>
+                <select aria-label="Trigger"
                   value={form.triggerEvent}
                   onChange={(e) => setForm((f) => ({ ...f, triggerEvent: e.target.value as ScheduledTriggerEvent }))}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  className="qc-select w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                 >
                   {triggerOptions.map((opt) => (
                     <option key={opt.value} value={opt.value} disabled={!opt.available}>
@@ -259,14 +260,14 @@ export function ScheduleFollowUpButton({
 
               {/* Delay */}
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Wait</label>
+                <label className="qc-flow-label block text-xs font-medium text-slate-600 mb-1">Wait</label>
                 {isEventTrigger ? (
-                  <label className="flex items-center gap-2 text-sm text-slate-700 mb-2">
+                  <label className="qc-flow-label flex items-center gap-2 text-sm text-slate-700 mb-2">
                     <input
                       type="checkbox"
                       checked={form.isInstant}
                       onChange={(e) => setForm((f) => ({ ...f, isInstant: e.target.checked }))}
-                      className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                      className="qc-check h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                     />
                     Instant (fire immediately when the event happens)
                   </label>
@@ -279,12 +280,12 @@ export function ScheduleFollowUpButton({
                       max={365}
                       value={form.wait}
                       onChange={(e) => setForm((f) => ({ ...f, wait: Number(e.target.value) || 0 }))}
-                      className="w-24 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                      className="qc-input w-24 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     />
                     <select
                       value={form.unit}
                       onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value as UnitChoice }))}
-                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                      className="qc-select rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                     >
                       <option value="minutes">minutes</option>
                       <option value="hours">hours</option>
@@ -304,23 +305,23 @@ export function ScheduleFollowUpButton({
               {/* Recipient */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Recipient email</label>
-                  <input
+                  <label className="qc-flow-label block text-xs font-medium text-slate-600 mb-1">Recipient email</label>
+                  <input aria-label="customer@example.com"
                     type="email"
                     value={form.recipientEmail}
                     onChange={(e) => setForm((f) => ({ ...f, recipientEmail: e.target.value }))}
                     placeholder="customer@example.com"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    className="qc-input w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Recipient name (optional)</label>
-                  <input
+                  <label className="qc-flow-label block text-xs font-medium text-slate-600 mb-1">Recipient name (optional)</label>
+                  <input aria-label={quote.customer_name ?? ''}
                     type="text"
                     value={form.recipientName}
                     onChange={(e) => setForm((f) => ({ ...f, recipientName: e.target.value }))}
                     placeholder={quote.customer_name ?? ''}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    className="qc-input w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                   />
                 </div>
               </div>
@@ -332,12 +333,12 @@ export function ScheduleFollowUpButton({
                   of ever firing. Hidden in that case. */}
               <div className="space-y-2 pt-1">
                 {form.triggerEvent === 'quote_sent' || form.triggerEvent === 'manual' ? (
-                  <label className="flex items-start gap-2 text-xs text-slate-700">
+                  <label className="qc-flow-label flex items-start gap-2 text-xs text-slate-700">
                     <input
                       type="checkbox"
                       checked={form.requireNoResponse}
                       onChange={(e) => setForm((f) => ({ ...f, requireNoResponse: e.target.checked }))}
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                      className="qc-check mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                     />
                     <span>
                       Cancel automatically if the customer accepts, declines, or requests a change first.
@@ -349,12 +350,12 @@ export function ScheduleFollowUpButton({
                     Event follow-ups fire when the trigger event happens - the customer&apos;s response IS what activates this rule, so it won&apos;t auto-cancel on their action.
                   </p>
                 )}
-                <label className="flex items-start gap-2 text-xs text-slate-700">
+                <label className="qc-flow-label flex items-start gap-2 text-xs text-slate-700">
                   <input
                     type="checkbox"
                     checked={form.respectQuietHours}
                     onChange={(e) => setForm((f) => ({ ...f, respectQuietHours: e.target.checked }))}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                    className="qc-check mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                   />
                   <span>
                     Avoid evenings (8pm–8am) and weekends.
@@ -427,11 +428,11 @@ export function ScheduleFollowUpButton({
             </div>
 
             <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-2">
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={isPending}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -439,15 +440,15 @@ export function ScheduleFollowUpButton({
                 type="button"
                 onClick={handleSubmit}
                 disabled={!canSubmit}
-                className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="qc-flow-control px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 {isPending ? 'Scheduling\u2026' : 'Schedule send'}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       ) : null}
-    </>
+    </></QcJourney>
   );
 }
 

@@ -1,0 +1,23 @@
+id,capability,source,target_or_preservation,batch,runtime_verification
+P3-01,Quotes destination and name,/quotes,unchanged route; default QuoteIndexPage view,A,PENDING_GAVIN_PREVIEW
+P3-02,Drafts tab and routing,QuotesList.tsx,byte-unchanged,A,PENDING_GAVIN_PREVIEW
+P3-03,Confirmed/status/search/sort controls,QuotesList.tsx,byte-unchanged,A,PENDING_GAVIN_PREVIEW
+P3-04,Create manual/digital/standard quote,QuotesList + /quotes/new,existing route/guards/props unchanged,A,PENDING_GAVIN_PREVIEW
+P3-05,Quota/subscription/storage gates,QuotesPage reads -> QuoteIndexPage,original block preserved,A,PENDING_GAVIN_PREVIEW
+P3-06,Bulk download/delete/selection,QuotesList.tsx,byte-unchanged,A,PENDING_GAVIN_PREVIEW
+P3-07,Company scope and read coverage,QuotesPage reads -> QuoteIndexPage,same RLS/company scope; P3-LIST-01 runtime completeness gate,A,PENDING_GAVIN_PREVIEW
+P3-08,Job Spaces entry and list,new /job-spaces,additional non-draft projection; no data mutation,A,PENDING_GAVIN_PREVIEW
+P3-09,Job summary row destination,existing Summary route,"from=job-spaces, native link, no prefetch",A,PENDING_GAVIN_PREVIEW
+P3-10,Back to origin,Summary header + Current/Original links,new Job Spaces origin; inbox/quotes origins retained,A,PENDING_GAVIN_PREVIEW
+P3-11,Revision and viewed presentation,existing loaded fields,"same recipient precedence, read-only display",A,PENDING_GAVIN_PREVIEW
+P3-12,Failures and empty results,new list,distinguished error/empty/partial states,A,PENDING_GAVIN_PREVIEW
+P3-13,Sidebar hide/show,two previous desktop controls,one C50 orange edge tab,B,PENDING_GAVIN_PREVIEW
+P3-14,Logo and Q mark,public/logo.png + public/q-mark.png,"assets unchanged, real compact mark retained",B,PENDING_GAVIN_PREVIEW
+P3-15,Expanded/hidden preference,existing user/workspace localStorage key,retained hidden; legacy rail normalized,B,PENDING_GAVIN_PREVIEW
+P3-16,Takeoff immersive override,shell route defaults,hidden default retained; no engine changes,B,PENDING_GAVIN_PREVIEW
+P3-17,Builder state preservation,quote builder + main slot,builder unchanged; one stable slot,B,PENDING_GAVIN_PREVIEW
+P3-18,Notifications refresh fix,AlertBell,byte-unchanged; timed runtime regression required,B,PENDING_GAVIN_PREVIEW
+P3-19,Mobile drawer/backdrop behaviour,QcDialog + QcNavigation,same explicit dismissal; added destination; scroll body,B,PENDING_GAVIN_PREVIEW
+P3-20,Feature flags/selectors/utility slots,workspaceNavigation + QcAppShell,existing flags/copilot IDs/one utility instance retained,A+B,PENDING_GAVIN_PREVIEW
+P3-21,Smart Assistant V2 and mobile work,baseline stack,byte-unchanged,A+B,PENDING_GAVIN_PREVIEW
+P3-22,HOME-01/JOB-01 integration state,Home and JobOverview data wiring,Home unchanged; JOB-01 remains deferred,A+B,PENDING_GAVIN_PREVIEW

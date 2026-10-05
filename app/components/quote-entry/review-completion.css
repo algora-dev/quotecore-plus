@@ -1,0 +1,37 @@
+/* Experience 3 only. Shared button/notice tokens are authoritative. No editor,
+   canvas, global header, money-table or recipient-output rules are overridden. */
+:where([data-qc-ui='v2']).qrc-completion { display: grid; grid-template-columns: minmax(0,1fr) minmax(280px,360px); align-items: center; gap: 20px 32px; min-width: 0; }
+:where([data-qc-ui='v2']) .qrc-intro { min-width: 0; }
+:where([data-qc-ui='v2']) .qrc-eyebrow { color: var(--qc-text-secondary); font-size: 12px; line-height: 18px; font-weight: 600; margin: 0 0 6px; }
+:where([data-qc-ui='v2']) .qrc-intro h3 { margin: 0 0 8px; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -.02em; color: var(--qc-text-primary); }
+:where([data-qc-ui='v2']) .qrc-intro > p:not(.qrc-eyebrow) { max-width: 64ch; font-size: 14px; line-height: 22px; color: var(--qc-text-body); margin: 0; }
+:where([data-qc-ui='v2']) .qrc-intro > .qrc-reassurance { margin-top: 8px; color: var(--qc-text-secondary); font-size: 13px; }
+:where([data-qc-ui='v2']) .qrc-actions { display: grid; gap: 10px; min-width: 0; }
+:where([data-qc-ui='v2']) .qrc-actions .qc-button { width: 100%; }
+:where([data-qc-ui='v2']) .qrc-progress { grid-column: 1 / -1; margin: 0; font-size: 13px; line-height: 20px; color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qrc-progress:empty { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:where([data-qc-ui='v2']) .qrc-result { grid-column: 1 / -1; min-width: 0; border-radius: var(--qc-radius-control); }
+:where([data-qc-ui='v2']) .qrc-result h4 { font-size: 15px; line-height: 23px; margin: 0 0 6px; color: var(--qc-text-primary); }
+:where([data-qc-ui='v2']) .qrc-result p { margin: 0 0 8px; font-size: 14px; line-height: 22px; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qrc-result-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+:where([data-qc-ui='v2']) .qrc-margin-inputs { border: 0; padding: 0; margin: 0; min-width: 0; }
+:where([data-qc-ui='v2']).qrc-route-state { max-width: 760px; margin: 32px auto; padding: clamp(16px,4vw,32px); width: 100%; box-sizing: border-box; background: var(--qc-bg-surface); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); }
+:where([data-qc-ui='v2']) .qrc-route-heading { margin: 0 0 12px; font-size: 24px; line-height: 32px; color: var(--qc-text-primary); font-weight: 600; letter-spacing: -.02em; }
+:where([data-qc-ui='v2']) .qrc-route-copy { margin: 0; font-size: 14px; line-height: 23px; max-width: 62ch; }
+@media (max-width:767px) {
+  :where([data-qc-ui='v2']).qrc-completion { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  :where([data-qc-ui='v2']) .qrc-result-actions { display: grid; grid-template-columns: minmax(0,1fr); }
+  :where([data-qc-ui='v2']) .qrc-result-actions .qc-button { width: 100%; min-height: 44px; }
+  :where([data-qc-ui='v2']).qrc-route-state { margin: 16px auto; }
+}
+
+:where([data-qc-ui='v2']).qrc-completion:is([data-completion-state='margin-warning'],[data-completion-state='confirmation-error'],[data-completion-state='navigation-error']) { grid-template-columns: minmax(0,1fr); }
+
+/* Scoped pressed feedback: the shared hover rule follows its active rule, so
+   C74 must deliberately retain a pressed treatment while the pointer hovers. */
+:where([data-qc-ui='v2']):is(.qrc-completion, .qrc-route-state) .qc-button:active:not(:disabled) {
+  box-shadow: inset 0 2px 3px rgba(25, 27, 32, .12);
+}
+:where([data-qc-ui='v2']):is(.qrc-completion, .qrc-route-state) .qc-button[data-qc-variant='primary']:active:not(:disabled) {
+  background: var(--qc-gradient-primary-pressed);
+}

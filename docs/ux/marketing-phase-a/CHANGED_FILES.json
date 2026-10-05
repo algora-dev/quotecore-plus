@@ -1,0 +1,15 @@
+{
+  "baseline": "quotecore-plus-ux-handoff-2-2026-09-29.zip",
+  "scope": "Marketing Phase A \u2014 header and reusable CTA primitives only",
+  "files": [
+    "components/BlogHeader.tsx",
+    "components/BlogHeader.module.css",
+    "components/marketing/MarketingButton.tsx",
+    "components/marketing/MarketingButton.module.css",
+    "components/hero/AnimatedHero.tsx",
+    "components/HeroVideo.tsx",
+    "START_HERE_MARKETING_PHASE_A.md",
+    "docs/ux/marketing-phase-a/HANDOFF.md",
+    "docs/ux/marketing-phase-a/preview.html"
+  ]
+}

@@ -15,6 +15,7 @@
  * no-op. The parent decides when to render it.
  */
 
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { reopenQuote } from '../../actions';
@@ -79,12 +80,12 @@ export function ReopenQuoteButton({ quoteId, state }: Props) {
   const copy = COPY[state];
 
   return (
-    <>
+    <QcJourney><>
       <button
         type="button"
         onClick={() => setOpen(true)}
         title="Reopen this quote so you can send a fresh link"
-        className="inline-flex items-center gap-1.5 rounded-full border border-orange-300 bg-white px-4 py-2 text-sm font-medium text-orange-700 hover:bg-orange-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.3)]"
+        className="qc-flow-control inline-flex items-center gap-1.5 rounded-full border border-orange-300 bg-white px-4 py-2 text-sm font-medium text-orange-700 hover:bg-orange-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.3)]"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -98,7 +99,7 @@ export function ReopenQuoteButton({ quoteId, state }: Props) {
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
+        <QcJourneyDialog label="Reopen quote" size="md">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
             {success ? (
               <div className="space-y-3">
@@ -128,19 +129,19 @@ export function ReopenQuoteButton({ quoteId, state }: Props) {
               </p>
             ) : null}
             <div className="flex items-center justify-end gap-2">
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="primary"
                 type="button"
                 onClick={handleConfirm}
                 disabled={pending}
-                className="px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 {pending ? 'Reopening\u2026' : copy.buttonLabel}
               </button>
@@ -148,8 +149,8 @@ export function ReopenQuoteButton({ quoteId, state }: Props) {
               </>
             )}
           </div>
-        </div>
+        </QcJourneyDialog>
       ) : null}
-    </>
+    </></QcJourney>
   );
 }

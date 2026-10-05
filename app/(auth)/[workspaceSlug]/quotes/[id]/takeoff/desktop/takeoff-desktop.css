@@ -1,0 +1,179 @@
+/* T06 / Phase 4. Opt-in DESKTOP presentation only. No canvas dimensions,
+   transforms, pointer-events or transition on the workspace/scroll owner. */
+.qc-takeoff-host { min-width:0; }
+.qc-takeoff-host[data-qc-desktop='false'] { display:contents; }
+/* The protected touch shell retains its original desktop widening classes.
+   This direct child adapter affects its INACTIVE desktop presentation only. */
+.qc-takeoff-host[data-qc-desktop='true'] > div { width:100%; max-width:100%; margin-left:0; }
+[data-qc-width='immersive'] .qc-main:has(.qc-takeoff-host[data-qc-desktop='true']) { padding-bottom:12px; }
+.qc-takeoff-workstation {
+  height:var(--qc-takeoff-height,calc(100dvh - 100px)); min-height:360px;
+  margin:0; padding:0; color:var(--qc-text-body); background:var(--qc-bg-app);
+  font:400 14px/20px var(--qc-font-sans); container:takeoff / inline-size;
+}
+/* Owner 2026-10-01 (free tool): the free takeoff runs inside a fixed inset-0
+   overlay with no page chrome. Fill mode skips the document-position measure
+   (landing-page body scroll must not shrink the canvas) and stretches the
+   host chain to the full viewport instead. */
+.qc-takeoff-host[data-qc-fill='true'] { height:100%; }
+.qc-takeoff-host[data-qc-fill='true'] > div { height:100%; }
+.qc-takeoff-host[data-qc-fill='true'] .qc-takeoff-workstation { height:100%; }
+.qc-takeoff-workstation .qc-takeoff-surface { border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-card); box-shadow:none; }
+.qc-takeoff-workstation .qc-takeoff-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:8px 16px; flex-shrink:0; background:var(--qc-bg-surface); }
+.qc-takeoff-workstation .qc-takeoff-identity { display:flex; align-items:center; gap:12px; min-width:0; }
+.qc-takeoff-workstation .qc-takeoff-identity > div { min-width:0; }
+.qc-takeoff-workstation .qc-takeoff-eyebrow { display:block; font-size:12px; line-height:18px; color:var(--qc-text-secondary); }
+.qc-takeoff-workstation .qc-takeoff-header h1 { font-size:18px; line-height:26px; font-weight:600; margin:0; color:var(--qc-text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.qc-takeoff-workstation .qc-takeoff-back { display:grid; place-items:center; width:40px; height:40px; flex-shrink:0; border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-control); color:var(--qc-text-secondary); }
+.qc-takeoff-workstation .qc-takeoff-header-actions { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+/* Owner 2026-09-25: "Next: Measurements & Pricing" folds INTO the finish
+   button as a second line (taller two-line primary), and the upload button
+   matches the height so both header actions align. */
+.qc-takeoff-workstation .qc-takeoff-finish { display:flex; align-items:center; }
+.qc-takeoff-workstation .qc-takeoff-finish button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-height:58px; padding:6px 22px; white-space:nowrap; }
+.qc-takeoff-workstation .qc-takeoff-finish .qc-takeoff-finish-main { display:flex; align-items:center; gap:5px; font-size:14px; line-height:20px; font-weight:600; }
+.qc-takeoff-workstation .qc-takeoff-finish .qc-takeoff-finish-next { font-size:11px; line-height:15px; font-weight:500; opacity:.82; letter-spacing:.01em; }
+.qc-takeoff-workstation .qc-takeoff-header-actions .qc-takeoff-upload { min-height:58px; }
+.qc-takeoff-workstation .qc-takeoff-context { height:44px; flex-shrink:0; display:grid; grid-template-columns:minmax(240px,1fr) minmax(280px,1.35fr); align-items:center; gap:20px; padding:4px 16px; border-block:1px solid var(--qc-border-divider); background:var(--qc-bg-subtle); }
+.qc-takeoff-workstation .qc-takeoff-plan-context { display:flex; align-items:center; gap:8px; min-width:0; font-size:13px; }
+.qc-takeoff-workstation .qc-takeoff-plan-context > svg { width:16px; height:16px; flex-shrink:0; color:var(--qc-text-secondary); }
+.qc-takeoff-workstation .qc-takeoff-plan-context > span:first-of-type { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.qc-takeoff-workstation .qc-takeoff-page-count { flex-shrink:0; color:var(--qc-text-secondary); font-variant-numeric:tabular-nums; }
+.qc-takeoff-workstation .qc-takeoff-plan-context .qc-status { flex-shrink:0; }
+.qc-takeoff-workstation .qc-takeoff-guidance { font-size:13px; line-height:20px; margin:0; color:var(--qc-text-secondary); max-height:36px; overflow:auto; }
+.qc-takeoff-workstation .qc-takeoff-body { grid-template-columns:300px minmax(0,1fr); }
+.qc-takeoff-workstation .qc-takeoff-panel { overflow:hidden; border-color:var(--qc-border-divider); background:var(--qc-bg-surface); }
+.qc-takeoff-workstation .qc-takeoff-panel > .p-4 { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; padding:16px 12px; }
+.qc-takeoff-workstation .qc-takeoff-panel h2 { font-size:14px; line-height:22px; font-weight:600; color:var(--qc-text-primary); text-transform:none; letter-spacing:normal; }
+.qc-takeoff-workstation .qc-takeoff-section-header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+.qc-takeoff-workstation .qc-takeoff-section-header .qc-button { padding-inline:8px; gap:4px; }
+/* Add-component accent (owner 2026-09-25): the next-step CTA after the area
+   exists - orange presence, not a full primary. Outranks the default ghost
+   recipe via the [data-qc-ui] prefix. */
+[data-qc-ui='v2'] .qc-takeoff-workstation .qc-button.qc-takeoff-add-component { border:1px solid var(--qc-color-orange-core); color:var(--qc-color-orange-ink); background:var(--qc-color-orange-wash); font-weight:650; }
+@media(hover:hover) { [data-qc-ui='v2'] .qc-takeoff-workstation .qc-button.qc-takeoff-add-component:hover { background:var(--qc-color-orange-tint); border-color:var(--qc-color-orange-ink); box-shadow:0 0 8px rgba(255,107,53,.18); } }
+[data-qc-ui='v2'] .qc-takeoff-workstation .qc-button.qc-takeoff-add-component:active { box-shadow:inset 0 0 0 1px var(--qc-color-orange-ink); }
+.qc-takeoff-workstation .qc-takeoff-section-caption { font-size:12px; color:var(--qc-text-secondary); font-weight:600; }
+.qc-takeoff-workstation .qc-takeoff-area { border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-control); background:var(--qc-bg-surface); padding:4px; }
+.qc-takeoff-workstation .qc-takeoff-area[data-selected='true'] { background:var(--qc-selected-bg); border-color:var(--qc-color-orange-ink); }
+.qc-takeoff-workstation .qc-takeoff-area-row { display:flex; align-items:flex-start; gap:4px; }
+.qc-takeoff-workstation .qc-takeoff-area-select { flex:1; min-width:0; display:grid; gap:4px; padding:8px; border:1px solid var(--qc-border-divider); background:var(--qc-bg-subtle); border-radius:var(--qc-radius-control); text-align:left; cursor:pointer; color:var(--qc-text-primary); }
+.qc-takeoff-workstation .qc-takeoff-area-name { font-weight:600; overflow-wrap:anywhere; }
+.qc-takeoff-workstation .qc-takeoff-area-meta { display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:12px; color:var(--qc-text-secondary); font-variant-numeric:tabular-nums; }
+.qc-takeoff-workstation .qc-takeoff-row-actions { display:flex; align-items:center; gap:0; padding-top:4px; }
+.qc-takeoff-workstation .qc-takeoff-icon-action { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; padding:6px; flex-shrink:0; color:var(--qc-text-secondary); border:1px solid transparent; border-radius:var(--qc-radius-control); cursor:pointer; }
+.qc-takeoff-workstation .qc-takeoff-icon-action svg { width:16px; height:16px; }
+.qc-takeoff-workstation .qc-takeoff-icon-action[aria-pressed='false'] { background:var(--qc-bg-subtle); border-style:dashed; border-color:var(--qc-border-control); }
+.qc-takeoff-workstation .qc-takeoff-selected-label { display:inline-flex; align-items:center; gap:4px; color:var(--qc-selected-text); font-size:12px; font-weight:550; }
+.qc-takeoff-workstation .qc-takeoff-selected-label svg { width:12px; height:12px; }
+.qc-takeoff-workstation .qc-takeoff-plan-chips { padding:4px 8px; border-top:1px solid var(--qc-border-divider); }
+.qc-takeoff-workstation .qc-takeoff-plan-chips > span { font-size:12px; text-transform:none; letter-spacing:normal; }
+.qc-takeoff-workstation .qc-takeoff-plan-chips button { min-width:32px; min-height:32px; font-size:12px; padding:4px; border:1px solid var(--qc-border-control); }
+.qc-takeoff-workstation .qc-takeoff-plan-chips button[aria-pressed='true'] { background:var(--qc-action-secondary-bg); color:var(--qc-action-secondary-text); border-color:var(--qc-action-secondary-bg); }
+.qc-takeoff-workstation .qc-takeoff-component { background:var(--qc-bg-surface); border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-control); overflow:hidden; }
+.qc-takeoff-workstation .qc-takeoff-component[data-selected='true'] { border-color:var(--qc-color-orange-ink); box-shadow:0 0 0 3px var(--qc-color-orange-tint), 0 4px 12px rgba(15,17,23,.08); }
+.qc-takeoff-workstation .qc-takeoff-component-colour { width:4px; }
+.qc-takeoff-workstation .qc-takeoff-component-body { padding:10px; }
+.qc-takeoff-workstation .qc-takeoff-component-header { display:flex; align-items:flex-start; gap:4px; }
+.qc-takeoff-workstation .qc-takeoff-component-select { display:grid; gap:2px; flex:1; min-width:0; border:1px solid var(--qc-border-divider); background:var(--qc-bg-subtle); border-radius:var(--qc-radius-small); padding:2px; text-align:left; cursor:pointer; }
+.qc-takeoff-workstation .qc-takeoff-component-name { font-size:14px; line-height:20px; font-weight:600; color:var(--qc-text-primary); overflow-wrap:anywhere; }
+.qc-takeoff-workstation .qc-takeoff-component-meta { font-size:12px; line-height:18px; color:var(--qc-text-secondary); }
+/* Owner 2026-09-25 (12:34): compact active-component rows. Unselected rows
+   collapse to one faded line (colour + name + type/count); clicking selects
+   + expands to the full card. Only the selected component is dominant. */
+.qc-takeoff-workstation .qc-takeoff-component-compact { display:flex; align-items:center; gap:8px; width:100%; padding:7px 10px; border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-control); background:var(--qc-bg-surface); text-align:left; opacity:.6; transition:opacity .15s ease, border-color .15s ease; }
+.qc-takeoff-workstation .qc-takeoff-component-compact:hover { opacity:1; border-color:var(--qc-color-orange-ink); }
+.qc-takeoff-workstation .qc-takeoff-component-compact-dot { width:10px; height:10px; border-radius:999px; flex-shrink:0; }
+.qc-takeoff-workstation .qc-takeoff-component-compact-name { font-size:13px; line-height:18px; font-weight:600; color:var(--qc-text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.qc-takeoff-workstation .qc-takeoff-component-compact-meta { margin-left:auto; font-size:11px; line-height:16px; color:var(--qc-text-secondary); white-space:nowrap; flex-shrink:0; }
+.qc-takeoff-workstation .qc-takeoff-measurement-disclosure { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:32px; padding:4px 2px; margin-top:4px; border:0; border-radius:var(--qc-radius-small); background:var(--qc-bg-subtle); font-size:12px; font-weight:550; text-align:left; color:var(--qc-text-secondary); cursor:pointer; }
+.qc-takeoff-workstation .qc-takeoff-measurement-disclosure svg { width:14px; height:14px; transform:rotate(90deg); }
+.qc-takeoff-workstation .qc-takeoff-measurement-disclosure[aria-expanded='true'] svg { transform:rotate(-90deg); }
+.qc-takeoff-workstation .qc-takeoff-measurement-details > .space-y-1 { scrollbar-width:thin; }
+.qc-takeoff-workstation .qc-takeoff-measurement-details > div:first-child { font-size:12px; line-height:18px; color:var(--qc-text-secondary); text-transform:none; letter-spacing:normal; }
+.qc-takeoff-workstation .qc-takeoff-measurement-row { min-height:32px; font-size:13px; line-height:20px; font-variant-numeric:tabular-nums; border-radius:var(--qc-radius-small); padding-left:2px; }
+.qc-takeoff-workstation .qc-takeoff-measurement-row .qc-button { min-width:32px; min-height:32px; width:32px; height:32px; padding:4px; border-color:transparent; }
+.qc-takeoff-workstation .qc-takeoff-measurement-row .qc-button svg { width:14px; height:14px; }
+.qc-takeoff-workstation .qc-takeoff-needs-component { padding:4px 6px; margin-bottom:6px; border-radius:var(--qc-radius-small); background:var(--qc-color-warning-bg); color:var(--qc-color-warning-ink); font-size:12px; line-height:18px; font-weight:550; }
+.qc-takeoff-workstation .qc-takeoff-library { padding:12px; border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-control); background:var(--qc-bg-subtle); }
+.qc-takeoff-workstation .qc-takeoff-library[hidden] { display:none; }
+.qc-takeoff-workstation .qc-takeoff-library > .space-y-1 { scrollbar-width:thin; }
+.qc-takeoff-workstation .qc-takeoff-library .qc-button { text-align:left; justify-content:space-between; font-weight:400; padding:8px; border-color:var(--qc-border-divider); }
+.qc-takeoff-workstation .qc-takeoff-library .qc-button > span { width:24px; height:24px; border:0; background:var(--qc-selected-bg); color:var(--qc-selected-text); }
+.qc-takeoff-workstation .qc-takeoff-library input { padding-left:32px; }
+.qc-takeoff-workstation .qc-takeoff-panel :is(input:not([type='radio']):not([type='checkbox']),select) { min-height:32px; border:1px solid var(--qc-border-control); border-radius:var(--qc-radius-control); font-size:13px; line-height:20px; background:var(--qc-bg-surface); color:var(--qc-text-primary); }
+.qc-takeoff-workstation .qc-takeoff-panel-footer { flex-shrink:0; display:grid; gap:2px; padding:8px 12px; border-top:1px solid var(--qc-border-divider); background:var(--qc-bg-surface); }
+.qc-takeoff-workstation .qc-takeoff-reset { width:100%; justify-content:flex-start; color:var(--qc-color-danger); }
+.qc-takeoff-workstation .qc-takeoff-panel-footer > span { font-size:12px; line-height:18px; color:var(--qc-text-secondary); padding-inline:12px; }
+.qc-takeoff-workstation .qc-takeoff-canvas-column { min-width:0; background:var(--qc-bg-app); }
+.qc-takeoff-workstation .qc-takeoff-toolbar { flex-shrink:0; margin:10px 12px 0; padding:6px 8px; display:flex; flex-direction:column; align-items:stretch; gap:4px; }
+.qc-takeoff-workstation .qc-takeoff-toolbar-main { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+.qc-takeoff-workstation .qc-takeoff-toolbar-context { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; padding-top:4px; border-top:1px solid var(--qc-border-divider); }
+.qc-takeoff-workstation .qc-takeoff-subtools { min-height:36px; display:flex; align-items:center; }
+.qc-takeoff-workstation .qc-takeoff-subtools > span { font-size:12px; line-height:18px; color:var(--qc-text-secondary); }
+.qc-takeoff-workstation .qc-takeoff-subtools .qc-button { font-size:12px; min-height:32px; padding:4px 10px; }
+.qc-takeoff-workstation .qc-takeoff-setup-tools .qc-button { font-size:12px; padding-inline:8px; }
+.qc-takeoff-workstation .qc-takeoff-view-tools { display:flex; align-items:center; gap:8px; margin-left:auto; }
+.qc-takeoff-workstation .qc-canvas-icon-tool { min-width:32px; width:32px; min-height:32px; padding:5px; }
+.qc-takeoff-workstation .qc-takeoff-zoom { padding-left:8px; border-left:1px solid var(--qc-border-divider); flex-wrap:nowrap; }
+.qc-takeoff-workstation .qc-takeoff-zoom-value { display:block; min-width:40px; text-align:center; font-size:12px; font-variant-numeric:tabular-nums; }
+.qc-takeoff-workstation .qc-takeoff-canvas-scroll { padding:16px; }
+.qc-takeoff-workstation .qc-takeoff-plan-border { border-color:var(--qc-border-divider); border-radius:0; flex-shrink:0; }
+.qc-takeoff-workstation .qc-takeoff-canvas-status { display:flex; align-items:center; justify-content:space-between; gap:12px; height:32px; flex-shrink:0; padding:4px 16px; border-top:1px solid var(--qc-border-divider); background:var(--qc-bg-surface); font-size:12px; color:var(--qc-text-secondary); }
+.qc-takeoff-workstation .qc-takeoff-target { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.qc-takeoff-workstation .qc-takeoff-canvas-status > span:last-child { flex-shrink:0; }
+.qc-takeoff-workstation :is(.text-gray-400,.text-slate-400,.text-gray-500,.text-slate-500) { color:var(--qc-text-secondary); }
+.qc-takeoff-workstation .text-green-400 { color:var(--qc-color-success-ink); }
+.qc-takeoff-workstation .text-\[10px\],.qc-takeoff-workstation .text-\[11px\] { font-size:12px; line-height:18px; }
+.qc-takeoff-workstation .animate-pulse,.qc-takeoff-workstation .pill-shimmer { animation:none; }
+.qc-takeoff-workstation .qc-takeoff-multiline-banner { background:var(--qc-glass-b-bg); border-color:var(--qc-border-divider); border-radius:var(--qc-radius-control); box-shadow:var(--qc-shadow-floating); }
+.qc-takeoff-workstation .qc-takeoff-multiline-banner :is(.text-orange-800,.text-orange-500) { color:var(--qc-text-primary); }
+.qc-takeoff-workstation .qc-takeoff-ai-error { border:1px solid var(--qc-color-danger); border-radius:var(--qc-radius-control); background:var(--qc-color-danger-bg); color:var(--qc-color-danger); font-size:13px; }
+.qc-takeoff-workstation :is(button,a,input,select,textarea,[tabindex]):focus-visible { outline:2px solid var(--qc-focus-ring); outline-offset:2px; }
+.qc-takeoff-workstation :is(.qc-takeoff-area-select,.qc-takeoff-component-select,.qc-takeoff-measurement-disclosure,.qc-takeoff-icon-action,.qc-takeoff-back):active { background:var(--qc-color-orange-tint); }
+@media(hover:hover) {
+  .qc-takeoff-workstation :is(.qc-takeoff-area-select,.qc-takeoff-component-select,.qc-takeoff-measurement-disclosure,.qc-takeoff-icon-action,.qc-takeoff-back):hover { background:var(--qc-selected-bg); color:var(--qc-selected-text); }
+  .qc-takeoff-workstation .qc-takeoff-danger:hover,.qc-takeoff-workstation .qc-takeoff-reset:hover:not(:disabled) { background:var(--qc-color-danger-bg); color:var(--qc-color-danger); border-color:var(--qc-color-danger); }
+  .qc-takeoff-workstation .qc-takeoff-measurement-row:hover { background:var(--qc-selected-bg); }
+}
+@container takeoff (max-width:1100px) {
+  .qc-takeoff-workstation .qc-takeoff-body { grid-template-columns:280px minmax(0,1fr); }
+  .qc-takeoff-workstation .qc-takeoff-toolbar { margin-inline:8px; }
+  .qc-takeoff-workstation .qc-takeoff-toolbar-main > :first-child .qc-button { padding-inline:8px; }
+}
+@container takeoff (max-width:840px) {
+  .qc-takeoff-workstation .qc-takeoff-body { grid-template-columns:256px minmax(0,1fr); }
+  .qc-takeoff-workstation .qc-takeoff-header { gap:8px; padding-inline:12px; }
+  .qc-takeoff-workstation .qc-takeoff-header-actions { gap:8px; }
+  .qc-takeoff-workstation .qc-takeoff-upload { max-width:144px; font-size:12px; padding-inline:8px; }
+  .qc-takeoff-workstation .qc-takeoff-context { grid-template-columns:minmax(180px,1fr) minmax(220px,1fr); gap:12px; }
+  .qc-takeoff-workstation .qc-takeoff-setup-tools { width:100%; }
+  .qc-takeoff-workstation .qc-takeoff-toolbar-context { display:grid; grid-template-columns:1fr; }
+  .qc-takeoff-workstation .qc-takeoff-view-tools { justify-self:end; }
+  .qc-takeoff-workstation .qc-takeoff-canvas-status { height:48px; align-items:flex-start; flex-direction:column; gap:0; }
+  .qc-takeoff-workstation .qc-takeoff-panel .qc-button { font-size:12px; padding-inline:6px; }
+}
+/* Desktop selected manually at phone widths remains a scrollable desktop;
+   this does not replace the separately owned Mobile / touch presentation. */
+@container takeoff (max-width:620px) {
+  .qc-takeoff-workstation .qc-takeoff-header { flex-wrap:wrap; }
+  .qc-takeoff-workstation .qc-takeoff-header-actions { width:100%; justify-content:space-between; }
+  .qc-takeoff-workstation .qc-takeoff-context { height:84px; grid-template-columns:1fr; gap:4px; }
+  .qc-takeoff-workstation .qc-takeoff-body { overflow-x:auto; grid-template-columns:240px minmax(340px,1fr); }
+  .qc-takeoff-workstation .qc-takeoff-panel { min-width:240px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .qc-takeoff-workstation :is(button,a) { transition:none; }
+}
+@media(forced-colors:active) {
+  .qc-takeoff-workstation :is(.qc-takeoff-area,.qc-takeoff-component)[data-selected='true'] { border:2px solid Highlight; }
+  .qc-takeoff-workstation .qc-takeoff-selected-label { color:CanvasText; }
+  .qc-takeoff-workstation :is(button,a,input,select):focus-visible { outline-color:Highlight; }
+}
+
+.qc-takeoff-workstation .qc-takeoff-new-area { box-shadow:none; }
+
+.qc-takeoff-workstation .qc-takeoff-component-name { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+/* Type and count remain in the component header; suppress this duplicate label. */
+.qc-takeoff-workstation .qc-takeoff-measurement-details > div:first-child { display:none; }
+.qc-takeoff-workstation .qc-takeoff-calibration-hint { padding:12px; border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-control); background:var(--qc-bg-subtle); font-size:13px; line-height:20px; }

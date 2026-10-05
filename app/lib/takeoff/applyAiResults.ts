@@ -11,6 +11,7 @@
  */
 
 import type { Calibration } from './reconstructTypes';
+import { effectiveScaleFromLegacyCalibrations } from './calibration';
 import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS, type SemanticKey, SPOUTING_DASH_ARRAY, getSemanticColour, getLineOptions } from './aiComponentRegistry';
 
 // ── Constants (canvas dimensions are now dynamic - passed as params) ───────
@@ -83,8 +84,10 @@ export interface AiMeasurement {
   /** Semantic key - mirrors placeholderType but is the authoritative field
    *  for defensive validation (prevents Barge→Spouting ID mix). */
   semanticKey: SemanticKey;
-  /** The system component id for this placeholder type. */
-  componentId: string;
+  /** The system component id for this placeholder type.
+   *  Null for unresolved (uncertain) AI detections - they are review items,
+   *  not quote components, and must never be persisted as one. */
+  componentId: string | null;
   /** Parent roof area id (from point-in-polygon test). */
   quoteRoofAreaId: string | null;
   /** Always true for AI-created entries. */
@@ -101,8 +104,8 @@ export interface AiMeasurement {
  */
 export function validateMeasurementConsistency(
   semanticKey: SemanticKey,
-  componentId: string | undefined,
-  systemComponentIds: Record<SemanticKey, string>,
+  componentId: string | null,
+  systemComponentIds: Partial<Record<SemanticKey, string>>,
 ): boolean {
   // Uncertain lines have no system component - allow them through without validation
   if (semanticKey === 'uncertain') return true;
@@ -327,8 +330,9 @@ export function computeLineValue(
 ): number {
   if (calibrations.length === 0) return 0;
   const pixelDistance = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-  const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
-  return pixelDistance * avgScale;
+  // 6.3 (audit 2026-09-20): canonical unit-normalised effective scale - the
+  // raw arithmetic mean of cal.scale values is NOT the domain maths.
+  return pixelDistance * effectiveScaleFromLegacyCalibrations(calibrations);
 }
 
 /**
@@ -341,8 +345,9 @@ export function computeAreaValue(
 ): number {
   if (calibrations.length === 0 || points.length < 3) return 0;
   const pixelArea = shoelaceArea(points);
-  const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
-  return pixelArea * avgScale * avgScale;
+  // 6.3: canonical unit-normalised effective scale (see computeLineValue).
+  const effectiveScale = effectiveScaleFromLegacyCalibrations(calibrations);
+  return pixelArea * effectiveScale * effectiveScale;
 }
 
 function shoelaceArea(points: CanvasPoint[]): number {
@@ -364,7 +369,7 @@ export function computeScaleCheck(
   aiData: AiScanData,
   calibrations: Calibration[],
 ): ApplyAiResult['scaleCheck'] {
-  const dl = aiData.scale.dimension_line;
+  const dl = aiData.scale?.dimension_line ?? null;
   if (!dl) {
     return {
       hasDimensionLine: false,
@@ -389,8 +394,8 @@ export function computeScaleCheck(
   // AI says this pixel length = real_length (in unit)
   const aiScale = dl.real_length / pixelLength; // units per pixel
 
-  // User calibration (average)
-  const userScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
+  // 6.3: canonical unit-normalised effective scale (see computeLineValue).
+  const userScale = effectiveScaleFromLegacyCalibrations(calibrations);
 
   const discrepancyPct = Math.abs(aiScale - userScale) / userScale * 100;
 
@@ -420,7 +425,12 @@ export function computeScaleCheck(
 export function perimeterAccountingPass(
   aiData: AiScanData,
 ): AiScanData['components'] {
-  const corrected = structuredClone(aiData.components);
+  // Staged scan1 (outline-only) responses carry no components object. Treat
+  // that as an empty set so applying stage-1 results (area confirm) works;
+  // the perimeter pass is a no-op on empty arrays.
+  const corrected = structuredClone(aiData.components ?? {
+    ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [], uncertain: [],
+  });
   const PERIMETER_TOLERANCE = 8;
   const RIDGE_ENDPOINT_TOLERANCE = 35;
   const PERPENDICULAR_DOT_TOLERANCE = Math.sin(15 * Math.PI / 180);
@@ -604,17 +614,92 @@ export function perimeterAccountingPass(
       });
     }
 
+    // ── Ridge-ray projection fallback ──
+    // The model often returns the ridge endpoint slightly SHORT of the outline
+    // (truncated trace). Project along the ridge direction to the nearest
+    // intersecting perpendicular outline edge and treat the intersection as
+    // the gable centre. Without this, a short-by-more-than-tolerance ridge
+    // produces no barges at all and the whole gable edge becomes spouting.
+    const RAY_PROJECTION_MAX = 160; // px - max distance we'll extend a short ridge
+    const other = ridgeEndpoint === ridgeStart ? ridgeEnd : ridgeStart;
+    const rayDx = ridgeEndpoint.x - other.x;
+    const rayDy = ridgeEndpoint.y - other.y;
+    const rayLen = Math.hypot(rayDx, rayDy);
+    if (rayLen > 0) {
+      const rx = rayDx / rayLen, ry = rayDy / rayLen;
+      for (const edge of perimeterEdges) {
+        if (!isPerpendicularToRidge(edge.start, edge.end, ridgeStart, ridgeEnd)) continue;
+        const edgeLength = distance(edge.start, edge.end);
+        if (edgeLength < MIN_RUN_LENGTH * 2) continue;
+        // Ray-segment intersection: p + t*r = a + u*(b-a)
+        const ex = edge.end.x - edge.start.x, ey = edge.end.y - edge.start.y;
+        const denom = rx * ey - ry * ex;
+        if (Math.abs(denom) < 1e-9) continue; // parallel
+        const t = ((edge.start.x - ridgeEndpoint.x) * ey - (edge.start.y - ridgeEndpoint.y) * ex) / denom;
+        const u = ((edge.start.x - ridgeEndpoint.x) * ry - (edge.start.y - ridgeEndpoint.y) * rx) / denom;
+        if (t < 0 || t > RAY_PROJECTION_MAX || u < 0 || u > 1) continue;
+        const minimumParameter = MIN_RUN_LENGTH / edgeLength;
+        if (u <= minimumParameter || u >= 1 - minimumParameter) continue;
+        const gableCentre = pointOnEdge(edge.start, edge.end, u);
+        // The projected point must still be near where the ridge points (sanity:
+        // the gable centre should be roughly perpendicular-offset from the ridge
+        // endpoint, not far along the edge from the projection of the endpoint).
+        const endpointProjection = projectPointToEdge(ridgeEndpoint, edge.start, edge.end);
+        if (!endpointProjection
+          || Math.abs(endpointProjection.parameter - u) * edgeLength > RIDGE_ENDPOINT_TOLERANCE + t * 0.5) continue;
+        candidates.push({
+          offset: t,
+          barges: [
+            { points: [gableCentre, { ...edge.start }] },
+            { points: [gableCentre, { ...edge.end }] },
+          ],
+        });
+      }
+    }
+
     return candidates.sort((left, right) => left.offset - right.offset)[0] ?? null;
   }
 
   const generatedPerimeterBarges: AiLineEntry[] = [];
+  // A gable face is sometimes split into two collinear outline sub-edges by the
+  // vertex where a valley lands. Barge runs must continue across that vertex to
+  // the end of the gable face, otherwise the leftover sub-edge is mislabelled as
+  // spouting (spouting cannot exist on a gable edge where a valley terminates).
+  const COLLINEAR_DOT = 0.995;
+  function extendBargeAcrossCollinearVertices(bar: AiLineEntry): AiLineEntry {
+    let near = bar.points[0];
+    let far = bar.points[bar.points.length - 1];
+    for (let hop = 0; hop < 2; hop++) {
+      let extended = false;
+      for (const edge of perimeterEdges) {
+        const sharesStart = distance(edge.start, far) <= PERIMETER_TOLERANCE;
+        const sharesEnd = distance(edge.end, far) <= PERIMETER_TOLERANCE;
+        if (!sharesStart && !sharesEnd) continue;
+        const other = sharesStart ? edge.end : edge.start;
+        if (distance(other, far) < MIN_RUN_LENGTH) continue;
+        const d1x = far.x - near.x, d1y = far.y - near.y;
+        const d2x = other.x - far.x, d2y = other.y - far.y;
+        const l1 = Math.hypot(d1x, d1y) || 1, l2 = Math.hypot(d2x, d2y) || 1;
+        if ((d1x * d2x + d1y * d2y) / (l1 * l2) < COLLINEAR_DOT) continue;
+        near = far;
+        far = other;
+        extended = true;
+        break;
+      }
+      if (!extended) break;
+    }
+    return { points: [bar.points[0], { ...far }] };
+  }
   for (const ridge of corrected.ridges) {
     if (ridge.points.length < 2) continue;
     const ridgeStart = ridge.points[0];
     const ridgeEnd = ridge.points[ridge.points.length - 1];
     for (const ridgeEndpoint of [ridgeStart, ridgeEnd]) {
       const pair = findGableBargePair(ridgeEndpoint, ridgeStart, ridgeEnd);
-      if (pair) generatedPerimeterBarges.push(...pair.barges);
+      if (pair) generatedPerimeterBarges.push(
+        extendBargeAcrossCollinearVertices(pair.barges[0]),
+        extendBargeAcrossCollinearVertices(pair.barges[1]),
+      );
     }
   }
 
@@ -687,8 +772,9 @@ export function perimeterAccountingPass(
 export interface ApplyAiParams {
   aiData: AiScanData;
   calibrations: Calibration[];
-  /** Map of placeholder type → system component id (from the component fetch). */
-  systemComponentIds: Record<PlaceholderType, string>;
+  /** Map of placeholder type → system component id (from the component fetch).
+   *  Partial: 'uncertain' has no system component and maps to null. */
+  systemComponentIds: Partial<Record<PlaceholderType, string>>;
   /** Canvas dimensions (dynamic - canvas = processed image dimensions). */
   canvasWidth?: number;
   canvasHeight?: number;
@@ -724,7 +810,7 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
   const roofAreaResults: AiRoofAreaResult[] = correctedAiData.roof_areas.map((area, idx) => {
     const canvasPoints = area.points.map(point => ({ ...point }));
     const areaValue = computeAreaValue(canvasPoints, calibrations);
-    const pitch = area.pitch_degrees ?? aiData.pitch.global_degrees ?? 0;
+    const pitch = area.pitch_degrees ?? aiData.pitch?.global_degrees ?? 0;
     return {
       id: crypto.randomUUID(),
       name: area.name || `Area ${idx + 1}`,
@@ -742,7 +828,13 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
 
   const placeholderTypes: PlaceholderType[] = ALL_SEMANTIC_KEYS;
 
-  for (const ptype of placeholderTypes) {
+  // Outline-only (staged scan1) data carries no component detections. Applying
+  // the outline must NOT synthesise perimeter spouting either - real
+  // components arrive with scans 2+3 run on the corrected outline. Skipping
+  // the whole loop keeps stage 1 a pure area/outline apply.
+  const outlineOnly = !aiData.components;
+
+  for (const ptype of outlineOnly ? [] : placeholderTypes) {
     const rawEntries = correctedAiData.components[ptype];
 
     // snapAndValidate
@@ -757,8 +849,13 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
       const canvasPoints = entry.points.map(point => ({ ...point }));
       const value = computeLineValue(canvasPoints[0], canvasPoints[1], calibrations);
 
-      // Defensive validation: prevent Barge→Spouting ID mix
-      const componentId = systemComponentIds[ptype];
+      // Uncertain detections are review items, not quote components: they get
+      // an explicit null componentId (never a leaked runtime undefined).
+      const componentId = ptype === 'uncertain' ? null : (systemComponentIds[ptype] ?? null);
+      if (componentId === null && ptype !== 'uncertain') {
+        console.warn(`[AI Takeoff] No system component id for semantic key "${ptype}" - skipping its measurements`);
+        continue;
+      }
       if (!validateMeasurementConsistency(ptype, componentId, systemComponentIds)) {
         continue; // skip inconsistent measurement
       }

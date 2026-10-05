@@ -81,19 +81,37 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug, us
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
 
-  // Poll for new alerts every 30 seconds
+  // Poll for new alerts every 30 seconds via the scoped /api/alerts endpoint.
+  // NEVER use router.refresh() here (the previous implementation): a global
+  // router refresh re-renders the whole app and destroys in-progress client
+  // state everywhere - most visibly the quote builder, whose expanded
+  // components and active step reset ~30s after page load (root-caused
+  // 2026-09-24). This poll updates ONLY the bell's own local state.
   useEffect(() => {
-    const interval = setInterval(() => {
-      router.refresh();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [router]);
+    let cancelled = false;
+    const poll = async () => {
+      if (document.hidden) return;
+      try {
+        const res = await fetch('/api/alerts');
+        if (!res.ok || cancelled) return;
+        const data: { alerts?: Alert[] } = await res.json();
+        if (Array.isArray(data.alerts)) {
+          setAlerts(data.alerts);
+          const acknowledgedAlertId = localStorage.getItem(acknowledgedAlertKey);
+          setNewAlertCount(countAlertsAfterAcknowledgement(data.alerts, acknowledgedAlertId));
+        }
+      } catch {
+        // transient network error - the next tick retries
+      }
+    };
+    const interval = setInterval(poll, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [acknowledgedAlertKey]);
 
-  // Sync from server. router.refresh() above polls every 30s and the
-  // server re-renders with new `initialAlerts`; mirroring into local
-  // state keeps the dropdown reactive. React 19's rule warns about this
-  // pattern; the proper fix (derive from props directly + lift markAsRead)
-  // is a larger refactor.
+  // Sync from server. If a page-level refresh happens for other reasons the
+  // server re-renders with new `initialAlerts`; mirroring into local state
+  // keeps the dropdown reactive. The 30s poll above updates local state
+  // directly (scoped fetch, no global refresh).
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAlerts(initialAlerts);

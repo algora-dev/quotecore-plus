@@ -1,0 +1,1101 @@
+{
+  "date": "2026-09-27",
+  "input_archive": "quotecore-plus-marketing-competitor-handoff-2026-09-27.zip",
+  "input_sha256": "5ecbfa5a5ed8575387fdcbd3e15583b3a51558c4430bd66eefb4f1b75e9906df",
+  "source_validation": {
+    "syntaxFiles": 73,
+    "syntaxErrors": [],
+    "contentErrors": [],
+    "typeContractErrors": [],
+    "pages": [
+      {
+        "slug": "roofr-alternative",
+        "faqCount": 7,
+        "comparisonRows": 18,
+        "originalRowsRetained": true,
+        "sourceCount": 3,
+        "titleLength": 59,
+        "descriptionLength": 145
+      },
+      {
+        "slug": "eagleview-alternative",
+        "faqCount": 8,
+        "comparisonRows": 10,
+        "originalRowsRetained": true,
+        "sourceCount": 4,
+        "titleLength": 60,
+        "descriptionLength": 152
+      },
+      {
+        "slug": "planswift-alternative",
+        "faqCount": 8,
+        "comparisonRows": 10,
+        "originalRowsRetained": true,
+        "sourceCount": 2,
+        "titleLength": 56,
+        "descriptionLength": 149
+      },
+      {
+        "slug": "hover-alternative",
+        "faqCount": 8,
+        "comparisonRows": 17,
+        "originalRowsRetained": true,
+        "sourceCount": 5,
+        "titleLength": 56,
+        "descriptionLength": 150
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "faqCount": 8,
+        "comparisonRows": 12,
+        "originalRowsRetained": true,
+        "sourceCount": 2,
+        "titleLength": 55,
+        "descriptionLength": 149
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "faqCount": 8,
+        "comparisonRows": 19,
+        "originalRowsRetained": true,
+        "sourceCount": 2,
+        "titleLength": 62,
+        "descriptionLength": 149
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "faqCount": 8,
+        "comparisonRows": 17,
+        "originalRowsRetained": true,
+        "sourceCount": 5,
+        "titleLength": 59,
+        "descriptionLength": 151
+      }
+    ],
+    "internalLinkChecks": [
+      {
+        "slug": "roofr-alternative",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/measurement-to-quote-tool",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/free-tools",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/roofing-takeoff-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/roofing-estimating-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/roofing-quoting-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/roofsnap-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/stack-alternative-for-roofing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/hover-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/planswift-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/features/digital-roof-takeoff",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofr-alternative",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/measurement-to-quote-tool",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/free-tools",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/roofing-takeoff-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/roofing-estimating-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/roofing-quoting-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/roofsnap-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/planswift-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/roofr-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/stack-alternative-for-roofing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/hover-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/blog/ai-roof-measuring",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/features/digital-roof-takeoff",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "eagleview-alternative",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/measurement-to-quote-tool",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/free-tools",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/roofing-takeoff-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/roofing-estimating-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/roofing-quoting-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/roofsnap-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/bluebeam-alternative-for-roofing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/eagleview-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/roofr-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/free-quote-generator",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/features/digital-roof-takeoff",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "planswift-alternative",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/measurement-to-quote-tool",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/free-tools",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/roofing-takeoff-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/eagleview-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/roofsnap-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/roofr-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/roofing-quoting-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/features/digital-roof-takeoff",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "hover-alternative",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/measurement-to-quote-tool",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/free-tools",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/roofing-takeoff-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/roofing-quoting-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/roofing-estimating-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/eagleview-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/planswift-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/roofr-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/stack-alternative-for-roofing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/hover-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/features/digital-roof-takeoff",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "roofsnap-alternative",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/measurement-to-quote-tool",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/free-tools",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/planswift-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/stack-alternative-for-roofing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/roofing-takeoff-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/roofing-quoting-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/hover-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/features/digital-roof-takeoff",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "bluebeam-alternative-for-roofing",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/pricing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/free-roofing-takeoff-builder",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/measurement-to-quote-tool",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/free-tools",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/roofing-takeoff-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/roofing-estimating-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/roofing-quoting-software",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/roofr-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/planswift-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/roofsnap-alternative",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/bluebeam-alternative-for-roofing",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/features/digital-roof-takeoff",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/features/smart-components",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/features",
+        "sourceResolved": true
+      },
+      {
+        "slug": "stack-alternative-for-roofing",
+        "href": "/pricing",
+        "sourceResolved": true
+      }
+    ],
+    "scope": "Source syntax, exact content contracts, metadata/FAQ wiring and local link checks only. No Next.js build, full project tsc, lint or browser/device test.",
+    "passed": true
+  },
+  "diff_validation": {
+    "forbiddenAddedLineCount": 0,
+    "violations": [],
+    "punctuationOnlyFilesVerified": 65,
+    "replacementsVerified": 542,
+    "changedSourceFiles": 73,
+    "deletedBaselineFiles": []
+  },
+  "seo": {
+    "before": {
+      "errors": 0,
+      "warnings": 66
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 66
+    },
+    "log_difference": "One existing title-suffix counter changes from 33 to 26 because route metadata uses quoted property keys; not a verified SEO outcome."
+  },
+  "punctuation_only": {
+    "file_count": 65,
+    "replacement_count": 542,
+    "files": [
+      {
+        "path": "app/(marketing)/about/page.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/affiliate-program/DistributorApplicationForm.tsx",
+        "count": 3
+      },
+      {
+        "path": "app/(marketing)/affiliate-program/page.tsx",
+        "count": 7
+      },
+      {
+        "path": "app/(marketing)/affiliate-program-terms/page.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/best-quoting-software-au.tsx",
+        "count": 8
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/best-quoting-software-nz.tsx",
+        "count": 11
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/best-quoting-software-us.tsx",
+        "count": 8
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/chrome-roof-pitch-calculator-extension.tsx",
+        "count": 14
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/construction-estimating-spreadsheet-alternative.tsx",
+        "count": 18
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/convert-spreadsheet-to-quote.tsx",
+        "count": 28
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/custom-roofing-quoting-software.tsx",
+        "count": 21
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-much-roofing-material.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-calculate-roof-pitch.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-do-a-roof-takeoff.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-do-cladding-takeoff.tsx",
+        "count": 27
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-estimate-roofing-materials.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-measure-a-roof-from-a-pdf-plan.tsx",
+        "count": 36
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-measure-a-roof-online.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx",
+        "count": 3
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-measure-pdf-plans.tsx",
+        "count": 24
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-measure-walls-cladding-from-plans.tsx",
+        "count": 24
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-quote-a-roof-from-plans.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/how-to-reduce-roofing-waste.tsx",
+        "count": 11
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/import-price-list-csv-to-components.tsx",
+        "count": 14
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/manual-vs-digital-roof-takeoff.tsx",
+        "count": 7
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/price-a-job-from-measurements.tsx",
+        "count": 22
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/quotecore-plus-reviews.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/quoting-from-plans-vs-site-visits.tsx",
+        "count": 18
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/roof-measurements-to-quote.tsx",
+        "count": 18
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/roofing-estimating-spreadsheet-vs-software.tsx",
+        "count": 11
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/roofing-estimating-vs-quoting.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/roofing-quoting-software-uk.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/roofing-quoting-software-vs-spreadsheets.tsx",
+        "count": 16
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/simple-roofing-estimating-software.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(marketing)/blog/[slug]/content/takeoff-to-quote-workflow.tsx",
+        "count": 17
+      },
+      {
+        "path": "app/(marketing)/custom-solutions/page.tsx",
+        "count": 6
+      },
+      {
+        "path": "app/(marketing)/customer-stories/page.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/done-for-you-setup/page.tsx",
+        "count": 13
+      },
+      {
+        "path": "app/(marketing)/roof-measurement-cost-comparison/page.tsx",
+        "count": 7
+      },
+      {
+        "path": "app/(marketing)/supplier-partnership/SupplierApplicationModal.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/suppliers/[slug]/catalogue/page.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/suppliers/[slug]/page.tsx",
+        "count": 5
+      },
+      {
+        "path": "app/(marketing)/suppliers/page.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(marketing)/takeoff-demo/DemoQuoteView.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(marketing)/takeoff-demo/page.tsx",
+        "count": 10
+      },
+      {
+        "path": "app/(public)/free-cladding-takeoff/CladdingTakeoff.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(public)/free-cladding-takeoff/page.tsx",
+        "count": 24
+      },
+      {
+        "path": "app/(public)/free-construction-takeoff-tools/page.tsx",
+        "count": 3
+      },
+      {
+        "path": "app/(public)/free-flooring-takeoff/FlooringTakeoff.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(public)/free-flooring-takeoff/page.tsx",
+        "count": 19
+      },
+      {
+        "path": "app/(public)/free-invoice-generator/page.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(public)/free-purchase-order-generator/layout.tsx",
+        "count": 4
+      },
+      {
+        "path": "app/(public)/free-purchase-order-generator/page.tsx",
+        "count": 11
+      },
+      {
+        "path": "app/(public)/free-quote-generator/page.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(public)/free-roof-pricing-calculator/layout.tsx",
+        "count": 3
+      },
+      {
+        "path": "app/(public)/free-roof-takeoff/FreeRoofTakeoff.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(public)/free-roof-takeoff/page.tsx",
+        "count": 2
+      },
+      {
+        "path": "app/(public)/free-roofing-takeoff-builder/[supplierSlug]/page.tsx",
+        "count": 13
+      },
+      {
+        "path": "app/(public)/free-roofing-takeoff-calculator/page.tsx",
+        "count": 3
+      },
+      {
+        "path": "app/(public)/free-tools/TaskAccordions.tsx",
+        "count": 4
+      },
+      {
+        "path": "app/(public)/free-tools/ToolSections.tsx",
+        "count": 6
+      },
+      {
+        "path": "app/(public)/free-tools/page.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(public)/measurement-to-quote-tool/layout.tsx",
+        "count": 1
+      },
+      {
+        "path": "app/(public)/measurement-to-quote-tool/page.tsx",
+        "count": 4
+      }
+    ],
+    "deferred": [
+      {
+        "file": "app/(marketing)/home/page.tsx",
+        "entries": [
+          {
+            "start": 14003,
+            "end": 14004,
+            "line": 284,
+            "character": 42,
+            "kind": "JsxText",
+            "match": "\u2014",
+            "context": "Built for roofing first \u2014 powerful enough for any job that needs measuring, pricing and quoting"
+          }
+        ]
+      },
+      {
+        "file": "components/DoneForYouBanner.tsx",
+        "entries": [
+          {
+            "start": 1082,
+            "end": 1083,
+            "line": 21,
+            "character": 49,
+            "kind": "JsxText",
+            "match": "\u2014",
+            "context": "rebuild it inside QuoteCore+ for you \u2014 existing spreadsheets,"
+          }
+        ]
+      },
+      {
+        "file": "components/FreeTakeoffCTACard.tsx",
+        "entries": [
+          {
+            "start": 3018,
+            "end": 3019,
+            "line": 69,
+            "character": 41,
+            "kind": "JsxText",
+            "match": "\u2014",
+            "context": "Measure your own roof plan \u2014 free, no signup"
+          }
+        ]
+      },
+      {
+        "file": "components/VideoShowcase.tsx",
+        "entries": [
+          {
+            "start": 983,
+            "end": 984,
+            "line": 21,
+            "character": 30,
+            "kind": "StringLiteral",
+            "match": "\u2014",
+            "context": "title=\"QuoteCore+ \u2014 see how it works\""
+          }
+        ]
+      },
+      {
+        "file": "components/hero/AnimatedHero.tsx",
+        "entries": [
+          {
+            "start": 7608,
+            "end": 7609,
+            "line": 221,
+            "character": 33,
+            "kind": "StringLiteral",
+            "match": "\u2014",
+            "context": "aria-label=\"QuoteCore+ \u2014 measure, price and quote in one place\""
+          },
+          {
+            "start": 17328,
+            "end": 17329,
+            "line": 560,
+            "character": 22,
+            "kind": "FirstTemplateToken",
+            "match": "\u2014",
+            "context": "/* Entry glow pulse \u2014 same layering as the word letters */"
+          }
+        ]
+      }
+    ]
+  },
+  "not_run": [
+    "full project TypeScript check",
+    "ESLint",
+    "Next.js production build",
+    "browser render",
+    "device or voice workflow test",
+    "live HTTP crawl"
+  ],
+  "integration_owner": "Gavin",
+  "deployed": false
+}

@@ -253,7 +253,7 @@ export default function Post() {
       <p>
         Minimum roof slopes are set by code, not preference: under the International Residential
         Code (IRC 2021, §R905.2.2), asphalt shingles are permitted only on slopes of 2:12 or
-        greater — with double underlayment required between 2:12 and 4:12 — while clay and
+        greater - with double underlayment required between 2:12 and 4:12 - while clay and
         concrete tile requires 2.5:12 and slate 4:12 (see the{' '}
         <a href="https://codes.iccsafe.org/s/IRC2021P3/chapter-9-roof-assemblies/IRC2021P3-Pt03-Ch09-SecR905.2.2" target="_blank" rel="noopener noreferrer">ICC IRC 2021 §R905 slope requirements</a>).
         In the UK, NHBC Standards additionally require tile and slate roofs to comply with
@@ -304,7 +304,7 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? <a href="/free-trial">Start your free QuoteCore+ trial today</a>.
+        Ready to quote faster? <a href="/free-trial">Get started with QuoteCore+ today</a>.
         No card needed. From complex plan to quote in under 3 minutes for less than a dollar.
       </p>
     </div>

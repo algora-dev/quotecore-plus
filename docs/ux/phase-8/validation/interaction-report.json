@@ -1,0 +1,185 @@
+{
+  "method": "Actual source callbacks executed under named state/ref evaluator. All specified server/download/router calls are deterministic substitutions. React scheduling, effects, native focus restore, network, PDF contents and persistence NOT tested.",
+  "tests": [
+    {
+      "name": "quote: successful bulk export requests one download and clears pending",
+      "status": "passed"
+    },
+    {
+      "name": "quote: partial export preserves full failure details",
+      "status": "passed"
+    },
+    {
+      "name": "quote: zero successful records never requests a download",
+      "status": "passed"
+    },
+    {
+      "name": "quote: compression failure reports no completed download",
+      "status": "passed"
+    },
+    {
+      "name": "quote: existing 25-record selection cap remains enforced before requests",
+      "status": "passed"
+    },
+    {
+      "name": "quote: bulk delete needs confirmation; cancelling never mutates",
+      "status": "passed"
+    },
+    {
+      "name": "quote: confirmed delete shows deleted/skipped counts from actual result",
+      "status": "passed"
+    },
+    {
+      "name": "quote: failed delete exposes result and preserves selected IDs for retry",
+      "status": "passed"
+    },
+    {
+      "name": "order: successful bulk export requests one download and clears pending",
+      "status": "passed"
+    },
+    {
+      "name": "order: partial export preserves full failure details",
+      "status": "passed"
+    },
+    {
+      "name": "order: zero successful records never requests a download",
+      "status": "passed"
+    },
+    {
+      "name": "order: compression failure reports no completed download",
+      "status": "passed"
+    },
+    {
+      "name": "order: existing 25-record selection cap remains enforced before requests",
+      "status": "passed"
+    },
+    {
+      "name": "order: bulk delete needs confirmation; cancelling never mutates",
+      "status": "passed"
+    },
+    {
+      "name": "order: confirmed delete shows deleted/skipped counts from actual result",
+      "status": "passed"
+    },
+    {
+      "name": "order: failed delete exposes result and preserves selected IDs for retry",
+      "status": "passed"
+    },
+    {
+      "name": "invoice: successful bulk export requests one download and clears pending",
+      "status": "passed"
+    },
+    {
+      "name": "invoice: partial export preserves full failure details",
+      "status": "passed"
+    },
+    {
+      "name": "invoice: zero successful records never requests a download",
+      "status": "passed"
+    },
+    {
+      "name": "invoice: compression failure reports no completed download",
+      "status": "passed"
+    },
+    {
+      "name": "invoice: existing 25-record selection cap remains enforced before requests",
+      "status": "passed"
+    },
+    {
+      "name": "invoice: bulk delete needs confirmation; cancelling never mutates",
+      "status": "passed"
+    },
+    {
+      "name": "invoice: confirmed delete shows deleted/skipped counts from actual result",
+      "status": "passed"
+    },
+    {
+      "name": "invoice: failed delete exposes result and preserves selected IDs for retry",
+      "status": "passed"
+    },
+    {
+      "name": "Quote audit begin failure prevents downloads and clears progress",
+      "status": "passed"
+    },
+    {
+      "name": "Post-download quote audit failure tells user to check the requested download",
+      "status": "passed"
+    },
+    {
+      "name": "Orders final delete result remains available in empty list branch",
+      "status": "passed"
+    },
+    {
+      "name": "New Quote missing customer exposes inline validation without creating",
+      "status": "passed"
+    },
+    {
+      "name": "New Quote missing entry mode explains exactly the blocked choice",
+      "status": "passed"
+    },
+    {
+      "name": "New Quote Digital without plan prevents creation and shows scoped help",
+      "status": "passed"
+    },
+    {
+      "name": "New Quote existing monthly cap guard precedes required-field validation",
+      "status": "passed"
+    },
+    {
+      "name": "New Quote manual retains action payload and destination",
+      "status": "passed"
+    },
+    {
+      "name": "New Quote blank retains action payload and destination",
+      "status": "passed"
+    },
+    {
+      "name": "New Quote structured failure retains typed billing message and no navigation",
+      "status": "passed"
+    },
+    {
+      "name": "Shared destructive feedback cancels safely and requires explicit affirmative action",
+      "status": "passed"
+    },
+    {
+      "name": "Shared notification waits for acknowledgement before caller continues",
+      "status": "passed"
+    },
+    {
+      "name": "quote: failed status update preserves current value and exposes error",
+      "status": "passed"
+    },
+    {
+      "name": "quote: Escape closes status options and restores trigger through existing ref",
+      "status": "passed"
+    },
+    {
+      "name": "order: failed status update preserves current value and exposes error",
+      "status": "passed"
+    },
+    {
+      "name": "order: Escape closes status options and restores trigger through existing ref",
+      "status": "passed"
+    },
+    {
+      "name": "invoice: failed status update preserves current value and exposes error",
+      "status": "passed"
+    },
+    {
+      "name": "invoice: Escape closes status options and restores trigger through existing ref",
+      "status": "passed"
+    },
+    {
+      "name": "Quote structure missing name is inline and never calls create",
+      "status": "passed"
+    },
+    {
+      "name": "Quote structure empty-components confirmation cancellation preserves draft",
+      "status": "passed"
+    },
+    {
+      "name": "Quote structure explicit save uses existing payload and library destination",
+      "status": "passed"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "typescript": "5.8.3",
+  "scope": "Parser/transpilation only, not application typecheck.",
+  "checks": [
+    {
+      "file": "app/components/quote-entry/reviewCompletion.ts",
+      "errors": []
+    },
+    {
+      "file": "app/components/quote-entry/CustomerQuoteRouteState.tsx",
+      "errors": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/ConfirmQuoteButton.tsx",
+      "errors": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/quote-builder.tsx",
+      "errors": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/error.tsx",
+      "errors": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/loading.tsx",
+      "errors": []
+    }
+  ]
+}

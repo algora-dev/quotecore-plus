@@ -1,3 +1,5 @@
+import { DocumentHeader } from '@/app/components/documents/DocumentHeader';
+import { DocumentEditTarget, documentRegion, type DocumentSelection } from '@/app/components/documents/DocumentSelection';
 import type { QuoteRow } from '@/app/lib/types';
 import type { TaxLine } from '@/app/lib/taxes/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
@@ -6,6 +8,8 @@ import { displayLineText, splitLineParts } from '@/app/lib/quotes/lineText';
 
 interface QuoteLine {
   id: string;
+  qty?: number;
+  unitPrice?: number | null;
   text: string;
   /** Toggle-able quantity portion for catalog lines (fix #5). */
   quantityText?: string | null;
@@ -25,6 +29,9 @@ interface QuoteLine {
 }
 
 interface Props {
+  selection?: DocumentSelection;
+  documentTitle?: string;
+  metadataExtra?: React.ReactNode;
   quote: QuoteRow;
   lines: QuoteLine[];
   subtotal: number;
@@ -66,6 +73,9 @@ interface Props {
 }
 
 export function QuotePreview({
+  selection,
+  documentTitle = 'Quotation',
+  metadataExtra,
   quote,
   lines,
   subtotal,
@@ -101,72 +111,29 @@ export function QuotePreview({
   // (fix #5 - logic centralised in displayLineText.)
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="border-b pb-4 relative">
-        {/* Logo (Above everything, right-aligned) */}
-        <div className="flex justify-end mb-3">
-          {companyLogoUrl ? (
-            <img src={companyLogoUrl} alt="Company Logo" className="h-16 object-contain" />
-          ) : (
-            <div className="w-32 h-16 border-2 border-dashed border-slate-300 rounded flex items-center justify-center bg-slate-50">
-              <span className="text-xs text-slate-400">Logo</span>
-            </div>
-          )}
-        </div>
-
-        {/* Quote Info (Left) + Company Details (Right) - Side by Side */}
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <h3 className="text-xl font-bold text-slate-900">
-              QUOTE #{quote.quote_number || 'DRAFT'}
-            </h3>
-            <p className="text-base text-slate-900">
-              <span className="font-semibold">Client:</span> {quote.customer_name}
-            </p>
-            {quote.job_name && (
-              <p className="text-base text-slate-900">
-                <span className="font-semibold">Job:</span> {quote.job_name}
-              </p>
-            )}
-            <p className="text-base text-slate-900">
-              <span className="font-semibold">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}
-            </p>
-          </div>
-
-          <div className="text-right space-y-1">
-            {companyName && <p className="font-semibold text-base text-slate-900">{companyName}</p>}
-            {companyAddress && <p className="text-sm text-slate-600">{companyAddress}</p>}
-            {companyPhone && <p className="text-sm text-slate-600">{companyPhone}</p>}
-            {companyEmail && <p className="text-sm text-slate-600">{companyEmail}</p>}
-          </div>
-        </div>
-
-        {/* Edit Header Button */}
-        {showEditButtons && onEditHeader && (
-          <button
-            onClick={onEditHeader}
-            className="absolute -top-2 -right-2 p-1.5 rounded-full bg-white border border-slate-300 hover:bg-slate-50 shadow-sm"
-            title="Edit header details"
-          >
-            <svg className="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-          </button>
-        )}
-      </div>
+    <div className="qc-output qc-output-quote">
+      <DocumentHeader title={documentTitle} number={`#${quote.quote_number || 'DRAFT'}`}
+        companyName={companyName} logo={companyLogoUrl} selection={selection}
+        companyDetails={<>{companyAddress && <p>{companyAddress}</p>}{companyPhone && <p>{companyPhone}</p>}{companyEmail && <p>{companyEmail}</p>}</>}
+        recipientLabel="Prepared for"
+        recipient={<><p><strong>{quote.customer_name}</strong></p>{quote.job_name && <p>{quote.job_name}</p>}{quote.site_address && <p>{quote.site_address}</p>}</>}
+        meta={<><div className="qc-output-meta-row"><span>Date</span><span>{new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}</span></div>{metadataExtra}</>}
+      />
+      {showEditButtons && onEditHeader && <button type="button" data-exclude-pdf data-html2canvas-ignore="true" onClick={onEditHeader} aria-label="Edit header details">Edit header</button>}
 
       {/* Line items - table layout for clean column alignment (matches order editor) */}
-      <div className="border-t pt-4">
+      <div>
         {lines.length === 0 ? (
-          <p className="text-sm text-slate-400 italic">No items selected</p>
+          <div><p className="text-sm text-slate-400 italic">No items selected</p></div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="qc-output-table">
             <thead>
               <tr className="border-b-2 border-slate-300 text-left">
                 <th className="py-2 pr-3 font-semibold text-slate-600">Item</th>
                 {showQuantityColumn && (
-                  <th className="py-2 px-2 text-right font-semibold text-slate-600 whitespace-nowrap w-12">Qty</th>
+                  <th className="qc-output-numeric">Qty</th>
                 )}
-                <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">
+                <th className="qc-output-numeric">
                   {hideLinePrices ? '' : 'Total'}
                 </th>
                 {showEditButtons && onEditLine && <th className="w-8" />}
@@ -189,7 +156,7 @@ export function QuotePreview({
                         initialAmount={line.amount}
                         initialShowPrice={line.showPrice}
                         showQuantityColumn={showQuantityColumn}
-                        initialQty={(line as { qty?: number }).qty ?? 1}
+                        initialQty={line.qty ?? 1}
                         initialUnitPrice={(line as { unitPrice?: number | null }).unitPrice ?? null}
                         // Margin fields
                         isComponentLine={line.type === 'component'}
@@ -227,16 +194,17 @@ export function QuotePreview({
                     </td>
                   </tr>
                 ) : (
-                  <tr key={line.id} data-pdf-block className="border-b border-slate-100 align-top">
+                  <tr key={line.id} data-pdf-block {...documentRegion(selection, `line:${line.id}`)} className="border-b border-slate-100 align-top">
                     <td className="py-2 pr-3 text-slate-900">
                       {displayLineText(line.text, line.quantityText, line.showUnits)}
+                      <DocumentEditTarget selection={selection} id={`line:${line.id}`} label={line.text || 'line item'} />
                     </td>
                     {showQuantityColumn && (
-                      <td className="py-2 px-2 text-right text-slate-600 w-12 tabular-nums">
-                        {(line as { qty?: number }).qty ?? 1}
+                      <td className="qc-output-numeric">
+                        {line.qty ?? '—'}
                       </td>
                     )}
-                    <td className="py-2 pl-3 text-right font-medium text-slate-900 whitespace-nowrap tabular-nums">
+                    <td className="qc-output-numeric">
                       {line.showPrice && !hideLinePrices
                         ? formatCurrency(line.amount, currency)
                         : ''}
@@ -244,7 +212,7 @@ export function QuotePreview({
                     {showEditButtons && onEditLine && (
                       <td className="py-2 pl-2 text-right">
                         <button
-                          onClick={() => onEditLine(line.id)}
+                          data-exclude-pdf data-html2canvas-ignore="true" aria-label={`Edit ${line.text || 'line'}`} onClick={() => onEditLine(line.id)}
                           className="p-1 text-slate-400 hover:text-slate-600"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,7 +232,7 @@ export function QuotePreview({
       </div>
 
       {/* Totals */}
-      {!hideTotals && <div data-pdf-block className="space-y-2 pt-4 border-t">
+      {!hideTotals && <div data-pdf-block className="qc-output-totals" {...documentRegion(selection, 'appearance')}><div className="qc-output-totals-inner">
         <div className="flex justify-between text-sm">
           <span className="text-slate-600">Subtotal</span>
           <span className="font-medium text-slate-900">{formatCurrency(subtotal, currency)}</span>
@@ -301,16 +269,17 @@ export function QuotePreview({
             )}
           </>
         )}
-        <div className="flex justify-between text-lg font-bold border-t pt-2">
+        <div className="qc-output-grand-total">
           <span className="text-slate-900">Total</span>
           <span className="text-slate-900">{formatCurrency(total, currency)}</span>
         </div>
-      </div>}
+      </div><DocumentEditTarget selection={selection} id="appearance" label="totals and price display" /></div>}
       {/* end hideTotals guard */}
 
       {/* Footer */}
       {(footerText || (showEditButtons && onEditFooter)) && (
-        <div className="pt-4 border-t relative">
+        <div data-pdf-block className="qc-output-footer" {...documentRegion(selection, 'footer')}>
+          <DocumentEditTarget selection={selection} id="footer" label="footer and terms" />
           {footerText && (
             <p className="text-sm text-slate-600 italic whitespace-pre-wrap">{footerText}</p>
           )}
@@ -319,7 +288,7 @@ export function QuotePreview({
           )}
           {showEditButtons && onEditFooter && (
             <button
-              onClick={onEditFooter}
+              data-exclude-pdf data-html2canvas-ignore="true" aria-label="Edit footer" onClick={onEditFooter}
               className="absolute -top-2 -right-2 p-1.5 rounded-full bg-white border border-slate-300 hover:bg-slate-50 shadow-sm"
               title="Edit footer"
             >
@@ -328,6 +297,7 @@ export function QuotePreview({
           )}
         </div>
       )}
+      {!footerText && <></>}
     </div>
   );
 }

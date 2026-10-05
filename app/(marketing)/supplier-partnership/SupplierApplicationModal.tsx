@@ -82,12 +82,12 @@ export default function SupplierApplicationModal({
             </div>
             <h2 className="mt-4 text-xl font-semibold text-slate-900">Application received</h2>
             <p className="mt-2 text-sm text-slate-600">
-              Thanks for your interest in becoming a QuoteCore+ supplier partner. We&apos;ll review your details and get back to you within 1–2 business days.
+              Thanks for your interest in becoming a QuoteCore+ supplier partner. We&apos;ll review your details and get back to you within 1 - 2 business days.
             </p>
             <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50/50 px-4 py-3 text-left">
               <p className="text-sm font-medium text-slate-900">Create your free account now</p>
               <p className="mt-1 text-xs text-slate-600">
-                We&apos;ve opened the signup page in a new tab. Creating your account now means we can grant supplier dashboard access as soon as your application is approved — no waiting around.
+                We&apos;ve opened the signup page in a new tab. Creating your account now means we can grant supplier dashboard access as soon as your application is approved - no waiting around.
               </p>
             </div>
             <div className="mt-6 flex flex-col gap-2">

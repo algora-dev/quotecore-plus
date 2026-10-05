@@ -1,0 +1,79 @@
+{
+  "baselineZip": "quotecore-plus-phase8-ux-handoff-2026-09-27.zip",
+  "baselineZipSha256": "3419f46b37938caa0d4cd33daa3cf74195722b7d3c857cba16c767344c3869bf",
+  "checks": [
+    {
+      "name": "All baseline repository paths retained",
+      "passed": true,
+      "detail": {
+        "originalFiles": 3094,
+        "missing": []
+      }
+    },
+    {
+      "name": "Only the approved 24 existing production files changed",
+      "passed": true,
+      "detail": {
+        "modifiedProduction": 24,
+        "unexpected": []
+      }
+    },
+    {
+      "name": "Protected files are raw-byte identical",
+      "passed": true,
+      "detail": {
+        "count": 887,
+        "mismatches": []
+      }
+    },
+    {
+      "name": "Catalogue locked Actions column retained",
+      "passed": true,
+      "detail": {
+        "width": "190px"
+      }
+    },
+    {
+      "name": "Removed Resource Library button stays absent",
+      "passed": true,
+      "detail": {
+        "route": "quotes"
+      }
+    },
+    {
+      "name": "Legacy resources/new redirects to unified library",
+      "passed": true,
+      "detail": {
+        "authorizedException": "obsolete route only; no shared server action changed"
+      }
+    },
+    {
+      "name": "Generic Trades submit payload preserved",
+      "passed": true,
+      "detail": {
+        "responsiveChange": "Industry/collection controls stack at narrow widths; options/flags/state/payload unchanged"
+      }
+    },
+    {
+      "name": "New Quote option values preserved",
+      "passed": true,
+      "detail": {
+        "optionCount": 19
+      }
+    },
+    {
+      "name": "Database types encoding untouched",
+      "passed": true,
+      "detail": {
+        "encoding": "UTF-16LE BOM"
+      }
+    },
+    {
+      "name": "Security delete retains existing action (no fabricated success)",
+      "passed": true,
+      "detail": {
+        "backendLimitation": "deleteSecurityQuestion returns void and does not inspect provider error; runtime owner must resolve"
+      }
+    }
+  ]
+}

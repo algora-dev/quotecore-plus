@@ -1,0 +1,234 @@
+TAP version 13
+# Subtest: 50 unique acceptance cases distinguish manual fixtures from read automation
+ok 1 - 50 unique acceptance cases distinguish manual fixtures from read automation
+  ---
+  duration_ms: 1.302148
+  type: 'test'
+  ...
+# Subtest: P17-01 example selection validates (not a live resolution pass)
+ok 2 - P17-01 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 2.416674
+  type: 'test'
+  ...
+# Subtest: P17-02 example selection validates (not a live resolution pass)
+ok 3 - P17-02 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.293602
+  type: 'test'
+  ...
+# Subtest: P17-03 example selection validates (not a live resolution pass)
+ok 4 - P17-03 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.327302
+  type: 'test'
+  ...
+# Subtest: P17-04 example selection validates (not a live resolution pass)
+ok 5 - P17-04 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.339991
+  type: 'test'
+  ...
+# Subtest: P17-05 example selection validates (not a live resolution pass)
+ok 6 - P17-05 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.169265
+  type: 'test'
+  ...
+# Subtest: P17-06 example selection validates (not a live resolution pass)
+ok 7 - P17-06 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.23927
+  type: 'test'
+  ...
+# Subtest: P17-07 example selection validates (not a live resolution pass)
+ok 8 - P17-07 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.161643
+  type: 'test'
+  ...
+# Subtest: P17-08 example selection validates (not a live resolution pass)
+ok 9 - P17-08 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.396676
+  type: 'test'
+  ...
+# Subtest: P17-09 example selection validates (not a live resolution pass)
+ok 10 - P17-09 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.491068
+  type: 'test'
+  ...
+# Subtest: P17-10 example selection validates (not a live resolution pass)
+ok 11 - P17-10 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.27922
+  type: 'test'
+  ...
+# Subtest: P17-11 example selection validates (not a live resolution pass)
+ok 12 - P17-11 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.161112
+  type: 'test'
+  ...
+# Subtest: P17-12 example selection validates (not a live resolution pass)
+ok 13 - P17-12 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.115113
+  type: 'test'
+  ...
+# Subtest: P17-13 example selection validates (not a live resolution pass)
+ok 14 - P17-13 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.093531
+  type: 'test'
+  ...
+# Subtest: P17-14 example selection validates (not a live resolution pass)
+ok 15 - P17-14 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.097827
+  type: 'test'
+  ...
+# Subtest: P17-20 example plan compiles (not a language-quality pass)
+ok 16 - P17-20 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.283386
+  type: 'test'
+  ...
+# Subtest: P17-21 example plan compiles (not a language-quality pass)
+ok 17 - P17-21 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.251638
+  type: 'test'
+  ...
+# Subtest: P17-22 example plan compiles (not a language-quality pass)
+ok 18 - P17-22 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.13943
+  type: 'test'
+  ...
+# Subtest: P17-23 example plan compiles (not a language-quality pass)
+ok 19 - P17-23 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.215294
+  type: 'test'
+  ...
+# Subtest: P17-24 example plan compiles (not a language-quality pass)
+ok 20 - P17-24 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.113611
+  type: 'test'
+  ...
+# Subtest: P17-25 example plan compiles (not a language-quality pass)
+ok 21 - P17-25 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.133981
+  type: 'test'
+  ...
+# Subtest: P17-26 example plan compiles (not a language-quality pass)
+ok 22 - P17-26 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.095424
+  type: 'test'
+  ...
+# Subtest: P17-27 example plan compiles (not a language-quality pass)
+ok 23 - P17-27 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.163235
+  type: 'test'
+  ...
+# Subtest: P17-28 example plan compiles (not a language-quality pass)
+ok 24 - P17-28 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.103666
+  type: 'test'
+  ...
+# Subtest: P17-29 example plan compiles (not a language-quality pass)
+ok 25 - P17-29 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.082244
+  type: 'test'
+  ...
+# Subtest: P17-30 example plan compiles (not a language-quality pass)
+ok 26 - P17-30 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.096665
+  type: 'test'
+  ...
+# Subtest: P17-31 example plan compiles (not a language-quality pass)
+ok 27 - P17-31 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.129305
+  type: 'test'
+  ...
+# Subtest: P17-32 example plan compiles (not a language-quality pass)
+ok 28 - P17-32 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.244157
+  type: 'test'
+  ...
+# Subtest: P17-33 example plan compiles (not a language-quality pass)
+ok 29 - P17-33 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.09298
+  type: 'test'
+  ...
+# Subtest: P17-34 example plan compiles (not a language-quality pass)
+ok 30 - P17-34 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.082704
+  type: 'test'
+  ...
+# Subtest: P17-35 example plan compiles (not a language-quality pass)
+ok 31 - P17-35 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.087312
+  type: 'test'
+  ...
+# Subtest: P17-36 example plan compiles (not a language-quality pass)
+ok 32 - P17-36 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.071006
+  type: 'test'
+  ...
+# Subtest: P17-37 example plan compiles (not a language-quality pass)
+ok 33 - P17-37 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.090456
+  type: 'test'
+  ...
+# Subtest: P17-38 example selection validates (not a live resolution pass)
+ok 34 - P17-38 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.116526
+  type: 'test'
+  ...
+# Subtest: P17-45 example selection validates (not a live resolution pass)
+ok 35 - P17-45 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.090846
+  type: 'test'
+  ...
+# Subtest: P17-46 example plan compiles (not a language-quality pass)
+ok 36 - P17-46 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.082354
+  type: 'test'
+  ...
+# Subtest: P17-49 example selection validates (not a live resolution pass)
+ok 37 - P17-49 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.129966
+  type: 'test'
+  ...
+1..37
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 34.916854
+
+EXIT_CODE=0

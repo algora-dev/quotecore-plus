@@ -1,3 +1,4 @@
+import { BackButton } from '@/app/components/BackButton';
 import { notFound, redirect } from 'next/navigation';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import type { FlashingLibraryRow } from '@/app/lib/types';
@@ -48,7 +49,8 @@ export default async function EditFlashingPage(props: Props) {
   ).featureLabelSingular;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-slate-50 min-h-screen">
+    <div className="max-w-4xl mx-auto space-y-5">
+      <BackButton href={`/${workspaceSlug}/drawings`} label="Back to Drawings / Images" />
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Edit {featureLabelSingular}</h1>
         <p className="text-sm text-slate-600 mt-1">

@@ -13,22 +13,76 @@ const PLAN_BADGE: Record<string, string> = {
   free:      'bg-slate-100 text-slate-500',
 };
 
-const STATUS_BADGE: Record<string, string> = {
-  active:    'bg-emerald-100 text-emerald-700 border-emerald-200',
-  trialing:  'bg-amber-100 text-amber-700 border-amber-200',
-  past_due:  'bg-orange-100 text-orange-700 border-orange-200',
-  grace:     'bg-orange-100 text-orange-700 border-orange-200',
-  disputed:  'bg-red-100 text-red-700 border-red-200',
-  canceled:  'bg-slate-100 text-slate-400 border-slate-100',
-  suspended: 'bg-slate-100 text-slate-400 border-slate-100',
+// Activity thresholds (days)
+const ACTIVE_GREEN_DAYS = 5;
+const ACTIVE_ORANGE_DAYS = 21;
+
+function activityTier(iso: string | null): 'green' | 'orange' | 'red' | 'never' {
+  if (!iso) return 'never';
+  const days = (Date.now() - new Date(iso).getTime()) / 86_400_000;
+  if (days <= ACTIVE_GREEN_DAYS) return 'green';
+  if (days <= ACTIVE_ORANGE_DAYS) return 'orange';
+  return 'red';
+}
+
+const DOT_TIER: Record<string, string> = {
+  green: 'bg-emerald-500',
+  orange: 'bg-amber-500',
+  red: 'bg-red-500',
+  never: 'bg-slate-300',
 };
 
-function PlanBadge({ code }: { code: string | null }) {
+function formatLastActive(iso: string | null): string {
+  if (!iso) return 'Never';
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  const d = new Date(iso);
+  const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  if (days <= 0) return dateStr;
+  if (days === 1) return `${dateStr} (1 day ago)`;
+  return `${dateStr} (${days} days ago)`;
+}
+
+function PlanBadge({ code, status, hasSub }: { code: string | null; status?: string | null; hasSub?: boolean }) {
   if (!code || code === 'premium') return null;
+  // Never-paid account (signed up, never picked/paid a plan): distinct amber
+  // "Unpaid" pill instead of the plan it defaulted to.
+  if (!hasSub && status === 'canceled' && (code === 'starter' || code === 'trial')) {
+    return (
+      <span className="rounded-full px-2.5 py-1 text-xs font-medium bg-amber-100 text-amber-700">
+        Unpaid
+      </span>
+    );
+  }
   const cls = PLAN_BADGE[code] ?? 'bg-slate-100 text-slate-600';
   return (
     <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${cls}`}>
       {code.replace(/_/g, ' ')}
+    </span>
+  );
+}
+
+function CompBadge({ until }: { until: string }) {
+  const daysLeft = Math.ceil((new Date(until).getTime() - Date.now()) / 86_400_000);
+  if (daysLeft < 0) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+        Comp expired
+      </span>
+    );
+  }
+  const urgent = daysLeft <= 14;
+  return (
+    <span
+      title={`Comped until ${new Date(until).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${
+        urgent
+          ? 'bg-amber-100 text-amber-700 border-amber-200'
+          : 'bg-slate-100 text-slate-600 border-slate-200'
+      }`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${urgent ? 'bg-amber-500' : 'bg-slate-400'}`} />
+      Comp: {daysLeft} day{daysLeft === 1 ? '' : 's'}
     </span>
   );
 }
@@ -125,7 +179,7 @@ export function UsersPanel() {
                 <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Name</th>
                 <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Company</th>
                 <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Plan</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Status</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Last active</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -139,15 +193,23 @@ export function UsersPanel() {
                   <td className="px-4 py-3 font-medium text-slate-900">{u.email}</td>
                   <td className="px-4 py-3 text-slate-600">{u.fullName ?? <span className="text-slate-400">-</span>}</td>
                   <td className="px-4 py-3 text-slate-700">{u.companyName}</td>
-                  <td className="px-4 py-3"><PlanBadge code={u.planCode} /></td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {u.subscriptionStatus && (
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${STATUS_BADGE[u.subscriptionStatus] ?? 'bg-slate-100 text-slate-500 border-slate-200'}`}>
-                          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                          {u.subscriptionStatus}
-                        </span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <PlanBadge code={u.planCode} status={u.subscriptionStatus} hasSub={!!u.stripeSubscriptionId} />
+                      {u.compUntil && (
+                        <CompBadge until={u.compUntil} />
                       )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        title={activityTier(u.lastActiveAt) === 'never' ? 'Never signed in' : `Last active: ${u.lastActiveAt}`}
+                        className="inline-flex items-center gap-1.5"
+                      >
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${DOT_TIER[activityTier(u.lastActiveAt)]}`} />
+                        <span className="text-xs text-slate-600">{formatLastActive(u.lastActiveAt)}</span>
+                      </span>
                       {u.adminPaused && (
                         <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-red-100 text-red-700 border border-red-200">
                           <span className="w-1.5 h-1.5 rounded-full bg-red-500" />

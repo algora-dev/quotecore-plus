@@ -9,7 +9,7 @@ export default function Post() {
       <p>This guide walks through the full process: measure the roof, calculate areas and quantities, apply waste, add labour and accessories, and avoid the common mistakes that erode margins.</p>
       <h2>Step 1: Measure the roof</h2>
       <p>Everything starts with measurement. You need roof surface areas, linear lengths (ridges, hips, valleys, eaves, barges), and pitch. For a full walkthrough, see <a href="/blog/how-to-measure-a-roof">how to measure a roof for materials</a>.</p>
-      <p>Manual measurement works for simple roofs. For complex roofs or when working from plans, <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link> tools let you measure from a PDF on screen — no printing, no scaling ruler, no transcription.</p>
+      <p>Manual measurement works for simple roofs. For complex roofs or when working from plans, <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link> tools let you measure from a PDF on screen - no printing, no scaling ruler, no transcription.</p>
       <h2>Step 2: Calculate roof area</h2>
       <p>Roof surface area is not the same as floor area. Pitch increases the covering area. Calculate the effective area using the pitch factor:</p>
       <ul>
@@ -54,7 +54,7 @@ export default function Post() {
         <li><strong>Underestimating waste:</strong> a flat 10% across all materials over-orders metal and under-orders shingles.</li>
         <li><strong>Forgetting accessories:</strong> flashings, fixings, membrane, and ridge details are easy to miss but expensive to add later.</li>
         <li><strong>Not accounting for cuts:</strong> complex roofs with hips, valleys, and dormers generate more waste than simple gables.</li>
-        <li><strong>Rounding up instead of calculating:</strong> adding 20% "to be safe" is not estimating — it is guessing.</li>
+        <li><strong>Rounding up instead of calculating:</strong> adding 20% "to be safe" is not estimating - it is guessing.</li>
       </ul>
       <h2>How digital tools help</h2>
       <p>QuoteCore+ uses <Link href="/features/smart-components">Smart Components&#8482;</Link> to automate the material estimation process. A Smart Component carries the materials, calculations, waste rules, labour, and pricing for a specific roof element. When you measure a roof area or length in the takeoff, the component automatically applies the right quantities and costs.</p>
@@ -67,7 +67,7 @@ export default function Post() {
       <h3>Do I need to measure the roof myself or can I use plans?</h3>
       <p>You can use plans if they are current, accurately scaled, and detailed enough. Verify key dimensions on site if possible. QuoteCore+ lets you measure directly from PDF plans using <Link href="/features/digital-roof-takeoff">digital takeoff</Link> tools, and <Link href="/features/ai-scan-assist">AI Scan Assist</Link> can auto-detect roof geometry from a plan.</p>
       <h3>Can software estimate roofing materials automatically?</h3>
-      <p>Yes. QuoteCore+ Smart Components&#8482; store material calculations, waste rules, and pricing for each roof element. When you measure a roof area or length in the takeoff, the component applies the correct materials and quantities automatically. Try it with the <a href="/free-roofing-material-calculator">free roofing material calculator</a>, <a href="/roofing-quoting-software">explore the quoting software for contractors</a>, or <a href="/free-trial">start a free trial</a>.</p>
+      <p>Yes. QuoteCore+ Smart Components&#8482; store material calculations, waste rules, and pricing for each roof element. When you measure a roof area or length in the takeoff, the component applies the correct materials and quantities automatically. Try it with the <a href="/free-roofing-material-calculator">free roofing material calculator</a>, <a href="/roofing-quoting-software">explore the quoting software for contractors</a>, or <a href="/free-trial">get started with QuoteCore+</a>.</p>
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe
           src="https://www.youtube.com/embed/B--YAux8Bqo"

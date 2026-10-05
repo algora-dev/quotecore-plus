@@ -272,7 +272,7 @@ export function DemoQuoteView({
               <>
                 <h2 className="text-xl font-semibold text-slate-900">This quote took you {timeLabel}.</h2>
                 <p className="mt-2 text-sm text-slate-500">
-                  Including the guided tour. Sign up for free and try it on your own plans - 14-day trial, no card needed.
+                  Including the guided tour. Try the free tools on your own plans with no signup, or start in the app with a 30-day money-back guarantee.
                 </p>
               </>
             );
@@ -282,8 +282,8 @@ export function DemoQuoteView({
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/free-trial?utm_source=takeoff-demo&utm_medium=demo&utm_campaign=trial"
-              onClick={() => trackEvent('trial_click', { source: 'takeoff-demo', stage: 'quote-view' })}
+              href="/pricing?utm_source=takeoff-demo&utm_medium=demo&utm_campaign=get-started"
+              onClick={() => trackEvent('get_started_click', { source: 'takeoff-demo', stage: 'quote-view' })}
               className="inline-flex items-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
             >
               Create your free account
@@ -312,20 +312,20 @@ export function DemoQuoteView({
               That&apos;s the fast version
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              You just used our real digital takeoff system — the canvas you measured on is exactly what&apos;s in the app.
+              You just used our real digital takeoff system - the canvas you measured on is exactly what&apos;s in the app.
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               To keep the demo quick and easy, we pre-loaded the component library and skipped straight to the finished quote. In the full app, you can create as many components as you want with your own rules and pricing, and fully edit the quote before you send it.
             </p>
-            <p className="mt-4 text-sm font-semibold text-slate-900">Try it on your next job — free, right now.</p>
+            <p className="mt-4 text-sm font-semibold text-slate-900">Try it on your next job - free, right now.</p>
 
             <div className="mt-6 flex flex-col gap-3">
               <Link
                 href="https://app.quote-core.com/signup?utm_source=takeoff-demo&utm_medium=demo&utm_campaign=demo-end-modal"
-                onClick={() => trackEvent('trial_click', { source: 'takeoff-demo', stage: 'end-modal' })}
+                onClick={() => trackEvent('get_started_click', { source: 'takeoff-demo', stage: 'end-modal' })}
                 className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
               >
-                Start free trial
+                Get started
               </Link>
               <Link
                 href="/#how-it-works"

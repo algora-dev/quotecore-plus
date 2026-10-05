@@ -1,5 +1,6 @@
 'use client';
 
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState } from 'react';
 import type { UserCollection } from '../supplier-directory/actions';
 
@@ -196,14 +197,14 @@ export function CatalogueConverter({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 mb-6">
+    <QcLibrary className="rounded-xl border border-slate-200 bg-white p-5 mb-6">
       <div className="flex items-center justify-between mb-3">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">Catalogue Converter</h3>
           <p className="text-xs text-slate-400 mt-0.5">Convert catalogue rows into components</p>
         </div>
         {step !== 'select-catalog' && step !== 'success' && (
-          <button onClick={handleReset} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer">
+          <button data-qc-variant="ghost" onClick={handleReset} className="qc-button qc-flow-control qc-library-control ">
             Start over
           </button>
         )}
@@ -224,7 +225,7 @@ export function CatalogueConverter({
               <select
                 value={selectedCatalogId}
                 onChange={e => setSelectedCatalogId(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                className="qc-select qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
               >
                 <option value="">Choose a catalogue...</option>
                 {catalogs.map(cat => (
@@ -233,10 +234,10 @@ export function CatalogueConverter({
                   </option>
                 ))}
               </select>
-              <button
+              <button data-qc-variant="primary"
                 onClick={handleCatalogSelect}
                 disabled={!selectedCatalogId || loadingRows}
-                className="cursor-pointer rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 {loadingRows ? 'Loading...' : 'Load Catalogue'}
               </button>
@@ -286,11 +287,11 @@ export function CatalogueConverter({
                           return next;
                         });
                       }}
-                      className={`text-xs rounded-lg border px-2 py-1.5 focus:border-orange-500 focus:outline-none min-w-[140px] ${
+                      className={"qc-select qc-library-control " + (`text-xs rounded-lg border px-2 py-1.5 focus:border-orange-500 focus:outline-none min-w-[140px] ${
                         isNameUnset
                           ? 'border-orange-300 ring-1 ring-orange-200'
                           : 'border-slate-300'
-                      }`}
+                      }`)}
                     >
                       <option value="">{field.placeholder}</option>
                       {headers.map(h => (
@@ -320,9 +321,9 @@ export function CatalogueConverter({
               </div>
             </div>
           )}
-          <button
+          <button data-qc-variant="primary"
             onClick={handleProceedToRowSelect}
-            className="cursor-pointer rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition"
+            className="qc-button qc-flow-control qc-library-control "
           >
             Next: Select Rows
           </button>
@@ -338,7 +339,7 @@ export function CatalogueConverter({
               value={searchFilter}
               onChange={e => setSearchFilter(e.target.value)}
               placeholder="Filter rows..."
-              className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
+              className="qc-input qc-library-control flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
             />
             <span className="text-xs text-slate-500 whitespace-nowrap">
               {selectedRowIndices.size} / {allRows.length} selected
@@ -346,7 +347,7 @@ export function CatalogueConverter({
           </div>
 
           <div className="rounded-lg border border-slate-200 overflow-auto max-h-96">
-            <table className="w-full text-xs min-w-max">
+            <table className="qc-library-table qc-library-table-mobile w-full text-xs min-w-max">
               <thead className="sticky top-0 z-10 bg-white">
                 <tr className="border-b border-slate-200">
                   <th className="px-2 py-2 text-left">
@@ -354,7 +355,7 @@ export function CatalogueConverter({
                       type="checkbox"
                       checked={selectedRowIndices.size === allRows.length && allRows.length > 0}
                       onChange={toggleAll}
-                      className="cursor-pointer"
+                      className="qc-checkbox qc-library-control cursor-pointer"
                     />
                   </th>
                   {headers.map(h => (
@@ -375,7 +376,7 @@ export function CatalogueConverter({
                         type="checkbox"
                         checked={selectedRowIndices.has(i)}
                         onChange={() => toggleRow(i)}
-                        className="cursor-pointer"
+                        className="qc-checkbox qc-library-control cursor-pointer"
                       />
                     </td>
                     {headers.map(h => (
@@ -390,10 +391,10 @@ export function CatalogueConverter({
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <label className="text-xs font-medium text-slate-600 mb-1 block">Import to library</label>
-              <select
+              <select aria-label="Import to library"
                 value={targetCollection}
                 onChange={e => setTargetCollection(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                className="qc-select qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
               >
                 {collections.map(col => (
                   <option key={col.id} value={col.id}>
@@ -403,10 +404,10 @@ export function CatalogueConverter({
               </select>
             </div>
             <div className="flex items-end">
-              <button
+              <button data-qc-variant="ghost"
                 onClick={handleConvert}
                 disabled={selectedRowIndices.size === 0 || !targetCollection}
-                className="cursor-pointer rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white hover:bg-[#e55a2b] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 Create {selectedRowIndices.size} Component{selectedRowIndices.size !== 1 ? 's' : ''}
               </button>
@@ -434,14 +435,14 @@ export function CatalogueConverter({
               Created {createdCount} component{createdCount !== 1 ? 's' : ''} from catalogue.
             </span>
           </div>
-          <button
+          <button data-qc-variant="ghost"
             onClick={handleReset}
-            className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 rounded-full border border-emerald-300 px-3 py-1 cursor-pointer"
+            className="qc-button qc-flow-control qc-library-control "
           >
             Convert More
           </button>
         </div>
       )}
-    </div>
+    </QcLibrary>
   );
 }

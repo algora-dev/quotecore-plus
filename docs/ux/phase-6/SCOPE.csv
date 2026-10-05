@@ -1,0 +1,61 @@
+path,change,group,status
+app/(auth)/[workspaceSlug]/account/AccountTabs.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/account/LogoUploader.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/account/UserProfileForm.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/account/billing/BillingPanel.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/account/integrations/IntegrationsPanel.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/account/page.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/account/support/SupportSection.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/attachments/AttachmentsTab.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/attachments/attachment-list.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/attachments/upload-attachment-modal.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/catalogs/edit-catalog-modal.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/catalogs/page.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/catalogs/replace-catalog-modal.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/invoices/invoice-from-quote/[quoteId]/InvoiceLineSelector.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/invoices/page.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/material-orders/order-from-quote/[quoteId]/LineSelector.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/material-orders/order-list.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/material-orders/orders-hub.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/material-orders/page.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/quotes/[id]/summary/ReopenQuoteButton.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/quotes/[id]/summary/ScheduleFollowUpButton.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/quotes/[id]/summary/SendToAppButton.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/quotes/[id]/summary/WithdrawQuoteButton.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/resources/CustomerTemplateLogoUploader.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/settings/EmailChangeSection.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/settings/MfaSection.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/settings/PasswordSection.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/settings/PaymentDetailsForm.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/onboarding/GoogleOnboardingForm.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/onboarding/OnboardingForm.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/onboarding/SecurityQuestionsStep.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/onboarding/page.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/(auth)/paywall/page.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/auth/reset-password/page.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/components/TaxEditor.tsx,modified,Account / billing,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/components/attachments/AttachmentSendPicker.tsx,modified,Catalogue / files,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/components/auth/GoogleSignInButton.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/components/send/SendDocumentButton.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/components/send/SendDocumentModal.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/components/send/SendTestTipModal.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/components/ui/PasswordField.tsx,modified,Shared journeys,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/components/ui/v2/QcJourney.tsx,added,Shared journeys,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/components/ui/v2/qc-journeys.css,added,Shared journeys,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/components/workspace/QuoteIndexPage.tsx,modified,Lists / connecting dialogs,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/login/TroubleSigningInPanel.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/login/page.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/login/recover/RecoverFlow.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/login/recover/page.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING
+app/signup/page.tsx,modified,Auth / activation,SOURCE_IMPLEMENTED_APP_RUNTIME_PENDING

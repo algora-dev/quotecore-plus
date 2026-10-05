@@ -355,7 +355,7 @@ function InvoiceGeneratorForm() {
         {/* Hero */}
         <section className="mb-8 print:hidden">
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Invoice Generator</h1>
-          <p className="mt-1 text-sm font-medium text-[#BD4A1A]">QuoteCore Plus Free Invoice Generator — free, no signup required.</p>
+          <p className="mt-1 text-sm font-medium text-[#BD4A1A]">QuoteCore Plus Free Invoice Generator - free, no signup required.</p>
           <p className="mt-2 text-sm text-slate-500 max-w-xl">
             Create a professional invoice in minutes. Upload a photo of your existing invoice and
             AI will fill in the form - or paste your details, or type it manually. No signup required.
@@ -960,6 +960,7 @@ function InvoiceGeneratorForm() {
             {/* Post-generation modal */}
             <PostGenerationModal
               toolType="invoice"
+              toolSlug="free-invoice-generator"
               trigger={popupTrigger}
               resultLabel={`${formatMoney(total, sym)} invoice`}
               resultDetails={`${invoiceNumber} for ${clientName || 'client'}`}
@@ -995,11 +996,11 @@ function InvoiceGeneratorForm() {
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">What&apos;s the difference between this and QuoteCore+?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">This free tool generates a one-off invoice. QuoteCore+ gives you a complete quoting and business management platform in one place - track and store all your documents, send follow-ups to clients, and auto-update statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#BD4A1A] font-medium">Start a free trial &rarr;</Link></p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">This free tool generates a one-off invoice. QuoteCore+ gives you a complete quoting and business management platform in one place - track and store all your documents, send follow-ups to clients, and auto-update statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#BD4A1A] font-medium">Plans from $19/mo &rarr;</Link></p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">How do I remove the QuoteCore+ branding and create more free invoices?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free invoices and remove the QuoteCore+ branding, or sign up to the full QuoteCore+ app for higher limits and loads of extra features with a free trial.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free invoices and remove the QuoteCore+ branding, or subscribe to the full QuoteCore+ app (plans from $19/mo, 30-day money-back guarantee) for higher limits and loads of extra features.</p></div>
               </details>
             </div>
           </div>

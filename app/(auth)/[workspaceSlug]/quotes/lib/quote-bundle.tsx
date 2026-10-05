@@ -37,6 +37,8 @@ export function sanitizeFilename(input: string): string {
 
 export async function renderCustomerQuotePdfBuffer(b: QuoteBundleData): Promise<ArrayBuffer> {
   const p = b.preview;
+  // AGENT-TODO P5-EXPORT-01: the protected loader excludes hidden/in-total lines
+  // from its subtotal. Gavin must reconcile it before financial output sign-off.
   return renderComponentToPdfBuffer(
     <QuotePreview
       quote={p.quote as unknown as QuoteRow}
@@ -52,6 +54,9 @@ export async function renderCustomerQuotePdfBuffer(b: QuoteBundleData): Promise<
       companyLogoUrl={p.companyLogoUrl}
       footerText={p.footerText}
       showEditButtons={false}
+      hideLinePrices={(p.quote as { hide_line_prices?: boolean }).hide_line_prices === true}
+      hideTotals={(p.quote as { hide_totals?: boolean }).hide_totals === true}
+      // AGENT-TODO P5-EXPORT-02: loader omits qty/unitPrice. Do not invent a quantity column.
       currency={p.currency}
     />,
   );

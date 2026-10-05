@@ -3,6 +3,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import {
   AUTH_COOKIE_NAME,
   authCookieOptions,
+  demoAuthCookieOptions,
+  DEMO_COOKIE_NAME,
   legacyAuthCookiePrefix,
 } from '@/app/lib/supabase/cookie-config';
 import {
@@ -54,6 +56,7 @@ const STABLE_VERCEL_ALIASES = new Set([
 const PUBLIC_PATHS = [
   '/login',
   '/signup',
+  '/demo',        // Public live demo entry (Architecture V2, switch-aware)
   '/accept',       // Quote acceptance (public)
   '/auth/callback', // OAuth callback
   '/auth/verify',   // Magic-link verification (impersonation flow)
@@ -71,7 +74,10 @@ const PUBLIC_PATHS = [
   '/suppliers-info',
   '/affiliate-program', // Partner & Affiliate Program (public landing page)
   '/affiliate-program-terms', // Partner Program Terms (public)
+  '/careers',       // Commission sales roles page (public)
   '/supplier-partnership', // Hidden supplier partnership page (email outreach, not in nav)
+  '/supplier-pricing-tool', // Public supplier pricing tool (incl. /quote handoff page)
+  '/research',    // Original research/study pages (marketing)
   '/blog',
   '/resources',     // Resource hub pages (blog category hubs)
   '/pricing',
@@ -81,10 +87,15 @@ const PUBLIC_PATHS = [
   '/coffee-terms',
   '/tutorials',
   '/features',     // Feature pages (marketing)
+  '/integrations', // Integration pages (Xero)
   '/takeoff-demo', // Interactive public takeoff demo (client-only, no auth)
   '/measurement-to-quote-tool', // Free measurement-to-pricing tool (renamed from /free-quote-builder)
+  '/done-for-you-setup',
+  '/custom-solutions',
   '/free-trial',
   '/construction-quoting-software',
+  '/construction-takeoff-software',
+  '/free-construction-takeoff-tools', // Free high-value takeoff tool discovery page
   '/roofing-quoting-software',
   '/roofing-estimating-software',
   '/roofing-takeoff-software',
@@ -116,6 +127,7 @@ const PUBLIC_PATHS = [
                    //  in the URL is the access gate.
   '/file',         // Hosted attachment downloads (token-gated). Already
                    //  HMAC-verified at the route level.
+  '/feedback',     // Public feedback questionnaire (email campaign + site-wide).
 ];
 
 // Paths reachable when the user has an AAL1 session but still needs to clear 2FA.
@@ -128,6 +140,13 @@ const AAL1_ALLOWED_PATHS = [
 function isAal1Allowed(pathname: string): boolean {
   return AAL1_ALLOWED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
+
+/** AI-costing/assistant API routes (demo guard scope, Architecture V2 §11
+ *  interim). Calls carrying a demo cookie are treated as demo-context:
+ *  master-switch check + cookie-view rewrite so routes resolve the demo
+ *  tenant. Normal users' calls (no demo cookie) are untouched. */
+const DEMO_AI_API_PATTERN =
+  /^\/api\/(smart-assistant(\/|$)|takeoff\/(ai-scan-v3|scan-jobs)|app\/(parse-document|ai-quota))/;
 
 function isPublicPath(pathname: string): boolean {
   // All /free-* paths are public (calculators, generators, hub page).
@@ -144,7 +163,9 @@ function isStaticAsset(pathname: string): boolean {
   return (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
-    pathname === '/favicon.ico' ||
+    // P9: Next's public metadata response must not be redirected to HTML login.
+    pathname === '/manifest.webmanifest' ||
+        pathname === '/favicon.ico' ||
     pathname === '/favicon.png' ||
     pathname === '/logo.png' ||
     // Gerald audit M-04: SEO/discovery metadata routes must be reachable
@@ -162,6 +183,15 @@ function isStaticAsset(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.nextUrl.hostname;
+
+  // -- /var/* hard-404 (2026-09-25) ----------------------------------
+  // Docs RSC payloads leaked absolute /var/task/... paths (AWS Lambda
+  // root) into page HTML; Google indexed them via GSC and they dead-ended
+  // through the app-domain 308 chain. 404 at the edge on every host —
+  // these paths never exist as routes.
+  if (pathname === '/var' || pathname.startsWith('/var/')) {
+    return new NextResponse(null, { status: 404 });
+  }
 
   // ── Stable Vercel alias redirect ───────────────────────────
   // Known stable production aliases (e.g. quotecore-plus-dev.vercel.app)
@@ -249,6 +279,41 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(appUrl, 308);
   }
 
+  // ── Demo AI guard (interim wiring; full route metering lands with the SA
+  // agent return). Runs before the static-asset skip because /api/* short-
+  // circuits there. Demo cookie present + AI route = demo-context call. ──
+  if (
+    DEMO_AI_API_PATTERN.test(pathname) &&
+    request.cookies.getAll().some(c => c.name.startsWith(DEMO_COOKIE_NAME))
+  ) {
+    const check = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/demo_ai_enabled`,
+      {
+        method: 'POST',
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Content-Type': 'application/json',
+        },
+        body: '{}',
+      }
+    );
+    const enabled = check.ok ? (await check.json()) === true : false;
+    if (!enabled) {
+      return NextResponse.json({ error: 'Demo AI is currently switched off.' }, { status: 403 });
+    }
+    const legacyPrefix = legacyAuthCookiePrefix();
+    const demoChunks = request.cookies.getAll().filter(c => c.name.startsWith(DEMO_COOKIE_NAME));
+    for (const c of request.cookies.getAll()) {
+      if (c.name.startsWith(AUTH_COOKIE_NAME) || (legacyPrefix && c.name.startsWith(legacyPrefix))) {
+        request.cookies.delete(c.name);
+      }
+    }
+    for (const c of demoChunks) {
+      request.cookies.set(c.name.replace(DEMO_COOKIE_NAME, AUTH_COOKIE_NAME), c.value);
+    }
+    return NextResponse.next({ request });
+  }
+
   // Skip static assets and API routes
   if (isStaticAsset(pathname)) {
     return NextResponse.next();
@@ -259,6 +324,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Demo workspace routes (slug prefix demo-) authenticate via the DEMO
+  // cookie namespace (Architecture V2 §5): a demo session and a normal
+  // session coexist in one browser and never touch each other.
+  const firstSegment = pathname.split('/')[1] ?? '';
+  const isDemoWorkspace = firstSegment.startsWith('demo-');
+
   // Create Supabase client for middleware
   let response = NextResponse.next({ request });
 
@@ -268,7 +339,7 @@ export async function middleware(request: NextRequest) {
     {
       // Cross-subdomain auth cookies (see cookie-config.ts): sessions
       // refreshed here must stay valid on all quote-core.com subdomains.
-      cookieOptions: authCookieOptions(hostname),
+      cookieOptions: isDemoWorkspace ? demoAuthCookieOptions(hostname) : authCookieOptions(hostname),
       cookies: {
         get(name: string) {
           return request.cookies.get(name)?.value;
@@ -299,7 +370,7 @@ export async function middleware(request: NextRequest) {
   if (!user) {
     const hasAuthCookies = request.cookies
       .getAll()
-      .some(c => c.name.startsWith(AUTH_COOKIE_NAME));
+      .some(c => c.name.startsWith(isDemoWorkspace ? DEMO_COOKIE_NAME : AUTH_COOKIE_NAME));
     if (hasAuthCookies) {
       const { data: refreshData } = await supabase.auth.refreshSession();
       user = refreshData.user ?? null;
@@ -307,11 +378,36 @@ export async function middleware(request: NextRequest) {
   }
 
   // No user (and refresh failed) — redirect to login
+  // (demo workspaces bounce to /demo for a fresh sandbox instead)
   if (!user) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    url.searchParams.set('redirect', pathname);
+    if (isDemoWorkspace) {
+      url.pathname = '/demo';
+      url.search = '';
+    } else {
+      url.pathname = '/login';
+      url.searchParams.set('redirect', pathname);
+    }
     return expireLegacyAuthCookies(request, NextResponse.redirect(url));
+  }
+
+  // Demo workspace cookie-view rewrite (Architecture V2 §5, testing-phase
+  // path-based variant): make the demo session visible to the app's normal
+  // clients under the NORMAL cookie name for this request only, so workspace
+  // pages resolve the anon demo user transparently under normal RLS. A stale
+  // normal session in the same browser is masked while inside demo slugs.
+  if (isDemoWorkspace && user) {
+    const legacyPrefix = legacyAuthCookiePrefix();
+    const demoChunks = request.cookies.getAll().filter(c => c.name.startsWith(DEMO_COOKIE_NAME));
+    for (const c of request.cookies.getAll()) {
+      if (c.name.startsWith(AUTH_COOKIE_NAME) || (legacyPrefix && c.name.startsWith(legacyPrefix))) {
+        request.cookies.delete(c.name);
+      }
+    }
+    for (const c of demoChunks) {
+      request.cookies.set(c.name.replace(DEMO_COOKIE_NAME, AUTH_COOKIE_NAME), c.value);
+    }
+    response = NextResponse.next({ request });
   }
 
   // 2FA gate. getAuthenticatorAssuranceLevel() is a local JWT decode, not a

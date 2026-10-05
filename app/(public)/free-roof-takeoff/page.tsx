@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FreeRoofTakeoff } from './FreeRoofTakeoff';
+import { FreeTakeoffApp } from './FreeTakeoffApp';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { buildFaqSchema } from '@/lib/schema';
@@ -8,12 +9,12 @@ import { buildFaqSchema } from '@/lib/schema';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Roof Takeoff Tool | Measure Roof Plans Online | QuoteCore Plus',
+  title: 'Free Roof Takeoff & Measurement Tool - Upload Plans Online | QuoteCore+',
   description:
-    'Measure roof plans online for free. Upload a plan, set the scale and calculate roof areas, ridges, hips, valleys and other dimensions. No signup required.',
+    'Free roof takeoff and measurement tool. Upload a roof plan image, set the scale and measure roof areas, ridges, hips, valleys and eaves in metric, imperial or roofing squares. No signup required.',
   alternates: { canonical: '/free-roof-takeoff' },
   openGraph: {
-    title: 'Free Roof Takeoff Tool | Measure Roof Plans Online | QuoteCore Plus',
+    title: 'Free Roof Takeoff & Measurement Tool - Upload Plans Online | QuoteCore+',
     description:
       'Upload your own roof plan, measure with pitch calculations, and get a full measurement output. Free, no signup required.',
     url: '/free-roof-takeoff',
@@ -104,6 +105,7 @@ const TRUST_POINTS = [
   'No signup required',
   'No credit card',
   'Metric, imperial & roofing squares',
+  'Upload plans or satellite imagery',
   'Nothing saved unless you continue in QuoteCore+',
 ];
 
@@ -133,7 +135,15 @@ const COMPARISON: [string, string, string][] = [
   ['Save takeoffs & manage jobs', 'No - session only', 'Yes'],
 ];
 
-export default function FreeRoofTakeoffPage() {
+export default async function FreeRoofTakeoffPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ engine?: string }>;
+}) {
+  const params = (await searchParams) ?? {};
+  // v2 = the app-engine tool (default). ?engine=v1 keeps the legacy engine
+  // reachable for A/B comparison during the review loop.
+  const tool = params.engine === 'v1' ? <FreeRoofTakeoff /> : <FreeTakeoffApp />;
   return (
     <div className="bg-slate-50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }} />
@@ -145,11 +155,17 @@ export default function FreeRoofTakeoffPage() {
       {/* H1 + hero + trust strip (above the tool) */}
       <section className="mx-auto max-w-3xl px-4 pt-10 pb-6 text-center md:pt-14">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-          Free Roof Takeoff Tool — Measure Your Roof Plan Online
+          Free Roof Takeoff &amp; Measurement Tool
         </h1>
         <p className="mt-4 text-base leading-relaxed text-slate-600">
-          The QuoteCore Plus free roof takeoff lets you upload a roof plan, set the drawing scale, and measure roof
-          areas, ridges, hips, valleys, eaves and other roof dimensions directly in your browser. No signup required.
+          Upload your own roof plan image (PNG, JPG or WebP - including a screenshot of a PDF plan or an aerial/satellite
+          image), set the drawing scale, and measure roof areas, ridges, hips, valleys, eaves and other roof dimensions
+          directly in your browser. Metric, imperial or roofing squares - no signup required.
+        </p>
+        <p className="mt-3 text-sm text-slate-600">
+          Wondering how accurate remote measuring is? See our{" "}
+          <a href="/research/google-earth-roof-measurement-accuracy" className="font-medium text-[#BD4A1A] underline underline-offset-4">Google Earth roof measurement accuracy study</a>{" "}
+          - 10 real roofs measured remotely, then verified on site.
         </p>
         <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
           {TRUST_POINTS.map(point => (
@@ -165,7 +181,7 @@ export default function FreeRoofTakeoffPage() {
 
       {/* The tool */}
       <div id="free-roof-takeoff" className="scroll-mt-24">
-        <FreeRoofTakeoff />
+        {tool}
       </div>
 
       {/* Example output */}
@@ -187,7 +203,8 @@ export default function FreeRoofTakeoffPage() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-xs text-slate-500">Illustrative example - your results come from your own measurements.</p>
+        <p className="mt-2 text-xs text-slate-500">Illustrative example - your results come from your own measurements. Need materials and pricing too? Add your own component rates here, or{' '}
+          <Link href="/measurement-to-quote-tool" className="text-[#BD4A1A] underline underline-offset-2">turn measurements from any source into pricing</Link>{' '}with the Measurement-to-Quote tool.</p>
       </section>
 
       {/* What can you measure */}
@@ -230,6 +247,12 @@ export default function FreeRoofTakeoffPage() {
           lengths such as ridges, hips, valleys and eaves. These measurements can then be used to calculate roofing
           materials, labour, pricing and quotations. QuoteCore Plus&rsquo;s free roof takeoff tool lets you perform the
           measurement stage directly in your browser without creating an account first.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          In the U.S. and Canada this workflow may be called a roof takeoff, roof measurement, roofing quantity takeoff
+          or roof estimating from plans - in the UK, Australia and New Zealand, a roof take-off or roof plan measurement.
+          QuoteCore+ supports imperial units (square feet, linear feet), pitch ratios like 6:12 and roofing squares, as
+          well as metric.
         </p>
         <div className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4">
           <h3 className="text-sm font-semibold text-slate-900">Roof takeoff vs roof estimating</h3>
@@ -304,6 +327,11 @@ export default function FreeRoofTakeoffPage() {
             the right place - this is the Free Roof Takeoff tool.
           </li>
           <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <strong className="text-slate-900">I need to measure walls, cladding or façades from a plan.</strong> Use the{' '}
+            <Link href="/free-cladding-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Wall &amp; Cladding Takeoff Tool</Link>{' '}
+            - same workflow, wall and cladding components.
+          </li>
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
             <strong className="text-slate-900">I already have my measurements and need quantities.</strong> Use the{' '}
             <Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] underline underline-offset-2">roof takeoff builder</Link>{' '}
             or the{' '}
@@ -317,7 +345,7 @@ export default function FreeRoofTakeoffPage() {
           <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
             <strong className="text-slate-900">I want to go from measure to quote to job management.</strong> That&rsquo;s
             the full{' '}
-            <Link href="/free-trial" className="text-[#BD4A1A] underline underline-offset-2">QuoteCore+ workflow</Link>.
+            <Link href="/signup" className="text-[#BD4A1A] underline underline-offset-2">QuoteCore+ workflow</Link>.
           </li>
         </ul>
       </section>

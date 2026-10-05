@@ -13,7 +13,10 @@ import type { AddItemModalProps, OrderEntryMode, LengthEntry, Variable, Componen
 import type { OrderLineItem } from './types';
 import { ALL_LIBRARIES } from './types';
 
-export function AddItemModal({ flashings, components = [], collections = [], workspaceSlug = '', measurementSystem = 'metric', existingLine, onSave, onCancel, showAlert }: AddItemModalProps) {
+export function AddItemModal({ flashings, components = [], collections = [], workspaceSlug = '', measurementSystem = 'metric', existingLine, onSave, onCancel, showAlert, embedded = false, onDraftChange }: AddItemModalProps & {
+  /** Presentation host only; the existing form validation and measurement logic are unchanged. */
+  embedded?: boolean; onDraftChange?: (pending: boolean) => void;
+}) {
   const [showAngleCalc, setShowAngleCalc] = useState(false);
   const [angleCopied, setAngleCopied] = useState(false);
 
@@ -236,10 +239,18 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
   
   const selectedFlashing = flashingId ? flashings.find(f => f.id === flashingId) : undefined;
   
+  // Observe local UI draft changes, including drawing selection and added/removed
+  // measurements. This does not save or recalculate anything.
+  const draftSignature = JSON.stringify([componentName, flashingId, entryMode, quantity, unit,
+    lengths, notes, pricedQuantity, measurementValue, measurementUnit, newLength, newMultiplier,
+    calcL, calcW, calcD, currentVariables, newVarName, newVarValue, newVarUnit]);
+  const initialDraftSignature = useRef(draftSignature);
+  useEffect(() => { onDraftChange?.(draftSignature !== initialDraftSignature.current); }, [draftSignature, onDraftChange]);
+
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className={embedded ? "qc-studio-embedded-item" : "fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"}>
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-slate-200">
+        <div hidden={embedded} className="px-6 py-4 border-b border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900">
             {existingLine ? 'Edit Order Item' : 'Add Order Item'}
           </h2>
@@ -334,7 +345,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
             </label>
             <input
               type="text"
-              value={componentName}
+              aria-label="Component name" value={componentName}
               onChange={(e) => setComponentName(e.target.value)}
               required
               placeholder="e.g., Ridge Flashing, Valley Gutter - or pick/search above"
@@ -347,7 +358,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Flashing Drawing <span className="text-slate-400 font-normal">(Optional)</span>
             </label>
-            <SearchableFlashingSelect
+            <SearchableFlashingSelect appearance="v2"
               flashings={flashings}
               value={flashingId || undefined}
               onChange={(id) => setFlashingId(id || '')}
@@ -394,7 +405,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
                   <label className="block text-xs font-medium text-slate-700 mb-1">Quantity</label>
                   <input
                     type="text"
-                    value={pricedQuantity}
+                    aria-label="Fixed quantity" value={pricedQuantity}
                     onChange={(e) => setPricedQuantity(e.target.value)}
                     placeholder="e.g. 5"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
@@ -405,7 +416,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      value={measurementValue}
+                      aria-label="Fixed quantity measurement" value={measurementValue}
                       onChange={(e) => setMeasurementValue(e.target.value)}
                       placeholder="e.g. 231.71"
                       className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
@@ -481,7 +492,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
                 </label>
                 <input
                   type="number"
-                  value={quantity}
+                  aria-label="Quantity" value={quantity}
                   onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
                   required
                   step="0.1"
@@ -496,7 +507,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
                 </label>
                 <input
                   type="text"
-                  value={notes}
+                  aria-label="Component notes" value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. 25kg bags, 3m lengths, box of 100"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
@@ -537,7 +548,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
                   <div className="flex-1">
                     <input
                       type="number"
-                      value={newLength || ''}
+                      aria-label="Measurement value" value={newLength || ''}
                       onChange={(e) => setNewLength(parseFloat(e.target.value) || 0)}
                       step="0.01"
                       min="0"
@@ -550,7 +561,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
                   <div className="w-20">
                     <input
                       type="number"
-                      value={newMultiplier || ''}
+                      aria-label="Measurement quantity" value={newMultiplier || ''}
                       onChange={(e) => setNewMultiplier(parseInt(e.target.value) || 1)}
                       min="1"
                       placeholder="Qty"
@@ -705,7 +716,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
               Notes <span className="text-slate-400 font-normal">(Optional)</span>
             </label>
             <textarea
-              value={notes}
+              aria-label="Component notes" value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any additional notes or specifications..."
               rows={3}
@@ -735,7 +746,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
             onClick={handleSubmit}
             className="px-6 py-2.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm"
           >
-            {existingLine ? 'Save Changes' : 'Add Item'}
+            {existingLine ? (embedded ? 'Apply changes' : 'Save Changes') : 'Add Item'}
           </button>
         </div>
       </div>

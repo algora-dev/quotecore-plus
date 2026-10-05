@@ -174,7 +174,7 @@ export default function Post() {
         Run your numbers now with the <Link href="/free-margin-calculator">free margin calculator</Link> - per-line
         margins, live totals, AI import from a supplier list, no signup. Then turn the result into a professional
         document with the <Link href="/free-quote-generator">free quote generator</Link>, or{" "}
-        <Link href="/free-trial">start a free QuoteCore+ trial</Link> for the full quoting workflow.
+        <Link href="/free-trial">get started with QuoteCore+</Link> for the full quoting workflow.
       </p>
     </div>
   );

@@ -34,8 +34,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const s = data.supplier;
-  const title = `Free Roof Takeoff Calculator — ${s.supplier_name} Pricing${s.branch_city ? ` | ${s.branch_city}` : ''} | QuoteCore+`;
-  const description = `Calculate roof materials and costs using ${s.supplier_name}'s pricing catalogue${s.branch_city ? ` in ${s.branch_city}` : ''}. Enter roof measurements and get instant material quantities and indicative pricing — no signup required.`;
+  const title = `Free Roof Takeoff Calculator - ${s.supplier_name} Pricing${s.branch_city ? ` | ${s.branch_city}` : ''} | QuoteCore+`;
+  const description = `Calculate roof materials and costs using ${s.supplier_name}'s pricing catalogue${s.branch_city ? ` in ${s.branch_city}` : ''}. Enter roof measurements and get instant material quantities and indicative pricing - no signup required.`;
   const robots = data.eligibility.indexable
     ? { index: true, follow: true }
     : { index: false, follow: true };
@@ -122,11 +122,11 @@ function buildAgentPayload(data: SupplierDetail, origin: string) {
     workflow: {
       step1: "Identify the supplier already selected on this page",
       step2: "Parse the roof dimensions from the user's request",
-      step3: "Resolve measurement basis (plan vs actual) — ask if unclear",
+      step3: "Resolve measurement basis (plan vs actual) - ask if unclear",
       step4: "Read the calculator schema at /api/public/roof-takeoff/schema",
       step5: "Construct a GET calculation URL at /free-roofing-takeoff-builder/calculate with measurements, mode, units, pitch, and supplier slug",
-      step6: "Open the URL — the server redirects to a stable result page at /free-roofing-takeoff-builder/result/[token]",
-      step7: "Read the server-rendered HTML result page — no JavaScript required",
+      step6: "Open the URL - the server redirects to a stable result page at /free-roofing-takeoff-builder/result/[token]",
+      step7: "Read the server-rendered HTML result page - no JavaScript required",
       step8: "Return the exact resultUrl from the result page to the user. Do not reconstruct or modify it.",
     },
     endpoints: {
@@ -159,7 +159,7 @@ function buildStructuredData(data: SupplierDetail, origin: string) {
   const webApp: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    name: `Free Roof Takeoff Calculator — ${s.supplier_name} Pricing`,
+    name: `Free Roof Takeoff Calculator - ${s.supplier_name} Pricing`,
     description: `Calculate roof materials and costs using ${s.supplier_name}'s authorised pricing catalogue${s.branch_city ? ` in ${s.branch_city}, ${s.branch_region || ''}` : ''}.`,
     applicationCategory: "CalculatorApplication",
     operatingSystem: "Web",
@@ -288,10 +288,10 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
           <li>Read the <a href="/api/public/roof-takeoff/schema">calculator schema</a> to understand supported inputs</li>
           <li>Extract roof measurements from the user's request</li>
           <li>Determine the correct mode: use "plan" if measurements are from a 2D roof plan, use "actual" if they are already true roof-surface values</li>
-          <li>If measurement basis is unclear, ask the user — do not guess</li>
+          <li>If measurement basis is unclear, ask the user - do not guess</li>
           <li>Construct a GET calculation URL at <code>/free-roofing-takeoff-builder/calculate?mode=...&amp;units=...&amp;area=...&amp;pitch=...&amp;hips=...&amp;ridge=...&amp;valleys=...&amp;gutter=...&amp;supplier={s.slug}</code></li>
-          <li>Open the URL — the server redirects to a stable result page at <code>/free-roofing-takeoff-builder/result/[token]</code></li>
-          <li>Read the server-rendered HTML result page — no JavaScript required</li>
+          <li>Open the URL - the server redirects to a stable result page at <code>/free-roofing-takeoff-builder/result/[token]</code></li>
+          <li>Read the server-rendered HTML result page - no JavaScript required</li>
           <li>Return the exact <code>resultUrl</code> from the result page to the user. Do not reconstruct or modify it.</li>
         </ol>
         <p>
@@ -317,11 +317,17 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
       {/* Server-rendered SEO content — wraps the interactive calculator */}
       <section className="mx-auto max-w-5xl px-4 pt-6 pb-2">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-          Free Roof Takeoff Calculator — {s.supplier_name} Pricing
+          Free Roof Takeoff Calculator - {s.supplier_name} Pricing
         </h1>
         <p className="mt-2 text-sm text-slate-600 max-w-3xl">
           Calculate roof materials and costs using {s.supplier_name}'s pricing catalogue.
-          Enter your roof measurements and get instant material quantities and indicative pricing — no signup required.
+          Enter your roof measurements and get instant material quantities and indicative pricing - no signup required.
+          {s.slug === "thames-slate-tile" && (
+            <>
+              {' '}
+              Measuring from an architect&apos;s PDF? See <a href="/blog/how-to-measure-a-roof-from-a-pdf-plan" className="text-[#BD4A1A] hover:underline">how to measure a roof from a PDF plan</a> first.
+            </>
+          )}
         </p>
       </section>
 
@@ -432,7 +438,7 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
           <div className="mt-4 space-y-4">
             <div>
               <h3 className="text-sm font-medium text-slate-900">How do I calculate a roof takeoff with {s.supplier_name} pricing?</h3>
-              <p className="mt-1 text-sm text-slate-600">Use the free QuoteCore+ roof takeoff builder above. It's pre-configured with {s.supplier_name}'s published catalogue. Enter your roof measurements and get instant material quantities and indicative pricing — no signup required.</p>
+              <p className="mt-1 text-sm text-slate-600">Use the free QuoteCore+ roof takeoff builder above. It's pre-configured with {s.supplier_name}'s published catalogue. Enter your roof measurements and get instant material quantities and indicative pricing - no signup required.</p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-slate-900">Is the roof takeoff calculator free?</h3>
@@ -473,7 +479,7 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
           <p className="mt-1 text-xs text-slate-500">
             This calculator is pre-configured for {s.supplier_name}. Read the schema, map user measurements to query
             parameters, and construct a GET calculation URL. Include <code>supplier={s.slug}</code> in the URL to use
-            this supplier's pricing. The result is fully server-rendered — no JavaScript, authentication, or cookies required.
+            this supplier's pricing. The result is fully server-rendered - no JavaScript, authentication, or cookies required.
           </p>
           <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-xs">
             <li><Link href="/api/public/roof-takeoff/schema" className="font-medium text-[#BD4A1A] hover:underline">Calculator schema (JSON)</Link></li>

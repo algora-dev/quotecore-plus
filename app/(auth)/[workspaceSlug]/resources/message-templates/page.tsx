@@ -1,16 +1,18 @@
-import { ResourcesSection } from '../ResourcesSection';
+import { requireCompanyContext } from '@/app/lib/supabase/server';
 import { BackButton } from '@/app/components/BackButton';
+import { loadEmailTemplates } from '../email-actions';
+import { loadAttachments, loadAttachmentEntitlements } from '../../attachments/actions';
+import { MessageTemplateLibrary } from './MessageTemplateLibrary';
 
-export default async function MessageTemplatesSectionPage({
-  params,
-}: {
-  params: Promise<{ workspaceSlug: string }>;
-}) {
+export default async function MessageTemplatesPage({ params }: { params: Promise<{ workspaceSlug: string }> }) {
   const { workspaceSlug } = await params;
-  return (
-    <section className="space-y-5">
-      <BackButton />
-      <ResourcesSection workspaceSlug={workspaceSlug} tab="email" />
-    </section>
-  );
+  await requireCompanyContext();
+  const entitlements = await loadAttachmentEntitlements();
+  const [templates, attachments] = await Promise.allSettled([loadEmailTemplates(), loadAttachments()]);
+  return <>
+    <BackButton href={`/${workspaceSlug}/resources`} label="Back to Resources" />
+    <MessageTemplateLibrary workspaceSlug={workspaceSlug} templates={templates.status === 'fulfilled' ? templates.value : []}
+      loadError={templates.status === 'rejected'} attachmentLoadError={attachments.status === 'rejected'}
+      attachments={attachments.status === 'fulfilled' ? attachments.value : []} attachmentsEnabled={entitlements.attachmentsEnabled} />
+  </>;
 }

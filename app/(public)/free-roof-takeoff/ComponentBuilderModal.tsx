@@ -21,6 +21,13 @@ const MEASUREMENT_TYPES: { value: TakeoffComponentSpec['measurementType']; label
   { value: 'quantity', label: 'Quantity', hint: 'Screws, brackets, fixings - counted by click' },
 ];
 
+/** Flooring variant: area / lineal / single item only, no roofing hints. */
+const FLOORING_MEASUREMENT_TYPES: typeof MEASUREMENT_TYPES = [
+  { value: 'area', label: 'Floor Area', hint: 'Plank, carpet, tile, underlay - measured by area' },
+  { value: 'lineal', label: 'Lineal', hint: 'Skirting, scotia, transition strips - measured by length' },
+  { value: 'quantity', label: 'Single Item', hint: 'Glue buckets, sundries, trims - counted by click' },
+];
+
 const WASTE_TYPES: { value: TakeoffComponentSpec['wasteType']; label: string }[] = [
   { value: 'none', label: 'None' },
   { value: 'percent', label: 'Percentage' },
@@ -31,15 +38,19 @@ const WASTE_TYPES: { value: TakeoffComponentSpec['wasteType']; label: string }[]
 export function ComponentBuilderModal({
   initial,
   measurementSystem = 'metric',
+  trade = 'roofing',
   onSave,
   onClose,
 }: {
   /** Existing spec to edit, or null to create. */
   initial: TakeoffComponentSpec | null;
   measurementSystem?: MeasurementSystemLite;
+  /** Trade variant: flooring swaps measurement-type labels/hints and hides pitch. */
+  trade?: 'roofing' | 'cladding' | 'flooring';
   onSave: (spec: TakeoffComponentSpec, isNew: boolean) => void;
   onClose: () => void;
 }) {
+  const typeOptions = trade === 'flooring' ? FLOORING_MEASUREMENT_TYPES : MEASUREMENT_TYPES;
   const metric = measurementSystem === 'metric';
   const lengthUnit = metric ? 'm' : 'ft';
   const areaUnit = metric ? 'm\u00b2' : 'ft\u00b2';
@@ -105,7 +116,7 @@ export function ComponentBuilderModal({
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="e.g. Ridge Flashing"
+                placeholder={trade === 'flooring' ? 'e.g. Skirting' : 'e.g. Ridge Flashing'}
                 autoFocus
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
               />
@@ -115,7 +126,7 @@ export function ComponentBuilderModal({
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Measurement type</label>
               <div className="space-y-1.5">
-                {MEASUREMENT_TYPES.map(t => (
+                {typeOptions.map(t => (
                   <label key={t.value} className="flex items-start gap-2.5 p-2.5 rounded-xl border border-slate-200 cursor-pointer hover:border-orange-200 hover:bg-orange-50/40">
                     <input
                       type="radio"
@@ -224,8 +235,8 @@ export function ComponentBuilderModal({
               </div>
             </div>
 
-            {/* Pitch */}
-            {measurementType !== 'quantity' && (
+            {/* Pitch - roofing only; flooring has no pitch concept. */}
+            {measurementType !== 'quantity' && trade !== 'flooring' && (
               <div>
                 <label className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 cursor-pointer hover:border-orange-200 hover:bg-orange-50/40">
                   <input

@@ -1,0 +1,9 @@
+{
+  "result": "PASS syntax only; not semantic typing",
+  "evidence": "all-offline.log",
+  "scanner": "scripts/check-smart-assistant-speed-source.cjs",
+  "reported": [
+    "PASS TypeScript/TSX syntax across 103 assistant files (NOT semantic typing)."
+  ],
+  "also": "Existing P17 source checker transpiled the two quote components. No production build."
+}

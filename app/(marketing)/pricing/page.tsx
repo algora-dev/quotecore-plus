@@ -12,14 +12,14 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
   description:
-    "Compare QuoteCore+ plans from free to premium. 14-day full-feature trial, no credit card required. Takeoff, Smart Components, invoicing, and material ordering included.",
+    "Compare QuoteCore+ paid plans from $19 to $59/month, each backed by a 30-day money-back guarantee. Takeoff, Smart Components, invoicing, and material ordering included.",
   alternates: {
     canonical: "https://quote-core.com/pricing",
     languages: hreflangLanguages("/pricing"),
   },
   openGraph: {
     title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
-    description: "Compare QuoteCore+ plans from free to premium. 14-day full-feature trial, no credit card required.",
+    description: "Compare QuoteCore+ paid plans from $19 to $59/month with a 30-day money-back guarantee.",
     url: "https://quote-core.com/pricing",
     siteName: "QuoteCore+",
     type: "website",
@@ -44,16 +44,16 @@ const breadcrumbSchema = buildBreadcrumbSchema([
 
 const faqs = [
   {
-    question: "How long is the free trial?",
-    answer: "The Full trial runs for 14 days and unlocks all features within the trial limits shown on this page. You get 20 AI Scan Assist points to try AI roof plan scanning.",
+    question: "Do you offer a free trial?",
+    answer: "We replaced the free trial with something better: permanent free tools with no signup, and a 30-day money-back guarantee on every paid plan. Try the free tools, then start in the app knowing you can get your money back if it is not right for you.",
   },
   {
-    question: "Is a credit card required for the trial?",
-    answer: "No. QuoteCore+ does not require a credit card to start the 14-day trial.",
+    question: "How does the 30-day money-back guarantee work?",
+    answer: "You pay up front for your chosen plan and get full access for 30 days. If it is not right for you, request a refund after day 30 via a short request and questionnaire and we will refund your payment.",
   },
   {
-    question: "What happens after the trial?",
-    answer: "The account moves to the Lite free plan unless you choose to upgrade to a paid plan.",
+    question: "Can I use anything for free without paying?",
+    answer: "Yes. Our free tools - takeoff builder, roofing calculator, quote generator, invoice generator and more - are free forever with no signup. The connected app workflow (quotes to orders to invoicing) is part of the paid plans.",
   },
   {
     question: "Which currencies are shown?",
@@ -63,9 +63,9 @@ const faqs = [
 
 const faqSchema = buildFaqSchema(faqs);
 
-// Card styling per tier — richer treatment on higher tiers draws the eye up-range
+// Card styling per tier - richer treatment on higher tiers draws the eye up-range
 function planStyles(plan: (typeof pricingPlans)[number]): string {
-  const premium = plan.name === "Pro Plus" || plan.name === "Premium";
+  const premium = plan.name === "Pro Plus";
   if (plan.featured) {
     return "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)] hover:border-[#BD4A1A] hover:shadow-[0_26px_64px_rgba(189,74,26,0.22)]";
   }
@@ -74,6 +74,35 @@ function planStyles(plan: (typeof pricingPlans)[number]): string {
   }
   return "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]";
 }
+
+const dfyPackages = [
+  {
+    name: "Done-For-You Estimating Setup",
+    price: "$499",
+    tagline: "Best for smaller estimating setups or contractors with a focused range of products and services.",
+    items: [
+      "Up to 20 custom components built for you",
+      "Your material pricing configured",
+      "Labour and waste rules configured",
+      "Personalised training",
+      "6 months setup and product support",
+      "6 months QuoteCore+ Pro included",
+    ],
+  },
+  {
+    name: "Complete Done-For-You Setup",
+    price: "$999",
+    tagline: "Best for larger or more detailed estimating systems.",
+    highlight: true,
+    items: [
+      "Up to 60 custom components built for you",
+      "Larger material and pricing setup",
+      "More complex labour and waste configurations",
+      "Help organising larger pricing lists or catalogues",
+      "More detailed workflow configuration",
+    ],
+  },
+];
 
 export default function PricingPage() {
   return (
@@ -90,11 +119,11 @@ export default function PricingPage() {
             QuoteCore+ pricing for every stage of a roofing business.
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-zinc-600">
-            Start with the complete product for 14 days, no card required. Compare each plan by its real quote, storage and AI Scan Assist limits before you choose.
+            Try the free tools with no signup, then choose a plan from $19/month - every paid plan is backed by a 30-day money-back guarantee. Compare each plan by its real quote, storage and AI Scan Assist limits before you choose.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Start free trial
+              Get started
             </Link>
             <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 px-7 text-sm font-semibold text-zinc-900 transition-colors hover:border-zinc-500">
               Compare features
@@ -109,7 +138,7 @@ export default function PricingPage() {
                 key={plan.name}
                 className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${planStyles(plan)}`}
               >
-                {plan.featured && <span className="absolute right-6 top-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
+                {plan.featured && <span className="absolute -top-3 right-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
                 <h2 className="text-xl font-semibold">{plan.displayName}</h2>
                 <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{plan.subtitle}</p>
                 <div className="mt-6">
@@ -130,13 +159,41 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href={plan.contactUs ? "/contact" : "/free-trial"} className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${plan.featured ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
-                  {plan.contactUs ? "Contact us" : plan.isFree ? "Start free trial" : "Try this plan"}
+                <a href={plan.contactUs ? "/contact" : "https://app.quote-core.com/signup?utm_source=pricing"} className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${plan.featured ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
+                  {plan.contactUs ? "Contact us" : plan.isFree ? "Get started" : "Choose this plan"}
+                </a>
+              </article>
+            ))}
+            {dfyPackages.map((pkg) => (
+              <article
+                key={pkg.name}
+                className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${pkg.highlight ? "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)]" : "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]"}`}
+              >
+                {pkg.highlight && <span className="absolute -top-3 right-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most complete</span>}
+                <h2 className="text-xl font-semibold">{pkg.name}</h2>
+                <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{pkg.tagline}</p>
+                <div className="mt-6">
+                  <div className="flex min-h-[92px] w-full flex-col justify-center rounded-xl border border-zinc-200/80 bg-white/60 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USD</p>
+                    <p className="mt-1 text-2xl font-semibold">{pkg.price}</p>
+                    <p className="text-xs text-zinc-500">one-time setup</p>
+                  </div>
+                </div>
+                <ul className="mt-6 flex-1 space-y-3">
+                  {pkg.items.map((item) => (
+                    <li key={item} className="flex gap-3 text-sm text-zinc-700">
+                      <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#BD4A1A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/done-for-you-setup" className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${pkg.highlight ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
+                  See what is included
                 </Link>
               </article>
             ))}
           </div>
-          <p className="mx-auto mt-8 max-w-3xl px-6 text-center text-sm text-zinc-600">Monthly prices are shown in USD. Taxes are calculated at checkout where applicable.</p>
+          <p className="mx-auto mt-8 max-w-3xl px-6 text-center text-sm text-zinc-600">All prices are shown in USD. Taxes are calculated at checkout where applicable.</p>
         </section>
 
         <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
@@ -168,7 +225,7 @@ export default function PricingPage() {
             </a>
             <a href="/planswift-alternative" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">PlanSwift alternative</p>
-              <p className="mt-1 text-sm text-zinc-600">US$2,000/seat/yr vs plans from free.</p>
+              <p className="mt-1 text-sm text-zinc-600">US$2,000/seat/yr vs paid QuoteCore+ plans.</p>
             </a>
             <a href="/features" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Features</p>
@@ -176,7 +233,7 @@ export default function PricingPage() {
             </a>
             <a href="/trust" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Trust and security</p>
-              <p className="mt-1 text-sm text-zinc-600">Trial terms, cancellation, data ownership.</p>
+              <p className="mt-1 text-sm text-zinc-600">Plan terms, cancellation, data ownership.</p>
             </a>
             <a href="/free-tools" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Free tools</p>

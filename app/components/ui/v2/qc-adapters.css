@@ -1,0 +1,46 @@
+/* Opt-in adapters for existing fields and upload/create flows. No server concerns. */
+:where([data-qc-ui='v2']) .qc-choice-group { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--qc-bg-subtle); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-control); max-width: 100%; }
+:where([data-qc-ui='v2']) .qc-choice { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 6px 12px; border: 1px solid transparent; border-radius: var(--qc-radius-small); background: var(--qc-bg-surface); color: var(--qc-text-secondary); font: inherit; font-size: 13px; line-height: 20px; font-weight: 600; cursor: pointer; }
+:where([data-qc-ui='v2']) .qc-choice[aria-pressed='true'] { background: var(--qc-selected-bg); color: var(--qc-selected-text); border-color: var(--qc-color-orange-ink); }
+:where([data-qc-ui='v2']) .qc-pitch-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+:where([data-qc-ui='v2']) .qc-pitch-value { width: 112px; }
+:where([data-qc-ui='v2']) .qc-pitch label { font-size: 13px; font-weight: 600; color: var(--qc-text-primary); }
+:where([data-qc-ui='v2']) .qc-pitch :where(span.text-slate-400,span.text-\[11px\]) { font-size: 12px; line-height: 18px; color: var(--qc-text-secondary); }
+[data-qc-ui='v2'].qc-upload { display: grid; gap: 12px; }
+:where([data-qc-ui='v2']) .qc-upload-zone { position: relative; border: 1px dashed var(--qc-border-control); border-radius: var(--qc-radius-card); background: var(--qc-bg-surface); padding: 24px; text-align: center; cursor: pointer; }
+:where([data-qc-ui='v2']) .qc-upload-zone .text-slate-400 { color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qc-upload-zone svg { width: 32px; height: 32px; color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qc-upload-dragging { border-color: var(--qc-color-orange-ink); background: var(--qc-selected-bg); }
+:where([data-qc-ui='v2']) .qc-upload-pending { cursor: progress; }
+:where([data-qc-ui='v2']) .qc-notice-danger { color: var(--qc-color-danger); background: var(--qc-color-danger-bg); }
+/* Preserve one existing form and every native field name. Styling is local to v2. */
+[data-qc-ui='v2'].qc-create-component-dialog { padding: 0; }
+:where([data-qc-ui='v2']) .qc-form-adapter { min-width: 0; }
+:where([data-qc-ui='v2']) .qc-form-adapter > div:first-child { padding: 24px; }
+:where([data-qc-ui='v2']) .qc-form-adapter > form { padding: 20px 24px 24px; }
+:where([data-qc-ui='v2']) .qc-form-adapter :where(label,.text-slate-400,.text-slate-500) { color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qc-form-adapter label { display: block; font-size: 13px; line-height: 20px; font-weight: 600; margin-bottom: 6px; }
+:where([data-qc-ui='v2']) .qc-form-adapter label.flex { display: flex; }
+:where([data-qc-ui='v2']) .qc-form-adapter :where(input:not([type='checkbox']):not([type='hidden']),select,textarea) { width: 100%; min-width: 0; min-height: var(--qc-control-md); padding: 8px 12px; border: 1px solid var(--qc-border-control); border-radius: var(--qc-radius-control); background: var(--qc-bg-surface); color: var(--qc-text-primary); font: inherit; font-size: 14px; line-height: 20px; }
+:where([data-qc-ui='v2']) .qc-form-adapter input[type='checkbox'] { accent-color: var(--qc-color-orange-ink); width: 18px; height: 18px; }
+:where([data-qc-ui='v2']) .qc-form-adapter button:not(.qc-button) { min-width: 32px; min-height: 32px; }
+:where([data-qc-ui='v2']) .qc-form-adapter button[aria-label='Close'] { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--qc-radius-control); width: 40px; height: 40px; }
+:where([data-qc-ui='v2']) .qc-form-adapter input::placeholder, :where([data-qc-ui='v2']) .qc-form-adapter textarea::placeholder { color: var(--qc-text-secondary); opacity: 1; }
+:where([data-qc-ui='v2']) .qc-form-adapter [type='submit']:disabled { background: var(--qc-color-disabled-bg); color: var(--qc-color-disabled-ink); border-color: var(--qc-border-divider); opacity: 1; }
+@media (max-width:767px), (pointer:coarse) {
+  :where([data-qc-ui='v2']) .qc-choice { min-height: 44px; }
+  :where([data-qc-ui='v2']) .qc-form-adapter :where(button,input:not([type='checkbox']):not([type='hidden']),select,textarea) { min-height: 44px; }
+  :where([data-qc-ui='v2']) .qc-form-adapter :where(input:not([type='checkbox']),select,textarea) { font-size: 16px; line-height: 24px; }
+  :where([data-qc-ui='v2']) .qc-form-adapter button[aria-label='Close'] { width: 44px; height: 44px; }
+}
+@media (max-width:479px) {
+  :where([data-qc-ui='v2']) .qc-form-adapter > div:first-child { padding: 20px; }
+  :where([data-qc-ui='v2']) .qc-form-adapter > form { padding: 16px 20px 20px; }
+  :where([data-qc-ui='v2']) .qc-form-adapter .grid-cols-2 { grid-template-columns: minmax(0,1fr); }
+  :where([data-qc-ui='v2']) .qc-form-adapter .col-span-2 { grid-column: span 1 / span 1; }
+  :where([data-qc-ui='v2']) .qc-form-adapter form > div:last-child { flex-wrap: wrap; }
+}
+@media (forced-colors:active) {
+  :where([data-qc-ui='v2']) .qc-choice[aria-pressed='true'] { border: 2px solid Highlight; }
+  :where([data-qc-ui='v2']) .qc-upload-zone { border-color: ButtonText; }
+}

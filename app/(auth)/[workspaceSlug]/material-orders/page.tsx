@@ -1,3 +1,4 @@
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import Link from 'next/link';
 import { loadOrderTemplates } from './template-actions';
 import { loadRecentOrders } from './order-list-actions';
@@ -22,9 +23,9 @@ export default async function MaterialOrdersPage(props: Props) {
   if (!ent.features.material_orders) {
     const requiredPlan = FEATURE_MIN_PLAN.material_orders;
     return (
-      <section className="space-y-4 md:space-y-5 px-0 md:px-0">
+      <QcJourney><section className="space-y-4 md:space-y-5 px-0 md:px-0">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Material Orders</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Material Orders</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">Available on the {requiredPlan} plan and above.</p>
         </div>
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 md:p-6">
@@ -40,9 +41,9 @@ export default async function MaterialOrdersPage(props: Props) {
                 Send purchase orders straight to your suppliers and track deliveries on the {requiredPlan} plan or above. Upgrade your account to unlock material orders.
               </p>
               <div className="mt-4">
-                <Link
+                <Link data-qc-variant="primary"
                   href={`/${workspaceSlug}/account?tab=billing&plan=${requiredPlan}`}
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
+                  className="qc-button qc-flow-control inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
                 >
                   View plans
                 </Link>
@@ -50,7 +51,7 @@ export default async function MaterialOrdersPage(props: Props) {
             </div>
           </div>
         </div>
-      </section>
+      </section></QcJourney>
     );
   }
 
@@ -60,9 +61,9 @@ export default async function MaterialOrdersPage(props: Props) {
   ]);
 
   return (
-    <section className="space-y-4 md:space-y-5 px-0 md:px-0">
+    <QcJourney><section className="space-y-4 md:space-y-5 px-0 md:px-0">
       <div>
-        <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Material Orders</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Material Orders</h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">Create orders, manage suppliers, and track deliveries.</p>
       </div>
 
@@ -71,6 +72,6 @@ export default async function MaterialOrdersPage(props: Props) {
         initialTemplates={templates}
         recentOrders={recentOrders}
       />
-    </section>
+    </section></QcJourney>
   );
 }

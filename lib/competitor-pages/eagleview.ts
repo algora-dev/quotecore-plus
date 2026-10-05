@@ -16,7 +16,7 @@ export const eagleViewPage: CompetitorPageData = {
     sub: "EagleView sells expertly produced aerial measurement reports. QuoteCore+ is quoting software where you measure your own plans — PDF takeoff, AI Scan Assist, automatic materials and pricing — and own the whole estimate. Different tools for different jobs.",
     qualifier: "Need another aerial measurement provider? QuoteCore+ isn't one. Already have plans or usable imagery and want to stop paying per report? That's where QuoteCore+ fits.",
     primaryCta: { href: "/free-roofing-takeoff-builder", label: "See what you can measure without buying another report" },
-    ghostCta: { href: "/free-trial", label: "Start a free 14-day trial" },
+    ghostCta: { href: "/free-trial", label: "Get started with QuoteCore+" },
   },
   quickAnswer: {
     heading: "The short answer",
@@ -40,7 +40,7 @@ export const eagleViewPage: CompetitorPageData = {
     qcBestFor: [
       {
         title: "You want to stop paying per roof",
-        body: "QuoteCore+ is a subscription from free to $59/mo — no per-report fees, no matter how many roofs you measure.",
+        body: "QuoteCore+ is a subscription from $19 to $59/mo — no per-report fees, no matter how many roofs you measure.",
       },
       {
         title: "You already have the plans",
@@ -66,7 +66,7 @@ export const eagleViewPage: CompetitorPageData = {
     bullets: [
       { label: "Own the plan-based takeoff", detail: "Upload plans or images, measure roofing geometry yourself, and correct the result before pricing it.", positive: true },
       { label: "Turn measurement into a quote", detail: "Smart Components apply materials, waste, labour and margins; the same data continues to order and invoice.", positive: true },
-      { label: "Avoid a report fee where plans exist", detail: "QuoteCore+ plans run from free to $59/mo with no per-report charge.", positive: true },
+      { label: "Avoid a report fee where plans exist", detail: "QuoteCore+ plans run from $19 to $59/mo with no per-report charge.", positive: true },
       { label: "Aerial imagery and property intelligence", detail: "EagleView's core strength. QuoteCore+ does not provide flown reports, solar data, wall data or property intelligence.", positive: false },
       { label: "Remote or unsafe properties", detail: "When you cannot access the roof or need a measurement before visiting, an EagleView report may be exactly what you need.", positive: false },
     ],
@@ -183,7 +183,7 @@ export const eagleViewPage: CompetitorPageData = {
       },
       {
         feature: "Pricing model",
-        qc: { status: "yes", note: "Subscription from free to $59/mo" },
+        qc: { status: "yes", note: "Subscription from $19 to $59/mo" },
         competitor: { status: "yes", note: "Per report, $13.75–$105 typical range; volume tier discounts" },
       },
     ],
@@ -309,6 +309,6 @@ export const eagleViewPage: CompetitorPageData = {
   ],
   finalCta: {
     heading: "Own the measurements. Own the margin.",
-    body: "Stop paying per roof. Measure your own plans, let Smart Components price them, and send the quote — all in one workflow. Free for 14 days.",
+    body: "Stop paying per roof. Measure your own plans, let Smart Components price them, and send the quote — all in one workflow. Free tools, no signup; paid plans from $19/month with a 30-day money-back guarantee.",
   },
 };

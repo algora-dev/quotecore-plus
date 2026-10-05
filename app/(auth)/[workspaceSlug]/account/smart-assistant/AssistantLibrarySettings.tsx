@@ -1,0 +1,31 @@
+'use client';
+import { useMemo, useState, useTransition } from 'react';
+import { saveAssistantLibrary } from './library-actions';
+import { ASSISTANT_LIBRARY_ROLES, type AssistantLibraryRole } from '@/app/lib/smart-assistant/library-workflow/contracts';
+
+type ComponentRow={id:string;name:string;takeoffSlot:string|null;included:boolean;role:AssistantLibraryRole|null;isDefault:boolean};
+type LibraryRow={id:string;name:string;enabled:boolean;includeAll:boolean;components:ComponentRow[]};
+const LABELS:Record<AssistantLibraryRole,string>={roof_area:'Roof covering / area',ridge:'Ridge',hip:'Hip',valley:'Valley',barge:'Barge',spouting:'Spouting',underlay:'Underlay',fixings:'Fixings'};
+export function AssistantLibrarySettings({libraries,available}:{libraries:LibraryRow[];available:boolean}){
+ const [selected,setSelected]=useState(libraries[0]?.id??'');const current=libraries.find(l=>l.id===selected);
+ const [drafts,setDrafts]=useState<Record<string,LibraryRow>>(()=>Object.fromEntries(libraries.map(l=>[l.id,structuredClone(l)])));
+ const [message,setMessage]=useState('');const [pending,start]=useTransition();const live=drafts[selected]??current;
+ const included=useMemo(()=>live?.components.filter(c=>live.includeAll||c.included).length??0,[live]);
+ if(!available)return <section className="rounded-xl border border-amber-200 bg-amber-50 p-5"><h2 className="font-semibold text-slate-900">Assistant component libraries</h2><p className="mt-1 text-sm text-amber-800">Library workflow setup is not installed on this deployment yet. Apply the supplied migration before enabling this feature.</p></section>;
+ if(!libraries.length)return <section className="rounded-xl border border-slate-200 bg-white p-5"><h2 className="font-semibold">Assistant component libraries</h2><p className="mt-1 text-sm text-slate-500">Create a component library first, then return here to make selected products available to Smart Assistant.</p></section>;
+ const update=(fn:(l:LibraryRow)=>void)=>setDrafts(prev=>{const copy={...prev,[selected]:structuredClone(prev[selected]??current!)};fn(copy[selected]);return copy;});
+ return <section className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+  <div><h2 className="text-sm font-semibold text-slate-900">Assistant component libraries</h2><p className="mt-0.5 text-xs text-slate-500">Reduce noise by choosing which libraries and components Smart Assistant may use for new draft workflows. Assign measurement roles so a roof brief can resolve products deterministically.</p></div>
+  {message&&<p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">{message}</p>}
+  <label className="block text-sm font-medium text-slate-700">Library<select className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" value={selected} onChange={e=>setSelected(e.target.value)}>{libraries.map(l=><option key={l.id} value={l.id}>{l.name}</option>)}</select></label>
+  {live&&<>
+   <div className="grid gap-3 sm:grid-cols-2">
+    <label className="flex items-center gap-3 rounded-lg border border-slate-200 p-3"><input type="checkbox" checked={live.enabled} onChange={e=>update(l=>{l.enabled=e.target.checked;})}/><span><strong className="block text-sm">Available to Smart Assistant</strong><small className="text-slate-500">Allows this library to be considered for new draft workflows.</small></span></label>
+    <label className="flex items-center gap-3 rounded-lg border border-slate-200 p-3"><input type="checkbox" checked={live.includeAll} onChange={e=>update(l=>{l.includeAll=e.target.checked;})}/><span><strong className="block text-sm">Include all active components</strong><small className="text-slate-500">Otherwise include only the components ticked below.</small></span></label>
+   </div>
+   <p className="text-xs text-slate-500">{included} component{included===1?'':'s'} available to Smart Assistant. Existing quotes remain readable according to normal assistant permissions; this setting controls new-work eligibility.</p>
+   <div className="overflow-x-auto rounded-lg border border-slate-200"><table className="w-full min-w-[720px] text-sm"><thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="p-3">Use</th><th className="p-3">Component</th><th className="p-3">Assistant role</th><th className="p-3">Default</th></tr></thead><tbody>{live.components.map(c=><tr key={c.id} className="border-t border-slate-100"><td className="p-3"><input aria-label={`Use ${c.name}`} type="checkbox" disabled={live.includeAll} checked={live.includeAll||c.included} onChange={e=>update(l=>{const row=l.components.find(x=>x.id===c.id)!;row.included=e.target.checked;if(!row.included){row.role=null;row.isDefault=false;}})}/></td><td className="p-3"><strong>{c.name}</strong>{c.takeoffSlot&&<span className="ml-2 text-xs text-slate-400">suggested: {c.takeoffSlot.replace('_',' ')}</span>}</td><td className="p-3"><select className="w-full rounded-md border border-slate-200 px-2 py-1.5" value={c.role??''} disabled={!live.enabled||(!live.includeAll&&!c.included)} onChange={e=>update(l=>{const row=l.components.find(x=>x.id===c.id)!;row.role=(e.target.value||null) as AssistantLibraryRole|null;if(!row.role)row.isDefault=false;})}><option value="">No measurement role</option>{ASSISTANT_LIBRARY_ROLES.map(role=><option key={role} value={role}>{LABELS[role]}</option>)}</select></td><td className="p-3"><input aria-label={`Default ${c.name}`} type="checkbox" disabled={!c.role||!live.enabled||(!live.includeAll&&!c.included)} checked={c.isDefault} onChange={e=>update(l=>{const row=l.components.find(x=>x.id===c.id)!;if(e.target.checked&&row.role){for(const other of l.components)if(other.id!==row.id&&other.role===row.role)other.isDefault=false;}row.isDefault=e.target.checked;})}/></td></tr>)}</tbody></table></div>
+   <button disabled={pending} onClick={()=>start(async()=>{setMessage('');const result=await saveAssistantLibrary({collectionId:live.id,enabled:live.enabled,includeAll:live.includeAll,members:live.components.map(c=>({componentId:c.id,included:c.included,role:c.role,isDefault:c.isDefault}))});setMessage(result.ok?result.message:result.error);})} className="rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white disabled:opacity-50">{pending?'Saving…':'Save assistant library'}</button>
+  </>}
+ </section>;
+}

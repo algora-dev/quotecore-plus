@@ -2,12 +2,16 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
+import { QcStudioToolbar, QcStudioInspectorHeading, QcStudioSection, QcStudioOverview, type QcStudioOption } from '@/app/components/ui/v2/QcDocumentStudio';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcDocumentWorkspace, QcDocumentHeader, QcDocumentSaveState, QcDocumentBody, QcDocumentPanel, QcDocumentPanelHeader, QcDocumentSection, QcDocumentPreview, QcDocumentDialogScope } from '@/app/components/ui/v2/QcDocumentWorkspace';
+
 import { saveInvoiceLines, saveInvoiceMeta, saveInvoicePaymentDetails, cancelInvoice, confirmPaymentReceived, markInvoiceSentByLink, resetInvoice } from '../actions';
 import { ResetButton } from '@/app/components/ResetButton';
 import { InvoicePreview } from './InvoicePreview';
 import { SendDocumentButton } from '@/app/components/send/SendDocumentButton';
 import type { EmailTemplate } from '@/app/components/send/types';
+import type { InvoiceTemplate } from '../template-actions';
 import { AiUploadModal } from '@/app/components/ai-import/AiUploadModal';
 import { AiTextPromptModal } from '@/app/components/ai-import/AiTextPromptModal';
 import type { ParsedDocumentResult } from '@/app/components/ai-import/types';
@@ -91,6 +95,7 @@ interface Props {
   invoice: InvoiceRow;
   savedLines: InvoiceLineRow[];
   emailTemplates: EmailTemplate[];
+  invoiceTemplates?: InvoiceTemplate[];
   libraryFiles: { id: string; name: string; fileSize: number }[];
   libraryLocked: boolean;
   workspaceSlug: string;
@@ -138,6 +143,7 @@ export function InvoiceEditor({
   componentLibrary,
   activity,
   emailTemplates,
+  invoiceTemplates = [],
   libraryFiles,
   libraryLocked,
   canFollowups = false,
@@ -186,6 +192,8 @@ export function InvoiceEditor({
   const [invoiceDate, setInvoiceDate] = useState(initial.invoice_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState(initial.due_date?.slice(0, 10) ?? '');
 
+  // AGENT-TODO P5-PAY-01 (Gavin): payment details are saved separately.
+  // Do not imply that the invoice autosave/save/send persists these fields.
   // ── Payment details state ──
   const pd = initial.payment_details ?? {};
   const [payAccountName, setPayAccountName] = useState((pd as Record<string,string>).accountName ?? '');
@@ -206,6 +214,8 @@ export function InvoiceEditor({
 
   // ── UI state ──
   const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [studioSection, setStudioSection] = useState('document');
+  const [studioPreview, setStudioPreview] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -249,6 +259,28 @@ export function InvoiceEditor({
 
   // ── Mark dirty on changes ──
   const markDirty = useCallback(() => setIsDirty(true), []);
+
+  /** Apply a saved invoice template: business details, logo, footer,
+   *  notes/terms and payment details (payment saves via its own button). */
+  function applyInvoiceTemplate(templateId: string) {
+    const template = invoiceTemplates.find(t => t.id === templateId);
+    if (!template) return;
+    setCompanyName(template.company_name || '');
+    setCompanyAddress(template.company_address || '');
+    setCompanyEmail(template.company_email || '');
+    setCompanyPhone(template.company_phone || '');
+    setCompanyLogoUrl(template.company_logo_url || defaultLogoUrl || '');
+    setFooterText(template.footer_text || '');
+    setNotes(template.default_notes || '');
+    setTerms(template.default_terms || '');
+    setPayAccountName(template.payment_account_name || '');
+    setPayBankName(template.payment_bank_name || '');
+    setPayAccountNumber(template.payment_account_number || '');
+    setPaySortCode(template.payment_sort_code || '');
+    setPayPaymentLink(template.payment_link || '');
+    markDirty();
+    setPayDirty(true);
+  }
 
   function updateLine(localId: string, patch: Partial<EditableLine>) {
     setLines((prev) =>
@@ -316,6 +348,7 @@ export function InvoiceEditor({
   // ── Totals (include_in_total drives the $, regardless of visibility/show_price) ──
   const subtotal = lines.filter((l) => l.include_in_total).reduce((s, l) => s + l.line_total, 0);
   // Tax: flat rate approach (will extend to per-line taxes in a later phase)
+  // AGENT-TODO P5-TAX-01: no new invoice tax calculation/editor in this UX pass.
   const taxTotal = 0; // Phase 2: add tax rows
   const total = subtotal + taxTotal;
 
@@ -441,16 +474,30 @@ export function InvoiceEditor({
     if (!win && typeof window !== 'undefined') window.location.href = publicUrl;
   }, [publicUrl, initial.id, router]);
 
+  // Presentation selection only. Invoice edits still use the original update/save owners.
+  const studioOptions: QcStudioOption[] = [
+    { id: 'dates', label: 'Dates & references', description: 'Issue date, due date and invoice reference' },
+    { id: 'header', label: 'Business details', description: 'Business name, contact details and logo' },
+    { id: 'appearance', label: 'Price display', description: 'Show or hide line prices and totals' },
+    { id: 'payment', label: 'Payment details', description: 'Bank information and payment link' },
+    { id: 'notes', label: 'Notes', description: 'A message for your customer' },
+    { id: 'terms', label: 'Terms', description: 'Payment terms for this invoice' },
+    { id: 'footer', label: 'Footer', description: 'Closing text on the document' },
+    { id: 'import', label: 'Import items', description: 'Use an image or text with AI' },
+    { id: 'activity', label: 'Activity', description: 'Invoice events and communication' },
+  ];
+  function selectStudioSection(target: string) {
+    setStudioSection(target);
+    setStudioPreview(false);
+    setPanelCollapsed(false);
+    setEditingLineId(target.startsWith('line:') ? target.slice(5) : null);
+    setActiveTab(target === 'activity' ? 'activity' : target === 'items' || target.startsWith('line:') ? 'lines' : 'details');
+  }
+
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Top bar - rounded floating card on a continuous grey band, matching
-          the Quotes summary style. The band (bg-slate-100) also backs the
-          activity card below so header + activity read as one grey section
-          above the editor's two-pane body - no second-box look. Non-sticky. */}
-      <div className="bg-slate-50 px-2 pt-2 md:px-4 md:pt-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between px-2 md:px-4 py-2 md:py-3 border border-slate-200 rounded-2xl bg-white shadow-sm">
-        <div className="flex items-center gap-3 min-w-0">
-          <Link
+    <QcDocumentWorkspace className="qc-document-studio">
+      <QcDocumentHeader title={`Invoice ${initial.invoice_number}`} subtitle={initial.customer_name}
+        back={<Link
             href={backHref}
             title={backHref.endsWith('/inbox') ? 'Back to Message Center' : 'Back to Invoices'}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors flex-shrink-0"
@@ -458,96 +505,82 @@ export function InvoiceEditor({
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
-          </Link>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-900 text-sm">{initial.invoice_number}</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.cls}`}>{status.label}</span>
-            </div>
-            <p className="text-xs text-slate-500 truncate">{initial.customer_name}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-          {/* Save indicator */}
-          {isDirty && (
-            <span className="text-xs text-amber-600 font-medium">Unsaved changes</span>
-          )}
-          {!isDirty && lastSaved && (
-            <span className="text-xs text-slate-400">Saved</span>
-          )}
-
-          {/* Public link - sharing it flips a draft to Sent (no email). */}
-          <button
+          <span>Back</span></Link>}
+        status={<><span className={`text-xs px-2 py-1 rounded-full font-medium ${status.cls}`}>{status.label}</span>
+          <QcDocumentSaveState saving={saving || paymentSaving} dirty={isDirty || payDirty} lastSaved={lastSaved}
+            idle={isReadOnly ? 'Read only' : 'Auto-save enabled'} /></>}
+        actions={<>          {/* Public link - sharing it flips a draft to Sent (no email). */}
+          <QcButton variant="ghost" size="sm"
             type="button"
             onClick={openCustomerView}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-600 border border-slate-200 rounded-full px-3 py-1.5 hover:bg-slate-50 hover:border-slate-300 transition-all"
+            title="Opening the customer link also marks a draft invoice as sent"
+            
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" /><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" /></svg>
-            Customer View
-          </button>
+            Customer link
+          </QcButton>
 
           {/* Payment Reported action */}
           {initial.status === 'payment_reported' && (
-            <button
+            <QcButton variant="secondary" size="sm"
               type="button"
               onClick={() => setShowConfirmPaymentModal(true)}
-              className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-all"
+              
             >
               Confirm Payment
-            </button>
+            </QcButton>
           )}
 
           {/* Download PDF (owner) - same on-screen InvoicePreview, captured to
               a PDF that matches the bulk ZIP output exactly. */}
-          <button
+          <QcButton variant="ghost" size="sm"
             type="button"
             onClick={handleDownloadPdf}
             disabled={downloadingPdf}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-700 border border-slate-300 rounded-full px-3 py-1.5 hover:bg-slate-50 transition-all disabled:opacity-50"
+            
           >
             {downloadingPdf ? 'Generating PDF...' : 'Download PDF'}
-          </button>
+          </QcButton>
 
           {/* Reset: void the public link + roll back to draft so the user can
               re-send a fresh invoice with a new URL. Only meaningful once the
               invoice has actually been sent (past 'draft'). */}
           {initial.status !== 'draft' && (
-            <ResetButton
+            <QcDocumentDialogScope><ResetButton
               action={resetInvoice}
               id={initial.id}
               entityLabel="Invoice"
               className="inline-flex items-center gap-1.5 text-xs text-amber-700 border border-amber-300 rounded-full px-3 py-1.5 hover:bg-amber-50 transition-all"
-            />
+            /></QcDocumentDialogScope>
           )}
 
           {/* Cancel */}
           {!['cancelled', 'paid'].includes(initial.status) && (
-            <button
+            <QcButton variant="ghost" size="sm"
               type="button"
               onClick={() => setShowCancelModal(true)}
-              className="inline-flex items-center gap-1.5 text-xs text-red-600 border border-red-200 rounded-full px-3 py-1.5 hover:bg-red-50 transition-all"
+              className="qc-document-danger-control"
             >
               Cancel Invoice
-            </button>
+            </QcButton>
           )}
 
           {/* Save */}
           {!isReadOnly && (
-            <button
+            <QcButton variant="secondary" size="sm"
               type="button"
               onClick={handleSave}
               disabled={saving}
               data-copilot="invoice-save"
-              className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+              
             >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
+              {saving ? 'Saving…' : 'Save & return'}
+            </QcButton>
           )}
 
           {/* Send Invoice - pinned far right (primary action), matching the
               Quotes/Orders editors where Send is the right-most action. */}
-          <SendDocumentButton
+          <QcDocumentDialogScope><SendDocumentButton
             entityKind="invoice"
             entityId={initial.id}
             workspaceSlug={workspaceSlug}
@@ -570,439 +603,169 @@ export function InvoiceEditor({
             libraryLocked={libraryLocked}
             existingToken={initial.public_token}
             hidden={['cancelled', 'paid'].includes(initial.status)}
-          />
-        </div>
+          /></QcDocumentDialogScope>
+</>} />
+      <QcStudioToolbar section={studioSection} onSelect={selectStudioSection} options={studioOptions}
+        preview={studioPreview} onPreview={() => setStudioPreview(!studioPreview)}
+        primary={!isReadOnly ? <QcButton variant="secondary" size="sm" type="button" onClick={() => setShowAddLine(true)} data-copilot="invoice-add-line">+ Add item</QcButton> : undefined} />
+      <div className="qc-document-note">
+        {isReadOnly ? 'This invoice is read only.' : 'Invoice edits save automatically. Payment details use their own Save button in Payment details.'}
+        {initial.status === 'draft' && ' Opening the customer link also marks this draft as sent.'}
+        {payDirty && <strong> Payment details have unsaved changes.</strong>}
       </div>
+      <QcDocumentBody collapsed={panelCollapsed || studioPreview}>
+        <QcDocumentPanel collapsed={panelCollapsed || studioPreview}>
+          <QcStudioInspectorHeading section={studioSection}
+            title={studioSection.startsWith('line:') ? 'Invoice item' : studioSection === 'items' ? 'All items' : studioOptions.find(option => option.id === studioSection)?.label ?? 'Your invoice'}
+            subtitle={isReadOnly ? 'This invoice is read only.' : studioSection.startsWith('line:') ? 'Changes update the invoice immediately.' : undefined}
+            onBack={() => selectStudioSection('document')} onCollapse={() => setPanelCollapsed(true)} />
+          <QcStudioSection active={studioSection === 'document'}>
+            <QcStudioOverview readOnly={isReadOnly} options={studioOptions.filter(option => ['dates', 'header', 'appearance', 'payment', 'notes'].includes(option.id))} onSelect={selectStudioSection} />
+            <div className="qc-document-note"><strong>{initial.customer_name}</strong><p>Customer details come from this invoice’s saved customer record.</p></div>
+          </QcStudioSection>
+          <QcStudioSection active={studioSection === 'items' || studioSection.startsWith('line:')}>
+            <div className="qc-document-panel-content space-y-4" data-copilot="invoice-lines-list">
+              <p className="qc-document-help">Show controls visibility. In total controls the amount, even when an item is hidden.</p>
+              {lines.length === 0 && <p className="qc-document-empty">No items yet. Choose Add item to start your invoice.</p>}
+              {lines.map((line, idx) => (
+                <div key={line.localId} className="qc-document-line" data-studio-detail={studioSection.startsWith('line:')} data-visible={line.is_visible}
+                  hidden={studioSection.startsWith('line:') && editingLineId !== line.localId}>
+                  {!isReadOnly && <>
+                    <div className="qc-document-line-toggles">
+                      <label><input type="checkbox" checked={line.is_visible} onChange={() => updateLine(line.localId, { is_visible: !line.is_visible })} /> Show item</label>
+                      <label><input type="checkbox" checked={line.show_price} disabled={!line.is_visible} onChange={() => updateLine(line.localId, { show_price: !line.show_price })} /> Price</label>
+                      <label><input type="checkbox" checked={line.show_quantity} disabled={!line.is_visible} onChange={() => updateLine(line.localId, { show_quantity: !line.show_quantity })} /> Quantity</label>
+                      <label><input type="checkbox" checked={line.include_in_total} onChange={() => updateLine(line.localId, { include_in_total: !line.include_in_total })} /> In total</label>
+                      {studioSection.startsWith('line:') && <label><input type="checkbox" checked={line.show_description} disabled={!line.is_visible}
+                        onChange={() => updateLine(line.localId, { show_description: !line.show_description })} /> Description</label>}
+                    </div>
+                    <div className="qc-document-row-actions">
+                      <QcButton variant="ghost" size="sm" aria-label="Move line up" onClick={() => moveLine(line.localId, 'up')} disabled={idx === 0 || isReadOnly}>↑ Move up</QcButton>
+                      <QcButton variant="ghost" size="sm" aria-label="Move line down" onClick={() => moveLine(line.localId, 'down')} disabled={idx === lines.length - 1 || isReadOnly}>↓ Move down</QcButton>
+                      <QcButton variant="ghost" size="sm" className="qc-document-danger-control" aria-label="Remove line" onClick={() => removeLine(line.localId)}>Remove</QcButton>
+                    </div>
+                  </>}
+                  {studioSection.startsWith('line:') && editingLineId === line.localId ? (
+                    <div className="qc-studio-fields">
+                      <label>Item name<input aria-label="Item name" value={line.title} disabled={isReadOnly}
+                        onChange={(e) => updateLine(line.localId, { title: e.target.value })} placeholder="Line title" /></label>
+                      <label>Description<textarea aria-label="Description" value={line.description ?? ''} disabled={isReadOnly}
+                        onChange={(e) => updateLine(line.localId, { description: e.target.value || null })} rows={4} placeholder="Description (optional)" /></label>
+                      <div className="qc-studio-field-row"><label>Quantity<input aria-label="Quantity" type="number" value={line.quantity} min={0} step={0.01} disabled={isReadOnly}
+                        onChange={(e) => updateLine(line.localId, { quantity: parseFloat(e.target.value) || 0 })} /></label>
+                      <label>Unit<input aria-label="Unit" value={line.unit} placeholder="item" disabled={isReadOnly}
+                        onChange={(e) => updateLine(line.localId, { unit: e.target.value })} /></label></div>
+                      <label>Unit price ({currency})<input aria-label="Unit price" type="number" value={line.unit_price} min={0} step={0.01} disabled={isReadOnly}
+                        onChange={(e) => updateLine(line.localId, { unit_price: parseFloat(e.target.value) || 0 })} /></label>
+                      <p className="qc-document-note">Item total: <strong>{formatCurrency(line.line_total, currency)}</strong></p>
+                    </div>
+                  ) : (
+                    <div className="qc-studio-item-summary">
+                      <button type="button" className="qc-studio-item-link" onClick={() => selectStudioSection(`line:${line.localId}`)}>{line.title || 'Untitled item'}</button>
+                      {!line.is_visible && <span className="qc-studio-hidden-badge">Hidden</span>}
+                      <p className="qc-document-help">{line.quantity} {line.unit} × {formatCurrency(line.unit_price, currency)}</p>
+                      <strong>{line.show_price ? formatCurrency(line.line_total, currency) : 'Price hidden'}</strong>
+                    </div>
+                  )}
 
-      {/* Activity card - inside the same grey band as the header card, so
-          header + activity read as one continuous grey section above the
-          editor's full-bleed two-pane body. Full width, padded to align
-          with the header card. data-exclude-pdf keeps it off the printed doc. */}
-      {activitySlot ? (
-        <div className="pt-4 data-exclude-pdf">{activitySlot}</div>
-      ) : null}
-      </div>
-      <div className="h-4 bg-slate-50" />
-
-      {/* Editor body - panes float as rounded cards on the slate-50 app
-          background, with a gap between them (matches the rounded card
-          language of the header/activity section above). */}
-      <div className="flex flex-col md:flex-row md:flex-1 md:overflow-hidden relative bg-slate-50 px-2 md:px-4 pb-4 md:pb-20 gap-3 md:gap-4 pb-20 md:pb-4">
-        {/* ── Left panel ── */}
-        {!panelCollapsed && (
-          <div className="w-full md:w-[480px] md:min-w-[400px] flex-shrink-0 border border-slate-200 rounded-2xl bg-white flex flex-col md:overflow-y-auto shadow-sm">
-            {/* Panel tabs */}
-            <div className="flex border-b border-slate-200 sticky top-0 bg-white z-10 rounded-t-2xl">
-              {(['lines', 'details', 'activity'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  data-copilot={tab === 'lines' ? 'invoice-lines-tab' : tab === 'details' ? 'invoice-details-tab' : undefined}
-                  className={`flex-1 py-2.5 text-sm font-medium capitalize transition-colors ${
-                    activeTab === tab
-                      ? 'border-b-2 border-orange-500 text-orange-600'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  {tab === 'lines' ? 'Line Items' : tab === 'details' ? 'Details' : 'Activity'}
-                </button>
+                </div>
               ))}
-              <CollapseButton collapsed={false} onToggle={() => setPanelCollapsed(true)} className="px-3" />
+              {studioSection.startsWith('line:') && !lines.some(line => line.localId === editingLineId) && <QcButton onClick={() => selectStudioSection('items')}>Back to all items</QcButton>}
+              {studioSection === 'items' && lines.length > 0 && <p className="qc-document-note">Invoice total: <strong>{formatCurrency(total, currency)}</strong></p>}
             </div>
-
-            {/* ── Lines tab ── */}
-            {activeTab === 'lines' && (
-              <div className="p-4 flex flex-col gap-3 flex-1">
-                {lines.length === 0 ? (
-                  <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center text-slate-400">
-                    <p className="text-sm font-medium">No line items yet</p>
-                    <p className="text-xs mt-1">Add a line item to get started.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2" data-copilot="invoice-lines-list">
-                    {lines.map((line, idx) => (
-                      <div
-                        key={line.localId}
-                        className={`rounded-xl border ${line.is_visible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50 opacity-60'} p-3`}
-                      >
-                        {editingLineId === line.localId ? (
-                          /* ── Edit mode: content fields only ── */
-                          <div className="space-y-2">
-                            <input
-                              type="text"
-                              value={line.title}
-                              onChange={(e) => updateLine(line.localId, { title: e.target.value })}
-                              placeholder="Line title"
-                              autoFocus
-                              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
-                            />
-                            <textarea
-                              value={line.description ?? ''}
-                              onChange={(e) => updateLine(line.localId, { description: e.target.value || null })}
-                              placeholder="Description (optional)"
-                              rows={2}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm resize-none focus:border-orange-500 focus:outline-none"
-                            />
-                            <div className="grid grid-cols-3 gap-2">
-                              <div>
-                                <label className="block text-xs text-slate-500 mb-0.5">Qty</label>
-                                <input type="number" value={line.quantity} min={0} step={0.01}
-                                  onChange={(e) => updateLine(line.localId, { quantity: parseFloat(e.target.value) || 0 })}
-                                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
-                              </div>
-                              <div>
-                                <label className="block text-xs text-slate-500 mb-0.5">Unit</label>
-                                <input type="text" value={line.unit} placeholder="item"
-                                  onChange={(e) => updateLine(line.localId, { unit: e.target.value })}
-                                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
-                              </div>
-                              <div>
-                                <label className="block text-xs text-slate-500 mb-0.5">Unit Price</label>
-                                <input type="number" value={line.unit_price} min={0} step={0.01}
-                                  onChange={(e) => updateLine(line.localId, { unit_price: parseFloat(e.target.value) || 0 })}
-                                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold text-slate-700">
-                                Line total: {formatCurrency(line.line_total, currency)}
-                              </span>
-                              <button type="button" onClick={() => setEditingLineId(null)}
-                                className="text-xs text-orange-600 font-medium hover:underline">Done</button>
-                            </div>
-                          </div>
-                        ) : (
-                          /* ── Display mode: content + inline toggles ── */
-                          <div>
-                            <div className="flex items-start gap-2">
-                              {/* Reorder arrows */}
-                              <div className="flex flex-col gap-0.5 mt-0.5">
-                                <button type="button" onClick={() => moveLine(line.localId, 'up')}
-                                  disabled={idx === 0 || isReadOnly}
-                                  className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-30">
-                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                                </button>
-                                <button type="button" onClick={() => moveLine(line.localId, 'down')}
-                                  disabled={idx === lines.length - 1 || isReadOnly}
-                                  className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-30">
-                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                </button>
-                              </div>
-                              {/* Content */}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-slate-900 truncate">{line.title || 'Untitled'}</p>
-                                {line.description && (
-                                  <p className="text-xs text-slate-500 truncate">{line.description}</p>
-                                )}
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                  {line.quantity} {line.unit} × {formatCurrency(line.unit_price, currency)}
-                                </p>
-                              </div>
-                              {/* Total + actions */}
-                              <div className="flex items-center gap-1 flex-shrink-0">
-                                <span className="text-sm font-semibold text-slate-900 mr-1">
-                                  {line.show_price ? formatCurrency(line.line_total, currency) : <span className="text-xs text-slate-400 italic">hidden</span>}
-                                </span>
-                                {!isReadOnly && (
-                                  <>
-                                    <button type="button" onClick={() => setEditingLineId(line.localId)}
-                                      className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100">
-                                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                    </button>
-                                    <button type="button" onClick={() => removeLine(line.localId)}
-                                      className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50">
-                                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                            {/* ── Show/hide toggles - checkbox pattern matching CustomerQuoteEditor ── */}
-                            {!isReadOnly && (
-                              <div className="flex items-center gap-4 mt-2 pt-2 border-t border-slate-100">
-                                <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={line.is_visible}
-                                    onChange={() => updateLine(line.localId, { is_visible: !line.is_visible })}
-                                    className="toggle-dot"
-                                  />
-                                  Show
-                                </label>
-                                <label className={`flex items-center gap-1.5 text-xs cursor-pointer ${
-                                  line.is_visible ? 'text-slate-600' : 'text-slate-300'
-                                }`}>
-                                  <input
-                                    type="checkbox"
-                                    checked={line.show_price}
-                                    disabled={!line.is_visible}
-                                    onChange={() => updateLine(line.localId, { show_price: !line.show_price })}
-                                    className="toggle-dot"
-                                  />
-                                  Price
-                                </label>
-                                <label className={`flex items-center gap-1.5 text-xs cursor-pointer ${
-                                  line.is_visible ? 'text-slate-600' : 'text-slate-300'
-                                }`}>
-                                  <input
-                                    type="checkbox"
-                                    checked={line.show_quantity}
-                                    disabled={!line.is_visible}
-                                    onChange={() => updateLine(line.localId, { show_quantity: !line.show_quantity })}
-                                    className="toggle-dot"
-                                  />
-                                  Qty
-                                </label>
-                                <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={line.include_in_total}
-                                    onChange={() => updateLine(line.localId, { include_in_total: !line.include_in_total })}
-                                    className="toggle-dot"
-                                  />
-                                  Add $
-                                </label>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Totals summary */}
-                {lines.length > 0 && (
-                  <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-1">
-                    <div className="flex justify-between text-sm text-slate-600">
-                      <span>Subtotal</span>
-                      <span>{formatCurrency(subtotal, currency)}</span>
-                    </div>
-                    {taxTotal > 0 && (
-                      <div className="flex justify-between text-sm text-slate-600">
-                        <span>Tax</span>
-                        <span>{formatCurrency(taxTotal, currency)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm font-semibold text-slate-900 pt-1 border-t border-slate-200">
-                      <span>Total</span>
-                      <span>{formatCurrency(total, currency)}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Price visibility toggles */}
-                {!isReadOnly && (
-                  <div className="flex items-center gap-4 pt-2">
-                    <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
-                      <input
-                        type="checkbox"
-                        checked={hideLinePrices}
-                        onChange={(e) => { setHideLinePrices(e.target.checked); setIsDirty(true); }}
-                        className="rounded border-slate-300 text-orange-600"
-                      />
-                      Hide line prices
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
-                      <input
-                        type="checkbox"
-                        checked={hideTotals}
-                        onChange={(e) => { setHideTotals(e.target.checked); setIsDirty(true); }}
-                        className="rounded border-slate-300 text-orange-600"
-                      />
-                      Hide totals
-                    </label>
-                  </div>
-                )}
-
-                {/* AI import buttons */}
-                {!isReadOnly && (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowAiUpload(true)}
-                      title="Upload image to auto-fill invoice lines"
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      Upload Image
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowAiText(true)}
-                      title="Paste text to auto-fill invoice lines"
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Text Prompt
-                    </button>
-                  </div>
-                )}
-
-                {/* Add line button */}
-                {!isReadOnly && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAddLine(true)}
-                    data-copilot="invoice-add-line"
-                    className="flex items-center justify-center gap-2 w-full rounded-xl border border-dashed border-slate-200 bg-white px-6 py-4 text-sm font-medium text-slate-500 hover:border-[#FF6B35] hover:text-[#FF6B35] transition-all"
-                  >
-                    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                    Add Line Item
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* ── Details tab ── */}
-            {activeTab === 'details' && (
-              <div className="p-4 space-y-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Invoice Dates</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Invoice Date</label>
-                      <input
-                        type="date"
-                        value={invoiceDate}
-                        onChange={(e) => { setInvoiceDate(e.target.value); markDirty(); }}
-                        disabled={isReadOnly}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:bg-slate-50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Due Date <span className="text-slate-400 font-normal">(opt)</span></label>
-                      <input
-                        type="date"
-                        value={dueDate}
-                        onChange={(e) => { setDueDate(e.target.value); markDirty(); }}
-                        disabled={isReadOnly}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:bg-slate-50"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Notes & Terms</p>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Notes</label>
-                      <textarea
-                        value={notes}
-                        onChange={(e) => { setNotes(e.target.value); markDirty(); }}
-                        disabled={isReadOnly}
-                        rows={3}
-                        placeholder="Any additional notes for the customer…"
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:bg-slate-50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Terms</label>
-                      <textarea
-                        value={terms}
-                        onChange={(e) => { setTerms(e.target.value); markDirty(); }}
-                        disabled={isReadOnly}
-                        rows={3}
-                        placeholder="Payment terms, e.g. Payment due within 14 days…"
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:bg-slate-50"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Business Details</p>
-                    {!isReadOnly && (
-                      <button
-                        type="button"
-                        onClick={() => setShowHeaderModal(true)}
-                        data-copilot="invoice-edit-header"
-                        className="text-xs text-orange-600 hover:underline"
-                      >
-                        Edit
-                      </button>
-                    )}
-                  </div>
-                  <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-1.5 text-sm">
-                    <p className="font-medium text-slate-900">{companyName || <span className="text-slate-400 italic">Business name not set</span>}</p>
-                    {companyAddress && <p className="text-slate-600 text-xs whitespace-pre-line">{companyAddress}</p>}
-                    {companyEmail && <p className="text-slate-500 text-xs">{companyEmail}</p>}
-                    {companyPhone && <p className="text-slate-500 text-xs">{companyPhone}</p>}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">References</p>
-                  <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Invoice Number</span>
-                      <span className="font-mono font-medium text-slate-900">{initial.invoice_number}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Payment Reference</span>
-                      <span className="font-mono font-medium text-slate-900">{initial.payment_reference}</span>
-                    </div>
-                    {initial.source_type !== 'blank' && (
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Source</span>
-                        <span className="text-slate-700 capitalize">{initial.source_type}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Payment Details - editable per-invoice */}
-                <div data-copilot="invoice-payment-details">
+          </QcStudioSection>
+          <QcStudioSection active={studioSection === 'appearance'}>
+            <div className="qc-studio-fields">
+              <label className="qc-studio-toggle"><input type="checkbox" checked={hideLinePrices} disabled={isReadOnly}
+                onChange={(e) => { setHideLinePrices(e.target.checked); setIsDirty(true); }} /> Hide line prices</label>
+              <label className="qc-studio-toggle"><input type="checkbox" checked={hideTotals} disabled={isReadOnly}
+                onChange={(e) => { setHideTotals(e.target.checked); setIsDirty(true); }} /> Hide totals</label>
+              <p className="qc-document-help">These controls change what is shown, not the underlying invoice amount.</p>
+            </div>
+          </QcStudioSection>
+          <QcStudioSection active={studioSection === 'dates'}>
+            <div className="qc-studio-fields" data-copilot="invoice-details-tab">
+              <label>Invoice date<input aria-label="Invoice date" type="date" value={invoiceDate} disabled={isReadOnly} onChange={(e) => { setInvoiceDate(e.target.value); markDirty(); }} /></label>
+              <label>Due date (optional)<input aria-label="Due date" type="date" value={dueDate} disabled={isReadOnly} onChange={(e) => { setDueDate(e.target.value); markDirty(); }} /></label>
+              <p className="qc-document-note">Invoice: <strong>{initial.invoice_number}</strong><br />Payment reference: <strong>{initial.payment_reference}</strong>
+                {initial.source_type !== 'blank' && <><br />Source: {initial.source_type}</>}</p>
+            </div>
+          </QcStudioSection>
+          <QcStudioSection active={studioSection === 'header'}>
+            <div className="qc-studio-fields">
+              <label>Load from saved template
+                <select aria-label="Invoice template" value="" disabled={isReadOnly || invoiceTemplates.length === 0}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      applyInvoiceTemplate(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                >
+                  <option value="">{invoiceTemplates.length > 0 ? 'Choose a template...' : 'No templates saved yet'}</option>
+                  {invoiceTemplates.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </label>
+              <p className="qc-document-help italic">Applies business details, logo, footer, notes, terms and payment details. Payment details save with their own button afterwards.</p>
+              <label>Business name<input aria-label="Business name" value={companyName} disabled={isReadOnly} onChange={e => { setCompanyName(e.target.value); markDirty(); }} /></label>
+              <label>Address<textarea aria-label="Business address" value={companyAddress} rows={3} disabled={isReadOnly} onChange={e => { setCompanyAddress(e.target.value); markDirty(); }} /></label>
+              <label>Email<input aria-label="Business email" type="email" value={companyEmail} disabled={isReadOnly} onChange={e => { setCompanyEmail(e.target.value); markDirty(); }} /></label>
+              <label>Phone<input aria-label="Business phone" value={companyPhone} disabled={isReadOnly} onChange={e => { setCompanyPhone(e.target.value); markDirty(); }} /></label>
+              <label>Logo URL<input aria-label="Logo URL" type="url" value={companyLogoUrl} disabled={isReadOnly} onChange={e => { setCompanyLogoUrl(e.target.value); markDirty(); }} /></label>
+              {!isReadOnly && <QcButton size="sm" variant="ghost" onClick={() => setShowHeaderModal(true)}>Open full header editor</QcButton>}
+            </div>
+          </QcStudioSection>
+          <QcStudioSection active={studioSection === 'notes'}><div className="qc-studio-fields"><label>Notes<textarea aria-label="Invoice notes" value={notes} rows={6} disabled={isReadOnly} onChange={(e) => { setNotes(e.target.value); markDirty(); }} placeholder="A message for your customer…" /></label></div></QcStudioSection>
+          <QcStudioSection active={studioSection === 'terms'}><div className="qc-studio-fields"><label>Terms<textarea aria-label="Terms" value={terms} rows={6} disabled={isReadOnly} onChange={(e) => { setTerms(e.target.value); markDirty(); }} placeholder="Payment terms for this invoice…" /></label></div></QcStudioSection>
+          <QcStudioSection active={studioSection === 'footer'}><div className="qc-studio-fields"><label>Footer<textarea aria-label="Footer" value={footerText} rows={6} disabled={isReadOnly} onChange={(e) => { setFooterText(e.target.value); markDirty(); }} /></label></div></QcStudioSection>
+          <QcStudioSection active={studioSection === 'payment'}>
+            <p className="qc-document-note">Payment details save separately. Use Save payment details below before sending or leaving.</p>
+            <div className="qc-document-panel-content">                <div data-copilot="invoice-payment-details">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment Details</p>
                     {payDirty && !isReadOnly && (
-                      <button
+                      <QcButton variant="ghost" size="sm"
                         type="button"
                         onClick={handleSavePaymentDetails}
                         disabled={paymentSaving}
-                        className="text-xs text-orange-600 font-semibold hover:underline disabled:opacity-50"
+                        
                       >
-                        {paymentSaving ? 'Saving…' : 'Save'}
-                      </button>
+                        {paymentSaving ? 'Saving…' : 'Save payment details'}
+                      </QcButton>
                     )}
                   </div>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-1">Account Name</label>
-                        <input type="text" value={payAccountName} onChange={(e) => { setPayAccountName(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
+                        <input type="text" aria-label="Account name" value={payAccountName} onChange={(e) => { setPayAccountName(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
                           placeholder="e.g. Smith Roofing Ltd"
                           className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs focus:border-orange-500 focus:outline-none disabled:bg-slate-50" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-1">Bank Name</label>
-                        <input type="text" value={payBankName} onChange={(e) => { setPayBankName(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
+                        <input type="text" aria-label="Bank name" value={payBankName} onChange={(e) => { setPayBankName(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
                           placeholder="e.g. Barclays"
                           className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs focus:border-orange-500 focus:outline-none disabled:bg-slate-50" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-1">Account Number</label>
-                        <input type="text" value={payAccountNumber} onChange={(e) => { setPayAccountNumber(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
+                        <input type="text" aria-label="Account number" value={payAccountNumber} onChange={(e) => { setPayAccountNumber(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
                           placeholder="12345678"
                           className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-mono focus:border-orange-500 focus:outline-none disabled:bg-slate-50" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-1">Sort Code</label>
-                        <input type="text" value={paySortCode} onChange={(e) => { setPaySortCode(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
+                        <input type="text" aria-label="Sort code" value={paySortCode} onChange={(e) => { setPaySortCode(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
                           placeholder="00-00-00"
                           className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-mono focus:border-orange-500 focus:outline-none disabled:bg-slate-50" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-700 mb-1">Payment Link <span className="text-slate-400 font-normal">(opt)</span></label>
-                      <input type="url" value={payPaymentLink} onChange={(e) => { setPayPaymentLink(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
+                      <input type="url" aria-label="Payment link" value={payPaymentLink} onChange={(e) => { setPayPaymentLink(e.target.value); setPayDirty(true); }} disabled={isReadOnly}
                         placeholder="https://pay.stripe.com/…"
                         className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs focus:border-orange-500 focus:outline-none disabled:bg-slate-50" />
                     </div>
@@ -1014,12 +777,16 @@ export function InvoiceEditor({
                       </p>
                     )}
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── Activity tab ── */}
-            {activeTab === 'activity' && (
+                </div></div>
+          </QcStudioSection>
+          <QcStudioSection active={studioSection === 'import'}><div className="qc-studio-fields">
+            <p className="qc-document-help">Add invoice items from an image or text. Review imported descriptions and amounts before sending.</p>
+            <QcButton disabled={isReadOnly} onClick={() => setShowAiUpload(true)}>Import from image</QcButton>
+            <QcButton disabled={isReadOnly} onClick={() => setShowAiText(true)}>Import from text</QcButton>
+          </div></QcStudioSection>
+          <QcStudioSection active={studioSection === 'activity'}>
+            {activitySlot ? <div className="qc-document-activity" data-exclude-pdf>{activitySlot}</div> : null}
+                        {activeTab === 'activity' && (
               <div className="p-4">
                 {activity.length === 0 ? (
                   <p className="text-sm text-slate-400 text-center py-8">No activity yet.</p>
@@ -1038,18 +805,13 @@ export function InvoiceEditor({
                 )}
               </div>
             )}
-          </div>
-        )}
-
-        {/* ── Collapsed tab ── */}
-        {panelCollapsed && (
-          <ExpandTab collapsed={panelCollapsed} onToggle={() => setPanelCollapsed(false)} />
-        )}
-
-        {/* ── Right panel: preview ── */}
-        <div className="w-full md:flex-1 md:overflow-y-auto bg-slate-50 rounded-2xl p-1 md:p-4" data-copilot="invoice-preview">
-          <div data-pdf-content>
+          </QcStudioSection>
+        </QcDocumentPanel>
+        <QcDocumentPreview title={studioPreview ? 'Recipient preview' : 'Your invoice'} description={isReadOnly || studioPreview ? 'Clean output without editing controls.' : 'Click an item or section to edit it. Changes appear here.'}
+          collapsed={panelCollapsed || studioPreview} onExpand={() => { setPanelCollapsed(false); setStudioPreview(false); }} data-copilot="invoice-preview">
+          <div className="qc-document-paper qc-document-paper--invoice"><div data-pdf-content>
           <InvoicePreview
+            selection={isReadOnly || studioPreview ? undefined : { active: studioSection, onSelect: selectStudioSection }}
             invoice={initial}
             lines={lines}
             currency={currency}
@@ -1076,11 +838,10 @@ export function InvoiceEditor({
               paymentLink: payPaymentLink,
             }}
           />
-          </div>
-        </div>
-      </div>
-
-      {/* Modals */}
+          </div></div>
+        </QcDocumentPreview>
+      </QcDocumentBody>
+      <QcDocumentDialogScope>      {/* Modals */}
       {showAddLine && (
         <AddInvoiceLineModal
           currency={currency}
@@ -1114,7 +875,7 @@ export function InvoiceEditor({
         />
       )}
 
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={showCancelModal}
         title="Cancel this invoice?"
         description="The invoice will be marked as cancelled. The customer link will stop working. This cannot be undone."
@@ -1127,7 +888,7 @@ export function InvoiceEditor({
         onConfirm={doCancel}
       />
 
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={showConfirmPaymentModal}
         title="Confirm payment received?"
         description="This will mark the invoice as Paid and close it out. Only do this once payment has cleared."
@@ -1155,6 +916,7 @@ export function InvoiceEditor({
           onClose={() => setShowAiText(false)}
         />
       )}
-    </div>
+</QcDocumentDialogScope>
+    </QcDocumentWorkspace>
   );
 }

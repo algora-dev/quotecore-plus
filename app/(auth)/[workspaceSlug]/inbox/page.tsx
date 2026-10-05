@@ -1,3 +1,4 @@
+import { QcLibrary, QcLibraryError } from '@/app/components/ui/v2/QcLibrary';
 import Link from 'next/link';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { resolvePrefs } from '@/app/lib/alerts/prefs';
@@ -28,7 +29,7 @@ export default async function InboxPage({
     return (
       <div className="max-w-5xl mx-auto px-0 md:px-4 py-3 md:py-6 space-y-3 md:space-y-5">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-900">Message Center</h1>
+          <h1 className="qc-library-title text-xl md:text-2xl font-bold text-slate-900">Message Center</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">Available on the Starter plan and above.</p>
         </div>
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 md:p-6">
@@ -44,9 +45,9 @@ export default async function InboxPage({
                 The full inbox of every alert and message from your quotes, orders and invoices is available on the {requiredPlan} plan or above. You&apos;ll still get accept / decline / change alerts to your bell and email on the free plan.
               </p>
               <div className="mt-4">
-                <Link
+                <Link data-qc-variant="primary"
                   href={`/${workspaceSlug}/account?tab=billing&plan=${requiredPlan}`}
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
+                  className="qc-button qc-flow-control qc-library-control inline-flex"
                 >
                   View plans
                 </Link>
@@ -60,7 +61,7 @@ export default async function InboxPage({
 
   const supabase = await createSupabaseServerClient();
 
-  const [{ data: alerts }, { data: company }] = await Promise.all([
+  const [{ data: alerts, error: alertsError }, { data: company, error: preferencesError }] = await Promise.all([
     supabase
       .from('alerts')
       .select(
@@ -79,18 +80,20 @@ export default async function InboxPage({
   const notificationPrefs = resolvePrefs(company?.notification_prefs);
 
   return (
-    <div className="max-w-5xl mx-auto px-0 md:px-4 py-3 md:py-6 pb-20 md:pb-6">
+    <QcLibrary className="max-w-5xl mx-auto px-0 md:px-4 py-3 md:py-6 pb-20 md:pb-6">
       <div className="mb-4 md:mb-5">
-        <h1 className="text-xl md:text-2xl font-bold text-slate-900">Message Center</h1>
+        <h1 className="qc-library-title text-xl md:text-2xl font-bold text-slate-900">Message Center</h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">
           Every alert and message from your quotes, orders and invoices in one place.
         </p>
       </div>
-      <InboxList
+      {alertsError || preferencesError ? <QcLibraryError title="Message Center could not be loaded">
+        We could not load {alertsError ? 'your messages' : 'your notification settings'}. Return to this page or reload to try again. No settings have been changed.
+      </QcLibraryError> : <InboxList
         initialAlerts={alerts || []}
         workspaceSlug={workspaceSlug}
         initialNotificationPrefs={notificationPrefs}
-      />
-    </div>
+      />}
+    </QcLibrary>
   );
 }

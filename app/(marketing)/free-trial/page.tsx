@@ -9,10 +9,11 @@ import { buildBreadcrumbSchema, buildFaqSchema, siteUrl } from "@/lib/schema";
 import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import DemoCTACard from "@/components/DemoCTACard";
+import { pricingPlans } from "@/lib/pricing";
 
 export const metadata: Metadata = {
-  title: "Free 14-Day Trial - No Card Required",
-  description: "Try QuoteCore+ free for 14 days. Measure jobs, build professional quotes, track acceptances, and manage materials orders. No credit card needed.",
+  title: "Get Started with QuoteCore+ - Free Tools + Paid Plans",
+  description: "Start with free roofing tools, no signup. Then choose a paid QuoteCore+ plan from $19/month with a 30-day money-back guarantee. Free trial no longer needed - free tools are forever.",
   alternates: {
     canonical: "https://quote-core.com/free-trial",
     languages: hreflangLanguages("/free-trial"),
@@ -21,32 +22,32 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    question: "Do I need a credit card to sign up?",
-    answer: "No. Your free trial is completely free. We'll only ask for payment if you decide to upgrade.",
+    question: "Do you offer a free trial?",
+    answer: "We replaced the free trial with something better: permanent free tools and a money-back guarantee. Our free tools (takeoff builder, roofing calculator, quote generator and more) are free forever with no signup. For the full app, choose a paid plan - every plan is backed by a 30-day money-back guarantee, so you can try the full workflow with confidence.",
   },
   {
-    question: "How long is the trial?",
-    answer: "14 days from the date you sign up.",
+    question: "Do I need a credit card to use the free tools?",
+    answer: "No. The free tools work instantly in your browser with no signup and no card. You only pay if you choose a paid app plan.",
   },
   {
-    question: "What happens when the trial ends?",
-    answer: "You'll be automatically put on the Lite (Free) plan and be able to upgrade from there if you wish. All your saved data remains stored.",
+    question: "How does the 30-day money-back guarantee work?",
+    answer: "You pay up front for your chosen plan and get full access to every QuoteCore+ feature for 30 days. If it is not right for you, request a refund after day 30 via a short request and questionnaire and we will refund your payment.",
   },
   {
-    question: "Can I send real quotes to real customers during the trial?",
-    answer: "Yes. Quote, measure, and send to customers from day one.",
+    question: "Can I send real quotes to real customers?",
+    answer: "Yes. Quote, measure, and send to customers from day one on any paid plan.",
   },
   {
     question: "What if I need help?",
     answer: "You can chat to \"Q\" our smart assistant in the bottom right corner, check the <a href=\"/docs\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">docs</a>, or <a href=\"https://quote-core.com/contact\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">contact us here</a>.",
   },
   {
-    question: "What is included in the free trial?",
-    answer: "Your 14-day free trial gives you full access to every QuoteCore+ feature. That includes digital roof takeoff, AI Scan Assist (20 scan points), Smart Components, quote builder, sending and tracking with automated follow-ups, material ordering and invoicing. You can send real quotes, orders and invoices to real customers from day one and save everything to your account - nothing is locked.",
+    question: "What is included in the paid app?",
+    answer: "Paid plans include every QuoteCore+ feature: digital roof takeoff, AI Scan Assist, Smart Components, quote builder, sending and tracking with automated follow-ups, material ordering and invoicing. You can send real quotes, orders and invoices to real customers from day one - nothing is locked.",
   },
   {
     question: "How do I get started?",
-    answer: "Sign up takes less than 2 minutes. Once you're signed up, \"Q\" can walk you through everything by chatting to you, or by showing you. You can create components, upload pricing catalogs, images, convert previous quotes to our format, create new quotes, orders, invoices. Just go to the \"Resources\" page in the main navigation, then to the tutorials page to learn how everything works.",
+    answer: "Two ways: dive into the <a href=\"/free-tools\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">free tools</a> right now with no signup, or choose a plan and start in the app. Once you are in, \"Q\" can walk you through everything by chatting to you, or by showing you. Just go to the \"Resources\" page in the main navigation, then to the tutorials page to learn how everything works.",
   },
   {
     question: "Who is QuoteCore+ for?",
@@ -54,7 +55,7 @@ const faqs = [
   },
   {
     question: "What are Smart Components™?",
-    answer: "Smart Components™ are reusable parts of your quoting workflow. You can create components that include materials, labour, waste allowances, measurements, drawings, images, calculations and pricing rules, then reuse them in future quotes. They help each quote make the next quote faster.",
+    answer: "Think of a Smart Component as one row or line on a spreadsheet - it holds all the information about a product or service (materials, labour, waste allowances, measurements, drawings, images and pricing rules), including the complex calculations. The difference is that QuoteCore+ does the calculating for you, so you need no spreadsheet knowledge at all. If you currently price with a spreadsheet, you can upload it and convert your rows into Smart Components in bulk, then reuse them in every future quote.",
   },
 ];
 
@@ -109,6 +110,47 @@ function TrialPreviewImages() {
   );
 }
 
+function planStyles(plan: (typeof pricingPlans)[number]): string {
+  const premium = plan.name === "Pro Plus";
+  if (plan.featured) {
+    return "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)] hover:border-[#BD4A1A] hover:shadow-[0_26px_64px_rgba(189,74,26,0.22)]";
+  }
+  if (premium) {
+    return "border-zinc-300 bg-gradient-to-b from-white to-zinc-50 shadow-[0_10px_36px_rgba(24,24,27,0.07)] hover:border-zinc-400 hover:shadow-[0_22px_54px_rgba(24,24,27,0.15)]";
+  }
+  return "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]";
+}
+
+const dfyPackages = [
+  {
+    name: "Done-For-You Estimating Setup",
+    price: "$499",
+    tagline: "Best for smaller estimating setups or contractors with a focused range of products and services.",
+    highlight: false,
+    items: [
+      "Up to 20 custom components built for you",
+      "Your material pricing configured",
+      "Labour and waste rules configured",
+      "Personalised training",
+      "6 months setup and product support",
+      "6 months QuoteCore+ Pro included",
+    ],
+  },
+  {
+    name: "Complete Done-For-You Setup",
+    price: "$999",
+    tagline: "Best for larger or more detailed estimating systems.",
+    highlight: true,
+    items: [
+      "Up to 60 custom components built for you",
+      "Larger material and pricing setup",
+      "More complex labour and waste configurations",
+      "Help organising larger pricing lists or catalogues",
+      "More detailed workflow configuration",
+    ],
+  },
+];
+
 export default function FreeTrialPage() {
   return (
     <>
@@ -123,7 +165,7 @@ export default function FreeTrialPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(buildBreadcrumbSchema([
             { name: "Home", url: `${siteUrl}/` },
-            { name: "Free Trial", url: `${siteUrl}/free-trial` },
+            { name: "Get started", url: `${siteUrl}/free-trial` },
           ])),
         }}
       />
@@ -134,27 +176,27 @@ export default function FreeTrialPage() {
       />
       <main className="min-h-screen bg-white text-zinc-950">
        <BlogHeader backLabel="Back to homepage" backHref="/" />
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Free Trial" }]} />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Get started" }]} />
 
         <section className="relative overflow-hidden bg-[linear-gradient(180deg,#fff_0%,#fff7f2_52%,#fff_100%)]">
           <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-6 py-12 lg:grid-cols-[1fr_0.68fr] lg:px-8 lg:py-16 xl:grid-cols-[0.98fr_0.58fr_0.95fr] xl:gap-8">
             <div className="xl:pt-6">
               <p className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#FF6B35] shadow-sm">
                 <span className="text-base leading-none">*</span>
-                14-day free trial
+                Free tools + paid plans
               </p>
               <h1 className="mt-6 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-                Try QuoteCore+ free for 14 days.
+                Get started with QuoteCore+.
               </h1>
 
               <p className="mt-4 max-w-2xl text-xl font-semibold leading-snug text-zinc-700 sm:text-2xl">
-                Test the full quoting workflow.
+                Free tools, forever. No signup.
                 <br />
-                No card. No commitment.
+                Paid plans from $19/month.
               </p>
 
               <p className="mt-4 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg">
-                See how fast you can go from roof plan to customer-ready quote before you spend a penny.
+                Try the free tools right now, then start in the app with a 30-day money-back guarantee.
               </p>
 
               <div className="mt-10 max-w-xl space-y-6 text-zinc-600 hidden" aria-hidden="true">
@@ -165,9 +207,9 @@ export default function FreeTrialPage() {
 
               <div className="mt-8 hidden max-w-xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_22px_70px_rgba(15,23,42,0.08)] sm:grid sm:grid-cols-3">
                 {[
-                  { title: "Full access", text: "All features included", icon: "lock" as const },
-                  { title: "14 days", text: "Risk-free trial", icon: "calendar" as const },
-                  { title: "Pause anytime", text: "No charges", icon: "pause" as const },
+                  { title: "Free tools", text: "No signup, forever", icon: "lock" as const },
+                  { title: "From $19/mo", text: "Choose your plan", icon: "calendar" as const },
+                  { title: "30-day guarantee", text: "Money-back promise", icon: "pause" as const },
                 ].map(({ title, text, icon }, index) => (
                   <div
                     key={title}
@@ -198,6 +240,87 @@ export default function FreeTrialPage() {
             </div>
           </div>
         </section>
+
+        {/* Plans + done for you */}
+        <section className="border-y border-zinc-200 bg-zinc-50 py-16">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">Paid plans</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Pick the plan that fits.</h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
+              From $19/month, every paid plan backed by the 30-day money-back guarantee.
+            </p>
+            <div className="mt-10 grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {pricingPlans.map((plan) => (
+                <article
+                  key={plan.name}
+                  className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${planStyles(plan)}`}
+                >
+                  {plan.featured && <span className="absolute -top-3 right-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
+                  <h3 className="text-xl font-semibold">{plan.displayName}</h3>
+                  <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{plan.subtitle}</p>
+                  <div className="mt-6">
+                    <div className="flex min-h-[92px] w-full flex-col justify-center rounded-xl border border-zinc-200/80 bg-white/60 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USD</p>
+                      <p className="mt-1 text-2xl font-semibold">{plan.usd}</p>
+                      {!plan.isFree && !plan.contactUs && <p className="text-xs text-zinc-500">per month</p>}
+                    </div>
+                  </div>
+                  <ul className="mt-6 flex-1 space-y-3">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex gap-3 text-sm text-zinc-700">
+                        <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#BD4A1A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <a href={plan.contactUs ? "/contact" : "https://app.quote-core.com/signup?utm_source=get-started"} className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${plan.featured ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
+                    {plan.contactUs ? "Contact us" : plan.isFree ? "Get started" : "Choose this plan"}
+                  </a>
+                </article>
+              ))}
+            </div>
+            <p className="mt-8 text-center text-sm text-zinc-600">Monthly prices are shown in USD. Taxes are calculated at checkout where applicable.</p>
+
+            <div className="mt-16 border-t border-zinc-200 pt-16">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">Done for you</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Rather have it set up for you?</h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
+                One-time packages where the QuoteCore+ team builds your components, pricing and workflow with you, so you start quoting from day one.
+              </p>
+              <div className="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
+                {dfyPackages.map((pkg) => (
+                  <article
+                    key={pkg.name}
+                    className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${pkg.highlight ? "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)]" : "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]"}`}
+                  >
+                    {pkg.highlight && <span className="absolute -top-3 right-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most complete</span>}
+                    <h3 className="text-xl font-semibold">{pkg.name}</h3>
+                    <p className="mt-2 text-sm leading-6 text-zinc-600">{pkg.tagline}</p>
+                    <div className="mt-6">
+                      <div className="flex min-h-[92px] w-full flex-col justify-center rounded-xl border border-zinc-200/80 bg-white/60 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USD</p>
+                        <p className="mt-1 text-2xl font-semibold">{pkg.price}</p>
+                        <p className="text-xs text-zinc-500">one-time setup</p>
+                      </div>
+                    </div>
+                    <ul className="mt-6 flex-1 space-y-3">
+                      {pkg.items.map((item) => (
+                        <li key={item} className="flex gap-3 text-sm text-zinc-700">
+                          <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#BD4A1A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <a href="/done-for-you-setup" className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${pkg.highlight ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
+                      See what is included
+                    </a>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Demo card */}
         <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
           <DemoCTACard location="free_trial_bottom" variant="inline" className="mx-auto max-w-2xl" />

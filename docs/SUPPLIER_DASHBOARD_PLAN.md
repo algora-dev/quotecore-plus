@@ -12,7 +12,7 @@ The supplier dashboard currently has:
 - Component library and catalogue management
 - Takeoff builder settings
 
-**Missing:** Logo upload, banner upload, location fields (country/city/region ÔÇö exist in DB but not in the form), price list file upload (PDF/CSV), and a "Your Links" quick-copy section. The supplier cannot fully build their own public page from the dashboard.
+**Missing:** Logo upload, banner upload, location fields (country/city/region - exist in DB but not in the form), price list file upload (PDF/CSV), and a "Your Links" quick-copy section. The supplier cannot fully build their own public page from the dashboard.
 
 ## What We're Building
 
@@ -23,7 +23,7 @@ Add the following fields to the existing Edit Profile section in `SupplierDashbo
 | Field | DB Column | Type | Notes |
 |-------|-----------|------|-------|
 | Logo upload | `logo_url` | File upload (image) | Already in DB, just needs UI. Supabase Storage bucket: `supplier-assets` |
-| Banner upload | `banner_url` (NEW) | File upload (image) | Needs new DB column. Recommended size: 1600├ù400px, max 2MB, JPG/PNG/WebP |
+| Banner upload | `banner_url` (NEW) | File upload (image) | Needs new DB column. Recommended size: 1600×400px, max 2MB, JPG/PNG/WebP |
 | Country | `branch_country` | Select dropdown | Already in DB. Pre-populated country list |
 | City | `branch_city` | Text input | Already in DB |
 | Region/State | `branch_region` | Text input | Already in DB |
@@ -33,7 +33,7 @@ The existing fields stay: website URL, contact email, phone number, description,
 
 ### 2. Banner Image Spec (Ron)
 
-- **Recommended dimensions:** 1600├ù400px (4:1 aspect ratio)
+- **Recommended dimensions:** 1600×400px (4:1 aspect ratio)
 - **Max file size:** 2MB
 - **Accepted formats:** JPG, PNG, WebP
 - **Display:** Hero banner on the public supplier page, positioned above the supplier name/logo area. Falls back gracefully if no banner uploaded.
@@ -56,10 +56,10 @@ Supplier uploads a PDF or CSV of their full price list. This is displayed as a d
 - Only visible when `price_list_url` is set and supplier has enabled public catalogue
 
 **DB columns needed (Gavin):**
-- `price_list_url` (text, nullable) ÔÇö storage path or URL
-- `price_list_filename` (text, nullable) ÔÇö original filename for display
-- `price_list_uploaded_at` (timestamptz, nullable) ÔÇö last upload timestamp
-- `price_list_content_type` (text, nullable) ÔÇö mime type for download headers
+- `price_list_url` (text, nullable) - storage path or URL
+- `price_list_filename` (text, nullable) - original filename for display
+- `price_list_uploaded_at` (timestamptz, nullable) - last upload timestamp
+- `price_list_content_type` (text, nullable) - mime type for download headers
 
 **Storage:** Supabase Storage bucket `supplier-assets`. If Storage 403s (known issue on some projects), fallback to storing as a base64 blob in a separate `supplier_files` table.
 
@@ -70,14 +70,14 @@ A card at the top of the supplier dashboard (above the Edit Profile card) showin
 - **Supplier Page URL:** `https://quote-core.com/suppliers/{slug}` (with copy button)
 - **Takeoff Builder URL:** `https://quote-core.com/free-roofing-takeoff-builder/{slug}` (with copy button, shown when takeoff builder is enabled)
 
-Each URL has a copy-to-clipboard button. Card is always visible when profile exists, regardless of publication state. If profile is not yet published, show a note: "Page is not yet published ÔÇö URL will work when you publish."
+Each URL has a copy-to-clipboard button. Card is always visible when profile exists, regardless of publication state. If profile is not yet published, show a note: "Page is not yet published - URL will work when you publish."
 
 ### 5. Public Supplier Page Updates (Ron)
 
 Update `app/(marketing)/suppliers/[slug]/page.tsx` and `lib/supplier-directory.ts`:
 
 - Render banner image as hero (if `banner_url` set)
-- Logo already renders ÔÇö keep as is
+- Logo already renders - keep as is
 - Add "Download Price List" section (if `price_list_url` set and catalogue is public)
 - Ensure all new fields flow through the `public_supplier_read` RPC
 
@@ -106,11 +106,11 @@ ALTER TABLE supplier_profiles
 
 ```
 Supplier Dashboard
-  ÔåÆ POST /api/supplier-upload (new API route, Ron builds)
-    ÔåÆ Validates file type + size
-    ÔåÆ Uploads to Supabase Storage bucket "supplier-assets"
-    ÔåÆ Returns public URL
-  ÔåÆ Dashboard saves URL to supplier_profiles via updateSupplierProfile action
+  → POST /api/supplier-upload (new API route, Ron builds)
+    → Validates file type + size
+    → Uploads to Supabase Storage bucket "supplier-assets"
+    → Returns public URL
+  → Dashboard saves URL to supplier_profiles via updateSupplierProfile action
 ```
 
 **Bucket setup (Gavin or Ron with admin client):**
@@ -120,7 +120,7 @@ Supplier Dashboard
 - Allowed MIME types: image/jpeg, image/png, image/webp, application/pdf, text/csv
 
 **RLS policies:**
-- SELECT: public (anyone can read ÔÇö these are public marketing assets)
+- SELECT: public (anyone can read - these are public marketing assets)
 - INSERT/UPDATE/DELETE: supplier can only manage their own company's assets (match on company_id via supplier_profiles join)
 
 ## Implementation Order
@@ -132,10 +132,10 @@ Supplier Dashboard
 5. **Ron:** Price list upload UI in dashboard
 6. **Ron:** Update public supplier page (banner, price list download)
 7. **Test:** Shaun tests full flow as RS Roofing supplier account
-8. **Deploy:** Push to development ÔåÆ Shaun reviews ÔåÆ merge to main
+8. **Deploy:** Push to development → Shaun reviews → merge to main
 
 ## What's NOT in This Plan
 
-- **Keywords** ÔÇö dropped per Shaun's decision (the existing roofing_types toggle chips are sufficient for now)
-- **Business name editing** ÔÇö stays admin-only (supplier name is set during profile creation by admin)
-- **Multi-file price lists** ÔÇö single file for now. Can expand to multiple files later if needed.
+- **Keywords** - dropped per Shaun's decision (the existing roofing_types toggle chips are sufficient for now)
+- **Business name editing** - stays admin-only (supplier name is set during profile creation by admin)
+- **Multi-file price lists** - single file for now. Can expand to multiple files later if needed.

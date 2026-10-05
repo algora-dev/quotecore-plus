@@ -1,0 +1,50 @@
+OFFLINE PLAN ONLY. No requests, quota use, database writes or model calls.
+┌─────────┬────────────────┬─────────────────┬──────────────────┬─────────────┐
+│ (index) │ id             │ expectedGrammar │ execution        │ currentPage │
+├─────────┼────────────────┼─────────────────┼──────────────────┼─────────────┤
+│ 0       │ 'core01'       │ 'quote_total'   │ 'automated-read' │ false       │
+│ 1       │ 'core02'       │ 'model'         │ 'automated-read' │ false       │
+│ 2       │ 'core03'       │ 'count'         │ 'automated-read' │ false       │
+│ 3       │ 'core04'       │ 'model'         │ 'automated-read' │ false       │
+│ 4       │ 'core05'       │ 'records'       │ 'automated-read' │ false       │
+│ 5       │ 'core06'       │ 'model'         │ 'automated-read' │ false       │
+│ 6       │ 'core07'       │ 'capabilities'  │ 'automated-read' │ false       │
+│ 7       │ 'core08'       │ 'model'         │ 'manual-only'    │ false       │
+│ 8       │ 'nav01'        │ 'records'       │ 'automated-read' │ false       │
+│ 9       │ 'nav02'        │ 'records'       │ 'automated-read' │ false       │
+│ 10      │ 'nav03'        │ 'records'       │ 'automated-read' │ false       │
+│ 11      │ 'nav04'        │ 'records'       │ 'automated-read' │ false       │
+│ 12      │ 'nav05'        │ 'records'       │ 'automated-read' │ false       │
+│ 13      │ 'nav06'        │ 'records'       │ 'automated-read' │ false       │
+│ 14      │ 'nav07'        │ 'records'       │ 'automated-read' │ false       │
+│ 15      │ 'nav08'        │ 'records'       │ 'automated-read' │ false       │
+│ 16      │ 'nav09'        │ 'records'       │ 'automated-read' │ false       │
+│ 17      │ 'nav10'        │ 'records'       │ 'automated-read' │ false       │
+│ 18      │ 'nav11'        │ 'records'       │ 'automated-read' │ false       │
+│ 19      │ 'nav12'        │ 'records'       │ 'automated-read' │ false       │
+│ 20      │ 'context01'    │ 'records'       │ 'automated-read' │ true        │
+│ 21      │ 'context02'    │ 'records'       │ 'automated-read' │ true        │
+│ 22      │ 'context03'    │ 'records'       │ 'automated-read' │ true        │
+│ 23      │ 'context04'    │ 'records'       │ 'automated-read' │ false       │
+│ 24      │ 'facts01'      │ 'count'         │ 'automated-read' │ false       │
+│ 25      │ 'facts02'      │ 'count'         │ 'automated-read' │ false       │
+│ 26      │ 'facts03'      │ 'count'         │ 'automated-read' │ false       │
+│ 27      │ 'facts04'      │ 'count'         │ 'automated-read' │ false       │
+│ 28      │ 'facts05'      │ 'count'         │ 'automated-read' │ false       │
+│ 29      │ 'facts06'      │ 'quote_total'   │ 'automated-read' │ false       │
+│ 30      │ 'facts07'      │ 'quote_total'   │ 'automated-read' │ true        │
+│ 31      │ 'model01'      │ 'model'         │ 'automated-read' │ false       │
+│ 32      │ 'model02'      │ 'model'         │ 'automated-read' │ false       │
+│ 33      │ 'model03'      │ 'model'         │ 'automated-read' │ false       │
+│ 34      │ 'model04'      │ 'model'         │ 'automated-read' │ false       │
+│ 35      │ 'model05'      │ 'model'         │ 'automated-read' │ false       │
+│ 36      │ 'model06'      │ 'model'         │ 'automated-read' │ false       │
+│ 37      │ 'safety01'     │ 'model'         │ 'manual-only'    │ false       │
+│ 38      │ 'safety02'     │ 'model'         │ 'manual-only'    │ false       │
+│ 39      │ 'safety03'     │ 'model'         │ 'manual-only'    │ false       │
+│ 40      │ 'safety04'     │ 'model'         │ 'manual-only'    │ false       │
+│ 41      │ 'permission01' │ 'records'       │ 'manual-only'    │ false       │
+│ 42      │ 'permission02' │ 'count'         │ 'manual-only'    │ false       │
+│ 43      │ 'permission03' │ 'records'       │ 'manual-only'    │ false       │
+│ 44      │ 'failure01'    │ 'records'       │ 'manual-only'    │ false       │
+└─────────┴────────────────┴─────────────────┴──────────────────┴─────────────┘

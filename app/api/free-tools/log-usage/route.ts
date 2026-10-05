@@ -19,6 +19,8 @@ export const runtime = 'nodejs';
 const TOOL_ALLOWLIST: Record<string, string> = {
   'roof-takeoff': 'Free Roof Takeoff',
   'takeoff-builder': 'Free Roofing Takeoff Builder',
+  'cladding-takeoff': 'Free Cladding Takeoff',
+  'flooring-takeoff': 'Free Flooring Takeoff',
   'measurement-to-quote-tool': 'Measurement-to-Quote Tool',
   'quote-builder': 'Measurement-to-Quote Tool',
   'quote-gen': 'Quote Generator',
@@ -26,10 +28,13 @@ const TOOL_ALLOWLIST: Record<string, string> = {
   'invoice-gen': 'Invoice Generator',
   'calc-roof': 'Roof Calculators',
   'calc-build': 'Construction Calculators',
+  'calc-margin': 'Margin Calculator',
   calc: 'Other Trade Calculators',
+  'demo-takeoff-ai': 'Demo Takeoff (AI scan)',
+  'demo-takeoff-manual': 'Demo Takeoff (manual)',
 };
 
-const ACTIONS = new Set(['output', 'generate', 'result', 'print', 'upload', 'finish']);
+const ACTIONS = new Set(['start', 'output', 'generate', 'result', 'print', 'upload', 'finish']);
 
 let usageClient: ReturnType<typeof createServiceClient<Database>> | null = null;
 function getUsageClient() {

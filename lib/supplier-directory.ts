@@ -17,7 +17,7 @@ export const TEST_SUPPLIER_SLUGS = new Set([
 /**
  * Public supplier data layer.
  * Uses the SECURITY DEFINER RPCs created in migration 20260804203000.
- * These functions strip disallowed fields server-side ÔÇö hidden prices
+ * These functions strip disallowed fields server-side - hidden prices
  * and contacts cannot leak through this layer.
  */
 

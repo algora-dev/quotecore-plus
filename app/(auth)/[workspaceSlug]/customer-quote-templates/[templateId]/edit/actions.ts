@@ -1,4 +1,5 @@
 'use server';
+import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 
 export async function loadTemplateForEdit(templateId: string) {
@@ -60,4 +61,8 @@ export async function updateCustomerQuoteTemplate(
     .eq('company_id', profile.company_id);
 
   if (error) throw new Error(error.message);
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
+  revalidatePath('/[workspaceSlug]/customer-quote-templates/[templateId]', 'page');
+  revalidatePath('/[workspaceSlug]/customer-quote-templates/[templateId]/edit', 'page');
+
 }

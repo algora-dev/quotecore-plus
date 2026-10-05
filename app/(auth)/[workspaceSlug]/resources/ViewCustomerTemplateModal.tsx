@@ -1,4 +1,6 @@
 'use client';
+import '@/app/components/ui/v2/qc-library.css';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
 
 interface Props {
@@ -8,14 +10,14 @@ interface Props {
 
 export function ViewCustomerTemplateModal({ template, onClose }: Props) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <QcJourneyDialog label="Header Information" size="lg">
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-slate-900">{template.name}</h2>
-          <button
+          <button aria-label="Close" data-qc-variant="ghost"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600"
+            className="qc-button qc-flow-control qc-library-control "
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -29,7 +31,7 @@ export function ViewCustomerTemplateModal({ template, onClose }: Props) {
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">Header Information</h3>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="qc-library-field-grid grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Company Name</label>
                 <p className="text-sm text-slate-900">{template.company_name || '-'}</p>
@@ -80,14 +82,14 @@ export function ViewCustomerTemplateModal({ template, onClose }: Props) {
 
         {/* Footer */}
         <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 px-6 py-4 flex justify-end">
-          <button
+          <button data-qc-variant="ghost"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+            className="qc-button qc-flow-control qc-library-control "
           >
             Close
           </button>
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

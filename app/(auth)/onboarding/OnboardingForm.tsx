@@ -1,4 +1,5 @@
 'use client';
+import { QcJourney, QcJourneySteps } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { completeOnboarding } from './actions';
@@ -56,44 +57,34 @@ export function OnboardingForm({
 
   if (step === 'recovery') {
     return (
-      <div className="space-y-6">
+      <QcJourney><div className="space-y-6">
         {/* Step indicator: 1 done, 2 active, 3 pending */}
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-emerald-500 text-white">&#10003;</div>
-          <div className="flex-1 h-0.5 bg-emerald-500" />
-          <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-black text-white">2</div>
-          <div className="flex-1 h-0.5 bg-slate-200" />
-          <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-slate-200 text-slate-500">3</div>
-        </div>
+        <QcJourneySteps steps={["Preferences", "Recovery", "Ready"]}
+          current={1} label="Workspace setup" />
         <SecurityQuestionsStep onDone={() => setStep('welcome')} />
-      </div>
+      </div></QcJourney>
     );
   }
 
   if (step === 'welcome') {
     return (
-      <div className="space-y-6">
+      <QcJourney><div className="space-y-6">
         {/* Step indicator: 1 + 2 done, 3 active */}
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-emerald-500 text-white">&#10003;</div>
-          <div className="flex-1 h-0.5 bg-emerald-500" />
-          <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-emerald-500 text-white">&#10003;</div>
-          <div className="flex-1 h-0.5 bg-emerald-500" />
-          <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-black text-white">3</div>
-        </div>
+        <QcJourneySteps steps={["Preferences", "Recovery", "Ready"]}
+          current={2} label="Workspace setup" />
 
         <div className="text-center space-y-3">
           <div className="w-20 h-20 mx-auto rounded-full overflow-hidden ring-2 ring-orange-200 shadow-sm">
             <img src="/q-avatar.png" alt="Q, your QuoteCore+ assistant" className="w-full h-full object-cover" />
           </div>
-          <h2 className="text-xl font-semibold text-slate-900">Welcome to QuoteCore+</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Your workspace is almost ready</h2>
           <p className="text-sm text-slate-600 max-w-md mx-auto">
             To get started, use <span className="font-semibold text-slate-900">“Q”</span> &mdash; your
             assistant for any help, guide-me assistance, or general questions to get you up and
             running easily.
           </p>
           <p className="text-sm text-slate-600 max-w-md mx-auto">
-            Q is not your average chat bot, he&apos;s kinda smart.
+            After setup, a paid subscription is required to enter your workspace. Q will be there when you need help.
           </p>
         </div>
 
@@ -103,10 +94,10 @@ export function OnboardingForm({
             We&apos;ve put together step-by-step tutorials that walk you through the basics &mdash;
             from creating your first component to sending a quote.{' '}
             <a
-              href="/${companySlug}/tutorials"
+              href={`/${companySlug}/tutorials`}
               target="_blank"
               rel="noopener"
-              className="text-orange-600 font-medium hover:text-orange-700 underline underline-offset-2"
+              className="qc-flow-link text-orange-600 font-medium hover:text-orange-700 underline underline-offset-2"
             >
               View Tutorials
             </a>
@@ -114,33 +105,28 @@ export function OnboardingForm({
         </div>
 
         <div className="space-y-3">
-          <button
+          <button data-qc-variant="primary"
             type="button"
             onClick={finishOnboarding}
             disabled={isPending}
-            className="w-full py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
+            className="qc-flow-control qc-button w-full py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
           >
             {isPending ? 'Setting up...' : 'Get Started'}
           </button>
         </div>
-      </div>
+      </div></QcJourney>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <QcJourney><div className="space-y-6">
       {/* Step indicator: 1 active, 2 + 3 pending */}
-      <div className="flex items-center gap-2 mb-2">
-        <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-black text-white">1</div>
-        <div className="flex-1 h-0.5 bg-slate-200" />
-        <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-slate-200 text-slate-500">2</div>
-        <div className="flex-1 h-0.5 bg-slate-200" />
-        <div className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-slate-200 text-slate-500">3</div>
-      </div>
+      <QcJourneySteps steps={["Preferences", "Recovery", "Ready"]}
+          current={0} label="Workspace setup" />
 
       {/* Currency Selection */}
       <div className="space-y-3">
-        <label className="block">
+        <label className="qc-flow-label block">
           <span className="text-sm font-semibold text-slate-900">Default Currency</span>
           <p className="text-xs text-slate-500 mt-1 mb-2">
             All component library prices will be entered in this currency. You can change quote currency later, but prices won&apos;t auto-convert.
@@ -148,7 +134,7 @@ export function OnboardingForm({
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="qc-select w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
           >
             {CURRENCY_GROUPS.map(group => (
               <optgroup key={group.label} label={group.label}>
@@ -170,7 +156,7 @@ export function OnboardingForm({
 
       {/* Measurement System */}
       <div className="space-y-3">
-        <label className="block">
+        <label className="qc-flow-label block">
           <span className="text-sm font-semibold text-slate-900">Measurement System</span>
           <p className="text-xs text-slate-500 mt-1 mb-2">
             Default for new quotes (you can change per-quote later)
@@ -186,11 +172,11 @@ export function OnboardingForm({
               key={opt.value}
               type="button"
               onClick={() => setMeasurement(opt.value)}
-              className={`p-4 rounded-lg border-2 transition text-left ${
+              className={"qc-flow-control qc-flow-card " + (`p-4 rounded-lg border-2 transition text-left ${
                 measurement === opt.value
                   ? 'border-orange-500 bg-orange-50'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-              }`}
+              }`)}
             >
               <div className="font-semibold">{opt.title}</div>
               <div className="text-xs text-slate-500 mt-1">{opt.subtitle}</div>
@@ -229,11 +215,11 @@ export function OnboardingForm({
               key={opt.value}
               type="button"
               onClick={() => setDefaultTrade(opt.value)}
-              className={`px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition text-left ${
+              className={"qc-flow-control qc-flow-card " + (`px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition text-left ${
                 defaultTrade === opt.value
                   ? 'border-orange-500 bg-orange-50 text-orange-900'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-              }`}
+              }`)}
             >
               {opt.label}
             </button>
@@ -242,13 +228,13 @@ export function OnboardingForm({
       </div>
 
       {/* Next Button */}
-      <button
+      <button data-qc-variant="primary"
         type="button"
         onClick={() => setStep('recovery')}
-        className="w-full py-4 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition"
+        className="qc-flow-control qc-button w-full py-4 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition"
       >
         Next →
       </button>
-    </div>
+    </div></QcJourney>
   );
 }

@@ -11,6 +11,7 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion, batchCreateAiRoofAreas, uploadCanvasImage, checkStorageQuota, saveFileMetadata, mintQuoteDocumentUploadUrl, type TakeoffHydrationData } from './demoActions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
 import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
 import { AiResultsModal, type AiResultsData } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AiResultsModal';
@@ -23,6 +24,7 @@ import { getTradeLabels } from '@/app/lib/trades/labels';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
 // F-15: Extracted modal components
 import { AreaNameModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AreaNameModal';
+import { RoofPitchEstimatorModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/RoofPitchEstimatorModal';
 import { PointMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/PointMeasurementModal';
 import { LineMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal';
 import { CalibrationModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal';
@@ -167,6 +169,9 @@ interface Props {
    *  'upload' = free-roof-takeoff tool - blank canvas, NO baked calibration
    *  (the user calibrates their own uploaded plan, exactly like the app). */
   demoMode?: 'scan' | 'manual' | 'upload';
+  /** UPLOAD MODE: trade variant for the Guide Me steps (cladding / flooring
+   *  free tools get trade-specific step sets). Default roofing. */
+  guideTrade?: 'roofing' | 'cladding' | 'flooring';
   /** UPLOAD MODE: default calibration length unit chosen in the landing wizard
    *  (metric -> meters, imperial/roofing squares -> feet). Squares calibrate
    *  in feet (lineal) - areas convert to squares in the report. */
@@ -177,6 +182,9 @@ interface Props {
   /** UPLOAD MODE: user-built component specs from the landing wizard - passed
    *  straight through to the finish payload (never used inside the canvas). */
   componentSpecs?: import('@/app/(public)/free-roof-takeoff/tradeConfig').TakeoffComponentSpec[];
+  /** UPLOAD MODE: reset back to the tool's landing wizard. Without this the
+   *  "Back to demo start" link targets the current URL and does nothing. */
+  onExitToStart?: () => void;
   /** DEMO: called instead of navigating to the quote builder on Finish and Save. */
   onFinish?: (payload: DemoFinishPayload) => void;
 }
@@ -199,16 +207,16 @@ function computeCanvasDimensions(naturalWidth: number, naturalHeight: number): {
 
 // Color palette for components (10 highly distinct colors)
 const COLOR_PALETTE = [
-  '#ef4444', // red
-  '#3b82f6', // blue
-  '#10b981', // emerald-green
+  '#f87171', // bright red
+  '#d946ef', // fuchsia-pink (blue reserved for roof areas)
+  '#34d399', // bright emerald
   '#eab308', // yellow
-  '#8b5cf6', // purple
-  '#ec4899', // pink
-  '#14b8a6', // teal
+  '#a78bfa', // bright purple
+  '#f472b6', // bright pink
+  '#2dd4bf', // bright teal
   '#fb923c', // bright orange
-  '#6366f1', // indigo
-  '#a855f7', // vibrant purple
+  '#818cf8', // bright indigo
+  '#c084fc', // light purple
 ];
 
 interface CalibrationPoint {
@@ -269,7 +277,9 @@ export function DemoWorkstation({
   onFinish,
   preferredLengthUnit = 'meters',
   unitSystem,
+  guideTrade = 'roofing',
   componentSpecs,
+  onExitToStart,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
@@ -395,6 +405,7 @@ export function DemoWorkstation({
   // - target = 'new' creates a new roof area + new page with the uploaded plan
   //   (mirrors FilesManager Option C: new area, new plan).
   const [showUploadAnotherModal, setShowUploadAnotherModal] = useState(false);
+  const pdfPicker = usePdfPagePicker();
   const [uploadAnotherTarget, setUploadAnotherTarget] = useState<'existing' | 'new'>('existing');
   const [uploadAnotherAreaId, setUploadAnotherAreaId] = useState<string>('');
   const [uploadAnotherFile, setUploadAnotherFile] = useState<File | null>(null);
@@ -471,6 +482,9 @@ export function DemoWorkstation({
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
   const [pitchOnlyInput, setPitchOnlyInput] = useState('');
   const [pitchOnlyDegrees, setPitchOnlyDegrees] = useState<number | null>(null);
+  // Pitch Finder (est. 2026-09-07): image-based pitch estimator available from the
+  // pitch-only prompt, mirroring the AreaNameModal entry point.
+  const [showPitchEstimator, setShowPitchEstimator] = useState(false);
 
   // Volume (L × W × D) - depth prompt state.
   // Fires after the area polygon is closed for a volume_3d component.
@@ -510,6 +524,10 @@ export function DemoWorkstation({
   const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null);
   const popupDragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const popupContainerRef = useRef<HTMLDivElement>(null);
+  // Draggable polygon-hint chip position (null = default top-center).
+  const [polygonHintPos, setPolygonHintPos] = useState<{ x: number; y: number } | null>(null);
+  const polygonHintDragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const polygonHintRef = useRef<HTMLDivElement>(null);
   const [showLineMeasurementPrompt, setShowLineMeasurementPrompt] = useState(false);
   const [pendingLineMeasurement, setPendingLineMeasurement] = useState<{ points: { x: number; y: number }[], length: number } | null>(null);
   const [_showAreaMeasurementPrompt, _setShowAreaMeasurementPrompt] = useState(false);
@@ -792,8 +810,8 @@ export function DemoWorkstation({
     if (areaMode && areaPoints.length > 0) {
       areaPoints.forEach(p => {
         const marker = new Circle({
-          left: p.x, top: p.y, radius: 4,
-          fill: '#f59e0b', stroke: '#000', strokeWidth: 1,
+          left: p.x, top: p.y, radius: 5,
+          fill: '#fbbf24', stroke: '#000', strokeWidth: 1,
           originX: 'center', originY: 'center',
           selectable: false, evented: false, hasControls: false, hasBorders: false,
         });
@@ -804,8 +822,8 @@ export function DemoWorkstation({
     if (lineMode && linePoints.length > 0) {
       linePoints.forEach(p => {
         const marker = new Circle({
-          left: p.x, top: p.y, radius: 4,
-          fill: '#f59e0b', stroke: '#000', strokeWidth: 1,
+          left: p.x, top: p.y, radius: 5,
+          fill: '#fbbf24', stroke: '#000', strokeWidth: 1,
           originX: 'center', originY: 'center',
           selectable: false, evented: false, hasControls: false, hasBorders: false,
         });
@@ -816,8 +834,8 @@ export function DemoWorkstation({
     if (multiLinealMode && multiLinealPoints.length > 0) {
       multiLinealPoints.forEach(p => {
         const marker = new Circle({
-          left: p.x, top: p.y, radius: 4,
-          fill: '#f59e0b', stroke: '#000', strokeWidth: 1,
+          left: p.x, top: p.y, radius: 5,
+          fill: '#fbbf24', stroke: '#000', strokeWidth: 1,
           originX: 'center', originY: 'center',
           selectable: false, evented: false, hasControls: false, hasBorders: false,
         });
@@ -1603,16 +1621,29 @@ export function DemoWorkstation({
       }
       // Remove from client state
       const deletedId = pendingDeleteAreaId;
+      const deletedArea = areaList.find(a => a.id === deletedId);
       setAreaList(prev => prev.filter(a => a.id !== deletedId));
-      // Remove canvas objects for this area
+      // Remove canvas objects for this area. Match the same way the sidebar
+      // does (quoteRoofAreaId / id / label) AND fall back to measurementId tags,
+      // because polygon object references are lost after redraws (this was the
+      // bug where deleting left the outline + fill on the canvas).
+      const deletedRaIds = new Set(
+        roofAreas
+          .filter(ra => ra.quoteRoofAreaId === deletedId || ra.id === deletedId ||
+            (deletedArea && ra.name === deletedArea.label))
+          .map(ra => ra.id)
+      );
       if (fabricRef.current) {
-        const toRemove = fabricRef.current.getObjects().filter((obj: any) =>
-          obj.measurementId && roofAreas.find(ra => ra.id === deletedId && ra.polygon === obj)
+        const canvas = fabricRef.current;
+        const toRemove = canvas.getObjects().filter((obj: any) =>
+          (obj.measurementId && deletedRaIds.has(obj.measurementId)) ||
+          roofAreas.some(ra => deletedRaIds.has(ra.id) &&
+            (ra.polygon === obj || ra.markers?.some(m => m === obj)))
         );
-        toRemove.forEach(obj => fabricRef.current!.remove(obj));
-        fabricRef.current?.renderAll();
+        toRemove.forEach(obj => canvas.remove(obj));
+        canvas.requestRenderAll();
       }
-      setRoofAreas(prev => prev.filter(ra => ra.id !== deletedId));
+      setRoofAreas(prev => prev.filter(ra => !deletedRaIds.has(ra.id)));
       // Clear cached state for this area
       areaCanvasStatesRef.current.delete(deletedId);
       // If the deleted area was active, switch to the first remaining area
@@ -1672,8 +1703,8 @@ export function DemoWorkstation({
       // Create polygon on canvas
       const polygon = new Polygon(pendingAreaPoints, {
         fill: 'rgba(59, 130, 246, 0.2)',
-        stroke: '#3b82f6',
-        strokeWidth: 1.25,
+        stroke: '#60a5fa',
+        strokeWidth: 1.7,
         selectable: false,
         evented: false,
       });
@@ -1748,7 +1779,11 @@ export function DemoWorkstation({
                   roofAreas: outgoingRoofAreas.map(ra => ({
                     id: ra.id, name: ra.name, points: ra.points, area: ra.area,
                     pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId,
-                    quoteRoofAreaId: ra.quoteRoofAreaId ?? outgoingAreaId,
+                    // 2026-08-30: keep the area's OWN identity (ra.id), not the
+                    // page's area id. Stamping every area on a page with the page
+                    // id made multiple areas share one key at report time, so the
+                    // same entries rendered under every area of that page.
+                    quoteRoofAreaId: ra.quoteRoofAreaId ?? ra.id,
                   })),
                   calibrations: outgoingCalibrations.map(cal => ({ ...cal })),
                   calibrationPoints: outgoingCalibrationPoints.map(p => ({ ...p })),
@@ -1930,7 +1965,7 @@ export function DemoWorkstation({
       const componentId = capturedComponentId || selectedComponentId;
       if (!componentId) return;
 
-      const componentColor = componentColors.find(c => c.componentId === componentId)?.color || '#3b82f6';
+      const componentColor = componentColors.find(c => c.componentId === componentId)?.color || '#d946ef';
       
       // Remove in-progress vertex markers before adding the committed polygon.
       cleanupInProgressObjects();
@@ -1938,7 +1973,7 @@ export function DemoWorkstation({
       const polygon = new Polygon(pendingAreaPoints, {
         fill: `${componentColor}33`,
         stroke: componentColor,
-        strokeWidth: 1.25,
+        strokeWidth: 2.2,
         selectable: false,
         evented: false,
       });
@@ -2005,18 +2040,32 @@ export function DemoWorkstation({
 
   const handleToggleAreaVisibility = (areaId: string) => {
     pushHistorySnapshot();
-    setRoofAreas(roofAreas.map(area => {
-      if (area.id === areaId) {
-        const newVisible = !area.visible;
-        if (area.polygon) {
-          area.polygon.set('visible', newVisible);
-        }
-        area.markers?.forEach(marker => marker.set('visible', newVisible));
-        fabricRef.current?.renderAll();
-        return { ...area, visible: newVisible };
+    // Match using the same criteria as the sidebar render (quoteRoofAreaId / id / label)
+    // so the toggle still resolves after an area has been saved and re-id'd.
+    const area = areaList.find(a => a.id === areaId);
+    const matches = roofAreas.filter(ra =>
+      ra.quoteRoofAreaId === areaId || ra.id === areaId || (area && ra.name === area.label)
+    );
+    if (matches.length === 0) return;
+    const newVisible = !matches[0].visible;
+    const matchIds = new Set(matches.map(ra => ra.id));
+    matches.forEach(ra => {
+      if (ra.polygon) {
+        ra.polygon.set('visible', newVisible);
       }
-      return area;
-    }));
+      ra.markers?.forEach(marker => marker.set('visible', newVisible));
+    });
+    // Belt-and-braces: toggle any canvas objects tagged with this area's id,
+    // covering polygons whose object reference was lost after a redraw.
+    if (fabricRef.current) {
+      fabricRef.current.getObjects().forEach((obj: any) => {
+        if (obj.measurementId && matchIds.has(obj.measurementId)) {
+          obj.set('visible', newVisible);
+        }
+      });
+      fabricRef.current.renderAll();
+    }
+    setRoofAreas(prev => prev.map(ra => matchIds.has(ra.id) ? { ...ra, visible: newVisible } : ra));
   };
   
   // P1-2: Central tool-switching helper. Uses the canonical toolForMeasurementType
@@ -3215,7 +3264,7 @@ export function DemoWorkstation({
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 3,
+            radius: 3.75,
             fill: componentColor,
             stroke: '#000',
             strokeWidth: 1,
@@ -3235,7 +3284,7 @@ export function DemoWorkstation({
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 3,
+            radius: 3.75,
             fill: componentColor,
             stroke: '#000',
             strokeWidth: 1,
@@ -3250,7 +3299,7 @@ export function DemoWorkstation({
           // Draw line (component color)
           const line = new Line([firstPoint.x, firstPoint.y, newPoint.x, newPoint.y], {
             stroke: componentColor,
-            strokeWidth: 1.25,
+            strokeWidth: 2.2,
             selectable: false,
             evented: false,
           });
@@ -3296,7 +3345,7 @@ export function DemoWorkstation({
         const marker = new Circle({
           left: newPoint.x,
           top: newPoint.y,
-          radius: 3,
+          radius: 3.75,
           fill: isFirst ? '#f97316' : componentColor, // orange for first, component color for rest
           stroke: '#000',
           strokeWidth: 1,
@@ -3314,7 +3363,7 @@ export function DemoWorkstation({
           const prev = currentPoints[currentPoints.length - 1];
           const segLine = new Line([prev.x, prev.y, newPoint.x, newPoint.y], {
             stroke: componentColor,
-            strokeWidth: 1.25,
+            strokeWidth: 2.2,
             selectable: false,
             evented: false,
           });
@@ -3371,7 +3420,7 @@ export function DemoWorkstation({
           boxDragStartRef.current = newPoint;
           isBoxDraggingRef.current = true;
           // Create a preview rect (will be updated on mouse:move).
-          const componentColor = componentColorsRef.current.find(c => c.componentId === (activeAreaComponentIdRef.current ?? selectedComponentIdRef.current))?.color || '#3b82f6';
+          const componentColor = componentColorsRef.current.find(c => c.componentId === (activeAreaComponentIdRef.current ?? selectedComponentIdRef.current))?.color || '#d946ef';
           const rect = new Rect({
             left: newPoint.x,
             top: newPoint.y,
@@ -3379,7 +3428,7 @@ export function DemoWorkstation({
             height: 0,
             fill: `${componentColor}22`,
             stroke: componentColor,
-            strokeWidth: 1.5,
+            strokeWidth: 2,
             strokeDashArray: [5, 4],
             selectable: false,
             evented: false,
@@ -3473,11 +3522,11 @@ export function DemoWorkstation({
                 setPendingVolumeComponentId(currentSelectedId);
                 setPendingVolumePoints([...currentPoints]);
                 // Draw a dashed preview polygon so the user sees the shape.
-                const compColor = componentColors.find(c => c.componentId === currentSelectedId)?.color || '#3b82f6';
+                const compColor = componentColors.find(c => c.componentId === currentSelectedId)?.color || '#d946ef';
                 const previewPoly = new Polygon(currentPoints, {
                   fill: `${compColor}22`,
                   stroke: compColor,
-                  strokeWidth: 1.5,
+                  strokeWidth: 2,
                   strokeDashArray: [5, 4],
                   selectable: false,
                   evented: false,
@@ -3505,8 +3554,8 @@ export function DemoWorkstation({
         const marker = new Circle({
           left: newPoint.x,
           top: newPoint.y,
-          radius: 3,
-          fill: isFirstPoint ? '#10b981' : '#3b82f6', // green first, blue rest
+          radius: 3.75,
+          fill: isFirstPoint ? '#34d399' : '#d946ef', // green first, blue rest
           stroke: '#000',
           strokeWidth: 1,
           originX: 'center',
@@ -3531,7 +3580,7 @@ export function DemoWorkstation({
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 3.75,
+            radius: 4.75,
             fill: '#facc15',
             stroke: '#000',
             strokeWidth: 1,
@@ -3553,7 +3602,7 @@ export function DemoWorkstation({
           const marker2 = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 3.75,
+            radius: 4.75,
             fill: '#facc15',
             stroke: '#000',
             strokeWidth: 1,
@@ -3567,7 +3616,7 @@ export function DemoWorkstation({
           // Draw calibration line
           const line = new Line([point1.x, point1.y, point2.x, point2.y], {
             stroke: '#facc15', // yellow-400
-            strokeWidth: 1.875,
+            strokeWidth: 2.5,
             selectable: false,
             evented: false,
           });
@@ -3709,11 +3758,11 @@ export function DemoWorkstation({
             setPendingVolumeCalibratedArea(areaCalibrated);
             setPendingVolumeComponentId(currentSelectedId);
             setPendingVolumePoints([...boxPoints]);
-            const compColor = componentColorsRef.current.find(c => c.componentId === currentSelectedId)?.color || '#3b82f6';
+            const compColor = componentColorsRef.current.find(c => c.componentId === currentSelectedId)?.color || '#d946ef';
             const previewPoly = new Polygon(boxPoints, {
               fill: `${compColor}22`,
               stroke: compColor,
-              strokeWidth: 1.5,
+              strokeWidth: 2,
               strokeDashArray: [5, 4],
               selectable: false,
               evented: false,
@@ -4298,8 +4347,8 @@ export function DemoWorkstation({
         ra.canvasPoints.map(p => ({ x: p.x, y: p.y })),
         {
           fill: 'rgba(59, 130, 246, 0.2)',
-          stroke: '#3b82f6',
-          strokeWidth: 2,
+          stroke: '#60a5fa',
+          strokeWidth: 1.7,
           selectable: false,
           objectCaching: false,
         },
@@ -4310,8 +4359,8 @@ export function DemoWorkstation({
       // Vertex markers
       const markers = ra.canvasPoints.map(p => {
         const marker = new Circle({
-          left: p.x, top: p.y, radius: 3,
-          fill: '#3b82f6', stroke: '#000', strokeWidth: 1,
+          left: p.x, top: p.y, radius: 3.75,
+          fill: '#60a5fa', stroke: '#000', strokeWidth: 1,
           originX: 'center', originY: 'center',
           selectable: false, hasControls: false, hasBorders: false,
         });
@@ -4352,11 +4401,14 @@ export function DemoWorkstation({
     // Group by semanticKey → componentId
     const byComponent = new Map<string, { measurements: typeof applied.measurements; semanticKey: SemanticKey }>();
     for (const m of applied.measurements) {
-      const existing = byComponent.get(m.componentId);
+      // Uncertain AI detections have a null componentId (review items, not
+      // quote components) - group them under an explicit review key.
+      const groupKey = m.componentId ?? `__review__${m.semanticKey}`;
+      const existing = byComponent.get(groupKey);
       if (existing) {
         existing.measurements.push(m);
       } else {
-        byComponent.set(m.componentId, { measurements: [m], semanticKey: m.semanticKey });
+        byComponent.set(groupKey, { measurements: [m], semanticKey: m.semanticKey });
       }
     }
 
@@ -4372,7 +4424,7 @@ export function DemoWorkstation({
         const newMeasurements: ComponentMeasurement[] = measurements.map((m: AiMeasurement) => {
           const [p1, p2] = m.canvasPoints;
           const marker1 = new Circle({
-            left: p1.x, top: p1.y, radius: 3,
+            left: p1.x, top: p1.y, radius: 3.75,
             fill: colour, stroke: '#000', strokeWidth: 1,
             originX: 'center', originY: 'center',
             selectable: false, hasControls: false, hasBorders: false,
@@ -4380,7 +4432,7 @@ export function DemoWorkstation({
           (marker1 as unknown as { measurementId: string }).measurementId = m.id;
 
           const marker2 = new Circle({
-            left: p2.x, top: p2.y, radius: 3,
+            left: p2.x, top: p2.y, radius: 3.75,
             fill: colour, stroke: '#000', strokeWidth: 1,
             originX: 'center', originY: 'center',
             selectable: false, hasControls: false, hasBorders: false,
@@ -4621,6 +4673,44 @@ export function DemoWorkstation({
     }
   };
 
+  /** Apply an existing (already-drawn) roof area to an area-type component:
+   *  adds the area's plan area as a normal entry stamped with that area, so
+   *  the report pitches/prices it exactly like a hand-drawn area entry.
+   *  2026-08-30: lets users measure a wall/roof once and reuse it for every
+   *  area-based component (e.g. wrap / battens / cladding layers). */
+  const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string) => {
+    // 2026-08-30 fix: match by UNIQUE row id. Sibling areas under one parent share
+    // the same quoteRoofAreaId stamp, so every dropdown option resolved to the
+    // FIRST area - always adding its value no matter which one was picked.
+    const ra = roofAreas.find(a => a.id === roofAreaId);
+    if (!ra || !(ra.area > 0)) return;
+    pushHistorySnapshot();
+    const newMeasurement: ComponentMeasurement = {
+      id: `apply-${Date.now()}`,
+      type: 'area' as ComponentMeasurement['type'],
+      value: ra.area,
+      points: [],
+      visible: true,
+      canvasObjects: [], // derived entry - no canvas geometry of its own
+      quoteRoofAreaId: ra.id, // unique per-area stamp - report keys areas by their own id
+      fromPageId: currentPageIdRef.current,
+    };
+    const compData = componentMeasurements.find(c => c.componentId === componentId);
+    if (compData) {
+      setComponentMeasurements(componentMeasurements.map(c =>
+        c.componentId === componentId
+          ? { ...c, measurements: [...c.measurements, newMeasurement], expanded: true }
+          : c
+      ));
+    } else {
+      setComponentMeasurements([
+        ...componentMeasurements,
+        { componentId, measurements: [newMeasurement], expanded: true },
+      ]);
+    }
+    setIsDirty(true);
+  };
+
   // DEMO: build the finish payload handed to the demo shell (replaces the
   // router.push to the quote builder in the real app).
   //
@@ -4633,7 +4723,12 @@ export function DemoWorkstation({
     const pushGroup = (g: typeof componentMeasurements[number]) => {
       const existing = mergedByComponent.get(g.componentId);
       if (existing) {
-        existing.measurements.push(...g.measurements);
+        // 2026-08-30 dedupe: the live state and an area-page snapshot can both
+        // contain the same measurement (restore path) - never count one twice.
+        for (const m of g.measurements) {
+          if (m.id && existing.measurements.some(x => x.id === m.id)) continue;
+          existing.measurements.push(m);
+        }
       } else {
         mergedByComponent.set(g.componentId, { ...g, measurements: [...g.measurements] });
       }
@@ -4645,13 +4740,24 @@ export function DemoWorkstation({
     });
 
     const mergedRoofAreas: { id: string; name: string; area: number; pitch: number }[] = [];
+    // 2026-08-30: every area gets its OWN unique report key (ra.id). Sibling
+    // areas under one parent share a quoteRoofAreaId stamp - keying by it made
+    // every entry render under BOTH siblings. Shared stamps are remapped to
+    // the first sibling's unique id so hand-drawn measurements still resolve.
+    const seenAreaIds = new Set<string>();
+    const stampToFirstId = new Map<string, string>();
+    const pushArea = (ra: { id: string; name: string; area: number; pitch: number; quoteRoofAreaId?: string | null }) => {
+      if (seenAreaIds.has(ra.id)) return;
+      seenAreaIds.add(ra.id);
+      const stamp = ra.quoteRoofAreaId ?? ra.id;
+      if (!stampToFirstId.has(stamp)) stampToFirstId.set(stamp, ra.id);
+      mergedRoofAreas.push({ id: ra.id, name: ra.name, area: ra.area, pitch: ra.pitch });
+    };
     areaCanvasStatesRef.current.forEach((cached, areaId) => {
       if (areaId === activeAreaId) return;
-      // id must match measurement stamps (quoteRoofAreaId = DB area id),
-      // otherwise the report cannot resolve which area a measurement belongs to.
-      cached.roofAreas.forEach((ra: any) => mergedRoofAreas.push({ id: ra.quoteRoofAreaId ?? ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
+      cached.roofAreas.forEach((ra: any) => pushArea(ra));
     });
-    roofAreas.forEach(ra => mergedRoofAreas.push({ id: ra.quoteRoofAreaId ?? ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
+    roofAreas.forEach(ra => pushArea(ra));
 
     return {
     roofAreas: mergedRoofAreas,
@@ -4665,7 +4771,7 @@ export function DemoWorkstation({
         count: g.measurements.length,
         total: g.measurements.reduce((s, m) => s + m.value, 0),
         measurementType: comp?.measurement_type,
-        measurements: g.measurements.map(m => ({ value: m.value, quoteRoofAreaId: m.quoteRoofAreaId ?? null })),
+        measurements: g.measurements.map(m => ({ value: m.value, quoteRoofAreaId: m.quoteRoofAreaId ? (stampToFirstId.get(m.quoteRoofAreaId) ?? m.quoteRoofAreaId) : null })),
       };
     }),
     calibrationUnit: calibrations[0]?.unit ?? 'meters',
@@ -4677,14 +4783,24 @@ export function DemoWorkstation({
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="-my-8 h-[calc(100vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden">
+    <div className="-my-8 h-[calc(120vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden">
       {/* Back link sits above the canvas card so it never crowds the header */}
-      <Link
-        href={demoMode === 'upload' ? '/free-roof-takeoff' : '/takeoff-demo'}
-        className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
-      >
-        <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to demo start
-      </Link>
+      {demoMode === 'upload' && onExitToStart ? (
+        <button
+          type="button"
+          onClick={() => { if (typeof window !== 'undefined') window.scrollTo(0, 0); onExitToStart(); }}
+          className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
+        >
+          <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to demo start
+        </button>
+      ) : (
+        <Link
+          href={demoMode === 'upload' ? '/free-roof-takeoff' : '/takeoff-demo'}
+          className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
+        >
+          <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to demo start
+        </Link>
+      )}
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden min-h-0">
         {/* Header: title + action buttons only - no nav links */}
         <div className="bg-white border-b border-gray-200 px-2 md:px-6 py-2 md:py-3 flex items-center justify-between">
@@ -4865,17 +4981,23 @@ export function DemoWorkstation({
                     <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-xs text-slate-500">Choose plan (PDF or image, max 10 MB)</span>
+                    <span className="text-xs text-slate-500">Choose plan (PDF up to 50 MB or image up to 10 MB)</span>
                     <input
                       type="file"
                       accept="image/*,application/pdf"
                       className="hidden"
-                      onChange={e => {
-                        const f = e.target.files?.[0] || null;
-                        if (f && f.size > 10485760) {
-                          setUploadAnotherError('File exceeds 10 MB limit.');
+                      onChange={async e => {
+                        const raw = e.target.files?.[0] || null;
+                        e.currentTarget.value = '';
+                        if (!raw) return;
+                        const isPdf = raw.type === 'application/pdf' || /\.pdf$/i.test(raw.name);
+                        const limit = isPdf ? 52428800 : 10485760;
+                        if (raw.size > limit) {
+                          setUploadAnotherError(isPdf ? 'PDF exceeds 50 MB limit.' : 'File exceeds 10 MB limit.');
                           return;
                         }
+                        const f = await pdfPicker.convertIfNeeded(raw);
+                        if (!f) return;
                         setUploadAnotherFile(f);
                         setUploadAnotherError(null);
                       }}
@@ -4975,10 +5097,11 @@ export function DemoWorkstation({
                 <button
                   onClick={handleCreateNewArea}
                   disabled={false}
-                  className="text-xs font-medium text-[#FF6B35] hover:text-orange-600"
+                  className="inline-flex items-center gap-1 rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_12px_rgba(255,107,53,0.45)] transition hover:bg-orange-600 animate-pulse"
                   title="Create a new area"
                 >
-                  + New Area
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                  New Area
                 </button>
               </div>
               <div className="space-y-2">
@@ -5167,6 +5290,33 @@ export function DemoWorkstation({
                                       </button>
                                     </div>
                                   </div>
+
+                                  {/* Use an existing roof area as this component's entry
+                                      (area-type components only; requires at least
+                                      one drawn roof area). Adds the area's plan area
+                                      as a normal entry stamped with that area - the
+                                      report pitches/prices it like a hand-drawn one. */}
+                                  {mt === 'area' && roofAreas.length > 0 && (
+                                    <div className="mt-2">
+                                      <select
+                                        onChange={(e) => {
+                                          if (e.target.value) {
+                                            handleApplyRoofAreaToComponent(comp.id, e.target.value);
+                                            e.target.value = '';
+                                          }
+                                        }}
+                                        defaultValue=""
+                                        className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
+                                      >
+                                        <option value="">Use an existing area…</option>
+                                        {roofAreas.map(ra => (
+                                          <option key={ra.id} value={ra.id}>
+                                            {ra.name} · {ra.area.toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'} (pitch {Math.round(ra.pitch ?? 0)}°)
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  )}
 
                                   {/* AI Placeholder: Attach real component */}
                                   {comp.is_system && compData && compData.measurements.length > 0 && (() => {
@@ -5403,7 +5553,7 @@ export function DemoWorkstation({
           {/* Hidden marker: copilot only starts after first roof area created */}
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
-          <DemoGuideMeModal open={guideOpen} flow={demoMode} onClose={() => setGuideOpen(false)} />
+          <DemoGuideMeModal open={guideOpen} flow={demoMode} trade={guideTrade} onClose={() => setGuideOpen(false)} />
 
           {/* UPLOAD MODE: create-custom-component modal (session-only) */}
           {showCreateComponent && (
@@ -5678,6 +5828,55 @@ export function DemoWorkstation({
           {/* Phase 7: Multi-lineal in-progress floating banner. DRAGGABLE so it
               never blocks the canvas where the user needs to click. Drag from
               the grip handle on the left; buttons remain clickable. */}
+          {/* Polygon in-progress hint: mirrors the multi-lineal banner -
+              tells the user how to CLOSE the shape without needing the guide. */}
+          {areaMode && areaSubTool === 'polygon' && areaPoints.length >= 1 && (() => {
+            const style: CSSProperties = polygonHintPos
+              ? { left: polygonHintPos.x, top: polygonHintPos.y, transform: 'none' }
+              : { left: '50%', transform: 'translateX(-50%)', top: 96 };
+            return (
+              <div
+                ref={polygonHintRef}
+                className="absolute z-20"
+                style={style}
+              >
+                <div
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-300 rounded-full text-sm shadow-md cursor-grab active:cursor-grabbing select-none"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const container = polygonHintRef.current;
+                    if (!container) return;
+                    const rect = container.getBoundingClientRect();
+                    const parentRect = container.offsetParent?.getBoundingClientRect();
+                    if (!parentRect) return;
+                    polygonHintDragRef.current = {
+                      startX: e.clientX,
+                      startY: e.clientY,
+                      origX: rect.left - parentRect.left,
+                      origY: rect.top - parentRect.top,
+                    };
+                    const onMove = (ev: MouseEvent) => {
+                      if (!polygonHintDragRef.current) return;
+                      const dx = ev.clientX - polygonHintDragRef.current.startX;
+                      const dy = ev.clientY - polygonHintDragRef.current.startY;
+                      setPolygonHintPos({ x: polygonHintDragRef.current.origX + dx, y: polygonHintDragRef.current.origY + dy });
+                    };
+                    const onUp = () => {
+                      polygonHintDragRef.current = null;
+                      document.removeEventListener('mousemove', onMove);
+                      document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                  }}
+                >
+                  <span className="text-blue-800 font-medium whitespace-nowrap">Polygon: {areaPoints.length} point{areaPoints.length !== 1 ? 's' : ''}</span>
+                  <span className="text-blue-500 text-xs whitespace-nowrap">To close the shape, click back on your first point</span>
+                </div>
+              </div>
+            );
+          })()}
+
           {multiLinealMode && multiLinealPoints.length >= 1 && (() => {
             const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / (calibrations.length || 1);
             let runningTotal = 0;
@@ -6027,7 +6226,7 @@ export function DemoWorkstation({
                 Plan Area: {(pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0).toFixed(2)} sq {calibrations[0]?.unit || 'feet'}{tradeConfig.pitchRequired ? ' (before pitch adjustment)' : ''}
               </p>
             </div>
-            <div className="mb-4">
+            <div className="mb-4 flex items-end gap-2">
               <PitchInput
                 degrees={pitchOnlyDegrees}
                 onSave={(deg) => setPitchOnlyDegrees(deg)}
@@ -6036,6 +6235,17 @@ export function DemoWorkstation({
                 autoFocus
                 className="block"
               />
+              {tradeConfig.pitchRequired && (
+                <button
+                  type="button"
+                  onClick={() => setShowPitchEstimator(true)}
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/40 transition mb-0.5"
+                  title="Estimate roof pitch from a photo"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                  Pitch Finder
+                </button>
+              )}
             </div>
             <div className="flex gap-3">
               <button
@@ -6062,6 +6272,13 @@ export function DemoWorkstation({
             </div>
           </div>
         </div>
+      )}
+
+      {showPitchEstimator && (
+        <RoofPitchEstimatorModal
+          onClose={() => setShowPitchEstimator(false)}
+          onApply={(deg) => { setPitchOnlyDegrees(deg); setShowPitchEstimator(false); }}
+        />
       )}
 
       {/* Area Name Prompt */}
@@ -6462,6 +6679,9 @@ export function DemoWorkstation({
         </div>
       )}
 
+      {/* PDF page picker modal (client-side pdfjs) */}
+      {pdfPicker.modal}
+
       {/* AI Takeoff: results modal */}
       {aiResults && aiScanRaw && (
         <AiResultsModal
@@ -6481,4 +6701,5 @@ export function DemoWorkstation({
 
 // Area Name Modal - isRoofing controls whether pitch is shown/required.
 // modalTitle + namePlaceholder are trade-config-driven.
+
 

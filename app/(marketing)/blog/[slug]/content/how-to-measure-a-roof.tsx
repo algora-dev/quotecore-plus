@@ -6,7 +6,7 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        <strong>Quick answer:</strong> There are three main ways to measure a roof: manual measurement (site visit with tape measure), digital measurement from PDF plans, and AI-assisted measurement using satellite or aerial imagery. For most roofing contractors, digital measurement from plans is the fastest and most accurate method. You can <Link href="/free-roofing-takeoff-builder">try the free roof takeoff builder</Link> to calculate roof areas, material quantities, and indicative pricing from your measurements — no signup required.
+        <strong>Quick answer:</strong> There are three main ways to measure a roof: manual measurement (site visit with tape measure), digital measurement from PDF plans, and AI-assisted measurement using satellite or aerial imagery. For most roofing contractors, digital measurement from plans is the fastest and most accurate method. You can <Link href="/free-roofing-takeoff-builder">try the free roof takeoff builder</Link> to calculate roof areas, material quantities, and indicative pricing from your measurements - no signup required.
       </p>
       <p>
         This guide covers the three main ways to measure a roof, how to turn those measurements
@@ -60,7 +60,8 @@ export default function Post() {
         <strong>Key step:</strong> the dimensions on a plan are horizontal (plan view). The actual
         roof surface is tilted, so it is always larger than the plan area. You must apply the pitch
         factor to get the true surface area. At 30 degrees, the factor is 1.155 - so 100 sqm on
-        plan becomes 115.5 sqm of roof surface. For the complete workflow that follows, see
+        plan becomes 115.5 sqm of roof surface. For measuring from architect PDFs specifically, see
+        <a href="/blog/how-to-measure-a-roof-from-a-pdf-plan">how to measure a roof from a PDF plan</a>, and for the complete pricing workflow, read
         <a href="/blog/how-to-quote-a-roof-from-plans">how to quote a roof from plans</a>.
       </p>
 
@@ -75,7 +76,7 @@ export default function Post() {
         <strong>Pros:</strong> fastest method, repeatable, and you can save and review the takeoff
         later. No maths errors. No missed sections.
       </p>
-      <p>If you have a roof plan, QuoteCore+'s <a href="/features/digital-roof-takeoff">digital roof takeoff</a> tools and <a href="/features/ai-scan-assist">AI Scan Assist</a> can identify roof areas, ridges, hips, valleys, and barges automatically — you review and adjust before committing. It's designed for roofers who want a head start on takeoffs without losing control of the measurements.</p>
+      <p>If you have a roof plan, QuoteCore+'s <a href="/features/digital-roof-takeoff">digital roof takeoff</a> tools and <a href="/features/ai-scan-assist">AI Scan Assist</a> can identify roof areas, ridges, hips, valleys, and barges automatically - you review and adjust before committing. It's designed for roofers who want a head start on takeoffs without losing control of the measurements.</p>
       <p>
         <strong>Cons:</strong> you need a digital copy of the plan, and you still need to verify
         the AI measurements on complex or unusual roof shapes.
@@ -85,8 +86,8 @@ export default function Post() {
         version of this: you enter your plan dimensions manually (lengths and widths from your
         plans or site measurements), set the pitch, and it calculates roof area, ridges, hips,
         valleys, barges, underlay, and fixings with the correct pitch factors applied. For the
-        AI-assisted component scanning available in the app, <a href="/free-trial">try QuoteCore+
-        free</a>.
+        AI-assisted component scanning available in the app, <a href="/free-trial">get started with
+        QuoteCore+</a>.
       </p>
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe
@@ -240,6 +241,10 @@ export default function Post() {
           calculation in imperial units
         </li>
         <li>
+          <a href="/free-roof-square-metre-calculator">Roof Square Metre Calculator</a> - same
+          calculation in metric units
+        </li>
+        <li>
           <Link href="/free-roofing-calculator">Full Roofing Calculator</Link> - pitch, area, rafter
           lengths, and material quantities in one tool
         </li>
@@ -304,7 +309,7 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? <Link href="/free-roofing-takeoff-builder">Try the free roof takeoff builder</Link> with your measurements — no signup required. Or <a href="/free-trial">start your free QuoteCore+ trial</a> for the full quoting workflow: digital takeoff, <Link href="/features/smart-components">Smart Components</Link>, quote tracking, and material ordering. No card needed.
+        Ready to quote faster? <Link href="/free-roofing-takeoff-builder">Try the free roof takeoff builder</Link> with your measurements - no signup required. Once you have your dimensions, the <Link href="/blog/how-to-do-a-roof-takeoff">full roof takeoff guide</Link> shows how to turn them into a component-by-component material list, and <Link href="/blog/manual-vs-digital-roof-takeoff">manual vs digital roof takeoff</Link> compares the two approaches in detail. Or <a href="/free-trial">get started with QuoteCore+</a> for the full quoting workflow: digital takeoff, <Link href="/features/smart-components">Smart Components</Link>, quote tracking, and material ordering. Plans start at $19/month with a 30-day money-back guarantee.
       </p>
     </div>
   );

@@ -3,12 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import {
-  requireComponentSlot,
-  ComponentLimitReachedError,
-  SubscriptionInactiveError,
-  isBillingError,
-} from '@/app/lib/billing/entitlements';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AdminAny = any;
@@ -179,34 +173,6 @@ export async function importCatalogueComponents(params: {
     return { ok: false, created: 0, errors: ['Target library not found.'] };
   }
 
-  // 2. Check tier limit
-  try {
-    await requireComponentSlot(profile.company_id);
-
-    if (rows.length > 1) {
-      const { loadCompanyEntitlements } = await import('@/app/lib/billing/entitlements');
-      const ent = await loadCompanyEntitlements(profile.company_id);
-      if (ent.componentLimit !== null && ent.componentCount + rows.length > ent.componentLimit) {
-        return {
-          ok: false,
-          created: 0,
-          errors: [`Importing ${rows.length} components would exceed your plan limit (${ent.componentCount}/${ent.componentLimit} on ${ent.effectivePlanCode} plan).`],
-        };
-      }
-    }
-  } catch (err) {
-    if (err instanceof ComponentLimitReachedError) {
-      return { ok: false, created: 0, errors: [`Component limit reached (${err.used}/${err.limit} on ${err.planCode} plan).`] };
-    }
-    if (err instanceof SubscriptionInactiveError) {
-      return { ok: false, created: 0, errors: ['Subscription inactive.'] };
-    }
-    if (isBillingError(err)) {
-      return { ok: false, created: 0, errors: [err.message] };
-    }
-    throw err;
-  }
-
   // 3. Get current max sort_order
   const { data: maxSort } = await supabase
     .from('component_library')
@@ -341,8 +307,10 @@ export async function convertSelectedRowsToComponents(params: {
   targetCollectionId: string;
   selectedRows: Record<string, string>[];
   columnMapping: Record<string, string[]>;
+  /** How to apply mapped waste values: percentage or per-unit length. */
+  wasteUnit?: 'percent' | 'length';
 }): Promise<ConvertResult> {
-  const { targetCollectionId, selectedRows, columnMapping } = params;
+  const { targetCollectionId, selectedRows, columnMapping, wasteUnit = 'percent' } = params;
 
   if (selectedRows.length > 20) {
     return { ok: false, errors: ['Maximum 20 rows can be converted at once.'] };
@@ -371,32 +339,6 @@ export async function convertSelectedRowsToComponents(params: {
 
   if (!targetCol) {
     return { ok: false, errors: ['Target library not found.'] };
-  }
-
-  // Check tier limit
-  try {
-    await requireComponentSlot(profile.company_id);
-    if (selectedRows.length > 1) {
-      const { loadCompanyEntitlements } = await import('@/app/lib/billing/entitlements');
-      const ent = await loadCompanyEntitlements(profile.company_id);
-      if (ent.componentLimit !== null && ent.componentCount + selectedRows.length > ent.componentLimit) {
-        return {
-          ok: false,
-          errors: [`Importing ${selectedRows.length} components would exceed your plan limit (${ent.componentCount}/${ent.componentLimit} on ${ent.effectivePlanCode} plan).`],
-        };
-      }
-    }
-  } catch (err) {
-    if (err instanceof ComponentLimitReachedError) {
-      return { ok: false, errors: [`Component limit reached (${err.used}/${err.limit} on ${err.planCode} plan).`] };
-    }
-    if (err instanceof SubscriptionInactiveError) {
-      return { ok: false, errors: ['Subscription inactive.'] };
-    }
-    if (isBillingError(err)) {
-      return { ok: false, errors: [err.message] };
-    }
-    throw err;
   }
 
   // Get current max sort_order
@@ -432,6 +374,12 @@ export async function convertSelectedRowsToComponents(params: {
     const priceStr = fieldToHeader.price ? (row[fieldToHeader.price] ?? '0') : '0';
     const price = parseFloat(priceStr.replace(/[^0-9.\-]/g, '')) || 0;
     const notes = fieldToHeader.notes ? (row[fieldToHeader.notes] ?? '').trim() : '';
+    const labourStr = fieldToHeader.labour ? (row[fieldToHeader.labour] ?? '0') : '0';
+    const labour = parseFloat(labourStr.replace(/[^0-9.\-]/g, '')) || 0;
+    const wasteStr = fieldToHeader.waste ? (row[fieldToHeader.waste] ?? '0') : '0';
+    const wasteValue = parseFloat(wasteStr.replace(/[^0-9.\-]/g, '')) || 0;
+    const wasteMapped = Boolean(fieldToHeader.waste) && wasteValue > 0;
+    const wasteIsPercent = wasteUnit !== 'length';
 
     const slot = mapProductType('');
     const mType = mapMeasurementType('');
@@ -443,16 +391,16 @@ export async function convertSelectedRowsToComponents(params: {
       component_type: 'main' as const,
       measurement_type: mType as 'area' | 'linear' | 'quantity' | 'fixed' | 'lineal' | 'length_x_height' | 'volume' | 'hours_days' | 'count' | 'curved_line' | 'irregular_area' | 'multi_lineal' | 'multi_lineal_lxh' | 'volume_3d' | 'length_x_height_freestyle' | 'multi_lineal_lxh_freestyle',
       default_material_rate: price,
-      default_labour_rate: 0,
-      default_waste_type: 'percent' as const,
-      default_waste_percent: 0,
-      default_waste_fixed: 0,
+      default_labour_rate: labour,
+      default_waste_type: (wasteMapped && !wasteIsPercent ? 'fixed' : 'percent') as 'percent' | 'fixed',
+      default_waste_percent: wasteMapped && wasteIsPercent ? wasteValue : 0,
+      default_waste_fixed: wasteMapped && !wasteIsPercent ? wasteValue : 0,
       default_pitch_type: 'none' as const,
       pack_price: null,
       pack_size: null,
       pack_coverage_m2: null,
       pricing_strategy: 'per_unit' as const,
-      waste_unit: 'percent' as const,
+      waste_unit: (wasteMapped && !wasteIsPercent ? 'flat' : 'percent') as 'percent' | 'flat',
       show_price_default: true,
       show_dimensions_default: false,
       eligible_for_orders: false,

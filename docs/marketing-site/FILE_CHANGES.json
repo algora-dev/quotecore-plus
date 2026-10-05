@@ -1,0 +1,24 @@
+{
+  "phase": "Marketing V2 Phase 1A",
+  "date": "2026-09-27",
+  "baseline_commit": "6dc0eea7",
+  "source_files_modified": [
+    "app/(marketing)/layout.tsx",
+    "app/(marketing)/roofing-estimating-software/page.tsx",
+    "app/(marketing)/roofing-quoting-software/page.tsx",
+    "app/(marketing)/roofing-takeoff-software/page.tsx",
+    "app/(marketing)/pricing/page.tsx",
+    "components/competitor-pages/competitor-page.tsx"
+  ],
+  "documentation_files_added": [
+    "docs/marketing-site/RETURN_NOTES.md",
+    "docs/marketing-site/DESIGN_CHANGES.md",
+    "docs/marketing-site/FILE_CHANGES.json",
+    "docs/marketing-site/VALIDATION_PHASE1A.md"
+  ],
+  "protected_product_files_modified": [],
+  "homepage_source_modified": false,
+  "free_tool_source_modified": false,
+  "roofing_takeoff_demo_modified": false,
+  "app_demo_implemented": false
+}

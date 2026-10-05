@@ -86,7 +86,7 @@ const UPLOAD_STEPS: GuideStep[] = [
   },
   {
     title: 'Edit your measurements',
-    body: 'Hover a measurement to highlight its line on the plan. The eye hides it, the X deletes it. Add more lines any time with the Line tool.',
+    body: 'Hover a measurement to highlight its line on the plan. The eye hides it, the X deletes it. Add more lines any time with the Line tool. Measurements attach to the roof area you have selected - click a different area first to switch.',
   },
   {
     title: 'Keep going',
@@ -98,9 +98,70 @@ const UPLOAD_STEPS: GuideStep[] = [
   },
 ];
 
+/** Flow A for the free QuoteCore+ cladding takeoff: area-first, then
+ *  components attached to the selected area (NOT the supplier system flow). */
+const UPLOAD_CLADDING_STEPS: GuideStep[] = [
+  {
+    title: 'Calibrate your plan',
+    body: 'Click two points on a known dimension printed on the plan, enter its real length and confirm. At least one calibration is required, then click Confirm Calibration (top left).',
+  },
+  {
+    title: 'Create a new area',
+    body: 'Click + New Area and trace your first wall with the Area tool (Polygon or Rectangle), then name it after the covering (e.g. Brick, Cedar, Plasterboard). Use + New Area for each additional wall.',
+  },
+  {
+    title: 'Multiple areas, one selected',
+    body: 'You can add as many areas as you need, each with its own measurements. Just make sure the area you want to measure is the one selected and highlighted in the left panel - click it first to switch.',
+  },
+  {
+    title: 'Apply your components',
+    body: 'With an area selected, pick a component and measure: Area for cladding surfaces, Line for trims and battens, Item for openings and fixings. You do not have to redraw every component - use the Use an existing area dropdown on the component to apply an area you have already measured.',
+  },
+  {
+    title: 'Edit your measurements',
+    body: 'Hover a measurement to highlight its line on the plan. The eye hides it, the X deletes it.',
+  },
+  {
+    title: 'Finish and see your report',
+    body: 'When you are happy, click Finish and Save (top right). Your measurements roll into a takeoff report you can print or send into QuoteCore+.',
+  },
+];
+
+/** Flow A for the free QuoteCore+ flooring takeoff: area-first, then
+ *  components attached to the selected area. */
+const UPLOAD_FLOORING_STEPS: GuideStep[] = [
+  {
+    title: 'Calibrate your plan',
+    body: 'Click two points on a known dimension printed on the plan, enter its real length and confirm. At least one calibration is required, then click Confirm Calibration (top left).',
+  },
+  {
+    title: 'Create a new area',
+    body: 'Click + New Area and trace your floor area with the Area tool (Polygon or Rectangle), then name it after the covering (e.g. Carpet, Tiles, Timber plank). Use + New Area for each additional area.',
+  },
+  {
+    title: 'Multiple areas, one selected',
+    body: 'You can add as many areas as you need, each with its own measurements. Just make sure the area you want to measure is the one selected and highlighted in the left panel - click it first to switch.',
+  },
+  {
+    title: 'Apply your components',
+    body: 'With an area selected, pick a component and measure: Area for floor coverings, Line for skirting and scotia runs, Item for single items like glue and sundries. You do not have to redraw every component - use the Use an existing area dropdown on the component to apply an area you have already measured.',
+  },
+  {
+    title: 'Edit your measurements',
+    body: 'Hover a measurement to highlight its line on the plan. The eye hides it, the X deletes it. Add more any time with the Line tool.',
+  },
+  {
+    title: 'Finish and see your report',
+    body: 'When you are happy, click Finish and Save in the top right. Your measurements roll into a takeoff report you can print or send into QuoteCore+.',
+  },
+];
+
 interface Props {
   open: boolean;
   flow: 'scan' | 'manual' | 'upload';
+  /** Trade variant for the upload flow: selects the cladding / flooring
+   *  step set (free QuoteCore+ tools). Default roofing = existing steps. */
+  trade?: 'roofing' | 'cladding' | 'flooring';
   onClose: () => void;
 }
 
@@ -137,7 +198,7 @@ export function DemoLimitModal({ open, title, body, onClose }: { open: boolean; 
 
 const PANEL_W = 340;
 
-export function DemoGuideMeModal({ open, flow, onClose }: Props) {
+export function DemoGuideMeModal({ open, flow, trade = 'roofing', onClose }: Props) {
   const [step, setStep] = useState(0);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
@@ -178,7 +239,12 @@ export function DemoGuideMeModal({ open, flow, onClose }: Props) {
 
   if (!open) return null;
 
-  const steps = flow === 'scan' ? SCAN_STEPS : flow === 'upload' ? UPLOAD_STEPS : MANUAL_STEPS;
+  let steps: GuideStep[];
+  if (flow === 'scan') steps = SCAN_STEPS;
+  else if (flow === 'upload' && trade === 'cladding') steps = UPLOAD_CLADDING_STEPS;
+  else if (flow === 'upload' && trade === 'flooring') steps = UPLOAD_FLOORING_STEPS;
+  else if (flow === 'upload') steps = UPLOAD_STEPS;
+  else steps = MANUAL_STEPS;
   const current = steps[step];
   const isLast = step === steps.length - 1;
 

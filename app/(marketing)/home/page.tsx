@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import CoffeePopup from "@/components/CoffeePopup";
+import SetupHelpModal from "@/components/SetupHelpModal";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import DemoCTACard from "@/components/DemoCTACard";
+import DemoToolCard from "@/components/DemoToolCard";
+import DoneForYouBanner from "@/components/DoneForYouBanner";
+import VideoShowcase from "@/components/VideoShowcase";
 import FreeTakeoffCTACard from "@/components/FreeTakeoffCTACard";
 import YouTubeLite from "@/components/YouTubeLite";
 import Link from "next/link";
@@ -58,14 +60,75 @@ const faqs = [
   {
     question: "Is a card required to start?",
     answer:
-      "No. You get full access to every feature for 14 days with no card required. If you decide to continue, you choose a plan that fits your business.",
+      "No. Our free tools work instantly with no signup or card. When you are ready for the connected app workflow, choose a paid plan from $19/month - every paid plan is backed by a 30-day money-back guarantee.",
   },
   {
     question: "How much do plans cost?",
     answer:
-      "Plans range from free to $59 per month. All paid plans include the full feature set - the difference is in usage limits like AI scan points and storage. See the pricing page for full details.",
+      "Paid plans are $19, $39 or $59 per month. All plans include the full feature set - the difference is in usage limits like AI scan points and storage. See the pricing page for full details.",
   },
 ];
+
+function SmartComponentsShowcase() {
+  const [open, setOpen] = useState(false);
+  const alt = "Smart Components™ - spreadsheet rows mapped into a QuoteCore+ component library with pricing, labour and waste";
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+  return (
+    <div className="flex flex-1 flex-col items-center">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-label="View the Smart Components spreadsheet import image larger"
+        className="block w-full cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-transform duration-300 ease-out hover:scale-[1.02]"
+      >
+        <img
+          loading="lazy"
+          decoding="async"
+          width={2048}
+          height={891}
+          src="/smart-components-mapping.png"
+          alt={alt}
+          className="h-auto w-full"
+        />
+      </button>
+      <a
+        href="https://www.youtube.com/watch?v=aFXJwOiliPI&t=14s"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
+      >
+        <span aria-hidden="true">▶</span> Click to watch a short video on Smart Components
+      </a>
+      {open && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Smart Components spreadsheet import"
+          onClick={() => setOpen(false)}
+        >
+          <div className="relative w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+            <img src="/smart-components-mapping.png" alt={alt} className="h-auto w-full rounded-xl bg-white shadow-2xl" />
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Close image"
+              className="absolute -right-3 -top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black text-white shadow-lg hover:bg-zinc-800"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function HomePage() {
   const [activeStep, setActiveStep] = useState(0);
@@ -87,7 +150,7 @@ export default function HomePage() {
     {
       number: "02",
       title: "Pricing",
-      body: "Smart Components allow you to store all your material, labour, waste, and pricing logic. Build them once, use them in every quote! Smart components let you digitally configure how you already work!",
+      body: "Smart Components allow you to store all your material, labour, waste, and pricing logic. Think of each one as a row on your current spreadsheet, except QuoteCore+ does the calculations for you. Build them once, use them in every quote!",
       images: [
         { src: "/how-it-works-smart-components-editor.png", label: "Component editor" },
       ],
@@ -224,24 +287,24 @@ export default function HomePage() {
                   Measure the job. Calculate the price. Send the quote.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  QuoteCore+ takes you from plan to priced quote — <a href="/features/digital-roof-takeoff" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">digital takeoff</a>, <a href="/features/ai-scan-assist" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</a> and <a href="/features/smart-components" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Smart Components&#8482;</a> turn roof measurements into materials, labour and accurate pricing. The same job then flows through to quote, order and invoice — no duplicated admin.
+                  QuoteCore+ takes you from plan to priced quote. Measure from an uploaded plan or image with <a href="/features/digital-roof-takeoff" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">digital takeoff</a> and <a href="/features/ai-scan-assist" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</a>, or <a href="/measurement-to-quote-tool" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">start with measurements you already have</a> from a site measure, satellite report or spreadsheet. <a href="/features/smart-components" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Smart Components&#8482;</a> turn areas, lengths and quantities into materials, labour, waste and accurate pricing - and the same job then flows through to estimate, quote, order and invoice. No duplicated admin, for contractors and estimators in the US, Canada, UK, Australia and New Zealand.
                 </p>
 
                 {/* Pricing reassurance line */}
                 <p className="mt-4 text-sm font-medium text-zinc-700">
                   <a href="/pricing" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">
-                    Plans from free to $59/month
+                    Plans from $19 to $59/month
                   </a>
-                  {" "}- full-featured 14-day trial, no card required.
+                  {" "}- free tools with no signup, paid plans from $19/month with a 30-day money-back guarantee.
                 </p>
 
                 <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
                   <a
                     href="/free-trial"
                     className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
-                    onClick={() => trackEvent("free_trial_click", { location: "hero" })}
+                    onClick={() => trackEvent("get_started_click", { location: "hero" })}
                   >
-                    Start free trial
+                    Get started
                   </a>
                   <a
                     href="#how-it-works"
@@ -263,7 +326,7 @@ export default function HomePage() {
               {/* Right: interactive demo card + free takeoff tool card (two-tier funnel) */}
               <div className="relative z-10 flex flex-1 flex-col items-center justify-start gap-4 overflow-hidden lg:flex-1 lg:items-start lg:gap-5">
                 <div className="w-full max-w-xl">
-                  <DemoCTACard location="homepage_hero" />
+                  <DemoToolCard />
                 </div>
                 <div className="w-full max-w-xl">
                   <FreeTakeoffCTACard />
@@ -275,11 +338,14 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* 1a. "Another piece of software" objection — directly below the hero */}
+        <DoneForYouBanner />
+
         {/* Trust band */}
         <section className="border-y border-zinc-100 bg-white">
           <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-6 py-4 text-sm text-zinc-600 lg:px-8">
-            <span className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>No card required</span>
-            <span className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>14-day full-access trial</span>
+            <span className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>Free tools, no signup</span>
+            <span className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>30-day money-back guarantee</span>
             <span className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>Plans from free to $59/month</span>
             <span className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>Built for roofing first</span>
           </div>
@@ -352,11 +418,14 @@ export default function HomePage() {
                   <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
                 </div>
                 <h3 className="mt-4 text-base font-semibold text-zinc-950">Smart Components&#8482;</h3>
-                <p className="mt-2 text-sm leading-6 text-zinc-600">Reusable rules for materials, labour, waste, pricing and drawings. Build the logic once, reuse it on every job.</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">Like rows on your spreadsheet, but reusable: each Smart Component holds the materials, labour, waste, pricing and drawings for a job, and the app does the maths for you.</p>
               </div>
             </div>
           </div>
         </section>
+
+        {/* 1c. Product video showcase */}
+        <VideoShowcase />
 
         {/* 2. Core Workflow */}
         <section id="how-it-works" className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-8 lg:py-16">
@@ -386,7 +455,7 @@ export default function HomePage() {
 
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
             {/* Left: step cards */}
-            <div className="flex flex-col gap-3 lg:w-[460px] lg:shrink-0">
+            <div className="flex flex-col gap-3 lg:w-[390px] lg:shrink-0">
               {steps.map((item, i) => (
                 <div key={item.number} className="contents">
                   <button
@@ -453,7 +522,7 @@ export default function HomePage() {
                   Smart Components&#8482;
                 </h2>
                 <p className="mt-5 text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  Smart Components™ store the materials, labour, waste allowances, pricing, formulas, and business rules behind the work you quote regularly. Build the logic once, then reuse it across every future job.
+                  Think of a Smart Component™ as one row or line on the spreadsheet you already use - it holds all the materials, labour, waste allowances, pricing, formulas and business rules for a product or service, including the complex calculations. The difference is QuoteCore+ does the calculating for you, so you need no spreadsheet knowledge at all. You can even upload your current spreadsheet and convert its rows into Smart Components in bulk. Build the logic once, then reuse it across every future job.
                 </p>
                 <p className="mt-4 text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
                   Every quote starts from your own proven logic, not a blank page.
@@ -482,9 +551,9 @@ export default function HomePage() {
                   <a
                     href="/free-trial"
                     className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
-                    onClick={() => trackEvent("free_trial_click", { location: "smart_components" })}
+                    onClick={() => trackEvent("get_started_click", { location: "smart_components" })}
                   >
-                    Start free trial
+                    Get started
                   </a>
                   <a
                     href="/features/smart-components"
@@ -495,39 +564,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right: overlapping laptop mockups */}
-              <div className="flex-1 flex items-center justify-center">
-                <div className="relative min-h-[190px] w-full max-w-xl sm:min-h-[260px] lg:min-h-[340px]">
-                  <div
-                    className="absolute left-1/2 top-0 w-full -translate-x-1/2 transition-transform duration-500 ease-out hover:scale-[1.03] hover:-translate-y-2 md:left-auto md:-right-8 md:-top-8 md:w-[102%] md:translate-x-0"
-                    style={{ zIndex: 1 }}
-                  >
-                    <img
-                      loading="lazy"
-                      decoding="async"
-                      width={1200}
-                      height={750}
-                      src="/smart-components-laptop-1.png"
-                      alt="Smart Components™ - component list"
-                      className="w-full h-auto"
-                    />
-                  </div>
-                  <div
-                    className="absolute -left-12 -bottom-28 hidden w-[82%] transition-transform duration-500 ease-out hover:scale-[1.03] hover:translate-y-[-8px] md:block"
-                    style={{ zIndex: 2 }}
-                  >
-                    <img
-                      loading="lazy"
-                      decoding="async"
-                      width={1200}
-                      height={750}
-                      src="/smart-components-laptop-2.png"
-                      alt="Smart Components™ - component editor"
-                      className="w-full h-auto"
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* Right: spreadsheet-to-components image, click to enlarge */}
+              <SmartComponentsShowcase />
             </div>
           </div>
         </section>
@@ -578,7 +616,7 @@ export default function HomePage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { src: "/how-it-works-smart-components-list.png", label: "Smart Components™ library", desc: "Roofing pricing, labour and rules - reusable on every quote." },
-              { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a roof plan, AI identifies areas and components.", href: "/features/ai-scan-assist" },
+              { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a roof plan (image or multi-page PDF), AI identifies areas and components.", href: "/features/ai-scan-assist" },
               { src: "/how-it-works/how-it-works-2-2.png", label: "Quote builder", desc: "Build, customise and send roofing quotes in minutes.", href: "/features/digital-roof-takeoff" },
               { src: "/how-it-works/how-it-works-5-2.png", label: "Connected invoicing", desc: "Invoice from the same job data - no re-entry.", href: "/features/invoicing" },
             ].map((item) => (
@@ -639,7 +677,7 @@ export default function HomePage() {
             />
           </div>
           <p className="mt-6 text-center text-sm text-zinc-600">
-            Use <Link href="/features/ai-scan-assist" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</Link> to speed this up even more. Try it on your next quote - <a href="/free-trial" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]" onClick={() => trackEvent("free_trial_click", { location: "video_section" })}>free in the app</a>.
+            Use <Link href="/features/ai-scan-assist" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</Link> to speed this up even more. Try it on your next quote - <a href="/free-trial" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]" onClick={() => trackEvent("get_started_click", { location: "video_section" })}>start in the app</a>.
           </p>
         </section>
 
@@ -713,16 +751,16 @@ export default function HomePage() {
                 Build your next roofing quote in QuoteCore+.
               </h2>
               <p className="mt-5 text-base leading-7 text-zinc-500 sm:text-lg sm:leading-8">
-                Start with full access for 14 days. No card required. From first measurement to final invoice - all in one connected workflow.
+                From first measurement to final invoice - all in one connected workflow. Plans from $19/month with a 30-day money-back guarantee.
               </p>
 
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <a
                   href="/free-trial"
                   className="inline-flex min-h-12 items-center justify-center gap-3 rounded-full bg-[#FF6B35] px-9 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
-                  onClick={() => trackEvent("free_trial_click", { location: "bottom_cta" })}
+                  onClick={() => trackEvent("get_started_click", { location: "bottom_cta" })}
                 >
-                  Start free trial
+                  Get started
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M5 12h14" />
                     <path d="M13 6l6 6-6 6" />
@@ -736,7 +774,7 @@ export default function HomePage() {
                 </a>
               </div>
               <p className="mt-5 text-sm text-zinc-600">
-                Plans from free to $59/month. No card required. 14 days full access.
+                Plans from $19 to $59/month. Free tools forever. 30-day money-back guarantee.
               </p>
             </div>
           </div>
@@ -767,7 +805,15 @@ export default function HomePage() {
           <div className="flex flex-col items-center gap-3 text-center text-sm text-zinc-500">
             <p>
               Looking for free roofing tools?{" "}
-              <a href="/free-tools" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Try our calculators and generators.</a>
+              <a href="/free-roof-takeoff" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Measure a roof plan free</a>{" "}
+              or <a href="/free-tools" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">browse all free takeoff, estimating and quoting tools</a>.
+            </p>
+            <p>
+              Comparing software?{" "}
+              <a href="/construction-quoting-software" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">contractor estimating &amp; quoting software</a>,{" "}
+              <a href="/roofing-estimating-software" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">roofing estimating software</a>,{" "}
+              <a href="/roofing-takeoff-software" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">roofing takeoff software</a>,{" "}
+              <a href="/construction-takeoff-software" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">construction takeoff software</a>.
             </p>
             <p>
               Are you a roofing supplier?{" "}
@@ -779,7 +825,7 @@ export default function HomePage() {
         <SiteFooter />
       </main>
 
-      <CoffeePopup />
+      <SetupHelpModal />
       <style>{`
         .brand-wordmark {
           white-space: nowrap;

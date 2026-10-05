@@ -1,0 +1,135 @@
+{
+  "method": "Real TSX modules; custom static JSX evaluator and deterministic hook stubs. NOT React/Next runtime tests.",
+  "results": [
+    {
+      "name": "quotes",
+      "source": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "quotes-drafts",
+      "source": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "quotes-bulk",
+      "source": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "invoices",
+      "source": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "create-invoice",
+      "source": "app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "orders",
+      "source": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "catalogue-upload",
+      "source": "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "catalogue-map",
+      "source": "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "catalogue-components",
+      "source": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "billing",
+      "source": "app/(auth)/[workspaceSlug]/account/billing/BillingPanel.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "activation",
+      "source": "app/(auth)/[workspaceSlug]/account/billing/BillingPanel.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "company-settings",
+      "source": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "login",
+      "source": "app/login/page.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "signup",
+      "source": "app/signup/page.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "reset-password",
+      "source": "app/auth/reset-password/page.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "send-options",
+      "source": "app/components/send/SendDocumentModal.tsx",
+      "status": "rendered"
+    }
+  ],
+  "loadedSources": [
+    "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+    "app/components/ui/v2/QcJourney.tsx",
+    "app/components/ui/v2/QcDialog.tsx",
+    "app/components/ui/v2/QcHostedDialog.tsx",
+    "app/components/ui/v2/QcButton.tsx",
+    "app/components/UpgradeModal.tsx",
+    "app/components/RecipientStatusBadge.tsx",
+    "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+    "app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx",
+    "app/components/ConfirmModal.tsx",
+    "app/lib/currency/currencies.ts",
+    "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+    "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+    "app/components/billing/StorageBlockedModal.tsx",
+    "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+    "app/(auth)/[workspaceSlug]/account/billing/BillingPanel.tsx",
+    "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+    "app/(auth)/[workspaceSlug]/account/LogoUploader.tsx",
+    "app/components/FileUploader.tsx",
+    "app/components/TaxEditor.tsx",
+    "app/login/page.tsx",
+    "app/components/auth/GoogleSignInButton.tsx",
+    "app/components/auth/AuthSessionDebugPing.tsx",
+    "app/login/TroubleSigningInPanel.tsx",
+    "app/components/PublicFooter.tsx",
+    "app/components/ui/PasswordField.tsx",
+    "lib/app-url.ts",
+    "app/signup/page.tsx",
+    "app/(public)/shared/appOrigin.ts",
+    "app/auth/reset-password/page.tsx",
+    "app/components/send/SendDocumentModal.tsx",
+    "app/components/attachments/AttachmentSendPicker.tsx"
+  ],
+  "mockedModules": [
+    "./actions",
+    "./actions-bulk",
+    "jszip",
+    "./lib/quote-bundle",
+    "../MeasureJobModal",
+    "./lib/invoice-bundle",
+    "./order-list-actions",
+    "./lib/order-bundle",
+    "papaparse",
+    "../catalog-actions",
+    "@/app/lib/taxes/actions",
+    "@/app/lib/supabase/client",
+    "@/app/lib/files/storage-actions",
+    "@/app/(public)/shared/FreeToolsWelcomeModal (not shown in no-draft fixture)"
+  ]
+}

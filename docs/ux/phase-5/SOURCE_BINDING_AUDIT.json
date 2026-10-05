@@ -1,0 +1,65 @@
+{
+  "scope": "Static AST comparison; does not prove runtime behaviour.",
+  "files": [
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "originalHandlerCount": 55,
+      "currentHandlerCount": 58,
+      "missingHandlerExpressions": [],
+      "addedHandlerExpressions": [
+        "{() => setShowEditHeader(true)}",
+        "{() => setShowEditFooter(true)}",
+        "{() => setShowPreviewModal(false)}"
+      ],
+      "missingDisabled": [],
+      "missingFieldBindings": [],
+      "missingGuideSelectors": [],
+      "removedControllerStatements": [],
+      "addedControllerStatements": [],
+      "syntaxDiagnostics": 0
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "originalHandlerCount": 50,
+      "currentHandlerCount": 50,
+      "missingHandlerExpressions": [],
+      "addedHandlerExpressions": [],
+      "missingDisabled": [],
+      "missingFieldBindings": [],
+      "missingGuideSelectors": [],
+      "removedControllerStatements": [],
+      "addedControllerStatements": [],
+      "syntaxDiagnostics": 0
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/create/OrderLineByLineEditor.tsx",
+      "originalHandlerCount": 35,
+      "currentHandlerCount": 35,
+      "missingHandlerExpressions": [],
+      "addedHandlerExpressions": [],
+      "missingDisabled": [],
+      "missingFieldBindings": [],
+      "missingGuideSelectors": [],
+      "removedControllerStatements": [],
+      "addedControllerStatements": [],
+      "syntaxDiagnostics": 0
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/create/order-create-form.tsx",
+      "originalHandlerCount": 56,
+      "currentHandlerCount": 56,
+      "missingHandlerExpressions": [],
+      "addedHandlerExpressions": [],
+      "missingDisabled": [],
+      "missingFieldBindings": [],
+      "missingGuideSelectors": [],
+      "removedControllerStatements": [
+        "const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 1024);"
+      ],
+      "addedControllerStatements": [
+        "const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(false);"
+      ],
+      "syntaxDiagnostics": 0
+    }
+  ]
+}

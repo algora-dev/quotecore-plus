@@ -19,6 +19,9 @@
     "e2e:cleanup:dry-run": "node --eval \"console.log('Dry-run: no deletion performed. Manifest review only.')\"",
     "e2e:check-imports": "npx tsx e2e/scripts/check-imports.ts",
     "test:roof-takeoff": "node --import tsx --test \"app/(public)/free-roofing-takeoff-builder/*.test.ts\" \"app/lib/supplier-pricing/*.test.ts\"",
+    "test:calibration": "node --import tsx --test \"app/lib/takeoff/calibration*.test.ts\"",
+    "test:precision": "node --import tsx --test \"app/lib/takeoff/precision/*.test.ts\"",
+    "test:assistant": "node scripts/test-smart-assistant.mjs",
     "prebuild": "node scripts/check-server-deps.mjs"
   },
   "dependencies": {
@@ -44,6 +47,8 @@
     "next-mdx-remote": "^6.0.0",
     "openai": "^6.41.0",
     "papaparse": "^5.5.3",
+    "pdfjs-dist": "^6.3.289",
+    "qrcode": "^1.5.4",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "reading-time": "^1.5.0",
@@ -71,6 +76,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/fabric": "^5.3.10",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "dotenv": "^17.4.2",

@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { applyPitchAndWaste, rafterPitchFactor } from '@/app/lib/pricing/engine';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
+import { isCornerValueBasis } from '@/app/lib/takeoff/cornerCount';
 import { recalcAllQuoteComponents } from '../../actions';
 
 interface TakeoffMeasurement {
@@ -24,7 +25,20 @@ interface TakeoffMeasurement {
    *  depth). Display-only - never feeds calculation (m.value is already the
    *  final product). Persisted to quote_takeoff_measurements.entry_inputs so
    *  re-entry hydration + re-save doesn't wipe it. */
-  entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
+  /** P3/P4 (spec 10.3): attached-area entries also carry value_basis/plan_value
+   *  snapshots and the durable source_geometry_id provenance link; these DO
+   *  participate in calibration recomputation (no longer display-only).
+   *  Corner-derived point entries (2026-09-30) carry value_basis
+   *  'corner_all' | 'corner_external' | 'corner_internal' + corner_count. */
+  entryInputs?: {
+    height_m?: number | null;
+    depth_m?: number | null;
+    value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal';
+    plan_value?: number;
+    pitch_applied?: boolean;
+    source_geometry_id?: string;
+    corner_count?: number;
+  } | null;
 }
 
 export async function saveTakeoffMeasurements(
@@ -46,6 +60,17 @@ export async function saveTakeoffMeasurements(
   /** Canvas-rework: calibration data to persist on the takeoff_pages row.
    *  Stored in scale_calibration JSONB so re-entry can restore the scale. */
   calibrations?: unknown,
+  /** P3 (spec 10.1): when true, calibration persistence is REQUIRED - a
+   *  failure returns COMMIT_FAILED instead of being swallowed. Used by the
+   *  AI-assisted calibration finish path so a failed commit is never
+   *  reported as success (the client rolls back its session state). */
+  requireCalibrationCommit?: boolean,
+  /** P4 (spec 11): versioned calibration envelope (calibrationCodec v1)
+   *  persisted to takeoff_pages.calibration_metadata. When supplied, the
+   *  legacy scale_calibration array is STILL written alongside it (rolling
+   *  deployment, spec 11.4) and the server-established image_revision is
+   *  stamped on the same row update. */
+  calibrationMetadata?: unknown,
 ): Promise<{ success: true } | { success: false; error: string }> {
   const supabase = await createSupabaseServerClient();
 
@@ -245,7 +270,7 @@ export async function saveTakeoffMeasurements(
           // reads entry_inputs for calculation).
           //  - preset height/depth: from component_library at save time
           //  - user height/depth: carried on the measurement (freestyle/volume_3d)
-          let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user' } | null = null;
+          let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user'; value_basis?: string; corner_count?: number; source_geometry_id?: string } | null = null;
           if (m.type === 'multi_lineal_lxh' && heightMm && heightM > 0) {
             entryInputs = { height_m: heightM, source: 'preset' };
           } else if (m.type === 'area' && libComp.measurement_type === 'volume' && depthM) {
@@ -254,6 +279,16 @@ export async function saveTakeoffMeasurements(
             entryInputs = { height_m: Number(m.entryInputs.height_m), source: 'user' };
           } else if (m.type === 'volume_3d' && m.entryInputs?.depth_m) {
             entryInputs = { depth_m: Number(m.entryInputs.depth_m), source: 'user' };
+          } else if (m.type === 'point' && isCornerValueBasis(m.entryInputs?.value_basis)) {
+            // Corner-derived entries (2026-09-30): keep the corner basis +
+            // count snapshot riding the same jsonb so hydration and the
+            // builder can show provenance.
+            const cei = m.entryInputs!;
+            entryInputs = {
+              value_basis: cei.value_basis,
+              corner_count: Number(cei.corner_count ?? m.value),
+              ...(cei.source_geometry_id ? { source_geometry_id: cei.source_geometry_id } : {}),
+            };
           }
 
           // All measurements are from the current page and share the same unit.
@@ -306,11 +341,30 @@ export async function saveTakeoffMeasurements(
             effectiveWasteType = 'fixed';
           }
 
+          // 2026-09-03 (pitch-stale fix): entries attached from an existing
+          // area via the "Use an existing area" dropdown now carry a
+          // value_basis + plan_value snapshot. Recompute from the PLAN value
+          // and re-apply the LIVE pitch for this area at save time, so a
+          // pitch set/changed AFTER attaching always corrects the numbers:
+          //   basis 'pitched' -> plan x live pitch factor (roof sheets etc.)
+          //   basis 'plan'    -> plan, no pitch
+          const ei = (m as { entryInputs?: { value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal'; plan_value?: number; pitch_applied?: boolean; source_geometry_id?: string; corner_count?: number } | null }).entryInputs;
+          const hasLiveBasis = m.type === 'area' && ei && (ei.value_basis === 'pitched' || ei.value_basis === 'plan') && typeof ei.plan_value === 'number' && ei.plan_value > 0;
+          if (hasLiveBasis) {
+            metricValue = toMetricArea(ei!.plan_value!);
+          }
+
+          // Legacy (pre-2026-09-03) pitch_applied entries already carry the
+          // PITCHED value baked in - never pitch twice.
+          const pitchPreApplied = !hasLiveBasis && ei?.pitch_applied === true;
+          // basis 'plan' explicitly opts out of pitch entirely.
+          const basisPlanOnly = hasLiveBasis && ei!.value_basis === 'plan';
+
           const result = applyPitchAndWaste(
             metricValue,
             true,
-            pitchType as any,
-            groupPitch,
+            (pitchPreApplied || basisPlanOnly ? 'none' : pitchType) as any,
+            (pitchPreApplied || basisPlanOnly) ? 0 : groupPitch,
             effectiveWasteType as any,
             wastePercent,
             effectiveWasteFixed
@@ -321,9 +375,19 @@ export async function saveTakeoffMeasurements(
             sort_order: index,
             // Per-entry pitch (2026-07-08): actual pitch used for this entry so
             // the calc audit + UI can report it faithfully per page/area.
-            pitch_degrees: groupPitch,
+            pitch_degrees: basisPlanOnly ? 0 : groupPitch,
             // v8: input reference snapshot (display only).
-            entry_inputs: entryInputs,
+            // P6 (deferred P4 item): the durable source-polygon link is preserved
+            // on EVERY branch, not only the live-basis branch, so attached entries
+            // keep their provenance even when the plan_value snapshot is absent
+            // (legacy attached entries). Hydration + recompute already prefer it.
+            entry_inputs: hasLiveBasis
+              ? { ...(entryInputs ?? {}), value_basis: ei!.value_basis, plan_value: ei!.plan_value, ...(ei.source_geometry_id ? { source_geometry_id: ei.source_geometry_id } : {}) }
+              : (pitchPreApplied
+                ? { ...(entryInputs ?? {}), pitch_applied: true, ...(ei?.source_geometry_id ? { source_geometry_id: ei.source_geometry_id } : {}) }
+                : (ei?.source_geometry_id
+                  ? { ...(entryInputs ?? {}), source_geometry_id: ei.source_geometry_id }
+                  : entryInputs)),
           };
         });
 
@@ -379,6 +443,29 @@ export async function saveTakeoffMeasurements(
     ...(m.quoteRoofAreaId ? { quote_roof_area_id: m.quoteRoofAreaId } : {}),
   }));
 
+  // P0-3 (calibration hardening audit 2026-09-20): the AI recalibration path
+  // persists measurements AND page calibration through the new
+  // save_takeoff_atomic_v2 RPC in ONE database transaction, so a failed
+  // calibration write can no longer leave recalibrated measurements behind.
+  // Legacy path (no metadata / non-fatal calibration) keeps using
+  // save_takeoff_atomic + the separate page update below, unchanged.
+  const useAtomicCalibrationRpc =
+    requireCalibrationCommit === true &&
+    !!currentPageId &&
+    calibrationMetadata != null &&
+    calibrations != null;
+  let calibrationBlock: Record<string, unknown> | null = null;
+  if (useAtomicCalibrationRpc && currentPageId) {
+    const { getCalibrationImageRevision } = await import('@/app/lib/takeoff/calibrationImageRevision');
+    const imageRevision = await getCalibrationImageRevision(currentPageId);
+    calibrationBlock = {
+      page_id: currentPageId,
+      scale_calibration: calibrations,
+      calibration_metadata: calibrationMetadata,
+      ...(imageRevision ? { image_revision: imageRevision } : {}),
+    };
+  }
+
   // Pass STORAGE PATHS to the RPC (Gerald audit pass 2). The RPC keeps
   // accepting the legacy *_url keys for one release so an in-flight deploy
   // doesn't drop snapshots, but we should never send them from new code.
@@ -394,6 +481,9 @@ export async function saveTakeoffMeasurements(
     measurements: measurementsPayload,
     roof_areas: roofAreasPayload,
     components: componentsPayload,
+    // P0-3: calibration block rides the same payload; v2 commits it with the
+    // measurements in one transaction.
+    ...(calibrationBlock ? { calibration: calibrationBlock } : {}),
   };
 
   // The RPC's `p_payload` parameter is typed `Json` by Postgres, which
@@ -405,7 +495,30 @@ export async function saveTakeoffMeasurements(
     p_quote_id: quoteId,
     p_payload: payload,
   } as unknown as { p_quote_id: string; p_payload: never };
-  const { error: rpcError } = await supabase.rpc('save_takeoff_atomic', rpcArgs);
+  let rpcName = calibrationBlock ? 'save_takeoff_atomic_v2' : 'save_takeoff_atomic';
+  const rpcFn = rpcName as 'save_takeoff_atomic';
+  let { error: rpcError } = await supabase.rpc(rpcFn, rpcArgs);
+
+  // Legacy fallback: when the v2 RPC is not deployed yet (migration not
+  // applied), strip the calibration block and retry through the original
+  // RPC + the separate (fatal-on-requireCalibrationCommit) page update.
+  // This keeps the pre-migration behaviour working when args/RPC are absent.
+  if (rpcError && rpcName === 'save_takeoff_atomic_v2') {
+    const fnMissing =
+      rpcError.code === 'PGRST202' ||
+      /could not find the function|does not exist/i.test(rpcError.message ?? '');
+    if (fnMissing) {
+      const { calibration: _strip, ...legacyPayload } = payload as Record<string, unknown>;
+      rpcName = 'save_takeoff_atomic';
+      const legacyArgs = {
+        p_quote_id: quoteId,
+        p_payload: legacyPayload,
+      } as unknown as { p_quote_id: string; p_payload: never };
+      rpcError = (await supabase.rpc('save_takeoff_atomic', legacyArgs)).error;
+      // Re-enable the legacy separate (fatal) page update below.
+      calibrationBlock = null;
+    }
+  }
 
   if (rpcError) {
     console.error('[SaveTakeoff] RPC error:', rpcError);
@@ -417,18 +530,52 @@ export async function saveTakeoffMeasurements(
   }
 
   // Canvas-rework: persist calibration data to the takeoff_pages row so
-  // re-entry can restore the scale. Non-fatal: a failure here doesn't affect
-  // the save result (calibrations are session-level metadata, not transactional
-  // with the measurements).
-  if (currentPageId && calibrations != null) {
+  // re-entry can restore the scale. Default NON-FATAL (legacy callers rely on
+  // measurements-only saves succeeding even if this row update fails).
+  // P3: with requireCalibrationCommit the failure is FATAL and surfaced as
+  // COMMIT_FAILED - the client rolls back to the prior state, so a failed
+  // calibration save can never be reported as success.
+  if (currentPageId && calibrations != null && !calibrationBlock) {
+    // Legacy path: separate page update. Skipped entirely when the v2 RPC
+    // already committed the calibration atomically with the measurements.
+    let calUpdateError: string | null = null;
     try {
-      await supabase
+      // P4 (spec 11.1/11.3): write the versioned envelope + server-established
+      // image revision in the SAME row update as the legacy array (rolling
+      // deployment: legacy readers keep working, spec 11.4). The image
+      // revision is established SERVER-side (sha256 content digest) - the
+      // client never supplies it. A null revision here just means the page
+      // has no resolvable storage object; the metadata envelope still saves.
+      let imageRevision: string | null = null;
+      if (calibrationMetadata != null) {
+        const { getCalibrationImageRevision } = await import('@/app/lib/takeoff/calibrationImageRevision');
+        imageRevision = await getCalibrationImageRevision(currentPageId);
+      }
+      const calUpdate: Record<string, unknown> = {
+        scale_calibration: calibrations,
+      };
+      if (calibrationMetadata != null) {
+        calUpdate.calibration_metadata = calibrationMetadata;
+        if (imageRevision) calUpdate.image_revision = imageRevision;
+      }
+      const { error: calError } = await supabase
         .from('takeoff_pages')
-        .update({ scale_calibration: calibrations as unknown as never })
+        .update(calUpdate as never)
         .eq('id', currentPageId)
         .eq('quote_id', quoteId);
+      if (calError) calUpdateError = calError.message;
     } catch (err) {
-      console.warn('[SaveTakeoff] Failed to persist calibrations:', err);
+      calUpdateError = err instanceof Error ? err.message : String(err);
+    }
+    if (calUpdateError) {
+      if (requireCalibrationCommit) {
+        console.error('[SaveTakeoff] COMMIT_FAILED: calibration persistence failed:', calUpdateError);
+        return {
+          success: false,
+          error: `COMMIT_FAILED: calibration could not be persisted (${calUpdateError}). No changes were kept - please retry.`,
+        };
+      }
+      console.warn('[SaveTakeoff] Failed to persist calibrations:', calUpdateError);
     }
   }
 
@@ -494,6 +641,12 @@ export interface TakeoffHydrationPage {
   imagePath: string | null;
   imageUrl: string | null; // signed URL, minted server-side
   scaleCalibration: unknown | null; // persisted calibration data for canvas reconstruction
+  /** P4 (spec 11.1): versioned calibration envelope (calibrationCodec v1).
+   *  Null = legacy row - read scaleCalibration instead. */
+  calibrationMetadata: unknown | null;
+  /** P4 (spec 5.3): server-established immutable source-image revision
+   *  (sha256 content digest + orientation version). Null = not established. */
+  imageRevision: string | null;
   /** AI Takeoff: stored scan result for "Reset AI Entries". */
   aiScanResult: unknown | null;
 }
@@ -513,8 +666,20 @@ export interface TakeoffHydrationMeasurement {
    *  measurements and legacy rows with no matching entry. */
   pitch: number | null;
   /** v8 (2026-07-08): user-entered height/depth reference values (metric)
-   *  saved with this measurement. Display-only passthrough. */
-  entryInputs: { height_m?: number | null; depth_m?: number | null } | null;
+   *  saved with this measurement. Display-only passthrough.
+   *  P4 (spec 10.3): attached-area entries also hydrate value_basis/plan_value
+   *  and the durable source_geometry_id provenance link (preferred by
+   *  calibration recompute over heuristic matching). Corner-derived point
+   *  entries (2026-09-30) hydrate their corner basis + count snapshot. */
+  entryInputs: {
+    height_m?: number | null;
+    depth_m?: number | null;
+    value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal';
+    plan_value?: number;
+    pitch_applied?: boolean;
+    source_geometry_id?: string;
+    corner_count?: number;
+  } | null;
 }
 
 export interface TakeoffHydrationData {
@@ -546,11 +711,35 @@ export async function loadTakeoffHydrationData(
   if (!session) return null;
 
   // 2. Pages (ordered)
-  const { data: pages } = await supabase
+  // P4: read the new columns additively. Pre-migration DBs reject the
+  // expanded select (PGRST204), so fall back to the legacy select - hydration
+  // then just returns null metadata/revision and the legacy path is unchanged.
+  type HydratedPageRow = {
+    id: string;
+    page_order: number;
+    page_name: string | null;
+    image_storage_path: string | null;
+    scale_calibration: unknown;
+    calibration_metadata?: unknown;
+    image_revision?: string | null;
+    ai_scan_result?: unknown;
+  };
+  const pagesExpanded = await supabase
     .from('takeoff_pages')
-    .select('id, page_order, page_name, image_storage_path, scale_calibration, ai_scan_result')
+    .select('id, page_order, page_name, image_storage_path, scale_calibration, calibration_metadata, image_revision, ai_scan_result')
     .eq('quote_id', quoteId)
     .order('page_order', { ascending: true });
+  let pages: HydratedPageRow[] | null = null;
+  if (!pagesExpanded.error) {
+    pages = (pagesExpanded.data ?? null) as unknown as HydratedPageRow[] | null;
+  } else if (/calibration_metadata|image_revision|Could not find|does not exist/i.test(pagesExpanded.error.message)) {
+    const pagesLegacy = await supabase
+      .from('takeoff_pages')
+      .select('id, page_order, page_name, image_storage_path, scale_calibration, ai_scan_result')
+      .eq('quote_id', quoteId)
+      .order('page_order', { ascending: true });
+    pages = pagesLegacy.error ? null : ((pagesLegacy.data ?? null) as unknown as HydratedPageRow[] | null);
+  }
 
   const hydratedPages: TakeoffHydrationPage[] = await Promise.all(
     (pages ?? []).map(async (p) => {
@@ -568,8 +757,12 @@ export async function loadTakeoffHydrationData(
         pageName: p.page_name,
         imagePath: p.image_storage_path,
         imageUrl,
-        scaleCalibration: (p as { scale_calibration?: unknown }).scale_calibration ?? null,
-        aiScanResult: (p as { ai_scan_result?: unknown }).ai_scan_result ?? null,
+        scaleCalibration: p.scale_calibration ?? null,
+        // P4: versioned envelope + server-established image revision. Reading
+        // them is additive - pre-migration DBs return nulls for both.
+        calibrationMetadata: p.calibration_metadata ?? null,
+        imageRevision: p.image_revision ?? null,
+        aiScanResult: p.ai_scan_result ?? null,
       };
     }),
   );
@@ -635,7 +828,16 @@ export async function loadTakeoffHydrationData(
       quoteRoofAreaId: (m as { quote_roof_area_id?: string | null }).quote_roof_area_id ?? null,
       pitch,
       // v8: display-only passthrough so re-save doesn't wipe user H/D values.
-      entryInputs: (m as { entry_inputs?: { height_m?: number | null; depth_m?: number | null } | null }).entry_inputs ?? null,
+      // P4: value_basis/plan_value/source_geometry_id ride the same jsonb.
+      entryInputs: (m as { entry_inputs?: {
+        height_m?: number | null;
+        depth_m?: number | null;
+        value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal';
+        plan_value?: number;
+        pitch_applied?: boolean;
+        source_geometry_id?: string;
+        corner_count?: number;
+      } | null }).entry_inputs ?? null,
     };
   });
 
@@ -1017,6 +1219,11 @@ export async function createNewTakeoffArea(
     const profile = await requireCompanyContext();
     const admin = createAdminClient();
 
+    // Admin writes bypass RLS, so authorise the quote explicitly first.
+    const { data: ownedQuote, error: ownershipError } = await admin.from('quotes')
+      .select('id').eq('id', quoteId).eq('company_id', profile.company_id).maybeSingle();
+    if (ownershipError || !ownedQuote) return { ok: false, error: 'Quote not found or access denied.' };
+
     // Load all existing area labels for this quote.
     const { data: existing } = await admin
       .from('quote_roof_areas')
@@ -1279,4 +1486,154 @@ export async function batchCreateAiRoofAreas(
     console.error('[batchCreateAiRoofAreas] Error:', err);
     return { ok: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
+}
+
+/** P3 (spec 10.1): calibration-only commit for pages with no measurements yet.
+ *  The measurement save path safe-skips empty pages, so initial calibration
+ *  persists through this verified, quote+page-scoped update. Unlike the legacy
+ *  non-fatal calibration write inside saveTakeoffMeasurements, failures here
+ *  are returned to the caller (surfaced as COMMIT_FAILED by the client).
+ *  P4 (spec 11): optionally also persists the versioned calibration_metadata
+ *  envelope and the server-established image_revision in the same update. */
+export async function persistPageCalibration(
+  quoteId: string,
+  pageId: string,
+  calibrations: unknown,
+  calibrationMetadata?: unknown,
+): Promise<{ success: true; imageRevision: string | null } | { success: false; error: string }> {
+  const supabase = await createSupabaseServerClient();
+
+  const { data: quote, error: quoteError } = await supabase
+    .from('quotes')
+    .select('company_id')
+    .eq('id', quoteId)
+    .single();
+  if (quoteError || !quote) {
+    return { success: false, error: 'Quote not found' };
+  }
+
+  // P4: server-established image revision (sha256 content digest), resolved
+  // from the page's storage object. Null just means no resolvable object.
+  let imageRevision: string | null = null;
+  if (calibrationMetadata != null) {
+    const { getCalibrationImageRevision } = await import('@/app/lib/takeoff/calibrationImageRevision');
+    imageRevision = await getCalibrationImageRevision(pageId);
+  }
+
+  const pageUpdate: Record<string, unknown> = {
+    scale_calibration: calibrations,
+  };
+  if (calibrationMetadata != null) {
+    // Keep the envelope and page column on the same server-resolved frame.
+    // The client must never mint an image revision from presentation state.
+    pageUpdate.calibration_metadata = imageRevision && typeof calibrationMetadata === 'object' && !Array.isArray(calibrationMetadata)
+      ? { ...calibrationMetadata, imageRevision }
+      : calibrationMetadata;
+    if (imageRevision) pageUpdate.image_revision = imageRevision;
+  }
+
+  const { data: updatedPage, error } = await supabase
+    .from('takeoff_pages')
+    .update(pageUpdate as never)
+    .eq('id', pageId)
+    .eq('quote_id', quoteId)
+    .select('id')
+    .maybeSingle();
+  if (error) {
+    console.error('[persistPageCalibration] Error:', error);
+    return { success: false, error: error.message };
+  }
+  if (!updatedPage) return { success: false, error: 'The plan could not be updated. Check access and reload.' };
+  return { success: true, imageRevision };
+}
+
+// -- M5: update-in-place roof-area geometry edit (patch_052) ----------------
+
+export interface UpdateTakeoffAreaGeometryInput {
+  quoteId: string;
+  /** Durable quote_takeoff_measurements row id of the area-type polygon. */
+  measurementId: string;
+  /** Page the polygon lives on (ownership + scale resolution). */
+  pageId: string;
+  /** New outline points in the page's scene frame (takeoff-scene-v1). */
+  points: { x: number; y: number }[];
+  /** Client's last-read takeoff session version (optimistic guard, O13). */
+  sessionVersion: number | null;
+}
+
+export type UpdateTakeoffAreaGeometryResult =
+  | {
+      success: true;
+      /** Server-derived area value (measurement_value, row's unit). */
+      value: number;
+      sessionVersion: number | null;
+    }
+  | {
+      success: false;
+      error: string;
+      /** True when the failure is a session-version conflict (O13): the
+       *  client must offer reload/review and KEEP the user's draft � never
+       *  force-overwrite. */
+      staleVersion?: boolean;
+    };
+
+/**
+ * Mobile takeoff M5 (spec �8.5/�11.3): updates an EXISTING saved roof area's
+ * geometry by measurement id through the additive patch_052 RPC � never
+ * delete+insert, never a duplicate row. The RPC re-validates geometry,
+ * re-derives the area from the page's own calibration scale server-side,
+ * recomputes source-linked dependent entries at constant scale (O07) and
+ * guards concurrency with the same optimistic session-version check as every
+ * other save (O13). Idempotent by construction (UPDATE by id): a retry after
+ * a lost save response re-applies the same geometry (O12).
+ */
+export async function updateTakeoffAreaGeometry(
+  input: UpdateTakeoffAreaGeometryInput,
+): Promise<UpdateTakeoffAreaGeometryResult> {
+  const supabase = await createSupabaseServerClient();
+
+  // Ownership pre-check mirroring saveTakeoffMeasurements (clear error before
+  // the RPC; RLS still applies inside it).
+  const { data: quote } = await supabase
+    .from('quotes')
+    .select('company_id')
+    .eq('id', input.quoteId)
+    .maybeSingle();
+  if (!quote) {
+    return { success: false, error: 'Quote not found.' };
+  }
+
+  // The generated RPC name union does not know the patch_052 function yet —
+  // cast once at the boundary (same pattern as saveTakeoffMeasurements v2).
+  const rpcFn = 'update_takeoff_area_geometry_v1' as 'save_takeoff_atomic';
+  const { data, error } = await supabase.rpc(rpcFn, {
+    p_quote_id: input.quoteId,
+    p_measurement_id: input.measurementId,
+    p_page_id: input.pageId,
+    p_points: input.points,
+    p_session_version: input.sessionVersion,
+  } as unknown as { p_quote_id: string; p_payload: never });
+
+  if (error) {
+    const message = error.message ?? String(error);
+    if (/STALE_TAKEOFF_VERSION/i.test(message)) {
+      return {
+        success: false,
+        error: 'Takeoff edited elsewhere. Reload to review � your edits are kept.',
+        staleVersion: true,
+      };
+    }
+    console.error('[updateTakeoffAreaGeometry] RPC error:', message);
+    return { success: false, error: message };
+  }
+
+  const result = (Array.isArray(data) ? data[0] : data) as unknown as
+    | { ok?: boolean; value?: number | string; session_version?: number | null }
+    | null;
+  return {
+    success: true,
+    value: result?.value != null ? Number(result.value) : 0,
+    sessionVersion:
+      result?.session_version != null ? Number(result.session_version) : null,
+  };
 }

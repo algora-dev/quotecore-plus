@@ -1,16 +1,7 @@
-import { ResourcesSection } from '../ResourcesSection';
-import { BackButton } from '@/app/components/BackButton';
+import { redirect } from 'next/navigation';
 
-export default async function QuoteHeaderTemplatesSectionPage({
-  params,
-}: {
-  params: Promise<{ workspaceSlug: string }>;
-}) {
+/** Phase 7: preserve bookmarked list URLs; the existing create/edit routes remain. */
+export default async function LegacyTemplateList({ params }: { params: Promise<{ workspaceSlug: string }> }) {
   const { workspaceSlug } = await params;
-  return (
-    <section className="space-y-5">
-      <BackButton />
-      <ResourcesSection workspaceSlug={workspaceSlug} tab="customer" />
-    </section>
-  );
+  redirect(`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`);
 }

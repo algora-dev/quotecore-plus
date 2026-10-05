@@ -227,8 +227,8 @@ export default function Post() {
         The takeoff builder, material calculator, and quote generator are all free. When you want
         the full AI pipeline with unlimited scans, the full component library, and the ability to
         generate quotes directly from takeoffs,{' '}
-        <a href="/free-trial">start a free 14-day trial of QuoteCore+</a>. You get every feature,
-        including the AI takeoff assistant, at no cost for 14 days. No card required.
+        <a href="/free-trial">get started with QuoteCore+</a>. You get every feature,
+        including the AI takeoff assistant, on paid plans backed by a 30-day money-back guarantee.
       </p>
 
       <hr />
@@ -243,7 +243,7 @@ export default function Post() {
       </p>
       <p>
         If you are still tracing plans by hand, that is the part AI can help with today.{' '}
-        <a href="/free-trial">Try it free for 14 days</a> and see whether it fits your workflow.
+        <a href="/free-trial">Get started</a> and see whether it fits your workflow.
       </p>
     </div>
   );

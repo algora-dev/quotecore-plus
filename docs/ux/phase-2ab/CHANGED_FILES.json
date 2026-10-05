@@ -1,0 +1,327 @@
+{
+  "baseline_archive_sha256": "75178221a15c358c1b41f949a52c9b94a749e7b70c65d319f91da40d25a2fab3",
+  "self_and_audit_exclusions": [
+    "CHANGED_FILES.json",
+    "PROTECTED_HASHES.csv",
+    "SOURCE_VALIDATION.json"
+  ],
+  "files": [
+    {
+      "path": "quotecore-plus/DESIGN_CHANGES.md",
+      "change": "modified",
+      "baseline_sha256": "455a51eef6707ee16c71fc7f4b90ef34d7c4ac7df85f28e3d0472299f52e9340",
+      "returned_sha256": "13b48d907a80f5c683ec4d96a22fe43694e5a92b1139cdc7adde1849e6e9c192",
+      "bytes": 7257
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/layout.tsx",
+      "change": "modified",
+      "baseline_sha256": "c3fb5add73ccefdf68aaabfd783057c440348e14037cb393679b5622d82b8cb6",
+      "returned_sha256": "77190e8f889dce41741995b96bcc64298cba296e669a7ca6e244e4253d32e1c3",
+      "bytes": 8050
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/page.tsx",
+      "change": "modified",
+      "baseline_sha256": "c4401e46205cc677c04ac0e6c975cb1be7b15a8cebadad03451e7e46539c81a4",
+      "returned_sha256": "a52df2c05a9d7296609231d5b256a5862d81ae7621a8e957c8d03df18a24b809",
+      "bytes": 4754
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/ActivityCardClient.tsx",
+      "change": "modified",
+      "baseline_sha256": "53fd23f0c73ccd48869052d5fd7cc024fa9ea5a520fb585a2b13d11f81e73a6b",
+      "returned_sha256": "3692d7c9277ee136eadd660ba038a57690b08e41c8b9edfe98abb1919fac4de5",
+      "bytes": 11997
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/DownloadSummaryPDFButton.tsx",
+      "change": "modified",
+      "baseline_sha256": "7e82c6b9a5e1c107a97ff8921233b05a1454c433af0e123525c957367bbb1208",
+      "returned_sha256": "8554a7db21883df1574f7a0ae207aa58a16c7c87d8dcd36f9d8bee67337a91a5",
+      "bytes": 2381
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/page.tsx",
+      "change": "modified",
+      "baseline_sha256": "eff036dab0173d180751da41184f33c251551e4d2c8bf1268e52a0a49c8704d4",
+      "returned_sha256": "102f8f26334b218a6d44684cd28e472e051fa83bff2bc7519edb33d972734ebd",
+      "bytes": 42502
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/SendToAppButton.tsx",
+      "change": "modified",
+      "baseline_sha256": "8f539d8af7fb104620582f083277f5c561e55fbe22fc92aba9064212dd09e9e2",
+      "returned_sha256": "ccf02b6912af36ffa98241fbbc8f25e35a0f2f603b8c353d95bc631b772e9b97",
+      "bytes": 8404
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/SummaryFilesPanel.tsx",
+      "change": "modified",
+      "baseline_sha256": "ccad3d2e820a25a8157563b4b2baa58a04e9f4761ceab0005769a644183122d1",
+      "returned_sha256": "69cc199e7386d2af7c167a11c3af1083237b2edfe56c161bdc94d2023da516b9",
+      "bytes": 4983
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/SummaryTabs.tsx",
+      "change": "modified",
+      "baseline_sha256": "2b297478beef5a2ca72ef0e090bc632e5bc7fbaee7f0da2836e59598968d7109",
+      "returned_sha256": "5147332e748dd9004f49375f522cd08101980cf52896d9a108b563db82baac29",
+      "bytes": 8228
+    },
+    {
+      "path": "quotecore-plus/app/components/ui/v2/qc.css",
+      "change": "modified",
+      "baseline_sha256": "7e115d1d2ce5ed135c97684c1564a7fdf87579749e64e2fcbc6e9ae06eab17e1",
+      "returned_sha256": "e48f499e033dd3a031ea5d546ee3b69e622f6eb225da0536deed95deb5162893",
+      "bytes": 13360
+    },
+    {
+      "path": "RETURN_NOTES.md",
+      "change": "modified",
+      "baseline_sha256": "8587927b12c26496358fb3d853a1afde75de212b4362c4a91d10dc092c432809",
+      "returned_sha256": "778489ea75bd9b1b8d166fe084d1f39b102e006dc4b0092150870acec9c83f29",
+      "bytes": 10083
+    },
+    {
+      "path": "START_PHASE_2AB.md",
+      "change": "added",
+      "returned_sha256": "bf9a670ab8bc7a54983ac672008bd82cb613cc259df0994d785f4bc5e7548f41",
+      "bytes": 830
+    },
+    {
+      "path": "quotecore-plus/app/components/workspace/qc-home.css",
+      "change": "added",
+      "returned_sha256": "0cd60a8934d05a6d4b3e1f2dbfb6b1a23cfdfedf81511a766b6a36bccecff34a",
+      "bytes": 6684
+    },
+    {
+      "path": "quotecore-plus/app/components/workspace/HomeDashboard.tsx",
+      "change": "added",
+      "returned_sha256": "386e4b3e1f59c0a9512cc93ab3523874194bafae2ebbbe249fce0958a117e764",
+      "bytes": 6290
+    },
+    {
+      "path": "quotecore-plus/app/components/workspace/qc-shell.css",
+      "change": "added",
+      "returned_sha256": "5747610285a95f8d4c869a8e5aa016e39b1d62bf0db18530992efe5598b7818a",
+      "bytes": 8381
+    },
+    {
+      "path": "quotecore-plus/app/components/workspace/QcAppShell.tsx",
+      "change": "added",
+      "returned_sha256": "d1c22ddb093c43ea754d3cffc600bcd9661a056f78c3b57d9b28251b34705fa8",
+      "bytes": 6018
+    },
+    {
+      "path": "quotecore-plus/app/components/workspace/QcNavigation.tsx",
+      "change": "added",
+      "returned_sha256": "bb32d74fe7456abfb944026de14fdb2dc1a749eaafbd31333047f1dc8c1e8b79",
+      "bytes": 1952
+    },
+    {
+      "path": "quotecore-plus/app/components/workspace/shell-config.ts",
+      "change": "added",
+      "returned_sha256": "08f9550f4ea308aaa697e382f1bf85b18f6de42176000f4cf45f3947f243cabf",
+      "bytes": 3626
+    },
+    {
+      "path": "quotecore-plus/app/components/ui/v2/QcIcon.tsx",
+      "change": "added",
+      "returned_sha256": "e8adaf41639750d18c4206761ac1230b27ba183bdb89881b367b87f9f2a2dd28",
+      "bytes": 2381
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/job-space/JobOverview.tsx",
+      "change": "added",
+      "returned_sha256": "bd4834e9b9d3308518e5f9f36f7c684af66100fc2da2d52b9a2288731fa00575",
+      "bytes": 10025
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/job-space/JobOrderAction.tsx",
+      "change": "added",
+      "returned_sha256": "18f7a369aecb65bf1a3329c03547bfbed5665d58cecf505d9216b48209fb0806",
+      "bytes": 1221
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/job-space/summary-types.ts",
+      "change": "added",
+      "returned_sha256": "c5c445eb0e8dfa2171758b5efb9353051813b855a7dec561238a0f6419d55c4f",
+      "bytes": 1323
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/job-space/JobCapabilityCard.tsx",
+      "change": "added",
+      "returned_sha256": "d9fe7662a5fc57f05e437bd340d9ada6c4d74aaa2a3aa1acfd5b3f8ae2a40ea7",
+      "bytes": 829
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/job-space/JobHeader.tsx",
+      "change": "added",
+      "returned_sha256": "f0228d3f1c1638d2e406afc7db585c5079e9050e964b8532f52ad23abdf1fa25",
+      "bytes": 1459
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/job-space/job-space.css",
+      "change": "added",
+      "returned_sha256": "81bc26040a80a976245dd7c80051a65b75a9e320dcd8bfa078f60255cea4affe",
+      "bytes": 14572
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/job-space/JobSpaceContext.tsx",
+      "change": "added",
+      "returned_sha256": "729c69d2cedfc035f03b44b1f1af00fad45db99e4bfcb876d206db70c69c8999",
+      "bytes": 615
+    },
+    {
+      "path": "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/job-space/SummaryDocumentPreviews.tsx",
+      "change": "added",
+      "returned_sha256": "fcf1b9a6d1fee9056561d29dd059dc3ef51915c4a24c0ef3f51a972c61f1a838",
+      "bytes": 11697
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/PARITY_CHECKLIST.md",
+      "change": "added",
+      "returned_sha256": "6f16ff0e99fa0c0d2b8687667a06282f4f9e024dfe6c4fca52d918dab80ac406",
+      "bytes": 3495
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/VISUAL_FIXTURE_CHECKS.json",
+      "change": "added",
+      "returned_sha256": "0869b272f7271e5f7918f9a0a1322194c721aeb0b166bbcf17a8cb3783b9b9fb",
+      "bytes": 3176
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/visual-reference.html",
+      "change": "added",
+      "returned_sha256": "e790a36ec2655a5733be2fd354d9c4bcb3b95a2589fce2d2fb61a21ab9bbe58f",
+      "bytes": 374434
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/job-1440-viewport.png",
+      "change": "added",
+      "returned_sha256": "4d40c3ff3f9d3c6591f0e36cb486cfdc8cf47a73d2e65e0be5ce2ba2aeadf773",
+      "bytes": 179065
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/SHELL_CONTRACT.md",
+      "change": "added",
+      "returned_sha256": "eb1b6e402221672b36c5a3d9fd634c62e8f1ea9a77f1257aa65aa69572b55863",
+      "bytes": 2926
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/mobile-navigation-390.png",
+      "change": "added",
+      "returned_sha256": "2a73778a50e44af47cad94732380d47fd5668a2e52df82678aa708d58a8a0ced",
+      "bytes": 36811
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/job-390.png",
+      "change": "added",
+      "returned_sha256": "ce54a2489a1e140c240e0c14eebb19c467efac0496dbd4e5453dcc17e6fbf27f",
+      "bytes": 233065
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/CAPABILITY_PARITY.csv",
+      "change": "added",
+      "returned_sha256": "7b23ecf93dfa4293fc1dbea51f1f8f540ef47ce27303390a0ae6223f874a898a",
+      "bytes": 12693
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/DATA_CONTRACTS.md",
+      "change": "added",
+      "returned_sha256": "5976d99ed9f067992d767bebe4c604ecc0ebd59656301611a9366266036130c5",
+      "bytes": 4385
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/INTEGRATION.md",
+      "change": "added",
+      "returned_sha256": "3e2cff4dfabd3e5e3e2bbaccd9e53ce3ce84c3a0d44fe232973ab57cf6a93c75",
+      "bytes": 4859
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/home-390.png",
+      "change": "added",
+      "returned_sha256": "0f2041595e661acd32a05576229da9f06fa0f84d2bf7b0efc810c20c0b66eb5f",
+      "bytes": 147562
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/STATIC_INVARIANTS.json",
+      "change": "added",
+      "returned_sha256": "35eebdebc483a3be38887b95b78a573b435d2a3a21bf39fe82f01e7e1633ddc8",
+      "bytes": 4242
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/home-1440.png",
+      "change": "added",
+      "returned_sha256": "3e9e91634071e4ea5279428542b41b66680b84624d37ae9f5a59501e9dc28dd7",
+      "bytes": 229044
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/COMPONENT_MAP.md",
+      "change": "added",
+      "returned_sha256": "e14b2e51981a48ab10c9b7d8c8977344118e09176177264800d636ccc9e60514",
+      "bytes": 3787
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/job-390-viewport.png",
+      "change": "added",
+      "returned_sha256": "1e67c59b5aa3627078c1711a2913a03bdddd384e4e1dba3f284ca223be43f694",
+      "bytes": 103428
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/STATIC_SYNTAX.json",
+      "change": "added",
+      "returned_sha256": "741362a6770f8aa2773b41429e4173e7d9b61220b9aca49f3f3e9ad130333513",
+      "bytes": 3396
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/builder-host-1440.png",
+      "change": "added",
+      "returned_sha256": "4e3158df7400c9d0b96fa5f8da4a5e0832e00d83f79a18da187f74d12d066ad1",
+      "bytes": 72681
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/FILE_CHANGE_NOTES.md",
+      "change": "added",
+      "returned_sha256": "1010fa104c3ad84d79f4939220f16fa5deaf651d1439a88cc884327f2703ea2d",
+      "bytes": 5203
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/job-hidden-1440.png",
+      "change": "added",
+      "returned_sha256": "3cd825a4e2bbe3cad9c12d775ead91fdf9c104fe1fbefd11c36e12bd0e1d1ea6",
+      "bytes": 159172
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/immersive-host-1440.png",
+      "change": "added",
+      "returned_sha256": "55816daec0b9364a071bad089ad97d59d39543d7d313b1d25596dc7eca7ea8f7",
+      "bytes": 59431
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/job-1440.png",
+      "change": "added",
+      "returned_sha256": "6e5ae09de4f7c447996e261136a062f71e61e77ac2fb12c748154abab189db11",
+      "bytes": 265164
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/STATIC_VALIDATION.md",
+      "change": "added",
+      "returned_sha256": "350d7f8c3c175b581140c8e76eacb91599f5929e47465c7ff1b2a9e608cc6813",
+      "bytes": 6499
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/job-rail-1440.png",
+      "change": "added",
+      "returned_sha256": "b6ec2395867d4a8a592e25ea3dc20d480338ee8e5c08e6e91dd1b63301e62c95",
+      "bytes": 163771
+    },
+    {
+      "path": "quotecore-plus/docs/ux/phase-2ab/CATALOGUE_FEEDBACK_CHECKS.json",
+      "change": "added",
+      "returned_sha256": "c12614b6746950ed9e81f93eebba67104b46fb34e232765ff4e89f8a563e3811",
+      "bytes": 3548
+    }
+  ]
+}

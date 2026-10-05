@@ -11,7 +11,7 @@ import DemoCTACard from "@/components/DemoCTACard";
 export const metadata: Metadata = {
   title: "AI Scan Assist for Roof Plans",
   description:
-    "AI Scan Assist identifies multiple roof areas, ridges, hips, valleys, barges and spouting from your uploaded plan. Verify, adjust and swap components - then carry everything into your quote.",
+    "Scan your roof plan on phone, tablet or desktop. AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting in stages - you review the detected outline, correct anything, and swap components before anything is priced.",
   alternates: {
     canonical: "https://quote-core.com/features/ai-scan-assist",
     languages: hreflangLanguages("/features/ai-scan-assist"),
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "AI Scan Assist for Roof Plans",
     description:
-      "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting from your uploaded plan. Verify, adjust and swap components.",
+      "Scan a roof plan on any device. AI identifies roof areas, ridges, hips, valleys, barges and spouting - you verify, adjust and swap components.",
     url: "https://quote-core.com/features/ai-scan-assist",
     siteName: "QuoteCore+",
     type: "website",
@@ -36,7 +36,7 @@ const softwareSchema = {
   description: "AI Scan Assist identifies multiple roof areas, ridges, hips, valleys, barges and spouting from uploaded roof plans. Users verify, adjust, swap Smart Components and carry everything into a priced quote.",
   url: `${SITE_URL}/features/ai-scan-assist`,
   publisher: { "@id": `${SITE_URL}/#organization` },
-  offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "14-day free trial with 20 AI scan points included, no credit card required" },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free tools with no signup; paid plans from $19/month include AI scan points and a 30-day money-back guarantee" },
 };
 
 const breadcrumbSchema = {
@@ -82,7 +82,15 @@ const faqSchema = {
       name: "How many AI scan points do I get?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "The 14-day free trial includes 20 AI scan points. Paid plans include 50 (Pro) or 100 (Pro Plus) AI scan points. Additional scan points can be purchased if needed.",
+        text: "Paid plans include 50 (Pro) or 100 (Pro Plus) AI scan points. Additional scan points can be purchased if needed.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Does AI Scan Assist work on mobile?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. The staged scan workflow - upload, scan, review and correct the outline, component detection - runs on phones and tablets as well as desktop. Scan the plan on site and continue the job on any device.",
       },
     },
   ],
@@ -92,7 +100,8 @@ const faqs = [
   { q: "What does AI Scan Assist detect on a roof plan?", a: "AI Scan Assist identifies multiple roof outlines/areas (which you can name and assign different pitches, materials and components to), plus ridges/ridge capping, hips, valleys, barges and spouting. Each detected element is a placeholder you can swap to any saved Smart Component." },
   { q: "Can I correct what AI Scan Assist finds?", a: "Yes. Every detected element is a placeholder. You can adjust measurements, swap any placeholder to a different Smart Component via dropdown (quantities, labour, waste and pricing recalculate automatically), and add any components AI does not detect such as flashings, downpipes, parapet caps or change-of-pitch flashings." },
   { q: "Is AI Scan Assist required?", a: "No. AI Scan Assist is an optional accelerator. You can skip it entirely and use manual digital takeoff to draw everything yourself. Both paths produce the same result - a complete, priced roof takeoff." },
-  { q: "How many AI scan points do I get?", a: "The 14-day free trial includes 20 AI scan points. Paid plans include 50 (Pro) or 100 (Pro Plus) AI scan points. Additional scan points can be purchased if needed." },
+  { q: "How many AI scan points do I get?", a: "Paid plans include 50 (Pro) or 100 (Pro Plus) AI scan points. Additional scan points can be purchased if needed." },
+  { q: "Does AI Scan Assist work on mobile?", a: "Yes. The staged scan workflow - upload, scan, review and correct the outline, component detection - runs on phones and tablets as well as desktop. Scan the plan on site and continue the job on any device." },
 ];
 
 export default function AIScanAssistPage() {
@@ -111,20 +120,20 @@ export default function AIScanAssistPage() {
           <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-              AI Scan Assist: from plan to priced takeoff in seconds.
+              AI Scan Assist: scan the plan, review the result, keep control.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
-              Upload a roof plan and AI identifies multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each area, assign different pitches and materials, then verify and adjust everything manually. Each detected element is a placeholder you can swap to any saved Smart Component.
+              Upload a roof plan on phone, tablet or desktop and scan it in stages: AI Scan Assist detects the roof outline for you to review and correct, then identifies roof areas, ridges, hips, valleys, barges and spouting on the corrected geometry. Name each area, assign different pitches and materials, then verify and adjust everything manually. Each detected element is a placeholder you can swap to any saved Smart Component.
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-                Start free trial
+                Get started
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
                 All features
               </Link>
             </div>
-            <p className="mt-3 text-sm text-zinc-500">14-day trial, 20 AI scan points included, no card required</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools, no signup. Paid plans include 50-100 AI scan points.</p>
           </div>
         </section>
 
@@ -168,8 +177,8 @@ export default function AIScanAssistPage() {
             <h2 className="text-2xl font-semibold sm:text-3xl">How it works</h2>
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { num: "1", title: "Upload plan", text: "Upload a roof plan PDF or image. AI Scan Assist starts from the same upload as manual takeoff." },
-                { num: "2", title: "AI identifies elements", text: "AI detects roof areas, ridges, hips, valleys, barges and spouting. Each is a placeholder." },
+                { num: "1", title: "Upload plan", text: "Upload a plan image or a multi-page PDF (e.g. council plans) on phone, tablet or desktop and pick the page you need - it is converted to an image automatically. AI Scan Assist starts from the same upload as manual takeoff." },
+                { num: "2", title: "Review the outline, AI identifies elements", text: "First, review and correct the detected roof outline - drag vertices to match the plan. Then AI detects ridges, hips, valleys, barges and spouting on the corrected geometry. Each is a placeholder." },
                 { num: "3", title: "Verify and swap", text: "Adjust measurements, swap any placeholder to a saved Smart Component. Quantities, labour, waste and pricing recalculate automatically." },
                 { num: "4", title: "Add and carry to quote", text: "Add any non-detected components. Everything carries directly into your quote - no copy-pasting." },
               ].map((step) => (
@@ -202,7 +211,7 @@ export default function AIScanAssistPage() {
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm font-medium text-zinc-900">Accuracy</td><td className="px-5 py-3 text-sm text-zinc-700">AI suggests, you verify and adjust</td><td className="px-5 py-3 text-sm text-zinc-500">You draw exactly what you see</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm font-medium text-zinc-900">Component swapping</td><td className="px-5 py-3 text-sm text-zinc-700">Swap any placeholder via dropdown</td><td className="px-5 py-3 text-sm text-zinc-500">Assign components as you draw</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm font-medium text-zinc-900">Adding non-detected items</td><td className="px-5 py-3 text-sm text-zinc-700">Add flashings, downpipes, etc after AI runs</td><td className="px-5 py-3 text-sm text-zinc-500">Draw and assign everything yourself</td></tr>
-                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm font-medium text-zinc-900">Cost</td><td className="px-5 py-3 text-sm text-zinc-700">Uses AI scan points (20 trial, 50-100 paid)</td><td className="px-5 py-3 text-sm text-zinc-500">No scan points used</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm font-medium text-zinc-900">Cost</td><td className="px-5 py-3 text-sm text-zinc-700">Uses AI scan points (50-100 paid)</td><td className="px-5 py-3 text-sm text-zinc-500">No scan points used</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm font-medium text-zinc-900">Result</td><td className="px-5 py-3 text-sm text-zinc-700">Complete, priced roof takeoff</td><td className="px-5 py-3 text-sm text-zinc-500">Complete, priced roof takeoff</td></tr>
               </tbody>
             </table>
@@ -249,10 +258,10 @@ export default function AIScanAssistPage() {
         {/* CTA */}
         <section className="relative overflow-hidden bg-white py-16 sm:py-20">
           <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold sm:text-4xl">Try AI Scan Assist free for 14 days</h2>
-            <p className="mt-4 text-base text-zinc-600">20 AI scan points included. No card required.</p>
+            <h2 className="text-3xl font-semibold sm:text-4xl">Try AI Scan Assist in the paid app</h2>
+            <p className="mt-4 text-base text-zinc-600">Paid plans include 50 (Pro) or 100 (Pro Plus) AI scan points. 30-day money-back guarantee.</p>
             <a href="https://app.quote-core.com/signup?utm_source=feature-ai-scan-assist" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
-              Start free trial
+              Get started
             </a>
           </div>
         </section>

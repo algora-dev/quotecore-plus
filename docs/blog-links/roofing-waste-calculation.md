@@ -34,13 +34,14 @@ Source: `app/(marketing)/blog/[slug]/content/roofing-waste-calculation.tsx`
 |---|---|
 | /features/smart-components | Smart Components™ |
 
-## Inbound in-article links (4)
+## Inbound in-article links (5)
 
 | From | Anchor used |
 |---|---|
 | /blog/how-to-do-a-roof-takeoff | roofing waste calculation |
 | /blog/how-to-estimate-roofing-materials | how to calculate roofing waste |
 | /blog/how-to-estimate-roofing-materials | our waste calculation guide |
+| /blog/how-to-measure-a-roof-from-a-pdf-plan | roofing waste calculation guide |
 | /blog/how-to-reduce-roofing-waste | how to calculate roofing waste |
 
 External links in source: 1

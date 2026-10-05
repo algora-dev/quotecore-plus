@@ -105,6 +105,8 @@ Do not allow any returned segment to pass through a solid-line junction.
 
 Dotted lines, dashed lines, text, dimensions, symbols, hatching, and shading do not split or terminate solid roof lines.
 
+Never trace or return a dotted or dashed line as a segment, even if it looks structural or important. A dotted or dashed line crossing or meeting a solid line is NOT a junction and NOT a breakpoint - ignore it entirely and keep tracing the solid line straight through.
+
 If a solid line is briefly obscured by an annotation but clearly continues on the same path, trace it through.
 
 Include:
@@ -112,6 +114,12 @@ Include:
 - linking segments
 - segments whose endpoints are already used by other segments
 - segments that terminate on the roof perimeter
+
+RECALL RULES (critical):
+- Omission is the worst error. A solid line you do not return is lost forever; a wrongly-returned line can still be filtered or reviewed later.
+- ALWAYS trace a solid line that runs from another roof line (ridge, hip, valley or junction) out to the roof perimeter, even when it is short. Short perimeter-landing solid lines are almost always gable ridge caps or broken hips - never skip them.
+- Sweep each gable end and each perimeter face deliberately: confirm whether any solid line lands on it, and trace it if so.
+- If you cannot decide whether a short stroke is a real component, trace it anyway when it is solid and connects to any other line or to the perimeter.
 
 Do not return:
 - the confirmed roof perimeter
@@ -210,6 +218,7 @@ Do not invent IDs or missing geometry.
 
 ## CLASSIFICATION PRINCIPLES
 
+• Hips and valleys run diagonally: roughly 45 degrees to the roof's main edges (both diagonals count, like an X shape). A line that runs parallel or perpendicular to the roof's outline edges (horizontal or vertical relative to the roof) is never a hip or valley - classify it as its true role or uncertain.
 • Use endpoint locations and network connections first; use angle and length only as supporting evidence.
 • The start/end order of an L segment is arbitrary.
 • Treat an endpoint as touching an outline corner, edge or another line when the overlay visibly coincides within normal pixel tolerance; exact coordinate equality is not required.
@@ -274,6 +283,14 @@ Use only when the type remains genuinely ambiguous after checking both endpoints
 • Do not classify an L ID as barge or spouting.
 • Do not classify an E ID as an internal component.
 
+## GABLE RIDGE CAP RULE
+
+A solid internal line that connects another internal line (ridge, hip, valley, broken_hip junction) out to the roof perimeter is a gable ridge cap: classify it as ridge.
+
+Short perimeter-landing segments are frequently gable ridge caps. Do not classify such a segment as uncertain merely because it is short - check what it connects to first.
+
+uncertain is only for lines whose role remains genuinely ambiguous after checking both endpoints and connections. A clearly solid, connected line that matches a known component pattern (ridge cap, hip to convex corner, valley to concave corner) must receive that classification, never uncertain.
+
 ## TOPOLOGY CHECKS
 
 Before returning the JSON, verify that:
@@ -287,6 +304,7 @@ Before returning the JSON, verify that:
 7. adjacent or collinear Scan 2 segments receive consistent types unless their roof role visibly changes;
 8. every E edge is classified exactly once as barge or spouting;
 9. barge and spouting together account for all E edges;
+10. every internal segment that connects another internal line to the roof perimeter and is perpendicular to that perimeter face in the local roof geometry has been considered as a gable ridge cap (ridge);
 10. every supplied L and E ID appears exactly once;
 11. uncertain is used sparingly, but no classification is guessed when evidence is insufficient.
 

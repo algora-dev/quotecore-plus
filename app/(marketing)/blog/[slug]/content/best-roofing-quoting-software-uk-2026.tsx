@@ -19,7 +19,7 @@ export default function Post() {
       <p>Material calculations compound across components. A standard re-roof with concrete interlocking tiles needs tiles, ridge tiles, hip tiles where applicable, breathable membrane, 25mm x 50mm battens at calculated centres, tile clips, nails, lead flashing, and dry ridge or mortar systems. Each has a coverage rate, a waste factor, and a price that shifts with suppliers.</p>
       <p>Scaffold is a significant line item that customers question. On a typical two-storey semi, scaffold hire might run £600 to £1,200. Customers rarely understand why it costs what it does. A quoting tool that lets you present scaffold as a clear, justified line item reduces the conversations that stall a sale.</p>
       <p>Generic quoting apps - built for "trades" broadly - miss most of this. They give you a blank line-item form and leave the complexity to you.</p>
-      <p>If you are currently managing roofing quotes in a spreadsheet, see our breakdown of <a href="/blog/roofing-quoting-software-vs-spreadsheets">roofing quoting software vs spreadsheets</a> - including where spreadsheets genuinely hold up and where they start costing you time and jobs. For a complete guide to the pricing process itself, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>.</p>
+      <p>If you are currently managing roofing quotes in a spreadsheet, see our breakdown of <a href="/blog/roofing-quoting-software-vs-spreadsheets">roofing quoting software vs spreadsheets</a> - including where spreadsheets genuinely hold up and where they start costing you time and jobs. For a complete guide to the pricing process itself, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>. And if you are setting up on your own rather than switching an established business, our guide to <a href="/blog/how-to-start-a-roofing-business-uk">starting a roofing business in the UK</a> covers quoting from day one.</p>
 
       <hr />
 
@@ -44,7 +44,7 @@ export default function Post() {
               ["Workflow from quote to invoice", "Keeps the accepted quote connected through job management and invoicing"],
               ["Mobile-friendly", "Works on site, in a van, not just at a desk"],
               ["UK pricing and VAT", "Handles UK tax requirements without workarounds"],
-              ["Free trial", "Low-risk way to test before committing"],
+              ["Free trial or money-back guarantee", "Low-risk way to test before committing"],
             ].map(([feature, why]) => (
               <tr key={feature}>
                 <td className="px-4 py-3 font-medium text-zinc-800">{feature}</td>
@@ -63,13 +63,13 @@ export default function Post() {
 
       <h3>1. QuoteCore+</h3>
       <p><em>Best for: UK roofers and construction contractors who quote from architectural plans and need a complete workflow from measurement to invoice.</em></p>
-      <p>QuoteCore+ is a construction quoting platform built for UK contractors, designed around the full workflow that happens between site visit, quote, material orders, job management and invoicing. It was shaped by real roofing experience - not adapted from a generic invoicing tool. <a href="/blog/built-by-a-roofer">Read the full story of how QuoteCore+ was built from inside the industry</a>.</p>
+      <p>QuoteCore+ is <a href="/construction-quoting-software">construction quoting software for contractors</a> in the UK, designed around the full workflow that happens between site visit, quote, material orders, job management and invoicing. It was shaped by real roofing experience - not adapted from a generic invoicing tool. <a href="/blog/built-by-a-roofer">Read the full story of how QuoteCore+ was built from inside the industry</a>.</p>
       <p>The starting point is digital takeoff. You upload a roof plan directly into the platform and AI Assist scans it to measure roof sections, hips, valleys, ridges, and components - without printing anything or transferring numbers between tools. This is particularly useful when quoting from architectural drawings provided by a homeowner, builder, or project manager, where site access may not yet be possible. For a free version that handles manual measurements, try the <a href="/free-roofing-takeoff-builder">free Roof Takeoff Builder</a>.</p>
       <p>From the takeoff, you build the quote directly. QuoteCore+ gives you full control over what the customer sees - line items, pricing structure, and scope - while keeping the measurement data connected throughout. Quotes are formatted professionally and ready to send.</p>
       <p>Once the quote goes out, acceptance tracking runs automatically. You receive an alert by email and in your QuoteCore+ account when a quote is accepted or declined. Nothing gets lost in a pile of emails.</p>
       <p>From an accepted quote, you create material orders directly - including custom flashing details you can draw and store in the flashings drawer. The job then stays connected through job management and invoicing.</p>
 
-      <p><strong>Pricing:</strong> QuoteCore+ has monthly plans and a 14-day free trial with no card required. <Link href="/pricing">See current pricing</Link>.</p>
+      <p><strong>Pricing:</strong> QuoteCore+ has monthly plans from £19/month, free tools with no signup, and a 30-day money-back guarantee on every plan. <Link href="/pricing">See current pricing</Link>.</p>
 
       <p><strong>Pros:</strong></p>
       <ul>
@@ -81,7 +81,7 @@ export default function Post() {
         <li>Material orders directly from accepted quotes</li>
         <li>Works across construction trades beyond roofing</li>
         <li>Built specifically for UK contractors and UK workflows</li>
-        <li>Free 14-day trial, no card required</li>
+        <li>Free tools with no signup; 30-day money-back guarantee on paid plans</li>
       </ul>
 
       <p><strong>Cons:</strong></p>
@@ -131,7 +131,7 @@ export default function Post() {
         />
       </div>
       
-      <p><a href="/free-trial">Start a free 14-day trial</a>. From complex plan to quote in under 3 minutes for less than a dollar.</p>
+      <p><a href="/free-trial">Get started with QuoteCore+</a>. From complex plan to quote in under 3 minutes for less than a dollar.</p>
 
       <hr />
 
@@ -335,7 +335,7 @@ export default function Post() {
               ["Job scheduling", "✅", "Basic", "Strong", "Strong", "Basic", "✅", "Basic"],
               ["Team management", "✅", "Basic", "Strong", "Strong", "Basic", "✅", "Basic"],
               ["Job costing", "Basic", "Basic", "✅", "✅", "Basic", "Strong", "Basic"],
-              ["Free trial", "✅ 2wk", "✅ free tier", "❌", "❌", "❌", "❌", "✅ free tier"],
+              ["Free option", "✅ free tools", "✅ free tier", "❌", "❌", "❌", "❌", "✅ free tier"],
               ["Starting price", "£19/mo", "Free/£29.99", "£29/user", "~£39/mo", "~£20/mo", "~£35/mo", "Free/£39.99"],
             ].map(([feature, ...values]) => (
               <tr key={feature}>
@@ -384,7 +384,7 @@ export default function Post() {
       <p>No. Modern quoting software is designed to be usable from day one. If you can use email and a computer, you can use most platforms on this list. The best ones require no setup beyond entering your pricing templates.</p>
 
       <h3>Is there free roofing quoting software for UK roofers?</h3>
-      <p>QuoteCore+ offers a 14-day free trial with no credit card required. Sleepless Tradesman has a free tier with a limited number of quotes per month. Most other platforms on this list do not offer a free option, though some include a trial period.</p>
+      <p>QuoteCore+ has free tools with no signup, and paid plans are backed by a 30-day money-back guarantee. Sleepless Tradesman has a free tier with a limited number of quotes per month. Most other platforms on this list do not offer a free option, though some include a trial period.</p>
 
       <h3>What should a professional roofing quote include?</h3>
       <p>A professional roofing quote should include: a clear scope of work, itemised materials and labour, scaffold costs as a separate line item, your company details and accreditations, a validity period, and a way for the customer to accept or decline. Quotes that include a breakdown of why costs are what they are - particularly scaffold - reduce the back-and-forth that slows down job acceptance.</p>

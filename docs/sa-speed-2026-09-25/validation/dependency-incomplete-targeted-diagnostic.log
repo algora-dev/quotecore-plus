@@ -1,0 +1,73 @@
+Dependency-incomplete targeted semantic diagnostic; NOT a project typecheck.
+All graph diagnostics: 242; changed-file diagnostics: 70
+app/api/smart-assistant/turn/route.ts(1,43): error TS2307: Cannot find module 'next/server' or its corresponding type declarations.
+app/components/smart-assistant/v2/V2ChatClient.tsx(2,58): error TS2307: Cannot find module 'react' or its corresponding type declarations.
+app/components/smart-assistant/v2/V2ChatClient.tsx(3,40): error TS2307: Cannot find module 'next/navigation' or its corresponding type declarations.
+app/components/smart-assistant/v2/V2ChatClient.tsx(14,15): error TS2307: Cannot find module './assistant.module.css' or its corresponding type declarations.
+app/components/smart-assistant/v2/V2ChatClient.tsx(59,18): error TS7006: Parameter 'p' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(197,30): error TS7006: Parameter 'p' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(265,43): error TS7006: Parameter 'c' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(296,46): error TS7006: Parameter 'a' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(297,43): error TS7006: Parameter 'c' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(319,84): error TS7006: Parameter 'c' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(320,55): error TS7006: Parameter 'm' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(320,88): error TS7006: Parameter 'm' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(321,61): error TS7006: Parameter 'c' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(322,12): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(322,12): error TS2875: This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.
+app/components/smart-assistant/v2/V2ChatClient.tsx(323,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(323,136): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(323,166): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(323,271): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(324,14): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(325,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(329,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(330,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(330,51): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(331,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(332,41): error TS7006: Parameter 'c' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(333,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(334,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(335,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(337,40): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(337,59): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(337,64): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(337,167): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(337,171): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(340,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(340,37): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(340,117): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(341,31): error TS7006: Parameter 'm' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(341,36): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(341,52): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(341,153): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(342,261): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(344,43): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(344,110): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(344,115): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(345,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(346,16): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(346,163): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(347,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(348,33): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(348,235): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(349,26): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(349,193): error TS7006: Parameter 'e' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(349,235): error TS7006: Parameter 'e' implicitly has an 'any' type.
+app/components/smart-assistant/v2/V2ChatClient.tsx(352,23): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(352,47): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(352,57): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(352,189): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(353,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(357,7): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(358,5): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/components/smart-assistant/v2/V2ChatClient.tsx(359,3): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+app/lib/smart-assistant/orchestrator.ts(9,37): error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+app/lib/smart-assistant/speed/config.ts(3,10): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+app/lib/smart-assistant/speed/config.ts(6,28): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+app/lib/smart-assistant/speed/facts.server.ts(2,37): error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+app/lib/smart-assistant/speed/operations.server.ts(2,37): error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+app/lib/smart-assistant/turn.ts(60,37): error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+app/lib/smart-assistant/turn.ts(112,17): error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+app/lib/smart-assistant/v2/database.ts(3,37): error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+

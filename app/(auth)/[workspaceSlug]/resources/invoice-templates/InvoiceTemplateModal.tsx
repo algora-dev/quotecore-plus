@@ -1,4 +1,6 @@
 'use client';
+import '@/app/components/ui/v2/qc-library.css';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect } from 'react';
 import {
   createInvoiceTemplate,
@@ -86,14 +88,14 @@ export function InvoiceTemplateModal({ template, onSaved, onClose }: Props) {
   const hasPayment = payAccountName || payAccountNumber || paySortCode;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center backdrop-blur-sm bg-black/40 p-4 overflow-y-auto">
+    <QcJourneyDialog label="Invoice Template Modal" size="lg">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-slate-200 my-8">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
           <h2 className="text-lg font-semibold text-slate-900">
             {isNew ? 'New Invoice Template' : `Edit - ${template.name}`}
           </h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+          <button aria-label="Close" data-qc-variant="ghost" type="button" onClick={onClose} className="qc-button qc-flow-control qc-library-control ">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -105,13 +107,13 @@ export function InvoiceTemplateModal({ template, onSaved, onClose }: Props) {
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Template Name <span className="text-red-500">*</span>
           </label>
-          <input
+          <input aria-label="Template Name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Standard UK Invoice, Stripe Pay, etc."
             autoFocus
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+            className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
           />
         </div>
 
@@ -122,11 +124,11 @@ export function InvoiceTemplateModal({ template, onSaved, onClose }: Props) {
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`py-2.5 px-3 text-sm font-medium transition-colors ${
+              className={"qc-flow-control qc-library-choice " + (`py-2.5 px-3 text-sm font-medium transition-colors ${
                 tab === t.key
                   ? 'border-b-2 border-orange-500 text-orange-600'
                   : 'text-slate-500 hover:text-slate-900'
-              }`}
+              }`)}
             >
               {t.label}
             </button>
@@ -140,40 +142,40 @@ export function InvoiceTemplateModal({ template, onSaved, onClose }: Props) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Business Name</label>
-                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)}
+                  <input aria-label="Business Name" type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="e.g. Smith Roofing Ltd"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                    className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                  <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)}
+                  <input aria-label="Email" type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)}
                     placeholder="hello@business.com"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                    className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                  <input type="tel" value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)}
+                  <input aria-label="Phone" type="tel" value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)}
                     placeholder="+44 7700 000000"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                    className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Logo URL <span className="text-slate-400 font-normal">(opt)</span></label>
-                  <input type="url" value={companyLogoUrl} onChange={(e) => setCompanyLogoUrl(e.target.value)}
+                  <input aria-label="Logo URL (opt)" type="url" value={companyLogoUrl} onChange={(e) => setCompanyLogoUrl(e.target.value)}
                     placeholder="https://…"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                    className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
-                <textarea value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)}
+                <textarea aria-label="Address" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)}
                   rows={3} placeholder="Your business address"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Footer Text <span className="text-slate-400 font-normal">(opt)</span></label>
-                <input type="text" value={footerText} onChange={(e) => setFooterText(e.target.value)}
+                <input aria-label="Footer Text (opt)" type="text" value={footerText} onChange={(e) => setFooterText(e.target.value)}
                   placeholder="e.g. Thank you for your business!"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
               </div>
 
               {/* Live preview */}
@@ -202,35 +204,35 @@ export function InvoiceTemplateModal({ template, onSaved, onClose }: Props) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Account Name</label>
-                  <input type="text" value={payAccountName} onChange={(e) => setPayAccountName(e.target.value)}
+                  <input aria-label="Account Name" type="text" value={payAccountName} onChange={(e) => setPayAccountName(e.target.value)}
                     placeholder="e.g. Smith Roofing Ltd"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                    className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
                   <p className="text-xs text-slate-400 mt-1">The name on your bank account / payment recipient</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
-                  <input type="text" value={payBankName} onChange={(e) => setPayBankName(e.target.value)}
+                  <input aria-label="Bank Name" type="text" value={payBankName} onChange={(e) => setPayBankName(e.target.value)}
                     placeholder="e.g. Barclays"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                    className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Account Number</label>
-                  <input type="text" value={payAccountNumber} onChange={(e) => setPayAccountNumber(e.target.value)}
+                  <input aria-label="Account Number" type="text" value={payAccountNumber} onChange={(e) => setPayAccountNumber(e.target.value)}
                     placeholder="12345678"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none" />
+                    className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Sort Code</label>
-                  <input type="text" value={paySortCode} onChange={(e) => setPaySortCode(e.target.value)}
+                  <input aria-label="Sort Code" type="text" value={paySortCode} onChange={(e) => setPaySortCode(e.target.value)}
                     placeholder="00-00-00"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none" />
+                    className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Payment Link <span className="text-slate-400 font-normal">(optional)</span></label>
-                <input type="url" value={payLink} onChange={(e) => setPayLink(e.target.value)}
+                <input aria-label="Payment Link (optional)" type="url" value={payLink} onChange={(e) => setPayLink(e.target.value)}
                   placeholder="https://pay.stripe.com/… or paypal.me/…"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
                 <p className="text-xs text-slate-400 mt-1">Shown as a &ldquo;Pay Online&rdquo; button on the invoice</p>
               </div>
 
@@ -271,15 +273,15 @@ export function InvoiceTemplateModal({ template, onSaved, onClose }: Props) {
               </p>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Default Notes</label>
-                <textarea value={defaultNotes} onChange={(e) => setDefaultNotes(e.target.value)}
+                <textarea aria-label="Default Notes" value={defaultNotes} onChange={(e) => setDefaultNotes(e.target.value)}
                   rows={4} placeholder="e.g. All prices include VAT. Thank you for your business."
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Default Terms</label>
-                <textarea value={defaultTerms} onChange={(e) => setDefaultTerms(e.target.value)}
+                <textarea aria-label="Default Terms" value={defaultTerms} onChange={(e) => setDefaultTerms(e.target.value)}
                   rows={4} placeholder="e.g. Payment due within 14 days of invoice date. Late payment fees may apply."
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
+                  className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-none focus:border-orange-500 focus:outline-none" />
               </div>
             </>
           )}
@@ -288,16 +290,16 @@ export function InvoiceTemplateModal({ template, onSaved, onClose }: Props) {
         {/* Footer */}
         {error && <p className="px-6 text-sm text-red-600">{error}</p>}
         <div className="px-6 pb-5 flex gap-3 border-t border-slate-100 pt-4">
-          <button type="button" onClick={onClose}
-            className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <button data-qc-variant="ghost" type="button" onClick={onClose}
+            className="qc-button qc-flow-control qc-library-control flex-1">
             Cancel
           </button>
-          <button type="button" onClick={handleSave} disabled={saving || !name.trim()}
-            className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
+          <button data-qc-variant="primary" type="button" onClick={handleSave} disabled={saving || !name.trim()}
+            className="qc-button qc-flow-control qc-library-control flex-1">
             {saving ? 'Saving…' : isNew ? 'Create Template' : 'Save Changes'}
           </button>
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

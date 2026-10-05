@@ -1,5 +1,40 @@
 # Smoke Test Checklist
 
+### Pending verification (PAID-ONLY CHANGEOVER, pushed 2026-09-16, main `91eed806`)
+
+**TRIAL REMOVAL - APP + DOCS (test on app.quote-core.com once deployed)**
+- [ ] /signup: copy says "Plans from $19/mo · 30-day money-back guarantee · Cancel anytime" - zero mention of a free trial
+- [ ] Email signup + Google signup both still work end to end (account created, onboarding completes)
+- [ ] In-app: no trial countdown banner anywhere; billing panel shows plan cards + Stripe checkout only
+- [ ] Comped users (10 companies, incl. test/Fig Tree/ProTech/Mitch cook/GCR): log in -> full Pro access, no upgrade nagging
+- [ ] Free tools sweep (approx 15 tools): free-roof-takeoff, free-cladding-takeoff, measurement-to-quote-tool, takeoff-demo, free-quote-generator, free-invoice-generator, free-purchase-order-generator, free-margin-calculator, free-calculators (roofing/cladding/flooring/brick): every CTA reads as paid ("plans from $19/mo", "30-day money-back guarantee"), no "free trial" anywhere, no dead /free-trial links
+- [ ] SaveToAppButton flow from a free tool: still hands off to signup, copy mentions picking a plan
+- [ ] Docs site: /docs/account/trial now a "Plans & billing" page (same URL); zero trial mentions across docs except the changelog
+- [ ] KNOWN LEFTOVER (Ron's slice): /free-trial marketing page still live - to be retired/redirected to /pricing
+- [ ] KNOWN LEFTOVER (mine): /terms legal wording still references trial - awaiting Shaun's direction
+
+**PAYWALL + FREE-TOOLS FUNNEL (pushed 2026-09-16)**
+- [ ] New signup (email): signup -> onboarding -> paywall at /paywall (Starter/Pro/Pro Plus cards, 30-day money-back guarantee badge, "Need something bigger? Get in touch", "Done-For-You setup - $499/$999" links)
+- [ ] New signup (Google): same path, same paywall
+- [ ] Paywall "No thanks, I'll keep using the free tools" -> quote-core.com/free-tools, no account state written
+- [ ] Pay with a Stripe test card -> checkout success -> lands in workspace with the paid tier's features
+- [ ] Comped user (Pro until 16 Oct): logs in straight to workspace, never sees paywall; visiting /paywall directly redirects to workspace
+- [ ] Free tool results modal (quote/invoice/PO generators): "saved in your account once you sign up and pick a plan" caption + "Try the next tool" cross-sell row (quote->invoice->PO->quote chain)
+- [ ] Save-to-app handoff from a free tool with a fresh account -> signup -> paywall -> after payment the pending save lands in the workspace
+- [ ] Known behaviour: right after Stripe checkout, a very fast redirect can land on the paywall for a second before the webhook flips the account active (self-heals on refresh)
+
+### Pending verification (test on quote-core.com main, 2026-09-04 — commits be60aea7, ed2ce178, 5152185d, 3781ddbc)
+
+**FLOORING TAKEOFF + GUIDE FLOWS + SUPPLIER IMAGES (2026-09-04)**
+- [ ] /free-flooring-takeoff loads, wizard works: unit → our 8 defaults (Timber Plank/Carpet/Tile/Underlay/Skirting/Scotia/Transition/Adhesive) or build own 7 → PDF/image upload → calibrate → measure → report says FLOORING TAKEOFF REPORT
+- [ ] Free cladding + flooring Guide Me: auto-opens ~300ms after entering tool; trade-specific steps (area-first, no roofing wording); "Measurements land where you are clicked" step present
+- [ ] Roof takeoff guide unchanged except selected-area one-liner in Edit step
+- [ ] Polygon hint: select Area → Polygon, place ≥1 point → blue chip shows point count + "click back on your first point to close" (free tools + supplier tools)
+- [ ] Supplier tools (apex/vertex/oakline on quote-core.com): Guide Me shows system-first steps for cladding/flooring; roofing unchanged
+- [ ] Send-to-supplier: measure on 1-2 plan pages → Finish and Save → Request supplier quote → modal has "<plan> - with drawings.png" + "<plan> - original.png" pre-attached (up to 10 files)
+- [ ] Free tools hub /free-tools: cladding + flooring accordions sit directly under the roof takeoff accordion; brick wall + tiled floor icons; flooring findable via Smart Tool Finder ("measure floors from plan")
+- [ ] quote-core.com/sitemap.xml contains /free-flooring-takeoff and /free-cladding-takeoff
+
 ## Status: `main` at `13776b8` = `development` at `13776b8` (synced, 2026-07-14)
 
 ### Pending verification (test on feature/ai-takeoff preview URL)
@@ -280,6 +315,51 @@
 - [ ] Create Template → goes STRAIGHT to the builder (selector page removed)
 - [ ] Builder "Back" and "Cancel" return to the templates list (no redirect loop)
 
+### Pending verification (Takeoff tools batch - 2026-08-30 session, commits `25a2dc86`..`6419e08d` on main + LOCAL-ONLY taller change)
+
+**A. Convert to Quote reroute (free roof takeoff, `25a2dc86`)**
+- [ ] Finish a takeoff on /free-roof-takeoff -> orange CTA reads "Convert to quote - free quote generator"
+- [ ] Clicking it lands on /free-quote-generator with lines prefilled (desc, qty, unit, rate) and total carried over
+- [ ] "Save my takeoff" app handoff still works alongside it
+
+**B. Use-an-existing-area dropdown (main app + supplier tool, `4afe0100`)**
+- [ ] Main app: draw 2+ areas, add an area-type component -> "Use an existing area…" dropdown lists each with value + pitch
+- [ ] Applying adds an entry instantly (no re-draw); dropdown resets to placeholder; can apply same area to multiple components
+- [ ] Main app: Finish and Save SUCCEEDS (no "invalid input syntax for type uuid" error - `fc36a8f4` fix)
+- [ ] Supplier tool: same dropdown works in its takeoff stage
+
+**C. Corrugate pitch display fix (main app, `6419e08d`)**
+- [ ] Apply area (e.g. 68.16 m² @ 30°) to an area component -> builder entry reads `68.16 -> ~70.20 incl waste (30°)` (NOT 59.03)
+- [ ] Dropdown option label shows the pitched value (68.2 m², pitch 30°)
+- [ ] Final quantities/costs unchanged vs before the fix (same totals, only display differs)
+
+**D. Canvas sizing (wide = `6419e08d`, taller = `c8103e87`, both live)**
+- [ ] Wide: main app takeoff, /free-roof-takeoff, /free-cladding-takeoff and supplier tool canvases extend ~125% width
+- [ ] Taller: all four canvases ~20% taller, less scrolling before the plan fits (incl. cavity-battens-area batch, `c8103e87`)
+- [ ] Main app fit-to-screen: plan auto-fits largest size (up to 2x); resize browser window -> plan re-fits; manual zoom buttons stop auto re-fit
+
+**E. Main app UI (fc36a8f4)**
+- [ ] Pulsing orange "+ New Area" pill button in the areas panel (matches supplier/free tools)
+
+**F. Supplier pricing tool (6419e08d)**
+- [ ] Takeoff stage: no orange hover glows (black buttons glow Burton teal, blue glows blue)
+- [ ] Create a custom component in the takeoff stage, measure it, Finish -> it appears on the Custom components step (not dropped) with quantity carried over
+- [ ] Output screen: "+ Add a custom component" button returns to the custom step, add another, output updates
+- [ ] Custom step values (basis/qty) match what was measured
+
+**G. New cladding tool (/free-cladding-takeoff, `077716d6` + SEO `3e3f77ad`)**
+- [ ] Page loads with 3-step wizard (units -> components -> upload); wall terminology everywhere ("Wall Area", "North Elevation" placeholder, no "roof")
+- [ ] Default components: Building Wrap, Cavity Battens, Cladding Cedar/Corrugate, Window/Door Trim, Corner Trims, Soffit, Openings
+- [ ] Full run: upload elevation, calibrate, draw wall area, measure, Finish -> "WALL & CLADDING TAKEOFF REPORT", "Wall Areas & Components", "Total wall area", NO pitch language
+- [ ] Build-your-own components path works; report footer notes no pitch adjustment
+- [ ] Convert to quote + Save-to-app handoffs work; cross-links to/from /free-roof-takeoff present; sitemap/blog guides resolve
+
+**H. Free roof takeoff output fixes (last session, `b227eac8`+`1a652d1c`+`fe3ea1ce`)**
+- [ ] Two sibling areas with same name: components render under the CORRECT area only (no cross-duplication)
+- [ ] Area dropdown applies the selected sibling's value (not always the first)
+- [ ] Area-type entries show m² (not m); no literal "&amp;" in headings
+- [ ] Pulsing New Area button present
+
 ### Pending verification (Supplier Component System - Phases 1-10, main `a64a2b0`, 2026-07-27)
 
 **Prerequisites:**
@@ -477,3 +557,28 @@
 - [x] Banner: plural "components are ready" -> click routes to components page, banner clears
 - [x] Green "find your takeoff in Quotes -> Drafts" banner shows on components page/dashboard, dismissable
 - [x] Quote builder: areas pitched, components per-area/per-entry, final incl-waste values + spec-rate prices
+- [ ] /supplier-pricing-tool: Burton branding (logo + teal #012B39), GBP prices; pick CUPA slate on Roof Areas -> later groups filter to slate-compatible, CUPA Slate/Manthorpe items flagged Recommended, defaults pre-ticked; pick Marley Edgemere tile -> filters flip to tile + Marley Edgemere family
+
+- [ ] /supplier-pricing-tool/[supplierSlug]: add a supplier def in supplierDefs, confirm /supplier-pricing-tool/<slug> renders that branding + catalog (Burton = default route unchanged)
+
+### PDF UPLOAD (main 2ef75531, 2026-09-01)
+- [ ] App takeoff: upload multi-page PDF (12+ MB) -> page picker opens -> pick page -> converts to PNG -> calibrates + measures
+- [ ] Free roof takeoff + cladding takeoff: same PDF flow works
+- [ ] Supplier pricing tool: PDF plan upload -> pick page -> measure
+- [ ] Image upload still capped at 10 MB; PDF accepted up to 50 MB
+- [ ] Password-protected PDF shows friendly screenshot-instead message (no dead end)
+- [ ] Xero: Account > Integrations shows Connected (tenant name); quote Summary > Send to App > Export to Xero creates draft invoice (verify in Xero Contacts > All contacts > customer)
+- [ ] Dashboard: click Start measuring on the Measure a job card, fill job name + units, upload a plan/image, land on the takeoff canvas with the plan loaded (new digital quote created).
+- [ ] Quotes page: same Measure a job card shows above the list; full flow identical to dashboard (create -> land on takeoff canvas).
+- [ ] Q chat: ask "take me to quotes" / "where are my invoices" -> Q navigates the app there automatically (one short reply, no directions dump).
+- [ ] AI Takeoff scan2: run a plan with dotted/dashed plan lines on Medium - confirm dashed lines are removed early (server log \scan2 stroke-style: removed N dashed\) and do not appear as components or pink uncertain lines
+
+## Smart Assistant (Phase 1, 2026-09-18)
+- [x] Cross-tenant: match_sa_chunks as other-company user with foreign p_company returns 0 rows (PASS)
+- [x] Private conversations: other user sees only own conversations; assistant_configs cross-tenant read returns 0 rows (PASS)
+- [x] Flag-off admission: unflagged company user gets flag_off refusal from sa_admit_run (PASS)
+- [x] Duplicate submit: same clientRequestId replays as duplicate, no second run (PASS)
+- [x] Busy: second turn while run active refused run_in_progress; finish frees slot (PASS)
+- [x] Usage ledger: finished run writes exactly one assistant_usage_events row with token counts (PASS)
+- [x] Poisoned doc: chunk with script-tag content is invisible cross-tenant; SafeMessage renders escaped (PASS)
+- [ ] Live UI pass on RS Roofing: enable toggle at /account/smart-assistant, send a real turn in /[workspaceSlug]/assistant (Shaun)

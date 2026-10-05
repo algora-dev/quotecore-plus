@@ -1,0 +1,199 @@
+{
+  "method": "Actual source callbacks under deterministic state/ref evaluator. Effects/scheduling, network, native focus, Fabric geometry and persistence NOT tested. Calculation results compare the unchanged existing pure calculator, not an independent engineering certification.",
+  "tests": [
+    {
+      "name": "Inbox confirmed full result clears only successful selection",
+      "pass": true
+    },
+    {
+      "name": "Inbox partial result restores failed rows and keeps them selected",
+      "pass": true
+    },
+    {
+      "name": "Inbox network rejection rolls back locally without claiming server rollback",
+      "pass": true
+    },
+    {
+      "name": "Inbox HTTP failure rolls back locally without claiming server rollback",
+      "pass": true
+    },
+    {
+      "name": "Inbox old/unconfirmed response rolls back locally without claiming server rollback",
+      "pass": true
+    },
+    {
+      "name": "Inbox blocks duplicate submissions synchronously while request is pending",
+      "pass": true
+    },
+    {
+      "name": "Inbox delete cancellation never issues a request",
+      "pass": true
+    },
+    {
+      "name": "Inbox confirmed delete retains failed records and selection",
+      "pass": true
+    },
+    {
+      "name": "Inbox notification preference failure is visible and restores local value",
+      "pass": true
+    },
+    {
+      "name": "Drawing upload missing file validates before mutation",
+      "pass": true
+    },
+    {
+      "name": "Drawing upload oversize file validates before mutation",
+      "pass": true
+    },
+    {
+      "name": "Drawing upload wrong type validates before mutation",
+      "pass": true
+    },
+    {
+      "name": "Drawing upload success updates local library and reports completion",
+      "pass": true
+    },
+    {
+      "name": "Drawing upload plan-cap response keeps existing upgrade path",
+      "pass": true
+    },
+    {
+      "name": "Drawing upload provider failure remains within form",
+      "pass": true
+    },
+    {
+      "name": "Drawing deletion requires explicit confirmation and shows inline failure",
+      "pass": true
+    },
+    {
+      "name": "Drawing cap and storage guard still run before creating or uploading",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget uses existing hipValley/ridge calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget uses existing hipValley/ridge calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget uses existing rafterPitch/ridge calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget uses existing rafterPitch/changeOfPitch calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget uses existing rafterPitch/upstandOntoRoof calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget uses existing rafterPitch/roofIntoUpstand calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget rejects invalid pitch1=",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget rejects invalid pitch1=90",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget rejects invalid cornerAngle=0",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget rejects invalid cornerAngle=181",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget rejects invalid pitch2=bad",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorWidget applies selected bend with original close behaviour",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal uses existing hipValley/ridge calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal uses existing hipValley/ridge calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal uses existing rafterPitch/ridge calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal uses existing rafterPitch/changeOfPitch calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal uses existing rafterPitch/upstandOntoRoof calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal uses existing rafterPitch/roofIntoUpstand calculations",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal rejects invalid pitch1=",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal rejects invalid pitch1=90",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal rejects invalid cornerAngle=0",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal rejects invalid cornerAngle=181",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal rejects invalid pitch2=bad",
+      "pass": true
+    },
+    {
+      "name": "AngleCalculatorModal applies selected bend with original close behaviour",
+      "pass": true
+    },
+    {
+      "name": "Drawing tools keep adjusting-points guard before switching tools",
+      "pass": true
+    },
+    {
+      "name": "Drawing edit value invalid number stays open with inline error",
+      "pass": true
+    },
+    {
+      "name": "Drawing save-name validation cannot reach backend",
+      "pass": true
+    },
+    {
+      "name": "Tutorial pager preserves pages and exposes close in the shared footer",
+      "pass": true
+    },
+    {
+      "name": "Tutorial direct feature CTA preserves close then original route",
+      "pass": true
+    },
+    {
+      "name": "Quote header invalid logo never attempts storage",
+      "pass": true
+    },
+    {
+      "name": "Quote header failed save keeps fields and exposes retry feedback",
+      "pass": true
+    }
+  ],
+  "passed": 48,
+  "failed": 0
+}

@@ -65,6 +65,7 @@ export type ClientCapability =
   | 'voice' // voice in/out
   | 'sse' // can consume Server-Sent Events streaming
   | 'highlight' // can render UI highlight commands
+  | 'navigate' // can act on in-app navigation commands
   | 'markdown'; // can render markdown in chat bubbles
 
 // ---------------------------------------------------------------------------
@@ -199,6 +200,23 @@ export interface HighlightCommand {
 }
 
 /**
+ * Navigate command - tells the CLIENT to route the user to a page. Carries a
+ * semantic screenKey plus the slug-LESS in-app path (same convention as
+ * GuideStartCommand.startPage: e.g. "/quotes", "/resources"). The server
+ * only ever emits paths from the validated NAVIGABLE_PAGES allowlist - the
+ * model can request one by key, it can never inject an arbitrary path.
+ */
+export interface NavigateCommand {
+  type: 'navigate';
+  /** Semantic screen key of the destination (registry-validated). */
+  screenKey: ScreenKey;
+  /** Slug-less in-app path from the allowlist (client adds its workspace slug). */
+  path: string;
+  /** Short human reason ("Taking you to the Quotes page"). */
+  reason?: string;
+}
+
+/**
  * Guide-start command - tells the CLIENT step-engine to take over stepping for
  * a workflow the model just confirmed in Guide-me. Carries the semantic
  * workflowId (the client fetches the selector-free steps from
@@ -218,6 +236,7 @@ export type AssistantStreamEvent =
   | { type: 'token'; text: string }
   | { type: 'highlight'; command: HighlightCommand }
   | { type: 'guide_start'; command: GuideStartCommand }
+  | { type: 'navigate'; command: NavigateCommand }
   | { type: 'tool_call'; tool: string }
   | { type: 'error'; code: AssistantErrorCode; message: string }
   | { type: 'done'; messageId: string };

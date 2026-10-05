@@ -1,4 +1,5 @@
 'use client';
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/client';
@@ -57,13 +58,13 @@ export function LogoUploader({ companyId, currentLogoUrl, isOverStorage }: Props
   }
 
   return (
-    <div className="space-y-3">
+    <QcJourney><div className="space-y-3">
       <h3 className="text-sm font-semibold text-slate-900">Company Logo</h3>
       <p className="text-xs text-slate-500">
         This logo will appear on customer quotes. Recommended: 400×200px PNG with transparent background.
       </p>
       
-      <FileUploader
+      <FileUploader appearance="v2"
         accept="image/jpeg,image/png,image/webp"
         maxSize={2097152} // 2 MB
         onUpload={handleUpload}
@@ -72,6 +73,6 @@ export function LogoUploader({ companyId, currentLogoUrl, isOverStorage }: Props
         description="PNG, JPG or WebP (max 2 MB)"
         isOverStorage={isOverStorage}
       />
-    </div>
+    </div></QcJourney>
   );
 }

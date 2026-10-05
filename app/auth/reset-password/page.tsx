@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -50,9 +51,9 @@ export default function ResetPasswordPage() {
 
   if (status === 'success') {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <QcJourney><main className="qc-flow-auth flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center">
+          <div className="qc-flow-auth-card text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 flex items-center justify-center">
               <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -62,54 +63,54 @@ export default function ResetPasswordPage() {
             <p className="text-sm text-slate-500">Redirecting to login...</p>
           </div>
         </div>
-      </main>
+      </main></QcJourney>
     );
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <QcJourney><main className="qc-flow-auth flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img src="/logo.png" alt="QuoteCore" className="h-12 inline-block" />
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
+        <div className="qc-flow-auth-card">
           <h1 className="text-2xl font-semibold text-slate-900 mb-2 text-center">Set New Password</h1>
           <p className="text-sm text-slate-500 mb-6 text-center">Enter your new password below</p>
 
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4">
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">New Password</span>
-                <PasswordField
+                <PasswordField appearance="v2"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   minLength={8}
                   required
-                  inputClassName="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  inputClassName="qc-input w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="••••••••"
                 />
                 <p className="text-xs text-slate-500 mt-1">At least 8 characters</p>
               </label>
 
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Confirm Password</span>
-                <PasswordField
+                <PasswordField appearance="v2"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   minLength={8}
                   required
-                  inputClassName="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  inputClassName="qc-input w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="••••••••"
                 />
               </label>
 
               {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
-              <button
+              <button data-qc-variant="primary"
                 type="submit"
                 disabled={status === 'saving'}
-                className="w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                className="qc-flow-control qc-button w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
               >
                 {status === 'saving' ? 'Saving...' : 'Update Password'}
               </button>
@@ -117,6 +118,6 @@ export default function ResetPasswordPage() {
           </form>
         </div>
       </div>
-    </main>
+    </main></QcJourney>
   );
 }

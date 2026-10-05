@@ -575,7 +575,7 @@ function MarginCalculator() {
               inherits the default - type a margin into any line to override it, and clear the field to inherit the
               default again. The totals panel tracks total cost, gross profit, selling price and the blended margin
               across the whole quote, live as you type. It is the same per-line margin behaviour as the quote editor in
-              the full QuoteCore+ app - <Link href="/free-trial" className="text-[#BD4A1A] font-medium">try it free</Link> when you
+              the full QuoteCore+ app - <Link href="/signup" className="text-[#BD4A1A] font-medium">plans from $19/mo</Link> when you
               want margins, measurements, material orders and invoicing connected.
             </p>
           </div>

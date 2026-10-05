@@ -1,0 +1,46 @@
+{
+  "method": "TypeScript transpileModule syntax/transformation check only; not project type resolution or app build.",
+  "typescriptVersion": "5.8.3",
+  "results": [
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/OrderLayoutPickerModal.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/create/OrderLineByLineEditor.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/create/order-create-form.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/create/page.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/create/parts/AddItemModal.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/QuotePreview.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/components/SearchableFlashingSelect.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/components/ui/v2/QcDocumentWorkspace.tsx",
+      "errors": []
+    }
+  ]
+}

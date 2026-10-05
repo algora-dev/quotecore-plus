@@ -2,14 +2,19 @@
 
 import { useState, useTransition, useEffect } from 'react';
 import {
+  getFinderStats,
   getT1Stats,
   getT2Users,
+  type FinderSummary,
+  type FinderTopQuery,
+  type FinderClickedTool,
+  type FinderNoMatch,
   type T1ToolStat,
   type T1DailyStat,
   type T2User,
 } from './actions';
 
-type Tab = 't1' | 't2';
+type Tab = 't1' | 't2' | 'finder';
 
 export function FreeToolUsagePanel() {
   const [tab, setTab] = useState<Tab>('t1');
@@ -38,10 +43,170 @@ export function FreeToolUsagePanel() {
         >
           Free-tool accounts (T2)
         </button>
+        <button
+          onClick={() => setTab('finder')}
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+            tab === 'finder'
+              ? 'bg-slate-900 text-white'
+              : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          Finder
+        </button>
       </div>
 
       {tab === 't1' && <T1Tab />}
       {tab === 't2' && <T2Tab />}
+      {tab === 'finder' && <FinderTab />}
+    </div>
+  );
+}
+
+// ── Finder: Smart Tool Finder analytics ────────────────────
+
+function FinderTab() {
+  const [summary, setSummary] = useState<FinderSummary | null>(null);
+  const [topQueries, setTopQueries] = useState<FinderTopQuery[]>([]);
+  const [clickedTools, setClickedTools] = useState<FinderClickedTool[]>([]);
+  const [noMatches, setNoMatches] = useState<FinderNoMatch[]>([]);
+  const [loading, startLoad] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setError(null);
+    startLoad(async () => {
+      const res = await getFinderStats();
+      if (res.ok) {
+        setSummary(res.summary);
+        setTopQueries(res.topQueries);
+        setClickedTools(res.clickedTools);
+        setNoMatches(res.noMatches);
+      } else {
+        setError(res.error);
+      }
+    });
+  }, []);
+
+  return (
+    <div className="space-y-4">
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {summary && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="Finder queries" value={summary.totalQueries} />
+          <StatCard label="Click-through rate" value={summary.ctrPct} />
+          <StatCard label="AI fallback queries" value={summary.aiQueries} />
+          <StatCard label="No-match queries" value={summary.noMatchQueries} />
+        </div>
+      )}
+      {summary && (
+        <p className="text-xs text-slate-400">
+          {summary.queriesLast7} queries in the last 7 days · {summary.queriesLast30} in the last 30 · {summary.clicks} recommendation clicks · {summary.aiQueries} AI vs {summary.deterministicQueries} deterministic
+        </p>
+      )}
+
+      {/* Top queries */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <h3 className="text-sm font-semibold text-slate-900">Top queries</h3>
+          <p className="text-xs text-slate-500 mt-0.5">What people search for (sanitised, counted by exact query text).</p>
+        </div>
+        {loading && !summary ? (
+          <p className="text-sm text-slate-500 p-6 text-center">Loading...</p>
+        ) : topQueries.length === 0 ? (
+          <div className="rounded-xl border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+            <p className="text-sm text-slate-500">No finder queries recorded yet.</p>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Query</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Count</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Match method</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Last seen</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {topQueries.map((q) => (
+                <tr key={q.query} className="hover:bg-orange-50/40 transition">
+                  <td className="px-4 py-3 font-medium text-slate-900 max-w-md truncate">{q.query}</td>
+                  <td className="px-4 py-3 text-slate-700">{q.count}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${q.matchMethod === 'ai' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
+                      <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${q.matchMethod === 'ai' ? 'bg-blue-500' : 'bg-slate-400'}`} />
+                      {q.matchMethod === 'ai' ? 'AI' : 'Deterministic'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-500">
+                    {new Date(q.lastSeen).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Clicked tools */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <h3 className="text-sm font-semibold text-slate-900">Recommendation clicks by tool</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Which recommendations people act on, and how often the top-ranked pick wins.</p>
+        </div>
+        {clickedTools.length === 0 ? (
+          <div className="rounded-xl border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+            <p className="text-sm text-slate-500">No recommendation clicks yet.</p>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Tool</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Clicks</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wide">Ranked 1st when clicked</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {clickedTools.map((t) => (
+                <tr key={t.toolId} className="hover:bg-orange-50/40 transition">
+                  <td className="px-4 py-3 font-medium text-slate-900">{t.toolName}</td>
+                  <td className="px-4 py-3 text-slate-700">{t.clicks}</td>
+                  <td className="px-4 py-3 text-slate-500">{t.clicks > 0 ? Math.round((t.position1Clicks / t.clicks) * 100) : 0}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* No-match queries */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <h3 className="text-sm font-semibold text-slate-900">No-match queries (build/keyword opportunities)</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Queries where nothing fitted - candidates for new tools or registry keywords/intents.</p>
+        </div>
+        {noMatches.length === 0 ? (
+          <div className="rounded-xl border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+            <p className="text-sm text-slate-500">No no-match queries recorded.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {noMatches.map((n) => (
+              <li key={n.query} className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-orange-50/40 transition">
+                <span className="text-sm text-slate-900 truncate">{n.query}</span>
+                <span className="text-xs text-slate-400 whitespace-nowrap">
+                  {new Date(n.lastSeen).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

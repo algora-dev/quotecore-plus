@@ -39,7 +39,7 @@ Source: `app/(marketing)/blog/[slug]/content/roofing-quoting-software-uk.tsx`
 |---|---|
 | /features/ai-scan-assist | AI Scan Assist |
 
-## Inbound in-article links (6)
+## Inbound in-article links (5)
 
 | From | Anchor used |
 |---|---|
@@ -48,6 +48,5 @@ Source: `app/(marketing)/blog/[slug]/content/roofing-quoting-software-uk.tsx`
 | /blog/construction-quote-speed-checklist | here is what the shift to digital quoting looks like in practice |
 | /blog/how-to-get-more-work-as-a-contractor | here is how UK roofers are using digital quoting to send better quotes faster - and what that means for winning work |
 | /blog/quotecore-plus-vs-quotesmith | this breakdown of how UK roofers are winning more jobs with digital quotes |
-| /blog/roofing-quoting-software-vs-spreadsheets | this breakdown of how UK roofers are winning more jobs by moving away from manual processes |
 
 External links in source: 0

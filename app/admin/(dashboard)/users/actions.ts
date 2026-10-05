@@ -49,13 +49,47 @@ export interface SearchUserRow {
   companyId: string;
   companyName: string;
   planCode: string | null;
+  stripeSubscriptionId: string | null;
   subscriptionStatus: string | null;
+  compUntil: string | null;
   adminPaused: boolean;
+  lastActiveAt: string | null;
 }
 
 export type SearchResult =
   | { ok: true; users: SearchUserRow[]; total: number }
   | { ok: false; error: string };
+
+/**
+ * Fetch last_sign_in_at for a set of user ids from auth.users via the
+ * service-role admin API. Returns a map of user id -> ISO timestamp (null if
+ * the user never signed in / auth row missing).
+ */
+async function fetchLastActiveMap(
+  admin: ReturnType<typeof createAdminClient>,
+  userIds: string[],
+): Promise<Map<string, string | null>> {
+  const map = new Map<string, string | null>();
+  if (userIds.length === 0) return map;
+
+  const wanted = new Set(userIds);
+  let page = 1;
+  const perPage = 200;
+  // Walk pages until we have every id or run out of auth users (safety cap).
+  for (let i = 0; i < 20; i++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error || !data) break;
+    for (const au of data.users) {
+      if (wanted.has(au.id)) {
+        map.set(au.id, au.last_sign_in_at ?? au.created_at ?? null);
+      }
+    }
+    if (map.size === wanted.size || data.users.length < perPage) break;
+    page += 1;
+  }
+  for (const id of userIds) if (!map.has(id)) map.set(id, null);
+  return map;
+}
 
 /**
  * Server-side paginated search for admin user management.
@@ -71,7 +105,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
     // No query: return most recent accounts
     const { data: companies, error: coErr } = await admin
       .from('companies')
-      .select('id, name, plan_code, subscription_status, admin_paused')
+      .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
     if (coErr) return { ok: false, error: coErr.message };
@@ -83,6 +117,11 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       .from('users')
       .select('id, email, full_name, is_admin, company_id')
       .in('company_id', companyIds);
+
+    const activeMap = await fetchLastActiveMap(
+      admin,
+      (allUsers ?? []).map((u) => u.id),
+    );
 
     const users: SearchUserRow[] = [];
     for (const co of companies ?? []) {
@@ -96,7 +135,10 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
           companyName: co.name,
           planCode: co.plan_code,
           subscriptionStatus: co.subscription_status,
+          stripeSubscriptionId: co.stripe_subscription_id ?? null,
+          compUntil: (co as { comp_until?: string | null }).comp_until ?? null,
           adminPaused: co.admin_paused,
+          lastActiveAt: activeMap.get(u.id) ?? null,
         });
       }
     }
@@ -113,17 +155,22 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
   if (emailErr) return { ok: false, error: emailErr.message };
 
   const emailCompanyIds = (emailMatches ?? []).map((u) => u.company_id).filter(Boolean) as string[];
-  let companiesById: Record<string, { id: string; name: string; plan_code: string | null; subscription_status: string | null; admin_paused: boolean }> = {};
+  let companiesById: Record<string, { id: string; name: string; plan_code: string | null; subscription_status: string | null; admin_paused: boolean; stripe_subscription_id: string | null; comp_until: string | null }> = {};
 
   if (emailCompanyIds.length > 0) {
     const { data: cos } = await admin
       .from('companies')
-      .select('id, name, plan_code, subscription_status, admin_paused')
+      .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
       .in('id', emailCompanyIds);
     for (const c of cos ?? []) {
       companiesById[c.id] = c;
     }
   }
+
+  const emailActiveMap = await fetchLastActiveMap(
+    admin,
+    (emailMatches ?? []).map((u) => u.id),
+  );
 
   const users: SearchUserRow[] = (emailMatches ?? []).map((u) => {
     const co = companiesById[u.company_id];
@@ -135,7 +182,10 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       companyName: co?.name ?? 'Unknown',
       planCode: co?.plan_code ?? null,
       subscriptionStatus: co?.subscription_status ?? null,
+      stripeSubscriptionId: co?.stripe_subscription_id ?? null,
+      compUntil: co?.comp_until ?? null,
       adminPaused: co?.admin_paused ?? false,
+      lastActiveAt: emailActiveMap.get(u.id) ?? null,
     };
   });
 
@@ -143,7 +193,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
   if (users.length < limit) {
     const { data: coMatches } = await admin
       .from('companies')
-      .select('id, name, plan_code, subscription_status, admin_paused')
+      .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
       .ilike('name', `%${q}%`)
       .limit(limit);
 
@@ -156,6 +206,11 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
         .select('id, email, full_name, is_admin, company_id')
         .in('company_id', newCoIds);
 
+      const coActiveMap = await fetchLastActiveMap(
+        admin,
+        (coUsers ?? []).map((u) => u.id),
+      );
+
       for (const c of coMatches ?? []) {
         for (const u of (coUsers ?? []).filter((cu) => cu.company_id === c.id)) {
           users.push({
@@ -166,7 +221,10 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
             companyName: c.name,
             planCode: c.plan_code,
             subscriptionStatus: c.subscription_status,
+            stripeSubscriptionId: c.stripe_subscription_id ?? null,
+            compUntil: (c as { comp_until?: string | null }).comp_until ?? null,
             adminPaused: c.admin_paused,
+            lastActiveAt: coActiveMap.get(u.id) ?? null,
           });
         }
       }

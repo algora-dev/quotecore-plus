@@ -3,13 +3,12 @@
  *
  * Renders ABOVE every workspace page when the company's subscription needs
  * the user's attention. Stays SILENT when subscription_status is healthy
- * (active, no failures, no trial nearing end). The whole component returns
+ * (active, no failures). The whole component returns
  * null in that case, so layout impact is zero.
  *
  * Decisions are made on the SERVER (this is a server component). Banner
  * copy and severity derive from the entitlements snapshot:
  *
- *   - trialing + days_left <= 3:    soft amber "trial ending"
  *   - past_due:                     amber "payment failed; update card"
  *   - grace:                        amber "limited access; pay to restore"
  *   - pending_data_purge:           red "data will be removed in N days"
@@ -27,6 +26,9 @@
  * yet need.
  */
 
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import type { CompanyEntitlements } from '@/app/lib/billing/entitlements';
 
@@ -65,6 +67,34 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
       ctaLabel: 'Manage storage',
       standardCta: true,
     };
+  }
+
+  // Admin override / comp grants full access even when the raw subscription
+  // status is canceled (e.g. never-paid accounts we comp or override from
+  // the admin panel). The effective plan is what counts - never show
+  // dunning/inactive banners for those accounts.
+  const overrideActive =
+    !!ent.adminOverridePlanCode &&
+    !!ent.adminOverrideUntil &&
+    new Date(ent.adminOverrideUntil).getTime() > Date.now();
+  const compUntilMs = ent.compUntil ? new Date(ent.compUntil).getTime() : null;
+  const compActive = compUntilMs !== null && compUntilMs > Date.now();
+  if ((overrideActive || compActive) && ent.subscriptionStatus !== 'suspended') {
+    // Comped accounts (e.g. legacy trial users comped to Pro): warn during
+    // the final 14 days so expiry never comes as a surprise - at comp_until
+    // they drop to the paywall automatically. Admin overrides stay silent.
+    if (compActive && !overrideActive) {
+      const daysLeft = Math.ceil((compUntilMs! - Date.now()) / 86_400_000);
+      if (daysLeft <= 14) {
+        return {
+          tone: 'amber',
+          title: 'Free Pro access ending soon.',
+          description: `Your complimentary Pro access ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}. Choose a plan to keep full access - your quotes and data stay safe either way.`,
+          ctaLabel: 'View plans',
+        };
+      }
+    }
+    return null;
   }
 
   switch (ent.subscriptionStatus) {
@@ -126,50 +156,10 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
         ctaLabel: 'View billing',
       };
     }
-    case 'trialing': {
-      // Smoke #1 (2026-05-19): three distinct states for a trialing
-      // company. daysUntil() returns whole days; we want hour-grained
-      // detection of the “ending today” window and a distinct expired
-      // state. Use the raw timestamp.
-      if (!ent.trialEndsAt) return null;
-      const ends = new Date(ent.trialEndsAt).getTime();
-      const now = Date.now();
-      const diffMs = ends - now;
-
-      // Expired: the account now rolls into the active FREE tier (no longer a
-      // hard read-only lock). The friendly, dismissible "you're on Free now"
-      // notice is handled by TrialRolledToFreeBanner, so this persistent banner
-      // stays silent for the expired-trial case to avoid a duplicate/red scare.
-      if (diffMs <= 0) {
-        return null;
-      }
-
-      const hoursLeft = diffMs / (60 * 60 * 1000);
-      if (hoursLeft <= 24) {
-        return {
-          tone: 'amber',
-          title: 'Trial ends today.',
-          description:
-            'Choose a plan now to keep your data and continue using QuoteCore+.',
-          ctaLabel: 'Choose a plan',
-        };
-      }
-
-      const daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
-      if (daysLeft <= 3) {
-        return {
-          tone: 'amber',
-          title: `Trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`,
-          description:
-            'Pick a plan to keep your work, quotes and email sends after the trial ends.',
-          ctaLabel: 'Upgrade',
-        };
-      }
-
-      return null;
-    }
+    /* 'trialing' remains a valid legacy DB status (comped accounts only);
+       no banner is shown for it - trials no longer exist for new signups. */
     case 'active':
-    case 'trialing' /* unreached when no countdown */:
+    case 'trialing':
     default:
       return null;
   }
@@ -190,8 +180,9 @@ const CTA_TONE_CLASSES: Record<Variant['tone'], string> = {
 };
 
 export function EntitlementBanner({ entitlements, workspaceSlug }: EntitlementBannerProps) {
+  const [dismissed, setDismissed] = useState(false);
   const variant = pickVariant(entitlements);
-  if (!variant) return null;
+  if (!variant || dismissed) return null;
 
   return (
     <div className={`border-b ${TONE_CLASSES[variant.tone]}`}>
@@ -200,17 +191,27 @@ export function EntitlementBanner({ entitlements, workspaceSlug }: EntitlementBa
           <span className="font-semibold">{variant.title}</span>{' '}
           <span className="opacity-90">{variant.description}</span>
         </div>
-        <Link
-          href={`/${workspaceSlug}/account?tab=billing`}
-          prefetch={false}
-          className={
-            variant.standardCta
-              ? 'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium text-white bg-black hover:bg-slate-800 transition-all'
-              : `inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold ${CTA_TONE_CLASSES[variant.tone]}`
-          }
-        >
-          {variant.ctaLabel}
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href={`/${workspaceSlug}/account?tab=billing`}
+            prefetch={false}
+            className={
+              variant.standardCta
+                ? 'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium text-white bg-black hover:bg-slate-800 transition-all'
+                : `inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold ${CTA_TONE_CLASSES[variant.tone]}`
+            }
+          >
+            {variant.ctaLabel}
+          </Link>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => setDismissed(true)}
+            className="inline-flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-sm opacity-60 transition hover:opacity-100"
+          >
+            ✕
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,156 @@
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000006","enabledByServer":false,"enabledByWorkspace":false,"state":"setup_required","knowledge":false,"catalogues":false,"tools":["find_records","read_record","current_record","open_record","offer_options","resolve_records"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000006","enabledByServer":false,"enabledByWorkspace":false,"state":"setup_required","knowledge":false,"catalogues":false,"tools":["find_records","read_record","current_record","open_record","offer_options","resolve_records"]}
+TAP version 13
+# Subtest: master-off scope does not load any V2 data
+ok 1 - master-off scope does not load any V2 data
+  ---
+  duration_ms: 2.730899
+  type: 'test'
+  ...
+# Subtest: company P1-off scope adds no marker or tools
+ok 2 - company P1-off scope adds no marker or tools
+  ---
+  duration_ms: 0.651919
+  type: 'test'
+  ...
+# Subtest: scope binds before use and skips session on a self-contained speed command
+ok 3 - scope binds before use and skips session on a self-contained speed command
+  ---
+  duration_ms: 1.885385
+  type: 'test'
+  ...
+# Subtest: speed-off preserves eager session and omits composite/facts tools
+ok 4 - speed-off preserves eager session and omits composite/facts tools
+  ---
+  duration_ms: 0.495747
+  type: 'test'
+  ...
+# Subtest: model session context is loaded once even when requested twice
+ok 5 - model session context is loaded once even when requested twice
+  ---
+  duration_ms: 1.681588
+  type: 'test'
+  ...
+# Subtest: inline current-page hint is re-read without a session round trip
+ok 6 - inline current-page hint is re-read without a session round trip
+  ---
+  duration_ms: 2.837541
+  type: 'test'
+  ...
+# Subtest: cross-workspace page hints fail closed before tools
+ok 7 - cross-workspace page hints fail closed before tools
+  ---
+  duration_ms: 1.167705
+  type: 'test'
+  ...
+# Subtest: missing context asks for a record instead of guessing
+ok 8 - missing context asks for a record instead of guessing
+  ---
+  duration_ms: 1.285191
+  type: 'test'
+  ...
+# Subtest: ambiguous composite emits one choice card and never auto-opens
+ok 9 - ambiguous composite emits one choice card and never auto-opens
+  ---
+  duration_ms: 0.719042
+  type: 'test'
+  ...
+# Subtest: customer cards carry source-quote section as well as Customers
+ok 10 - customer cards carry source-quote section as well as Customers
+  ---
+  duration_ms: 0.902598
+  type: 'test'
+  ...
+# Subtest: gated P2/P3/P4 and arbitrary SQL/write tools stay absent
+ok 11 - gated P2/P3/P4 and arbitrary SQL/write tools stay absent
+  ---
+  duration_ms: 0.449787
+  type: 'test'
+  ...
+# Subtest: facts register only with both speed/facts enabled and a readable quote section
+ok 12 - facts register only with both speed/facts enabled and a readable quote section
+  ---
+  duration_ms: 0.42232
+  type: 'test'
+  ...
+# Subtest: all hidden records expose no search or composite capability
+ok 13 - all hidden records expose no search or composite capability
+  ---
+  duration_ms: 0.232868
+  type: 'test'
+  ...
+# Subtest: hidden fast counts do not query the database
+ok 14 - hidden fast counts do not query the database
+  ---
+  duration_ms: 1.423296
+  type: 'test'
+  ...
+# Subtest: disabled facts decline to the normal model path without RPCs
+ok 15 - disabled facts decline to the normal model path without RPCs
+  ---
+  duration_ms: 0.565261
+  type: 'test'
+  ...
+# Subtest: facts reader binds authoritative run and revision and labels count scope
+ok 16 - facts reader binds authoritative run and revision and labels count scope
+  ---
+  duration_ms: 0.378618
+  type: 'test'
+  ...
+# Subtest: facts reader refuses incomplete and wrong-timezone counts
+ok 17 - facts reader refuses incomplete and wrong-timezone counts
+  ---
+  duration_ms: 0.47111
+  type: 'test'
+  ...
+# Subtest: facts reader does not lose bigint precision
+ok 18 - facts reader does not lose bigint precision
+  ---
+  duration_ms: 0.154925
+  type: 'test'
+  ...
+# Subtest: permission revocation blocks facts before RPC
+ok 19 - permission revocation blocks facts before RPC
+  ---
+  duration_ms: 0.200231
+  type: 'test'
+  ...
+# Subtest: missing migration does not masquerade as zero facts
+ok 20 - missing migration does not masquerade as zero facts
+  ---
+  duration_ms: 0.137241
+  type: 'test'
+  ...
+# Subtest: missing quote is not a zero total
+ok 21 - missing quote is not a zero total
+  ---
+  duration_ms: 0.15938
+  type: 'test'
+  ...
+# Subtest: natural total lookup selects and calculates in one registered tool without navigation
+ok 22 - natural total lookup selects and calculates in one registered tool without navigation
+  ---
+  duration_ms: 1.197112
+  type: 'test'
+  ...
+# Subtest: composite total ambiguity does not query totals or pick one record
+ok 23 - composite total ambiguity does not query totals or pick one record
+  ---
+  duration_ms: 0.356973
+  type: 'test'
+  ...
+# Subtest: model current read does not reread the same authoritative row
+ok 24 - model current read does not reread the same authoritative row
+  ---
+  duration_ms: 0.861912
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 40.451965

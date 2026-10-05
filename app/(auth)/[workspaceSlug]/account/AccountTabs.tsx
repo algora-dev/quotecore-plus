@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -177,9 +178,9 @@ export function AccountTabs({ panels }: AccountTabsProps) {
 
   return (
     <div className="flex flex-col md:flex-row md:items-start gap-6">
-      <aside className="w-full md:w-56 lg:w-60 md:flex-shrink-0">
-        <nav aria-label="Account sections" className="md:sticky md:top-6 md:self-start">
-          <ul className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible -mx-2 md:mx-0 px-0 md:px-0 pb-2 md:pb-0">
+      <aside className="w-full md:w-56 lg:w-60 md:flex-shrink-0"><QcJourney>
+        <nav aria-label="Account sections" className="qc-flow-settings-nav md:sticky md:top-6 md:self-start">
+          <ul className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
             {TABS.map((tab) => {
               if (tab.disabled) {
                 return (
@@ -205,7 +206,7 @@ export function AccountTabs({ panels }: AccountTabsProps) {
                     type="button"
                     onClick={() => pickTab(tab.key as AccountTabKey)}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap md:whitespace-normal text-left ${
+                    className={`qc-flow-control flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap md:whitespace-normal text-left ${
                       isActive
                         ? 'bg-orange-50 text-orange-700'
                         : 'text-slate-700 hover:bg-slate-100'
@@ -219,7 +220,7 @@ export function AccountTabs({ panels }: AccountTabsProps) {
             })}
           </ul>
         </nav>
-      </aside>
+      </QcJourney></aside>
       <main className="flex-1 min-w-0">{panels[active]}</main>
     </div>
   );

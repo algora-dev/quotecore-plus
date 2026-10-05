@@ -44,6 +44,7 @@ export const V1_TOOL_IDS = [
   'get_ui_element_details',
   'request_ui_highlight',
   'begin_guide',
+  'navigate_to',
 ] as const;
 
 export type V1ToolId = (typeof V1_TOOL_IDS)[number];
@@ -253,6 +254,23 @@ export const V1_TOOLS: Record<V1ToolId, ToolDefinition> = {
         },
       },
       required: ['workflowId'],
+    },
+  },
+  navigate_to: {
+    id: 'navigate_to',
+    description:
+      'Take the user directly to a page they asked for ("take me to quotes", "where are my invoices", "get me to the tutorials"). READ-ONLY: sends a navigation command to the client - changes no data. Only the listed destinations are allowed; pick the closest match and say where it landed in one short sentence. Do NOT use this for guide-me walkthroughs - use begin_guide for those.',
+    requiresWrite: false,
+    parameters: {
+      type: 'object',
+      properties: {
+        destination: {
+          type: 'string',
+          description:
+            'Destination key from the allowlist the system prompt lists (e.g. quotes, orders, resources, components, catalogs, drawings, attachments, invoices, account, billing, dashboard).',
+        },
+      },
+      required: ['destination'],
     },
   },
 };

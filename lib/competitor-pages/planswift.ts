@@ -212,7 +212,7 @@ export const planSwiftPage: CompetitorPageData = {
       {
         label: "Trying it out",
         competitor: "14-day free trial (full version, download)",
-        qc: "Free Lite plan forever + 14-day full-feature trial, no card",
+        qc: "Free tools (no signup) + paid plans from $19/month, 30-day money-back guarantee",
       },
     ],
     scenarioNote:
@@ -282,7 +282,7 @@ export const planSwiftPage: CompetitorPageData = {
     {
       question: "How do I switch from PlanSwift to QuoteCore+?",
       answer:
-        "Nothing to export — run them side by side. Rebuild your core roofing materials as Smart Components (most trades finish their core set in an afternoon), then take your next roof from its PDF in QuoteCore+ and send the quote from there. When the quotes match your expectations, drop the PlanSwift seat. The free Lite plan and 14-day trial mean switching costs nothing up front.",
+        "Nothing to export — run them side by side. Rebuild your core roofing materials as Smart Components (most trades finish their core set in an afternoon), then take your next roof from its PDF in QuoteCore+ and send the quote from there. When the quotes match your expectations, drop the PlanSwift seat. The free tools mean switching costs nothing up front.",
     },
   ],
   related: [
@@ -311,7 +311,7 @@ export const planSwiftPage: CompetitorPageData = {
   ],
   finalCta: {
     heading: "Roofing-native, not general-purpose.",
-    body: "Measure the roof, price the roof, quote the job — one browser workflow built for roofing. Free for 14 days.",
+    body: "Measure the roof, price the roof, quote the job — one browser workflow built for roofing. Free tools, no signup; paid plans from $19/month with a 30-day money-back guarantee.",
     ctaLabel: "Try QuoteCore+ on your next roof plan",
   },
 };

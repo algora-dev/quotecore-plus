@@ -1,3 +1,4 @@
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { requireCompanyContext } from '@/app/lib/supabase/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { notFound } from 'next/navigation';
@@ -23,23 +24,23 @@ export default async function ViewTemplatePage({
   if (!template) notFound();
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <QcLibrary className="min-h-0 bg-slate-50">
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <Link
-              href={`/${workspaceSlug}/customer-quote-templates`}
-              className="text-sm text-slate-500 hover:text-slate-700"
+              href={`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`}
+              className="qc-flow-link qc-library-control text-sm text-slate-500 hover:text-slate-700"
             >
-              ← Back to Templates
+              ← Back to document templates
             </Link>
-            <h1 className="text-2xl font-semibold text-slate-900 mt-2">{template.name}</h1>
+            <h1 className="qc-library-title text-2xl font-semibold text-slate-900 mt-2">{template.name}</h1>
             <p className="text-sm text-slate-500 mt-1">Template preview</p>
           </div>
-          <Link
+          <Link data-qc-variant="primary"
             href={`/${workspaceSlug}/customer-quote-templates/${template.id}/edit`}
-            className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-button qc-flow-control qc-library-control "
           >
             Edit Template
           </Link>
@@ -110,6 +111,6 @@ export default async function ViewTemplatePage({
           </div>
         </div>
       </div>
-    </div>
+    </QcLibrary>
   );
 }

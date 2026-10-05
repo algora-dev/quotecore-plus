@@ -11,7 +11,9 @@
  * current quote immediately.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
+import { QcDialog } from '@/app/components/ui/v2/QcDialog';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { createComponent } from '@/app/(auth)/[workspaceSlug]/components/actions';
 import { loadFlashingLibrary } from '@/app/(auth)/[workspaceSlug]/drawings/actions';
 import type {
@@ -126,21 +128,21 @@ function TypeSpecificFields(props: {
       {(measurementType === 'length_x_height' || measurementType === 'multi_lineal_lxh') && (
         <div>
           <label className="block text-xs text-slate-500 mb-1">Component height (mm)</label>
-          <input type="number" step="1" placeholder="e.g. 2400" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+          <input type="number" step="1" placeholder="e.g. 2400" aria-label="Component height in millimetres" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
           <p className="text-xs text-slate-400 mt-1">Area = measured length x height.</p>
         </div>
       )}
       {measurementType === 'volume' && (
         <div>
           <label className="block text-xs text-slate-500 mb-1">Component depth (mm)</label>
-          <input type="number" step="1" placeholder="e.g. 100" value={depthMm} onChange={(e) => setDepthMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+          <input type="number" step="1" placeholder="e.g. 100" aria-label="Component depth in millimetres" value={depthMm} onChange={(e) => setDepthMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
           <p className="text-xs text-slate-400 mt-1">Volume = measured area x depth.</p>
         </div>
       )}
       {measurementType === 'hours_days' && (
         <div>
           <label className="block text-xs text-slate-500 mb-1">Time unit</label>
-          <select value={hoursUnit} onChange={(e) => setHoursUnit(e.target.value as 'hr' | 'day')} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
+          <select aria-label="Time unit" value={hoursUnit} onChange={(e) => setHoursUnit(e.target.value as 'hr' | 'day')} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
             <option value="hr">Hours</option>
             <option value="day">Days</option>
           </select>
@@ -155,6 +157,8 @@ function TypeSpecificFields(props: {
 // ---------------------------------------------------------------------------
 
 interface Props {
+  /** Optional presentation only; data, field names and validation stay unchanged. */
+  appearance?: 'v2';
   measurementSystem: MeasurementSystem;
   defaultTrade: string;
   /** Default type pre-selects Main or Extra depending on which phase triggered the modal. */
@@ -170,6 +174,7 @@ interface Props {
 // ---------------------------------------------------------------------------
 
 export function CreateSmartComponentModal({
+  appearance,
   measurementSystem,
   defaultTrade,
   defaultComponentType,
@@ -177,6 +182,7 @@ export function CreateSmartComponentModal({
   onCreated,
   onClose,
 }: Props) {
+  const { notify, feedback, feedbackOpen } = useQcFeedback();
   // ------- trade-aware labels (mirrors component-list.tsx) -------
   const tradeLabels = getTradeLabels(defaultTrade);
   const pitchVisible = tradeLabels.pitchRequired || !!tradeLabels.pitchOptional;
@@ -184,7 +190,6 @@ export function CreateSmartComponentModal({
   const pitchHidesValleyHip = !!tradeLabels.pitchHidesValleyHip;
   const pitchRafterLabel = tradeLabels.pitchRafterLabel ?? 'Rafter Pitch';
   const isRoofingTrade = defaultTrade === 'roofing';
-  const featureLabel = tradeLabels.featureLabel ?? 'Flashings';
   const imageAssignLabel = 'Assign Images (Optional)';
   const imageSelectPlaceholder = 'Select an image...';
   const imageHelperText = isRoofingTrade
@@ -238,22 +243,23 @@ export function CreateSmartComponentModal({
     fetchFlashings();
   }, []);
 
-  // Close on Escape
+  // The native v2 dialog owns Escape; never let nested feedback close this form.
   useEffect(() => {
+    if (appearance === 'v2' || feedbackOpen) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, appearance, feedbackOpen]);
 
   const wasteAmountLabel = wasteAmountSuffix(formWasteType, formMeasurementType);
   const wasteAmountPlaceholderText = wasteAmountPlaceholder(formWasteType, formMeasurementType);
 
-  function addFlashing() {
+  async function addFlashing() {
     if (!selectedFlashingId) return;
     if (assignedFlashings.includes(selectedFlashingId)) {
-      alert('This flashing is already assigned');
+      await notify('This flashing is already assigned');
       return;
     }
     setAssignedFlashings(prev => [...prev, selectedFlashingId]);
@@ -270,7 +276,7 @@ export function CreateSmartComponentModal({
 
     if (formPricingStrategy === 'per_pack_coverage') {
       if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
-        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+        await notify('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
         setSaving(false);
         return;
       }
@@ -284,7 +290,7 @@ export function CreateSmartComponentModal({
     if (wasteType === 'fixed' && wasteAmountRaw.includes('.')) {
       const decimals = wasteAmountRaw.split('.')[1];
       if (decimals && decimals.length > 2) {
-        alert('Reduce your decimal places to two or less (e.g. 0.25)');
+        await notify('Reduce your decimal places to two or less (e.g. 0.25)');
         setSaving(false);
         return;
       }
@@ -327,16 +333,12 @@ export function CreateSmartComponentModal({
     try {
       const result = await createComponent(fullInput);
       if (!result.ok) {
-        if (result.code === 'subscription_inactive') {
-          alert('Your subscription is inactive. Please choose a plan to continue.');
-        } else {
-          alert(result.code === 'internal_error' ? result.message : 'Could not create Smart Component™.');
-        }
+        await notify(result.code === 'internal_error' ? result.message : 'Could not create Smart Component™.');
         return;
       }
       onCreated(result.data);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create Smart Component™');
+      await notify(err instanceof Error ? err.message : 'Failed to create Smart Component™');
     } finally {
       setSaving(false);
     }
@@ -345,13 +347,8 @@ export function CreateSmartComponentModal({
   return (
     <>
       {/* Overlay */}
-      <div
-        className="fixed inset-0 z-50 flex items-start justify-center backdrop-blur-sm bg-black/40 p-4 overflow-y-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="create-component-modal-title"
-      >
-        <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl my-8">
+      <CreateComponentFrame appearance={appearance} onClose={onClose}>
+        <div className={appearance === 'v2' ? 'qc-form-adapter' : 'relative w-full max-w-lg bg-white rounded-2xl shadow-xl my-8'}>
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100">
             <div>
@@ -381,6 +378,7 @@ export function CreateSmartComponentModal({
                 <label className="block text-xs text-slate-500 mb-1">Name</label>
                 <input
                   name="name"
+                  aria-label="Component name"
                   required
                   autoFocus
                   className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-400"
@@ -392,6 +390,7 @@ export function CreateSmartComponentModal({
                 <label className="block text-xs text-slate-500 mb-1">Type</label>
                 <select
                   name="component_type"
+                  aria-label="Component type"
                   required
                   defaultValue={defaultComponentType}
                   className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg"
@@ -406,6 +405,7 @@ export function CreateSmartComponentModal({
                 <label className="block text-xs text-slate-500 mb-1">Measurement</label>
                 <select
                   name="measurement_type"
+                  aria-label="Measurement type"
                   required
                   value={formMeasurementType}
                   onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
@@ -427,6 +427,7 @@ export function CreateSmartComponentModal({
                 </label>
                 <input
                   name="default_labour_rate"
+                  aria-label={`Labour rate per ${unitForMeasurement(formMeasurementType)}`}
                   type="number"
                   step="0.01"
                   placeholder="0"
@@ -439,7 +440,7 @@ export function CreateSmartComponentModal({
                 <div className="col-span-2">
                   <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
                   <select
-                    value={formPricingStrategy}
+                    aria-label="Pricing strategy" value={formPricingStrategy}
                     onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
                     className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg"
                   >
@@ -458,6 +459,7 @@ export function CreateSmartComponentModal({
                   </label>
                   <input
                     name="default_material_rate"
+                  aria-label={`Item cost per ${unitForMeasurement(formMeasurementType)}`}
                     type="number"
                     step="0.01"
                     placeholder="0"
@@ -469,12 +471,13 @@ export function CreateSmartComponentModal({
               {/* Pack pricing fields (generic trades) */}
               {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
                 <>
-                  <input type="hidden" name="default_material_rate" value="0" />
+                  <input type="hidden" name="default_material_rate"
+                  aria-label={`Item cost per ${unitForMeasurement(formMeasurementType)}`} value="0" />
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
                     <input
                       type="number" step="0.01" placeholder="e.g. 500"
-                      value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)}
+                      aria-label="Pack price" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)}
                       className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg"
                     />
                   </div>
@@ -484,7 +487,7 @@ export function CreateSmartComponentModal({
                     </label>
                     <input
                       type="number" step="0.01" placeholder="e.g. 50"
-                      value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)}
+                      aria-label="Pack size" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)}
                       className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg"
                     />
                   </div>
@@ -493,7 +496,7 @@ export function CreateSmartComponentModal({
                       <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
                       <input
                         type="number" step="0.01" placeholder="e.g. 50"
-                        value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)}
+                        aria-label="Coverage per pack" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)}
                         className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg"
                       />
                     </div>
@@ -506,6 +509,7 @@ export function CreateSmartComponentModal({
                 <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
                 <select
                   name="default_waste_type"
+                  aria-label="Waste type"
                   value={formWasteType}
                   onChange={(e) => setFormWasteType(e.target.value as WasteType)}
                   className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg"
@@ -524,6 +528,7 @@ export function CreateSmartComponentModal({
                   </label>
                   <input
                     name="waste_amount"
+                  aria-label={`Waste amount ${wasteAmountLabel}`}
                     type="number"
                     step="0.01"
                     placeholder={wasteAmountPlaceholderText}
@@ -537,7 +542,7 @@ export function CreateSmartComponentModal({
                 <div className="col-span-2">
                   <label className="block text-xs text-slate-500 mb-1">Waste unit</label>
                   <select
-                    value={formWasteUnit}
+                    aria-label="Waste unit" value={formWasteUnit}
                     onChange={(e) => setFormWasteUnit(e.target.value as WasteUnit)}
                     className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg"
                   >
@@ -578,7 +583,8 @@ export function CreateSmartComponentModal({
                 {formPitchEnabled && (
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                    <select name="default_pitch_type" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg">
+                    <select name="default_pitch_type"
+                  aria-label="Pitch calculation type" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg">
                       <option value="rafter">{pitchRafterLabel}</option>
                       {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
                     </select>
@@ -598,7 +604,7 @@ export function CreateSmartComponentModal({
                 <label className="block text-xs text-slate-500 mb-1">{imageAssignLabel}</label>
                 <div className="flex gap-2">
                   <select
-                    value={selectedFlashingId}
+                    aria-label="Image to assign" value={selectedFlashingId}
                     onChange={(e) => setSelectedFlashingId(e.target.value)}
                     className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
                   >
@@ -611,7 +617,9 @@ export function CreateSmartComponentModal({
                     type="button"
                     onClick={addFlashing}
                     disabled={!selectedFlashingId}
-                    className="px-3 py-1 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    data-qc-component={appearance === 'v2' ? 'C01' : undefined}
+                    data-qc-variant={appearance === 'v2' ? 'ghost' : undefined}
+                    className={appearance === 'v2' ? 'qc-button' : 'px-3 py-1 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all'}
                   >
                     Add
                   </button>
@@ -640,7 +648,7 @@ export function CreateSmartComponentModal({
               </label>
               <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
               <textarea
-                value={formNotes}
+                aria-label="Component notes" value={formNotes}
                 onChange={e => setFormNotes(e.target.value)}
                 placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
                 rows={3}
@@ -657,7 +665,7 @@ export function CreateSmartComponentModal({
               <div className="border-t border-slate-200 pt-4">
                 <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
                 <select
-                  value={selectedCollectionId}
+                  aria-label="Save to library" value={selectedCollectionId}
                   onChange={e => setSelectedCollectionId(e.target.value)}
                   className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg"
                 >
@@ -675,22 +683,38 @@ export function CreateSmartComponentModal({
               <button
                 type="submit"
                 disabled={saving}
-                className="px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition-all disabled:opacity-50"
+                data-qc-component={appearance === 'v2' ? 'C01' : undefined}
+                data-qc-variant={appearance === 'v2' ? 'primary' : undefined}
+                className={appearance === 'v2' ? 'qc-button' : 'px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition-all disabled:opacity-50'}
               >
                 {saving ? 'Saving...' : 'Save & Add to Quote'}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
+                data-qc-component={appearance === 'v2' ? 'C01' : undefined}
+                data-qc-variant={appearance === 'v2' ? 'ghost' : undefined}
+                className={appearance === 'v2' ? 'qc-button' : 'px-4 py-2 text-sm rounded-full border border-slate-300 hover:bg-slate-50'}
               >
                 Cancel
               </button>
             </div>
           </form>
         </div>
-      </div>
-
+      </CreateComponentFrame>
+      {feedback}
     </>
   );
+}
+
+/** Stable frame only. No duplicate form tree or form-state/persistence ownership. */
+function CreateComponentFrame({ appearance, onClose, children }: {
+  appearance?: 'v2'; onClose: () => void; children: ReactNode;
+}) {
+  if (appearance === 'v2') {
+    return <QcDialog open labelledBy="create-component-modal-title" onRequestClose={onClose}
+      size="md" className="qc-create-component-dialog">{children}</QcDialog>;
+  }
+  return <div className="fixed inset-0 z-50 flex items-start justify-center backdrop-blur-sm bg-black/40 p-4 overflow-y-auto"
+    role="dialog" aria-modal="true" aria-labelledby="create-component-modal-title">{children}</div>;
 }

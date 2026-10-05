@@ -347,14 +347,14 @@ function POGeneratorForm() {
         {/* Hero */}
         <section className="mb-8 print:hidden">
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Purchase Order Generator</h1>
-          <p className="mt-1 text-sm font-medium text-[#BD4A1A]">QuoteCore Plus Free Purchase Order Generator — free, no signup required.</p>
+          <p className="mt-1 text-sm font-medium text-[#BD4A1A]">QuoteCore Plus Free Purchase Order Generator - free, no signup required.</p>
           <p className="mt-2 text-sm text-slate-500 max-w-xl">
             Create a professional purchase order for your suppliers. Upload a photo of your existing
             PO and AI will fill in the form - or paste your details, or type it manually. No signup required.
           </p>
           <div className="mt-4 max-w-xl rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <p className="text-sm leading-6 text-slate-600">
-              <strong className="text-slate-900">Quick answer:</strong> Generate a free purchase order in seconds — fill in your details, line items, and delivery date, then download a professional PO as a PDF. Completely free, no signup, no watermark, unlimited POs.
+              <strong className="text-slate-900">Quick answer:</strong> Generate a free purchase order in seconds - fill in your details, line items, and delivery date, then download a professional PO as a PDF. Completely free, no signup, no watermark, unlimited POs.
             </p>
           </div>
         </section>
@@ -976,6 +976,7 @@ function POGeneratorForm() {
             {/* Post-generation modal */}
             <PostGenerationModal
               toolType="order"
+              toolSlug="free-purchase-order-generator"
               trigger={popupTrigger}
               resultLabel={`${formatMoney(total, sym)} purchase order`}
               resultDetails={`${poNumber} to ${supplierName || 'supplier'}`}
@@ -991,12 +992,12 @@ function POGeneratorForm() {
           <div>
             <h2 className="text-lg font-semibold text-slate-900">How to use this purchase order generator</h2>
             <div className="mt-4 space-y-4">
-              <p className="text-sm text-slate-600 leading-relaxed">A purchase order (PO) is the document you send to a supplier to order materials at agreed prices. This generator produces a professional PO in about two minutes — no signup, no watermark on your first documents, and instant PDF download. Here is the fastest way to use it.</p>
-              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 1 — Enter your business details.</strong> Under &quot;Your business&quot;, add your company name, address, email and phone. These appear in the PO header and are what the supplier uses to identify the order. Set your currency and PO number in the document settings bar — a simple sequence like PO-001, PO-002 works fine.</p>
-              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 2 — Add the supplier and delivery details.</strong> Enter the supplier&apos;s name and (optionally) the delivery address and required date. Clear delivery instructions reduce follow-up calls and disputes about what was ordered.</p>
-              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 3 — Add line items.</strong> For each material, enter the description, quantity, unit (m², m, each, box, roll) and unit rate. The generator totals the order live. If you already have quantities from a calculator — flooring packs, paint litres, tile boxes — paste them straight in.</p>
-              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 4 — Review and download.</strong> Check the totals, then hit generate. You get a clean PDF purchase order you can email to the supplier. Uploading a photo of an existing PO uses AI to extract the details for you (5 free scans per day).</p>
-              <p className="text-sm text-slate-600 leading-relaxed">A good PO states: PO number, order date, supplier, delivery address and date, itemised materials with quantities and rates, and your business details. Because it is dated and numbered, a PO also protects you — if a supplier delivers the wrong quantity, the PO is your written record of what was agreed.</p>
+              <p className="text-sm text-slate-600 leading-relaxed">A purchase order (PO) is the document you send to a supplier to order materials at agreed prices. This generator produces a professional PO in about two minutes - no signup, no watermark on your first documents, and instant PDF download. Here is the fastest way to use it.</p>
+              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 1 - Enter your business details.</strong> Under &quot;Your business&quot;, add your company name, address, email and phone. These appear in the PO header and are what the supplier uses to identify the order. Set your currency and PO number in the document settings bar - a simple sequence like PO-001, PO-002 works fine.</p>
+              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 2 - Add the supplier and delivery details.</strong> Enter the supplier&apos;s name and (optionally) the delivery address and required date. Clear delivery instructions reduce follow-up calls and disputes about what was ordered.</p>
+              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 3 - Add line items.</strong> For each material, enter the description, quantity, unit (m², m, each, box, roll) and unit rate. The generator totals the order live. If you already have quantities from a calculator - flooring packs, paint litres, tile boxes - paste them straight in.</p>
+              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 4 - Review and download.</strong> Check the totals, then hit generate. You get a clean PDF purchase order you can email to the supplier. Uploading a photo of an existing PO uses AI to extract the details for you (5 free scans per day).</p>
+              <p className="text-sm text-slate-600 leading-relaxed">A good PO states: PO number, order date, supplier, delivery address and date, itemised materials with quantities and rates, and your business details. Because it is dated and numbered, a PO also protects you - if a supplier delivers the wrong quantity, the PO is your written record of what was agreed.</p>
             </div>
           </div>
 
@@ -1040,7 +1041,7 @@ function POGeneratorForm() {
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I manage suppliers in QuoteCore+?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. QuoteCore+ gives you a complete document and business management platform in one place - track and store all your purchase orders, quotes, and invoices, send automatic follow-ups to suppliers, and auto-update order statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), supplier database, and online order management. <Link href="/signup" className="text-[#BD4A1A] font-medium">Start a free trial &rarr;</Link></p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. QuoteCore+ gives you a complete document and business management platform in one place - track and store all your purchase orders, quotes, and invoices, send automatic follow-ups to suppliers, and auto-update order statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), supplier database, and online order management. <Link href="/signup" className="text-[#BD4A1A] font-medium">Plans from $19/mo &rarr;</Link></p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I use different currencies?</summary>
@@ -1048,7 +1049,7 @@ function POGeneratorForm() {
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">How do I remove the QuoteCore+ branding and create more free purchase orders?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free purchase orders and remove the QuoteCore+ branding, or sign up to the full QuoteCore+ app for higher limits and loads of extra features with a free trial.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free purchase orders and remove the QuoteCore+ branding, or subscribe to the full QuoteCore+ app (plans from $19/mo, 30-day money-back guarantee) for higher limits and loads of extra features.</p></div>
               </details>
             </div>
           </div>

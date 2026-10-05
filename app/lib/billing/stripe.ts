@@ -194,7 +194,7 @@ export async function resolveStripeCheckoutForPlan(
  *
  *   Stripe              ->  Our subscription_status
  *   ----------------       ----------------------
- *   trialing            ->  trialing
+ *   trialing            ->  trialing (legacy; no new trials are created)
  *   active              ->  active
  *   past_due            ->  past_due
  *   unpaid              ->  past_due  (we treat unpaid as past_due; dunning
@@ -258,7 +258,7 @@ export type RepairStripeCustomerResult =
  * Safety rules:
  *   1. If stripe_subscription_id exists → retrieve subscription in current
  *      mode; if valid, overwrite stripe_customer_id from subscription.customer.
- *   2. If local subscription_status is active/past_due/trialing AND repair
+ *   2. If local subscription_status is active/past_due/trialing (legacy) AND repair
  *      fails → do NOT null the ID. Return repair_failed so the caller can
  *      surface a "contact support" message.
  *   3. Only if subscription_status is terminal (cancelled/suspended) AND no

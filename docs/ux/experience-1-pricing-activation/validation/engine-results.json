@@ -1,0 +1,274 @@
+{
+  "scope": "Real pure helper + new draft adapter; no server or DB executed",
+  "passed": 67,
+  "checks": [
+    {
+      "name": "120 square metres /10% /50m2 rolls: 3 whole packs, labour on132 not150",
+      "status": "PASS"
+    },
+    {
+      "name": "Rafter 25 degrees uses existing helper before waste",
+      "status": "PASS"
+    },
+    {
+      "name": "Already on slope does not apply pitch twice or require degrees",
+      "status": "PASS"
+    },
+    {
+      "name": "Hip valley existing formula, not rafter factor",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid measurement \"0\" has no result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid measurement \"-1\" has no result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid measurement \"\" has no result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid measurement \"NaN\" has no result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid measurement \"Infinity\" has no result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid measurement \"1e309\" has no result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid materialRate \"\" invalidates result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid materialRate \"-3\" invalidates result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid materialRate \"NaN\" invalidates result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid labourRate \"\" invalidates result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid labourRate \"-3\" invalidates result",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid labourRate \"NaN\" invalidates result",
+      "status": "PASS"
+    },
+    {
+      "name": "Zero material/labour is explicitly accepted",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing pack values fail instead of silently free material",
+      "status": "PASS"
+    },
+    {
+      "name": "Positive pack price required by authoritative helper",
+      "status": "PASS"
+    },
+    {
+      "name": "Per-unit ignores unused stale pack settings",
+      "status": "PASS"
+    },
+    {
+      "name": "Pack material rate is ignored as in quote engine",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid plan pitch \"90\"",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid plan pitch \"100\"",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid plan pitch \"-1\"",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid plan pitch \"\"",
+      "status": "PASS"
+    },
+    {
+      "name": "Zero plan pitch allowed",
+      "status": "PASS"
+    },
+    {
+      "name": "Percentage waste uses adjusted quantity",
+      "status": "PASS"
+    },
+    {
+      "name": "Fixed waste manual entries each receive the allowance",
+      "status": "PASS"
+    },
+    {
+      "name": "Segment waste manual fallback matches engine, pack rounding across aggregate",
+      "status": "PASS"
+    },
+    {
+      "name": "Preset height millimetres multiplies length before pricing",
+      "status": "PASS"
+    },
+    {
+      "name": "Preset depth millimetres multiplies area before volume pack",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing preset length_x_height rejects rather than fake price",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing preset multi_lineal_lxh rejects rather than fake price",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing preset volume rejects rather than fake price",
+      "status": "PASS"
+    },
+    {
+      "name": "Already calculated length_x_height_freestyle avoids double multiplier",
+      "status": "PASS"
+    },
+    {
+      "name": "Already calculated multi_lineal_lxh_freestyle avoids double multiplier",
+      "status": "PASS"
+    },
+    {
+      "name": "Already calculated volume_3d avoids double multiplier",
+      "status": "PASS"
+    },
+    {
+      "name": "Quantity + labour",
+      "status": "PASS"
+    },
+    {
+      "name": "Fixed charge uses one",
+      "status": "PASS"
+    },
+    {
+      "name": "Time does not invent hour to day conversion",
+      "status": "PASS"
+    },
+    {
+      "name": "1 can be tested without a hardcoded sample cap",
+      "status": "PASS"
+    },
+    {
+      "name": "5 can be tested without a hardcoded sample cap",
+      "status": "PASS"
+    },
+    {
+      "name": "500 can be tested without a hardcoded sample cap",
+      "status": "PASS"
+    },
+    {
+      "name": "1000 can be tested without a hardcoded sample cap",
+      "status": "PASS"
+    },
+    {
+      "name": "Imperial area -> canonical costs",
+      "status": "PASS"
+    },
+    {
+      "name": "Roofing square -> 100 square feet",
+      "status": "PASS"
+    },
+    {
+      "name": "Feet into preset metric height",
+      "status": "PASS"
+    },
+    {
+      "name": "Cubic feet -> cubic metres",
+      "status": "PASS"
+    },
+    {
+      "name": "Legacy pack coverage kept",
+      "status": "PASS"
+    },
+    {
+      "name": "Incompatible pack method fails",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing rows fails",
+      "status": "PASS"
+    },
+    {
+      "name": "NaN allowance fails",
+      "status": "PASS"
+    },
+    {
+      "name": "Hidden allowance invalid values ignored",
+      "status": "PASS"
+    },
+    {
+      "name": "Too large calculation rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Small job effective cost includes pack boundary",
+      "status": "PASS"
+    },
+    {
+      "name": "No draft or input object mutation",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension area",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension lineal",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension linear",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension multi_lineal",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension quantity",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension count",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension fixed",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension irregular_area",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension curved_line",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension hours_days",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical dimension volume_3d",
+      "status": "PASS"
+    }
+  ]
+}

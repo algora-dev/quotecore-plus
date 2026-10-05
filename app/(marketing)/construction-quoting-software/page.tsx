@@ -3,17 +3,19 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import DemoCTACard from "@/components/DemoCTACard";
+import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import YouTubeLite from "@/components/YouTubeLite";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Construction Quoting Software for Contractors | Free Trial · QuoteCore+",
+  // Root layout appends "| QuoteCore+" via template - do NOT add brand suffix here (avoids suffix doubling)
+  title: "Contractor Estimating & Quoting Software for Construction",
   description:
-    "Quoting software for contractors and trades — roofing, carpentry, plastering, subcontractors and general contractors. Digital takeoff, Smart Components, material ordering and invoicing. Plans from free.",
+    "Contractor estimating and quoting software for trades - build estimates and quotes from measurements on site or in the office, with digital takeoff, Smart Components, material ordering, invoicing and Smart Assistant. Free tools and paid plans from $19/month with a 30-day money-back guarantee.",
   openGraph: {
-    title: "Construction Quoting Software for Contractors | Free Trial · QuoteCore+",
+    title: "Contractor Estimating & Quoting Software | QuoteCore+",
     description:
-      "Quoting software for contractors and trades — roofing, carpentry, plastering, subcontractors and general contractors. Plans from free, 14-day free trial.",
+      "Contractor estimating and quoting software for trades - build estimates and quotes from measurements on site or in the office. Free tools and paid plans from $19/month.",
     url: "/construction-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -80,6 +82,14 @@ const faqSchema = {
   mainEntity: [
     {
       "@type": "Question",
+      name: "What is the difference between estimating and quoting?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "An estimate is an approximate price based on measured quantities and your pricing rules - useful for ballparking a job before committing. A quote is a fixed, professional offer you stand behind. QuoteCore+ supports both: build the estimate from measurements, then turn it into a sent, trackable quote when the numbers are confirmed.",
+      },
+    },
+    {
+      "@type": "Question",
       name: "What trades can use QuoteCore+?",
       acceptedAnswer: {
         "@type": "Answer",
@@ -107,7 +117,7 @@ const faqSchema = {
       name: "Can I try it before paying?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. QuoteCore+ offers a 14-day free trial with no credit card required.",
+        text: "Yes. Our free tools work instantly with no signup, and every paid plan is backed by a 30-day money-back guarantee.",
       },
     },
     {
@@ -115,7 +125,7 @@ const faqSchema = {
       name: "How much does construction quoting software cost?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "QuoteCore+ plans range from free to $59/month. The free plan includes core quoting features. Paid plans add digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. See our pricing page for current plan details.",
+        text: "QuoteCore+ plans range from 19 to 59 dollars per month and all include the full feature set - digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. Plans also include digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. See our pricing page for current plan details.",
       },
     },
     {
@@ -131,7 +141,7 @@ const faqSchema = {
       name: "How is QuoteCore+ different from spreadsheets?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Spreadsheets calculate numbers but disconnect the job — measurements, pricing, quotes, material orders, and invoices live in separate files. QuoteCore+ keeps the same job data connected from first measurement to final invoice, with Smart Components that remember your pricing rules so you don't rebuild formulas every time.",
+        text: "Spreadsheets calculate numbers but disconnect the job - measurements, pricing, quotes, material orders, and invoices live in separate files. QuoteCore+ keeps the same job data connected from first measurement to final invoice, with Smart Components that remember your pricing rules so you don't rebuild formulas every time.",
       },
     },
     {
@@ -139,7 +149,7 @@ const faqSchema = {
       name: "Does QuoteCore+ work for subcontractors?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Subcontractors who quote from plans or site measurements can use QuoteCore+ to build priced quotes, track customer approval, order materials, and invoice — all from the same job data. Smart Components are especially useful for subcontractors who repeat similar work across multiple jobs.",
+        text: "Yes. Subcontractors who quote from plans or site measurements can use QuoteCore+ to build priced quotes, track customer approval, order materials, and invoice - all from the same job data. Smart Components are especially useful for subcontractors who repeat similar work across multiple jobs.",
       },
     },
     {
@@ -158,6 +168,22 @@ const faqSchema = {
         text: "Yes. QuoteCore+ is designed to keep the job connected through to invoicing and payment, instead of stopping once the quote is accepted.",
       },
     },
+    {
+      "@type": "Question",
+      name: "Can I quote from my phone or tablet?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. The workflow runs on phones and tablets as well as desktop - measure on site, build or review the quote, track whether it has been viewed or accepted, and keep the job moving from wherever you are.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What is Smart Assistant?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Smart Assistant is an in-app assistant that works with the data in your QuoteCore+ account. Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks - important changes are proposed for your confirmation first. It makes the workflow faster to operate without replacing your pricing judgement.",
+      },
+    },
   ],
 };
 
@@ -165,7 +191,7 @@ const steps = [
   {
     number: "01",
     title: "Choose how you want to quote",
-    body: "Start from a blank quote, use saved Smart Components™, or upload a plan and measure digitally. AI Scan Assist identifies roof areas and components from an uploaded plan automatically. QuoteCore+ gives you different ways to build the job depending on how you work.",
+    body: "Start from a blank quote, use saved Smart Components™, or upload a plan and measure digitally on phone, tablet or desktop. AI Scan Assist identifies roof areas and components from an uploaded plan automatically. QuoteCore+ gives you different ways to build the job depending on how you work.",
   },
   {
     number: "02",
@@ -196,6 +222,10 @@ const steps = [
 
 const faqs = [
   {
+    q: "What is the difference between estimating and quoting?",
+    a: "An estimate is an approximate price based on measured quantities and your pricing rules - useful for ballparking a job before committing. A quote is a fixed, professional offer you stand behind. QuoteCore+ supports both: build the estimate from measurements, then turn it into a sent, trackable quote when the numbers are confirmed.",
+  },
+  {
     q: "What trades can use QuoteCore+?",
     a: "QuoteCore+ can be used by construction and trade businesses that quote from measurements, plans, site details, materials and labour. That includes roofing, cladding, flooring, fencing, landscaping, decking, general building, renovation trades and exterior works.",
   },
@@ -217,7 +247,7 @@ const faqs = [
   },
   {
     q: "Can I try it before paying?",
-    a: "Yes. QuoteCore+ offers a 14-day free trial with no credit card required.",
+    a: "Yes. Our free tools work instantly with no signup, and every paid plan is backed by a 30-day money-back guarantee.",
   },
   {
     q: "Who do I contact with questions?",
@@ -237,7 +267,15 @@ const faqs = [
   },
   {
     q: "Does QuoteCore+ work for subcontractors?",
-    a: "Yes. Subcontractors who quote from plans or site measurements can use QuoteCore+ to build priced quotes, track customer approval, order materials, and invoice — all from the same job data. Smart Components are especially useful for subcontractors who repeat similar work across multiple jobs.",
+    a: "Yes. Subcontractors who quote from plans or site measurements can use QuoteCore+ to build priced quotes, track customer approval, order materials, and invoice - all from the same job data. Smart Components are especially useful for subcontractors who repeat similar work across multiple jobs.",
+  },
+  {
+    q: "Can I quote from my phone or tablet?",
+    a: "Yes. The workflow runs on phones and tablets as well as desktop - measure on site, build or review the quote, track whether it has been viewed or accepted, and keep the job moving from wherever you are.",
+  },
+  {
+    q: "What is Smart Assistant?",
+    a: "Smart Assistant is an in-app assistant that works with the data in your QuoteCore+ account. Ask by text or voice to find jobs, quotes, orders and invoices, or carry out supported tasks - important changes are proposed for your confirmation first. It makes the workflow faster to operate without replacing your pricing judgement.",
   },
 ];
 
@@ -323,19 +361,31 @@ export default function ConstructionQuotingSoftwarePage() {
             </p>
 
             <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Construction quoting software for trades that work from measurements.
+              Estimating &amp; quoting software for contractors who work from measurements.
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure jobs with digital takeoff and AI Scan Assist, build priced quotes with Smart Components™, track customer approval, order materials, manage work, invoice and get paid - all in one connected workflow.
+              Measure jobs with digital takeoff and AI Scan Assist, build priced quotes with Smart Components™, track customer approval, order materials, manage work, invoice and get paid - all in one connected workflow that runs on phone, tablet or desktop.
             </p>
+
+            {/* Two entry paths */}
+            <div className="mx-auto mt-6 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
+              <a href="/free-roof-takeoff" className="rounded-xl border border-zinc-200 bg-white px-5 py-4 transition-colors hover:border-[#FF6B35]/40">
+                <p className="text-sm font-semibold text-zinc-950">Start with a plan or image</p>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">Digital takeoff for roofs, walls and floors - manual, or AI-assisted where available. <span className="text-[#BD4A1A]">Try the free takeoff tools &rarr;</span></p>
+              </a>
+              <a href="/measurement-to-quote-tool" className="rounded-xl border border-zinc-200 bg-white px-5 py-4 transition-colors hover:border-[#FF6B35]/40">
+                <p className="text-sm font-semibold text-zinc-950">Already have measurements?</p>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">Enter areas, lengths and quantities from a site measure or satellite report; reusable components apply material, labor and waste pricing. <span className="text-[#BD4A1A]">Open Measurement-to-Quote &rarr;</span></p>
+              </a>
+            </div>
 
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#FF6B35]">
                 Quick answer
               </p>
               <p className="text-sm leading-6 text-zinc-600">
-                QuoteCore+ is construction quoting software for trade businesses that quote from measurements, plans, materials, labour and pricing rules. It replaces the scattered workflow of spreadsheets, emails, documents, folders and manual follow-up with one connected platform from first quote to final payment.
+                Quoting software for contractors turns measurements, labour and material prices into a professional, priced quote - without spreadsheets or re-typed numbers. It is built for contractors, builders, roofers, plasterers and subcontractors who quote from measurements or plans. Try the free tools with no signup, then choose a paid plan from $19/month with a 30-day money-back guarantee - so you can move to a connected quoting workflow with confidence.
               </p>
             </div>
 
@@ -344,7 +394,7 @@ export default function ConstructionQuotingSoftwarePage() {
                 href="/free-trial"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
-                Start free 14-day trial
+                Get started
               </a>
 
               <a
@@ -357,11 +407,16 @@ export default function ConstructionQuotingSoftwarePage() {
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-400">No card required. 14 days free.</p>
+            <p className="mt-3 text-sm text-zinc-400">Free tools forever. 30-day money-back guarantee on paid plans.</p>
+
+            <p className="mt-3 text-sm text-zinc-500">
+              Already have spreadsheets, price lists or quote templates?{" "}
+              <a href="/done-for-you-setup" className="font-medium text-[#BD4A1A] hover:underline">We can help configure the system around the way you already work.</a>
+            </p>
 
             <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-600">
               <span className="font-semibold text-zinc-950">Simple pricing:</span>
-              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Free Lite plan</a>
+              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Free tools</a>
               <span className="text-zinc-300">·</span>
               <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Starter $19/mo</a>
               <span className="text-zinc-300">·</span>
@@ -370,6 +425,20 @@ export default function ConstructionQuotingSoftwarePage() {
               <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Pro Plus $59/mo</a>
             </div>
           </div>
+        </section>
+
+        {/* What is contractor quoting software */}
+        <section className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">What is contractor quoting software?</h2>
+          <p className="mt-6 text-lg leading-8 text-zinc-600">
+            Contractor quoting software is a tool that turns job measurements, labour and material prices into a professional, priced quote - or estimate - without spreadsheets or re-typed numbers. Instead of rebuilding formulas for every job, contractors save their pricing rules once and reuse them, so the typical workflow becomes <strong className="text-zinc-950">estimate → quote → order → invoice</strong> in one connected place.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            Construction estimating and quoting software goes further than a quote template: it connects measurement (manual or digital takeoff from plans), pricing, customer approval, material ordering and invoicing to the same job data. Job quoting software for trades like roofing, carpentry and plastering is built around this measured-work workflow, which is what separates it from generic invoicing apps.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            If you currently price jobs in a spreadsheet, see our guide to <a href="/blog/how-to-do-a-roof-takeoff" className="text-[#BD4A1A] hover:underline">how to do a roof takeoff</a> for the measurement side, or the <a href="/blog/construction-estimating-spreadsheet-alternative" className="text-[#BD4A1A] hover:underline">construction estimating spreadsheet alternative</a> walkthrough for moving your pricing across without starting from scratch.
+          </p>
         </section>
 
         {/* Problem section */}
@@ -399,14 +468,39 @@ export default function ConstructionQuotingSoftwarePage() {
           <DemoCTACard location="construction_quoting_software_intro" />
         </section>
 
+        {/* Three ways to work */}
+        <ThreeWaysToWork
+          className="max-w-4xl"
+          title="Three ways to get from measurements to a quote"
+          intro="Whatever trade you work in, all three paths feed the same saved pricing rules."
+          cards={[
+            {
+              title: "Measure it in QuoteCore+",
+              body: "Measure from plans or images with digital takeoff on phone, tablet or desktop - roofs, walls or floors. Use AI Scan Assist where it helps, then review before pricing.",
+              href: "/features/digital-roof-takeoff",
+              linkLabel: "See digital takeoff →",
+            },
+            {
+              title: "Enter measurements you already have",
+              body: "Site measure, third-party report or spreadsheet? Enter the dimensions and Smart Components™ apply your saved materials, labour, waste and pricing rules.",
+              href: "/measurement-to-quote-tool",
+              linkLabel: "See measurement-to-quote →",
+            },
+            {
+              title: "Ask Smart Assistant",
+              body: "Ask by text or voice to find jobs, quotes, orders and invoices or carry out supported tasks - important changes are proposed for your confirmation first.",
+            },
+          ]}
+          footnote="The same measurements and pricing rules feed every path - and the priced quote carries through to material orders and invoices."
+        />
+
         {/* Pricing clarity */}
         <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
           <div className="rounded-[2rem] border border-zinc-200 bg-zinc-50 px-7 py-8">
             <h2 className="text-2xl font-semibold text-zinc-950">How much does it cost?</h2>
-            <p className="mt-3 text-zinc-600">Simple monthly plans in USD. Start with a 14-day full-feature free trial — no credit card required.</p>
+            <p className="mt-3 text-zinc-600">Simple monthly plans in USD. Paid plans from $19/month, every one backed by a 30-day money-back guarantee.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-4">
               {[
-                { name: "Lite", price: "Free", note: "Core quoting" },
                 { name: "Starter", price: "$19/mo", note: "Quoting + templates" },
                 { name: "Pro", price: "$39/mo", note: "Takeoff + AI Scan Assist" },
                 { name: "Pro Plus", price: "$59/mo", note: "Everything included" },
@@ -430,16 +524,40 @@ export default function ConstructionQuotingSoftwarePage() {
           <div className="mt-10 space-y-5">
             {[
               { slug: "roofing", title: "Roofing contractors", body: <>Roofing quoting is measurement-heavy: roof areas, ridges, hips, valleys, barges, waste allowances and material pricing per square. QuoteCore+ includes <a href="/features/digital-roof-takeoff" className="text-[#BD4A1A] hover:underline">digital roof takeoff</a> with AI Scan Assist to identify roof areas and components from an uploaded plan, and Smart Components™ that store your per-square pricing, labour and waste rules so re-roof and repair quotes build in minutes. See the dedicated <a href="/roofing-quoting-software" className="text-[#BD4A1A] hover:underline">roofing quoting software</a> and <a href="/roofing-estimating-software" className="text-[#BD4A1A] hover:underline">roofing estimating software</a> pages.</> },
-              { slug: "carpentry", title: "Carpentry", body: <>Carpentry quotes mix materials (timber, fixings, sheet goods), labour hours and often repeated assemblies — decks, pergolas, framing packages. Save each assembly once as a Smart Component™ with its materials list, labour and pricing rule, then drop it into the next quote and adjust quantities. Measure on site or from plans, then let the quote update from the measurements.</> },
+              { slug: "carpentry", title: "Carpentry", body: <>Carpentry quotes mix materials (timber, fixings, sheet goods), labour hours and often repeated assemblies - decks, pergolas, framing packages. Save each assembly once as a Smart Component™ with its materials list, labour and pricing rule, then drop it into the next quote and adjust quantities. Measure on site or from plans, then let the quote update from the measurements.</> },
               { slug: "plastering", title: "Plastering", body: <>Plastering quotes come from wall and ceiling areas, openings deducted, coats and finishes priced per area, and materials like plasterboard, compound and tape ordered by the job. Build Smart Components™ per finish type, quote from measured areas, and turn the accepted quote into a material order without re-keying anything.</> },
-              { slug: "subcontractors", title: "Subcontractors", body: <>Subcontractors quote from head-contractor plans, then need to move fast: price it, submit it, and if accepted, order materials and invoice without admin overhead. QuoteCore+ keeps takeoff, quote, <a href="/features/material-ordering" className="text-[#BD4A1A] hover:underline">material orders</a> and <a href="/features/invoicing" className="text-[#BD4A1A] hover:underline">invoicing</a> connected to the same job data — especially valuable when you repeat similar work across multiple jobs.</> },
-              { slug: "general-contractors", title: "General contractors", body: <>General builders juggle multiple trades, materials and suppliers on every quote. QuoteCore+ lets you build quotes from a library of trade-specific Smart Components™, keep every customer and job in one place, track which quotes are accepted, and move the winners straight through to material orders and invoices — instead of rebuilding the job in spreadsheets at every stage.</> },
+              { slug: "subcontractors", title: "Subcontractors", body: <>Subcontractors quote from head-contractor plans, then need to move fast: price it, submit it, and if accepted, order materials and invoice without admin overhead. QuoteCore+ keeps takeoff, quote, <a href="/features/material-ordering" className="text-[#BD4A1A] hover:underline">material orders</a> and <a href="/features/invoicing" className="text-[#BD4A1A] hover:underline">invoicing</a> connected to the same job data - especially valuable when you repeat similar work across multiple jobs.</> },
+              { slug: "general-contractors", title: "General contractors", body: <>General builders juggle multiple trades, materials and suppliers on every quote. QuoteCore+ lets you build quotes from a library of trade-specific Smart Components™, keep every customer and job in one place, track which quotes are accepted, and move the winners straight through to material orders and invoices - instead of rebuilding the job in spreadsheets at every stage.</> },
             ].map((t) => (
               <div key={t.slug} id={t.slug} className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-6 shadow-sm">
                 <h3 className="text-xl font-semibold text-zinc-950">{t.title}</h3>
                 <p className="mt-3 text-base leading-7 text-zinc-600">{t.body}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Contractor evaluation criteria */}
+        <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">How contractors evaluate quoting software.</h2>
+          <p className="mt-4 text-lg leading-8 text-zinc-600">Before choosing job quoting software, most contractors weigh the same four things. Here is how QuoteCore+ handles each.</p>
+          <div className="mt-8 space-y-4">
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 shadow-sm">
+              <h3 className="text-xl font-semibold text-zinc-950">Quotes per week: will it keep up with your volume?</h3>
+              <p className="mt-3 text-base leading-7 text-zinc-600">Whether you send 2 quotes a week or 20, the bottleneck is the same: rebuilding the same measurements, materials and labour pricing every time. Smart Components™ store your pricing rules once, then drop them into every new quote - so quoting volume scales without your admin hours scaling with it.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 shadow-sm">
+              <h3 className="text-xl font-semibold text-zinc-950">Material lists: can the quote become an order?</h3>
+              <p className="mt-3 text-base leading-7 text-zinc-600">A quote that can&apos;t be ordered from is only half a job. In QuoteCore+, the accepted quote drives <a href="/features/material-ordering" className="text-[#BD4A1A] hover:underline">materials ordering</a> directly - component quantities, drawings and custom lengths stay connected, with no copy-paste into a separate spreadsheet.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 shadow-sm">
+              <h3 className="text-xl font-semibold text-zinc-950">Follow-ups: do you know which quotes are still open?</h3>
+              <p className="mt-3 text-base leading-7 text-zinc-600">Most lost jobs are lost to silence, not to competitors. QuoteCore+ tracks whether each quote has been viewed, accepted or declined, so follow-up is a list you work - not a feeling. For scripts and timing, see our guide on <a href="/blog/how-to-follow-up-on-a-quote" className="text-[#BD4A1A] hover:underline">how to follow up on a quote</a>.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 shadow-sm">
+              <h3 className="text-xl font-semibold text-zinc-950">Client-facing PDF: will customers trust the document?</h3>
+              <p className="mt-3 text-base leading-7 text-zinc-600">Homeowners, developers and project managers judge professionalism quickly. Quotes export as clean, branded PDF documents generated from live job data - not a spreadsheet printout - which helps the quote get taken seriously before your price is even compared.</p>
+            </div>
           </div>
         </section>
 
@@ -460,12 +578,12 @@ export default function ConstructionQuotingSoftwarePage() {
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
                   {[
-                    ["Measure from plans / digital takeoff", "Yes — built-in, with AI Scan Assist", "No — separate tool or manual", "No"],
-                    ["Reusable trade pricing rules", "Yes — Smart Components™", "Fragile formulas you rebuild", "No"],
-                    ["Professional quote output", "Yes — from live job data", "Manual formatting each time", "Basic templates"],
-                    ["Quote-to-material-order flow", "Yes — from the accepted quote", "Copy-paste into a new sheet", "No"],
-                    ["Quote-to-invoice flow", "Yes — same job data", "Rebuild manually", "Yes — but quote side is basic"],
-                    ["Approval and follow-up tracking", "Yes — accepted / declined per quote", "Your memory or another sheet", "Limited"],
+                    ["Measure from plans / digital takeoff", "Yes - built-in, with AI Scan Assist", "No - separate tool or manual", "No"],
+                    ["Reusable trade pricing rules", "Yes - Smart Components™", "Fragile formulas you rebuild", "No"],
+                    ["Professional quote output", "Yes - from live job data", "Manual formatting each time", "Basic templates"],
+                    ["Quote-to-material-order flow", "Yes - from the accepted quote", "Copy-paste into a new sheet", "No"],
+                    ["Quote-to-invoice flow", "Yes - same job data", "Rebuild manually", "Yes - but quote side is basic"],
+                    ["Approval and follow-up tracking", "Yes - accepted / declined per quote", "Your memory or another sheet", "Limited"],
                     ["Works offline / field-friendly", "Web-based, measure on screen", "Yes", "Varies"],
                   ].map((row) => (
                     <tr key={row[0]}>
@@ -478,7 +596,7 @@ export default function ConstructionQuotingSoftwarePage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-sm text-zinc-500">For a deeper walkthrough, see <a href="/blog/roofing-quoting-software-vs-spreadsheets" className="text-[#BD4A1A] hover:underline">quoting software vs spreadsheets</a>.</p>
+            <p className="mt-4 text-sm text-zinc-500">For a deeper walkthrough, see <a href="/blog/roofing-quoting-software-vs-spreadsheets" className="text-[#BD4A1A] hover:underline">quoting software vs spreadsheets</a> - or go straight to <a href="/blog/convert-spreadsheet-to-quote" className="text-[#BD4A1A] hover:underline">how to convert your spreadsheet to quoting software</a> without losing your pricing.</p>
           </div>
         </section>
 
@@ -487,10 +605,10 @@ export default function ConstructionQuotingSoftwarePage() {
           <h2 className="text-3xl font-semibold sm:text-4xl">See the platform.</h2>
           <div className="mt-8 grid gap-5 sm:grid-cols-2">
             {[
-              { src: "/images/features/digital-roof-takeoff.png", alt: "Digital roof takeoff in QuoteCore+ — measure roof areas and components on an uploaded plan", caption: "Digital takeoff — measure plans on screen" },
-              { src: "/images/features/smart-components-quote.png", alt: "Smart Components in a QuoteCore+ quote — reusable pricing, labour and waste rules", caption: "Smart Components™ — your pricing, reusable" },
+              { src: "/images/features/digital-roof-takeoff.png", alt: "Digital roof takeoff in QuoteCore+ - measure roof areas and components on an uploaded plan", caption: "Digital takeoff - measure plans on screen" },
+              { src: "/images/features/smart-components-quote.png", alt: "Smart Components in a QuoteCore+ quote - reusable pricing, labour and waste rules", caption: "Smart Components™ - your pricing, reusable" },
               { src: "/images/features/material-ordering.png", alt: "Material ordering from an accepted quote in QuoteCore+", caption: "Material orders from accepted quotes" },
-              { src: "/images/features/invoicing.png", alt: "Invoicing in QuoteCore+ — turn an accepted quote into an invoice", caption: "Invoicing without re-keying the job" },
+              { src: "/images/features/invoicing.png", alt: "Invoicing in QuoteCore+ - turn an accepted quote into an invoice", caption: "Invoicing without re-keying the job" },
             ].map((img) => (
               <figure key={img.src} className="overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-white shadow-sm">
                 <img src={img.src} alt={img.alt} className="w-full object-cover" loading="lazy" />
@@ -499,8 +617,8 @@ export default function ConstructionQuotingSoftwarePage() {
             ))}
           </div>
           <div className="mt-10 text-center">
-            <a href="/free-trial" className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">Start free 14-day trial</a>
-            <p className="mt-3 text-sm text-zinc-400">No card required. 14 days free.</p>
+            <a href="/free-trial" className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">Get started</a>
+            <p className="mt-3 text-sm text-zinc-400">Free tools forever. 30-day money-back guarantee on paid plans.</p>
           </div>
         </section>
 
@@ -622,6 +740,7 @@ export default function ConstructionQuotingSoftwarePage() {
               "You copy the same job details between different tools",
               "You need quotes to look professional without spending hours formatting them",
               "You want job information to stay connected after the customer says yes",
+              "You work from site as much as the office and need the workflow on your phone",
             ].map((item) => (
               <li key={item} className="flex items-start gap-3 text-zinc-700">
                 <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#FF6B35]" />
@@ -733,13 +852,13 @@ export default function ConstructionQuotingSoftwarePage() {
                       </>
                     ) : f.a === "cost-link" ? (
                       <>
-                        QuoteCore+ plans range from free to $59/month. The free plan includes core quoting features. Paid plans add digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. See our{" "}
+                        QuoteCore+ plans range from 19 to 59 dollars per month and all include the full feature set - digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. Plans also include digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. See our{" "}
                         <a href="/pricing" className="text-[#FF6B35] hover:underline">pricing page</a>{" "}
                         for current plan details.
                       </>
                     ) : f.a === "spreadsheets-link" ? (
                       <>
-                        Spreadsheets calculate numbers but disconnect the job — measurements, pricing, quotes, material orders, and invoices live in separate files. QuoteCore+ keeps the same job data connected from first measurement to final invoice, with Smart Components that remember your pricing rules so you don&apos;t rebuild formulas every time. See our{" "}
+                        Spreadsheets calculate numbers but disconnect the job - measurements, pricing, quotes, material orders, and invoices live in separate files. QuoteCore+ keeps the same job data connected from first measurement to final invoice, with Smart Components that remember your pricing rules so you don&apos;t rebuild formulas every time. See our{" "}
                         <a href="/blog/roofing-quoting-software-vs-spreadsheets" className="text-[#FF6B35] hover:underline">roofing quoting software vs spreadsheets comparison</a>{" "}
                         for a detailed breakdown.
                       </>
@@ -835,6 +954,26 @@ export default function ConstructionQuotingSoftwarePage() {
               <p className="font-semibold text-zinc-950">Free quote generator</p>
               <p className="mt-1 text-sm text-zinc-600">Create a professional quote for free, no signup required.</p>
             </a>
+            <a href="/free-roof-takeoff" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free roof takeoff tool</p>
+              <p className="mt-1 text-sm text-zinc-600">Measure a roof plan online, no signup.</p>
+            </a>
+            <a href="/measurement-to-quote-tool" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Measurement-to-Quote tool</p>
+              <p className="mt-1 text-sm text-zinc-600">Turn measurements into priced estimates, free.</p>
+            </a>
+            <a href="/roofing-takeoff-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Roofing takeoff software</p>
+              <p className="mt-1 text-sm text-zinc-600">Roof measurement software for PDF plans.</p>
+            </a>
+            <a href="/construction-takeoff-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Construction takeoff software</p>
+              <p className="mt-1 text-sm text-zinc-600">Measure PDF plans digitally across trades.</p>
+            </a>
+            <a href="/free-construction-takeoff-tools" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free takeoff tools</p>
+              <p className="mt-1 text-sm text-zinc-600">Roof, siding/cladding and flooring takeoffs - no signup.</p>
+            </a>
             <a href="/roofing-quoting-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Roofing quoting software</p>
               <p className="mt-1 text-sm text-zinc-600">Built specifically for roofing contractors - takeoff to invoice.</p>
@@ -864,10 +1003,10 @@ export default function ConstructionQuotingSoftwarePage() {
             href="/free-trial"
             className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
           >
-            Start your free 14-day trial
+            Get started
           </a>
 
-          <p className="mt-4 text-sm text-zinc-400">No card required. 14 days free. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
+          <p className="mt-4 text-sm text-zinc-400">Free tools forever. 30-day money-back guarantee on paid plans. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
         </section>
 
         <SiteFooter />

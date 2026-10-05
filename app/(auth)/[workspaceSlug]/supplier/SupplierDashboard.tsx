@@ -1,6 +1,10 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
-import { useState } from 'react';
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   updateSupplierProfile,
@@ -144,19 +148,19 @@ function OpeningHoursEditor({ value, onChange }: { value: string; onChange: (v: 
         const h = hours[day];
         const isOpen = !!h;
         return (
-          <div key={day} className="flex items-center gap-2">
-            <label className="flex items-center gap-2 cursor-pointer w-28 sm:w-32 flex-shrink-0">
+          <div key={day} className="qc-library-opening-day flex items-center gap-2">
+            <label className="qc-library-opening-label flex items-center gap-2 cursor-pointer w-28 sm:w-32 flex-shrink-0">
               <input type="checkbox" checked={isOpen} onChange={() => toggleDay(day)}
-                className="rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
+                className="qc-checkbox qc-library-control rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
               <span className="text-xs font-medium text-slate-600">{day.slice(0, 3)}</span>
             </label>
             {isOpen ? (
               <div className="flex items-center gap-1.5 flex-1">
-                <input type="time" value={h!.open} onChange={e => updateDay(day, 'open', e.target.value)}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-xs focus:border-orange-500 focus:outline-none" />
+                <input aria-label={`${day} opening time`} type="time" value={h!.open} onChange={e => updateDay(day, 'open', e.target.value)}
+                  className="qc-input qc-library-control rounded-lg border border-slate-300 px-2 py-1 text-xs focus:border-orange-500 focus:outline-none" />
                 <span className="text-xs text-slate-400">to</span>
-                <input type="time" value={h!.close} onChange={e => updateDay(day, 'close', e.target.value)}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-xs focus:border-orange-500 focus:outline-none" />
+                <input aria-label={`${day} closing time`} type="time" value={h!.close} onChange={e => updateDay(day, 'close', e.target.value)}
+                  className="qc-input qc-library-control rounded-lg border border-slate-300 px-2 py-1 text-xs focus:border-orange-500 focus:outline-none" />
               </div>
             ) : (
               <span className="text-xs text-slate-400 italic">Closed</span>
@@ -174,19 +178,15 @@ export function SupplierDashboard({
   libraries,
   catalogs,
   collections,
-  componentLimit,
-  companyActiveCount,
-  effectivePlanCode,
 }: {
   workspaceSlug: string;
   profile: SupplierProfileData | null;
   libraries: SupplierLibraryData[];
   catalogs: SupplierCatalogData[];
   collections: UserCollection[];
-  componentLimit: number | null;
-  companyActiveCount: number;
-  effectivePlanCode: string;
 }) {
+  const { notify, feedback } = useQcFeedback();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('libraries');
 
   // Collapsible sections
@@ -213,6 +213,10 @@ export function SupplierDashboard({
 
   const [localLibraries, setLocalLibraries] = useState(libraries);
   const [localCatalogs, setLocalCatalogs] = useState(catalogs);
+  // Explicit successful publication refreshes server lists without resetting
+  // unrelated profile drafts or reloading the entire application.
+  useEffect(() => setLocalLibraries(libraries), [libraries]);
+  useEffect(() => setLocalCatalogs(catalogs), [catalogs]);
 
   const [websiteUrl, setWebsiteUrl] = useState(profile?.website_url ?? '');
   const [contactEmail, setContactEmail] = useState(profile?.contact_email ?? '');
@@ -399,10 +403,10 @@ export function SupplierDashboard({
     setRenaming(true);
     try {
       const result = await renameComponentCollection(id, renameValue);
-      if (!result.ok) { alert(result.message); return; }
+      if (!result.ok) { await notify(result.message); return; }
       setLocalLibraries(prev => prev.map(l => l.id === id ? { ...l, name: result.name } : l));
       setRenamingId(null); setRenameValue('');
-    } catch (e) { alert(e instanceof Error ? e.message : 'Failed to rename'); }
+    } catch (e) { await notify(e instanceof Error ? e.message : 'Failed to rename'); }
     finally { setRenaming(false); }
   }
 
@@ -410,10 +414,10 @@ export function SupplierDashboard({
     setDeleteLoading(true);
     try {
       const result = await deleteComponentCollection(id);
-      if (!result.ok) { alert(result.message); return; }
+      if (!result.ok) { await notify(result.message); return; }
       setLocalLibraries(prev => prev.filter(l => l.id !== id));
       setDeletingId(null);
-    } catch (e) { alert(e instanceof Error ? e.message : 'Failed to delete'); }
+    } catch (e) { await notify(e instanceof Error ? e.message : 'Failed to delete'); }
     finally { setDeleteLoading(false); }
   }
 
@@ -433,11 +437,12 @@ export function SupplierDashboard({
   const publishedCatalogCount = localCatalogs.filter(c => c.visibility === 'published').length;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
+    <QcLibrary className="qc-library-detail">
+      {feedback}
       <div className="mx-auto max-w-4xl px-4 py-6">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">
-          <Link href={`/${workspaceSlug}/components`} className="hover:text-slate-700">Components</Link>
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">
+          <Link href={`/${workspaceSlug}/components`} className="qc-flow-link qc-library-control hover:text-slate-700">Components</Link>
           <svg className="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
@@ -447,7 +452,7 @@ export function SupplierDashboard({
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Supplier Dashboard</h1>
+            <h1 className="qc-library-title text-xl font-semibold text-slate-900">Supplier Dashboard</h1>
             <p className="text-sm text-slate-400 mt-0.5">Manage your supplier profile, libraries and catalogues</p>
           </div>
         </div>
@@ -458,7 +463,7 @@ export function SupplierDashboard({
         {/* === SUPPLIER PROFILE (collapsible) === */}
         {profile ? (
           <div className="rounded-xl border border-slate-200 bg-white mb-4 overflow-hidden">
-            <button onClick={() => setProfileExpanded(!profileExpanded)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/50 transition">
+            <button data-qc-variant="ghost" onClick={() => setProfileExpanded(!profileExpanded)} className="qc-button qc-flow-control qc-library-control w-full justify-between">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Chevron open={profileExpanded} />
                 {logoUrl || profile.logo_url ? (
@@ -483,7 +488,7 @@ export function SupplierDashboard({
                 <div className="flex items-center justify-between mb-3 pt-3">
                   <p className="text-xs text-slate-400">Your business details shown on your public supplier page.</p>
                   {!editingProfile && (
-                    <button onClick={() => setEditingProfile(true)} className="cursor-pointer text-xs font-medium text-slate-500 hover:text-slate-700 rounded-full px-3 py-1 hover:bg-slate-100">Edit Profile</button>
+                    <button data-qc-variant="ghost" onClick={() => setEditingProfile(true)} className="qc-button qc-flow-control qc-library-control ">Edit Profile</button>
                   )}
                 </div>
 
@@ -500,10 +505,10 @@ export function SupplierDashboard({
                           </div>
                         )}
                         <div className="flex-1">
-                          <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'logo'); }} disabled={uploading !== null}
-                            className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
+                          <input aria-label="Logo" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'logo'); }} disabled={uploading !== null}
+                            className="qc-flow-file qc-library-control text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
                           {uploading === 'logo' && <span className="text-xs text-slate-400 ml-2">Uploading...</span>}
-                          {logoUrl && <button type="button" onClick={() => setLogoUrl('')} className="text-xs text-red-400 hover:text-red-600 ml-2">Remove</button>}
+                          {logoUrl && <button data-qc-variant="ghost" type="button" onClick={() => setLogoUrl('')} className="qc-button qc-flow-control qc-library-control ml-2">Remove</button>}
                         </div>
                       </div>
                     </div>
@@ -514,38 +519,38 @@ export function SupplierDashboard({
                       {bannerUrl ? (
                         <div className="mt-1 relative rounded-lg overflow-hidden border border-slate-200">
                           <img src={bannerUrl} alt="Banner" className="w-full h-24 object-cover" />
-                          <button type="button" onClick={() => setBannerUrl('')} className="absolute top-1 right-1 rounded-full bg-black/50 text-white p-1 hover:bg-black/70">
+                          <button data-qc-variant="primary" type="button" onClick={() => setBannerUrl('')} className="qc-button qc-flow-control qc-library-control absolute top-1 right-1">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
                         </div>
                       ) : (
-                        <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'banner'); }} disabled={uploading !== null}
-                          className="mt-1 text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
+                        <input aria-label="Supplier banner image" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'banner'); }} disabled={uploading !== null}
+                          className="qc-flow-file qc-library-control mt-1 text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
                       )}
                       {uploading === 'banner' && <span className="text-xs text-slate-400 ml-2">Uploading...</span>}
                     </div>
 
                     <div>
                       <label className="text-xs font-medium text-slate-600">Website URL</label>
-                      <input type="text" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="https://..." />
+                      <input aria-label="Website URL" type="text" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="https://..." />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs font-medium text-slate-600">Contact Email (public)</label>
-                        <input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="sales@yourcompany.com" />
+                        <input aria-label="Contact Email (public)" type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="sales@yourcompany.com" />
                       </div>
                       <div>
                         <label className="text-xs font-medium text-slate-600">Phone Number</label>
-                        <input type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="+44 7700 900000" />
+                        <input aria-label="Phone Number" type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="+44 7700 900000" />
                       </div>
                     </div>
                     <div>
                       <label className="text-xs font-medium text-slate-600">Description</label>
-                      <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Tell customers about your products..." />
+                      <textarea aria-label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={2} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Tell customers about your products..." />
                     </div>
                     <div>
                       <label className="text-xs font-medium text-slate-600">Service Areas (comma-separated)</label>
-                      <input type="text" value={serviceAreas} onChange={e => setServiceAreas(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="UK, US, Australia" />
+                      <input aria-label="Service Areas (comma-separated)" type="text" value={serviceAreas} onChange={e => setServiceAreas(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="UK, US, Australia" />
                     </div>
                     <div>
                       <label className="text-xs font-medium text-slate-600">Roofing Types</label>
@@ -554,18 +559,18 @@ export function SupplierDashboard({
                           const selected = roofingTypes.includes(rt);
                           return (
                             <button key={rt} type="button" onClick={() => setRoofingTypes(selected ? roofingTypes.filter(x => x !== rt) : [...roofingTypes, rt])}
-                              className={`cursor-pointer rounded-full border px-3 py-1 text-xs transition ${selected ? 'bg-slate-900 border-slate-900 text-white' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`}>{rt}</button>
+                              className={"qc-flow-control qc-library-choice " + (`cursor-pointer rounded-full border px-3 py-1 text-xs transition ${selected ? 'bg-slate-900 border-slate-900 text-white' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`)}>{rt}</button>
                           );
                         })}
                       </div>
                     </div>
                     <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap gap-3 items-center justify-between">
                         <div>
                           <label className="text-xs font-medium text-slate-700">Allow custom pricing on takeoff tool</label>
                           <Hint>When enabled, users on your branded takeoff tool can enter their own known prices.</Hint>
                         </div>
-                        <button type="button" onClick={() => setAllowCustomPricing(!allowCustomPricing)} className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${allowCustomPricing ? 'bg-[#FF6B35]' : 'bg-slate-300'}`}>
+                        <button type="button" onClick={() => setAllowCustomPricing(!allowCustomPricing)} className={"qc-flow-control qc-library-choice " + (`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${allowCustomPricing ? 'bg-[#FF6B35]' : 'bg-slate-300'}`)}>
                           <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${allowCustomPricing ? 'translate-x-5' : 'translate-x-0.5'}`} />
                         </button>
                       </div>
@@ -573,21 +578,21 @@ export function SupplierDashboard({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs font-medium text-slate-600">Country</label>
-                        <select value={branchCountry} onChange={e => setBranchCountry(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none">
+                        <select aria-label="Country" value={branchCountry} onChange={e => setBranchCountry(e.target.value)} className="qc-select qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none">
                           {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
                         </select>
                       </div>
                       <div>
                         <label className="text-xs font-medium text-slate-600">City</label>
-                        <input type="text" value={branchCity} onChange={e => setBranchCity(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Christchurch" />
+                        <input aria-label="City" type="text" value={branchCity} onChange={e => setBranchCity(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Christchurch" />
                       </div>
                       <div>
                         <label className="text-xs font-medium text-slate-600">Region / State</label>
-                        <input type="text" value={branchRegion} onChange={e => setBranchRegion(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Canterbury" />
+                        <input aria-label="Region / State" type="text" value={branchRegion} onChange={e => setBranchRegion(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Canterbury" />
                       </div>
                       <div>
                         <label className="text-xs font-medium text-slate-600">Postcode (optional)</label>
-                        <input type="text" value={branchPostcode} onChange={e => setBranchPostcode(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="8011" />
+                        <input aria-label="Postcode (optional)" type="text" value={branchPostcode} onChange={e => setBranchPostcode(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="8011" />
                       </div>
                     </div>
 
@@ -597,39 +602,39 @@ export function SupplierDashboard({
                         <label className="text-xs font-medium text-slate-700">Location & Map Coordinates (optional)</label>
                         <Hint>Helps your supplier page appear in Google Maps and local search results. Use the buttons below to set your coordinates automatically.</Hint>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          <button type="button" onClick={() => {
-                            if (!navigator.geolocation) { alert('Geolocation is not supported by your browser.'); return; }
+                          <button data-qc-variant="ghost" type="button" onClick={() => {
+                            if (!navigator.geolocation) { void notify('Geolocation is not supported by your browser.'); return; }
                             navigator.geolocation.getCurrentPosition(
                               (pos) => { setBranchLatitude(pos.coords.latitude.toFixed(6)); setBranchLongitude(pos.coords.longitude.toFixed(6)); },
-                              () => { alert('Could not get your location. Please check browser permissions or enter coordinates manually.'); },
+                              () => { void notify('Could not get your location. Please check browser permissions or enter coordinates manually.'); },
                               { enableHighAccuracy: true, timeout: 10000 }
                             );
-                          }} className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:bg-orange-50/40 transition cursor-pointer">
+                          }} className="qc-button qc-flow-control qc-library-control inline-flex gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                             Use my current location
                           </button>
-                          <button type="button" onClick={async () => {
+                          <button data-qc-variant="ghost" type="button" onClick={async () => {
                             const parts = [branchCity, branchRegion, branchCountry].filter(Boolean).join(',');
-                            if (!parts) { alert('Enter your city, region and country above first, then use this button.'); return; }
+                            if (!parts) { await notify('Enter your city, region and country above first, then use this button.'); return; }
                             try {
                               const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(parts)}&limit=1`);
                               const data = await res.json();
                               if (data && data[0]) { setBranchLatitude(parseFloat(data[0].lat).toFixed(6)); setBranchLongitude(parseFloat(data[0].lon).toFixed(6)); }
-                              else { alert('Could not find coordinates for that address. Try entering them manually.'); }
-                            } catch { alert('Could not look up coordinates. Please enter them manually.'); }
-                          }} className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:bg-orange-50/40 transition cursor-pointer">
+                              else { await notify('Could not find coordinates for that address. Try entering them manually.'); }
+                            } catch { await notify('Could not look up coordinates. Please enter them manually.'); }
+                          }} className="qc-button qc-flow-control qc-library-control inline-flex gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                             Suggest from my address
                           </button>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 mt-2">
+                        <div className="qc-library-field-grid grid grid-cols-2 gap-3 mt-2">
                           <div>
                             <label className="text-xs font-medium text-slate-600">Latitude</label>
-                            <input type="text" inputMode="decimal" value={branchLatitude} onChange={e => setBranchLatitude(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="-43.5320" />
+                            <input aria-label="Latitude" type="text" inputMode="decimal" value={branchLatitude} onChange={e => setBranchLatitude(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="-43.5320" />
                           </div>
                           <div>
                             <label className="text-xs font-medium text-slate-600">Longitude</label>
-                            <input type="text" inputMode="decimal" value={branchLongitude} onChange={e => setBranchLongitude(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="172.6362" />
+                            <input aria-label="Longitude" type="text" inputMode="decimal" value={branchLongitude} onChange={e => setBranchLongitude(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="172.6362" />
                           </div>
                         </div>
                       </div>
@@ -648,29 +653,29 @@ export function SupplierDashboard({
                       <Hint>How tax applies to your published prices. Users will see this information when using your takeoff builder.</Hint>
                       <div className="mt-2 space-y-2">
                         <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="tax-treatment" value="inclusive" checked={taxTreatment === 'inclusive'} onChange={() => setTaxTreatment('inclusive')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <input type="radio" name="tax-treatment" value="inclusive" checked={taxTreatment === 'inclusive'} onChange={() => setTaxTreatment('inclusive')} className="qc-checkbox qc-library-control text-[#FF6B35] focus:ring-[#FF6B35]" />
                           <span className="text-sm text-slate-700">Prices <strong>include</strong> tax</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="tax-treatment" value="exclusive" checked={taxTreatment === 'exclusive'} onChange={() => setTaxTreatment('exclusive')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <input type="radio" name="tax-treatment" value="exclusive" checked={taxTreatment === 'exclusive'} onChange={() => setTaxTreatment('exclusive')} className="qc-checkbox qc-library-control text-[#FF6B35] focus:ring-[#FF6B35]" />
                           <span className="text-sm text-slate-700">Prices <strong>exclude</strong> tax</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="tax-treatment" value="not_applicable" checked={taxTreatment === 'not_applicable'} onChange={() => setTaxTreatment('not_applicable')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <input type="radio" name="tax-treatment" value="not_applicable" checked={taxTreatment === 'not_applicable'} onChange={() => setTaxTreatment('not_applicable')} className="qc-checkbox qc-library-control text-[#FF6B35] focus:ring-[#FF6B35]" />
                           <span className="text-sm text-slate-700">Tax not applicable</span>
                         </label>
                       </div>
                       {taxTreatment === 'inclusive' && (
-                        <div className="mt-3 grid grid-cols-2 gap-2 pl-6">
+                        <div className="qc-library-field-grid mt-3 grid grid-cols-2 gap-2 pl-6">
                           <div>
                             <label className="text-xs font-medium text-slate-600">Tax Name</label>
-                            <input type="text" value={taxName} onChange={e => setTaxName(e.target.value)}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. GST, VAT" />
+                            <input aria-label="Tax Name" type="text" value={taxName} onChange={e => setTaxName(e.target.value)}
+                              className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. GST, VAT" />
                           </div>
                           <div>
                             <label className="text-xs font-medium text-slate-600">Rate (%)</label>
-                            <input type="number" step="0.01" min="0" max="100" value={taxRate} onChange={e => setTaxRate(e.target.value)}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. 15" />
+                            <input aria-label="Rate (%)" type="number" step="0.01" min="0" max="100" value={taxRate} onChange={e => setTaxRate(e.target.value)}
+                              className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. 15" />
                           </div>
                         </div>
                       )}
@@ -686,7 +691,7 @@ export function SupplierDashboard({
                           return (
                             <label key={opt.value} className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-2 text-sm transition ${selected ? 'border-[#FF6B35] bg-orange-50/50 text-slate-900' : 'border-slate-200 text-slate-600 hover:border-slate-300'}`}>
                               <input type="checkbox" checked={selected} onChange={() => setDeliveryCoverage(selected ? deliveryCoverage.filter(v => v !== opt.value) : [...deliveryCoverage, opt.value])}
-                                className="rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
+                                className="qc-checkbox qc-library-control rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
                               {opt.label}
                             </label>
                           );
@@ -695,16 +700,16 @@ export function SupplierDashboard({
                       {/* Delivery notes */}
                       <div className="mt-3">
                         <label className="text-xs font-medium text-slate-600">Delivery notes (optional)</label>
-                        <input type="text" value={deliveryAssumptions} onChange={e => setDeliveryAssumptions(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. Free delivery on orders over $500" />
+                        <input aria-label="Delivery notes (optional)" type="text" value={deliveryAssumptions} onChange={e => setDeliveryAssumptions(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. Free delivery on orders over $500" />
                       </div>
                       {/* Exclusions */}
                       <div className="mt-2">
                         <label className="text-xs font-medium text-slate-600">Exclusions (optional)</label>
-                        <input type="text" value={exclusions} onChange={e => setExclusions(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. No deliveries to offshore islands" />
+                        <input aria-label="Exclusions (optional)" type="text" value={exclusions} onChange={e => setExclusions(e.target.value)} className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. No deliveries to offshore islands" />
                       </div>
                       {/* National coverage */}
                       <div className="mt-2 flex items-center gap-2">
-                        <input type="checkbox" id="national-coverage" checked={nationalCoverage} onChange={e => setNationalCoverage(e.target.checked)} className="rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
+                        <input aria-label="We provide national coverage across the entire country" type="checkbox" id="national-coverage" checked={nationalCoverage} onChange={e => setNationalCoverage(e.target.checked)} className="qc-checkbox qc-library-control rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
                         <label htmlFor="national-coverage" className="text-xs text-slate-600 cursor-pointer">We provide national coverage across the entire country</label>
                       </div>
                     </div>
@@ -715,15 +720,15 @@ export function SupplierDashboard({
                       <Hint>Control whether your physical address is shown on your public supplier page. Service-area businesses may prefer to hide their address.</Hint>
                       <div className="mt-2 space-y-2">
                         <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="address-visibility" value="show" checked={addressVisibility === 'show'} onChange={() => setAddressVisibility('show')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <input type="radio" name="address-visibility" value="show" checked={addressVisibility === 'show'} onChange={() => setAddressVisibility('show')} className="qc-checkbox qc-library-control text-[#FF6B35] focus:ring-[#FF6B35]" />
                           <span className="text-sm text-slate-700">Show full address (city, region, postcode, country)</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="address-visibility" value="city_only" checked={addressVisibility === 'city_only'} onChange={() => setAddressVisibility('city_only')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <input type="radio" name="address-visibility" value="city_only" checked={addressVisibility === 'city_only'} onChange={() => setAddressVisibility('city_only')} className="qc-checkbox qc-library-control text-[#FF6B35] focus:ring-[#FF6B35]" />
                           <span className="text-sm text-slate-700">Show city and country only</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="address-visibility" value="hidden" checked={addressVisibility === 'hidden'} onChange={() => setAddressVisibility('hidden')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <input type="radio" name="address-visibility" value="hidden" checked={addressVisibility === 'hidden'} onChange={() => setAddressVisibility('hidden')} className="qc-checkbox qc-library-control text-[#FF6B35] focus:ring-[#FF6B35]" />
                           <span className="text-sm text-slate-700">Hide address (service-area business)</span>
                         </label>
                       </div>
@@ -741,18 +746,18 @@ export function SupplierDashboard({
                             </div>
                             {priceListUploadedAt && <span className="text-xs text-slate-400">Uploaded {new Date(priceListUploadedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
                           </div>
-                          <button type="button" onClick={() => { setPriceListUrl(''); setPriceListFilename(''); setPriceListUploadedAt(''); }} className="text-xs text-red-400 hover:text-red-600">Remove</button>
+                          <button data-qc-variant="ghost" type="button" onClick={() => { setPriceListUrl(''); setPriceListFilename(''); setPriceListUploadedAt(''); }} className="qc-button qc-flow-control qc-library-control ">Remove</button>
                         </div>
                       ) : (
-                        <input type="file" accept=".pdf,.csv,application/pdf,text/csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'price-list'); }} disabled={uploading !== null}
-                          className="mt-2 text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
+                        <input aria-label="Supplier price list" type="file" accept=".pdf,.csv,application/pdf,text/csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'price-list'); }} disabled={uploading !== null}
+                          className="qc-flow-file qc-library-control mt-2 text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
                       )}
                       {uploading === 'price-list' && <span className="text-xs text-slate-400 ml-2">Uploading...</span>}
 
                       {/* Tax inclusion checkbox for price list */}
                       {priceListUrl && (
                         <div className="mt-2 flex items-center gap-2">
-                          <input type="checkbox" id="pricelist-tax" checked={priceListIncludesTax === true} onChange={e => setPriceListIncludesTax(e.target.checked)} className="rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <input aria-label="This catalogue includes tax" type="checkbox" id="pricelist-tax" checked={priceListIncludesTax === true} onChange={e => setPriceListIncludesTax(e.target.checked)} className="qc-checkbox qc-library-control rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
                           <label htmlFor="pricelist-tax" className="text-xs text-slate-600 cursor-pointer">
                             This catalogue includes tax{taxTreatment === 'inclusive' && taxName ? ` (${taxName}${taxRate ? ` ${taxRate}%` : ''})` : ''}
                           </label>
@@ -760,8 +765,8 @@ export function SupplierDashboard({
                       )}
                     </div>
                     <div className="flex items-center gap-2 pt-2">
-                      <button onClick={handleSaveProfile} disabled={saving} className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition disabled:opacity-40">{saving ? 'Saving...' : 'Save Profile'}</button>
-                      <button onClick={() => setEditingProfile(false)} className="cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
+                      <button data-qc-variant="primary" onClick={handleSaveProfile} disabled={saving} className="qc-button qc-flow-control qc-library-control ">{saving ? 'Saving...' : 'Save Profile'}</button>
+                      <button data-qc-variant="ghost" onClick={() => setEditingProfile(false)} className="qc-button qc-flow-control qc-library-control ">Cancel</button>
                     </div>
                   </div>
                 ) : (
@@ -772,7 +777,7 @@ export function SupplierDashboard({
                     {(bannerUrl || profile.banner_url) && (
                       <div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Banner</span><img src={(bannerUrl || profile.banner_url) ?? ''} alt="Banner" className="h-10 w-24 rounded border border-slate-200 object-cover" /></div>
                     )}
-                    {profile.website_url && (<div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Website</span><a href={profile.website_url} target="_blank" rel="noopener noreferrer" className="text-[#2563EB] hover:underline">{profile.website_url}</a></div>)}
+                    {profile.website_url && (<div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Website</span><a href={profile.website_url} target="_blank" rel="noopener noreferrer" className="qc-flow-link qc-library-control text-[#2563EB] hover:underline">{profile.website_url}</a></div>)}
                     {profile.contact_email && (<div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Contact</span><span className="text-slate-600">{profile.contact_email}</span></div>)}
                     {profile.phone_number && (<div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Phone</span><span className="text-slate-600">{profile.phone_number}</span></div>)}
                     {profile.description && (<div className="flex items-start gap-2 text-xs"><span className="text-slate-400 w-20">Description</span><span className="text-slate-600">{profile.description}</span></div>)}
@@ -824,7 +829,7 @@ export function SupplierDashboard({
         {/* === SUPPLIER PUBLIC URLS (collapsible) === */}
         {profile?.slug && (
           <div className="rounded-xl border border-slate-200 bg-white mb-4 overflow-hidden">
-            <button onClick={() => setUrlsExpanded(!urlsExpanded)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/50 transition">
+            <button data-qc-variant="ghost" onClick={() => setUrlsExpanded(!urlsExpanded)} className="qc-button qc-flow-control qc-library-control w-full justify-between">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Chevron open={urlsExpanded} />
                 <div className="flex items-center gap-2 min-w-0 flex-wrap">
@@ -845,7 +850,7 @@ export function SupplierDashboard({
                         <span className="text-xs font-medium text-slate-500 block">Supplier Page</span>
                         <code className="text-xs text-[#BD4A1A] break-all">https://quote-core.com/suppliers/{profile.slug}</code>
                       </div>
-                      <button onClick={() => handleCopyLink(`https://quote-core.com/suppliers/${profile.slug}`, 'supplier-page')} className="flex-shrink-0 rounded-full p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition" title="Copy URL">
+                      <button aria-label="Copy URL" data-qc-variant="ghost" onClick={() => handleCopyLink(`https://quote-core.com/suppliers/${profile.slug}`, 'supplier-page')} className="qc-button qc-flow-control qc-library-control flex-shrink-0" title="Copy URL">
                         {copiedField === 'supplier-page' ? (
                           <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         ) : (
@@ -862,7 +867,7 @@ export function SupplierDashboard({
                           <span className="text-xs font-medium text-slate-500 block">Roofing Calculator</span>
                           <code className="text-xs text-[#BD4A1A] break-all">https://quote-core.com/free-roofing-takeoff-builder/{profile.slug}</code>
                         </div>
-                        <button onClick={() => handleCopyLink(`https://quote-core.com/free-roofing-takeoff-builder/${profile.slug}`, 'takeoff-builder')} className="flex-shrink-0 rounded-full p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition" title="Copy URL">
+                        <button aria-label="Copy URL" data-qc-variant="ghost" onClick={() => handleCopyLink(`https://quote-core.com/free-roofing-takeoff-builder/${profile.slug}`, 'takeoff-builder')} className="qc-button qc-flow-control qc-library-control flex-shrink-0" title="Copy URL">
                           {copiedField === 'takeoff-builder' ? (
                             <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                           ) : (
@@ -883,7 +888,7 @@ export function SupplierDashboard({
 
         {/* === ROOFING CALCULATOR (collapsible) === */}
         <div className="rounded-xl border border-slate-200 bg-white mb-4 overflow-hidden">
-          <button onClick={() => setCalculatorExpanded(!calculatorExpanded)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/50 transition">
+          <button data-qc-variant="ghost" onClick={() => setCalculatorExpanded(!calculatorExpanded)} className="qc-button qc-flow-control qc-library-control w-full justify-between">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <Chevron open={calculatorExpanded} />
               <div className="flex items-center gap-2 min-w-0 flex-wrap">
@@ -901,12 +906,12 @@ export function SupplierDashboard({
               <p className="text-xs text-slate-400">Your branded roofing calculator that customers can use to get instant quotes. Turn this on to get a custom URL you can share with customers or add to your website.</p>
 
               <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-3 items-center justify-between">
                   <div>
                     <label className="text-xs font-medium text-slate-700">Calculator enabled</label>
                     <Hint>When enabled, your branded calculator URL is active and your components are available.</Hint>
                   </div>
-                  <button type="button" onClick={() => setTakeoffEnabled(!takeoffEnabled)} className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${takeoffEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`}>
+                  <button type="button" onClick={() => setTakeoffEnabled(!takeoffEnabled)} className={"qc-flow-control qc-library-choice " + (`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${takeoffEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`)}>
                     <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${takeoffEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
                 </div>
@@ -917,7 +922,7 @@ export function SupplierDashboard({
                   <p className="text-xs font-semibold text-emerald-800 mb-1">Your Calculator URL</p>
                   <div className="flex items-center gap-2">
                     <code className="text-xs text-[#BD4A1A] flex-1 break-all">https://quote-core.com/free-roofing-takeoff-builder/{profile.slug}</code>
-                    <button onClick={() => navigator.clipboard.writeText(`https://quote-core.com/free-roofing-takeoff-builder/${profile.slug}`)} className="flex-shrink-0 text-slate-400 hover:text-slate-600 transition" title="Copy URL">
+                    <button aria-label="Copy URL" data-qc-variant="ghost" onClick={() => navigator.clipboard.writeText(`https://quote-core.com/free-roofing-takeoff-builder/${profile.slug}`)} className="qc-button qc-flow-control qc-library-control flex-shrink-0" title="Copy URL">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10a2 2 0 00-2 2v3a2 2 0 002 2h10a2 2 0 002-2v-3a2 2 0 00-2-2z" /></svg>
                     </button>
                   </div>
@@ -931,27 +936,18 @@ export function SupplierDashboard({
                 {localLibraries.length === 0 ? (
                   <div className="mt-2 rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center">
                     <p className="text-sm text-slate-500">No component libraries found.</p>
-                    <Link href={`/${workspaceSlug}/components`} className="mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Create a library first</Link>
+                    <Link href={`/${workspaceSlug}/components`} className="qc-flow-link qc-library-control mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Create a library first</Link>
                   </div>
                 ) : (
                   <div className="mt-2 space-y-2">
-                    {/* Active component allowance summary */}
-                    {componentLimit !== null && (
-                      <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 mb-1">
-                        <span className="text-xs text-slate-600">
-                          Your plan allows <span className="font-semibold text-slate-900">{componentLimit} active components</span> across all libraries.
-                          You currently have <span className={`font-semibold ${companyActiveCount >= componentLimit ? 'text-red-600' : 'text-slate-900'}`}>{companyActiveCount} active</span>.
-                        </span>
-                      </div>
-                    )}
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="takeoff-collection" checked={takeoffCollectionId === null} onChange={() => setTakeoffCollectionId(null)} className="border-slate-300 text-orange-500 focus:ring-orange-500" />
+                      <input type="radio" name="takeoff-collection" checked={takeoffCollectionId === null} onChange={() => setTakeoffCollectionId(null)} className="qc-checkbox qc-library-control border-slate-300 text-orange-500 focus:ring-orange-500" />
                       <span className="text-sm text-slate-500">No library (uses generic components)</span>
                     </label>
                     {localLibraries.map((lib) => {
                       return (
                       <label key={lib.id} className="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-200 px-3 py-2 hover:bg-orange-50/40 transition">
-                        <input type="radio" name="takeoff-collection" checked={takeoffCollectionId === lib.id} onChange={() => setTakeoffCollectionId(lib.id)} className="border-slate-300 text-orange-500 focus:ring-orange-500" />
+                        <input type="radio" name="takeoff-collection" checked={takeoffCollectionId === lib.id} onChange={() => setTakeoffCollectionId(lib.id)} className="qc-checkbox qc-library-control border-slate-300 text-orange-500 focus:ring-orange-500" />
                         <div className="flex-1">
                           <span className="text-sm font-medium text-slate-900">{lib.name}</span>
                           <span className="ml-2 text-xs text-slate-400">
@@ -966,58 +962,10 @@ export function SupplierDashboard({
                   </div>
                 )}
 
-                {/* Warning: selected library has more total components than active allowance */}
-                {takeoffCollectionId && componentLimit !== null && (() => {
-                  const selectedLib = localLibraries.find(l => l.id === takeoffCollectionId);
-                  if (!selectedLib || selectedLib.total_component_count <= componentLimit) return null;
-                  return (
-                    <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                      <div className="flex items-start gap-2">
-                        <svg className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div className="flex-1">
-                          <p className="text-xs font-medium text-amber-900">
-                            This library has {selectedLib.total_component_count} components, but your {effectivePlanCode} plan allows only {componentLimit} active at once.
-                          </p>
-                          <p className="text-xs text-amber-700 mt-1">
-                            Only {selectedLib.component_count} active components will appear in your takeoff builder. {selectedLib.total_component_count - selectedLib.component_count} are inactive and hidden from customers.
-                          </p>
-                          <Link href={`/${workspaceSlug}/components`} className="mt-2 inline-block text-xs font-medium text-[#BD4A1A] hover:underline">
-                            Manage active components →
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Warning: at or over active component cap */}
-                {takeoffCollectionId && componentLimit !== null && companyActiveCount >= componentLimit && (
-                  <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
-                    <div className="flex items-start gap-2">
-                      <svg className="h-4 w-4 text-[#BD4A1A] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      <div className="flex-1">
-                        <p className="text-xs font-medium text-slate-900">
-                          You have reached your active component limit ({companyActiveCount}/{componentLimit}).
-                        </p>
-                        <p className="text-xs text-slate-600 mt-1">
-                          Deactivate components you don't need, or upgrade to activate more. New components you create will be stored as inactive.
-                        </p>
-                        <Link href={`/${workspaceSlug}/settings/billing`} className="mt-2 inline-block text-xs font-medium text-[#BD4A1A] hover:underline">
-                          Upgrade plan →
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Tax inclusion checkbox for takeoff library */}
                 {takeoffCollectionId && (
                   <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2">
-                    <input type="checkbox" id="takeoff-tax" checked={takeoffLibraryIncludesTax === true} onChange={e => setTakeoffLibraryIncludesTax(e.target.checked)} className="rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
+                    <input aria-label="Prices in this library include tax" type="checkbox" id="takeoff-tax" checked={takeoffLibraryIncludesTax === true} onChange={e => setTakeoffLibraryIncludesTax(e.target.checked)} className="qc-checkbox qc-library-control rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
                     <label htmlFor="takeoff-tax" className="text-xs text-slate-600 cursor-pointer">
                       Prices in this library include tax{taxTreatment === 'inclusive' && taxName ? ` (${taxName}${taxRate ? ` ${taxRate}%` : ''})` : ''}
                     </label>
@@ -1029,18 +977,18 @@ export function SupplierDashboard({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Enquiry Email</label>
-                    <input type="email" value={takeoffEnquiryEmail} onChange={(e) => setTakeoffEnquiryEmail(e.target.value)} placeholder="sales@yourcompany.com" className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
+                    <input aria-label="Enquiry Email" type="email" value={takeoffEnquiryEmail} onChange={(e) => setTakeoffEnquiryEmail(e.target.value)} placeholder="sales@yourcompany.com" className="qc-input qc-library-control w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
                     <Hint>Email that receives customer enquiries from the calculator.</Hint>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={takeoffEnquiriesEnabled} onChange={(e) => setTakeoffEnquiriesEnabled(e.target.checked)} className="rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
+                    <input type="checkbox" checked={takeoffEnquiriesEnabled} onChange={(e) => setTakeoffEnquiriesEnabled(e.target.checked)} className="qc-checkbox qc-library-control rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
                     <span className="text-sm text-slate-700">Enquiries enabled</span>
                     <span className="text-xs text-slate-400">(customers can send enquiries to your email)</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={takeoffInstantPricing} onChange={(e) => setTakeoffInstantPricing(e.target.checked)} className="rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
+                    <input type="checkbox" checked={takeoffInstantPricing} onChange={(e) => setTakeoffInstantPricing(e.target.checked)} className="qc-checkbox qc-library-control rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
                     <span className="text-sm text-slate-700">Instant pricing available</span>
                     <span className="text-xs text-slate-400">(shows real-time prices in the calculator)</span>
                   </label>
@@ -1050,7 +998,7 @@ export function SupplierDashboard({
               {takeoffError && (<div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{takeoffError}</div>)}
               {takeoffSaved && (<div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-600">Settings saved. Your calculator URL is {takeoffEnabled ? 'active.' : 'disabled.'}</div>)}
               <div className="mt-4 flex items-center gap-2">
-                <button onClick={handleSaveTakeoffSettings} disabled={takeoffSaving} className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition disabled:opacity-40">{takeoffSaving ? 'Saving...' : 'Save Calculator Settings'}</button>
+                <button data-qc-variant="primary" onClick={handleSaveTakeoffSettings} disabled={takeoffSaving} className="qc-button qc-flow-control qc-library-control ">{takeoffSaving ? 'Saving...' : 'Save Calculator Settings'}</button>
               </div>
               </div>
             </div>
@@ -1059,7 +1007,7 @@ export function SupplierDashboard({
 
         {/* === VISIBILITY & PUBLISHING (collapsible) === */}
         <div className="rounded-xl border border-slate-200 bg-white mb-4 overflow-hidden">
-          <button onClick={() => { setVisibilityExpanded(!visibilityExpanded); if (!visibilityExpanded) handleCheckReadiness(); }} className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/50 transition">
+          <button data-qc-variant="ghost" onClick={() => { setVisibilityExpanded(!visibilityExpanded); if (!visibilityExpanded) handleCheckReadiness(); }} className="qc-button qc-flow-control qc-library-control w-full justify-between">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <Chevron open={visibilityExpanded} />
               <div className="flex items-center gap-2 min-w-0 flex-wrap">
@@ -1119,7 +1067,7 @@ export function SupplierDashboard({
                     </div>
                   ))}
                 </div>
-                <button onClick={handleCheckReadiness} className="mt-3 text-xs text-[#2563EB] hover:underline">Re-check</button>
+                <button data-qc-variant="ghost" onClick={handleCheckReadiness} className="qc-button qc-flow-control qc-library-control mt-3">Re-check</button>
               </div>
             )}
 
@@ -1130,12 +1078,12 @@ export function SupplierDashboard({
 
               {/* Page toggle */}
               <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-3 items-center justify-between">
                   <div>
                     <label className="text-xs font-medium text-slate-700">Public supplier page</label>
                     <Hint>Your profile page at quote-core.com/suppliers/{profile?.slug || 'your-slug'}. This is where customers can find your business.</Hint>
                   </div>
-                  <button type="button" onClick={() => setPubPageEnabled(!pubPageEnabled)} className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${pubPageEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`}>
+                  <button type="button" onClick={() => setPubPageEnabled(!pubPageEnabled)} className={"qc-flow-control qc-library-choice " + (`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${pubPageEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`)}>
                     <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${pubPageEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
                 </div>
@@ -1143,12 +1091,12 @@ export function SupplierDashboard({
 
               {/* Show on Google */}
               <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-3 items-center justify-between">
                   <div>
                     <label className="text-xs font-medium text-slate-700">Show on Google</label>
                     <Hint>When on, your supplier page can appear in Google search results, helping new customers find you.</Hint>
                   </div>
-                  <button type="button" onClick={() => setPubIndexingEnabled(!pubIndexingEnabled)} className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${pubIndexingEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`}>
+                  <button type="button" onClick={() => setPubIndexingEnabled(!pubIndexingEnabled)} className={"qc-flow-control qc-library-choice " + (`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${pubIndexingEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`)}>
                     <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${pubIndexingEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
                 </div>
@@ -1156,12 +1104,12 @@ export function SupplierDashboard({
 
               {/* Show product categories */}
               <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-3 items-center justify-between">
                   <div>
                     <label className="text-xs font-medium text-slate-700">Show product categories</label>
                     <Hint>Displays your roofing types and brands on your public page so customers know what you sell.</Hint>
                   </div>
-                  <button type="button" onClick={() => setPubCatalogueEnabled(!pubCatalogueEnabled)} className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${pubCatalogueEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`}>
+                  <button type="button" onClick={() => setPubCatalogueEnabled(!pubCatalogueEnabled)} className={"qc-flow-control qc-library-choice " + (`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${pubCatalogueEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`)}>
                     <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${pubCatalogueEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
                 </div>
@@ -1171,13 +1119,13 @@ export function SupplierDashboard({
               <div className="mt-4">
                 <label className="text-xs font-medium text-slate-600">Show your prices</label>
                 <Hint>Control where your pricing is shown. More visibility means more customers can see your pricing and send enquiries.</Hint>
-                <div className="mt-2 grid grid-cols-3 gap-2">
+                <div className="qc-library-field-grid mt-2 grid grid-cols-3 gap-2">
                   {([
                     { value: 'hidden', label: 'Hidden', desc: 'No prices shown anywhere' },
                     { value: 'web_only', label: 'On your page', desc: 'Prices on your supplier page only' },
                     { value: 'full', label: 'Everywhere', desc: 'On your page, in the calculator, and in AI tools' },
                   ] as const).map((opt) => (
-                    <button key={opt.value} type="button" onClick={() => setPubPriceVisibility(opt.value)} className={`rounded-lg border px-3 py-2 text-left transition ${pubPriceVisibility === opt.value ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                    <button key={opt.value} type="button" onClick={() => setPubPriceVisibility(opt.value)} className={"qc-flow-control qc-library-choice " + (`rounded-lg border px-3 py-2 text-left transition ${pubPriceVisibility === opt.value ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`)}>
                       <span className="text-xs font-medium text-slate-900">{opt.label}</span>
                       <span className="block text-[11px] text-slate-400 mt-0.5">{opt.desc}</span>
                     </button>
@@ -1189,13 +1137,13 @@ export function SupplierDashboard({
               <div className="mt-4">
                 <label className="text-xs font-medium text-slate-600">Show your contact details</label>
                 <Hint>Control where your phone number and email are shown to customers.</Hint>
-                <div className="mt-2 grid grid-cols-3 gap-2">
+                <div className="qc-library-field-grid mt-2 grid grid-cols-3 gap-2">
                   {([
                     { value: 'hidden', label: 'Hidden', desc: 'No contact details shown' },
                     { value: 'page_only', label: 'On your page', desc: 'Shown on your supplier page' },
                     { value: 'full', label: 'Everywhere', desc: 'On your page, in the calculator, and in results' },
                   ] as const).map((opt) => (
-                    <button key={opt.value} type="button" onClick={() => setPubContactVisibility(opt.value)} className={`rounded-lg border px-3 py-2 text-left transition ${pubContactVisibility === opt.value ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                    <button key={opt.value} type="button" onClick={() => setPubContactVisibility(opt.value)} className={"qc-flow-control qc-library-choice " + (`rounded-lg border px-3 py-2 text-left transition ${pubContactVisibility === opt.value ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`)}>
                       <span className="text-xs font-medium text-slate-900">{opt.label}</span>
                       <span className="block text-[11px] text-slate-400 mt-0.5">{opt.desc}</span>
                     </button>
@@ -1207,13 +1155,13 @@ export function SupplierDashboard({
               <div className="mt-4">
                 <label className="text-xs font-medium text-slate-600">Page status</label>
                 <Hint>Control whether your page is visible in the supplier directory or only accessible by direct link.</Hint>
-                <div className="mt-2 grid grid-cols-3 gap-2">
+                <div className="qc-library-field-grid mt-2 grid grid-cols-3 gap-2">
                   {([
                     { value: 'unready', label: 'Hidden', desc: 'Not visible to the public' },
                     { value: 'unlisted', label: 'Direct link only', desc: 'Accessible via URL but not in directory' },
                     { value: 'published', label: 'Visible in directory', desc: 'Anyone can find you in the directory' },
                   ] as const).map((opt) => (
-                    <button key={opt.value} type="button" onClick={() => setPubState(opt.value)} className={`rounded-lg border px-3 py-2 text-left transition ${pubState === opt.value ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                    <button key={opt.value} type="button" onClick={() => setPubState(opt.value)} className={"qc-flow-control qc-library-choice " + (`rounded-lg border px-3 py-2 text-left transition ${pubState === opt.value ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`)}>
                       <span className="text-xs font-medium text-slate-900">{opt.label}</span>
                       <span className="block text-[11px] text-slate-400 mt-0.5">{opt.desc}</span>
                     </button>
@@ -1241,18 +1189,18 @@ export function SupplierDashboard({
               {pubSaved && (<div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-600">Visibility settings saved.</div>)}
 
               <div className="mt-4 flex items-center gap-2">
-                <button onClick={handleSaveVisibility} disabled={pubSaving} className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition disabled:opacity-40">{pubSaving ? 'Saving...' : 'Save Visibility Settings'}</button>
-                <button onClick={handlePreview} className="cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50 transition">Preview Public Profile</button>
+                <button data-qc-variant="primary" onClick={handleSaveVisibility} disabled={pubSaving} className="qc-button qc-flow-control qc-library-control ">{pubSaving ? 'Saving...' : 'Save Visibility Settings'}</button>
+                <button data-qc-variant="ghost" onClick={handlePreview} className="qc-button qc-flow-control qc-library-control ">Preview Public Profile</button>
               </div>
             </div>
 
             {/* Preview modal */}
             {showPreview && previewData && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+              <QcJourneyDialog label="Public Profile Preview" size="lg">
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
                   <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
                     <h3 className="text-sm font-semibold text-slate-900">Public Profile Preview</h3>
-                    <button onClick={() => setShowPreview(false)} className="text-slate-400 hover:text-slate-600 transition">
+                    <button aria-label="Close" data-qc-variant="ghost" onClick={() => setShowPreview(false)} className="qc-button qc-flow-control qc-library-control ">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   </div>
@@ -1261,7 +1209,7 @@ export function SupplierDashboard({
                     <p className="text-xs text-slate-400 mt-3">This is what the public will see when they view your supplier page. Details you have not shared are removed automatically.</p>
                   </div>
                 </div>
-              </div>
+              </QcJourneyDialog>
             )}
               </div>
             </div>
@@ -1270,33 +1218,33 @@ export function SupplierDashboard({
 
         {/* === TABS (Libraries & Catalogues) === */}
         <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <button onClick={() => setActiveTab('libraries')} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'libraries' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>Component Libraries</button>
-          <button onClick={() => setActiveTab('catalogues')} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'catalogues' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>Price Catalogues</button>
+          <button aria-pressed={activeTab === 'libraries'} onClick={() => setActiveTab('libraries')} className={"qc-flow-control qc-library-choice " + (`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'libraries' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`)}>Component Libraries</button>
+          <button aria-pressed={activeTab === 'catalogues'} onClick={() => setActiveTab('catalogues')} className={"qc-flow-control qc-library-choice " + (`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'catalogues' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`)}>Price Catalogues</button>
         </div>
 
         {/* === LIBRARIES TAB === */}
         {activeTab === 'libraries' && (
           <div className="space-y-3">
             <p className="text-xs text-slate-400">Groups of roofing components with pricing that customers can use in the calculator. Publish a library to make it available to the public.</p>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap gap-3 items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-900">Libraries</h3>
-              <Link href={`/${workspaceSlug}/components`} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Manage in Components →</Link>
+              <Link href={`/${workspaceSlug}/components`} className="qc-flow-link qc-library-control text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Manage in Components →</Link>
             </div>
             {localLibraries.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
                 <p className="text-sm text-slate-400">No libraries yet.</p>
-                <Link href={`/${workspaceSlug}/components`} className="mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Go to Components to create one</Link>
+                <Link href={`/${workspaceSlug}/components`} className="qc-flow-link qc-library-control mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Go to Components to create one</Link>
               </div>
             ) : (
               localLibraries.map(lib => (
                 <div key={lib.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="qc-supplier-summary flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       {renamingId === lib.id ? (
                         <div className="flex items-center gap-2">
-                          <input type="text" value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleRename(lib.id); } if (e.key === 'Escape') { setRenamingId(null); setRenameValue(''); } }} maxLength={80} className="px-2 py-1 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none" autoFocus />
-                          <button type="button" onClick={() => void handleRename(lib.id)} disabled={renaming || !renameValue.trim()} className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">{renaming ? 'Saving...' : 'Save'}</button>
-                          <button type="button" onClick={() => { setRenamingId(null); setRenameValue(''); }} className="px-3 py-1 text-xs rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
+                          <input type="text" value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleRename(lib.id); } if (e.key === 'Escape') { setRenamingId(null); setRenameValue(''); } }} maxLength={80} className="qc-input qc-library-control px-2 py-1 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none" autoFocus />
+                          <button data-qc-variant="primary" type="button" onClick={() => void handleRename(lib.id)} disabled={renaming || !renameValue.trim()} className="qc-button qc-flow-control qc-library-control ">{renaming ? 'Saving...' : 'Save'}</button>
+                          <button data-qc-variant="ghost" type="button" onClick={() => { setRenamingId(null); setRenameValue(''); }} className="qc-button qc-flow-control qc-library-control ">Cancel</button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 flex-wrap">
@@ -1316,17 +1264,17 @@ export function SupplierDashboard({
                       )}
                     </div>
                     <div className="flex flex-col gap-1.5 items-end shrink-0">
-                      <button type="button" onClick={() => setShowPublishModal(lib.id)} className="text-xs px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50 hover:border-orange-300 text-slate-600 transition font-medium">{(lib.visibility ?? 'private') === 'private' ? 'Publish' : 'Settings'}</button>
-                      {renamingId !== lib.id && !lib.is_bootstrap && (<button type="button" title="Rename" onClick={() => { setRenamingId(lib.id); setRenameValue(lib.name); }} className="text-xs text-slate-400 hover:text-orange-500 transition">Rename</button>)}
-                      {!lib.is_bootstrap && deletingId !== lib.id && (<button type="button" title="Delete" onClick={() => setDeletingId(lib.id)} className="text-xs text-slate-400 hover:text-red-500 transition">Delete</button>)}
+                      <button data-qc-variant="ghost" type="button" onClick={() => setShowPublishModal(lib.id)} className="qc-button qc-flow-control qc-library-control ">{(lib.visibility ?? 'private') === 'private' ? 'Publish' : 'Settings'}</button>
+                      {renamingId !== lib.id && !lib.is_bootstrap && (<button aria-label="Rename" data-qc-variant="ghost" type="button" title="Rename" onClick={() => { setRenamingId(lib.id); setRenameValue(lib.name); }} className="qc-button qc-flow-control qc-library-control ">Rename</button>)}
+                      {!lib.is_bootstrap && deletingId !== lib.id && (<button aria-label="Delete" data-qc-variant="ghost" type="button" title="Delete" onClick={() => setDeletingId(lib.id)} className="qc-button qc-flow-control qc-library-control ">Delete</button>)}
                       {deletingId === lib.id && (
                         <div className="flex items-center gap-1">
-                          <button type="button" onClick={() => void handleDelete(lib.id)} disabled={deleteLoading} className="text-xs px-2 py-1 rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">{deleteLoading ? 'Deleting...' : 'Confirm'}</button>
-                          <button type="button" onClick={() => setDeletingId(null)} className="text-xs px-2 py-1 rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
+                          <button data-qc-variant="danger" type="button" onClick={() => void handleDelete(lib.id)} disabled={deleteLoading} className="qc-button qc-flow-control qc-library-control ">{deleteLoading ? 'Deleting...' : 'Confirm'}</button>
+                          <button data-qc-variant="ghost" type="button" onClick={() => setDeletingId(null)} className="qc-button qc-flow-control qc-library-control ">Cancel</button>
                         </div>
                       )}
                       {lib.visibility === 'published' && (
-                        <button onClick={() => handlePublishUpdate(lib.id)} disabled={publishing === lib.id} className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-50 font-medium">{publishing === lib.id ? 'Publishing...' : 'Push Update'}</button>
+                        <button data-qc-variant="ghost" onClick={() => handlePublishUpdate(lib.id)} disabled={publishing === lib.id} className="qc-button qc-flow-control qc-library-control ">{publishing === lib.id ? 'Publishing...' : 'Push Update'}</button>
                       )}
                       {publishResult[lib.id] && <span className={`text-xs ${publishResult[lib.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>{publishResult[lib.id].message}</span>}
                       {lib.published_version != null && lib.published_version > 0 && lib.visibility === 'published' && <span className="text-xs text-slate-400">v{lib.published_version}</span>}
@@ -1342,19 +1290,19 @@ export function SupplierDashboard({
         {activeTab === 'catalogues' && (
           <div className="space-y-3">
             <p className="text-xs text-slate-400">Upload CSV or PDF price lists from your suppliers. Convert them into component libraries using the converter below.</p>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap gap-3 items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-900">Catalogues</h3>
-              <Link href={`/${workspaceSlug}/catalogs`} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Upload in Catalogs →</Link>
+              <Link href={`/${workspaceSlug}/catalogs`} className="qc-flow-link qc-library-control text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Upload in Catalogs →</Link>
             </div>
             {localCatalogs.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
                 <p className="text-sm text-slate-400">No catalogues yet.</p>
-                <Link href={`/${workspaceSlug}/catalogs`} className="mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Go to Catalogs to upload one</Link>
+                <Link href={`/${workspaceSlug}/catalogs`} className="qc-flow-link qc-library-control mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Go to Catalogs to upload one</Link>
               </div>
             ) : (
               localCatalogs.map(cat => (
                 <div key={cat.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="qc-supplier-summary flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-slate-900">{cat.name}</span>
@@ -1373,8 +1321,8 @@ export function SupplierDashboard({
                       )}
                     </div>
                     <div className="flex flex-col gap-1.5 items-end shrink-0">
-                      <button type="button" onClick={() => setShowCatalogPublishModal(cat.id)} className="text-xs px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50 hover:border-orange-300 text-slate-600 transition font-medium">{cat.visibility === 'private' ? 'Publish' : 'Settings'}</button>
-                      {cat.visibility === 'published' && (<Link href={`/${workspaceSlug}/catalogs?replace=${cat.id}`} className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition font-medium text-center">Upload New Version</Link>)}
+                      <button data-qc-variant="ghost" type="button" onClick={() => setShowCatalogPublishModal(cat.id)} className="qc-button qc-flow-control qc-library-control ">{cat.visibility === 'private' ? 'Publish' : 'Settings'}</button>
+                      {cat.visibility === 'published' && (<Link href={`/${workspaceSlug}/catalogs?replace=${cat.id}`} className="qc-flow-link qc-library-control text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition font-medium text-center">Upload New Version</Link>)}
                       {publishResult[cat.id] && <span className={`text-xs ${publishResult[cat.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>{publishResult[cat.id].message}</span>}
                       {cat.published_version > 0 && cat.visibility === 'published' && <span className="text-xs text-slate-400">v{cat.published_version}</span>}
                     </div>
@@ -1396,7 +1344,7 @@ export function SupplierDashboard({
         <div className="mt-8 pt-6 border-t border-slate-100">
           <details className="text-xs text-slate-400">
             <summary className="cursor-pointer hover:text-slate-600">Stats: {localLibraries.length} libraries ({publishedCount} published), {localCatalogs.length} catalogues ({publishedCatalogCount} published)</summary>
-            <div className="grid grid-cols-4 gap-3 mt-3">
+            <div className="qc-library-field-grid grid grid-cols-4 gap-3 mt-3">
               <div className="rounded-xl border border-slate-200 bg-white p-4">
                 <div className="text-2xl font-semibold text-slate-900">{localLibraries.length}</div>
                 <div className="text-xs text-slate-400 mt-0.5">Libraries</div>
@@ -1428,7 +1376,7 @@ export function SupplierDashboard({
               publicTitle={lib.public_title || ''} publicDescription={lib.public_description || ''}
               roofingTypes={lib.roofing_types || []}
               onClose={() => setShowPublishModal(null)}
-              onSaved={() => { setShowPublishModal(null); window.location.reload(); }}
+              onSaved={() => { setShowPublishModal(null); router.refresh(); }}
             />
           );
         })()}
@@ -1441,11 +1389,11 @@ export function SupplierDashboard({
             <CatalogPublishModal
               catalog={cat}
               onClose={() => setShowCatalogPublishModal(null)}
-              onSaved={() => { setShowCatalogPublishModal(null); window.location.reload(); }}
+              onSaved={() => { setShowCatalogPublishModal(null); router.refresh(); }}
             />
           );
         })()}
       </div>
-    </div>
+    </QcLibrary>
   );
 }

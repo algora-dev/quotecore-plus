@@ -1,17 +1,22 @@
 // Supplier Pricing Portal - shared types
-// Phase 1: measurement entry (actual/site), Measurement Set, group product
-// assignment (Standard mode), materials pricing output.
+// Phase 2: Standard + Advanced mode. AppliedProduct carries all settings;
+// entryId=null means whole-group (Standard), specific entryId = per-entry.
+
+import { GROUP_PITCH_RULES, pitchFactor } from './pitch';
 
 export type MeasurementBasis = 'area' | 'lineal' | 'count';
 
-/** Which measurement group a product can be applied to. */
+/** Which measurement group a product can be applied to.
+ *  'areas' = parent-model trades (cladding/flooring) - see tradeConfig.ts. */
 export type GroupKey =
+  | 'areas'
   | 'roofAreas'
   | 'ridges'
   | 'hips'
   | 'valleys'
   | 'barges'
-  | 'spouting';
+  | 'spouting'
+  | 'downpipes';
 
 export interface GroupDef {
   key: GroupKey;
@@ -28,7 +33,10 @@ export const GROUP_DEFS: GroupDef[] = [
   { key: 'valleys', label: 'Valleys', singular: 'Valley', basis: 'lineal', unit: 'm' },
   { key: 'barges', label: 'Barges', singular: 'Barge', basis: 'lineal', unit: 'm' },
   { key: 'spouting', label: 'Spouting', singular: 'Spouting', basis: 'lineal', unit: 'm' },
+  { key: 'downpipes', label: 'Downpipes', singular: 'Downpipe', basis: 'count', unit: 'ea' },
 ];
+
+export type RoofTypeTag = string; // 'slate' | 'tile' | 'metal' | ... | 'all'
 
 export interface SupplierProduct {
   id: string;
@@ -37,9 +45,22 @@ export interface SupplierProduct {
   basis: MeasurementBasis;
   /** groups this product is valid for */
   groups: GroupKey[];
+  /** component category - coverings drive roof-type compatibility */
+  component?: 'covering' | 'underlay' | 'fixing' | 'ridge' | 'hip' | 'valley' | 'barge' | 'gutter' | 'downpipe';
+  /** roof types this product suits - ['all'] when omitted */
+  roofTypes?: RoofTypeTag[];
+  /** system family - same-family items are Recommended once a covering is picked */
+  family?: string;
   unitPrice: number; // baseline/public price per unit
   packSize: number | null; // when set, sold in packs
   defaultWastePct: number; // suggested waste for this product
+  /** lineal products: default waste MODE. 'flat' adds a fixed length per
+   *  entry (defaultWasteFlat, like the main app); 'percent' (default)
+   *  scales with length. Area/count products are always percent. */
+  defaultWasteMode?: 'percent' | 'flat';
+  defaultWasteFlat?: number; // suggested flat waste length (m) when mode = flat
+  defaultLabourRate: number; // suggested labour $/unit (0 = none)
+  priceEditable: boolean; // supplier config: can customer override price?
   suggested?: boolean;
 }
 
@@ -47,28 +68,172 @@ export interface SupplierProduct {
 export interface MeasureEntry {
   id: string;
   label: string;
-  /** area (m2), length (m) or count */
+  /** area (m2), length (m) or count - plan value when entryPath === 'plan' */
   value: number;
+  /** how many of this measurement (length x qty); areas use 1 */
+  quantity: number;
+  /** optional per-entry pitch override (plan mode) */
+  pitchDegrees?: number;
+  /** linear entries: the roof area this component belongs to. Drives
+   *  plan-mode pitch conversion (attached area's pitch) and output grouping. */
+  roofAreaId?: string | null;
 }
 
-/** A measurement group holds entries + applied products (Standard: whole group). */
 export interface MeasurementGroup {
   key: GroupKey;
   entries: MeasureEntry[];
-  /** products applied to the whole group */
-  productIds: string[];
+  /** master pitch (plan mode); entries inherit unless they carry their own */
+  pitchDegrees: number;
 }
 
-/** Per-applied-product settings (waste etc.). Phase 2 adds labour/overrides. */
-export interface AppliedSettings {
-  wastePct: number;
+// ---------------------------------------------------------------------
+// PARENT-AREA MODEL v2 (cladding / flooring - see tradeConfig.ts)
+// A PARENT is a pure name-only bucket ("Cedar Cladding", "Plasterboard")
+// with no geometry, no measurement and no product of its own. Components
+// under the bucket carry the measurements AND receive the products at the
+// next step (possibly several layered products on one component).
+// ---------------------------------------------------------------------
+
+/** A named bucket organising the job. Never measured, never priced. */
+export interface ParentArea {
+  id: string;
+  name: string;
 }
+
+/** How a component is measured (and which catalog products it accepts). */
+export type ParentBasis = 'area' | 'lineal' | 'point';
+
+/** A measured component attached to a parent bucket. */
+export interface ParentComponent {
+  id: string;
+  parentId: string;
+  name: string;
+  basis: ParentBasis;
+}
+
+/** One measured entry inside a component. */
+export interface ParentEntry {
+  id: string;
+  componentId: string;
+  label: string;
+  /** area (m2), length (m) or count - basis of the owning component */
+  value: number;
+  /** how many of this measurement (identical runs/areas); default 1 */
+  quantity: number;
+  /** optional raw length + height that produced value (area basis, display only) */
+  length?: number | null;
+  height?: number | null;
+  /** optional slope/angle in degrees (cladding only, display only) */
+  angleDegrees?: number | null;
+}
+
+/** One product applied to a component. Components take MULTIPLE products
+ *  (layered: cedar timber + battens + building wrap on the same m2). */
+export interface ComponentApplied {
+  id: string;
+  componentId: string;
+  productId: string;
+  wastePct: number;
+  /** lineal components: flat waste length added to calc qty (same unit) */
+  wasteFlat: number;
+  /** which waste mode is active - only one applies at a time */
+  wasteMode: 'percent' | 'flat';
+  labourRate: number;         // per unit (0 = none)
+  qtyOverride: number | null; // replaces measured qty when set
+  priceOverride: number | null; // only honoured if product.priceEditable
+}
+
+/** The whole in-progress job for parent-model trades. */
+export interface ParentJob {
+  parents: ParentArea[];
+  components: ParentComponent[];
+  entries: ParentEntry[];
+  applied: ComponentApplied[];
+  customComponents: CustomComponent[];
+}
+
+export function emptyParentJob(): ParentJob {
+  return { parents: [], components: [], entries: [], applied: [], customComponents: [] };
+}
+
+export const PARENT_BASIS_UNIT: Record<ParentBasis, string> = {
+  area: 'm\u00B2',
+  lineal: 'm',
+  point: 'ea',
+};
+
+/** Total measured value of one component (entries x qty). */
+export function componentTotal(job: ParentJob, componentId: string): number {
+  return job.entries
+    .filter(e => e.componentId === componentId)
+    .reduce((s, e) => s + (e.value || 0) * (e.quantity || 1), 0);
+}
+
+/** One product application. entryId=null applies to the whole group
+ *  (Standard); a specific entryId is an Advanced per-entry assignment. */
+export interface AppliedProduct {
+  id: string;
+  groupKey: GroupKey;
+  productId: string;
+  entryId: string | null;
+  wastePct: number;
+  /** length-based waste: flat amount added to calc qty (same unit as the group) */
+  wasteFlat: number;
+  /** which waste mode is active - only one applies at a time */
+  wasteMode: 'percent' | 'flat';
+  labourRate: number;          // $ per unit (0 = none)
+  qtyOverride: number | null;  // replaces measured qty when set
+  priceOverride: number | null; // only honoured if product.priceEditable
+  /** true while this entry was auto-attached by the tool (recommended
+   *  default for the measurement type) and the user has not touched it -
+   *  drives the "pre-attached" badge + explainer so users know a product
+   *  is already selected and can be removed, swapped or added to. */
+  autoApplied?: boolean;
+}
+
+/** Purchase qty after waste (percent OR flat length per wasteMode - never
+ *  both) - single source of truth shared by the pricing engine and the live
+ *  UI previews. */
+export function applyWaste(ap: { wastePct?: number; wasteFlat?: number; wasteMode?: 'percent' | 'flat' }, calcQty: number, unitCount = 1): number {
+  if (ap.wasteMode === 'flat') {
+    // flat waste is a per-length cutting allowance: it applies to EVERY
+    // measurement entry covered by this application, not once off the total.
+    return calcQty + (ap.wasteFlat || 0) * Math.max(1, unitCount);
+  }
+  return calcQty * (1 + (ap.wastePct || 0) / 100);
+}
+
+/** User-defined custom component (final step before output). Fully
+ *  self-priced: the user enters measurement basis, quantity, material cost
+ *  and labour cost. Session-only - never persisted to any library. */
+export interface CustomComponent {
+  id: string;
+  name: string;
+  basis: MeasurementBasis;
+  /** measured amount: m2, m or count */
+  quantity: number;
+  /** material cost per unit */
+  unitPrice: number;
+  /** labour cost per unit (0 = none) */
+  labourRate: number;
+}
+
+export const CUSTOM_BASIS_UNIT: Record<MeasurementBasis, string> = {
+  area: 'm\u00B2',
+  lineal: 'm',
+  count: 'ea',
+};
 
 export interface MeasurementSet {
   entryPath: 'measure' | 'plan' | 'actual'; // Phase 1: 'actual' only
-  groups: Record<GroupKey, MeasurementGroup>;
-  applied: Record<string, AppliedSettings>; // key = productId (group-level in Phase 1)
+  /** keyed by GroupKey; parent-model trades do not use this */
+  groups: Record<string, MeasurementGroup>;
+  appliedProducts: AppliedProduct[];
+  /** user-created custom components (final step before output) */
+  customComponents: CustomComponent[];
 }
+
+export type Mode = 'standard' | 'advanced';
 
 export type EntryMode = 'measure' | 'have'; // Step 1 choice
 export type HaveSubMode = 'plan' | 'actual'; // Step 1B choice
@@ -76,13 +241,35 @@ export type HaveSubMode = 'plan' | 'actual'; // Step 1B choice
 export function emptyMeasurementSet(): MeasurementSet {
   const groups = {} as MeasurementSet['groups'];
   for (const g of GROUP_DEFS) {
-    groups[g.key] = { key: g.key, entries: [], productIds: [] };
+    groups[g.key] = { key: g.key, entries: [], pitchDegrees: 25 };
   }
-  return { entryPath: 'actual', groups, applied: {} };
+  return { entryPath: 'actual', groups, appliedProducts: [], customComponents: [] };
 }
 
 export function groupTotal(set: MeasurementSet, key: GroupKey): number {
   return set.groups[key].entries.reduce((s, e) => s + (e.value || 0), 0);
+}
+
+/** Pitched (converted) value of an entry - plan mode applies the pitch
+ *  rule; actual mode returns the value unchanged. Attached linear entries
+ *  convert at their ROOF AREA's pitch (per-area correctness), falling back
+ *  to the group pitch when unattached. */
+export function entryPitched(set: MeasurementSet, key: GroupKey, entryId: string): number {
+  const g = set.groups[key];
+  const e = g.entries.find(x => x.id === entryId);
+  if (!e) return 0;
+  const raw = e.value * (e.quantity || 1);
+  if (set.entryPath !== 'plan') return raw;
+  const areaPitch = e.roofAreaId
+    ? set.groups.roofAreas.entries.find(a => a.id === e.roofAreaId)?.pitchDegrees
+    : undefined;
+  const deg = e.pitchDegrees ?? areaPitch ?? g.pitchDegrees ?? 0;
+  return raw * pitchFactor(GROUP_PITCH_RULES[key] ?? 'none', deg);
+}
+
+/** Pitched total for a whole group. */
+export function groupPitchedTotal(set: MeasurementSet, key: GroupKey): number {
+  return set.groups[key].entries.reduce((s, e) => s + entryPitched(set, key, e.id), 0);
 }
 
 export function makeId(prefix = 'id'): string {

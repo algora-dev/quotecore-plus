@@ -1,0 +1,5 @@
+Verified 2 files; 16 sources; schema feaff3719950d5d17cd163326b06d5641f1b03a915fe947aa9b9abfa94b6eaad
+PASS 16 registered sources, 339 physical-column references, field/relationship/dimension parity with supplied types.
+PASS SQL structure and fixed-registry/parameter-binding checks. PostgreSQL parsing, schema deployment, grants, RLS, planner cost and results remain separate integration gates.
+
+EXIT_CODE=0

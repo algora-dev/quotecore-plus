@@ -1,0 +1,424 @@
+{
+  "probes": [
+    {
+      "name": "live-run-capture",
+      "ok": true,
+      "detail": "runId=37085fe1-2c0b-425b-bb8f-41796def06dc status=accepted"
+    },
+    {
+      "name": "run-scope-bound",
+      "ok": true,
+      "detail": "capabilities responded OK"
+    },
+    {
+      "name": "capabilities-enabled",
+      "ok": true,
+      "detail": "{\"enabled\":true,\"version\":1,\"schema_hash\":\"feaff3719950d5d17cd163326b06d5641f1b03a915fe947aa9b9abfa94b6eaad\",\"knowledge_enabled\":false,\"catalogues_allowed\":true"
+    },
+    {
+      "name": "isolation-search-maple",
+      "ok": true,
+      "detail": "rows=2 Maple Ridge Roof Repair|Maple Ridge Roof Repair"
+    },
+    {
+      "name": "isolation-foreign-search-empty",
+      "ok": true,
+      "detail": "rows=0"
+    },
+    {
+      "name": "isolation-foreign-id-empty",
+      "ok": true,
+      "detail": "rows=0"
+    },
+    {
+      "name": "isolation-random-id-indistinguishable",
+      "ok": true,
+      "detail": "shape equal"
+    },
+    {
+      "name": "reject-unknown-field",
+      "ok": true,
+      "detail": "400 unsupported_field"
+    },
+    {
+      "name": "reject-tenant-key",
+      "ok": true,
+      "detail": "400 invalid_plan"
+    },
+    {
+      "name": "reject-dotted-field",
+      "ok": true,
+      "detail": "400 unsupported_field"
+    },
+    {
+      "name": "reject-proto-field",
+      "ok": true,
+      "detail": "400 unsupported_field"
+    },
+    {
+      "name": "reject-limit-21",
+      "ok": true,
+      "detail": "400 invalid_limit"
+    },
+    {
+      "name": "reject-aggregate-no-metrics",
+      "ok": true,
+      "detail": "400 invalid_projection"
+    },
+    {
+      "name": "reject-sum-text-metric",
+      "ok": true,
+      "detail": "400 invalid_numeric_metric"
+    },
+    {
+      "name": "reject-source-injection",
+      "ok": true,
+      "detail": "400 unsupported_source"
+    },
+    {
+      "name": "reject-source-infoschema",
+      "ok": true,
+      "detail": "400 unsupported_source"
+    },
+    {
+      "name": "reject-sql-in-search",
+      "ok": true,
+      "detail": "status=200 rows=0 (literal search, no injection surface)"
+    },
+    {
+      "name": "reject-knowledge-off-source",
+      "ok": true,
+      "detail": "400 knowledge_disabled"
+    },
+    {
+      "name": "reject-nested-json-filter",
+      "ok": true,
+      "detail": "400 invalid_filter_value"
+    },
+    {
+      "name": "reject-control-chars",
+      "ok": true,
+      "detail": "400 unsupported Unicode escape sequence"
+    },
+    {
+      "name": "engine-aggregate-builder-total",
+      "ok": true,
+      "detail": "mode=engine_inputs complete=true"
+    },
+    {
+      "name": "deny-foreign-user-jwt",
+      "ok": true,
+      "detail": "403 access_changed"
+    },
+    {
+      "name": "deny-noretrieval-user-jwt",
+      "ok": true,
+      "detail": "403 access_changed"
+    },
+    {
+      "name": "deny-stale-revision",
+      "ok": true,
+      "detail": "403 access_changed"
+    },
+    {
+      "name": "deny-anon-key",
+      "ok": true,
+      "detail": "status=401"
+    },
+    {
+      "name": "deny-no-jwt",
+      "ok": true,
+      "detail": "status=401"
+    },
+    {
+      "name": "resolve-duplicate-candidates",
+      "ok": true,
+      "detail": "rows=2 res=null"
+    },
+    {
+      "name": "draft-by-name",
+      "ok": true,
+      "detail": "rows=1"
+    },
+    {
+      "name": "related-ridge-semijoin",
+      "ok": true,
+      "detail": "rows=3 (expect q1,q2,q3 once each)"
+    },
+    {
+      "name": "catalogue-rows-search",
+      "ok": true,
+      "detail": "rows=1"
+    },
+    {
+      "name": "live-turn-completed",
+      "ok": true,
+      "detail": "status=completed turn=- Quotes: 4 non-draft quotes. Totals are incomplete: NZD $862.50 recorded across"
+    },
+    {
+      "name": "deny-finished-run",
+      "ok": true,
+      "detail": "403 access_changed"
+    },
+    {
+      "name": "deny-nonexistent-run",
+      "ok": true,
+      "detail": "403 access_changed"
+    }
+  ],
+  "luna": [
+    {
+      "msg": "How many quotes and drafts do I have in total?",
+      "ms": 4067,
+      "ok": true,
+      "reply": "You have 6 quotes and drafts in total.",
+      "cards": [],
+      "tokensIn": null,
+      "tokensOut": null
+    },
+    {
+      "msg": "Find my Maple Ridge Roof Repair quote",
+      "ms": 3697,
+      "ok": true,
+      "reply": "I found two matching records. Which one do you mean: John Smith’s quote or Jane Doe’s draft?",
+      "cards": [
+        "choices"
+      ],
+      "tokensIn": null,
+      "tokensOut": null
+    },
+    {
+      "msg": "What's the builder total on the Maple Ridge Roof Repair quote for John Smith?",
+      "ms": 3085,
+      "ok": true,
+      "reply": "Quote #175614 — Maple Ridge Roof Repair\nCurrent builder total including quote taxes: NZD $1,340.90 · currency: NZD\n\nScope: quotes; non-draft quotes only; customer name eq John Smith; job name eq Maple Ridge Roof Repair",
+      "cards": [
+        "choices",
+        "records"
+      ],
+      "tokensIn": null,
+      "tokensOut": null
+    },
+    {
+      "msg": "Show me the Ridge component on my 9th canvas test draft",
+      "ms": 5796,
+      "ok": true,
+      "reply": "I found the Ridge component, but I couldn’t open its record.",
+      "cards": [
+        "choices",
+        "records"
+      ],
+      "tokensIn": null,
+      "tokensOut": null
+    },
+    {
+      "msg": "How many Ridge components are there across all my quotes and drafts?",
+      "ms": 3680,
+      "ok": true,
+      "reply": "There are 3 Ridge components across your permitted quotes and drafts.",
+      "cards": [
+        "choices",
+        "records"
+      ],
+      "tokensIn": null,
+      "tokensOut": null
+    },
+    {
+      "msg": "Which material orders link to the Maple Ridge quote for John Smith?",
+      "ms": 3065,
+      "ok": true,
+      "reply": "Order PO-A1-muiktqxht5cn — Maple Ridge Roof Repair\nsupplier name: Plumbing World · status: ordered\n\nScope: orders; with quote where customer_name eq John Smith and job_name eq Maple Ridge Roof Repair",
+      "cards": [
+        "choices",
+        "records",
+        "records"
+      ],
+      "tokensIn": null,
+      "tokensOut": null
+    },
+    {
+      "msg": "Which of my invoices are not paid yet?",
+      "ms": 14097,
+      "ok": false,
+      "reply": "I couldn’t retrieve the unpaid invoices because the invoice status filter was rejected.",
+      "cards": [
+        "choices",
+        "records",
+        "records"
+      ],
+      "tokensIn": null,
+      "tokensOut": null
+    },
+    {
+      "msg": "What can you help me with?",
+      "ms": 1866,
+      "ok": true,
+      "reply": "I can find, read and open your permitted quotes, draft quotes, orders, invoices, components, customers. I can also count permitted quotes/drafts and verify their available totals. Attention summaries are available. Supported changes require review and a Confirm button; not every domain has an edit operation yet.\nBroader retrieval is available for these permitted sources: quotes, quote_components, quote_areas, quote_entries, customer_quote_lines, orders, order_lines, order_text_lines, invoices, invoice_lines, component_library, component_collections, catalogues, catalogue_rows. I can resolve na",
+      "cards": [
+        "choices",
+        "records",
+        "records"
+      ],
+      "tokensIn": null,
+      "tokensOut": null
+    }
+  ],
+  "regression": [
+    {
+      "name": "p15-latest-quote-fast",
+      "ok": true,
+      "detail": "ms=2546 tokens_in=0 reply=Your workspace's most recently updated record is Quote #175614 - John Smith will open. You"
+    },
+    {
+      "name": "p15-count-month-fast",
+      "ok": true,
+      "detail": "ms=1993 tokens_in=0 reply=4 non-draft quotes created by you created this calendar month (UTC). This counts current statuses; drafts and non-drafts"
+    },
+    {
+      "name": "p3-propose-rate",
+      "ok": false,
+      "detail": "proposed=0 titles="
+    },
+    {
+      "name": "fallback-company-c-note",
+      "ok": true,
+      "detail": "reply=I can find, read and open your permitted quotes, draft quotes, orders, invoices, components, customers. I can also count permitted quotes/drafts and verify their available totals. Attention summaries "
+    }
+  ],
+  "bench": [
+    {
+      "tag": "fast-latest",
+      "rep": 1,
+      "ms": 2139,
+      "tokensIn": 0,
+      "tokensOut": 0
+    },
+    {
+      "tag": "fast-latest",
+      "rep": 2,
+      "ms": 1617,
+      "tokensIn": 0,
+      "tokensOut": 0
+    },
+    {
+      "tag": "fast-latest",
+      "rep": 3,
+      "ms": 1968,
+      "tokensIn": 0,
+      "tokensOut": 0
+    },
+    {
+      "tag": "one-model-fuzzy-draft",
+      "rep": 1,
+      "ms": 4184,
+      "tokensIn": 7630,
+      "tokensOut": 130
+    },
+    {
+      "tag": "one-model-fuzzy-draft",
+      "rep": 2,
+      "ms": 3114,
+      "tokensIn": 3567,
+      "tokensOut": 104
+    },
+    {
+      "tag": "one-model-fuzzy-draft",
+      "rep": 3,
+      "ms": 2801,
+      "tokensIn": 3567,
+      "tokensOut": 101
+    },
+    {
+      "tag": "one-model-aggregate",
+      "rep": 1,
+      "ms": 3729,
+      "tokensIn": 7301,
+      "tokensOut": 84
+    },
+    {
+      "tag": "one-model-aggregate",
+      "rep": 2,
+      "ms": 3899,
+      "tokensIn": 7305,
+      "tokensOut": 88
+    },
+    {
+      "tag": "one-model-aggregate",
+      "rep": 3,
+      "ms": 3344,
+      "tokensIn": 7305,
+      "tokensOut": 88
+    },
+    {
+      "tag": "related-orders",
+      "rep": 1,
+      "ms": 5487,
+      "tokensIn": 11520,
+      "tokensOut": 240
+    },
+    {
+      "tag": "related-orders",
+      "rep": 2,
+      "ms": 2977,
+      "tokensIn": 3561,
+      "tokensOut": 97
+    },
+    {
+      "tag": "related-orders",
+      "rep": 3,
+      "ms": 8294,
+      "tokensIn": 20244,
+      "tokensOut": 395
+    }
+  ],
+  "lunaRuns": [
+    {
+      "id": "abaea7c8-42d7-4fbd-b392-de7d094ce45a",
+      "status": "completed",
+      "tokens_in": 7273,
+      "tokens_out": 64
+    },
+    {
+      "id": "fa37d6b0-402d-49b4-9b60-4853e7209dd5",
+      "status": "completed",
+      "tokens_in": 7825,
+      "tokens_out": 109
+    },
+    {
+      "id": "6154bc99-0783-4df0-b389-4d3f009afb86",
+      "status": "completed",
+      "tokens_in": 3634,
+      "tokens_out": 100
+    },
+    {
+      "id": "0e69c924-7485-44a9-b015-599c9f21dfc9",
+      "status": "completed",
+      "tokens_in": 12590,
+      "tokens_out": 186
+    },
+    {
+      "id": "8c911388-a131-48bb-84fd-325cf6dd7591",
+      "status": "completed",
+      "tokens_in": 7791,
+      "tokens_out": 88
+    },
+    {
+      "id": "99018351-eef9-4ca6-b141-e8638fdb7644",
+      "status": "completed",
+      "tokens_in": 3839,
+      "tokens_out": 94
+    },
+    {
+      "id": "c726ba94-3f5c-4489-9bcb-4ffa489bc136",
+      "status": "completed",
+      "tokens_in": 8086,
+      "tokens_out": 98
+    },
+    {
+      "id": "6d48a7b4-e1bc-4be2-a930-246c38304c04",
+      "status": "completed",
+      "tokens_in": 0,
+      "tokens_out": 0
+    }
+  ]
+}

@@ -31,12 +31,12 @@ export default async function OrderFromQuotePage(props: Props) {
       <BackButton />
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Order from Quote</h1>
-        <p className="text-sm text-slate-500 mt-1">Select a confirmed quote to create a material order.</p>
+        <p className="text-sm text-slate-500 mt-1">Choose a quote to create a material order. Draft quotes are not shown.</p>
       </div>
 
       {!quotes || quotes.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
-          <p className="text-sm text-slate-500">No confirmed quotes found.</p>
+          <p className="text-sm text-slate-500">No non-draft quotes are available yet. Finish a quote, then return here to create an order.</p>
         </div>
       ) : (
         <QuoteSelector quotes={quotes} workspaceSlug={workspaceSlug} />

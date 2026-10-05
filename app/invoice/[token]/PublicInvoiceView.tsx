@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { InvoicePreview } from '@/app/(auth)/[workspaceSlug]/invoices/[id]/InvoicePreview';
 
 export type InvoiceLine = {
   id: string;
@@ -25,6 +26,8 @@ export type PaymentDetails = {
 };
 
 export type Invoice = {
+  hide_line_prices?: boolean;
+  hide_totals?: boolean;
   id: string;
   invoice_number: string;
   payment_reference: string;
@@ -91,6 +94,7 @@ function PayRow({
         </span>
         <button
           type="button"
+          aria-label={`Copy ${label}`}
           onClick={() => onCopy(value, copyKey)}
           className="flex-shrink-0 text-xs text-orange-600 border border-orange-300 rounded-full px-2 py-0.5 hover:bg-orange-100 transition-colors whitespace-nowrap"
         >
@@ -257,7 +261,6 @@ function DisputeForm({ token }: { token: string }) {
 // ── Main public view ───────────────────────────────────────────────────────
 
 export function PublicInvoiceView({ invoice, lines, token }: Props) {
-  const visibleLines = lines.filter((l) => l.is_visible);
   const isPaid = invoice.status === 'paid';
   const isPaymentReported = invoice.status === 'payment_reported';
   const isDisputed = invoice.status === 'disputed';
@@ -291,112 +294,27 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
           </div>
         )}
 
-        {/* Invoice document */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-          {/* Header */}
-          <div className="bg-slate-900 px-8 py-6 flex items-start justify-between">
-            <div>
-              {invoice.cq_company_logo_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={invoice.cq_company_logo_url} alt="Logo" className="h-12 w-auto object-contain mb-3" />
-              )}
-              <h1 className="text-2xl font-bold text-white">INVOICE</h1>
-              <p className="text-slate-400 text-sm mt-1 font-mono">{invoice.invoice_number}</p>
-            </div>
-            <div className="text-right">
-              {invoice.cq_company_name && <p className="text-white font-semibold text-sm">{invoice.cq_company_name}</p>}
-              {invoice.cq_company_address && <p className="text-slate-400 text-xs mt-1 whitespace-pre-line">{invoice.cq_company_address}</p>}
-              {invoice.cq_company_email && <p className="text-slate-400 text-xs">{invoice.cq_company_email}</p>}
-              {invoice.cq_company_phone && <p className="text-slate-400 text-xs">{invoice.cq_company_phone}</p>}
-            </div>
-          </div>
-
-          {/* Meta */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-slate-200">
-            {[
-              { label: 'Invoice Date', value: formatDate(invoice.invoice_date) },
-              { label: 'Due Date', value: formatDate(invoice.due_date) },
-              { label: 'Invoice No.', value: invoice.invoice_number },
-              { label: 'Payment Ref.', value: invoice.payment_reference },
-            ].map((item, i) => (
-              <div key={item.label} className={`px-5 py-3 ${i < 3 ? 'border-r border-slate-200' : ''}`}>
-                <p className="text-xs text-slate-500 uppercase tracking-wide">{item.label}</p>
-                <p className="text-sm font-medium text-slate-900 mt-0.5 font-mono break-all">{item.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Bill to */}
-          <div className="px-8 py-5 border-b border-slate-100">
-            <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Bill To</p>
-            <p className="font-semibold text-slate-900">{invoice.customer_name}</p>
-            {invoice.customer_snapshot?.email && <p className="text-sm text-slate-600">{invoice.customer_snapshot.email}</p>}
-            {invoice.customer_snapshot?.address && <p className="text-sm text-slate-600 whitespace-pre-line">{invoice.customer_snapshot.address}</p>}
-          </div>
-
-          {/* Lines */}
-          <div className="px-8 py-5">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Description</th>
-                  <th className="text-right py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide w-20">Qty</th>
-                  <th className="text-right py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide w-24 hidden sm:table-cell">Unit Price</th>
-                  <th className="text-right py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide w-24">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {visibleLines.map((line) => (
-                  <tr key={line.id}>
-                    <td className="py-3">
-                      <p className="font-medium text-slate-900">{line.title}</p>
-                      {line.description && line.show_description && (
-                        <p className="text-xs text-slate-500 mt-0.5">{line.description}</p>
-                      )}
-                    </td>
-                    <td className="py-3 text-right text-slate-700">
-                      {line.show_quantity ? `${line.quantity} ${line.unit}` : '-'}
-                    </td>
-                    <td className="py-3 text-right text-slate-700 hidden sm:table-cell">
-                      {line.show_price ? formatCurrency(line.unit_price, invoice.currency) : '-'}
-                    </td>
-                    <td className="py-3 text-right font-medium text-slate-900">
-                      {line.show_price ? formatCurrency(line.line_total, invoice.currency) : '-'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Totals */}
-            <div className="mt-4 flex justify-end">
-              <div className="w-64 space-y-1">
-                <div className="flex justify-between text-sm text-slate-600">
-                  <span>Subtotal</span><span>{formatCurrency(invoice.subtotal, invoice.currency)}</span>
-                </div>
-                {invoice.tax_total > 0 && (
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>Tax</span><span>{formatCurrency(invoice.tax_total, invoice.currency)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-base font-bold text-slate-900 border-t border-slate-200 pt-2 mt-2">
-                  <span>Total Due</span><span>{formatCurrency(invoice.total, invoice.currency)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Payment instructions */}
-          <div className="mx-8 mb-6 rounded-xl bg-orange-50 border border-orange-200 p-5">
+        {/* Same document body as owner preview and PDF. Recipient actions stay below. */}
+        <div className="qc-recipient-paper bg-white border border-slate-200 shadow-sm">
+          <InvoicePreview invoice={invoice} lines={lines.map(line => ({ ...line, localId: line.id }))}
+            currency={invoice.currency} companyName={invoice.cq_company_name || ''}
+            companyAddress={invoice.cq_company_address || ''} companyEmail={invoice.cq_company_email || ''}
+            companyPhone={invoice.cq_company_phone || ''} companyLogoUrl={invoice.cq_company_logo_url || ''}
+            footerText={invoice.cq_footer_text || ''} notes={invoice.notes || ''} terms={invoice.terms || ''}
+            invoiceDate={invoice.invoice_date} dueDate={invoice.due_date || ''}
+            subtotal={invoice.subtotal} taxTotal={invoice.tax_total} total={invoice.total}
+            hideLinePrices={invoice.hide_line_prices === true} hideTotals={invoice.hide_totals === true}
+            paymentDetails={invoice.payment_details || undefined} paymentContent={<>
             <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-4">Payment Instructions</p>
 
+            {invoice.hide_totals !== true && <>
             {/* Amount due with copy button */}
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm text-slate-600">Amount Due</span>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-slate-900">{formatCurrency(invoice.total, invoice.currency)}</span>
                 <button
-                  type="button"
+                  type="button" aria-label="Copy amount due"
                   onClick={() => copyToClipboard(formatCurrency(invoice.total, invoice.currency), 'amount')}
                   className="flex-shrink-0 text-xs text-orange-600 border border-orange-300 rounded-full px-2 py-0.5 hover:bg-orange-100 transition-colors whitespace-nowrap"
                 >
@@ -405,6 +323,7 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
               </div>
             </div>
 
+            </>}
             {/* Bank details - individual copy rows */}
             {(invoice.payment_details?.accountName || invoice.payment_details?.accountNumber) && (
               <div className="space-y-2 mb-3 pb-3 border-b border-orange-200">
@@ -433,7 +352,7 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
                 onClick={() => {
                   const pd = invoice.payment_details ?? {};
                   const parts = [
-                    `Amount Due: ${formatCurrency(invoice.total, invoice.currency)}`,
+                    invoice.hide_totals !== true ? `Amount Due: ${formatCurrency(invoice.total, invoice.currency)}` : '',
                     pd.accountName ? `Account Name: ${pd.accountName}` : '',
                     pd.bankName ? `Bank: ${pd.bankName}` : '',
                     pd.accountNumber ? `Account Number: ${pd.accountNumber}` : '',
@@ -466,27 +385,9 @@ export function PublicInvoiceView({ invoice, lines, token }: Props) {
                 Payment due by {formatDate(invoice.due_date)}
               </p>
             )}
-          </div>
 
-          {/* Notes / Terms */}
-          {invoice.notes && (
-            <div className="px-8 pb-5">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Notes</p>
-              <p className="text-sm text-slate-700 whitespace-pre-line">{invoice.notes}</p>
-            </div>
-          )}
-          {invoice.terms && (
-            <div className="px-8 pb-5">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Terms & Conditions</p>
-              <p className="text-sm text-slate-600 whitespace-pre-line">{invoice.terms}</p>
-            </div>
-          )}
-
-          {invoice.cq_footer_text && (
-            <div className="bg-slate-50 border-t border-slate-200 px-8 py-4">
-              <p className="text-xs text-slate-500 text-center">{invoice.cq_footer_text}</p>
-            </div>
-          )}
+            </>}
+          />
         </div>
 
         {/* Customer actions */}

@@ -1,0 +1,42 @@
+TAP version 13
+# Subtest: nearest-rank percentiles never convert missing data to zero
+ok 1 - nearest-rank percentiles never convert missing data to zero
+  ---
+  duration_ms: 1.450401
+  type: 'test'
+  ...
+# Subtest: decodes prefixed logs and message envelopes but not unrelated content
+ok 2 - decodes prefixed logs and message envelopes but not unrelated content
+  ---
+  duration_ms: 0.274974
+  type: 'test'
+  ...
+# Subtest: uncertain finish is not counted as canonical completed; repeated logs deduplicate
+ok 3 - uncertain finish is not counted as canonical completed; repeated logs deduplicate
+  ---
+  duration_ms: 0.631409
+  type: 'test'
+  ...
+# Subtest: benchmark plan runs without credentials or network
+ok 4 - benchmark plan runs without credentials or network
+  ---
+  duration_ms: 32.273673
+  type: 'test'
+  ...
+# Subtest: live benchmark refuses without explicit paid-turn opt-in
+ok 5 - live benchmark refuses without explicit paid-turn opt-in
+  ---
+  duration_ms: 33.255389
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 76.964732
+
+EXIT_CODE=0

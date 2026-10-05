@@ -1,7 +1,11 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { QcDialog } from './ui/v2/QcDialog';
+import { QcButton } from './ui/v2/QcButton';
 
 interface Props {
+  /** Opt in only on reviewed Phase 1 surfaces; other callers retain the existing UI. */
+  appearance?: 'v2';
   open: boolean;
   title: string;
   description?: string;
@@ -22,6 +26,7 @@ interface Props {
  */
 export function ConfirmModal({
   open,
+  appearance,
   title,
   description,
   confirmLabel = 'Delete',
@@ -32,17 +37,31 @@ export function ConfirmModal({
   onCancel,
   onConfirm,
 }: Props) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
   // Close on Escape
   useEffect(() => {
-    if (!open) return;
+    if (!open || appearance === 'v2') return;
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape' && !pending) onCancel();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, pending, onCancel]);
+  }, [open, pending, onCancel, appearance]);
 
   if (!open) return null;
+
+  if (appearance === 'v2') {
+    return (
+      <QcDialog open={open} title={title} description={description} pending={pending}
+        onRequestClose={onCancel} initialFocusRef={cancelRef}
+        footer={<>
+          <QcButton ref={cancelRef} onClick={onCancel} disabled={pending}>{cancelLabel}</QcButton>
+          <QcButton onClick={onConfirm} pending={pending} variant={destructive ? 'danger' : 'primary'}>
+            {pending ? pendingLabel : confirmLabel}
+          </QcButton>
+        </>} />
+    );
+  }
 
   const confirmClass = destructive
     ? 'bg-red-600 text-white hover:bg-red-700'

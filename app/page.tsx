@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { headers } from 'next/headers';
 import type { Metadata } from 'next';
 import MarketingHome from './(marketing)/home/page';
-import HeroVideo from '@/components/HeroVideo';
+import AnimatedHero from '@/components/hero/AnimatedHero';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 import { shouldRenderMarketing, marketingUrl } from '@/lib/app-url';
 import {
@@ -25,14 +25,14 @@ export async function generateMetadata(): Promise<Metadata> {
   if (isMarketingDomain) {
     return {
       title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
-      description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice — all in one platform. Free tools and 14-day trial for roofing and construction contractors.',
+      description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice — all in one platform. Free tools and paid plans from $19/mo (30-day money-back guarantee) for roofing and construction contractors.',
       alternates: {
         canonical: 'https://quote-core.com/',
         languages: hreflangLanguages('/'),
       },
       openGraph: {
         title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
-        description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice — all in one platform. Free tools and 14-day trial for roofing and construction contractors.',
+        description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice — all in one platform. Free tools and paid plans from $19/mo (30-day money-back guarantee) for roofing and construction contractors.',
         url: 'https://quote-core.com/',
         siteName: 'QuoteCore+',
         type: 'website',
@@ -138,7 +138,7 @@ export default async function Home() {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(videoSchema) }}
         />
-        <HeroVideo />
+        <AnimatedHero />
         <MarketingHome />
       </>
     );

@@ -1,0 +1,10 @@
+{
+  "sourceCss": [
+    "app/components/ui/v2/qc.css",
+    "app/components/ui/v2/qc-canvas.css",
+    "app/components/ui/v2/qc-hosted-dialog.css",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/desktop/takeoff-desktop.css"
+  ],
+  "utilityCompiler": "Preinstalled Tailwind 4.1.10; static fixtures only. App dependency/config unchanged.",
+  "utilities": 218
+}

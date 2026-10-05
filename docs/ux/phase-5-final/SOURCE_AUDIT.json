@@ -1,0 +1,298 @@
+{
+  "baselineFiles": 2505,
+  "returnFiles": 2636,
+  "changed": [
+    "DESIGN_CHANGES.md",
+    "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+    "app/(auth)/[workspaceSlug]/invoices/[id]/InvoicePreview.tsx",
+    "app/(auth)/[workspaceSlug]/invoices/lib/invoice-bundle.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/OrderLayoutPickerModal.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/create/OrderLineByLineEditor.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/create/order-create-form.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/create/page.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/create/parts/AddItemModal.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/customer/page.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/LineEditForm.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/QuotePreview.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/lib/quote-bundle.tsx",
+    "app/accept/[token]/page.tsx",
+    "app/components/SearchableFlashingSelect.tsx",
+    "app/invoice/[token]/PublicInvoiceView.tsx",
+    "app/orders/[token]/OrderBody.tsx"
+  ],
+  "added": [
+    "PACKAGE_MANIFEST.json",
+    "RETURN_NOTES.md",
+    "app/components/documents/DocumentHeader.tsx",
+    "app/components/documents/DocumentSelection.tsx",
+    "app/components/documents/qc-document-output.css",
+    "app/components/ui/v2/QcDocumentStudio.tsx",
+    "app/components/ui/v2/QcDocumentWorkspace.tsx",
+    "app/components/ui/v2/qc-document-studio.css",
+    "app/components/ui/v2/qc-document.css",
+    "docs/ux/phase-5/BASELINE_BYTE_CHECK.json",
+    "docs/ux/phase-5/CAPABILITY_PARITY.csv",
+    "docs/ux/phase-5/COMPONENT_CONTRACTS.md",
+    "docs/ux/phase-5/FILE_CHANGES.json",
+    "docs/ux/phase-5/INTEGRATION.md",
+    "docs/ux/phase-5/PARITY_CHECKLIST.md",
+    "docs/ux/phase-5/README.md",
+    "docs/ux/phase-5/SOURCE_BINDING_AUDIT.json",
+    "docs/ux/phase-5/STATIC_VALIDATION.md",
+    "docs/ux/phase-5/SYNTAX_CHECK.json",
+    "docs/ux/phase-5/fixtures/control-state-check.json",
+    "docs/ux/phase-5/fixtures/fixture-manifest.json",
+    "docs/ux/phase-5/fixtures/fixtures.css",
+    "docs/ux/phase-5/fixtures/invoice-add-item.html",
+    "docs/ux/phase-5/fixtures/invoice-details.html",
+    "docs/ux/phase-5/fixtures/invoice-edit-line.html",
+    "docs/ux/phase-5/fixtures/invoice-paid.html",
+    "docs/ux/phase-5/fixtures/invoice.html",
+    "docs/ux/phase-5/fixtures/labour-sheet.html",
+    "docs/ux/phase-5/fixtures/layout-check.json",
+    "docs/ux/phase-5/fixtures/order-collapsed.html",
+    "docs/ux/phase-5/fixtures/order-double.html",
+    "docs/ux/phase-5/fixtures/order-empty.html",
+    "docs/ux/phase-5/fixtures/order-lines.html",
+    "docs/ux/phase-5/fixtures/order-picker.html",
+    "docs/ux/phase-5/fixtures/order-single.html",
+    "docs/ux/phase-5/fixtures/quote-add-item.html",
+    "docs/ux/phase-5/fixtures/quote-collapsed.html",
+    "docs/ux/phase-5/fixtures/quote-edit-line.html",
+    "docs/ux/phase-5/fixtures/quote-empty.html",
+    "docs/ux/phase-5/fixtures/quote-full-preview.html",
+    "docs/ux/phase-5/fixtures/quote.html",
+    "docs/ux/phase-5/fixtures/screenshots/invoice-1440.png",
+    "docs/ux/phase-5/fixtures/screenshots/invoice-390.png",
+    "docs/ux/phase-5/fixtures/screenshots/invoice-details-1440.png",
+    "docs/ux/phase-5/fixtures/screenshots/order-double-1440.png",
+    "docs/ux/phase-5/fixtures/screenshots/order-lines-1440.png",
+    "docs/ux/phase-5/fixtures/screenshots/order-picker-1440.png",
+    "docs/ux/phase-5/fixtures/screenshots/order-single-1440.png",
+    "docs/ux/phase-5/fixtures/screenshots/order-single-390.png",
+    "docs/ux/phase-5/fixtures/screenshots/quote-1440.png",
+    "docs/ux/phase-5/fixtures/screenshots/quote-390.png",
+    "docs/ux/phase-5/fixtures/screenshots/quote-add-item-1440.png",
+    "docs/ux/phase-5/fixtures/screenshots/quote-edit-line-1440.png",
+    "docs/ux/phase-5/fixtures/screenshots/quote-full-preview-1440.png",
+    "docs/ux/phase-5/fixtures/screenshots/visual-add-item-1440.png",
+    "docs/ux/phase-5/fixtures/visual-add-item.html",
+    "docs/ux/phase-5/tools/README.md",
+    "docs/ux/phase-5/tools/check-source-bindings.cjs",
+    "docs/ux/phase-5/tools/check-static-layout.py",
+    "docs/ux/phase-5/tools/render-static-fixtures.cjs",
+    "docs/ux/phase-5-final/AGENT_TODOS.md",
+    "docs/ux/phase-5-final/CAPABILITY_PARITY.csv",
+    "docs/ux/phase-5-final/FILE_CHANGES.json",
+    "docs/ux/phase-5-final/HANDOFF.md",
+    "docs/ux/phase-5-final/INTEGRATION.md",
+    "docs/ux/phase-5-final/INTERACTION_TESTS.json",
+    "docs/ux/phase-5-final/LAYOUT_CHECKS.json",
+    "docs/ux/phase-5-final/PRINT_CHECKS.json",
+    "docs/ux/phase-5-final/README.md",
+    "docs/ux/phase-5-final/RENDERER_MAP.md",
+    "docs/ux/phase-5-final/RUNTIME_CHECKLIST.md",
+    "docs/ux/phase-5-final/SOURCE_AUDIT.json",
+    "docs/ux/phase-5-final/TYPE_SCREEN.json",
+    "docs/ux/phase-5-final/VALIDATION.md",
+    "docs/ux/phase-5-final/fixtures/fixtures.css",
+    "docs/ux/phase-5-final/fixtures/invoice-add-item.html",
+    "docs/ux/phase-5-final/fixtures/invoice-details.html",
+    "docs/ux/phase-5-final/fixtures/invoice-edit-line.html",
+    "docs/ux/phase-5-final/fixtures/invoice-paid.html",
+    "docs/ux/phase-5-final/fixtures/invoice.html",
+    "docs/ux/phase-5-final/fixtures/labour-sheet.html",
+    "docs/ux/phase-5-final/fixtures/order-collapsed.html",
+    "docs/ux/phase-5-final/fixtures/order-double.html",
+    "docs/ux/phase-5-final/fixtures/order-edit-component.html",
+    "docs/ux/phase-5-final/fixtures/order-empty.html",
+    "docs/ux/phase-5-final/fixtures/order-lines-edit.html",
+    "docs/ux/phase-5-final/fixtures/order-lines.html",
+    "docs/ux/phase-5-final/fixtures/order-picker.html",
+    "docs/ux/phase-5-final/fixtures/order-single.html",
+    "docs/ux/phase-5-final/fixtures/output-invoice.html",
+    "docs/ux/phase-5-final/fixtures/output-long-invoice.html",
+    "docs/ux/phase-5-final/fixtures/output-order-lines.html",
+    "docs/ux/phase-5-final/fixtures/output-order-visual.html",
+    "docs/ux/phase-5-final/fixtures/output-public-invoice.html",
+    "docs/ux/phase-5-final/fixtures/output-quote.html",
+    "docs/ux/phase-5-final/fixtures/print/output-invoice-page-1.png",
+    "docs/ux/phase-5-final/fixtures/print/output-invoice.pdf",
+    "docs/ux/phase-5-final/fixtures/print/output-long-invoice-page-1.png",
+    "docs/ux/phase-5-final/fixtures/print/output-long-invoice-page-5.png",
+    "docs/ux/phase-5-final/fixtures/print/output-long-invoice.pdf",
+    "docs/ux/phase-5-final/fixtures/print/output-order-lines-page-1.png",
+    "docs/ux/phase-5-final/fixtures/print/output-order-lines.pdf",
+    "docs/ux/phase-5-final/fixtures/print/output-order-visual-page-1.png",
+    "docs/ux/phase-5-final/fixtures/print/output-order-visual.pdf",
+    "docs/ux/phase-5-final/fixtures/print/output-quote-page-1.png",
+    "docs/ux/phase-5-final/fixtures/print/output-quote.pdf",
+    "docs/ux/phase-5-final/fixtures/quote-add-item.html",
+    "docs/ux/phase-5-final/fixtures/quote-appearance.html",
+    "docs/ux/phase-5-final/fixtures/quote-collapsed.html",
+    "docs/ux/phase-5-final/fixtures/quote-edit-line.html",
+    "docs/ux/phase-5-final/fixtures/quote-empty.html",
+    "docs/ux/phase-5-final/fixtures/quote-full-preview.html",
+    "docs/ux/phase-5-final/fixtures/quote-items.html",
+    "docs/ux/phase-5-final/fixtures/quote.html",
+    "docs/ux/phase-5-final/fixtures/screens/invoice-1440.png",
+    "docs/ux/phase-5-final/fixtures/screens/invoice-edit-line-1440.png",
+    "docs/ux/phase-5-final/fixtures/screens/order-double-1440.png",
+    "docs/ux/phase-5-final/fixtures/screens/order-edit-component-1440.png",
+    "docs/ux/phase-5-final/fixtures/screens/order-lines-1440.png",
+    "docs/ux/phase-5-final/fixtures/screens/order-lines-edit-1440.png",
+    "docs/ux/phase-5-final/fixtures/screens/output-invoice-880.png",
+    "docs/ux/phase-5-final/fixtures/screens/output-order-lines-880.png",
+    "docs/ux/phase-5-final/fixtures/screens/output-order-visual-880.png",
+    "docs/ux/phase-5-final/fixtures/screens/output-public-invoice-375.png",
+    "docs/ux/phase-5-final/fixtures/screens/output-public-invoice-880.png",
+    "docs/ux/phase-5-final/fixtures/screens/output-quote-880.png",
+    "docs/ux/phase-5-final/fixtures/screens/quote-1440.png",
+    "docs/ux/phase-5-final/fixtures/screens/quote-edit-line-1440.png",
+    "docs/ux/phase-5-final/fixtures/visual-add-item.html",
+    "docs/ux/phase-5-final/tools/README.md",
+    "docs/ux/phase-5-final/tools/render-static-fixtures.cjs"
+  ],
+  "missing": [],
+  "protectedChanges": [],
+  "syntaxErrors": [],
+  "controllerChecks": [
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "function": "handleSave",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "function": "persistChanges",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "function": "handleSavePaymentDetails",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "function": "handleAiParsed",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "function": "updateLine",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "function": "handleDownloadPdf",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "function": "moveLine",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/create/OrderLineByLineEditor.tsx",
+      "function": "handleAddLineItem",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/create/OrderLineByLineEditor.tsx",
+      "function": "handleAiParsed",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/create/OrderLineByLineEditor.tsx",
+      "function": "saveLineEdit",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/create/order-create-form.tsx",
+      "function": "handleSaveDraft",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/create/order-create-form.tsx",
+      "function": "handleTemplateChange",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/create/order-create-form.tsx",
+      "function": "handleLogoUpload",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/create/order-create-form.tsx",
+      "function": "saveLineItem",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/create/parts/AddItemModal.tsx",
+      "function": "handleSubmit",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "function": "handleSave",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "function": "handleGlobalMarginChange",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "function": "handleGlobalLaborMarginChange",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "function": "handleApplyGlobalMargins",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "function": "handleAddLineItem",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "function": "handleAiParsed",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "function": "updateLine",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "function": "toggleVisibility",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "function": "toggleIncludeInTotal",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "function": "toggleShowPrice",
+      "unchanged": true
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/LineEditForm.tsx",
+      "function": "handleSubmit",
+      "unchanged": true
+    },
+    {
+      "file": "app/invoice/[token]/PublicInvoiceView.tsx",
+      "function": "handleSubmit",
+      "unchanged": true
+    }
+  ],
+  "inventory_note": "Final path inventory. Package-manifest and change-manifest bytes are generated after source checks; no executable source changed after validation."
+}

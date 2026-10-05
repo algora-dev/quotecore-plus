@@ -1,3 +1,4 @@
+import { QcJourneyHeader } from '@/app/components/ui/v2/QcJourney';
 import { notFound } from 'next/navigation';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 
@@ -113,14 +114,14 @@ export default async function AccountPage() {
           <h2 className="text-lg md:text-xl font-semibold text-slate-900">Profile</h2>
           <p className="text-sm text-slate-500 mt-1">Your personal account details.</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4">
+        <div className="qc-flow-panel space-y-4">
           <UserProfileForm
             userId={profile.id}
             currentFullName={user?.full_name ?? ''}
             currentEmail={userEmail}
           />
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4">
+        <div className="qc-flow-panel space-y-4">
           <div>
             <h3 className="text-base font-semibold text-slate-900">Sign-in email</h3>
             <p className="text-xs text-slate-500 mt-1">Change the email used to sign in. Both your old and new email must confirm the change.</p>
@@ -136,7 +137,7 @@ export default async function AccountPage() {
           <h2 className="text-lg md:text-xl font-semibold text-slate-900">Company</h2>
           <p className="text-sm text-slate-500 mt-1">Settings that apply to your whole workspace.</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6" data-copilot="account-company">
+        <div className="qc-flow-panel" data-copilot="account-company">
           <CompanySettingsForm
             companyId={company.id}
             isOverStorage={entitlements.isOverStorage}
@@ -167,7 +168,7 @@ export default async function AccountPage() {
           <h2 className="text-lg md:text-xl font-semibold text-slate-900">Security</h2>
           <p className="text-sm text-slate-500 mt-1">Protect access to your account.</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4" data-copilot="account-security">
+        <div className="qc-flow-panel space-y-4" data-copilot="account-security">
           <PasswordSection authProvider={authProvider} userEmail={userEmail} />
           <MfaSection
             initialFactors={mfa.factors}
@@ -179,7 +180,7 @@ export default async function AccountPage() {
             hasVerifiedMfa={mfa.factors.some((f) => f.status === 'verified')}
           />
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4" data-copilot="account-recovery">
+        <div className="qc-flow-panel space-y-4" data-copilot="account-recovery">
           <div>
             <h3 className="text-base font-semibold text-slate-900">Account Recovery</h3>
             <p className="text-sm text-slate-500 mt-1">
@@ -242,13 +243,12 @@ export default async function AccountPage() {
         stripe_price_id_test: string | null;
         sort_order: number;
       }>;
-      // Tier-gating v3: render every active plan as a card. Trial is
-      // always selectable (non-Stripe path); coming-soon tiers render
-      // greyed-out and never invoke Stripe.
-      // Pricing Tier v2 ladder: Free Trial / Free / Starter / Pro (+ higher
-      // pro_plus and coming-soon premium). `growth` is deactivated and
-      // intentionally excluded.
-      const VISIBLE = new Set(['trial', 'free', 'starter', 'pro', 'pro_plus', 'premium']);
+      // Tier-gating v3: render every active plan as a card. Coming-soon
+      // tiers render greyed-out and never invoke Stripe.
+      // Pricing Tier v2 ladder: Free / Starter / Pro (+ higher pro_plus
+      // and coming-soon premium). `growth` is deactivated and
+      // intentionally excluded; legacy `trial` is hidden (trials removed).
+      const VISIBLE = new Set(['free', 'starter', 'pro', 'pro_plus', 'premium']);
       const plans: BillingPlanInfo[] = allPlans
         .filter((p) => VISIBLE.has(p.code))
         .map((p) => ({
@@ -281,17 +281,15 @@ export default async function AccountPage() {
           featureBlurbs: p.feature_blurbs ?? [],
           comingSoon: p.coming_soon,
           hasStripePrice: Boolean(p[priceColumn]),
-          isTrial: p.code === 'trial',
         }));
 
-      // Whether the company has an active Stripe sub. Used to gate the
-      // trial activation button so paying customers can't accidentally
-      // downgrade themselves. A sub is treated as 'winding down' - and
-      // therefore effectively gone for trial-activation purposes - when
-      // EITHER cancel_at_period_end=true OR cancel_at is a future
-      // timestamp. Both flags can be set by Stripe Dashboard cancel
-      // flows (the portal sets cancel_at_period_end; some dashboard
-      // paths set cancel_at instead).
+      // Whether the company has an active Stripe sub. Used to route plan
+      // switches through the in-app change flow instead of a fresh
+      // Checkout (which would create a second subscription). A sub is
+      // treated as 'winding down' when EITHER cancel_at_period_end=true
+      // OR cancel_at is a future timestamp. Both flags can be set by
+      // Stripe Dashboard cancel flows (the portal sets
+      // cancel_at_period_end; some dashboard paths set cancel_at instead).
       const cancelAt = (company as { cancel_at?: string | null }).cancel_at ?? null;
       const cancelAtInFuture = cancelAt != null && new Date(cancelAt).getTime() > Date.now();
       const hasActiveSubscription = Boolean(
@@ -315,7 +313,6 @@ export default async function AccountPage() {
               subscriptionStatus={entitlements.subscriptionStatus}
               hasStripeCustomer={Boolean(company.stripe_customer_id)}
               hasActiveSubscription={hasActiveSubscription}
-              trialEndsAt={entitlements.trialEndsAt}
               currentPeriodEnd={entitlements.currentPeriodEnd}
               cancelAtPeriodEnd={Boolean(company.cancel_at_period_end)}
               cancelAt={cancelAt}
@@ -335,7 +332,7 @@ export default async function AccountPage() {
           <h2 className="text-lg md:text-xl font-semibold text-slate-900">Integrations</h2>
           <p className="text-sm text-slate-500 mt-1">Send completed quotes to the platforms you already use.</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6">
+        <div className="qc-flow-panel">
           <IntegrationsPanel />
         </div>
       </section>
@@ -345,13 +342,10 @@ export default async function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-2 md:p-6">
+    <div className="p-2 md:p-6">
       <div className="max-w-6xl mx-auto space-y-4">
         <BackButton />
-        <header>
-          <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">Account</h1>
-          <p className="text-sm md:text-base text-slate-500 mt-1">Manage your account, company, security, and preferences.</p>
-        </header>
+        <QcJourneyHeader title="Account" eyebrow="Your workspace" description="Manage your details, company defaults, security and subscription." />
         <AccountTabs panels={panels} />
       </div>
     </div>

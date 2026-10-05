@@ -1,5 +1,7 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -49,6 +51,7 @@ export function LibraryDetail({
   userCollections: UserCollection[];
   alreadyImportedIds: Set<string>;
 }) {
+  const { notify, feedback } = useQcFeedback();
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [collectionList, setCollectionList] = useState<UserCollection[]>(userCollections);
@@ -134,10 +137,10 @@ export function LibraryDetail({
         setShowNewLibraryInput(false);
         setNewLibraryName('');
       } else {
-        alert(result.message || 'Failed to create library');
+        await notify(result.message || 'Failed to create library');
       }
     } catch {
-      alert('Failed to create library');
+      await notify('Failed to create library');
     } finally {
       setCreatingLibrary(false);
     }
@@ -148,15 +151,16 @@ export function LibraryDetail({
   const importedCount = components.length - availableCount;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
+    <QcLibrary className="qc-library-detail">
+      {feedback}
       <div className="mx-auto max-w-4xl px-4 py-6">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">
-          <Link href={`/${workspaceSlug}/components`} className="hover:text-slate-700">Components</Link>
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">
+          <Link href={`/${workspaceSlug}/components`} className="qc-flow-link qc-library-control hover:text-slate-700">Components</Link>
           <svg className="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
-          <Link href={`/${workspaceSlug}/supplier-directory`} className="hover:text-slate-700">Supplier Directory</Link>
+          <Link href={`/${workspaceSlug}/supplier-directory`} className="qc-flow-link qc-library-control hover:text-slate-700">Supplier Directory</Link>
           <svg className="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
@@ -165,9 +169,9 @@ export function LibraryDetail({
 
         {/* Library header */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 mb-4">
-          <div className="flex items-start justify-between gap-4">
+          <div className="qc-supplier-summary flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg font-semibold text-slate-900">{library.public_title || library.name}</h1>
+              <h1 className="qc-library-title text-lg font-semibold text-slate-900">{library.public_title || library.name}</h1>
               <p className="text-xs text-slate-400 mt-0.5">by {library.supplier_name}</p>
               {library.public_description && (
                 <p className="text-sm text-slate-600 mt-2">{library.public_description}</p>
@@ -199,7 +203,7 @@ export function LibraryDetail({
             </div>
             <Link
               href={`/${workspaceSlug}/components`}
-              className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 rounded-full border border-emerald-300 px-3 py-1"
+              className="qc-flow-link qc-library-control text-xs font-semibold text-emerald-700 hover:text-emerald-900 rounded-full border border-emerald-300 px-3 py-1"
             >
               View My Components
             </Link>
@@ -220,9 +224,9 @@ export function LibraryDetail({
         <div className="rounded-xl border border-slate-200 bg-white overflow-hidden mb-4">
           <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <button onClick={selectAll} className="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer">Select All</button>
+              <button data-qc-variant="ghost" onClick={selectAll} className="qc-button qc-flow-control qc-library-control ">Select All</button>
               {selectedCount > 0 && (
-                <button onClick={deselectAll} className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer">Clear</button>
+                <button data-qc-variant="ghost" onClick={deselectAll} className="qc-button qc-flow-control qc-library-control ">Clear</button>
               )}
               {importedCount > 0 && (
                 <span className="rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-xs">
@@ -257,7 +261,7 @@ export function LibraryDetail({
                       onChange={() => !isImported && toggleSelect(comp.id)}
                       onClick={e => e.stopPropagation()}
                       disabled={isImported}
-                      className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer disabled:opacity-40"
+                      className="qc-checkbox qc-library-control h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer disabled:opacity-40"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -317,7 +321,7 @@ export function LibraryDetail({
                       }
                     }}
                     disabled={importState === 'importing' || availableCount === 0}
-                    className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:bg-slate-50"
+                    className="qc-select qc-library-control flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:bg-slate-50"
                   >
                     {collectionList.map(col => (
                       <option key={col.id} value={col.id}>
@@ -336,21 +340,21 @@ export function LibraryDetail({
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleCreateLibrary(); } }}
                     placeholder="Library name"
                     maxLength={80}
-                    className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                    className="qc-input qc-library-control flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                     autoFocus
                   />
-                  <button
+                  <button data-qc-variant="primary"
                     type="button"
                     onClick={() => void handleCreateLibrary()}
                     disabled={creatingLibrary || !newLibraryName.trim()}
-                    className="px-3 py-2 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 whitespace-nowrap"
+                    className="qc-button qc-flow-control qc-library-control whitespace-nowrap"
                   >
                     {creatingLibrary ? 'Creating...' : 'Create'}
                   </button>
-                  <button
+                  <button data-qc-variant="ghost"
                     type="button"
                     onClick={() => { setShowNewLibraryInput(false); setNewLibraryName(''); setTargetCollection(collectionList[0]?.id ?? ''); }}
-                    className="px-3 py-2 text-xs rounded-full border border-slate-300 hover:bg-slate-50 whitespace-nowrap"
+                    className="qc-button qc-flow-control qc-library-control whitespace-nowrap"
                   >
                     Cancel
                   </button>
@@ -360,16 +364,16 @@ export function LibraryDetail({
 
             {/* Import button */}
             <div className="flex items-end gap-2">
-              <button
+              <button data-qc-variant="ghost"
                 onClick={handleImport}
                 disabled={selectedCount === 0 || !targetCollection || importState === 'importing' || showNewLibraryInput}
-                className="cursor-pointer rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white hover:bg-[#e55a2b] transition disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+                className="qc-button qc-flow-control qc-library-control "
               >
                 {importState === 'importing' ? 'Importing...' : `Import Selected (${selectedCount})`}
               </button>
               <Link
                 href={`/${workspaceSlug}/supplier-directory`}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-flow-link qc-library-control px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
               >
                 Cancel
               </Link>
@@ -387,7 +391,7 @@ export function LibraryDetail({
                   type="checkbox"
                   checked={alertsEnabled}
                   onChange={e => setAlertsEnabled(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                  className="qc-checkbox qc-library-control mt-0.5 h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
                 />
                 <div className="flex-1">
                   <span className="text-sm font-medium text-slate-700">Notify me about supplier updates</span>
@@ -406,6 +410,6 @@ export function LibraryDetail({
           )}
         </div>
       </div>
-    </div>
+    </QcLibrary>
   );
 }

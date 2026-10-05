@@ -36,7 +36,7 @@ export default function Post() {
         Much Roofing Material Do You Need? (Material Calculator Guide)</a> before you go any
         further. Try the <Link href="/free-roof-pricing-calculator">free roof pricing calculator</Link> to estimate material, labour, and total costs.
       </p>
-      <p>Once you've measured the roof — whether manually or with <Link href="/features/ai-scan-assist">AI Scan Assist</Link> — Smart Components apply your stored pricing rules to generate quantities, labour, and totals automatically.</p>
+      <p>Once you've measured the roof - whether manually or with <Link href="/features/ai-scan-assist">AI Scan Assist</Link> - Smart Components apply your stored pricing rules to generate quantities, labour, and totals automatically.</p>
 
       <h3>2. Labour</h3>
       <p>
@@ -245,7 +245,9 @@ export default function Post() {
         For more free tools that speed up quoting and measurement, see <a href="/blog/best-free-tools-for-roofers">Best
         Free Tools for Roofers (2026 Guide)</a>. And if you need to calculate pitch for your quote,
         <a href="/blog/how-to-calculate-roof-pitch">How to Calculate Roof Pitch</a> covers the
-        maths and common mistakes.
+        maths and common mistakes. To run the whole pricing-to-quote process in one place,
+        <a href="/construction-quoting-software">quoting software for contractors</a> keeps the
+        roof measurements, pricing rules and customer document connected. NZ readers comparing platforms can start with our guide to <a href="/blog/best-quoting-software-nz">quoting software for NZ trades</a>.
       </p>
 
       <hr />
@@ -353,7 +355,7 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? Check your profit on every price with the <a href="/free-margin-calculator">free margin calculator</a> and our guide to <a href="/blog/margin-vs-markup">margin vs markup</a>. Or <a href="/free-trial">start your free QuoteCore+ trial today</a>.
+        Ready to quote faster? Check your profit on every price with the <a href="/free-margin-calculator">free margin calculator</a> and our guide to <a href="/blog/margin-vs-markup">margin vs markup</a>. Or <a href="/free-trial">get started with QuoteCore+ today</a>.
         No card needed. From complex plan to quote in under 3 minutes for less than a dollar.
       </p>
     </div>

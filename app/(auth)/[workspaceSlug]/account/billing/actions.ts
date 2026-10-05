@@ -3,8 +3,7 @@
 /**
  * Billing server actions.
  *
- * Trial activation is a non-Stripe path: we just flip the company onto
- * the `trial` plan with a 14-day clock. The rest of the billing surface
+ * All plan changes go through Stripe checkout. The billing surface
  * (checkout, portal) is Stripe-only.
  *
  * Two entry points: createCheckoutSession (new subscription / plan change
@@ -26,13 +25,6 @@ import {
   requireStripe,
   resolveStripeCheckoutForPlan,
 } from '@/app/lib/billing/stripe';
-
-/**
- * How long a freshly-activated trial runs for. 14 days is the marketing
- * promise; the entitlement helpers (company_effective_plan_code) downgrade
- * to `starter` once trial_ends_at < now().
- */
-const TRIAL_DAYS = 14;
 
 /**
  * Compute the absolute base URL for return links.
@@ -196,7 +188,7 @@ export async function createCheckoutSession(
  * write companies.* directly. It only drives Stripe; the webhook reconciles.
  *
  * Defence-in-depth: target must be an active, Stripe-priced plan in the
- * current mode; trial is never a valid target here; the company must have a
+ * current mode; the legacy `trial` plan is never a valid target here; the company must have a
  * real active subscription (not winding down / canceled).
  */
 export async function changePlan(
@@ -416,135 +408,4 @@ export async function createCustomerPortalSession(): Promise<BillingActionResult
     console.error('[billing] createCustomerPortalSession failed:', msg);
     return { ok: false, code: 'stripe_error', message: msg || 'stripe_portal_failed' };
   }
-}
-
-
-/**
- * Activate the 14-day trial on the current company.
- *
- * Non-Stripe path: this just flips the company onto the 	rial plan
- * with a 14-day clock. The entitlement helpers
- * (company_effective_plan_code) auto-collapse to starter once
- * trial_ends_at < now(), so we don't need a cron to enforce expiry.
- *
- * Guards:
- *   * Only allowed when there is NO active Stripe subscription
- *     (stripe_subscription_id IS NULL AND subscription_status is one
- *     of trialing/canceled/suspended) so a paying customer can't
- *     accidentally downgrade themselves to trial via this button.
- *   * Refused if the company has already had a trial that ENDED in the
- *     last 30 days (anti-abuse: prevents trial re-rolling).
- */
-export async function activateTrial(): Promise<BillingActionResult> {
-  let ctx;
-  try {
-    ctx = await loadCompanyContext();
-  } catch {
-    return { ok: false, code: 'unauthenticated', message: 'Please sign in to activate the trial.' };
-  }
-  const { profile, company: ctxCompany } = ctx;
-  const slug = ctxCompany.slug;
-
-  const admin = createAdminClient();
-  const { data: company, error: companyErr } = await admin
-    .from('companies')
-    .select('id, plan_code, subscription_status, stripe_subscription_id, stripe_customer_id, cancel_at_period_end, cancel_at, trial_ends_at, trial_started_at')
-    .eq('id', profile.company_id)
-    .maybeSingle();
-  if (companyErr || !company) {
-    return { ok: false, code: 'company_not_found', message: 'Company record missing.' };
-  }
-
-  // Gerald audit M-01R: durable once-per-company trial marker. Previously
-  // we used `stripe_customer_id` as the proxy, which only fires after
-  // first Checkout - a non-paying company whose trial expired could
-  // re-invoke this action and get another 14 days. `trial_started_at` is
-  // set on first successful activation and is the authoritative gate.
-  if (company.trial_started_at) {
-    return {
-      ok: false,
-      code: 'trial_not_available',
-      message: 'The free trial is for new accounts only. Pick a paid plan to keep using QuoteCore+.',
-    };
-  }
-
-  // Belt-and-braces: stripe_customer_id is a separate proxy for "this
-  // company has paid us at some point". Keep blocking on it too.
-  if (company.stripe_customer_id) {
-    return {
-      ok: false,
-      code: 'trial_not_available',
-      message: 'The free trial is for new accounts only. Pick a paid plan to keep using QuoteCore+.',
-    };
-  }
-
-  // Belt-and-braces: even with no stripe_customer_id, refuse if there's
-  // somehow an active Stripe sub on record (this should never happen given
-  // the customer/sub pairing is set together by the webhook, but it's
-  // cheap insurance against a partial state).
-  const isWindingDown =
-    company.cancel_at_period_end
-    || (company.cancel_at != null && new Date(company.cancel_at).getTime() > Date.now());
-  if (company.stripe_subscription_id && !isWindingDown) {
-    return {
-      ok: false,
-      code: 'has_active_subscription',
-      message: 'You have an active paid subscription. Cancel it via "Manage subscription" before starting a trial.',
-    };
-  }
-
-  // If we get here trial_started_at is NULL, so this is the first-ever
-  // activation for this company. Friendly already-active check is still
-  // useful for the (impossible-after-M-01R) edge case where state got
-  // poked into 'trialing' without setting trial_started_at.
-  if (company.subscription_status === 'trialing' && company.trial_ends_at) {
-    const ends = new Date(company.trial_ends_at).getTime();
-    if (Date.now() < ends) {
-      return {
-        ok: false,
-        code: 'trial_already_active',
-        message: 'You are already on the free trial.',
-      };
-    }
-  }
-
-  const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
-
-  const nowIso = new Date().toISOString();
-  const { error: updateErr } = await admin
-    .from('companies')
-    .update({
-      plan_code: 'trial',
-      subscription_status: 'trialing',
-      trial_ends_at: trialEndsAt,
-      // M-01R: stamp the durable once-per-company marker. Subsequent calls
-      // refuse via the trial_started_at guard above.
-      trial_started_at: nowIso,
-      // Clear any leftover dunning state so the trial isn't immediately
-      // suspended by a stale past-due timer.
-      first_payment_failure_at: null,
-      dunning_stage_entered_at: null,
-    })
-    .eq('id', company.id);
-  if (updateErr) {
-    console.error('[billing] activateTrial update failed:', updateErr);
-    return { ok: false, code: 'update_failed', message: updateErr.message };
-  }
-
-  // Audit row in subscription_events so future debugging can correlate.
-  // Schema mirrors what the Stripe webhook handler writes - the
-  // distinguishing field is event_type='trial.activated'.
-  await admin.from('subscription_events').insert({
-    company_id: company.id,
-    event_type: 'trial.activated',
-    from_plan_code: company.plan_code,
-    to_plan_code: 'trial',
-    stripe_event_type: null,
-  });
-
-  // The success URL goes back to the billing tab so we can flash a
-  // banner - keep the same pattern as Stripe checkout success.
-  const base = await baseUrl();
-  revalidatePath(`/${slug}/account`);
-  return { ok: true, url: `${base}/${slug}/account?tab=billing&trial=activated` };
 }

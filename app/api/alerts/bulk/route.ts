@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       | { ids?: unknown; action?: unknown }
       | null;
     const ids = Array.isArray(bodyJson?.ids)
-      ? bodyJson!.ids.filter((x): x is string => typeof x === 'string')
+      ? Array.from(new Set(bodyJson!.ids.filter((x): x is string => typeof x === 'string')))
       : [];
     const action = bodyJson?.action as BulkAction | undefined;
 
@@ -122,21 +122,22 @@ export async function POST(request: Request) {
 
     const scope = supabase.from('alerts');
     let error: { message: string } | null = null;
+    let data: { id: string }[] | null = null;
 
     if (action === 'delete') {
-      ({ error } = await scope.delete().in('id', ids).eq('company_id', profile.company_id));
+      ({ data, error } = await scope.delete().in('id', ids).eq('company_id', profile.company_id).select('id'));
     } else if (action === 'read' || action === 'unread') {
-      ({ error } = await scope
+      ({ data, error } = await scope
         .update({ is_read: action === 'read' })
         .in('id', ids)
-        .eq('company_id', profile.company_id));
+        .eq('company_id', profile.company_id).select('id'));
     } else {
       // status moves: todo | active | archive(->archived)
       const status = action === 'archive' ? 'archived' : action;
-      ({ error } = await scope
+      ({ data, error } = await scope
         .update({ status })
         .in('id', ids)
-        .eq('company_id', profile.company_id));
+        .eq('company_id', profile.company_id).select('id'));
 
       // "Done" (archive) resolves the work. If any archived alert is an
       // action-required alert (dispute / change request / info request), also
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
       // archive itself.
       if (!error && action === 'archive') {
         try {
-          await clearActionRequiredForArchivedAlerts(supabase, profile.company_id, ids);
+          await clearActionRequiredForArchivedAlerts(supabase, profile.company_id, (data ?? []).map(row => row.id));
         } catch (e) {
           console.error('[alerts/bulk] clear action-required flags failed:', e);
         }
@@ -155,7 +156,12 @@ export async function POST(request: Request) {
     }
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true, count: ids.length });
+    // RLS/concurrent deletion can legitimately affect fewer rows than requested.
+    // Never claim those unmatched IDs succeeded. Existing callers retain ok/count.
+    const updatedIds = (data ?? []).map(row => row.id);
+    const updated = new Set(updatedIds);
+    const failedIds = ids.filter(id => !updated.has(id));
+    return NextResponse.json({ ok: true, count: updatedIds.length, updatedIds, failedIds });
   } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

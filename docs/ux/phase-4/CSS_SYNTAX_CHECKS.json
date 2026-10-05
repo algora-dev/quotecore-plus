@@ -1,0 +1,17 @@
+[
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/desktop/takeoff-desktop.css",
+    "parsed": true,
+    "rules": 112
+  },
+  {
+    "path": "app/components/ui/v2/qc-canvas.css",
+    "parsed": true,
+    "rules": 12
+  },
+  {
+    "path": "app/components/ui/v2/qc-hosted-dialog.css",
+    "parsed": true,
+    "rules": 30
+  }
+]

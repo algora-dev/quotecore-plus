@@ -10,11 +10,14 @@ export default function Page() {
     <>
       {/* Accessible summary (screen readers / crawlers) */}
       <section className="sr-only" aria-labelledby="mtq-capabilities">
-        <h2 id="mtq-capabilities">Free Measurement-to-Quote Tool</h2>
+        <h1 id="mtq-capabilities">Turn Measurements Into a Priced Estimate - Free</h1>
         <p>
-          Already have your measurements from a site measure, plan takeoff or estimating workflow?
-          Turn areas, lengths and quantities into materials, labour and pricing using reusable
-          components. Free to use, no signup required for the core workflow.
+          Already have your measurements from a site measure, PDF plan takeoff, aerial or satellite
+          measurement, a third-party report or an estimating spreadsheet? Enter areas, lengths and
+          quantities, and reusable components apply materials, labor, waste, pack logic and pricing
+          automatically - then turn the result into a professional estimate or quote. Free to use,
+          no signup required for the core workflow. A contractor estimating tool built for measured
+          work: roofing, siding/cladding, flooring and any trade where quantities drive pricing.
         </p>
         <h2>How it works</h2>
         <ul>
@@ -24,6 +27,11 @@ export default function Page() {
           <li>Enter actual measurements or plan measurements with automatic pitch factors</li>
           <li>Get a priced report, then print or download it, convert it into a free customer quote, or save it to QuoteCore+</li>
         </ul>
+        <p className="mt-3 text-sm text-slate-600">
+          Starting from a satellite or aerial measurement? See our{' '}
+          <a href="/research/google-earth-roof-measurement-accuracy" className="font-medium text-[#BD4A1A] underline underline-offset-4">10-roof satellite measurement field test</a>
+          for how accurate remote measurements were on real roofs.
+        </p>
       </section>
       <BlogHeader />
       <FreeQuoteBuilder />
@@ -34,7 +42,7 @@ export default function Page() {
           <p className="text-xs font-semibold uppercase tracking-wider text-[#BD4A1A]">Measurements → Reusable components → Priced output</p>
           <h2 className="mt-2 text-2xl font-semibold text-slate-900">You already did the measuring. Don&apos;t rebuild the pricing every time.</h2>
           <p className="mt-3 max-w-3xl text-slate-600">
-            This tool is for contractors who already have measurements — from a site measure, a plan
+            This tool is for contractors who already have measurements - from a site measure, a plan
             takeoff, another estimating tool, or handwritten notes. Save your pricing logic once as a
             reusable component, then every new measurement set flows through the same rules:
             materials, waste, labour and totals.
@@ -62,7 +70,7 @@ export default function Page() {
               <h3 className="text-sm font-semibold text-slate-900">3. Already have prices in a spreadsheet?</h3>
               <p className="mt-2 text-sm text-slate-600">
                 Export your price list as CSV, upload it, map your columns, and turn rows into
-                reusable components — up to 7 at a time in the free tool.{' '}
+                reusable components - up to 7 at a time in the free tool.{' '}
                 <Link href="/free-smart-component-creator" className={link}>The Catalog-to-Component Converter</Link>{' '}
                 handles larger catalogs.
               </p>
@@ -117,7 +125,7 @@ export default function Page() {
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             <div className="rounded-xl border border-slate-200 p-5">
               <h3 className="text-sm font-semibold text-slate-900">Print / Download</h3>
-              <p className="mt-2 text-sm text-slate-600">Use the priced output immediately — no signup required.</p>
+              <p className="mt-2 text-sm text-slate-600">Use the priced output immediately - no signup required.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-5">
               <h3 className="text-sm font-semibold text-slate-900">Convert to a free quote</h3>
@@ -148,6 +156,14 @@ export default function Page() {
               <Link href="/free-roof-takeoff" className={link}>Free Roof Takeoff</Link>
             </li>
             <li className="rounded-xl border border-slate-200 bg-white px-5 py-4">
+              I need to measure walls, siding or cladding →{' '}
+              <Link href="/free-cladding-takeoff" className={link}>Free Siding &amp; Cladding Takeoff</Link>
+            </li>
+            <li className="rounded-xl border border-slate-200 bg-white px-5 py-4">
+              I need to measure a floor plan →{' '}
+              <Link href="/free-flooring-takeoff" className={link}>Free Flooring Takeoff</Link>
+            </li>
+            <li className="rounded-xl border border-slate-200 bg-white px-5 py-4">
               I need to measure and price a roof →{' '}
               <Link href="/free-roofing-takeoff-builder" className={link}>Roof Takeoff Builder</Link>
             </li>
@@ -166,11 +182,12 @@ export default function Page() {
             </li>
           </ul>
           <p className="mt-6 text-sm text-slate-600">
-            Works for roofing, cladding, flooring, fencing, decking, landscaping, concrete,
+            Works for roofing, cladding, siding, flooring, fencing, decking, landscaping, concrete,
             carpentry and any measured work where quantities drive pricing. Read{' '}
-            <Link href="/blog/price-a-job-from-measurements" className={link}>how to price a job from your measurements</Link>{' '}
-            or see{' '}
-            <Link href="/blog/construction-estimating-spreadsheet-alternative" className={link}>why contractors move on from estimating spreadsheets</Link>.
+            <Link href="/blog/price-a-job-from-measurements" className={link}>how to price a job from your measurements</Link>,{' '}
+            <Link href="/blog/how-to-measure-pdf-plans" className={link}>how to measure PDF plans online</Link>, or see{' '}
+            <Link href="/blog/construction-estimating-spreadsheet-alternative" className={link}>why contractors move on from estimating spreadsheets</Link>. Comparing full systems? See{' '}
+            <Link href="/construction-quoting-software" className={link}>QuoteCore+ contractor estimating &amp; quoting software</Link>.
           </p>
         </div>
       </section>

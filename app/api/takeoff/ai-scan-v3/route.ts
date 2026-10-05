@@ -41,10 +41,14 @@ import {
   outlineToEdgeLines,
 } from '@/app/lib/takeoff/scanOverlay';
 import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
+import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from '@/app/lib/takeoff/strokeStyle';
+import { mergeArtificialCollinearSplits, removeIslandMicroClusters, findIsolatedClosedLoopLineIds } from '@/app/lib/takeoff/scanPostprocess';
+import { getAiScanPointCost } from '@/app/lib/takeoff/pointCost';
 import {
   classifyOutlineVertices,
   matchEndpointsToVertices,
   enforceHipValleyVertexRule,
+  enforceHipValleyAngleRule,
   type AugmentedLine,
 } from '@/app/lib/takeoff/outlineGeometry';
 
@@ -180,7 +184,7 @@ async function callVisionModel(
   schema: Record<string, unknown>,
   model: string,
   options: { reasoningEffort?: 'low' | 'medium' | 'high'; maxCompletionTokens: number },
-): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null }> {
+): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens: number | null } | null }> {
   const contentParts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [
     { type: 'text', text: prompt },
   ];
@@ -194,9 +198,9 @@ async function callVisionModel(
     });
   }
 
-  // reasoning_effort is only supported by o-series and GPT-5.x models.
+  // reasoning_effort is only supported by o-series and GPT-5.x/6.x models.
   // GPT-4.1 / 4o don't accept this parameter.
-  const supportsReasoningEffort = /^o\d|^gpt-5/i.test(model);
+  const supportsReasoningEffort = /^o\d|^gpt-[56]/i.test(model);
   const createParams: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
     model,
     max_completion_tokens: options.maxCompletionTokens,
@@ -226,6 +230,7 @@ async function callVisionModel(
       promptTokens: response.usage.prompt_tokens,
       completionTokens: response.usage.completion_tokens,
       totalTokens: response.usage.total_tokens,
+      reasoningTokens: response.usage.completion_tokens_details?.reasoning_tokens ?? null,
     } : null,
   };
 }
@@ -373,6 +378,11 @@ function nearestAllowedAngle(angle: number): number | null {
   return bestDiff <= ANGLE_TOLERANCE ? best : null;
 }
 
+// Snap is cosmetic cleanup for small model jitter. It must never move an
+// endpoint far enough to change network topology (10-15px tolerances), so a
+// snapped result is only accepted when both endpoints stay within this bound.
+const MAX_SNAP_ENDPOINT_MOVEMENT_PX = 8;
+
 function snapLineToAngle(line: V3Line): V3Line {
   const angle = lineAngle(line.start, line.end);
   const targetAngle = nearestAllowedAngle(angle);
@@ -386,10 +396,22 @@ function snapLineToAngle(line: V3Line): V3Line {
   const dx = Math.cos(rad);
   const dy = -Math.sin(rad);
 
+  const snappedStart = { x: Math.round(midX - dx * halfLen), y: Math.round(midY - dy * halfLen) };
+  const snappedEnd = { x: Math.round(midX + dx * halfLen), y: Math.round(midY + dy * halfLen) };
+
+  // Endpoint-movement guard: long lines with a small angular correction can
+  // otherwise shift endpoints by 20-35px, silently breaking vertex matching
+  // and junction connectivity. Fall back to the model's original geometry.
+  const startMoved = Math.hypot(snappedStart.x - line.start.x, snappedStart.y - line.start.y);
+  const endMoved = Math.hypot(snappedEnd.x - line.end.x, snappedEnd.y - line.end.y);
+  if (startMoved > MAX_SNAP_ENDPOINT_MOVEMENT_PX || endMoved > MAX_SNAP_ENDPOINT_MOVEMENT_PX) {
+    return line;
+  }
+
   return {
     ...line,
-    start: { x: Math.round(midX - dx * halfLen), y: Math.round(midY - dy * halfLen) },
-    end: { x: Math.round(midX + dx * halfLen), y: Math.round(midY + dy * halfLen) },
+    start: snappedStart,
+    end: snappedEnd,
   };
 }
 
@@ -410,6 +432,131 @@ function filterAngleValid(lines: V3Line[]): { valid: V3Line[]; rejected: V3Line[
   }
   return { valid, rejected };
 }
+
+// ── Collinear split merge (deterministic, post-Scan 3) ──────────────────
+// Two collinear segments meeting at a point where no other real line
+// terminates is an artificial junction (typically created by a dotted plan
+// line that Scan 2 treated as a break). Merge them back into one segment
+// and unify their classification. Genuine hip/valley changeovers always
+// happen at a real network junction (e.g. a ridge crossing), which this
+// rule deliberately leaves alone.
+
+const MERGE_ENDPOINT_TOLERANCE = 12;
+const MERGE_COLLINEAR_TOLERANCE = 3; // degrees
+
+export function mergeCollinearSplitLines(
+  lines: V3Line[],
+  outlinePoints: V3Point[],
+  classifications: Array<{ line_id: string; type: string; confidence: number; reason: string }>,
+): { lines: V3Line[]; classifications: Array<{ line_id: string; type: string; confidence: number; reason: string }>; merges: Array<{ kept: string; removed: string }> } {
+  let currentLines = lines.filter(l => !l.id.startsWith('E'));
+  const edgeLines = lines.filter(l => l.id.startsWith('E'));
+  let currentClass = classifications.map(c => ({ ...c }));
+  const merges: Array<{ kept: string; removed: string }> = [];
+
+  const classMap = () => new Map(currentClass.map(c => [c.line_id, c]));
+
+  const rank = (type: string): number => {
+    if (type === 'hip' || type === 'valley') return 3;
+    if (type === 'ridge') return 2;
+    if (type === 'uncertain') return 0;
+    return 1;
+  };
+
+  const dist = (a: V3Point, b: V3Point) => Math.hypot(a.x - b.x, a.y - b.y);
+  const dirOf = (l: V3Line) => {
+    const dx = l.end.x - l.start.x;
+    const dy = l.end.y - l.start.y;
+    const len = Math.hypot(dx, dy) || 1;
+    return { x: dx / len, y: dy / len };
+  };
+  const angleBetween = (a: V3Line, b: V3Line) => {
+    const da = dirOf(a);
+    const db = dirOf(b);
+    const dot = Math.max(-1, Math.min(1, da.x * db.x + da.y * db.y));
+    const directed = Math.acos(dot) * 180 / Math.PI;
+    // Undirected: a segment has no semantic direction, and the far-endpoint
+    // continuation check already proves opposite extension, so compare the
+    // acute line angle (0..90) regardless of stored start/end ordering.
+    return Math.min(directed, 180 - directed);
+  };
+
+  const nearOutline = (p: V3Point): boolean => {
+    for (let i = 0; i < outlinePoints.length; i++) {
+      if (pointToSegmentDistance(p, outlinePoints[i], outlinePoints[(i + 1) % outlinePoints.length]) <= MERGE_ENDPOINT_TOLERANCE) return true;
+    }
+    return false;
+  };
+
+  let merged = true;
+  while (merged) {
+    merged = false;
+    const cmap = classMap();
+
+    outer: for (let i = 0; i < currentLines.length; i++) {
+      for (let j = i + 1; j < currentLines.length; j++) {
+        const a = currentLines[i];
+        bCandidate: for (const [ai, bi] of [[0, 0], [0, 1], [1, 0], [1, 1]] as const) {
+          const pa = ai === 0 ? a.start : a.end;
+          const B = currentLines[j];
+          const pb = bi === 0 ? B.start : B.end;
+          if (dist(pa, pb) > MERGE_ENDPOINT_TOLERANCE) continue bCandidate;
+
+          // Continuation check: far endpoints must be on opposite sides of the shared point
+          const farA = ai === 0 ? a.end : a.start;
+          const farB = bi === 0 ? B.end : B.start;
+          const vA = { x: farA.x - pa.x, y: farA.y - pa.y };
+          const vB = { x: farB.x - pb.x, y: farB.y - pb.y };
+          const lenA = Math.hypot(vA.x, vA.y) || 1;
+          const lenB = Math.hypot(vB.x, vB.y) || 1;
+          const dot = (vA.x * vB.x + vA.y * vB.y) / (lenA * lenB);
+          if (dot > -0.9985) continue bCandidate; // not a straight continuation
+
+          if (angleBetween(a, B) > MERGE_COLLINEAR_TOLERANCE) continue bCandidate;
+          if (nearOutline(pa)) continue bCandidate;
+
+          // Degree check: no other non-uncertain line endpoint at this junction
+          const clsB = cmap.get(B.id);
+          const clsA = cmap.get(a.id);
+          if (!clsA || !clsB) continue bCandidate;
+          const othersAtJunction = currentLines.some(other => {
+            if (other.id === a.id || other.id === B.id) return false;
+            const oc = cmap.get(other.id);
+            if (oc && oc.type === 'uncertain') return false;
+            return dist(other.start, pa) <= MERGE_ENDPOINT_TOLERANCE || dist(other.end, pa) <= MERGE_ENDPOINT_TOLERANCE;
+          });
+          if (othersAtJunction) continue bCandidate;
+
+          // Merge: keep `a`, extend to B's far endpoint
+          const newA: V3Line = {
+            ...a,
+            start: farA,
+            end: farB,
+            confidence: Math.min(a.confidence, B.confidence),
+          };
+          currentLines = currentLines.map(l => (l.id === a.id ? newA : l)).filter(l => l.id !== B.id);
+
+          // Unify classification: keep the higher-rank (hip/valley first), tie-break confidence
+          const keepA = rank(clsA.type) > rank(clsB.type) || (rank(clsA.type) === rank(clsB.type) && clsA.confidence >= clsB.confidence);
+          const keptClass = keepA ? clsA : clsB;
+          currentClass = currentClass
+            .filter(c => c.line_id !== a.id && c.line_id !== B.id)
+            .concat([{ ...keptClass, line_id: a.id, reason: `${keptClass.reason} [collinear merge of ${a.id}+${B.id}]` }]);
+
+          merges.push({ kept: a.id, removed: B.id });
+          merged = true;
+          break outer;
+        }
+      }
+    }
+  }
+
+  return { lines: [...currentLines, ...edgeLines], classifications: currentClass, merges };
+}
+
+      // Dotted-line raster detection (deterministic) - see lib/takeoff/strokeStyle.ts
+      // (moved to an early, evidence-based classifier that runs in Scan 2 before
+      // topology/overlays are built; this route-local duty-cycle detector was retired).
 
 // ── Connectivity validation ─────────────────────────────────────────────
 
@@ -454,9 +601,21 @@ function validateConnectivity(
     return false;
   }
 
+  // T-junction awareness: an endpoint touching the BODY of another line counts
+  // as connected (same topology definition the micro-cluster filter trusts).
+  // Without this, a legitimate spur meeting the middle of a ridge is dropped
+  // as "floating" before later passes can protect it.
+  function pointNearOtherLineSegment(p: V3Point, ownLineId: string): boolean {
+    for (const other of lines) {
+      if (other.id === ownLineId) continue;
+      if (pointToSegmentDistance(p, other.start, other.end) <= tolerance) return true;
+    }
+    return false;
+  }
+
   for (const line of lines) {
-    const startConnected = pointNearOutline(line.start) || pointNearOtherEndpoint(line.start, line.id, true);
-    const endConnected = pointNearOutline(line.end) || pointNearOtherEndpoint(line.end, line.id, false);
+    const startConnected = pointNearOutline(line.start) || pointNearOtherEndpoint(line.start, line.id, true) || pointNearOtherLineSegment(line.start, line.id);
+    const endConnected = pointNearOutline(line.end) || pointNearOtherEndpoint(line.end, line.id, false) || pointNearOtherLineSegment(line.end, line.id);
     if (startConnected || endConnected) {
       connected.push(line);
     } else {
@@ -506,7 +665,7 @@ function classificationsToComponents(
 
 // ── Usage logging ───────────────────────────────────────────────────────
 
-function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string }) {
+function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string; tokens?: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens?: number | null } | null; durationMs?: number }) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return;
@@ -514,6 +673,11 @@ function logScanUsage(params: { companyId: string; quoteId: string; userId: stri
   client.from('ai_scan_usage').insert({
     company_id: params.companyId, quote_id: params.quoteId, user_id: params.userId,
     page_id: params.pageId ?? null, success: params.success, model: params.model, error: params.error,
+    prompt_tokens: params.tokens?.promptTokens ?? null,
+    completion_tokens: params.tokens?.completionTokens ?? null,
+    total_tokens: params.tokens?.totalTokens ?? null,
+    duration_ms: params.durationMs ?? null,
+    reasoning_tokens: params.tokens?.reasoningTokens ?? null,
   }).then(() => {}, (err) => console.warn('[ai-scan-v3] usage log failed:', err.message));
 }
 
@@ -562,14 +726,26 @@ export async function POST(req: NextRequest) {
 
     timer.mark('auth_done');
 
-    const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
-
     // Quality level from client (low / medium / high). Default: medium.
     const qualityLevel = typeof body.qualityLevel === 'string' ? body.qualityLevel : 'medium';
-    const effortMap = { low: 'low', medium: 'medium', high: 'high' } as const;
+
+    // Model per quality level (updated 2026-09-11, Shaun's A/B test):
+    // low = GPT-5.6 Luna (fastest), medium = GPT-6 Astra on low reasoning,
+    // high = GPT-6 Astra on medium reasoning (complex plans).
+    // NOTE: medium tier = Astra LOW effort, high tier = Astra MEDIUM effort -
+    const MODEL_BY_QUALITY: Record<string, string> = {
+      low: 'gpt-5.6-luna',
+      medium: 'gpt-6-astra',
+      high: 'gpt-6-astra',
+    };
+    const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
+
+    // Quality level from client (low / medium / high). Default: medium.
+    const effortMap = { low: 'low', medium: 'low', high: 'medium' } as const;
     const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'medium';
-    // Token limits: low/medium stay as-is, high gets bumped to avoid reasoning-eats-output bug.
-    const tokenLimits = userReasoningEffort === 'high'
+    // Token limits: complex (high) tier gets bumped limits regardless of
+    // reasoning effort - complex plans produce more lines and longer output.
+    const tokenLimits = qualityLevel === 'high'
       ? { scan1: 8000, scan2: 12000, scan3: 12000 }
       : { scan1: 5000, scan2: 8000, scan3: 8000 };
 
@@ -577,8 +753,9 @@ export async function POST(req: NextRequest) {
     // Point cost per quality level: low=2, medium=4, high=8.
     // Points are deducted once on scan1 (the full cost). Scans 2+3 are
     // continuations of the same scan session - no additional deduction.
-    const POINT_COST: Record<string, number> = { low: 2, medium: 4, high: 8 };
-    const pointsToSpend = POINT_COST[qualityLevel] ?? 4;
+    // Canonical point costs (2/6/12) - shared constant, keep in sync with
+    // pointCost.ts and the SQL queue path (see parity checklist).
+    const pointsToSpend = getAiScanPointCost(qualityLevel);
 
     if (stage === 'scan1') {
       const admin = createServiceClient<Database>(
@@ -615,9 +792,10 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-    const usage = (success: boolean, error?: string) => logScanUsage({
+    const usage = (success: boolean, error?: string, tokens?: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens?: number | null } | null) => logScanUsage({
       companyId: profile.company_id, quoteId, userId: profile.id,
-      pageId, success, model, error: error ? `${stage}: ${error}` : undefined,
+      pageId, success, model, error: error ? `${stage}: ${error}` : undefined, tokens,
+      durationMs: timer.summary().total,
     });
 
     // ══════════════════════════════════════════════════════════════════
@@ -717,7 +895,7 @@ export async function POST(req: NextRequest) {
           .eq('id', pageId).eq('quote_id', quoteId);
       }
 
-      usage(true);
+      usage(true, undefined, result.usage);
       logRequest({
         requestId, stage: 'scan1_complete', timer, quality: userReasoningEffort, tokens: tokenLimits,
         extra: { areas: roofAreasCanvas.length, vertices: roofAreasCanvas[0]?.points.length ?? 0, modelUsage: result.usage },
@@ -819,13 +997,48 @@ export async function POST(req: NextRequest) {
       const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
 
       timer.mark('postprocess_start');
-      const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(rawLines);
+      // ── Early stroke-style classification (BEFORE angle snap / connectivity / overlays) ──
+      // Dotted/dashed plan lines are never roof components. Remove high-confidence
+      // dashed candidates here so they cannot create phantom junctions, split real
+      // components, or be redrawn as solid orange lines in the Scan 3 overlays.
+      // Borderline strokes stay as 'ambiguous' for review downstream.
+      const strokeMap = await classifyCandidateStrokeStyles(processedBuffer, rawLines);
+      const dashedRawIds = new Set([...strokeMap.entries()].filter(([, e]) => e.style === 'dashed').map(([id]) => id));
+      const ambiguousStrokeCount = [...strokeMap.values()].filter(e => e.style === 'ambiguous').length;
+      if (dashedRawIds.size > 0) {
+        console.log(`[ai-scan-v3:${requestId}] scan2 stroke-style: removed ${dashedRawIds.size} dashed candidate(s): ${[...dashedRawIds].map(id => {
+          const e = strokeMap.get(id);
+          return `${id}(duty=${e?.dutyCycle ?? '?'},gaps=${e?.gapRuns ?? '?'})`;
+        }).join(', ')}`);
+      }
+      const strokeFilteredLines = rawLines.filter(l => !dashedRawIds.has(l.id));
+
+      const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(strokeFilteredLines);
       const { connected: connectedLines, floating: floatingLines } = validateConnectivity(angleValidLines, outlinePoints);
-      const scan2aLines: V3Line[] = connectedLines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
+
+      // ── Pre-Scan-3 artificial split healing (classification-independent) ──
+      // After dashed removal, merge collinear fragments that meet where no other
+      // retained line terminates, so Scan 3 sees repaired continuous candidates.
+      const healResult = mergeArtificialCollinearSplits(connectedLines, outlinePoints);
+      if (healResult.merges.length > 0) {
+        console.log(`[ai-scan-v3:${requestId}] scan2 pre-heal: ${healResult.merges.length} collinear merge(s): ${healResult.merges.map(m => `${m.removed}->${m.kept}`).join(', ')}`);
+      }
+
+      // ── Island micro-cluster removal ──
+      // Short fragments the model traces around dashed rectangular plan features
+      // (annotation boxes, symbols) form closed loops or isolated clusters that
+      // never join the real roof network - remove them before Scan 3.
+      const clusterResult = removeIslandMicroClusters(healResult.lines, outlinePoints);
+      if (clusterResult.removed.length > 0) {
+        for (const rec of clusterResult.removed) {
+          console.log(`[ai-scan-v3:${requestId}] scan2 micro-cluster: removed ${rec.removedIds.join(',')} (${rec.reason})`);
+        }
+      }
+      const scan2aLines: V3Line[] = clusterResult.lines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
       const finalLines: V3Line[] = scan2aLines;
       timer.mark('postprocess_done');
 
-      console.log(`[ai-scan-v3:${requestId}] scan2 postprocess: raw=${rawLines.length} angleValid=${angleValidLines.length} connected=${connectedLines.length} rejected(angle)=${angleRejectedLines.length} floating=${floatingLines.length}`);
+      console.log(`[ai-scan-v3:${requestId}] scan2 postprocess: raw=${rawLines.length} dashedRemoved=${dashedRawIds.size} ambiguous=${ambiguousStrokeCount} angleValid=${angleValidLines.length} connected=${connectedLines.length} preHealed=${healResult.merges.length} rejected(angle)=${angleRejectedLines.length} floating=${floatingLines.length}`);
 
       const canvasScaleX = canvasW / imgW;
       const canvasScaleY = canvasH / imgH;
@@ -843,14 +1056,14 @@ export async function POST(req: NextRequest) {
           analysisDimensions: { width: imgW, height: imgH },
           canvasDimensions: { width: canvasW, height: canvasH },
           notes,
-          stats: { rawLines: rawLines.length, angleValid: angleValidLines.length, connected: connectedLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length },
+          stats: { rawLines: rawLines.length, dashedRemoved: dashedRawIds.size, ambiguousStrokes: ambiguousStrokeCount, preHealedMerges: healResult.merges.length, angleValid: angleValidLines.length, connected: connectedLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length },
         };
         await supabase.from('takeoff_pages')
           .update({ ai_scan_result: JSON.parse(JSON.stringify(scan2Data)) })
           .eq('id', pageId).eq('quote_id', quoteId);
       }
 
-      usage(true);
+      usage(true, undefined, result.usage);
       logRequest({
         requestId, stage: 'scan2_complete', timer, quality: userReasoningEffort, tokens: tokenLimits,
         extra: { rawLines: rawLines.length, finalLines: finalLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, modelUsage: result.usage },
@@ -872,7 +1085,7 @@ export async function POST(req: NextRequest) {
         data: { lines: linesCanvas, outlinePoints: outlineCanvas, notes },
         analysisDimensions: { width: imgW, height: imgH },
         canvasDimensions: { width: canvasW, height: canvasH },
-        summary: { rawLines: rawLines.length, finalLines: finalLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, notes },
+        summary: { rawLines: rawLines.length, finalLines: finalLines.length, dashedRemoved: dashedRawIds.size, preHealedMerges: healResult.merges.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, notes },
         debugImages: scan2DebugUrls,
       });
     }
@@ -903,7 +1116,7 @@ export async function POST(req: NextRequest) {
       const outlinePoints: V3Point[] = outlinePointsCanvas.map(p => ({
         x: Math.round(p.x * scaleX), y: Math.round(p.y * scaleY),
       }));
-      const lines: V3Line[] = linesCanvas.map(l => ({
+      let lines: V3Line[] = linesCanvas.map(l => ({
         id: l.id,
         start: { x: Math.round(l.start.x * scaleX), y: Math.round(l.start.y * scaleY) },
         end: { x: Math.round(l.end.x * scaleX), y: Math.round(l.end.y * scaleY) },
@@ -989,6 +1202,105 @@ export async function POST(req: NextRequest) {
             console.log(`[ai-scan-v3:${requestId}]   ${cor.line_id}: ${cor.from} → ${cor.to} (${cor.reason})`);
           }
         }
+        // Angle gate: hips/valleys must run ~45 deg to the corner edges.
+        // Demotes non-diagonal hips/valleys to uncertain (never relabels).
+        try {
+          const classified = classifyOutlineVertices(outlinePoints);
+          const angleGate = enforceHipValleyAngleRule(finalClassifications, augmentedLines, classified);
+          finalClassifications = angleGate.classifications as typeof classifications;
+          if (angleGate.corrections.length > 0) {
+            console.log(`[ai-scan-v3:${requestId}] scan3: angle gate corrections: ${angleGate.corrections.length}`);
+            for (const cor of angleGate.corrections) {
+              console.log(`[ai-scan-v3:${requestId}]   ${cor.line_id}: ${cor.from} → ${cor.to} (${cor.reason})`);
+            }
+            enforcementCorrections.push(...angleGate.corrections);
+          }
+        } catch (angleErr) {
+          console.warn(`[ai-scan-v3:${requestId}] angle gate skipped:`, angleErr instanceof Error ? angleErr.message : angleErr);
+        }
+      }
+
+      // Floating-line safety net: lines whose endpoints touch neither the
+      // outline nor another line endpoint are forced to uncertain (shown to
+      // the user for manual review) instead of being trusted or silently lost.
+      const { floating: scan3Floating } = validateConnectivity(allLines, outlinePoints);
+      if (scan3Floating.length > 0) {
+        const floatingIds = new Set(scan3Floating.map(l => l.id));
+        finalClassifications = finalClassifications.map(c =>
+          floatingIds.has(c.line_id) && c.type !== 'uncertain'
+            ? { ...c, type: 'uncertain' as const, reason: `Backend: line is not connected to the roof network - marked uncertain for manual review` }
+            : c
+        );
+        console.log(`[ai-scan-v3:${requestId}] scan3: forced uncertain on ${scan3Floating.length} floating line(s)`);
+      }
+
+      // Dotted-line raster filter: sample pixels along each line; a low
+      // ink duty-cycle with repeated gaps = dotted plan line = never a
+      // component. Drop entirely before merging, so phantom dotted junctions
+      // disappear first.
+      // Stroke-style raster safety net (same classifier as Scan 2): any line that
+      // arrives here still raster-proven DASHED is dropped regardless of its
+      // semantic classification - dotted plan lines are never components. Most
+      // dashed candidates were already removed in Scan 2; this catches lines that
+      // survived the client round-trip. Conflicts are logged for the benchmark.
+      const strokeMap3 = await classifyCandidateStrokeStyles(processedBuffer, lines);
+      const dashedIds = new Set([...strokeMap3.entries()].filter(([, e]) => e.style === 'dashed').map(([id]) => id));
+      // Near-empty ambiguous traces (ultra-fine dotted styles the classifier cannot
+      // confirm as dashed) must never be trusted as real components - demote any
+      // confident classification to uncertain for manual review instead of deleting.
+      const nearEmptyIds = new Set([...strokeMap3.entries()]
+        .filter(([, e]) => e.style === 'ambiguous' && e.dutyCycle <= NEAR_EMPTY_DUTY_CYCLE)
+        .map(([id]) => id));
+      if (nearEmptyIds.size > 0) {
+        console.log(`[ai-scan-v3:${requestId}] scan3: demoted ${nearEmptyIds.size} near-empty stroke(s) to uncertain: ${[...nearEmptyIds].join(', ')}`);
+        finalClassifications = finalClassifications.map(c =>
+          nearEmptyIds.has(c.line_id) && c.type !== 'uncertain'
+            ? { ...c, type: 'uncertain' as const, reason: `Backend: stroke shows almost no ink (duty<=${NEAR_EMPTY_DUTY_CYCLE}) - likely fine dotted plan line, marked uncertain for review` }
+            : c
+        );
+      }
+      if (dashedIds.size > 0) {
+        for (const id of dashedIds) {
+          const cls = finalClassifications.find(c => c.line_id === id);
+          if (cls && cls.type !== 'uncertain') {
+            const e = strokeMap3.get(id);
+            console.warn(`[ai-scan-v3:${requestId}] scan3: raster-dashed line ${id} (duty=${e?.dutyCycle},gaps=${e?.gapRuns}) classified '${cls.type}' - dropping anyway (dashed strokes are never components)`);
+          }
+        }
+        console.log(`[ai-scan-v3:${requestId}] scan3: dropped ${dashedIds.size} dashed line(s): ${[...dashedIds].join(', ')}`);
+        lines = lines.filter(l => !dashedIds.has(l.id));
+        finalClassifications = finalClassifications.filter(c => !dashedIds.has(c.line_id));
+      }
+
+      // ── Isolated closed-loop demotion (annotation-box suspicion) ──
+      // Solid borders of plan annotation features (skylight/solar symbols)
+      // traced as long lines would otherwise be classified as ridges. A
+      // closed loop with no junction to the wider roof network is not real
+      // roof geometry: demote to uncertain (pink, deletable) - never trust,
+      // never delete silently.
+      const loopDemotions = findIsolatedClosedLoopLineIds(lines);
+      for (const rec of loopDemotions.records) {
+        console.log(`[ai-scan-v3:${requestId}] scan3: annotation-box loop demoted (${rec.lineIds.join(',')}): ${rec.reason}`);
+      }
+      if (loopDemotions.ids.size > 0) {
+        finalClassifications = finalClassifications.map(c =>
+          loopDemotions.ids.has(c.line_id) && c.type !== 'uncertain'
+            ? { ...c, type: 'uncertain' as const, reason: 'Backend: part of an isolated closed loop with no junction to the roof network - likely a traced annotation box, marked uncertain for review' }
+            : c
+        );
+      }
+
+      // Collinear split merge: undo artificial junctions (typically created
+      // by dotted plan lines Scan 2 treated as breaks). A valley split into
+      // valley + hip at a phantom junction is merged back into one component.
+      const mergeResult = mergeCollinearSplitLines(lines, outlinePoints, finalClassifications);
+      if (mergeResult.merges.length > 0) {
+        console.log(`[ai-scan-v3:${requestId}] scan3: collinear merges: ${mergeResult.merges.length}`);
+        for (const m of mergeResult.merges) {
+          console.log(`[ai-scan-v3:${requestId}]   merged ${m.removed} into ${m.kept}`);
+        }
+        lines = mergeResult.lines;
+        finalClassifications = mergeResult.classifications as typeof finalClassifications;
       }
 
       const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
@@ -1019,7 +1331,7 @@ export async function POST(req: NextRequest) {
           .eq('id', pageId).eq('quote_id', quoteId);
       }
 
-      usage(true);
+      usage(true, undefined, result.usage);
       logRequest({
         requestId, stage: 'scan3_complete', timer, quality: userReasoningEffort, tokens: tokenLimits,
         extra: {

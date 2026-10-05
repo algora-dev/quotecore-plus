@@ -1,10 +1,16 @@
 'use client';
+import { DocumentHeader } from '@/app/components/documents/DocumentHeader';
+import { DocumentEditTarget, DocumentRegion, documentRegion, type DocumentSelection } from '@/app/components/documents/DocumentSelection';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import type { ReactNode } from 'react';
 import type { InvoiceRow, EditableLine } from './InvoiceEditor';
 
 interface Props {
-  invoice: InvoiceRow;
-  lines: EditableLine[];
+  selection?: DocumentSelection;
+  /** Recipient-only clipboard controls; never included in editor/PDF output. */
+  paymentContent?: ReactNode;
+  invoice: Pick<InvoiceRow, 'invoice_number' | 'payment_reference' | 'status' | 'customer_name' | 'customer_snapshot'>;
+  lines: Pick<EditableLine, 'localId' | 'title' | 'description' | 'quantity' | 'unit' | 'unit_price' | 'line_total' | 'show_price' | 'show_quantity' | 'show_description' | 'is_visible'>[];
   currency: string;
   companyName: string;
   companyAddress: string;
@@ -40,6 +46,8 @@ function formatDate(dateStr: string) {
 }
 
 export function InvoicePreview({
+  selection,
+  paymentContent,
   invoice,
   lines,
   currency,
@@ -61,188 +69,63 @@ export function InvoicePreview({
   hideTotals = false,
 }: Props) {
   const visibleLines = lines.filter((l) => l.is_visible);
-  const customer = invoice.customer_snapshot as Record<string, string>;
+  const customer = (invoice.customer_snapshot ?? {}) as Record<string, string>;
 
   return (
-    <div className="w-full md:max-w-3xl md:mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-      {/* Header */}
-      <div className="bg-slate-900 px-4 md:px-8 py-4 md:py-6 flex items-start justify-between">
-        <div>
-          {companyLogoUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={companyLogoUrl} alt="Company logo" className="h-12 w-auto object-contain mb-3" />
-          )}
-          <h1 className="text-2xl font-bold text-white tracking-tight">INVOICE</h1>
-          <p className="text-slate-400 text-sm mt-1 font-mono">{invoice.invoice_number}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-white font-semibold text-sm">{companyName}</p>
-          {companyAddress && <p className="text-slate-400 text-xs mt-1 whitespace-pre-line">{companyAddress}</p>}
-          {companyEmail && <p className="text-slate-400 text-xs">{companyEmail}</p>}
-          {companyPhone && <p className="text-slate-400 text-xs">{companyPhone}</p>}
-        </div>
+    <div className="qc-output qc-output-invoice">
+      <DocumentHeader title="Invoice" number={invoice.invoice_number} companyName={companyName} logo={companyLogoUrl}
+        selection={selection} recipientLabel="Bill to" metaTarget="dates"
+        companyDetails={<>{companyAddress && <p>{companyAddress}</p>}{companyEmail && <p>{companyEmail}</p>}{companyPhone && <p>{companyPhone}</p>}</>}
+        recipient={<><p><strong>{invoice.customer_name}</strong></p>{customer.address && <p className="whitespace-pre-line">{customer.address}</p>}{customer.email && <p>{customer.email}</p>}{customer.phone && <p>{customer.phone}</p>}</>}
+        meta={<>
+          <div className="qc-output-meta-row"><span>Invoice date</span><span>{formatDate(invoiceDate)}</span></div>
+          {dueDate && <div className="qc-output-meta-row"><span>Due date</span><span>{formatDate(dueDate)}</span></div>}
+          <div className="qc-output-meta-row"><span>Payment reference</span><span>{invoice.payment_reference}</span></div>
+        </>}
+      />
+      <table className="qc-output-table">
+        <thead><tr><th>Description</th><th className="qc-output-numeric">Qty</th>
+          {!hideLinePrices && <><th className="qc-output-numeric qc-output-unit-price">Unit price</th><th className="qc-output-numeric">Total</th></>}
+        </tr></thead>
+        <tbody>{visibleLines.length === 0 ? <tr><td colSpan={hideLinePrices ? 2 : 4}>No line items added yet</td></tr> : visibleLines.map(line => (
+          <tr key={line.localId} data-pdf-block {...documentRegion(selection, `line:${line.localId}`)}>
+            <td><p className="font-medium">{line.title || 'Untitled'}</p>{line.description && line.show_description !== false && <p className="text-xs text-slate-500">{line.description}</p>}
+              <DocumentEditTarget selection={selection} id={`line:${line.localId}`} label={line.title || 'line item'} />
+            </td>
+            <td className="qc-output-numeric">{line.show_quantity !== false ? `${line.quantity} ${line.unit}` : '-'}</td>
+            {!hideLinePrices && <><td className="qc-output-numeric qc-output-unit-price">{line.show_price ? formatCurrency(line.unit_price, currency) : '-'}</td>
+              <td className="qc-output-numeric">{line.show_price ? formatCurrency(line.line_total, currency) : '-'}</td></>}
+          </tr>
+        ))}</tbody>
+      </table>
+      <></>
+      {!hideTotals && <div data-pdf-block className="qc-output-totals" {...documentRegion(selection, 'appearance')}>
+        <div className="qc-output-totals-inner"><div><span>Subtotal</span><span>{formatCurrency(subtotal, currency)}</span></div>
+          {taxTotal > 0 && <div><span>Tax</span><span>{formatCurrency(taxTotal, currency)}</span></div>}
+          <div className="qc-output-grand-total"><span>{invoice.status === 'paid' ? 'Invoice total' : 'Total due'}</span><span>{formatCurrency(total, currency)}</span></div>
+        </div><DocumentEditTarget selection={selection} id="appearance" label="price and total display" />
+      </div>}
+      <div className="qc-output-invoice-bottom" data-columns={notes || terms ? 'double' : 'single'}>
+      <div data-pdf-block className="qc-output-payment" {...documentRegion(selection, 'payment')}>
+        {paymentContent ?? <>
+        <p className="qc-output-label">Payment details</p>
+        {paymentDetails?.accountName && <div className="qc-output-meta-row"><span>Account name</span><span>{paymentDetails.accountName}</span></div>}
+        {paymentDetails?.bankName && <div className="qc-output-meta-row"><span>Bank</span><span>{paymentDetails.bankName}</span></div>}
+        {paymentDetails?.accountNumber && <div className="qc-output-meta-row"><span>Account number</span><span>{paymentDetails.accountNumber}</span></div>}
+        {paymentDetails?.sortCode && <div className="qc-output-meta-row"><span>Sort code</span><span>{paymentDetails.sortCode}</span></div>}
+        <div className="qc-output-meta-row"><span>Payment reference</span><span>{invoice.payment_reference}</span></div>
+        <p className="text-xs text-slate-500">Please include the payment reference when making your payment.</p>
+        {dueDate && <p className="text-xs text-slate-500">Payment due by {formatDate(dueDate)}</p>}
+        {paymentDetails?.paymentLink && <a href={paymentDetails.paymentLink} target="_blank" rel="noopener noreferrer" className="qc-output-payment-link">Pay online</a>}
+        </>}
+        <DocumentEditTarget selection={selection} id="payment" label="payment details" />
       </div>
-
-      {/* Meta bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-slate-200">
-        {[
-          { label: 'Invoice Date', value: formatDate(invoiceDate) },
-          { label: 'Due Date', value: dueDate ? formatDate(dueDate) : '-' },
-          { label: 'Invoice No.', value: invoice.invoice_number },
-          { label: 'Payment Ref.', value: invoice.payment_reference },
-        ].map((item, i) => (
-          <div key={item.label} className={`px-3 md:px-5 py-2 md:py-3 ${i < 3 ? 'border-r border-slate-200' : ''}`}>
-            <p className="text-xs text-slate-500 uppercase tracking-wide">{item.label}</p>
-            <p className="text-sm font-medium text-slate-900 mt-0.5 font-mono">{item.value}</p>
-          </div>
-        ))}
+      {(notes || terms) && <div data-pdf-block className="qc-output-invoice-notes">
+      {notes ? <DocumentRegion selection={selection} id="notes" label="invoice notes" className="qc-output-notes"><p className="qc-output-label">Notes</p><p>{notes}</p></DocumentRegion> : null}
+      {terms ? <DocumentRegion selection={selection} id="terms" label="terms" className="qc-output-notes"><p className="qc-output-label">Terms</p><p>{terms}</p></DocumentRegion> : null}
+      </div>}
       </div>
-
-      {/* Bill to */}
-      <div className="px-4 md:px-8 py-4 md:py-5 border-b border-slate-100">
-        <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Bill To</p>
-        <p className="font-semibold text-slate-900">{invoice.customer_name}</p>
-        {customer.email && <p className="text-sm text-slate-600">{customer.email}</p>}
-        {customer.phone && <p className="text-sm text-slate-600">{customer.phone}</p>}
-        {customer.address && <p className="text-sm text-slate-600 whitespace-pre-line">{customer.address}</p>}
-      </div>
-
-      {/* Line items */}
-      <div className="px-4 md:px-8 py-4 md:py-5">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200">
-              <th className="text-left py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Description</th>
-              <th className="text-right py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide w-16">Qty</th>
-              <th className="text-right py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide w-24">Unit Price</th>
-              <th className="text-right py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide w-24">Total</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {visibleLines.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="py-8 text-center text-slate-400 italic text-xs">No line items added yet</td>
-              </tr>
-            ) : (
-              visibleLines.map((line) => (
-                <tr key={line.localId} data-pdf-block>
-                  <td className="py-3">
-                    <p className="font-medium text-slate-900">{line.title || 'Untitled'}</p>
-                    {line.description && line.show_description !== false && (
-                      <p className="text-xs text-slate-500 mt-0.5">{line.description}</p>
-                    )}
-                  </td>
-                  <td className="py-3 text-right text-slate-700">
-                    {line.show_quantity !== false ? `${line.quantity} ${line.unit}` : '-'}
-                  </td>
-                  <td className="py-3 text-right text-slate-700">
-                    {line.show_price && !hideLinePrices ? formatCurrency(line.unit_price, currency) : '-'}
-                  </td>
-                  <td className="py-3 text-right font-medium text-slate-900">
-                    {line.show_price && !hideLinePrices ? formatCurrency(line.line_total, currency) : '-'}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-
-        {/* Totals */}
-        {!hideTotals && <div data-pdf-block className="mt-4 flex justify-end">
-          <div className="w-64 space-y-1">
-            <div className="flex justify-between text-sm text-slate-600">
-              <span>Subtotal</span>
-              <span>{formatCurrency(subtotal, currency)}</span>
-            </div>
-            {taxTotal > 0 && (
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Tax</span>
-                <span>{formatCurrency(taxTotal, currency)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-base font-bold text-slate-900 border-t border-slate-200 pt-2 mt-2">
-              <span>Total Due</span>
-              <span>{formatCurrency(total, currency)}</span>
-            </div>
-          </div>
-        </div>}
-      </div>
-
-      {/* Payment instructions */}
-      <div className="mx-4 md:mx-8 mb-4 md:mb-5 rounded-xl bg-orange-50 border border-orange-200 p-3 md:p-5">
-        <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-3">Payment Instructions</p>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-slate-600">Amount Due</span>
-            <span className="font-bold text-slate-900">{formatCurrency(total, currency)}</span>
-          </div>
-          {paymentDetails?.accountName && (
-            <div className="flex justify-between">
-              <span className="text-slate-600">Account Name</span>
-              <span className="font-medium text-slate-900">{paymentDetails.accountName}</span>
-            </div>
-          )}
-          {paymentDetails?.bankName && (
-            <div className="flex justify-between">
-              <span className="text-slate-600">Bank</span>
-              <span className="font-medium text-slate-900">{paymentDetails.bankName}</span>
-            </div>
-          )}
-          {paymentDetails?.accountNumber && (
-            <div className="flex justify-between">
-              <span className="text-slate-600">Account Number</span>
-              <span className="font-mono font-medium text-slate-900">{paymentDetails.accountNumber}</span>
-            </div>
-          )}
-          {paymentDetails?.sortCode && (
-            <div className="flex justify-between">
-              <span className="text-slate-600">Sort Code</span>
-              <span className="font-mono font-medium text-slate-900">{paymentDetails.sortCode}</span>
-            </div>
-          )}
-          <div className="flex justify-between border-t border-orange-200 pt-2 mt-2">
-            <span className="text-slate-600">Payment Reference</span>
-            <span className="font-mono font-semibold text-orange-700">{invoice.payment_reference}</span>
-          </div>
-        </div>
-        {paymentDetails?.paymentLink && (
-          <a href={paymentDetails.paymentLink} target="_blank" rel="noopener noreferrer"
-            className="mt-3 flex items-center justify-center gap-1.5 w-full rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 transition-all">
-            Pay Online
-          </a>
-        )}
-        <p className="text-xs text-slate-500 mt-3">
-          Please include the payment reference when making your payment so we can identify it quickly.
-        </p>
-        {dueDate && (
-          <p className="text-xs font-medium text-orange-700 mt-2">
-            Payment due by {formatDate(dueDate)}
-          </p>
-        )}
-      </div>
-
-      {/* Notes */}
-      {notes && (
-        <div className="px-8 pb-5">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Notes</p>
-          <p className="text-sm text-slate-700 whitespace-pre-line">{notes}</p>
-        </div>
-      )}
-
-      {/* Terms */}
-      {terms && (
-        <div className="px-8 pb-5">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Terms & Conditions</p>
-          <p className="text-sm text-slate-600 whitespace-pre-line">{terms}</p>
-        </div>
-      )}
-
-      {/* Footer */}
-      {footerText && (
-        <div className="bg-slate-50 border-t border-slate-200 px-8 py-4">
-          <p className="text-xs text-slate-500 text-center">{footerText}</p>
-        </div>
-      )}
+      {footerText ? <DocumentRegion selection={selection} id="footer" label="footer" className="qc-output-footer"><p>{footerText}</p></DocumentRegion> : null}
     </div>
   );
 }

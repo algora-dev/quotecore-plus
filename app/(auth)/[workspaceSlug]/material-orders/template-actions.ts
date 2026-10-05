@@ -74,7 +74,8 @@ export async function createOrderTemplate(input: MaterialOrderTemplateInsert) {
     throw new Error(`Failed to create template: ${error.message}`);
   }
 
-  revalidatePath('/[workspaceSlug]/material-orders');
+  revalidatePath('/[workspaceSlug]/material-orders', 'page');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
   return data;
 }
 
@@ -105,7 +106,8 @@ export async function updateOrderTemplate(id: string, input: Partial<MaterialOrd
     throw new Error(`Failed to update template: ${error.message}`);
   }
 
-  revalidatePath('/[workspaceSlug]/material-orders');
+  revalidatePath('/[workspaceSlug]/material-orders', 'page');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
   return data;
 }
 
@@ -130,5 +132,6 @@ export async function deleteOrderTemplate(id: string) {
     throw new Error(`Failed to delete template: ${error.message}`);
   }
 
-  revalidatePath('/[workspaceSlug]/material-orders');
+  revalidatePath('/[workspaceSlug]/material-orders', 'page');
+  revalidatePath('/[workspaceSlug]/resources/document-templates', 'page');
 }

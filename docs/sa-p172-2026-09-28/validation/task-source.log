@@ -1,0 +1,1 @@
+PASS 3197 baseline protected files, all 180 original migrations, 13 bounded adapters and additive metadata structure. NOT live SQL/RLS or performance evidence.

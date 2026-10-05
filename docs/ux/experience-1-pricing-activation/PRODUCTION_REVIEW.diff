@@ -1,0 +1,2051 @@
+--- baseline/app/(auth)/[workspaceSlug]/components/component-list.tsx
++++ return/app/(auth)/[workspaceSlug]/components/component-list.tsx
+@@ -1,9 +1,14 @@
+ 'use client';
+ import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
++import { useQcActionNotice } from '@/app/components/ui/v2/QcActionNotice';
++import { SmartComponentEditor, type ComponentEditorSettings, type ComponentEditorInitial } from '@/app/components/pricing/SmartComponentEditor';
++import { PricingIntroduction } from '@/app/components/pricing/PricingIntroduction';
++import { canonicalUnit } from '@/app/components/pricing/componentTest';
++import { formatCurrency } from '@/app/lib/currency/currencies';
+ 
+ import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+ import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+-import { useState, useEffect } from 'react';
++import { useState, useEffect, useRef } from 'react';
+ import Link from 'next/link';
+ import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility, setComponentActive } from './actions';
+ import { AddFromCatalogModal } from './components/AddFromCatalogModal';
+@@ -19,26 +24,23 @@
+   PricingStrategy,
+   FlashingLibraryRow,
+ } from '@/app/lib/types';
+-import {
+-  computePackCount,
+-} from '@/app/lib/pricing/engine';
+ import { getTradeLabels } from '@/app/lib/trades/labels';
+ import type { MeasurementSystem } from '@/app/lib/types';
+-import { normalizeMeasurementSystem } from '@/app/lib/types';
+-import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
+ import { loadFlashingLibrary } from '../drawings/actions';
+ import { loadCalcDraftAsync, clearCalcDraft } from '@/app/(public)/free-calculators/_shared/types';
+ 
+ /** Build the radio-button labels that decorate measurement type with the company's preferred unit. */
+ // F-15: Extracted helpers + sub-components
+-import { buildMeasurementLabels, allowedStrategiesFor, ROOFING_DEFAULT_TYPES, PRICING_STRATEGY_LABELS, WASTE_UNIT_LABELS, WASTE_LABELS, PITCH_LABELS } from './parts/helpers';
+-import { TypeSpecificFields } from './parts/TypeSpecificFields';
++import { buildMeasurementLabels, allowedStrategiesFor, PITCH_LABELS } from './parts/helpers';
+ import { PublishLibraryModal } from './components/PublishLibraryModal';
+ export function ComponentList({
+   initialComponents,
+   workspaceSlug,
+   companyMeasurementSystem = 'metric',
+   companyDefaultTrade = 'roofing',
++  companyCurrency = 'NZD',
++  showPricingIntroduction = false,
++  reviewImported = false,
+   componentCollections = [],
+   componentLimit,
+   componentCount,
+@@ -56,6 +58,9 @@
+   companyMeasurementSystem?: MeasurementSystem;
+   /** Company default trade; hides pitch for non-roofing trades. */
+   companyDefaultTrade?: string;
++  companyCurrency?: string;
++  showPricingIntroduction?: boolean;
++  reviewImported?: boolean;
+   /** Component collections for the company (for library assignment UI). */
+   componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
+   /** Plan cap on lifetime active components. NULL = unlimited. */
+@@ -85,7 +90,21 @@
+   /** Whether this company is an approved supplier. Shows publishing controls. */
+   isSupplier?: boolean;
+ }) {
+-  const { notify, feedback } = useQcFeedback();
++  const { notify, ask, feedback } = useQcFeedback();
++  const { notice, showNotice } = useQcActionNotice();
++  const [learning, setLearning] = useState(showPricingIntroduction);
++  const [testedInSession, setTestedInSession] = useState(false);
++  const [createdInSession, setCreatedInSession] = useState(false);
++  const [ownTested, setOwnTested] = useState(false);
++  const [draftTested, setDraftTested] = useState(false);
++  const [lastCreatedId, setLastCreatedId] = useState<string | null>(null);
++  const [testOnOpen, setTestOnOpen] = useState(false);
++  const [testRequest, setTestRequest] = useState(0);
++  const [editorDirty, setEditorDirty] = useState(false);
++  const [editorVersion, setEditorVersion] = useState(0);
++  const [createDefaults, setCreateDefaults] = useState<ComponentEditorInitial | null>(null);
++  const editorAnchor = useRef<HTMLDivElement>(null);
++  const [catalogueChanged, setCatalogueChanged] = useState(false);
+   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
+   // Pitch is shown when the trade requires it (roofing) or opts in optionally
+   // (landscaping, concrete, insulation, electrical). pitchOptional trades show
+@@ -102,24 +121,7 @@
+   // Drawing-library feature label: 'Flashings' for roofing, 'Drawings & Images' for all others.
+   const featureLabel = _tradeLabels.featureLabel ?? 'Flashings';
+   const featureLabelSingular = _tradeLabels.featureLabelSingular ?? 'Flashing';
+-  const imageAssignLabel = 'Assign Images (Optional)';
+-  const imageSelectPlaceholder = 'Select an image...';
+   const imageHelperText = isRoofingTrade ? 'Add flashing drawings to use in material order forms' : 'Add images/drawings to use in material order forms';
+-  /** Local helper that picks the right unit suffix for a measurement type given the company's default system. */
+-  const unitForMeasurement = (mt: MeasurementType) =>
+-    getUnitLabel(mt as 'area' | 'lineal' | 'quantity' | 'fixed', companyMeasurementSystem);
+-  /** System-aware version of `wasteAmountSuffix(wt, mt)` from types.ts. Drives the
+-   *  right-hand label next to the Waste Amount input on the component editor. */
+-  const wasteAmountSuffix = (wt: WasteType, mt: MeasurementType): string => {
+-    if (wt === 'percent') return '%';
+-    if (wt === 'fixed') return unitForMeasurement(mt);
+-    return '';
+-  };
+-  /** Placeholder text inside the Waste Amount input. Mirrors the suffix unit. */
+-  const wasteAmountPlaceholder = (wt: WasteType, mt: MeasurementType): string => {
+-    if (wt === 'percent') return '% e.g. 10';
+-    return `e.g. 0.25 (${unitForMeasurement(mt)})`;
+-  };
+   const [components, setComponents] = useState(initialComponents);
+   const [flashings, setFlashings] = useState<FlashingLibraryRow[]>([]);
+   const [showForm, setShowForm] = useState(false);
+@@ -157,7 +159,7 @@
+   // Initialise from localStorage so the user's last-set default is applied on landing.
+   const LOCAL_KEY = `qc-default-lib-${workspaceSlug}`;
+   const [activeLibraryId, setActiveLibraryId] = useState<string>(() => {
+-    if (typeof window === 'undefined') return '';
++    if (reviewImported || typeof window === 'undefined') return '';
+     const saved = localStorage.getItem(LOCAL_KEY);
+     // Validate saved id still exists in collections list before applying.
+     if (saved && componentCollections.some(c => c.id === saved)) return saved;
+@@ -214,7 +216,8 @@
+   // type, snap back to per_unit. Keeps the dropdown honest under rapid
+   // measurement-type changes.
+   useEffect(() => {
+-    if (!allowedStrategiesFor(formMeasurementType).includes(formPricingStrategy)) {
++    if (!allowedStrategiesFor(formMeasurementType).includes(formPricingStrategy) &&
++        !(formPricingStrategy === 'per_pack_coverage' && allowedStrategiesFor(formMeasurementType).includes('per_pack_area'))) {
+       setFormPricingStrategy('per_unit');
+     }
+   }, [formMeasurementType, formPricingStrategy]);
+@@ -335,7 +338,23 @@
+     return a.name.localeCompare(b.name);
+   });
+ 
+-  function startEdit(comp: ComponentLibraryRow) {
++  async function mayLeaveEditor() {
++    if (saving) return false;
++    if (!editorDirty) return true;
++    return ask({ title: 'Leave unsaved component settings?', description: 'Testing does not save your changes. Keep editing to save them first.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', destructive: true });
++  }
++
++  async function startEdit(comp: ComponentLibraryRow, openTest = false) {
++    if (editingId === comp.id) {
++      if (openTest) setTestRequest(value => value + 1);
++      editorAnchor.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
++      return;
++    }
++    if (!(await mayLeaveEditor())) return;
++    setShowForm(false);
++    setEditorDirty(false);
++    setEditorVersion(value => value + 1);
++    setTestOnOpen(openTest); setTestRequest(0);
+     setEditingId(comp.id);
+     setFormError(null);
+     setFormMeasurementType(comp.measurement_type);
+@@ -363,6 +382,8 @@
+   }
+ 
+   function cancelEdit() {
++    setEditorDirty(false);
++    setShowForm(false);
+     setEditingId(null);
+     setFormError(null);
+     setFormWasteType('none');
+@@ -559,6 +580,18 @@
+         return;
+       }
+       setComponents((prev) => [...prev, result.data]);
++      setEditorDirty(false);
++      setCreateDefaults(null);
++      setCreatedInSession(true);
++      setLastCreatedId(result.data.id);
++      setOwnTested(draftTested);
++      setDraftTested(false);
++      setActiveLibraryId(selectedCollectionId);
++      setFilter('all'); setMeasurementFilter('all'); setSearchQuery('');
++      showNotice({ title: 'Component saved', tone: result.activeStatus === 'inactive' ? 'warning' : 'success', focus: true,
++        description: result.activeStatus === 'inactive'
++          ? `${result.data.name} was saved as inactive because your active-component allowance is full. Activate it before using it in quotes.`
++          : `${result.data.name} is saved in your library. Check another component or price a job when your costs are ready.` });
+       // Update authoritative active count from the server response.
+       setActiveCountState(result.activeCount);
+       // If the component was created as inactive (at cap), show a brief message.
+@@ -694,6 +727,7 @@
+       const updated = await updateComponent(id, input);
+       setComponents((prev) => prev.map((c) => (c.id === id ? updated : c)));
+       cancelEdit();
++      showNotice({ title: 'Component saved', tone: 'success', focus: true, description: `${updated.name} has been updated. Testing explains the calculation; you remain responsible for checking your business costs.` });
+     } catch (err) {
+       setFormError(err instanceof Error ? err.message : 'Failed to update component');
+     } finally {
+@@ -742,20 +776,89 @@
+       if (wasActive) {
+         setActiveCountState(prev => Math.max(0, prev - 1));
+       }
++      if (deleteCompId === editingId) cancelEdit();
+       setDeleteCompId(null);
+     } catch (err) {
+-      setFormError(err instanceof Error ? err.message : 'Failed to delete');
++      showNotice({ title: 'Component was not deleted', tone: 'danger', description: err instanceof Error ? err.message : 'Please try again.', focus: true });
+     } finally {
+       setDeleteLoading(false);
+     }
+   }
+ 
+-  const wasteAmountLabel = wasteAmountSuffix(formWasteType, formMeasurementType);
+-  const wasteAmountPlaceholderText = wasteAmountPlaceholder(formWasteType, formMeasurementType);
++
++  const editingComponent = components.find(component => component.id === editingId);
++  function initialForComponent(component: ComponentLibraryRow): ComponentEditorInitial {
++    const extra = component as unknown as Record<string, unknown>;
++    return { name: component.name, sku: component.sku ?? '', componentType: component.component_type,
++      materialRate: String(component.default_material_rate ?? 0), labourRate: String(component.default_labour_rate ?? 0),
++      wasteAmount: String(component.default_waste_type === 'percent' ? component.default_waste_percent ?? 0 : component.default_waste_fixed ?? 0),
++      pitchType: component.default_pitch_type, eligibleForOrders: component.eligible_for_orders ?? true,
++      storedStrategy: (extra.pricing_strategy as PricingStrategy) ?? 'per_unit',
++      storedPackPrice: String(extra.pack_price ?? ''), storedPackSize: String(extra.pack_size ?? ''), storedPackCoverage: String(extra.pack_coverage_m2 ?? ''),
++      storedHeightMm: String(extra.height_value_mm ?? ''), storedDepthMm: String(extra.depth_value_mm ?? '') };
++  }
++  const editorInitial: ComponentEditorInitial = editingComponent ? initialForComponent(editingComponent) : createDefaults ?? {
++    name: restoredName, sku: '', componentType: filter === 'extra' ? 'extra' : 'main', materialRate: restoredMaterialRate,
++    labourRate: restoredLabourRate, wasteAmount: restoredWasteAmount, pitchType: 'rafter', eligibleForOrders: true };
++  const editorSettings: ComponentEditorSettings = { measurementType: formMeasurementType, wasteType: formWasteType,
++    pitchEnabled: formPitchEnabled, pricingStrategy: formPricingStrategy, packPrice: formPackPrice, packSize: formPackSize,
++    packCoverage: formPackCoverageM2, heightMm: formHeightMm, depthMm: formDepthMm, hoursUnit: formHoursUnit,
++    wasteUnit: formWasteUnit, notes: formNotes };
++  function updateEditorSettings(patch: Partial<ComponentEditorSettings>) {
++    setEditorDirty(true); setDraftTested(false);
++    if (patch.measurementType !== undefined) setFormMeasurementType(patch.measurementType);
++    if (patch.wasteType !== undefined) setFormWasteType(patch.wasteType);
++    if (patch.pitchEnabled !== undefined) setFormPitchEnabled(patch.pitchEnabled);
++    if (patch.pricingStrategy !== undefined) setFormPricingStrategy(patch.pricingStrategy);
++    if (patch.packPrice !== undefined) setFormPackPrice(patch.packPrice);
++    if (patch.packSize !== undefined) setFormPackSize(patch.packSize);
++    if (patch.packCoverage !== undefined) setFormPackCoverageM2(patch.packCoverage);
++    if (patch.heightMm !== undefined) setFormHeightMm(patch.heightMm);
++    if (patch.depthMm !== undefined) setFormDepthMm(patch.depthMm);
++    if (patch.hoursUnit !== undefined) setFormHoursUnit(patch.hoursUnit);
++    if (patch.wasteUnit !== undefined) setFormWasteUnit(patch.wasteUnit);
++    if (patch.notes !== undefined) setFormNotes(patch.notes);
++  }
++  async function startNew(copy?: ComponentEditorInitial) {
++    if (!subscriptionActive) { setSubBlockedOpen(true); return; }
++    // Explicitly making a copy preserves its draft values. Other navigation is
++    // confirmed first; never save implicitly or bypass subscription/cap guards.
++    if (!copy && !(await mayLeaveEditor())) return;
++    setEditingId(null); setShowForm(true); setFormError(null); setEditorDirty(!!copy); setDraftTested(false);
++    setCreateDefaults(copy ?? null); setEditorVersion(value => value + 1); setTestOnOpen(false); setTestRequest(0);
++    // A copied legacy row is a NEW record: use the canonical linear enum.
++    if (copy && formMeasurementType === 'linear') setFormMeasurementType('lineal');
++    if (!copy) {
++      setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false);
++      setFormPricingStrategy('per_unit'); setFormPackPrice(''); setFormPackSize(''); setFormPackCoverageM2('');
++      setFormHeightMm(''); setFormDepthMm(''); setFormHoursUnit('hr'); setFormWasteUnit('percent'); setFormNotes('');
++      setAssignedFlashings([]); setSelectedFlashingId('');
++      setRestoredName(''); setRestoredMaterialRate(''); setRestoredLabourRate(''); setRestoredWasteAmount('');
++      setSelectedCollectionId(activeLibraryId || collections.find(c => c.is_bootstrap)?.id || collections[0]?.id || '');
++    }
++  }
++  function componentCostSummary(component: ComponentLibraryRow) {
++    const values = initialForComponent(component);
++    if (values.storedStrategy && values.storedStrategy !== 'per_unit') {
++      if (!values.storedPackPrice || !(values.storedStrategy === 'per_pack_coverage' ? values.storedPackCoverage : values.storedPackSize)) return 'Materials: complete the pack settings';
++      return `Materials: ${formatCurrency(Number(values.storedPackPrice || 0), companyCurrency)} per pack (${values.storedStrategy === 'per_pack_coverage' ? values.storedPackCoverage : values.storedPackSize} ${canonicalUnit(component.measurement_type)})`;
++    }
++    return `Materials: ${formatCurrency(component.default_material_rate ?? 0, companyCurrency)}/${canonicalUnit(component.measurement_type)}`;
++  }
++  useEffect(() => {
++    if (showForm || editingId) editorAnchor.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
++  }, [showForm, editingId, editorVersion]);
++  useEffect(() => {
++    if (!editorDirty) return;
++    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
++    window.addEventListener('beforeunload', warn);
++    return () => window.removeEventListener('beforeunload', warn);
++  }, [editorDirty]);
+ 
+   return (
+     <QcLibrary className="space-y-5">
+       {feedback}
++      {notice}
+       {/* Create Library Modal */}
+       {showCreateLibraryModal && (
+         <QcJourneyDialog label="Create New Library" size="sm">
+@@ -805,6 +908,19 @@
+         <h1 className="qc-library-title text-xl md:text-2xl font-semibold text-slate-900">Pricing library</h1>
+         <p className="text-xs md:text-sm text-slate-500 mt-1">Find and reuse Smart Components™: saved materials, labour and measurement settings for your quotes.</p>
+       </div>
++      <PricingIntroduction open={learning} onOpen={() => setLearning(true)} onDismiss={() => setLearning(false)}
++        hasComponents={components.length > 0} tested={testedInSession} created={createdInSession} ownTested={ownTested}
++        workspaceSlug={workspaceSlug} onCreate={() => { void startNew(); }}
++        onTestCreated={() => {
++          const created = components.find(component => component.id === lastCreatedId);
++          if (created) void startEdit(created, true);
++          else void startNew();
++        }}
++        onChoose={() => {
++          setFilter('all'); setMeasurementFilter('all'); setSearchQuery(''); setActiveLibraryId('');
++          requestAnimationFrame(() => document.getElementById('qc-pricing-component-list')?.scrollIntoView({ block: 'start', behavior: 'auto' }));
++        }} />
++
+ 
+       
+ 
+@@ -914,7 +1030,7 @@
+         </div>
+       )}
+       {/* Filter tabs + Action Buttons */}
+-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
++      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+         <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-fit max-w-full">
+           {(['all', 'main', 'extra'] as const).map((f) => (
+             <button
+@@ -940,19 +1056,11 @@
+         
+         <div className="flex flex-col gap-2 md:flex-row">
+           <button data-qc-variant="primary"
+-            onClick={() => {
+-              if (!subscriptionActive) {
+-                setSubBlockedOpen(true);
+-                return;
+-              }
+-              // No cap block here - the DB trigger handles it.
+-              // Components created at cap land as inactive.
+-              setShowForm(true);
+-            }}
++            onClick={() => { void startNew(); }}
+             data-copilot="add-component"
+             className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
+           >
+-            + Add component
++            + Create component
+           </button>
+           <button data-qc-variant="ghost"
+             onClick={() => {
+@@ -960,7 +1068,7 @@
+                 setSubBlockedOpen(true);
+                 return;
+               }
+-              setShowCatalogModal(true);
++              void mayLeaveEditor().then(leave => { if (leave) { cancelEdit(); setShowCatalogModal(true); } });
+             }}
+             className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
+           >
+@@ -1085,263 +1193,29 @@
+         </div>
+       </div>
+ 
+-           {showForm && (
+-        <div className="mb-4 p-4 border border-slate-200 rounded-xl bg-white">
+-          <h3 className="font-semibold text-slate-900 mb-3">New Smart Component™</h3>
+-          {formError && (
+-            <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
+-          )}
+-          <form onSubmit={handleCreate} className="space-y-3">
+-            <div className="qc-library-field-grid grid grid-cols-1 sm:grid-cols-2 gap-3">
+-              <div data-copilot="component-name">
+-                <label className="block text-xs text-slate-500 mb-1">Name</label>
+-                <input aria-label="Name" name="name" required defaultValue={restoredName} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-              </div>
+-              <div data-copilot="component-sku">
+-                <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
+-                <input aria-label="SKU / Product Code" name="sku" defaultValue={''} placeholder="e.g. RDG-250-BLK" className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none" />
+-              </div>
+-              <div data-copilot="component-type">
+-                <label className="block text-xs text-slate-500 mb-1">Type</label>
+-                <select aria-label="Type" 
+-                  name="component_type" 
+-                  required 
+-                  defaultValue={filter === 'extra' ? 'extra' : 'main'}
+-                  className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+-                >
+-                  <option value="main">Main Component</option>
+-                  <option value="extra">Extra</option>
+-                </select>
+-              </div>
+-              <div data-copilot="component-measurement">
+-                <label className="block text-xs text-slate-500 mb-1">Measurement</label>
+-                <select aria-label="Measurement"
+-                  name="measurement_type"
+-                  required
+-                  value={formMeasurementType}
+-                  onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
+-                  className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+-                >
+-                  {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
+-                    // Filter the dropdown down to roofing defaults when the
+-                    // generic-trades flag is off; show every type when on.
+-                    // The legacy `linear` alias stays hidden in both modes
+-                    // because new rows must always use `lineal`.
+-                    .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
+-                    .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
+-                    .map(([k, v]) => (
+-                      <option key={k} value={k}>{v}</option>
+-                    ))}
+-                </select>
+-              </div>
+-              <div data-copilot="component-labour">
+-                <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
+-                <input aria-label={`Labour rate (${unitForMeasurement(formMeasurementType)})`} name="default_labour_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredLabourRate} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-              </div>
+-
+-              {/* Item Cost pricing: single source of truth.
+-                  When generic trades on: pricing strategy dropdown drives whether
+-                  we show per-unit Item Cost OR pack price/size fields.
+-                  When flag off: always show the simple Item Cost field. */}
+-              {genericTradesEnabled && (
+-                <div className="col-span-2">
+-                  <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
+-                  <select aria-label="Item Cost"
+-                    value={formPricingStrategy}
+-                    onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
+-                    className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+-                  >
+-                    {allowedStrategiesFor(formMeasurementType).map((s) => (
+-                      <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
+-                    ))}
+-                  </select>
+-                </div>
+-              )}
+-              {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
+-                <div data-copilot="component-rates">
+-                  <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
+-                  <input aria-label={`Item cost (${unitForMeasurement(formMeasurementType)})`} name="default_material_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredMaterialRate} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                </div>
+-              )}
+-              {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
+-                <>
+-                  {/* hidden zero so the form submission always has default_material_rate */}
+-                  <input type="hidden" name="default_material_rate" value="0" />
+-                  <div>
+-                    <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
+-                    <input aria-label="Quantity Price" type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                  </div>
+-                  <div>
+-                    <label className="block text-xs text-slate-500 mb-1">
+-                      Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
+-                    </label>
+-                    <input aria-label="Quantity amount" type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                  </div>
+-                  {formPricingStrategy === 'per_pack_coverage' && (
+-                    <div className="col-span-2">
+-                      <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
+-                      <input aria-label="Coverage per pack (m²)" type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                    </div>
+-                  )}
+-                </>
+-              )}
+-
+-              <div data-copilot="component-waste">
+-                <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
+-                <select aria-label="Waste Type"
+-                  name="default_waste_type"
+-                  value={formWasteType}
+-                  onChange={(e) => setFormWasteType(e.target.value as WasteType)}
+-                  className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+-                >
+-                  {Object.entries(WASTE_LABELS).map(([k, v]) => (
+-                    <option key={k} value={k}>{v}</option>
+-                  ))}
+-                </select>
+-              </div>
+-              {formWasteType !== 'none' && (
+-                <div data-copilot="component-waste-amount">
+-                  <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountLabel}</label>
+-                  <input aria-label="Waste Amount" name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} defaultValue={restoredWasteAmount} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                </div>
+-              )}
+-
+-            </div>
+-
+-            {/* Type-specific fields (generic trades only): height, depth, time unit. */}
+-            {genericTradesEnabled && (
+-              <TypeSpecificFields
+-                measurementType={formMeasurementType}
+-                heightMm={formHeightMm} setHeightMm={setFormHeightMm}
+-                depthMm={formDepthMm} setDepthMm={setFormDepthMm}
+-                hoursUnit={formHoursUnit} setHoursUnit={setFormHoursUnit}
+-              />
+-            )}
+-
+-            {pitchVisible && (
+-              <>
+-                <div className="flex flex-wrap items-center gap-2" data-copilot="component-pitch">
+-                  <input type="checkbox" id="pitch-enabled" checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="qc-checkbox qc-library-control rounded" />
+-                  <label htmlFor="pitch-enabled" className="text-xs text-slate-700">{pitchCheckboxLabel}</label>
+-                </div>
+-                {formPitchEnabled && (
+-                  <div data-copilot="component-pitch-type">
+-                    <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
+-                    <select aria-label="Pitch Type" name="default_pitch_type" className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
+-                      <option value="rafter">{pitchRafterLabel}</option>
+-                      {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
+-                    </select>
+-                  </div>
+-                )}
+-              </>
+-            )}
+-            <div className="border-t border-slate-200 pt-3 mt-3" data-copilot="component-flashings">
+-              <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
+-              <div className="flex items-center gap-2 mb-2">
+-                <input aria-label="Include in material orders" type="checkbox" id="eligible-orders" name="eligible_for_orders" defaultChecked className="qc-checkbox qc-library-control rounded" />
+-                <label htmlFor="eligible-orders" className="text-xs text-slate-700">Include in material orders</label>
+-              </div>
+-              <div>
+-                <label className="block text-xs text-slate-500 mb-1">{imageAssignLabel}</label>
+-                <div className="flex gap-2">
+-                  <select 
+-                    value={selectedFlashingId} 
+-                    onChange={(e) => setSelectedFlashingId(e.target.value)}
+-                    className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
+-                  >
+-                    <option value="">{imageSelectPlaceholder}</option>
+-                    {flashings.map(flashing => (
+-                      <option key={flashing.id} value={flashing.id}>
+-                        {flashing.name} {flashing.description && `- ${flashing.description}`}
+-                      </option>
+-                    ))}
+-                  </select>
+-                  <button data-qc-variant="ghost" 
+-                    type="button" 
+-                    onClick={addFlashing}
+-                    disabled={!selectedFlashingId}
+-                    className="qc-button qc-flow-control qc-library-control "
+-                  >
+-                    Add
+-                  </button>
+-                </div>
+-                {assignedFlashings.length > 0 && (
+-                  <div className="mt-2 space-y-1">
+-                    {assignedFlashings.map(flashingId => {
+-                      const flashing = flashings.find(f => f.id === flashingId);
+-                      return (
+-                        <div key={flashingId} className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded border border-slate-200">
+-                          <span className="text-xs text-slate-700">
+-                            {flashing?.name || 'Unknown'} {flashing?.description && `- ${flashing.description}`}
+-                          </span>
+-                          <button data-qc-variant="ghost"
+-                            type="button"
+-                            onClick={() => removeFlashing(flashingId)}
+-                            className="qc-button qc-flow-control qc-library-control "
+-                          >
+-                            Remove
+-                          </button>
+-                        </div>
+-                      );
+-                    })}
+-                  </div>
+-                )}
+-                <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
+-              </div>
+-            </div>
+-            {/* Notes */}
+-            <div className="border-t border-slate-200 pt-3 mt-3">
+-              <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
+-              <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
+-              <textarea aria-label="Notes (optional)"
+-                value={formNotes}
+-                onChange={e => setFormNotes(e.target.value)}
+-                placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
+-                rows={3}
+-                maxLength={500}
+-                className="qc-input qc-library-control w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
+-              />
+-              {formNotes.length > 0 && (
+-                <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
+-              )}
+-            </div>
+-
+-            {collections.length > 0 && (
+-              <div className="border-t border-slate-200 pt-3 mt-3">
+-                <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
+-                <div className="flex gap-2">
+-                  <select aria-label="Save to Library"
+-                    value={selectedCollectionId}
+-                    onChange={e => {
+-                      if (e.target.value === '__create_new__') {
+-                        setShowCreateLibraryModal(true);
+-                      } else {
+-                        setSelectedCollectionId(e.target.value);
+-                      }
+-                    }}
+-                    className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
+-                  >
+-                    {collections.map(col => (
+-                      <option key={col.id} value={col.id}>
+-                        {col.name}{col.is_bootstrap ? ' (default)' : ''}
+-                      </option>
+-                    ))}
+-                    <option value="__create_new__">+ Create New Library</option>
+-                  </select>
+-                </div>
+-              </div>
+-            )}
+-            <div className="flex gap-2 pt-2" data-copilot="component-save">
+-              <button data-qc-variant="primary" type="submit" disabled={saving} className="qc-button qc-flow-control qc-library-control ">
+-                {saving ? 'Saving...' : 'Create'}
+-              </button>
+-              <button data-qc-variant="ghost" type="button" onClick={() => { setShowForm(false); setFormWasteType('none'); setFormMeasurementType('area'); setFormPitchEnabled(false); }} className="qc-button qc-flow-control qc-library-control ">
+-                Cancel
+-              </button>
+-            </div>
+-          </form>
+-        </div>
+-      )}
++      <div ref={editorAnchor} className="qc-pricing-editor-anchor">
++        {(showForm || editingComponent) && (
++          <SmartComponentEditor key={`${editingId ?? 'new'}-${editorVersion}`}
++            mode={editingComponent ? 'edit' : 'create'} initial={editorInitial} settings={editorSettings}
++            onSettingsChange={updateEditorSettings} measurementSystem={companyMeasurementSystem} currency={companyCurrency}
++            genericTradesEnabled={genericTradesEnabled} pitchVisible={pitchVisible} pitchHidesValleyHip={pitchHidesValleyHip}
++            pitchRafterLabel={pitchRafterLabel} pitchCheckboxLabel={pitchCheckboxLabel}
++            collections={collections} selectedCollectionId={selectedCollectionId}
++            onCollectionChange={value => { setEditorDirty(true); if (value === '__create_new__') setShowCreateLibraryModal(true); else setSelectedCollectionId(value); }}
++            flashings={flashings} assignedFlashings={assignedFlashings} selectedFlashingId={selectedFlashingId}
++            onFlashingSelection={setSelectedFlashingId} onAddFlashing={addFlashing} onRemoveFlashing={removeFlashing}
++            imageHelperText={imageHelperText} supplierSkuRequired={!!(isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published')}
++            saving={saving} error={formError} onSubmit={editingComponent ? event => handleUpdate(event, editingComponent.id) : handleCreate}
++            onCancel={() => { void mayLeaveEditor().then(leave => { if (leave) cancelEdit(); }); }}
++            onDirty={() => { setEditorDirty(true); setDraftTested(false); }} onCalculated={() => {
++              setTestedInSession(true);
++              if (showForm) setDraftTested(true);
++              if (editingId && editingId === lastCreatedId) setOwnTested(true);
++            }}
++            onCopy={copy => { void startNew(copy); }} openTestInitially={testOnOpen} testRequest={testRequest} learning={learning}
++          />
++        )}
++      </div>
+ 
+       {/* Active component allowance counter */}
+       <div className="flex items-center justify-between mb-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5">
+@@ -1374,250 +1248,10 @@
+         </div>
+       </div>
+ 
+-      <div className="space-y-2">
++      <div id="qc-pricing-component-list" className="space-y-2">
+         {filtered.map((comp) => (
+           <div key={comp.id}>
+-            {editingId === comp.id ? (
+-              <div className="p-4 border border-slate-200 rounded-xl bg-white">
+-                <h3 className="font-semibold text-slate-900 mb-3">Edit {comp.name}</h3>
+-                {formError && (
+-                  <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
+-                )}
+-                <form onSubmit={(e) => handleUpdate(e, comp.id)} className="space-y-3">
+-                 <div className="qc-library-field-grid grid grid-cols-1 sm:grid-cols-2 gap-3">
+-                   <div>
+-                     <label className="block text-xs text-slate-500 mb-1">Name</label>
+-                     <input aria-label="Name" name="name" required defaultValue={comp.name} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                   </div>
+-                   <div>
+-                     <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
+-                     <input aria-label="SKU / Product Code" name="sku" defaultValue={comp.sku ?? ''} placeholder="e.g. RDG-250-BLK" className={"qc-input qc-library-control " + (`w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none ${!!comp.sku ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`)} readOnly={!!comp.sku} title={!!comp.sku ? 'SKU cannot be changed once set' : ''} />
+-                   </div>
+-                   <div>
+-                     <label className="block text-xs text-slate-500 mb-1">Measurement</label>
+-                     <select aria-label="Measurement"
+-                       value={formMeasurementType}
+-                       onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
+-                       className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+-                     >
+-                       {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
+-                         .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
+-                         .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
+-                         .map(([k, v]) => (
+-                           <option key={k} value={k}>{v}</option>
+-                         ))}
+-                     </select>
+-                    </div>
+-                    <div>
+-                      <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
+-                      <input aria-label={`Labour rate (${unitForMeasurement(formMeasurementType)})`} name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                    </div>
+-
+-                    {/* Item Cost - unified: strategy dropdown drives per-unit vs pack. */}
+-                    {genericTradesEnabled && (
+-                      <div className="col-span-2">
+-                        <label className="block text-xs text-slate-500 mb-1">Item Cost</label>
+-                        <select aria-label="Item Cost"
+-                          value={formPricingStrategy}
+-                          onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
+-                          className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+-                        >
+-                          {allowedStrategiesFor(formMeasurementType).map((s) => (
+-                            <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
+-                          ))}
+-                        </select>
+-                      </div>
+-                    )}
+-                    {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
+-                      <div>
+-                        <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
+-                        <input aria-label={`Item cost (${unitForMeasurement(formMeasurementType)})`} name="default_material_rate" type="number" step="0.01" defaultValue={comp.default_material_rate ?? 0} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                      </div>
+-                    )}
+-                    {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
+-                      <>
+-                        <input type="hidden" name="default_material_rate" value="0" />
+-                        <div>
+-                          <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
+-                          <input aria-label="Quantity Price" type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                        </div>
+-                        <div>
+-                          <label className="block text-xs text-slate-500 mb-1">
+-                            Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
+-                          </label>
+-                          <input aria-label="Quantity amount" type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                        </div>
+-                        {formPricingStrategy === 'per_pack_coverage' && (
+-                          <div className="col-span-2">
+-                            <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
+-                            <input aria-label="Coverage per pack (m²)" type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+-                          </div>
+-                        )}
+-                      </>
+-                    )}
+-
+-                    <div>
+-                      <label className="block text-xs text-slate-500 mb-1">Waste Type</label>
+-                      <select aria-label="Waste Type"
+-                        name="default_waste_type"
+-                        value={formWasteType}
+-                        onChange={(e) => setFormWasteType(e.target.value as WasteType)}
+-                        className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+-                      >
+-                        {Object.entries(WASTE_LABELS).map(([k, v]) => (
+-                          <option key={k} value={k}>{v}</option>
+-                        ))}
+-                      </select>
+-                    </div>
+-                    {formWasteType !== 'none' && (
+-                      <div>
+-                        <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountSuffix(formWasteType, formMeasurementType)}</label>
+-                        <input aria-label="Waste Amount"
+-                          name="waste_amount"
+-                          type="number"
+-                          step="0.01"
+-                          defaultValue={formWasteType === 'percent' ? comp.default_waste_percent : comp.default_waste_fixed}
+-                          className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
+-                        />
+-                      </div>
+-                    )}
+-
+-                  </div>
+-
+-                  {/* Type-specific fields (generic trades only). */}
+-                  {genericTradesEnabled && (
+-                    <TypeSpecificFields
+-                      measurementType={formMeasurementType}
+-                      heightMm={formHeightMm} setHeightMm={setFormHeightMm}
+-                      depthMm={formDepthMm} setDepthMm={setFormDepthMm}
+-                      hoursUnit={formHoursUnit} setHoursUnit={setFormHoursUnit}
+-                    />
+-                  )}
+-
+-                  {pitchVisible && (
+-                    <>
+-                      <div className="flex items-center gap-2">
+-                        <input type="checkbox" id={`pitch-${comp.id}`} checked={formPitchEnabled} onChange={(e) => setFormPitchEnabled(e.target.checked)} className="qc-checkbox qc-library-control rounded" />
+-                        <label htmlFor={`pitch-${comp.id}`} className="text-xs text-slate-700">{pitchCheckboxLabel}</label>
+-                      </div>
+-                      {formPitchEnabled && (
+-                        <div>
+-                          <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
+-                          <select aria-label="Pitch Type" name="default_pitch_type" defaultValue={comp.default_pitch_type} className="qc-select qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
+-                            <option value="rafter">{pitchRafterLabel}</option>
+-                            {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
+-                          </select>
+-                        </div>
+-                      )}
+-                    </>
+-                  )}
+-                  <div className="border-t border-slate-200 pt-3 mt-3">
+-                    <h4 className="text-xs font-semibold text-slate-700 mb-2">Material Orders</h4>
+-                    <div className="flex items-center gap-2 mb-2">
+-                      <input aria-label="Include in material orders" type="checkbox" id={`eligible-orders-${comp.id}`} name="eligible_for_orders" defaultChecked={comp.eligible_for_orders ?? true} className="qc-checkbox qc-library-control rounded" />
+-                      <label htmlFor={`eligible-orders-${comp.id}`} className="text-xs text-slate-700">Include in material orders</label>
+-                    </div>
+-                    <div>
+-                      <label className="block text-xs text-slate-500 mb-1">{imageAssignLabel}</label>
+-                      <div className="flex gap-2">
+-                        <select 
+-                          value={selectedFlashingId} 
+-                          onChange={(e) => setSelectedFlashingId(e.target.value)}
+-                          className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded"
+-                        >
+-                          <option value="">{imageSelectPlaceholder}</option>
+-                          {flashings.map(flashing => (
+-                            <option key={flashing.id} value={flashing.id}>
+-                              {flashing.name} {flashing.description && `- ${flashing.description}`}
+-                            </option>
+-                          ))}
+-                        </select>
+-                        <button data-qc-variant="ghost" 
+-                          type="button" 
+-                          onClick={addFlashing}
+-                          disabled={!selectedFlashingId}
+-                          className="qc-button qc-flow-control qc-library-control "
+-                        >
+-                          Add
+-                        </button>
+-                      </div>
+-                      {assignedFlashings.length > 0 && (
+-                        <div className="mt-2 space-y-1">
+-                          {assignedFlashings.map(flashingId => {
+-                            const flashing = flashings.find(f => f.id === flashingId);
+-                            return (
+-                              <div key={flashingId} className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded border border-slate-200">
+-                                <span className="text-xs text-slate-700">
+-                                  {flashing?.name || 'Unknown'} {flashing?.description && `- ${flashing.description}`}
+-                                </span>
+-                                <button data-qc-variant="ghost"
+-                                  type="button"
+-                                  onClick={() => removeFlashing(flashingId)}
+-                                  className="qc-button qc-flow-control qc-library-control "
+-                                >
+-                                  Remove
+-                                </button>
+-                              </div>
+-                            );
+-                          })}
+-                        </div>
+-                      )}
+-                      <p className="text-xs text-slate-400 mt-1">{imageHelperText}</p>
+-                    </div>
+-                  </div>
+-                  {/* Notes */}
+-                  <div className="border-t border-slate-200 pt-3 mt-3">
+-                    <label className="block text-xs text-slate-500 mb-1">Notes <span className="text-slate-400 font-normal">(optional)</span></label>
+-                    <p className="text-xs text-slate-400 mb-1">Explainers or usage tips visible when this component is expanded.</p>
+-                    <textarea aria-label="Notes (optional)"
+-                      value={formNotes}
+-                      onChange={e => setFormNotes(e.target.value)}
+-                      placeholder="e.g. Use for main field area. Check manufacturer spec for coverage rate."
+-                      rows={3}
+-                      maxLength={500}
+-                      className="qc-input qc-library-control w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
+-                    />
+-                    {formNotes.length > 0 && (
+-                      <p className="text-xs text-slate-400 text-right mt-0.5">{formNotes.length}/500</p>
+-                    )}
+-                  </div>
+-
+-                  {collections.length > 0 && (
+-                    <div className="border-t border-slate-200 pt-3 mt-3">
+-                      <label className="block text-xs text-slate-500 mb-1">Save to Library</label>
+-                      <div className="flex gap-2">
+-                        <select aria-label="Save to Library"
+-                          value={selectedCollectionId}
+-                          onChange={e => {
+-                            if (e.target.value === '__create_new__') {
+-                              setShowCreateLibraryModal(true);
+-                            } else {
+-                              setSelectedCollectionId(e.target.value);
+-                            }
+-                          }}
+-                          className="qc-select qc-library-control flex-1 px-2 py-1 text-sm border border-slate-300 rounded-lg"
+-                        >
+-                          {collections.map(col => (
+-                            <option key={col.id} value={col.id}>
+-                              {col.name}{col.is_bootstrap ? ' (default)' : ''}
+-                            </option>
+-                          ))}
+-                          <option value="__create_new__">+ Create New Library</option>
+-                        </select>
+-                      </div>
+-                    </div>
+-                  )}
+-                  <div className="flex gap-2 pt-2">
+-                    <button data-qc-variant="primary" type="submit" disabled={saving} className="qc-button qc-flow-control qc-library-control ">
+-                      {saving ? 'Saving...' : 'Save'}
+-                    </button>
+-                    <button data-qc-variant="ghost" type="button" onClick={cancelEdit} className="qc-button qc-flow-control qc-library-control ">
+-                      Cancel
+-                    </button>
+-                  </div>
+-                </form>
+-              </div>
+-            ) : (
++
+               <div
+                 id={`component-row-${comp.id}`}
+                 onClick={() => startEdit(comp)}
+@@ -1653,9 +1287,9 @@
+                     <span className="text-xs text-slate-400">{MEASUREMENT_LABELS[comp.measurement_type]}</span>
+                   </div>
+                   <p className="text-xs text-slate-500 mt-0.5">
+-                    Item Cost: ${(comp.default_material_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)} · Labour: ${(comp.default_labour_rate ?? 0).toFixed(2)}/{unitForMeasurement(comp.measurement_type)}
++                    {componentCostSummary(comp)} · Labour: {formatCurrency(comp.default_labour_rate ?? 0, companyCurrency)}/{canonicalUnit(comp.measurement_type)}
+                     {comp.default_waste_type !== 'none' && (
+-                      <> · Waste: {comp.default_waste_type === 'percent' ? `${comp.default_waste_percent}%` : `${comp.default_waste_fixed} ${unitForMeasurement(comp.measurement_type)}`}</>
++                      <> · Waste: {comp.default_waste_type === 'percent' ? `${comp.default_waste_percent}%` : `${comp.default_waste_fixed} ${canonicalUnit(comp.measurement_type)}`}</>
+                     )}
+                     {comp.default_pitch_type !== 'none' && <> · {PITCH_LABELS[comp.default_pitch_type]}</>}
+                   </p>
+@@ -1697,14 +1331,15 @@
+                     </svg>
+                   )}
+                 </button>
+-                <button aria-label={`Edit ${comp.name}`} data-qc-variant="ghost"
+-                  onClick={(e) => { e.stopPropagation(); startEdit(comp); }}
+-                  title="Click to edit"
++                <button aria-label={`Open and test ${comp.name}`} data-qc-variant="ghost"
++                  onClick={(e) => { e.stopPropagation(); void startEdit(comp, true); }}
++                  title="Open and test this component"
+                   className="qc-button qc-flow-control qc-library-control "
+                 >
+                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                   </svg>
++                  Open & test
+                 </button>
+                 <button aria-label={`Delete ${comp.name}`} data-qc-variant="ghost" 
+                   onClick={(e) => { e.stopPropagation(); setDeleteCompId(comp.id); }} 
+@@ -1717,7 +1352,6 @@
+                 </button>
+                 </div>
+               </div>
+-            )}
+           </div>
+         ))}
+       </div>
+@@ -1862,11 +1496,13 @@
+             is_bootstrap: c.is_bootstrap,
+             component_count: undefined,
+           }))}
+-          onClose={() => setShowCatalogModal(false)}
+-          onCreated={() => {
+-            // Reload to pick up new components
+-            window.location.reload();
++          onClose={() => {
++            setShowCatalogModal(false);
++            // Only refresh after the user has read the confirmed import result.
++            // Opening import is dirty-guarded; no active draft is discarded.
++            if (catalogueChanged) window.location.assign(`/${workspaceSlug}/components?reviewImport=1`);
+           }}
++          onCreated={() => setCatalogueChanged(true)}
+         />
+       )}
+     </QcLibrary>
+--- baseline/app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx
++++ return/app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx
+@@ -9,7 +9,7 @@
+   type UserCatalogSummary,
+   type PublicCatalogSummary,
+ } from '../catalog-actions';
+-import type { ComponentLibraryRow } from '@/app/lib/types';
++import '@/app/components/pricing/pricing-activation.css';
+ 
+ type ModalStep = 'select-catalog' | 'view-rows' | 'destination' | 'creating' | 'success' | 'error';
+ type CatalogTab = 'my-catalogs' | 'supplier-catalogs';
+@@ -23,7 +23,7 @@
+ const MAPPABLE_FIELDS = [
+   { value: 'name', label: 'Component Name', required: true, placeholder: 'Select a column...' },
+   { value: 'sku', label: 'SKU / Product Code', required: false, placeholder: 'Select a column...' },
+-  { value: 'price', label: 'Price', required: false, placeholder: 'Select a column...' },
++  { value: 'price', label: 'Material cost', required: false, placeholder: 'Select a column...' },
+   { value: 'notes', label: 'Description / Notes', required: false, placeholder: 'Select a column...' },
+ ] as const;
+ 
+@@ -301,7 +301,7 @@
+       .map((row, i) => ({ row, i }))
+       .filter(({ row }) => {
+         if (!rowSearchFilter) return true;
+-        return Object.values(row).some(v => v?.toLowerCase().includes(rowSearchFilter.toLowerCase()));
++        return Object.values(row).some(v => String(v ?? '').toLowerCase().includes(rowSearchFilter.toLowerCase()));
+       });
+   }, [allRows, rowSearchFilter]);
+ 
+@@ -310,6 +310,10 @@
+   const effectiveLimit = rowSearchFilter ? SEARCH_RENDER_LIMIT : visibleCount;
+   const visibleRowData = filteredRowData.slice(0, effectiveLimit);
+   const filteredIndices = filteredRowData.map(d => d.i);
++
++  // Show the SAME source row, not guessed parsed rates or invented pack rules.
++  const exampleIndex = allRows.findIndex((_, index) => selectedRowIndices.has(index));
++  const exampleRow = exampleIndex >= 0 ? allRows[exampleIndex] : undefined;
+ 
+   // Set of headers that are currently mapped to a field (for column highlighting)
+   const mappedHeaders = useMemo(() => {
+@@ -347,9 +351,9 @@
+       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl border border-slate-200 max-h-[90vh] flex flex-col">
+         {/* Header */}
+         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100 flex-shrink-0">
+-          <div><h2 className="text-lg font-semibold text-slate-900">Create components from a catalogue</h2><p className="qc-flow-description mb-0">Choose a source, check the fields, then add selected rows to a library.</p></div>
+-          <button aria-label="Close"
+-            onClick={onClose}
++          <div><h2 className="text-lg font-semibold text-slate-900">Create components from a catalogue</h2><p className="qc-flow-description mb-0">One row becomes one basic component. Match columns, choose rows, then review the pricing rules in your library.</p></div>
++          <button aria-label={step === 'creating' ? 'Creating components, please wait' : 'Close catalogue import'}
++            onClick={onClose} disabled={step === 'creating'}
+             className="qc-icon-button qc-flow-control text-slate-400 hover:text-slate-600 transition cursor-pointer"
+           >
+             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+@@ -500,7 +504,7 @@
+                   <div className="rounded-lg border border-slate-200 overflow-hidden">
+                     <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5">
+                       <p className="text-xs font-medium text-slate-600">Map your catalog columns to component fields</p>
+-                      <p className="text-[11px] text-slate-400 mt-0.5">Only Component Name is required. We auto-detected matches where possible.</p>
++                      <p className="text-[11px] text-slate-400 mt-0.5">Only Component Name is required. Suggested matches are a starting point: check what each column contains.</p>
+                     </div>
+                     <div className="divide-y divide-slate-100">
+                       {MAPPABLE_FIELDS.map(field => {
+@@ -535,6 +539,12 @@
+                       })}
+                     </div>
+                   </div>
++
++                  <section className="qc-catalogue-example" aria-label="Example component from selected row">
++                    <header><span className="qc-eyebrow">Your row → a Smart Component</span><h3>{exampleRow ? `Example from row ${exampleIndex + 1}` : 'Select a row to see an example'}</h3></header>
++                    {exampleRow && <dl>{MAPPABLE_FIELDS.map(field => <div key={field.value}><dt>{field.label}<small>{fieldToHeader[field.value] ? `From “${fieldToHeader[field.value]}”` : 'Not mapped'}</small></dt><dd>{fieldToHeader[field.value] ? (String(exampleRow[fieldToHeader[field.value]] ?? '') || 'Empty in this row') : 'Not supplied'}</dd></div>)}</dl>}
++                    <p>These are your selected source values. After import, check measurement, labour, waste and pitch. Roll or pack prices also need purchasing settings.</p>
++                  </section>
+ 
+                   {/* Search + selection counter */}
+                   <div className="flex items-center justify-between gap-3">
+@@ -702,7 +712,7 @@
+                 </div>
+ 
+                 {destMode === 'existing' ? (
+-                  <select
++                  <select aria-label="Destination library"
+                     value={existingCollectionId}
+                     onChange={e => setExistingCollectionId(e.target.value)}
+                     className="qc-select w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+@@ -732,7 +742,7 @@
+                   Creating <span className="font-semibold">{selectedRowIndices.size}</span> component{selectedRowIndices.size !== 1 ? 's' : ''} from catalog rows.
+                 </p>
+                 <p className="text-xs text-slate-400 mt-1">
+-                  Each row becomes a new component with mapped fields auto-populated.
++                  Each selected row creates a basic record. Check measurement type, material units and costs, labour, purchasing and allowances before quoting. Missing prices must be reviewed.
+                 </p>
+               </div>
+ 
+@@ -774,20 +784,20 @@
+                 Created {createdCount} component{createdCount !== 1 ? 's' : ''} successfully.
+               </p>
+               <p className="text-xs text-slate-400 mt-1 mb-6">
+-                They are now in your library and ready to use in quotes.
++                The basic records are saved. Open them to check measurement type, purchasing, labour, waste and pitch, then use Test component before quoting.
+               </p>
+               <div className="flex gap-3 justify-center">
+                 <button data-qc-variant="ghost"
+                   onClick={handleReset}
+                   className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
+                 >
+-                  Convert More
++                  Import more
+                 </button>
+                 <button data-qc-variant="primary"
+                   onClick={onClose}
+                   className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition cursor-pointer"
+                 >
+-                  Done
++                  Review components
+                 </button>
+               </div>
+             </div>
+--- baseline/app/(auth)/[workspaceSlug]/components/page.tsx
++++ return/app/(auth)/[workspaceSlug]/components/page.tsx
+@@ -1,6 +1,5 @@
+ import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections, hasDismissedComponentEditWarning } from './actions';
+ import { ComponentList } from './component-list';
+-import { ComponentsIntroModal } from './components-intro-modal';
+ import { PendingUpdatesBanner } from './PendingUpdatesBanner';
+ import { SupplierAlertSettingsButton } from './SupplierAlertSettingsButton';
+ import { loadCompanyContext } from '@/app/lib/data/company-context';
+@@ -12,10 +11,10 @@
+ 
+ export default async function ComponentsPage(props: {
+   params: Promise<{ workspaceSlug: string }>;
+-  searchParams: Promise<{ restore?: string; created?: string; from?: string }>;
++  searchParams: Promise<{ restore?: string; created?: string; from?: string; learn?: string; reviewImport?: string }>;
+ }) {
+   const { workspaceSlug } = await props.params;
+-  const { restore: restoreDraftId, created: createdComponentId, from } = await props.searchParams;
++  const { restore: restoreDraftId, created: createdComponentId, from, learn, reviewImport } = await props.searchParams;
+   let components;
+ 
+   try {
+@@ -31,17 +30,12 @@
+     );
+   }
+ 
+-  // Component library is per-company - shared across every quote regardless of
+-  // measurement system. We render rates in the company default so an Imperial
+-  // shop sees ft²/RS labels here, with a note that per-quote display still
+-  // follows the quote's own measurement_system.
++  // Stored rates and pack settings are canonical metric. Only test inputs and
++  // measured quantities use the company's preferred display system.
+   const { company } = await loadCompanyContext();
+   const ent = await loadCompanyEntitlements(company.id);
+ 
+-  // First-visit modal: shown once per user. Suppresses the copilot tour
+-  // while open (see ComponentsIntroModal). After dismissal the existing
+-  // copilot auto-detect picks up and runs the `components` guide if the
+-  // user has copilot enabled.
++  // Personal guidance preference only, never a company-pricing readiness flag.
+   const introSeen = await hasSeenComponentsIntro();
+   const collections = await loadComponentCollections();
+   const editWarningDismissed = await hasDismissedComponentEditWarning();
+@@ -56,7 +50,6 @@
+ 
+   return (
+     <>
+-      {!introSeen && <ComponentsIntroModal />}
+       <BackButton href={from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/resources`} label={from === 'inbox' ? 'Back to inbox' : 'Back to resources'} />
+       {/* "Where is my takeoff" helper - shown here because this is the landing
+           page after the free-takeoff import banner click. */}
+@@ -71,6 +64,9 @@
+         initialComponents={components}
+         workspaceSlug={workspaceSlug}
+         companyMeasurementSystem={company.default_measurement_system}
++        companyCurrency={company.default_currency ?? 'NZD'}
++        reviewImported={reviewImport === '1'}
++        showPricingIntroduction={learn === '1' || (!introSeen && !restoreDraftId && !createdComponentId)}
+         companyDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
+         componentCollections={collections}
+         componentLimit={ent.componentLimit}
+--- baseline/app/(auth)/[workspaceSlug]/page.tsx
++++ return/app/(auth)/[workspaceSlug]/page.tsx
+@@ -72,7 +72,7 @@
+     .single();
+ 
+   const firstName = user?.full_name?.split(' ')[0] || 'there';
+-  // Brand-new users (never dismissed) see the one-time Welcome modal.
++  // A personal help preference, not workspace pricing-readiness. No blocking tour.
+   const showWelcome = !user?.tutorials_seen_at;
+ 
+   // Check for calculator draft from signup flow (H-03: signup context preservation)
+@@ -121,7 +121,7 @@
+ 
+   return (
+     <section data-qc-ui="v2" className="space-y-5">
+-      {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} /> : null}
++      {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} pricingFirst={!hasCalcDraft && recentWork !== undefined && recentWork.length === 0 && !(company as { is_supplier?: boolean }).is_supplier} /> : null}
+       {hasCalcDraft && <CalcDraftImportBanner draftId={signupDraft!} sourceRef={signupRef ?? null} />}
+       <Suspense fallback={null}><DocDraftRestorer workspaceSlug={workspaceSlug} /></Suspense>
+       <TakeoffDraftNoteBanner />
+@@ -130,6 +130,7 @@
+       <HomeDashboard workspaceSlug={workspaceSlug} firstName={firstName} newUser={showWelcome}
+         notificationCount={unreadAlerts ?? 0} canCreateQuote={!monthlyQuoteAtCap}
+         assistantAvailable={!!smartAssistantOn} recentWork={recentWork}
++        allowPricingInvitation={!hasCalcDraft && !(company as { is_supplier?: boolean }).is_supplier}
+         measureAction={
+ <MeasureJobButton
+         variant="inline"
+--- baseline/app/(auth)/[workspaceSlug]/tutorials/WelcomeModal.tsx
++++ return/app/(auth)/[workspaceSlug]/tutorials/WelcomeModal.tsx
+@@ -1,123 +1,36 @@
+ 'use client';
+ 
+-import { useState, useTransition } from 'react';
+-import { useRouter } from 'next/navigation';
++import { useState } from 'react';
++import Link from 'next/link';
++import { QcButton } from '@/app/components/ui/v2/QcButton';
++import { QcIcon } from '@/app/components/ui/v2/QcIcon';
+ import { dismissWelcomeModal } from './welcome-actions';
++import '@/app/components/pricing/pricing-activation.css';
+ 
+-interface Props {
+-  /** Workspace base path, e.g. "/acme". */
+-  base: string;
+-  /** User's first name for the greeting. */
+-  firstName: string;
++interface Props { base: string; firstName: string; pricingFirst?: boolean; }
++/** Kept under the existing export for compatibility. An inline, optional welcome
++ *  replaces the blocking tutorial modal. The existing personal dismissal action
++ *  is unchanged; it never means that company prices have been checked. */
++export function WelcomeModal({ base, firstName, pricingFirst = false }: Props) {
++  const [open, setOpen] = useState(true);
++  const [pending, setPending] = useState(false);
++  const [error, setError] = useState('');
++  async function dismiss() {
++    if (pending) return;
++    setPending(true); setError('');
++    try {
++      const result = await dismissWelcomeModal();
++      if (result.ok) setOpen(false);
++      else setError('Could not remember your preference. Retry or hide this for this visit.');
++    } catch { setError('Could not remember your preference. Retry or hide this for this visit.'); }
++    finally { setPending(false); }
++  }
++  if (!open) return null;
++  return <aside className="qc-pricing-welcome" data-qc-ui="v2" aria-label="Getting started help">
++    <QcIcon name="help" /><div><strong>{pricingFirst ? `New here, ${firstName}? Start with a component you know.` : `Welcome, ${firstName}. Your workspace is ready to explore.`}</strong>
++      <p>{pricingFirst ? 'The pricing guide shows you how to test an example and create your own.' : 'Check your company’s Pricing Library, continue a job, or use Tutorials whenever you need help.'}</p>
++      <div><Link prefetch={false} href={`${base}/components?learn=1`} className="qc-text-link">Pricing guide</Link><Link prefetch={false} href={`${base}/tutorials`} className="qc-text-link">Tutorials</Link></div>
++      {error && <p role="status">{error} <QcButton size="sm" onClick={() => setOpen(false)}>Hide for now</QcButton></p>}
++    </div><QcButton pending={pending} aria-label="Dismiss getting started help" onClick={() => { void dismiss(); }}><QcIcon name="close" /></QcButton>
++  </aside>;
+ }
+-
+-/**
+- * First-login Welcome modal. Renders once for brand-new users on the dashboard
+- * (gated server-side by `users.tutorials_seen_at IS NULL`). Points them at the
+- * Tutorials hub, the help docs, and Q - and suggests starting with Tutorials.
+- *
+- * Dismissing (any path) stamps `tutorials_seen_at` so it never shows again.
+- */
+-export function WelcomeModal({ base, firstName }: Props) {
+-  const router = useRouter();
+-  const [open, setOpen] = useState(true);
+-  const [, startTransition] = useTransition();
+-
+-  function dismiss() {
+-    setOpen(false);
+-    startTransition(() => {
+-      void dismissWelcomeModal();
+-    });
+-  }
+-
+-  function goToTutorials() {
+-    dismiss();
+-    router.push(`${base}/tutorials`);
+-  }
+-
+-  if (!open) return null;
+-
+-  return (
+-    <div
+-      className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4"
+-      role="dialog"
+-      aria-modal="true"
+-      aria-labelledby="welcome-modal-title"
+-    >
+-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+-        {/* Header */}
+-        <div className="flex items-start gap-3 px-6 pt-6">
+-          <div className="flex-shrink-0 rounded-full bg-orange-50 p-3">
+-            <svg className="h-6 w-6 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+-            </svg>
+-          </div>
+-          <div className="min-w-0 flex-1">
+-            <h3 id="welcome-modal-title" className="text-lg font-semibold text-slate-900">
+-              Welcome to QuoteCore+, {firstName}!
+-            </h3>
+-            <p className="mt-0.5 text-sm text-slate-500">Let&apos;s get you up and running fast.</p>
+-          </div>
+-          <button
+-            type="button"
+-            onClick={dismiss}
+-            className="-mr-1 -mt-1 flex-shrink-0 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 md:p-1.5"
+-            aria-label="Close"
+-          >
+-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+-            </svg>
+-          </button>
+-        </div>
+-
+-        {/* Body */}
+-        <div className="px-6 py-5">
+-          <p className="text-sm leading-relaxed text-slate-700">
+-            There are three ways to learn QuoteCore+:
+-          </p>
+-          <ul className="mt-3 space-y-2 text-sm text-slate-700">
+-            <li className="flex gap-2">
+-              <span className="font-semibold text-[#FF6B35]">1.</span>
+-              <span>
+-                <span className="font-semibold">Tutorials</span> - quick cards explaining every feature. The fastest way to
+-                understand the whole app. <span className="text-slate-500">Start here.</span>
+-              </span>
+-            </li>
+-            <li className="flex gap-2">
+-              <span className="font-semibold text-[#FF6B35]">2.</span>
+-              <span>
+-                <span className="font-semibold">Help docs</span> - the <span className="font-mono text-xs">?</span> icon
+-                (top right) opens searchable help for whatever screen you&apos;re on.
+-              </span>
+-            </li>
+-            <li className="flex gap-2">
+-              <span className="font-semibold text-[#FF6B35]">3.</span>
+-              <span>
+-                <span className="font-semibold">Q</span> - your in-app assistant. Ask &quot;how do I…?&quot; and Q answers
+-                or walks you through it step by step.
+-              </span>
+-            </li>
+-          </ul>
+-        </div>
+-
+-        {/* CTAs */}
+-        <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-6 py-4 sm:flex-row sm:justify-end">
+-          <button
+-            type="button"
+-            onClick={dismiss}
+-            className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+-          >
+-            Maybe later
+-          </button>
+-          <button
+-            type="button"
+-            onClick={goToTutorials}
+-            className="rounded-full bg-[#FF6B35] px-5 py-2.5 text-sm font-semibold text-white transition hover:shadow-[0_0_12px_rgba(255,107,53,0.45)]"
+-          >
+-            Start with Tutorials
+-          </button>
+-        </div>
+-      </div>
+-    </div>
+-  );
+-}
+--- baseline/app/components/workspace/HomeDashboard.tsx
++++ return/app/components/workspace/HomeDashboard.tsx
+@@ -12,11 +12,18 @@
+   canCreateQuote: boolean; assistantAvailable: boolean; measureAction: ReactNode;
+   /** undefined means not loaded, NOT an empty company. No demo rows in application code. */
+   recentWork?: RecentWorkItem[];
++  /** Suppressed for supplier workspaces and resumed signup drafts. This is guidance,
++   *  not a claim that company prices are unverified. */
++  allowPricingInvitation?: boolean;
+ }
+ /** T01/C48. Read-only dashboard composition. Data is owned by the existing server page. */
+ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationCount,
+-  canCreateQuote, assistantAvailable, measureAction, recentWork }: Props) {
++  canCreateQuote, assistantAvailable, measureAction, recentWork, allowPricingInvitation = true }: Props) {
+   const base = `/${workspaceSlug}`;
++  // Only a successful, empty recent-work read can select the getting-started
++  // state. Unknown data and an existing company's jobs never become "new".
++  const pricingFirst = allowPricingInvitation && recentWork !== undefined && recentWork.length === 0;
++  const resume = recentWork?.[0];
+   return <div className="qc-home" data-qc-ui="v2">
+     <header className="qc-home-heading">
+       <div><p className="qc-eyebrow">Your workspace</p><h1>Welcome {newUser ? '' : 'back, '}{firstName}</h1>
+@@ -24,21 +31,30 @@
+       <Link href={`${base}/tutorials`} prefetch={false} className="qc-button" data-qc-variant="glass"><QcIcon name="help" /> Tutorials</Link>
+     </header>
+     <section className="qc-home-start" aria-labelledby="qc-home-start-title">
+-      <div className="qc-home-start-copy"><span className="qc-eyebrow">Start something new</span>
+-        <h2 id="qc-home-start-title">What are we pricing today?</h2>
+-        <p>Already measured the job? Start a quote. Need quantities first? Open your plan in takeoff.</p>
++      <div className="qc-home-start-copy"><span className="qc-eyebrow">{pricingFirst ? 'Build your pricing system' : resume ? 'Pick up where you left off' : 'Start something new'}</span>
++        <h2 id="qc-home-start-title">{pricingFirst ? 'Make QuoteCore use your prices' : resume ? 'Continue your work' : 'What are we pricing today?'}</h2>
++        <p>{pricingFirst
++          ? 'Open a familiar Smart Component, test a measurement, then enter your own costs. Set up once and reuse your pricing on every job.'
++          : resume ? `Return to ${resume.title}. Your other jobs and starting options are below.`
++          : 'Already measured the job? Start a quote. Need quantities first? Open your plan in takeoff.'}</p>
+         <div className="qc-home-start-actions">
+-          <Link href={canCreateQuote ? `${base}/quotes/new` : `${base}/quotes`} prefetch={false}
++          <Link href={pricingFirst ? `${base}/components?learn=1` : resume ? resume.href : canCreateQuote ? `${base}/quotes/new` : `${base}/quotes`} prefetch={false}
+             className="qc-button" data-qc-variant="primary" data-qc-size="lg">
+-            <QcIcon name="plus" />{canCreateQuote ? 'New quote' : 'Open quotes'}<QcIcon name="arrow" />
++            <QcIcon name={pricingFirst ? 'pricing' : resume ? 'quote' : 'plus'} />
++            {pricingFirst ? 'Set up your pricing' : resume ? 'Continue this job' : canCreateQuote ? 'New quote' : 'Open quotes'}<QcIcon name="arrow" />
+           </Link>
++          {(pricingFirst || resume) && <Link href={canCreateQuote ? `${base}/quotes/new` : `${base}/quotes`} prefetch={false} className="qc-button" data-qc-variant="ghost">
++            {canCreateQuote ? 'Start a new job' : 'Open quotes'}
++          </Link>}
+           <div className="qc-home-measure">{measureAction}</div>
+         </div>
++        {pricingFirst && <p className="qc-home-pricing-note">Starter rates are examples, not recommended prices. Already using your company's pricing? Go straight to a job.</p>}
+       </div>
+-      <div className="qc-home-process" aria-label="Measure, price, quote">
+-        {(['measure','pricing','quote'] as const).map((name, index) => <div key={name}>
++      <div className="qc-home-process" aria-label={pricingFirst ? 'Check a component, make your own, price a job' : 'Measure, price, quote'}>
++        {(pricingFirst ? (['pricing','library','quote'] as const) : (['measure','pricing','quote'] as const)).map((name, index) => <div key={name}>
+           <span className="qc-home-process-icon"><QcIcon name={name} /></span>
+-          <strong>{['Measure','Price','Quote'][index]}</strong><span>{['Capture the job','Use your pricing','Make it yours'][index]}</span>
++          <strong>{(pricingFirst ? ['Try one','Make your own','Price a job'] : ['Measure','Price','Quote'])[index]}</strong>
++          <span>{(pricingFirst ? ['Test a familiar item','Use your costs','Apply measurements'] : ['Capture the job','Use your pricing','Make it yours'])[index]}</span>
+         </div>)}
+       </div>
+     </section>
+@@ -51,8 +67,8 @@
+             <span className="qc-hub-icon"><QcIcon name="quote" /></span><span><strong>Find a job or quote</strong>
+               <span>Open your quotes to continue pricing, review a draft or check a customer response.</span></span><QcIcon name="arrow" />
+           </Link>
+-        ) : recentWork.length === 0 ? <div className="qc-home-empty"><QcIcon name="quote" /><h3>Your first quote starts here</h3>
+-          <p>Create a quote and it will appear in your recent work.</p></div> : <div className="qc-recent-list">
++        ) : recentWork.length === 0 ? <div className="qc-home-empty"><QcIcon name="quote" /><h3>Your work will appear here</h3>
++          <p>Check your pricing, then start a real job. You can return here to continue it.</p></div> : <div className="qc-recent-list">
+           {recentWork.map(work => <Link key={work.id} href={work.href} prefetch={false} className="qc-recent-row">
+             <span><strong>{work.title}</strong><small>{work.customer} · {work.quoteNumber}</small></span>
+             <span className="qc-status" data-qc-tone={work.statusTone}>{work.statusLabel}</span><small>{work.updatedLabel}</small><QcIcon name="chevron" />
+--- baseline/app/components/workspace/qc-home.css
++++ return/app/components/workspace/qc-home.css
+@@ -57,3 +57,8 @@
+   .qc-home-resume { padding:20px 14px; align-items:flex-start; } .qc-home-resume > svg { display:none; } .qc-home-resume strong { font-size:16px; } .qc-home-resume span span { font-size:13px; }
+   .qc-section-heading { align-items:flex-start; gap:8px; } .qc-text-link { min-height:44px; } .qc-recent-row { grid-template-columns:1fr auto; } .qc-recent-row > small,.qc-recent-row > svg { display:none; }
+ }
++
++/* Pricing activation is guidance based on known work, never a verification badge. */
++.qc-home .qc-home-pricing-note { font-size:12px; margin:16px 0 0; max-width:540px; }
++.qc-home-start-copy { min-width:0; overflow-wrap:anywhere; }
++@media(max-width:599px) { .qc-home-start-actions { gap:8px; } }
+--- /dev/null
++++ return/app/components/pricing/ComponentTestPanel.tsx
+@@ -0,0 +1,125 @@
++'use client';
++import { useEffect, useId, useRef, useState } from 'react';
++import type { MeasurementSystem } from '@/app/lib/types';
++import { normalizeMeasurementSystem } from '@/app/lib/types';
++import { formatCurrency } from '@/app/lib/currency/currencies';
++import { QcButton } from '@/app/components/ui/v2/QcButton';
++import { QcField, QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
++import { QcIcon } from '@/app/components/ui/v2/QcIcon';
++import { calculateComponentTest, canonicalUnit, displayQuantity, inputDimension, pricedDimension, unitForDimension, type ComponentTestDraft } from './componentTest';
++import './pricing-activation.css';
++
++const number = (value: number) => new Intl.NumberFormat('en', { maximumFractionDigits: 3 }).format(value);
++export function ComponentTestPanel({ draft, measurementSystem, currency, onClose, onCalculated, focusOnMount = false }: {
++  draft: ComponentTestDraft; measurementSystem: MeasurementSystem; currency: string;
++  onClose?: () => void; onCalculated?: () => void; focusOnMount?: boolean;
++}) {
++  const id = useId();
++  const firstInput = useRef<HTMLInputElement>(null);
++  const [values, setValues] = useState(['']);
++  const [system, setSystem] = useState<MeasurementSystem>(measurementSystem);
++  const [basis, setBasis] = useState<'surface' | 'plan'>('surface');
++  const [pitch, setPitch] = useState('');
++  const [attempted, setAttempted] = useState(false);
++  const inputDim = inputDimension(draft.measurementType);
++  const pricedDim = pricedDimension(draft.measurementType);
++  const inputUnit = unitForDimension(inputDim, system, draft.timeUnit);
++  const outputUnit = unitForDimension(pricedDim, system, draft.timeUnit);
++  const costUnit = canonicalUnit(draft.measurementType, draft.timeUnit);
++  const result = attempted ? calculateComponentTest(draft, { values, system, basis, pitch }) : null;
++  const errors = result && !result.ok ? result.errors : {};
++  const total = result?.ok ? result.result : null;
++  const money = (value: number) => formatCurrency(value, currency);
++  const qty = (value: number) => `${number(displayQuantity(value, pricedDim, system))} ${outputUnit}`;
++  const inputLabel = inputDim === 'length' ? 'Test length' : inputDim === 'area' ? 'Test area'
++    : inputDim === 'volume' ? 'Test volume' : inputDim === 'time' ? 'Test time' : 'Test quantity';
++
++  useEffect(() => { if (focusOnMount) firstInput.current?.focus({ preventScroll: true }); }, [focusOnMount]);
++  function calculate() {
++    setAttempted(true);
++    const outcome = calculateComponentTest(draft, { values, system, basis, pitch });
++    if (outcome.ok) onCalculated?.();
++  }
++  // Explicit non-existent form owner detaches test controls from an ancestor
++  // component form. A bad sample must NEVER block Save via native validity.
++  // No test controls have a name; Enter is handled locally below.
++  return <aside className="qc-component-test" aria-labelledby={`${id}-title`} data-qc-component="C70">
++    <header className="qc-pricing-heading"><div><span className="qc-eyebrow">Try a measurement</span>
++      <h3 id={`${id}-title`}>Test component</h3></div>
++      {onClose && <QcButton className="qc-icon-button" aria-label="Close component test" onClick={onClose}><QcIcon name="close" /></QcButton>}
++    </header>
++    <p className="qc-pricing-muted">Uses the settings in this editor. Nothing is saved and no quote is created.</p>
++    <div className="qc-test-inputs" onKeyDown={event => {
++      // Enter calculates, never submits the parent component form.
++      if (event.key === 'Enter' && event.target instanceof HTMLInputElement) { event.preventDefault(); calculate(); }
++    }}>
++      {inputDim !== 'fixed' && <>
++        {['length', 'area', 'volume'].includes(inputDim) && <QcField label="Test measurement units" htmlFor={`${id}-system`}>
++          <QcSelect form={`${id}-test-only`} id={`${id}-system`} value={normalizeMeasurementSystem(system)} onChange={e => {
++            // Do not reinterpret 120 ft² as 120 m² without asking for a new value.
++            setSystem(e.target.value as MeasurementSystem); setValues(['']); setAttempted(false);
++          }}>
++            <option value="metric">Metric</option><option value="imperial_ft">Feet / square feet</option><option value="imperial_rs">Feet / roofing squares</option>
++          </QcSelect>
++        </QcField>}
++        {values.map((value, index) => <div key={index} className="qc-test-measure-row">
++          <QcField htmlFor={`${id}-value-${index}`} label={`${inputLabel}${values.length > 1 ? ` ${index + 1}` : ''} (${inputUnit})`}>
++            <QcInput form={`${id}-test-only`} ref={index === 0 ? firstInput : undefined} id={`${id}-value-${index}`} type="number" min="0" step="any" inputMode="decimal"
++              value={value} placeholder={inputDim === 'quantity' ? 'e.g. 5' : 'e.g. 120'} aria-invalid={!!errors[`value-${index}`]}
++              aria-describedby={errors[`value-${index}`] ? `${id}-errors` : undefined}
++              onChange={e => setValues(previous => previous.map((v, i) => i === index ? e.target.value : v))} />
++          </QcField>
++          {values.length > 1 && <QcButton aria-label={`Remove test measurement ${index + 1}`} className="qc-icon-button" onClick={() => setValues(previous => previous.filter((_, i) => i !== index))}><QcIcon name="trash" /></QcButton>}
++        </div>)}
++        {(inputDim === 'length' || draft.measurementType.startsWith('multi_')) && <QcButton size="sm" onClick={() => setValues(previous => [...previous, ''])}><QcIcon name="plus" /> {inputDim === 'length' ? 'Add another length' : 'Add another measurement'}</QcButton>}
++        {draft.measurementType.includes('freestyle') && <p className="qc-pricing-muted">Enter the area you have already worked out from the length and height.</p>}
++        {draft.measurementType === 'volume_3d' && <p className="qc-pricing-muted">Enter the volume you have already worked out from length, width and depth.</p>}
++      </>}
++      {inputDim === 'fixed' && <p className="qc-pricing-callout">This test uses one fixed charge. No measurement is needed.</p>}
++      {draft.pitchType !== 'none' && <>
++        <QcField htmlFor={`${id}-basis`} label="Measurement basis" help="Already measured on the slope? Do not apply pitch a second time.">
++          <QcSelect form={`${id}-test-only`} id={`${id}-basis`} value={basis} onChange={e => setBasis(e.target.value as 'surface' | 'plan')}>
++            <option value="surface">Already measured / on the slope</option><option value="plan">Plan measurement - apply pitch</option>
++          </QcSelect>
++        </QcField>
++        {basis === 'plan' && <QcField htmlFor={`${id}-pitch`} label="Pitch (degrees)">
++          <QcInput form={`${id}-test-only`} id={`${id}-pitch`} type="number" inputMode="decimal" step="any" min="0" max="89.99" placeholder="e.g. 25" value={pitch}
++            aria-invalid={!!errors.pitch} onChange={e => setPitch(e.target.value)} />
++        </QcField>}
++      </>}
++      <QcButton variant="secondary" onClick={calculate}><QcIcon name="pricing" />{attempted ? 'Calculate again' : 'Calculate'}</QcButton>
++    </div>
++    {result && !result.ok && <div id={`${id}-errors`} className="qc-pricing-error" role="status">
++      <strong>Check before calculating</strong><ul>{Object.values(result.errors).map(message => <li key={message}>{message}</li>)}</ul>
++      <p>Enter 0 for an intentional zero cost. Empty costs are not assumed to be free.</p>
++    </div>}
++    {!attempted && <div className="qc-test-empty"><QcIcon name="measure" /><p>Enter a measurement to see materials, labour and allowances working together.</p></div>}
++    {total && <div className="qc-test-result">
++      <div className="qc-test-total" aria-live="polite" aria-atomic="true"><span>Component cost</span><strong>{money(total.total)}</strong><small>{currency} · before quote margins and tax</small></div>
++      <dl className="qc-test-breakdown">
++        <div><dt>{total.entryCount > 1 ? `${total.entryCount} measurements entered` : 'Measurement entered'}</dt><dd>{number(total.entered)} {inputUnit}</dd></div>
++        {inputDim !== pricedDim && <div><dt>After preset {inputDim === 'length' ? 'height' : 'depth'}</dt><dd>{qty(total.measured)}</dd></div>}
++        {total.pitchApplied && <div><dt>After {draft.pitchType === 'valley_hip' ? 'hip/valley' : 'rafter'} pitch ({pitch}°)</dt><dd>{qty(total.afterPitch)}</dd></div>}
++        {draft.wasteType !== 'none' && <div><dt>Waste added{draft.wasteType === 'percent' ? ` (${draft.wasteAmount}%)` : ''}</dt><dd>{qty(total.wasteAdded)}</dd></div>}
++        <div className="qc-test-emphasis"><dt>Required quantity</dt><dd>{qty(total.required)}</dd></div>
++        {total.purchased !== null && <>
++          <div><dt>Whole packs to buy</dt><dd>{number(total.packs)}</dd></div>
++          <div><dt>Quantity purchased</dt><dd>{qty(total.purchased)}</dd></div>
++          <div><dt>Spare after allowance</dt><dd>{qty(total.spare ?? 0)}</dd></div>
++        </>}
++        <div className="qc-test-emphasis"><dt>Materials</dt><dd>{money(total.materialCost)}</dd></div>
++        <div><dt>Labour</dt><dd>{money(total.labourCost)}</dd></div>
++      </dl>
++      <p className="qc-pricing-muted">{total.effectiveCost !== null && `Effective cost: ${money(total.effectiveCost)} per entered ${inputUnit}. `}{total.purchased !== null && 'Whole-pack rounding can make a small job cost more per unit.'}</p>
++      <details className="qc-pricing-details"><summary>How this was calculated</summary><div>
++        <p>{draft.strategy === 'per_unit'
++          ? `Materials: ${number(total.required)} ${costUnit} × ${money(Number(draft.materialRate))}.`
++          : `Materials: ${number(total.packs)} whole packs × ${money(Number(draft.packPrice))}.`}</p>
++        <p>Labour: {number(total.required)} {costUnit} × {money(Number(draft.labourRate))}. Labour uses the quantity after pitch and waste, not rounded-up pack coverage.</p>
++        {(draft.wasteType === 'fixed' || draft.wasteType === 'fixed_per_segment') && <p>The fixed allowance is applied to each entered measurement in this manual-entry test. Takeoff keeps its existing segment rules.</p>}
++        <p>Uses the quote calculation helpers with no job overrides, margins or tax. This explains the rules; it does not verify that your prices are right for your business.</p>
++      </div></details>
++      <p className="qc-test-live"><QcIcon name="check" /> Valid changes update this result immediately.</p>
++    </div>}
++  </aside>;
++}
+--- /dev/null
++++ return/app/components/pricing/PricingIntroduction.tsx
+@@ -0,0 +1,56 @@
++'use client';
++import { useEffect, useState } from 'react';
++import Link from 'next/link';
++import { QcButton } from '@/app/components/ui/v2/QcButton';
++import { QcIcon } from '@/app/components/ui/v2/QcIcon';
++import { markComponentsIntroSeen } from '@/app/(auth)/[workspaceSlug]/components/actions';
++import './pricing-activation.css';
++
++/** Personal guidance preference only. Never a business-price verification flag. */
++export function PricingIntroduction({ open, onOpen, onDismiss, hasComponents, tested, created, ownTested, workspaceSlug, onCreate, onChoose, onTestCreated }: {
++  open: boolean; onOpen: () => void; onDismiss: () => void; hasComponents: boolean;
++  tested: boolean; created: boolean; ownTested: boolean; workspaceSlug: string;
++  onCreate: () => void; onChoose: () => void; onTestCreated: () => void;
++}) {
++  const [pending, setPending] = useState(false);
++  const [error, setError] = useState('');
++  useEffect(() => {
++    if (!open) return;
++    const oldValue = document.body.dataset.copilotSuppress;
++    document.body.dataset.copilotSuppress = '1';
++    return () => {
++      if (oldValue === undefined) delete document.body.dataset.copilotSuppress;
++      else document.body.dataset.copilotSuppress = oldValue;
++    };
++  }, [open]);
++  async function dismiss() {
++    if (pending) return;
++    setPending(true); setError('');
++    try {
++      const result = await markComponentsIntroSeen();
++      if (result.ok) onDismiss();
++      else setError('Could not remember your preference. You can retry or hide this for this visit.');
++    } catch { setError('Could not remember your preference. You can retry or hide this for this visit.'); }
++    finally { setPending(false); }
++  }
++  if (!open) return <div className="qc-pricing-help-row"><QcButton size="sm" onClick={onOpen}><QcIcon name="help" /> How Smart Components work</QcButton></div>;
++  return <section className="qc-pricing-intro" aria-labelledby="qc-pricing-intro-title" data-qc-component="C71">
++    <header className="qc-pricing-heading"><div><span className="qc-eyebrow">Set up once. Reuse on every job.</span><h2 id="qc-pricing-intro-title">Make QuoteCore use your prices</h2></div>
++      <QcButton pending={pending} onClick={() => { void dismiss(); }} aria-label="Hide pricing introduction">Hide guide</QcButton></header>
++    <p>A Smart Component is like a reusable spreadsheet row: a name, material and labour costs, plus rules for measurement, purchasing and waste.</p>
++    <div className="qc-pricing-learning-steps">
++      <section><span className="qc-pricing-step-number">{tested ? <QcIcon name="check" /> : '1'}</span><h3>{hasComponents ? 'Test something familiar' : 'Start with one useful item'}</h3>
++        <p>{hasComponents ? 'Open a component below, choose Test component and enter a length, area or quantity. Change a setting to see its effect.' : 'Your library is empty. Create a product or service you know, enter its costs and test a measurement.'}</p>
++        <QcButton variant={tested ? 'ghost' : 'secondary'} onClick={hasComponents ? onChoose : onCreate}>{hasComponents ? 'Choose a component' : 'Create a component'}<QcIcon name="arrow" /></QcButton>
++      </section>
++      <section><span className="qc-pricing-step-number">{created && ownTested ? <QcIcon name="check" /> : '2'}</span><h3>Make your own, then test it</h3>
++        <p>Use your business costs. Start from scratch or use an open component's settings as a starting point. Test, check and save.</p>
++        <QcButton variant={tested && !created ? 'secondary' : 'ghost'} onClick={created ? onTestCreated : onCreate}>{created ? 'Test your saved component' : 'Create your own'}<QcIcon name="arrow" /></QcButton>
++      </section>
++    </div>
++    <p className="qc-pricing-example-warning"><QcIcon name="info" /><span><strong>Starter settings are examples, not recommended prices.</strong> Replace their costs and check every applicable rule before using them in a real quote. Components already configured by your company may be ready to use.</span></p>
++    {created && ownTested && <div className="qc-pricing-next"><span>You've created and tested a component in this visit. Add the others you need for a real job.</span><Link prefetch={false} href={`/${workspaceSlug}/quotes/new`} className="qc-button" data-qc-variant="primary">Price a job<QcIcon name="arrow" /></Link></div>}
++    <p className="qc-pricing-muted">These checkmarks describe this visit, not a verification of your prices. Catalogue import is available below when you have a price list.</p>
++    {error && <p className="qc-pricing-error" role="status">{error} <QcButton size="sm" onClick={onDismiss}>Hide for now</QcButton></p>}
++  </section>;
++}
+--- /dev/null
++++ return/app/components/pricing/SmartComponentEditor.tsx
+@@ -0,0 +1,197 @@
++'use client';
++import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
++import type { ComponentType, MeasurementSystem, MeasurementType, PitchType, PricingStrategy, WasteType, WasteUnit, FlashingLibraryRow } from '@/app/lib/types';
++import { QcButton } from '@/app/components/ui/v2/QcButton';
++import { QcField, QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
++import { QcIcon } from '@/app/components/ui/v2/QcIcon';
++import { canonicalUnit, type ComponentTestDraft } from './componentTest';
++import { ComponentTestPanel } from './ComponentTestPanel';
++import { buildMeasurementLabels, allowedStrategiesFor, ROOFING_DEFAULT_TYPES } from '@/app/(auth)/[workspaceSlug]/components/parts/helpers';
++import './pricing-activation.css';
++
++export interface ComponentEditorSettings {
++  measurementType: MeasurementType; wasteType: WasteType; pitchEnabled: boolean;
++  pricingStrategy: PricingStrategy; packPrice: string; packSize: string; packCoverage: string;
++  heightMm: string; depthMm: string; hoursUnit: 'hr' | 'day'; wasteUnit: WasteUnit; notes: string;
++}
++export interface ComponentEditorInitial {
++  name: string; sku: string; componentType: ComponentType; materialRate: string; labourRate: string;
++  wasteAmount: string; pitchType: PitchType; eligibleForOrders: boolean;
++  /** Stored values needed when generic-trades controls are gated off. */
++  storedStrategy?: PricingStrategy; storedPackPrice?: string; storedPackSize?: string; storedPackCoverage?: string;
++  storedHeightMm?: string; storedDepthMm?: string;
++}
++interface Props {
++  mode: 'create' | 'edit'; initial: ComponentEditorInitial; settings: ComponentEditorSettings;
++  onSettingsChange: (patch: Partial<ComponentEditorSettings>) => void;
++  measurementSystem: MeasurementSystem; currency: string; genericTradesEnabled: boolean;
++  pitchVisible: boolean; pitchHidesValleyHip: boolean; pitchRafterLabel: string; pitchCheckboxLabel: string;
++  collections: { id: string; name: string; is_bootstrap: boolean }[]; selectedCollectionId: string;
++  onCollectionChange: (value: string) => void;
++  flashings: FlashingLibraryRow[]; assignedFlashings: string[]; selectedFlashingId: string;
++  onFlashingSelection: (id: string) => void; onAddFlashing: () => void; onRemoveFlashing: (id: string) => void;
++  imageHelperText: string; supplierSkuRequired: boolean; saving: boolean; error: string | null;
++  onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>; onCancel: () => void;
++  onDirty: () => void; onCalculated?: () => void; onCopy?: (initial: ComponentEditorInitial) => void;
++  openTestInitially?: boolean; testRequest?: number; learning?: boolean;
++}
++export function SmartComponentEditor(props: Props) {
++  const { initial, settings: s, onSettingsChange: set, mode, saving, genericTradesEnabled } = props;
++  const id = useId();
++  const headingRef = useRef<HTMLHeadingElement>(null);
++  const testButtonRef = useRef<HTMLButtonElement>(null);
++  const settingsButtonRef = useRef<HTMLButtonElement>(null);
++  const [name, setName] = useState(initial.name);
++  const [sku, setSku] = useState(initial.sku);
++  const [componentType, setComponentType] = useState(initial.componentType);
++  const [materialRate, setMaterialRate] = useState(initial.materialRate);
++  const [labourRate, setLabourRate] = useState(initial.labourRate);
++  const [wasteAmount, setWasteAmount] = useState(initial.wasteAmount);
++  const [pitchType, setPitchType] = useState<PitchType>(initial.pitchType === 'none' ? 'rafter' : initial.pitchType);
++  const [eligible, setEligible] = useState(initial.eligibleForOrders);
++  const [testOpen, setTestOpen] = useState(!!props.openTestInitially);
++  const [testRequested, setTestRequested] = useState(false);
++  const [testOpened, setTestOpened] = useState(!!props.openTestInitially);
++  const [mobileView, setMobileView] = useState<'settings' | 'test'>(props.openTestInitially ? 'test' : 'settings');
++  function showTest() { setTestOpened(true); setTestOpen(true); setTestRequested(true); setMobileView('test'); }
++  useEffect(() => {
++    if (props.testRequest) { setTestOpened(true); setTestOpen(true); setTestRequested(true); setMobileView('test'); }
++  }, [props.testRequest]);
++  function closeTest() {
++    setTestOpen(false); setMobileView('settings');
++    requestAnimationFrame(() => {
++      const target = testButtonRef.current?.offsetParent ? testButtonRef.current : settingsButtonRef.current;
++      target?.focus({ preventScroll: true });
++    });
++  }
++  function showSettings() {
++    setMobileView('settings');
++    requestAnimationFrame(() => settingsButtonRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' }));
++  }
++  const labels = buildMeasurementLabels(props.measurementSystem);
++  const unit = canonicalUnit(s.measurementType, s.hoursUnit);
++  const strategy = genericTradesEnabled ? s.pricingStrategy : initial.storedStrategy ?? 'per_unit';
++  const packPricing = strategy !== 'per_unit';
++  const gatedPack = !genericTradesEnabled && packPricing;
++  const purchaseUnit = strategy === 'per_pack_length' ? 'm' : strategy === 'per_pack_volume' ? 'm³' : 'm²';
++  const draft: ComponentTestDraft = { name, measurementType: s.measurementType, materialRate, labourRate,
++    wasteType: s.wasteType, wasteAmount, pitchType: s.pitchEnabled ? pitchType : 'none', strategy,
++    packPrice: genericTradesEnabled ? s.packPrice : initial.storedPackPrice ?? '',
++    packSize: genericTradesEnabled ? s.packSize : initial.storedPackSize ?? '',
++    packCoverage: genericTradesEnabled ? s.packCoverage : initial.storedPackCoverage ?? '',
++    heightMm: genericTradesEnabled ? s.heightMm : initial.storedHeightMm ?? '',
++    depthMm: genericTradesEnabled ? s.depthMm : initial.storedDepthMm ?? '', timeUnit: s.hoursUnit };
++  useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, []);
++  useEffect(() => { if (props.error) headingRef.current?.scrollIntoView({ block: 'nearest' }); }, [props.error]);
++  const numberField = (key: string, label: string, value: string, update: (value: string) => void, options?: { name?: string; help?: string; step?: string }) => (
++    <QcField htmlFor={`${id}-${key}`} label={label} help={options?.help} helpId={options?.help ? `${id}-${key}-help` : undefined}>
++      <QcInput id={`${id}-${key}`} name={options?.name} type="number" inputMode="decimal" step={options?.step ?? '0.01'} value={value}
++        placeholder="0" aria-describedby={options?.help ? `${id}-${key}-help` : undefined} onChange={e => update(e.target.value)} />
++    </QcField>
++  );
++  const copyInitial = (): ComponentEditorInitial => ({ ...initial, name: `${name || 'Component'} (copy)`, sku: '', componentType,
++    materialRate, labourRate, wasteAmount, pitchType: s.pitchEnabled ? pitchType : 'none', eligibleForOrders: eligible });
++  return <section className="qc-component-editor" data-mobile-view={mobileView} data-qc-ui="v2" data-qc-component="C69" aria-labelledby={`${id}-title`}>
++    <header className="qc-pricing-editor-header"><div><p className="qc-eyebrow">Your reusable pricing</p>
++      <h2 id={`${id}-title`} ref={headingRef} tabIndex={-1}>{mode === 'create' ? 'Create a Smart Component' : name || 'Edit Smart Component'}</h2>
++      <p>Define it once. Add a measurement to use it on a job.</p></div>
++      <QcButton ref={testButtonRef} className="qc-pricing-desktop-test-toggle" variant={testOpen ? 'ghost' : 'secondary'} disabled={saving} aria-expanded={testOpen} aria-controls={`${id}-test`} onClick={() => { if (testOpen) closeTest(); else showTest(); }}>
++        <QcIcon name="pricing" />{testOpen ? 'Hide test' : 'Test component'}
++      </QcButton>
++    </header>
++    <div className="qc-pricing-mobile-tabs" role="group" aria-label="Component workspace">
++      <QcButton ref={settingsButtonRef} aria-pressed={mobileView === 'settings'} aria-controls={`${id}-settings`} disabled={saving} onClick={showSettings}>Settings</QcButton>
++      <QcButton aria-pressed={mobileView === 'test'} aria-controls={`${id}-test`} disabled={saving} onClick={showTest}>Test component</QcButton>
++    </div>
++    {props.error && <div className="qc-pricing-error" role="alert">{props.error}</div>}
++    {props.learning && <div className="qc-pricing-callout"><strong>Learn with an example, then use your own costs.</strong> Starter prices and settings are examples, not recommendations. Replace the costs and check the rules before using them in a real quote.</div>}
++    <form aria-busy={saving || undefined} onSubmit={props.onSubmit} onChange={event => {
++      if (!(event.target as HTMLElement).closest('[data-qc-component="C70"]')) props.onDirty();
++    }}>
++      <fieldset disabled={saving} className="qc-pricing-fieldset">
++      <div className="qc-pricing-editor-grid" data-test-open={testOpen}>
++        <div id={`${id}-settings`} className="qc-pricing-fields">
++          <section className="qc-pricing-section" aria-labelledby={`${id}-identity`}>
++            <header><span>1</span><div><h3 id={`${id}-identity`}>What are you pricing?</h3><p>A product, service or charge you can recognise later.</p></div></header>
++            <div className="qc-pricing-fields-grid">
++              <div data-copilot="component-name"><QcField htmlFor={`${id}-name`} label="Component name"><QcInput id={`${id}-name`} name="name" required value={name} placeholder="e.g. Roofing underlay" onChange={e => setName(e.target.value)} /></QcField></div>
++              <div data-copilot="component-sku"><QcField htmlFor={`${id}-sku`} label={`Product code / SKU${props.supplierSkuRequired ? ' (required for publishing)' : ' (optional)'}`} help={mode === 'edit' && initial.sku ? 'An existing product code cannot be changed.' : undefined}>
++                <QcInput id={`${id}-sku`} name="sku" value={sku} readOnly={mode === 'edit' && !!initial.sku} onChange={e => setSku(e.target.value)} placeholder="Your reference code" />
++              </QcField></div>
++              {mode === 'create' && <div data-copilot="component-type"><QcField htmlFor={`${id}-type`} label="Used as" help="Main items form the job. Extras cover additional work or charges."><QcSelect id={`${id}-type`} name="component_type" value={componentType} onChange={e => setComponentType(e.target.value as ComponentType)}>
++                <option value="main">Main component</option><option value="extra">Extra</option></QcSelect></QcField></div>}
++              <div data-copilot="component-measurement"><QcField htmlFor={`${id}-measurement`} label="How do you measure it?" help="Choose what you enter on a job. Purchasing is set separately below.">
++                <QcSelect id={`${id}-measurement`} name="measurement_type" value={s.measurementType} onChange={e => set({ measurementType: e.target.value as MeasurementType })}>
++                  {(Object.entries(labels) as [MeasurementType, string][]).filter(([key]) => key === s.measurementType ||
++                    (!['linear', 'count', 'curved_line', 'irregular_area'].includes(key) && (genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(key))))
++                    .map(([key, label]) => <option key={key} value={key}>{label}</option>)}
++                </QcSelect>
++              </QcField></div>
++              {genericTradesEnabled && ['length_x_height', 'multi_lineal_lxh'].includes(s.measurementType) && numberField('height', 'Preset height (mm)', s.heightMm, value => set({ heightMm: value }), { step: '1', help: 'Measured length × this height gives the priced area.' })}
++              {genericTradesEnabled && s.measurementType === 'volume' && numberField('depth', 'Preset depth (mm)', s.depthMm, value => set({ depthMm: value }), { step: '1', help: 'Measured area × this depth gives the priced volume.' })}
++              {genericTradesEnabled && s.measurementType === 'hours_days' && <QcField htmlFor={`${id}-time`} label="Time unit for this test" help="Keep your quoted time and rate on the same basis. This display choice does not convert rates."><QcSelect id={`${id}-time`} value={s.hoursUnit} onChange={e => set({ hoursUnit: e.target.value as 'hr' | 'day' })}><option value="hr">Hours</option><option value="day">Days</option></QcSelect></QcField>}
++            </div>
++          </section>
++          <section className="qc-pricing-section" aria-labelledby={`${id}-costs`}>
++            <header><span>2</span><div><h3 id={`${id}-costs`}>What does it cost you?</h3><p>Enter your business costs in {props.currency}. Quote margins and tax are added later.</p></div></header>
++            {/* Existing storage is canonical metric. Never relabel raw rates as imperial. */}
++            {props.measurementSystem !== 'metric' && <p className="qc-pricing-callout">Pricing settings use {unit}. You can enter your test measurement in your preferred units; QuoteCore converts that measurement before calculating.</p>}
++            <div className="qc-pricing-fields-grid">
++              {genericTradesEnabled && <QcField htmlFor={`${id}-strategy`} label="How do you buy the material?">
++                <QcSelect id={`${id}-strategy`} value={s.pricingStrategy} onChange={e => set({ pricingStrategy: e.target.value as PricingStrategy })}>
++                  {[...allowedStrategiesFor(s.measurementType), ...(s.pricingStrategy === 'per_pack_coverage' ? ['per_pack_coverage' as PricingStrategy] : [])].map(value => <option key={value} value={value}>{value === 'per_unit' ? `Per ${unit}` : value === 'per_pack_coverage' ? 'By coverage per pack (existing)' : 'Whole rolls, packs or fixed quantities'}</option>)}
++                </QcSelect>
++              </QcField>}
++              {(!genericTradesEnabled || !packPricing) && <div data-copilot="component-rates">{numberField('material', `Material cost per ${unit} (${props.currency})`, materialRate, setMaterialRate, { name: 'default_material_rate', help: gatedPack ? 'This saved component uses its pack price below, not this unit rate.' : 'Enter 0 for a labour-only component.' })}</div>}
++              {genericTradesEnabled && packPricing && <>
++                <input type="hidden" name="default_material_rate" value="0" />
++                {numberField('pack-price', `Price per roll / pack (${props.currency})`, s.packPrice, value => set({ packPrice: value }))}
++                {numberField('pack-size', `Amount in one roll / pack (${strategy === 'per_pack_coverage' ? 'pack units' : purchaseUnit})`, s.packSize, value => set({ packSize: value }), { help: strategy === 'per_pack_length' ? 'For example, 20 for a 20 m roll. Purchases round up to whole rolls.' : strategy === 'per_pack_volume' ? 'For example, 5 for a 5 m³ load. Purchases round up to whole units.' : strategy === 'per_pack_coverage' ? 'Keep the saved pack size. Coverage below determines the amount purchased.' : 'For example, 50 for a roll that covers 50 m². Purchases round up to whole packs.' })}
++                {strategy === 'per_pack_coverage' && numberField('coverage', 'Coverage per pack (m²)', s.packCoverage, value => set({ packCoverage: value }))}
++              </>}
++              <div data-copilot="component-labour">{numberField('labour', `Labour cost per ${unit} (${props.currency})`, labourRate, setLabourRate, { name: 'default_labour_rate', help: 'Enter 0 when no labour applies. Labour uses the quantity after allowances.' })}</div>
++            </div>
++            {gatedPack && <p className="qc-pricing-callout">Saved pack settings are used in the test: {initial.storedPackSize} {purchaseUnit} per pack, {initial.storedPackPrice} {props.currency}. Pack editing is disabled by this workspace configuration.</p>}
++          </section>
++          <section className="qc-pricing-section" aria-labelledby={`${id}-rules`}>
++            <header><span>3</span><div><h3 id={`${id}-rules`}>What allowances apply?</h3><p>Leave these off when they do not apply.</p></div></header>
++            <div className="qc-pricing-fields-grid">
++              <div data-copilot="component-waste"><QcField htmlFor={`${id}-waste`} label="Waste allowance"><QcSelect id={`${id}-waste`} name="default_waste_type" value={s.wasteType} onChange={e => set({ wasteType: e.target.value as WasteType })}>
++                <option value="none">No waste</option><option value="percent">Percentage of measurement</option><option value="fixed">Fixed amount per entry</option><option value="fixed_per_segment">Fixed amount per segment</option>
++              </QcSelect></QcField></div>
++              {s.wasteType !== 'none' && <div data-copilot="component-waste-amount">{numberField('waste-amount', `Allowance (${s.wasteType === 'percent' ? '%' : unit})`, wasteAmount, setWasteAmount, { name: 'waste_amount', help: s.wasteType === 'percent' ? 'For example, 10 adds 10% to the measurement.' : 'The test shows the allowance added to each manual entry.' })}</div>}
++            </div>
++            {(props.pitchVisible || s.pitchEnabled) && <div className="qc-pricing-pitch" data-copilot="component-pitch">
++              <label className="qc-pricing-check"><input id={`${id}-pitch-enabled`} type="checkbox" checked={s.pitchEnabled} onChange={e => set({ pitchEnabled: e.target.checked })} />{props.pitchCheckboxLabel}</label>
++              {s.pitchEnabled && <div data-copilot="component-pitch-type"><QcField htmlFor={`${id}-pitch-type`} label="Pitch rule" help="In the test, choose a plan measurement to apply this rule, or an already-measured surface to skip it."><QcSelect id={`${id}-pitch-type`} name="default_pitch_type" value={pitchType} onChange={e => setPitchType(e.target.value as PitchType)}>
++                <option value="rafter">{props.pitchRafterLabel}</option>{(!props.pitchHidesValleyHip || pitchType === 'valley_hip') && <option value="valley_hip">Valley / hip pitch</option>}
++              </QcSelect></QcField></div>}
++            </div>}
++          </section>
++          <details className="qc-pricing-details"><summary>Notes, images & material orders <span>{props.assignedFlashings.length ? `${props.assignedFlashings.length} image(s)` : 'Optional'}</span></summary><div>
++            <div data-copilot="component-flashings"><label className="qc-pricing-check"><input name="eligible_for_orders" type="checkbox" checked={eligible} onChange={e => setEligible(e.target.checked)} /> Include in material orders</label>
++              <p className="qc-pricing-muted">{props.imageHelperText}</p>
++              <QcField htmlFor={`${id}-image`} label="Attach an existing image"><div className="qc-pricing-inline">
++                <QcSelect id={`${id}-image`} value={props.selectedFlashingId} onChange={e => props.onFlashingSelection(e.target.value)}><option value="">Select an image</option>{props.flashings.map(image => <option key={image.id} value={image.id}>{image.name}{image.description ? ` - ${image.description}` : ''}</option>)}</QcSelect>
++                <QcButton disabled={!props.selectedFlashingId} onClick={() => { props.onDirty(); props.onAddFlashing(); }}>Add</QcButton>
++              </div></QcField>
++              {props.assignedFlashings.map(imageId => <div className="qc-pricing-attached" key={imageId}><span>{props.flashings.find(image => image.id === imageId)?.name || 'Assigned image'}</span><QcButton size="sm" onClick={() => { props.onDirty(); props.onRemoveFlashing(imageId); }} aria-label={`Remove ${props.flashings.find(image => image.id === imageId)?.name || 'assigned image'}`}>Remove</QcButton></div>)}
++            </div>
++            <QcField htmlFor={`${id}-notes`} label="Notes (optional)" help="Usage tips for your team. Up to 500 characters."><textarea id={`${id}-notes`} className="qc-input" value={s.notes} maxLength={500} rows={3} onChange={e => set({ notes: e.target.value })} /></QcField>
++          </div></details>
++          {props.collections.length > 0 && <QcField htmlFor={`${id}-library`} label="Save to library"><QcSelect id={`${id}-library`} value={props.selectedCollectionId} onChange={e => props.onCollectionChange(e.target.value)}>
++            {props.collections.map(collection => <option key={collection.id} value={collection.id}>{collection.name}{collection.is_bootstrap ? ' (default)' : ''}</option>)}<option value="__create_new__">+ Create new library</option>
++          </QcSelect></QcField>}
++        </div>
++        {testOpened && <div id={`${id}-test`} className="qc-pricing-test-column" hidden={!testOpen}><ComponentTestPanel key={s.measurementType} draft={draft} measurementSystem={props.measurementSystem} currency={props.currency}
++          focusOnMount={testRequested && testOpen} onCalculated={props.onCalculated} onClose={closeTest} /></div>}
++      </div>
++      <div className="qc-pricing-mobile-test-footer"><QcButton variant="secondary" onClick={showSettings}>Adjust component settings</QcButton><p>Return to settings to save. Your test stays here while you make changes.</p></div>
++      <footer className="qc-pricing-editor-footer" data-copilot="component-save"><div><QcButton variant="primary" type="submit" pending={saving}>{saving ? 'Saving...' : 'Save component'}</QcButton><QcButton disabled={saving} onClick={props.onCancel}>Cancel</QcButton></div>
++        {mode === 'edit' && props.onCopy && !gatedPack && <QcButton disabled={saving} onClick={() => props.onCopy?.(copyInitial())}>Use these settings for a new component</QcButton>}
++        <p>Testing does not save. Save explicitly when your settings are ready.</p>
++      </footer>
++      </fieldset>
++    </form>
++  </section>;
++}
+--- /dev/null
++++ return/app/components/pricing/componentTest.ts
+@@ -0,0 +1,156 @@
++/**
++ * Read-only draft adapter for Test component.
++ * Uses the SAME pure pitch/waste and pack helpers as quotes/actions.ts
++ * addComponentEntry + recalcComponentFromEntries. No API, DB, quote or storage.
++ * Canonical rates, packs and fixed allowances remain metric, as stored today.
++ */
++import type { MeasurementSystem, MeasurementType, PitchType, PricingStrategy, WasteType } from '@/app/lib/types';
++import { normalizeMeasurementSystem } from '@/app/lib/types';
++import { applyPitchAndWaste, computeMaterialCostByStrategy, computePackCount } from '@/app/lib/pricing/engine';
++import { areaInputToMetric, linearInputToMetric, volumeInputToMetric, convertLinear, convertAreaFt2, convertAreaRs, convertVolumeFt3 } from '@/app/lib/measurements/conversions';
++
++export interface ComponentTestDraft {
++  name: string;
++  measurementType: MeasurementType;
++  materialRate: string;
++  labourRate: string;
++  wasteType: WasteType;
++  wasteAmount: string;
++  pitchType: PitchType;
++  strategy: PricingStrategy;
++  packPrice: string;
++  packSize: string;
++  packCoverage: string;
++  heightMm: string;
++  depthMm: string;
++  timeUnit: 'hr' | 'day';
++}
++export interface ComponentTestInput {
++  values: string[];
++  system: MeasurementSystem;
++  basis: 'surface' | 'plan';
++  pitch: string;
++}
++export type Dimension = 'length' | 'area' | 'volume' | 'quantity' | 'fixed' | 'time';
++const LENGTH_TYPES = new Set(['lineal', 'linear', 'multi_lineal', 'curved_line']);
++const AREA_TYPES = new Set(['area', 'irregular_area', 'length_x_height', 'multi_lineal_lxh', 'length_x_height_freestyle', 'multi_lineal_lxh_freestyle']);
++const PRESET_HEIGHT = new Set(['length_x_height', 'multi_lineal_lxh']);
++export function pricedDimension(type: MeasurementType): Dimension {
++  if (LENGTH_TYPES.has(type)) return 'length';
++  if (AREA_TYPES.has(type)) return 'area';
++  if (type === 'volume' || type === 'volume_3d') return 'volume';
++  if (type === 'fixed') return 'fixed';
++  if (type === 'hours_days') return 'time';
++  return 'quantity';
++}
++export function inputDimension(type: MeasurementType): Dimension {
++  if (PRESET_HEIGHT.has(type)) return 'length';
++  if (type === 'volume') return 'area';
++  return pricedDimension(type);
++}
++export function unitForDimension(dimension: Dimension, system: MeasurementSystem, timeUnit: 'hr' | 'day' = 'hr'): string {
++  const norm = normalizeMeasurementSystem(system);
++  if (dimension === 'length') return norm === 'metric' ? 'm' : 'ft';
++  if (dimension === 'area') return norm === 'metric' ? 'm²' : norm === 'imperial_ft' ? 'ft²' : 'RS';
++  if (dimension === 'volume') return norm === 'metric' ? 'm³' : 'ft³';
++  return dimension === 'time' ? timeUnit : dimension === 'fixed' ? 'charge' : 'each';
++}
++export function canonicalUnit(type: MeasurementType, timeUnit: 'hr' | 'day' = 'hr'): string {
++  return unitForDimension(pricedDimension(type), 'metric', timeUnit);
++}
++export function displayQuantity(value: number, dimension: Dimension, system: MeasurementSystem): number {
++  const norm = normalizeMeasurementSystem(system);
++  if (norm === 'metric') return value;
++  if (dimension === 'length') return convertLinear(value);
++  if (dimension === 'area') return norm === 'imperial_ft' ? convertAreaFt2(value) : convertAreaRs(value);
++  if (dimension === 'volume') return convertVolumeFt3(value);
++  return value;
++}
++function toMetric(value: number, dimension: Dimension, system: MeasurementSystem): number {
++  if (dimension === 'length') return linearInputToMetric(value, system);
++  if (dimension === 'area') return areaInputToMetric(value, system);
++  if (dimension === 'volume') return volumeInputToMetric(value, system);
++  return value;
++}
++export interface ComponentTestResult {
++  entered: number; // summed test input in the chosen display system
++  measured: number; // canonical measured quantity after preset height/depth, before pitch
++  afterPitch: number;
++  required: number;
++  wasteAdded: number;
++  packs: number;
++  purchased: number | null;
++  spare: number | null;
++  materialCost: number;
++  labourCost: number;
++  total: number;
++  effectiveCost: number | null;
++  entryCount: number;
++  pitchApplied: boolean;
++  entries: { input: number; measured: number; afterPitch: number; afterWaste: number }[];
++}
++export type ComponentTestOutcome = { ok: true; result: ComponentTestResult } | { ok: false; errors: Record<string, string> };
++
++export function calculateComponentTest(draft: ComponentTestDraft, input: ComponentTestInput): ComponentTestOutcome {
++  const errors: Record<string, string> = {};
++  function number(raw: string, key: string, label: string, positive = false): number {
++    const n = Number(raw);
++    if (raw.trim() === '' || !Number.isFinite(n) || (positive ? n <= 0 : n < 0)) {
++      errors[key] = `${label}: enter ${positive ? 'a number above zero' : 'zero or a positive number'}.`;
++      return 0;
++    }
++    return n;
++  }
++  const dimension = pricedDimension(draft.measurementType);
++  const inDimension = inputDimension(draft.measurementType);
++  const packStrategy = draft.strategy !== 'per_unit';
++  const materialRate = packStrategy ? 0 : number(draft.materialRate, 'materialRate', 'Material cost');
++  const labourRate = number(draft.labourRate, 'labourRate', 'Labour cost');
++  const wasteAmount = draft.wasteType === 'none' ? 0 : number(draft.wasteAmount, 'wasteAmount', 'Waste allowance');
++  const packPrice = packStrategy ? number(draft.packPrice, 'packPrice', 'Pack price', true) : null;
++  const packSize = packStrategy ? number(draft.packSize, 'packSize', 'Pack size', true) : null;
++  const packCoverage = draft.strategy === 'per_pack_coverage' ? number(draft.packCoverage, 'packCoverage', 'Coverage per pack', true) : null;
++  const height = PRESET_HEIGHT.has(draft.measurementType) ? number(draft.heightMm, 'heightMm', 'Component height in mm', true) / 1000 : 1;
++  const depth = draft.measurementType === 'volume' ? number(draft.depthMm, 'depthMm', 'Component depth in mm', true) / 1000 : 1;
++  // Do not silently ignore a persisted unusual pitch rule. Match the selected
++  // component's rule, but make plan/surface basis explicit in the UI.
++  const pitchApplied = draft.pitchType !== 'none' && input.basis === 'plan';
++  const pitch = pitchApplied ? number(input.pitch, 'pitch', 'Pitch in degrees') : 0;
++  if (pitchApplied && pitch >= 90) errors.pitch = 'Pitch must be below 90 degrees.';
++  const values = dimension === 'fixed' ? [1] : input.values.map((raw, i) => number(raw, `value-${i}`, `Measurement ${i + 1}`, true));
++  if (values.length === 0) errors.values = 'Add a measurement to test.';
++  const compatible = draft.strategy === 'per_unit'
++    || (draft.strategy === 'per_pack_length' && dimension === 'length')
++    || ((draft.strategy === 'per_pack_area' || draft.strategy === 'per_pack_coverage') && dimension === 'area')
++    || (draft.strategy === 'per_pack_volume' && dimension === 'volume');
++  if (!compatible) errors.strategy = 'Choose a purchasing method that matches this measurement type.';
++  if (Object.keys(errors).length) return { ok: false, errors };
++
++  const entries = values.map(value => {
++    const measured = toMetric(value, inDimension, input.system) * height * depth;
++    const adjusted = applyPitchAndWaste(measured, pitchApplied, draft.pitchType, pitch,
++      draft.wasteType, draft.wasteType === 'percent' ? wasteAmount : 0,
++      draft.wasteType === 'fixed' || draft.wasteType === 'fixed_per_segment' ? wasteAmount : 0);
++    return { input: value, measured, afterPitch: adjusted.afterPitch, afterWaste: adjusted.afterWaste };
++  });
++  const entered = values.reduce((a, b) => a + b, 0);
++  const measured = entries.reduce((sum, e) => sum + e.measured, 0);
++  const afterPitch = entries.reduce((sum, e) => sum + e.afterPitch, 0);
++  const required = entries.reduce((sum, e) => sum + e.afterWaste, 0);
++  const material = computeMaterialCostByStrategy({ strategy: draft.strategy, totalQuantity: required,
++    materialRate, packPrice, packSize, packCoverageM2: packCoverage });
++  if (material.packDataMissing) return { ok: false, errors: { packSize: 'Complete the pack price and size before testing.' } };
++  const packs = computePackCount({ strategy: draft.strategy, totalQuantity: required, packSize, packCoverageM2: packCoverage });
++  // EXACT caller convention in recalcComponentFromEntries. Do not use purchased
++  // coverage or a second waste calculation for labour.
++  const labourCost = required * labourRate;
++  const total = material.cost + labourCost;
++  const purchased = packStrategy ? packs * (draft.strategy === 'per_pack_coverage' ? packCoverage! : packSize!) : null;
++  if (![measured, afterPitch, required, material.cost, labourCost, total, purchased ?? 0].every(Number.isFinite)) {
++    return { ok: false, errors: { values: 'These values are too large to calculate safely. Reduce the measurement or rates.' } };
++  }
++  return { ok: true, result: { entered, measured, afterPitch, required, wasteAdded: required - afterPitch,
++    packs, purchased, spare: purchased === null ? null : Math.max(0, purchased - required),
++    materialCost: material.cost, labourCost, total, effectiveCost: entered > 0 ? total / entered : null,
++    entryCount: values.length, pitchApplied, entries } };
++}
+--- /dev/null
++++ return/app/components/pricing/pricing-activation.css
+@@ -0,0 +1,119 @@
++@import '../ui/v2/qc.css';
++/* C69-C71: opt-in only. No shell, Takeoff, Document Studio or Assistant selectors. */
++.qc-component-editor, .qc-component-test, .qc-pricing-intro { min-width: 0; color: var(--qc-text-primary); }
++.qc-pricing-editor-anchor, #qc-pricing-component-list { scroll-margin-top: 90px; }
++.qc-component-editor { background: var(--qc-bg-surface); border: 1px solid var(--qc-border-control); border-radius: var(--qc-radius-card); overflow-wrap: anywhere; }
++.qc-pricing-editor-header { padding: 24px; border-bottom: 1px solid var(--qc-border-control); display:flex; align-items:center; justify-content:space-between; gap:16px; }
++.qc-pricing-editor-header h2 { margin:4px 0; font-size:24px; line-height:1.25; font-weight:650; }
++.qc-pricing-editor-header p { margin:0; font-size:14px; color:var(--qc-text-secondary); }
++.qc-pricing-editor-header .qc-eyebrow, .qc-pricing-heading .qc-eyebrow { font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--qc-text-secondary); }
++.qc-pricing-editor-header h2:focus { outline: none; }
++.qc-pricing-editor-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:24px; padding:24px; }
++.qc-pricing-editor-grid[data-test-open='true'] { grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr); align-items:start; }
++.qc-pricing-fields { display:grid; gap:24px; min-width:0; }
++.qc-pricing-fields-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; align-items:start; }
++.qc-pricing-fields-grid > * { min-width:0; }
++.qc-pricing-fields .qc-input, .qc-pricing-fields .qc-select, .qc-component-test .qc-input, .qc-component-test .qc-select { width:100%; box-sizing:border-box; }
++.qc-pricing-section { display:grid; gap:18px; min-width:0; }
++.qc-pricing-section + .qc-pricing-section { padding-top:24px; border-top:1px solid var(--qc-border-control); }
++.qc-pricing-section > header { display:flex; gap:12px; align-items:flex-start; }
++.qc-pricing-section > header > span { display:grid; place-items:center; min-width:28px; height:28px; border-radius:8px; background:var(--qc-bg-subtle,#f3f4f6); color:var(--qc-text-secondary); font-size:13px; font-weight:650; }
++.qc-pricing-section h3, .qc-pricing-heading h3 { margin:0; font-size:17px; line-height:1.4; font-weight:650; }
++.qc-pricing-section header p { margin:3px 0 0; color:var(--qc-text-secondary); font-size:13px; line-height:1.55; }
++.qc-pricing-muted { color:var(--qc-text-secondary); font-size:13px; line-height:1.6; margin:8px 0; }
++.qc-pricing-callout { padding:12px 16px; border:1px solid var(--qc-border-control); background:var(--qc-bg-subtle,#f8fafc); border-radius:12px; font-size:13px; line-height:1.6; margin:0; }
++.qc-component-editor > .qc-pricing-callout, .qc-component-editor > .qc-pricing-error { margin:16px 24px 0; }
++.qc-pricing-pitch { display:grid; gap:14px; }
++.qc-pricing-check { display:flex; gap:10px; align-items:center; font-size:14px; font-weight:550; min-height:44px; cursor:pointer; }
++.qc-pricing-check input { width:18px; height:18px; accent-color:var(--qc-action-primary-start); flex-shrink:0; }
++.qc-pricing-details { border:1px solid var(--qc-border-control); border-radius:12px; min-width:0; }
++.qc-pricing-details > summary { padding:14px 16px; cursor:pointer; font-size:14px; font-weight:600; min-height:44px; box-sizing:border-box; }
++.qc-pricing-details > summary span { float:right; font-weight:400; color:var(--qc-text-secondary); font-size:12px; }
++.qc-pricing-details > div { padding:0 16px 16px; display:grid; gap:12px; font-size:13px; line-height:1.65; }
++.qc-pricing-details p { margin:0; }
++.qc-pricing-inline { display:flex; align-items:center; gap:8px; min-width:0; }
++.qc-pricing-inline .qc-select { flex:1; width:0; }
++.qc-pricing-attached { display:flex; gap:8px; justify-content:space-between; align-items:center; margin-top:8px; font-size:13px; }
++.qc-pricing-editor-footer { border-top:1px solid var(--qc-border-control); padding:18px 24px; display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; justify-content:space-between; background:var(--qc-bg-surface); border-radius:0 0 var(--qc-radius-card) var(--qc-radius-card); }
++.qc-pricing-editor-footer > div { display:flex; gap:8px; flex-wrap:wrap; }
++.qc-pricing-editor-footer p { flex-basis:100%; font-size:12px; color:var(--qc-text-secondary); margin:0; }
++.qc-pricing-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
++.qc-pricing-heading h2 { margin:4px 0; font-size:22px; font-weight:650; }
++.qc-pricing-test-column { position:sticky; top:84px; min-width:0; max-height:calc(100dvh - 108px); overflow:auto; border-radius:16px; }
++.qc-component-test { padding:20px; border:1px solid var(--qc-border-control); border-radius:16px; background:#f9fafb; }
++.qc-test-inputs { display:grid; gap:14px; padding:12px 0 18px; }
++.qc-test-measure-row { display:flex; gap:8px; align-items:flex-end; }
++.qc-test-measure-row > .qc-field { flex:1; min-width:0; }
++.qc-test-empty { padding:24px 10px; text-align:center; font-size:14px; color:var(--qc-text-secondary); border-top:1px dashed var(--qc-border-control); }
++.qc-test-empty > svg { margin:auto; }
++.qc-test-result { display:grid; gap:12px; }
++.qc-test-total { display:grid; gap:4px; border-radius:12px; padding:18px; background:var(--qc-action-secondary-bg); color:var(--qc-action-secondary-text); }
++.qc-test-total > span { font-size:13px; }.qc-test-total > strong { font-size:30px; letter-spacing:-.02em; font-weight:650; font-variant-numeric:tabular-nums; }.qc-test-total small { font-size:11px; opacity:.85; }
++.qc-test-breakdown { margin:0; display:grid; gap:0; font-size:13px; }
++.qc-test-breakdown > div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; padding:10px 0; border-bottom:1px solid var(--qc-border-control); align-items:baseline; }
++.qc-test-breakdown dt { color:var(--qc-text-secondary); }.qc-test-breakdown dd { margin:0; font-weight:600; text-align:right; font-variant-numeric:tabular-nums; }.qc-test-breakdown .qc-test-emphasis { font-weight:600; }.qc-test-emphasis dt { color:var(--qc-text-primary); }
++.qc-test-live { display:flex; gap:8px; align-items:center; color:var(--qc-text-secondary); font-size:12px; line-height:1.5; margin:0; }.qc-test-live svg { flex-shrink:0; }
++.qc-pricing-error { padding:14px 16px; border:1px solid var(--qc-color-danger,#b42318); background:#fff5f4; border-radius:12px; color:#8c2018; font-size:13px; line-height:1.65; }
++.qc-pricing-error ul { padding-left:18px; margin:8px 0; }.qc-pricing-error p { margin:8px 0 0; }
++.qc-pricing-intro { padding:24px; border:1px solid var(--qc-border-control); border-radius:var(--qc-radius-card); background:var(--qc-bg-surface); }
++.qc-pricing-intro > p { max-width:820px; font-size:14px; line-height:1.7; color:var(--qc-text-secondary); }
++.qc-pricing-learning-steps { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
++.qc-pricing-learning-steps > section { border:1px solid var(--qc-border-control); padding:18px; border-radius:12px; display:grid; justify-items:start; gap:10px; }
++.qc-pricing-step-number { display:grid; place-items:center; width:28px; height:28px; border-radius:9px; background:#fff1e9; color:#823811; font-size:13px; font-weight:650; }
++.qc-pricing-learning-steps h3 { margin:0; font-size:16px; font-weight:650; }.qc-pricing-learning-steps p { margin:0; font-size:13px; line-height:1.7; color:var(--qc-text-secondary); }
++.qc-pricing-example-warning { display:flex; align-items:flex-start; gap:10px; background:#fff7ed; padding:14px 16px; border-radius:12px; color:#78350f!important; max-width:none!important; font-size:13px!important; }.qc-pricing-example-warning svg { flex-shrink:0; margin-top:2px; }
++.qc-pricing-next { display:flex; justify-content:space-between; gap:16px; align-items:center; font-size:14px; line-height:1.6; padding:14px 0; }
++.qc-pricing-help-row { display:flex; justify-content:flex-end; }
++.qc-pricing-mapping-preview { margin:16px 0; padding:16px; border:1px solid var(--qc-border-control); border-radius:12px; background:#f9fafb; }
++.qc-pricing-mapping-preview dl { display:grid; gap:10px; font-size:13px; }.qc-pricing-mapping-preview dl > div { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.5fr); gap:12px; }.qc-pricing-mapping-preview dt { color:var(--qc-text-secondary); }.qc-pricing-mapping-preview dd { margin:0; overflow-wrap:anywhere; font-weight:500; }
++.qc-pricing-welcome { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 18px; background:#fff7ed; border:1px solid #f2d7bd; border-radius:12px; font-size:14px; line-height:1.65; color:#78350f; }.qc-pricing-welcome p { margin:0; }
++.qc-pricing-details > summary:focus-visible, .qc-pricing-check input:focus-visible { outline:3px solid var(--qc-focus-ring,#9a3f10); outline-offset:3px; }
++.qc-pricing-details > summary:active { background:#f0f2f5; }
++@media (hover:hover) { .qc-pricing-details > summary:hover { background:#f6f7f9; }.qc-pricing-check:hover { color:var(--qc-text-primary); } }
++@media(max-width:1050px) {
++  .qc-pricing-editor-grid[data-test-open='true'] { grid-template-columns:minmax(0,1fr); }
++  .qc-pricing-test-column { position:static; max-height:none; overflow:visible; order:-1; }
++}
++@media(max-width:600px) {
++  .qc-pricing-editor-header { padding:18px 16px; align-items:flex-start; flex-direction:column; }
++  .qc-pricing-editor-header h2 { font-size:21px; }
++  .qc-pricing-editor-grid { padding:16px; gap:20px; }
++  .qc-pricing-fields-grid { grid-template-columns:minmax(0,1fr); gap:16px; }
++  .qc-component-editor > .qc-pricing-callout, .qc-component-editor > .qc-pricing-error { margin:12px 16px 0; }
++  .qc-pricing-editor-footer { padding:16px; flex-direction:column; align-items:stretch; }.qc-pricing-editor-footer > div .qc-button { flex:1; }
++  .qc-component-test { padding:16px; }.qc-component-test .qc-input, .qc-component-test .qc-select, .qc-pricing-fields .qc-input, .qc-pricing-fields .qc-select { font-size:16px; min-height:44px; }
++  .qc-pricing-intro { padding:16px; }.qc-pricing-heading { flex-wrap:wrap; }.qc-pricing-heading h2 { font-size:21px; }
++  .qc-pricing-learning-steps { grid-template-columns:1fr; }.qc-pricing-next { flex-direction:column; align-items:stretch; }
++  .qc-pricing-welcome { flex-wrap:wrap; }.qc-pricing-mapping-preview dl > div { grid-template-columns:1fr; gap:2px; }
++  .qc-pricing-details > summary span { float:none; display:block; margin-top:4px; }
++}
++@media(prefers-reduced-motion:reduce) { .qc-component-editor *, .qc-pricing-intro * { scroll-behavior:auto!important; } }
++
++.qc-pricing-fieldset { border:0; padding:0; margin:0; min-width:0; }
++.qc-pricing-fieldset:disabled { opacity:.75; }
++
++.qc-pricing-test-column[hidden] { display:none; }
++.qc-catalogue-example { margin:16px 0; padding:18px; border:1px solid var(--qc-border-control); border-radius:12px; background:var(--qc-bg-app); }
++.qc-catalogue-example h3 { margin:0; font-size:16px; font-weight:650; }
++.qc-catalogue-example dl { display:grid; gap:12px; font-size:13px; margin:16px 0; }
++.qc-catalogue-example dl > div { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.5fr); gap:16px; }
++.qc-catalogue-example dt { font-weight:600; }.qc-catalogue-example small { display:block; font-weight:400; color:var(--qc-text-secondary); }
++.qc-catalogue-example dd { margin:0; overflow-wrap:anywhere; }.qc-catalogue-example p { font-size:12px; line-height:1.6; color:var(--qc-text-secondary); margin:12px 0 0; }
++.qc-pricing-welcome > svg { flex-shrink:0; }.qc-pricing-welcome > div { min-width:0; flex:1; }.qc-pricing-welcome > div > div { display:flex; flex-wrap:wrap; gap:16px; }
++.qc-pricing-welcome .qc-text-link { font-size:13px; display:inline-flex; align-items:center; min-height:36px; text-decoration:underline; text-underline-offset:3px; }
++@media(max-width:600px) { .qc-catalogue-example dl > div { grid-template-columns:1fr; gap:4px; }.qc-pricing-welcome .qc-text-link { min-height:44px; }.qc-pricing-welcome { align-items:flex-start; } }
++
++/* Mobile/tablet uses two views of the SAME mounted state, not nested scrolling
++   or a second editor. Test fields remain independent of the save form. */
++.qc-pricing-mobile-tabs, .qc-pricing-mobile-test-footer { display:none; }
++@media(max-width:1050px) {
++  .qc-component-editor .qc-pricing-desktop-test-toggle { display:none; }
++  .qc-pricing-mobile-tabs { display:flex; gap:8px; padding:12px 16px; border-bottom:1px solid var(--qc-border-divider); }
++  .qc-pricing-mobile-tabs .qc-button { flex:1; min-height:44px; }
++  .qc-pricing-mobile-tabs [aria-pressed='true'] { background:var(--qc-selected-bg); border-color:var(--qc-color-orange-ink); color:var(--qc-selected-text); }
++  .qc-component-editor[data-mobile-view='settings'] .qc-pricing-test-column { display:none; }
++  .qc-component-editor[data-mobile-view='test'] .qc-pricing-fields,
++  .qc-component-editor[data-mobile-view='test'] .qc-pricing-editor-footer { display:none; }
++  .qc-component-editor[data-mobile-view='test'] .qc-pricing-mobile-test-footer { display:grid; gap:8px; padding:0 16px 16px; }
++  .qc-pricing-mobile-test-footer p { font-size:12px; color:var(--qc-text-secondary); margin:0; line-height:1.6; }
++}

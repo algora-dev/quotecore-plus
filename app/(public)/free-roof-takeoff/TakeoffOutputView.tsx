@@ -2,11 +2,16 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { buildConvertUrl } from '../shared/convertLines';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import { getStoredPitchMode } from '@/app/components/PitchInput';
 import { fromDegrees } from '@/app/lib/pitch-inputs';
 import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/DemoWorkstation';
 import type { TakeoffUnitSystem, TakeoffComponentSpec } from './tradeConfig';
+
+/** Trade variant for shared report copy (default roofing). Cladding switches
+ *  headings to wall terminology and hides pitch language entirely. */
+export type TakeoffTrade = 'roofing' | 'cladding' | 'flooring';
 
 /**
  * Free Roof Takeoff output view.
@@ -76,6 +81,7 @@ export function TakeoffOutputView({
   extras,
   unitSystem = 'metric',
   specs = [],
+  trade = 'roofing',
   onRestart,
   onBackToCanvas,
 }: {
@@ -86,9 +92,18 @@ export function TakeoffOutputView({
   /** User-built component specs (step 2 "build your own"). When present,
    *  quantities are pitch/waste-adjusted and costs shown per component. */
   specs?: TakeoffComponentSpec[];
+  /** Trade copy variant: roofing (default) or cladding (wall terminology,
+   *  no pitch language). */
+  trade?: TakeoffTrade;
   onRestart: () => void;
   onBackToCanvas: () => void;
 }) {
+  const isCladding = trade === 'cladding';
+  const isFlooring = trade === 'flooring';
+  // Non-roof trades: no pitch language anywhere.
+  const isFlat = isCladding || isFlooring;
+  const toolSlug = trade === 'cladding' ? 'free-cladding-takeoff' : trade === 'flooring' ? 'free-flooring-takeoff' : 'free-roof-takeoff';
+  const areaNoun = isFlooring ? 'Floor' : 'Wall';
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   // Show pitch in the mode the user entered it (degrees / ratio / gradient).
@@ -221,12 +236,78 @@ export function TakeoffOutputView({
   const totalCost = components.reduce((s, c) => s + (c.cost ?? 0), 0);
   const hasAnyCost = components.some(c => c.cost != null);
 
+  // 2026-08-30: "Convert to quote" routes to the FREE QUOTE GENERATOR with the
+  // takeoff's component lines pre-filled (same cross-tool conversion pattern as
+  // the other free document generators), NOT the app signup funnel.
+  const convertToQuoteUrl = buildConvertUrl({
+    targetPath: '/free-quote-generator',
+    amount: totalCost,
+    lines: components.map(c => {
+      const qty = c.measurementType === 'quantity' ? c.count : (c.adjustedTotal ?? c.total);
+      const unit = c.measurementType === 'quantity' ? 'pcs' : c.measurementType === 'area' ? areaUnitLabel : L;
+      const rate = c.cost != null && qty > 0 ? c.cost / qty : 0;
+      return { description: c.name, qty, unit, rate };
+    }).filter(l => l.qty > 0),
+    ref: toolSlug,
+  });
+
   const totalPlanArea = areas.reduce((s, a) => s + a.planArea, 0);
   const totalPitchedArea = areas.reduce((s, a) => s + a.pitchedArea, 0);
 
   const today = new Date().toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
 
   const hasMeasurements = areas.length > 0 || components.length > 0;
+
+  // Shared renderer for one component group (used both under a roof-area
+  // heading and in the no-areas layout). 2026-08-30: components with NO roof
+  // areas must still show in the report - previously the whole components
+  // section looped over areas only, so a no-area takeoff rendered nothing.
+  const renderGroup = (c: ComponentRow) => {
+    const u = c.measurementType === 'area' ? areaUnitLabel : L; // 2026-08-30: m2 for area components, not m
+    const planTotal = c.entries.reduce((s, e) => s + e.value, 0);
+    const anyAdj = c.entries.some(e => e.adjusted != null);
+    const adjTotal = anyAdj ? c.entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
+    const anyWaste = c.entries.some(e => e.afterWaste != null);
+    const wasteTotal = anyWaste ? c.entries.reduce((s, e) => s + (e.afterWaste ?? e.adjusted ?? e.value), 0) : null;
+    const groupCost = c.entries.some(e => e.cost != null)
+      ? c.entries.reduce((s, e) => s + (e.cost ?? 0), 0)
+      : null;
+    return (
+      <div key={c.key} className="avoid-break">
+        <div className="flex items-center justify-between pb-1">
+          <span className="text-black font-semibold">{c.name}</span>
+          <span className="text-black font-semibold whitespace-nowrap text-sm">
+            {c.measurementType === 'quantity'
+              ? `${c.entries.length} ea`
+              : `${fmt(planTotal)} ${u} plan`}
+            {adjTotal != null && c.measurementType !== 'quantity' && (
+              <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(adjTotal)} {u} pitched</span>
+            )}
+            {wasteTotal != null && c.measurementType !== 'quantity' && (
+              <span className="ml-2 text-black/70 font-medium">&middot; {fmt(wasteTotal)} {u} incl waste</span>
+            )}
+            {groupCost != null && <span className="ml-2">&middot; ${fmt(groupCost)}</span>}
+          </span>
+        </div>
+        <div className="space-y-0.5">
+          {c.entries.map((m, i) => (
+            <div key={i} className="flex items-center justify-between py-1 pl-4 text-sm border-b border-black/5">
+              <span className="text-black/70">Entry {i + 1}</span>
+              <span className="text-black/80 whitespace-nowrap">
+                {c.measurementType === 'quantity'
+                  ? '1 ea'
+                  : m.afterWaste != null
+                    ? `${fmt(m.value)} ${u} plan \u2192 ${fmt(m.adjusted ?? m.value)} ${u} pitched \u2192 ${fmt(m.afterWaste)} ${u} incl waste`
+                    : m.adjusted != null
+                      ? `${fmt(m.value)} ${u} plan \u2192 ${fmt(m.adjusted)} ${u} pitched`
+                      : `${fmt(m.value)} ${u}`}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   /** Persist the takeoff as a server-side draft (free_document_drafts,
    *  draft_type='takeoff') and send the user to signup/app with the draft
@@ -240,7 +321,7 @@ export function TakeoffOutputView({
         body: JSON.stringify({
           draftType: 'takeoff',
           payload: {
-            tool: 'free-roof-takeoff',
+            tool: toolSlug,
             unit: payload.calibrationUnit,
             unitSystem: system,
             componentSpecs: specs,
@@ -267,7 +348,7 @@ export function TakeoffOutputView({
       const appOrigin = window.location.hostname.endsWith('.quote-core.com')
         ? 'https://app.quote-core.com'
         : '';
-      window.location.href = `${appOrigin}/signup?ref=free-roof-takeoff&draft=${json.id}`;
+      window.open(`${appOrigin}/signup?ref=${toolSlug}&draft=${json.id}`, '_blank', 'noopener');
     } catch {
       setSaveState('error');
     }
@@ -288,6 +369,37 @@ export function TakeoffOutputView({
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 px-4 py-10">
+      {/* Print/PDF: output document ONLY. 2026-09-07 fix: the old approach
+          (visibility:hidden on body + position:absolute report) left all hidden
+          marketing sections occupying layout, which produced 3-4 trailing blank
+          pages, and multi-page absolutely-positioned content paginates badly in
+          print engines (content pushed to page 2 with page 1 empty). Now the
+          report stays IN FLOW, page chrome is removed with display:none, and
+          break-inside:avoid applies at the item level so nothing is cut in
+          half while sections flow naturally from page 1. */}
+      <style jsx global>{`
+        @media print {
+          html, body {
+            background: #fff !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          /* Page chrome (site header + marketing/FAQ sections) removed from
+             layout entirely so it cannot create blank pages. The report uses
+             only divs internally, so this can never clip report content. */
+          header, section, footer { display: none !important; }
+          .print-hide { display: none !important; }
+          #takeoff-report {
+            position: static !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            max-width: 100% !important;
+          }
+          .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+        }
+      `}</style>
       <div className="mx-auto max-w-4xl">
         {/* Takeoff report - clean measurement document, same format the app
             hands to the quote builder. */}
@@ -295,38 +407,15 @@ export function TakeoffOutputView({
           <div className="border-b-2 border-black pb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/MainQCP.png" alt="QuoteCore+ Roofing" className="h-14 object-contain" />
-            <h1 className="mt-4 text-xl font-bold text-black">ROOF TAKEOFF REPORT</h1>
+            <h1 className="mt-4 text-xl font-bold text-black">{isCladding ? 'WALL & CLADDING TAKEOFF REPORT' : isFlooring ? 'FLOORING TAKEOFF REPORT' : 'ROOF TAKEOFF REPORT'}</h1>
             <p className="mt-1 text-sm text-black">Generated {today} - QuoteCore+ free digital takeoff</p>
             <p className="mt-1 text-xs text-black/60">
               Measurement units: {system === 'squares' ? 'Roofing squares (areas) / feet (lengths)' : system === 'imperial' ? 'Imperial (ft / ft\u00b2)' : 'Metric (m / m\u00b2)'}
             </p>
           </div>
 
-          {/* Roof areas - every entry */}
-          {areas.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">Roof Areas</h2>
-              <div className="mt-3 space-y-2">
-                {areas.map(a => (
-                  <div key={a.key} className="flex items-center justify-between py-2 border-b border-black/10">
-                    <span className="text-black">{a.name} - pitch {fmtPitch(a.pitch)}</span>
-                    <span className="text-black font-medium whitespace-nowrap">
-                      {fmt(a.planArea)} {areaUnitLabel} plan &middot; {fmt(a.pitchedArea)} {areaUnitLabel} pitched
-                    </span>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between py-2 font-semibold">
-                  <span className="text-black">Total roof area</span>
-                  <span className="text-black whitespace-nowrap">
-                    {fmt(totalPlanArea)} {areaUnitLabel} plan &middot; {fmt(totalPitchedArea)} {areaUnitLabel} pitched
-                  </span>
-                </div>
-                {system === 'squares' && (
-                  <p className="text-xs text-black/60">1 square = 100 ft&sup2;</p>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Roof areas summary removed (2026-08-30): each area is listed once
+              with its components below - no separate duplicate area list. */}
 
           {/* Components grouped under their roof area (2026-08-21): each
               area is a clear heading, its components sit indented underneath,
@@ -334,8 +423,16 @@ export function TakeoffOutputView({
               the first area. */}
           {components.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">Roof Areas &amp; Components</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">{areas.length > 0 ? (isCladding ? 'Wall Areas & Components' : isFlooring ? 'Floor Areas & Components' : 'Roof Areas & Components') : 'Components'}</h2>
               <div className="mt-3 space-y-6">
+                {/* 2026-08-30: no roof areas - components stand alone (flat list,
+                    same as the app's no-area flow). Previously this section only
+                    looped over areas, so a no-area takeoff rendered nothing. */}
+                {areas.length === 0 && (
+                  <div className="space-y-3">
+                    {components.map(renderGroup)}
+                  </div>
+                )}
                 {areas.map(a => {
                   // Entries for this area: stamped with its id, or un-stamped (first area only).
                   // Costs/waste are stamped per entry, so filtering to this area's
@@ -346,60 +443,20 @@ export function TakeoffOutputView({
                   if (groupsHere.length === 0) return null;
                   return (
                     <div key={a.key}>
-                      <div className="flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
-                        <span className="text-black font-bold">{a.name} <span className="font-medium">- pitch {fmtPitch(a.pitch)}</span></span>
+                      {/* Area header stays attached to the page it starts on;
+                          individual component groups below each avoid being
+                          split mid-item, but the area section itself flows
+                          across pages naturally (2026-09-07 pagination fix). */}
+                      <div className="avoid-break flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
+                        <span className="text-black font-bold">{a.name}{isFlat ? '' : <span className="font-medium"> - pitch {fmtPitch(a.pitch)}</span>}</span>
                         <span className="text-black font-medium whitespace-nowrap text-sm">
-                          {fmt(a.planArea)} {areaUnitLabel} plan &middot; {fmt(a.pitchedArea)} {areaUnitLabel} pitched
+                          {isFlat
+                            ? <>{fmt(a.planArea)} {areaUnitLabel} area</>
+                            : <>{fmt(a.planArea)} {areaUnitLabel} plan &middot; {fmt(a.pitchedArea)} {areaUnitLabel} pitched</>}
                         </span>
                       </div>
                       <div className="pl-6 pt-2 space-y-3">
-                        {groupsHere.map(c => {
-                          const planTotal = c.entries.reduce((s, e) => s + e.value, 0);
-                          const anyAdj = c.entries.some(e => e.adjusted != null);
-                          const adjTotal = anyAdj ? c.entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
-                          const anyWaste = c.entries.some(e => e.afterWaste != null);
-                          const wasteTotal = anyWaste ? c.entries.reduce((s, e) => s + (e.afterWaste ?? e.adjusted ?? e.value), 0) : null;
-                          // THIS area's cost: sum the per-entry costs of the entries
-                          // shown here (pack-priced components keep group-level cost).
-                          const areaCost = c.entries.some(e => e.cost != null)
-                            ? c.entries.reduce((s, e) => s + (e.cost ?? 0), 0)
-                            : null;
-                          return (
-                            <div key={c.key}>
-                              <div className="flex items-center justify-between pb-1">
-                                <span className="text-black font-semibold">{c.name}</span>
-                                <span className="text-black font-semibold whitespace-nowrap text-sm">
-                                  {c.measurementType === 'quantity'
-                                    ? `${c.entries.length} ea`
-                                    : `${fmt(planTotal)} ${c.measurementType === 'area' ? areaUnitLabel : L} plan`}
-                                  {adjTotal != null && c.measurementType !== 'quantity' && (
-                                    <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(adjTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} pitched</span>
-                                  )}
-                                  {wasteTotal != null && c.measurementType !== 'quantity' && (
-                                    <span className="ml-2 text-black/70 font-medium">&middot; {fmt(wasteTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} incl waste</span>
-                                  )}
-                                  {areaCost != null && <span className="ml-2">&middot; ${fmt(areaCost)}</span>}
-                                </span>
-                              </div>
-                              <div className="space-y-0.5">
-                                {c.entries.map((m, i) => (
-                                  <div key={i} className="flex items-center justify-between py-1 pl-4 text-sm border-b border-black/5">
-                                    <span className="text-black/70">Entry {i + 1}</span>
-                                    <span className="text-black/80 whitespace-nowrap">
-                                      {c.measurementType === 'quantity'
-                                        ? '1 ea'
-                                        : m.afterWaste != null
-                                          ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted ?? m.value)} ${L} pitched \u2192 ${fmt(m.afterWaste)} ${L} incl waste`
-                                          : m.adjusted != null
-                                            ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted)} ${L} pitched`
-                                            : `${fmt(m.value)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {groupsHere.map(renderGroup)}
                       </div>
                     </div>
                   );
@@ -409,31 +466,62 @@ export function TakeoffOutputView({
             </div>
           )}
 
+          {/* Totals - always the last block of the report */}
+          <div className="pt-2 avoid-break">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">Totals</h2>
+            <div className="mt-3 space-y-2">
+              {areas.length > 0 && (
+                <div className="flex items-center justify-between py-2 border-b border-black/10">
+                  <span className="text-black">{isFlooring ? 'Total floor area' : isCladding ? 'Total wall area' : 'Total plan area'}</span>
+                  <span className="text-black font-medium">{isFlat ? <>{fmt(totalPlanArea)} {areaUnitLabel}</> : <>{fmt(totalPlanArea)} {areaUnitLabel} plan &middot; {fmt(totalPitchedArea)} {areaUnitLabel} pitched</>}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between py-2 border-b border-black/10">
+                <span className="text-black">Total components measured</span>
+                <span className="text-black font-medium">{components.length}</span>
+              </div>
+              {hasAnyCost && (
+                <div className="flex items-center justify-between py-1 mt-1">
+                  <span className="text-black font-bold">Estimated total</span>
+                  <span className="text-black font-bold text-lg">${fmt(totalCost)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="pt-4 border-t border-black">
             <p className="text-sm text-black italic">
-              Measurements taken with the QuoteCore+ digital takeoff system. Roof areas use the rafter
-              pitch factor for each area. Hips and valleys are adjusted using the hip &amp; valley pitch
-              calculated from their roof area&apos;s pitch; barges use the rafter pitch factor. Ridge and
-              spouting require no pitch adjustment. Send this takeoff into QuoteCore+ to price it with
-              your own component rates and turn it into a quote.
+              {isFlooring
+                ? 'Measurements taken with the QuoteCore+ digital takeoff system. Floor areas are measured as drawn - no pitch adjustment applies. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
+                : isCladding
+                ? 'Measurements taken with the QuoteCore+ digital takeoff system. Wall areas are measured as drawn - no pitch adjustment applies. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
+                : 'Measurements taken with the QuoteCore+ digital takeoff system. Roof areas use the rafter pitch factor for each area. Hips and valleys are adjusted using the hip &amp; valley pitch calculated from their roof area&apos;s pitch; barges use the rafter pitch factor. Ridge and spouting require no pitch adjustment. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'}
             </p>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-8 text-center">
+        <div className="print-hide mt-8 bg-white border border-slate-200 rounded-2xl p-8 text-center">
           <h2 className="text-xl font-semibold text-slate-900">Your takeoff is ready.</h2>
           <p className="mt-2 text-sm text-slate-500">
             Price it with your own rates, save it, and turn it into a customer quote - the exact
             measurements above carry straight into the QuoteCore+ quote builder.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href={convertToQuoteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-orange-600 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+            >
+              Convert to quote - free quote generator
+            </Link>
             <button
               onClick={handleSendToApp}
               disabled={saveState === 'saving' || saveState === 'saved'}
               className="inline-flex items-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
             >
-              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved - redirecting...' : 'Save my takeoff - it comes with you'}
+              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved - sign up opened in a new tab' : 'Save my takeoff - it comes with you'}
             </button>
             <button
               onClick={() => window.print()}

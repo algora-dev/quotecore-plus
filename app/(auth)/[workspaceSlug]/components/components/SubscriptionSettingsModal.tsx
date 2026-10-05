@@ -1,5 +1,7 @@
 'use client';
 
+import '@/app/components/ui/v2/qc-library.css';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect } from 'react';
 import { FIELD_LABELS, PRICE_FIELDS } from '@/app/lib/supabase/sync-fields';
 
@@ -109,7 +111,7 @@ export function SubscriptionSettingsModal({
   const detailFieldKeys = Object.keys(FIELD_LABELS).filter(k => !PRICE_FIELDS.includes(k as never));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <QcJourneyDialog label="Alert Preferences" size="lg">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 rounded-t-2xl bg-white">
@@ -117,9 +119,9 @@ export function SubscriptionSettingsModal({
             <h2 className="text-base font-semibold text-slate-900">Alert Preferences</h2>
             <p className="text-xs text-slate-400">Choose which supplier changes trigger alerts</p>
           </div>
-          <button
+          <button aria-label="Close" data-qc-variant="ghost"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 cursor-pointer"
+            className="qc-button qc-flow-control qc-library-control "
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -156,7 +158,7 @@ export function SubscriptionSettingsModal({
                       type="checkbox"
                       checked={sub.alerts_enabled}
                       onChange={e => toggleAlerts(sub.source_library_id, e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer shrink-0"
+                      className="qc-checkbox qc-library-control h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer shrink-0"
                     />
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-900 truncate">{sub.supplier_name}</div>
@@ -164,9 +166,9 @@ export function SubscriptionSettingsModal({
                     </div>
                   </div>
                   {sub.alerts_enabled && (
-                    <button
+                    <button data-qc-variant="ghost"
                       onClick={() => setExpandedLib(isExpanded ? null : sub.source_library_id)}
-                      className="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer shrink-0 ml-2"
+                      className="qc-button qc-flow-control qc-library-control shrink-0 ml-2"
                     >
                       {isExpanded ? 'Hide' : 'Customise'}
                       {hasCustomPrefs && !isExpanded && <span className="ml-1 text-orange-600">*</span>}
@@ -182,9 +184,9 @@ export function SubscriptionSettingsModal({
                         Alert me when: {hasCustomPrefs ? '(customised)' : '(all changes)'}
                       </p>
                       {hasCustomPrefs && (
-                        <button
+                        <button data-qc-variant="ghost"
                           onClick={() => resetToAllFields(sub.source_library_id)}
-                          className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                          className="qc-button qc-flow-control qc-library-control "
                         >
                           Reset to all
                         </button>
@@ -199,7 +201,7 @@ export function SubscriptionSettingsModal({
                           type="checkbox"
                           checked={!prefs || prefs['new_components'] !== false}
                           onChange={() => toggleFieldPref(sub.source_library_id, 'new_components', prefs)}
-                          className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                          className="qc-checkbox qc-library-control h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
                         />
                         <span className="text-sm text-slate-700">Alert me when new components are added</span>
                       </label>
@@ -217,7 +219,7 @@ export function SubscriptionSettingsModal({
                                 type="checkbox"
                                 checked={isChecked}
                                 onChange={() => toggleFieldPref(sub.source_library_id, field, prefs)}
-                                className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                                className="qc-checkbox qc-library-control h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
                               />
                               <span className="text-sm text-slate-700">{FIELD_LABELS[field]}</span>
                             </label>
@@ -238,7 +240,7 @@ export function SubscriptionSettingsModal({
                                 type="checkbox"
                                 checked={isChecked}
                                 onChange={() => toggleFieldPref(sub.source_library_id, field, prefs)}
-                                className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                                className="qc-checkbox qc-library-control h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
                               />
                               <span className="text-sm text-slate-700">{FIELD_LABELS[field]}</span>
                             </label>
@@ -265,14 +267,14 @@ export function SubscriptionSettingsModal({
 
         {/* Footer */}
         <div className="flex items-center justify-end px-5 py-3 border-t border-slate-100 sticky bottom-0 rounded-b-2xl bg-white">
-          <button
+          <button data-qc-variant="primary"
             onClick={onClose}
-            className="px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 cursor-pointer"
+            className="qc-button qc-flow-control qc-library-control "
           >
             Done
           </button>
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

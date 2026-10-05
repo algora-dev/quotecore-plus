@@ -1,0 +1,178 @@
+@import './qc.css';
+
+/* C55 / T05. Only document-editor chrome. No global shell or recipient rules. */
+.qc-document-workspace { container: qc-document / inline-size; min-width: 0; width: 100%; max-width: 1600px; margin: 0 auto; padding: 20px; background: var(--qc-bg-app); }
+.qc-document-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding: 4px 0 24px; }
+.qc-document-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.qc-document-identity { min-width: 0; }
+.qc-document-eyebrow { margin: 0 0 4px; color: var(--qc-text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.qc-document-header h1 { margin: 0; font-size: 24px; line-height: 32px; font-weight: 650; letter-spacing: -.025em; color: var(--qc-text-primary); overflow-wrap: anywhere; }
+.qc-document-subtitle { margin: 4px 0 0; color: var(--qc-text-secondary); font-size: 13px; line-height: 20px; }
+.qc-document-back :is(a,button) { min-height: 40px; display: inline-flex; align-items: center; gap: 6px; padding: 8px; border-radius: var(--qc-radius-control); font-size: 13px; color: var(--qc-text-secondary); }
+.qc-document-header-end { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; margin-left: auto; }
+.qc-document-actions, .qc-document-preview-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.qc-document-save-state { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--qc-text-secondary); font-size: 12px; line-height: 18px; }
+.qc-document-save-state > span { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--qc-border-control); }
+.qc-document-save-state[data-state='dirty'] > span { background: var(--qc-color-warning-ink); }
+.qc-document-save-state[data-state='saved'] > span { background: var(--qc-color-success-ink); }
+.qc-document-body { display: flex; flex-direction: column; gap: 20px; align-items: stretch; min-width: 0; }
+.qc-document-panel { min-width: 0; background: var(--qc-bg-surface); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); }
+.qc-document-panel[hidden], .qc-document-workspace [hidden] { display: none !important; }
+.qc-document-panel-header { padding: 20px; border-bottom: 1px solid var(--qc-border-divider); }
+.qc-document-panel-title { display: flex; align-items: center; gap: 8px; }
+.qc-document-panel h2, .qc-document-preview-bar h2 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 650; color: var(--qc-text-primary); }
+.qc-document-panel-title .qc-document-collapse { margin-left: auto; }
+.qc-document-count { padding: 2px 8px; border-radius: var(--qc-radius-pill); background: var(--qc-bg-subtle); color: var(--qc-text-secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
+.qc-document-help { margin: 6px 0 0; color: var(--qc-text-secondary); font-size: 12px; line-height: 19px; }
+.qc-document-add { margin-top: 16px; }
+.qc-document-add > .qc-button { width: 100%; }
+.qc-document-section { padding: 20px; min-width: 0; border-bottom: 1px solid var(--qc-border-divider); scroll-margin-top: 20px; }
+.qc-document-section:last-child { border-bottom: 0; }
+.qc-document-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.qc-document-section-heading h3 { font-size: 13px; line-height: 20px; font-weight: 650; color: var(--qc-text-primary); margin: 0; }
+.qc-document-section > .qc-document-help { margin: -6px 0 14px; }
+.qc-document-preview { min-width: 0; background: var(--qc-bg-subtle); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); align-self: start; width: 100%; }
+.qc-document-preview-bar { padding: 16px 20px; border-bottom: 1px solid var(--qc-border-divider); background: var(--qc-bg-surface); border-radius: var(--qc-radius-card) var(--qc-radius-card) 0 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.qc-document-preview-scroll { overflow: auto; padding: 24px; border-radius: 0 0 var(--qc-radius-card) var(--qc-radius-card); }
+/* Paper is a boundary, not a reset: no descendant selector touches document
+ * text, amounts, images, table layout, hide/show flags or PDF block markers. */
+.qc-document-paper { background: white; padding: 24px; min-width: 480px; border: 1px solid var(--qc-border-divider); border-radius: 2px; box-shadow: var(--qc-shadow-raised); }
+.qc-document-paper--invoice, .qc-document-paper--visual { padding: 0; border: 0; background: transparent; box-shadow: none; min-width: 560px; }
+.qc-document-paper--visual { max-width: 210mm; margin: 0 auto; }
+.qc-document-preview-scroll:focus-visible { outline-offset: -4px; }
+.qc-document-panel-content { padding: 20px; }
+.qc-document-imports { display: flex; flex-wrap: wrap; gap: 8px; }
+.qc-document-imports .qc-button { flex: 1; }
+.qc-document-line { padding: 12px; border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-control); background: var(--qc-bg-surface); min-width: 0; }
+.qc-document-line + .qc-document-line { margin-top: 8px; }
+.qc-document-line[data-visible='false'] { background: var(--qc-bg-subtle); }
+.qc-document-line-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.qc-document-line-title > :first-child { min-width: 0; overflow-wrap: anywhere; }
+.qc-document-line-title > :last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.qc-document-line-toggles { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--qc-border-divider); }
+.qc-document-row-actions { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.qc-document-row-actions .qc-button { padding: 4px 6px; min-width: 32px; min-height: 32px; }
+.qc-document-visibility { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.qc-document-tabs { display: flex; align-items: center; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--qc-border-divider); }
+.qc-document-tabs .qc-button { flex: 1; border-color: transparent; }
+.qc-document-tabs .qc-button[aria-pressed='true'], .qc-document-layout .qc-button[aria-pressed='true'] { background: var(--qc-selected-bg); color: var(--qc-selected-text); border-color: var(--qc-color-orange-ink); }
+.qc-document-layout { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.qc-document-layout > span { font-size: 12px; color: var(--qc-text-secondary); margin-right: 4px; }
+.qc-document-empty { padding: 24px 16px; border: 1px dashed var(--qc-border-control); border-radius: var(--qc-radius-control); color: var(--qc-text-secondary); text-align: center; font-size: 13px; }
+.qc-document-activity { margin: 0 0 20px; }
+.qc-document-note { padding: 12px 16px; margin-bottom: 16px; color: var(--qc-text-secondary); background: var(--qc-bg-surface); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-control); font-size: 12px; line-height: 19px; }
+.qc-document-order-details { min-width: 0; }
+.qc-document-order-details-grid { display: grid; gap: 20px; padding: 20px; }
+.qc-document-order-details-grid > div { display: grid; gap: 12px; min-width: 0; align-content: start; }
+.qc-document-order-template, .qc-document-order-summary { padding: 16px 20px; background: var(--qc-bg-subtle); border-bottom: 1px solid var(--qc-border-divider); }
+.qc-document-order-summary { display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap; }
+.qc-document-order-label { display: grid; gap: 5px; font-size: 12px; color: var(--qc-text-secondary); }
+.qc-document-order-label input, .qc-document-order-label textarea { width: 100%; }
+.qc-document-order-field-pair { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.qc-document-upload { position: relative; display: inline-flex; align-items: center; min-height: 40px; border: 1px solid var(--qc-border-control); border-radius: var(--qc-radius-control); padding: 8px 12px; font-size: 13px; cursor: pointer; }
+.qc-document-upload input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+.qc-document-upload:focus-within { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; }
+.qc-document-type-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.qc-document-type-option { display: flex; flex-direction: column; text-align: left; border: 1px solid var(--qc-border-control); border-radius: var(--qc-radius-card); overflow: hidden; background: var(--qc-bg-surface); color: var(--qc-text-primary); }
+.qc-document-type-option img { width: 100%; height: 160px; object-fit: contain; padding: 12px; background: var(--qc-bg-subtle); }
+.qc-document-type-option > span { padding: 16px; display: grid; gap: 8px; }
+.qc-document-type-option strong { font-size: 16px; }
+.qc-document-type-option small { font-size: 13px; line-height: 20px; color: var(--qc-text-secondary); }
+
+/* C56: existing form bindings, original controls. Typography is scoped to
+ * editor controls, never .qc-document-paper. No opacity on readable numbers. */
+:is(.qc-document-controls,.qc-document-dialog-scope,.qc-document-preview form) :is(input:not([type='checkbox']):not([type='radio']):not([type='file']),select,textarea) { min-height: 40px; min-width: 0; max-width: 100%; border: 1px solid var(--qc-border-control); border-radius: var(--qc-radius-control); background: var(--qc-bg-surface); padding: 8px 10px; font: inherit; font-size: 14px; color: var(--qc-text-primary); }
+:is(.qc-document-controls,.qc-document-dialog-scope,.qc-document-preview form) input[type='number'] { font-variant-numeric: tabular-nums; }
+:is(.qc-document-controls,.qc-document-dialog-scope,.qc-document-preview form) textarea { resize: vertical; }
+:is(.qc-document-controls,.qc-document-dialog-scope,.qc-document-preview form) :is(input[type='checkbox'],input[type='radio']) { appearance: auto; width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--qc-color-orange-ink); border: 1px solid var(--qc-border-control); border-radius: 4px; box-shadow: none; background-image: none; }
+:is(.qc-document-controls,.qc-document-dialog-scope,.qc-document-preview form) label:has(> input:is([type='checkbox'],[type='radio'])) { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; cursor: pointer; font-size: 12px; }
+:is(.qc-document-controls,.qc-document-dialog-scope,.qc-document-preview form) :is(input,textarea,select):disabled { background: var(--qc-color-disabled-bg); color: var(--qc-color-disabled-ink); cursor: not-allowed; }
+:is(.qc-document-controls,.qc-document-dialog-scope,.qc-document-preview form) :is(.text-slate-400,.text-gray-400) { color: var(--qc-text-secondary); }
+:is(.qc-document-controls,.qc-document-dialog-scope,.qc-document-preview form) :is(.text-orange-500,.text-orange-600,.text-orange-700) { color: var(--qc-color-orange-ink); }
+.qc-document-dialog-scope { display: contents; }
+/* Preserve the legacy overlay's positioning, stacking, Escape and click
+ * policy. ONLY backdrop/card/control appearance is adapted in this scope. */
+.qc-document-dialog-scope .fixed.inset-0 { background: var(--qc-glass-a-tint); backdrop-filter: blur(var(--qc-glass-a-blur)) saturate(var(--qc-glass-a-saturation)); padding: 16px; }
+.qc-document-dialog-scope .fixed.inset-0 > :is(div,section) { border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-dialog); box-shadow: var(--qc-shadow-dialog); }
+/* Legacy buttons receive the C01 recipe only within this opt-in adapter.
+ * Main editor buttons use QcButton directly. No application-wide selectors. */
+.qc-document-dialog-scope button:not(.qc-button) { min-height: 36px; border-radius: var(--qc-radius-control); font-family: var(--qc-font-sans); font-weight: 600; box-shadow: none; transition: background-color var(--qc-motion-fast),border-color var(--qc-motion-fast); }
+.qc-document-dialog-scope :is(button.bg-black,button.bg-orange-600,button.bg-orange-500,button.bg-\[\#FF6B35\]) { background: var(--qc-gradient-primary); color: var(--qc-action-primary-text); border: 1px solid var(--qc-action-primary-start); }
+.qc-document-dialog-scope button:disabled { background: var(--qc-color-disabled-bg); color: var(--qc-color-disabled-ink); opacity: 1; box-shadow: none; cursor: not-allowed; }
+.qc-document-dialog-scope :is(button,input,textarea,select,a):focus-visible, .qc-document-controls :is(button,input,textarea,select,a):focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; }
+.qc-document-dialog-scope button:active:not(:disabled) { box-shadow: inset 0 2px 3px rgba(25,27,32,.12); }
+.qc-document-back :is(a,button):active, .qc-document-type-option:active, .qc-document-upload:active { background: var(--qc-selected-bg); box-shadow: inset 0 2px 3px rgba(25,27,32,.12); }
+@media (hover:hover) {
+  .qc-document-back :is(a,button):hover, .qc-document-type-option:hover, .qc-document-upload:hover { background: var(--qc-selected-bg); border-color: var(--qc-color-orange-ink); }
+  .qc-document-dialog-scope button:not(:disabled):hover { border-color: var(--qc-color-orange-ink); background-color: var(--qc-selected-bg); }
+  .qc-document-dialog-scope :is(button.bg-black,button.bg-orange-600,button.bg-orange-500,button.bg-\[\#FF6B35\]):not(:disabled):hover { background: var(--qc-gradient-primary-hover); color: var(--qc-action-primary-text); box-shadow: var(--qc-glow-hover); }
+  .qc-document-controls label:has(> input:is([type='checkbox'],[type='radio']):not(:disabled)):hover { color: var(--qc-color-orange-ink); }
+}
+@container qc-document (min-width: 900px) {
+  .qc-document-body { display: grid; grid-template-columns: minmax(320px,380px) minmax(0,1fr); align-items: start; }
+  .qc-document-body[data-panel-collapsed='true'] { grid-template-columns: minmax(0,1fr); }
+}
+@container qc-document (min-width: 1240px) { .qc-document-body { grid-template-columns: 420px minmax(0,1fr); } }
+@media (min-height:760px) {
+  @container qc-document (min-width:900px) { .qc-document-preview { position: sticky; top: 20px; } .qc-document-preview-scroll { max-height: calc(100dvh - 180px); min-height: 320px; } }
+}
+@media (max-width:767px) {
+  .qc-document-workspace { padding: 12px; }
+  .qc-document-header { gap: 16px; padding-bottom: 16px; }
+  .qc-document-header h1 { font-size: 20px; line-height: 28px; }
+  .qc-document-header-end { justify-content: flex-start; margin: 0; width: 100%; }
+  .qc-document-actions { width: 100%; }
+  .qc-document-section, .qc-document-panel-header, .qc-document-preview-bar { padding: 16px; }
+  .qc-document-preview-scroll { padding: 12px; }
+  .qc-document-type-options { grid-template-columns: 1fr; }
+  .qc-document-order-field-pair { grid-template-columns: 1fr; }
+  :is(.qc-document-controls,.qc-document-dialog-scope,.qc-document-preview form) :is(input:not([type='checkbox']):not([type='radio']),select,textarea) { font-size: 16px; min-height: 44px; }
+  .qc-document-row-actions .qc-button, .qc-document-dialog-scope button, :is(.qc-document-controls,.qc-document-dialog-scope,.qc-document-preview form) label:has(> input:is([type='checkbox'],[type='radio'])) { min-height: 44px; }
+  .qc-document-row-actions .qc-button { min-width: 44px; }
+}
+@media (prefers-reduced-motion:reduce) { .qc-document-workspace *, .qc-document-dialog-scope * { scroll-behavior: auto; transition: none !important; animation: none !important; } }
+@media (prefers-reduced-transparency:reduce), (forced-colors:active) { .qc-document-dialog-scope .fixed.inset-0 { background: var(--qc-glass-a-fallback); backdrop-filter: none; } }
+@media (forced-colors:active) {
+  .qc-document-controls :is(input,textarea,select,button), .qc-document-type-option { forced-color-adjust: auto; border-color: ButtonText; }
+  .qc-document-layout .qc-button[aria-pressed='true'], .qc-document-tabs .qc-button[aria-pressed='true'] { outline: 2px solid Highlight; outline-offset: -3px; }
+}
+/* Direct C01 controls: icon-only controls are named, tax chips expose state. */
+.qc-document-controls .qc-document-icon { min-width: 32px; min-height: 32px; padding: 4px; flex-shrink: 0; }
+.qc-document-controls .qc-document-danger-control { color: var(--qc-color-danger); }
+.qc-document-controls .qc-button[aria-pressed='true'] { background: var(--qc-selected-bg); color: var(--qc-selected-text); border-color: var(--qc-color-orange-ink); }
+.qc-document-controls input.toggle-dot::before, .qc-document-controls input.toggle-dot::after { content: none; }
+.qc-document-line { overflow-wrap: anywhere; }
+.qc-document-order-details-section { padding: 0; }
+.qc-document-order-details-section > .qc-document-section-heading { padding: 20px 20px 0; }
+@media (max-width:767px) { .qc-document-controls .qc-document-icon { min-width: 44px; min-height: 44px; } }
+
+/* Inline pencil forms share the control recipe; ordinary document content is
+ * excluded. The form's controller and native submit semantics are untouched. */
+.qc-document-preview form button { min-height: 36px; border-radius: var(--qc-radius-control); padding: 6px 12px; font-size: 13px; font-weight: 600; }
+.qc-document-preview form button[type='submit'] { background: var(--qc-gradient-primary); color: var(--qc-action-primary-text); }
+.qc-document-preview form :is(button,input,textarea,select):focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; }
+.qc-document-preview form button:active { box-shadow: inset 0 2px 3px rgba(25,27,32,.12); }
+@media (hover:hover) { .qc-document-preview form button:hover { background-color: var(--qc-selected-bg); } .qc-document-preview form button[type='submit']:hover { background: var(--qc-gradient-primary-hover); } }
+
+/* Quiet supporting actions; drawing selectors keep native keyboard feedback. */
+.qc-document-controls .qc-document-icon { border-color: transparent; }
+.qc-document-line > .flex > .qc-document-row-actions { flex-direction: column; flex-wrap: nowrap; }
+.qc-document-controls button:not(.qc-button) { min-height: 36px; border-radius: var(--qc-radius-control); }
+.qc-document-controls button:not(.qc-button):active { background: var(--qc-selected-bg); box-shadow: inset 0 2px 3px rgba(25,27,32,.12); }
+.qc-document-controls .qc-document-back button { margin-bottom: 0; }
+@media (hover:hover) { .qc-document-controls button:not(.qc-button):hover { background: var(--qc-selected-bg); border-color: var(--qc-color-orange-ink); } }
+@media (max-width:767px), (pointer:coarse) { .qc-document-controls button:not(.qc-button) { min-height: 44px; } }
+/* After hover rules: keep pressed feedback visible while the pointer hovers. */
+:is(.qc-document-controls,.qc-document-dialog-scope) .qc-button:active:not(:disabled) { box-shadow: inset 0 2px 3px rgba(25,27,32,.16); }
+:is(.qc-document-controls,.qc-document-dialog-scope) .qc-button[data-qc-variant='primary']:active:not(:disabled) { background: var(--qc-gradient-primary-pressed); }
+.qc-document-dialog-scope :is(button.bg-black,button.bg-orange-600,button.bg-orange-500,button.bg-\[\#FF6B35\]):active:not(:disabled), .qc-document-preview form button[type='submit']:active { background: var(--qc-gradient-primary-pressed); box-shadow: inset 0 2px 3px rgba(25,27,32,.16); }
+
+/* Existing preview pencils are UI affordances, not document text. */
+.qc-document-preview .qc-document-paper button:not(.qc-button) { min-height: 32px; min-width: 32px; border-radius: var(--qc-radius-small); }
+.qc-document-preview .qc-document-paper button:active:not(:disabled) { box-shadow: inset 0 2px 3px rgba(25,27,32,.16); }
+.qc-document-dialog-scope .text-\[\#FF6B35\] { color: var(--qc-color-orange-ink); }
+/* The edit-target overlay spans whole document regions - a generic hover fill
+   would cover the region content entirely, so it is excluded here (owner
+   2026-09-26: hovering a line item must never blank the line). */
+@media (hover:hover) { .qc-document-preview .qc-document-paper button:hover:not(:disabled):not(.qc-output-edit-target):not(.qc-output-empty-target) { background-color: var(--qc-selected-bg); color: var(--qc-color-orange-ink); } }
+@media (max-width:767px), (pointer:coarse) { .qc-document-preview .qc-document-paper button:not(.qc-button) { min-width: 44px; min-height: 44px; } }

@@ -1,0 +1,141 @@
+{
+  "date": "2026-09-24",
+  "baseline": "quotecore-plus-smart-assistant-P0-integrated-2026-09-24.zip",
+  "baseline_sha256": "46ba0b8c753bce63835abecf7a072b05de80cadc60aa8077bc3a337956cdd0d2",
+  "baseline_commit_from_integrator": "40d5607d",
+  "status": "Static implementation review only. Not application acceptance.",
+  "typescript_syntax": {
+    "check": "TypeScript syntax/transpilation only, not application build or runtime tests",
+    "files": 32,
+    "errors": []
+  },
+  "pure_type_check": {
+    "status": "PASS",
+    "compiler": "external TypeScript 5.8.3",
+    "scope": "strict noEmit pure domain + supplied domain test source + existing engine/converters; external type-only Supabase alias shim; not full project"
+  },
+  "local_imports": {
+    "check": "Local source import path existence only; not external package/API type resolution",
+    "files": 32,
+    "local_imports": 141,
+    "unresolved": []
+  },
+  "unused_import_identifier_scan": [],
+  "harness_js_syntax": "PASS (node --check only; neither harness executed)",
+  "css": {
+    "errors": [],
+    "tokens": [
+      "--qc-bg-subtle",
+      "--qc-bg-surface",
+      "--qc-border-control",
+      "--qc-border-divider",
+      "--qc-radius-card",
+      "--qc-radius-control",
+      "--qc-shadow-raised",
+      "--qc-text-body",
+      "--qc-text-secondary"
+    ],
+    "missing_tokens": [],
+    "browser_rendered": false
+  },
+  "source_integrity": {
+    "original_files": 2330,
+    "original_byte_identical": 2324,
+    "original_modified": [
+      "quotecore-plus/app/(auth)/[workspaceSlug]/account/smart-assistant/AssistantPermissionsPanel.tsx",
+      "quotecore-plus/app/(auth)/[workspaceSlug]/assistant/ChatClient.tsx",
+      "quotecore-plus/app/components/smart-assistant/SmartAssistantLauncher.tsx",
+      "quotecore-plus/app/components/smart-assistant/ui/AssistantButton.tsx",
+      "quotecore-plus/app/lib/smart-assistant/orchestrator.ts",
+      "quotecore-plus/docs/SMART_ASSISTANT_V2_PLAN.md"
+    ],
+    "original_removed": [],
+    "outside_domain_changes": [],
+    "legacy_bodies_identical_except_export_import_rename": true,
+    "protected_hashes": {
+      "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/actions.ts": "993f4bb791e2f024a66450a5c9b0530b958bd06042fa9b9b7b13e8ddca6c1135",
+      "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/new/actions.ts": "981b56bdb217d6fe1d0c55a23d53f0b202a86b29934f18fd6b4850b056bb0bae",
+      "quotecore-plus/app/api/smart-assistant/transcribe/route.ts": "43f11c12fe7719d5afa2a7b1e91947a144eaa9c852af655b34639c401bb528c6",
+      "quotecore-plus/app/api/smart-assistant/turn/route.ts": "a0d6c609cc69f57dcd9a7ef21de0ebd312bed92411c2b32b7b58c3eb1bed5744",
+      "quotecore-plus/app/components/ui/PasswordField.tsx": "adbb30c82253a7b6668295ee8c05bea803a5458a6f2c9fdbd21eebb34f3d0180",
+      "quotecore-plus/app/components/ui/ScrollIndicator.tsx": "55ed300e2da8a72ec90676547ccbe3ed5ba2d3c1937b8c80ef2b09669a44d935",
+      "quotecore-plus/app/components/ui/v2/QcButton.tsx": "ae07f5ee6ea2b7f591d25a8de4d04cfe052e8cb8198ce1ec47db62f4af8778b8",
+      "quotecore-plus/app/components/ui/v2/QcDialog.tsx": "4730dd9a6865b7f842fd7a54fa2489765f86dd81556d5391240745561289524d",
+      "quotecore-plus/app/components/ui/v2/QcField.tsx": "b4d3db620ec4bd74f24637ee7be4ff2c1683a4d0f5b7dea0a30fd1f69d6ee575",
+      "quotecore-plus/app/components/ui/v2/QcMoneySummary.tsx": "1947413dff91a83eb9d2ad945ee66239df3e94e291f8463d5520e449bfb3b1de",
+      "quotecore-plus/app/components/ui/v2/QcSurface.tsx": "db1215004206da58ea6eaae2617174ba8f272f1129c01c62188df76b85baaaa7",
+      "quotecore-plus/app/components/ui/v2/QcWorkflowStepper.tsx": "1fc90d14a00c0242561849f30f0670fc148d9303109cf91af43f1c4092ba0316",
+      "quotecore-plus/app/components/ui/v2/README.md": "b4a89af3fc17c05b0a7cd526888f0cdcc0229593df6718995c71987e75e1c22b",
+      "quotecore-plus/app/components/ui/v2/qc-adapters.css": "bb32b7ec3963c8e51374524c5c29c0dd383ca91244b7d09ef58a9c02c3278417",
+      "quotecore-plus/app/components/ui/v2/qc-overlays.css": "8580afc18cb63dbe5f6b329b0bce37caeeeabf90908e342625108df515237484",
+      "quotecore-plus/app/components/ui/v2/qc-tokens.css": "2e66338ce8f9dd80e940cdedbda7bc6bbadf2d85e63348c2770769359d94ed0c",
+      "quotecore-plus/app/components/ui/v2/qc.css": "7cef82680445a61dc9cb68f1d886bf9e26e21c255c3e6acddaa4b8df0ef03823",
+      "quotecore-plus/app/components/ui/v2/useQcFeedback.tsx": "4561ca826f9a4719988a18cc88c005c1e6528af2526841ad556909ab2f7a42d9",
+      "quotecore-plus/app/lib/billing/entitlements.ts": "184cb5e19874257a8271966082fbe6de2cebaa620e413bb4df480c0c2b156777",
+      "quotecore-plus/app/lib/billing/errors.ts": "b12c9b9d5d381dffd4d96b8d9ff88f756cb6433578ab7593744aa6953b41c306",
+      "quotecore-plus/app/lib/billing/features.ts": "4f28931fc306574a7bd264b14cf6185d71971c7632422b16685f5a90c5b6843f",
+      "quotecore-plus/app/lib/billing/paywall-plans.ts": "ea045b8264da69c967668a113119b9284cbe2eea2c803a140b4e03b6cbd08d2e",
+      "quotecore-plus/app/lib/billing/quote-creation.ts": "1abf3b05fd6605bb07be8632a52ece1d8706608cd6fb490fcc8d3ecf4f219176",
+      "quotecore-plus/app/lib/billing/stripe.ts": "a26dd9e7d6bb64de499d2100e9f06681919ebba04c9d1156d789d657e061d74f",
+      "quotecore-plus/app/lib/pricing/calcTracer.ts": "bdde5a25488292a9b827abcf1c4e4b9a1eb3fd7994afee3b0a481ed6290f7b3a",
+      "quotecore-plus/app/lib/pricing/engine.ts": "b193a00c1ef5d1aa15c6dc7fb44a316d16e0f6bc942936d137dce23f7468817a",
+      "quotecore-plus/app/lib/supabase/admin.ts": "df62176d1f524ecd0141f1d21e307fc80b8f7d98fe721bbbda99ac134551ba88",
+      "quotecore-plus/app/lib/supabase/client.ts": "1bec08f43933d1d7b2a0ce4d42bc923343ee6e9961641e178a7aa51353b17b8f",
+      "quotecore-plus/app/lib/supabase/cookie-config.ts": "9e81d4e1cb7fec177881a5195ff1adc538a2612b14a134e023f8eb134ffc509f",
+      "quotecore-plus/app/lib/supabase/database.types.ts": "e5cd7d7d925eca5348e7d53ec7d0ab12e1010b3dc1c432f9092346489f04a36d",
+      "quotecore-plus/app/lib/supabase/free-client.ts": "930c5055eb9b270c2727d4b575d049a7dd5a411554575c2adc3200fb2060321b",
+      "quotecore-plus/app/lib/supabase/server.ts": "8b9ee4965511b76d379b342043d0913da5a7f4b2bcbd9ee9ae8a9ac2444651f3",
+      "quotecore-plus/app/lib/supabase/sync-fields.ts": "2ccf8b898f77d76dd1293522a07d3bccb19e7187462c85ec5517fe28978cad84",
+      "quotecore-plus/middleware.ts": "0bc6f30f650ab5d861ffdf9a1e273a280a77943be7522dc1a10e11a052a6ba7c",
+      "quotecore-plus/package-lock.json": "3d58d7afa0aa4232c6bf1ccf358cb37f946f20f33fcae3b404888ecd00bfd777",
+      "quotecore-plus/package.json": "a29f3301efc2a42bd219b983b6fc879d7cf08b0f628375751fcfe0fb7f1be817"
+    }
+  },
+  "sql": {
+    "status": "DRAFT ONLY; no PostgreSQL parse or execution",
+    "files": [
+      "quotecore-plus/backend/supabase/migrations/20260924133000_sa_v2_p4_drafts.sql",
+      "quotecore-plus/backend/supabase/migrations/20260924130000_sa_v2_p1_navigation.sql",
+      "quotecore-plus/backend/supabase/migrations/20260924131000_sa_v2_p2_attention.sql",
+      "quotecore-plus/backend/supabase/migrations/20260924132000_sa_v2_p3_actions.sql"
+    ],
+    "new_function_names": [
+      "sa_v2_action_cancel",
+      "sa_v2_action_confirm_atomic",
+      "sa_v2_action_propose",
+      "sa_v2_action_read",
+      "sa_v2_action_view",
+      "sa_v2_actor_context",
+      "sa_v2_attention",
+      "sa_v2_card_add",
+      "sa_v2_context_set",
+      "sa_v2_creation_checkpoint",
+      "sa_v2_creation_claim",
+      "sa_v2_creation_context",
+      "sa_v2_creation_context_private",
+      "sa_v2_creation_finish",
+      "sa_v2_creation_uncertain",
+      "sa_v2_match_score",
+      "sa_v2_record",
+      "sa_v2_run_scope_add",
+      "sa_v2_runtime",
+      "sa_v2_search",
+      "sa_v2_session_read",
+      "sa_v2_snapshot_private",
+      "sa_v2_target_snapshot"
+    ],
+    "redefines_preexisting_functions": false
+  },
+  "not_run": [
+    "Application runtime",
+    "Pinned full Next build",
+    "Full repository ESLint",
+    "Any pure test execution",
+    "V1 regression harness",
+    "V2 API harness",
+    "V2 browser harness",
+    "SQL migrations/grants/transactions",
+    "Live model accuracy/latency",
+    "Physical device/PWA/microphone testing"
+  ]
+}

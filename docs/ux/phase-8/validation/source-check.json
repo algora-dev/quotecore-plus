@@ -1,0 +1,32 @@
+{
+  "modified": [
+    "app/components/ui/v2/useQcFeedback.tsx",
+    "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+    "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/template-form.tsx",
+    "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+    "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+    "app/(auth)/[workspaceSlug]/resources/EditCustomerTemplateModal.tsx",
+    "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+    "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+    "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+    "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx",
+    "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+    "app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplatesList.tsx",
+    "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+    "app/(auth)/[workspaceSlug]/resources/new/page.tsx",
+    "app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/page.tsx",
+    "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx"
+  ],
+  "added": [
+    "app/components/ui/v2/qc-feedback.css",
+    "app/components/ui/v2/QcActionNotice.tsx"
+  ]
+}

@@ -12,10 +12,12 @@
  * matching the old <select> onChange contract so call sites stay simple.
  */
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useId } from 'react';
 import type { FlashingLibraryRow } from '@/app/lib/types';
 
 interface Props {
+  /** Phase 5 opt-in: native keyboard-operable option buttons. */
+  appearance?: 'legacy' | 'v2';
   /** All flashings available to the company. */
   flashings: FlashingLibraryRow[];
   /** Currently selected flashing id, or undefined for "None". */
@@ -35,6 +37,7 @@ interface Props {
 }
 
 export function SearchableFlashingSelect({
+  appearance = 'legacy',
   flashings,
   value,
   onChange,
@@ -44,6 +47,8 @@ export function SearchableFlashingSelect({
   placeholder = 'Search drawings & images...',
 }: Props) {
   const [open, setOpen] = useState(false);
+  const fieldId = useId();
+  const OptionTag = appearance === 'v2' ? 'button' : 'div';
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -91,17 +96,21 @@ export function SearchableFlashingSelect({
   const inputClasses = isSm
     ? 'w-full px-2 py-1 text-xs border border-slate-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 cursor-pointer'
     : 'w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 cursor-pointer';
-  const itemClasses = isSm
+  const itemClasses = (appearance === 'v2' ? 'w-full text-left ' : '') + (isSm
     ? 'px-2 py-1.5 text-xs cursor-pointer hover:bg-orange-50'
-    : 'px-3 py-2 text-sm cursor-pointer hover:bg-orange-50';
+    : 'px-3 py-2 text-sm cursor-pointer hover:bg-orange-50');
 
   return (
     <div className="relative" ref={containerRef}>
       {label && (
-        <label className={`block ${isSm ? 'text-xs' : 'text-sm'} text-slate-600 mb-1`}>{label}</label>
+        <label htmlFor={appearance === 'v2' ? fieldId : undefined} className={`block ${isSm ? 'text-xs' : 'text-sm'} text-slate-600 mb-1`}>{label}</label>
       )}
       {/* Click-to-open display */}
       <button
+        id={appearance === 'v2' ? fieldId : undefined}
+        aria-label={appearance === 'v2' ? (label || 'Choose a drawing or image') : undefined}
+        aria-expanded={appearance === 'v2' ? open : undefined}
+        aria-controls={appearance === 'v2' && open ? `${fieldId}-options` : undefined}
         type="button"
         onClick={() => {
           setOpen(!open);
@@ -130,6 +139,7 @@ export function SearchableFlashingSelect({
             <input
               ref={inputRef}
               type="text"
+              aria-label={appearance === 'v2' ? 'Search drawings and images' : undefined}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={placeholder}
@@ -138,14 +148,14 @@ export function SearchableFlashingSelect({
           </div>
 
           {/* Results */}
-          <div className="overflow-y-auto flex-1">
+          <div id={appearance === 'v2' ? `${fieldId}-options` : undefined} className="overflow-y-auto flex-1">
             {/* None option */}
-            <div
+            <OptionTag type={appearance === 'v2' ? 'button' : undefined}
               onClick={() => handleSelect(undefined)}
               className={`${itemClasses} text-slate-500 italic ${!value ? 'bg-orange-50' : ''}`}
             >
               None
-            </div>
+            </OptionTag>
 
             {linked.length > 0 && (
               <>
@@ -153,13 +163,13 @@ export function SearchableFlashingSelect({
                   Component Flashings
                 </div>
                 {linked.map((f) => (
-                  <div
+                  <OptionTag type={appearance === 'v2' ? 'button' : undefined}
                     key={f.id}
                     onClick={() => handleSelect(f.id)}
                     className={`${itemClasses} ${value === f.id ? 'bg-orange-50 text-orange-900 font-medium' : 'text-slate-700'}`}
                   >
                     {f.name}
-                  </div>
+                  </OptionTag>
                 ))}
               </>
             )}
@@ -172,13 +182,13 @@ export function SearchableFlashingSelect({
                   </div>
                 )}
                 {others.map((f) => (
-                  <div
+                  <OptionTag type={appearance === 'v2' ? 'button' : undefined}
                     key={f.id}
                     onClick={() => handleSelect(f.id)}
                     className={`${itemClasses} ${value === f.id ? 'bg-orange-50 text-orange-900 font-medium' : 'text-slate-700'}`}
                   >
                     {f.name}
-                  </div>
+                  </OptionTag>
                 ))}
               </>
             )}

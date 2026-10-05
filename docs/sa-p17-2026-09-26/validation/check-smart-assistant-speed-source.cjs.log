@@ -1,0 +1,4 @@
+PASS TypeScript/TSX syntax across 80 assistant files (NOT semantic typing).
+PASS additive SQL structure/allowlist checks. PostgreSQL parsing, deployment, grants/RLS and runtime results remain UNTESTED.
+
+EXIT_CODE=0

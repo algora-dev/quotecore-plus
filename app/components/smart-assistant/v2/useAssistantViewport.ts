@@ -1,0 +1,45 @@
+'use client';
+import { useEffect, type RefObject } from 'react';
+
+/** Fit this assistant only to the usable viewport; never change app-wide CSS. */
+export function useAssistantViewport(root: RefObject<HTMLDivElement>, visible: boolean) {
+  useEffect(() => {
+    if (!visible || !root.current) return;
+    const node = root.current;
+    // Both existing hosts are assistant-owned: the native dialog and standalone wrapper.
+    const host = node.parentElement;
+    if (!host) return;
+    const targets = [node, host];
+    const names = ['--sa-viewport-height', '--sa-viewport-top', '--sa-viewport-width'];
+    const before = targets.map(t => names.map(n => t.style.getPropertyValue(n)));
+    const viewport = window.visualViewport;
+    let raf = 0;
+    const measure = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        // Don't turn accessibility pinch-zoom into a miniature unzoomed interface.
+        if (viewport && Math.abs(viewport.scale - 1) > 0.05) return;
+        const height = Math.round(viewport?.height ?? window.innerHeight);
+        const width = Math.round(viewport?.width ?? window.innerWidth);
+        for (const t of targets) {
+          t.style.setProperty(names[0], `${height}px`);
+          t.style.setProperty(names[1], `${Math.round(viewport?.offsetTop ?? 0)}px`);
+          t.style.setProperty(names[2], `${width}px`);
+        }
+        node.dataset.saCompactHeight = height < 560 ? 'true' : 'false';
+      });
+    };
+    measure();
+    viewport?.addEventListener('resize', measure);
+    viewport?.addEventListener('scroll', measure);
+    window.addEventListener('resize', measure);
+    return () => {
+      cancelAnimationFrame(raf);
+      viewport?.removeEventListener('resize', measure);
+      viewport?.removeEventListener('scroll', measure);
+      window.removeEventListener('resize', measure);
+      targets.forEach((t, i) => names.forEach((n, j) => { if (before[i][j]) t.style.setProperty(n, before[i][j]); else t.style.removeProperty(n); }));
+      delete node.dataset.saCompactHeight;
+    };
+  }, [root, visible]);
+}

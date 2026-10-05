@@ -1,0 +1,7 @@
+{
+  "method": "Differential only, validation-only approximate dependency ambient shims; not a clean build/typecheck. Line numbers excluded from comparison because code moved.",
+  "baseline_diagnostic_count": 758,
+  "candidate_diagnostic_count": 758,
+  "new_diagnostic_count": 0,
+  "removed_diagnostic_count": 0
+}

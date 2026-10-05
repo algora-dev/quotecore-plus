@@ -23,7 +23,6 @@ import BlogHeader from "./BlogHeader";
 
 export default function HeroVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const transitionRef = useRef<HTMLElement>(null);
   const heroBlockRef = useRef<HTMLDivElement>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -65,25 +64,6 @@ export default function HeroVideo() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [heroCollapsed]);
 
-  // Slide-in animation for transition text lines
-  useEffect(() => {
-    const section = transitionRef.current;
-    if (!section) return;
-    const lines = section.querySelectorAll(".hero-slide-in");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -20% 0px" }
-    );
-    lines.forEach((line) => observer.observe(line));
-    return () => observer.disconnect();
-  }, []);
-
   const toggleMute = () => {
     const v = videoRef.current;
     if (!v) return;
@@ -107,6 +87,8 @@ export default function HeroVideo() {
   const handleEnded = () => {
     setIsPlaying(false);
     setVideoEnded(true);
+    // Let SetupHelpModal know the video has finished (fallback trigger path)
+    window.dispatchEvent(new Event("qc:hero-video-ended"));
   };
 
   return (
@@ -200,38 +182,6 @@ export default function HeroVideo() {
             </svg>
           </div>
         </section>
-
-        {/* ── Transition message section ── */}
-        <section ref={transitionRef} className="hero-transition-section bg-white py-32 sm:py-40 lg:py-52">
-          <div className="mx-auto max-w-3xl px-6 text-center lg:px-8">
-            <div className="space-y-4">
-              <p
-                className="hero-slide-in text-xl font-semibold text-zinc-900 sm:text-2xl lg:text-3xl"
-                style={{ "--hero-slide-index": 0 } as React.CSSProperties}
-              >
-                Add your components.
-              </p>
-              <p
-                className="hero-slide-in text-xl font-semibold text-zinc-900 sm:text-2xl lg:text-3xl"
-                style={{ "--hero-slide-index": 1 } as React.CSSProperties}
-              >
-                Measure with AI or manually.
-              </p>
-              <p
-                className="hero-slide-in text-xl font-semibold text-zinc-900 sm:text-2xl lg:text-3xl"
-                style={{ "--hero-slide-index": 2 } as React.CSSProperties}
-              >
-                Send the quote to your customer.
-              </p>
-              <p
-                className="hero-slide-in text-xl font-semibold text-[#FF6B35] sm:text-2xl lg:text-3xl"
-                style={{ "--hero-slide-index": 3 } as React.CSSProperties}
-              >
-                Done.
-              </p>
-            </div>
-          </div>
-        </section>
       </div>
 
       <style>{`
@@ -240,29 +190,9 @@ export default function HeroVideo() {
           display: none !important;
         }
 
-        /* Make header more transparent over video when hero is active */
-        body.hero-video-active .hero-header-transparent {
-          background: rgba(255, 255, 255, 0.35) !important;
-          backdrop-blur: 8px !important;
-          border-color: rgba(255, 255, 255, 0.3) !important;
-          box-shadow: none !important;
-        }
-
-        /* Transition text — slide in from left on scroll */
-        .hero-slide-in {
-          opacity: 0;
-          transform: translateX(-60px);
-          transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-          transition-delay: calc(var(--hero-slide-index) * 0.15s);
-        }
-        .hero-slide-in.is-visible {
-          opacity: 1;
-          transform: translateX(0);
-        }
-
-        /* Desktop: video fills viewport minus header (h-20 = 5rem) */
+        /* Desktop: video fills viewport minus the 72px marketing header */
         .hero-video-section {
-          height: calc(100vh - 5rem);
+          height: calc(100vh - 4.5rem);
         }
 
         /* Mobile: video fits screen with natural aspect ratio */
@@ -274,11 +204,6 @@ export default function HeroVideo() {
           .hero-video-element {
             position: relative !important;
             object-fit: contain !important;
-          }
-          /* Smaller transition text on mobile */
-          .hero-slide-in {
-            font-size: 1.125rem;
-            line-height: 1.75rem;
           }
         }
       `}</style>

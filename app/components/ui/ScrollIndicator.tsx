@@ -5,6 +5,8 @@ import { useRef, useState, useEffect, type ReactNode } from 'react';
 interface ScrollIndicatorProps {
   children: ReactNode;
   className?: string;
+  /** Optional accessible name and keyboard access for a migrated data table. */
+  ariaLabel?: string;
 }
 
 /**
@@ -15,7 +17,7 @@ interface ScrollIndicatorProps {
  *
  * The bar is always visible: faint orange at idle, brighter when scrolling.
  */
-export function ScrollIndicator({ children, className = '' }: ScrollIndicatorProps) {
+export function ScrollIndicator({ children, className = '', ariaLabel }: ScrollIndicatorProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [ratio, setRatio] = useState(0);
   const [thumbWidth, setThumbWidth] = useState(30);
@@ -68,6 +70,9 @@ export function ScrollIndicator({ children, className = '' }: ScrollIndicatorPro
     <div className={className}>
       <div
         ref={scrollRef}
+        role={ariaLabel ? 'region' : undefined}
+        aria-label={ariaLabel}
+        tabIndex={ariaLabel ? 0 : undefined}
         className="overflow-x-auto scrollbar-hide"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >

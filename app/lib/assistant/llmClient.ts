@@ -76,7 +76,11 @@ export interface ChatTurnResult {
   text: string;
   /** Tool calls the model requested (empty when it produced a final answer). */
   toolCalls: LlmToolCall[];
-  /** Best-effort token usage for this step (in+out). */
+  /** Prompt/input tokens for this step. */
+  tokensIn: number;
+  /** Completion/output tokens for this step. */
+  tokensOut: number;
+  /** Best-effort total token usage for this step (legacy field). */
   totalTokens: number;
 }
 
@@ -121,10 +125,30 @@ function toOpenAiMessages(
 }
 
 export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult> {
+  // Reasoning models (gpt-5 family) burn max_completion_tokens on hidden
+  // reasoning before any visible text. Low effort keeps synthesis quality
+  // while cutting latency and avoiding empty completions that starve the
+  // budget.
+  // 2026-09-26: OpenAI overnight REJECTED reasoning_effort combined with
+  // function tools on gpt-5.6-luna chat completions ("use /v1/responses or
+  // set reasoning_effort to 'none'") - every assistant turn died as an
+  // instant 400 upstream_error with 0 tokens. Tool turns therefore run at
+  // 'none' (tool selection needs no hidden reasoning); the final no-tools
+  // synthesis step keeps 'low'.
+  // 2026-09-28: provider-alias-proof gate + completion-token clamp. OpenAI
+  // rejects max_completion_tokens above the model cap (400 request_rejected)
+  // and rejects function tools unless reasoning_effort is explicitly set —
+  // infer neither from defaults; pin both explicitly for any gpt-5 id.
+  const chatModelId = MODEL_CONFIG.chatModel.includes('/') ? MODEL_CONFIG.chatModel.split('/').pop() ?? MODEL_CONFIG.chatModel : MODEL_CONFIG.chatModel;
+  const reasoning: { reasoning_effort?: 'low' | 'none' } = {};
+  if (chatModelId.startsWith('gpt-5')) {
+    reasoning.reasoning_effort = input.tools.length > 0 ? 'none' : 'low';
+  }
   const stream = await client().chat.completions.create(
     {
-      model: MODEL_CONFIG.chatModel,
-      max_completion_tokens: MODEL_LIMITS.maxOutputTokens,
+      model: chatModelId,
+      max_completion_tokens: Math.min(MODEL_LIMITS.maxOutputTokens, 64000),
+      ...reasoning,
       messages: toOpenAiMessages(input.messages),
       tools: input.tools.map((t) => ({
         type: 'function' as const,
@@ -141,6 +165,8 @@ export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult>
   );
 
   let text = '';
+  let usageIn = 0;
+  let usageOut = 0;
   let usage = 0;
   // Accumulate streamed tool-call fragments by index.
   const toolAcc = new Map<
@@ -165,12 +191,16 @@ export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult>
         toolAcc.set(idx, cur);
       }
     }
-    if (chunk.usage) usage = chunk.usage.total_tokens ?? usage;
+    if (chunk.usage) {
+      usageIn = chunk.usage.prompt_tokens ?? usageIn;
+      usageOut = chunk.usage.completion_tokens ?? usageOut;
+      usage = chunk.usage.total_tokens ?? usage;
+    }
   }
 
   const toolCalls: LlmToolCall[] = [...toolAcc.values()]
     .filter((t) => t.name)
     .map((t) => ({ id: t.id, name: t.name, arguments: t.args || '{}' }));
 
-  return { text, toolCalls, totalTokens: usage };
+  return { text, toolCalls, tokensIn: usageIn, tokensOut: usageOut, totalTokens: usage };
 }

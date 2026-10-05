@@ -38,7 +38,7 @@ export default function Post() {
               ["US units support", "Squares, feet, inches - not just metric"],
               ["Mobile-friendly", "Works on site, in a truck, not just at a desk"],
               ["US pricing in USD", "Pricing and support for US suppliers and distributors"],
-              ["Free trial", "Low-risk way to test before committing"],
+              ["Free trial or money-back guarantee", "Low-risk way to test before committing"],
             ].map(([feature, why]) => (
               <tr key={feature}>
                 <td className="px-4 py-3 font-medium text-zinc-800">{feature}</td>
@@ -53,11 +53,11 @@ export default function Post() {
 
       <h2>The best quoting software for US contractors in 2026</h2>
 
-      <h3>1. QuoteCore+ — Best for roofers and measured-trade quoting</h3>
-      <p><strong>Pricing:</strong> Free trial (20 AI scan points), Lite (free), Starter ($29/month), Pro ($59/month), Pro Plus ($99/month). All plans include digital takeoff and quoting.</p>
-      <p>QuoteCore+ is <a href="/roofing-quoting-software">roofing quoting software</a> built specifically for roofing and construction trades that measure from plans or site — including the wider <a href="/construction-quoting-software">construction quoting workflow</a> used by carpenters, plasterers, subcontractors and general contractors. The core workflow is: measure the roof (digitally or manually), apply pitch and waste factors, generate material quantities from a component library, and produce a branded quote.</p>
+      <h3>1. QuoteCore+ - Best for roofers and measured-trade quoting</h3>
+      <p><strong>Pricing:</strong> Free tools with no signup; paid plans from $19/month. All plans include digital takeoff and quoting, and every plan is backed by a 30-day money-back guarantee.</p>
+      <p>QuoteCore+ is <a href="/roofing-quoting-software">roofing quoting software</a> built specifically for roofing and construction trades that measure from plans or site - including the wider <a href="/construction-quoting-software">construction quoting workflow</a> used by carpenters, plasterers, subcontractors and general contractors. The core workflow is: measure the roof (digitally or manually), apply pitch and waste factors, generate material quantities from a component library, and produce a branded quote.</p>
       <p>The standout feature is <strong>Smart Components</strong> - reusable material assemblies that automatically calculate quantities from measurements. An asphalt shingle roof component might include shingles (by the square), underlayment, ice & water shield, drip edge, ridge cap, nails, and flashing - all calculated from one roof area entry with pitch applied. You build the component once, use it on every quote, and the maths is always consistent.</p>
-      <p>QuoteCore+ stands out with <a href="/features/ai-scan-assist">AI Scan Assist</a>, which reads roof plans and identifies roof areas and flashings automatically — you verify and adjust, then carry everything into a priced quote.</p>
+      <p>QuoteCore+ stands out with <a href="/features/ai-scan-assist">AI Scan Assist</a>, which reads roof plans and identifies roof areas and flashings automatically - you verify and adjust, then carry everything into a priced quote.</p>
       <p>For US roofers, QuoteCore+ handles asphalt shingles, standing seam metal, corrugated metal, TPO, EPDM, and tile roofing. The free <a href="/free-roofing-calculator">roofing calculator</a> and <a href="/free-roofing-takeoff-builder">roof takeoff builder</a> let you try the measurement and pricing engine before signing up.</p>
       <p><strong>Where it falls short:</strong> QuoteCore+ is built for measured trades - roofing, cladding, concrete, landscaping. If you need job scheduling, dispatch, and reactive service workflows, a trade management platform will serve you better.</p>
       <p><strong>Best for:</strong> Roofers, cladding installers, and trades that measure from plans and need accurate material quantities.</p>
@@ -84,34 +84,34 @@ export default function Post() {
         />
       </div>
 
-      <h3>2. Jobber — Best for home service businesses</h3>
+      <h3>2. Jobber - Best for home service businesses</h3>
       <p><strong>Pricing:</strong> From $49/month (USD). 14-day free trial.</p>
       <p>Jobber is a field service management platform popular with US home service businesses - landscaping, cleaning, HVAC, plumbing, and general contracting. It handles quoting, scheduling, dispatch, invoicing, and client communication in one system.</p>
       <p>The quoting module supports line items, packages, and add-ons. It produces professional-looking quotes that clients can approve online. However, there is no digital takeoff or material calculation engine - you enter quantities manually.</p>
       <p><strong>Where it falls short:</strong> No takeoff. No material calculations. No component libraries. Quoting is manual line-item entry. Not built for measured trades like roofing.</p>
       <p><strong>Best for:</strong> Home service businesses that need scheduling, dispatch, and client communication.</p>
 
-      <h3>3. Contractor Foreman — Best for general contractors</h3>
+      <h3>3. Contractor Foreman - Best for general contractors</h3>
       <p><strong>Pricing:</strong> From $49/month (USD).</p>
       <p>Contractor Foreman is an all-in-one construction management tool for US general contractors. It includes estimating, scheduling, project management, time tracking, and invoicing. The estimating module supports cost databases (RSMeans optional), assembly-based estimating, and custom templates.</p>
       <p>For GCs who need estimating tied to project management, Contractor Foreman offers good value. However, the estimating is cost-line based, not measurement-based - you do not measure a roof and get automatic material quantities.</p>
       <p><strong>Where it falls short:</strong> No digital takeoff from roof plans. No component-based material calculations from measurements. Estimating is line-item entry with optional cost database.</p>
       <p><strong>Best for:</strong> General contractors who need estimating + project management in one tool.</p>
 
-      <h3>4. Clear Estimates — Best for remodelers</h3>
+      <h3>4. Clear Estimates - Best for remodelers</h3>
       <p><strong>Pricing:</strong> From $59/month (USD).</p>
       <p>Clear Estimates is a quoting and estimating tool built for US remodelers and home improvement contractors. It includes a built-in cost database, template-based quoting, and proposal generation. The interface is straightforward and the learning curve is gentle.</p>
       <p><strong>Where it falls short:</strong> No takeoff. No measurement-based material calculations. No roofing-specific features. Limited to line-item estimating with a cost database.</p>
       <p><strong>Best for:</strong> Remodelers and home improvement contractors who want simple, template-based quoting.</p>
 
-      <h3>5. Procore — Best for large commercial contractors</h3>
+      <h3>5. Procore - Best for large commercial contractors</h3>
       <p><strong>Pricing:</strong> Enterprise pricing (custom quotes, typically $375+/month).</p>
       <p>Procore is the enterprise standard for US commercial construction. It handles preconstruction, project management, financials, and field execution. The estimating module is powerful and supports detailed takeoffs, cost databases, and assembly-based estimating.</p>
       <p>For large commercial contractors running multiple projects with dedicated estimators, Procore is the gold standard. But it is overkill for a roofing contractor quoting residential re-roofs.</p>
       <p><strong>Where it falls short:</strong> Enterprise pricing. Complex setup. Not designed for residential or small commercial roofing. No roofing-specific component libraries.</p>
       <p><strong>Best for:</strong> Large commercial contractors with dedicated estimators.</p>
 
-      <h3>6. Houzz Pro — Best for design-build firms</h3>
+      <h3>6. Houzz Pro - Best for design-build firms</h3>
       <p><strong>Pricing:</strong> From $99/month (USD).</p>
       <p>Houzz Pro is a business management tool for home improvement professionals, especially design-build firms and remodelers. It includes quoting, project management, client communication, and marketing tools. The quoting module produces polished proposals with images and product selections.</p>
       <p><strong>Where it falls short:</strong> No takeoff. No material calculations. Not built for trades that measure and quantify. Quoting is proposal-focused, not quantity-focused.</p>
@@ -158,7 +158,7 @@ export default function Post() {
       <h2>How to choose</h2>
       <p>The right choice depends on your trade and workflow:</p>
       <ul>
-        <li><strong>Roofing, cladding, or measured trades:</strong> QuoteCore+ is the only option here with digital takeoff and component-based material calculations. <a href="/free-trial">Try it free</a>.</li>
+        <li><strong>Roofing, cladding, or measured trades:</strong> QuoteCore+ is the only option here with digital takeoff and component-based material calculations. <a href="/free-trial">Get started</a>.</li>
         <li><strong>Home service businesses (landscaping, cleaning, HVAC):</strong> Jobber for scheduling and dispatch.</li>
         <li><strong>General contractors needing estimating + PM:</strong> Contractor Foreman.</li>
         <li><strong>Remodelers wanting simple template quoting:</strong> Clear Estimates.</li>
@@ -166,7 +166,7 @@ export default function Post() {
         <li><strong>Design-build firms needing polished proposals:</strong> Houzz Pro.</li>
       </ul>
 
-      <p>If you want to see how QuoteCore+ compares to spreadsheet quoting in detail - including where spreadsheets genuinely hold up and where they start costing you jobs - see our <a href="/blog/roofing-quoting-software-vs-spreadsheets">roofing quoting software vs spreadsheets</a> breakdown.</p>
+      <p>If you want to see how QuoteCore+ compares to spreadsheet quoting in detail - including where spreadsheets genuinely hold up and where they start costing you jobs - see our <a href="/blog/roofing-quoting-software-vs-spreadsheets">roofing quoting software vs spreadsheets</a> breakdown. If you also work in New Zealand or know contractors there, we have a separate <a href="/blog/best-quoting-software-nz">comparison of quoting software for NZ tradies</a>.</p>
 
       <hr />
 
@@ -179,7 +179,7 @@ export default function Post() {
       <p>If you quote more than 3-4 jobs per week, quoting software will save you time. The break-even is usually within the first month. Even a free tool like QuoteCore+ Lite or a simple spreadsheet-to-PDF workflow is better than sending hand-written quotes.</p>
 
       <h3>Can I use QuoteCore+ for free?</h3>
-      <p>Yes. QuoteCore+ has a free Lite plan that includes digital takeoff and quoting. The <a href="/free-roofing-calculator">roofing calculator</a> and <a href="/free-roofing-takeoff-builder">roof takeoff builder</a> are also free to use without signing up.</p>
+      <p>Yes. QuoteCore+ has free tools (no signup) plus paid plans from $19/month that include digital takeoff and quoting. The <a href="/free-roofing-calculator">roofing calculator</a> and <a href="/free-roofing-takeoff-builder">roof takeoff builder</a> are also free to use without signing up.</p>
 
       <h3>Does QuoteCore+ support US units (squares, feet)?</h3>
       <p>Yes. QuoteCore+ supports both metric and imperial units. You can enter roof areas in square feet, pitches in degrees or ratio (e.g. 4:12), and get material quantities in squares, linear feet, or pieces.</p>

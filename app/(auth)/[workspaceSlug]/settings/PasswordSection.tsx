@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
 
@@ -39,7 +40,7 @@ export function PasswordSection({ authProvider, userEmail }: Props) {
   }
 
   return (
-    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+    <QcJourney><div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
       <div>
         <p className="text-sm font-medium text-slate-900">
           {isGoogleOnly ? 'Add Password' : 'Change Password'}
@@ -59,16 +60,16 @@ export function PasswordSection({ authProvider, userEmail }: Props) {
       <button
         onClick={handlePasswordAction}
         disabled={status === 'sending' || status === 'sent'}
-        className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
+        className={"qc-flow-control " + (`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
           status === 'sent'
             ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
             : 'bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50'
-        }`}
+        }`)}
       >
         {status === 'sending' ? 'Sending...' :
          status === 'sent' ? '✓ Email Sent' :
          isGoogleOnly ? 'Add Password' : 'Send Reset Email'}
       </button>
-    </div>
+    </div></QcJourney>
   );
 }

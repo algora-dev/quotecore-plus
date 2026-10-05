@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourneyDialog, QcJourneySteps } from '@/app/components/ui/v2/QcJourney';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   listUserCatalogs,
@@ -8,7 +9,7 @@ import {
   type UserCatalogSummary,
   type PublicCatalogSummary,
 } from '../catalog-actions';
-import type { ComponentLibraryRow } from '@/app/lib/types';
+import '@/app/components/pricing/pricing-activation.css';
 
 type ModalStep = 'select-catalog' | 'view-rows' | 'destination' | 'creating' | 'success' | 'error';
 type CatalogTab = 'my-catalogs' | 'supplier-catalogs';
@@ -22,7 +23,9 @@ const NAME_CHAR_LIMIT = 60;
 const MAPPABLE_FIELDS = [
   { value: 'name', label: 'Component Name', required: true, placeholder: 'Select a column...' },
   { value: 'sku', label: 'SKU / Product Code', required: false, placeholder: 'Select a column...' },
-  { value: 'price', label: 'Price', required: false, placeholder: 'Select a column...' },
+  { value: 'price', label: 'Material cost', required: false, placeholder: 'Select a column...' },
+  { value: 'labour', label: 'Labour cost', required: false, placeholder: 'Select a column...' },
+  { value: 'waste', label: 'Waste', required: false, placeholder: 'Select a column...' },
   { value: 'notes', label: 'Description / Notes', required: false, placeholder: 'Select a column...' },
 ] as const;
 
@@ -62,6 +65,8 @@ export function AddFromCatalogModal({
   // Column mapping - stored as Record<string, string[]> (header -> fields[]) for backend compat,
   // but the UI is field-first: user picks a column for each field via dropdown.
   const [columnMapping, setColumnMapping] = useState<Record<string, string[]>>({});
+  // How mapped waste values are applied on import: percentage or per-unit length.
+  const [wasteUnit, setWasteUnit] = useState<'percent' | 'length'>('percent');
   // fieldToHeader: which catalog column is assigned to each field (field -> header | '')
   const [fieldToHeader, setFieldToHeader] = useState<Record<string, string>>({});
 
@@ -87,15 +92,16 @@ export function AddFromCatalogModal({
   const [createdCount, setCreatedCount] = useState(0);
 
   // ── Load catalogs on mount ──────────────────────────────────────────
-  const loadMyCatalogs = useCallback(async () => {
+  const loadMyCatalogs = useCallback(async (isCurrent: () => boolean = () => true) => {
     setLoadingCatalogs(true);
+    setError(null);
     try {
       const result = await listUserCatalogs();
-      setMyCatalogs(result);
+      if (isCurrent()) setMyCatalogs(result);
     } catch {
-      setError('Failed to load your catalogs.');
+      if (isCurrent()) setError('Failed to load your catalogs.');
     } finally {
-      setLoadingCatalogs(false);
+      if (isCurrent()) setLoadingCatalogs(false);
     }
   }, []);
 
@@ -111,9 +117,12 @@ export function AddFromCatalogModal({
     }
   }, []);
 
-  // Load my catalogs on first render
-  useMemo(() => {
-    void loadMyCatalogs();
+  // P6-CATALOG-01 resolved: no network effects during render. Server-action
+  // requests cannot be aborted, so ignore a stale mount (including Strict Mode replay).
+  useEffect(() => {
+    let current = true;
+    void loadMyCatalogs(() => current);
+    return () => { current = false; };
   }, [loadMyCatalogs]);
 
   // ── Catalog selection ───────────────────────────────────────────────
@@ -144,6 +153,12 @@ export function AddFromCatalogModal({
           }
           if (!autoFieldMap.price && (lower === 'price' || lower === 'cost' || lower === 'rate' || lower === 'unit price' || lower === 'buy price')) {
             autoFieldMap.price = h;
+          }
+          if (!autoFieldMap.labour && (lower === 'labour' || lower === 'labor' || lower === 'labour rate' || lower === 'labour cost' || lower === 'wage')) {
+            autoFieldMap.labour = h;
+          }
+          if (!autoFieldMap.waste && (lower === 'waste' || lower === 'waste %' || lower === 'wastage' || lower === 'allowance')) {
+            autoFieldMap.waste = h;
           }
           if (!autoFieldMap.notes && (lower === 'notes' || lower === 'note' || lower === 'description' || lower === 'desc')) {
             autoFieldMap.notes = h;
@@ -259,6 +274,7 @@ export function AddFromCatalogModal({
         newLibraryName: destMode === 'new' ? newLibraryName.trim() : undefined,
         selectedRows: rows,
         columnMapping,
+        wasteUnit,
       });
 
       if (result.ok) {
@@ -296,7 +312,7 @@ export function AddFromCatalogModal({
       .map((row, i) => ({ row, i }))
       .filter(({ row }) => {
         if (!rowSearchFilter) return true;
-        return Object.values(row).some(v => v?.toLowerCase().includes(rowSearchFilter.toLowerCase()));
+        return Object.values(row).some(v => String(v ?? '').toLowerCase().includes(rowSearchFilter.toLowerCase()));
       });
   }, [allRows, rowSearchFilter]);
 
@@ -305,6 +321,10 @@ export function AddFromCatalogModal({
   const effectiveLimit = rowSearchFilter ? SEARCH_RENDER_LIMIT : visibleCount;
   const visibleRowData = filteredRowData.slice(0, effectiveLimit);
   const filteredIndices = filteredRowData.map(d => d.i);
+
+  // Show the SAME source row, not guessed parsed rates or invented pack rules.
+  const exampleIndex = allRows.findIndex((_, index) => selectedRowIndices.has(index));
+  const exampleRow = exampleIndex >= 0 ? allRows[exampleIndex] : undefined;
 
   // Set of headers that are currently mapped to a field (for column highlighting)
   const mappedHeaders = useMemo(() => {
@@ -338,14 +358,14 @@ export function AddFromCatalogModal({
     return () => observer.disconnect();
   }, [visibleCount, rowSearchFilter, filteredRowData.length]);
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50 p-4">
+    <QcJourneyDialog label="Create components from catalogue" size="lg">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl border border-slate-200 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-slate-900">Add from Catalog</h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 transition cursor-pointer"
+          <div><h2 className="text-lg font-semibold text-slate-900">Create components from a catalogue</h2><p className="qc-flow-description mb-0">One row becomes one basic component. Match columns, choose rows, then review the pricing rules in your library.</p></div>
+          <button aria-label={step === 'creating' ? 'Creating components, please wait' : 'Close catalogue import'}
+            onClick={onClose} disabled={step === 'creating'}
+            className="qc-icon-button qc-flow-control text-slate-400 hover:text-slate-600 transition cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -355,6 +375,8 @@ export function AddFromCatalogModal({
 
         {/* Body */}
         <div className="px-6 py-5 overflow-auto flex-1">
+          <QcJourneySteps steps={["Catalogue", "Fields & rows", "Library", "Create"]}
+            current={step === 'select-catalog' ? 0 : step === 'view-rows' ? 1 : step === 'destination' ? 2 : 3} label="Component creation progress" />
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 mb-4">
               {error}
@@ -368,21 +390,21 @@ export function AddFromCatalogModal({
               <div className="flex gap-2">
                 <button
                   onClick={() => { setTab('my-catalogs'); void loadMyCatalogs(); }}
-                  className={`px-4 py-1.5 text-xs font-medium rounded-full border transition ${
+                  className={"qc-flow-control " + (`px-4 py-1.5 text-xs font-medium rounded-full border transition ${
                     tab === 'my-catalogs'
                       ? 'bg-slate-900 text-white border-slate-900'
                       : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                  }`}
+                  }`)}
                 >
                   My Catalogs
                 </button>
                 <button
                   onClick={() => { setTab('supplier-catalogs'); void loadPublicCatalogs(searchQuery); }}
-                  className={`px-4 py-1.5 text-xs font-medium rounded-full border transition ${
+                  className={"qc-flow-control " + (`px-4 py-1.5 text-xs font-medium rounded-full border transition ${
                     tab === 'supplier-catalogs'
                       ? 'bg-slate-900 text-white border-slate-900'
                       : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                  }`}
+                  }`)}
                 >
                   Supplier Catalogs
                 </button>
@@ -394,13 +416,13 @@ export function AddFromCatalogModal({
                   <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <input
+                  <input aria-label="Search by keyword, brand, location, roofing type..."
                     type="text"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') void loadPublicCatalogs(searchQuery); }}
                     placeholder="Search by keyword, brand, location, roofing type..."
-                    className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                    className="qc-input qc-flow-search w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -415,7 +437,7 @@ export function AddFromCatalogModal({
                 myCatalogs.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
                     <p className="text-sm text-slate-500">No catalogs uploaded yet.</p>
-                    <p className="text-xs text-slate-400 mt-1">Upload a CSV catalog from the Supplier Dashboard to use this feature.</p>
+                    <p className="text-xs text-slate-400 mt-1">Upload a CSV catalogue in Resources, then return here to choose the rows you need.</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -423,9 +445,9 @@ export function AddFromCatalogModal({
                       <button
                         key={cat.id}
                         onClick={() => handleCatalogClick(cat.id, cat.headers)}
-                        className="block w-full text-left rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
+                        className="qc-flow-control qc-flow-card block w-full text-left rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-900 truncate">{cat.name}</p>
                             <p className="text-xs text-slate-400 mt-0.5">
@@ -452,9 +474,9 @@ export function AddFromCatalogModal({
                       <button
                         key={cat.id}
                         onClick={() => handleCatalogClick(cat.id, cat.headers)}
-                        className="block w-full text-left rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
+                        className="qc-flow-control qc-flow-card block w-full text-left rounded-xl border border-slate-200 bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group"
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-900 truncate">
                               {cat.public_title || cat.name}
@@ -493,7 +515,7 @@ export function AddFromCatalogModal({
                   <div className="rounded-lg border border-slate-200 overflow-hidden">
                     <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5">
                       <p className="text-xs font-medium text-slate-600">Map your catalog columns to component fields</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Only Component Name is required. We auto-detected matches where possible.</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Only Component Name is required. Suggested matches are a starting point: check what each column contains.</p>
                     </div>
                     <div className="divide-y divide-slate-100">
                       {MAPPABLE_FIELDS.map(field => {
@@ -510,12 +532,13 @@ export function AddFromCatalogModal({
                             </div>
                             <select
                               value={selectedHeader}
+                              aria-label={`Column for ${field.label}`}
                               onChange={e => handleFieldMappingChange(field.value, e.target.value)}
-                              className={`text-xs rounded-lg border px-2 py-1.5 focus:border-orange-500 focus:outline-none min-w-[140px] ${
+                              className={"qc-select " + (`text-xs rounded-lg border px-2 py-1.5 focus:border-orange-500 focus:outline-none min-w-[140px] ${
                                 isNameUnset
                                   ? 'border-orange-300 ring-1 ring-orange-200'
                                   : 'border-slate-300'
-                              }`}
+                              }`)}
                             >
                               <option value="">{field.placeholder}</option>
                               {headers.map(h => (
@@ -528,18 +551,42 @@ export function AddFromCatalogModal({
                     </div>
                   </div>
 
+                  {(fieldToHeader.waste ?? '') !== '' && (
+                    <div className="rounded-lg border border-slate-200 px-4 py-2.5 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-700">Apply waste as</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Each row&apos;s waste value is saved onto the component and used in quote calculations.</p>
+                      </div>
+                      <select
+                        value={wasteUnit}
+                        aria-label="Waste unit"
+                        onChange={e => setWasteUnit(e.target.value === 'length' ? 'length' : 'percent')}
+                        className="qc-select text-xs rounded-lg border border-slate-300 px-2 py-1.5 focus:border-orange-500 focus:outline-none min-w-[140px]"
+                      >
+                        <option value="percent">Percentage (%)</option>
+                        <option value="length">Length (per unit)</option>
+                      </select>
+                    </div>
+                  )}
+
+                  <section className="qc-catalogue-example" aria-label="Example component from selected row">
+                    <header><span className="qc-eyebrow">Your row → a Smart Component</span><h3>{exampleRow ? `Example from row ${exampleIndex + 1}` : 'Select a row to see an example'}</h3></header>
+                    {exampleRow && <dl>{MAPPABLE_FIELDS.map(field => <div key={field.value}><dt>{field.label}<small>{fieldToHeader[field.value] ? `From “${fieldToHeader[field.value]}”` : 'Not mapped'}</small></dt><dd>{fieldToHeader[field.value] ? (String(exampleRow[fieldToHeader[field.value]] ?? '') || 'Empty in this row') : 'Not supplied'}</dd></div>)}</dl>}
+                    <p>These are your selected source values. After import, check measurement, labour, waste and pitch. Roll or pack prices also need purchasing settings.</p>
+                  </section>
+
                   {/* Search + selection counter */}
                   <div className="flex items-center justify-between gap-3">
                     <div className="relative flex-1 max-w-xs">
                       <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
-                      <input
+                      <input aria-label="Filter rows..."
                         type="text"
                         value={rowSearchFilter}
                         onChange={e => setRowSearchFilter(e.target.value)}
                         placeholder="Filter rows..."
-                        className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                        className="qc-input qc-flow-search w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                       />
                     </div>
                     <span className="text-xs text-slate-500 whitespace-nowrap">
@@ -552,17 +599,24 @@ export function AddFromCatalogModal({
                     </span>
                   </div>
 
+                  <div className="qc-flow-selection-summary" role="status">
+                    <strong>{selectedRowIndices.size} of {MAX_ROWS} rows selected</strong>
+                    <span>{rowSearchFilter
+                      ? `${Array.from(selectedRowIndices).filter(index => !filteredIndices.includes(index)).length} selected outside this filter`
+                      : 'Up to the first 20 rows are selected initially. Change the checkboxes to choose your own.'}</span>
+                  </div>
                   {/* Rows table */}
-                  <div className="rounded-lg border border-slate-200 overflow-auto max-h-[40vh]">
-                    <table className="text-xs min-w-max">
+                  <div className="qc-flow-scroll rounded-lg border border-slate-200 overflow-auto max-h-[40vh]" tabIndex={0} role="region" aria-label="Catalogue rows">
+                    <table className="qc-flow-table min-w-max">
                       <thead className="sticky top-0 z-10 bg-white">
                         <tr className="border-b border-slate-200">
                           <th className="px-2 py-2 text-left w-8">
                             <input
                               type="checkbox"
+                              aria-label="Select matching rows, up to 20 total"
                               checked={filteredIndices.length > 0 && filteredIndices.every(i => selectedRowIndices.has(i))}
                               onChange={() => toggleAllFiltered(filteredIndices)}
-                              className="cursor-pointer"
+                              className="qc-check cursor-pointer"
                             />
                           </th>
                           {headers.map(h => {
@@ -588,9 +642,10 @@ export function AddFromCatalogModal({
                             <td className={`px-2 py-1.5 ${selectedRowIndices.has(i) ? 'bg-orange-50/20' : ''}`} onClick={e => e.stopPropagation()}>
                               <input
                                 type="checkbox"
+                                aria-label={`Select catalogue row ${i + 1}`}
                                 checked={selectedRowIndices.has(i)}
                                 onChange={() => toggleRow(i)}
-                                className="cursor-pointer"
+                                className="qc-check cursor-pointer"
                               />
                             </td>
                             {headers.map(h => (
@@ -622,14 +677,14 @@ export function AddFromCatalogModal({
                   ) : null}
 
                   {/* Action bar */}
-                  <div className="flex items-center justify-between">
-                    <button
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <button data-qc-variant="ghost"
                       onClick={handleReset}
-                      className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
+                      className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
                     >
                       Back
                     </button>
-                    <button
+                    <button data-qc-variant="primary"
                       onClick={() => {
                         const allMappedFields = Object.values(columnMapping).flat();
                         const hasName = allMappedFields.includes('name');
@@ -645,7 +700,7 @@ export function AddFromCatalogModal({
                         setStep('destination');
                       }}
                       disabled={selectedRowIndices.size === 0}
-                      className="px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      className="qc-flow-control qc-button px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                     >
                       Next: Choose Library ({selectedRowIndices.size} selected)
                     </button>
@@ -665,31 +720,31 @@ export function AddFromCatalogModal({
                 <div className="flex gap-2 mb-4">
                   <button
                     onClick={() => setDestMode('existing')}
-                    className={`px-4 py-1.5 text-xs font-medium rounded-full border transition ${
+                    className={"qc-flow-control " + (`px-4 py-1.5 text-xs font-medium rounded-full border transition ${
                       destMode === 'existing'
                         ? 'bg-slate-900 text-white border-slate-900'
                         : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                    }`}
+                    }`)}
                   >
                     Existing Library
                   </button>
                   <button
                     onClick={() => setDestMode('new')}
-                    className={`px-4 py-1.5 text-xs font-medium rounded-full border transition ${
+                    className={"qc-flow-control " + (`px-4 py-1.5 text-xs font-medium rounded-full border transition ${
                       destMode === 'new'
                         ? 'bg-slate-900 text-white border-slate-900'
                         : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                    }`}
+                    }`)}
                   >
                     Create New Library
                   </button>
                 </div>
 
                 {destMode === 'existing' ? (
-                  <select
+                  <select aria-label="Destination library"
                     value={existingCollectionId}
                     onChange={e => setExistingCollectionId(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                    className="qc-select w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                   >
                     {collections.map(col => (
                       <option key={col.id} value={col.id}>
@@ -698,16 +753,17 @@ export function AddFromCatalogModal({
                     ))}
                   </select>
                 ) : (
-                  <input
+                  <input aria-label="New library name..."
                     type="text"
                     value={newLibraryName}
                     onChange={e => setNewLibraryName(e.target.value)}
                     placeholder="New library name..."
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                    className="qc-input w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                   />
                 )}
               </div>
 
+              <p className="qc-flow-callout"><strong>Destination:</strong> {destMode === 'new' ? (newLibraryName || 'Name your new library above') : (collections.find(collection => collection.id === existingCollectionId)?.name || 'Choose a library above')}. Your source catalogue is not changed.</p>
               {/* Summary */}
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                 <p className="text-xs text-slate-500 mb-1">Summary</p>
@@ -715,21 +771,21 @@ export function AddFromCatalogModal({
                   Creating <span className="font-semibold">{selectedRowIndices.size}</span> component{selectedRowIndices.size !== 1 ? 's' : ''} from catalog rows.
                 </p>
                 <p className="text-xs text-slate-400 mt-1">
-                  Each row becomes a new component with mapped fields auto-populated.
+                  Each selected row creates a basic record. Check measurement type, material units and costs, labour, purchasing and allowances before quoting. Missing prices must be reviewed.
                 </p>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-between">
-                <button
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button data-qc-variant="ghost"
                   onClick={() => setStep('view-rows')}
-                  className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
+                  className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
                 >
                   Back
                 </button>
-                <button
+                <button data-qc-variant="primary"
                   onClick={handleCreate}
-                  className="px-5 py-2 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition cursor-pointer"
+                  className="qc-flow-control qc-button px-5 py-2 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition cursor-pointer"
                 >
                   Create {selectedRowIndices.size} Component{selectedRowIndices.size !== 1 ? 's' : ''}
                 </button>
@@ -757,26 +813,26 @@ export function AddFromCatalogModal({
                 Created {createdCount} component{createdCount !== 1 ? 's' : ''} successfully.
               </p>
               <p className="text-xs text-slate-400 mt-1 mb-6">
-                They are now in your library and ready to use in quotes.
+                The basic records are saved. Open them to check measurement type, purchasing, labour, waste and pitch, then use Test component before quoting.
               </p>
               <div className="flex gap-3 justify-center">
-                <button
+                <button data-qc-variant="ghost"
                   onClick={handleReset}
-                  className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
+                  className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
                 >
-                  Convert More
+                  Import more
                 </button>
-                <button
+                <button data-qc-variant="primary"
                   onClick={onClose}
-                  className="px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition cursor-pointer"
+                  className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition cursor-pointer"
                 >
-                  Done
+                  Review components
                 </button>
               </div>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

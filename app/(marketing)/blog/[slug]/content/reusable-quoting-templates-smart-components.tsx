@@ -119,7 +119,7 @@ export default function Post() {
       <p>Review them when supplier costs, labour rates, products, specifications, or business methods change. Also review any component that repeatedly differs from actual job results.</p>
       <h3>Can different trades use Smart Components™</h3>
       <p>Yes. Any repeatable product, service, measurement, or calculation can become a component. The structure adapts to roofing, construction, concrete, landscaping, electrical, plumbing, and service work.</p>
-      <p>Build a draft component with the <a href="/free-smart-component-creator">free Smart Component Creator</a>, then start a <a href="/free-trial">free QuoteCore+ trial</a> to use reusable components throughout your quoting workflow.</p>
+      <p>Build a draft component with the <a href="/free-smart-component-creator">free Smart Component Creator</a>, then get <a href="/free-trial">started with QuoteCore+</a> to use reusable components throughout your quoting workflow.</p>
     </div>
   );
 }

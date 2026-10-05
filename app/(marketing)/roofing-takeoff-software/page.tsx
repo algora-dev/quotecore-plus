@@ -3,6 +3,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import DemoCTACard from "@/components/DemoCTACard";
+import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import {
   buildSoftwareApplicationSchema,
   buildBreadcrumbSchema,
@@ -13,11 +14,11 @@ import {
 export const metadata: Metadata = {
   title: "Roofing Takeoff Software for PDF Plans | QuoteCore+",
   description:
-    "Measure roof areas, lengths and pitch from PDF plans with AI Scan Assist and digital takeoff. Get automatic material quantities and pricing. Free roof takeoff builder — no signup required.",
+    "Measure roof areas, lengths and pitch from PDF plans with AI Scan Assist and digital takeoff - on phone, tablet or desktop. Get automatic material quantities and pricing. Free roof takeoff builder - no signup required.",
   openGraph: {
     title: "Roofing Takeoff Software for PDF Plans | QuoteCore+",
     description:
-      "Measure roof areas, lengths and pitch from PDF plans with AI Scan Assist and digital takeoff. Get automatic material quantities and pricing. Free roof takeoff builder — no signup required.",
+      "Measure roof areas, lengths and pitch from PDF plans with AI Scan Assist and digital takeoff - on phone, tablet or desktop. Get automatic material quantities and pricing. Free roof takeoff builder - no signup required.",
     url: "/roofing-takeoff-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -36,12 +37,17 @@ const faqs = [
   {
     question: "How does AI Scan Assist work for roof takeoffs?",
     answer:
-      "AI Scan Assist analyses an uploaded plan and automatically identifies roof areas, ridges, hips, valleys, barges and spouting. You review and adjust the detected measurements before they become part of the estimate. It significantly speeds up the takeoff process, especially for complex roofs with multiple sections.",
+      "AI Scan Assist analyses an uploaded plan in stages: it scans the plan, you review and correct the detected roof outline, then component detection identifies ridges, hips, valleys, barges and spouting on the corrected geometry. You review and adjust everything before it becomes part of the estimate. It speeds up the takeoff process significantly, especially for complex roofs with multiple sections - and it works on mobile as well as desktop.",
+  },
+  {
+    question: "Can I do roof takeoff on my phone or tablet?",
+    answer:
+      "Yes. The full takeoff workflow runs on phones and tablets: upload the plan, calibrate the scale, measure areas and lengths, use AI Scan Assist, assign components and save & continue. The job saves to your account, so you can finish on desktop or keep going on site.",
   },
   {
     question: "Can I measure ridge, hip, and valley lengths, not just roof areas?",
     answer:
-      "Yes. The digital takeoff tools measure both roof surface areas and linear lengths — ridges, hips, valleys, barges, eaves, flashings and spouting. All measurements can be named, grouped by roof section, and assigned different materials and pitch values.",
+      "Yes. The digital takeoff tools measure both roof surface areas and linear lengths - ridges, hips, valleys, barges, eaves, flashings and spouting. All measurements can be named, grouped by roof section, and assigned different materials and pitch values.",
   },
   {
     question: "Does QuoteCore+ calculate material quantities from takeoff measurements?",
@@ -51,7 +57,7 @@ const faqs = [
   {
     question: "What plan formats does QuoteCore+ support for takeoff?",
     answer:
-      "QuoteCore+ supports uploaded images and PDF plans. AI Scan Assist works on the uploaded plan image to identify roof geometry. You can also use the free roof takeoff builder without uploading a plan if you already have measurements.",
+      "QuoteCore+ supports uploaded images (PNG, JPG) and multi-page PDF plans - upload the whole PDF (e.g. council plans), pick the page you need, and it is converted to an image for measuring. For best results, use a view that shows just the area you want to measure, large enough to read clearly, with the scale or a known dimension visible so you can calibrate. You can also use the free roof takeoff builder without uploading a plan if you already have measurements.",
   },
   {
     question: "Can I export takeoff measurements without creating a quote?",
@@ -76,12 +82,12 @@ const takeoffSteps = [
   {
     number: "01",
     title: "Upload PDF plans or use AI Scan Assist",
-    body: "Upload a roof plan, satellite image or drawing. Use AI Scan Assist to auto-detect roof areas, ridges, hips, valleys, barges and spouting, or measure manually with digital takeoff tools.",
+    body: "Upload a roof plan, satellite image or drawing - on phone, tablet or desktop. With AI Scan Assist the workflow is staged: scan the plan, review and correct the detected outline, then let component detection find ridges, hips, valleys, barges and spouting on the corrected geometry. Or measure manually with digital takeoff tools.",
   },
   {
     number: "02",
     title: "Measure roof areas, lengths and pitch digitally",
-    body: "Name each roof area, assign pitch and material type. Digital takeoff handles angles, pitches and complex roof geometry. Measure ridges, hips, valleys, eaves, barges, flashings and spouting lengths.",
+    body: "Name each roof area, assign pitch and material type. Digital takeoff handles angles, pitches and complex roof geometry. Measure ridges, hips, valleys, eaves, barges, flashings and spouting lengths. Takeoffs save with the job, so you can measure on site and continue later on another device.",
   },
   {
     number: "03",
@@ -112,10 +118,6 @@ const limitations = [
   {
     title: "No cutting lists",
     body: "QuoteCore+ calculates material quantities and pricing, not individual cutting schedules for each piece of material on site.",
-  },
-  {
-    title: "No accounting integration",
-    body: "Takeoffs, estimates and invoices are created within QuoteCore+, but it does not sync with Xero, QuickBooks or other accounting software.",
   },
 ];
 
@@ -156,7 +158,7 @@ export default function RoofingTakeoffSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Upload plans and measure roof areas, lengths and pitch digitally. AI Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Plans from free to $59/month.
+              Upload plans and measure roof areas, lengths and pitch digitally - on site from your phone or tablet, or at the office on desktop. AI Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Paid plans from $19 to $59/month.
             </p>
 
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -164,11 +166,19 @@ export default function RoofingTakeoffSoftwarePage() {
                 href="/free-trial"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
-                Start your free 14-day trial
+                Get started with QuoteCore+
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-500">No credit card required.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. 30-day money-back guarantee.</p>
+
+            {/* Free product bridge */}
+            <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-[#FF6B35]/30 bg-orange-50/50 px-5 py-4 text-left">
+              <p className="text-sm leading-6 text-zinc-700">
+                Want to try the measurement workflow first?{" "}
+                <a href="/free-roof-takeoff" className="font-semibold text-[#BD4A1A] hover:underline">Try the free roof takeoff tool - upload your own plan, no signup.</a>
+              </p>
+            </div>
           </div>
         </section>
 
@@ -185,13 +195,48 @@ export default function RoofingTakeoffSoftwarePage() {
             Manual takeoff means printing plans, using a scaling ruler to measure dimensions, counting features by hand, and entering everything into a spreadsheet. It works, but it is slow, error-prone, and has to be repeated from scratch on every job.
           </p>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
-            QuoteCore+ replaces that with digital takeoff tools and AI Scan Assist. Upload a plan, measure digitally or let AI detect roof geometry, and Smart Components&#8482; automatically apply materials, labour, waste and pricing. The takeoff becomes an estimate, and the estimate becomes a quote — all in one connected workflow.
+            QuoteCore+ replaces that with digital takeoff tools and AI Scan Assist. Upload a plan, measure digitally or let AI detect roof geometry, and Smart Components&#8482; automatically apply materials, labour, waste and pricing. The takeoff becomes an estimate, and the estimate becomes a quote - all in one connected workflow.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            You may see this category called roof takeoff, roof measurement, roofing quantity takeoff or plan measurement software - and in the estimating stage, roofing estimating from plans. The distinction matters: <strong className="text-zinc-950">takeoff creates the measurements; estimating applies the pricing and material logic.</strong> This page covers the measurement side; for pricing see{' '}
+            <a href="/roofing-estimating-software" className="text-[#BD4A1A] hover:underline">roofing estimating software</a>, or{' '}
+            <a href="/measurement-to-quote-tool" className="text-[#BD4A1A] hover:underline">turn measurements you already have into pricing</a>.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            Whatever your plans and units - PDF drawings or blueprints, shingles, metal panels or membrane, square feet and roofing squares with pitch ratios like 6:12, or square metres with pitch degrees - the takeoff workflow is the same: calibrate, measure, verify, done - on phone, tablet or desktop. Measuring across other trades too? See{' '}
+            <a href="/construction-takeoff-software" className="text-[#BD4A1A] hover:underline">construction takeoff software for roofs, siding and floors</a>.
           </p>
         </section>
 
         <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
           <DemoCTACard location="roofing_takeoff_software_intro" />
         </section>
+
+        {/* Three ways to work */}
+        <ThreeWaysToWork
+          className="max-w-4xl"
+          title="Measure in QuoteCore+, or bring your own measurements"
+          intro="Takeoff is the measurement step - start from the source you actually have."
+          cards={[
+            {
+              title: "Measure it in QuoteCore+",
+              body: "Calibrate the scale and measure roof areas, ridges, hips, valleys, barges and spouting from plans or images - on phone, tablet or desktop. Use the staged AI Scan Assist path where it helps, then review and correct before anything is priced.",
+              href: "/features/digital-roof-takeoff",
+              linkLabel: "See digital takeoff →",
+            },
+            {
+              title: "Use measurements from another source",
+              body: "Already have a site measure, an aerial/satellite report or another takeoff app’s numbers? Enter them directly and apply the same saved materials, waste and pricing rules.",
+              href: "/measurement-to-quote-tool",
+              linkLabel: "See measurement-to-quote →",
+            },
+            {
+              title: "Ask Smart Assistant",
+              body: "Need a number while you work? Ask Smart Assistant to find jobs, quotes, orders and invoices by text or voice instead of navigating every screen.",
+            },
+          ]}
+          footnote="The quantities your takeoff produces flow straight into Smart Components™ pricing and the quote - takeoff creates the measurements, estimating applies the pricing logic."
+        />
 
         {/* Key takeoff features */}
         <section className="bg-zinc-50 py-20">
@@ -273,6 +318,22 @@ export default function RoofingTakeoffSoftwarePage() {
           </div>
         </section>
 
+        {/* Keep Xero for accounting */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <div className="rounded-[1.5rem] border border-[#FF6B35]/30 bg-orange-50/50 px-6 py-6 text-center">
+            <h2 className="text-2xl font-semibold sm:text-3xl">Keep Xero for accounting</h2>
+            <p className="mt-3 text-lg leading-8 text-zinc-600">
+              Connect your QuoteCore+ account to Xero, then open a quote summary and choose{" "}
+              <strong>Send to App &rarr; Xero</strong> to export its information as a
+              draft invoice with line items.{" "}
+              <a href="/integrations/xero" className="font-medium text-[#BD4A1A] hover:underline">
+                See how the Xero integration works
+              </a>
+              .
+            </p>
+          </div>
+        </section>
+
         {/* What QuoteCore+ measures in takeoff */}
         <section className="bg-zinc-50 py-20">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
@@ -302,11 +363,11 @@ export default function RoofingTakeoffSoftwarePage() {
         {/* Takeoff vs estimating */}
         <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">
-            Takeoff vs estimating — what&apos;s the difference?
+            Takeoff vs estimating - what&apos;s the difference?
           </h2>
 
           <p className="mt-6 text-lg leading-8 text-zinc-700">
-            Takeoff is the measurement step — measuring roof areas, lengths and pitch from a plan. Estimating adds pricing, labour, waste and material quantities to those measurements.
+            Takeoff is the measurement step - measuring roof areas, lengths and pitch from a plan. Estimating adds pricing, labour, waste and material quantities to those measurements.
           </p>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
             Many contractors do takeoff in one tool, then re-enter the measurements into a spreadsheet to estimate. QuoteCore+ does both in one workflow: takeoff measurements feed directly into Smart Components&#8482;, which apply materials, labour, waste and pricing automatically.
@@ -345,7 +406,7 @@ export default function RoofingTakeoffSoftwarePage() {
               Comparing takeoff tools?
             </h2>
             <p className="mt-4 text-lg leading-8 text-zinc-600">
-              Looking at RoofSnap, EagleView, PlanSwift, Roofr, STACK, HOVER or Bluebeam? We compare them with QuoteCore+ honestly — features, workflow and pricing:
+              Looking at RoofSnap, EagleView, PlanSwift, Roofr, STACK, HOVER or Bluebeam? We compare them with QuoteCore+ honestly - features, workflow and pricing:
             </p>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <a
@@ -354,7 +415,7 @@ export default function RoofingTakeoffSoftwarePage() {
               >
                 <p className="font-semibold text-zinc-950">RoofSnap alternative</p>
                 <p className="mt-1 text-sm text-zinc-600">
-                  Closest product-to-product comparison — measure-and-quote software vs software.
+                  Closest product-to-product comparison - measure-and-quote software vs software.
                 </p>
               </a>
               <a
@@ -521,6 +582,15 @@ export default function RoofingTakeoffSoftwarePage() {
                 Methods and tools for accurate roof measurement.
               </p>
             </a>
+            <a
+              href="/blog/manual-vs-digital-roof-takeoff"
+              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+            >
+              <p className="font-semibold text-zinc-950">Manual vs digital roof takeoff</p>
+              <p className="mt-1 text-sm text-zinc-600">
+                Weighing tape-and-ladder against measuring from plans on screen.
+              </p>
+            </a>
           </div>
         </section>
 
@@ -538,11 +608,11 @@ export default function RoofingTakeoffSoftwarePage() {
             href="/free-trial"
             className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
           >
-            Start your free 14-day trial
+            Get started with QuoteCore+
           </a>
 
           <p className="mt-4 text-sm text-zinc-500">
-            No card required. 14 days free.{" "}
+            Free tools, no signup. 30-day money-back guarantee on paid plans.{" "}
             <a href="/pricing" className="underline hover:text-zinc-900">
               See pricing
             </a>

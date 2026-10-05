@@ -277,7 +277,7 @@ export const bluebeamPage: CompetitorPageData = {
       {
         label: "Trying it out",
         competitor: "Free trial available via bluebeam.com",
-        qc: "Free Lite plan forever + 14-day full-feature trial, no card",
+        qc: "Free tools (no signup) + paid plans from $19/month, 30-day money-back guarantee",
       },
     ],
     scenarioNote:

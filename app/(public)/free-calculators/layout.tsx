@@ -66,7 +66,7 @@ export default function FreeCalculatorsLayout({ children }: { children: ReactNod
                 Free Invoice Generator
               </Link>
               <Link href="/signup?ref=free-calculators" className="text-xs font-medium text-[#BD4A1A] hover:text-[#ff5722]">
-                Start free trial
+                Plans from /mo
               </Link>
             </div>
           </div>

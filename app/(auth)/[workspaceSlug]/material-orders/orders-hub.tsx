@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { MaterialOrderTemplateRow, MaterialOrderRow } from '@/app/lib/types';
@@ -32,7 +33,7 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <QcJourney><div className="space-y-4 md:space-y-6">
       {/* Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4" data-copilot="mo-action-cards">
         {/* Create Custom Order */}
@@ -40,7 +41,7 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
           type="button"
           onClick={() => setPickerFor('custom')}
           data-copilot="mo-custom-order"
-          className="block w-full text-left p-4 md:p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+          className="qc-flow-control qc-flow-card block w-full text-left p-4 md:p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
         >
           <div className="flex items-start gap-3 md:gap-4">
             <div className="p-3 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
@@ -60,7 +61,7 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
           type="button"
           onClick={() => setPickerFor('from-quote')}
           data-copilot="mo-order-from-quote"
-          className="block w-full text-left p-4 md:p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
+          className="qc-flow-control qc-flow-card block w-full text-left p-4 md:p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
         >
           <div className="flex items-start gap-3 md:gap-4">
             <div className="p-3 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
@@ -78,7 +79,7 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
         {/* Order Templates - managed in Resource Library */}
         <button
           onClick={() => router.push(`/${workspaceSlug}/resources?tab=order`)}
-          className="block w-full p-4 md:p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group text-left"
+          className="qc-flow-control qc-flow-card block w-full p-4 md:p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group text-left"
         >
           <div className="flex items-start gap-3 md:gap-4">
             <div className="p-3 rounded-full bg-slate-100 group-hover:bg-slate-200 transition-colors">
@@ -102,12 +103,14 @@ export function MaterialOrdersHub({ workspaceSlug, initialTemplates, recentOrder
       )}
 
       {/* Recent Orders Section */}
-      <div className="bg-white border border-slate-200 rounded-xl p-3 md:p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Recent Orders</h2>
+      <section className="qc-flow-panel">
+        <h2 className="qc-flow-section-title">Recent orders</h2>
+        <p className="qc-flow-description">Your 20 most recent orders. Open a record to view it, or use the pencil to edit.</p>
+        {/* AGENT-TODO P6-DATA-02: the existing loader returns at most 20 rows. Full history/search requires Gavin-owned pagination. */}
         <OrderList orders={recentOrders} workspaceSlug={workspaceSlug} />
-      </div>
+      </section>
 
 
-    </div>
+    </div></QcJourney>
   );
 }

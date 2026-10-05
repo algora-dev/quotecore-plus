@@ -1,6 +1,8 @@
 'use client';
-import { useState, useRef, useEffect, type ReactNode, Fragment } from 'react';
+import { QuoteJourneyContext } from '@/app/components/quote-entry/QuoteJourneyContext';
+import { useState, useRef, useEffect, useId, type ReactNode, Fragment } from 'react';
 import Link from 'next/link';
+import { COMPONENT_FOCUS_EVENT, componentFocusId } from '@/app/lib/smart-assistant/v2/component-focus';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries } from '../actions';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
@@ -23,6 +25,7 @@ import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentR
 // QuoteDetailsForm + convertQuoteMeasurementSystem).
 import { QuoteNameEditor } from './QuoteNameEditor';
 import { ConfirmQuoteButton } from './ConfirmQuoteButton';
+import type { ReviewMarginResult } from '@/app/components/quote-entry/reviewCompletion';
 import { CurrencySelector } from './CurrencySelector';
 import { FilesManager } from './FilesManager';
 import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
@@ -35,6 +38,13 @@ import { ExpandableComponent } from './quote-builder/ExpandableComponent';
 import { AddFromLibrary } from './quote-builder/AddFromLibrary';
 import { formatQuantity, formatPricedQuantity } from './quote-builder/helpers';
 import { ScrollIndicator } from '@/app/components/ui/ScrollIndicator';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcInput } from '@/app/components/ui/v2/QcField';
+import { QcNotice, QcStatusBadge } from '@/app/components/ui/v2/QcSurface';
+import { QcWorkflowStepper } from '@/app/components/ui/v2/QcWorkflowStepper';
+import { QcMoneySummary } from '@/app/components/ui/v2/QcMoneySummary';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+import './quote-builder/quote-builder.css';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
@@ -99,11 +109,16 @@ export function QuoteBuilder({
   collections = [],
 }: Props) {
   console.log('[QuoteBuilder] Received components:', initialComponents.length, initialComponents.map(c => ({ name: c.name, type: c.component_type })));
+  const { notify, feedback } = useQcFeedback();
+  const newAreaId = useId();
+  const materialMarginId = useId();
+  const labourMarginId = useId();
   const [internalPhase, setInternalPhase] = useState<Phase>('areas');
   
   // Use external phase if provided, otherwise use internal
   const phase = externalPhase ?? internalPhase;
   const setPhase = (newPhase: Phase) => {
+    if (reviewCompleting) return;
     if (onPhaseChange) {
       onPhaseChange(newPhase);
     } else {
@@ -130,11 +145,38 @@ export function QuoteBuilder({
     (quote.labor_margin_percent ?? 0).toString()
   );
   const [marginSaving, setMarginSaving] = useState(false);
+  const [reviewCompleting, setReviewCompleting] = useState(false);
+  const marginSectionRef = useRef<HTMLDivElement>(null);
   
   const [roofAreas, setRoofAreas] = useState(initialRoofAreas);
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
   const [components, setComponents] = useState(initialComponents);
   const [entries, setEntries] = useState(initialEntries);
+  // Assistant navigation only reveals an already-loaded component. It never
+  // mutates data or turns a card/navigation event into approval.
+  const [assistantFocus, setAssistantFocus] = useState<{ id: string; request: number } | null>(null);
+  const focusHandler = useRef<() => void>(() => {});
+  focusHandler.current = () => {
+    const id = componentFocusId(window.location.search);
+    const component = components.find(c => c.id === id);
+    if (!component) return;
+    const destinationPhase = component.component_type === 'extra' && roofAreas.length > 0 ? 'extras' : 'components';
+    // On a fresh digital route the URL already selected the phase. Do not
+    // rewrite its query before the assistant has acknowledged navigation.
+    if (phase !== destinationPhase) setPhase(destinationPhase);
+    setAssistantFocus(previous => ({ id: component.id, request: (previous?.request ?? 0) + 1 }));
+  };
+  useEffect(() => {
+    const focus = () => focusHandler.current();
+    focus();
+    window.addEventListener(COMPONENT_FOCUS_EVENT, focus);
+    window.addEventListener('popstate', focus);
+    return () => { window.removeEventListener(COMPONENT_FOCUS_EVENT, focus); window.removeEventListener('popstate', focus); };
+    // Reopening the same card sends an explicit event; ordinary rerenders or
+    // manual phase changes must not keep snapping back to this component.
+  }, [quote.id]);
+
+
   // localLibrary: lifted from prop so newly-created mid-quote components are
   // immediately available for future adds in the same session.
   const [localLibrary, setLocalLibrary] = useState<ComponentLibraryRow[]>(libraryComponents);
@@ -254,7 +296,7 @@ export function QuoteBuilder({
       setComponents(prev => prev.filter(c => c.quote_roof_area_id !== areaPendingDelete.id));
       setAreaPendingDelete(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : `Failed to delete ${tradeLabels.areaSingularLabel.toLowerCase()}`);
+      await notify(err instanceof Error ? err.message : `Failed to delete ${tradeLabels.areaSingularLabel.toLowerCase()}`);
     } finally {
       setAreaDeleting(false);
     }
@@ -397,7 +439,7 @@ export function QuoteBuilder({
   async function handleCombineEntries(compId: string) {
     const result = await combineLinealEntries(compId);
     if (!result.ok || !result.combinedEntry) {
-      alert(result.error ?? 'Could not combine entries.');
+      await notify(result.error ?? 'Could not combine entries.');
       return;
     }
     // Replace this component's entries array with the single combined row.
@@ -429,7 +471,7 @@ export function QuoteBuilder({
   async function handleSplitEntries(compId: string) {
     const result = await splitLinealEntries(compId);
     if (!result.ok || !result.restoredEntries) {
-      alert(result.error ?? 'Could not split entries.');
+      await notify(result.error ?? 'Could not split entries.');
       return;
     }
     setEntries((prev) => ({
@@ -497,26 +539,34 @@ export function QuoteBuilder({
     return formatQuantity(actual, c.measurement_type);
   }
 
-  const phases: { key: Phase; label: string; shortLabel: string }[] = [
-    { key: 'areas', label: `1. ${tradeLabels.builderStepLabel}`, shortLabel: '1. Areas' },
-    { key: 'components', label: '2. Components', shortLabel: '2. Parts' },
-    { key: 'extras', label: '3. Extras', shortLabel: '3. Extras' },
-    { key: 'review', label: '4. Review', shortLabel: '4. Review' },
+  const phases: { key: Phase; label: string; description: string }[] = [
+    { key: 'areas', label: tradeLabels.builderStepLabel, description: 'Define your areas' },
+    { key: 'components', label: 'Components', description: 'Measurements and pricing' },
+    { key: 'extras', label: 'Extras', description: 'Other items and services' },
+    { key: 'review', label: 'Review', description: 'Margins and next steps' },
   ];
+  const phaseHelp: Record<Phase, string> = {
+    areas: tradeLabels.areaIsOptional
+      ? 'Add and confirm areas when useful, or continue to Components to price your work directly.'
+      : 'Group measurements in areas, or continue to Components to enter a total area, length or quantity directly.',
+    components: 'Choose your Smart Components, then add or check their measurements.',
+    extras: 'Add saved extras for the other items and services this quote needs.',
+    review: 'Check the quantities, costs and margins, then prepare the customer quote or return to Job Space.',
+  };
 
-  // Save margin settings
-  const handleSaveMargins = async () => {
+  // Existing validation, update payload and calculation semantics are unchanged.
+  // Report the result to Review completion so a failed save is not silent.
+  // Continuing with the last saved margins remains an explicit non-blocking option.
+  const handleSaveMargins = async (): Promise<ReviewMarginResult> => {
     const matPercent = parseFloat(materialMarginPercent);
     const labPercent = parseFloat(laborMarginPercent);
 
     if (isNaN(matPercent) || matPercent < 0 || matPercent > 100) {
-      alert('Item Cost margin must be between 0 and 100%');
-      return;
+      return { status: 'not-saved', message: 'Item Cost margin must be between 0 and 100%.' };
     }
 
     if (isNaN(labPercent) || labPercent < 0 || labPercent > 100) {
-      alert('Labor margin must be between 0 and 100%');
-      return;
+      return { status: 'not-saved', message: 'Labour margin must be between 0 and 100%.' };
     }
 
     setMarginSaving(true);
@@ -536,9 +586,10 @@ export function QuoteBuilder({
         material_margin_enabled: materialMarginEnabled,
         labor_margin_enabled: laborMarginEnabled,
       });
+      return { status: 'saved' };
     } catch (err) {
       console.error('Failed to save margins:', err);
-      alert('Failed to save margins. Please try again.');
+      return { status: 'not-saved', message: 'The margin changes could not be saved. Check your connection and try again.' };
     } finally {
       setMarginSaving(false);
     }
@@ -546,13 +597,15 @@ export function QuoteBuilder({
 
   return (
     <>
-    <section className="space-y-4 md:space-y-6 px-2 py-3 md:px-0 md:py-0 pb-20 md:pb-0">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+    <section data-qc-ui="v2" data-qc-page="quote-builder" data-qc-phase={phase} className="qb-workspace">
+      <header className="qb-header">
         <div className="min-w-0">
-          <Link href={`/${workspaceSlug}/quotes`} className="text-sm text-slate-500 hover:text-slate-700">
-            ← Quotes
+          <Link href={`/${workspaceSlug}/quotes`} className="qb-back-link">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="m14 7-5 5 5 5M9 12h11" /></svg>
+            Quotes
           </Link>
-          <div className="mt-1">
+          <p className="qb-eyebrow">Measurements &amp; pricing</p>
+          <div className="qb-job-name">
             <QuoteNameEditor 
               quoteId={quote.id}
               customerName={quote.customer_name}
@@ -560,7 +613,7 @@ export function QuoteBuilder({
             />
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="qb-header-meta">
           {quote.status === 'draft' && (
             <>
               <CurrencySelector 
@@ -571,22 +624,27 @@ export function QuoteBuilder({
               />
             </>
           )}
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            quote.status === 'draft' ? 'bg-slate-100 text-slate-600' : 'bg-orange-100 text-orange-700'
-          }`}>
+          <QcStatusBadge tone={quote.status === 'draft' ? 'neutral' : 'warning'}>
             {quote.status}
-          </span>
+          </QcStatusBadge>
         </div>
-      </div>
+      </header>
 
+      <QuoteJourneyContext
+        digital={quote.entry_mode === 'digital'}
+        hasMeasurements={Object.values(entries).some(items => items.length > 0) || Object.values(roofAreaEntries).some(items => items.length > 0)}
+        pitchRelevant={tradeLabels.pitchRequired || !!tradeLabels.pitchOptional}
+      />
+
+      <div className="qb-context-tools">
       {/* Edit Digital Take-off - always visible above Plans & Files (2026-07-06) */}
       {((hasExistingTakeoff || planUrl) && (
-        <div className="mb-3">
+        <div className="qb-tools">
           <Link
             href={`/${workspaceSlug}/quotes/${quote.id}/takeoff`}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white font-medium rounded-full text-sm hover:bg-slate-800 transition-colors hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
+            className="qc-button" data-qc-component="C02" data-qc-variant="glass"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             {hasExistingTakeoff ? 'Edit Digital Take-off' : 'Use Digital Take-off'}
@@ -609,32 +667,35 @@ export function QuoteBuilder({
         isOverStorage={isOverStorage}
       />
 
-      <nav className="flex gap-1 p-1 bg-slate-100 rounded-full overflow-x-auto scrollbar-hide -mx-2 px-2 md:mx-0 md:px-1" aria-label="Quote builder steps">
-        {phases.map(p => (
-          <button
-            key={p.key}
-            onClick={() => setPhase(p.key)}
-            className={`flex-shrink-0 py-2 px-3 text-xs md:text-sm font-medium rounded-full transition whitespace-nowrap min-h-[44px] ${
-              phase === p.key
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <span className="md:hidden">{p.shortLabel}</span>
-            <span className="hidden md:inline">{p.label}</span>
-          </button>
-        ))}
-      </nav>
-
-      <div className="flex flex-wrap gap-x-4 gap-y-1 p-2 md:p-3 bg-slate-50 rounded-lg text-xs md:text-sm">
-        <span>{tradeLabels.areaSingularLabel}: <strong>{formatArea(totalRoofSqm, quote.measurement_system)}</strong></span>
-        <span>Item Cost: <strong>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</strong></span>
-        <span>Labour: <strong>{formatCurrency(totals.totalLabour, effectiveCurrency)}</strong></span>
-        <span className="w-full md:w-auto md:ml-auto font-semibold">Total: {formatCurrency(totals.grandTotal, effectiveCurrency)}</span>
       </div>
 
+      <QcWorkflowStepper steps={phases.map(step => ({ ...step, disabled: reviewCompleting }))} current={phase} onSelect={setPhase} />
+
+      <div className="qb-work-grid">
+        {phase !== 'review' && (
+          <aside className="qb-totals-rail">
+            <QcMoneySummary
+              audience="internal"
+              title="Current quote"
+              rows={[
+                { id: 'area', label: tradeLabels.areaSingularLabel, value: formatArea(totalRoofSqm, quote.measurement_system) },
+                { id: 'materials', label: 'Item Cost', value: formatCurrency(totals.totalMaterials, effectiveCurrency) },
+                { id: 'labour', label: 'Labour', value: formatCurrency(totals.totalLabour, effectiveCurrency) },
+              ]}
+              totalLabel="Quote total"
+              total={formatCurrency(totals.grandTotal, effectiveCurrency)}
+              note="Uses the saved margin settings. Check margins in Review before continuing."
+            />
+          </aside>
+        )}
+        <div className="qb-step-content">
+          <header className="qb-phase-heading">
+            <p className="qb-eyebrow">Step {phases.findIndex(p => p.key === phase) + 1} of 4</p>
+            <h2>{phases.find(p => p.key === phase)?.label}</h2>
+            <p>{phaseHelp[phase]}</p>
+          </header>
       {phase === 'areas' && (
-        <div className="space-y-4">
+        <div className="qb-stack">
           {roofAreas.map(area => (
             <RoofAreaCard
               key={area.id}
@@ -650,52 +711,58 @@ export function QuoteBuilder({
           ))}
           {/* Add-area input. (Previously hidden mid-Copilot-guide when an area
               was unconfirmed; Copilot removed, so it always shows now.) */}
-          <div className="flex gap-2" data-copilot="quote-add-area-row">
-            <input
+          <div className="qc-surface qb-add-area" data-copilot="quote-add-area-row">
+            <label htmlFor={newAreaId} className="qc-label">{roofAreas.length === 0 ? 'Name your first area' : 'Add another area'}</label>
+            <div className="qb-inline-form">
+            <QcInput
+              id={newAreaId}
               value={newAreaLabel}
               onChange={e => setNewAreaLabel(e.target.value)}
               placeholder={tradeLabels.areaIsOptional ? tradeLabels.areaNamePlaceholder : 'e.g. Main Roof, Garage'}
               data-copilot="quote-area-name"
-              className="flex-1 px-3 py-2 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+              className="qb-grow"
               inputMode="text"
               onKeyDown={e => e.key === 'Enter' && handleAddArea()}
             />
-            <button
+            <QcButton
               onClick={handleAddArea}
               disabled={!newAreaLabel.trim()}
               data-copilot="quote-add-area"
-              className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 flex-shrink-0 min-h-[44px]"
+              variant={roofAreas.length === 0 ? 'primary' : 'ghost'}
             >
               {tradeLabels.addAreaCta}
-            </button>
+            </QcButton>
+            </div>
+            <p className="qc-help">{tradeLabels.areaIsOptional ? 'Areas are optional. You can also add components directly in the next step.' : 'Use a clear name such as Main Roof or Garage to reuse an area total. Already have a total? You can enter it directly in Components.'}</p>
           </div>
-          <div className="flex justify-end">
-            <button
+          <div className="qb-step-actions qb-step-actions-end">
+            <QcButton
               onClick={() => setPhase('components')}
               disabled={!allAreasLocked}
               data-copilot="quote-next-components"
-              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] min-h-[44px]"
+              variant="primary"
             >
               {allAreasLocked ? 'Next: Components →' : 'Confirm all areas to continue'}
-            </button>
+            </QcButton>
           </div>
         </div>
       )}
 
       {phase === 'components' && (
-        <div className="space-y-4" data-copilot="quote-components-phase">
+        <div className="qb-stack" data-copilot="quote-components-phase">
           {/* Phase 8: quotes with no areas - show a flat component list.
               All components live at the quote level (quote_roof_area_id = NULL)
               rather than under an area. We show ALL components here regardless
               of type. This applies to both generic trades and roofing quotes
               where the user skipped area creation and went straight to components. */}
           {roofAreas.length === 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-              <h3 className="font-semibold text-slate-900">Components</h3>
+            <div className="qc-surface qb-stack">
+              <h3 className="qb-group-title">Components</h3>
               {components.filter(c => !c.quote_roof_area_id).map((comp, idx) => (
                 <ExpandableComponent
                   key={comp.id}
                   comp={comp}
+                  assistantFocusRequest={assistantFocus?.id === comp.id ? assistantFocus.request : 0}
                   entries={entries[comp.id] ?? []}
                   roofAreas={roofAreas}
                   quote={quote}
@@ -721,10 +788,10 @@ export function QuoteBuilder({
           {roofAreas.map((area, areaIdx) => {
             const areaComps = mainComps.filter(c => c.quote_roof_area_id === area.id);
             return (
-              <div key={area.id} className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-                <h3 className="font-semibold text-slate-900">
+              <div key={area.id} className="qc-surface qb-stack">
+                <h3 className="qb-group-title">
                   {area.label}{' '}
-                  <span className="text-sm font-normal text-slate-500">
+                  <span className="qb-group-meta">
                     ({formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                     {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''})
                   </span>
@@ -733,6 +800,7 @@ export function QuoteBuilder({
                   <ExpandableComponent
                     key={comp.id}
                     comp={comp}
+                    assistantFocusRequest={assistantFocus?.id === comp.id ? assistantFocus.request : 0}
                     entries={entries[comp.id] ?? []}
                     roofAreas={roofAreas}
                     roofArea={area}
@@ -758,38 +826,36 @@ export function QuoteBuilder({
               </div>
             );
           })}
-          <div className="flex justify-between gap-2">
-            <button
+          <div className="qb-step-actions">
+            <QcButton
               onClick={() => setPhase('areas')}
-              className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50 min-h-[44px]"
+              variant="ghost"
             >
               ← {tradeLabels.areaPluralLabel}
-            </button>
-            <button
+            </QcButton>
+            <QcButton
               onClick={() => setPhase('extras')}
               data-copilot="quote-next-extras"
-              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] min-h-[44px]"
+              variant="primary"
             >
               Next: Extras →
-            </button>
+            </QcButton>
           </div>
         </div>
       )}
 
       {phase === 'extras' && (
-        <div className="space-y-4" data-copilot="quote-extras-phase">
-          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-            <h3 className="font-semibold text-slate-900">Extras</h3>
-            <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-              <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>You can only add pre-saved component extras here. To add fully custom &ldquo;Extras&rdquo; lines, use the customer quote editor tool after finishing this quote builder phase.</span>
-            </div>
+        <div className="qb-stack" data-copilot="quote-extras-phase">
+          <div className="qc-surface qb-stack">
+            <h3 className="qb-group-title">Extras</h3>
+            <QcNotice>
+              Choose saved extras below, or create a Smart Component to reuse later. Fully custom lines are added in the customer quote editor after this builder.
+            </QcNotice>
             {extraComps.map(comp => (
               <ExpandableComponent
                 key={comp.id}
                 comp={comp}
+                assistantFocusRequest={assistantFocus?.id === comp.id ? assistantFocus.request : 0}
                 entries={entries[comp.id] ?? []}
                 roofAreas={roofAreas}
                 quote={quote}
@@ -809,36 +875,36 @@ export function QuoteBuilder({
               measurementSystem={quote.measurement_system}
             />
           </div>
-          <div className="flex justify-between gap-2">
-            <button
+          <div className="qb-step-actions">
+            <QcButton
               onClick={() => setPhase('components')}
-              className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50 min-h-[44px]"
+              variant="ghost"
             >
               ← Smart Components™
-            </button>
-            <button
+            </QcButton>
+            <QcButton
               onClick={() => setPhase('review')}
               data-copilot="quote-next-review"
-              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] min-h-[44px]"
+              variant="primary"
             >
               Next: Review →
-            </button>
+            </QcButton>
           </div>
         </div>
       )}
 
       {phase === 'review' && (
-        <div className="space-y-6" data-copilot="quote-review-phase">
+        <div className="qb-stack" data-copilot="quote-review-phase">
           {roofAreas.map(area => {
             const areaComps = components.filter(c => c.quote_roof_area_id === area.id);
             return (
-              <div key={area.id} className="rounded-xl border border-slate-200 bg-white p-4">
-                <h3 className="font-semibold text-slate-900 mb-2">
+              <div key={area.id} className="qc-surface qb-review-card">
+                <h3 className="qb-group-title">
                   {area.label} - {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 </h3>
                {areaComps.length > 0 ? (
-                  <ScrollIndicator className="-mx-4 md:mx-0">
-                  <table className="w-full text-sm min-w-[480px]">
+                  <ScrollIndicator className="qb-review-scroll" ariaLabel="Quote quantities and costs">
+                  <table className="qb-review-table">
                     <thead>
                       <tr className="text-left text-xs text-slate-500 border-b">
                         <th className="py-1 whitespace-nowrap">Component</th>
@@ -855,7 +921,7 @@ export function QuoteBuilder({
                           <td className="py-1.5 whitespace-nowrap">
                             {c.name}
                             {(c.is_rate_overridden || c.is_waste_overridden) && (
-                              <span className="ml-1 text-xs text-amber-600">●</span>
+                              <span className="qb-override" title="Overridden from template default" aria-label="Overridden from template default"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4" /></svg></span>
                             )}
                           </td>
                           <td className="py-1.5 text-right whitespace-nowrap">{(entries[c.id] ?? []).length}</td>
@@ -873,7 +939,7 @@ export function QuoteBuilder({
                   </table>
                   </ScrollIndicator>
                 ) : (
-                  <p className="text-xs text-slate-400">No components</p>
+                  <p className="qc-help">No components</p>
                 )}
               </div>
             );
@@ -887,10 +953,10 @@ export function QuoteBuilder({
             const noAreaComps = components.filter(c => !c.quote_roof_area_id);
             if (noAreaComps.length === 0) return null;
             return (
-             <div className="rounded-xl border border-slate-200 bg-white p-4">
-               <h3 className="font-semibold text-slate-900 mb-2">Quote items</h3>
-                <ScrollIndicator className="-mx-4 md:mx-0">
-                <table className="w-full text-sm min-w-[480px]">
+             <div className="qc-surface qb-review-card">
+               <h3 className="qb-group-title">Quote items</h3>
+                <ScrollIndicator className="qb-review-scroll" ariaLabel="Quote quantities and costs">
+                <table className="qb-review-table">
                  <thead>
                    <tr className="text-left text-xs text-slate-500 border-b">
                      <th className="py-1 whitespace-nowrap">Component</th>
@@ -920,10 +986,10 @@ export function QuoteBuilder({
           })()}
 
           {extraComps.length > 0 && (
-           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-             <h3 className="font-semibold text-slate-900 mb-2">Extras</h3>
-              <ScrollIndicator className="-mx-4 md:mx-0">
-              <table className="w-full text-sm min-w-[480px]">
+           <div className="qc-surface qb-review-card">
+             <h3 className="qb-group-title">Extras</h3>
+              <ScrollIndicator className="qb-review-scroll" ariaLabel="Quote quantities and costs">
+              <table className="qb-review-table">
                <thead>
                  <tr className="text-left text-xs text-slate-500 border-b">
                    <th className="py-1 whitespace-nowrap">Extra</th>
@@ -953,87 +1019,94 @@ export function QuoteBuilder({
            </div>
           )}
 
+          <div className="qb-review-grid">
           {/* Profit Margin Controls */}
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 space-y-4" data-copilot="quote-margins">
+          <div ref={marginSectionRef} tabIndex={-1} aria-label="Profit margins" className="qc-surface qb-margins qb-stack" data-copilot="quote-margins">
             <div>
-              <h3 className="font-semibold text-gray-900 text-lg">💸 Profit Margins</h3>
-              <p className="text-sm text-gray-600 mt-1">Adjust your profit margins - saved automatically when you confirm.</p>
+              <h3 className="qb-group-title">Profit margins</h3>
+              <p className="qc-help">Adjust your margins here. Both completion options save these settings. You can also adjust margins in the customer quote editor.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+            <fieldset disabled={reviewCompleting || marginSaving} className="qrc-margin-inputs grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4" aria-label="Margin settings">
               {/* Material Margin */}
-              <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
-                <label className="flex items-center gap-2 mb-3">
+              <div className="qb-margin-field">
+                <label className="qc-check-label">
                   <input
                     type="checkbox"
                     checked={materialMarginEnabled}
                     onChange={(e) => setMaterialMarginEnabled(e.target.checked)}
-                    className="w-4 h-4 rounded"
+                    className="qc-check"
                   />
-                  <span className="font-semibold text-gray-900">Item Cost Margin</span>
+                  <span className="qc-label">Item Cost Margin</span>
                 </label>
-                <div className="relative">
-                  <input
+                <div className="qb-percent-input">
+                  <QcInput
                     type="number"
                     min="0"
                     max="100"
                     step="0.1"
+                    id={materialMarginId}
+                    aria-label="Item Cost Margin percentage"
                     value={materialMarginPercent}
                     onChange={(e) => setMaterialMarginPercent(e.target.value)}
                     disabled={!materialMarginEnabled}
-                    className="w-full px-3 py-2 md:px-4 pr-10 text-base md:text-sm border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:text-gray-500 focus:border-orange-500 focus:outline-none"
+                    className="qb-full-width"
                     inputMode="decimal"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">%</span>
                 </div>
                 {materialMarginEnabled && (
-                  <p className="text-xs text-gray-600 mt-2">
+                  <p className="qc-help qb-margin-preview">
                     +{formatCurrency(totals.totalMaterials * (parseFloat(materialMarginPercent) || 0) / 100, effectiveCurrency)} profit
                   </p>
                 )}
               </div>
 
               {/* Labor Margin */}
-              <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
-                <label className="flex items-center gap-2 mb-3">
+              <div className="qb-margin-field">
+                <label className="qc-check-label">
                   <input
                     type="checkbox"
                     checked={laborMarginEnabled}
                     onChange={(e) => setLaborMarginEnabled(e.target.checked)}
-                    className="w-4 h-4 rounded"
+                    className="qc-check"
                   />
-                  <span className="font-semibold text-gray-900">Labour Margin</span>
+                  <span className="qc-label">Labour Margin</span>
                 </label>
-                <div className="relative">
-                  <input
+                <div className="qb-percent-input">
+                  <QcInput
                     type="number"
                     min="0"
                     max="100"
                     step="0.1"
+                    id={labourMarginId}
+                    aria-label="Labour Margin percentage"
                     value={laborMarginPercent}
                     onChange={(e) => setLaborMarginPercent(e.target.value)}
                     disabled={!laborMarginEnabled}
-                    className="w-full px-3 py-2 md:px-4 pr-10 text-base md:text-sm border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:text-gray-500 focus:border-orange-500 focus:outline-none"
+                    className="qb-full-width"
                     inputMode="decimal"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">%</span>
                 </div>
                 {laborMarginEnabled && (
-                  <p className="text-xs text-gray-600 mt-2">
+                  <p className="qc-help qb-margin-preview">
                     +{formatCurrency(totals.totalLabour * (parseFloat(laborMarginPercent) || 0) / 100, effectiveCurrency)} profit
                   </p>
                 )}
               </div>
-            </div>
+            </fieldset>
 
-            <div className="bg-white rounded-lg p-3 border border-blue-200">
-              <p className="text-sm text-blue-900">
-                <strong>💡 Note:</strong> Margins are hidden from customers. They only see the final total price.
+            <div className="qc-notice">
+              <p className="qc-help">
+                <strong>Customer visibility:</strong> Choose what customers see in the customer quote editor. Review the customer document before sending.
               </p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-300 bg-white p-4 space-y-2">
+          <div className="qc-surface qb-review-totals">
+            <h3 className="qb-group-title">Quote breakdown</h3>
+            <p className="qc-help">Margin previews reflect your entries. Tax and grand total below use saved margins until you save this pricing.</p>
             <div className="flex justify-between text-sm">
               <span>Total Item Cost</span>
               <span>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</span>
@@ -1084,28 +1157,35 @@ export function QuoteBuilder({
               <span>{formatCurrency(totals.grandTotal, effectiveCurrency)}</span>
             </div>
           </div>
-          <p className="text-xs text-slate-400">● = value overridden from template default</p>
-          <div className="flex justify-between items-center pt-4 border-t gap-2">
-            <button
-              onClick={() => setPhase('extras')}
-              className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50 min-h-[44px]"
-            >
+          </div>
+          <p className="qc-help">A dot marks a value overridden from its template default.</p>
+          {/* Both completion choices retain the existing no-area/no-component policy. */}
+          <ConfirmQuoteButton
+            key={quote.id}
+            quoteId={quote.id}
+            workspaceSlug={workspaceSlug}
+            quoteStatus={quote.status}
+            onBeforeSubmit={handleSaveMargins}
+            onPendingChange={setReviewCompleting}
+            onConfirmed={() => setQuote(current => ({ ...current, status: 'confirmed' }))}
+            onReviewMargins={() => {
+              marginSectionRef.current?.focus({ preventScroll: true });
+              marginSectionRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+            }}
+          />
+          <div className="qb-step-actions">
+            <QcButton onClick={() => setPhase('extras')} variant="ghost" disabled={reviewCompleting}>
               ← Back to Extras
-            </button>
-            {/* Guard removed per Shaun: areas are optional for generic quotes
-                and the roofing guard was more friction than value. Just show
-                the ConfirmQuoteButton directly. */}
-            <ConfirmQuoteButton
-              quoteId={quote.id}
-              workspaceSlug={workspaceSlug}
-              quoteStatus={quote.status}
-              onBeforeSubmit={handleSaveMargins}
-            />
+            </QcButton>
           </div>
         </div>
       )}
+        </div>
+      </div>
     </section>
+    {feedback}
     <ConfirmModal
+      appearance="v2"
       open={showEmptyQuoteGuard !== null}
       title={showEmptyQuoteGuard === 'no-main-components' ? 'Add at least one component' : `Add at least one ${tradeLabels.areaSingularLabel.toLowerCase()}`}
       description={
@@ -1128,6 +1208,7 @@ export function QuoteBuilder({
       }}
     />
     <ConfirmModal
+      appearance="v2"
       open={areaPendingDelete !== null}
       title={`Remove ${tradeLabels.areaSingularLabel.toLowerCase()}`}
       description={
@@ -1143,6 +1224,7 @@ export function QuoteBuilder({
     />
     {showCreateComponentModal && (
       <CreateSmartComponentModal
+        appearance="v2"
         measurementSystem={companyMeasurementSystem}
         defaultTrade={companyDefaultTrade}
         defaultComponentType={createCompType}

@@ -1,0 +1,26 @@
+{
+  "versions": {
+    "react": "18.2.0",
+    "reactDOM": "18.2.0-next-9e3b772b8-20220608"
+  },
+  "method": "Isolated real React 18.2 DOM events. Original data/persistence/lifecycle effects disabled; local draft and focus effects run. Not a Next/application integration test.",
+  "results": [
+    {
+      "test": "quote selection/apply/hidden recovery/clean preview",
+      "passed": true
+    },
+    {
+      "test": "invoice immediate edit and appearance",
+      "passed": true
+    },
+    {
+      "test": "line order apply and distinct hidden-total semantics",
+      "passed": true
+    },
+    {
+      "test": "visual component inspector/draft/layout/image toggle",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

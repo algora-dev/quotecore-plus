@@ -6,12 +6,12 @@ import { TrialCTA } from './TrialCTA';
 import { buildFaqSchema } from '@/lib/schema';
 
 export const metadata: Metadata = {
-  title: 'Free Roof Takeoff Demo — Try Digital Takeoff in 30 Seconds',
+  title: 'Free Roof Takeoff Demo - Try Digital Takeoff in 30 Seconds',
   description:
     'Interactive demo of the QuoteCore+ takeoff workstation. Scan a sample roof plan with AI or measure manually and produce a real customer quote. Free, no sign-in.',
   alternates: { canonical: '/takeoff-demo' },
   openGraph: {
-    title: 'Free Roof Takeoff Demo — Try QuoteCore+ Digital Takeoff',
+    title: 'Free Roof Takeoff Demo - Try QuoteCore+ Digital Takeoff',
     description:
       'Scan a sample roof plan with AI or measure it manually, then see the customer quote your measurements produce. Free, no sign-in.',
     url: '/takeoff-demo',
@@ -24,7 +24,7 @@ const FAQS = [
   {
     question: 'Is the takeoff demo really free with no sign-in?',
     answer:
-      'Yes. The demo runs the full QuoteCore+ takeoff workstation with a sample roof plan. There is no sign-in, no payment details and nothing is saved — it is free to use as many times as you like.',
+      'Yes. The demo runs the full QuoteCore+ takeoff workstation with a sample roof plan. There is no sign-in, no payment details and nothing is saved - it is free to use as many times as you like.',
   },
   {
     question: 'What roof plan does the demo use?',
@@ -37,9 +37,9 @@ const FAQS = [
       'Yes. In the full QuoteCore+ app you upload your own roof plans (PDF or image), scan them with AI Scan Assist, measure manually, and price them with your own components. The demo uses a fixed sample plan so it needs no sign-in.',
   },
   {
-    question: 'What does the free trial include?',
+    question: 'How do I get the full app?',
     answer:
-      'The trial runs for 14 days with full features within the trial limits, including 20 AI Scan Assist points, and no credit card is required. After the trial the account moves to the free Lite plan unless you upgrade.',
+      'Our free tools work instantly with no signup. For the full workflow on your own plans, choose a paid plan from $19/month - every plan is backed by a 30-day money-back guarantee.',
   },
 ];
 
@@ -84,12 +84,12 @@ export default function TakeoffDemoPage() {
       <section className="mx-auto max-w-3xl px-4 pt-14 pb-2 text-center">
         <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Interactive demo · Free · No sign-in</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-          Free Roof Takeoff Demo — Try QuoteCore+ Digital Takeoff
+          Free Roof Takeoff Demo - Try QuoteCore+ Digital Takeoff
         </h1>
-        <p className="mt-1 text-sm font-medium text-[#BD4A1A]">The QuoteCore Plus Takeoff Demo — free, no sign-in required.</p>
+        <p className="mt-1 text-sm font-medium text-[#BD4A1A]">The QuoteCore Plus Takeoff Demo - free, no sign-in required.</p>
         <p className="mt-4 text-base leading-relaxed text-slate-600">
           An interactive demo of the QuoteCore+ takeoff workstation. Scan a sample roof plan with AI or measure it
-          manually, and the demo produces a real customer quote from your measurements. Free, no sign-in — best on a
+          manually, and the demo produces a real customer quote from your measurements. Free, no sign-in - best on a
           desktop computer.
         </p>
       </section>
@@ -99,13 +99,13 @@ export default function TakeoffDemoPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">See the product in action</h2>
           <p className="mt-2 text-sm text-slate-600">
-            The interactive demo needs a desktop — here&apos;s the product in action instead: a full quote created from
+            The interactive demo needs a desktop - here&apos;s the product in action instead: a full quote created from
             start to finish in under 3 minutes.
           </p>
           <div className="mt-4">
             <YouTubeLite videoId="pqIfx-rOcmo" title="Create a Quote from Start to Finish with QuoteCore+" showTitle rounded />
           </div>
-            <TrialCTA label="Start a free 14-day trial — no card required" className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]" />
+            <TrialCTA label="Get started with QuoteCore+ - from $19/month" className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]" />
         </div>
       </section>
 
@@ -131,7 +131,7 @@ export default function TakeoffDemoPage() {
           <div>
             <h3 className="text-base font-semibold text-slate-900">3. See the customer quote your measurements produce</h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Finish the takeoff and the demo generates the customer quote your measurements produced — line items,
+              Finish the takeoff and the demo generates the customer quote your measurements produced - line items,
               totals and terms, in the same format the full app sends to your customers.
             </p>
           </div>
@@ -143,7 +143,7 @@ export default function TakeoffDemoPage() {
         <div className="mx-auto max-w-3xl px-4 py-14">
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Measure manually or scan with AI</h2>
           <p className="mt-4 text-sm leading-relaxed text-slate-600">
-            Most takeoff tools give you one way of working. In this demo — exactly as in the full app — both modes live
+            Most takeoff tools give you one way of working. In this demo - exactly as in the full app - both modes live
             in the same workstation. Use AI Scan Assist to find the roof areas and components automatically, then fine-tune
             anything it missed with the manual drawing tools. Or start from a blank canvas and measure the whole plan
             yourself, placing points and lines with the same precision tools. Either route ends in the same place: a
@@ -152,11 +152,11 @@ export default function TakeoffDemoPage() {
         </div>
       </section>
 
-      {/* Trial CTA */}
+      {/* Get started CTA */}
       <section className="mx-auto max-w-3xl px-4 py-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Take it into the full app</h2>
         <p className="mt-4 text-sm leading-relaxed text-slate-600">
-          This is the real workstation. Start a free 14-day trial — no card required.
+          This is the real workstation. Try the free tools with no signup, or start in the app from $19/month with a 30-day money-back guarantee.
         </p>
         <TrialCTA />
       </section>

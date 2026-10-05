@@ -7,21 +7,23 @@
 import OpenAI from 'openai';
 import sharp from 'sharp';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
-import type { Database } from '@/app/lib/supabase/database.types';
+import type { Database } from '../supabase/database.types';
 import {
   V3_SCAN1_SCHEMA, V3_SCAN2_SCHEMA, V3_SCAN3_SCHEMA,
   buildV3OutlinePrompt, buildV3LineDetectionPrompt, buildV3ClassificationPrompt,
   type V3Point, type V3Line, type V3Classification,
-} from '@/app/lib/takeoff/ai-prompt-v3';
+} from './ai-prompt-v3';
 import {
   renderOutlineOverlay, renderLineOverlay, renderCleanOverlay,
   renderScan2AuditOverlay, outlineToEdgeLines,
-} from '@/app/lib/takeoff/scanOverlay';
-import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
+} from './scanOverlay';
+import { perimeterAccountingPass } from './applyAiResults';
 import {
   classifyOutlineVertices, matchEndpointsToVertices, enforceHipValleyVertexRule,
   type AugmentedLine,
-} from '@/app/lib/takeoff/outlineGeometry';
+} from './outlineGeometry';
+import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from './strokeStyle';
+import { mergeArtificialCollinearSplits, removeIslandMicroClusters, findIsolatedClosedLoopLineIds } from './scanPostprocess';
 
 // ── Types ───────────────────────────────────────────────────────────────
 
@@ -118,14 +120,14 @@ export async function callVisionModel(
   schema: Record<string, unknown>,
   model: string,
   options: { reasoningEffort?: 'low' | 'medium' | 'high'; maxCompletionTokens: number },
-): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null }> {
+): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens: number | null } | null }> {
   const openai = getOpenAIClient();
   const contentParts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [{ type: 'text', text: prompt }];
   for (const img of images) {
     if (img.label) contentParts.push({ type: 'text', text: img.label });
     contentParts.push({ type: 'image_url', image_url: { url: img.dataUrl, detail: img.detail ?? 'high' } });
   }
-  const supportsReasoningEffort = /^o\d|^gpt-5/i.test(model);
+  const supportsReasoningEffort = /^o\d|^gpt-[56]/i.test(model);
   const createParams: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
     model, max_completion_tokens: options.maxCompletionTokens,
     messages: [{ role: 'user', content: contentParts }],
@@ -137,7 +139,12 @@ export async function callVisionModel(
   if (!content) throw new Error('AI returned an empty response.');
   return {
     parsed: JSON.parse(content), responseId: response.id ?? null,
-    usage: response.usage ? { promptTokens: response.usage.prompt_tokens, completionTokens: response.usage.completion_tokens, totalTokens: response.usage.total_tokens } : null,
+    usage: response.usage ? {
+      promptTokens: response.usage.prompt_tokens,
+      completionTokens: response.usage.completion_tokens,
+      totalTokens: response.usage.total_tokens,
+      reasoningTokens: response.usage.completion_tokens_details?.reasoning_tokens ?? null,
+    } : null,
   };
 }
 
@@ -212,6 +219,10 @@ function nearestAllowedAngle(angle: number): number | null {
   return bestDiff <= ANGLE_TOLERANCE ? best : null;
 }
 
+// Snap is cosmetic cleanup only: never move an endpoint far enough to change
+// network topology (stays below the 10-15px tolerances used downstream).
+const MAX_SNAP_ENDPOINT_MOVEMENT_PX = 8;
+
 function snapLineToAngle(line: V3Line): V3Line {
   const angle = lineAngle(line.start, line.end);
   const targetAngle = nearestAllowedAngle(angle);
@@ -220,7 +231,12 @@ function snapLineToAngle(line: V3Line): V3Line {
   const length = Math.sqrt((line.end.x - line.start.x) ** 2 + (line.end.y - line.start.y) ** 2);
   const halfLen = length / 2, rad = targetAngle * Math.PI / 180;
   const dx = Math.cos(rad), dy = -Math.sin(rad);
-  return { ...line, start: { x: Math.round(midX - dx * halfLen), y: Math.round(midY - dy * halfLen) }, end: { x: Math.round(midX + dx * halfLen), y: Math.round(midY + dy * halfLen) } };
+  const snappedStart = { x: Math.round(midX - dx * halfLen), y: Math.round(midY - dy * halfLen) };
+  const snappedEnd = { x: Math.round(midX + dx * halfLen), y: Math.round(midY + dy * halfLen) };
+  const startMoved = Math.hypot(snappedStart.x - line.start.x, snappedStart.y - line.start.y);
+  const endMoved = Math.hypot(snappedEnd.x - line.end.x, snappedEnd.y - line.end.y);
+  if (startMoved > MAX_SNAP_ENDPOINT_MOVEMENT_PX || endMoved > MAX_SNAP_ENDPOINT_MOVEMENT_PX) return line;
+  return { ...line, start: snappedStart, end: snappedEnd };
 }
 
 export function filterAngleValid(lines: V3Line[]): { valid: V3Line[]; rejected: V3Line[] } {
@@ -255,8 +271,18 @@ export function validateConnectivity(lines: V3Line[], outlinePoints: V3Point[], 
     for (const ep of endpoints) { if (ep.lineId === ownLineId && ep.isStart === ownIsStart) continue; if (Math.sqrt((ep.x - p.x) ** 2 + (ep.y - p.y) ** 2) <= tolerance) return true; }
     return false;
   }
+  // T-junction awareness: an endpoint touching the BODY of another line counts
+  // as connected (same topology definition the micro-cluster filter trusts).
+  function pointNearOtherLineSegment(p: V3Point, ownLineId: string): boolean {
+    for (const other of lines) {
+      if (other.id === ownLineId) continue;
+      if (pointToSegmentDistance(p, other.start, other.end) <= tolerance) return true;
+    }
+    return false;
+  }
   for (const line of lines) {
-    if (pointNearOutline(line.start) || pointNearOtherEndpoint(line.start, line.id, true) || pointNearOutline(line.end) || pointNearOtherEndpoint(line.end, line.id, false)) connected.push(line);
+    if (pointNearOutline(line.start) || pointNearOtherEndpoint(line.start, line.id, true) || pointNearOtherLineSegment(line.start, line.id)
+      || pointNearOutline(line.end) || pointNearOtherEndpoint(line.end, line.id, false) || pointNearOtherLineSegment(line.end, line.id)) connected.push(line);
     else floating.push(line);
   }
   return { connected, floating };
@@ -289,6 +315,22 @@ function classificationsToComponents(lines: V3Line[], outlinePoints: V3Point[], 
 
 // ── Token limits ────────────────────────────────────────────────────────
 
+/** Model routing - MUST match ai-scan-v3 route (single source of truth: MEMORY.md 2026-09-11). */
+export function getScanModel(quality: 'low' | 'medium' | 'high'): string {
+  const MODEL_BY_QUALITY: Record<string, string> = {
+    low: 'gpt-5.6-luna',
+    medium: 'gpt-6-astra',
+    high: 'gpt-6-astra',
+  };
+  return MODEL_BY_QUALITY[quality] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
+}
+
+/** Reasoning effort per quality tier: low=low, medium=low, high=medium. */
+export function getReasoningEffort(quality: 'low' | 'medium' | 'high'): 'low' | 'medium' {
+  const effortMap = { low: 'low', medium: 'low', high: 'medium' } as const;
+  return effortMap[quality] ?? 'medium';
+}
+
 export function getTokenLimits(reasoningEffort: 'low' | 'medium' | 'high') {
   return reasoningEffort === 'high'
     ? { scan1: 8000, scan2: 12000, scan3: 12000 }
@@ -297,13 +339,18 @@ export function getTokenLimits(reasoningEffort: 'low' | 'medium' | 'high') {
 
 // ── Usage logging ───────────────────────────────────────────────────────
 
-export function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string }) {
+export function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string; tokens?: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens?: number | null } | null; durationMs?: number }) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return;
   const client = createServiceClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   client.from('ai_scan_usage').insert({
     company_id: params.companyId, quote_id: params.quoteId, user_id: params.userId,
     page_id: params.pageId ?? null, success: params.success, model: params.model, error: params.error,
+    prompt_tokens: params.tokens?.promptTokens ?? null,
+    completion_tokens: params.tokens?.completionTokens ?? null,
+    total_tokens: params.tokens?.totalTokens ?? null,
+    reasoning_tokens: params.tokens?.reasoningTokens ?? null,
+    duration_ms: params.durationMs ?? null,
   }).then(() => {}, (err) => console.warn('[scan-engine] usage log failed:', err.message));
 }
 
@@ -323,9 +370,9 @@ export async function runScan1(params: {
   processedBuffer?: Buffer;
 }> {
   const { imageDataUrl, canvasWidth: canvasW, canvasHeight: canvasH, quality, quoteId, pageId, companyId, userId } = params;
-  const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
-  const reasoningEffort = quality;
-  const tokenLimits = getTokenLimits(reasoningEffort);
+  const model = getScanModel(quality);
+  const reasoningEffort = getReasoningEffort(quality);
+  const tokenLimits = getTokenLimits(quality);
 
   const rawBuffer = Buffer.from(imageDataUrl.replace(/^data:[^;]+;base64,/, ''), 'base64');
   const processedBuffer = await preprocessImage(rawBuffer);
@@ -395,9 +442,9 @@ export async function runScan2(params: {
   stats?: { rawLines: number; finalLines: number; angleRejected: number; floating: number };
 }> {
   const { processedBuffer, canvasWidth: canvasW, canvasHeight: canvasH, outlinePointsCanvas, analysisDimensions, quality, quoteId, pageId, companyId, userId } = params;
-  const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
-  const reasoningEffort = quality;
-  const tokenLimits = getTokenLimits(reasoningEffort);
+  const model = getScanModel(quality);
+  const reasoningEffort = getReasoningEffort(quality);
+  const tokenLimits = getTokenLimits(quality);
 
   const meta = await sharp(processedBuffer).metadata();
   const imgW = meta.width ?? analysisDimensions.width, imgH = meta.height ?? analysisDimensions.height;
@@ -445,10 +492,22 @@ export async function runScan2(params: {
     });
 
   const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
-  const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(rawLines);
+  // Early stroke-style filter: remove high-confidence dashed candidates BEFORE
+  // angle snap / connectivity / overlays (dotted lines are never components).
+  const strokeMap = await classifyCandidateStrokeStyles(processedBuffer, rawLines);
+  const dashedIds = new Set([...strokeMap.entries()].filter(([, e]) => e.style === 'dashed').map(([id]) => id));
+  if (dashedIds.size > 0) console.log(`[scan-engine] scan2 stroke-style: removed ${dashedIds.size} dashed candidate(s): ${[...dashedIds].join(', ')}`);
+  const strokeFiltered = rawLines.filter(l => !dashedIds.has(l.id));
+  const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(strokeFiltered);
   const { connected: connectedLines, floating: floatingLines } = validateConnectivity(angleValidLines, outlinePoints);
-  const finalLines: V3Line[] = connectedLines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
-  console.log(`[scan-engine] scan2 postprocess: raw=${rawLines.length} angleValid=${angleValidLines.length} connected=${connectedLines.length} angleRejected=${angleRejectedLines.length} floating=${floatingLines.length}`);
+  // Pre-Scan-3 artificial split healing (classification-independent).
+  const heal = mergeArtificialCollinearSplits(connectedLines, outlinePoints);
+  if (heal.merges.length > 0) console.log(`[scan-engine] scan2 pre-heal: ${heal.merges.length} collinear merge(s)`);
+  // Island micro-cluster removal (traced annotation boxes around dashed features).
+  const clusters = removeIslandMicroClusters(heal.lines, outlinePoints);
+  for (const rec of clusters.removed) console.log(`[scan-engine] scan2 micro-cluster: removed ${rec.removedIds.join(',')} (${rec.reason})`);
+  const finalLines: V3Line[] = clusters.lines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
+  console.log(`[scan-engine] scan2 postprocess: raw=${rawLines.length} dashedRemoved=${dashedIds.size} angleValid=${angleValidLines.length} connected=${connectedLines.length} preHealed=${heal.merges.length} angleRejected=${angleRejectedLines.length} floating=${floatingLines.length}`);
 
   const canvasScaleX = canvasW / imgW, canvasScaleY = canvasH / imgH;
   const linesCanvas = finalLines.map(l => ({ ...l, start: scalePoint(l.start, canvasScaleX, canvasScaleY), end: scalePoint(l.end, canvasScaleX, canvasScaleY) }));
@@ -475,9 +534,9 @@ export async function runScan3(params: {
   enforcementCorrections?: Array<{ line_id: string; from: string; to: string; reason: string }>;
 }> {
   const { processedBuffer, canvasWidth: canvasW, canvasHeight: canvasH, outlinePointsCanvas, linesCanvas, analysisDimensions, quality, quoteId, pageId, companyId, userId } = params;
-  const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
-  const reasoningEffort = quality;
-  const tokenLimits = getTokenLimits(reasoningEffort);
+  const model = getScanModel(quality);
+  const reasoningEffort = getReasoningEffort(quality);
+  const tokenLimits = getTokenLimits(quality);
 
   const meta = await sharp(processedBuffer).metadata();
   const imgW = meta.width ?? analysisDimensions.width, imgH = meta.height ?? analysisDimensions.height;
@@ -547,7 +606,46 @@ export async function runScan3(params: {
 
   const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
 
-  const components = classificationsToComponents(lines, outlinePoints, finalClassifications);
+  // Stroke-style raster safety net (parity with ai-scan-v3 route): dashed
+  // strokes are never components, regardless of semantic classification.
+  // Most dashed candidates were already removed in Scan 2; this catches any
+  // that survived the client round-trip.
+  const strokeMap3 = await classifyCandidateStrokeStyles(processedBuffer, lines);
+  const dashed3 = new Set([...strokeMap3.entries()].filter(([, e]) => e.style === 'dashed').map(([id]) => id));
+  // Near-empty ambiguous traces (ultra-fine dotted styles) are demoted to
+  // uncertain for review - never trusted as real components, never deleted.
+  const nearEmpty3 = new Set([...strokeMap3.entries()]
+    .filter(([, e]) => e.style === 'ambiguous' && e.dutyCycle <= NEAR_EMPTY_DUTY_CYCLE)
+    .map(([id]) => id));
+  if (nearEmpty3.size > 0) {
+    console.log(`[scan-engine] scan3: demoted ${nearEmpty3.size} near-empty stroke(s) to uncertain: ${[...nearEmpty3].join(', ')}`);
+  }
+  for (const c of finalClassifications) {
+    if (nearEmpty3.has(c.line_id) && c.type !== 'uncertain') c.type = 'uncertain';
+  }
+  if (dashed3.size > 0) {
+    console.log(`[scan-engine] scan3: dropped ${dashed3.size} dashed line(s): ${[...dashed3].join(', ')}`);
+  }
+  // ── Isolated closed-loop demotion (annotation-box suspicion) ──
+  // A closed loop with no junction to the wider roof network is not real
+  // roof geometry: demote to uncertain (pink, deletable) - never trust, never
+  // delete silently.
+  const loopDemotions = findIsolatedClosedLoopLineIds(lines);
+  for (const rec of loopDemotions.records) {
+    console.log(`[scan-engine] scan3: annotation-box loop demoted (${rec.lineIds.join(',')}): ${rec.reason}`);
+  }
+  if (loopDemotions.ids.size > 0) {
+    finalClassifications = finalClassifications.map(c =>
+      loopDemotions.ids.has(c.line_id) && c.type !== 'uncertain'
+        ? { ...c, type: 'uncertain' as const, reason: 'Backend: part of an isolated closed loop with no junction to the roof network - likely a traced annotation box, marked uncertain for review' }
+        : c
+    );
+  }
+
+  const keptLines = lines.filter(l => !dashed3.has(l.id));
+  const keptClassifications = finalClassifications.filter(c => !dashed3.has(c.line_id));
+
+  const components = classificationsToComponents(keptLines, outlinePoints, keptClassifications);
   const aiResult: AiScanResult = {
     scale: { detected: false, ratio: null, dimension_line: null },
     pitch: { detected: false, global_degrees: null },
@@ -576,7 +674,7 @@ export async function runScan3(params: {
       uncertain: canvasResult.components.uncertain.length,
       notes: canvasResult.notes,
     },
-    classificationDetails: finalClassifications,
+    classificationDetails: keptClassifications,
     enforcementCorrections: enforcementCorrections.length > 0 ? enforcementCorrections : undefined,
   };
 }

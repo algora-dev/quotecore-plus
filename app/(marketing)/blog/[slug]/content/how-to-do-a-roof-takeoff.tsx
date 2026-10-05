@@ -29,8 +29,8 @@ export default function Post() {
       <p>Write assumptions beside the takeoff. If access, hidden damage, or structural work cannot be confirmed, state that clearly in the quote rather than burying uncertainty in the price.</p>
       <h2>Step 2: choose the right measurement source</h2>
       <p>You can build a takeoff from a scaled architectural plan, a roof plan with written dimensions, site measurements, aerial imagery, a digital measurement file, or an AI-assisted roof scan.</p>
-      <p>Plans are efficient, but verify the scale. Site measurements are direct, but access and safety matter. Aerial and AI-assisted methods are useful for early pricing and difficult access, but poor imagery, hidden roof sections, and later additions can affect the result. To see how those approaches compare in practice, read <a href="/blog/manual-vs-digital-roof-takeoff">manual vs digital roof takeoff</a>.</p>
-      <p>For a faster start, QuoteCore+ offers <a href="/features/ai-scan-assist">AI Scan Assist</a> — upload a plan and AI identifies roof areas and flashings for you. You verify each result, adjust anything that needs tweaking, and carry everything straight into a priced takeoff. It's not perfect, but it gives a novice a strong starting point while keeping full editing control.</p>
+      <p>Plans are efficient, but verify the scale. In QuoteCore+ you can upload the entire plan set as a multi-page PDF (e.g. council plans) and pick the page you need, or upload an image directly. If you are working from a PDF, the guide to <a href="/blog/how-to-measure-a-roof-from-a-pdf-plan">measuring a roof from a PDF plan</a> covers scale verification and calibration in detail. Site measurements are direct, but access and safety matter. Aerial and AI-assisted methods are useful for early pricing and difficult access, but poor imagery, hidden roof sections, and later additions can affect the result. To see how those approaches compare in practice, read <a href="/blog/manual-vs-digital-roof-takeoff">manual vs digital roof takeoff</a>.</p>
+      <p>For a faster start, QuoteCore+ offers <a href="/features/ai-scan-assist">AI Scan Assist</a> - upload a plan and AI identifies roof areas and flashings for you. You verify each result, adjust anything that needs tweaking, and carry everything straight into a priced takeoff. It's not perfect, but it gives a novice a strong starting point while keeping full editing control.</p>
       <p>For a detailed comparison, read <a href="/blog/how-to-measure-a-roof">how to measure a roof for materials</a>. If you are considering automated measurement, see the guide to <a href="/blog/ai-roof-measuring">AI roof measuring</a>.</p>
       <h2>Step 3: break the roof into simple planes</h2>
       <p>Do not try to calculate a complex roof as one shape. Divide it into rectangles, triangles, trapezoids, and other simple roof planes.</p>
@@ -104,7 +104,7 @@ export default function Post() {
       </table>
       <p>For sheet roofing, also check sheet direction, cover width, end laps, side laps, and maximum practical sheet length. For tiles or shingles, check gauge, exposure, headlap, and manufacturer coverage rather than relying on a generic units-per-square-metre figure.</p>
       <h2>Step 6: turn measurements into material quantities</h2>
-      <p>Once the geometry is complete, convert it into a material schedule covering the roof covering, underlay, battens or decking, ridge and edge systems, valleys, flashings, fixings, ventilation, and rainwater goods.</p>
+      <p>Once the geometry is complete, convert it into a material schedule covering the roof covering, underlay, battens or decking, ridge and edge systems, valleys, flashings, fixings, ventilation, and rainwater goods. Work in the units your suppliers quote in - m², sq ft, or roofing squares (one roofing square = 100 sq ft, or roughly 9.29 m² of roof area).</p>
       <p>Use manufacturer technical data for coverage, laps, fixing patterns, and product limits. The <a href="/free-roofing-material-calculator">free roofing material calculator</a> can help turn measured area into practical quantities, but the final order should still follow the selected product specification.</p>
       <h2>Step 7: apply waste intelligently</h2>
       <p>Waste is not one universal percentage. It depends on roof shape, material format, laying pattern, sheet lengths, cuts, breakage risk, and whether offcuts can be reused.</p>
@@ -113,7 +113,7 @@ export default function Post() {
       <h2>Step 8: add labour, access, and job-specific costs</h2>
       <p>A takeoff supports a quote, but quantities alone are not a complete price. Allow for strip-off and disposal, loading and material movement, scaffolding, lifting, complex details, weather protection, travel, supervision, and site constraints.</p>
       <p>Two roofs with the same area can require very different labour. A clear, accessible gable roof is not equivalent to a roof with multiple levels, valleys, rooflights, and restricted loading space.</p>
-      <p>For the pricing stage, use <a href="/blog/how-to-price-a-roofing-job">how to price a roofing job</a>.</p>
+      <p>For the pricing stage, use <a href="/blog/how-to-price-a-roofing-job">how to price a roofing job</a>. And if you are choosing a platform to run measurement-plus-quoting in one place, our guide to the <a href="/blog/best-quoting-software-nz">best quoting software for NZ trades</a> compares the main options side by side.</p>
       <h2>Worked example: a simple pitched roof</h2>
       <p>Assume a two-plane gable roof has a total plan area of 96 m? at 25 degrees.</p>
       <ol>
@@ -139,7 +139,7 @@ export default function Post() {
         <li>Failing to record assumptions</li>
       </ul>
       <h2>A faster connected workflow</h2>
-      <p>The <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> is useful for a one-off takeoff. For repeat work, QuoteCore+ connects <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link>, Smart Components™, pricing, customer quotes, material orders, and invoices in one workflow.</p>
+      <p>The <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> is useful for a one-off takeoff. For repeat work, QuoteCore+ is <Link href="/construction-quoting-software">quoting software for contractors</Link> that connects <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link>, Smart Components™, pricing, customer quotes, material orders, and invoices in one workflow.</p>
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe
           src="https://www.youtube.com/embed/B--YAux8Bqo"
@@ -161,7 +161,7 @@ export default function Post() {
       <p>It should be accurate enough to support the commercial decision being made. Early budgets can use stated allowances. A final order needs confirmed dimensions, product data, details, and quantities.</p>
       <h3>What is the fastest way to check a manual takeoff?</h3>
       <p>Recalculate area by roof plane, total linear components independently, compare the result with the roof footprint, and review the material schedule against the specification. A second-person check is valuable on complex work.</p>
-      <p>Ready to build a takeoff? Upload your plan to the <a href="/free-roof-takeoff">free roof takeoff tool</a> - <a href="/blog/how-to-measure-a-roof-online">here is the step-by-step guide to measuring a roof online</a> - try the <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> for quantities, then explore <Link href="/roofing-quoting-software">roofing quoting software</Link> when you want the whole process connected.</p>
+      <p>Ready to build a takeoff? Upload your plan to the <a href="/free-roof-takeoff">free roof takeoff tool</a> - <a href="/blog/how-to-measure-a-roof-online">here is the step-by-step guide to measuring a roof online</a> - try the <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> for quantities, then explore <Link href="/roofing-quoting-software">roofing quoting software</Link> when you want the whole process connected. When the quote is ready, you can <Link href="/integrations/xero">send its information to Xero as a draft invoice</Link> and keep your accounting where it is.</p>
     </div>
   );
 }

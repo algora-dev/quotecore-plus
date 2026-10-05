@@ -1,0 +1,709 @@
+{
+  "method": "Chromium on source-derived static specimens, not React/Next. No live data, requests, writes, saving or email. Only CSS, native details and dialog geometry exercised.",
+  "screens": [
+    {
+      "screen": "invoices-skipped-delete",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 9
+    },
+    {
+      "screen": "invoices-skipped-delete",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 9
+    },
+    {
+      "screen": "invoices-skipped-delete",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 9
+    },
+    {
+      "screen": "invoices-skipped-delete",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 9
+    },
+    {
+      "screen": "long-result-details",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 1
+    },
+    {
+      "screen": "long-result-details",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 1
+    },
+    {
+      "screen": "long-result-details",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 1
+    },
+    {
+      "screen": "long-result-details",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 1
+    },
+    {
+      "screen": "new-quote-customer-validation",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 10
+    },
+    {
+      "screen": "new-quote-customer-validation",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 10
+    },
+    {
+      "screen": "new-quote-customer-validation",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 10
+    },
+    {
+      "screen": "new-quote-customer-validation",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 10
+    },
+    {
+      "screen": "new-quote-digital-validation",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 11
+    },
+    {
+      "screen": "new-quote-digital-validation",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 11
+    },
+    {
+      "screen": "new-quote-digital-validation",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 11
+    },
+    {
+      "screen": "new-quote-digital-validation",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 11
+    },
+    {
+      "screen": "new-quote-generic-trades",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 12
+    },
+    {
+      "screen": "new-quote-generic-trades",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 12
+    },
+    {
+      "screen": "new-quote-generic-trades",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 12
+    },
+    {
+      "screen": "new-quote-generic-trades",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 12
+    },
+    {
+      "screen": "order-template-name-validation",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 15
+    },
+    {
+      "screen": "order-template-name-validation",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 15
+    },
+    {
+      "screen": "order-template-name-validation",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 15
+    },
+    {
+      "screen": "order-template-name-validation",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 15
+    },
+    {
+      "screen": "orders-complete-export",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 5
+    },
+    {
+      "screen": "orders-complete-export",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 5
+    },
+    {
+      "screen": "orders-complete-export",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 5
+    },
+    {
+      "screen": "orders-complete-export",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 5
+    },
+    {
+      "screen": "orders-empty-after-delete",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 1
+    },
+    {
+      "screen": "orders-empty-after-delete",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 1
+    },
+    {
+      "screen": "orders-empty-after-delete",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 1
+    },
+    {
+      "screen": "orders-empty-after-delete",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 1
+    },
+    {
+      "screen": "quotes-confirm-delete",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": {
+        "top": 395,
+        "bottom": 605,
+        "height": 1000
+      },
+      "controls": 21
+    },
+    {
+      "screen": "quotes-confirm-delete",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": {
+        "top": 313,
+        "bottom": 531,
+        "height": 844
+      },
+      "controls": 21
+    },
+    {
+      "screen": "quotes-confirm-delete",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": {
+        "top": 241,
+        "bottom": 479,
+        "height": 720
+      },
+      "controls": 21
+    },
+    {
+      "screen": "quotes-confirm-delete",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": {
+        "top": 90,
+        "bottom": 300,
+        "height": 390
+      },
+      "controls": 21
+    },
+    {
+      "screen": "quotes-export-failure",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 20
+    },
+    {
+      "screen": "quotes-export-failure",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 20
+    },
+    {
+      "screen": "quotes-export-failure",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 20
+    },
+    {
+      "screen": "quotes-export-failure",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 20
+    },
+    {
+      "screen": "quotes-partial-export",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 17
+    },
+    {
+      "screen": "quotes-partial-export",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 17
+    },
+    {
+      "screen": "quotes-partial-export",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 17
+    },
+    {
+      "screen": "quotes-partial-export",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 17
+    },
+    {
+      "screen": "security-remove-confirmation",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": {
+        "top": 401,
+        "bottom": 599,
+        "height": 1000
+      },
+      "controls": 5
+    },
+    {
+      "screen": "security-remove-confirmation",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": {
+        "top": 325,
+        "bottom": 519,
+        "height": 844
+      },
+      "controls": 5
+    },
+    {
+      "screen": "security-remove-confirmation",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": {
+        "top": 249,
+        "bottom": 471,
+        "height": 720
+      },
+      "controls": 5
+    },
+    {
+      "screen": "security-remove-confirmation",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": {
+        "top": 96,
+        "bottom": 294,
+        "height": 390
+      },
+      "controls": 5
+    },
+    {
+      "screen": "template-empty-confirmation",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": {
+        "top": 401,
+        "bottom": 599,
+        "height": 1000
+      },
+      "controls": 10
+    },
+    {
+      "screen": "template-empty-confirmation",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": {
+        "top": 314,
+        "bottom": 530,
+        "height": 844
+      },
+      "controls": 10
+    },
+    {
+      "screen": "template-empty-confirmation",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": {
+        "top": 210,
+        "bottom": 510,
+        "height": 720
+      },
+      "controls": 10
+    },
+    {
+      "screen": "template-empty-confirmation",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": {
+        "top": 96,
+        "bottom": 294,
+        "height": 390
+      },
+      "controls": 10
+    },
+    {
+      "screen": "template-name-validation",
+      "width": 1440,
+      "height": 1000,
+      "pageOverflow": false,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "dialog": null,
+      "controls": 8
+    },
+    {
+      "screen": "template-name-validation",
+      "width": 390,
+      "height": 844,
+      "pageOverflow": false,
+      "scrollWidth": 390,
+      "overflow": [],
+      "dialog": null,
+      "controls": 8
+    },
+    {
+      "screen": "template-name-validation",
+      "width": 320,
+      "height": 720,
+      "pageOverflow": false,
+      "scrollWidth": 320,
+      "overflow": [],
+      "dialog": null,
+      "controls": 8
+    },
+    {
+      "screen": "template-name-validation",
+      "width": 844,
+      "height": 390,
+      "pageOverflow": false,
+      "scrollWidth": 844,
+      "overflow": [],
+      "dialog": null,
+      "controls": 8
+    }
+  ],
+  "feedback": [
+    {
+      "selector": ".qc-action-result button",
+      "default": {
+        "background": "rgba(0, 0, 0, 0)",
+        "shadow": "none",
+        "outline": "none",
+        "outlineWidth": "0px",
+        "active": false,
+        "focus": false,
+        "height": 44
+      },
+      "hover": {
+        "background": "rgb(255, 244, 235)",
+        "shadow": "none",
+        "outline": "none",
+        "outlineWidth": "0px",
+        "active": false,
+        "focus": false,
+        "height": 44
+      },
+      "focus": {
+        "background": "rgb(255, 244, 235)",
+        "shadow": "none",
+        "outline": "solid",
+        "outlineWidth": "2px",
+        "active": false,
+        "focus": true,
+        "height": 44
+      },
+      "pressed": {
+        "background": "rgb(255, 244, 235)",
+        "shadow": "rgba(25, 27, 32, 0.12) 0px 2px 3px 0px inset",
+        "outline": "solid",
+        "outlineWidth": "2px",
+        "active": true,
+        "focus": true,
+        "height": 44
+      }
+    },
+    {
+      "selector": ".qc-action-result summary",
+      "default": {
+        "background": "rgba(0, 0, 0, 0)",
+        "shadow": "none",
+        "outline": "none",
+        "outlineWidth": "0px",
+        "active": false,
+        "focus": false,
+        "height": 44
+      },
+      "hover": {
+        "background": "rgb(255, 255, 255)",
+        "shadow": "none",
+        "outline": "none",
+        "outlineWidth": "0px",
+        "active": false,
+        "focus": false,
+        "height": 44
+      },
+      "focus": {
+        "background": "rgb(255, 255, 255)",
+        "shadow": "none",
+        "outline": "solid",
+        "outlineWidth": "2px",
+        "active": false,
+        "focus": true,
+        "height": 44
+      },
+      "pressed": {
+        "background": "rgb(255, 255, 255)",
+        "shadow": "rgba(25, 27, 32, 0.12) 0px 2px 3px 0px inset",
+        "outline": "solid",
+        "outlineWidth": "2px",
+        "active": true,
+        "focus": true,
+        "height": 44
+      }
+    }
+  ],
+  "nativeChecks": [
+    {
+      "check": "Native details opens from keyboard, all 13 failure details accessible, scrollable region focusable",
+      "pass": true
+    },
+    {
+      "check": "Forced-colors result action retains visible focus; reduced motion enabled",
+      "pass": true,
+      "computed": {
+        "outline": "solid",
+        "width": "2px",
+        "background": "rgba(255, 255, 255, 0)",
+        "transition": "0s"
+      }
+    }
+  ]
+}

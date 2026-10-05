@@ -1,0 +1,17 @@
+Please integrate and validate the attached P1.7.2 Task Context Quality package against your current branch. The supplied 28 September quality ZIP / commit 482513c8 is the implementation baseline. Preserve newer agent changes; do not blindly replace the branch.
+
+Read RETURN_NOTES.md, docs/SMART_ASSISTANT_P172_HANDOFF_2026-09-28.md, docs/sa-p172-2026-09-28/validation/VALIDATION.md and DATABASE_ACCEPTANCE.md first.
+
+This is a quality correction, not another feature phase. The acceptance bar is the owner's exact sentences in ONE continuous phone conversation, followed by genuine follow-ups and corrections. A large green offline suite is not sufficient.
+
+Keep SMART_ASSISTANT_TASK_CONTEXT_ENABLED=false until build, migration, ownership/epoch/concurrency and replay gates pass. Preserve Luna configuration/reasoning fixes, all admission/reservation/quota/replay/finish behavior, original business calculations, P2/P3 and staged rollout. Do not enable P4/knowledge, widen tenant rollout, redesign UX, or change model.
+
+Review/apply ONLY backend/supabase/migrations/20260928150000_sa_v2_task_context.sql in the approved testing database after inspecting actual schema. It is an unapplied draft adding task metadata, NOT replacing a business reader or quota function. Confirm function signatures and role grants. No bulk pending-migration application.
+
+Run node scripts/run-smart-assistant-task-quality-offline.mjs, full dependency install/typecheck/lint/production build in your normal environment, real SQL/RLS/tenant/permission/knowledge-epoch/replay and two-tab tests, then real browser and Luna acceptance. Historical P171 source-manifest checker already fails the supplied baseline at DESIGN_CHANGES.md; do not weaken it. The new checker records byte protection against this actual 28 September baseline. Verify and explain intentional branch drift.
+
+Enable TASK_CONTEXT plus the existing enabled resolver/retrieval/speed gates only on the testing deployment. Confirm sa_task_boundary logs and new task RPCs are actually used. Run docs/sa-p172-2026-09-28/continuous-acceptance.json in order. Repeat on stable data, without New chat or Done between the four owner messages. Inspect candidate destinations and selected IDs, not just text. Repeat with Done, without Done, real corrections, pauses, stale selections and deliberately failed/uncertain requests.
+
+Measure full end-to-end latency and added task RPC overhead separately; do not claim performance from mock fixture durations. Confirm no extra classifier model call, accurate provider usage, same request key on uncertain replay, and zero model/admission calls for the Done button. Typed "done" remains an ordinary admitted user turn. Closing a task must never approve/cancel a business action or finish an uncertain run.
+
+Return the full latest source/handoff ZIP with fixes made, migrations actually applied, exact flags/build id, natural-language transcripts, task decisions, selected record IDs, model/tool/query counts, timings (including task reads/begin/finish), security/concurrency results, browser evidence and remaining failures. Do not move on to analytics, P4, voice, PWA or visual redesign before the owner conversation passes.

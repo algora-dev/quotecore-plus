@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import LazyYouTube from "@/components/LazyYouTube";
 
 export default function Post() {
   return (
@@ -13,6 +14,11 @@ export default function Post() {
         payment - and nothing is saved unless you choose to continue into the app.
       </p>
       <p>
+        How accurate is this approach when the image comes from Google Earth or satellite imagery? See our{' '}
+        <Link href="/research/google-earth-roof-measurement-accuracy">Google Earth roof takeoff study</Link>
+        , where 10 remote measurements were physically verified on site.
+      </p>
+      <p>
         One clarification before the steps: this measures from a <strong>plan, drawing or image you upload</strong> -
         and you calibrate it against a dimension you already know. It is not an aerial or satellite measurement
         service: there is no imagery lookup, and the accuracy comes from your calibration. If you need a roof
@@ -23,6 +29,15 @@ export default function Post() {
         This guide walks through the whole process on a computer step by step: getting your plan ready as an image,
         calibrating the scale, measuring each component, and turning the output into materials and a quote.
       </p>
+
+      <div className="not-prose my-8">
+        <p className="mb-3 text-sm font-semibold text-zinc-900">Watch the full walkthrough</p>
+        <LazyYouTube
+          videoId="RIKlvOG_xdc"
+          title="How to Measure a Roof from Google Maps for Free - Full Roof Takeoff + Quote"
+        />
+        <p className="mt-2 text-sm text-zinc-600">The complete process on video: find the roof, measure every component, and turn it into a quote - free.</p>
+      </div>
 
       <hr />
 
@@ -121,7 +136,7 @@ export default function Post() {
             </tr>
           </thead>
           <tbody className="text-zinc-700">
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Cost</td><td className="py-2 pr-4">Free, no signup</td><td className="py-2">RoofSnap from $13 per report ($105/mo, $52–78/mo annual); EagleView $32.75–$105 per report (verified Aug 2026)</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Cost</td><td className="py-2 pr-4">Free, no signup</td><td className="py-2">RoofSnap from $13 per report ($105/mo, $52 - 78/mo annual); EagleView $32.75 - $105 per report (verified Aug 2026)</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Source of measurements</td><td className="py-2 pr-4">Your own plan, measured by you</td><td className="py-2">Aerial or plan-based, measured by the service</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Turnaround</td><td className="py-2 pr-4">Immediate - you measure as you quote</td><td className="py-2">Report delivery time varies by service</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Pitch-calculated lengths</td><td className="py-2 pr-4">Yes, automatic</td><td className="py-2">Yes</td></tr>
@@ -186,7 +201,7 @@ export default function Post() {
 
       <p>
         Ready to try it? <Link href="/free-roof-takeoff">Measure your roof plan online free</Link> - upload, set the scale,
-        measure. No signup required. Or <Link href="/free-trial">start a free QuoteCore+ trial</Link> for AI-assisted scans,
+        measure. No signup required. Or <Link href="/free-trial">get started with QuoteCore+</Link> for AI-assisted scans,
         saved components, and the full measure-to-invoice workflow.
       </p>
     </div>

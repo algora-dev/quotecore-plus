@@ -1,4 +1,5 @@
 'use client';
+import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -80,7 +81,7 @@ export function UpgradeModal({
   if (!open) return null;
 
   return (
-    <div
+    <QcHostedDialog label={title} size="sm"
       className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50 p-4"
       role="dialog"
       aria-modal="true"
@@ -104,13 +105,13 @@ export function UpgradeModal({
           </div>
         </div>
         <div className="flex gap-3 justify-end mt-6">
-          <button
+          <QcHostedButton variant="ghost"
             type="button"
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium rounded-full text-slate-700 hover:bg-slate-100"
           >
             {closeLabel}
-          </button>
+          </QcHostedButton>
           <Link
             href={href}
             onClick={onClose}
@@ -120,6 +121,6 @@ export function UpgradeModal({
           </Link>
         </div>
       </div>
-    </div>
+    </QcHostedDialog>
   );
 }

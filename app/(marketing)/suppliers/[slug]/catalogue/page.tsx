@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Catalogue Not Found", robots: { index: false, follow: false } };
   }
 
-  const title = `${data.supplier.supplier_name} — Product Catalogue | QuoteCore+`;
+  const title = `${data.supplier.supplier_name} - Product Catalogue | QuoteCore+`;
   const description = `Browse ${data.supplier.supplier_name}'s roofing material catalogue with pricing. Download as CSV or JSON. Calculate roof takeoffs using their pricing.`;
 
   return {
@@ -324,7 +324,7 @@ export default async function CataloguePage({ params, searchParams }: PageProps)
         <section className="pt-8 pb-6">
           <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-              {s.supplier_name} — Product Catalogue
+              {s.supplier_name} - Product Catalogue
             </h1>
             {cat.public_description && (
               <p className="mt-2 text-zinc-600 max-w-3xl">{cat.public_description}</p>

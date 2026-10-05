@@ -1,0 +1,588 @@
+{
+  "syntaxErrors": [],
+  "files": 59,
+  "baselineEvents": 463,
+  "preservedEvents": 463,
+  "report": [
+    {
+      "file": "app/(auth)/[workspaceSlug]/account/AccountTabs.tsx",
+      "baselineEvents": 1,
+      "events": 1,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/account/LogoUploader.tsx",
+      "baselineEvents": 1,
+      "events": 1,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/account/UserProfileForm.tsx",
+      "baselineEvents": 2,
+      "events": 2,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/account/billing/BillingPanel.tsx",
+      "baselineEvents": 11,
+      "events": 11,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/account/integrations/IntegrationsPanel.tsx",
+      "baselineEvents": 2,
+      "events": 2,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/account/page.tsx",
+      "baselineEvents": 0,
+      "events": 0,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/account/support/SupportSection.tsx",
+      "baselineEvents": 6,
+      "events": 6,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/attachments/AttachmentsTab.tsx",
+      "baselineEvents": 0,
+      "events": 0,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/attachments/attachment-list.tsx",
+      "baselineEvents": 14,
+      "events": 14,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/attachments/upload-attachment-modal.tsx",
+      "baselineEvents": 8,
+      "events": 8,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "baselineEvents": 25,
+      "events": 25,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/edit-catalog-modal.tsx",
+      "baselineEvents": 10,
+      "events": 10,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/page.tsx",
+      "baselineEvents": 0,
+      "events": 0,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/replace-catalog-modal.tsx",
+      "baselineEvents": 7,
+      "events": 8,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+      "baselineEvents": 15,
+      "events": 16,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "baselineEvents": 23,
+      "events": 23,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx",
+      "baselineEvents": 25,
+      "events": 26,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx",
+      "baselineEvents": 17,
+      "events": 17,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "baselineEvents": 30,
+      "events": 31,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/invoice-from-quote/[quoteId]/InvoiceLineSelector.tsx",
+      "baselineEvents": 6,
+      "events": 6,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/page.tsx",
+      "baselineEvents": 0,
+      "events": 0,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/[quoteId]/LineSelector.tsx",
+      "baselineEvents": 9,
+      "events": 9,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx",
+      "baselineEvents": 7,
+      "events": 7,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "baselineEvents": 17,
+      "events": 18,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/orders-hub.tsx",
+      "baselineEvents": 5,
+      "events": 5,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/page.tsx",
+      "baselineEvents": 0,
+      "events": 0,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "baselineEvents": 26,
+      "events": 27,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/ReopenQuoteButton.tsx",
+      "baselineEvents": 3,
+      "events": 3,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/ScheduleFollowUpButton.tsx",
+      "baselineEvents": 13,
+      "events": 13,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/SendToAppButton.tsx",
+      "baselineEvents": 7,
+      "events": 7,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/WithdrawQuoteButton.tsx",
+      "baselineEvents": 3,
+      "events": 3,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "baselineEvents": 15,
+      "events": 15,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/CustomerTemplateLogoUploader.tsx",
+      "baselineEvents": 2,
+      "events": 2,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "baselineEvents": 10,
+      "events": 10,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/EmailChangeSection.tsx",
+      "baselineEvents": 5,
+      "events": 5,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "baselineEvents": 17,
+      "events": 17,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/PasswordSection.tsx",
+      "baselineEvents": 1,
+      "events": 1,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/PaymentDetailsForm.tsx",
+      "baselineEvents": 6,
+      "events": 6,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
+      "baselineEvents": 10,
+      "events": 10,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/onboarding/GoogleOnboardingForm.tsx",
+      "baselineEvents": 11,
+      "events": 11,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/onboarding/OnboardingForm.tsx",
+      "baselineEvents": 6,
+      "events": 6,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/onboarding/SecurityQuestionsStep.tsx",
+      "baselineEvents": 5,
+      "events": 5,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/onboarding/page.tsx",
+      "baselineEvents": 0,
+      "events": 0,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/(auth)/paywall/page.tsx",
+      "baselineEvents": 0,
+      "events": 0,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/auth/reset-password/page.tsx",
+      "baselineEvents": 3,
+      "events": 3,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/components/TaxEditor.tsx",
+      "baselineEvents": 6,
+      "events": 6,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/components/attachments/AttachmentSendPicker.tsx",
+      "baselineEvents": 4,
+      "events": 4,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/components/auth/GoogleSignInButton.tsx",
+      "baselineEvents": 1,
+      "events": 1,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/components/send/SendDocumentButton.tsx",
+      "baselineEvents": 4,
+      "events": 4,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/components/send/SendDocumentModal.tsx",
+      "baselineEvents": 36,
+      "events": 36,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/components/send/SendTestTipModal.tsx",
+      "baselineEvents": 2,
+      "events": 2,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/components/ui/PasswordField.tsx",
+      "baselineEvents": 1,
+      "events": 1,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/components/workspace/QuoteIndexPage.tsx",
+      "baselineEvents": 0,
+      "events": 0,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/login/TroubleSigningInPanel.tsx",
+      "baselineEvents": 7,
+      "events": 7,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/login/page.tsx",
+      "baselineEvents": 4,
+      "events": 4,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/login/recover/RecoverFlow.tsx",
+      "baselineEvents": 9,
+      "events": 9,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/login/recover/page.tsx",
+      "baselineEvents": 0,
+      "events": 0,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    },
+    {
+      "file": "app/signup/page.tsx",
+      "baselineEvents": 5,
+      "events": 5,
+      "removedEvents": [],
+      "removedDisabled": [],
+      "removedBindings": [],
+      "changedNonJsxFunctions": [],
+      "changedConstants": []
+    }
+  ]
+}

@@ -1,0 +1,376 @@
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":false,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"enabledByWorkspace":false,"state":"disabled","knowledge":false,"catalogues":false,"tools":["find_records","read_record","current_record","open_record","offer_options","attention_today","resolve_records","count_quote_records","resolve_quote_totals","read_quote_totals"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":false,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":false,"tools":["find_records","read_record","current_record","open_record","offer_options","attention_today","resolve_records","count_quote_records","resolve_quote_totals","read_quote_totals"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":false,"tools":["open_record","offer_options","attention_today","describe_workspace_sources","query_workspace"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":false,"tools":["open_record","offer_options","attention_today","describe_workspace_sources","query_workspace"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":false,"tools":["open_record","offer_options","attention_today","describe_workspace_sources","query_workspace"]}
+TAP version 13
+# Subtest: RPC uses only admitted run/revision and the validated plan, never model company scope
+ok 1 - RPC uses only admitted run/revision and the validated plan, never model company scope
+  ---
+  duration_ms: 4.243382
+  type: 'test'
+  ...
+# Subtest: disabled server flag makes no data RPC
+ok 2 - disabled server flag makes no data RPC
+  ---
+  duration_ms: 0.396916
+  type: 'test'
+  ...
+# Subtest: hidden source is refused before a data RPC
+ok 3 - hidden source is refused before a data RPC
+  ---
+  duration_ms: 0.198584
+  type: 'test'
+  ...
+# Subtest: catalogue entitlement denial is not missing data
+ok 4 - catalogue entitlement denial is not missing data
+  ---
+  duration_ms: 0.209258
+  type: 'test'
+  ...
+# Subtest: unclassified knowledge gate is not a search miss
+ok 5 - unclassified knowledge gate is not a search miss
+  ---
+  duration_ms: 0.286653
+  type: 'test'
+  ...
+# Subtest: current page context is bound to an exact server-side ID filter
+ok 6 - current page context is bound to an exact server-side ID filter
+  ---
+  duration_ms: 1.264415
+  type: 'test'
+  ...
+# Subtest: current parent binding works for placed components
+ok 7 - current parent binding works for placed components
+  ---
+  duration_ms: 0.385189
+  type: 'test'
+  ...
+# Subtest: missing page hint asks for a useful record clue before any read
+ok 8 - missing page hint asks for a useful record clue before any read
+  ---
+  duration_ms: 0.351234
+  type: 'test'
+  ...
+# Subtest: wrong current domain never silently switches records
+ok 9 - wrong current domain never silently switches records
+  ---
+  duration_ms: 0.675623
+  type: 'test'
+  ...
+# Subtest: invalid plan errors are repairable, not trusted terminal replies
+ok 10 - invalid plan errors are repairable, not trusted terminal replies
+  ---
+  duration_ms: 0.498984
+  type: 'test'
+  ...
+# Subtest: unknown field is a capability error, not permission denial or empty results
+ok 11 - unknown field is a capability error, not permission denial or empty results
+  ---
+  duration_ms: 0.350138
+  type: 'test'
+  ...
+# Subtest: only server-produced results can be terminal replies
+ok 12 - only server-produced results can be terminal replies
+  ---
+  duration_ms: 0.353402
+  type: 'test'
+  ...
+# Subtest: explicit read result can prepare navigation without claiming arrival
+ok 13 - explicit read result can prepare navigation without claiming arrival
+  ---
+  duration_ms: 1.957776
+  type: 'test'
+  ...
+# Subtest: ambiguous lookup creates concrete choice buttons, not auto-navigation
+ok 14 - ambiguous lookup creates concrete choice buttons, not auto-navigation
+  ---
+  duration_ms: 1.023978
+  type: 'test'
+  ...
+# Subtest: choice replies use child row identity, never the navigation parent ID
+ok 15 - choice replies use child row identity, never the navigation parent ID
+  ---
+  duration_ms: 1.089138
+  type: 'test'
+  ...
+# Subtest: a sole weak fuzzy suggestion still offers Search differently
+ok 16 - a sole weak fuzzy suggestion still offers Search differently
+  ---
+  duration_ms: 0.349705
+  type: 'test'
+  ...
+# Subtest: card scope conservatively binds all currently readable sections
+ok 17 - card scope conservatively binds all currently readable sections
+  ---
+  duration_ms: 0.399319
+  type: 'test'
+  ...
+# Subtest: independent context read emits no card
+ok 18 - independent context read emits no card
+  ---
+  duration_ms: 0.604706
+  type: 'test'
+  ...
+# Subtest: database error P1604 is classified as permission_denied
+ok 19 - database error P1604 is classified as permission_denied
+  ---
+  duration_ms: 0.306831
+  type: 'test'
+  ...
+# Subtest: database error P1601 is classified as feature_disabled
+ok 20 - database error P1601 is classified as feature_disabled
+  ---
+  duration_ms: 0.115998
+  type: 'test'
+  ...
+# Subtest: database error P1603 is classified as unsupported_field
+ok 21 - database error P1603 is classified as unsupported_field
+  ---
+  duration_ms: 0.086632
+  type: 'test'
+  ...
+# Subtest: database error PGRST202 is classified as setup_required
+ok 22 - database error PGRST202 is classified as setup_required
+  ---
+  duration_ms: 0.085775
+  type: 'test'
+  ...
+# Subtest: database error 22023 is classified as invalid_query
+ok 23 - database error 22023 is classified as invalid_query
+  ---
+  duration_ms: 0.07545
+  type: 'test'
+  ...
+# Subtest: database error 57014 is classified as too_broad
+ok 24 - database error 57014 is classified as too_broad
+  ---
+  duration_ms: 0.07154
+  type: 'test'
+  ...
+# Subtest: database error 54000 is classified as too_broad
+ok 25 - database error 54000 is classified as too_broad
+  ---
+  duration_ms: 0.073012
+  type: 'test'
+  ...
+# Subtest: database error XX000 is classified as read_failed
+ok 26 - database error XX000 is classified as read_failed
+  ---
+  duration_ms: 0.086598
+  type: 'test'
+  ...
+# Subtest: database scope revocation is terminal, never model-readable error data
+ok 27 - database scope revocation is terminal, never model-readable error data
+  ---
+  duration_ms: 0.499412
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (schema hash) cannot become an answer
+ok 28 - invalid database envelope (schema hash) cannot become an answer
+  ---
+  duration_ms: 0.178707
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (source) cannot become an answer
+ok 29 - invalid database envelope (source) cannot become an answer
+  ---
+  duration_ms: 0.112682
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (mode) cannot become an answer
+ok 30 - invalid database envelope (mode) cannot become an answer
+  ---
+  duration_ms: 0.358237
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (as-of) cannot become an answer
+ok 31 - invalid database envelope (as-of) cannot become an answer
+  ---
+  duration_ms: 0.137004
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (unexpected field) cannot become an answer
+ok 32 - invalid database envelope (unexpected field) cannot become an answer
+  ---
+  duration_ms: 0.161386
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (wrong target UUID) cannot become an answer
+ok 33 - invalid database envelope (wrong target UUID) cannot become an answer
+  ---
+  duration_ms: 0.246361
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (missing row identity) cannot become an answer
+ok 34 - invalid database envelope (missing row identity) cannot become an answer
+  ---
+  duration_ms: 0.19662
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (invalid number) cannot become an answer
+ok 35 - invalid database envelope (invalid number) cannot become an answer
+  ---
+  duration_ms: 0.138723
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (invalid rank) cannot become an answer
+ok 36 - invalid database envelope (invalid rank) cannot become an answer
+  ---
+  duration_ms: 0.189761
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (too many rows) cannot become an answer
+ok 37 - invalid database envelope (too many rows) cannot become an answer
+  ---
+  duration_ms: 0.13912
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (wrong grouping) cannot become an answer
+ok 38 - invalid database envelope (wrong grouping) cannot become an answer
+  ---
+  duration_ms: 0.114713
+  type: 'test'
+  ...
+# Subtest: hidden returned section fails closed even if RPC payload is compromised
+ok 39 - hidden returned section fails closed even if RPC payload is compromised
+  ---
+  duration_ms: 0.381833
+  type: 'test'
+  ...
+# Subtest: telemetry never records prompts, arguments or row contents
+ok 40 - telemetry never records prompts, arguments or row contents
+  ---
+  duration_ms: 0.375651
+  type: 'test'
+  ...
+# Subtest: tool RPC inherits the admitted turn AbortSignal
+ok 41 - tool RPC inherits the admitted turn AbortSignal
+  ---
+  duration_ms: 0.231873
+  type: 'test'
+  ...
+# Subtest: aborted turn spends no new read
+ok 42 - aborted turn spends no new read
+  ---
+  duration_ms: 0.28735
+  type: 'test'
+  ...
+# Subtest: guard catches a retrieval rollout disabled after a successful read
+ok 43 - guard catches a retrieval rollout disabled after a successful read
+  ---
+  duration_ms: 0.533645
+  type: 'test'
+  ...
+# Subtest: knowledge epoch is revalidated even if only historical content is used
+ok 44 - knowledge epoch is revalidated even if only historical content is used
+  ---
+  duration_ms: 0.181857
+  type: 'test'
+  ...
+# Subtest: unchanged classification and current gates pass the release guard
+ok 45 - unchanged classification and current gates pass the release guard
+  ---
+  duration_ms: 0.14949
+  type: 'test'
+  ...
+# Subtest: capability lookup returns ready only on matching registry
+ok 46 - capability lookup returns ready only on matching registry
+  ---
+  duration_ms: 0.084885
+  type: 'test'
+  ...
+# Subtest: missing migration leaves a labelled fallback, not a fake empty search
+ok 47 - missing migration leaves a labelled fallback, not a fake empty search
+  ---
+  duration_ms: 0.088048
+  type: 'test'
+  ...
+# Subtest: schema mismatch disables new tools while retaining the history cutoff
+ok 48 - schema mismatch disables new tools while retaining the history cutoff
+  ---
+  duration_ms: 0.079656
+  type: 'test'
+  ...
+# Subtest: disabled database flag retains privacy cutoff metadata
+ok 49 - disabled database flag retains privacy cutoff metadata
+  ---
+  duration_ms: 0.0641
+  type: 'test'
+  ...
+# Subtest: canonical startup does not query capability metadata or load history
+ok 50 - canonical startup does not query capability metadata or load history
+  ---
+  duration_ms: 2.709287
+  type: 'test'
+  ...
+# Subtest: enabled model path installs universal tools and retains P2/P3 while P4 stays off
+ok 51 - enabled model path installs universal tools and retains P2/P3 while P4 stays off
+  ---
+  duration_ms: 2.092328
+  type: 'test'
+  ...
+# Subtest: rollout off preserves the existing model read vocabulary
+ok 52 - rollout off preserves the existing model read vocabulary
+  ---
+  duration_ms: 0.388439
+  type: 'test'
+  ...
+# Subtest: server flag off preserves old tools even if database rollout is on
+ok 53 - server flag off preserves old tools even if database rollout is on
+  ---
+  duration_ms: 0.384709
+  type: 'test'
+  ...
+# Subtest: context history is intersected with current knowledge epoch without deleting messages
+ok 54 - context history is intersected with current knowledge epoch without deleting messages
+  ---
+  duration_ms: 0.668204
+  type: 'test'
+  ...
+# Subtest: scope/session/capability startup is memoized only within the current turn
+ok 55 - scope/session/capability startup is memoized only within the current turn
+  ---
+  duration_ms: 0.736702
+  type: 'test'
+  ...
+# Subtest: malformed tool arguments do not touch the service
+ok 56 - malformed tool arguments do not touch the service
+  ---
+  duration_ms: 0.237971
+  type: 'test'
+  ...
+# Subtest: wrapper blocks model-invented navigation and terminal workflow shortcuts
+ok 57 - wrapper blocks model-invented navigation and terminal workflow shortcuts
+  ---
+  duration_ms: 1.624617
+  type: 'test'
+  ...
+# Subtest: only pure context plans are eligible for parallel execution
+ok 58 - only pure context plans are eligible for parallel execution
+  ---
+  duration_ms: 0.203128
+  type: 'test'
+  ...
+# Subtest: capability fast answer reflects readable registered source names
+ok 59 - capability fast answer reflects readable registered source names
+  ---
+  duration_ms: 0.570264
+  type: 'test'
+  ...
+# Subtest: all hidden capability answer never advertises reachable business sources
+ok 60 - all hidden capability answer never advertises reachable business sources
+  ---
+  duration_ms: 0.400579
+  type: 'test'
+  ...
+1..60
+# tests 60
+# suites 0
+# pass 60
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 53.745633

@@ -1,5 +1,7 @@
 'use client';
 
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import { upsertSecurityQuestion, deleteSecurityQuestion, type SecurityQuestionRecord } from './security-questions-actions';
 import { SUGGESTED_QUESTIONS, CUSTOM_QUESTION_LABEL, QUESTION_SLOTS } from '@/app/lib/security/questions';
@@ -20,6 +22,7 @@ type Props = {
  *    typos that would otherwise lock the user out of recovery.
  */
 export function SecurityQuestionsSection({ initialQuestions }: Props) {
+  const { ask, feedback } = useQcFeedback();
   const [questions, setQuestions] = useState<SecurityQuestionRecord[]>(initialQuestions);
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -31,8 +34,8 @@ export function SecurityQuestionsSection({ initialQuestions }: Props) {
     setEditingSlot(null);
   }
 
-  function handleDelete(slot: number) {
-    if (!confirm('Remove this security question?')) return;
+  async function handleDelete(slot: number) {
+    if (!await ask({ title: 'Remove recovery question?', description: 'You will no longer be able to use this question for account recovery.', confirmLabel: 'Remove question', destructive: true })) return;
     startTransition(async () => {
       await deleteSecurityQuestion(slot);
       setQuestions((prev) => prev.map((q) => (q.slot === slot ? { ...q, question: '', isSet: false, updatedAt: null } : q)));
@@ -40,12 +43,12 @@ export function SecurityQuestionsSection({ initialQuestions }: Props) {
   }
 
   return (
-    <div className="space-y-3">
+    <QcJourney>{feedback}<div className="space-y-3">
       <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
         <div>
           <p className="text-sm font-medium text-slate-900">Recovery Questions</p>
           <p className="text-xs text-slate-500 mt-0.5">
-            {setCount} of {QUESTION_SLOTS} set &mdash; used by support to verify your identity if you lose access to your email.
+            {setCount} of {QUESTION_SLOTS} set - used by support to verify your identity if you lose access to your email.
           </p>
         </div>
       </div>
@@ -67,15 +70,15 @@ export function SecurityQuestionsSection({ initialQuestions }: Props) {
                 type="button"
                 onClick={() => handleDelete(q.slot)}
                 disabled={isPending}
-                className="px-3 py-1.5 text-xs font-medium rounded-full text-slate-500 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-50"
+                className="qc-flow-control px-3 py-1.5 text-xs font-medium rounded-full text-slate-500 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-50"
               >
                 Remove
               </button>
             )}
-            <button
+            <button data-qc-variant="ghost"
               type="button"
               onClick={() => setEditingSlot(q.slot)}
-              className="px-3 py-1.5 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 transition"
+              className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 transition"
             >
               {q.isSet ? 'Update' : 'Set'}
             </button>
@@ -91,7 +94,7 @@ export function SecurityQuestionsSection({ initialQuestions }: Props) {
           onSaved={handleSaved}
         />
       )}
-    </div>
+    </div></QcJourney>
   );
 }
 
@@ -146,7 +149,7 @@ function SecurityQuestionEditor({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <QcJourneyDialog label={`Set recovery question ${slot}`} size="sm" pending={isPending}>
       <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full shadow-xl">
         <h3 className="text-base font-semibold text-slate-900">Set recovery question {slot}</h3>
         <p className="text-sm text-slate-500 mt-1 mb-4">
@@ -154,12 +157,12 @@ function SecurityQuestionEditor({
         </p>
 
         <form onSubmit={handleSubmit} className="grid gap-4">
-          <label className="block">
+          <label className="qc-flow-label block">
             <span className="block text-xs font-medium text-slate-700 mb-1">Question</span>
             <select
               value={pickerValue}
               onChange={(e) => setPickerValue(e.target.value)}
-              className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              className="qc-select w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
             >
               {SUGGESTED_QUESTIONS.map((q) => (
                 <option key={q} value={q}>
@@ -171,38 +174,38 @@ function SecurityQuestionEditor({
           </label>
 
           {isCustom && (
-            <label className="block">
+            <label className="qc-flow-label block">
               <span className="block text-xs font-medium text-slate-700 mb-1">Your custom question</span>
-              <input
+              <input aria-label="e.g. What was the make of your first car?"
                 type="text"
                 value={customText}
                 onChange={(e) => setCustomText(e.target.value)}
                 maxLength={200}
-                className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                className="qc-input w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                 placeholder="e.g. What was the make of your first car?"
               />
             </label>
           )}
 
-          <label className="block">
+          <label className="qc-flow-label block">
             <span className="block text-xs font-medium text-slate-700 mb-1">Answer</span>
-            <PasswordField
+            <PasswordField appearance="v2"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               maxLength={200}
-              inputClassName="w-full px-3 py-2 pr-10 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              inputClassName="qc-input w-full px-3 py-2 pr-10 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
               autoComplete="off"
             />
             <p className="text-xs text-slate-400 mt-1">Case insensitive. Extra spaces are ignored.</p>
           </label>
 
-          <label className="block">
+          <label className="qc-flow-label block">
             <span className="block text-xs font-medium text-slate-700 mb-1">Confirm answer</span>
-            <PasswordField
+            <PasswordField appearance="v2"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               maxLength={200}
-              inputClassName="w-full px-3 py-2 pr-10 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              inputClassName="qc-input w-full px-3 py-2 pr-10 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
               autoComplete="off"
             />
           </label>
@@ -210,24 +213,24 @@ function SecurityQuestionEditor({
           {error && <p className="text-xs text-red-600">{error}</p>}
 
           <div className="flex gap-2 justify-end mt-2">
-            <button
+            <button data-qc-variant="ghost"
               type="button"
               onClick={onClose}
               disabled={isPending}
-              className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition"
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition"
             >
               Cancel
             </button>
-            <button
+            <button data-qc-variant="primary"
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
             >
               {isPending ? 'Saving…' : 'Save'}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

@@ -18,6 +18,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import type { AssistantMode } from '@/app/lib/assistant/protocol';
 import { getElement } from '@/app/lib/assistant/uiRegistry';
 import { useAssistantChat } from './useAssistantChat';
@@ -202,11 +203,13 @@ export function AssistantWidget(_props: Props) {
     status,
     highlight,
     guideStart,
+    navigate,
     clearGuideStart,
     pushAssistantMessage,
     send,
     cancel,
   } = useAssistantChat();
+  const router = useRouter();
   const { buildHints } = useAssistantHints();
   // Passive browser-facts observer (Stage 3). Its recentActions are merged into
   // the per-turn hints so the assistant can judge whether a guide step is done.
@@ -326,6 +329,24 @@ export function AssistantWidget(_props: Props) {
     // engine.startWorkflow is stable (useCallback); guideStart is the trigger.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guideStart]);
+
+  // Q navigation ("take me to quotes"): when the server emits a validated
+  // navigate command, route the user there directly. Paths arrive slug-less
+  // ("/quotes") from the server allowlist; prefix the current workspace slug
+  // (first pathname segment) so the destination is tenant-correct.
+  useEffect(() => {
+    if (!navigate) return;
+    const path = navigate.path || '/';
+    if (typeof window !== 'undefined') {
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      const slug = segments[0] ?? '';
+      const target = path === '/' ? `/${slug}` : `/${slug}${path}`;
+      if (target !== window.location.pathname) {
+        router.push(target);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   // External launch bridge (Option A): any client surface (Tutorials page, help
   // links) can fire a `qcp:start-guide` CustomEvent to begin a known workflow

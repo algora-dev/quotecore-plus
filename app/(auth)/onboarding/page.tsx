@@ -1,3 +1,4 @@
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
@@ -110,9 +111,9 @@ export default async function OnboardingPage() {
   // Case 1: No profile at all (Google OAuth new user) - show company setup form
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-2 md:p-6">
+      <QcJourney><div className="qc-flow-auth flex items-center justify-center p-4 md:p-6">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-6">
+          <div className="qc-flow-auth-card space-y-6">
             <div className="text-center space-y-2">
               <img src="/logo.png" alt="QuoteCore" className="h-12 inline-block mb-2" />
               <h1 className="text-2xl font-bold text-slate-900">Welcome to QuoteCore+!</h1>
@@ -127,16 +128,16 @@ export default async function OnboardingPage() {
             />
           </div>
         </div>
-      </div>
+      </div></QcJourney>
     );
   }
 
   // Case 2: Has profile but no company (shouldn't happen normally)
   if (!profile.company_id) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-2 md:p-6">
+      <QcJourney><div className="qc-flow-auth flex items-center justify-center p-4 md:p-6">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-6">
+          <div className="qc-flow-auth-card space-y-6">
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-bold text-slate-900">Set Up Your Company</h1>
               <p className="text-slate-600 text-sm">We need a company name to get you started.</p>
@@ -144,7 +145,7 @@ export default async function OnboardingPage() {
             <GoogleOnboardingForm defaultName="" defaultEmail={authUser.email || ''} needsPassword={needsPassword} />
           </div>
         </div>
-      </div>
+      </div></QcJourney>
     );
   }
 
@@ -161,9 +162,9 @@ export default async function OnboardingPage() {
 
   // Case 4: Company exists but onboarding not complete - show preferences form
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-2 md:p-6">
+    <QcJourney><div className="qc-flow-auth flex items-center justify-center p-4 md:p-6">
       <div className="max-w-2xl w-full">
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-6">
+        <div className="qc-flow-auth-card space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold text-slate-900">Welcome to QuoteCore+</h1>
             <p className="text-slate-600">
@@ -184,6 +185,6 @@ export default async function OnboardingPage() {
           />
         </div>
       </div>
-    </div>
+    </div></QcJourney>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import '@/app/components/ui/v2/qc-library.css';
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { updateLibraryVisibility } from '../actions';
 
@@ -75,12 +77,12 @@ export function PublishLibraryModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
+    <QcJourneyDialog label="Library Visibility" size="lg">
       <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">Library Visibility</h2>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <button aria-label="Close" data-qc-variant="ghost" onClick={onClose} className="qc-button qc-flow-control qc-library-control ">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -104,11 +106,11 @@ export function PublishLibraryModal({
                 key={opt.value}
                 type="button"
                 onClick={() => setVisibility(opt.value as 'private' | 'unlisted' | 'published')}
-                className={`w-full text-left px-3 py-2 rounded-xl border transition ${
+                className={"qc-flow-control qc-library-choice " + (`w-full text-left px-3 py-2 rounded-xl border transition ${
                   visibility === opt.value
                     ? 'border-slate-900 bg-slate-50'
                     : 'border-slate-200 hover:border-orange-200'
-                }`}
+                }`)}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-900">{opt.label}</span>
@@ -128,19 +130,19 @@ export function PublishLibraryModal({
             <div className="space-y-3 pt-2 border-t border-slate-100">
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Public Title</label>
-                <input
+                <input aria-label="Public Title"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                 />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Public Description</label>
-                <textarea
+                <textarea aria-label="Public Description"
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   rows={2}
-                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -151,11 +153,11 @@ export function PublishLibraryModal({
                       key={type}
                       type="button"
                       onClick={() => toggleRoofingType(type)}
-                      className={`text-xs px-2.5 py-1 rounded-full border transition ${
+                      className={"qc-flow-control qc-library-choice " + (`text-xs px-2.5 py-1 rounded-full border transition ${
                         selectedRoofingTypes.includes(type)
                           ? 'bg-slate-900 text-white border-slate-900'
                           : 'bg-white text-slate-600 border-slate-300 hover:border-orange-300'
-                      }`}
+                      }`)}
                     >
                       {type}
                     </button>
@@ -165,30 +167,30 @@ export function PublishLibraryModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Brands (comma-separated)</label>
-                  <input
+                  <input aria-label="Brands (comma-separated)"
                     value={brands}
                     onChange={e => setBrands(e.target.value)}
                     placeholder="e.g. Marley, Klober"
-                    className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                    className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                   />
                 </div>
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Product Categories</label>
-                  <input
+                  <input aria-label="Product Categories"
                     value={productCategories}
                     onChange={e => setProductCategories(e.target.value)}
                     placeholder="e.g. Tiles, Membranes"
-                    className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                    className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Keywords (comma-separated)</label>
-                <input
+                <input aria-label="Keywords (comma-separated)"
                   value={keywords}
                   onChange={e => setKeywords(e.target.value)}
                   placeholder="e.g. breathable membrane, ventilation"
-                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  className="qc-input qc-library-control w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -199,22 +201,22 @@ export function PublishLibraryModal({
           )}
 
           <div className="flex gap-2 pt-2">
-            <button
+            <button data-qc-variant="primary"
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-40"
+              className="qc-button qc-flow-control qc-library-control inline-flex"
             >
               {saving ? 'Saving...' : 'Save'}
             </button>
-            <button
+            <button data-qc-variant="ghost"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+              className="qc-button qc-flow-control qc-library-control "
             >
               Cancel
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

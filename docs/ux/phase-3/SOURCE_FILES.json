@@ -1,0 +1,14 @@
+[
+  "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/page.tsx",
+  "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/summary/page.tsx",
+  "quotecore-plus/app/components/workspace/qc-shell.css",
+  "quotecore-plus/app/components/workspace/QcAppShell.tsx",
+  "quotecore-plus/app/components/workspace/shell-config.ts",
+  "quotecore-plus/app/(auth)/[workspaceSlug]/job-spaces/JobSpacesList.tsx",
+  "quotecore-plus/app/(auth)/[workspaceSlug]/job-spaces/job-space-list-model.ts",
+  "quotecore-plus/app/(auth)/[workspaceSlug]/job-spaces/job-spaces.css",
+  "quotecore-plus/app/(auth)/[workspaceSlug]/job-spaces/page.tsx",
+  "quotecore-plus/app/components/workspace/QcSidebarTab.tsx",
+  "quotecore-plus/app/components/workspace/QuoteIndexPage.tsx",
+  "quotecore-plus/app/components/workspace/sidebar-state.ts"
+]

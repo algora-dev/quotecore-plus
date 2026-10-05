@@ -1,0 +1,142 @@
+[
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/quote-builder.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/components/quote-entry/QuoteJourneyContext.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/components/quote-entry/quoteJourney.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/lib/smart-assistant/v2/component-focus.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/lib/smart-assistant/v2/contracts.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/lib/smart-assistant/section-permissions.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/lib/smart-assistant/tasks/contracts.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/actions.ts",
+    "mocked": true
+  },
+  {
+    "path": "app/lib/trades/labels.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/lib/pricing/engine.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/lib/measurements/conversions.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/lib/types.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/lib/measurements/displayHelpers.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/QuoteNameEditor.tsx",
+    "mocked": true
+  },
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/ConfirmQuoteButton.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/components/ui/v2/QcButton.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/components/ui/v2/QcSurface.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/components/quote-entry/reviewCompletion.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/CurrencySelector.tsx",
+    "mocked": true
+  },
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/FilesManager.tsx",
+    "mocked": true
+  },
+  {
+    "path": "app/lib/currency/currencies.ts",
+    "mocked": false
+  },
+  {
+    "path": "app/components/ConfirmModal.tsx",
+    "mocked": true
+  },
+  {
+    "path": "app/components/CreateSmartComponentModal.tsx",
+    "mocked": true
+  },
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/quote-builder/RoofAreaCard.tsx",
+    "mocked": true
+  },
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/quote-builder/ExpandableComponent.tsx",
+    "mocked": true
+  },
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/quote-builder/AddFromLibrary.tsx",
+    "mocked": true
+  },
+  {
+    "path": "app/components/ui/ScrollIndicator.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/components/ui/v2/QcField.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/components/ui/v2/QcWorkflowStepper.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/components/ui/v2/QcMoneySummary.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/components/ui/v2/useQcFeedback.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/components/AlertModal.tsx",
+    "mocked": true
+  },
+  {
+    "path": "app/components/quote-entry/CustomerQuoteRouteState.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/error.tsx",
+    "mocked": false
+  },
+  {
+    "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/loading.tsx",
+    "mocked": false
+  }
+]

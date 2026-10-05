@@ -1,5 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useId } from 'react';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcInput } from '@/app/components/ui/v2/QcField';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { updateQuoteNames } from '../actions';
 import { useRouter } from 'next/navigation';
 
@@ -10,6 +13,8 @@ interface Props {
 }
 
 export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
+  const { notify, feedback } = useQcFeedback();
+  const fieldId = useId();
   const [editing, setEditing] = useState(false);
   const [client, setClient] = useState(customerName);
   const [reference, setReference] = useState(jobName || '');
@@ -24,7 +29,7 @@ export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
       window.location.reload();
     } catch (err) {
       console.error('Failed to update quote names:', err);
-      alert('Failed to save changes. Please try again.');
+      await notify('Failed to save changes. Please try again.');
       setSaving(false);
     }
   }
@@ -37,9 +42,13 @@ export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
 
   if (editing) {
     return (
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <input
+      <>
+      {feedback}
+      <div className="qb-name-edit qb-stack">
+        <div className="qc-field">
+          <label htmlFor={`${fieldId}-customer`} className="qc-label">Customer name</label>
+          <QcInput
+            id={`${fieldId}-customer`}
             value={client}
             onChange={e => setClient(e.target.value)}
             onKeyDown={e => {
@@ -47,13 +56,15 @@ export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
               if (e.key === 'Escape') handleCancel();
             }}
             placeholder="Client name"
-            className="flex-1 px-2 py-1 text-xl font-semibold border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+            className="qb-full-width"
             autoFocus
             disabled={saving}
           />
         </div>
-        <div className="flex items-center gap-2">
-          <input
+        <div className="qc-field">
+          <label htmlFor={`${fieldId}-job`} className="qc-label">Job reference (optional)</label>
+          <QcInput
+            id={`${fieldId}-job`}
             value={reference}
             onChange={e => setReference(e.target.value)}
             onKeyDown={e => {
@@ -61,45 +72,47 @@ export function QuoteNameEditor({ quoteId, customerName, jobName }: Props) {
               if (e.key === 'Escape') handleCancel();
             }}
             placeholder="Job reference (optional)"
-            className="flex-1 px-2 py-1 text-sm text-slate-500 border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+            className="qb-full-width"
             disabled={saving}
           />
         </div>
         <div className="flex gap-2">
-          <button
+          <QcButton
             onClick={handleSave}
             disabled={saving || !client.trim()}
-            className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50"
+            variant="primary" size="sm"
           >
             {saving ? 'Saving...' : 'Save'}
-          </button>
-          <button
+          </QcButton>
+          <QcButton
             onClick={handleCancel}
             disabled={saving}
-            className="px-3 py-1 text-xs rounded-full border border-slate-300 hover:bg-slate-50"
+            size="sm"
           >
             Cancel
-          </button>
+          </QcButton>
         </div>
       </div>
+      </>
     );
   }
 
   return (
-    <div className="flex items-start gap-3">
+    <div className="qb-name-heading">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">{customerName}</h1>
-        {jobName && <p className="text-sm text-slate-500 mt-0.5">- {jobName}</p>}
+        <h1 className="qb-title">{customerName}</h1>
+        {jobName && <p className="qb-job-reference">{jobName}</p>}
       </div>
-      <button
+      <QcButton
         onClick={() => setEditing(true)}
-        className="mt-1 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition"
+        className="qb-edit-name" size="sm"
         title="Edit client and job reference"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
         </svg>
-      </button>
+        Edit details
+      </QcButton>
     </div>
   );
 }

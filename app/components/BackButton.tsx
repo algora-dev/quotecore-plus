@@ -1,29 +1,21 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { QcIcon } from './ui/v2/QcIcon';
+import { workspaceReturn } from './workspace/workspace-return';
+import './ui/v2/qc.css';
 
-export function BackButton() {
-  const router = useRouter();
-
-  return (
-    <button
-      onClick={() => router.back()}
-      className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors mb-4"
-    >
-      <svg 
-        className="w-4 h-4" 
-        fill="none" 
-        viewBox="0 0 24 24" 
-        stroke="currentColor"
-      >
-        <path 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          strokeWidth={2} 
-          d="M15 19l-7-7 7-7" 
-        />
-      </svg>
-      Back
-    </button>
-  );
+/** Existing call sites remain valid. Prefer an explicit, origin-aware href where
+ * one exists. A direct/bookmarked page otherwise returns to its workspace parent,
+ * not an unrelated external history entry. No refresh or session history writes.
+ */
+export function BackButton({ href, label, className = '' }: { href?: string; label?: string; className?: string }) {
+  const pathname = usePathname() ?? '';
+  const slug = pathname.split('/').filter(Boolean)[0];
+  const target = slug ? workspaceReturn(pathname, slug) : null;
+  return <Link href={href ?? target?.href ?? '/'} prefetch={false} data-qc-ui="v2"
+    className={`qc-button qc-page-back ${className}`} aria-label={label ?? `Back to ${target?.label ?? 'Home'}`}>
+    <QcIcon name="back" />{label ?? `Back to ${target?.label ?? 'Home'}`}
+  </Link>;
 }

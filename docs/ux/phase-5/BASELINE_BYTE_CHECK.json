@@ -1,0 +1,35 @@
+{
+  "baseline_archive": "quotecore-plus-phase5-ux-handoff-2026-09-25.zip",
+  "baseline_sha256": "fbcbdb0ecfdb1b757a23d24348fa8b84c2a66fa9ffe0335f1b7540c3e1e6d002",
+  "method": "Every incoming file compared byte-for-byte; no application execution. Original paths retained.",
+  "original_files": 2505,
+  "original_files_retained": 2505,
+  "original_files_byte_unchanged": 2495,
+  "modified_original_files": [
+    "DESIGN_CHANGES.md",
+    "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/OrderLayoutPickerModal.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/create/OrderLineByLineEditor.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/create/order-create-form.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/create/page.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/create/parts/AddItemModal.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/QuotePreview.tsx",
+    "app/components/SearchableFlashingSelect.tsx"
+  ],
+  "new_source_files": [
+    "app/components/ui/v2/QcDocumentWorkspace.tsx",
+    "app/components/ui/v2/qc-document.css"
+  ],
+  "unexpected_changes": [],
+  "deleted_original_files": [],
+  "explicit_minimal_exceptions_passed": [
+    "Orders create/page.tsx outer class only",
+    "Order AddItemModal appearance prop only",
+    "QuotePreview three pencil accessible names only"
+  ],
+  "protected_areas_byte_unchanged": true,
+  "protected_note": "All original files outside the explicit 9 source edits and DESIGN_CHANGES.md match the input ZIP, including app/lib, APIs/actions, Takeoff/mobile, Smart Assistant, shell, configs and dependencies.",
+  "css_top_level_parse_errors": [],
+  "css_undefined_qc_tokens": []
+}

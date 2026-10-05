@@ -1,0 +1,34 @@
+{
+  "baselineRepositoryFiles": 2445,
+  "modifiedRepositoryFiles": 15,
+  "modifiedSourceFiles": 14,
+  "newSourceFiles": 6,
+  "unchangedBaselineFiles": 2430,
+  "missingBaselineFiles": [],
+  "unexpectedDifferences": [],
+  "modifiedPaths": [
+    "DESIGN_CHANGES.md",
+    "app/(auth)/[workspaceSlug]/MeasureJobModal.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffPage.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffWorkstation.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/calibration/CalibrationChooser.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AiResultsModal.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AreaNameModal.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/PointMeasurementModal.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/RoofPitchEstimatorModal.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+    "app/components/PdfPagePicker.tsx",
+    "app/components/UpgradeModal.tsx",
+    "app/components/ui/v2/QcIcon.tsx"
+  ],
+  "newSourcePaths": [
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/desktop/TakeoffDesktopHost.tsx",
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/desktop/takeoff-desktop.css",
+    "app/components/ui/v2/QcCanvasChrome.tsx",
+    "app/components/ui/v2/QcHostedDialog.tsx",
+    "app/components/ui/v2/qc-canvas.css",
+    "app/components/ui/v2/qc-hosted-dialog.css"
+  ]
+}

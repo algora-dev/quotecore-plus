@@ -1,9 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, useId } from 'react';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { checkStorageQuota, saveFileMetadata, getQuoteFileSignedUrl } from '@/app/lib/files/storage-actions';
 import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
 import { deleteFile } from './actions-files';
@@ -58,6 +60,8 @@ export function FilesManager({
   isOverStorage,
   allPlans = [],
 }: Props) {
+  const { notify, feedback } = useQcFeedback();
+  const panelId = useId();
   const [expanded, setExpanded] = useState(false);
   const [supportingExpanded, setSupportingExpanded] = useState(false);
   const [showSupportingUploader, setShowSupportingUploader] = useState(false);
@@ -76,8 +80,12 @@ export function FilesManager({
   const [newPlanFile, setNewPlanFile] = useState<File | null>(null);
   const [isStartingTakeoff, setIsStartingTakeoff] = useState(false);
   const [takeoffError, setTakeoffError] = useState<string | null>(null);
+  const pdfPicker = usePdfPagePicker();
 
-  async function handlePlanUpload(file: File) {
+  async function handlePlanUpload(rawFile: File) {
+    // PDF plans: convert selected page to PNG client-side before upload.
+    const file = await pdfPicker.convertIfNeeded(rawFile);
+    if (!file) return; // user cancelled the page picker
     const hasQuota = await checkStorageQuota(companyId, file.size);
     if (!hasQuota) {
       throw new Error('Storage quota exceeded. Please upgrade your plan.');
@@ -180,7 +188,7 @@ export function FilesManager({
       setPendingDelete(null);
       router.refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete file');
+      await notify(err instanceof Error ? err.message : 'Failed to delete file');
     } finally {
       setDeleting(null);
     }
@@ -204,10 +212,11 @@ export function FilesManager({
 
   return (
     <>
-    <div className="border-l-4 border-slate-300 bg-slate-50 pl-3 py-2 rounded">
-      <button
+    <div data-qc-component="C36" className="qb-files">
+      <button type="button"
+        aria-expanded={expanded} aria-controls={`${panelId}-plans`}
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 w-full"
+        className="qb-files-toggle"
       >
         <svg
           className={`w-3 h-3 transition-transform ${expanded ? 'rotate-90' : ''}`}
@@ -224,12 +233,12 @@ export function FilesManager({
       </button>
 
       {expanded && (
-        <div className="mt-3 mr-3 space-y-6 bg-white p-4 rounded-lg border border-slate-200">
+        <div id={`${panelId}-plans`} className="qb-files-body qb-stack">
           {/* Roof Plan Section */}
           <div>
-            <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">Plan / Image</h3>
+            <h3 className="qb-group-title">Plan / Image</h3>
             <p className="text-xs text-slate-500 mb-3">
-              Upload your plan or image (PDF or image). Max 10 MB.
+              Upload a PDF up to 50 MB or an image up to 10 MB.
             </p>
 
             {planUrl && planName ? (
@@ -268,7 +277,7 @@ export function FilesManager({
                         <div className="mt-1.5">
                           <p className="text-xs font-medium text-slate-700 truncate">{plan.pageName}</p>
                           {plan.areas.length > 0 && (
-                            <p className="text-[10px] text-slate-400 truncate">
+                            <p className="qc-help">
                               {plan.areas.join(', ')}
                             </p>
                           )}
@@ -278,12 +287,10 @@ export function FilesManager({
                   </div>
                 ) : (
                   /* Fallback: single thumbnail for quotes without takeoff_pages */
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="qb-file-row">
                     <div className="flex-shrink-0">
                       {planName.toLowerCase().endsWith('.pdf') ? (
-                        <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
-                        </svg>
+                        <svg aria-hidden="true" className="qb-file-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H5v18h14V8l-5-5ZM14 3v5h5M8 13h8M8 17h5" /></svg>
                       ) : (
                         <img
                           src={planUrl}
@@ -293,12 +300,12 @@ export function FilesManager({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-700 truncate">{planName}</p>
+                      <p className="qb-file-name">{planName}</p>
                       <a
                         href={planUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-orange-600 hover:text-blue-800"
+                        className="qb-file-link"
                       >
                         View Plan →
                       </a>
@@ -310,12 +317,14 @@ export function FilesManager({
               </div>
             ) : (
               <FileUploader
+                appearance="v2"
                 accept="image/*,application/pdf"
                 maxSize={10485760}
+                pdfMaxSize={52428800}
                 onUpload={handlePlanUpload}
                 currentFileUrl={null}
                 label="Upload Plans / Images"
-                description="PDF or image (max 10 MB)"
+                description="PDF up to 50 MB or image (max 10 MB)"
                 isOverStorage={isOverStorage}
               />
             )}
@@ -324,9 +333,10 @@ export function FilesManager({
           {/* Supporting Files Section */}
           <div className="pt-4 border-t border-slate-200">
             <div className="flex items-center justify-between mb-2">
-              <button
+              <button type="button"
+                aria-expanded={supportingExpanded} aria-controls={`${panelId}-supporting`}
                 onClick={() => setSupportingExpanded(!supportingExpanded)}
-                className="flex items-center gap-2 text-xs font-semibold text-slate-700 uppercase tracking-wide hover:text-slate-900"
+                className="qb-files-toggle"
               >
                 <svg
                   className={`w-3 h-3 transition-transform ${supportingExpanded ? 'rotate-90' : ''}`}
@@ -344,7 +354,7 @@ export function FilesManager({
               {supportingExpanded && (
                 <button
                   onClick={() => setShowSupportingUploader(!showSupportingUploader)}
-                  className="text-xs text-orange-600 hover:text-blue-800 font-medium"
+                  className="qc-button" data-qc-component="C01" data-qc-size="sm" data-qc-variant="ghost"
                 >
                   {showSupportingUploader ? 'Cancel' : '+ Add File'}
                 </button>
@@ -352,7 +362,7 @@ export function FilesManager({
             </div>
 
             {supportingExpanded && (
-              <>
+              <div id={`${panelId}-supporting`}>
                 <p className="text-xs text-slate-500 mb-3">
                   Photos, revised plans, or site images. Max 10 MB per file.
                 </p>
@@ -360,6 +370,7 @@ export function FilesManager({
                 {showSupportingUploader && (
                   <div className="mb-3">
                     <FileUploader
+                appearance="v2"
                       accept="image/*,application/pdf"
                       maxSize={10485760}
                       onUpload={handleSupportingUpload}
@@ -376,13 +387,11 @@ export function FilesManager({
                     {supportingFiles.map(file => (
                       <div
                         key={file.id}
-                        className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200"
+                        className="qb-file-row"
                       >
                         <div className="flex-shrink-0">
                           {file.fileName.toLowerCase().endsWith('.pdf') ? (
-                            <svg className="w-10 h-10 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
-                            </svg>
+                            <svg aria-hidden="true" className="qb-file-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H5v18h14V8l-5-5ZM14 3v5h5M8 13h8M8 17h5" /></svg>
                           ) : (
                             <img
                               src={file.url}
@@ -392,7 +401,7 @@ export function FilesManager({
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-700 truncate">{file.fileName}</p>
+                          <p className="qb-file-name">{file.fileName}</p>
                           <p className="text-xs text-slate-500">{formatFileSize(file.fileSize)}</p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -400,14 +409,14 @@ export function FilesManager({
                             href={file.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-orange-600 hover:text-blue-800"
+                            className="qb-file-link"
                           >
                             View
                           </a>
                           <button
                             onClick={() => requestDelete(file)}
                             disabled={deleting === file.id}
-                            className="text-xs text-red-600 hover:text-red-800 disabled:opacity-50"
+                            className="qc-button qc-icon-danger" data-qc-component="C01" data-qc-size="sm" data-qc-variant="ghost"
                           >
                             {deleting === file.id ? 'Deleting...' : 'Delete'}
                           </button>
@@ -416,17 +425,19 @@ export function FilesManager({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400 italic">No supporting files yet.</p>
+                  <p className="qc-help">No supporting files yet.</p>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
       )}
     </div>
 
+    {feedback}
     {/* --- Delete confirm modal --- */}
     <ConfirmModal
+      appearance="v2"
       open={pendingDelete !== null}
       title="Delete file"
       description={
@@ -439,6 +450,10 @@ export function FilesManager({
       pending={deleting !== null}
       onCancel={() => { if (deleting === null) setPendingDelete(null); }}
       onConfirm={confirmDelete}
-    /></>
+    />
+
+    {/* PDF page picker modal (client-side pdfjs) */}
+    {pdfPicker.modal}
+    </>
   );
 }

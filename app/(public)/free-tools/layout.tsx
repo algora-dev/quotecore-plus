@@ -1,21 +1,21 @@
 import type { ReactNode } from 'react';
-import { TOOLS } from './tools-data';
+import { TOOL_REGISTRY } from './tool-registry';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata = {
-  title: 'QuoteCore Plus Free Tools | Roofing & Construction Calculators',
+  title: 'Free Construction Takeoff, Estimating & Quoting Tools | QuoteCore+',
   description:
-    'Free professional roofing calculators, roof takeoff builder, quote generator, invoice generator, and purchase order generator. No signup required. Built by a roofer, for roofers.',
+    'Free construction takeoff, estimating and quoting tools. Upload plans and measure roof, siding/cladding and flooring online, or enter measurements you already have. Core tools need no signup.',
   alternates: {
     canonical: `${SITE_URL}/free-tools`,
     languages: hreflangLanguages('/free-tools'),
   },
   openGraph: {
-    title: 'QuoteCore Plus Free Tools | Roofing & Construction Calculators',
+    title: 'Free Construction Takeoff, Estimating & Quoting Tools | QuoteCore+',
     description:
-      'Free professional roofing calculators, roof takeoff builder, quote generator, invoice generator, and purchase order generator. No signup required.',
+      'Free construction takeoff, estimating and quoting tools. Upload plans and measure online, or enter measurements you already have. Core tools need no signup.',
     url: `${SITE_URL}/free-tools`,
     type: 'website',
     images: [{ url: '/logo.png', alt: 'QuoteCore+ Free Tools' }],
@@ -28,23 +28,45 @@ export const metadata = {
   },
 };
 
+const SCHEMA_TOOLS = TOOL_REGISTRY.filter((t) => t.showInSchema !== false);
+
 const itemListLd = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
-  name: 'Free Trade Tools',
-  description: `Free professional trade tools including ${TOOLS.length} calculators, generators, and a roof takeoff builder.`,
-  itemListElement: TOOLS.map((tool, i) => ({
+  name: 'Free Roofing & Construction Tools',
+  description: `Free professional trade tools including ${SCHEMA_TOOLS.length} calculators, generators, and takeoff tools.`,
+  itemListElement: SCHEMA_TOOLS.map((tool, i) => ({
     '@type': 'ListItem',
     position: i + 1,
     name: tool.name,
-    url: `${SITE_URL}/${tool.slug}`,
+    url: `${SITE_URL}${tool.url}`,
   })),
+};
+
+const collectionLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Free Roofing & Construction Tools',
+  description:
+    'Free online tools for roofing and construction: digital roof takeoff, calculators, quote generator, invoice generator and purchase order tools. No signup required for most tools.',
+  url: `${SITE_URL}/free-tools`,
+};
+
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Free Tools', item: `${SITE_URL}/free-tools` },
+  ],
 };
 
 export default function FreeToolsLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       {children}
     </>
   );

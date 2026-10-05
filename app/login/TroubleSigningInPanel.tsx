@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/app/lib/supabase/client';
@@ -61,20 +62,20 @@ export function TroubleSigningInPanel() {
 
   if (!open) {
     return (
-      <div className="flex justify-end">
+      <QcJourney><div className="flex justify-end">
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-xs text-slate-500 hover:text-orange-600 transition-colors"
+          className="qc-flow-control text-xs text-slate-500 hover:text-orange-600 transition-colors"
         >
           Trouble signing in?
         </button>
-      </div>
+      </div></QcJourney>
     );
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+    <QcJourney><div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-slate-900">Trouble signing in?</p>
         <button
@@ -83,7 +84,7 @@ export function TroubleSigningInPanel() {
             reset();
             setOpen(false);
           }}
-          className="text-xs text-slate-400 hover:text-slate-700 transition"
+          className="qc-flow-control text-xs text-slate-400 hover:text-slate-700 transition"
           aria-label="Close"
         >
           Close
@@ -95,14 +96,14 @@ export function TroubleSigningInPanel() {
           <button
             type="button"
             onClick={() => setMode('forgot')}
-            className="w-full text-left p-3 rounded-lg border border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/40 transition"
+            className="qc-flow-control w-full text-left p-3 rounded-lg border border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/40 transition"
           >
             <p className="text-sm font-medium text-slate-900">Forgot password</p>
             <p className="text-xs text-slate-500 mt-0.5">I just need a new password - I still have my email.</p>
           </button>
           <Link
             href="/login/recover"
-            className="block w-full text-left p-3 rounded-lg border border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/40 transition"
+            className="qc-flow-link block w-full text-left p-3 rounded-lg border border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/40 transition"
           >
             <p className="text-sm font-medium text-slate-900">Lost access to my email</p>
             <p className="text-xs text-slate-500 mt-0.5">I can&apos;t get into the inbox on my account.</p>
@@ -115,27 +116,27 @@ export function TroubleSigningInPanel() {
           <button
             type="button"
             onClick={() => reset()}
-            className="text-xs text-slate-500 hover:text-slate-700 transition"
+            className="qc-flow-control text-xs text-slate-500 hover:text-slate-700 transition"
           >
             Back
           </button>
           <p className="text-xs text-slate-600">
             Enter the email on your account. If we recognise it, we&apos;ll send a reset link.
           </p>
-          <input
+          <input aria-label="you@example.com"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             autoComplete="email"
-            className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-sm"
+            className="qc-input w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-sm"
           />
           {errorMessage && <p className="text-xs text-red-600">{errorMessage}</p>}
-          <button
+          <button data-qc-variant="primary"
             type="submit"
             disabled={isPending || !email}
-            className="w-full px-4 py-2 text-sm font-semibold bg-black text-white rounded-lg hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
+            className="qc-flow-control qc-button w-full px-4 py-2 text-sm font-semibold bg-black text-white rounded-lg hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
           >
             {status === 'sending' ? 'Sending…' : 'Send reset link'}
           </button>
@@ -153,12 +154,12 @@ export function TroubleSigningInPanel() {
               reset();
               setOpen(false);
             }}
-            className="w-full text-xs text-slate-500 hover:text-slate-700 transition py-1"
+            className="qc-flow-control w-full text-xs text-slate-500 hover:text-slate-700 transition py-1"
           >
             Close
           </button>
         </div>
       )}
-    </div>
+    </div></QcJourney>
   );
 }

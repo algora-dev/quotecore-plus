@@ -183,7 +183,7 @@ export default function Post() {
       <p>
         Related reading: <Link href="/blog/margin-vs-markup">margin vs markup</Link> for pricing the quote
         correctly, and <Link href="/blog/do-professional-quotes-win-more-jobs">what makes a professional quote</Link>{' '}
-        once you have one.
+        once you have one. When you outgrow one-off generation, dedicated <Link href="/construction-quoting-software">contractor quoting software</Link> keeps every quote, pricing rule and follow-up in one place.
       </p>
 
       <hr />
@@ -241,7 +241,7 @@ export default function Post() {
         <strong>Create a quote free - no signup required.</strong> Upload the information, describe the job, or
         enter the lines manually - then edit everything in a structured quote with the{' '}
         <Link href="/free-quote-generator">QuoteCore+ free quote generator</Link>. For the full workflow from
-        measurement to material orders and invoicing, <Link href="/free-trial">start a free QuoteCore+ trial</Link>.
+        measurement to material orders and invoicing, <Link href="/free-trial">get started with QuoteCore+</Link>.
       </p>
     </div>
   );

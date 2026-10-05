@@ -309,6 +309,10 @@ export async function completeGoogleOnboarding(formData: FormData) {
       default_measurement_system: measurement,
       default_trade: defaultTrade as any,
       default_tax_rate: 15.0,
+      // Paid-only flow defaults (locked 2026-09-16): starter + canceled until
+      // they pay. Explicit here because the columns have no DB default.
+      plan_code: 'starter',
+      subscription_status: 'canceled',
       onboarding_completed_at: new Date().toISOString(),
     })
     .select('id, slug')

@@ -86,7 +86,7 @@ export function SummaryFilesPanel({ quoteId, companyId, files, isOverStorage }: 
           type="button"
           onClick={() => setUploaderOpen((v) => !v)}
           title={uploaderOpen ? 'Cancel upload' : 'Upload supporting file'}
-          className="icon-btn border-slate-300 bg-white"
+          className="qc-button" data-qc-variant="ghost"
         >
           {uploaderOpen ? (
             // Close (X) icon
@@ -104,6 +104,7 @@ export function SummaryFilesPanel({ quoteId, companyId, files, isOverStorage }: 
               />
             </svg>
           )}
+          <span>{uploaderOpen ? 'Cancel upload' : 'Add file'}</span>
         </button>
       </div>
 

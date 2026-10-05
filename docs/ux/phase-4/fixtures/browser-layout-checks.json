@@ -1,0 +1,4699 @@
+[
+  {
+    "mode": "desktop-measured",
+    "width": 1440,
+    "height": 900,
+    "documentWidth": 1440,
+    "documentHeight": 900,
+    "viewport": [
+      1440,
+      900
+    ],
+    "toolbar": {
+      "x": 329,
+      "y": 191,
+      "w": 1082,
+      "h": 91,
+      "scrollWidth": 1080,
+      "clientWidth": 1080
+    },
+    "panel": {
+      "x": 17,
+      "y": 181,
+      "w": 300,
+      "h": 706,
+      "scrollWidth": 299,
+      "clientWidth": 299
+    },
+    "canvas": {
+      "x": 317,
+      "y": 282,
+      "w": 1106,
+      "h": 573,
+      "scrollWidth": 1106,
+      "clientWidth": 1106
+    },
+    "status": {
+      "x": 317,
+      "y": 855,
+      "w": 1106,
+      "h": 32,
+      "scrollWidth": 1106,
+      "clientWidth": 1106
+    },
+    "finish": {
+      "x": 1244.9375,
+      "y": 77,
+      "w": 162.0625,
+      "h": 32,
+      "scrollWidth": 160,
+      "clientWidth": 160
+    },
+    "dialog": null,
+    "buttons": [
+      {
+        "text": "Help",
+        "r": {
+          "x": 1365.828125,
+          "y": 11.5,
+          "width": 54.171875,
+          "height": 32,
+          "top": 11.5,
+          "right": 1420,
+          "bottom": 43.5,
+          "left": 1365.828125
+        },
+        "font": "13px"
+      },
+      {
+        "text": "\u203a",
+        "r": {
+          "x": 0,
+          "y": 420,
+          "width": 14,
+          "height": 60,
+          "top": 420,
+          "right": 14,
+          "bottom": 480,
+          "left": 0
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Upload another plan",
+        "r": {
+          "x": 1055.265625,
+          "y": 87,
+          "width": 177.671875,
+          "height": 32,
+          "top": 87,
+          "right": 1232.9375,
+          "bottom": 119,
+          "left": 1055.265625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Finish & save",
+        "r": {
+          "x": 1244.9375,
+          "y": 77,
+          "width": 162.0625,
+          "height": 32,
+          "top": 77,
+          "right": 1407,
+          "bottom": 109,
+          "left": 1244.9375
+        },
+        "font": "13px"
+      },
+      {
+        "text": "New area",
+        "r": {
+          "x": 194.90625,
+          "y": 197,
+          "width": 109.09375,
+          "height": 32,
+          "top": 197,
+          "right": 304,
+          "bottom": 229,
+          "left": 194.90625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Main Roof\n192.40 m\u00b2\nActive",
+        "r": {
+          "x": 34,
+          "y": 246,
+          "width": 197,
+          "height": 60,
+          "top": 246,
+          "right": 231,
+          "bottom": 306,
+          "left": 34
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide Main Roof",
+        "r": {
+          "x": 235,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 267,
+          "bottom": 282,
+          "left": 235
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete Main Roof",
+        "r": {
+          "x": 267,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 299,
+          "bottom": 282,
+          "left": 267
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Add component",
+        "r": {
+          "x": 165.0625,
+          "y": 348,
+          "width": 138.9375,
+          "height": 32,
+          "top": 348,
+          "right": 304,
+          "bottom": 380,
+          "left": 165.0625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Ridge\nSelected\nlineal \u00b7 9 measurements",
+        "r": {
+          "x": 44,
+          "y": 437,
+          "width": 213,
+          "height": 46,
+          "top": 437,
+          "right": 257,
+          "bottom": 483,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Ridge",
+        "r": {
+          "x": 261,
+          "y": 437,
+          "width": 32,
+          "height": 32,
+          "top": 437,
+          "right": 293,
+          "bottom": 469,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurements",
+        "r": {
+          "x": 44,
+          "y": 487,
+          "width": 249,
+          "height": 32,
+          "top": 487,
+          "right": 293,
+          "bottom": 519,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 610,
+          "width": 32,
+          "height": 32,
+          "top": 610,
+          "right": 255,
+          "bottom": 642,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 610,
+          "width": 32,
+          "height": 32,
+          "top": 610,
+          "right": 293,
+          "bottom": 642,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 646,
+          "width": 32,
+          "height": 32,
+          "top": 646,
+          "right": 255,
+          "bottom": 678,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 646,
+          "width": 32,
+          "height": 32,
+          "top": 646,
+          "right": 293,
+          "bottom": 678,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 682,
+          "width": 32,
+          "height": 32,
+          "top": 682,
+          "right": 255,
+          "bottom": 714,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 682,
+          "width": 32,
+          "height": 32,
+          "top": 682,
+          "right": 293,
+          "bottom": 714,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 718,
+          "width": 32,
+          "height": 32,
+          "top": 718,
+          "right": 255,
+          "bottom": 750,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 718,
+          "width": 32,
+          "height": 32,
+          "top": 718,
+          "right": 293,
+          "bottom": 750,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 754,
+          "width": 32,
+          "height": 32,
+          "top": 754,
+          "right": 255,
+          "bottom": 786,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 754,
+          "width": 32,
+          "height": 32,
+          "top": 754,
+          "right": 293,
+          "bottom": 786,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 790,
+          "width": 32,
+          "height": 32,
+          "top": 790,
+          "right": 255,
+          "bottom": 822,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 790,
+          "width": 32,
+          "height": 32,
+          "top": 790,
+          "right": 293,
+          "bottom": 822,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 826,
+          "width": 32,
+          "height": 32,
+          "top": 826,
+          "right": 255,
+          "bottom": 858,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 826,
+          "width": 32,
+          "height": 32,
+          "top": 826,
+          "right": 293,
+          "bottom": 858,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 862,
+          "width": 32,
+          "height": 32,
+          "top": 862,
+          "right": 255,
+          "bottom": 894,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 862,
+          "width": 32,
+          "height": 32,
+          "top": 862,
+          "right": 293,
+          "bottom": 894,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 898,
+          "width": 32,
+          "height": 32,
+          "top": 898,
+          "right": 255,
+          "bottom": 930,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 898,
+          "width": 32,
+          "height": 32,
+          "top": 898,
+          "right": 293,
+          "bottom": 930,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hip\nlineal \u00b7 2 measurements",
+        "r": {
+          "x": 44,
+          "y": 784,
+          "width": 213,
+          "height": 46,
+          "top": 784,
+          "right": 257,
+          "bottom": 830,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Hip",
+        "r": {
+          "x": 261,
+          "y": 784,
+          "width": 32,
+          "height": 32,
+          "top": 784,
+          "right": 293,
+          "bottom": 816,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 834,
+          "width": 249,
+          "height": 32,
+          "top": 834,
+          "right": 293,
+          "bottom": 866,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Eaves\nlineal \u00b7 3 measurements",
+        "r": {
+          "x": 44,
+          "y": 974,
+          "width": 213,
+          "height": 46,
+          "top": 974,
+          "right": 257,
+          "bottom": 1020,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Eaves",
+        "r": {
+          "x": 261,
+          "y": 974,
+          "width": 32,
+          "height": 32,
+          "top": 974,
+          "right": 293,
+          "bottom": 1006,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 1024,
+          "width": 249,
+          "height": 32,
+          "top": 1024,
+          "right": 293,
+          "bottom": 1056,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Reset takeoff\u2026",
+        "r": {
+          "x": 29,
+          "y": 827,
+          "width": 275,
+          "height": 32,
+          "top": 827,
+          "right": 304,
+          "bottom": 859,
+          "left": 29
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Area",
+        "r": {
+          "x": 338,
+          "y": 198,
+          "width": 80.921875,
+          "height": 32,
+          "top": 198,
+          "right": 418.921875,
+          "bottom": 230,
+          "left": 338
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Line",
+        "r": {
+          "x": 422.921875,
+          "y": 198,
+          "width": 78.734375,
+          "height": 32,
+          "top": 198,
+          "right": 501.65625,
+          "bottom": 230,
+          "left": 422.921875
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Point",
+        "r": {
+          "x": 505.65625,
+          "y": 198,
+          "width": 84.5,
+          "height": 32,
+          "top": 198,
+          "right": 590.15625,
+          "bottom": 230,
+          "left": 505.65625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Recalibrate",
+        "r": {
+          "x": 1163.265625,
+          "y": 198,
+          "width": 108.703125,
+          "height": 32,
+          "top": 198,
+          "right": 1271.96875,
+          "bottom": 230,
+          "left": 1163.265625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Estimate pitch",
+        "r": {
+          "x": 1275.96875,
+          "y": 198,
+          "width": 126.03125,
+          "height": 32,
+          "top": 198,
+          "right": 1402,
+          "bottom": 230,
+          "left": 1275.96875
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Single",
+        "r": {
+          "x": 338,
+          "y": 241,
+          "width": 58.015625,
+          "height": 32,
+          "top": 241,
+          "right": 396.015625,
+          "bottom": 273,
+          "left": 338
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Multi",
+        "r": {
+          "x": 400.015625,
+          "y": 241,
+          "width": 50,
+          "height": 32,
+          "top": 241,
+          "right": 450.015625,
+          "bottom": 273,
+          "left": 400.015625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Undo",
+        "r": {
+          "x": 1205,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1237,
+          "bottom": 273,
+          "left": 1205
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Redo",
+        "r": {
+          "x": 1241,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1273,
+          "bottom": 273,
+          "left": 1241
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom out",
+        "r": {
+          "x": 1290,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1322,
+          "bottom": 273,
+          "left": 1290
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom in",
+        "r": {
+          "x": 1370,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1402,
+          "bottom": 273,
+          "left": 1370
+        },
+        "font": "13px"
+      }
+    ]
+  },
+  {
+    "mode": "desktop-measured",
+    "width": 1280,
+    "height": 800,
+    "documentWidth": 1280,
+    "documentHeight": 800,
+    "viewport": [
+      1280,
+      800
+    ],
+    "toolbar": {
+      "x": 329,
+      "y": 191,
+      "w": 922,
+      "h": 91,
+      "scrollWidth": 920,
+      "clientWidth": 920
+    },
+    "panel": {
+      "x": 17,
+      "y": 181,
+      "w": 300,
+      "h": 606,
+      "scrollWidth": 299,
+      "clientWidth": 299
+    },
+    "canvas": {
+      "x": 317,
+      "y": 282,
+      "w": 946,
+      "h": 473,
+      "scrollWidth": 946,
+      "clientWidth": 946
+    },
+    "status": {
+      "x": 317,
+      "y": 755,
+      "w": 946,
+      "h": 32,
+      "scrollWidth": 946,
+      "clientWidth": 946
+    },
+    "finish": {
+      "x": 1084.9375,
+      "y": 77,
+      "w": 162.0625,
+      "h": 32,
+      "scrollWidth": 160,
+      "clientWidth": 160
+    },
+    "dialog": null,
+    "buttons": [
+      {
+        "text": "Help",
+        "r": {
+          "x": 1205.828125,
+          "y": 11.5,
+          "width": 54.171875,
+          "height": 32,
+          "top": 11.5,
+          "right": 1260,
+          "bottom": 43.5,
+          "left": 1205.828125
+        },
+        "font": "13px"
+      },
+      {
+        "text": "\u203a",
+        "r": {
+          "x": 0,
+          "y": 370,
+          "width": 14,
+          "height": 60,
+          "top": 370,
+          "right": 14,
+          "bottom": 430,
+          "left": 0
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Upload another plan",
+        "r": {
+          "x": 895.265625,
+          "y": 87,
+          "width": 177.671875,
+          "height": 32,
+          "top": 87,
+          "right": 1072.9375,
+          "bottom": 119,
+          "left": 895.265625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Finish & save",
+        "r": {
+          "x": 1084.9375,
+          "y": 77,
+          "width": 162.0625,
+          "height": 32,
+          "top": 77,
+          "right": 1247,
+          "bottom": 109,
+          "left": 1084.9375
+        },
+        "font": "13px"
+      },
+      {
+        "text": "New area",
+        "r": {
+          "x": 194.90625,
+          "y": 197,
+          "width": 109.09375,
+          "height": 32,
+          "top": 197,
+          "right": 304,
+          "bottom": 229,
+          "left": 194.90625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Main Roof\n192.40 m\u00b2\nActive",
+        "r": {
+          "x": 34,
+          "y": 246,
+          "width": 197,
+          "height": 60,
+          "top": 246,
+          "right": 231,
+          "bottom": 306,
+          "left": 34
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide Main Roof",
+        "r": {
+          "x": 235,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 267,
+          "bottom": 282,
+          "left": 235
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete Main Roof",
+        "r": {
+          "x": 267,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 299,
+          "bottom": 282,
+          "left": 267
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Add component",
+        "r": {
+          "x": 165.0625,
+          "y": 348,
+          "width": 138.9375,
+          "height": 32,
+          "top": 348,
+          "right": 304,
+          "bottom": 380,
+          "left": 165.0625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Ridge\nSelected\nlineal \u00b7 9 measurements",
+        "r": {
+          "x": 44,
+          "y": 437,
+          "width": 213,
+          "height": 46,
+          "top": 437,
+          "right": 257,
+          "bottom": 483,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Ridge",
+        "r": {
+          "x": 261,
+          "y": 437,
+          "width": 32,
+          "height": 32,
+          "top": 437,
+          "right": 293,
+          "bottom": 469,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurements",
+        "r": {
+          "x": 44,
+          "y": 487,
+          "width": 249,
+          "height": 32,
+          "top": 487,
+          "right": 293,
+          "bottom": 519,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 610,
+          "width": 32,
+          "height": 32,
+          "top": 610,
+          "right": 255,
+          "bottom": 642,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 610,
+          "width": 32,
+          "height": 32,
+          "top": 610,
+          "right": 293,
+          "bottom": 642,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 646,
+          "width": 32,
+          "height": 32,
+          "top": 646,
+          "right": 255,
+          "bottom": 678,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 646,
+          "width": 32,
+          "height": 32,
+          "top": 646,
+          "right": 293,
+          "bottom": 678,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 682,
+          "width": 32,
+          "height": 32,
+          "top": 682,
+          "right": 255,
+          "bottom": 714,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 682,
+          "width": 32,
+          "height": 32,
+          "top": 682,
+          "right": 293,
+          "bottom": 714,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 718,
+          "width": 32,
+          "height": 32,
+          "top": 718,
+          "right": 255,
+          "bottom": 750,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 718,
+          "width": 32,
+          "height": 32,
+          "top": 718,
+          "right": 293,
+          "bottom": 750,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 754,
+          "width": 32,
+          "height": 32,
+          "top": 754,
+          "right": 255,
+          "bottom": 786,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 754,
+          "width": 32,
+          "height": 32,
+          "top": 754,
+          "right": 293,
+          "bottom": 786,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 790,
+          "width": 32,
+          "height": 32,
+          "top": 790,
+          "right": 255,
+          "bottom": 822,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 790,
+          "width": 32,
+          "height": 32,
+          "top": 790,
+          "right": 293,
+          "bottom": 822,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 826,
+          "width": 32,
+          "height": 32,
+          "top": 826,
+          "right": 255,
+          "bottom": 858,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 826,
+          "width": 32,
+          "height": 32,
+          "top": 826,
+          "right": 293,
+          "bottom": 858,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 862,
+          "width": 32,
+          "height": 32,
+          "top": 862,
+          "right": 255,
+          "bottom": 894,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 862,
+          "width": 32,
+          "height": 32,
+          "top": 862,
+          "right": 293,
+          "bottom": 894,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 898,
+          "width": 32,
+          "height": 32,
+          "top": 898,
+          "right": 255,
+          "bottom": 930,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 898,
+          "width": 32,
+          "height": 32,
+          "top": 898,
+          "right": 293,
+          "bottom": 930,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hip\nlineal \u00b7 2 measurements",
+        "r": {
+          "x": 44,
+          "y": 784,
+          "width": 213,
+          "height": 46,
+          "top": 784,
+          "right": 257,
+          "bottom": 830,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Hip",
+        "r": {
+          "x": 261,
+          "y": 784,
+          "width": 32,
+          "height": 32,
+          "top": 784,
+          "right": 293,
+          "bottom": 816,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 834,
+          "width": 249,
+          "height": 32,
+          "top": 834,
+          "right": 293,
+          "bottom": 866,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Eaves\nlineal \u00b7 3 measurements",
+        "r": {
+          "x": 44,
+          "y": 974,
+          "width": 213,
+          "height": 46,
+          "top": 974,
+          "right": 257,
+          "bottom": 1020,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Eaves",
+        "r": {
+          "x": 261,
+          "y": 974,
+          "width": 32,
+          "height": 32,
+          "top": 974,
+          "right": 293,
+          "bottom": 1006,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 1024,
+          "width": 249,
+          "height": 32,
+          "top": 1024,
+          "right": 293,
+          "bottom": 1056,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Reset takeoff\u2026",
+        "r": {
+          "x": 29,
+          "y": 727,
+          "width": 275,
+          "height": 32,
+          "top": 727,
+          "right": 304,
+          "bottom": 759,
+          "left": 29
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Area",
+        "r": {
+          "x": 338,
+          "y": 198,
+          "width": 80.921875,
+          "height": 32,
+          "top": 198,
+          "right": 418.921875,
+          "bottom": 230,
+          "left": 338
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Line",
+        "r": {
+          "x": 422.921875,
+          "y": 198,
+          "width": 78.734375,
+          "height": 32,
+          "top": 198,
+          "right": 501.65625,
+          "bottom": 230,
+          "left": 422.921875
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Point",
+        "r": {
+          "x": 505.65625,
+          "y": 198,
+          "width": 84.5,
+          "height": 32,
+          "top": 198,
+          "right": 590.15625,
+          "bottom": 230,
+          "left": 505.65625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Recalibrate",
+        "r": {
+          "x": 1003.265625,
+          "y": 198,
+          "width": 108.703125,
+          "height": 32,
+          "top": 198,
+          "right": 1111.96875,
+          "bottom": 230,
+          "left": 1003.265625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Estimate pitch",
+        "r": {
+          "x": 1115.96875,
+          "y": 198,
+          "width": 126.03125,
+          "height": 32,
+          "top": 198,
+          "right": 1242,
+          "bottom": 230,
+          "left": 1115.96875
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Single",
+        "r": {
+          "x": 338,
+          "y": 241,
+          "width": 58.015625,
+          "height": 32,
+          "top": 241,
+          "right": 396.015625,
+          "bottom": 273,
+          "left": 338
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Multi",
+        "r": {
+          "x": 400.015625,
+          "y": 241,
+          "width": 50,
+          "height": 32,
+          "top": 241,
+          "right": 450.015625,
+          "bottom": 273,
+          "left": 400.015625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Undo",
+        "r": {
+          "x": 1045,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1077,
+          "bottom": 273,
+          "left": 1045
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Redo",
+        "r": {
+          "x": 1081,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1113,
+          "bottom": 273,
+          "left": 1081
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom out",
+        "r": {
+          "x": 1130,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1162,
+          "bottom": 273,
+          "left": 1130
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom in",
+        "r": {
+          "x": 1210,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1242,
+          "bottom": 273,
+          "left": 1210
+        },
+        "font": "13px"
+      }
+    ]
+  },
+  {
+    "mode": "desktop-measured",
+    "width": 1024,
+    "height": 768,
+    "documentWidth": 1024,
+    "documentHeight": 768,
+    "viewport": [
+      1024,
+      768
+    ],
+    "toolbar": {
+      "x": 305,
+      "y": 191,
+      "w": 694,
+      "h": 91,
+      "scrollWidth": 692,
+      "clientWidth": 692
+    },
+    "panel": {
+      "x": 17,
+      "y": 181,
+      "w": 280,
+      "h": 574,
+      "scrollWidth": 279,
+      "clientWidth": 279
+    },
+    "canvas": {
+      "x": 297,
+      "y": 282,
+      "w": 710,
+      "h": 441,
+      "scrollWidth": 710,
+      "clientWidth": 710
+    },
+    "status": {
+      "x": 297,
+      "y": 723,
+      "w": 710,
+      "h": 32,
+      "scrollWidth": 710,
+      "clientWidth": 710
+    },
+    "finish": {
+      "x": 828.9375,
+      "y": 77,
+      "w": 162.0625,
+      "h": 32,
+      "scrollWidth": 160,
+      "clientWidth": 160
+    },
+    "dialog": null,
+    "buttons": [
+      {
+        "text": "Help",
+        "r": {
+          "x": 949.828125,
+          "y": 11.5,
+          "width": 54.171875,
+          "height": 32,
+          "top": 11.5,
+          "right": 1004,
+          "bottom": 43.5,
+          "left": 949.828125
+        },
+        "font": "13px"
+      },
+      {
+        "text": "\u203a",
+        "r": {
+          "x": 0,
+          "y": 354,
+          "width": 14,
+          "height": 60,
+          "top": 354,
+          "right": 14,
+          "bottom": 414,
+          "left": 0
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Upload another plan",
+        "r": {
+          "x": 639.265625,
+          "y": 87,
+          "width": 177.671875,
+          "height": 32,
+          "top": 87,
+          "right": 816.9375,
+          "bottom": 119,
+          "left": 639.265625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Finish & save",
+        "r": {
+          "x": 828.9375,
+          "y": 77,
+          "width": 162.0625,
+          "height": 32,
+          "top": 77,
+          "right": 991,
+          "bottom": 109,
+          "left": 828.9375
+        },
+        "font": "13px"
+      },
+      {
+        "text": "New area",
+        "r": {
+          "x": 174.90625,
+          "y": 197,
+          "width": 109.09375,
+          "height": 32,
+          "top": 197,
+          "right": 284,
+          "bottom": 229,
+          "left": 174.90625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Main Roof\n192.40 m\u00b2\nActive",
+        "r": {
+          "x": 34,
+          "y": 246,
+          "width": 177,
+          "height": 60,
+          "top": 246,
+          "right": 211,
+          "bottom": 306,
+          "left": 34
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide Main Roof",
+        "r": {
+          "x": 215,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 247,
+          "bottom": 282,
+          "left": 215
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete Main Roof",
+        "r": {
+          "x": 247,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 279,
+          "bottom": 282,
+          "left": 247
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Add component",
+        "r": {
+          "x": 145.0625,
+          "y": 348,
+          "width": 138.9375,
+          "height": 32,
+          "top": 348,
+          "right": 284,
+          "bottom": 380,
+          "left": 145.0625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Ridge\nSelected\nlineal \u00b7 9 measurements",
+        "r": {
+          "x": 44,
+          "y": 437,
+          "width": 193,
+          "height": 46,
+          "top": 437,
+          "right": 237,
+          "bottom": 483,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Ridge",
+        "r": {
+          "x": 241,
+          "y": 437,
+          "width": 32,
+          "height": 32,
+          "top": 437,
+          "right": 273,
+          "bottom": 469,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurements",
+        "r": {
+          "x": 44,
+          "y": 487,
+          "width": 229,
+          "height": 32,
+          "top": 487,
+          "right": 273,
+          "bottom": 519,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 203,
+          "y": 610,
+          "width": 32,
+          "height": 32,
+          "top": 610,
+          "right": 235,
+          "bottom": 642,
+          "left": 203
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 241,
+          "y": 610,
+          "width": 32,
+          "height": 32,
+          "top": 610,
+          "right": 273,
+          "bottom": 642,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 203,
+          "y": 646,
+          "width": 32,
+          "height": 32,
+          "top": 646,
+          "right": 235,
+          "bottom": 678,
+          "left": 203
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 241,
+          "y": 646,
+          "width": 32,
+          "height": 32,
+          "top": 646,
+          "right": 273,
+          "bottom": 678,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 203,
+          "y": 682,
+          "width": 32,
+          "height": 32,
+          "top": 682,
+          "right": 235,
+          "bottom": 714,
+          "left": 203
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 241,
+          "y": 682,
+          "width": 32,
+          "height": 32,
+          "top": 682,
+          "right": 273,
+          "bottom": 714,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 203,
+          "y": 718,
+          "width": 32,
+          "height": 32,
+          "top": 718,
+          "right": 235,
+          "bottom": 750,
+          "left": 203
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 241,
+          "y": 718,
+          "width": 32,
+          "height": 32,
+          "top": 718,
+          "right": 273,
+          "bottom": 750,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 203,
+          "y": 754,
+          "width": 32,
+          "height": 32,
+          "top": 754,
+          "right": 235,
+          "bottom": 786,
+          "left": 203
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 241,
+          "y": 754,
+          "width": 32,
+          "height": 32,
+          "top": 754,
+          "right": 273,
+          "bottom": 786,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 203,
+          "y": 790,
+          "width": 32,
+          "height": 32,
+          "top": 790,
+          "right": 235,
+          "bottom": 822,
+          "left": 203
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 241,
+          "y": 790,
+          "width": 32,
+          "height": 32,
+          "top": 790,
+          "right": 273,
+          "bottom": 822,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 203,
+          "y": 826,
+          "width": 32,
+          "height": 32,
+          "top": 826,
+          "right": 235,
+          "bottom": 858,
+          "left": 203
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 241,
+          "y": 826,
+          "width": 32,
+          "height": 32,
+          "top": 826,
+          "right": 273,
+          "bottom": 858,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 203,
+          "y": 862,
+          "width": 32,
+          "height": 32,
+          "top": 862,
+          "right": 235,
+          "bottom": 894,
+          "left": 203
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 241,
+          "y": 862,
+          "width": 32,
+          "height": 32,
+          "top": 862,
+          "right": 273,
+          "bottom": 894,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 203,
+          "y": 898,
+          "width": 32,
+          "height": 32,
+          "top": 898,
+          "right": 235,
+          "bottom": 930,
+          "left": 203
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 241,
+          "y": 898,
+          "width": 32,
+          "height": 32,
+          "top": 898,
+          "right": 273,
+          "bottom": 930,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hip\nlineal \u00b7 2 measurements",
+        "r": {
+          "x": 44,
+          "y": 784,
+          "width": 193,
+          "height": 46,
+          "top": 784,
+          "right": 237,
+          "bottom": 830,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Hip",
+        "r": {
+          "x": 241,
+          "y": 784,
+          "width": 32,
+          "height": 32,
+          "top": 784,
+          "right": 273,
+          "bottom": 816,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 834,
+          "width": 229,
+          "height": 32,
+          "top": 834,
+          "right": 273,
+          "bottom": 866,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Eaves\nlineal \u00b7 3 measurements",
+        "r": {
+          "x": 44,
+          "y": 974,
+          "width": 193,
+          "height": 46,
+          "top": 974,
+          "right": 237,
+          "bottom": 1020,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Eaves",
+        "r": {
+          "x": 241,
+          "y": 974,
+          "width": 32,
+          "height": 32,
+          "top": 974,
+          "right": 273,
+          "bottom": 1006,
+          "left": 241
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 1024,
+          "width": 229,
+          "height": 32,
+          "top": 1024,
+          "right": 273,
+          "bottom": 1056,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Reset takeoff\u2026",
+        "r": {
+          "x": 29,
+          "y": 677,
+          "width": 255,
+          "height": 32,
+          "top": 677,
+          "right": 284,
+          "bottom": 709,
+          "left": 29
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Area",
+        "r": {
+          "x": 314,
+          "y": 198,
+          "width": 72.921875,
+          "height": 32,
+          "top": 198,
+          "right": 386.921875,
+          "bottom": 230,
+          "left": 314
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Line",
+        "r": {
+          "x": 390.921875,
+          "y": 198,
+          "width": 70.734375,
+          "height": 32,
+          "top": 198,
+          "right": 461.65625,
+          "bottom": 230,
+          "left": 390.921875
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Point",
+        "r": {
+          "x": 465.65625,
+          "y": 198,
+          "width": 76.5,
+          "height": 32,
+          "top": 198,
+          "right": 542.15625,
+          "bottom": 230,
+          "left": 465.65625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Recalibrate",
+        "r": {
+          "x": 751.265625,
+          "y": 198,
+          "width": 108.703125,
+          "height": 32,
+          "top": 198,
+          "right": 859.96875,
+          "bottom": 230,
+          "left": 751.265625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Estimate pitch",
+        "r": {
+          "x": 863.96875,
+          "y": 198,
+          "width": 126.03125,
+          "height": 32,
+          "top": 198,
+          "right": 990,
+          "bottom": 230,
+          "left": 863.96875
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Single",
+        "r": {
+          "x": 314,
+          "y": 241,
+          "width": 58.015625,
+          "height": 32,
+          "top": 241,
+          "right": 372.015625,
+          "bottom": 273,
+          "left": 314
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Multi",
+        "r": {
+          "x": 376.015625,
+          "y": 241,
+          "width": 50,
+          "height": 32,
+          "top": 241,
+          "right": 426.015625,
+          "bottom": 273,
+          "left": 376.015625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Undo",
+        "r": {
+          "x": 793,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 825,
+          "bottom": 273,
+          "left": 793
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Redo",
+        "r": {
+          "x": 829,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 861,
+          "bottom": 273,
+          "left": 829
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom out",
+        "r": {
+          "x": 878,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 910,
+          "bottom": 273,
+          "left": 878
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom in",
+        "r": {
+          "x": 958,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 990,
+          "bottom": 273,
+          "left": 958
+        },
+        "font": "13px"
+      }
+    ]
+  },
+  {
+    "mode": "desktop-measured",
+    "width": 800,
+    "height": 700,
+    "documentWidth": 800,
+    "documentHeight": 700,
+    "viewport": [
+      800,
+      700
+    ],
+    "toolbar": {
+      "x": 281,
+      "y": 191,
+      "w": 494,
+      "h": 171,
+      "scrollWidth": 492,
+      "clientWidth": 492
+    },
+    "panel": {
+      "x": 17,
+      "y": 181,
+      "w": 256,
+      "h": 506,
+      "scrollWidth": 255,
+      "clientWidth": 255
+    },
+    "canvas": {
+      "x": 273,
+      "y": 362,
+      "w": 510,
+      "h": 277,
+      "scrollWidth": 532,
+      "clientWidth": 510
+    },
+    "status": {
+      "x": 273,
+      "y": 639,
+      "w": 510,
+      "h": 48,
+      "scrollWidth": 510,
+      "clientWidth": 510
+    },
+    "finish": {
+      "x": 608.9375,
+      "y": 77,
+      "w": 162.0625,
+      "h": 32,
+      "scrollWidth": 160,
+      "clientWidth": 160
+    },
+    "dialog": null,
+    "buttons": [
+      {
+        "text": "Help",
+        "r": {
+          "x": 725.828125,
+          "y": 11.5,
+          "width": 54.171875,
+          "height": 32,
+          "top": 11.5,
+          "right": 780,
+          "bottom": 43.5,
+          "left": 725.828125
+        },
+        "font": "13px"
+      },
+      {
+        "text": "\u203a",
+        "r": {
+          "x": 0,
+          "y": 320,
+          "width": 14,
+          "height": 60,
+          "top": 320,
+          "right": 14,
+          "bottom": 380,
+          "left": 0
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Upload another plan",
+        "r": {
+          "x": 456.9375,
+          "y": 78,
+          "width": 144,
+          "height": 50,
+          "top": 78,
+          "right": 600.9375,
+          "bottom": 128,
+          "left": 456.9375
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Finish & save",
+        "r": {
+          "x": 608.9375,
+          "y": 77,
+          "width": 162.0625,
+          "height": 32,
+          "top": 77,
+          "right": 771,
+          "bottom": 109,
+          "left": 608.9375
+        },
+        "font": "13px"
+      },
+      {
+        "text": "New area",
+        "r": {
+          "x": 167.296875,
+          "y": 197,
+          "width": 92.703125,
+          "height": 32,
+          "top": 197,
+          "right": 260,
+          "bottom": 229,
+          "left": 167.296875
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Main Roof\n192.40 m\u00b2\nActive",
+        "r": {
+          "x": 34,
+          "y": 246,
+          "width": 153,
+          "height": 60,
+          "top": 246,
+          "right": 187,
+          "bottom": 306,
+          "left": 34
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide Main Roof",
+        "r": {
+          "x": 191,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 223,
+          "bottom": 282,
+          "left": 191
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete Main Roof",
+        "r": {
+          "x": 223,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 255,
+          "bottom": 282,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Add component",
+        "r": {
+          "x": 132.671875,
+          "y": 348,
+          "width": 127.328125,
+          "height": 32,
+          "top": 348,
+          "right": 260,
+          "bottom": 380,
+          "left": 132.671875
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Ridge\nSelected\nlineal \u00b7 9 measurements",
+        "r": {
+          "x": 44,
+          "y": 437,
+          "width": 169,
+          "height": 46,
+          "top": 437,
+          "right": 213,
+          "bottom": 483,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Ridge",
+        "r": {
+          "x": 217,
+          "y": 437,
+          "width": 32,
+          "height": 32,
+          "top": 437,
+          "right": 249,
+          "bottom": 469,
+          "left": 217
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurements",
+        "r": {
+          "x": 44,
+          "y": 487,
+          "width": 205,
+          "height": 32,
+          "top": 487,
+          "right": 249,
+          "bottom": 519,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 179,
+          "y": 628,
+          "width": 32,
+          "height": 32,
+          "top": 628,
+          "right": 211,
+          "bottom": 660,
+          "left": 179
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 217,
+          "y": 628,
+          "width": 32,
+          "height": 32,
+          "top": 628,
+          "right": 249,
+          "bottom": 660,
+          "left": 217
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 179,
+          "y": 664,
+          "width": 32,
+          "height": 32,
+          "top": 664,
+          "right": 211,
+          "bottom": 696,
+          "left": 179
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 217,
+          "y": 664,
+          "width": 32,
+          "height": 32,
+          "top": 664,
+          "right": 249,
+          "bottom": 696,
+          "left": 217
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 179,
+          "y": 700,
+          "width": 32,
+          "height": 32,
+          "top": 700,
+          "right": 211,
+          "bottom": 732,
+          "left": 179
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 217,
+          "y": 700,
+          "width": 32,
+          "height": 32,
+          "top": 700,
+          "right": 249,
+          "bottom": 732,
+          "left": 217
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 179,
+          "y": 736,
+          "width": 32,
+          "height": 32,
+          "top": 736,
+          "right": 211,
+          "bottom": 768,
+          "left": 179
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 217,
+          "y": 736,
+          "width": 32,
+          "height": 32,
+          "top": 736,
+          "right": 249,
+          "bottom": 768,
+          "left": 217
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 179,
+          "y": 772,
+          "width": 32,
+          "height": 32,
+          "top": 772,
+          "right": 211,
+          "bottom": 804,
+          "left": 179
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 217,
+          "y": 772,
+          "width": 32,
+          "height": 32,
+          "top": 772,
+          "right": 249,
+          "bottom": 804,
+          "left": 217
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 179,
+          "y": 808,
+          "width": 32,
+          "height": 32,
+          "top": 808,
+          "right": 211,
+          "bottom": 840,
+          "left": 179
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 217,
+          "y": 808,
+          "width": 32,
+          "height": 32,
+          "top": 808,
+          "right": 249,
+          "bottom": 840,
+          "left": 217
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 179,
+          "y": 844,
+          "width": 32,
+          "height": 32,
+          "top": 844,
+          "right": 211,
+          "bottom": 876,
+          "left": 179
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 217,
+          "y": 844,
+          "width": 32,
+          "height": 32,
+          "top": 844,
+          "right": 249,
+          "bottom": 876,
+          "left": 217
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 179,
+          "y": 880,
+          "width": 32,
+          "height": 32,
+          "top": 880,
+          "right": 211,
+          "bottom": 912,
+          "left": 179
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 217,
+          "y": 880,
+          "width": 32,
+          "height": 32,
+          "top": 880,
+          "right": 249,
+          "bottom": 912,
+          "left": 217
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 179,
+          "y": 916,
+          "width": 32,
+          "height": 32,
+          "top": 916,
+          "right": 211,
+          "bottom": 948,
+          "left": 179
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 217,
+          "y": 916,
+          "width": 32,
+          "height": 32,
+          "top": 916,
+          "right": 249,
+          "bottom": 948,
+          "left": 217
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hip\nlineal \u00b7 2 measurements",
+        "r": {
+          "x": 44,
+          "y": 802,
+          "width": 169,
+          "height": 46,
+          "top": 802,
+          "right": 213,
+          "bottom": 848,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Hip",
+        "r": {
+          "x": 217,
+          "y": 802,
+          "width": 32,
+          "height": 32,
+          "top": 802,
+          "right": 249,
+          "bottom": 834,
+          "left": 217
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 852,
+          "width": 205,
+          "height": 32,
+          "top": 852,
+          "right": 249,
+          "bottom": 884,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Eaves\nlineal \u00b7 3 measurements",
+        "r": {
+          "x": 44,
+          "y": 1010,
+          "width": 169,
+          "height": 46,
+          "top": 1010,
+          "right": 213,
+          "bottom": 1056,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Eaves",
+        "r": {
+          "x": 217,
+          "y": 1010,
+          "width": 32,
+          "height": 32,
+          "top": 1010,
+          "right": 249,
+          "bottom": 1042,
+          "left": 217
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 1060,
+          "width": 205,
+          "height": 32,
+          "top": 1060,
+          "right": 249,
+          "bottom": 1092,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Reset takeoff\u2026",
+        "r": {
+          "x": 29,
+          "y": 609,
+          "width": 231,
+          "height": 32,
+          "top": 609,
+          "right": 260,
+          "bottom": 641,
+          "left": 29
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Area",
+        "r": {
+          "x": 290,
+          "y": 198,
+          "width": 72.921875,
+          "height": 32,
+          "top": 198,
+          "right": 362.921875,
+          "bottom": 230,
+          "left": 290
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Line",
+        "r": {
+          "x": 366.921875,
+          "y": 198,
+          "width": 70.734375,
+          "height": 32,
+          "top": 198,
+          "right": 437.65625,
+          "bottom": 230,
+          "left": 366.921875
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Point",
+        "r": {
+          "x": 441.65625,
+          "y": 198,
+          "width": 76.5,
+          "height": 32,
+          "top": 198,
+          "right": 518.15625,
+          "bottom": 230,
+          "left": 441.65625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Recalibrate",
+        "r": {
+          "x": 290,
+          "y": 238,
+          "width": 108.703125,
+          "height": 32,
+          "top": 238,
+          "right": 398.703125,
+          "bottom": 270,
+          "left": 290
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Estimate pitch",
+        "r": {
+          "x": 402.703125,
+          "y": 238,
+          "width": 126.03125,
+          "height": 32,
+          "top": 238,
+          "right": 528.734375,
+          "bottom": 270,
+          "left": 402.703125
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Single",
+        "r": {
+          "x": 290,
+          "y": 281,
+          "width": 58.015625,
+          "height": 32,
+          "top": 281,
+          "right": 348.015625,
+          "bottom": 313,
+          "left": 290
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Multi",
+        "r": {
+          "x": 352.015625,
+          "y": 281,
+          "width": 50,
+          "height": 32,
+          "top": 281,
+          "right": 402.015625,
+          "bottom": 313,
+          "left": 352.015625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Undo",
+        "r": {
+          "x": 569,
+          "y": 323,
+          "width": 32,
+          "height": 32,
+          "top": 323,
+          "right": 601,
+          "bottom": 355,
+          "left": 569
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Redo",
+        "r": {
+          "x": 605,
+          "y": 323,
+          "width": 32,
+          "height": 32,
+          "top": 323,
+          "right": 637,
+          "bottom": 355,
+          "left": 605
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom out",
+        "r": {
+          "x": 654,
+          "y": 323,
+          "width": 32,
+          "height": 32,
+          "top": 323,
+          "right": 686,
+          "bottom": 355,
+          "left": 654
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom in",
+        "r": {
+          "x": 734,
+          "y": 323,
+          "width": 32,
+          "height": 32,
+          "top": 323,
+          "right": 766,
+          "bottom": 355,
+          "left": 734
+        },
+        "font": "13px"
+      }
+    ]
+  },
+  {
+    "mode": "desktop-library",
+    "width": 1440,
+    "height": 900,
+    "documentWidth": 1440,
+    "documentHeight": 900,
+    "viewport": [
+      1440,
+      900
+    ],
+    "toolbar": {
+      "x": 329,
+      "y": 191,
+      "w": 1082,
+      "h": 91,
+      "scrollWidth": 1080,
+      "clientWidth": 1080
+    },
+    "panel": {
+      "x": 17,
+      "y": 181,
+      "w": 300,
+      "h": 706,
+      "scrollWidth": 299,
+      "clientWidth": 299
+    },
+    "canvas": {
+      "x": 317,
+      "y": 282,
+      "w": 1106,
+      "h": 573,
+      "scrollWidth": 1106,
+      "clientWidth": 1106
+    },
+    "status": {
+      "x": 317,
+      "y": 855,
+      "w": 1106,
+      "h": 32,
+      "scrollWidth": 1106,
+      "clientWidth": 1106
+    },
+    "finish": {
+      "x": 1244.9375,
+      "y": 77,
+      "w": 162.0625,
+      "h": 32,
+      "scrollWidth": 160,
+      "clientWidth": 160
+    },
+    "dialog": null,
+    "buttons": [
+      {
+        "text": "Help",
+        "r": {
+          "x": 1365.828125,
+          "y": 11.5,
+          "width": 54.171875,
+          "height": 32,
+          "top": 11.5,
+          "right": 1420,
+          "bottom": 43.5,
+          "left": 1365.828125
+        },
+        "font": "13px"
+      },
+      {
+        "text": "\u203a",
+        "r": {
+          "x": 0,
+          "y": 420,
+          "width": 14,
+          "height": 60,
+          "top": 420,
+          "right": 14,
+          "bottom": 480,
+          "left": 0
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Upload another plan",
+        "r": {
+          "x": 1055.265625,
+          "y": 87,
+          "width": 177.671875,
+          "height": 32,
+          "top": 87,
+          "right": 1232.9375,
+          "bottom": 119,
+          "left": 1055.265625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Finish & save",
+        "r": {
+          "x": 1244.9375,
+          "y": 77,
+          "width": 162.0625,
+          "height": 32,
+          "top": 77,
+          "right": 1407,
+          "bottom": 109,
+          "left": 1244.9375
+        },
+        "font": "13px"
+      },
+      {
+        "text": "New area",
+        "r": {
+          "x": 194.90625,
+          "y": 197,
+          "width": 109.09375,
+          "height": 32,
+          "top": 197,
+          "right": 304,
+          "bottom": 229,
+          "left": 194.90625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Main Roof\n192.40 m\u00b2\nActive",
+        "r": {
+          "x": 34,
+          "y": 246,
+          "width": 197,
+          "height": 60,
+          "top": 246,
+          "right": 231,
+          "bottom": 306,
+          "left": 34
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide Main Roof",
+        "r": {
+          "x": 235,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 267,
+          "bottom": 282,
+          "left": 235
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete Main Roof",
+        "r": {
+          "x": 267,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 299,
+          "bottom": 282,
+          "left": 267
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Add component",
+        "r": {
+          "x": 165.0625,
+          "y": 348,
+          "width": 138.9375,
+          "height": 32,
+          "top": 348,
+          "right": 304,
+          "bottom": 380,
+          "left": 165.0625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Roof covering\n+",
+        "r": {
+          "x": 42,
+          "y": 526,
+          "width": 249,
+          "height": 42,
+          "top": 526,
+          "right": 291,
+          "bottom": 568,
+          "left": 42
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Ridge tile\n+",
+        "r": {
+          "x": 42,
+          "y": 572,
+          "width": 249,
+          "height": 42,
+          "top": 572,
+          "right": 291,
+          "bottom": 614,
+          "left": 42
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Roof fasteners\n+",
+        "r": {
+          "x": 42,
+          "y": 618,
+          "width": 249,
+          "height": 42,
+          "top": 618,
+          "right": 291,
+          "bottom": 660,
+          "left": 42
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Ridge\nSelected\nlineal \u00b7 9 measurements",
+        "r": {
+          "x": 44,
+          "y": 826,
+          "width": 213,
+          "height": 46,
+          "top": 826,
+          "right": 257,
+          "bottom": 872,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Ridge",
+        "r": {
+          "x": 261,
+          "y": 826,
+          "width": 32,
+          "height": 32,
+          "top": 826,
+          "right": 293,
+          "bottom": 858,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurements",
+        "r": {
+          "x": 44,
+          "y": 876,
+          "width": 249,
+          "height": 32,
+          "top": 876,
+          "right": 293,
+          "bottom": 908,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 999,
+          "width": 32,
+          "height": 32,
+          "top": 999,
+          "right": 255,
+          "bottom": 1031,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 999,
+          "width": 32,
+          "height": 32,
+          "top": 999,
+          "right": 293,
+          "bottom": 1031,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 1035,
+          "width": 32,
+          "height": 32,
+          "top": 1035,
+          "right": 255,
+          "bottom": 1067,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 1035,
+          "width": 32,
+          "height": 32,
+          "top": 1035,
+          "right": 293,
+          "bottom": 1067,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 1071,
+          "width": 32,
+          "height": 32,
+          "top": 1071,
+          "right": 255,
+          "bottom": 1103,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 1071,
+          "width": 32,
+          "height": 32,
+          "top": 1071,
+          "right": 293,
+          "bottom": 1103,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 1107,
+          "width": 32,
+          "height": 32,
+          "top": 1107,
+          "right": 255,
+          "bottom": 1139,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 1107,
+          "width": 32,
+          "height": 32,
+          "top": 1107,
+          "right": 293,
+          "bottom": 1139,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 1143,
+          "width": 32,
+          "height": 32,
+          "top": 1143,
+          "right": 255,
+          "bottom": 1175,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 1143,
+          "width": 32,
+          "height": 32,
+          "top": 1143,
+          "right": 293,
+          "bottom": 1175,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 1179,
+          "width": 32,
+          "height": 32,
+          "top": 1179,
+          "right": 255,
+          "bottom": 1211,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 1179,
+          "width": 32,
+          "height": 32,
+          "top": 1179,
+          "right": 293,
+          "bottom": 1211,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 1215,
+          "width": 32,
+          "height": 32,
+          "top": 1215,
+          "right": 255,
+          "bottom": 1247,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 1215,
+          "width": 32,
+          "height": 32,
+          "top": 1215,
+          "right": 293,
+          "bottom": 1247,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 1251,
+          "width": 32,
+          "height": 32,
+          "top": 1251,
+          "right": 255,
+          "bottom": 1283,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 1251,
+          "width": 32,
+          "height": 32,
+          "top": 1251,
+          "right": 293,
+          "bottom": 1283,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 1287,
+          "width": 32,
+          "height": 32,
+          "top": 1287,
+          "right": 255,
+          "bottom": 1319,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 1287,
+          "width": 32,
+          "height": 32,
+          "top": 1287,
+          "right": 293,
+          "bottom": 1319,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hip\nlineal \u00b7 2 measurements",
+        "r": {
+          "x": 44,
+          "y": 1173,
+          "width": 213,
+          "height": 46,
+          "top": 1173,
+          "right": 257,
+          "bottom": 1219,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Hip",
+        "r": {
+          "x": 261,
+          "y": 1173,
+          "width": 32,
+          "height": 32,
+          "top": 1173,
+          "right": 293,
+          "bottom": 1205,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 1223,
+          "width": 249,
+          "height": 32,
+          "top": 1223,
+          "right": 293,
+          "bottom": 1255,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Eaves\nlineal \u00b7 3 measurements",
+        "r": {
+          "x": 44,
+          "y": 1363,
+          "width": 213,
+          "height": 46,
+          "top": 1363,
+          "right": 257,
+          "bottom": 1409,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Eaves",
+        "r": {
+          "x": 261,
+          "y": 1363,
+          "width": 32,
+          "height": 32,
+          "top": 1363,
+          "right": 293,
+          "bottom": 1395,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 1413,
+          "width": 249,
+          "height": 32,
+          "top": 1413,
+          "right": 293,
+          "bottom": 1445,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Reset takeoff\u2026",
+        "r": {
+          "x": 29,
+          "y": 827,
+          "width": 275,
+          "height": 32,
+          "top": 827,
+          "right": 304,
+          "bottom": 859,
+          "left": 29
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Area",
+        "r": {
+          "x": 338,
+          "y": 198,
+          "width": 80.921875,
+          "height": 32,
+          "top": 198,
+          "right": 418.921875,
+          "bottom": 230,
+          "left": 338
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Line",
+        "r": {
+          "x": 422.921875,
+          "y": 198,
+          "width": 78.734375,
+          "height": 32,
+          "top": 198,
+          "right": 501.65625,
+          "bottom": 230,
+          "left": 422.921875
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Point",
+        "r": {
+          "x": 505.65625,
+          "y": 198,
+          "width": 84.5,
+          "height": 32,
+          "top": 198,
+          "right": 590.15625,
+          "bottom": 230,
+          "left": 505.65625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Recalibrate",
+        "r": {
+          "x": 1163.265625,
+          "y": 198,
+          "width": 108.703125,
+          "height": 32,
+          "top": 198,
+          "right": 1271.96875,
+          "bottom": 230,
+          "left": 1163.265625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Estimate pitch",
+        "r": {
+          "x": 1275.96875,
+          "y": 198,
+          "width": 126.03125,
+          "height": 32,
+          "top": 198,
+          "right": 1402,
+          "bottom": 230,
+          "left": 1275.96875
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Single",
+        "r": {
+          "x": 338,
+          "y": 241,
+          "width": 58.015625,
+          "height": 32,
+          "top": 241,
+          "right": 396.015625,
+          "bottom": 273,
+          "left": 338
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Multi",
+        "r": {
+          "x": 400.015625,
+          "y": 241,
+          "width": 50,
+          "height": 32,
+          "top": 241,
+          "right": 450.015625,
+          "bottom": 273,
+          "left": 400.015625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Undo",
+        "r": {
+          "x": 1205,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1237,
+          "bottom": 273,
+          "left": 1205
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Redo",
+        "r": {
+          "x": 1241,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1273,
+          "bottom": 273,
+          "left": 1241
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom out",
+        "r": {
+          "x": 1290,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1322,
+          "bottom": 273,
+          "left": 1290
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom in",
+        "r": {
+          "x": 1370,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1402,
+          "bottom": 273,
+          "left": 1370
+        },
+        "font": "13px"
+      }
+    ]
+  },
+  {
+    "mode": "desktop-calibration",
+    "width": 1280,
+    "height": 800,
+    "documentWidth": 1280,
+    "documentHeight": 800,
+    "viewport": [
+      1280,
+      800
+    ],
+    "toolbar": {
+      "x": 329,
+      "y": 191,
+      "w": 922,
+      "h": 91,
+      "scrollWidth": 920,
+      "clientWidth": 920
+    },
+    "panel": {
+      "x": 17,
+      "y": 181,
+      "w": 300,
+      "h": 606,
+      "scrollWidth": 299,
+      "clientWidth": 299
+    },
+    "canvas": {
+      "x": 317,
+      "y": 282,
+      "w": 946,
+      "h": 473,
+      "scrollWidth": 946,
+      "clientWidth": 946
+    },
+    "status": {
+      "x": 317,
+      "y": 755,
+      "w": 946,
+      "h": 32,
+      "scrollWidth": 946,
+      "clientWidth": 946
+    },
+    "finish": {
+      "x": 1084.9375,
+      "y": 77,
+      "w": 162.0625,
+      "h": 32,
+      "scrollWidth": 160,
+      "clientWidth": 160
+    },
+    "dialog": null,
+    "buttons": [
+      {
+        "text": "Help",
+        "r": {
+          "x": 1205.828125,
+          "y": 11.5,
+          "width": 54.171875,
+          "height": 32,
+          "top": 11.5,
+          "right": 1260,
+          "bottom": 43.5,
+          "left": 1205.828125
+        },
+        "font": "13px"
+      },
+      {
+        "text": "\u203a",
+        "r": {
+          "x": 0,
+          "y": 370,
+          "width": 14,
+          "height": 60,
+          "top": 370,
+          "right": 14,
+          "bottom": 430,
+          "left": 0
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Upload another plan",
+        "r": {
+          "x": 895.265625,
+          "y": 87,
+          "width": 177.671875,
+          "height": 32,
+          "top": 87,
+          "right": 1072.9375,
+          "bottom": 119,
+          "left": 895.265625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Finish & save",
+        "r": {
+          "x": 1084.9375,
+          "y": 77,
+          "width": 162.0625,
+          "height": 32,
+          "top": 77,
+          "right": 1247,
+          "bottom": 109,
+          "left": 1084.9375
+        },
+        "font": "13px"
+      },
+      {
+        "text": "New area",
+        "r": {
+          "x": 194.90625,
+          "y": 297,
+          "width": 109.09375,
+          "height": 32,
+          "top": 297,
+          "right": 304,
+          "bottom": 329,
+          "left": 194.90625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Reset takeoff\u2026",
+        "r": {
+          "x": 29,
+          "y": 727,
+          "width": 275,
+          "height": 32,
+          "top": 727,
+          "right": 304,
+          "bottom": 759,
+          "left": 29
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Area",
+        "r": {
+          "x": 338,
+          "y": 198,
+          "width": 80.921875,
+          "height": 32,
+          "top": 198,
+          "right": 418.921875,
+          "bottom": 230,
+          "left": 338
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Line",
+        "r": {
+          "x": 422.921875,
+          "y": 198,
+          "width": 78.734375,
+          "height": 32,
+          "top": 198,
+          "right": 501.65625,
+          "bottom": 230,
+          "left": 422.921875
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Point",
+        "r": {
+          "x": 505.65625,
+          "y": 198,
+          "width": 84.5,
+          "height": 32,
+          "top": 198,
+          "right": 590.15625,
+          "bottom": 230,
+          "left": 505.65625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Calibrate",
+        "r": {
+          "x": 1016.609375,
+          "y": 198,
+          "width": 95.359375,
+          "height": 32,
+          "top": 198,
+          "right": 1111.96875,
+          "bottom": 230,
+          "left": 1016.609375
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Estimate pitch",
+        "r": {
+          "x": 1115.96875,
+          "y": 198,
+          "width": 126.03125,
+          "height": 32,
+          "top": 198,
+          "right": 1242,
+          "bottom": 230,
+          "left": 1115.96875
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Undo",
+        "r": {
+          "x": 1045,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1077,
+          "bottom": 273,
+          "left": 1045
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Redo",
+        "r": {
+          "x": 1081,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1113,
+          "bottom": 273,
+          "left": 1081
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom out",
+        "r": {
+          "x": 1130,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1162,
+          "bottom": 273,
+          "left": 1130
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom in",
+        "r": {
+          "x": 1210,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1242,
+          "bottom": 273,
+          "left": 1210
+        },
+        "font": "13px"
+      }
+    ]
+  },
+  {
+    "mode": "desktop-upload",
+    "width": 1280,
+    "height": 800,
+    "documentWidth": 1280,
+    "documentHeight": 800,
+    "viewport": [
+      1280,
+      800
+    ],
+    "toolbar": {
+      "x": 329,
+      "y": 191,
+      "w": 922,
+      "h": 91,
+      "scrollWidth": 920,
+      "clientWidth": 920
+    },
+    "panel": {
+      "x": 17,
+      "y": 181,
+      "w": 300,
+      "h": 606,
+      "scrollWidth": 299,
+      "clientWidth": 299
+    },
+    "canvas": {
+      "x": 317,
+      "y": 282,
+      "w": 946,
+      "h": 473,
+      "scrollWidth": 946,
+      "clientWidth": 946
+    },
+    "status": {
+      "x": 317,
+      "y": 755,
+      "w": 946,
+      "h": 32,
+      "scrollWidth": 946,
+      "clientWidth": 946
+    },
+    "finish": {
+      "x": 1084.9375,
+      "y": 77,
+      "w": 162.0625,
+      "h": 32,
+      "scrollWidth": 160,
+      "clientWidth": 160
+    },
+    "dialog": {
+      "x": 320,
+      "y": 161,
+      "w": 640,
+      "h": 478,
+      "scrollWidth": 638,
+      "clientWidth": 638
+    },
+    "buttons": [
+      {
+        "text": "Help",
+        "r": {
+          "x": 1205.828125,
+          "y": 11.5,
+          "width": 54.171875,
+          "height": 32,
+          "top": 11.5,
+          "right": 1260,
+          "bottom": 43.5,
+          "left": 1205.828125
+        },
+        "font": "13px"
+      },
+      {
+        "text": "\u203a",
+        "r": {
+          "x": 0,
+          "y": 370,
+          "width": 14,
+          "height": 60,
+          "top": 370,
+          "right": 14,
+          "bottom": 430,
+          "left": 0
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Upload another plan",
+        "r": {
+          "x": 895.265625,
+          "y": 87,
+          "width": 177.671875,
+          "height": 32,
+          "top": 87,
+          "right": 1072.9375,
+          "bottom": 119,
+          "left": 895.265625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Finish & save",
+        "r": {
+          "x": 1084.9375,
+          "y": 77,
+          "width": 162.0625,
+          "height": 32,
+          "top": 77,
+          "right": 1247,
+          "bottom": 109,
+          "left": 1084.9375
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Cancel",
+        "r": {
+          "x": 345,
+          "y": 574,
+          "width": 289,
+          "height": 40,
+          "top": 574,
+          "right": 634,
+          "bottom": 614,
+          "left": 345
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Upload plan",
+        "r": {
+          "x": 646,
+          "y": 574,
+          "width": 289,
+          "height": 40,
+          "top": 574,
+          "right": 935,
+          "bottom": 614,
+          "left": 646
+        },
+        "font": "14px"
+      },
+      {
+        "text": "New area",
+        "r": {
+          "x": 194.90625,
+          "y": 197,
+          "width": 109.09375,
+          "height": 32,
+          "top": 197,
+          "right": 304,
+          "bottom": 229,
+          "left": 194.90625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Main Roof\n192.40 m\u00b2\nActive",
+        "r": {
+          "x": 34,
+          "y": 246,
+          "width": 197,
+          "height": 60,
+          "top": 246,
+          "right": 231,
+          "bottom": 306,
+          "left": 34
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide Main Roof",
+        "r": {
+          "x": 235,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 267,
+          "bottom": 282,
+          "left": 235
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete Main Roof",
+        "r": {
+          "x": 267,
+          "y": 250,
+          "width": 32,
+          "height": 32,
+          "top": 250,
+          "right": 299,
+          "bottom": 282,
+          "left": 267
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Add component",
+        "r": {
+          "x": 165.0625,
+          "y": 348,
+          "width": 138.9375,
+          "height": 32,
+          "top": 348,
+          "right": 304,
+          "bottom": 380,
+          "left": 165.0625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Ridge\nSelected\nlineal \u00b7 9 measurements",
+        "r": {
+          "x": 44,
+          "y": 437,
+          "width": 213,
+          "height": 46,
+          "top": 437,
+          "right": 257,
+          "bottom": 483,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Ridge",
+        "r": {
+          "x": 261,
+          "y": 437,
+          "width": 32,
+          "height": 32,
+          "top": 437,
+          "right": 293,
+          "bottom": 469,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurements",
+        "r": {
+          "x": 44,
+          "y": 487,
+          "width": 249,
+          "height": 32,
+          "top": 487,
+          "right": 293,
+          "bottom": 519,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 610,
+          "width": 32,
+          "height": 32,
+          "top": 610,
+          "right": 255,
+          "bottom": 642,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 610,
+          "width": 32,
+          "height": 32,
+          "top": 610,
+          "right": 293,
+          "bottom": 642,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 646,
+          "width": 32,
+          "height": 32,
+          "top": 646,
+          "right": 255,
+          "bottom": 678,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 646,
+          "width": 32,
+          "height": 32,
+          "top": 646,
+          "right": 293,
+          "bottom": 678,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 682,
+          "width": 32,
+          "height": 32,
+          "top": 682,
+          "right": 255,
+          "bottom": 714,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 682,
+          "width": 32,
+          "height": 32,
+          "top": 682,
+          "right": 293,
+          "bottom": 714,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 718,
+          "width": 32,
+          "height": 32,
+          "top": 718,
+          "right": 255,
+          "bottom": 750,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 718,
+          "width": 32,
+          "height": 32,
+          "top": 718,
+          "right": 293,
+          "bottom": 750,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 754,
+          "width": 32,
+          "height": 32,
+          "top": 754,
+          "right": 255,
+          "bottom": 786,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 754,
+          "width": 32,
+          "height": 32,
+          "top": 754,
+          "right": 293,
+          "bottom": 786,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 790,
+          "width": 32,
+          "height": 32,
+          "top": 790,
+          "right": 255,
+          "bottom": 822,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 790,
+          "width": 32,
+          "height": 32,
+          "top": 790,
+          "right": 293,
+          "bottom": 822,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 826,
+          "width": 32,
+          "height": 32,
+          "top": 826,
+          "right": 255,
+          "bottom": 858,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 826,
+          "width": 32,
+          "height": 32,
+          "top": 826,
+          "right": 293,
+          "bottom": 858,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 862,
+          "width": 32,
+          "height": 32,
+          "top": 862,
+          "right": 255,
+          "bottom": 894,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 862,
+          "width": 32,
+          "height": 32,
+          "top": 862,
+          "right": 293,
+          "bottom": 894,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hide measurement",
+        "r": {
+          "x": 223,
+          "y": 898,
+          "width": 32,
+          "height": 32,
+          "top": 898,
+          "right": 255,
+          "bottom": 930,
+          "left": 223
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Delete measurement for Ridge",
+        "r": {
+          "x": 261,
+          "y": 898,
+          "width": 32,
+          "height": 32,
+          "top": 898,
+          "right": 293,
+          "bottom": 930,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Hip\nlineal \u00b7 2 measurements",
+        "r": {
+          "x": 44,
+          "y": 784,
+          "width": 213,
+          "height": 46,
+          "top": 784,
+          "right": 257,
+          "bottom": 830,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Hip",
+        "r": {
+          "x": 261,
+          "y": 784,
+          "width": 32,
+          "height": 32,
+          "top": 784,
+          "right": 293,
+          "bottom": 816,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 834,
+          "width": 249,
+          "height": 32,
+          "top": 834,
+          "right": 293,
+          "bottom": 866,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Eaves\nlineal \u00b7 3 measurements",
+        "r": {
+          "x": 44,
+          "y": 974,
+          "width": 213,
+          "height": 46,
+          "top": 974,
+          "right": 257,
+          "bottom": 1020,
+          "left": 44
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Remove Eaves",
+        "r": {
+          "x": 261,
+          "y": 974,
+          "width": 32,
+          "height": 32,
+          "top": 974,
+          "right": 293,
+          "bottom": 1006,
+          "left": 261
+        },
+        "font": "14px"
+      },
+      {
+        "text": "Show measurements",
+        "r": {
+          "x": 44,
+          "y": 1024,
+          "width": 249,
+          "height": 32,
+          "top": 1024,
+          "right": 293,
+          "bottom": 1056,
+          "left": 44
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Reset takeoff\u2026",
+        "r": {
+          "x": 29,
+          "y": 727,
+          "width": 275,
+          "height": 32,
+          "top": 727,
+          "right": 304,
+          "bottom": 759,
+          "left": 29
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Area",
+        "r": {
+          "x": 338,
+          "y": 198,
+          "width": 80.921875,
+          "height": 32,
+          "top": 198,
+          "right": 418.921875,
+          "bottom": 230,
+          "left": 338
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Line",
+        "r": {
+          "x": 422.921875,
+          "y": 198,
+          "width": 78.734375,
+          "height": 32,
+          "top": 198,
+          "right": 501.65625,
+          "bottom": 230,
+          "left": 422.921875
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Point",
+        "r": {
+          "x": 505.65625,
+          "y": 198,
+          "width": 84.5,
+          "height": 32,
+          "top": 198,
+          "right": 590.15625,
+          "bottom": 230,
+          "left": 505.65625
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Recalibrate",
+        "r": {
+          "x": 1003.265625,
+          "y": 198,
+          "width": 108.703125,
+          "height": 32,
+          "top": 198,
+          "right": 1111.96875,
+          "bottom": 230,
+          "left": 1003.265625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Estimate pitch",
+        "r": {
+          "x": 1115.96875,
+          "y": 198,
+          "width": 126.03125,
+          "height": 32,
+          "top": 198,
+          "right": 1242,
+          "bottom": 230,
+          "left": 1115.96875
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Single",
+        "r": {
+          "x": 338,
+          "y": 241,
+          "width": 58.015625,
+          "height": 32,
+          "top": 241,
+          "right": 396.015625,
+          "bottom": 273,
+          "left": 338
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Multi",
+        "r": {
+          "x": 400.015625,
+          "y": 241,
+          "width": 50,
+          "height": 32,
+          "top": 241,
+          "right": 450.015625,
+          "bottom": 273,
+          "left": 400.015625
+        },
+        "font": "12px"
+      },
+      {
+        "text": "Undo",
+        "r": {
+          "x": 1045,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1077,
+          "bottom": 273,
+          "left": 1045
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Redo",
+        "r": {
+          "x": 1081,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1113,
+          "bottom": 273,
+          "left": 1081
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom out",
+        "r": {
+          "x": 1130,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1162,
+          "bottom": 273,
+          "left": 1130
+        },
+        "font": "13px"
+      },
+      {
+        "text": "Zoom in",
+        "r": {
+          "x": 1210,
+          "y": 241,
+          "width": 32,
+          "height": 32,
+          "top": 241,
+          "right": 1242,
+          "bottom": 273,
+          "left": 1210
+        },
+        "font": "13px"
+      }
+    ]
+  }
+]

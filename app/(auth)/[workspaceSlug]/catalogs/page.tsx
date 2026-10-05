@@ -1,3 +1,4 @@
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { Suspense } from 'react';
 import { loadCatalogs, loadCatalogEntitlements } from './actions';
 import { CatalogList } from './catalog-list';
@@ -13,12 +14,12 @@ export default async function CatalogsPage(props: {
     catalogs = await loadCatalogs();
   } catch (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+      <QcJourney><div className="rounded-xl border border-red-200 bg-red-50 p-6">
         <h2 className="text-lg font-semibold text-red-900 mb-2">Unable to load catalogs</h2>
         <p className="text-sm text-red-700">
           {error instanceof Error ? error.message : 'An unexpected error occurred'}
         </p>
-      </div>
+      </div></QcJourney>
     );
   }
 
@@ -28,7 +29,7 @@ export default async function CatalogsPage(props: {
   const supplierCatalogs = await searchSupplierCatalogs({ limit: 50 });
 
   return (
-    <Suspense fallback={null}>
+    <QcJourney><Suspense fallback={null}>
       <CatalogList
         initialCatalogs={catalogs}
         workspaceSlug={workspaceSlug}
@@ -40,6 +41,6 @@ export default async function CatalogsPage(props: {
         isOverStorage={ent.isOverStorage}
         supplierCatalogs={supplierCatalogs}
       />
-    </Suspense>
+    </Suspense></QcJourney>
   );
 }

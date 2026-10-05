@@ -1,0 +1,1958 @@
+--- baseline/app/components/ui/v2/qc-feedback.css
++++ return/app/components/ui/v2/qc-feedback.css
+@@ -0,0 +1,18 @@
++/* C66: opt-in, persistent operation results. No global page or document rules. */
++:where([data-qc-ui='v2']) .qc-action-result { min-width: 0; margin-block: 12px; scroll-margin-block: 96px; }
++:where([data-qc-ui='v2']) .qc-action-result:focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; border-radius: var(--qc-radius-control); }
++:where([data-qc-ui='v2']) .qc-action-result .qc-notice > div { flex: 1; min-width: 0; }
++:where([data-qc-ui='v2']) .qc-action-result-heading { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px 16px; }
++:where([data-qc-ui='v2']) .qc-action-result-heading h2 { margin: 6px 0 0; font-size: 15px; line-height: 22px; font-weight: 650; color: inherit; overflow-wrap: anywhere; }
++:where([data-qc-ui='v2']) .qc-action-result-description { white-space: pre-line; overflow-wrap: anywhere; margin: 8px 0 0; }
++:where([data-qc-ui='v2']) .qc-action-result-details { margin-top: 12px; }
++:where([data-qc-ui='v2']) .qc-action-result-details summary { display: list-item; cursor: pointer; width: fit-content; max-width: 100%; padding: 10px 6px; min-height: 44px; box-sizing: border-box; border: 1px solid transparent; border-radius: var(--qc-radius-control); font-weight: 600; }
++:where([data-qc-ui='v2']) .qc-action-result-details summary:focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; }
++:where([data-qc-ui='v2']) .qc-action-result-details summary:active { box-shadow: inset 0 2px 3px rgba(25,27,32,.12); }
++:where([data-qc-ui='v2']) .qc-action-result-details ul { padding-left: 20px; margin: 8px 0 0; max-height: 240px; overflow: auto; overflow-wrap: anywhere; }
++:where([data-qc-ui='v2']) .qc-action-result-details li + li { margin-top: 6px; }
++@media (hover:hover) { :where([data-qc-ui='v2']) .qc-action-result-details summary:hover { background: var(--qc-bg-surface); border-color: currentColor; } }
++@media (max-width:767px) { :where([data-qc-ui='v2']) .qc-action-result .qc-button { min-height: 44px; } }
++@media (forced-colors:active) { :where([data-qc-ui='v2']) .qc-action-result .qc-notice { border-color: CanvasText; } }
++
++:where([data-qc-ui='v2']) .qc-action-result-details ul:focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; }
+--- baseline/app/components/ui/v2/useQcFeedback.tsx
++++ return/app/components/ui/v2/useQcFeedback.tsx
+@@ -3,7 +3,7 @@
+ import { AlertModal } from '../../AlertModal';
+ import { ConfirmModal } from '../../ConfirmModal';
+ 
+-type FeedbackOptions = { title: string; description: string; confirmLabel?: string; cancelLabel?: string };
++type FeedbackOptions = { title: string; description: string; confirmLabel?: string; cancelLabel?: string; destructive?: boolean };
+ type Request = FeedbackOptions & { kind: 'alert' | 'confirm'; resolve: (accepted: boolean) => void };
+ 
+ /** Awaitable feedback preserves the pause formerly provided by native dialogs.
+@@ -34,7 +34,7 @@
+   const feedback = request?.kind === 'confirm' ? (
+     <ConfirmModal appearance="v2" open title={request.title} description={request.description}
+       confirmLabel={request.confirmLabel ?? 'Continue'} cancelLabel={request.cancelLabel ?? 'Cancel'}
+-      destructive={false} onCancel={() => settle(false)} onConfirm={() => settle(true)} />
++      destructive={request.destructive ?? false} onCancel={() => settle(false)} onConfirm={() => settle(true)} />
+   ) : (
+     <AlertModal appearance="v2" open={request !== null} title={request?.title ?? ''}
+       description={request?.description} confirmLabel={request?.confirmLabel} onClose={() => settle(true)} />
+--- baseline/app/components/ui/v2/QcActionNotice.tsx
++++ return/app/components/ui/v2/QcActionNotice.tsx
+@@ -0,0 +1,88 @@
++'use client';
++
++import { useCallback, useEffect, useId, useRef, useState } from 'react';
++import { QcButton } from './QcButton';
++import { QcNotice } from './QcSurface';
++import './qc-feedback.css';
++
++export type QcActionResult = {
++  title: string;
++  description: string;
++  tone?: 'info' | 'success' | 'warning' | 'danger';
++  /** For per-record failures. Rendered as text, never HTML, never truncated. */
++  details?: readonly string[];
++  /** Opt in for a user-initiated batch result, not background updates. */
++  focus?: boolean;
++};
++
++/** C66 composes C30/C01. A persistent, local result, not a toast or request owner.
++ * The feature supplies the real outcome. Dismiss never retries a mutation.
++ * Mount outside completed dialogs; blocking form errors stay inside their form.
++ */
++export function QcActionNotice({ result, onDismiss }: {
++  result: QcActionResult | null; onDismiss: () => void;
++}) {
++  const headingId = useId();
++  const regionRef = useRef<HTMLDivElement>(null);
++  const triggerRef = useRef<HTMLElement | null>(null);
++  useEffect(() => {
++    if (!result?.focus) return;
++    // Let native dialog cleanup restore its trigger first, then expose the result.
++    const frame = requestAnimationFrame(() => {
++      if (document.activeElement instanceof HTMLElement && !regionRef.current?.contains(document.activeElement)) {
++        triggerRef.current = document.activeElement;
++      }
++      regionRef.current?.focus({ preventScroll: true });
++      regionRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
++    });
++    return () => cancelAnimationFrame(frame);
++  }, [result]);
++
++  function dismiss() {
++    const region = regionRef.current;
++    // Do not strand keyboard focus on a button that is about to disappear.
++    if (region?.contains(document.activeElement)) {
++      const trigger = triggerRef.current;
++      const fallback = Array.from(region.closest('main')?.querySelectorAll<HTMLElement>('h1, button:not(:disabled), a[href]') ?? [])
++        .find(element => !region.contains(element));
++      const target = trigger?.isConnected && trigger !== document.body && !region.contains(trigger) && !trigger.matches(':disabled')
++        ? trigger : fallback;
++      if (target) {
++        const needsTabIndex = !target.hasAttribute('tabindex') && target.tagName === 'H1';
++        if (needsTabIndex) target.setAttribute('tabindex', '-1');
++        target.focus({ preventScroll: true });
++        if (needsTabIndex) target.addEventListener('blur', () => target.removeAttribute('tabindex'), { once: true });
++      }
++    }
++    onDismiss();
++  }
++
++  return <div data-qc-ui="v2" data-qc-component="C66" className="qc-action-feedback">
++    {/* Keep the announcement region mounted so repeated action outcomes announce. */}
++    <div aria-live={result?.tone === 'danger' ? 'assertive' : 'polite'} aria-atomic="true">
++      {result && <div ref={regionRef} tabIndex={-1} role="region" aria-labelledby={headingId}
++        className="qc-action-result">
++        <QcNotice tone={result.tone ?? 'info'}>
++          <div className="qc-action-result-heading">
++            <h2 id={headingId}>{result.title}</h2>
++            <QcButton size="sm" onClick={dismiss} aria-label="Dismiss result">Dismiss</QcButton>
++          </div>
++          <p className="qc-action-result-description">{result.description}</p>
++          {!!result.details?.length && <details className="qc-action-result-details">
++            <summary>View details ({result.details.length})</summary>
++            <ul tabIndex={0} aria-label="Operation details">{result.details.map((detail, index) => <li key={index}>{detail}</li>)}</ul>
++          </details>}
++        </QcNotice>
++      </div>}
++    </div>
++  </div>;
++}
++
++/** Local state only; no timers, provider assumptions, fetching, refresh or mutation. */
++export function useQcActionNotice() {
++  const [result, setResult] = useState<QcActionResult | null>(null);
++  const showNotice = useCallback((next: QcActionResult) => setResult(next), []);
++  const clearNotice = useCallback(() => setResult(null), []);
++  return { showNotice, clearNotice,
++    notice: <QcActionNotice result={result} onDismiss={clearNotice} /> };
++}
+--- baseline/app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx
++++ return/app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcActionNotice, type QcActionResult } from '@/app/components/ui/v2/QcActionNotice';
+ import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+ import { useState, useRef, useEffect } from 'react';
+ import Link from 'next/link';
+@@ -109,7 +110,7 @@
+  * Orders (OrderStatusDropdown) and Quotes (JobStatusDropdown) lists so all
+  * three match. Selecting a status persists via updateInvoiceStatus.
+  */
+-function InvoiceStatusDropdown({ invoiceId, currentStatus }: { invoiceId: string; currentStatus: string }) {
++function InvoiceStatusDropdown({ invoiceId, currentStatus, onResult }: { invoiceId: string; currentStatus: string; onResult: (result: QcActionResult) => void }) {
+   const [open, setOpen] = useState(false);
+   const [saving, setSaving] = useState(false);
+   const [status, setStatus] = useState(currentStatus);
+@@ -143,18 +144,25 @@
+       router.refresh();
+     } catch (err) {
+       console.error('Failed to update invoice status:', err);
++      onResult({ tone: 'danger', title: 'Status was not updated', description: 'The invoice status could not be saved. Please try again.', focus: true });
+     } finally {
+       setSaving(false);
+     }
+   }
+ 
+   return (
+-    <div className="relative" ref={ref} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
++    <div className="relative" ref={ref} onKeyDown={(event) => {
++      if (event.key === 'Escape' && open) {
++        event.preventDefault(); event.stopPropagation(); setOpen(false);
++        ref.current?.querySelector<HTMLButtonElement>('button')?.focus();
++      }
++    }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+       <button
+         type="button"
+         onClick={() => setOpen(!open)}
+         disabled={saving}
+         title="Click to change status"
++        aria-label={`Change status, currently ${config.label}`} aria-expanded={open} aria-busy={saving || undefined}
+         className={"qc-flow-control " + (`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`)}
+       >
+         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+@@ -195,10 +203,12 @@
+   invoice,
+   workspaceSlug,
+   onDeleted,
++  onResult,
+ }: {
+   invoice: InvoiceRow;
+   workspaceSlug: string;
+   onDeleted: (id: string) => void;
++  onResult: (result: QcActionResult) => void;
+ }) {
+   const [open, setOpen] = useState(false);
+   const [busy, setBusy] = useState(false);
+@@ -211,7 +221,7 @@
+       await deleteInvoice(invoice.id);
+       onDeleted(invoice.id);
+     } catch {
+-      alert('Failed to delete invoice.');
++      onResult({ tone: 'danger', title: 'Invoice was not deleted', description: 'Failed to delete invoice. Please try again.', focus: true });
+     } finally {
+       setBusy(false);
+       setConfirmAction(null);
+@@ -224,7 +234,7 @@
+       await cancelInvoice(invoice.id);
+       router.refresh();
+     } catch {
+-      alert('Failed to cancel invoice.');
++      onResult({ tone: 'danger', title: 'Invoice was not cancelled', description: 'Failed to cancel invoice. Please try again.', focus: true });
+     } finally {
+       setBusy(false);
+       setConfirmAction(null);
+@@ -238,7 +248,7 @@
+           type="button"
+           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen((v) => !v); }}
+           disabled={busy}
+-          className="qc-icon-button qc-flow-control icon-btn opacity-0 group-hover:opacity-100 p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
++          className="qc-icon-button qc-flow-control icon-btn p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+           aria-label="Invoice actions"
+         >
+           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+@@ -340,6 +350,7 @@
+ // ── Main list ──────────────────────────────────────────────────────────────
+ 
+ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props) {
++  const { showNotice, clearNotice, notice } = useQcActionNotice();
+   const [invoices, setInvoices] = useState<InvoiceRow[]>(initialInvoices);
+   const [search, setSearch] = useState('');
+   const [statusFilter, setStatusFilter] = useState('all');
+@@ -452,13 +463,15 @@
+     const ids = Array.from(selectedIds);
+     if (ids.length === 0) return;
+     if (ids.length > MAX_BULK_SELECTION) {
+-      alert(`Too many invoices selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`);
++      showNotice({ tone: 'warning', title: 'Selection limit', description: `Too many invoices selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`, focus: true });
+       return;
+     }
+ 
++    clearNotice();
+     setBulkBusy('download');
+     setBulkProgress({ done: 0, total: ids.length, message: 'Preparing export...' });
+ 
++    let downloadRequested = false;
+     try {
+       const zip = new JSZip();
+       let succeeded = 0;
+@@ -488,7 +501,7 @@
+       }
+ 
+       if (succeeded === 0) {
+-        alert(`No invoices could be exported.${failures.length ? '\n\nFailed:\n' + failures.join('\n') : ''}`);
++        showNotice({ tone: 'danger', title: 'Nothing exported', description: `No invoices could be exported. Review the details before trying again.`, details: failures, focus: true });
+         return;
+       }
+ 
+@@ -505,10 +518,22 @@
+       }
+ 
+       downloadBlob(blob, zipName);
+-
+-      if (failures.length > 0) {
+-        alert(`Exported ${succeeded} of ${ids.length} invoices.\n\nFailed:\n${failures.join('\n')}`);
+-      }
++      downloadRequested = true;
++
++      showNotice({
++        tone: failures.length ? 'warning' : 'success',
++        title: failures.length ? 'Some invoices were not exported' : 'Export ready',
++        description: `Prepared ${succeeded} of ${ids.length} invoices. The ZIP download has been requested. Check your browser downloads.`,
++        details: failures, focus: true,
++      });
++    } catch (err) {
++      console.error('[bulkDownload] could not finish export:', err);
++      showNotice({ tone: 'danger',
++        title: downloadRequested ? 'Check your download' : 'Export could not finish',
++        description: downloadRequested
++          ? 'The download was requested, but a later export step failed. Check your browser downloads before trying again.'
++          : 'The ZIP could not be prepared or the download could not be started. Your records have not been changed.',
++        details: [err instanceof Error ? err.message : 'Unknown export error'], focus: true });
+     } finally {
+       setBulkBusy(null);
+       setBulkProgress(null);
+@@ -519,6 +544,7 @@
+   async function handleBulkDelete() {
+     const ids = Array.from(selectedIds);
+     if (ids.length === 0) return;
++    clearNotice();
+     setBulkBusy('delete');
+     try {
+       const result = await bulkDeleteInvoices(ids);
+@@ -527,12 +553,11 @@
+       setSelectedIds(new Set());
+       setBulkDeleteConfirmOpen(false);
+       router.refresh();
+-      if (result.skipped > 0) {
+-        alert(`Deleted ${result.deleted} draft invoice(s). ${result.skipped} were skipped (only draft invoices can be bulk-deleted; cancel sent invoices individually).`);
+-      }
++      showNotice({ tone: result.skipped ? 'warning' : 'success', title: result.skipped ? 'Deletion finished with skipped records' : 'Deletion complete', description: `Draft invoices deleted: ${result.deleted}. Skipped: ${result.skipped}. Only draft invoices can be bulk-deleted; cancel sent invoices individually.`, focus: true });
+     } catch (err) {
+       console.error('[bulkDelete] failed:', err);
+-      alert(`Failed to delete invoices: ${err instanceof Error ? err.message : 'unknown error'}`);
++      setBulkDeleteConfirmOpen(false);
++      showNotice({ tone: 'danger', title: 'Deletion failed', description: `Failed to delete invoices: ${err instanceof Error ? err.message : 'unknown error'}`, focus: true });
+     } finally {
+       setBulkBusy(null);
+     }
+@@ -540,6 +565,7 @@
+ 
+   return (
+     <QcJourney className="qc-journey-stack"><>
++      {notice}
+      {/* Toolbar */}
+       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+         <div className="relative flex-1 md:max-w-sm">
+@@ -686,7 +712,7 @@
+ 
+                 {/* Status - owner dropdown + recipient badge, beside Last Activity */}
+                 <div className="flex items-center gap-1.5 flex-wrap">
+-                  <InvoiceStatusDropdown invoiceId={inv.id} currentStatus={inv.status} />
++                  <InvoiceStatusDropdown invoiceId={inv.id} currentStatus={inv.status}  onResult={showNotice} />
+                   <RecipientStatusBadge status={invoiceRecipientStatus(inv)} />
+                 </div>
+ 
+@@ -706,6 +732,7 @@
+                     invoice={inv}
+                     workspaceSlug={workspaceSlug}
+                     onDeleted={handleDeleted}
++                    onResult={showNotice}
+                   />
+                 </div>
+               </div>
+--- baseline/app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx
++++ return/app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ 
+ import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+ import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+@@ -189,6 +190,7 @@
+   companyActiveCount: number;
+   effectivePlanCode: string;
+ }) {
++  const { notify, feedback } = useQcFeedback();
+   const [activeTab, setActiveTab] = useState<Tab>('libraries');
+ 
+   // Collapsible sections
+@@ -401,10 +403,10 @@
+     setRenaming(true);
+     try {
+       const result = await renameComponentCollection(id, renameValue);
+-      if (!result.ok) { alert(result.message); return; }
++      if (!result.ok) { await notify(result.message); return; }
+       setLocalLibraries(prev => prev.map(l => l.id === id ? { ...l, name: result.name } : l));
+       setRenamingId(null); setRenameValue('');
+-    } catch (e) { alert(e instanceof Error ? e.message : 'Failed to rename'); }
++    } catch (e) { await notify(e instanceof Error ? e.message : 'Failed to rename'); }
+     finally { setRenaming(false); }
+   }
+ 
+@@ -412,10 +414,10 @@
+     setDeleteLoading(true);
+     try {
+       const result = await deleteComponentCollection(id);
+-      if (!result.ok) { alert(result.message); return; }
++      if (!result.ok) { await notify(result.message); return; }
+       setLocalLibraries(prev => prev.filter(l => l.id !== id));
+       setDeletingId(null);
+-    } catch (e) { alert(e instanceof Error ? e.message : 'Failed to delete'); }
++    } catch (e) { await notify(e instanceof Error ? e.message : 'Failed to delete'); }
+     finally { setDeleteLoading(false); }
+   }
+ 
+@@ -436,6 +438,7 @@
+ 
+   return (
+     <QcLibrary className="qc-library-detail">
++      {feedback}
+       <div className="mx-auto max-w-4xl px-4 py-6">
+         {/* Breadcrumb */}
+         <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">
+@@ -600,10 +603,10 @@
+                         <Hint>Helps your supplier page appear in Google Maps and local search results. Use the buttons below to set your coordinates automatically.</Hint>
+                         <div className="mt-2 flex flex-wrap gap-2">
+                           <button data-qc-variant="ghost" type="button" onClick={() => {
+-                            if (!navigator.geolocation) { alert('Geolocation is not supported by your browser.'); return; }
++                            if (!navigator.geolocation) { void notify('Geolocation is not supported by your browser.'); return; }
+                             navigator.geolocation.getCurrentPosition(
+                               (pos) => { setBranchLatitude(pos.coords.latitude.toFixed(6)); setBranchLongitude(pos.coords.longitude.toFixed(6)); },
+-                              () => { alert('Could not get your location. Please check browser permissions or enter coordinates manually.'); },
++                              () => { void notify('Could not get your location. Please check browser permissions or enter coordinates manually.'); },
+                               { enableHighAccuracy: true, timeout: 10000 }
+                             );
+                           }} className="qc-button qc-flow-control qc-library-control inline-flex gap-1.5">
+@@ -612,13 +615,13 @@
+                           </button>
+                           <button data-qc-variant="ghost" type="button" onClick={async () => {
+                             const parts = [branchCity, branchRegion, branchCountry].filter(Boolean).join(',');
+-                            if (!parts) { alert('Enter your city, region and country above first, then use this button.'); return; }
++                            if (!parts) { await notify('Enter your city, region and country above first, then use this button.'); return; }
+                             try {
+                               const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(parts)}&limit=1`);
+                               const data = await res.json();
+                               if (data && data[0]) { setBranchLatitude(parseFloat(data[0].lat).toFixed(6)); setBranchLongitude(parseFloat(data[0].lon).toFixed(6)); }
+-                              else { alert('Could not find coordinates for that address. Try entering them manually.'); }
+-                            } catch { alert('Could not look up coordinates. Please enter them manually.'); }
++                              else { await notify('Could not find coordinates for that address. Try entering them manually.'); }
++                            } catch { await notify('Could not look up coordinates. Please enter them manually.'); }
+                           }} className="qc-button qc-flow-control qc-library-control inline-flex gap-1.5">
+                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                             Suggest from my address
+--- baseline/app/(auth)/[workspaceSlug]/material-orders/order-list.tsx
++++ return/app/(auth)/[workspaceSlug]/material-orders/order-list.tsx
+@@ -1,5 +1,6 @@
+ 'use client';
+ 
++import { useQcActionNotice, type QcActionResult } from '@/app/components/ui/v2/QcActionNotice';
+ import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+ import { useState, useRef, useEffect } from 'react';
+ import Link from 'next/link';
+@@ -52,7 +53,7 @@
+ 
+ const ORDER_STATUS_ORDER = ['ready', 'ordered', 'delivered', 'paid', 'pickup', 'waiting'];
+ 
+-function OrderStatusDropdown({ orderId, currentStatus }: { orderId: string; currentStatus: string }) {
++function OrderStatusDropdown({ orderId, currentStatus, onResult }: { orderId: string; currentStatus: string; onResult: (result: QcActionResult) => void }) {
+   const [open, setOpen] = useState(false);
+   const [saving, setSaving] = useState(false);
+   const [status, setStatus] = useState(currentStatus);
+@@ -79,17 +80,25 @@
+       router.refresh();
+     } catch (err) {
+       console.error('Failed to update order status:', err);
++      onResult({ tone: 'danger', title: 'Status was not updated', description: 'The order status could not be saved. Please try again.', focus: true });
+     } finally {
+       setSaving(false);
+     }
+   }
+ 
+   return (
+-    <div className="relative" ref={ref} onClick={e => e.stopPropagation()}>
++    <div className="relative" ref={ref} onKeyDown={(event) => {
++      if (event.key === 'Escape' && open) {
++        event.preventDefault(); event.stopPropagation(); setOpen(false);
++        ref.current?.querySelector<HTMLButtonElement>('button')?.focus();
++      }
++    }} onClick={e => e.stopPropagation()}>
+       <button
++        type="button"
+         onClick={() => setOpen(!open)}
+         disabled={saving}
+         title="Click to change status"
++        aria-label={`Change status, currently ${config.label}`} aria-expanded={open} aria-busy={saving || undefined}
+         className={"qc-flow-control " + (`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`)}
+       >
+         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+@@ -160,6 +169,7 @@
+ 
+ export function OrderList({ orders, workspaceSlug }: Props) {
+   const router = useRouter();
++  const { showNotice, clearNotice, notice } = useQcActionNotice();
+   const [deleting, setDeleting] = useState<string | null>(null);
+   const [deleteId, setDeleteId] = useState<string | null>(null);
+   // Multi-select state for bulk download / delete (mirrors QuotesList).
+@@ -239,13 +249,15 @@
+     const ids = Array.from(selectedIds);
+     if (ids.length === 0) return;
+     if (ids.length > MAX_BULK_SELECTION) {
+-      alert(`Too many orders selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`);
++      showNotice({ tone: 'warning', title: 'Selection limit', description: `Too many orders selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`, focus: true });
+       return;
+     }
+ 
++    clearNotice();
+     setBulkBusy('download');
+     setBulkProgress({ done: 0, total: ids.length, message: 'Preparing export...' });
+ 
++    let downloadRequested = false;
+     try {
+       const zip = new JSZip();
+       let succeeded = 0;
+@@ -275,7 +287,7 @@
+       }
+ 
+       if (succeeded === 0) {
+-        alert(`No orders could be exported.${failures.length ? '\n\nFailed:\n' + failures.join('\n') : ''}`);
++        showNotice({ tone: 'danger', title: 'Nothing exported', description: `No orders could be exported. Review the details before trying again.`, details: failures, focus: true });
+         return;
+       }
+ 
+@@ -293,10 +305,22 @@
+       }
+ 
+       downloadBlob(blob, zipName);
+-
+-      if (failures.length > 0) {
+-        alert(`Exported ${succeeded} of ${ids.length} orders.\n\nFailed:\n${failures.join('\n')}`);
+-      }
++      downloadRequested = true;
++
++      showNotice({
++        tone: failures.length ? 'warning' : 'success',
++        title: failures.length ? 'Some orders were not exported' : 'Export ready',
++        description: `Prepared ${succeeded} of ${ids.length} orders. The ZIP download has been requested. Check your browser downloads.`,
++        details: failures, focus: true,
++      });
++    } catch (err) {
++      console.error('[bulkDownload] could not finish export:', err);
++      showNotice({ tone: 'danger',
++        title: downloadRequested ? 'Check your download' : 'Export could not finish',
++        description: downloadRequested
++          ? 'The download was requested, but a later export step failed. Check your browser downloads before trying again.'
++          : 'The ZIP could not be prepared or the download could not be started. Your records have not been changed.',
++        details: [err instanceof Error ? err.message : 'Unknown export error'], focus: true });
+     } finally {
+       setBulkBusy(null);
+       setBulkProgress(null);
+@@ -307,18 +331,18 @@
+   async function handleBulkDelete() {
+     const ids = Array.from(selectedIds);
+     if (ids.length === 0) return;
++    clearNotice();
+     setBulkBusy('delete');
+     try {
+       const result = await bulkDeleteOrders(ids);
+       setSelectedIds(new Set());
+       setBulkDeleteConfirmOpen(false);
+       router.refresh();
+-      if (result.skipped > 0) {
+-        alert(`Deleted ${result.deleted} orders. ${result.skipped} were skipped (not owned or already gone).`);
+-      }
++      showNotice({ tone: result.skipped ? 'warning' : 'success', title: result.skipped ? 'Deletion finished with skipped records' : 'Deletion complete', description: `Orders deleted: ${result.deleted}. Skipped: ${result.skipped} (not owned or already gone).`, focus: true });
+     } catch (err) {
+       console.error('[bulkDelete] failed:', err);
+-      alert(`Failed to delete orders: ${err instanceof Error ? err.message : 'unknown error'}`);
++      setBulkDeleteConfirmOpen(false);
++      showNotice({ tone: 'danger', title: 'Deletion failed', description: `Failed to delete orders: ${err instanceof Error ? err.message : 'unknown error'}`, focus: true });
+     } finally {
+       setBulkBusy(null);
+     }
+@@ -329,10 +353,12 @@
+     setDeleting(deleteId);
+     try {
+       await deleteOrder(deleteId);
++      showNotice({ tone: 'success', title: 'Order deleted', description: 'The selected order has been deleted.', focus: true });
+       setDeleteId(null);
+       router.refresh();
+     } catch {
+-      alert('Failed to delete order.');
++      setDeleteId(null);
++      showNotice({ tone: 'danger', title: 'Order was not deleted', description: 'Failed to delete order. Please try again.', focus: true });
+     } finally {
+       setDeleting(null);
+     }
+@@ -340,14 +366,14 @@
+ 
+   if (orders.length === 0) {
+     return (
+-      <QcJourney><div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
++      <QcJourney>{notice}<div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
+         <p className="text-sm text-slate-500">No orders yet. Create your first order above.</p>
+       </div></QcJourney>
+     );
+   }
+ 
+   return (
+-    <QcJourney><div>
++    <QcJourney>{notice}<div>
+       {/* Header */}
+       <div className="qc-flow-columns hidden sm:grid grid-cols-[28px_160px_1fr_1fr_130px_80px_70px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
+         <input
+@@ -405,7 +431,7 @@
+               />
+             </div>
+             <div className="flex items-center gap-1.5 flex-wrap">
+-              <OrderStatusDropdown orderId={order.id} currentStatus={order.status || 'ready'} />
++              <OrderStatusDropdown orderId={order.id} currentStatus={order.status || 'ready'}  onResult={showNotice} />
+               <RecipientStatusBadge status={orderRecipientStatus(order)} />
+             </div>
+             <div className="text-xs text-slate-400">
+--- baseline/app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx
++++ return/app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ 
+ import { useState } from 'react';
+ import type { MaterialOrderTemplateRow, MaterialOrderTemplateInsert } from '@/app/lib/types';
+@@ -13,6 +14,7 @@
+ }
+ 
+ export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Props) {
++  const { notify, ask, feedback } = useQcFeedback();
+   const [templates, setTemplates] = useState(initialTemplates);
+   const [showForm, setShowForm] = useState(false);
+   const [editingId, setEditingId] = useState<string | null>(null);
+@@ -45,7 +47,7 @@
+       setShowForm(false);
+       setFormLogoUrl('');
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to create template');
++      await notify(err instanceof Error ? err.message : 'Failed to create template');
+     } finally {
+       setSaving(false);
+     }
+@@ -74,7 +76,7 @@
+       setEditingId(null);
+       setFormLogoUrl('');
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to update template');
++      await notify(err instanceof Error ? err.message : 'Failed to update template');
+     } finally {
+       setSaving(false);
+     }
+@@ -91,13 +93,13 @@
+   }
+ 
+   async function handleDelete(id: string, name: string) {
+-    if (!confirm(`Delete template "${name}"?`)) return;
++    if (!await ask({ title: `Delete template "${name}"?`, description: 'This removes the saved template. This action cannot be undone.', confirmLabel: 'Delete template', destructive: true })) return;
+     
+     try {
+       await deleteOrderTemplate(id);
+       setTemplates(prev => prev.filter(t => t.id !== id));
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to delete template');
++      await notify(err instanceof Error ? err.message : 'Failed to delete template');
+     }
+   }
+   
+@@ -107,12 +109,12 @@
+     if (!file) return;
+     
+     if (!file.type.startsWith('image/')) {
+-      alert('Please upload an image file');
++      await notify('Please upload an image file');
+       return;
+     }
+     
+     if (file.size > 5 * 1024 * 1024) {
+-      alert('Image must be less than 5MB');
++      await notify('Image must be less than 5MB');
+       return;
+     }
+     
+@@ -133,7 +135,7 @@
+       setFormLogoUrl(url);
+     } catch (error) {
+       console.error('Logo upload error:', error);
+-      alert('Failed to upload logo. Please try again.');
++      await notify('Failed to upload logo. Please try again.');
+     } finally {
+       setUploadingLogo(false);
+     }
+@@ -141,6 +143,7 @@
+ 
+   return (
+     <>
++      {feedback}
+     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+     <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+--- baseline/app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx
++++ return/app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ 
+ import '@/app/components/ui/v2/qc-library.css';
+ import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+@@ -19,6 +20,7 @@
+ }
+ 
+ export function TemplateManager({ initialTemplates, onClose, isOverStorage, initialMode = 'list', initialTemplateId, singleEditor = false }: Props) {
++  const { notify, feedback } = useQcFeedback();
+   const [templates, setTemplates] = useState(initialTemplates);
+   const [showForm, setShowForm] = useState(initialMode === 'create');
+   const [editingTemplate, setEditingTemplate] = useState<MaterialOrderTemplateRow | null>(() => initialMode === 'edit' ? initialTemplates.find(t => t.id === initialTemplateId) ?? null : null);
+@@ -50,7 +52,7 @@
+       setShowForm(false);
+       if (singleEditor) onClose();
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to create template');
++      await notify(err instanceof Error ? err.message : 'Failed to create template');
+     } finally {
+       setSaving(false);
+     }
+@@ -82,7 +84,7 @@
+       setEditingTemplate(null);
+       if (singleEditor) onClose();
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to update template');
++      await notify(err instanceof Error ? err.message : 'Failed to update template');
+     } finally {
+       setSaving(false);
+     }
+@@ -96,7 +98,7 @@
+       setTemplates(prev => prev.filter(t => t.id !== deleteTemplateId));
+       setDeleteTemplateId(null);
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to delete template');
++      await notify(err instanceof Error ? err.message : 'Failed to delete template');
+     } finally {
+       setDeleteLoading(false);
+     }
+@@ -106,6 +108,7 @@
+   if (showForm) {
+     return (
+       <QcJourneyDialog label="Create order template" size="lg" pending={saving}>
++        {feedback}
+         <div className="qc-order-template-form w-full">
+           <div className="px-6 py-4 border-b border-slate-200">
+             <h2 className="text-lg font-semibold text-slate-900">Create order template</h2>
+@@ -144,6 +147,7 @@
+     
+     return (
+       <QcJourneyDialog label="Edit order template" size="lg" pending={saving}>
++        {feedback}
+         <div className="qc-order-template-form w-full">
+           <div className="px-6 py-4 border-b border-slate-200">
+             <h2 className="text-lg font-semibold text-slate-900">Edit order template</h2>
+@@ -167,6 +171,7 @@
+   // Template list view
+   return (
+     <QcJourneyDialog label="Supplier Templates" size="lg">
++        {feedback}
+       <div className="w-full flex flex-col">
+         {/* Header */}
+         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+--- baseline/app/(auth)/[workspaceSlug]/material-orders/template-form.tsx
++++ return/app/(auth)/[workspaceSlug]/material-orders/template-form.tsx
+@@ -1,7 +1,8 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ 
+ import '@/app/components/ui/v2/qc-library.css';
+-import { useState } from 'react';
++import { useState, useRef, useId } from 'react';
+ import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
+ 
+ interface TemplateFormData {
+@@ -33,6 +34,10 @@
+ 
+ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, isOverStorage }: Props) {
+   // Template meta
++  const nameErrorId = useId();
++  const [nameError, setNameError] = useState('');
++  const nameRef = useRef<HTMLInputElement>(null);
++  const { notify, feedback } = useQcFeedback();
+   const [name, setName] = useState(initialData?.name || '');
+   const [description, setDescription] = useState(initialData?.description || '');
+   
+@@ -71,12 +76,12 @@
+     if (!file) return;
+     
+     if (!file.type.startsWith('image/')) {
+-      alert('Please upload an image file');
++      await notify('Please upload an image file');
+       return;
+     }
+     
+     if (file.size > 5 * 1024 * 1024) {
+-      alert('Image must be less than 5MB');
++      await notify('Image must be less than 5MB');
+       return;
+     }
+     
+@@ -97,7 +102,7 @@
+       setLogoUrl(url);
+     } catch (error) {
+       console.error('Logo upload error:', error);
+-      alert('Failed to upload logo. Please try again.');
++      await notify('Failed to upload logo. Please try again.');
+     } finally {
+       setUploadingLogo(false);
+     }
+@@ -107,7 +112,8 @@
+     e.preventDefault();
+     
+     if (!name.trim()) {
+-      alert('Template name is required');
++      setNameError('Enter a template name.');
++      nameRef.current?.focus();
+       return;
+     }
+     
+@@ -129,6 +135,7 @@
+   
+   return (
+     <>
++      {feedback}
+     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+     <form onSubmit={handleSubmit} className="space-y-6">
+       {/* Template Name & Description */}
+@@ -137,14 +144,15 @@
+           <label className="block text-sm font-medium text-slate-700 mb-1">
+             Template Name <span className="text-red-500">*</span>
+           </label>
+-          <input aria-label="Template Name"
++          <input aria-label="Template Name" ref={nameRef} aria-invalid={!!nameError} aria-describedby={nameError ? nameErrorId : undefined}
+             type="text"
+             value={name}
+-            onChange={(e) => setName(e.target.value)}
++            onChange={(e) => { setName(e.target.value); setNameError(''); }}
+             required
+             placeholder="e.g., Main Supplier, Emergency Supplier"
+             className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+           />
++              {nameError && <p id={nameErrorId} className="qc-flow-error" role="alert">{nameError}</p>}
+           <p className="text-xs text-slate-500 mt-1">This name will appear in the template dropdown</p>
+         </div>
+         
+--- baseline/app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx
++++ return/app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ 
+ import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+ import { useState, useTransition, useEffect } from 'react';
+@@ -74,6 +75,7 @@
+   isOverStorage,
+   supplierCatalogs = [],
+ }: Props) {
++  const { notify, feedback } = useQcFeedback();
+   const router = useRouter();
+   const [, startTransition] = useTransition();
+   const [catalogs, setCatalogs] = useState<CatalogRow[]>(initialCatalogs);
+@@ -155,7 +157,7 @@
+       setDeleteTarget(null);
+       startTransition(() => router.refresh());
+     } else {
+-      alert(result.message);
++      await notify(result.message);
+     }
+   }
+ 
+@@ -169,7 +171,7 @@
+       setArchiveTarget(null);
+       startTransition(() => router.refresh());
+     } else {
+-      alert(result.message);
++      await notify(result.message);
+     }
+   }
+ 
+@@ -183,7 +185,7 @@
+       setCatalogs((prev) => prev.map((c) => (c.id === catalog.id ? { ...c, status: 'ready' as const } : c)));
+       startTransition(() => router.refresh());
+     } else {
+-      alert(result.message);
++      await notify(result.message);
+     }
+   }
+ 
+@@ -314,7 +316,8 @@
+   }
+ 
+   return (
+-    <QcJourney><section className="space-y-5">
++    <QcJourney>
++      {feedback}<section className="space-y-5">
+       {/* Header */}
+       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+         <div>
+--- baseline/app/(auth)/[workspaceSlug]/components/component-list.tsx
++++ return/app/(auth)/[workspaceSlug]/components/component-list.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ 
+ import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+ import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+@@ -84,6 +85,7 @@
+   /** Whether this company is an approved supplier. Shows publishing controls. */
+   isSupplier?: boolean;
+ }) {
++  const { notify, feedback } = useQcFeedback();
+   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
+   // Pitch is shown when the trade requires it (roofing) or opts in optionally
+   // (landscaping, concrete, insulation, electrical). pitchOptional trades show
+@@ -396,7 +398,7 @@
+   function addFlashing() {
+     if (!selectedFlashingId) return;
+     if (assignedFlashings.includes(selectedFlashingId)) {
+-      alert('This flashing is already assigned');
++      setFormError('This image is already assigned. Choose a different image.');
+       return;
+     }
+     setAssignedFlashings(prev => [...prev, selectedFlashingId]);
+@@ -413,7 +415,7 @@
+     const result = await deleteComponentCollection(deletingLibraryId);
+     setDeleteLibraryLoading(false);
+     if (!result.ok) {
+-      alert(result.message);
++      await notify(result.message);
+       setDeletingLibraryId(null);
+       return;
+     }
+@@ -432,7 +434,7 @@
+     const result = await renameComponentCollection(renamingLibraryId, renameValue);
+     setRenaming(false);
+     if (!result.ok) {
+-      alert(result.message);
++      await notify(result.message);
+       return;
+     }
+     setCollections(prev => prev.map(c => c.id === renamingLibraryId ? { ...c, name: result.name } : c));
+@@ -477,7 +479,7 @@
+     // Validate per_pack_coverage requires all three pack fields.
+     if (formPricingStrategy === 'per_pack_coverage') {
+       if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
+-        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
++        setFormError('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+         setSaving(false);
+         return;
+       }
+@@ -492,7 +494,7 @@
+     if (wasteType === 'fixed' && wasteAmountRaw.includes('.')) {
+       const decimals = wasteAmountRaw.split('.')[1];
+       if (decimals && decimals.length > 2) {
+-        alert('Reduce your decimal places to two or less (e.g. 0.25)');
++        setFormError('Reduce your decimal places to two or less (e.g. 0.25)');
+         setSaving(false);
+         return;
+       }
+@@ -614,7 +616,7 @@
+     // Validate per_pack_coverage requires all three pack fields.
+     if (formPricingStrategy === 'per_pack_coverage') {
+       if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
+-        alert('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
++        setFormError('Per Coverage Area requires Pack price, Pack size, and Coverage per pack to all be filled in.');
+         return;
+       }
+     }
+@@ -628,7 +630,7 @@
+     if (wasteType === 'fixed' && wasteAmountRaw.includes('.')) {
+       const decimals = wasteAmountRaw.split('.')[1];
+       if (decimals && decimals.length > 2) {
+-        alert('Reduce your decimal places to two or less (e.g. 0.25)');
++        setFormError('Reduce your decimal places to two or less (e.g. 0.25)');
+         return;
+       }
+     }
+@@ -753,6 +755,7 @@
+ 
+   return (
+     <QcLibrary className="space-y-5">
++      {feedback}
+       {/* Create Library Modal */}
+       {showCreateLibraryModal && (
+         <QcJourneyDialog label="Create New Library" size="sm">
+@@ -1086,7 +1089,7 @@
+         <div className="mb-4 p-4 border border-slate-200 rounded-xl bg-white">
+           <h3 className="font-semibold text-slate-900 mb-3">New Smart Component™</h3>
+           {formError && (
+-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
++            <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
+           )}
+           <form onSubmit={handleCreate} className="space-y-3">
+             <div className="qc-library-field-grid grid grid-cols-1 sm:grid-cols-2 gap-3">
+@@ -1378,7 +1381,7 @@
+               <div className="p-4 border border-slate-200 rounded-xl bg-white">
+                 <h3 className="font-semibold text-slate-900 mb-3">Edit {comp.name}</h3>
+                 {formError && (
+-                  <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
++                  <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
+                 )}
+                 <form onSubmit={(e) => handleUpdate(e, comp.id)} className="space-y-3">
+                  <div className="qc-library-field-grid grid grid-cols-1 sm:grid-cols-2 gap-3">
+--- baseline/app/(auth)/[workspaceSlug]/resources/EditCustomerTemplateModal.tsx
++++ return/app/(auth)/[workspaceSlug]/resources/EditCustomerTemplateModal.tsx
+@@ -1,7 +1,8 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ import '@/app/components/ui/v2/qc-library.css';
+ import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+-import { useState } from 'react';
++import { useState, useRef, useId } from 'react';
+ import type { CustomerQuoteTemplateRow } from '@/app/lib/types';
+ import { updateCustomerQuoteTemplate } from './actions';
+ import { CustomerTemplateLogoUploader } from './CustomerTemplateLogoUploader';
+@@ -16,6 +17,10 @@
+ }
+ 
+ export function EditCustomerTemplateModal({ template, companyId, onClose, onSaved, isOverStorage }: Props) {
++  const nameErrorId = useId();
++  const [nameError, setNameError] = useState('');
++  const nameRef = useRef<HTMLInputElement>(null);
++  const { notify, feedback } = useQcFeedback();
+   const [name, setName] = useState(template.name);
+   const [companyName, setCompanyName] = useState(template.company_name || '');
+   const [companyAddress, setCompanyAddress] = useState(template.company_address || '');
+@@ -27,7 +32,8 @@
+ 
+   async function handleSave() {
+     if (!name.trim()) {
+-      alert('Template name is required');
++      setNameError('Enter a template name.');
++      nameRef.current?.focus();
+       return;
+     }
+ 
+@@ -44,7 +50,7 @@
+       });
+       onSaved();
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to update template');
++      await notify(err instanceof Error ? err.message : 'Failed to update template');
+     } finally {
+       setSaving(false);
+     }
+@@ -52,6 +58,7 @@
+ 
+   return (
+     <QcJourneyDialog label="Edit Template" size="lg">
++      {feedback}
+       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+         {/* Header */}
+         <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+@@ -73,13 +80,14 @@
+             <label className="block text-sm font-medium text-slate-700 mb-1">
+               Template Name <span className="text-red-500">*</span>
+             </label>
+-            <input aria-label="Template Name"
++            <input aria-label="Template Name" ref={nameRef} aria-invalid={!!nameError} aria-describedby={nameError ? nameErrorId : undefined}
+               type="text"
+               value={name}
+-              onChange={(e) => setName(e.target.value)}
++              onChange={(e) => { setName(e.target.value); setNameError(''); }}
+               className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+               required
+             />
++              {nameError && <p id={nameErrorId} className="qc-flow-error" role="alert">{nameError}</p>}
+           </div>
+ 
+           {/* Header Section */}
+--- baseline/app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx
++++ return/app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ import { useState } from 'react';
+ import { useRouter } from 'next/navigation';
+ import Link from 'next/link';
+@@ -60,6 +61,7 @@
+   initialTab,
+   hideTabBar = false,
+ }: Props) {
++  const { notify, feedback } = useQcFeedback();
+   const router = useRouter();
+   const [activeTab, setActiveTab] = useState<'quote' | 'customer' | 'email' | 'order' | 'catalogs' | 'attachments'>(
+     initialTab === 'customer' ? 'customer'
+@@ -92,7 +94,7 @@
+       else await deleteEmailTemplate(pendingDeleteId);
+       router.refresh();
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to delete');
++      await notify(err instanceof Error ? err.message : 'Failed to delete');
+     } finally {
+       setDeleting(null);
+       setPendingDeleteId(null);
+@@ -113,6 +115,7 @@
+ 
+   return (
+     <div className="space-y-5">
++      {feedback}
+       {/* Header */}
+       <div>
+         <h1 className="text-2xl font-semibold text-slate-900">{hideTabBar ? activeTabLabel : 'Resource Library'}</h1>
+--- baseline/app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx
++++ return/app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx
+@@ -1,5 +1,6 @@
+ 'use client';
+ import { QcLibraryError } from '@/app/components/ui/v2/QcLibrary';
++import { useQcActionNotice, type QcActionResult } from '@/app/components/ui/v2/QcActionNotice';
+ import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+ import { useState, useRef, useEffect } from 'react';
+ import Link from 'next/link';
+@@ -125,7 +126,7 @@
+   return `${Math.floor(diffDays / 30)} months ago`;
+ }
+ 
+-function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; currentStatus: string }) {
++function JobStatusDropdown({ quoteId, currentStatus, onResult }: { quoteId: string; currentStatus: string; onResult: (result: QcActionResult) => void }) {
+   const [open, setOpen] = useState(false);
+   const [saving, setSaving] = useState(false);
+   const [status, setStatus] = useState(currentStatus);
+@@ -157,17 +158,25 @@
+       router.refresh();
+     } catch (err) {
+       console.error('Failed to update job status:', err);
++      onResult({ tone: 'danger', title: 'Status was not updated', description: 'The quote status could not be saved. Please try again.', focus: true });
+     } finally {
+       setSaving(false);
+     }
+   }
+ 
+   return (
+-    <div className="relative" ref={ref} onClick={e => e.stopPropagation()}>
++    <div className="relative" ref={ref} onKeyDown={(event) => {
++      if (event.key === 'Escape' && open) {
++        event.preventDefault(); event.stopPropagation(); setOpen(false);
++        ref.current?.querySelector<HTMLButtonElement>('button')?.focus();
++      }
++    }} onClick={e => e.stopPropagation()}>
+       <button
++        type="button"
+         onClick={() => setOpen(!open)}
+         disabled={saving}
+         title="Click to change status"
++        aria-label={`Change status, currently ${config.label}`} aria-expanded={open} aria-busy={saving || undefined}
+         className={"qc-flow-control " + (`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`)}
+       >
+         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+@@ -215,6 +224,7 @@
+   effectivePlanCode,
+   measureProps,
+ }: Props) {
++  const { showNotice, clearNotice, notice } = useQcActionNotice();
+   const [capUpgradeOpen, setCapUpgradeOpen] = useState(false);
+   // Smoke #7 (2026-05-19): subscription-inactive (e.g. canceled unpaid)
+   // opens this modal when the user clicks New Quote. The DB-level guard
+@@ -297,11 +307,13 @@
+     setDeleting(true);
+     try {
+       await deleteQuote(deleteId);
++      showNotice({ tone: 'success', title: 'Quote deleted', description: 'The selected quote has been deleted.', focus: true });
+       setDeleteId(null);
+       router.refresh();
+     } catch (err) {
+       console.error('Failed to delete quote:', err);
+-      alert('Failed to delete quote. Please try again.');
++      setDeleteId(null);
++      showNotice({ tone: 'danger', title: 'Quote was not deleted', description: 'Failed to delete quote. Please try again.', focus: true });
+     } finally {
+       setDeleting(false);
+     }
+@@ -373,10 +385,11 @@
+     if (ids.length === 0) return;
+     if (ids.length > MAX_BULK_SELECTION) {
+       // Should be unreachable thanks to the toggle guards; defensive belt anyway.
+-      alert(`Too many quotes selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`);
++      showNotice({ tone: 'warning', title: 'Selection limit', description: `Too many quotes selected (${ids.length}). Maximum ${MAX_BULK_SELECTION} per batch.`, focus: true });
+       return;
+     }
+ 
++    clearNotice();
+     setBulkBusy('download');
+     setBulkProgress({ done: 0, total: ids.length, message: 'Preparing export...' });
+ 
+@@ -388,12 +401,13 @@
+       auditId = begin.auditId;
+     } catch (err) {
+       console.error('[bulkDownload] cap rejected by server:', err);
+-      alert(err instanceof Error ? err.message : 'Failed to start bulk download.');
++      showNotice({ tone: 'danger', title: 'Export could not start', description: err instanceof Error ? err.message : 'Failed to start bulk download.', focus: true });
+       setBulkBusy(null);
+       setBulkProgress(null);
+       return;
+     }
+ 
++    let downloadRequested = false;
+     try {
+       const zip = new JSZip();
+       let succeeded = 0;
+@@ -430,7 +444,7 @@
+           failures.length,
+           failures.length > 0 ? failures.slice(0, 5).join('; ') : 'no quotes exported',
+         );
+-        alert(`No quotes could be exported.${failures.length ? '\n\nFailed:\n' + failures.join('\n') : ''}`);
++        showNotice({ tone: 'danger', title: 'Nothing exported', description: `No quotes could be exported. Review the details before trying again.`, details: failures, focus: true });
+         return;
+       }
+ 
+@@ -450,6 +464,7 @@
+       }
+ 
+       downloadBlob(blob, zipName);
++      downloadRequested = true;
+ 
+       await finishBulkDownloadAudit(
+         auditId,
+@@ -459,9 +474,20 @@
+         failures.length > 0 ? failures.slice(0, 5).join('; ') : undefined,
+       );
+ 
+-      if (failures.length > 0) {
+-        alert(`Exported ${succeeded} of ${ids.length} quotes.\n\nFailed:\n${failures.join('\n')}`);
+-      }
++      showNotice({
++        tone: failures.length ? 'warning' : 'success',
++        title: failures.length ? 'Some quotes were not exported' : 'Export ready',
++        description: `Prepared ${succeeded} of ${ids.length} quotes. The ZIP download has been requested. Check your browser downloads.`,
++        details: failures, focus: true,
++      });
++    } catch (err) {
++      console.error('[bulkDownload] could not finish export:', err);
++      showNotice({ tone: 'danger',
++        title: downloadRequested ? 'Check your download' : 'Export could not finish',
++        description: downloadRequested
++          ? 'The download was requested, but a later export step failed. Check your browser downloads before trying again.'
++          : 'The ZIP could not be prepared or the download could not be started. Your records have not been changed.',
++        details: [err instanceof Error ? err.message : 'Unknown export error'], focus: true });
+     } finally {
+       setBulkBusy(null);
+       setBulkProgress(null);
+@@ -472,18 +498,18 @@
+   async function handleBulkDelete() {
+     const ids = Array.from(selectedIds);
+     if (ids.length === 0) return;
++    clearNotice();
+     setBulkBusy('delete');
+     try {
+       const result = await bulkDeleteQuotes(ids);
+       setSelectedIds(new Set());
+       setBulkDeleteConfirmOpen(false);
+       router.refresh();
+-      if (result.skipped > 0) {
+-        alert(`Deleted ${result.deleted} quotes. ${result.skipped} were skipped (not owned or already gone).`);
+-      }
++      showNotice({ tone: result.skipped ? 'warning' : 'success', title: result.skipped ? 'Deletion finished with skipped records' : 'Deletion complete', description: `Quotes deleted: ${result.deleted}. Skipped: ${result.skipped} (not owned or already gone).`, focus: true });
+     } catch (err) {
+       console.error('[bulkDelete] failed:', err);
+-      alert(`Failed to delete quotes: ${err instanceof Error ? err.message : 'unknown error'}`);
++      setBulkDeleteConfirmOpen(false);
++      showNotice({ tone: 'danger', title: 'Deletion failed', description: `Failed to delete quotes: ${err instanceof Error ? err.message : 'unknown error'}`, focus: true });
+     } finally {
+       setBulkBusy(null);
+     }
+@@ -499,6 +525,7 @@
+ 
+   return (
+     <QcJourney className="qc-journey-stack"><>
++      {notice}
+       {/* Top actions row */}
+       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+         <div className="qc-flow-tabs">
+@@ -698,7 +725,7 @@
+                   </span>
+                 ) : (
+                   <div className="flex items-center gap-1.5 flex-wrap">
+-                    <JobStatusDropdown quoteId={q.id} currentStatus={q.job_status || 'unsent'} />
++                    <JobStatusDropdown quoteId={q.id} currentStatus={q.job_status || 'unsent'}  onResult={showNotice} />
+                     <RecipientStatusBadge status={quoteRecipientStatus(q)} />
+                   </div>
+                 )}
+--- baseline/app/(auth)/[workspaceSlug]/settings/MfaSection.tsx
++++ return/app/(auth)/[workspaceSlug]/settings/MfaSection.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ 
+ import { QcJourney } from '@/app/components/ui/v2/QcJourney';
+ import { useState, useTransition } from 'react';
+@@ -31,6 +32,7 @@
+ }
+ 
+ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: Props) {
++  const { notify, feedback } = useQcFeedback();
+   const router = useRouter();
+   const supabase = createClient();
+ 
+@@ -128,7 +130,7 @@
+   async function handleToggleMfa(next: boolean) {
+     if (next && !hasVerified) {
+       // Can't enable without a factor; nudge the user to enrol instead.
+-      alert('Add an authenticator factor first before turning 2FA back on.');
++      await notify('Add an authenticator factor first before turning 2FA back on.');
+       return;
+     }
+     setTogglingMfa(true);
+@@ -140,7 +142,7 @@
+       router.refresh();
+     } catch (err) {
+       setMfaRequiredState(previous);
+-      alert(err instanceof Error ? err.message : 'Could not update 2FA preference');
++      await notify(err instanceof Error ? err.message : 'Could not update 2FA preference');
+     } finally {
+       setTogglingMfa(false);
+     }
+@@ -171,14 +173,15 @@
+       setPendingUnenroll(null);
+       router.refresh();
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to remove 2FA factor');
++      await notify(err instanceof Error ? err.message : 'Failed to remove 2FA factor');
+     } finally {
+       setUnenrollDeleting(false);
+     }
+   }
+ 
+   return (
+-    <QcJourney><div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl gap-4">
++    <QcJourney>
++      {feedback}<div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl gap-4">
+       <div className="flex-1">
+         <div className="flex items-center gap-3">
+           <p className="text-sm font-medium text-slate-900">Two-Factor Authentication (2FA)</p>
+@@ -218,7 +221,7 @@
+         </div>
+         <p className="text-xs text-slate-500 mt-0.5">
+           Use an authenticator app (Google Authenticator, 1Password, Authy, etc.) to add a
+-          second factor to your login. Optional &mdash; recommended for any account holding
++          second factor to your login. Optional - recommended for any account holding
+           customer data.
+         </p>
+ 
+--- baseline/app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx
++++ return/app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx
+@@ -1,6 +1,7 @@
+ 'use client';
+ 
+-import { QcJourney } from '@/app/components/ui/v2/QcJourney';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
++import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+ import { useState, useTransition } from 'react';
+ import { upsertSecurityQuestion, deleteSecurityQuestion, type SecurityQuestionRecord } from './security-questions-actions';
+ import { SUGGESTED_QUESTIONS, CUSTOM_QUESTION_LABEL, QUESTION_SLOTS } from '@/app/lib/security/questions';
+@@ -21,6 +22,7 @@
+  *    typos that would otherwise lock the user out of recovery.
+  */
+ export function SecurityQuestionsSection({ initialQuestions }: Props) {
++  const { ask, feedback } = useQcFeedback();
+   const [questions, setQuestions] = useState<SecurityQuestionRecord[]>(initialQuestions);
+   const [editingSlot, setEditingSlot] = useState<number | null>(null);
+   const [isPending, startTransition] = useTransition();
+@@ -32,8 +34,8 @@
+     setEditingSlot(null);
+   }
+ 
+-  function handleDelete(slot: number) {
+-    if (!confirm('Remove this security question?')) return;
++  async function handleDelete(slot: number) {
++    if (!await ask({ title: 'Remove recovery question?', description: 'You will no longer be able to use this question for account recovery.', confirmLabel: 'Remove question', destructive: true })) return;
+     startTransition(async () => {
+       await deleteSecurityQuestion(slot);
+       setQuestions((prev) => prev.map((q) => (q.slot === slot ? { ...q, question: '', isSet: false, updatedAt: null } : q)));
+@@ -41,12 +43,12 @@
+   }
+ 
+   return (
+-    <QcJourney><div className="space-y-3">
++    <QcJourney>{feedback}<div className="space-y-3">
+       <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+         <div>
+           <p className="text-sm font-medium text-slate-900">Recovery Questions</p>
+           <p className="text-xs text-slate-500 mt-0.5">
+-            {setCount} of {QUESTION_SLOTS} set &mdash; used by support to verify your identity if you lose access to your email.
++            {setCount} of {QUESTION_SLOTS} set - used by support to verify your identity if you lose access to your email.
+           </p>
+         </div>
+       </div>
+@@ -147,7 +149,7 @@
+   }
+ 
+   return (
+-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
++    <QcJourneyDialog label={`Set recovery question ${slot}`} size="sm" pending={isPending}>
+       <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full shadow-xl">
+         <h3 className="text-base font-semibold text-slate-900">Set recovery question {slot}</h3>
+         <p className="text-sm text-slate-500 mt-1 mb-4">
+@@ -229,6 +231,6 @@
+           </div>
+         </form>
+       </div>
+-    </div>
++    </QcJourneyDialog>
+   );
+ }
+--- baseline/app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx
++++ return/app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx
+@@ -1,6 +1,6 @@
+ 'use client';
+ import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
+-import { useState, useEffect } from 'react';
++import { useState, useEffect, useRef } from 'react';
+ import { useRouter, useSearchParams } from 'next/navigation';
+ import Link from 'next/link';
+ import { createQuoteWithDetails } from './actions';
+@@ -74,6 +74,12 @@
+   const router = useRouter();
+   const searchParams = useSearchParams();
+   const [customerName, setCustomerName] = useState('');
++  // Presentation-only validation. Original submit guards and disabled rules remain.
++  const [customerTouched, setCustomerTouched] = useState(false);
++  const [validationAttempted, setValidationAttempted] = useState(false);
++  const customerRef = useRef<HTMLInputElement>(null);
++  const modeRef = useRef<HTMLDivElement>(null);
++  const planRef = useRef<HTMLDivElement>(null);
+   const pdfPicker = usePdfPagePicker();
+   const [jobName, setJobName] = useState('');
+   const [templateId, setTemplateId] = useState('');
+@@ -171,18 +177,20 @@
+       return;
+     }
+ 
++    setValidationAttempted(true);
+     if (!customerName.trim()) {
+-      alert('Customer name is required');
++      setCustomerTouched(true);
++      customerRef.current?.focus();
+       return;
+     }
+ 
+     if (!entryMode) {
+-      alert('Please select an entry mode (Component, Digital Measure, or Standard Quote)');
++      modeRef.current?.focus();
+       return;
+     }
+ 
+     if (entryMode === 'digital' && !planUploaded) {
+-      alert('Please upload a plan or image for digital takeoff');
++      planRef.current?.focus();
+       return;
+     }
+ 
+@@ -271,7 +279,7 @@
+   return (
+     <QcJourney><form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-8 space-y-6">
+       {createError && (
+-        <div
++        <div role="alert"
+           className={`rounded-lg border p-4 ${
+             createError.showUpgrade
+               ? 'border-amber-300 bg-amber-50 text-amber-900'
+@@ -294,7 +302,7 @@
+       {genericTradesEnabled && (
+         <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+           <h3 className="text-sm font-semibold text-slate-800">Industry &amp; Component Collection</h3>
+-          <div className="grid grid-cols-2 gap-4">
++          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+             <div>
+               <label className="qc-flow-label block text-xs text-slate-600 mb-1">Industry</label>
+               <select aria-label="Industry"
+@@ -344,10 +352,14 @@
+ 
+       {/* Customer Name */}
+       <div data-copilot="quote-customer">
+-        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
++        <label htmlFor="new-quote-customer" className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
+           Customer Name <span className="text-red-500">*</span>
+         </label>
+-        <input aria-label="e.g., John Smith"
++        <input id="new-quote-customer" ref={customerRef}
++          aria-invalid={(customerTouched || validationAttempted) && !customerName.trim() || undefined}
++          aria-describedby={(customerTouched || validationAttempted) && !customerName.trim() ? 'new-quote-customer-error' : undefined}
++          onBlur={() => setCustomerTouched(true)}
++          onInvalid={(event) => { event.preventDefault(); setCustomerTouched(true); customerRef.current?.focus(); }}
+           type="text"
+           value={customerName}
+           onChange={(e) => setCustomerName(e.target.value)}
+@@ -356,14 +368,16 @@
+           required
+           autoFocus
+         />
++        {(customerTouched || validationAttempted) && !customerName.trim() &&
++          <p id="new-quote-customer-error" className="qc-flow-error" role="alert">Enter the customer name to continue.</p>}
+       </div>
+ 
+       {/* Job Name */}
+       <div data-copilot="quote-job">
+-        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
++        <label htmlFor="new-quote-job" className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
+           Job Name <span className="text-slate-400">(optional)</span>
+         </label>
+-        <input aria-label="e.g., Residential Re-roof, 123 Main St"
++        <input id="new-quote-job"
+           type="text"
+           value={jobName}
+           onChange={(e) => setJobName(e.target.value)}
+@@ -499,16 +513,20 @@
+       </div>
+ 
+       {/* Entry Mode Selection */}
+-      <div data-copilot="quote-entry">
++      <div data-copilot="quote-entry" ref={modeRef} tabIndex={-1} role="group" aria-label="How to create your quote" aria-describedby="new-quote-mode-help">
+         <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-3">
+           Entry Mode <span className="text-red-500">*</span>
+         </label>
+         {/* Three-up mode pills. Manual builds via Areas/Components, Digital
+             adds the takeoff canvas step first, Blank skips the builder and
+             uses the customer quote editor as the master source. */}
++        <p id="new-quote-mode-help" className={validationAttempted && !entryMode ? 'qc-flow-error' : 'text-xs text-slate-500 mb-3'}>
++          Choose Component, Digital Measure or Standard Quote. Your choice determines the next screen.
++        </p>
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+           {/* Component Quote Button */}
+           <button
++            aria-pressed={entryMode === 'manual'}
+             type="button"
+             onClick={() => {
+               setEntryMode('manual');
+@@ -533,6 +551,7 @@
+ 
+           {/* Digital Measure Button - locked when plan lacks the feature */}
+           <button
++            aria-pressed={entryMode === 'digital'}
+             type="button"
+             onClick={() => {
+               if (!digitalTakeoffAvailable) {
+@@ -571,6 +590,7 @@
+ 
+           {/* Standard Quote Button */}
+           <button
++            aria-pressed={entryMode === 'blank'}
+             type="button"
+             onClick={() => {
+               setEntryMode('blank');
+@@ -599,14 +619,15 @@
+ 
+       {/* Roof Plan Upload (Digital Measure Only) */}
+       {entryMode === 'digital' && (
+-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
++        <div ref={planRef} tabIndex={-1} role="group" aria-label="Plan for digital measurement" aria-describedby="new-quote-plan-help" className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+           <div>
+             <h3 className="text-sm font-semibold text-slate-900 mb-1">Upload Plans / Images</h3>
+-            <p className="text-xs text-slate-600 mb-3">
+-              Upload your plans or images (PDF or image). Max 10 MB.
++            <p id="new-quote-plan-help" className="text-xs text-slate-600 mb-3">
++              Upload a PDF up to 50 MB or an image up to 10 MB. A plan is required for Digital Measure.
+             </p>
+           </div>
+           
++          {validationAttempted && !planUploaded && <p className="qc-flow-error" role="alert">Upload a plan or image before starting Digital Takeoff.</p>}
+           {planUploaded ? (
+             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+               <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+@@ -630,6 +651,13 @@
+         </div>
+       )}
+ 
++      {/* Explain the existing disabled condition without changing its gates. */}
++      <p id="new-quote-next-step" className="text-sm text-slate-600" role="status">
++        {!customerName.trim() ? 'Enter a customer name to continue.'
++          : !entryMode ? 'Choose how you want to create this quote.'
++          : entryMode === 'digital' && !planUploaded ? 'Upload your plan to enable Start Digital Takeoff.'
++          : 'Ready. Your next step will open when you create the quote.'}
++      </p>
+       {/* Actions */}
+       <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+         <Link
+@@ -641,6 +669,8 @@
+         <button data-qc-variant="primary"
+           type="submit"
+           data-copilot="quote-create"
++          aria-describedby="new-quote-next-step"
++          aria-busy={creating || undefined}
+           disabled={creating || !customerName.trim() || !entryMode || (entryMode === 'digital' && !planUploaded)}
+           className="qc-flow-control qc-button px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+         >
+--- baseline/app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx
++++ return/app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+ import { useState } from 'react';
+ import Link from 'next/link';
+@@ -14,6 +15,7 @@
+ }
+ 
+ export function SaveFromQuote({ workspaceSlug, quote, savedLines: _savedLines, templateName }: Props) {
++  const { notify, feedback } = useQcFeedback();
+   const router = useRouter();
+   const [saving, setSaving] = useState(false);
+   const [companyName, setCompanyName] = useState('Your Company Name');
+@@ -41,13 +43,14 @@
+       router.refresh();
+       router.push(`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`);
+     } catch (error) {
+-      alert('Failed to save template: ' + (error as Error).message);
++      await notify('Failed to save template: ' + (error as Error).message);
+       setSaving(false);
+     }
+   };
+ 
+   return (
+     <QcLibrary className="min-h-0 bg-slate-50">
++      {feedback}
+       <div className="max-w-5xl mx-auto p-6 space-y-6">
+         {/* Header */}
+         <div>
+--- baseline/app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx
++++ return/app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+ import { useState } from 'react';
+ import Link from 'next/link';
+@@ -15,6 +16,7 @@
+ }
+ 
+ export function TemplateEditor({ workspaceSlug, template, isOverStorage }: Props) {
++  const { notify, feedback } = useQcFeedback();
+   const router = useRouter();
+   const [saving, setSaving] = useState(false);
+   const [storageBlocked, setStorageBlocked] = useState(false);
+@@ -35,12 +37,12 @@
+     if (!file) return;
+ 
+     if (file.size > 2 * 1024 * 1024) {
+-      alert('File too large. Maximum size is 2MB.');
++      await notify('File too large. Maximum size is 2MB.');
+       return;
+     }
+ 
+     if (!file.type.startsWith('image/')) {
+-      alert('Please upload an image file.');
++      await notify('Please upload an image file.');
+       return;
+     }
+ 
+@@ -62,7 +64,7 @@
+ 
+       setLogoUrl(urlData.publicUrl);
+     } catch (error) {
+-      alert('Logo upload failed: ' + (error as Error).message);
++      await notify('Logo upload failed: ' + (error as Error).message);
+     } finally {
+       setUploading(false);
+     }
+@@ -99,7 +101,7 @@
+       if (msg.includes('already exists')) {
+         setNameError('A template with this name already exists');
+       } else {
+-        alert('Failed to update template: ' + msg);
++        await notify('Failed to update template: ' + msg);
+       }
+       setSaving(false);
+     }
+@@ -109,6 +111,7 @@
+     <>
+     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
+     <QcLibrary className="qc-template-editor">
++      {feedback}
+       <div className="max-w-5xl mx-auto p-6 space-y-6">
+         {/* Header */}
+         <div>
+--- baseline/app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplatesList.tsx
++++ return/app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplatesList.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ import '@/app/components/ui/v2/qc-library.css';
+ import { useState } from 'react';
+ import Link from 'next/link';
+@@ -12,6 +13,7 @@
+ }
+ 
+ export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props) {
++  const { notify, feedback } = useQcFeedback();
+   const router = useRouter();
+   const [templates, setTemplates] = useState<InvoiceTemplate[]>(initialTemplates);
+   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+@@ -27,7 +29,7 @@
+       setTemplates((prev) => prev.filter((t) => t.id !== confirmDeleteId));
+       setConfirmDeleteId(null);
+     } catch {
+-      alert('Failed to delete template.');
++      await notify('Failed to delete template.');
+     } finally {
+       setDeleting(false);
+     }
+@@ -35,6 +37,7 @@
+ 
+   return (
+     <>
++      {feedback}
+       {/* Toolbar */}
+       <div className="flex justify-end">
+         <Link data-qc-variant="primary"
+--- baseline/app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx
++++ return/app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx
+@@ -1,6 +1,7 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+-import { useState } from 'react';
++import { useState, useRef, useId } from 'react';
+ import { useRouter } from 'next/navigation';
+ import Link from 'next/link';
+ import type { ComponentLibraryRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
+@@ -20,6 +21,10 @@
+ }
+ 
+ export function TemplateBuilder({ workspaceSlug, componentLibrary, customerTemplates }: Props) {
++  const nameErrorId = useId();
++  const [nameError, setNameError] = useState('');
++  const nameRef = useRef<HTMLInputElement>(null);
++  const { notify, ask, feedback } = useQcFeedback();
+   const router = useRouter();
+   const [name, setName] = useState('');
+   const [description, setDescription] = useState('');
+@@ -71,15 +76,14 @@
+ 
+   async function handleSave() {
+     if (!name.trim()) {
+-      alert('Template name is required');
++      setNameError('Enter a template name.');
++      nameRef.current?.focus();
+       return;
+     }
+ 
+     // Validation modal for empty components/extras
+     if (selectedComponents.length === 0 && selectedExtras.length === 0) {
+-      const confirmed = confirm(
+-        'You have not added any roof components or extras. Are you sure you want to continue? You can still add components/extras when building a quote, adding them here will just save you time when building each quote.'
+-      );
++      const confirmed = await ask({ title: 'Save without components?', description: 'You have not added any roof components or extras. Are you sure you want to continue? You can still add components/extras when building a quote, adding them here will just save you time when building each quote.', confirmLabel: 'Save template', cancelLabel: 'Keep editing' });
+       if (!confirmed) return;
+     }
+ 
+@@ -99,7 +103,7 @@
+       router.refresh();
+       router.push(`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-structure`);
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to save template');
++      await notify(err instanceof Error ? err.message : 'Failed to save template');
+     } finally {
+       setSaving(false);
+     }
+@@ -107,6 +111,7 @@
+ 
+   return (
+     <QcLibrary className="qc-template-editor">
++      {feedback}
+       <div className="max-w-4xl mx-auto p-6 space-y-6">
+         {/* Header */}
+         <div className="flex items-center justify-between">
+@@ -137,14 +142,15 @@
+               <label className="block text-sm font-medium text-slate-700 mb-1">
+                 Template Name <span className="text-red-500">*</span>
+               </label>
+-              <input aria-label="Template Name"
++              <input aria-label="Template Name" ref={nameRef} aria-invalid={!!nameError} aria-describedby={nameError ? nameErrorId : undefined}
+                 type="text"
+                 value={name}
+-                onChange={(e) => setName(e.target.value)}
++                onChange={(e) => { setName(e.target.value); setNameError(''); }}
+                 placeholder="e.g., Standard Quote Template"
+                 className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                 required
+               />
++              {nameError && <p id={nameErrorId} className="qc-flow-error" role="alert">{nameError}</p>}
+             </div>
+ 
+             <div>
+--- baseline/app/(auth)/[workspaceSlug]/resources/new/page.tsx
++++ return/app/(auth)/[workspaceSlug]/resources/new/page.tsx
+@@ -1,62 +1,11 @@
+-import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+-import { createTemplate } from '../actions';
++import { redirect } from 'next/navigation';
+ 
+-async function handleCreate(formData: FormData) {
+-  'use server';
+-  // This page appears to be unused/deprecated - wrapping for type safety
+-  await createTemplate({
+-    name: formData.get('name') as string,
+-    description: formData.get('description') as string || '',
+-    roofingProfile: formData.get('roofingProfile') as string || '',
+-    notes: '',
+-    customerTemplateId: null,
+-    components: [],
+-    extras: [],
+-  });
++/** P8-D02: retire the unused creator without breaking saved links.
++ * No template is created and no legacy server action runs on this route.
++ */
++export default async function NewTemplatePage({ params }: {
++  params: Promise<{ workspaceSlug: string }>;
++}) {
++  const { workspaceSlug } = await params;
++  redirect(`/${workspaceSlug}/resources/document-templates`);
+ }
+-
+-export default function NewTemplatePage() {
+-  return (
+-    <QcLibrary className="max-w-2xl mx-auto space-y-6">
+-      <h1 className="qc-library-title text-3xl font-semibold text-slate-900">New Template</h1>
+-
+-      <form action={handleCreate} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+-        <div>
+-          <label className="block text-sm font-medium text-slate-700 mb-1">Template Name *</label>
+-          <input aria-label="Template Name"
+-            name="name"
+-            required
+-            className="qc-input qc-library-control w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 focus:outline-none"
+-            placeholder="e.g. Long Run Steel Roof"
+-          />
+-        </div>
+-
+-        <div>
+-          <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+-          <textarea aria-label="Description"
+-            name="description"
+-            rows={2}
+-            className="qc-input qc-library-control w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 focus:outline-none"
+-            placeholder="Optional description"
+-          />
+-        </div>
+-
+-        <div>
+-          <label className="block text-sm font-medium text-slate-700 mb-1">Roofing Profile</label>
+-          <input aria-label="Roofing Profile"
+-            name="roofing_profile"
+-            className="qc-input qc-library-control w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 focus:outline-none"
+-            placeholder="e.g. Corrugate, Standing Seam, Tiles"
+-          />
+-        </div>
+-
+-        <button data-qc-variant="primary"
+-          type="submit"
+-          className="qc-button qc-flow-control qc-library-control w-full"
+-        >
+-          Create Template
+-        </button>
+-      </form>
+-    </QcLibrary>
+-  );
+-}
+--- baseline/app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx
++++ return/app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx
+@@ -1,6 +1,7 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+-import { useState } from 'react';
++import { useState, useRef, useId } from 'react';
+ import { useRouter } from 'next/navigation';
+ import Link from 'next/link';
+ import type { ComponentLibraryRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
+@@ -21,6 +22,10 @@
+ }
+ 
+ export function TemplateEditor({ workspaceSlug, template, componentLibrary, customerTemplates }: Props) {
++  const nameErrorId = useId();
++  const [nameError, setNameError] = useState('');
++  const nameRef = useRef<HTMLInputElement>(null);
++  const { notify, ask, feedback } = useQcFeedback();
+   const router = useRouter();
+ 
+   // Initialize with template data
+@@ -94,14 +99,13 @@
+ 
+   async function handleSave() {
+     if (!name.trim()) {
+-      alert('Template name is required');
++      setNameError('Enter a template name.');
++      nameRef.current?.focus();
+       return;
+     }
+ 
+     if (selectedComponents.length === 0 && selectedExtras.length === 0) {
+-      const confirmed = confirm(
+-        'You have not added any roof components or extras. Are you sure you want to continue?'
+-      );
++      const confirmed = await ask({ title: 'Save without components?', description: 'You have not added any roof components or extras. Are you sure you want to continue?', confirmLabel: 'Save template', cancelLabel: 'Keep editing' });
+       if (!confirmed) return;
+     }
+ 
+@@ -121,7 +125,7 @@
+       router.refresh();
+       router.push(`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-structure`);
+     } catch (err) {
+-      alert(err instanceof Error ? err.message : 'Failed to update template');
++      await notify(err instanceof Error ? err.message : 'Failed to update template');
+     } finally {
+       setSaving(false);
+     }
+@@ -129,6 +133,7 @@
+ 
+   return (
+     <QcLibrary className="qc-template-editor">
++      {feedback}
+       <div className="max-w-4xl mx-auto p-6 space-y-6">
+         {/* Header */}
+         <div className="flex items-center justify-between">
+@@ -158,14 +163,15 @@
+               <label className="block text-sm font-medium text-slate-700 mb-1">
+                 Template Name <span className="text-red-500">*</span>
+               </label>
+-              <input aria-label="Template Name"
++              <input aria-label="Template Name" ref={nameRef} aria-invalid={!!nameError} aria-describedby={nameError ? nameErrorId : undefined}
+                 type="text"
+                 value={name}
+-                onChange={(e) => setName(e.target.value)}
++                onChange={(e) => { setName(e.target.value); setNameError(''); }}
+                 placeholder="e.g., Standard Quote Template"
+                 className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                 required
+               />
++              {nameError && <p id={nameErrorId} className="qc-flow-error" role="alert">{nameError}</p>}
+             </div>
+ 
+             <div>
+--- baseline/app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx
++++ return/app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx
+@@ -199,7 +199,7 @@
+       ) : (
+         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
+           <p className="text-sm text-slate-500">
+-            {searchQuery ? 'No quotes match your search.' : 'No confirmed quotes found.'}
++            {searchQuery ? 'No quotes match your search.' : 'No non-draft quotes are available yet. Finish a quote, then return here to create an order.'}
+           </p>
+         </div>
+       )}
+--- baseline/app/(auth)/[workspaceSlug]/material-orders/order-from-quote/page.tsx
++++ return/app/(auth)/[workspaceSlug]/material-orders/order-from-quote/page.tsx
+@@ -31,12 +31,12 @@
+       <BackButton />
+       <div>
+         <h1 className="text-2xl font-semibold text-slate-900">Order from Quote</h1>
+-        <p className="text-sm text-slate-500 mt-1">Select a confirmed quote to create a material order.</p>
++        <p className="text-sm text-slate-500 mt-1">Choose a quote to create a material order. Draft quotes are not shown.</p>
+       </div>
+ 
+       {!quotes || quotes.length === 0 ? (
+         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
+-          <p className="text-sm text-slate-500">No confirmed quotes found.</p>
++          <p className="text-sm text-slate-500">No non-draft quotes are available yet. Finish a quote, then return here to create an order.</p>
+         </div>
+       ) : (
+         <QuoteSelector quotes={quotes} workspaceSlug={workspaceSlug} />
+--- baseline/app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx
++++ return/app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx
+@@ -1,4 +1,5 @@
+ 'use client';
++import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
+ 
+ import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+ import { useState } from 'react';
+@@ -50,6 +51,7 @@
+   userCollections: UserCollection[];
+   alreadyImportedIds: Set<string>;
+ }) {
++  const { notify, feedback } = useQcFeedback();
+   const router = useRouter();
+   const [selected, setSelected] = useState<Set<string>>(new Set());
+   const [collectionList, setCollectionList] = useState<UserCollection[]>(userCollections);
+@@ -135,10 +137,10 @@
+         setShowNewLibraryInput(false);
+         setNewLibraryName('');
+       } else {
+-        alert(result.message || 'Failed to create library');
++        await notify(result.message || 'Failed to create library');
+       }
+     } catch {
+-      alert('Failed to create library');
++      await notify('Failed to create library');
+     } finally {
+       setCreatingLibrary(false);
+     }
+@@ -150,6 +152,7 @@
+ 
+   return (
+     <QcLibrary className="qc-library-detail">
++      {feedback}
+       <div className="mx-auto max-w-4xl px-4 py-6">
+         {/* Breadcrumb */}
+         <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">

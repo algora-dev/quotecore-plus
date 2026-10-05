@@ -87,9 +87,9 @@ export const AI_COMPONENT_REGISTRY: Record<SemanticKey, AiComponentDefinition> =
     key: 'uncertain',
     displayName: 'Uncertain',
     systemName: 'uncertain',
-    colour: '#94A3B8', // slate-400
+    colour: '#EC4899', // pink - intentionally loud so uncertain lines stand out for manual review
     dashed: true,
-    badgeClasses: 'bg-slate-100 text-slate-500',
+    badgeClasses: 'bg-pink-100 text-pink-700',
   },
 };
 
@@ -120,14 +120,14 @@ export function resolveSemanticKey(componentName: string): SemanticKey | null {
  */
 export function buildSystemComponentIds(
   components: { id: string; name: string; is_system?: boolean }[],
-): Record<SemanticKey, string> {
+): Partial<Record<SemanticKey, string>> {
   const map: Partial<Record<SemanticKey, string>> = {};
   for (const comp of components) {
     if (!comp.is_system) continue;
     const key = resolveSemanticKey(comp.name);
-    if (key) map[key] = comp.id;
+    if (key && key !== 'uncertain') map[key] = comp.id;
   }
-  return map as Record<SemanticKey, string>;
+  return map;
 }
 
 /**
@@ -149,7 +149,7 @@ export function getLineOptions(key: SemanticKey): {
   const def = AI_COMPONENT_REGISTRY[key];
   const opts: { stroke: string; strokeWidth: number; strokeDashArray?: number[] } = {
     stroke: def.colour,
-    strokeWidth: 2,
+    strokeWidth: 2.6,
   };
   if (def.dashed) opts.strokeDashArray = SPOUTING_DASH_ARRAY;
   return opts;

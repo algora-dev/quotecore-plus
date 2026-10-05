@@ -1,4 +1,6 @@
 'use client';
+import '@/app/components/ui/v2/qc.css';
+import '@/app/components/ui/v2/qc-journeys.css';
 import { useState } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
 
@@ -32,10 +34,10 @@ export function GoogleSignInButton() {
   }
 
   return (
-    <button
+    <button data-qc-ui="v2" data-qc-variant="ghost"
       onClick={handleGoogleSignIn}
       disabled={loading}
-      className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white border-2 border-slate-300 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50"
+      className="qc-button qc-flow-control w-full flex items-center justify-center gap-3 px-6 py-3 bg-white border-2 border-slate-300 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50"
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">
         <path

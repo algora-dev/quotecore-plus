@@ -4,12 +4,63 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
 
-      <p><strong>Quick answer:</strong> Quoting software for contractors turns measurements, labour, and material prices into a professional, priced quote — without spreadsheets or re-typed numbers. For NZ tradies in 2026, the strongest options are QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact, and Xero Projects. This guide compares all six on pricing, features, and NZ-specific fit.</p>
+      <div className="not-prose mb-6 rounded-xl border border-zinc-200 bg-orange-50/40 px-4 py-3 text-sm text-zinc-800">
+        <strong className="font-semibold text-zinc-950">In New Zealand?</strong>{" "}
+        <a
+          href="https://www.quote-core.co.nz"
+          className="font-medium text-[#BD4A1A] underline underline-offset-2 hover:text-[#a03f16]"
+        >
+          QuoteCore+ NZ - NZD pricing, GST-inclusive quoting
+        </a>{" "}
+        built specifically for Kiwi tradies.
+      </div>
 
-      <p><em>Last checked: August 2026. Competitor pricing sourced from each provider's published NZD rates at time of writing.</em></p>
+      <p><strong>Quick answer:</strong> Quoting software for contractors turns measurements, labour, and material prices into a professional, priced quote - without spreadsheets or re-typed numbers. For NZ tradies in 2026, the strongest options are QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact, and Xero Projects. This guide compares all six on pricing, features, and NZ-specific fit.</p>
+
+      <p><em>Last updated: September 2026. Competitor pricing sourced from each provider's published NZD rates at time of writing - always check with the vendor for current pricing.</em></p>
 
       <p><em>Editorial note: This guide is published by QuoteCore+, so our own product appears in the comparison. We have listed where other tools may be a better fit, including for trade job scheduling, high-volume service work, detailed construction cost estimating, and businesses already embedded in Xero.</em></p>
       <p>This guide compares six quoting platforms available to NZ tradies in 2026, with honest assessments of where each one works well and where it falls short.</p>
+
+      <h2>At a glance: the six options compared</h2>
+      <div className="not-prose my-6">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-zinc-200 bg-zinc-50">
+              <th className="px-3 py-2 text-left font-semibold text-zinc-950 text-xs">Feature</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">QC+</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Tradify</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Fergus</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">ServiceM8</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Buildxact</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Xero</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {[
+              ["Starting price (NZD)", "Free - $59/mo", "~$49/mo", "~$49/mo", "~$39/mo", "~$149/mo", "Included"],
+              ["GST-ready (15%)", "✅", "✅", "✅", "✅", "✅", "✅"],
+              ["Roofing suitability", "✅ Strong", "Basic", "Basic", "Basic", "Builder-focused", "❌"],
+              ["Plan-based takeoff", "✅", "❌", "❌", "❌", "✅", "❌"],
+              ["Materials ordering from quote", "✅", "❌", "Basic", "❌", "✅", "❌"],
+              ["Invoicing", "✅", "✅", "✅", "✅", "✅", "✅"],
+              ["Job scheduling", "✅", "Strong", "Strong", "Strong", "Basic", "Basic"],
+              ["NZ-built / local presence", "✅", "✅", "✅", "AU/NZ", "AU", "NZ HQ"],
+              ["Free option", "✅ free tools", "Limited", "❌", "❌", "Limited", "Via Xero"],
+            ].map(([feature, ...values]) => (
+              <tr key={feature}>
+                <td className="px-3 py-2 font-medium text-zinc-800 text-xs">{feature}</td>
+                {values.map((v, i) => (
+                  <td key={i} className="px-3 py-2 text-zinc-600 text-center text-xs">{v}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-2 text-xs text-zinc-500">Cells marked ~ are approximate published rates - check with the vendor for current pricing and inclusions.</p>
+      </div>
+
+      <p><strong>How we assessed these tools:</strong> each platform was evaluated on NZD pricing with GST handling, plan-based takeoff and measurement support, suitability for roofing and measured trades, the quote-to-order-to-invoice workflow, and NZ-specific support. Where a vendor does not publish a figure or we could not verify a capability, we say so rather than guess. Note: this guide is published by QuoteCore+, so our own product appears in the comparison - we have flagged where other tools may fit better.</p>
 
       <hr />
 
@@ -41,7 +92,7 @@ export default function Post() {
               ["Workflow from quote to job", "Keep the accepted quote connected to the job - not buried in email"],
               ["Mobile-friendly", "Works on site, in a ute, not just at a desk"],
               ["GST-ready", "Handles NZ tax requirements natively"],
-              ["Free trial", "Low-risk way to test before committing"],
+              ["Free trial or money-back guarantee", "Low-risk way to test before committing"],
             ].map(([feature, why]) => (
               <tr key={feature}>
                 <td className="px-4 py-3 font-medium text-zinc-800">{feature}</td>
@@ -62,13 +113,13 @@ export default function Post() {
       <p><em>Best for: NZ tradespeople and construction contractors who quote from plans and need a complete workflow from measurement to job.</em></p>
       <p>QuoteCore+ is <Link href="/roofing-quoting-software">quoting software for contractors</Link> and <Link href="/construction-quoting-software">construction quoting software</Link> built specifically for tradespeople. Shaun, who leads the product, spent over 12 years on the tools in roofing before heading up the build of the platform - designed around the actual process a NZ tradesperson goes through from first measurement to completed job. <a href="/blog/built-by-a-roofer">Read the full story behind QuoteCore+</a>.</p>
       <p>That origin matters. QuoteCore+ was not designed in a tech office by a generalist product team. It was built by people who lived the problem - and that shows in how the workflow is structured.</p>
-      <p>The workflow starts with digital takeoff. You upload a set of plans - architectural drawings, council documents, or a PDF from a site manager - and measure directly from them in the platform. No printing. No transferring numbers between tools. Roof sections, floor areas, linear metres - measured once, used throughout.</p>
-      <p>QuoteCore+ offers <Link href="/features/ai-scan-assist">AI Scan Assist</Link> — upload a roof plan and AI identifies areas, ridges, hips, valleys, barges and spouting. You review and adjust before committing, so you stay in control of every measurement.</p>
+      <p>The workflow starts with digital takeoff. You upload a set of plans - architectural drawings, council documents, or a PDF from a site manager - and measure directly from them in the platform. Multi-page PDFs (like council-permitted plans) upload as-is: pick the page you need and it converts to an image for measuring. No printing. No transferring numbers between tools. Roof sections, floor areas, linear metres - measured once, used throughout.</p>
+      <p>QuoteCore+ offers <Link href="/features/ai-scan-assist">AI Scan Assist</Link> - upload a roof plan and AI identifies areas, ridges, hips, valleys, barges and spouting. You review and adjust before committing, so you stay in control of every measurement.</p>
       <p>From the takeoff, you build the quote. QuoteCore+ gives you full control over what the customer sees: line items, pricing, scope of work, and any specific conditions. Quotes are formatted professionally and ready to send. For tradies who have been emailing Word documents, the difference in how a quote lands is immediate.</p>
       <p>Once the quote is sent, acceptance tracking runs automatically. You get a notification when a customer views or accepts the quote. No more chasing phone calls asking whether they received it.</p>
       <p>From an accepted quote, you generate a materials order directly - including custom details for specific job requirements. The job then moves into workflow management: tracked from first measurement to job completion in one place.</p>
 
-      <p><strong>Pricing:</strong> QuoteCore+ publishes transparent pricing on its <Link href="/pricing">pricing page</Link>: a free Lite plan, paid plans from $19/month (Starter) and $39/month (Pro) up to $59/month (Pro Plus), and a 14-day free trial of all features with no credit card required. See how the plans compare side by side on the <Link href="/construction-quoting-software">construction quoting software hub</Link>.</p>
+      <p><strong>Pricing:</strong> QuoteCore+ publishes transparent pricing on its <Link href="/pricing">pricing page</Link>: a free Lite plan, paid plans from $19/month (Starter) and $39/month (Pro) up to $59/month (Pro Plus). The free tools need no signup, and every paid plan is backed by a 30-day money-back guarantee. See how the plans compare side by side on the <Link href="/construction-quoting-software">construction quoting software hub</Link>.</p>
 
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe
@@ -88,7 +139,7 @@ export default function Post() {
         <li>Professional quote output</li>
         <li>Quote acceptance notifications</li>
         <li>Works across construction trades - roofers, general builders, electricians, plumbers, and more</li>
-        <li>Free 14-day trial, no card required</li>
+        <li>Free tools with no signup; 30-day money-back guarantee on paid plans</li>
       </ul>
 
       <p><strong>Cons:</strong></p>
@@ -97,7 +148,7 @@ export default function Post() {
         <li>Newer platform - integration ecosystem still growing</li>
       </ul>
 
-      <p><a href="/free-trial">Start a free 14-day trial of QuoteCore+</a></p>
+      <p><a href="/free-trial">Get started with QuoteCore+</a></p>
 
       <p>QuoteCore+ also includes a <a href="/suppliers">supplier directory</a> where roofing and construction suppliers can publish their catalogues and get found by contractors and AI search:</p>
 
@@ -180,47 +231,6 @@ export default function Post() {
 
       <hr />
 
-      <h2>Comparison table</h2>
-
-      <div className="not-prose my-6">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-zinc-200 bg-zinc-50">
-              <th className="px-3 py-2 text-left font-semibold text-zinc-950 text-xs">Feature</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">QC+</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Tradify</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Fergus</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">ServiceM8</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Buildxact</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Xero</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {[
-              ["Plan-based takeoff", "✅", "❌", "❌", "❌", "✅", "❌"],
-              ["Trade-specific pricing", "✅", "Basic", "Basic", "Basic", "✅", "❌"],
-              ["Quote acceptance tracking", "✅", "✅", "✅", "✅", "✅", "Basic"],
-              ["Materials ordering", "✅", "❌", "Basic", "❌", "✅", "❌"],
-              ["Job scheduling", "✅", "Strong", "Strong", "Strong", "Basic", "Basic"],
-              ["Job costing", "Basic", "✅", "Strong", "Basic", "✅", "Basic"],
-              ["NZ-built", "✅", "✅", "✅", "❌", "❌", "NZ HQ"],
-              ["GST-ready", "✅", "✅", "✅", "✅", "✅", "✅"],
-              ["Starting price (NZD)", "Free–$59/mo", "~$49/mo", "~$49/mo", "~$39/mo", "~$149/mo", "Included"],
-              ["Free trial, no card", "✅ 14 days", "Limited", "❌", "❌", "Limited", "Via Xero"],
-            ].map(([feature, ...values]) => (
-              <tr key={feature}>
-                <td className="px-3 py-2 font-medium text-zinc-800 text-xs">{feature}</td>
-                {values.map((v, i) => (
-                  <td key={i} className="px-3 py-2 text-zinc-600 text-center text-xs">{v}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <hr />
-
       <h2>Which quoting software is right for your trade?</h2>
 
       <p><strong>Quoting from plans or architectural drawings:</strong> QuoteCore+ and Buildxact are the two options with real plan-based takeoff. QuoteCore+ is better suited to most trades; Buildxact is better suited to builders doing full construction estimates with detailed material schedules.</p>
@@ -241,7 +251,7 @@ export default function Post() {
       <p>The right option depends on your trade and workflow. QuoteCore+ is the strongest choice for tradies who quote from plans and need a complete workflow from measurement to job completion. Tradify and Fergus are strong for team management and job tracking. ServiceM8 works well for high-volume service trades.</p>
 
       <h3>Is there free quoting software for NZ tradies?</h3>
-      <p>QuoteCore+ offers a 14-day free trial with no credit card required. Tradify has a trial period. Most platforms on this list require a paid subscription - the cost is typically recovered in the first month through time saved on admin and faster quote turnaround.</p>
+      <p>QuoteCore+ has free tools with no signup, and paid plans from $19/month backed by a 30-day money-back guarantee. Tradify has a trial period. Most platforms on this list require a paid subscription - the cost is typically recovered in the first month through time saved on admin and faster quote turnaround.</p>
 
       <h3>How much does quoting software cost for NZ tradespeople?</h3>
       <p>Most quoting platforms for NZ tradies range from approximately $39 to $79 per month for a sole trader or small team. Buildxact starts higher at around $149/month due to its more complex feature set.</p>
@@ -264,7 +274,7 @@ export default function Post() {
       <hr />
 
       <h2>Try the free tools before you decide</h2>
-      <p>Not ready to commit to a platform yet? Start with the <Link href="/free-roofing-takeoff-builder">free roof takeoff builder</Link> — enter your roof measurements and get instant material quantities and indicative pricing. No signup, no card, no download. Then when you are ready for the full quoting workflow, <Link href="/free-trial">start a 14-day free trial of QuoteCore+</Link>.</p>
+      <p>Not ready to commit to a platform yet? Start with the <Link href="/free-roofing-takeoff-builder">free roof takeoff builder</Link> - enter your roof measurements and get instant material quantities and indicative pricing. No signup, no card, no download. Then when you are ready for the full quoting workflow, <Link href="/free-trial">get started with QuoteCore+</Link>.</p>
 
     </div>
   );

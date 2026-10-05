@@ -1,0 +1,110 @@
+// Supplier definition registry. Adding a supplier demo:
+//   1. Copy burton-roofing.ts -> <slug>.ts, change values + catalog.
+//   2. Import it here and add to SUPPLIER_DEFS.
+// Route: /supplier-pricing-tool/<slug> (default route = DEFAULT_SUPPLIER_SLAG).
+// The tool components never change - everything renders from the def.
+
+import { BURTON_ROOFING } from './burton-roofing';
+import { VERTEX_CLADDING } from './vertex-cladding';
+import { OAKLINE_FLOORING } from './oakline-flooring';
+import { APEX_ROOFING } from './apex-roofing';
+import { ROOFLINE_ROOFING } from './roofline-roofing';
+import { ROOFLINE_CLADDING } from './roofline-cladding';
+import type { SupplierProduct } from '../types';
+import type { Trade } from '../tradeConfig';
+
+/** Theme palette that drives the scoped CSS remap in the tool shell. */
+export interface SupplierTheme {
+  primary: string;
+  primaryHover: string;
+  accent: string;
+  accentHover: string;
+  border: string;
+  borderHover: string;
+  washAlpha: number;
+  glowAlpha: number;
+}
+
+export interface SupplierDefinition {
+  slug: string;
+  /** which trade this instance serves - drives the flow model
+   *  (roofing = groups + placeholder components, cladding/flooring =
+   *  parent areas). Defaults to roofing when omitted. */
+  trade?: Trade;
+  name: string;
+  tagline: string;
+  /** demo instance - shows "(demo)" labelling so nobody mistakes it for a
+   *  real company. All current suppliers in this tool are demos. */
+  demo?: boolean;
+  currency: string;
+  logoUrl: string | null;
+  logoDarkUrl: string | null;
+  brandColor: string;
+  /** optional explicit header background - defaults to brandColor. Used
+   *  when a supplier wants a black header but coloured accents elsewhere
+   *  (e.g. Roofline black header + red output accents). */
+  headerColor?: string;
+  /** render the header logo inside a white rounded box (dark-background
+   *  logos that would disappear on a dark header). */
+  logoWhiteBox?: boolean;
+  /** show " - demo only, not a real company" after the tagline (default
+   *  true). False for demos of REAL companies (e.g. Roofline Canterbury). */
+  demoDisclaimer?: boolean;
+  /** colour of the indicative lines in the guide-me vector diagrams.
+   *  Defaults to blue. Set per supplier when the theme colour stands out
+   *  on white (skip it for light colours that won't read). */
+  guideLineColor?: string;
+  /** plain-language name of that colour, used in the supporting text
+   *  ("indicated in red") so the copy always matches the diagram. */
+  guideLineColorName?: string;
+  theme: SupplierTheme;
+  poweredBy: boolean;
+  discountPct: number;
+  tradeRequiresLogin: boolean;
+  features: {
+    login: boolean;
+    adminPanel: boolean;
+    quoteCoreConnect: boolean;
+    convertToQuote: boolean;
+    emailCapture: boolean;
+    /** supply-mode choice at flow start (supply only vs supply + install) */
+    pricingMode: boolean;
+  };
+  products: SupplierProduct[];
+  /** external endpoint overrides - defaults are same-origin relative paths.
+   *  Set absolute URLs (e.g. https://www.quote-core.com/...) when the tool
+   *  is embedded on another domain (T3 Labs port). */
+  urls?: {
+    signup?: string;
+    draftsApi?: string;
+    enquiryApi?: string;
+  };
+  /** where "Start a new job" / restart sends the user. Defaults to an
+   *  in-place flow reset; set it for dual-trade brands (Roofline) so a
+   *  restart lands on the trade-choice page instead of the current trade. */
+  restartUrl?: string;
+}
+
+/** Restart target for a supplier slug (undefined = reset in place). */
+export function getRestartUrl(slug: string | undefined | null): string | undefined {
+  return SUPPLIER_DEFS.find(d => d.slug === slug)?.restartUrl;
+}
+
+export const SUPPLIER_DEFS: SupplierDefinition[] = [
+  APEX_ROOFING as unknown as SupplierDefinition,
+  BURTON_ROOFING as unknown as SupplierDefinition,
+  VERTEX_CLADDING as unknown as SupplierDefinition,
+  OAKLINE_FLOORING as unknown as SupplierDefinition,
+  ROOFLINE_ROOFING as unknown as SupplierDefinition,
+  ROOFLINE_CLADDING as unknown as SupplierDefinition,
+];
+
+export const DEFAULT_SUPPLIER_SLUG = 'burton-roofing';
+
+export function getSupplierDef(slug: string | undefined | null): SupplierDefinition {
+  return SUPPLIER_DEFS.find(d => d.slug === slug) ?? SUPPLIER_DEFS.find(d => d.slug === DEFAULT_SUPPLIER_SLUG)!;
+}
+
+export function supplierExists(slug: string): boolean {
+  return SUPPLIER_DEFS.some(d => d.slug === slug);
+}

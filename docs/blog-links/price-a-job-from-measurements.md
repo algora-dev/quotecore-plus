@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/price-a-job-from-measurements.tsx`
 
-## Outbound internal links (8)
+## Outbound internal links (7)
 
 ### Blog articles (1)
 
@@ -10,11 +10,10 @@ Source: `app/(marketing)/blog/[slug]/content/price-a-job-from-measurements.tsx`
 |---|---|
 | /blog/construction-estimating-spreadsheet-alternative | our guide to moving on from an estimating spreadsheet |
 
-### Free tools (4)
+### Free tools (3)
 
 | Destination | Anchor |
 |---|---|
-| /free-smart-component-creator | Catalog-to-Component Converter |
 | /free-quote-generator | Free Quote Generator |
 | /free-quote-generator | Free Quote Generator |
 | /free-margin-calculator | free margin calculator |
@@ -27,11 +26,10 @@ Source: `app/(marketing)/blog/[slug]/content/price-a-job-from-measurements.tsx`
 | /measurement-to-quote-tool | free Measurement-to-Quote Tool |
 | /measurement-to-quote-tool | free tool here |
 
-## Inbound in-article links (2)
+## Inbound in-article links (1)
 
 | From | Anchor used |
 |---|---|
-| /blog/construction-estimating-spreadsheet-alternative | See the full measurements-to-pricing example → |
-| /blog/construction-estimating-spreadsheet-alternative | See how to price a job from your measurements |
+| /blog/construction-estimating-spreadsheet-alternative | See the measurements-to-pricing example |
 
 External links in source: 0

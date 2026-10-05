@@ -91,7 +91,7 @@ export default function EarlyAccessPopup({ forceOpen, onClose }: Props = {}) {
         <div className="relative hidden min-h-[410px] overflow-hidden bg-[radial-gradient(circle_at_85%_24%,rgba(255,255,255,0.18),transparent_28%),linear-gradient(160deg,#ff965a_0%,#ff6b35_45%,#ff4f25_100%)] px-8 py-7 text-white md:flex md:flex-col">
           <div className="flex items-center">
             <img
-              src="/MainQCP.png"
+              src="/logo.png"
               alt="QuoteCore+"
               className="h-10 w-auto brightness-0 invert"
             />

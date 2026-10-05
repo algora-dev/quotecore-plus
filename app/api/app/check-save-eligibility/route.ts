@@ -78,7 +78,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckResponse
     .eq('id', companyId)
     .maybeSingle();
 
-  // Check subscription is active
+  // Check subscription is active ('trialing' is a legacy DB status kept for
+  // comped accounts; it still grants access).
   const activeStatuses = ['active', 'trialing'];
   if (!activeStatuses.includes(company?.subscription_status)) {
     return NextResponse.json({

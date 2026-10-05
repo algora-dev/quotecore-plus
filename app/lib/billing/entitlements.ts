@@ -171,7 +171,7 @@ export interface CompanyEntitlements {
 
   /**
    * Timestamps the UI needs for banners / countdowns. Nullable when not set
-   * (e.g. trial_ends_at is null for a paying customer).
+   * (e.g. trial_ends_at, a legacy DB column, is null for most customers).
    */
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
@@ -349,7 +349,7 @@ export const loadCompanyEntitlements = cache(
     const componentLimit = plan.component_limit;
 
     // Lazy reconciliation: if the company has more active components than
-    // their plan allows (e.g. trial just expired, or cron hasn't run yet),
+    // their plan allows (e.g. legacy trial expired, or cron hasn't run yet),
     // reconcile immediately so enforcement is consistent.
     if (componentLimit !== null && componentCount > componentLimit) {
       try {

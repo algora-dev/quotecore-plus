@@ -1,6 +1,8 @@
 'use client';
+import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 import { useState } from 'react';
 import { PitchInput } from '@/app/components/PitchInput';
+import { RoofPitchEstimatorModal } from './RoofPitchEstimatorModal';
 
 export function AreaNameModal({
   isRoofing,
@@ -26,6 +28,7 @@ export function AreaNameModal({
 }) {
   const [name, setName] = useState(initialName);
   const [pitchDegrees, setPitchDegrees] = useState<number | null>(null);
+  const [showPitchEstimator, setShowPitchEstimator] = useState(false);
 
   // P1-1b: when initialName is pre-filled (new-page mode), name is locked -
   // only pitch is needed from the user.
@@ -37,9 +40,9 @@ export function AreaNameModal({
       // Component area - no pitch needed
       onSave('');
     } else if (isRoofing) {
-      // Roof area - require pitch; name comes from pre-fill or input
+      // Roof area - pitch is optional (0°/flat is valid); name comes from pre-fill or input
       const effectiveName = nameIsLocked ? initialName : name.trim();
-      if (effectiveName && (pitchDegrees != null || nameIsLocked)) {
+      if (effectiveName) {
         onSave(effectiveName, pitchDegrees ?? 0);
       }
     } else {
@@ -52,8 +55,11 @@ export function AreaNameModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-96 border border-gray-200">
+    // Modeless (desktop, owner 2026-09-26): a floating draggable card - the
+    // plan/canvas behind stays fully interactive (pan/zoom to check the area
+    // just drawn). The touch scope keeps the original overlay presentation.
+    <QcHostedDialog label="Area details" modeless size="md" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-4 w-full border border-slate-200 shadow-xl">
         <h2 className="text-xl font-semibold mb-4">
           {componentName ? 'Add Area to Component' : (modalTitle ?? (isRoofing ? 'Create Roof Area' : 'Create Area'))}
         </h2>
@@ -62,7 +68,7 @@ export function AreaNameModal({
           <div className="mb-4 p-3 bg-blue-50 border border-blue-300 rounded-lg-lg">
             <div className="text-sm text-gray-600 mb-1">Component:</div>
             <div className="font-semibold">{componentName}</div>
-            <div className="text-2xl font-bold text-blue-400 mt-2">
+            <div className="text-2xl font-bold text-[#FF6B35] mt-2">
               {calculatedArea.toFixed(2)} sq {unit}
             </div>
           </div>
@@ -80,7 +86,7 @@ export function AreaNameModal({
               ) : (
                 <div>
                   <label className="block text-sm mb-2">Area Name <span className="text-red-400">*</span></label>
-                  <input
+                  <input aria-label="Area name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -93,14 +99,24 @@ export function AreaNameModal({
               )}
               {isRoofing && (
                 <>
-                  <PitchInput
-                    degrees={pitchDegrees}
-                    onSave={setPitchDegrees}
-                    label="Roof Pitch"
-                    required={!nameIsLocked}
-                    autoFocus={nameIsLocked}
-                    className="block"
-                  />
+                  <div className="flex items-end gap-2">
+                    <PitchInput
+                      degrees={pitchDegrees}
+                      onSave={setPitchDegrees}
+                      label="Roof Pitch"
+                      className="block"
+                      autoFocus={nameIsLocked}
+                    />
+                    <QcHostedButton variant="ghost"
+                      type="button"
+                      onClick={() => setShowPitchEstimator(true)}
+                      className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/40 transition mb-0.5"
+                      title="Estimate roof pitch from a photo"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                      Pitch Finder
+                    </QcHostedButton>
+                  </div>
                   <p className="text-xs text-gray-600 -mt-2">
                     Used to calculate component lengths (rafters, hips, valleys)
                   </p>
@@ -124,24 +140,30 @@ export function AreaNameModal({
             </>
           )}
           <div className="flex gap-2 justify-end">
-            <button
+            <QcHostedButton variant="ghost"
               type="button"
               onClick={onCancel}
               className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full pill-shimmer"
             >
               Cancel
-            </button>
-            <button
+            </QcHostedButton>
+            <QcHostedButton variant="secondary"
               type="submit"
               className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              disabled={!componentName && !nameIsLocked && (!name.trim() || (isRoofing && pitchDegrees == null))}
+              disabled={!componentName && !nameIsLocked && !name.trim()}
             >
               {componentName ? 'Add to Component' : isRoofing ? 'Create Roof Area' : 'Create Area'}
-            </button>
+            </QcHostedButton>
           </div>
         </form>
       </div>
-    </div>
+      {showPitchEstimator && (
+        <RoofPitchEstimatorModal
+          onClose={() => setShowPitchEstimator(false)}
+          onApply={(deg) => { setPitchDegrees(deg); setShowPitchEstimator(false); }}
+        />
+      )}
+    </QcHostedDialog>
   );
 }
 

@@ -23,11 +23,16 @@ import { getSupplierDirectory, TEST_SUPPLIER_SLUGS } from '@/lib/supplier-direct
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${SITE_URL}/research/google-earth-roof-measurement-accuracy`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/research`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${SITE_URL}/integrations/xero`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/blog`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${SITE_URL}/roofing-quoting-software`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/roofing-estimating-software`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/roofing-takeoff-software`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/construction-quoting-software`, changeFrequency: 'monthly', priority: 0.9 },
+  { url: `${SITE_URL}/construction-takeoff-software`, changeFrequency: 'monthly', priority: 0.9 },
+  { url: `${SITE_URL}/free-construction-takeoff-tools`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/roofsnap-alternative`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/eagleview-alternative`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/planswift-alternative`, changeFrequency: 'monthly', priority: 0.8 },
@@ -38,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   { url: `${SITE_URL}/roof-measurement-cost-comparison`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/pricing`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/affiliate-program`, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/careers`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/affiliate-program-terms`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/services`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/about`, changeFrequency: 'yearly', priority: 0.5 },
@@ -54,6 +60,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/takeoff-demo`, changeFrequency: 'monthly', priority: 0.8 },
     // Free roof takeoff tool (upload your own plan)
     { url: `${SITE_URL}/free-roof-takeoff`, changeFrequency: 'monthly', priority: 0.8 },
+    // Free wall & cladding takeoff tool (upload your own plan)
+    { url: `${SITE_URL}/free-cladding-takeoff`, changeFrequency: 'monthly', priority: 0.8 },
+    // Free flooring takeoff tool (upload your own plan)
+    { url: `${SITE_URL}/free-flooring-takeoff`, changeFrequency: 'monthly', priority: 0.8 },
     // Resource hubs
     { url: `${SITE_URL}/resources/roofing-estimating`, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/resources/construction-quoting`, changeFrequency: 'weekly', priority: 0.7 },
@@ -64,7 +74,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/resources/ai`, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/tutorials`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/contact`, changeFrequency: 'yearly', priority: 0.5 },
-    { url: `${SITE_URL}/free-trial`, changeFrequency: 'monthly', priority: 0.9 },
+  { url: `${SITE_URL}/done-for-you-setup`, changeFrequency: 'monthly', priority: 0.8 },
+  { url: `${SITE_URL}/custom-solutions`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/suppliers`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${SITE_URL}/suppliers-info`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/trust`, changeFrequency: 'monthly', priority: 0.6 },

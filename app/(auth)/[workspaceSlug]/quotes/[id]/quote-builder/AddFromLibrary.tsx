@@ -1,4 +1,7 @@
-import { useState } from 'react';
+'use client';
+import { useState, useId } from 'react';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcSelect } from '@/app/components/ui/v2/QcField';
 import type { ComponentLibraryRow, MeasurementSystem } from '@/app/lib/types';
 import { measurementTypeLabel } from '@/app/lib/types';
 
@@ -18,9 +21,13 @@ export function AddFromLibrary({
   measurementSystem: MeasurementSystem;
 }) {
   const [sel, setSel] = useState('');
+  const selectId = useId();
   return (
-    <div className="flex gap-2" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
-      <select
+    <div className="qb-library" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
+      <label htmlFor={selectId} className="qc-label">Add from your pricing library</label>
+      <div className="qb-inline-form">
+      <QcSelect
+        id={selectId}
         value={sel}
         onChange={e => {
           const val = e.target.value;
@@ -31,19 +38,19 @@ export function AddFromLibrary({
             setSel(val);
           }
         }}
-        className="flex-1 px-2 py-1 text-xs border border-slate-300 rounded"
+        className="qb-grow"
       >
-        <option value="">Add from library...</option>
+        <option value="">Choose a Smart Component...</option>
         {onCreateNew && (
-          <option value={CREATE_NEW_COMPONENT_ID} style={{ color: '#FF6B35', fontWeight: 600 }}>+ Create new Smart Component™</option>
+          <option value={CREATE_NEW_COMPONENT_ID}>+ Create new Smart Component™</option>
         )}
         {library.map(c => (
           <option key={c.id} value={c.id}>
             {c.name} ({measurementTypeLabel(c.measurement_type as any, measurementSystem)})
           </option>
         ))}
-      </select>
-      <button
+      </QcSelect>
+      <QcButton
         onClick={() => {
           if (sel) {
             onAdd(sel);
@@ -52,10 +59,13 @@ export function AddFromLibrary({
         }}
         disabled={!sel}
         data-copilot={copilotId ? `${copilotId}-add-btn` : undefined}
-        className="px-3 py-1 text-xs rounded-full bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)] disabled:hover:bg-orange-500 disabled:hover:shadow-none"
+        variant="ghost"
       >
-        +
-      </button>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" d="M12 5v14M5 12h14" /></svg>
+        Add component
+      </QcButton>
+      </div>
+      {library.length === 0 && <p className="qc-help">No saved components in this list.{onCreateNew ? ' Choose Create new Smart Component in the menu to add one.' : ''}</p>}
     </div>
   );
 }

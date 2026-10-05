@@ -1,0 +1,787 @@
+{
+  "method": "Syntax-normalized external action/helper/request/navigation call targets and arguments. Does not prove provider behavior or event ordering; canonical diff and runtime checklist cover those separately.",
+  "reports": [
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx",
+      "passed": true,
+      "calls": 4
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+      "passed": true,
+      "calls": 7
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "passed": true,
+      "calls": 12
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "passed": true,
+      "calls": 10
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/page.tsx",
+      "passed": true,
+      "calls": 2
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx",
+      "passed": true,
+      "calls": 3
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplatesList.tsx",
+      "passed": true,
+      "calls": 1
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "passed": true,
+      "calls": 13
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "passed": true,
+      "calls": 11
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-form.tsx",
+      "passed": true,
+      "calls": 1
+    },
+    {
+      "file": "app/components/ui/v2/useQcFeedback.tsx",
+      "passed": true,
+      "calls": 0
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "passed": true,
+      "calls": 10
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx",
+      "passed": true,
+      "calls": 1
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+      "passed": true,
+      "calls": 3
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+      "passed": true,
+      "calls": 4
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/new/page.tsx",
+      "passed": true,
+      "authorizedException": "Old orphan inline create action replaced with library redirect."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "passed": true,
+      "calls": 16
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx",
+      "passed": true,
+      "calls": 3
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "passed": true,
+      "calls": 11
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+      "passed": true,
+      "calls": 3
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "passed": true,
+      "calls": 11
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx",
+      "passed": true,
+      "calls": 3
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/EditCustomerTemplateModal.tsx",
+      "passed": true,
+      "calls": 1
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
+      "passed": true,
+      "calls": 2
+    }
+  ],
+  "callInventory": [
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx",
+      "target": "./template-actions::createOrderTemplate",
+      "args": "input"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx",
+      "target": "./template-actions::deleteOrderTemplate",
+      "args": "id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx",
+      "target": "./template-actions::updateOrderTemplate",
+      "args": "id, input"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx",
+      "target": "fetch",
+      "args": "'/api/upload-logo', {\n    method: 'POST',\n    body: formData,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+      "target": "./actions::deleteCustomerQuoteTemplate",
+      "args": "pendingDeleteId"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+      "target": "./actions::deleteTemplate",
+      "args": "pendingDeleteId"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+      "target": "./email-actions::deleteEmailTemplate",
+      "args": "pendingDeleteId"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "./actions::archiveCatalog",
+      "args": "archiveTarget.id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "./actions::deleteCatalog",
+      "args": "deleteTarget.id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "./actions::unarchiveCatalog",
+      "args": "catalog.id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "fetch",
+      "args": "'/api/supplier-directory/save-catalog', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ catalogId }),\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "target": "router.replace",
+      "args": "`/${workspaceSlug}/catalogs`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "target": "./actions::createQuoteWithDetails",
+      "args": "{\n    customerName: customerName.trim(),\n    jobName: jobName.trim() || null,\n    templateId: templateId || null,\n    entryMode,\n    measurementSystem,\n    ...(genericTradesEnabled && selectedTrade ? { trade: selectedTrade as 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction' } : {}),\n    ...(genericTradesEnabled && selectedCollectionId ? { componentCollectionId: selectedCollectionId } : {}),\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "target": "@/app/lib/files/signed-upload::mintQuoteDocumentUploadUrl",
+      "args": "{\n    scope: { kind: 'pending' },\n    filename: file.name,\n    contentType: file.type || 'application/octet-stream',\n    claimedSize: file.size,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "target": "@/app/lib/files/storage-actions::saveFileMetadata",
+      "args": "{\n    companyId,\n    quoteId,\n    fileType: 'plan',\n    fileName: pendingFile.fileName,\n    fileSize: pendingFile.fileSize,\n    mimeType: pendingFile.mimeType,\n    storagePath: finalPath,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "target": "@/app/lib/supabase/client::createClient",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "target": "@/app/lib/supabase/client::createClient",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/quotes/${quoteId}/blank-build`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/quotes/${quoteId}/takeoff`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/quotes/${quoteId}`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "target": "supabase.storage.from('QUOTE-DOCUMENTS').move",
+      "args": "pendingFile.tempPath, finalPath"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/page.tsx",
+      "target": "@/app/lib/supabase/server::createSupabaseServerClient",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/page.tsx",
+      "target": "@/app/lib/supabase/server::requireCompanyContext",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx",
+      "target": "./actions::saveQuoteAsTemplate",
+      "args": "{\n    quoteId: quote.id,\n    name: templateName,\n    companyName,\n    companyAddress,\n    companyPhone,\n    companyEmail,\n    footerText,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplatesList.tsx",
+      "target": "@/app/(auth)/[workspaceSlug]/invoices/template-actions::deleteInvoiceTemplate",
+      "args": "confirmDeleteId"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "./actions-bulk::bulkDeleteInvoices",
+      "args": "ids"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "./actions-bulk::loadInvoiceBundleData",
+      "args": "id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "./actions::cancelInvoice",
+      "args": "invoice.id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "./actions::deleteInvoice",
+      "args": "invoice.id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "./actions::updateInvoiceStatus",
+      "args": "invoiceId, newStatus"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "./lib/invoice-bundle::addInvoiceToZip",
+      "args": "zip, data"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "./lib/invoice-bundle::downloadBlob",
+      "args": "blob, zipName"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "./lib/invoice-bundle::sanitizeFilename",
+      "args": "[inv?.invoice_number ?? 'Invoice', inv?.customer_name ?? ''].filter(Boolean).join('-')"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "@/app/lib/currency/currencies::formatCurrency",
+      "args": "inv.total ?? 0, inv.currency ?? 'GBP'"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/invoices/${inv.id}`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "./actions-bulk::bulkDeleteOrders",
+      "args": "ids"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "./actions-bulk::loadOrderBundleData",
+      "args": "id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "./lib/order-bundle::addOrderToZip",
+      "args": "zip, data"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "./lib/order-bundle::downloadBlob",
+      "args": "blob, zipName"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "./lib/order-bundle::sanitizeFilename",
+      "args": "[o?.order_number ?? 'Order', supplier].filter(Boolean).join('-')"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "./order-list-actions::deleteOrder",
+      "args": "deleteId"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "./order-list-actions::updateOrderStatus",
+      "args": "orderId, newStatus"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/material-orders/${order.id}/preview`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-form.tsx",
+      "target": "fetch",
+      "args": "'/api/upload-logo', {\n    method: 'POST',\n    body: formData,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "target": "./mfa-actions::markMfaRequiredAfterEnroll",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "target": "./mfa-actions::setMfaRequired",
+      "args": "next"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "target": "./mfa-actions::unenrollMfaFactor",
+      "args": "pendingUnenroll.id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "target": "./recovery-actions::generateRecoveryCodes",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "target": "@/app/lib/supabase/client::createClient",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/material-orders/order-from-quote/${selectedQuote.id}?layout=${layout}${columnParam}`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+      "target": "../actions::createTemplate",
+      "args": "{\n    name,\n    description,\n    roofingProfile,\n    components: selectedComponents.map(c => ({ libraryId: c.libraryId, type: c.type })),\n    extras: selectedExtras.map(e => ({ libraryId: e.libraryId, type: e.type })),\n    customerTemplateId,\n    notes,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-structure`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+      "target": "./actions::updateCustomerQuoteTemplate",
+      "args": "template.id, {\n    name: templateName,\n    companyName,\n    companyAddress,\n    companyPhone,\n    companyEmail,\n    footerText,\n    companyLogoUrl: logoUrl,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+      "target": "@/app/lib/supabase/client::createClient",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-header`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "./actions-bulk::beginBulkDownload",
+      "args": "ids"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "./actions-bulk::bulkDeleteQuotes",
+      "args": "ids"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "./actions-bulk::finishBulkDownloadAudit",
+      "args": "auditId, 'error', 0, failures.length, failures.length > 0 ? failures.slice(0, 5).join('; ') : 'no quotes exported'"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "./actions-bulk::finishBulkDownloadAudit",
+      "args": "auditId, failures.length > 0 ? 'partial' : 'success', succeeded, failures.length, failures.length > 0 ? failures.slice(0, 5).join('; ') : undefined"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "./actions-bulk::loadQuoteBundleData",
+      "args": "id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "./actions::deleteQuote",
+      "args": "deleteId"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "./actions::updateQuoteJobStatus",
+      "args": "quoteId, newStatus as JobStatus"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "./lib/quote-bundle::addQuoteToZip",
+      "args": "zip, data"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "./lib/quote-bundle::downloadBlob",
+      "args": "blob, zipName"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "./lib/quote-bundle::sanitizeFilename",
+      "args": "q.customer_name"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/quotes/${q.id}/summary`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/quotes/${q.id}`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx",
+      "target": "../../../components/actions::createComponentCollection",
+      "args": "newLibraryName.trim()"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx",
+      "target": "fetch",
+      "args": "'/api/supplier-import', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n        sourceLibraryId: library.id,\n        targetCollectionId: targetCollection,\n        componentIds: [...selected],\n        alertsEnabled,\n    }),\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "../components/actions::deleteComponentCollection",
+      "args": "id"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "../components/actions::renameComponentCollection",
+      "args": "id, renameValue"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "./actions::checkPublicationReadiness",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "./actions::previewPublicProfile",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "./actions::publishCatalogUpdate",
+      "args": "catalogId"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "./actions::updateSupplierProfile",
+      "args": "{\n    website_url: websiteUrl.trim() || null, contact_email: contactEmail.trim() || null,\n    phone_number: phoneNumber.trim() || null, description: description.trim() || null,\n    service_areas: serviceAreas.split(',').map(s => s.trim()).filter(Boolean),\n    roofing_types: roofingTypes, allow_custom_pricing: allowCustomPricing,\n    branch_city: branchCity.trim() || null, branch_region: branchRegion.trim() || null,\n    branch_country: branchCountry || null, branch_postcode: branchPostcode.trim() || null,\n    logo_url: logoUrl || null, banner_url: bannerUrl || null,\n    price_list_url: priceListUrl || null, price_list_filename: priceListFilename || null,\n    price_list_uploaded_at: priceListUploadedAt || null, price_list_content_type: null,\n    price_list_includes_tax: priceListIncludesTax,\n    tax_treatment: taxTreatment,\n    tax_name: taxTreatment === 'inclusive' ? (taxName.trim() || null) : null,\n    tax_rate: taxTreatment === 'inclusive' ? (parseFloat(taxRate) || null) : null,\n    delivery_coverage: deliveryCoverage.length > 0 ? deliveryCoverage : null,\n    delivery_assumptions: deliveryAssumptions.trim() || null,\n    exclusions: exclusions.trim() || null,\n    national_coverage: nationalCoverage,\n    address_visibility: addressVisibility,\n    branch_latitude: branchLatitude.trim() ? parseFloat(branchLatitude) || null : null,\n    branch_longitude: branchLongitude.trim() ? parseFloat(branchLongitude) || null : null,\n    opening_hours: openingHoursJson.trim() ? (() => { try {\n        return JSON.parse(openingHoursJson);\n    }\n    catch {\n        return null;\n    } })() : null,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "./actions::updateSupplierVisibility",
+      "args": "{\n    public_page_enabled: pubPageEnabled, search_indexing_enabled: pubIndexingEnabled,\n    public_catalogue_enabled: pubCatalogueEnabled, public_price_visibility: pubPriceVisibility,\n    public_contact_visibility: pubContactVisibility,\n    publication_state: pubState as 'unready' | 'ready' | 'published' | 'unlisted',\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "./actions::updateTakeoffBuilderSettings",
+      "args": "{\n    takeoff_builder_enabled: takeoffEnabled, default_takeoff_collection_id: takeoffCollectionId,\n    enquiry_email: takeoffEnquiryEmail.trim() || null, enquiries_enabled: takeoffEnquiriesEnabled,\n    instant_pricing_available: takeoffInstantPricing,\n    takeoff_library_includes_tax: takeoffLibraryIncludesTax,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "fetch",
+      "args": "'/api/supplier-publish-update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ libraryId }) }"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "fetch",
+      "args": "'/api/supplier-upload', { method: 'POST', body: formData }"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "target": "fetch",
+      "args": "`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(parts)}&limit=1`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+      "target": "./template-actions::createOrderTemplate",
+      "args": "input"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+      "target": "./template-actions::deleteOrderTemplate",
+      "args": "deleteTemplateId"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+      "target": "./template-actions::updateOrderTemplate",
+      "args": "editingTemplate.id, input"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "../drawings/actions::loadFlashingLibrary",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "./actions::createComponent",
+      "args": "inputWithGenericTrades"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "./actions::createComponentCollection",
+      "args": "newLibraryName"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "./actions::deleteComponent",
+      "args": "deleteCompId"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "./actions::deleteComponentCollection",
+      "args": "deletingLibraryId"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "./actions::dismissComponentEditWarning",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "./actions::renameComponentCollection",
+      "args": "renamingLibraryId, renameValue"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "./actions::setComponentActive",
+      "args": "compId, nextActive"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "./actions::updateComponent",
+      "args": "id, input"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "@/app/lib/measurements/displayHelpers::getUnitLabel",
+      "args": "mt as 'area' | 'lineal' | 'quantity' | 'fixed', companyMeasurementSystem"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "target": "@/app/lib/trades/labels::getTradeLabels",
+      "args": "companyDefaultTrade"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx",
+      "target": "../../actions::updateTemplate",
+      "args": "template.id, {\n    name,\n    description,\n    roofingProfile,\n    components: selectedComponents.map(c => ({ libraryId: c.libraryId, type: c.type })),\n    extras: selectedExtras.map(e => ({ libraryId: e.libraryId, type: e.type })),\n    customerTemplateId,\n    notes,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx",
+      "target": "router.push",
+      "args": "`/${workspaceSlug}/resources/document-templates?type=quote&kind=quote-structure`"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx",
+      "target": "router.refresh",
+      "args": ""
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/EditCustomerTemplateModal.tsx",
+      "target": "./actions::updateCustomerQuoteTemplate",
+      "args": "template.id, {\n    name,\n    companyName,\n    companyAddress,\n    companyPhone,\n    companyEmail,\n    companyLogoUrl,\n    footerText,\n}"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
+      "target": "./security-questions-actions::deleteSecurityQuestion",
+      "args": "slot"
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
+      "target": "./security-questions-actions::upsertSecurityQuestion",
+      "args": "{ slot, question: finalQuestion, answer }"
+    }
+  ]
+}

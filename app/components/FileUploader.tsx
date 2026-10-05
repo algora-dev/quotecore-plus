@@ -1,10 +1,16 @@
 'use client';
 import { useState, useRef } from 'react';
+import './ui/v2/qc.css';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 
 interface Props {
+  /** Phase-scoped styling. Existing consumers keep their current presentation. */
+  appearance?: 'v2';
   accept?: string;
   maxSize?: number; // bytes
+  /** Higher limit for PDFs - the page picker converts them to a PNG client-side,
+   *  so a large multi-page PDF is fine as long as the chosen page converts small. */
+  pdfMaxSize?: number; // bytes
   onUpload: (file: File) => Promise<void>;
   currentFileUrl?: string | null;
   label?: string;
@@ -16,8 +22,10 @@ interface Props {
 }
 
 export function FileUploader({
+  appearance,
   accept = 'image/*',
   maxSize = 2097152, // 2 MB default
+  pdfMaxSize,
   onUpload,
   currentFileUrl,
   label = 'Upload File',
@@ -30,9 +38,18 @@ export function FileUploader({
   const [storageBlocked, setStorageBlocked] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  function isPdf(file: File) {
+    return file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  }
+
+  function effectiveMaxSize(file: File) {
+    return isPdf(file) && pdfMaxSize ? pdfMaxSize : maxSize;
+  }
+
   function validateFile(file: File): string | null {
-    if (maxSize && file.size > maxSize) {
-      const maxMB = (maxSize / 1024 / 1024).toFixed(1);
+    const max = effectiveMaxSize(file);
+    if (max && file.size > max) {
+      const maxMB = (max / 1024 / 1024).toFixed(0);
       return `File too large. Max size: ${maxMB} MB`;
     }
 
@@ -81,7 +98,7 @@ export function FileUploader({
   }
 
   return (
-    <div className="space-y-3">
+    <div data-qc-ui={appearance} className={appearance === 'v2' ? 'qc-upload' : 'space-y-3'}>
       {/* Current file preview */}
       {currentFileUrl && (
         <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
@@ -104,7 +121,19 @@ export function FileUploader({
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         onClick={() => { if (isOverStorage) { setStorageBlocked(true); return; } inputRef.current?.click(); }}
-        className={`
+        role={appearance === 'v2' ? 'button' : undefined}
+        tabIndex={appearance === 'v2' ? 0 : undefined}
+        aria-label={appearance === 'v2' ? label : undefined}
+        aria-disabled={appearance === 'v2' ? uploading : undefined}
+        aria-busy={appearance === 'v2' ? uploading : undefined}
+        onKeyDown={appearance === 'v2' ? (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          if (uploading) return;
+          if (isOverStorage) { setStorageBlocked(true); return; }
+          inputRef.current?.click();
+        } : undefined}
+        className={appearance === 'v2' ? `qc-upload-zone ${isDragging ? 'qc-upload-dragging' : ''} ${uploading ? 'qc-upload-pending' : ''}` : `
           relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition
           ${isDragging ? 'border-orange-500 bg-blue-50' : 'border-slate-300 hover:border-slate-400 bg-white'}
           ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
@@ -134,7 +163,7 @@ export function FileUploader({
                 <p className="text-sm font-medium text-slate-700">{label}</p>
                 <p className="text-xs text-slate-500">{description}</p>
                 <p className="text-xs text-slate-400 mt-1">
-                  Max size: {(maxSize / 1024 / 1024).toFixed(1)} MB
+                  Max size: {(effectiveMaxSize({ type: '', name: 'x' } as File) / 1024 / 1024).toFixed(0)} MB{pdfMaxSize ? ` (${(pdfMaxSize / 1024 / 1024).toFixed(0)} MB for PDFs)` : ''}
                 </p>
               </div>
             </>
@@ -144,7 +173,7 @@ export function FileUploader({
 
       {/* Error message */}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div role={appearance === 'v2' ? 'alert' : undefined} className={appearance === 'v2' ? 'qc-notice qc-notice-danger' : 'p-3 bg-red-50 border border-red-200 rounded-lg'}>
           <p className="text-sm text-red-800">{error}</p>
         </div>
       )}

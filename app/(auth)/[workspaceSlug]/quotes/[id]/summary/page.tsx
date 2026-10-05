@@ -22,6 +22,11 @@ import { SendDocumentButton } from '@/app/components/send/SendDocumentButton';
 import { WithdrawQuoteButton } from './WithdrawQuoteButton';
 import { ReopenQuoteButton } from './ReopenQuoteButton';
 import { SummaryTabs } from './SummaryTabs';
+import { JobHeader } from './job-space/JobHeader';
+import { JobOverview, type JobOverviewModel } from './job-space/JobOverview';
+import type { JobSection } from './job-space/JobSpaceContext';
+import { QcIcon } from '@/app/components/ui/v2/QcIcon';
+import './job-space/job-space.css';
 import { SummaryFilesPanel } from './SummaryFilesPanel';
 import { CalcAuditPanel } from '../calc-audit/CalcAuditPanel';
 import { ActivityCard } from './ActivityCard';
@@ -40,13 +45,16 @@ export default async function QuoteSummaryPage({
   searchParams,
 }: {
   params: Promise<{ workspaceSlug: string; id: string }>;
-  searchParams: Promise<{ from?: string; view?: string }>;
+  searchParams: Promise<{ from?: string; view?: string; tab?: string }>;
 }) {
   const { workspaceSlug, id } = await params;
-  const { from, view } = await searchParams;
+  const { from, view, tab } = await searchParams;
   // When opened from the Message Center, "Back" returns to the inbox.
-  const backHref = from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/quotes`;
-  const backLabel = from === 'inbox' ? 'Back to Message Center' : 'Back';
+  const backHref = from === 'inbox' ? `/${workspaceSlug}/inbox` :
+    from === 'job-spaces' ? `/${workspaceSlug}/job-spaces` : `/${workspaceSlug}/quotes`;
+  const backLabel = from === 'inbox' ? 'Back to Message Center' :
+    from === 'job-spaces' ? 'All job spaces' : 'All quotes';
+  const returnContext = from === 'inbox' ? '&from=inbox' : from === 'job-spaces' ? '&from=job-spaces' : '';
   const [quote, roofAreas, components, entries, quoteTaxes] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
@@ -55,8 +63,7 @@ export default async function QuoteSummaryPage({
     loadQuoteTaxes(id),
   ]);
 
-  // Activity card is a paid-tier feature. Trial keeps it (to drive upgrade
-  // pitch); Starter hides it; Growth+ has it. The flag is computed off the
+  // Activity card is a paid-tier feature. Starter hides it; Growth+ has it. The flag is computed off the
   // effective plan, so dunning-collapsed accounts (grace -> starter) hide
   // the card automatically.
   const entitlements = await loadCompanyEntitlements(quote.company_id);
@@ -346,104 +353,54 @@ export default async function QuoteSummaryPage({
 
   const showOriginalView = view === 'original' && !!originalSnapshot;
 
+  // Presentation-only model. All money is taken from the existing totals above.
+  const editHref = quote.entry_mode === 'blank'
+    ? `/${workspaceSlug}/quotes/${id}/blank-build` : `/${workspaceSlug}/quotes/${id}`;
+  const statusMap: Record<string, { label: string; tone: string }> = {
+    unsent: { label: 'Unsent', tone: 'neutral' }, sent: { label: 'Sent', tone: 'info' },
+    accepted: { label: 'Accepted', tone: 'success' }, declined: { label: 'Declined', tone: 'danger' },
+    deposit_paid: { label: 'Deposit paid', tone: 'success' }, materials_ordered: { label: 'Materials ordered', tone: 'info' },
+    install: { label: 'Install', tone: 'info' }, invoice_sent: { label: 'Invoice sent', tone: 'info' },
+    invoice_paid: { label: 'Invoice paid', tone: 'success' }, finished: { label: 'Finished', tone: 'success' },
+    expired: { label: 'Expired', tone: 'warning' },
+  };
+  const jobStatus = quote.status === 'draft' ? { label: 'Draft', tone: 'neutral' } :
+    quote.withdrawn_at ? { label: 'Withdrawn', tone: 'warning' } :
+    statusMap[quote.job_status ?? 'unsent'] ?? { label: quote.job_status ?? 'Unsent', tone: 'neutral' };
+  const formatJobDate = (value: string) => new Date(value).toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
+  });
+  const recordedEvents = [
+    { label: 'Job created', at: quote.created_at },
+    { label: 'Job updated', at: quote.updated_at },
+    ...(activityCardEnabled ? [
+      { label: 'Customer viewed quote', at: quote.viewed_at },
+      { label: 'Customer accepted quote', at: quote.accepted_at },
+      { label: 'Customer declined quote', at: quote.declined_at },
+    ] : []),
+  ].filter(event => !!event.at).sort((a,b) => new Date(b.at!).getTime() - new Date(a.at!).getTime()).slice(0,4);
+  const overviewModel: JobOverviewModel = {
+    workspaceSlug, quoteId: id, editHref, blank: quote.entry_mode === 'blank',
+    hasCustomerQuote, hasLaborSheet, fileCount: allFiles.length, noteCount: quoteNotes.length,
+    componentCount: components.length, areaLabel: formatArea(_totalRoofSqm, quote.measurement_system),
+    total: formatCurrency(adjustedGrandTotal, effectiveCurrency), materials: formatCurrency(totals.totalMaterials, effectiveCurrency),
+    labour: formatCurrency(totals.totalLabour, effectiveCurrency), margin: formatCurrency(totals.materialMargin + totals.labourMargin, effectiveCurrency),
+    quoteStatus: jobStatus.label, accepted: !!quote.accepted_at, declined: !!quote.declined_at, withdrawn: !!quote.withdrawn_at,
+    revisionCount: activityCardEnabled ? revisionRequests.filter(request => !request.resolved_at).length : 0,
+    canOrder: entitlements.features.material_orders, canInvoice: entitlements.features.invoices, activityEnabled: activityCardEnabled,
+    events: recordedEvents.map(event => ({ label: event.label, date: formatJobDate(event.at!) })),
+  };
+  const initialSection = (['overview','summary','customer','labor','files','activity'].includes(tab ?? '')
+    ? tab : showOriginalView ? 'summary' : 'overview') as JobSection;
+
   return (
-    <div className="max-w-5xl mx-auto py-3 md:py-8 px-2 md:px-4 space-y-3 md:space-y-6">
-      {/* Header */}
-      <div>
-        <Link href={backHref} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-3">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          {backLabel}
-        </Link>
-
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-xl md:text-2xl font-semibold text-slate-900 truncate">{quote.customer_name}</h1>
-            {quote.job_name && <p className="text-sm text-slate-500 mt-0.5">{quote.job_name}</p>}
-            {(quote as any).acceptance_token_expires_at && (
-              <div className="mt-2">
-                <QuoteExpiryEditor
-                  quoteId={id}
-                  expiresAt={(quote as any).acceptance_token_expires_at}
-                  isFinalised={!!(quote.accepted_at || quote.declined_at)}
-                />
-              </div>
-            )}
-          </div>
-          <span className="text-sm font-medium text-orange-600 flex-shrink-0">Quote #{quote.quote_number}</span>
-        </div>
-      </div>
-
-      {activityCardEnabled && (
-        <ActivityCard
-          workspaceSlug={workspaceSlug}
-          quoteId={id}
-          companyId={quote.company_id}
-          customerName={quote.customer_name}
-          quoteNumber={quote.quote_number}
-          revisionRequests={revisionRequests}
-        />
-      )}
-
-      <SummaryTabs
-        workspaceSlug={workspaceSlug}
-        quoteId={id}
-        customerLines={(allCustomerLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
-        hasCustomerQuote={hasCustomerQuote}
-        quote={{
-          quote_number: quote.quote_number,
-          customer_name: quote.customer_name,
-          job_name: quote.job_name,
-          site_address: quote.site_address,
-          created_at: quote.created_at,
-          tax_rate: quote.tax_rate,
-          cq_company_name: quote.cq_company_name,
-          cq_company_address: quote.cq_company_address,
-          cq_company_phone: quote.cq_company_phone,
-          cq_company_email: quote.cq_company_email,
-          cq_company_logo_url: quote.cq_company_logo_url,
-          cq_footer_text: quote.cq_footer_text,
-        }}
-        effectiveCurrency={effectiveCurrency}
-        hasLaborSheet={hasLaborSheet}
-        laborLines={(laborSheetLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
-        summaryHeaderSlot={
-          !!originalSnapshot ? (
-            <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit overflow-x-auto scrollbar-hide -mx-2 px-2 md:mx-0 md:px-1">
-              <Link
-                href={`/${workspaceSlug}/quotes/${id}/summary`}
-                title="Your current up to date quote summary"
-                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-                  !showOriginalView
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
-                }`}
-              >
-                Current
-              </Link>
-              <Link
-                href={`/${workspaceSlug}/quotes/${id}/summary?view=original`}
-                title="The first saved Quote Summary version"
-                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-                  showOriginalView
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
-                }`}
-              >
-                Original
-              </Link>
-            </div>
-          ) : null
-        }
-        summaryActions={
-          <>
-            {quote.accepted_at ? (
-              <ReopenQuoteButton quoteId={id} state="accepted" />
-            ) : quote.declined_at ? (
-              <ReopenQuoteButton quoteId={id} state="declined" />
-            ) : quote.withdrawn_at ? (
-              <ReopenQuoteButton quoteId={id} state="withdrawn" />
-            ) : null}
-            <SendToAppButton />
+    <div className="qc-job-space" data-qc-ui="v2">
+      <JobHeader title={quote.job_name || quote.site_address || quote.customer_name}
+        customer={quote.customer_name} address={quote.site_address} quoteLabel={`Quote #${quote.quote_number || 'DRAFT'}`}
+        status={jobStatus.label} statusTone={jobStatus.tone} updatedLabel={formatJobDate(quote.updated_at)}
+        backHref={backHref} backLabel={backLabel} editHref={editHref}
+        primarySend={hasCustomerQuote && !quote.accepted_at && !quote.declined_at && !quote.withdrawn_at && overviewModel.revisionCount === 0}
+        sendAction={
             <SendDocumentButton
               entityKind="quote"
               entityId={id}
@@ -471,39 +428,137 @@ export default async function QuoteSummaryPage({
               showMarginWarning={!!(quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview}
               hasCustomerQuote={hasCustomerQuote}
             />
-            {/* Utility icon buttons at the end so main action buttons stretch across */}
-            {quote.status === 'draft' && (
-              <CurrencySelector quoteId={id} currentCurrency={quote.currency} companyDefaultCurrency={companyDefaultCurrency} workspaceSlug={workspaceSlug} />
-            )}
-            {/*
-              "Edit Quote" goes back to whichever screen IS the master source
-              for this quote's mode. For manual/digital that's the quote
-              builder route (which itself routes digital onward to /build);
-              for blank quotes the customer quote editor IS the master source
-              of line items, so we route there directly.
-            */}
-            <Link
-              href={
-                quote.entry_mode === 'blank'
-                  ? `/${workspaceSlug}/quotes/${id}/blank-build`
-                  : `/${workspaceSlug}/quotes/${id}`
-              }
-              title="Edit Quote"
-              className="icon-btn border-slate-300 bg-white"
-            >
-              <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-            </Link>
+        }
+        expiry={(quote as { acceptance_token_expires_at?: string | null }).acceptance_token_expires_at ? (
+<QuoteExpiryEditor
+                  quoteId={id}
+                  expiresAt={(quote as { acceptance_token_expires_at?: string | null }).acceptance_token_expires_at!}
+                  isFinalised={!!(quote.accepted_at || quote.declined_at)}
+                />
+        ) : null}
+      />
+      <SummaryTabs key={id}
+        workspaceSlug={workspaceSlug}
+        quoteId={id}
+        customerLines={(allCustomerLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
+        hasCustomerQuote={hasCustomerQuote}
+        quote={{
+          quote_number: quote.quote_number,
+          customer_name: quote.customer_name,
+          job_name: quote.job_name,
+          site_address: quote.site_address,
+          created_at: quote.created_at,
+          tax_rate: quote.tax_rate,
+          cq_company_name: quote.cq_company_name,
+          cq_company_address: quote.cq_company_address,
+          cq_company_phone: quote.cq_company_phone,
+          cq_company_email: quote.cq_company_email,
+          cq_company_logo_url: quote.cq_company_logo_url,
+          cq_footer_text: quote.cq_footer_text,
+        }}
+        effectiveCurrency={effectiveCurrency}
+        hasLaborSheet={hasLaborSheet}
+        laborLines={(laborSheetLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
+
+        initialSection={initialSection}
+        overview={
+          // AGENT-TODO: JOB-01: wire optional company-scoped relatedDocuments for this quote.
+          // Do not infer that no order/invoice exists while these reads are absent.
+          <JobOverview model={overviewModel} />
+        }
+        filesPanel={
+          <div className="qc-job-files-notes">
+            <section id="qc-job-files" tabIndex={-1} aria-label="Files and documents">
+        <SummaryFilesPanel
+          quoteId={id}
+          companyId={quote.company_id}
+          isOverStorage={entitlements.isOverStorage}
+          files={allFiles.map((f) => ({
+            id: f.id,
+            file_name: f.file_name,
+            file_type: f.file_type as string,
+            file_size: f.file_size,
+            storage_path: f.storage_path,
+            url: f.url,
+          }))}
+        />
+            </section>
+            <section id="qc-job-notes" tabIndex={-1} aria-label="Internal job notes">
+      <QuoteNotesPanel quoteId={id} initialNotes={quoteNotes} currentUserFullName={currentUserFullName} />
+            </section>
+          </div>
+        }
+        activityPanel={activityCardEnabled ? (
+<ActivityCard
+          workspaceSlug={workspaceSlug}
+          quoteId={id}
+          companyId={quote.company_id}
+          customerName={quote.customer_name}
+          quoteNumber={quote.quote_number}
+          revisionRequests={revisionRequests}
+        />
+        ) : (
+          <section className="qc-hub-surface qc-job-activity-locked"><span className="qc-hub-icon"><QcIcon name="lock" /></span>
+            <h2>Communication & follow-ups</h2><p>Detailed job activity is not included in your current plan.</p>
+            <Link href={`/${workspaceSlug}/account?tab=billing`} prefetch={false} className="qc-text-link">View plan options <QcIcon name="arrow" /></Link>
+          </section>
+        )}
+        summaryHeaderSlot={
+          !!originalSnapshot ? (
+            <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit overflow-x-auto scrollbar-hide -mx-2 px-2 md:mx-0 md:px-1">
+              <Link
+                href={`/${workspaceSlug}/quotes/${id}/summary?tab=summary${returnContext}`}
+                title="Your current up to date quote summary"
+                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                  !showOriginalView
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
+                }`}
+              >
+                Current
+              </Link>
+              <Link
+                href={`/${workspaceSlug}/quotes/${id}/summary?view=original&tab=summary${returnContext}`}
+                title="The first saved Quote Summary version"
+                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                  showOriginalView
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
+                }`}
+              >
+                Original
+              </Link>
+            </div>
+          ) : null
+        }
+
+        summaryActions={
+          <>
+            {quote.status === 'draft' && <CurrencySelector quoteId={id} currentCurrency={quote.currency} companyDefaultCurrency={companyDefaultCurrency} workspaceSlug={workspaceSlug} />}
+            <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} />
+          </>
+        }
+        managementActions={
+          <>
+            {quote.accepted_at ? (
+              <ReopenQuoteButton quoteId={id} state="accepted" />
+            ) : quote.declined_at ? (
+              <ReopenQuoteButton quoteId={id} state="declined" />
+            ) : quote.withdrawn_at ? (
+              <ReopenQuoteButton quoteId={id} state="withdrawn" />
+            ) : null}
+            <SendToAppButton quoteId={id} />
             <form action={async () => {
               'use server';
               const { cloneQuote } = await import('../../actions');
               const newId = await cloneQuote(id, quote.customer_name + ' (Copy)');
               redirect(`/${workspaceSlug}/quotes/${newId}`);
             }}>
-              <button type="submit" title="Clone Quote" className="icon-btn border-slate-300 bg-white">
+              <button type="submit" title="Clone Quote" className="qc-button" data-qc-variant="ghost">
                 <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                <span>Duplicate quote</span>
               </button>
             </form>
-            <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} />
             <WithdrawQuoteButton
               quoteId={id}
               hasActiveToken={!!quote.acceptance_token && !quote.withdrawn_at}
@@ -514,7 +569,6 @@ export default async function QuoteSummaryPage({
           </>
         }
       >
-
       <div data-pdf-content className="p-12 bg-white">
         {/* PDF Header */}
         <div className="mb-8 pb-4 border-b border-slate-200">
@@ -524,7 +578,7 @@ export default async function QuoteSummaryPage({
           {showOriginalView && originalSnapshot && (
             <div className="mb-3">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                🔒 Original - captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                Original - captured {new Date(originalSnapshot.capturedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
               </span>
             </div>
           )}
@@ -683,35 +737,12 @@ export default async function QuoteSummaryPage({
           </div>
         )}
 
-        {/* Files & Documents (always visible so users can add more supporting files from here) */}
-        <SummaryFilesPanel
-          quoteId={id}
-          companyId={quote.company_id}
-          isOverStorage={entitlements.isOverStorage}
-          files={allFiles.map((f) => ({
-            id: f.id,
-            file_name: f.file_name,
-            file_type: f.file_type as string,
-            file_size: f.file_size,
-            storage_path: f.storage_path,
-            url: f.url,
-          }))}
-        />
+
       </div>
       </div>
 
-      {/* Calculation audit trace - admin only */}
-      {_profile.is_admin && (
-        <CalcAuditPanel quoteId={id} currency={effectiveCurrency} />
-      )}
-
+        {_profile.is_admin && <CalcAuditPanel quoteId={id} currency={effectiveCurrency} />}
       </SummaryTabs>
-
-      {/* Notes panel -- always visible below the main summary content */}
-      <div className="pb-20 md:pb-0">
-      <QuoteNotesPanel quoteId={id} initialNotes={quoteNotes} currentUserFullName={currentUserFullName} />
-      </div>
-
     </div>
   );
 }

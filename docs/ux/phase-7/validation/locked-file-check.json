@@ -1,0 +1,61 @@
+{
+  "method": "Exact bytes of named locks against supplied ZIP",
+  "files": [
+    {
+      "path": "package-lock.json",
+      "unchanged": true
+    },
+    {
+      "path": "package.json",
+      "unchanged": true
+    },
+    {
+      "path": "public/MainQCP.png",
+      "unchanged": true
+    },
+    {
+      "path": "public/q-mark.png",
+      "unchanged": true
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/q-mark.png",
+      "unchanged": true
+    },
+    {
+      "path": "docs/ux/phase-4/fixtures/q-mark.png",
+      "unchanged": true
+    },
+    {
+      "path": "app/components/workspace/shell-config.ts",
+      "unchanged": true
+    },
+    {
+      "path": "app/components/documents/DocumentHeader.tsx",
+      "unchanged": true
+    },
+    {
+      "path": "app/components/documents/DocumentSelection.tsx",
+      "unchanged": true
+    },
+    {
+      "path": "app/components/ui/v2/qc-tokens.css",
+      "unchanged": true
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "unchanged": true
+    },
+    {
+      "path": "app/lib/supabase/database.types.ts",
+      "unchanged": true
+    },
+    {
+      "path": "app/lib/measurements/conversions.ts",
+      "unchanged": true
+    },
+    {
+      "path": "app/lib/smart-assistant/v2-database.types.ts",
+      "unchanged": true
+    }
+  ]
+}

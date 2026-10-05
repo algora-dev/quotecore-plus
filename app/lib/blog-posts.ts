@@ -54,6 +54,66 @@ export interface BlogPostMeta {
 
 export const BLOG_POSTS: BlogPostMeta[] = [
   {
+    slug: 'roof-measurements-to-quote',
+    category: 'roofing-estimating',
+    title: 'Roof Measurements to Quote: The Roofing Path From Numbers to Price',
+    description:
+      'Turn roof measurements into a priced quote: the areas, lines and pitch you need, the four conversions from measurement to price, and a free tool that does them for you.',
+    date: '2026-08-31',
+    lastModified: '2026-08-31',
+    faqs: [
+      { question: 'How do I turn roof measurements into a quote?', answer: 'Convert each area measurement into material quantities using coverage and waste rules, convert each lineal measurement (ridges, valleys, barges) into lineal components, add labour, apply your margin, then present the result as a quote document. The free Measurement to Quote Tool does these conversions from your entered measurements.' },
+      { question: 'Does roof pitch change the quote?', answer: 'Yes. Pitch multiplies the flat (plan) area to give the true roof surface area, and can affect labour difficulty too. Any measurement-to-price system you use should apply pitch per roof area, not as one global number - different faces often have different pitches.' },
+      { question: 'Can I price a roof from measurements without software?', answer: 'You can - a spreadsheet with the right formulas will produce numbers. The risks are maintenance, re-entry of the same data into quotes and orders, and inconsistent results between jobs. Free tools remove those risks at the same price as the spreadsheet.' },
+      { question: 'Is the Measurement to Quote Tool really free?', answer: 'Yes - enter measurements, price them, print or PDF the result, no account needed. Creating a free account lets you save results and convert them into editable quotes in QuoteCore+.' },
+    ],
+  },
+  {
+    slug: 'takeoff-to-quote-workflow',
+    category: 'digital-takeoffs',
+    title: 'From Takeoff to Quote: The End-to-End Workflow',
+    description:
+      'How a roof takeoff becomes a priced quote without re-entering data: plan, takeoff, components, calculation, quote, order and invoice - one connected path with no copy-paste.',
+    date: '2026-08-31',
+    lastModified: '2026-08-31',
+    faqs: [
+      { question: 'Does QuoteCore+ turn a takeoff into a quote automatically?', answer: 'A takeoff with components attached produces calculated quantities and prices for the whole job. The quote document is generated from that same data - you review, adjust presentation, and send. No re-entry between takeoff and quote.' },
+      { question: 'Can I go straight from a takeoff to a material order?', answer: 'Yes. Once a quote is accepted, it converts into a material order using the same calculated quantities - and later into an invoice. The job data is entered once and reused downstream.' },
+      { question: 'Do I have to draw the plan myself?', answer: 'No. AI Scan Assist can propose the roof geometry from an uploaded plan, which you then verify and adjust. A full manual drawing path also exists, and you can mix both on the same plan.' },
+      { question: 'What if I have measurements but no plan?', answer: 'Use the site-measurement path instead: enter your measurements directly and attach components - see our Roof Measurements to Quote guide. A plan is optional, not required.' },
+    ],
+  },
+  {
+    slug: 'import-price-list-csv-to-components',
+    category: 'quotecore-guides',
+    title: 'Import a Price List CSV Into Your Quoting Software',
+    description:
+      'Stop re-typing supplier price lists. How to import a CSV price list as a catalogue and convert it into reusable, calculating components - free up to 7 components, full catalogues in QuoteCore+.',
+    date: '2026-08-31',
+    lastModified: '2026-08-31',
+    faqs: [
+      { question: "Can I import my supplier's price list CSV?", answer: 'Yes. Supplier catalogues import from CSV into QuoteCore+, and catalogue rows convert into reusable components with the Catalogue to Component Converter. If your supplier publishes a catalogue on the platform, you can pull it directly without handling files.' },
+      { question: 'How many components can I convert at once?', answer: 'The free version of the converter handles up to 7 components at a time. QuoteCore+ accounts support larger batches for full-catalogue imports.' },
+      { question: 'Do supplier price updates flow through?', answer: 'Catalogue data is imported into your account, so you update prices where they live - the catalogue - and re-convert or update as needed. Historical quotes keep their original pricing, so past jobs stay explainable.' },
+      { question: 'Can I use my own products, not just supplier lists?', answer: 'Yes. Your own products, labour rates and waste rules become your own Smart Components - the import path is the same, the data source is just your list instead of a supplier\u2019s.' },
+    ],
+  },
+  {
+    slug: 'custom-roofing-quoting-software',
+    category: 'comparisons',
+    title: 'Custom Roofing Software: Do You Need It Built or Configured?',
+    description:
+      'Custom roofing software vs a configurable platform: a decision table and framework for whether you need a bespoke build or software that uses your own pricing, labour and waste rules.',
+    date: '2026-08-31',
+    lastModified: '2026-08-31',
+    faqs: [
+      { question: 'Is QuoteCore+ custom software?', answer: "It's configurable software. The platform is purpose-built for roofing estimating and commercial workflows, but the content — your components, products, prices, labour, waste rules and documents — is entirely yours. That gets you the fit of custom software without funding a from-scratch build." },
+      { question: 'What does custom roofing software cost vs QuoteCore+?', answer: 'QuoteCore+ is a subscription from $19/month. A bespoke roofing platform is a five-to-six figure development project. If configuration solves your problem, that difference stays in your pocket.' },
+      { question: 'Can QuoteCore+ be customised further if I need something specific?', answer: 'Configuration covers products, pricing, labour, waste, documents and workflow. Requirements beyond that — portals, unique integrations, standalone applications — are handled by our development partner T3 Labs.' },
+      { question: 'Who is T3 Labs?', answer: 'T3 Labs is the product studio behind QuoteCore+. They build custom estimating, pricing, portal and workflow software for businesses whose requirements genuinely exceed what existing platforms offer.' },
+    ],
+  },
+  {
     slug: 'price-a-job-from-measurements',
     category: 'construction-quoting',
     title: 'How to Price a Job From Your Measurements',
@@ -75,13 +135,28 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     ],
   },
   {
+    slug: 'convert-spreadsheet-to-quote',
+    category: 'construction-quoting',
+    title: 'How to Turn a Spreadsheet Into a Professional Quote (3 Ways)',
+    description:
+      'Three ways to turn your Excel or Google Sheets estimate into a professional quote — manual, free converter, or reusable components. Free, no signup.',
+    date: '2026-08-29',
+    lastModified: '2026-08-29',
+    faqs: [
+      { question: 'Is there an Excel to quote converter?', answer: 'Yes. The free Quote Generator converts pasted spreadsheet rows into a formatted, downloadable quote with no account required. To convert the pricing itself into reusable rules, the Catalog-to-Component Converter turns CSV rows into Smart Components.' },
+      { question: 'Can I turn a Google Sheets estimate into a quote?', answer: 'Yes — the same three options apply. Copy rows out of Google Sheets and paste them into the free quote generator, or export the sheet as CSV and convert your pricing into reusable components.' },
+      { question: 'Spreadsheet vs quoting software — which should I use for quotes?', answer: 'Spreadsheets work for estimating, but the copy-paste step into a customer document is where errors and time pile up. Quoting software removes that step by generating the customer document directly from the priced estimate.' },
+      { question: 'How do I stop rebuilding the same quote every job?', answer: 'Convert your pricing into reusable Smart Components once. After that, each quote reuses the same priced components — measure the job, drop them in, and the totals recalculate.' },
+    ],
+  },
+  {
     slug: 'construction-estimating-spreadsheet-alternative',
     category: 'construction-quoting',
-    title: 'Is There a Better Alternative to a Construction Estimating Spreadsheet?',
+    title: 'Construction Estimating Spreadsheet Alternative: What Works Better?',
     description:
-      'Spreadsheets can price jobs well, but they become slow when formulas, copying and quoting are spread across multiple files. See a free reusable alternative built for measured jobs.',
+      'What can you use instead of an Excel or Google Sheets estimate? Compare estimating alternatives, score them on a 7-point checklist, and keep your existing pricing.',
     date: '2026-08-24',
-    lastModified: '2026-08-24',
+    lastModified: '2026-08-29',
     faqs: [
       { question: 'Is a construction estimating spreadsheet still worth using?', answer: 'Yes, if your estimating volume is low, one person understands the file, pricing rarely changes and there is little copying between systems. The reason to change is workflow cost, not licence cost.' },
       { question: 'What is the alternative to an estimating spreadsheet?', answer: 'A reusable pricing component system: save the pricing logic (materials, waste, labour, rates) once as components, then enter each job\u2019s measurements and get a priced output you can convert directly into a quote.' },
@@ -90,11 +165,45 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     ],
   },
   {
+    slug: 'roofing-estimating-spreadsheet-vs-software',
+    category: 'roofing-estimating',
+    title: 'Roofing Estimating: Keep Your Spreadsheet or Switch to Software?',
+    description:
+      'Should you keep your roofing estimating spreadsheet or switch to software? A stay-or-switch decision table, the real cost of switching, and how to bring your pricing across.',
+    date: '2026-08-26',
+    lastModified: '2026-08-29',
+    faqs: [
+      { question: 'Is Excel good enough for roofing estimates?', answer: 'It can be. If you quote a small number of straightforward jobs and your spreadsheet is accurate, easy to maintain and quick to use, there may be no reason to change. Dedicated estimating software becomes more useful when you are repeatedly copying jobs, re-entering measurements, maintaining complicated formulas or moving the same information between several systems.' },
+      { question: 'What can replace a roofing estimating spreadsheet?', answer: 'Roofing estimating software can replace the calculation and quoting parts of a spreadsheet while adding reusable materials, labour, waste rules, digital takeoffs, quote generation and other connected workflows. The right choice depends on how you currently estimate and which parts of your process actually need improving.' },
+      { question: 'Can I move my existing roofing pricing into QuoteCore+?', answer: 'Yes. Your existing material pricing, labour rates, waste allowances and estimating logic can be recreated as Smart Components. You can build these yourself or use the Done-For-You Setup if you would rather have QuoteCore+ configure the agreed setup for you.' },
+      { question: 'Do I need to stop using my spreadsheet immediately?', answer: 'No. Running both systems for several jobs is often the safest way to switch. Compare familiar jobs, check the calculations and move across once you are comfortable with the new workflow.' },
+      { question: 'Can someone set up roofing estimating software for me?', answer: "Yes. QuoteCore+'s Done-For-You Setup is designed for contractors who want a better estimating system but do not want to configure everything themselves. We first check whether QuoteCore+ suits your workflow, then use the pricing and information you provide to build the agreed setup and help you learn how to use it." },
+      { question: 'Does QuoteCore+ only work for roofing?', answer: 'No. QuoteCore+ was built for roofing first, but Smart Components can represent products, materials, services and labour across other measured trades where reusable pricing and calculation rules are useful.' },
+    ],
+  },
+  {
+    slug: 'simple-roofing-estimating-software',
+    category: 'roofing-estimating',
+    title: 'I Need Better Estimating Software — But I Don\u2019t Want Another Complicated App',
+    description:
+      'Need better roofing estimating software but don\u2019t want another complicated app? Learn what simple estimating software should actually do — and how to switch without the setup pain.',
+    date: '2026-08-26',
+    lastModified: '2026-08-26',
+    faqs: [
+      { question: 'What is the easiest roofing estimating software to use?', answer: 'The easiest system depends on how you already work. Look for software that lets you reuse your common pricing, labour and material rules, supports the measurements you already have, and avoids forcing you to configure features you do not need.' },
+      { question: 'Is roofing estimating software difficult to set up?', answer: 'It can be if you have a large amount of existing pricing, products and labour rules to move across. A sensible approach is to start with your most common work and build gradually, or use a setup service if the software provider offers one.' },
+      { question: 'Can estimating software be set up for me?', answer: 'Yes. QuoteCore+ offers a Done-For-You Estimating Setup where we first check whether the system suits your workflow, then configure agreed components, pricing and setup using the information you provide.' },
+      { question: 'Do I need a full roofing CRM just to estimate and quote?', answer: 'Not necessarily. A full CRM can be useful for businesses that need broader sales and job-management tools, but contractors who mainly want to improve measurement, estimating and quoting may prefer a more focused system.' },
+      { question: 'Can I use estimating software if I already have roof measurements?', answer: 'Yes. You should not need to remeasure a job simply because you changed estimating systems. QuoteCore+ supports workflows where you already have the measurements, as well as digital takeoff for plan-based jobs.' },
+      { question: 'What should I look for in simple contractor estimating software?', answer: 'Look for reusable pricing, clear calculations, flexible labour and waste rules, easy measurement entry, quote generation, straightforward setup and support when you need it. The system should remove repetitive work rather than create more administration.' },
+    ],
+  },
+  {
     slug: 'quotecore-plus-reviews',
     category: 'comparisons',
     title: 'QuoteCore+ Reviews: Is It Legit and Who Is It For?',
     description:
-      'Wondering if QuoteCore+ is legit? Here\u2019s what the platform does, who it is for, how the free trial works, and how it helps construction businesses manage the workflow from quote to material orders, job management and invoicing.',
+      'Wondering if QuoteCore+ is legit? Here\u2019s what the platform does, who it is for, how paid plans work, and how it helps construction businesses manage the workflow from quote to material orders, job management and invoicing.',
     date: '2026-05-27',
     lastModified: '2026-05-27',
   },
@@ -119,11 +228,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'roofing-quoting-software-vs-spreadsheets',
     category: 'comparisons',
-    title: 'Roofing Quoting Software vs Spreadsheets: What Saves Time?',
+    title: 'Creating Roofing Quotes: Spreadsheet vs Quoting Software',
     description:
-      'Spreadsheets can work for roofing quotes, but they start to slow businesses down when measurements, pricing, approvals, material orders, job details and invoicing need to stay connected.',
+      'Turning a finished roofing estimate into the customer quote — spreadsheet workflow vs quoting software, with a side-by-side comparison and a quote QA checklist.',
     date: '2026-05-11',
-    lastModified: '2026-05-11',
+    lastModified: '2026-08-29',
   },
   {
     slug: 'built-by-a-roofer',
@@ -155,11 +264,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'best-quoting-software-nz',
     category: 'comparisons',
-    title: 'Best Quoting Software for Contractors (2026) — NZ & UK',
+    title: 'Best Quoting Software NZ 2026 — Pricing Compared',
     description:
-      'Comparing quoting software for contractors: QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact and Xero Projects on pricing, features and fit. NZ-focused with UK guidance.',
+      'Six quoting tools for NZ tradies compared on NZD pricing, GST and features: QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact and Xero — from free to $149/mo, side by side.',
     date: '2026-07-15',
-    lastModified: '2026-08-05',
+    lastModified: '2026-09-21',
   },
   {
     slug: 'best-quoting-software-au',
@@ -192,7 +301,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       { question: 'What is the best roofing quoting software for UK contractors in 2026?', answer: 'The best option depends on your workflow. QuoteCore+ is the strongest for contractors quoting from plans who need a full workflow from measurement to quote, material orders, job management and invoicing. Sleepless Tradesman is a strong choice for sole traders doing high volumes of repair work who want AI-assisted quoting from customer photos. Tradify works well for small teams that need job management alongside quoting.' },
       { question: 'How long does it take to send a roofing quote with software?', answer: 'With a platform like QuoteCore+, most contractors send their first quote within minutes of entering their measurements. The goal is to quote the same day as the site visit - ideally before leaving. The delay in most quoting processes is not measurement but the admin that comes after it.' },
       { question: 'Do I need to be technical to use roofing quoting software?', answer: 'No. Modern quoting software is designed to be usable from day one. If you can use email and a computer, you can use most platforms on this list. The best ones require no setup beyond entering your pricing templates.' },
-      { question: 'Is there free roofing quoting software for UK roofers?', answer: 'QuoteCore+ offers a 14-day free trial with no credit card required. Sleepless Tradesman has a free tier with a limited number of quotes per month. Most other platforms on this list do not offer a free option, though some include a trial period.' },
+      { question: 'Is there free roofing quoting software for UK roofers?', answer: 'QuoteCore+ offers free tools with no account required, and paid plans from $19/mo with a 30-day money-back guarantee. Sleepless Tradesman has a free tier with a limited number of quotes per month. Most other platforms on this list do not offer a free option, though some include a trial period.' },
       { question: 'What should a professional roofing quote include?', answer: 'A professional roofing quote should include: a clear scope of work, itemised materials and labour, scaffold costs as a separate line item, your company details and accreditations, a validity period, and a way for the customer to accept or decline.' },
       { question: 'Can roofing quoting software help me win more jobs?', answer: 'Yes - indirectly. Research suggests the first contractor to respond wins a significant proportion of competitive quote situations. Software that helps you quote faster, and that produces a more professional output, improves your position in both dimensions.' },
     ],
@@ -214,6 +323,30 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Three ways to measure a roof (site visit, plans, digital takeoff), how to calculate actual surface area from plan dimensions with pitch factors, and free tools that handle the maths for you.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
+  },
+  {
+    slug: 'how-to-measure-a-roof-from-a-pdf-plan',
+    category: 'roofing-estimating',
+    title: 'How to Measure a Roof from a PDF Plan (2026 Guide)',
+    description:
+      'Measure a roof from a PDF plan: verify or calibrate the scale, work plane by plane, apply pitch factors, and price linear components. Free Roof Takeoff Builder, no signup.',
+    date: '2026-08-28',
+    lastModified: '2026-08-28',
+    faqs: [
+      { question: 'Can you measure a roof from a PDF plan?', answer: 'Yes. Verify the drawing scale against a labelled dimension first (or calibrate from any known dimension), then measure each roof plane on screen, apply pitch factors for true area, and measure ridges, hips, valleys, verges and eaves separately. The free Roof Takeoff Builder does this from an uploaded PDF with no account required.' },
+      { question: 'What if the PDF plan has no scale?', answer: 'Calibrate from a known dimension: any labelled dimension string, or a standard component drawn to scale such as a door leaf or parking bay. Measure it on screen, divide the real size by the measured size, and apply that factor to every other measurement. If nothing on the drawing has a knowable size, request a scaled drawing or measure on site.' },
+      { question: 'How accurate is measuring from a PDF plan?', answer: 'Vector PDFs exported from CAD hold their scale exactly once calibrated, so accuracy is limited mainly by your measuring care. Scanned plans add distortion risk. The bigger accuracy risk is not the measuring but the drawing itself: stale revisions, grid vs external dimensions, and details hidden on other sheets.' },
+      { question: 'Do I still need a site visit if I measure from the PDF?', answer: 'Not always. New-build and fully specified work can usually be quoted from plans alone. You need a site visit when access, existing damage, or as-built deviations could change the scope. A hybrid works well: full takeoff from the PDF now, short site check before contract.' },
+    ],
+  },
+  {
+    slug: 'quoting-from-plans-vs-site-visits',
+    category: 'construction-quoting',
+    title: 'Quoting From Plans vs Site Visits: When to Visit',
+    description:
+      'When contractors can safely quote from PDF plans alone, when a site visit is unavoidable, and the hybrid approach that gets the quote out same day without carrying the risk.',
+    date: '2026-08-28',
+    lastModified: '2026-08-28',
   },
   {
     slug: 'how-much-roofing-material',
@@ -284,11 +417,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'how-to-quote-a-roof-from-plans',
     category: 'digital-takeoffs',
-    title: 'How to Quote a Roof From Plans: Complete Workflow',
+    title: 'How to Quote a Roof From Plans: Takeoff to Priced Quote (2026)',
     description:
-      'Learn how to quote a roof from plans: verify scale, complete the takeoff, apply pitch and waste, price the job, build the customer quote, send it and track the result.',
+      'Turn roof plans into a priced, professional quote: takeoff, material quantities, labour, margin and a customer-ready document.',
     date: '2026-08-14',
-    lastModified: '2026-08-14',
+    lastModified: '2026-08-29',
     video: {
       videoId: 'AHXhlOuRAvw',
       title: 'Quote a Roof From Start to Finish with QuoteCore+',
@@ -421,11 +554,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'how-to-follow-up-on-a-quote',
     category: 'contractor-business',
-    title: 'How to Follow Up on a Quote Without Losing the Job',
+    title: 'How to Follow Up on a Quote and Win More Jobs',
     description:
-      'Practical guide to following up on quotes: when to follow up, what to say, how many times, handling objections, and using automated follow-ups to win more jobs without chasing.',
+      'The follow-up timing that doubles quote acceptance, plus copy-paste message templates for contractors — follow up without sounding pushy or desperate.',
     date: '2026-07-31',
-    lastModified: '2026-08-14',
+    lastModified: '2026-09-21',
     video: {
       videoId: 'AHXhlOuRAvw',
       title: 'Automatic Quote Follow-Ups and Customer Tracking in QuoteCore+',
@@ -523,7 +656,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     date: '2026-08-18',
     lastModified: '2026-08-18',
     faqs: [
-      { question: 'Is the QuoteCore+ Roof Pitch Calculator extension free?', answer: 'Yes. The extension is completely free with no paid tier, no trial limit and no account required. It installs from the Chrome Web Store like any other extension.' },
+      { question: 'Is the QuoteCore+ Roof Pitch Calculator extension free?', answer: 'Yes. The extension is completely free with no paid tier, no usage limit and no account required. It installs from the Chrome Web Store like any other extension.' },
       { question: 'Does the roof pitch calculator extension need an account?', answer: 'No. It is a self-contained popup calculator that opens when you click the toolbar icon. It does not ask for any personal details and does not connect to an account.' },
       { question: 'What data does the roof pitch extension access?', answer: 'None beyond its own popup. The extension does not request permissions to read your browsing history, tabs, or website data. It is a calculator that opens on click and closes when you are done.' },
       { question: 'Does the extension work in Edge, Brave, Arc or Opera?', answer: 'Yes. Any Chromium-based browser can install extensions from the Chrome Web Store, including Edge, Brave, Arc and Opera.' },
@@ -618,6 +751,65 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       { question: 'Is there a free AI quote generator?', answer: 'Yes. The QuoteCore+ free quote generator includes AI-assisted input (image upload and job description) with structured, editable output. AI-assisted input has a small number of free scans per day; everything else is unlimited.' },
       { question: 'Do I need to sign up to use the QuoteCore+ quote generator?', answer: 'No. The free quote generator, invoice generator and purchase order generator all work without an account. Signing up is only needed for the wider QuoteCore+ workflow - saved documents, tracking, takeoff and connected quoting.' },
       { question: 'Is ChatGPT better than quoting software?', answer: 'It depends on the task. ChatGPT is excellent for drafting and one-off work. Quoting software is usually better for repeatable, structured documents that need precise editing, consistent fields and connected workflows.' },
+    ],
+  },
+  {
+    slug: 'how-to-measure-walls-cladding-from-plans',
+    category: 'digital-takeoffs',
+    title: 'How to Measure Walls & Cladding From Plans: Complete Takeoff Guide',
+    description:
+      'Step-by-step: measure wall and cladding areas from plans and elevations — scale check, gables, irregular walls, opening deductions, material zones. Free PDF takeoff tool included.',
+    date: '2026-08-30',
+    lastModified: '2026-08-30',
+    faqs: [
+      { question: 'How do I measure wall areas from plans?', answer: 'Calibrate the drawing scale from a known dimension, trace each wall or elevation as a polygon to get gross area, then trace windows and doors and subtract them for net area. A free tool like the QuoteCore+ Wall & Cladding Takeoff does the arithmetic on screen.' },
+      { question: 'How do I calculate cladding area from a drawing?', answer: 'Measure the gross wall area per elevation (including gables), deduct all window and door openings to get net area, then add your waste allowance (typically 5-10%) at the ordering stage.' },
+      { question: 'Do I include gables in wall area?', answer: 'Yes. Gables are cladding area. Calculate each gable as half base times height, or trace it as a triangle in a takeoff tool. Gables are the most commonly forgotten area in wall takeoffs.' },
+      { question: 'Should cladding be ordered from gross or net wall area?', answer: 'Net. Cladding only covers wall area minus openings, so order from net area plus waste. Paint and render are often priced from gross area because reveals still get coated.' },
+      { question: 'What drawings do I need for a wall takeoff?', answer: 'Elevations are the key drawings for cladding, plus floor plans for wall lengths, sections for build-ups, and the window/door schedule to cross-check opening deductions.' },
+      { question: 'Can I measure plans digitally for free?', answer: 'Yes. The QuoteCore+ Free Wall & Cladding Takeoff Tool lets you upload a plan image, calibrate the scale and trace wall areas, trims and openings free, with no signup.' },
+      { question: 'How do I handle multiple cladding materials on one elevation?', answer: 'Trace each material zone as its own area and name it (e.g. brick lower, weatherboard upper). Your takeoff then totals each material separately, which is what suppliers need for ordering.' },
+      { question: 'What is the difference between gross and net wall area?', answer: 'Gross wall area is the full elevation as drawn (width x height plus gables). Net wall area subtracts windows, doors and other openings. Keep both numbers - different materials use different baselines.' },
+      { question: 'How do you take off interior walls from architectural drawings?', answer: 'Find each wall type in the plan\'s legend or wall schedule, measure the length of every run and total it per type, multiply by floor-to-ceiling height, deduct door openings, then add 5-10% waste. Drywall and paint need both faces, so double the net area before ordering board.' },
+      { question: 'How do you measure walls at 1/4" scale?', answer: 'At 1/4" = 1\'-0" scale, every 1/4 inch on paper is 1 foot on the building - a 1:48 factor. Multiply the paper measurement in inches by 4 to get feet: a wall measuring 2 3/8" on paper is 9.5 ft (2.375 x 4), or 76 ft\u00b2 of face at an 8 ft height.' },
+      { question: 'How do you show a step up or level change on a floor plan?', answer: 'With a direction arrow labelled UP or DN along the drawn treads, annotated with the riser count (e.g. UP 2R), plus an elevation marker giving the height at that point (e.g. +0.300 = 300 mm). Multiply riser count by riser height for the total rise, and take threshold widths from the door schedule for trims.' },
+    ],
+  },
+  {
+    slug: 'how-to-measure-pdf-plans',
+    category: 'digital-takeoffs',
+    title: 'How to Measure Anything From PDF Plans: Areas, Lengths & Quantities',
+    description:
+      'Measure areas, lengths and quantities directly from PDF construction plans — calibration, irregular shapes, opening deductions, elevations vs floor plans. Free online tool.',
+    date: '2026-08-30',
+    lastModified: '2026-08-30',
+    faqs: [
+      { question: 'Can I measure a PDF plan online for free?', answer: 'Yes. Export or screenshot the PDF sheet as an image, upload it to a free measurement tool like the QuoteCore+ plan takeoff, calibrate the scale from a known dimension, and trace areas and lengths on screen.' },
+      { question: 'How do I calibrate the scale on a PDF plan?', answer: 'Find a dimension you trust (a labelled dimension line or a standard door width), draw a calibration line along it, and enter the known length. Then sanity-check by measuring a second known dimension before continuing.' },
+      { question: 'How do I calculate area from a PDF drawing?', answer: 'Calibrate the scale, then trace the boundary of the area as a polygon - rectangles, L-shapes and irregular shapes all work by clicking around the boundary and closing the shape. The tool computes the area.' },
+      { question: 'How do I measure lengths on a plan?', answer: 'Draw a line along the route - a wall, fence, pipe run or path - and read the measurement at your calibrated scale. Multi-segment lines give total run lengths.' },
+      { question: 'Do I measure floors on the floor plan and walls on the elevations?', answer: 'Yes. Floor plans give horizontal quantities (floor and room areas, wall lengths); elevations give vertical quantities (wall areas, cladding zones, opening perimeters). Calibrate each sheet separately.' },
+      { question: 'Does screenshotting a PDF change the scale?', answer: 'No - as long as you do not crop or stretch the image, proportions are preserved exactly and one calibration covers the whole sheet. Cropping after calibrating does invalidate the scale.' },
+      { question: 'Is measuring plans digitally accurate?', answer: 'Yes, when calibrated correctly. Accuracy depends on zooming in when clicking vertices and verifying calibration against a second known dimension. The same method is used for professional digital takeoffs.' },
+    ],
+  },
+  {
+    slug: 'how-to-do-cladding-takeoff',
+    category: 'digital-takeoffs',
+    title: 'How to Do a Cladding Takeoff From Plans: Areas, Openings & Quantities',
+    description:
+      'Complete cladding takeoff guide: gross wall area, opening deductions, net cladding area, gables, material types, trims and waste. Do it free from your plans.',
+    date: '2026-08-30',
+    lastModified: '2026-08-30',
+    faqs: [
+      { question: 'How do I do a cladding takeoff?', answer: 'Measure gross wall area from each elevation (including gables), deduct windows and doors for net cladding area, separate mixed materials into zones, measure trims and battens as linear runs, then add waste and price each quantity.' },
+      { question: 'What is net cladding area?', answer: 'Gross wall area minus all openings (windows, doors, garage doors). Cladding is ordered from net area plus waste, not gross area.' },
+      { question: 'How much waste should I add for cladding?', answer: 'Typically 5-10% for weatherboard and composite boards, 7-10% for fibre cement sheet, 5-8% for metal sheet, 5% for trims and battens, and 3-5% for panelised systems. More short cuts means more waste.' },
+      { question: 'How do I convert cladding area to linear metres of board?', answer: 'Divide the net area (plus waste) by the board\u0027s effective coverage in m per m\u00b2 - effective width after laps, not total width. For example 46.3 m\u00b2 at 175 mm effective coverage is about 264 linear metres of board.' },
+      { question: 'Do I measure trims as areas or lengths?', answer: 'Lengths. Window and door trims run around the opening perimeter, corner trims run the corner height per corner, and cavity battens are vertical runs from batten spacing. All are linear measurements, not areas.' },
+      { question: 'Is a siding takeoff the same as a cladding takeoff?', answer: 'Yes - siding is the US term for cladding. The takeoff process is identical: gross elevation areas, opening deductions, material zones, linear trims and waste.' },
+      { question: 'Can I do a cladding takeoff free?', answer: 'Yes. The QuoteCore+ Free Wall & Cladding Takeoff Tool measures wall areas, trims, battens and openings from your plan or elevation images, free with no signup.' },
+      { question: 'What is a facade takeoff?', answer: 'A facade takeoff is the same measurement process applied to the full building envelope - all elevations, all materials including cladding, panels, trims and flashings - producing quantities for pricing the facade package.' },
     ],
   },
 ];

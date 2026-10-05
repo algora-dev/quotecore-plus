@@ -1,6 +1,8 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
-import { useState } from 'react';
+import '@/app/components/ui/v2/qc-library.css';
+import { useState, useRef, useId } from 'react';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 
 interface TemplateFormData {
@@ -32,6 +34,10 @@ interface Props {
 
 export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, isOverStorage }: Props) {
   // Template meta
+  const nameErrorId = useId();
+  const [nameError, setNameError] = useState('');
+  const nameRef = useRef<HTMLInputElement>(null);
+  const { notify, feedback } = useQcFeedback();
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
   
@@ -70,12 +76,12 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file');
+      await notify('Please upload an image file');
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be less than 5MB');
+      await notify('Image must be less than 5MB');
       return;
     }
     
@@ -96,7 +102,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
       setLogoUrl(url);
     } catch (error) {
       console.error('Logo upload error:', error);
-      alert('Failed to upload logo. Please try again.');
+      await notify('Failed to upload logo. Please try again.');
     } finally {
       setUploadingLogo(false);
     }
@@ -106,7 +112,8 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
     e.preventDefault();
     
     if (!name.trim()) {
-      alert('Template name is required');
+      setNameError('Enter a template name.');
+      nameRef.current?.focus();
       return;
     }
     
@@ -128,6 +135,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
   
   return (
     <>
+      {feedback}
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Template Name & Description */}
@@ -136,14 +144,15 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Template Name <span className="text-red-500">*</span>
           </label>
-          <input
+          <input aria-label="Template Name" ref={nameRef} aria-invalid={!!nameError} aria-describedby={nameError ? nameErrorId : undefined}
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); setNameError(''); }}
             required
             placeholder="e.g., Main Supplier, Emergency Supplier"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           />
+              {nameError && <p id={nameErrorId} className="qc-flow-error" role="alert">{nameError}</p>}
           <p className="text-xs text-slate-500 mt-1">This name will appear in the template dropdown</p>
         </div>
         
@@ -151,12 +160,12 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Description <span className="text-slate-400 font-normal">(Optional)</span>
           </label>
-          <input
+          <input aria-label="Description (Optional)"
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional notes about this template"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           />
         </div>
       </div>
@@ -175,52 +184,52 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
             
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">To</label>
-              <input
+              <input aria-label="To"
                 type="text"
                 value={toSupplier}
                 onChange={(e) => setToSupplier(e.target.value)}
                 placeholder="Supplier company name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Reference</label>
-              <input
+              <input aria-label="Reference"
                 type="text"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
                 placeholder="Default job reference (usually left blank)"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Order Type</label>
-              <input
+              <input aria-label="Order Type"
                 type="text"
                 value={orderType}
                 onChange={(e) => setOrderType(e.target.value)}
                 placeholder="e.g., materials, labour, equipment"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Colours</label>
               <div className="flex gap-2 mb-2">
-                <input
+                <input aria-label="Colours"
                   type="text"
                   value={colourInput}
                   onChange={(e) => setColourInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addColour())}
                   placeholder="Enter colour name"
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="qc-input qc-library-control flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
-                <button
+                <button data-qc-variant="ghost"
                   type="button"
                   onClick={addColour}
-                  className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
+                  className="qc-button qc-flow-control qc-library-control "
                 >
                   Add
                 </button>
@@ -233,10 +242,10 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
                       className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-sm"
                     >
                       {colour}
-                      <button
+                      <button data-qc-variant="ghost"
                         type="button"
                         onClick={() => removeColour(colour)}
-                        className="text-red-600 hover:text-red-700 font-medium"
+                        className="qc-button qc-flow-control qc-library-control "
                       >
                         ×
                       </button>
@@ -248,23 +257,23 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Delivery Address</label>
-              <textarea
+              <textarea aria-label="Delivery Address"
                 value={deliveryAddress}
                 onChange={(e) => setDeliveryAddress(e.target.value)}
                 placeholder="Default delivery address..."
                 rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Order Notes</label>
-              <textarea
+              <textarea aria-label="Order Notes"
                 value={orderNotes}
                 onChange={(e) => setOrderNotes(e.target.value)}
                 placeholder="Default notes..."
                 rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
           </div>
@@ -279,10 +288,10 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
                 {logoUrl ? (
                   <div className="relative w-32 h-32 border border-slate-200 rounded-lg overflow-hidden bg-white">
                     <img src={logoUrl} alt="Company logo" className="w-full h-full object-contain p-2" />
-                    <button
+                    <button data-qc-variant="danger"
                       type="button"
                       onClick={() => setLogoUrl('')}
-                      className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg"
+                      className="qc-button qc-flow-control qc-library-control absolute top-1 right-1"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -301,7 +310,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
                       accept="image/*"
                       onChange={handleLogoUpload}
                       disabled={uploadingLogo}
-                      className="hidden"
+                      className="qc-flow-file qc-library-control hidden"
                     />
                     <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors">
                       {uploadingLogo ? (
@@ -329,34 +338,34 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">From</label>
-              <input
+              <input aria-label="From"
                 type="text"
                 value={fromCompany}
                 onChange={(e) => setFromCompany(e.target.value)}
                 placeholder="Your company name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Contact Person</label>
-              <input
+              <input aria-label="Contact Person"
                 type="text"
                 value={contactPerson}
                 onChange={(e) => setContactPerson(e.target.value)}
                 placeholder="Contact name"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Contact Details</label>
-              <input
+              <input aria-label="Contact Details"
                 type="text"
                 value={contactDetails}
                 onChange={(e) => setContactDetails(e.target.value)}
                 placeholder="Phone number or email"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-input qc-library-control w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
           </div>
@@ -365,18 +374,18 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
 
       {/* Action Buttons */}
       <div className="flex gap-3 justify-end">
-        <button
+        <button data-qc-variant="ghost"
           type="button"
           onClick={onCancel}
           disabled={saving}
-          className="px-6 py-2.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50"
+          className="qc-button qc-flow-control qc-library-control "
         >
           Cancel
         </button>
-        <button
+        <button data-qc-variant="ghost"
           type="submit"
           disabled={saving}
-          className="px-6 py-2.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
+          className="qc-button qc-flow-control qc-library-control "
         >
           {saving ? 'Saving...' : mode === 'create' ? 'Create Template' : 'Save Changes'}
         </button>

@@ -1,4 +1,5 @@
 'use client';
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import { savePaymentDetails, type PaymentDetails } from './payment-details-actions';
 
@@ -31,7 +32,7 @@ export function PaymentDetailsForm({ current }: Props) {
   const hasDetails = accountName || bankName || accountNumber || sortCode || paymentLink;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <QcJourney><form onSubmit={handleSubmit} className="space-y-6">
       {/* Preview card */}
       {hasDetails && (
         <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
@@ -66,7 +67,7 @@ export function PaymentDetailsForm({ current }: Props) {
             {paymentLink && (
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">Payment Link</span>
-                <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="font-medium text-orange-600 hover:underline truncate max-w-[200px]">
+                <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="qc-flow-link font-medium text-orange-600 hover:underline truncate max-w-[200px]">
                   {paymentLink.replace(/^https?:\/\//, '')}
                 </a>
               </div>
@@ -77,66 +78,66 @@ export function PaymentDetailsForm({ current }: Props) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">
             Account Name
           </label>
-          <input
+          <input aria-label="e.g. Smith Roofing Ltd"
             type="text"
             value={accountName}
             onChange={(e) => setAccountName(e.target.value)}
             placeholder="e.g. Smith Roofing Ltd"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+            className="qc-input w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
           />
           <p className="text-xs text-slate-400 mt-1">The name on your bank account</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">
             Bank Name
           </label>
-          <input
+          <input aria-label="e.g. Barclays"
             type="text"
             value={bankName}
             onChange={(e) => setBankName(e.target.value)}
             placeholder="e.g. Barclays"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+            className="qc-input w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">
             Account Number
           </label>
-          <input
+          <input aria-label="e.g. 12345678"
             type="text"
             value={accountNumber}
             onChange={(e) => setAccountNumber(e.target.value)}
             placeholder="e.g. 12345678"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none"
+            className="qc-input w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">
             Sort Code
           </label>
-          <input
+          <input aria-label="e.g. 00-00-00"
             type="text"
             value={sortCode}
             onChange={(e) => setSortCode(e.target.value)}
             placeholder="e.g. 00-00-00"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none"
+            className="qc-input w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">
+        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">
           Payment Link <span className="text-slate-400 font-normal">(optional)</span>
         </label>
-        <input
+        <input aria-label="e.g. https://pay.stripe.com/… or PayPal.me/…"
           type="url"
           value={paymentLink}
           onChange={(e) => setPaymentLink(e.target.value)}
           placeholder="e.g. https://pay.stripe.com/… or PayPal.me/…"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+          className="qc-input w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
         />
         <p className="text-xs text-slate-400 mt-1">Stripe, PayPal, GoCardless or any direct pay link - shown as a clickable button on invoices</p>
       </div>
@@ -148,14 +149,14 @@ export function PaymentDetailsForm({ current }: Props) {
       )}
 
       <div className="flex justify-end">
-        <button
+        <button data-qc-variant="primary"
           type="submit"
           disabled={isPending}
-          className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
+          className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
         >
           {isPending ? 'Saving…' : 'Save Payment Details'}
         </button>
       </div>
-    </form>
+    </form></QcJourney>
   );
 }

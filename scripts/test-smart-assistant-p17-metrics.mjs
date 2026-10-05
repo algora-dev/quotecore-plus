@@ -1,0 +1,18 @@
+/* Synthetic log-report tests and guarded OFFLINE harness checks. NOT a benchmark. */
+import test from 'node:test';import assert from 'node:assert/strict';import {spawnSync} from 'node:child_process';import {summarizeP17,decodeP17} from './report-smart-assistant-p17.mjs';
+const lines=a=>a.map(JSON.stringify).join('\n');
+const cap={event:'sa_retrieval_capabilities',runId:'r',intelligenceActive:true,intelligenceVersion:1};
+const turn={event:'sa_turn_performance',runId:'r',status:'completed',path:'retrieval',modelCalls:1,retrievalPlanFailures:1,retrievalRepairs:1,repairBudgetStops:0};
+const finish={event:'sa_request_performance',runId:'r',status:'completed',requestMs:123};
+test('empty telemetry is unknown, not a zero-ms successful turn',()=>{const p=summarizeP17('').p17;assert.equal(p.requestMs.p50,null);assert.equal(p.capabilityVerifiedRuns,0);assert.equal(p.oneModelCompletions,0)});
+test('prefixed JSON and Vercel message envelopes retain P17 fields',()=>assert.equal(decodeP17(JSON.stringify({message:'[smart-assistant] '+JSON.stringify(cap)})).intelligenceVersion,1));
+test('model result without canonical finish is not successful',()=>{const p=summarizeP17(lines([cap,turn])).p17;assert.equal(p.completedWithTiming,0);assert.equal(p.missingFinalTiming,1)});
+test('finish uncertain is not successful',()=>assert.equal(summarizeP17(lines([cap,turn,{...finish,status:'finish_uncertain'}])).p17.completedWithTiming,0));
+test('P17 requires both server activation and RPC version',()=>{for(const c of [{...cap,intelligenceActive:false},{...cap,intelligenceVersion:undefined},{...cap,intelligenceVersion:2}])assert.equal(summarizeP17(lines([c,turn,finish])).p17.completedWithTiming,0)});
+test('actual joined events produce measured percentiles and distinct repair counters',()=>{const p=summarizeP17(lines([cap,turn,finish])).p17;assert.equal(p.requestMs.p50,123);assert.equal(p.oneModelCompletions,1);assert.equal(p.repairRoundsObserved,1);assert.equal(p.repairAllowancesOffered,1);assert.equal(p.repairStopsObserved,0)});
+test('duplicate terminal exports are deduplicated by run, not counted as extra users',()=>assert.equal(summarizeP17(lines([cap,turn,finish,cap,turn,finish])).p17.completedWithTiming,1));
+test('composite without duration is not a zero-duration SQL observation',()=>{const p=summarizeP17(lines([{event:'sa_composite_resolution',runId:'r'},{event:'sa_composite_resolution',runId:'r',totalMs:9}])).p17;assert.equal(p.compositeCalls,2);assert.equal(p.compositeMs.samples,1);assert.equal(p.compositeMs.p95,9)});
+test('HTTP benchmark offline plan displays all 50 cases',()=>{const r=spawnSync(process.execPath,['scripts/benchmark-smart-assistant-p17.mjs','--plan'],{encoding:'utf8'});assert.equal(r.status,0);assert.match(r.stdout,/OFFLINE PLAN ONLY/);assert.match(r.stdout,/P17-50/)});
+test('HTTP benchmark refuses live work without explicit paid-turn opt-in',()=>{const r=spawnSync(process.execPath,['scripts/benchmark-smart-assistant-p17.mjs','--run'],{encoding:'utf8',env:{...process.env,SA_P17_BENCH_ACK:''}});assert.equal(r.status,2);assert.match(r.stderr,/Explicit SA_P17_BENCH_ACK/)});
+test('scale probes default to an offline plan',()=>{const r=spawnSync(process.execPath,['scripts/probe-smart-assistant-p17.mjs','--plan'],{encoding:'utf8'});assert.equal(r.status,0);assert.match(r.stdout,/OFFLINE PLAN ONLY/);assert.match(r.stdout,/catalogue/)});
+test('scale probe refuses live work without isolated-fixture opt-in',()=>{const r=spawnSync(process.execPath,['scripts/probe-smart-assistant-p17.mjs','--probe'],{encoding:'utf8',env:{...process.env,SA_P17_PROBE_ACK:''}});assert.equal(r.status,2);assert.match(r.stderr,/SA_P17_PROBE_ACK/)});

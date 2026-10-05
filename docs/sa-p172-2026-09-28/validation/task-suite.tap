@@ -1,0 +1,1034 @@
+TAP version 13
+# Subtest: fresh message escapes unresolved filters: show me my quotes with ridges
+ok 1 - fresh message escapes unresolved filters: show me my quotes with ridges
+  ---
+  duration_ms: 6.931211
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: I just want to see the quotes that contain ridge components
+ok 2 - fresh message escapes unresolved filters: I just want to see the quotes that contain ridge components
+  ---
+  duration_ms: 2.329959
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: quote 1014
+ok 3 - fresh message escapes unresolved filters: quote 1014
+  ---
+  duration_ms: 0.688037
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: show invoices
+ok 4 - fresh message escapes unresolved filters: show invoices
+  ---
+  duration_ms: 1.823577
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: whats the most recent john smith quote
+ok 5 - fresh message escapes unresolved filters: whats the most recent john smith quote
+  ---
+  duration_ms: 0.872754
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: show me all of John's quotes
+ok 6 - fresh message escapes unresolved filters: show me all of John's quotes
+  ---
+  duration_ms: 0.379501
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: Open order 184
+ok 7 - fresh message escapes unresolved filters: Open order 184
+  ---
+  duration_ms: 0.433703
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: Compare my quotes this month
+ok 8 - fresh message escapes unresolved filters: Compare my quotes this month
+  ---
+  duration_ms: 3.743459
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: What's my largest accepted quote?
+ok 9 - fresh message escapes unresolved filters: What's my largest accepted quote?
+  ---
+  duration_ms: 1.656996
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: I need to find the other invoice for the Smith job
+ok 10 - fresh message escapes unresolved filters: I need to find the other invoice for the Smith job
+  ---
+  duration_ms: 1.038254
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: Thanks, now show invoices
+ok 11 - fresh message escapes unresolved filters: Thanks, now show invoices
+  ---
+  duration_ms: 0.273382
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: Thanks now show invoices
+ok 12 - fresh message escapes unresolved filters: Thanks now show invoices
+  ---
+  duration_ms: 0.150096
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: New question: quote 1014
+ok 13 - fresh message escapes unresolved filters: New question: quote 1014
+  ---
+  duration_ms: 0.133791
+  type: 'test'
+  ...
+# Subtest: fresh message escapes unresolved filters: How many quotes do I have?
+ok 14 - fresh message escapes unresolved filters: How many quotes do I have?
+  ---
+  duration_ms: 0.137257
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: done
+ok 15 - typed explicit closure: done
+  ---
+  duration_ms: 0.228193
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: Task complete
+ok 16 - typed explicit closure: Task complete
+  ---
+  duration_ms: 0.121253
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: thanks
+ok 17 - typed explicit closure: thanks
+  ---
+  duration_ms: 0.082484
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: thank you
+ok 18 - typed explicit closure: thank you
+  ---
+  duration_ms: 0.083666
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: move on
+ok 19 - typed explicit closure: move on
+  ---
+  duration_ms: 0.085599
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: new question
+ok 20 - typed explicit closure: new question
+  ---
+  duration_ms: 0.081242
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: cancel this search
+ok 21 - typed explicit closure: cancel this search
+  ---
+  duration_ms: 0.081623
+  type: 'test'
+  ...
+# Subtest: typed explicit closure: never mind
+ok 22 - typed explicit closure: never mind
+  ---
+  duration_ms: 0.087842
+  type: 'test'
+  ...
+# Subtest: acknowledgement is not confirmation or record name: yes
+ok 23 - acknowledgement is not confirmation or record name: yes
+  ---
+  duration_ms: 0.344088
+  type: 'test'
+  ...
+# Subtest: acknowledgement is not confirmation or record name: confirmed
+ok 24 - acknowledgement is not confirmation or record name: confirmed
+  ---
+  duration_ms: 0.157888
+  type: 'test'
+  ...
+# Subtest: acknowledgement is not confirmation or record name: approve
+ok 25 - acknowledgement is not confirmation or record name: approve
+  ---
+  duration_ms: 0.132719
+  type: 'test'
+  ...
+# Subtest: acknowledgement is not confirmation or record name: confirm
+ok 26 - acknowledgement is not confirmation or record name: confirm
+  ---
+  duration_ms: 0.175925
+  type: 'test'
+  ...
+# Subtest: dependent follow-up retains task: what about its labour?
+ok 27 - dependent follow-up retains task: what about its labour?
+  ---
+  duration_ms: 0.236006
+  type: 'test'
+  ...
+# Subtest: dependent follow-up retains task: How much is its labour?
+ok 28 - dependent follow-up retains task: How much is its labour?
+  ---
+  duration_ms: 0.131798
+  type: 'test'
+  ...
+# Subtest: dependent follow-up retains task: the other one
+ok 29 - dependent follow-up retains task: the other one
+  ---
+  duration_ms: 0.113821
+  type: 'test'
+  ...
+# Subtest: exact quote can answer a cost parent question
+ok 30 - exact quote can answer a cost parent question
+  ---
+  duration_ms: 1.550045
+  type: 'test'
+  ...
+# Subtest: five-minute elapsed time changes ambiguous fragment, not a clear new request
+ok 31 - five-minute elapsed time changes ambiguous fragment, not a clear new request
+  ---
+  duration_ms: 0.415376
+  type: 'test'
+  ...
+# Subtest: expired task is not resurrected by a vague fragment
+ok 32 - expired task is not resurrected by a vague fragment
+  ---
+  duration_ms: 0.140572
+  type: 'test'
+  ...
+# Subtest: Done is optional for a complete new request after an answer
+ok 33 - Done is optional for a complete new request after an answer
+  ---
+  duration_ms: 0.142615
+  type: 'test'
+  ...
+# Subtest: closed task provides no inherited constraints
+ok 34 - closed task provides no inherited constraints
+  ---
+  duration_ms: 0.122755
+  type: 'test'
+  ...
+# Subtest: normal short answer can fill the expected customer slot
+ok 35 - normal short answer can fill the expected customer slot
+  ---
+  duration_ms: 0.904483
+  type: 'test'
+  ...
+# Subtest: same-subject morphology correction: ridge?
+ok 36 - same-subject morphology correction: ridge?
+  ---
+  duration_ms: 0.327263
+  type: 'test'
+  ...
+# Subtest: same-subject morphology correction: ridges?
+ok 37 - same-subject morphology correction: ridges?
+  ---
+  duration_ms: 0.261504
+  type: 'test'
+  ...
+# Subtest: same-subject morphology correction: ridging?
+ok 38 - same-subject morphology correction: ridging?
+  ---
+  duration_ms: 0.160702
+  type: 'test'
+  ...
+# Subtest: variant correction does not remove specific component qualifiers
+ok 39 - variant correction does not remove specific component qualifiers
+  ---
+  duration_ms: 0.20583
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: show me my quotes with ridges
+ok 40 - whole-request interpretation: show me my quotes with ridges
+  ---
+  duration_ms: 0.505992
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: I just want to see the quotes that contain ridge components
+ok 41 - whole-request interpretation: I just want to see the quotes that contain ridge components
+  ---
+  duration_ms: 0.11277
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: quote 1014
+ok 42 - whole-request interpretation: quote 1014
+  ---
+  duration_ms: 0.080992
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: whats the most recent john smith quote
+ok 43 - whole-request interpretation: whats the most recent john smith quote
+  ---
+  duration_ms: 0.535687
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: show me all of John's quotes
+ok 44 - whole-request interpretation: show me all of John's quotes
+  ---
+  duration_ms: 0.184668
+  type: 'test'
+  ...
+# Subtest: whole-request interpretation: Show the latest quote for John Smith
+ok 45 - whole-request interpretation: Show the latest quote for John Smith
+  ---
+  duration_ms: 0.227282
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: Open quote 1014 and email it
+ok 46 - unconsumed intent goes to model: Open quote 1014 and email it
+  ---
+  duration_ms: 0.107552
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: How much is its labour?
+ok 47 - unconsumed intent goes to model: How much is its labour?
+  ---
+  duration_ms: 0.057457
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: Show latest quote for Smith without Ridge
+ok 48 - unconsumed intent goes to model: Show latest quote for Smith without Ridge
+  ---
+  duration_ms: 0.055463
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: Show latest accepted quote
+ok 49 - unconsumed intent goes to model: Show latest accepted quote
+  ---
+  duration_ms: 0.05308
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: Show latest quote since January
+ok 50 - unconsumed intent goes to model: Show latest quote since January
+  ---
+  duration_ms: 0.094322
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: Show my most expensive quote
+ok 51 - unconsumed intent goes to model: Show my most expensive quote
+  ---
+  duration_ms: 0.061894
+  type: 'test'
+  ...
+# Subtest: unconsumed intent goes to model: quote 1014 but not Smith
+ok 52 - unconsumed intent goes to model: quote 1014 but not Smith
+  ---
+  duration_ms: 0.05968
+  type: 'test'
+  ...
+# Subtest: only known complete component words normalize
+ok 53 - only known complete component words normalize
+  ---
+  duration_ms: 0.093901
+  type: 'test'
+  ...
+# Subtest: task wire is strict and readable without model interpretation
+ok 54 - task wire is strict and readable without model interpretation
+  ---
+  duration_ms: 1.313429
+  type: 'test'
+  ...
+# Subtest: acknowledgement prefix keeps a genuinely dependent follow-up
+ok 55 - acknowledgement prefix keeps a genuinely dependent follow-up
+  ---
+  duration_ms: 0.166982
+  type: 'test'
+  ...
+# Subtest: Okay prefix preserves a typed parent clarification
+ok 56 - Okay prefix preserves a typed parent clarification
+  ---
+  duration_ms: 2.516621
+  type: 'test'
+  ...
+# Subtest: explicit New question bypasses even a valid old parent slot
+ok 57 - explicit New question bypasses even a valid old parent slot
+  ---
+  duration_ms: 0.164979
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: most recent
+ok 58 - temporal word is an instruction, not a record name: most recent
+  ---
+  duration_ms: 0.138219
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: newest
+ok 59 - temporal word is an instruction, not a record name: newest
+  ---
+  duration_ms: 0.088122
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: latest
+ok 60 - temporal word is an instruction, not a record name: latest
+  ---
+  duration_ms: 0.142334
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: last
+ok 61 - temporal word is an instruction, not a record name: last
+  ---
+  duration_ms: 0.091868
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: first
+ok 62 - temporal word is an instruction, not a record name: first
+  ---
+  duration_ms: 0.084717
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: earliest
+ok 63 - temporal word is an instruction, not a record name: earliest
+  ---
+  duration_ms: 0.081182
+  type: 'test'
+  ...
+# Subtest: temporal word is an instruction, not a record name: oldest
+ok 64 - temporal word is an instruction, not a record name: oldest
+  ---
+  duration_ms: 0.075063
+  type: 'test'
+  ...
+# Subtest: quoted temporal name is still a name
+ok 65 - quoted temporal name is still a name
+  ---
+  duration_ms: 0.140001
+  type: 'test'
+  ...
+# Subtest: owner verbatim sequence in ONE conversation: list, restatement, exact number, latest customer
+ok 66 - owner verbatim sequence in ONE conversation: list, restatement, exact number, latest customer
+  ---
+  duration_ms: 61.298378
+  type: 'test'
+  ...
+# Subtest: empty component list does not repeat identical discovery as broadening
+ok 67 - empty component list does not repeat identical discovery as broadening
+  ---
+  duration_ms: 2.425443
+  type: 'test'
+  ...
+# Subtest: a cost clarification preserves Ridge when user supplies quote 1014
+ok 68 - a cost clarification preserves Ridge when user supplies quote 1014
+  ---
+  duration_ms: 13.652786
+  type: 'test'
+  ...
+# Subtest: short customer clarification adds a constraint, does not drop component membership
+ok 69 - short customer clarification adds a constraint, does not drop component membership
+  ---
+  duration_ms: 6.139167
+  type: 'test'
+  ...
+# Subtest: Done closes task without deleting history or doing a business read
+ok 70 - Done closes task without deleting history or doing a business read
+  ---
+  duration_ms: 8.967779
+  type: 'test'
+  ...
+# Subtest: Move on closes an unsuccessful question and does not require successful resolution
+ok 71 - Move on closes an unsuccessful question and does not require successful resolution
+  ---
+  duration_ms: 7.640769
+  type: 'test'
+  ...
+# Subtest: typed thanks also closes without a model and next request is independent
+ok 72 - typed thanks also closes without a model and next request is independent
+  ---
+  duration_ms: 1.768244
+  type: 'test'
+  ...
+# Subtest: forgotten Done does not make unrelated short explicit numbers inherit filters
+ok 73 - forgotten Done does not make unrelated short explicit numbers inherit filters
+  ---
+  duration_ms: 1.399308
+  type: 'test'
+  ...
+# Subtest: unclear fragment after pause asks task boundary, not a fake data search
+ok 74 - unclear fragment after pause asks task boundary, not a fake data search
+  ---
+  duration_ms: 2.929102
+  type: 'test'
+  ...
+# Subtest: boundary Continue reuses the saved message without asking user to repeat it
+ok 75 - boundary Continue reuses the saved message without asking user to repeat it
+  ---
+  duration_ms: 2.129969
+  type: 'test'
+  ...
+# Subtest: boundary New excludes previous task history and constraints
+ok 76 - boundary New excludes previous task history and constraints
+  ---
+  duration_ms: 1.021439
+  type: 'test'
+  ...
+# Subtest: stale boundary buttons cannot reopen a closed task
+ok 77 - stale boundary buttons cannot reopen a closed task
+  ---
+  duration_ms: 0.765673
+  type: 'test'
+  ...
+# Subtest: stale candidate buttons cannot reopen a closed task or propose
+ok 78 - stale candidate buttons cannot reopen a closed task or propose
+  ---
+  duration_ms: 3.149474
+  type: 'test'
+  ...
+# Subtest: candidate selection in active task rereads price rather than cached label
+ok 79 - candidate selection in active task rereads price rather than cached label
+  ---
+  duration_ms: 3.066729
+  type: 'test'
+  ...
+# Subtest: deleted selected candidate never becomes the other same-name record
+ok 80 - deleted selected candidate never becomes the other same-name record
+  ---
+  duration_ms: 3.599242
+  type: 'test'
+  ...
+# Subtest: complex correction delegates interpretation, not literal-name search
+ok 81 - complex correction delegates interpretation, not literal-name search
+  ---
+  duration_ms: 0.838844
+  type: 'test'
+  ...
+# Subtest: latest explicit customer filter never falls back to matching job name
+ok 82 - latest explicit customer filter never falls back to matching job name
+  ---
+  duration_ms: 1.378637
+  type: 'test'
+  ...
+# Subtest: ambiguous colloquial latest NAME quote can try name after complete empty customer set
+ok 83 - ambiguous colloquial latest NAME quote can try name after complete empty customer set
+  ---
+  duration_ms: 1.240889
+  type: 'test'
+  ...
+# Subtest: latest fallback never runs after incomplete customer read
+ok 84 - latest fallback never runs after incomplete customer read
+  ---
+  duration_ms: 0.656439
+  type: 'test'
+  ...
+# Subtest: component-specific qualifier is preserved after plural normalization
+ok 85 - component-specific qualifier is preserved after plural normalization
+  ---
+  duration_ms: 0.603028
+  type: 'test'
+  ...
+# Subtest: empty read is not exposed as permission denial; hidden source is not exposed as absent
+ok 86 - empty read is not exposed as permission denial; hidden source is not exposed as absent
+  ---
+  duration_ms: 1.009851
+  type: 'test'
+  ...
+# Subtest: permission revocation terminates before a proposal or data release
+ok 87 - permission revocation terminates before a proposal or data release
+  ---
+  duration_ms: 0.867727
+  type: 'test'
+  ...
+# Subtest: closing while a run is unresolved is refused by fixture contract
+ok 88 - closing while a run is unresolved is refused by fixture contract
+  ---
+  duration_ms: 0.243997
+  type: 'test'
+  ...
+# Subtest: canonical latest bypasses old updated-at shortcut and uses creation order
+ok 89 - canonical latest bypasses old updated-at shortcut and uses creation order
+  ---
+  duration_ms: 0.91641
+  type: 'test'
+  ...
+# Subtest: done sends ONLY authenticated metadata close
+ok 90 - done sends ONLY authenticated metadata close
+  ---
+  duration_ms: 42.979534
+  type: 'test'
+  ...
+# Subtest: move_on sends ONLY authenticated metadata close
+ok 91 - move_on sends ONLY authenticated metadata close
+  ---
+  duration_ms: 2.36977
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+ok 92 - invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+  ---
+  duration_ms: 0.525873
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+ok 93 - invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+  ---
+  duration_ms: 0.327564
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+ok 94 - invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+  ---
+  duration_ms: 0.641456
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: ["{broken",{}]
+ok 95 - invalid control rejected before auth/write: ["{broken",{}]
+  ---
+  duration_ms: 0.389777
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: ["[]",{}]
+ok 96 - invalid control rejected before auth/write: ["[]",{}]
+  ---
+  duration_ms: 0.927027
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+ok 97 - invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+  ---
+  duration_ms: 0.359732
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+ok 98 - invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+  ---
+  duration_ms: 2.345363
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+ok 99 - invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+  ---
+  duration_ms: 0.786655
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+ok 100 - invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+  ---
+  duration_ms: 0.35148
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+ok 101 - invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+  ---
+  duration_ms: 0.361604
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+ok 102 - invalid control rejected before auth/write: [{"companyId":"00000000-0000-0000-0000-000000000001","conversationId":"00000000-0000-0000-
+  ---
+  duration_ms: 0.275445
+  type: 'test'
+  ...
+# Subtest: invalid control rejected before auth/write: ["\\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ok 103 - invalid control rejected before auth/write: ["\\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  ---
+  duration_ms: 0.396547
+  type: 'test'
+  ...
+# Subtest: cross-company body cannot pass the server account fence
+ok 104 - cross-company body cannot pass the server account fence
+  ---
+  duration_ms: 0.442597
+  type: 'test'
+  ...
+# Subtest: signed-out user cannot close a task
+ok 105 - signed-out user cannot close a task
+  ---
+  duration_ms: 0.468826
+  type: 'test'
+  ...
+# Subtest: disabled feature does not mutate task metadata
+ok 106 - disabled feature does not mutate task metadata
+  ---
+  duration_ms: 0.377389
+  type: 'test'
+  ...
+# Subtest: database gate remains explicit: P1721
+ok 107 - database gate remains explicit: P1721
+  ---
+  duration_ms: 0.950292
+  type: 'test'
+  ...
+# Subtest: database gate remains explicit: P1722
+ok 108 - database gate remains explicit: P1722
+  ---
+  duration_ms: 1.759931
+  type: 'test'
+  ...
+# Subtest: database gate remains explicit: 42501
+ok 109 - database gate remains explicit: 42501
+  ---
+  duration_ms: 0.459362
+  type: 'test'
+  ...
+# Subtest: database gate remains explicit: PGRST202
+ok 110 - database gate remains explicit: PGRST202
+  ---
+  duration_ms: 0.314323
+  type: 'test'
+  ...
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"read","ms":1,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"begin","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task] {"event":"sa_task_boundary","version":1,"runId":"00000000-0000-0000-0000-000000000004","disposition":"new","reason":"self_contained_request","previousTaskId":"00000000-0000-0000-0000-000000000050","taskId":"00000000-0000-0000-0000-000000000051","taskVersion":2,"carriedRunCount":0,"expectedSlot":null,"elapsedMs":2,"inheritedFields":[],"droppedFields":["contains","list"]}
+# [smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"00000000-0000-0000-0000-000000000004","source":"quotes","mode":"rows","state":"ok","rowsReturned":1,"truncated":false,"rpcMs":0,"engineMs":0,"renderMs":1,"totalMs":2}
+# [smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"00000000-0000-0000-0000-000000000004","source":"quotes","mode":"rows","state":"ok","rowsReturned":1,"truncated":false,"rpcMs":0,"engineMs":0,"renderMs":0,"totalMs":0}
+# [smart-assistant:resolver] {"event":"sa_entity_resolution","version":1,"runId":"00000000-0000-0000-0000-000000000004","reads":2,"sources":["quotes"],"failedSources":[],"truncatedSources":[],"skippedSources":[],"broadened":false,"clarifications":0,"totalMs":13}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"finish","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"read","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"begin","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task] {"event":"sa_task_boundary","version":1,"runId":"00000000-0000-0000-0000-000000000004","disposition":"new","reason":"unparsed_self_contained_request","previousTaskId":"00000000-0000-0000-0000-000000000050","taskId":"00000000-0000-0000-0000-000000000051","taskVersion":2,"carriedRunCount":0,"expectedSlot":null,"elapsedMs":0,"inheritedFields":[],"droppedFields":["contains","list"]}
+# [smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000004","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,"resolverByServer":true,"resolverVersion":1,"resolverActive":true,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","resolve_workspace_entity"]}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"finish","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"read","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"begin","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task] {"event":"sa_task_boundary","version":1,"runId":"00000000-0000-0000-0000-000000000004","disposition":"continue","reason":"dependent_reference","previousTaskId":"00000000-0000-0000-0000-000000000050","taskId":"00000000-0000-0000-0000-000000000050","taskVersion":2,"carriedRunCount":1,"expectedSlot":null,"elapsedMs":0,"inheritedFields":[],"droppedFields":[]}
+# [smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000004","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,"resolverByServer":true,"resolverVersion":1,"resolverActive":true,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","resolve_workspace_entity"]}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"finish","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"read","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"begin","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task] {"event":"sa_task_boundary","version":1,"runId":"00000000-0000-0000-0000-000000000004","disposition":"continue","reason":"boundary_choice_continue","previousTaskId":"00000000-0000-0000-0000-000000000050","taskId":"00000000-0000-0000-0000-000000000050","taskVersion":2,"carriedRunCount":1,"expectedSlot":null,"elapsedMs":1,"inheritedFields":[],"droppedFields":[]}
+# [smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000004","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,"resolverByServer":true,"resolverVersion":1,"resolverActive":true,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","resolve_workspace_entity"]}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"finish","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"read","ms":0,"outcome":"error","code":"migration_required"}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"read","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"begin","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task] {"event":"sa_task_boundary","version":1,"runId":"00000000-0000-0000-0000-000000000004","disposition":"new","reason":"no_live_task","previousTaskId":null,"taskId":"00000000-0000-0000-0000-000000000051","taskVersion":1,"carriedRunCount":0,"expectedSlot":null,"elapsedMs":null,"inheritedFields":[],"droppedFields":[]}
+# [smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000004","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,"resolverByServer":true,"resolverVersion":1,"resolverActive":true,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","resolve_workspace_entity"]}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"finish","ms":0,"outcome":"error","code":"access_changed"}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"read","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"begin","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task] {"event":"sa_task_boundary","version":1,"runId":"00000000-0000-0000-0000-000000000004","disposition":"new","reason":"no_live_task","previousTaskId":null,"taskId":"00000000-0000-0000-0000-000000000051","taskVersion":1,"carriedRunCount":0,"expectedSlot":null,"elapsedMs":null,"inheritedFields":[],"droppedFields":[]}
+# [smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000004","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,"resolverByServer":true,"resolverVersion":1,"resolverActive":true,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","resolve_workspace_entity"]}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"finish","ms":0,"outcome":"error","code":"task_changed"}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"read","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"begin","ms":0,"outcome":"error","code":"task_changed"}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"read","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"begin","ms":0,"outcome":"error","code":"run_in_progress"}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"read","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"begin","ms":0,"outcome":"ok","code":null}
+# [smart-assistant:task-stage] {"event":"sa_task_stage","runId":"00000000-0000-0000-0000-000000000004","stage":"finish","ms":0,"outcome":"ok","code":null}
+# Subtest: actual scope chooses a task BEFORE exact deterministic retrieval and passes fenced writer arguments
+ok 111 - actual scope chooses a task BEFORE exact deterministic retrieval and passes fenced writer arguments
+  ---
+  duration_ms: 28.239178
+  type: 'test'
+  ...
+# Subtest: new task excludes old model history, references and pending actions
+ok 112 - new task excludes old model history, references and pending actions
+  ---
+  duration_ms: 6.720714
+  type: 'test'
+  ...
+# Subtest: dependent follow-up carries ONLY current-task history and still reads current facts
+ok 113 - dependent follow-up carries ONLY current-task history and still reads current facts
+  ---
+  duration_ms: 1.702043
+  type: 'test'
+  ...
+# Subtest: boundary choice resumes stored input exactly once without opaque marker
+ok 114 - boundary choice resumes stored input exactly once without opaque marker
+  ---
+  duration_ms: 1.461972
+  type: 'test'
+  ...
+# Subtest: Done wire is never interpreted by a model when feature disabled
+ok 115 - Done wire is never interpreted by a model when feature disabled
+  ---
+  duration_ms: 0.357269
+  type: 'test'
+  ...
+# Subtest: master rollback also does not send task wire to model
+ok 116 - master rollback also does not send task wire to model
+  ---
+  duration_ms: 0.328845
+  type: 'test'
+  ...
+# Subtest: missing task migration is explicit setup failure before model or business read
+ok 117 - missing task migration is explicit setup failure before model or business read
+  ---
+  duration_ms: 0.777001
+  type: 'test'
+  ...
+# Subtest: task flag cannot silently fall back to aggressive P171 on missing capability
+ok 118 - task flag cannot silently fall back to aggressive P171 on missing capability
+  ---
+  duration_ms: 0.334004
+  type: 'test'
+  ...
+# Subtest: disabling task flag keeps the baseline reader path
+ok 119 - disabling task flag keeps the baseline reader path
+  ---
+  duration_ms: 0.37179
+  type: 'test'
+  ...
+# Subtest: late metadata failure preserves model token usage for canonical finish
+ok 120 - late metadata failure preserves model token usage for canonical finish
+  ---
+  duration_ms: 1.668393
+  type: 'test'
+  ...
+# Subtest: metadata finish failure is reported as failed, not completed, in telemetry
+ok 121 - metadata finish failure is reported as failed, not completed, in telemetry
+  ---
+  duration_ms: 1.27488
+  type: 'test'
+  ...
+# Subtest: task decision CAS failure prevents model and retrieval
+ok 122 - task decision CAS failure prevents model and retrieval
+  ---
+  duration_ms: 0.492072
+  type: 'test'
+  ...
+# Subtest: another running request prevents closing or resetting metadata
+ok 123 - another running request prevents closing or resetting metadata
+  ---
+  duration_ms: 0.582438
+  type: 'test'
+  ...
+# Subtest: caller has no privileged metadata writer in the task store
+ok 124 - caller has no privileged metadata writer in the task store
+  ---
+  duration_ms: 0.547625
+  type: 'test'
+  ...
+# Subtest: metadata-only close calls no model, pricing, admission, finish or proposal RPC
+ok 125 - metadata-only close calls no model, pricing, admission, finish or proposal RPC
+  ---
+  duration_ms: 0.17955
+  type: 'test'
+  ...
+# Subtest: close error stays distinct: 42501
+ok 126 - close error stays distinct: 42501
+  ---
+  duration_ms: 0.13912
+  type: 'test'
+  ...
+# Subtest: close error stays distinct: P1721
+ok 127 - close error stays distinct: P1721
+  ---
+  duration_ms: 0.082534
+  type: 'test'
+  ...
+# Subtest: close error stays distinct: P1722
+ok 128 - close error stays distinct: P1722
+  ---
+  duration_ms: 0.116886
+  type: 'test'
+  ...
+# Subtest: close error stays distinct: PGRST202
+ok 129 - close error stays distinct: PGRST202
+  ---
+  duration_ms: 0.258029
+  type: 'test'
+  ...
+# Subtest: malformed checkpoint cannot become trusted state
+ok 130 - malformed checkpoint cannot become trusted state
+  ---
+  duration_ms: 0.221514
+  type: 'test'
+  ...
+# Subtest: revoked or withheld snapshot may be null, not a fabricated active task
+ok 131 - revoked or withheld snapshot may be null, not a fabricated active task
+  ---
+  duration_ms: 0.127603
+  type: 'test'
+  ...
+# Subtest: diagnostic logger failure does not change metadata or run outcome
+ok 132 - diagnostic logger failure does not change metadata or run outcome
+  ---
+  duration_ms: 2.982894
+  type: 'test'
+  ...
+# Subtest: canonical failed gets one inline failure, not a fake assistant message
+ok 133 - canonical failed gets one inline failure, not a fake assistant message
+  ---
+  duration_ms: 1.594141
+  type: 'test'
+  ...
+# Subtest: canonical timed_out gets one inline failure, not a fake assistant message
+ok 134 - canonical timed_out gets one inline failure, not a fake assistant message
+  ---
+  duration_ms: 0.243417
+  type: 'test'
+  ...
+# Subtest: canonical aborted gets one inline failure, not a fake assistant message
+ok 135 - canonical aborted gets one inline failure, not a fake assistant message
+  ---
+  duration_ms: 0.113001
+  type: 'test'
+  ...
+# Subtest: canonical cancelled gets one inline failure, not a fake assistant message
+ok 136 - canonical cancelled gets one inline failure, not a fake assistant message
+  ---
+  duration_ms: 0.169395
+  type: 'test'
+  ...
+# Subtest: no invented failure for accepted
+ok 137 - no invented failure for accepted
+  ---
+  duration_ms: 0.742378
+  type: 'test'
+  ...
+# Subtest: no invented failure for running
+ok 138 - no invented failure for running
+  ---
+  duration_ms: 0.104758
+  type: 'test'
+  ...
+# Subtest: no invented failure for completed
+ok 139 - no invented failure for completed
+  ---
+  duration_ms: 0.168084
+  type: 'test'
+  ...
+# Subtest: existing canonical reply suppresses extra failure object
+ok 140 - existing canonical reply suppresses extra failure object
+  ---
+  duration_ms: 0.196066
+  type: 'test'
+  ...
+# Subtest: no orphan fake message for hidden or absent user row
+ok 141 - no orphan fake message for hidden or absent user row
+  ---
+  duration_ms: 0.365381
+  type: 'test'
+  ...
+# Subtest: opaque failed button cannot be automatically reexecuted: [[sa-task:v1:invalid]]
+ok 142 - opaque failed button cannot be automatically reexecuted: [[sa-task:v1:invalid]]
+  ---
+  duration_ms: 0.415966
+  type: 'test'
+  ...
+# Subtest: opaque failed button cannot be automatically reexecuted: [[sa-resolution:v1:invalid]]
+ok 143 - opaque failed button cannot be automatically reexecuted: [[sa-resolution:v1:invalid]]
+  ---
+  duration_ms: 0.184087
+  type: 'test'
+  ...
+# Subtest: choices becomes inert after task closes or expires
+ok 144 - choices becomes inert after task closes or expires
+  ---
+  duration_ms: 0.301895
+  type: 'test'
+  ...
+# Subtest: resolution becomes inert after task closes or expires
+ok 145 - resolution becomes inert after task closes or expires
+  ---
+  duration_ms: 0.1067
+  type: 'test'
+  ...
+# Subtest: new task cannot reuse old candidate cards but keeps actual navigation
+ok 146 - new task cannot reuse old candidate cards but keeps actual navigation
+  ---
+  duration_ms: 0.143957
+  type: 'test'
+  ...
+# Subtest: flag-off session retains baseline card presentation
+ok 147 - flag-off session retains baseline card presentation
+  ---
+  duration_ms: 0.157007
+  type: 'test'
+  ...
+# Subtest: current candidate is interactive
+ok 148 - current candidate is interactive
+  ---
+  duration_ms: 0.11332
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"version":0}
+ok 149 - untrusted task metadata rejected: {"version":0}
+  ---
+  duration_ms: 0.240853
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"version":"1"}
+ok 150 - untrusted task metadata rejected: {"version":"1"}
+  ---
+  duration_ms: 0.146771
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"label":"bad\\nlabel"}
+ok 151 - untrusted task metadata rejected: {"label":"bad\\nlabel"}
+  ---
+  duration_ms: 0.109455
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"label":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ok 152 - untrusted task metadata rejected: {"label":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  ---
+  duration_ms: 0.080802
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"boundary":"yes"}
+ok 153 - untrusted task metadata rejected: {"boundary":"yes"}
+  ---
+  duration_ms: 0.176976
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"lastRunId":"wrong"}
+ok 154 - untrusted task metadata rejected: {"lastRunId":"wrong"}
+  ---
+  duration_ms: 0.094512
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"expiresAt":"tomorrow"}
+ok 155 - untrusted task metadata rejected: {"expiresAt":"tomorrow"}
+  ---
+  duration_ms: 0.088803
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"closure":"confirm"}
+ok 156 - untrusted task metadata rejected: {"closure":"confirm"}
+  ---
+  duration_ms: 0.091057
+  type: 'test'
+  ...
+# Subtest: untrusted task metadata rejected: {"status":"committed"}
+ok 157 - untrusted task metadata rejected: {"status":"committed"}
+  ---
+  duration_ms: 0.140191
+  type: 'test'
+  ...
+# Subtest: valid task checkpoint survives public parsing
+ok 158 - valid task checkpoint survives public parsing
+  ---
+  duration_ms: 0.181273
+  type: 'test'
+  ...
+# Subtest: provider diagnostic rate_limit
+ok 159 - provider diagnostic rate_limit
+  ---
+  duration_ms: 0.154963
+  type: 'test'
+  ...
+# Subtest: provider diagnostic authentication
+ok 160 - provider diagnostic authentication
+  ---
+  duration_ms: 0.100241
+  type: 'test'
+  ...
+# Subtest: provider diagnostic provider_server
+ok 161 - provider diagnostic provider_server
+  ---
+  duration_ms: 0.063025
+  type: 'test'
+  ...
+# Subtest: provider diagnostic request_rejected
+ok 162 - provider diagnostic request_rejected
+  ---
+  duration_ms: 0.063997
+  type: 'test'
+  ...
+# Subtest: provider diagnostic timeout
+ok 163 - provider diagnostic timeout
+  ---
+  duration_ms: 0.07351
+  type: 'test'
+  ...
+# Subtest: provider diagnostic never leaks arbitrary body/message/key/code
+ok 164 - provider diagnostic never leaks arbitrary body/message/key/code
+  ---
+  duration_ms: 0.269606
+  type: 'test'
+  ...
+1..164
+# tests 164
+# suites 0
+# pass 164
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2085.089758

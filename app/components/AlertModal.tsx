@@ -1,9 +1,13 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { QcDialog } from './ui/v2/QcDialog';
+import { QcButton } from './ui/v2/QcButton';
 
 type AlertVariant = 'info' | 'success' | 'error';
 
 interface Props {
+  /** Optional migrated presentation. Existing callers keep their current style. */
+  appearance?: 'v2';
   open: boolean;
   title: string;
   description?: string;
@@ -24,23 +28,33 @@ interface Props {
  */
 export function AlertModal({
   open,
+  appearance,
   title,
   description,
   confirmLabel = 'OK',
   variant = 'info',
   onClose,
 }: Props) {
+  const closeRef = useRef<HTMLButtonElement>(null);
   // Close on Escape so keyboard users aren't trapped.
   useEffect(() => {
-    if (!open) return;
+    if (!open || appearance === 'v2') return;
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  }, [open, onClose, appearance]);
 
   if (!open) return null;
+
+  if (appearance === 'v2') {
+    return <QcDialog open={open} title={title} description={description} onRequestClose={onClose}
+      initialFocusRef={closeRef}
+      footer={<QcButton ref={closeRef} variant={variant === 'error' ? 'secondary' : 'primary'} onClick={onClose}>
+        {confirmLabel}
+      </QcButton>} />;
+  }
 
   // Variant-driven styling. Errors get red; success gets green; info uses
   // the same neutral black we use for primary CTAs elsewhere.

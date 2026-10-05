@@ -250,8 +250,8 @@ export default function TutorialsPage() {
               <p className="mt-1 text-sm text-slate-500">Digital takeoff, AI Scan Assist, Smart Components, sending and tracking, and more.</p>
             </a>
             <a href="/free-trial" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-slate-900">Start free trial</p>
-              <p className="mt-1 text-sm text-slate-500">14 days, no card. Full access to every feature.</p>
+              <p className="font-semibold text-slate-900">Get started</p>
+              <p className="mt-1 text-sm text-slate-500">Free tools, no signup. 30-day money-back guarantee on paid plans.</p>
             </a>
             <a href="/free-tools" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-slate-900">Free tools</p>

@@ -1,7 +1,7 @@
 'use client';
+import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 
 import { useState } from 'react';
-import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS } from '@/app/lib/takeoff/aiComponentRegistry';
 
 export interface AiResultsArea {
   /** Index in the roof_areas array (0-based). */
@@ -12,6 +12,9 @@ export interface AiResultsArea {
   pitch: number | null;
   /** Number of polygon points. */
   vertexCount: number;
+  /** Formatted real-world area size (e.g. "142.6 m²"). Owner 2026-09-25:
+   *  stage 1 is area-only, so the measured size leads the card. */
+  sizeLabel?: string | null;
 }
 
 export interface AiResultsData {
@@ -40,13 +43,14 @@ export interface AiResultsData {
 
 interface Props {
   data: AiResultsData;
-  onApply: (areaOverrides: Record<number, { name: string; pitch: number }>) => void;
+  onApply: (areaOverrides: Record<number, { name: string; pitch: number }>) => void | Promise<void>;
   onDiscard: () => void;
 }
 
 export function AiResultsModal({ data, onApply, onDiscard }: Props) {
-  const { summary, scaleCheck, droppedCount, areas } = data;
+  const { summary, scaleCheck, areas } = data;
   const [acknowledged, setAcknowlednowledged] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [areaEdits, setAreaEdits] = useState<Record<number, { name: string; pitch: string }>>(() => (
     Object.fromEntries(areas.map(area => [area.index, {
       name: '',
@@ -57,21 +61,21 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
 
   if (summary.unreadable) {
     return (
-      <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
+      <QcHostedDialog label="Review AI measurements" size="md" floating className="fixed inset-0 bg-black/20 flex items-center justify-center z-[60]">
         <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md border border-gray-200 shadow-xl">
-          <h2 className="text-lg font-semibold mb-2">⚠️ Image unreadable</h2>
+          <h2 className="text-lg font-semibold mb-2">Image unreadable</h2>
           <p className="text-sm text-slate-500 mb-4">
             The AI couldn&apos;t analyse this plan image. This usually means the image is too low quality,
             rotated at an unusual angle, or doesn&apos;t contain a recognisable roof plan.
           </p>
-          <button
+          <QcHostedButton variant="secondary"
             onClick={onDiscard}
             className="w-full py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
           >
             Close
-          </button>
+          </QcHostedButton>
         </div>
-      </div>
+      </QcHostedDialog>
     );
   }
 
@@ -108,41 +112,30 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
   });
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
-      <div className="bg-white rounded-2xl p-4 md:p-6 max-w-lg border border-gray-200 shadow-xl max-h-[85vh] overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-1">AI Assist Results</h2>
-        <p className="text-xs text-slate-500 mb-4">
-          Here&apos;s what AI Assist identified from its scans, please check the area(s) and components, then ensure you apply a pitch value to any identified roof area(s). You can also change the roof area name(s).
+    // Owner 2026-09-25: stage-1 results are AREA-ONLY (the component scan is
+    // a later, optional step), so the card talks only about the traced roof
+    // area: its measured size, name and pitch. Modeless + draggable like the
+    // calibration card - the canvas stays fully interactive behind it, and
+    // with no component tile grid there is nothing to scroll horizontally.
+    <QcHostedDialog label="AI Assist Results" modeless
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20">
+      <div className="bg-white rounded-2xl p-4 md:p-5 max-w-sm border border-gray-200 shadow-xl">
+        <h2 className="text-base font-semibold mb-1 text-slate-900">AI Assist Results</h2>
+        <p className="text-xs text-slate-500 mb-3">
+          AI traced the roof outline and measured this area. Check it against the plan, give it a name and a pitch, then apply it to the canvas.
         </p>
 
-        {/* Detection summary */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <SummaryCard label="Roof Areas" value={summary.areas} colour="text-blue-600" />
-          <SummaryCard label="Total Lines" value={summary.components} colour="text-slate-900" />
-          <SummaryCard label="Dropped" value={droppedCount} colour={droppedCount > 0 ? 'text-amber-600' : 'text-slate-400'} />
-        </div>
-
-        <div className="grid grid-cols-5 gap-2 mb-4">
-          {ALL_SEMANTIC_KEYS.map(key => {
-            const def = AI_COMPONENT_REGISTRY[key];
-            const count = summary[def.key];
-            return (
-              <MiniStat key={key} label={def.displayName} value={count} colour={def.badgeClasses} />
-            );
-          })}
-        </div>
-
-        {/* Scale cross-check */}
+        {/* Scale cross-check (directly relevant to the area measurement) */}
         {scaleCheck?.warning && (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-            ⚠️ {scaleCheck.warning}
+          <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+            {scaleCheck.warning}
           </div>
         )}
 
         {/* Apply pitch to all */}
         {areas.length > 1 && (
           <div className="flex gap-2 items-center mb-3 p-2 bg-orange-50/50 border border-orange-100 rounded-lg">
-            <input
+            <input aria-label="Pitch for all areas, degrees"
               type="number"
               min={0}
               max={89}
@@ -157,19 +150,19 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
               Apply this pitch to all areas
             </span>
             {applyPitchToAll && (
-              <button
+              <QcHostedButton variant="ghost"
                 onClick={() => setApplyPitchToAll('')}
                 className="text-xs text-slate-400 hover:text-slate-600 ml-auto"
               >
                 Clear
-              </button>
+              </QcHostedButton>
             )}
           </div>
         )}
 
-        {/* Per-area editable cards */}
+        {/* Per-area editable cards: measured size + name + pitch */}
         {areas.length > 0 && (
-          <div className="mb-4 space-y-3">
+          <div className="mb-3 space-y-3">
             {areas.map((area) => {
               const edit = areaEdits[area.index];
               const nameEmpty = !edit?.name?.trim();
@@ -177,10 +170,16 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
               return (
                 <div key={area.index} className="rounded-xl border-2 border-[#FF6B35]/30 p-3 space-y-2">
                   <div className="text-xs font-semibold text-slate-700">Roof Area {area.index + 1}</div>
+                  {area.sizeLabel && (
+                    <div className="text-center py-1.5 rounded-lg bg-orange-50/60">
+                      <div className="text-2xl font-bold leading-7 text-slate-900">{area.sizeLabel}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">measured roof area</div>
+                    </div>
+                  )}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-slate-500 w-12 shrink-0">Name:</label>
-                      <input
+                      <input aria-label={`Name of AI area ${area.index + 1}`}
                         type="text"
                         value={edit?.name ?? ''}
                         placeholder="Enter area name"
@@ -197,7 +196,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
                     </div>
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-slate-500 w-12 shrink-0">Pitch:</label>
-                      <input
+                      <input aria-label={`Pitch of AI area ${area.index + 1}, degrees}`}
                         type="number"
                         min={0}
                         max={89}
@@ -225,7 +224,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
           </div>
         )}
 
-        {/* Acknowledgment */}
+        {/* Acknowledgment - area only (components are a later, optional step) */}
         <label className="flex items-start gap-2 mb-4 cursor-pointer">
           <input
             type="checkbox"
@@ -234,46 +233,33 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
             className="mt-0.5 w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
           />
           <span className="text-xs text-slate-600">
-            I understand these are AI-generated measurements placed as placeholder components.
-            I&apos;ll verify accuracy and attach real components before quoting.
+            I understand this roof area measurement is AI-generated. I&apos;ll check it against the plan before quoting.
           </span>
         </label>
 
         {/* Actions */}
         <div className="flex gap-2">
-          <button
+          <QcHostedButton variant="ghost"
             onClick={onDiscard}
             className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
           >
             Discard
-          </button>
-          <button
-            onClick={() => onApply(buildOverrides())}
-            disabled={!acknowledged || !allValid}
+          </QcHostedButton>
+          <QcHostedButton variant="secondary"
+            onClick={async () => {
+              // Area creation is a DB roundtrip: show a working state so the
+              // confirm never feels dead while it saves (owner 2026-09-25).
+              if (applying) return;
+              setApplying(true);
+              try { await onApply(buildOverrides()); } catch { setApplying(false); }
+            }}
+            disabled={!acknowledged || !allValid || applying}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Apply to Canvas
-          </button>
+            {applying ? 'Applying…' : 'Apply to Canvas'}
+          </QcHostedButton>
         </div>
       </div>
-    </div>
-  );
-}
-
-function SummaryCard({ label, value, colour }: { label: string; value: number; colour: string }) {
-  return (
-    <div className="rounded-xl border border-slate-200 p-2.5 text-center">
-      <div className={`text-xl font-bold ${colour}`}>{value}</div>
-      <div className="text-[10px] text-slate-500 mt-0.5">{label}</div>
-    </div>
-  );
-}
-
-function MiniStat({ label, value, colour }: { label: string; value: number; colour: string }) {
-  return (
-    <div className={`rounded-lg p-2 text-center ${colour}`}>
-      <div className="text-base font-bold">{value}</div>
-      <div className="text-[9px] uppercase tracking-wide opacity-70">{label}</div>
-    </div>
+    </QcHostedDialog>
   );
 }

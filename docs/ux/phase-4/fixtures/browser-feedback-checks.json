@@ -1,0 +1,321 @@
+{
+  "kind": "STATIC_CSS_ONLY",
+  "checks": [
+    {
+      "selector": "[data-copilot=\"takeoff-save\"]",
+      "default": {
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(135deg, rgb(255, 100, 31) 0%, rgb(255, 138, 61) 55%, rgb(255, 179, 107) 100%)",
+        "color": "rgb(25, 27, 32)",
+        "border": "rgb(255, 100, 31)",
+        "outline": "rgb(25, 27, 32) none 0px",
+        "shadow": "rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0.12s, 0.12s, 0.12s",
+        "focusVisible": false
+      },
+      "hover": {
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(135deg, rgb(255, 107, 53) 0%, rgb(255, 146, 61) 55%, rgb(255, 188, 122) 100%)",
+        "color": "rgb(25, 27, 32)",
+        "border": "rgb(255, 100, 31)",
+        "outline": "rgb(25, 27, 32) none 0px",
+        "shadow": "rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset, rgba(255, 107, 53, 0.2) 0px 4px 14px 0px",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0.12s, 0.12s, 0.12s",
+        "focusVisible": false
+      },
+      "focus": {
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(135deg, rgb(255, 100, 31) 0%, rgb(255, 138, 61) 55%, rgb(255, 179, 107) 100%)",
+        "color": "rgb(25, 27, 32)",
+        "border": "rgb(255, 100, 31)",
+        "outline": "rgb(182, 61, 10) solid 2px",
+        "shadow": "rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0.12s, 0.12s, 0.12s",
+        "focusVisible": true
+      },
+      "pressed": {
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "linear-gradient(135deg, rgb(255, 107, 53) 0%, rgb(255, 146, 61) 55%, rgb(255, 188, 122) 100%)",
+        "color": "rgb(25, 27, 32)",
+        "border": "rgb(255, 100, 31)",
+        "outline": "rgb(182, 61, 10) solid 2px",
+        "shadow": "rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset, rgba(255, 107, 53, 0.2) 0px 4px 14px 0px",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0.12s, 0.12s, 0.12s",
+        "focusVisible": true
+      },
+      "hasVisibleFocus": true,
+      "hoverChange": true,
+      "pressedChange": true
+    },
+    {
+      "selector": ".qc-canvas-tool[aria-pressed=\"true\"]",
+      "default": {
+        "background": "rgb(255, 244, 235)",
+        "backgroundImage": "none",
+        "color": "rgb(182, 61, 10)",
+        "border": "rgb(182, 61, 10)",
+        "outline": "rgb(182, 61, 10) none 0px",
+        "shadow": "rgb(182, 61, 10) 0px -2px 0px 0px inset",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0.12s, 0.12s, 0.12s",
+        "focusVisible": false
+      },
+      "hover": {
+        "background": "rgb(255, 230, 210)",
+        "backgroundImage": "none",
+        "color": "rgb(182, 61, 10)",
+        "border": "rgb(182, 61, 10)",
+        "outline": "rgb(182, 61, 10) none 0px",
+        "shadow": "rgb(182, 61, 10) 0px -2px 0px 0px inset",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0.12s, 0.12s, 0.12s",
+        "focusVisible": false
+      },
+      "focus": {
+        "background": "rgb(255, 244, 235)",
+        "backgroundImage": "none",
+        "color": "rgb(182, 61, 10)",
+        "border": "rgb(182, 61, 10)",
+        "outline": "rgb(182, 61, 10) solid 2px",
+        "shadow": "rgb(182, 61, 10) 0px -2px 0px 0px inset",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0.12s, 0.12s, 0.12s",
+        "focusVisible": true
+      },
+      "pressed": {
+        "background": "rgb(255, 230, 210)",
+        "backgroundImage": "none",
+        "color": "rgb(182, 61, 10)",
+        "border": "rgb(182, 61, 10)",
+        "outline": "rgb(182, 61, 10) solid 2px",
+        "shadow": "rgb(182, 61, 10) 0px 0px 0px 2px inset",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0.12s, 0.12s, 0.12s",
+        "focusVisible": true
+      },
+      "hasVisibleFocus": true,
+      "hoverChange": true,
+      "pressedChange": true
+    },
+    {
+      "selector": ".qc-takeoff-component-select",
+      "default": {
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "none",
+        "color": "rgb(48, 54, 65)",
+        "border": "rgba(0, 0, 0, 0)",
+        "outline": "rgb(48, 54, 65) none 0px",
+        "shadow": "none",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": false
+      },
+      "hover": {
+        "background": "rgb(255, 244, 235)",
+        "backgroundImage": "none",
+        "color": "rgb(182, 61, 10)",
+        "border": "rgba(0, 0, 0, 0)",
+        "outline": "rgb(182, 61, 10) none 0px",
+        "shadow": "none",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": false
+      },
+      "focus": {
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "none",
+        "color": "rgb(48, 54, 65)",
+        "border": "rgba(0, 0, 0, 0)",
+        "outline": "rgb(182, 61, 10) solid 2px",
+        "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": true
+      },
+      "pressed": {
+        "background": "rgb(255, 244, 235)",
+        "backgroundImage": "none",
+        "color": "rgb(182, 61, 10)",
+        "border": "rgba(0, 0, 0, 0)",
+        "outline": "rgb(182, 61, 10) solid 2px",
+        "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": true
+      },
+      "hasVisibleFocus": true,
+      "hoverChange": true,
+      "pressedChange": true
+    },
+    {
+      "selector": ".qc-takeoff-icon-action",
+      "default": {
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "none",
+        "color": "rgb(89, 98, 115)",
+        "border": "rgba(0, 0, 0, 0)",
+        "outline": "rgb(89, 98, 115) none 0px",
+        "shadow": "none",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": false
+      },
+      "hover": {
+        "background": "rgb(255, 244, 235)",
+        "backgroundImage": "none",
+        "color": "rgb(182, 61, 10)",
+        "border": "rgba(0, 0, 0, 0)",
+        "outline": "rgb(182, 61, 10) none 0px",
+        "shadow": "none",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": false
+      },
+      "focus": {
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "none",
+        "color": "rgb(89, 98, 115)",
+        "border": "rgba(0, 0, 0, 0)",
+        "outline": "rgb(182, 61, 10) solid 2px",
+        "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": true
+      },
+      "pressed": {
+        "background": "rgb(255, 244, 235)",
+        "backgroundImage": "none",
+        "color": "rgb(182, 61, 10)",
+        "border": "rgba(0, 0, 0, 0)",
+        "outline": "rgb(182, 61, 10) solid 2px",
+        "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": true
+      },
+      "hasVisibleFocus": true,
+      "hoverChange": true,
+      "pressedChange": true
+    },
+    {
+      "selector": ".qc-takeoff-back",
+      "default": {
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "none",
+        "color": "rgb(89, 98, 115)",
+        "border": "rgb(221, 225, 231)",
+        "outline": "rgb(89, 98, 115) none 0px",
+        "shadow": "none",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": false
+      },
+      "hover": {
+        "background": "rgb(255, 244, 235)",
+        "backgroundImage": "none",
+        "color": "rgb(182, 61, 10)",
+        "border": "rgb(221, 225, 231)",
+        "outline": "rgb(182, 61, 10) none 0px",
+        "shadow": "none",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": false
+      },
+      "focus": {
+        "background": "rgba(0, 0, 0, 0)",
+        "backgroundImage": "none",
+        "color": "rgb(89, 98, 115)",
+        "border": "rgb(221, 225, 231)",
+        "outline": "rgb(182, 61, 10) solid 2px",
+        "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": true
+      },
+      "pressed": {
+        "background": "rgb(255, 244, 235)",
+        "backgroundImage": "none",
+        "color": "rgb(182, 61, 10)",
+        "border": "rgb(221, 225, 231)",
+        "outline": "rgb(182, 61, 10) solid 2px",
+        "shadow": "rgb(255, 255, 255) 0px 0px 0px 2px",
+        "transform": "none",
+        "opacity": "1",
+        "transition": "0s",
+        "focusVisible": true
+      },
+      "hasVisibleFocus": true,
+      "hoverChange": true,
+      "pressedChange": true
+    }
+  ],
+  "limitations": "No React event handlers, native-dialog component lifecycle, mobile mode or Fabric canvas executed. Sample HTML controls only.",
+  "disabled": {
+    "disabled": true,
+    "computed": {
+      "background": "rgb(229, 232, 237)",
+      "backgroundImage": "none",
+      "color": "rgb(102, 112, 128)",
+      "border": "rgb(221, 225, 231)",
+      "outline": "rgb(102, 112, 128) none 0px",
+      "shadow": "none",
+      "transform": "none",
+      "opacity": "1",
+      "transition": "0.12s, 0.12s, 0.12s",
+      "focusVisible": false
+    }
+  },
+  "reducedMotion": {
+    "background": "rgba(0, 0, 0, 0)",
+    "backgroundImage": "linear-gradient(135deg, rgb(255, 100, 31) 0%, rgb(255, 138, 61) 55%, rgb(255, 179, 107) 100%)",
+    "color": "rgb(25, 27, 32)",
+    "border": "rgb(255, 100, 31)",
+    "outline": "rgb(25, 27, 32) none 0px",
+    "shadow": "rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset",
+    "transform": "none",
+    "opacity": "1",
+    "transition": "0s",
+    "focusVisible": false
+  },
+  "forcedColorsSelected": {
+    "background": "rgb(255, 255, 255)",
+    "backgroundImage": "none",
+    "color": "rgb(0, 0, 0)",
+    "border": "rgba(5, 0, 73, 0.8)",
+    "outline": "rgb(0, 0, 0) none 0px",
+    "shadow": "none",
+    "transform": "none",
+    "opacity": "1",
+    "transition": "0s",
+    "focusVisible": false
+  },
+  "uploadDialog": {
+    "count": 1,
+    "fitsViewport": true,
+    "fieldCount": 4
+  },
+  "allCheckedControlsHaveFocusFeedback": true
+}

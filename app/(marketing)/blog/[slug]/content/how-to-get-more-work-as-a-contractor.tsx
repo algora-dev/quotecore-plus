@@ -69,7 +69,7 @@ export default function Post() {
         />
       </div>
       
-      <p>If you are still putting quotes together manually, <a href="/blog/roofing-quoting-software-uk">here is how UK roofers are using digital quoting to send better quotes faster - and what that means for winning work</a>. For the full pricing process, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>.</p>
+      <p>If you are still putting quotes together manually, <a href="/blog/roofing-quoting-software-uk">here is how UK roofers are using digital quoting to send better quotes faster - and what that means for winning work</a>. For the full pricing process, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>. If you are comparing platforms, our guide to the <a href="/blog/best-quoting-software-nz">best quoting software for NZ tradies</a> covers the options in detail.</p>
 
       <hr />
 
@@ -155,7 +155,7 @@ export default function Post() {
 
       <hr />
 
-      <p>Ready to quote faster? Build your quotes with the <a href="/free-quote-generator">free quote generator</a> - professional, itemised, no signup - and see <a href="/blog/do-professional-quotes-win-more-jobs">what the evidence says about professional quotes winning more jobs</a>. Or <a href="/free-trial">start your free QuoteCore+ trial today</a>. No card needed. From complex plan to quote in under 3 minutes for less than a dollar.</p>
+      <p>Ready to quote faster? Build your quotes with the <a href="/free-quote-generator">free quote generator</a> - professional, itemised, no signup - and see <a href="/blog/do-professional-quotes-win-more-jobs">what the evidence says about professional quotes winning more jobs</a>. Or <a href="/free-trial">get started with QuoteCore+ today</a>. Plans from $19/month with a 30-day money-back guarantee. From complex plan to quote in under 3 minutes for less than a dollar.</p>
     </div>
   );
 }

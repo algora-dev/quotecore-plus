@@ -1067,6 +1067,7 @@ export async function getCompanyQuotas(companyId: string): Promise<QuotaInfo[]> 
     invoiceCountRes,
     orderCountRes,
     aiPointsRes,
+    draftQuoteCountRes,
   ] = await Promise.all([
     admin.from('company_quote_usage')
       .select('quotes_created')
@@ -1086,6 +1087,11 @@ export async function getCompanyQuotas(companyId: string): Promise<QuotaInfo[]> 
     (admin as any).rpc('company_order_count', { p_company_id: companyId }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).rpc('get_ai_assist_points_status', { p_company_id: companyId }),
+    // Quote drafts: started but never finalised (any draft quote for this company)
+    admin.from('quotes')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId)
+      .eq('status', 'draft'),
   ]);
 
   const planCode = (effPlanRes.data as string | null) ?? 'starter';
@@ -1109,6 +1115,14 @@ export async function getCompanyQuotas(companyId: string): Promise<QuotaInfo[]> 
       unit: 'quotes',
       resettable: true,
       key: 'quotes',
+    },
+    {
+      label: 'Quote Drafts (unfinished)',
+      used: draftQuoteCountRes.count ?? 0,
+      limit: null,
+      unit: 'drafts',
+      resettable: false,
+      key: 'quote_drafts',
     },
     {
       label: 'Invoices (monthly)',

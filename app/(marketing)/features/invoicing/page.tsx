@@ -64,6 +64,14 @@ const faqSchema = {
         text: "Yes. Invoices include action buttons for customers to mark payment as sent or dispute the invoice. QuoteCore+ does not process payments - customers use the payment instructions provided (such as bank details) to pay, then mark payment as sent. This gives both parties a clear record of invoice status.",
       },
     },
+    {
+      "@type": "Question",
+      name: "Can Smart Assistant help with invoices?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. Smart Assistant can find invoices and their status by text or voice - including which invoices are unpaid - alongside jobs, quotes and orders in your account. Invoice creation and sending stay in the invoicing tool, where line items flow from your quote.",
+      },
+    },
   ],
 };
 
@@ -78,6 +86,7 @@ const faqs = [
   { q: "Do I need a quote to create an invoice?", a: "No. You can generate an invoice from an accepted quote in QuoteCore+, import a quote from another tool, or create a blank invoice from scratch. The invoicing tool works standalone." },
   { q: "Do invoices include payment instructions?", a: "Yes. Every invoice includes a payment instructions panel with the amount due, payment reference, and due date. Customers can copy payment details with one click." },
   { q: "Can customers confirm payment or dispute an invoice online?", a: "Yes. Invoices include action buttons for customers to mark payment as sent or dispute the invoice. QuoteCore+ does not process payments - customers pay using the included payment instructions (such as bank details) and mark payment as sent. This gives both parties a clear record of invoice status." },
+  { q: "Can Smart Assistant help with invoices?", a: "Yes. Smart Assistant can find invoices and their status by text or voice - including which invoices are unpaid - alongside jobs, quotes and orders in your account. Invoice creation and sending stay in the invoicing tool, where line items flow from your quote." },
 ];
 
 export default function InvoicingPage() {
@@ -102,7 +111,7 @@ export default function InvoicingPage() {
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-                Start free trial
+                Get started
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
                 All features
@@ -160,7 +169,7 @@ export default function InvoicingPage() {
             Invoicing is a standalone tool. You can generate an invoice from an accepted quote in QuoteCore+, import a quote from another tool, or create a blank invoice from scratch. However you start, the result is a branded, professional invoice document with line items, totals, and payment instructions.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
-            Every invoice includes a payment instructions panel with the amount due, payment reference, and due date. Customers can copy payment details with one click, mark payment as sent, or dispute the invoice. You see the status of every invoice without chasing emails.
+            Every invoice includes a payment instructions panel with the amount due, payment reference, and due date. Customers can copy payment details with one click, mark payment as sent, or dispute the invoice. You see the status of every invoice without chasing emails - on any device - and Smart Assistant can find which invoices are unpaid or disputed by text or voice.
           </p>
         </section>
 
@@ -256,8 +265,8 @@ export default function InvoicingPage() {
               <p className="mt-2 text-sm text-zinc-600">The invoice includes payment instructions, but QuoteCore+ does not process card or bank payments. Customers pay via bank transfer using the details on the invoice.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900">No accounting software integration</h3>
-              <p className="mt-2 text-sm text-zinc-600">Invoices are stored in QuoteCore+ but do not sync to Xero, QuickBooks, or other accounting platforms. Export invoice data manually if needed.</p>
+              <h3 className="font-semibold text-slate-900">No automatic accounting sync</h3>
+              <p className="mt-2 text-sm text-zinc-600">Invoices are stored in QuoteCore+ and are not continuously synchronised with accounting software. However, quotes can be exported to Xero as draft invoices with line items via <a href="/integrations/xero" className="font-medium text-[#BD4A1A] hover:underline">Send to App &rarr; Xero</a>.</p>
             </div>
           </div>
         </section>
@@ -308,7 +317,7 @@ export default function InvoicingPage() {
             </Link>
             <Link href="/pricing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Pricing</h3>
-              <p className="mt-1 text-sm text-zinc-600">Compare plans and start a 14-day free trial.</p>
+              <p className="mt-1 text-sm text-zinc-600">Compare plans - paid from $19/month with a 30-day money-back guarantee.</p>
             </Link>
           </div>
         </section>
@@ -322,9 +331,9 @@ export default function InvoicingPage() {
         <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try invoicing free</h2>
-            <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
+            <p className="mt-2 text-zinc-600">Free tools, no signup. 30-day money-back guarantee on paid plans.</p>
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Start free trial
+              Get started
             </a>
             <p className="mt-4 text-sm text-zinc-500">
               <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>

@@ -1,0 +1,130 @@
+{
+  "method": "Syntax AST and isolated transpile only, not semantic typechecking.",
+  "results": [
+    {
+      "file": "app/components/ui/v2/useQcFeedback.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/template-form.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/EditCustomerTemplateModal.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/TemplatesPageClient.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/save-from-quote/SaveFromQuote.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplatesList.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/new/page.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/resources/[id]/edit/TemplateEditor.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/page.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx",
+      "pass": true,
+      "diagnostics": []
+    },
+    {
+      "file": "app/components/ui/v2/QcActionNotice.tsx",
+      "pass": true,
+      "diagnostics": []
+    }
+  ]
+}

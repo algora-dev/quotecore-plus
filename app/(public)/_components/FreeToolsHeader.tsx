@@ -11,7 +11,7 @@ const navItems = [
   { label: "Pricing", href: "/#pricing" },
   { label: "Blog", href: "/blog" },
   { label: "Contact us", href: "/contact" },
-  { label: "Free trial", href: "/free-trial" },
+  { label: "Pricing", href: "/pricing" },
 ];
 
 /**
@@ -30,7 +30,7 @@ export default function FreeToolsHeader() {
   const contactButton =
     `${headerButton} pill-shimmer border border-zinc-300 bg-white font-medium text-zinc-900 shadow-[0_6px_24px_rgba(255,255,255,0.18)_inset,0_10px_30px_rgba(0,0,0,0.04)] backdrop-blur-3xl hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
 
-  const trialButton =
+  const signupButton =
     `${headerButton} bg-[#FF6B35] font-semibold text-white shadow-[0_14px_34px_rgba(255,107,53,0.22)] hover:bg-[#E55A28] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
 
   const menuButton =

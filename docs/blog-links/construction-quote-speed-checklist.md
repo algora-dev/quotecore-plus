@@ -38,7 +38,7 @@ Source: `app/(marketing)/blog/[slug]/content/construction-quote-speed-checklist.
 |---|---|
 | /qc-checklist.pdf | Download checklist (PDF) |
 
-## Inbound in-article links (7)
+## Inbound in-article links (6)
 
 | From | Anchor used |
 |---|---|
@@ -48,6 +48,5 @@ Source: `app/(marketing)/blog/[slug]/content/construction-quote-speed-checklist.
 | /blog/how-to-get-more-work-as-a-contractor | The Construction Quote Speed Checklist |
 | /blog/quotecore-plus-reviews | the Construction Quote Speed Checklist is free to download |
 | /blog/roofing-quoting-software-uk | the Construction Quote Speed Checklist |
-| /blog/roofing-quoting-software-vs-spreadsheets | the Construction Quote Speed Checklist |
 
 External links in source: 0

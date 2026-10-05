@@ -1,0 +1,447 @@
+// Parent-model flow (cladding / flooring): entry mode -> (digital takeoff
+// station when measuring from plans) -> parents & measurements -> products
+// per parent -> custom components -> output. Mirrors PortalFlow structure;
+// data model is parent areas (see tradeConfig.ts). Fully self-contained.
+
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import type { EntryMode, MeasurementSet, ParentJob } from './types';
+import { emptyParentJob } from './types';
+import type { SupplierProduct } from './types';
+import { StepProgress } from './StepShell';
+import { ParentMeasureStep } from './ParentMeasureStep';
+import { ParentProductStep } from './ParentProductStep';
+import { ParentOutputView } from './ParentOutputView';
+import { CustomComponentsStep } from './CustomComponentsStep';
+import { ParentTakeoffStation } from './ParentTakeoffStation';
+import { PricingModeChoice, includeLabourFor } from './PricingModeChoice';
+import type { PricingMode } from './PricingModeChoice';
+import { tradeConfigFor } from './tradeConfig';
+import type { TradeConfig } from './tradeConfig';
+import { tradeUnitPrice, useSupplierConfig } from './supplierConfig';
+import { readAdminData, effectiveTrade } from './adminData';
+import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
+
+const FLOW_KEY = 'qc-spt-parentflow-v2';
+
+interface PersistedParentFlow {
+  entryMode: 'measure' | 'have' | null;
+  pricingMode: PricingMode | null;
+  step: number;
+  mode: 'standard' | 'advanced';
+  job: ParentJob;
+}
+
+function readPersisted(): PersistedParentFlow | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(FLOW_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as PersistedParentFlow;
+    if (!p?.job || !Array.isArray(p.job.parents) || typeof p.step !== 'number') return null;
+    return p;
+  } catch {
+    return null;
+  }
+}
+
+export function ParentFlow() {
+  const { config, basePath, restartUrl } = useSupplierConfig();
+  const trade: TradeConfig = tradeConfigFor(config.trade);
+  const { user } = useFreeToolsAuth();
+
+  const restored = readPersisted();
+  const [entryMode, setEntryMode] = useState<'measure' | 'have' | null>(restored?.entryMode ?? null);
+  const [pricingMode, setPricingMode] = useState<PricingMode | null>(restored?.pricingMode ?? null);
+  const [planUrl, setPlanUrl] = useState<string | null>(null);
+  const [step, setStep] = useState(() => {
+    // A restored measure flow at the station step has no plan file to
+    // re-render - land on the measurement edit step (job data survives).
+    if (restored && restored.entryMode === 'measure' && restored.step === 2) return 3;
+    return restored?.step ?? 1;
+  });
+  const [mode, setMode] = useState<'standard' | 'advanced'>(restored?.mode ?? 'standard');
+  const [job, setJob] = useState<ParentJob>(restored?.job ?? emptyParentJob());
+  // Header brand click: offer go-back vs restart instead of wiping
+  const [restartOpen, setRestartOpen] = useState(false);
+  // Plan images captured at the takeoff station (annotated + originals) -
+  // handed to the send-to-supplier enquiry as pre-attached files.
+  const [planImages, setPlanImages] = useState<{ name: string; dataUrl: string; annotated: boolean }[] | null>(null);
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(FLOW_KEY, JSON.stringify({ entryMode, pricingMode, step, mode, job } satisfies PersistedParentFlow));
+    } catch { /* ignore quota */ }
+  }, [entryMode, pricingMode, step, mode, job]);
+
+  // Trade pricing parity with the roofing flow (customer tier beats blanket)
+  const showTrade = (config.features.login && user != null) || !config.tradeRequiresLogin;
+  const tradeInfo = effectiveTrade(config, readAdminData(config.slug, config), user?.email);
+  const catalog = useMemo<SupplierProduct[]>(() =>
+    showTrade
+      ? config.products.map(p => ({ ...p, unitPrice: tradeUnitPrice(p, config, tradeInfo.pct) }))
+      : config.products,
+    [config, showTrade, tradeInfo.pct]);
+
+  // Dynamic step list: the takeoff station only exists on the measure path.
+  const stationStep = entryMode === 'measure' ? 2 : 0;
+  const measureStepNum = entryMode === 'measure' ? 3 : 2;
+  const productStepNum = measureStepNum + 1;
+  const customStepNum = productStepNum + 1;
+  const outputStepNum = customStepNum + 1;
+
+  const steps = [
+    { key: 'mode', label: 'How do you want to price this job?' },
+    ...(entryMode === 'measure' ? [{ key: 'takeoff', label: 'Measure your plans' }] : []),
+    { key: 'measure', label: `${trade.areaLabel} & measurements` },
+    { key: 'products', label: 'Products' },
+    { key: 'custom', label: 'Custom components' },
+    { key: 'output', label: 'Output' },
+  ];
+  const currentStep = Math.min(step, steps.length);
+
+  // Shim so the shared CustomComponentsStep (MeasurementSet-typed) can be
+  // reused verbatim - it only touches the customComponents slice.
+  const customsShim = { entryPath: 'actual', groups: {}, appliedProducts: [], customComponents: job.customComponents } as unknown as MeasurementSet;
+  function setCustomsShim(next: MeasurementSet) {
+    setJob(j => ({ ...j, customComponents: next.customComponents }));
+  }
+
+  function reset() {
+    setEntryMode(null);
+    setPricingMode(null);
+    if (planUrl) URL.revokeObjectURL(planUrl);
+    setPlanUrl(null);
+    setJob(emptyParentJob());
+    setStep(1);
+    try { window.sessionStorage.removeItem(FLOW_KEY); } catch { /* ignore */ }
+    // Dual-trade brands (Roofline): restart lands on the trade-choice page
+    if (restartUrl) window.location.assign(restartUrl);
+  }
+
+  // Header brand click restarts the flow (choice modal keeps progress)
+  const hasProgress = step > 1
+    || job.parents.length > 0
+    || job.components.length > 0
+    || job.applied.length > 0
+    || job.customComponents.length > 0;
+  useEffect(() => {
+    const restart = () => { if (hasProgress) setRestartOpen(true); };
+    window.addEventListener('qc-spt-restart', restart);
+    return () => window.removeEventListener('qc-spt-restart', restart);
+  }, [hasProgress]);
+  // Warn before closing the tab with a job in progress (browser prompt)
+  useEffect(() => {
+    if (!hasProgress) return;
+    const h = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', h);
+    return () => window.removeEventListener('beforeunload', h);
+  }, [hasProgress]);
+
+  /** Station finished: merge its parents/entries/customs into the job and
+   *  land on the measurement edit step so names/values can be reviewed. */
+  function handleStationFinish(next: ParentJob, planImages?: { name: string; dataUrl: string; annotated: boolean }[]) {
+    setJob(next);
+    setPlanImages(planImages ?? null);
+    setStep(measureStepNum);
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {step < outputStepNum && (
+        <StepProgress steps={steps} current={currentStep} />
+      )}
+      <div className="mx-auto max-w-5xl px-4 py-6 pb-16">
+        {/* Persistent Standard/Advanced toggle (mirrors the roofing flow) */}
+        {step >= measureStepNum && step < outputStepNum && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
+              <button
+                onClick={() => setMode('standard')}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer ${mode === 'standard' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
+              >
+                Standard
+              </button>
+              <button
+                onClick={() => setMode('advanced')}
+                title="Advanced adds waste, labour and quantity overrides per area group - your choice is remembered across steps"
+                className={`rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer ${mode === 'advanced' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
+              >
+                Advanced
+              </button>
+            </div>
+            <span className="text-xs text-slate-400">
+              {mode === 'standard' ? 'Fast materials pricing' : 'Detailed job costing - waste, labour, overrides'}
+            </span>
+          </div>
+        )}
+
+        {step === 1 && (
+          <ParentEntryStep
+            trade={trade}
+            entryMode={entryMode}
+            setEntryMode={setEntryMode}
+            pricingMode={pricingMode}
+            setPricingMode={setPricingMode}
+            showPricingMode={config.features.pricingMode}
+            planUrl={planUrl}
+            setPlanUrl={setPlanUrl}
+            onBackToChoice={() => { setEntryMode(null); setPlanUrl(null); }}
+            onNext={() => setStep(entryMode === 'measure' ? stationStep : measureStepNum)}
+          />
+        )}
+
+        {/* Digital takeoff station (measure from plans). Multi-plan: use
+            "Upload another plan or image" inside the station to add the
+            floor plan then each elevation in the same takeoff. */}
+        {step === stationStep && entryMode === 'measure' && planUrl && (
+          <ParentTakeoffStation
+            trade={trade.key}
+            planUrl={planUrl}
+            onFinish={handleStationFinish}
+          />
+        )}
+
+        {step === measureStepNum && (
+          <ParentMeasureStep
+            trade={trade}
+            job={job}
+            setJob={setJob}
+            fromPlan={entryMode === 'measure'}
+            bucketExamples={config.bucketExamples}
+            bucketRows={config.bucketRows}
+            onBack={() => setStep(entryMode === 'measure' ? stationStep : 1)}
+            onNext={() => setStep(productStepNum)}
+          />
+        )}
+
+        {step === productStepNum && (
+          <ParentProductStep
+            job={job}
+            setJob={setJob}
+            catalog={catalog}
+            mode={mode}
+            includeLabour={config.features.pricingMode ? includeLabourFor(pricingMode) : true}
+            currency={config.currency}
+            trade={trade}
+            onBack={() => setStep(measureStepNum)}
+            onNext={() => setStep(customStepNum)}
+          />
+        )}
+
+        {step === customStepNum && (
+          <CustomComponentsStep
+            measureSet={customsShim}
+            setMeasureSet={setCustomsShim}
+            includeLabour={config.features.pricingMode ? includeLabourFor(pricingMode) : true}
+            onBack={() => setStep(productStepNum)}
+            onNext={() => setStep(outputStepNum)}
+          />
+        )}
+
+        {step >= outputStepNum && (
+          <ParentOutputView
+            trade={trade}
+            job={job}
+            catalog={catalog}
+            baselineCatalog={config.products}
+            planImages={planImages ?? undefined}
+            includeLabour={config.features.pricingMode ? includeLabourFor(pricingMode) : true}
+            pricingMode={config.features.pricingMode ? pricingMode : null}
+            showTrade={showTrade}
+            tradeLabel={showTrade && tradeInfo.pct > 0 ? tradeInfo.label : null}
+            currency={config.currency}
+            basePath={basePath}
+            onBack={() => setStep(customStepNum)}
+            onAddCustom={() => setStep(customStepNum)}
+            onRestart={reset}
+          />
+        )}
+      </div>
+
+      {/* Header restart choice: keep the job or start fresh */}
+      {restartOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white border border-slate-200 shadow-xl p-6 text-center">
+            <h3 className="text-base font-bold text-slate-900">You have a job in progress</h3>
+            <p className="mt-1 text-sm text-slate-500">Everything is saved - your measurements, products and choices. Go back to carry on where you left off, or start fresh.</p>
+            <div className="mt-4 grid gap-2">
+              <button
+                onClick={() => setRestartOpen(false)}
+                className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition cursor-pointer"
+              >
+                Go back to my job
+              </button>
+              <button
+                onClick={() => { reset(); setRestartOpen(false); }}
+                className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition cursor-pointer"
+              >
+                Start a new job (clears everything)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Step 1: two paths - measure from plans (upload PNG/JPG/PDF) or enter
+ *  known measurements. The station handles multi-plan in-session. */
+function ParentEntryStep({
+  trade, entryMode, setEntryMode, planUrl, setPlanUrl, onBackToChoice, onNext, pricingMode, setPricingMode, showPricingMode,
+}: {
+  trade: TradeConfig;
+  entryMode: 'measure' | 'have' | null;
+  setEntryMode: (m: 'measure' | 'have' | null) => void;
+  planUrl: string | null;
+  setPlanUrl: (u: string | null) => void;
+  onBackToChoice: () => void;
+  onNext: () => void;
+  pricingMode: PricingMode | null;
+  setPricingMode: (m: PricingMode) => void;
+  showPricingMode: boolean;
+}) {
+  const pdfPicker = usePdfPagePicker();
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handleFile(raw: File) {
+    setBusy(true);
+    try {
+      const isPdf = raw.type === 'application/pdf' || /\.pdf$/i.test(raw.name);
+      const file = isPdf ? await pdfPicker.convertIfNeeded(raw) : raw;
+      if (!file) return; // PDF page picker cancelled
+      const url = URL.createObjectURL(file);
+      setPlanUrl(url);
+      setFileName(raw.name);
+      setEntryMode('measure');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
+        <h2 className="text-lg font-semibold text-slate-900">How do you want to price this job?</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          {trade.label} - {trade.areaLabel.toLowerCase()} drive the product quantities.
+        </p>
+
+        <div className="mt-4 space-y-3">
+          <button
+            onClick={() => setEntryMode('measure')}
+            className={`w-full rounded-xl border px-4 py-4 text-left transition cursor-pointer ${entryMode === 'measure'
+              ? 'border-blue-300 bg-blue-50/40 shadow-[0_0_8px_rgba(37,99,235,0.08)]'
+              : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40'}`}
+          >
+            <span className="text-sm font-semibold text-slate-900">Measure from plans</span>
+            <p className="mt-1 text-xs text-slate-500">
+              Upload a floor plan and/or elevation plans{trade.allowHeight ? ' - measure wall runs (length x height) or draw areas' : ' - draw the areas on the plan'}. Add more plans in the same takeoff.
+            </p>
+            {entryMode === 'measure' && (
+              <div className="mt-3">
+                {planUrl ? (
+                  <div className="rounded-xl border border-green-200 bg-green-50/40 p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" /></svg>
+                      </span>
+                      <span className="text-sm font-semibold text-slate-900">Plan uploaded</span>
+                    </div>
+                    <div className="mt-3 flex items-start gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={planUrl}
+                        alt="Uploaded plan"
+                        className="h-28 w-40 flex-shrink-0 rounded-lg border border-slate-200 bg-white object-contain"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-medium text-slate-700" title={fileName ?? undefined}>{fileName ?? 'Your plan'}</p>
+                        <p className="mt-1 text-xs text-slate-500">This is the plan you will calibrate and measure in the next step.</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <label className="inline-flex cursor-pointer items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-600 transition hover:border-slate-400">
+                            {busy ? 'Processing PDF...' : 'Upload another plan'}
+                            <input
+                              type="file"
+                              accept="application/pdf,image/png,image/jpeg"
+                              className="hidden"
+                              onChange={e => {
+                                const f = e.target.files?.[0];
+                                if (f) void handleFile(f);
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                          <button
+                            onClick={onNext}
+                            disabled={busy}
+                            className="inline-flex items-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
+                          >
+                            Continue
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center hover:border-blue-300 transition">
+                    <span className="text-sm font-medium text-slate-700">
+                      {busy ? 'Processing PDF...' : 'Upload your first plan'}
+                    </span>
+                    <span className="mt-1 text-xs text-slate-400">PDF, PNG, JPG</span>
+                    <input
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg"
+                      className="hidden"
+                      onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (f) void handleFile(f);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            )}
+          </button>
+
+          <button
+            onClick={() => setEntryMode('have')}
+            className={`w-full rounded-xl border px-4 py-4 text-left transition cursor-pointer ${entryMode === 'have'
+              ? 'border-blue-300 bg-blue-50/40 shadow-[0_0_8px_rgba(37,99,235,0.08)]'
+              : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40'}`}
+          >
+            <span className="text-sm font-semibold text-slate-900">Enter measurements I already have</span>
+            <p className="mt-1 text-xs text-slate-500">
+              Add each {trade.areaNoun} area group (one per product type) with its m\u00B2 values, then apply products.
+            </p>
+          </button>
+        </div>
+      </div>
+
+      {/* Supply-mode choice: materials only vs materials + install */}
+      {showPricingMode && (
+        <PricingModeChoice pricingMode={pricingMode} setPricingMode={setPricingMode} />
+      )}
+
+      <div className="flex items-center justify-between">
+        {entryMode ? (
+          <button onClick={onBackToChoice} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
+            Clear choice
+          </button>
+        ) : <span className="text-xs text-slate-400">Step 1 of 5</span>}
+        <button
+          onClick={onNext}
+          disabled={entryMode === null || (entryMode === 'measure' && !planUrl) || busy || (showPricingMode && pricingMode === null)}
+          className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
+        >
+          {entryMode === 'measure' ? 'Next: Measure your plans' : `Next: ${trade.areaLabel}`}
+        </button>
+      </div>
+    </div>
+  );
+}

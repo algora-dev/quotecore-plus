@@ -1,0 +1,38 @@
+const {root}=require('./sa-speed-test-loader.cjs');
+const test=require('node:test'),assert=require('node:assert/strict'),path=require('node:path');
+const load=p=>require(path.join(root,'app/lib/smart-assistant',p)),uuid=n=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
+const {failedTurns,staleTaskCard}=load('tasks/presentation.ts');const {parseTaskView}=load('tasks/contracts.ts');const {providerFailure}=load('speed/provider-failure.ts');
+const task=()=>({id:uuid(1),version:1,status:'answered',label:'Finding: quotes',lastRunId:uuid(2),startedAt:new Date(Date.now()-60000).toISOString(),updatedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+900000).toISOString(),closure:null,boundary:false});
+const user={id:uuid(3),role:'user',content:'show quotes',runId:uuid(4),createdAt:new Date().toISOString()};
+for(const status of ['failed','timed_out','aborted','cancelled'])test('canonical '+status+' gets one inline failure, not a fake assistant message',()=>{const f=failedTurns([user],[{id:uuid(4),requestId:uuid(5),status}]);assert.equal(f.length,1);assert.equal(f[0].messageId,user.id);assert.equal(f[0].canRetry,true);assert.doesNotMatch(f[0].copy,/nothing was changed|no changes applied/i);});
+for(const status of ['accepted','running','completed'])test('no invented failure for '+status,()=>assert.deepEqual(failedTurns([user],[{id:uuid(4),requestId:uuid(5),status}]),[]));
+test('existing canonical reply suppresses extra failure object',()=>assert.deepEqual(failedTurns([user,{...user,id:uuid(8),role:'assistant'}],[{id:uuid(4),status:'failed'}]),[]));
+test('no orphan fake message for hidden or absent user row',()=>assert.deepEqual(failedTurns([],[{id:uuid(4),status:'failed'}]),[]));
+for(const content of ['[[sa-task:v1:invalid]]','[[sa-resolution:v1:invalid]]'])test('opaque failed button cannot be automatically reexecuted: '+content,()=>assert.equal(failedTurns([{...user,content}],[{id:uuid(4),status:'failed'}])[0].canRetry,false));
+const card=(kind,offset=0)=>({id:uuid(6),runId:uuid(7),createdAt:new Date(Date.now()+offset).toISOString(),content:{kind,title:'Choices',options:[]}});
+for(const kind of ['choices','resolution'])test(kind+' becomes inert after task closes or expires',()=>{assert.equal(staleTaskCard(card(kind),{...task(),status:'closed'}),true);assert.equal(staleTaskCard(card(kind),{...task(),expiresAt:new Date(Date.now()-1).toISOString()}),true);assert.equal(staleTaskCard(card(kind),null),true);});
+test('new task cannot reuse old candidate cards but keeps actual navigation',()=>{assert.equal(staleTaskCard(card('resolution',-120000),task()),true);assert.equal(staleTaskCard(card('records',-120000),task()),false);assert.equal(staleTaskCard(card('proposal',-120000),{...task(),status:'closed'}),false);});
+test('flag-off session retains baseline card presentation',()=>assert.equal(staleTaskCard(card('choices'),undefined),false));
+test('current candidate is interactive',()=>assert.equal(staleTaskCard(card('resolution'),task()),false));
+for(const patch of [{version:0},{version:'1'},{label:'bad\nlabel'},{label:'x'.repeat(201)},{boundary:'yes'},{lastRunId:'wrong'},{expiresAt:'tomorrow'},{closure:'confirm'},{status:'committed'}])test('untrusted task metadata rejected: '+JSON.stringify(patch).slice(0,70),()=>assert.equal(parseTaskView({...task(),...patch}),null));
+test('valid task checkpoint survives public parsing',()=>assert.ok(parseTaskView(task())));
+for(const [e,category]of [[{status:429,code:'rate_limit_exceeded'},'rate_limit'],[{status:401},'authentication'],[{status:503},'provider_server'],[{status:400},'request_rejected'],[{name:'AbortError'},'timeout']])test('provider diagnostic '+category,()=>assert.equal(providerFailure(e).category,category));
+test('provider diagnostic never leaks arbitrary body/message/key/code',()=>{const e={status:500,code:'secret-prompt-text',message:'a private user question',body:'private response',stack:'apikey=secret'};assert.deepEqual(providerFailure(e),{category:'provider_server',status:500,code:null});assert.deepEqual(providerFailure(null),{category:'unknown',status:null,code:null});});
+const {awaitingProceed}=load('tasks/presentation.ts');
+const reply=(content,runId=uuid(2))=>({id:uuid(9),role:'assistant',content,runId,createdAt:new Date().toISOString()});
+test('confirm-to-continue reply shows the Proceed affordance',()=>{for(const content of [
+ 'I found corrugated sheets at 12.50/m2 and the cheapest underlay at 4.10/m2. Shall I proceed with those prices?',
+ 'So that is a 100 m2 plan-area roof at 30 degrees with 10% waste. Is my understanding correct?',
+ 'That sounds right - want me to continue with the James Smith draft?',
+ 'Ready when you are. Shall I create the draft now?',
+ 'Does that look okay to you?']
+ )assert.equal(awaitingProceed(task(),[user,reply(content)]),true,content);});
+test('ordinary answers keep the current strip',()=>{for(const content of [
+ 'The Smith draft has Ridge, Underlay and Spouting on it.','Here are your five most recent quotes.',
+ 'Do you want the cheapest underlay or the premium one?','How much does the Ridge cost on this draft?',
+ 'What is the cheapest underlay in your library?']
+ )assert.equal(awaitingProceed(task(),[user,reply(content)]),false,content);});
+test('resolver input, closed tasks and missing replies never offer Proceed',()=>{
+ assert.equal(awaitingProceed({...task(),status:'awaiting_input'},[user,reply('Shall I proceed?')]),false);
+ assert.equal(awaitingProceed({...task(),status:'closed'},[user,reply('Shall I proceed?')]),false);
+ assert.equal(awaitingProceed(null,[user]),false);assert.equal(awaitingProceed(task(),[]),false);});

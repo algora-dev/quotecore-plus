@@ -1,5 +1,7 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -73,6 +75,7 @@ export function CatalogList({
   isOverStorage,
   supplierCatalogs = [],
 }: Props) {
+  const { notify, feedback } = useQcFeedback();
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [catalogs, setCatalogs] = useState<CatalogRow[]>(initialCatalogs);
@@ -154,7 +157,7 @@ export function CatalogList({
       setDeleteTarget(null);
       startTransition(() => router.refresh());
     } else {
-      alert(result.message);
+      await notify(result.message);
     }
   }
 
@@ -168,7 +171,7 @@ export function CatalogList({
       setArchiveTarget(null);
       startTransition(() => router.refresh());
     } else {
-      alert(result.message);
+      await notify(result.message);
     }
   }
 
@@ -182,7 +185,7 @@ export function CatalogList({
       setCatalogs((prev) => prev.map((c) => (c.id === catalog.id ? { ...c, status: 'ready' as const } : c)));
       startTransition(() => router.refresh());
     } else {
-      alert(result.message);
+      await notify(result.message);
     }
   }
 
@@ -217,7 +220,7 @@ export function CatalogList({
         key={catalog.id}
         onClick={() => setEditCatalog(catalog)}
         title="Click to edit this catalog"
-        className={`grid sm:grid-cols-[1fr_140px_120px_120px_80px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${isArchived ? 'border-slate-200 opacity-75' : 'border-slate-200'}`}
+        className={`grid sm:grid-cols-[1fr_120px_110px_120px_190px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${isArchived ? 'border-slate-200 opacity-75' : 'border-slate-200'}`}
       >
         {/* Name */}
         <div className="min-w-0">
@@ -247,10 +250,10 @@ export function CatalogList({
         {/* Actions */}
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           {isArchived ? (
-            <button
+            <button aria-label="Reinstate catalog"
               onClick={() => handleUnarchive(catalog)}
               title="Reinstate catalog"
-              className="icon-btn"
+              className="qc-icon-button qc-flow-control icon-btn"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -259,10 +262,10 @@ export function CatalogList({
           ) : (
             <>
               {!catalog.source_catalog_id && (
-                <button
+                <button aria-label="Upload new version"
                   onClick={() => setReplaceTarget(catalog)}
                   title="Upload new version"
-                  className="icon-btn opacity-0 group-hover:opacity-100"
+                  className="qc-icon-button qc-flow-control icon-btn opacity-0 group-hover:opacity-100"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -272,25 +275,25 @@ export function CatalogList({
               <a
                 href={`/${workspaceSlug}/catalogs/download/${catalog.id}`}
                 title="Download CSV"
-                className="icon-btn opacity-0 group-hover:opacity-100"
+                className="qc-flow-link icon-btn opacity-0 group-hover:opacity-100"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
               </a>
-              <button
+              <button aria-label="Edit catalog"
                 onClick={() => setEditCatalog(catalog)}
                 title="Edit catalog"
-                className="icon-btn opacity-0 group-hover:opacity-100"
+                className="qc-icon-button qc-flow-control icon-btn opacity-0 group-hover:opacity-100"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </button>
-              <button
+              <button aria-label="Archive catalog"
                 onClick={() => setArchiveTarget(catalog)}
                 title="Archive catalog"
-                className="icon-btn opacity-0 group-hover:opacity-100"
+                className="qc-icon-button qc-flow-control icon-btn opacity-0 group-hover:opacity-100"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -298,10 +301,10 @@ export function CatalogList({
               </button>
             </>
           )}
-          <button
+          <button aria-label="Delete catalog"
             onClick={() => setDeleteTarget(catalog)}
             title="Delete catalog"
-            className="icon-btn icon-btn--danger opacity-0 group-hover:opacity-100"
+            className="qc-icon-button qc-flow-control icon-btn icon-btn--danger opacity-0 group-hover:opacity-100"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -313,7 +316,8 @@ export function CatalogList({
   }
 
   return (
-    <section className="space-y-5">
+    <QcJourney>
+      {feedback}<section className="space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -326,10 +330,10 @@ export function CatalogList({
           </p>
         </div>
         {activeTab === 'my-catalogs' && (
-          <button
+          <button data-qc-variant="primary"
             onClick={handleNewCatalog}
             data-copilot="upload-catalog"
-            className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 self-start sm:self-auto"
+            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 self-start sm:self-auto"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -342,11 +346,11 @@ export function CatalogList({
       {/* Tabs */}
       <div className="flex items-center gap-2">
         <button onClick={() => setActiveTab('my-catalogs')}
-          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'my-catalogs' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+          className={"qc-flow-control " + (`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'my-catalogs' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`)}>
           My Catalogs ({catalogs.length})
         </button>
         <button onClick={() => setActiveTab('find-catalogs')}
-          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'find-catalogs' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+          className={"qc-flow-control " + (`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'find-catalogs' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`)}>
             Find Supplier Catalogs ({supplierCatalogs.length})
           </button>
       </div>
@@ -357,8 +361,8 @@ export function CatalogList({
           <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
             <p className="text-sm font-medium text-slate-700 mb-1">No supplier catalogs available</p>
             <p className="text-xs text-slate-400 mb-4">When suppliers publish catalogues, they'll appear here for you to add to your account.</p>
-            <Link href={`/${workspaceSlug}/supplier-directory`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800">
+            <Link data-qc-variant="primary" href={`/${workspaceSlug}/supplier-directory`}
+              className="qc-button qc-flow-control inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800">
               Browse Supplier Directory
             </Link>
           </div>
@@ -388,10 +392,10 @@ export function CatalogList({
                     )}
                   </div>
                   <div className="flex flex-col gap-1.5 items-end shrink-0">
-                    <button
+                    <button data-qc-variant="primary"
                       onClick={() => handleSaveSupplierCatalog(cat.id)}
                       disabled={savingCatalogId === cat.id}
-                      className="cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#e55a2b] transition disabled:opacity-50"
+                      className="qc-flow-control qc-button cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#e55a2b] transition disabled:opacity-50"
                     >
                       {savingCatalogId === cat.id ? 'Adding...' : 'Add Catalog'}
                     </button>
@@ -412,18 +416,18 @@ export function CatalogList({
       {/* Search */}
       {catalogs.length > 0 && (
         <div className="relative max-w-sm">
-          <input
+          <input aria-label="Search catalogs..."
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search catalogs..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+            className="qc-input qc-flow-search w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">✕</button>
+            <button onClick={() => setSearchQuery('')} className="qc-flow-control absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">✕</button>
           )}
         </div>
       )}
@@ -433,9 +437,9 @@ export function CatalogList({
         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm font-medium text-slate-700 mb-1">No catalogs yet</p>
           <p className="text-xs text-slate-400 mb-4">Upload a CSV price list to get started.</p>
-          <button
+          <button data-qc-variant="primary"
             onClick={handleNewCatalog}
-            className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
           >
             Upload your first catalog
           </button>
@@ -445,7 +449,7 @@ export function CatalogList({
       {/* Active catalogs */}
       {activeCatalogs.length > 0 && (
         <>
-          <div className="hidden sm:grid sm:grid-cols-[1fr_140px_120px_120px_80px] gap-4 px-4 text-xs font-medium text-slate-400 uppercase tracking-wide">
+          <div className="hidden sm:grid sm:grid-cols-[1fr_120px_110px_120px_190px] gap-4 px-4 text-xs font-medium text-slate-400 uppercase tracking-wide">
             <span>Catalog</span>
             <span>Size</span>
             <span>Status</span>
@@ -487,38 +491,38 @@ export function CatalogList({
 
       {/* Delete confirmation */}
       {deleteTarget && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage catalogue" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete catalog</h3>
             <p className="text-sm text-slate-500 mt-2">
               Permanently delete <strong className="text-slate-700">{deleteTarget.name}</strong>? This removes {deleteTarget.row_count.toLocaleString()} rows and frees {formatBytes(deleteTarget.data_bytes)} of storage. This cannot be undone.
             </p>
             <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setDeleteTarget(null)} disabled={deleting} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
-              <button onClick={handleDelete} disabled={deleting} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
+              <button data-qc-variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
+              <button data-qc-variant="danger" onClick={handleDelete} disabled={deleting} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Archive confirmation */}
       {archiveTarget && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage catalogue" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Archive catalog</h3>
             <p className="text-sm text-slate-500 mt-2">
               Archive <strong className="text-slate-700">{archiveTarget.name}</strong>? It will be hidden from search and the active list, but kept and reinstatable. Storage still counts toward your plan limit.
             </p>
             <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setArchiveTarget(null)} disabled={archiving} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
-              <button onClick={handleArchive} disabled={archiving} className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
+              <button data-qc-variant="ghost" onClick={() => setArchiveTarget(null)} disabled={archiving} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
+              <button data-qc-variant="primary" onClick={handleArchive} disabled={archiving} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">
                 {archiving ? 'Archiving...' : 'Archive'}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Upgrade modal */}
@@ -552,6 +556,6 @@ export function CatalogList({
       )}
       </>
       )}
-    </section>
+    </section></QcJourney>
   );
 }

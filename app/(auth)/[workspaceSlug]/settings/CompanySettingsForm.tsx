@@ -1,4 +1,5 @@
 'use client';
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -142,24 +143,24 @@ export function CompanySettingsForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <QcJourney><form onSubmit={handleSubmit} className="space-y-8">
       {/* Account Information */}
       <div className="border-b border-gray-200 pb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">👤 Account Information</h2>
+        <h2 className="qc-flow-section-title">Business identity</h2><p className="qc-flow-description">The details that identify your business on documents.</p>
         
         <div className="space-y-6">
           {/* Company Name */}
           <div className="space-y-2">
-            <label className="block">
+            <label className="qc-flow-label block">
               <span className="text-sm font-semibold text-gray-900">Company Name</span>
               <p className="text-xs text-gray-600 mt-1 mb-2">
                 Your company name appears on quotes and templates
               </p>
-              <input
+              <input aria-label="Company Name Your company name appears on quotes and templates"
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-input w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 placeholder="Your Company Ltd"
                 disabled={isPending}
                 required
@@ -169,16 +170,16 @@ export function CompanySettingsForm({
 
           {/* User Name */}
           <div className="space-y-2">
-            <label className="block">
+            <label className="qc-flow-label block">
               <span className="text-sm font-semibold text-gray-900">Your Name</span>
               <p className="text-xs text-gray-600 mt-1 mb-2">
                 Your full name for your account profile
               </p>
-              <input
+              <input aria-label="Your Name Your full name for your account profile"
                 type="text"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-input w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 placeholder="John Smith"
                 disabled={isPending}
                 required
@@ -191,9 +192,11 @@ export function CompanySettingsForm({
         </div>
       </div>
 
+      <section className="space-y-6" aria-label="Workspace preferences">
+      <div><h2 className="qc-flow-section-title">Workspace preferences</h2><p className="qc-flow-description">Defaults for new work. Existing records keep their saved settings.</p></div>
       {/* Currency Selection */}
       <div className="space-y-3">
-        <label className="block">
+        <label className="qc-flow-label block">
           <span className="text-sm font-semibold text-gray-900">Default Currency</span>
           <p className="text-xs text-gray-600 mt-1 mb-2">
             All component library prices will be entered in this currency
@@ -201,7 +204,7 @@ export function CompanySettingsForm({
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+            className="qc-select w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
             disabled={isPending}
           >
             {CURRENCY_GROUPS.map(group => (
@@ -224,7 +227,7 @@ export function CompanySettingsForm({
 
       {/* Language Selection */}
       <div className="space-y-3">
-        <label className="block">
+        <label className="qc-flow-label block">
           <span className="text-sm font-semibold text-gray-900">Language</span>
           <p className="text-xs text-gray-600 mt-1 mb-2">
             UI language (currently only English is supported)
@@ -232,7 +235,7 @@ export function CompanySettingsForm({
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+            className="qc-select w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
             disabled={isPending}
           >
             <option value="en">English</option>
@@ -242,7 +245,7 @@ export function CompanySettingsForm({
 
       {/* Measurement System */}
       <div className="space-y-3">
-        <label className="block">
+        <label className="qc-flow-label block">
           <span className="text-sm font-semibold text-gray-900">Measurement System</span>
           <p className="text-xs text-gray-600 mt-1 mb-2">
             Default units for new quotes. Each quote keeps its own measurement system once created.
@@ -255,7 +258,7 @@ export function CompanySettingsForm({
             ].map((opt) => (
               <label
                 key={opt.value}
-                className="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50"
+                className="qc-flow-label flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50"
               >
                 <input
                   type="radio"
@@ -263,7 +266,7 @@ export function CompanySettingsForm({
                   checked={measurement === opt.value}
                   onChange={(e) => setMeasurement(e.target.value as 'metric' | 'imperial_ft' | 'imperial_rs')}
                   disabled={isPending}
-                  className="w-4 h-4"
+                  className="qc-check w-4 h-4"
                 />
                 <span className="text-sm">{opt.label}</span>
               </label>
@@ -275,7 +278,7 @@ export function CompanySettingsForm({
       {/* Phase 8 (Generic Trades): default trade selector */}
       {genericTradesEnabled && (
         <div className="space-y-1">
-          <label htmlFor="default-trade" className="block text-sm font-semibold text-gray-900">
+          <label htmlFor="default-trade" className="qc-flow-label block text-sm font-semibold text-gray-900">
             Default Industry
           </label>
           <p className="text-xs text-gray-600 mb-2">
@@ -286,7 +289,7 @@ export function CompanySettingsForm({
             value={defaultTrade}
             onChange={e => setDefaultTrade(e.target.value as TradeOption)}
             disabled={isPending}
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="qc-select w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="generic">Generic</option>
             <option value="roofing">Roofing</option>
@@ -307,13 +310,15 @@ export function CompanySettingsForm({
         </div>
       )}
 
+      </section>
+
       {/* Templates shortcut - quick access from the trade section */}
       <div className="py-4 border-t border-slate-100">
         <p className="text-sm font-semibold text-slate-900">Resource Library</p>
         <p className="text-xs text-slate-500 mt-0.5">Manage all your quote templates, message templates, customer quote templates, order templates, catalog files, and upload library.</p>
         <Link
           href={`/${workspaceSlug}/resources`}
-          className="inline-block mt-3 px-4 py-2 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] whitespace-nowrap"
+          data-qc-variant="secondary" className="qc-button qc-flow-control mt-3"
         >
           Resource Library
         </Link>
@@ -321,7 +326,7 @@ export function CompanySettingsForm({
 
       {/* Profit Margins */}
       <div className="border-t border-gray-200 pt-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Default Profit Margins</h2>
+        <h2 className="qc-flow-section-title mb-3">Default Profit Margins</h2>
         <p className="text-sm text-gray-600 mb-6">
           These margins will be automatically applied to new quotes. You can adjust them per quote in the Review tab.
         </p>
@@ -329,7 +334,7 @@ export function CompanySettingsForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Item Cost Margin */}
           <div className="space-y-2">
-            <label className="block">
+            <label className="qc-flow-label block">
               <span className="text-sm font-semibold text-gray-900">Item Cost Margin</span>
               <p className="text-xs text-gray-600 mt-1 mb-2">
                 Profit margin added to item costs
@@ -342,7 +347,7 @@ export function CompanySettingsForm({
                   step="0.1"
                   value={materialMargin}
                   onChange={(e) => setMaterialMargin(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="qc-input w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   placeholder="15"
                   disabled={isPending}
                 />
@@ -358,7 +363,7 @@ export function CompanySettingsForm({
 
           {/* Labor Margin */}
           <div className="space-y-2">
-            <label className="block">
+            <label className="qc-flow-label block">
               <span className="text-sm font-semibold text-gray-900">Labor Margin</span>
               <p className="text-xs text-gray-600 mt-1 mb-2">
                 Profit margin added to labor costs
@@ -371,7 +376,7 @@ export function CompanySettingsForm({
                   step="0.1"
                   value={laborMargin}
                   onChange={(e) => setLaborMargin(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="qc-input w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   placeholder="20"
                   disabled={isPending}
                 />
@@ -395,13 +400,13 @@ export function CompanySettingsForm({
 
       {/* Default Taxes */}
       <div className="border-t border-gray-200 pt-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Default Taxes</h2>
+        <h2 className="qc-flow-section-title mb-3">Default Taxes</h2>
         <p className="text-sm text-gray-600 mb-4">
           Add as many taxes as you need (e.g. GST, regional levy). Each new quote starts
           with this list copied across; you can hide or edit individual taxes per quote.
           When multiple taxes apply they stack on the customer quote and labor sheet.
         </p>
-        <TaxEditor taxes={taxes} onChange={setTaxes} disabled={isPending} />
+        <TaxEditor appearance="v2" taxes={taxes} onChange={setTaxes} disabled={isPending} />
       </div>
 
       {/* Save Message */}
@@ -419,14 +424,14 @@ export function CompanySettingsForm({
 
       {/* Save Button */}
       <div className="flex justify-end pt-6 border-t border-gray-200">
-        <button
+        <button data-qc-variant="primary"
           type="submit"
           disabled={isPending}
-          className="px-5 py-2.5 bg-black hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] text-white font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="qc-flow-control qc-button px-5 py-2.5 bg-black hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] text-white font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isPending ? 'Saving...' : 'Save Settings'}
         </button>
       </div>
-    </form>
+    </form></QcJourney>
   );
 }

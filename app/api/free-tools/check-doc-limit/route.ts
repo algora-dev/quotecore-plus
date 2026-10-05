@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const upgradeHint =
       resolved.tier === 1
         ? 'Sign up free at the top of the page for higher daily limits.'
-        : 'Start a free trial of QuoteCore+ for unlimited document generation.';
+        : 'Get QuoteCore+ (plans from /mo, 30-day money-back guarantee) for unlimited document generation.';
     return NextResponse.json(
       {
         allowed: false,

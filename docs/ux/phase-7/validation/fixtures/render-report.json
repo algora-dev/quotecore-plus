@@ -1,0 +1,295 @@
+{
+  "method": "Real TSX view modules; custom static JSX evaluator; sample deterministic state; effects/actions/HTTP skipped. NOT React/Next runtime verification.",
+  "results": [
+    {
+      "name": "quotes",
+      "source": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "quotes-drafts",
+      "source": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "quotes-bulk",
+      "source": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "invoices",
+      "source": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "create-invoice",
+      "source": "app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "orders",
+      "source": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "catalogue-upload",
+      "source": "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "catalogue-map",
+      "source": "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "catalogue-components",
+      "source": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "billing",
+      "source": "app/(auth)/[workspaceSlug]/account/billing/BillingPanel.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "activation",
+      "source": "app/(auth)/[workspaceSlug]/account/billing/BillingPanel.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "company-settings",
+      "source": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "login",
+      "source": "app/login/page.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "signup",
+      "source": "app/signup/page.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "reset-password",
+      "source": "app/auth/reset-password/page.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "send-options",
+      "source": "app/components/send/SendDocumentModal.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "document-templates",
+      "source": "app/(auth)/[workspaceSlug]/resources/document-templates/DocumentTemplateLibrary.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "document-templates-empty",
+      "source": "app/(auth)/[workspaceSlug]/resources/document-templates/DocumentTemplateLibrary.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "document-templates-error",
+      "source": "app/(auth)/[workspaceSlug]/resources/document-templates/DocumentTemplateLibrary.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "document-template-choose",
+      "source": "app/(auth)/[workspaceSlug]/resources/document-templates/DocumentTemplateLibrary.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "quote-template-choose",
+      "source": "app/(auth)/[workspaceSlug]/resources/document-templates/DocumentTemplateLibrary.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "message-templates",
+      "source": "app/(auth)/[workspaceSlug]/resources/message-templates/MessageTemplateLibrary.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "message-template-edit",
+      "source": "app/(auth)/[workspaceSlug]/resources/EmailTemplateEditor.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "invoice-template-edit",
+      "source": "app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplateEditor.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "quote-header-edit",
+      "source": "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "order-template-edit",
+      "source": "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "pricing-library",
+      "source": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "component-create",
+      "source": "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "quote-structure-create",
+      "source": "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "inbox",
+      "source": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "inbox-bulk",
+      "source": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "notification-settings",
+      "source": "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "supplier-directory",
+      "source": "app/(auth)/[workspaceSlug]/supplier-directory/SupplierDirectory.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "supplier-library",
+      "source": "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "supplier-portal",
+      "source": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "supplier-profile-edit",
+      "source": "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "quotes-error",
+      "source": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "invoice-picker-error",
+      "source": "app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "invoice-template-error",
+      "source": "app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx",
+      "status": "rendered"
+    },
+    {
+      "name": "resources",
+      "source": "app/(auth)/[workspaceSlug]/resources/page.tsx",
+      "status": "rendered"
+    }
+  ],
+  "loadedSources": [
+    "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+    "app/components/ui/v2/QcLibrary.tsx",
+    "app/components/ui/v2/QcJourney.tsx",
+    "app/components/ui/v2/QcDialog.tsx",
+    "app/components/ui/v2/QcHostedDialog.tsx",
+    "app/components/ui/v2/QcButton.tsx",
+    "app/components/ui/v2/QcIcon.tsx",
+    "app/components/UpgradeModal.tsx",
+    "app/components/RecipientStatusBadge.tsx",
+    "app/components/workspace/QcMobileReturn.tsx",
+    "app/components/workspace/workspace-return.ts",
+    "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+    "app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx",
+    "app/components/ConfirmModal.tsx",
+    "app/lib/currency/currencies.ts",
+    "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+    "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+    "app/components/billing/StorageBlockedModal.tsx",
+    "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+    "app/(auth)/[workspaceSlug]/account/billing/BillingPanel.tsx",
+    "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+    "app/(auth)/[workspaceSlug]/account/LogoUploader.tsx",
+    "app/components/FileUploader.tsx",
+    "app/components/TaxEditor.tsx",
+    "app/login/page.tsx",
+    "app/components/auth/GoogleSignInButton.tsx",
+    "app/components/auth/AuthSessionDebugPing.tsx",
+    "app/login/TroubleSigningInPanel.tsx",
+    "app/components/PublicFooter.tsx",
+    "app/components/ui/PasswordField.tsx",
+    "lib/app-url.ts",
+    "app/signup/page.tsx",
+    "app/(public)/shared/appOrigin.ts",
+    "app/auth/reset-password/page.tsx",
+    "app/components/send/SendDocumentModal.tsx",
+    "app/components/attachments/AttachmentSendPicker.tsx",
+    "app/(auth)/[workspaceSlug]/resources/document-templates/DocumentTemplateLibrary.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/template-manager-new.tsx",
+    "app/(auth)/[workspaceSlug]/material-orders/template-form.tsx",
+    "app/(auth)/[workspaceSlug]/resources/message-templates/MessageTemplateLibrary.tsx",
+    "app/(auth)/[workspaceSlug]/resources/EmailTemplateEditor.tsx",
+    "app/lib/messages/mergeVars.ts",
+    "app/(auth)/[workspaceSlug]/resources/invoice-templates/InvoiceTemplateEditor.tsx",
+    "app/(auth)/[workspaceSlug]/customer-quote-templates/[templateId]/edit/TemplateEditor.tsx",
+    "app/(auth)/[workspaceSlug]/components/component-list.tsx",
+    "app/lib/trades/labels.ts",
+    "app/lib/measurements/displayHelpers.ts",
+    "app/lib/measurements/conversions.ts",
+    "app/lib/types.ts",
+    "app/(public)/free-calculators/_shared/types.ts",
+    "app/(auth)/[workspaceSlug]/components/parts/helpers.ts",
+    "app/(auth)/[workspaceSlug]/components/parts/TypeSpecificFields.tsx",
+    "app/(auth)/[workspaceSlug]/components/components/PublishLibraryModal.tsx",
+    "app/(auth)/[workspaceSlug]/resources/create/TemplateBuilder.tsx",
+    "app/(auth)/[workspaceSlug]/inbox/InboxList.tsx",
+    "app/(auth)/[workspaceSlug]/supplier-directory/SupplierDirectory.tsx",
+    "app/(auth)/[workspaceSlug]/supplier-directory/library/[libraryId]/LibraryDetail.tsx",
+    "app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx",
+    "app/(auth)/[workspaceSlug]/supplier/CatalogueConverter.tsx",
+    "app/(auth)/[workspaceSlug]/supplier/CatalogPublishModal.tsx",
+    "app/(auth)/[workspaceSlug]/resources/page.tsx"
+  ],
+  "mockedModules": [
+    "./actions",
+    "./actions-bulk",
+    "jszip",
+    "./lib/quote-bundle",
+    "../MeasureJobModal",
+    "./lib/invoice-bundle",
+    "./order-list-actions",
+    "./lib/order-bundle",
+    "papaparse",
+    "../catalog-actions",
+    "@/app/lib/taxes/actions",
+    "@/app/lib/supabase/client",
+    "@/app/lib/files/storage-actions",
+    "@/app/(public)/shared/FreeToolsWelcomeModal (not shown in no-draft fixture)",
+    "../actions",
+    "../../material-orders/template-actions",
+    "./template-actions",
+    "../../invoices/template-actions",
+    "./email-actions",
+    "../email-actions",
+    "@/app/(auth)/[workspaceSlug]/invoices/template-actions",
+    "../drawings/actions",
+    "./settings-actions",
+    "../../../components/actions",
+    "../components/actions"
+  ]
+}

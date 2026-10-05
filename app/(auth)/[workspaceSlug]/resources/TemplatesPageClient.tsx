@@ -1,4 +1,5 @@
 'use client';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -60,6 +61,7 @@ export function TemplatesPageClient({
   initialTab,
   hideTabBar = false,
 }: Props) {
+  const { notify, feedback } = useQcFeedback();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'quote' | 'customer' | 'email' | 'order' | 'catalogs' | 'attachments'>(
     initialTab === 'customer' ? 'customer'
@@ -92,7 +94,7 @@ export function TemplatesPageClient({
       else await deleteEmailTemplate(pendingDeleteId);
       router.refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete');
+      await notify(err instanceof Error ? err.message : 'Failed to delete');
     } finally {
       setDeleting(null);
       setPendingDeleteId(null);
@@ -113,6 +115,7 @@ export function TemplatesPageClient({
 
   return (
     <div className="space-y-5">
+      {feedback}
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">{hideTabBar ? activeTabLabel : 'Resource Library'}</h1>

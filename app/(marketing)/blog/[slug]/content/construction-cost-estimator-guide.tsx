@@ -199,7 +199,7 @@ export default function Post() {
       <p>An estimate forecasts likely cost based on stated information and assumptions. A quote is a commercial offer to complete a defined scope for a stated price and terms.</p>
       <h3>How often should an estimate be updated?</h3>
       <p>Update it when drawings, specification, scope, programme, supplier prices, subcontractor quotes, or risk assumptions change. Live jobs should also track committed and actual cost.</p>
-      <p>Start with the <a href="/free-construction-calculator">free construction calculator</a>, then start a <a href="/free-trial">free QuoteCore+ trial</a> when you want estimating, quoting, ordering, and invoicing connected.</p>
+      <p>Start with the <a href="/free-construction-calculator">free construction calculator</a>, then get <a href="/free-trial">started with QuoteCore+</a> when you want estimating, quoting, ordering, and invoicing connected.</p>
     </div>
   );
 }

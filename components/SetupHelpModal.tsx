@@ -1,0 +1,178 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+/**
+ * SetupHelpModal — homepage conversion modal.
+ *
+ * Two paths: Done-For-You setup help, or free tools (no commitment).
+ *
+ * Trigger: 25s after the visitor lands on the page (lets the intro play
+ * and browsing begin). Never during the video: playing the video showcase
+ * cancels the pending trigger.
+ * Shows once per session; suppressed after close.
+ * Homepage only (only rendered from home/page.tsx).
+ */
+
+const SESSION_KEY = "qc-setup-modal-shown";
+const PAGE_LOAD_DELAY_MS = 25_000;
+
+function trackEvent(event: string, cta?: string) {
+  const payload = { event, cta };
+  const w = window as unknown as { dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
+  try {
+    w.dataLayer?.push(payload);
+    w.gtag?.("event", event, cta ? { cta } : undefined);
+  } catch {
+    /* analytics not loaded — non-blocking */
+  }
+}
+
+export default function SetupHelpModal() {
+  const [visible, setVisible] = useState(false);
+  const shownRef = useRef(false);
+
+  const show = useCallback(() => {
+    if (shownRef.current) return;
+    shownRef.current = true;
+    try {
+      sessionStorage.setItem(SESSION_KEY, "1");
+    } catch {
+      /* private mode — non-blocking */
+    }
+    setVisible(true);
+    trackEvent("setup_modal_view");
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(SESSION_KEY)) {
+        shownRef.current = true;
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    // Path 1: 25s after the visitor lands on the page — no scroll or any
+    // other action required.
+    timers.push(setTimeout(show, PAGE_LOAD_DELAY_MS));
+
+    // Path 2: visitor started watching the video showcase — cancel pending
+    // triggers so the modal never interrupts an active viewer.
+    const onVideoPlay = () => {
+      timers.forEach(clearTimeout);
+      timers.length = 0;
+    };
+    window.addEventListener("qc:video-play", onVideoPlay);
+
+    return () => {
+      window.removeEventListener("qc:video-play", onVideoPlay);
+      timers.forEach(clearTimeout);
+    };
+  }, [show]);
+
+  const close = useCallback(() => {
+    setVisible(false);
+    trackEvent("setup_modal_close");
+  }, []);
+
+  // Escape to close
+  useEffect(() => {
+    if (!visible) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [visible, close]);
+
+  if (!visible) return null;
+
+  return (
+    <>
+      {/* Backdrop — click does NOT close (prevent accidental dismissal) */}
+      <div
+        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+        aria-hidden="true"
+      />
+
+      {/* Modal */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="setup-modal-headline"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+      >
+        <div className="pointer-events-auto relative flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_32px_80px_rgba(0,0,0,0.25)] sm:flex-row">
+
+          {/* Left — founder photo (desktop) / top (mobile) */}
+          <div className="relative h-64 w-full flex-shrink-0 bg-[#fdf6ee] sm:h-auto sm:w-48">
+            <img
+              src="/shaun-smiling.jpg"
+              alt="Shaun, founder of QuoteCore+"
+              className="h-full w-full object-cover object-top sm:object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent sm:bg-gradient-to-r sm:from-transparent sm:to-white/10" />
+          </div>
+
+          {/* Right — copy + CTAs */}
+          <div className="flex flex-1 flex-col p-6 sm:p-8">
+            <h2
+              id="setup-modal-headline"
+              className="text-xl font-semibold leading-tight tracking-tight text-zinc-950 sm:text-2xl"
+            >
+              Don&apos;t want to set up another piece of software?
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-600">
+              <span className="font-semibold text-[#FF6B35]">We get it.</span> We can set QuoteCore+ up around the way you already work - or you can test our free tools first, with no commitment.
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3">
+              <a
+                href="/done-for-you-setup"
+                onClick={() => trackEvent("setup_modal_cta_click", "see_how_it_works")}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-black px-6 py-3.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_20px_rgba(255,107,53,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2"
+              >
+                See How It Works
+              </a>
+              <a
+                href="/free-tools"
+                onClick={() => trackEvent("setup_modal_cta_click", "try_free_tools")}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#FF6B35] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2"
+              >
+                Try Our Free Tools
+              </a>
+            </div>
+
+            <p className="mt-4 text-center text-xs text-zinc-400">
+              No hard sell. Get help setting it up, or explore the tools yourself first.
+            </p>
+
+            <button
+              type="button"
+              onClick={close}
+              className="mx-auto mt-3 rounded-full border border-zinc-200 px-4 py-1.5 text-xs text-zinc-500 transition-colors hover:border-[#FF6B35] hover:text-[#FF6B35] hover:shadow-[0_0_12px_rgba(255,107,53,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            >
+              Close
+            </button>
+          </div>
+
+          {/* X close button (top right) */}
+          <button
+            type="button"
+            onClick={close}
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-zinc-500 shadow-sm transition-all hover:bg-white hover:text-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            aria-label="Close"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}

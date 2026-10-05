@@ -92,7 +92,7 @@ export default function Post() {
       </div>
       <h2>When to use each</h2>
       <p>Estimating is for internal pricing decisions. You estimate to decide whether a job is worth taking on, what margin to apply, and whether the numbers work for your business.</p>
-      <p>Quoting is for customer communication. You quote to present a price the customer can accept or decline. The quote may not show every line item from the estimate — you may group costs, round figures, or present a fixed price rather than a breakdown.</p>
+      <p>Quoting is for customer communication. You quote to present a price the customer can accept or decline. The quote may not show every line item from the estimate - you may group costs, round figures, or present a fixed price rather than a breakdown.</p>
       <p>Both are essential. Estimating without quoting means you know your costs but cannot communicate them. Quoting without estimating means you are presenting a price without knowing your true cost.</p>
       <h2>Frequently asked questions</h2>
       <h3>Is estimating the same as quoting?</h3>
@@ -100,10 +100,10 @@ export default function Post() {
       <h3>Can I estimate without creating a quote?</h3>
       <p>Yes. Estimating is an internal exercise. You can estimate a job to decide whether to tender, what margin to target, or whether the work fits your schedule. You only create a quote when you are ready to present a price to the customer.</p>
       <h3>Do I need separate software for estimating and quoting?</h3>
-      <p>Not necessarily. QuoteCore+ handles both in one workflow — the estimate is built from takeoff measurements and Smart Components, and the quote is generated from the same data. See <Link href="/pricing">pricing plans</Link> for options.</p>
+      <p>Not necessarily. QuoteCore+ handles both in one workflow - the estimate is built from takeoff measurements and Smart Components, and the quote is generated from the same data. See <Link href="/pricing">pricing plans</Link> for options.</p>
       <h3>What's included in a roofing estimate vs a quote?</h3>
       <p>An estimate typically includes material quantities, waste allowances, labour hours, rates, and a total cost. A quote includes the price the customer pays, scope of work, terms, payment schedule, and validity period. The quote may simplify or group the estimate's line items for presentation.</p>
-      <p>Ready to estimate and quote faster? <a href="/free-trial">Start your free QuoteCore+ trial today</a>.</p>
+      <p>Ready to estimate and quote faster? <a href="/free-trial">Get started with QuoteCore+ today</a>.</p>
     </div>
   );
 }

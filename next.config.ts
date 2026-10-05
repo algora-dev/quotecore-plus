@@ -78,6 +78,17 @@ const APP_CSP_REPORT_ONLY = [
 
 const nextConfig: NextConfig = {
   pageExtensions: ["ts", "tsx", "md", "mdx"],
+  // Client build stamp for stale-bundle detection: the assistant compares its
+  // baked NEXT_PUBLIC_BUILD_ID against /api/build-id and reloads when the
+  // deployed build differs (open PWAs otherwise keep running the old bundle).
+  env: {
+    NEXT_PUBLIC_BUILD_ID: process.env.VERCEL_GIT_COMMIT_SHA ?? 'local',
+  },
+  // M8 (2026-09-21): the dev-tools indicator badge sits in the bottom-right
+  // corner and overlapped the full-bleed touch takeoff layout's floating
+  // sheets (and intercepted their buttons in the touch e2e harness). Dev-only
+  // chrome — production builds are unaffected.
+  devIndicators: false,
   // sharp is used directly by server code (AI scan pipeline). Next.js
   // only externalises sharp for its OWN image optimizer - direct app usage
   // must be declared or Turbopack bundles it without native binaries

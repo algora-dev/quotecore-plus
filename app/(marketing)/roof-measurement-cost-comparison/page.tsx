@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import LazyYouTube from "@/components/LazyYouTube";
 
 export const metadata: Metadata = {
   title: "What Does a Roof Measurement or Quote Actually Cost? QuoteCore+ vs Per-Report Services",
@@ -25,7 +26,7 @@ const rows = [
     model: "Subscription (free tier available)",
     cost: "Cents per AI scan, worst case ~$0.50 per measurement; Pro at $39/mo with 50+ quotes/mo works out to well under $1 per quote",
     detail:
-      "Measure your own plans (manual takeoff is unlimited and free of per-measurement fees) or use AI Scan Assist at cents per scan. Full trial is genuinely free — no card required.",
+      "Measure your own plans (manual takeoff is unlimited and free of per-measurement fees) or use AI Scan Assist at cents per scan. Paid plans from $19/month with a 30-day money-back guarantee.",
     highlight: true,
   },
   {
@@ -61,7 +62,7 @@ export default function RoofMeasurementCostComparison() {
             What does a roof measurement or quote actually cost?
           </h1>
           <p className="mt-3 text-base text-zinc-500">
-            QuoteCore+ vs per-report measurement services — prices checked August 2026
+            QuoteCore+ vs per-report measurement services - prices checked August 2026
           </p>
 
           <div className="prose prose-zinc mt-10 max-w-none prose-a:text-[#BD4A1A]">
@@ -73,7 +74,7 @@ export default function RoofMeasurementCostComparison() {
             </p>
             <p>
               Here&rsquo;s the honest breakdown, with every price sourced from official pricing
-              pages and dated. We&rsquo;re in this comparison too — our costs are stated with plan
+              pages and dated. We&rsquo;re in this comparison too - our costs are stated with plan
               context so you can check the maths yourself.
             </p>
           </div>
@@ -107,23 +108,34 @@ export default function RoofMeasurementCostComparison() {
             differ.
           </p>
 
+          <div className="not-prose mt-10">
+            <p className="text-sm font-semibold text-zinc-900">Is the free DIY approach accurate enough? We tested it on 10 real roofs.</p>
+            <p className="mt-1 text-sm text-zinc-600">Every remote measurement was verified on site. Watch the study, or read the <Link href="/research/google-earth-roof-measurement-accuracy" className="font-medium text-[#BD4A1A] underline underline-offset-4">full field study with the published dataset</Link>.</p>
+            <div className="mt-4 max-w-2xl">
+              <LazyYouTube
+                videoId="k-5FTjyK1wg"
+                title="How Accurate Is Measuring a Roof with Google Earth? We Tested 10 Real Roofs!"
+              />
+            </div>
+          </div>
+
           <h2 className="mt-14 text-2xl font-semibold">How QuoteCore+ works out to under $1 per quote</h2>
           <div className="prose prose-zinc mt-4 max-w-none prose-a:text-[#BD4A1A]">
             <p>
               QuoteCore+ is subscription software, not a per-report service. Manual digital takeoff
-              is unlimited — no per-measurement fee. AI Scan Assist (which detects roof areas,
+              is unlimited - no per-measurement fee. AI Scan Assist (which detects roof areas,
               ridges, hips, valleys, barges and spouting for you to verify) costs cents per scan,
               with a worst case around $0.50.
             </p>
             <p>
               On the Pro plan ($39/mo), a roofer sending 50+ quotes a month works out to well under
-              $1 per quote — including measurement, pricing, the quote document itself, sending,
-              tracking, material orders and invoicing. The 14-day trial is genuinely free: every
-              feature, no card required.
+              $1 per quote - including measurement, pricing, the quote document itself, sending,
+              tracking, material orders and invoicing. Paid plans start at $19/month with a 30-day
+              money-back guarantee.
             </p>
             <p>
               We&rsquo;ve demonstrated a complete complex roofing quote created in under 3 minutes
-              for less than $1 —{" "}
+              for less than $1 - {" "}
               <Link href="/" className="font-medium text-[#BD4A1A] underline underline-offset-2">
                 see the video on our homepage
               </Link>
@@ -139,8 +151,13 @@ export default function RoofMeasurementCostComparison() {
               measure a handful of roofs a year, a $13-$105 report is a reasonable purchase.
             </p>
             <p>
-              If you quote weekly or more — and especially if you then rebuild the measured roof
-              into materials, labour and a priced quote — the per-report maths gets expensive fast,
+              Curious how close the free DIY route can get? See our{' '}
+              <a href="/research/google-earth-roof-measurement-accuracy">Google Earth roof measurement accuracy study</a>
+              , where 10 remote takeoffs were checked against physical site measurements.
+            </p>
+            <p>
+              If you quote weekly or more - and especially if you then rebuild the measured roof
+              into materials, labour and a priced quote - the per-report maths gets expensive fast,
               and the measurement doesn&rsquo;t carry through to the quote. That&rsquo;s the gap
               QuoteCore+ is built to close.
             </p>
@@ -167,13 +184,13 @@ export default function RoofMeasurementCostComparison() {
           <div className="mt-14 rounded-2xl border border-zinc-200 bg-zinc-50 px-8 py-10 text-center">
             <h2 className="text-xl font-semibold">Try the measure-to-quote workflow yourself</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-600">
-              Full access for 14 days. No card required. Plans from free to $59/month.
+              Free tools, no signup. Paid plans from $19/month with a 30-day money-back guarantee.
             </p>
             <Link
               href="/free-trial"
               className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
             >
-              Start free trial
+              Get started
             </Link>
           </div>
         </article>

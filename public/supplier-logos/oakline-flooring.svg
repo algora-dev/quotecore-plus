@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="64" viewBox="0 0 240 64" role="img" aria-label="Oakline Flooring">
+  <!-- Generic flooring-plank mark: three offset planks -->
+  <rect x="4" y="10" width="44" height="44" rx="10" fill="#42505C"/>
+  <rect x="12" y="18" width="28" height="6" rx="3" fill="#A8B4C0"/>
+  <rect x="12" y="29" width="20" height="6" rx="3" fill="#8B99A8"/>
+  <rect x="12" y="40" width="28" height="6" rx="3" fill="#A8B4C0"/>
+  <text x="58" y="30" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#42505C">Oakline</text>
+  <text x="58" y="47" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" letter-spacing="2" fill="#64748B">FLOORING</text>
+</svg>

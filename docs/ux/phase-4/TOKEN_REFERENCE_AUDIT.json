@@ -1,0 +1,11 @@
+{
+  "missing": {},
+  "checkedCssFiles": [
+    "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/desktop/takeoff-desktop.css",
+    "app/components/ui/v2/qc-canvas.css",
+    "app/components/ui/v2/qc-hosted-dialog.css"
+  ],
+  "dynamicVariables": {
+    "--qc-takeoff-height": "TakeoffDesktopHost.tsx sets the CSS property; desktop CSS also supplies a calc fallback."
+  }
+}

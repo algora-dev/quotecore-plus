@@ -17,7 +17,7 @@ export function TypeSpecificFields(props: {
       {(measurementType === 'length_x_height' || measurementType === 'multi_lineal_lxh') && (
         <div>
           <label className="block text-xs text-slate-500 mb-1">Component height (mm)</label>
-          <input type="number" step="1" placeholder="e.g. 2400" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+          <input aria-label="Component height (mm)" type="number" step="1" placeholder="e.g. 2400" value={heightMm} onChange={(e) => setHeightMm(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1 text-sm border border-slate-300 rounded" />
           <p className="text-xs text-slate-400 mt-1">Area = measured length x height.</p>
         </div>
       )}
@@ -25,14 +25,14 @@ export function TypeSpecificFields(props: {
       {measurementType === 'volume' && (
         <div>
           <label className="block text-xs text-slate-500 mb-1">Component depth (mm)</label>
-          <input type="number" step="1" placeholder="e.g. 100" value={depthMm} onChange={(e) => setDepthMm(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+          <input aria-label="Component depth (mm)" type="number" step="1" placeholder="e.g. 100" value={depthMm} onChange={(e) => setDepthMm(e.target.value)} className="qc-input qc-library-control w-full px-2 py-1 text-sm border border-slate-300 rounded" />
           <p className="text-xs text-slate-400 mt-1">Volume = measured area x depth.</p>
         </div>
       )}
       {measurementType === 'hours_days' && (
         <div>
           <label className="block text-xs text-slate-500 mb-1">Time unit</label>
-          <select value={hoursUnit} onChange={(e) => setHoursUnit(e.target.value as 'hr' | 'day')} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
+          <select aria-label="Time unit" value={hoursUnit} onChange={(e) => setHoursUnit(e.target.value as 'hr' | 'day')} className="qc-select qc-library-control w-full px-2 py-1 text-sm border border-slate-300 rounded">
             <option value="hr">Hours</option>
             <option value="day">Days</option>
           </select>

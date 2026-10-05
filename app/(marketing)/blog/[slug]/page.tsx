@@ -11,6 +11,10 @@ import { BLOG_POST_MAP } from '@/app/lib/blog-posts';
 
 // Content imports - keep inline (page-specific dynamic imports)
 const contentLoaders: Record<string, () => Promise<{ default: React.ComponentType }>> = {
+  'roof-measurements-to-quote': () => import('./content/roof-measurements-to-quote'),
+  'takeoff-to-quote-workflow': () => import('./content/takeoff-to-quote-workflow'),
+  'import-price-list-csv-to-components': () => import('./content/import-price-list-csv-to-components'),
+  'custom-roofing-quoting-software': () => import('./content/custom-roofing-quoting-software'),
   'quotecore-plus-reviews': () => import('./content/quotecore-plus-reviews'),
   'quotecore-plus-vs-quotesmith': () => import('./content/quotecore-plus-vs-quotesmith'),
   'roofing-quoting-software-uk': () => import('./content/roofing-quoting-software-uk'),
@@ -24,9 +28,12 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'best-quoting-software-us': () => import('./content/best-quoting-software-us'),
   'how-to-calculate-roof-pitch': () => import('./content/how-to-calculate-roof-pitch'),
   'how-to-measure-a-roof': () => import('./content/how-to-measure-a-roof'),
+  'how-to-measure-a-roof-from-a-pdf-plan': () => import('./content/how-to-measure-a-roof-from-a-pdf-plan'),
+  'quoting-from-plans-vs-site-visits': () => import('./content/quoting-from-plans-vs-site-visits'),
   'how-much-roofing-material': () => import('./content/how-much-roofing-material'),
   'how-to-price-a-roofing-job': () => import('./content/how-to-price-a-roofing-job'),
   'roofing-quote-example': () => import('./content/roofing-quote-example'),
+  'convert-spreadsheet-to-quote': () => import('./content/convert-spreadsheet-to-quote'),
   'how-to-quote-a-roof-from-plans': () => import('./content/how-to-quote-a-roof-from-plans'),
   'best-free-tools-for-roofers': () => import('./content/best-free-tools-for-roofers'),
   'ai-roof-measuring': () => import('./content/ai-roof-measuring'),
@@ -53,6 +60,11 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'can-chatgpt-create-a-quote': () => import('./content/can-chatgpt-create-a-quote'),
   'price-a-job-from-measurements': () => import('./content/price-a-job-from-measurements'),
   'construction-estimating-spreadsheet-alternative': () => import('./content/construction-estimating-spreadsheet-alternative'),
+  'roofing-estimating-spreadsheet-vs-software': () => import('./content/roofing-estimating-spreadsheet-vs-software'),
+  'simple-roofing-estimating-software': () => import('./content/simple-roofing-estimating-software'),
+  'how-to-measure-walls-cladding-from-plans': () => import('./content/how-to-measure-walls-cladding-from-plans'),
+  'how-to-measure-pdf-plans': () => import('./content/how-to-measure-pdf-plans'),
+  'how-to-do-cladding-takeoff': () => import('./content/how-to-do-cladding-takeoff'),
 };
 
 type Props = { params: Promise<{ slug: string }> };
@@ -136,7 +148,7 @@ export default async function BlogPostPage({ params }: Props) {
       <div className="min-h-screen bg-white text-zinc-950">
         <BlogHeader backLabel="Back to blogs" backHref="/blog" />
         <main>
-        <article className="mx-auto max-w-3xl px-6 py-20 lg:px-8">
+        <article className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
           <p className="text-sm text-zinc-500">
             {new Date(post.date).toLocaleDateString('en-GB', {
               day: 'numeric',
@@ -178,7 +190,7 @@ export default async function BlogPostPage({ params }: Props) {
                 href="/free-trial"
                 className="inline-flex items-center justify-center rounded-full bg-[#E55A28] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#BD4A1A]"
               >
-                Start free trial
+                Get started
               </a>
             </div>
           </div>

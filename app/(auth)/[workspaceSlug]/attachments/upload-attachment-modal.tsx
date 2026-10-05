@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
 import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
@@ -105,13 +106,13 @@ export function UploadAttachmentModal({ onClose, onSaved, isOverStorage }: Props
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <QcJourneyDialog label="Upload attachment" size="md">
       <div
         className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4"
       >
         <div className="border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-900">Upload file</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
+          <button onClick={onClose} className="qc-icon-button qc-flow-control text-slate-400 hover:text-slate-600" aria-label="Close">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -120,7 +121,7 @@ export function UploadAttachmentModal({ onClose, onSaved, isOverStorage }: Props
 
         <div className="p-2 md:p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">File</label>
+            <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">File</label>
             {file ? (
               <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                 <div className="min-w-0">
@@ -130,7 +131,7 @@ export function UploadAttachmentModal({ onClose, onSaved, isOverStorage }: Props
                 <button
                   type="button"
                   onClick={() => handleFile(null)}
-                  className="text-slate-400 hover:text-slate-600 shrink-0"
+                  className="qc-icon-button qc-flow-control text-slate-400 hover:text-slate-600 shrink-0"
                   aria-label="Remove file"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +143,7 @@ export function UploadAttachmentModal({ onClose, onSaved, isOverStorage }: Props
               <>
                 <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
                 <label
-                  className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/40 transition"
+                  className="qc-flow-label flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/40 transition"
                   onClick={isOverStorage ? (e) => { e.preventDefault(); setStorageBlocked(true); } : undefined}
                 >
                   <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,12 +171,12 @@ export function UploadAttachmentModal({ onClose, onSaved, isOverStorage }: Props
 
           {file && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+              <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={inputCls}
+                className={"qc-input " + (inputCls)}
                 maxLength={120}
                 autoFocus
               />
@@ -185,23 +186,23 @@ export function UploadAttachmentModal({ onClose, onSaved, isOverStorage }: Props
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <div className="flex gap-3 justify-end pt-1">
-            <button
+            <button data-qc-variant="ghost"
               onClick={onClose}
               disabled={saving}
-              className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50 disabled:opacity-50"
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50 disabled:opacity-50"
             >
               Cancel
             </button>
-            <button
+            <button data-qc-variant="primary"
               onClick={handleSave}
               disabled={saving || !file || !name.trim()}
-              className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40"
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40"
             >
               {saving ? 'Uploading...' : 'Save'}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

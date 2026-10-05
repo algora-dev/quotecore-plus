@@ -43,10 +43,10 @@ export const FEATURE_LABELS: Record<Feature, string> = {
 /**
  * The cheapest plan code that includes each feature. Drives the "Upgrade
  * to <plan> to unlock <feature>" copy. Keep in sync with the seed rows in
- * the 2026-05-15 subscription tiers migration:
+ * the 2026-05-15 subscription tiers migration (legacy 	rial tier
+ * removed - trials no longer offered):
  *
- *   trial:  digital_takeoff, activity_card
- *   growth: digital_takeoff, email_send, activity_card (+ trial)
+ *   growth: digital_takeoff, email_send, activity_card
  *   pro:    digital_takeoff, flashings, material_orders, followups,
  *           email_send, activity_card
  *
