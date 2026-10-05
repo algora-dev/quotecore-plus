@@ -53,6 +53,16 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
         </div>
       </section>
 
+      <section id="setup" className={`${s.section} ${s.setupSection}`} aria-labelledby="setup-title">
+        <div className={`${s.container} ${s.setupGrid}`}>
+          <div className={s.setupPortrait}><img src="/shaun-smiling.jpg" width={795} height={1066} alt="Shaun, the founder of QuoteCore+" loading="lazy" decoding="async" /><div className={s.founderCaption}><strong>Real people. Practical help.</strong><span>Shaun · Founder, QuoteCore+</span></div></div>
+          <div className={`${s.dark} ${s.setupCard}`}><p className={s.eyebrow}>Done For You Setup</p><h2 id="setup-title" className={s.sectionTitle}>Another app to set up?<br /><span className={s.mutedHeading}>Not another thing<br />on your list.</span></h2><p className={s.bodyCopy}>Let’s build it around the way you already work. We’ll help load your pricing and services, shape your setup around your business, and teach you using your own jobs.</p>
+            <div className={s.setupPoints}><span><Icon name="check" size={18} />Your products and pricing</span><span><Icon name="check" size={18} />Your workflow, configured</span><span><Icon name="check" size={18} />Personal, practical training</span></div>
+            <MarketingButton href="/done-for-you-setup" variant="primary" size="large" className={s.button} icon={<Icon name="arrow" />}>Explore Done For You Setup</MarketingButton><p className={s.smallNote}>Start with a conversation. Scope and pricing agreed with you.</p>
+          </div>
+        </div>
+      </section>
+
       <WorkflowExplorer />
 
       <section id="smart-components" className={`${s.section} ${s.smartSection}`} aria-labelledby="smart-title">
@@ -60,16 +70,6 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
           <div className={s.sectionIntro}><div><p className={s.eyebrow}>The thinking behind your quote</p><h2 className={s.sectionTitle} id="smart-title">Most software remembers<br />what you charged.<br /><span className={s.orangeInk}>We remember how you work.</span></h2></div><div className={s.introAside}><p>Labour rates. Waste factors. Pack sizes. Formulas. Save your know-how as Smart Components™ and put it to work on every quote.</p><a href="/features/smart-components" className={s.textLink}>Discover Smart Components<Icon name="arrow" size={17} /></a></div></div>
           <div className={s.smartVisual}><div className={s.smartVisualHeading}><span><Icon name="spark" size={20} />Your business logic, connected.</span><span>Set it up once. Reuse it.</span></div><img src="/smart-components-mapping.png" width={1916} height={821} alt="Actual Smart Components illustration showing spreadsheet rows mapped into the QuoteCore+ component library" loading="lazy" decoding="async" /></div>
           <div className={s.smartPillars}>{[['Your materials', 'Products, quantities and pack sizes.'], ['Your labour', 'Rates and time that reflect your work.'], ['Your pricing', 'Waste, margins and rules — remembered.']].map(([title, text]) => <div key={title}><Icon name="check" size={19} /><span><strong>{title}</strong><small>{text}</small></span></div>)}</div>
-        </div>
-      </section>
-
-      <section id="setup" className={`${s.section} ${s.dark} ${s.setupSection}`} aria-labelledby="setup-title">
-        <div className={`${s.container} ${s.setupGrid}`}>
-          <div className={s.setupPortrait}><img src="/shaun-smiling.jpg" width={795} height={1066} alt="Shaun, the founder of QuoteCore+" loading="lazy" decoding="async" /><div className={s.founderCaption}><strong>Real people. Practical help.</strong><span>Shaun · Founder, QuoteCore+</span></div></div>
-          <div><p className={s.eyebrow}>Done For You Setup</p><h2 id="setup-title" className={s.sectionTitle}>Another app to set up?<br /><span className={s.mutedHeading}>Not another thing<br />on your list.</span></h2><p className={s.bodyCopy}>Let’s build it around the way you already work. We’ll help load your pricing and services, shape your setup around your business, and teach you using your own jobs.</p>
-            <div className={s.setupPoints}><span><Icon name="check" size={18} />Your products and pricing</span><span><Icon name="check" size={18} />Your workflow, configured</span><span><Icon name="check" size={18} />Personal, practical training</span></div>
-            <MarketingButton href="/done-for-you-setup" variant="primary" size="large" className={s.button} icon={<Icon name="arrow" />}>Explore Done For You Setup</MarketingButton><p className={s.smallNote}>Start with a conversation. Scope and pricing agreed with you.</p>
-          </div>
         </div>
       </section>
 
@@ -88,7 +88,7 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
       <section id="free-tools" className={`${s.section} ${s.toolsSection}`} aria-labelledby="tools-title"><div className={s.container}>
         <div className={s.sectionIntro}><div><p className={s.eyebrow}>Start with something useful</p><h2 id="tools-title" className={s.sectionTitle}>Your plan. Our free tools.</h2></div><a href="/free-tools" className={s.textLink}>Explore all free tools<Icon name="arrow" size={18} /></a></div>
         <div className={s.toolsGrid}>{([
-          ['ruler', 'Free digital takeoff', 'Upload your own roof plan and try the measurement tools for yourself.', '/free-roofing-takeoff-builder'],
+          ['ruler', 'Free roofing digital takeoff', 'Upload your own roof plan and try the measurement tools for yourself.', '/free-roof-takeoff'],
           ['calculator', 'Roofing calculators', 'Useful calculations for your next job, without another spreadsheet.', '/free-calculators'],
           ['document', 'Find your next tool', 'Explore the free tool library and find what fits the job in front of you.', '/free-tools'],
         ] as [IconName, string, string, string][]).map(([icon, title, text, href]) => <a href={href} className={s.toolCard} key={title}><Icon name={icon} size={28} /><h3>{title}</h3><p>{text}</p><span>Open tool<Icon name="arrow" size={18} /></span></a>)}</div>

@@ -248,17 +248,18 @@
 .smartPillars strong { display: block; font-size: 13px; }
 .smartPillars small { display: block; color: var(--muted); font-size: 12px; margin-top: 5px; }
 
-.setupSection { background: radial-gradient(ellipse at 15% 40%,rgba(255,107,53,.07),transparent 60%),var(--focus-canvas); }
-.setupGrid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 100px; align-items: center; }
-.setupPortrait { position: relative; height: 495px; max-width: 385px; border: 1px solid var(--focus-border); border-radius: 19px; overflow: hidden; background: #1f2329; }
+.setupSection { background: radial-gradient(ellipse at 15% 40%,rgba(255,107,53,.07),transparent 60%),#f6f7f9; padding-block: 64px; }
+.setupGrid { display: grid; grid-template-columns: .62fr 1.38fr; gap: 64px; align-items: center; }
+.setupPortrait { position: relative; height: 340px; max-width: 280px; border: 1px solid var(--focus-border); border-radius: 19px; overflow: hidden; background: #1f2329; }
 .setupPortrait::after { content: ''; position: absolute; inset: 40% 0 0; background: linear-gradient(transparent,rgba(10,12,15,.94)); pointer-events: none; }
 .setupPortrait > img { width: 100%; height: 100%; object-fit: cover; object-position: center 24%; }
-.founderCaption { position: absolute; z-index: 1; left: 28px; right: 28px; bottom: 28px; }
-.founderCaption strong { display: block; color: #fff; font-size: 18px; font-weight: 550; letter-spacing: -.02em; }
+.founderCaption { position: absolute; z-index: 1; left: 18px; right: 18px; bottom: 18px; }
+.founderCaption strong { display: block; color: #fff; font-size: 15px; font-weight: 550; letter-spacing: -.02em; }
 .founderCaption > span { color: #d2d7df; font-size: 12px; display: block; margin-top: 6px; }
 .setupPoints { display: grid; gap: 11px; font-size: 13px; margin-bottom: 30px; color: #d9dde4; }
 .setupPoints > span { display: flex; align-items: center; gap: 10px; }
 .setupPoints svg { color: var(--orange-bright); }
+.setupCard { border-radius: 24px; padding: 44px 48px; border: 1px solid var(--focus-border); box-shadow: 0 24px 64px rgba(16,19,24,.14); }
 
 .reviewsSection { background: #fafbfc; }
 .reviewsGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 26px; }
@@ -427,8 +428,8 @@
   .workflowDescription h3 { font-size: 25px; }
   .workflowDescription p { font-size: 14px; }
   .workflowImage { height: 305px; }
-  .setupGrid { gap: 45px; grid-template-columns: .9fr 1.1fr; }
-  .setupPortrait { height: 445px; }
+  .setupGrid { gap: 45px; grid-template-columns: .7fr 1.3fr; }
+  .setupPortrait { height: 320px; }
   .reviewsGrid { gap: 16px; }
   .testimonial { padding: 22px 20px; }
   .testimonial blockquote { font-size: 12px; }
@@ -500,8 +501,9 @@
   .smartPillars > div + div { border: 0; }
   .smartPillars small { font-size: 12px; }
   .setupGrid > div:last-child { grid-row: 1; }
-  .setupPortrait { height: 340px; width: 100%; max-width: none; }
+  .setupPortrait { height: 300px; width: 100%; max-width: none; }
   .setupPortrait > img { object-position: center 25%; }
+  .setupCard { padding: 30px 24px; border-radius: 18px; }
   .reviewsGrid { grid-template-columns: 1fr; gap: 16px; }
   .testimonial { padding: 26px; }
   .testimonial blockquote { font-size: 14px; }
