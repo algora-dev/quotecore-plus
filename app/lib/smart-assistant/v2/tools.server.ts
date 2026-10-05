@@ -259,33 +259,49 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
     if (access.phases.p4 && ['draft_quotes', 'customers', 'components'].every(section => access.permissions[section as AssistantSection] === 'edit')) {
         if (workflowEnabled) {
             const finishWorkflow = (result: Awaited<ReturnType<typeof prepareDraftWorkflow>>) => { if (task && typeof task.noteWorkflow === 'function') task.noteWorkflow(result.state); return result; };
+            // Bugfix 2026-10-05 (BUG B): workflow validation raises ProposalError /
+            // AssistantV2Error with precise, model-actionable correction guidance,
+            // but these handlers let them escape as unclassified exceptions, so the
+            // model-loop replaced them with a generic failure and the turn dead-ended
+            // (RS Roofing: every prepare_draft_from_brief 500-styled "workspace tool
+            // failed" after 15:41). registerProposal tools already convert the same
+            // error classes into model-readable results; do the same here. Terminal
+            // access failures still propagate for the model loop to fail the turn.
+            const workflowToolHandler = (run: (args: Record<string, unknown>) => Promise<unknown>) => async (args: Record<string, unknown>) => {
+                try { return await run(args); }
+                catch (error) {
+                    if (error instanceof AssistantV2Error && ['access_changed','permissions_changed','unauthenticated'].includes(error.code)) throw error;
+                    if (error instanceof ProposalError || error instanceof AssistantV2Error) return { error: error.message, applied: false };
+                    throw error;
+                }
+            };
             tools.prepare_draft_from_brief = {
                 schema: {name:'prepare_draft_from_brief',description:'Begin a NEW server-owned job brief from user measurements and workspace concepts/aliases. Do not use for corrections to ACTIVE_WORKING_BRIEF. No draft is created until button confirmation.',parameters:PREPARE_WORKING_BRIEF_PARAMETERS},
-                handler: async args => {
+                handler: workflowToolHandler(async args => {
                     if(workflowHint && task?.decision.disposition !== 'new' && task?.decision.disposition !== 'close') throw new ProposalError('A working brief already exists. Use revise_draft_workflow with typed corrections, or explicitly start a new task.');
                     return finishWorkflow(await prepareDraftWorkflow(input.supabase,access,input.conversationId,input.runId,args));
-                },
+                }),
                 terminalReply: result => isRecord(result) && typeof result.answer === 'string' ? result.answer : null,
             };
             tools.revise_draft_workflow = {
                 schema:{name:'revise_draft_workflow',description:'Apply ONLY the user-requested typed corrections to ACTIVE_WORKING_BRIEF. Preserves other details and the same created draft identity. Recalculates using QuoteCore and prepares review; never confirms.',parameters:REVISE_WORKING_BRIEF_PARAMETERS},
-                handler:async args=>finishWorkflow(await reviseDraftWorkflow(input.supabase,access,input.conversationId,input.runId,args)),
+                handler:workflowToolHandler(async args=>finishWorkflow(await reviseDraftWorkflow(input.supabase,access,input.conversationId,input.runId,args))),
                 terminalReply: result => isRecord(result) && typeof result.answer === 'string' ? result.answer : null,
             };
             tools.read_working_measurements = {
                 schema:{name:'read_working_measurements',description:'Read up to 50 individual entries and stable IDs from a current working component. Use before correcting an entry omitted from bounded context. Does not mutate anything.',parameters:{type:'object',properties:{state_id:{type:'string',format:'uuid'},revision:{type:'integer',minimum:1},measurement_id:{type:'string',format:'uuid'},offset:{type:'integer',minimum:0}},required:['state_id','revision','measurement_id'],additionalProperties:false}},
-                parallelSafe:true,handler:async args=>readWorkingMeasurements(input.supabase,access,input.conversationId,args),
+                parallelSafe:true,handler:workflowToolHandler(async args=>readWorkingMeasurements(input.supabase,access,input.conversationId,args)),
             };
             tools.continue_draft_workflow = {
                 schema: { name: 'continue_draft_workflow', description: 'Continue the ACTIVE working draft after the user answers product-choice questions by text or voice. Use only option IDs shown in ACTIVE_WORKING_BRIEF. This does not confirm/create the draft.', parameters: { type:'object', properties:{ state_id:{type:'string',format:'uuid'}, revision:{type:'integer',minimum:1}, selections:{type:'object',additionalProperties:{type:'string',format:'uuid'}} }, required:['state_id','revision','selections'], additionalProperties:false } },
-                handler: async args => {
+                handler: workflowToolHandler(async args => {
                     if (Object.keys(args).some(key => !['state_id', 'revision', 'selections'].includes(key))
                         || !isUuid(args.state_id) || !Number.isSafeInteger(args.revision) || Number(args.revision) < 1
                         || !isRecord(args.selections) || Object.values(args.selections).some(value => !isUuid(value)))
                         throw new ProposalError('Use the current working-brief identity, revision and actual product option IDs. Nothing was changed.');
                     return finishWorkflow(await applyDraftChoice(input.supabase, access, input.conversationId, input.runId,
                         {version:1,stateId:args.state_id,revision:Number(args.revision),selections:args.selections as Record<string,string>}));
-                },
+                }),
                 terminalReply: result => isRecord(result) && typeof result.answer === 'string' ? result.answer : null,
             };
         } else {

@@ -118,9 +118,15 @@ export type RunOutcome = {
     errorCode: string | null;
 };
 export function parseRunOutcome(value: unknown): RunOutcome | null {
-    if (!isRecord(value) || !isUuid(value.id) || !isUuid(value.client_request_id) || !['accepted', 'running', 'completed', 'failed', 'cancelled', 'aborted', 'timed_out'].includes(String(value.status)))
+    // Bugfix 2026-10-05 (BUG A): client_request_id is an opaque string at the
+    // turn API/admission boundary (no UUID contract). Requiring a UUID here
+    // fail-closed the whole session read after any non-UUID request id,
+    // 500-ing every later turn on that conversation. Accept any non-empty
+    // string; consumers only ever compare it for equality.
+    if (!isRecord(value) || !isUuid(value.id) || typeof value.client_request_id !== 'string' || !value.client_request_id
+        || !['accepted', 'running', 'completed', 'failed', 'cancelled', 'aborted', 'timed_out'].includes(String(value.status)))
         return null;
-    return { id: value.id, requestId: value.client_request_id, status: String(value.status),
+    return { id: value.id, requestId: value.client_request_id.slice(0, 240), status: String(value.status),
         errorCode: typeof value.error_code === 'string' ? value.error_code.slice(0, 240) : null };
 }
 export type SessionSnapshot = {
