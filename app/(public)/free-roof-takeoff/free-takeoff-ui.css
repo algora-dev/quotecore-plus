@@ -133,6 +133,9 @@
   .qc-free-entry-guide { display: none; }
   .qc-free-entry-card { padding: 20px; }
   .qc-free-mobile-demo { display: flex; margin-top: 12px; }
+  /* 2026-10-05: no download round-trip on mobile — the one-tap example plan
+     covers it; a download link pokes iOS download/browser UI (owner report). */
+  .qc-free-sample-row { display: none; }
   .qc-free-page-intro { padding: 28px 16px 20px; }
   .qc-free-page-intro h1 { font-size: 28px; }
   .qc-free-page-intro > p { font-size: 14px; }
