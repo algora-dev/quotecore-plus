@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const { context, admin } = await requireDemoRequest(request);
     const [co, control, allowance] = await Promise.all([
-      admin.from('companies').select('slug').eq('id', context.companyId).single(), getDemoControl(), getDemoAllowance(context),
+      admin.from('companies').select('slug, default_measurement_system').eq('id', context.companyId).single(), getDemoControl(), getDemoAllowance(context),
     ]);
     if (co.error || !co.data.slug) throw new DemoError('Could not resolve the demo workspace.', 503);
     // Live skylight signal: the visitor's created component already has a
@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
     }
     return demoJson({ sessionId: context.sessionId, expiresAt: context.expiresAt, slug: co.data.slug, tutorialState: context.tutorialState,
       progress: guideProgress(context.tutorialState), aiEnabled: control.aiEnabled && allowance.configured,
-      selfSendEnabled: process.env.DEMO_SELF_SEND_ENABLED === 'true', skylightAdded, allowance });
+      selfSendEnabled: process.env.DEMO_SELF_SEND_ENABLED === 'true', skylightAdded, allowance,
+      units: co.data.default_measurement_system === 'imperial_ft' || co.data.default_measurement_system === 'imperial_rs' ? co.data.default_measurement_system : 'metric' });
   } catch (error) { return demoErrorResponse(error); }
 }
 export async function PATCH(request: NextRequest) {

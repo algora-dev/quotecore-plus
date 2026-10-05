@@ -11,7 +11,7 @@ export function decodeDraftChoice(value:string):DraftChoiceWire|null{
       ||!parsed.selections||typeof parsed.selections!=='object'||Array.isArray(parsed.selections)
       ||parsed.choice!==undefined&&!['apply','cancel'].includes(parsed.choice))return null;
     const selections=Object.entries(parsed.selections);
-    if(selections.length>25||selections.some(([key,id])=>key.length>120||!uuid(id)||!(key==='collection'||/^concept:[a-z][a-z0-9_]{1,63}$/.test(key)||key.startsWith('measurement:')&&uuid(key.slice(12)))))return null;
+    if(selections.length>25||selections.some(([key,id])=>key.length>120||!(key==='basis'?(id==='plan'||id==='actual'):uuid(id))||!(key==='collection'||key==='basis'||/^concept:[a-z][a-z0-9_]{1,63}$/.test(key)||key.startsWith('measurement:')&&uuid(key.slice(12)))))return null;
     return {version:1,stateId:parsed.stateId,revision:parsed.revision,selections:Object.fromEntries(selections) as Record<string,string>,...(parsed.choice?{choice:parsed.choice}:{})};
   }catch{return null;}
 }

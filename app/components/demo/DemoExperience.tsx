@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { QcDialog } from '@/app/components/ui/v2/QcDialog';
 import { DEMO_GUIDE_CHAPTERS, guideHref, guideProgress, nextGuideStep, type DemoStep } from '@/app/lib/demo/guide';
-import type { DemoEvent, DemoGuideState } from '@/app/lib/demo/model';
+import type { DemoEvent, DemoGuideChapter, DemoGuideState } from '@/app/lib/demo/model';
 import type { GuideCommand } from '@/app/lib/demo/commands';
 import { normalAccountHref } from '@/app/lib/demo/routing';
 import './demo-experience.css';
@@ -22,7 +22,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const [state, setState] = useState(initialState); const [open, setOpen] = useState(initialState.mode === 'guided' || !initialState.welcomed);
   const [mounted, setMounted] = useState(false); const [pending, setPending] = useState(false); const [error, setError] = useState('');
   const [resetOpen, setResetOpen] = useState(false); const [expired, setExpired] = useState(false); const [completeOpen, setCompleteOpen] = useState(false);
-  const [allowance, setAllowance] = useState<Allowance | null>(null); const [selfSendEnabled, setSelfSendEnabled] = useState(false); const [skylightAdded, setSkylightAdded] = useState(false);
+  const [allowance, setAllowance] = useState<Allowance | null>(null); const [units, setUnits] = useState<'metric' | 'imperial_ft' | 'imperial_rs'>('metric'); const [skylightAdded, setSkylightAdded] = useState(false);
   const [position, setPosition] = useState<Position | null>(null); const widget = useRef<HTMLElement>(null);
   const drag = useRef<{ pointerId: number; dx: number; dy: number } | null>(null);
   // Guide-initiated navigation: hold a "loading the next task" card until the
@@ -38,7 +38,8 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
       if (response.status === 410 || response.status === 401) { setExpired(true); return; }
       if (!response.ok) { if (response.status === 503) setError(result.error ?? 'Demo verification is temporarily unavailable.'); return; }
       if (result.sessionId !== sessionId) { setExpired(true); return; }
-      setState(result.tutorialState); setAllowance(result.allowance); setSelfSendEnabled(result.selfSendEnabled === true); if (result.skylightAdded === true) setSkylightAdded(true);
+      setState(result.tutorialState); setAllowance(result.allowance); if (result.skylightAdded === true) setSkylightAdded(true);
+      if (result.units === 'imperial_ft' || result.units === 'imperial_rs' || result.units === 'metric') setUnits(result.units);
     } catch (cause) { if (!(cause instanceof DOMException && cause.name === 'AbortError')) setError('Could not refresh demo progress. Your product edits are not changed.'); }
   }, [sessionId]);
   useEffect(() => { setMounted(true); const controller = new AbortController(); void refresh(controller.signal);
@@ -83,13 +84,32 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const step = nextGuideStep(state); const progress = guideProgress(state);
   const chapterIndex = DEMO_GUIDE_CHAPTERS.findIndex(chapter => chapter.id === state.chapter);
   const chapter = DEMO_GUIDE_CHAPTERS[chapterIndex] ?? DEMO_GUIDE_CHAPTERS[0];
+  const nextChapter = DEMO_GUIDE_CHAPTERS[chapterIndex + 1]?.id;
   const destination = guideHref(workspaceSlug, state); const destinationPath = destination.split('?')[0];
-  const onExpectedPage = pathname === destinationPath;
+  // The Smart Assistant popup opens from any workspace page; its only wrong
+  // page is the standalone /assistant page (owner direction 2026-10-05).
+  const assistantStep = step?.target === 'assistant';
+  const onExpectedPage = assistantStep ? pathname !== `/${workspaceSlug}/assistant` : pathname === destinationPath;
   // Owner 2026-10-05: when a completion card is showing but the visitor has
   // ALREADY arrived on the next task's page (Finish & Save lands straight in
   // the customer quote editor), skip the celebration card and show the actual
   // next instruction immediately.
   useEffect(() => { if (justCompleted && step && pathname === destinationPath) setJustCompleted(null); }, [justCompleted, step, pathname, destinationPath]);
+  // Owner 2026-10-05 (pass 5): when the visitor is ALREADY on the NEXT
+  // chapter's first page (Finish & Save lands straight in the customer quote
+  // editor), advance the chapter quietly instead of showing a "Continue to
+  // Prepare the customer quote" button they cannot need.
+  const autoAdvance = useRef<{ chapter: DemoGuideChapter | undefined; run: boolean }>({ chapter: undefined, run: false });
+  autoAdvance.current.chapter = nextChapter;
+  useEffect(() => {
+    if (!justCompleted || step || pending || expired) return;
+    const chapterId = autoAdvance.current.chapter; if (!chapterId || autoAdvance.current.run) return;
+    const first = DEMO_GUIDE_CHAPTERS.find(chapter => chapter.id === chapterId)!.steps[0];
+    const nextPath = guideHref(workspaceSlug, { ...state, chapter: chapterId }, first).split('?')[0];
+    if (pathname !== nextPath) return;
+    autoAdvance.current.run = true; setJustCompleted(null);
+    void command({ action: 'chapter', chapter: chapterId }).finally(() => { autoAdvance.current.run = false; });
+  }, [justCompleted, step, pathname, pending, expired, state, workspaceSlug]);
   async function command(input: GuideCommand, navigate = false) {
     if (pending || expired) return; setPending(true); setError('');
     try {
@@ -126,7 +146,16 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     setPosition(clampPosition({ x: event.clientX - drag.current.dx, y: event.clientY - drag.current.dy }, widget.current));
   }
   const expiryLabel = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' }).format(new Date(expiresAt));
-  const nextChapter = DEMO_GUIDE_CHAPTERS[chapterIndex + 1]?.id;
+  // Units-adaptive Smart Assistant scripts (owner direction 2026-10-05): the
+  // example bakes in "on the plan" so the basis question never fires, and the
+  // wording follows the measurement system chosen at demo entry.
+  const saCreateScript = units === 'metric'
+    ? 'Create a roof quote for Jim Smith — 180 m² roof on the plan, 25° pitch, 5 hips at 4 m and 1 ridge at 2 m, using the roofing library.'
+    : units === 'imperial_rs'
+    ? 'Create a roof quote for Jim Smith — 19.4 roofing squares on the plan, 25° pitch, 5 hips at 13 ft and 1 ridge at 6.5 ft, using the roofing library.'
+    : 'Create a roof quote for Jim Smith — 1,940 ft² roof on the plan, 25° pitch, 5 hips at 13 ft and 1 ridge at 6.5 ft, using the roofing library.';
+  const saEditScript = units === 'metric' ? 'Change the ridge to 6 m and add 12 m of gutter.' : 'Change the ridge to 20 ft and add 40 ft of gutter.';
+  const saFindScript = 'Do I have any accepted quotes without a material order?';
   const guide = <>
     {!open && <button className="qc-demo-reopen" type="button" onClick={() => setOpen(true)} aria-label="Resume guided demo">QCP demo · {progress.done}/{progress.total}<span>Resume guide</span></button>}
     {open && <aside ref={widget} className="qc-demo-guide" aria-label="QuoteCore+ demo guide" style={position ? { left: position.x, top: position.y, right: 'auto', bottom: 'auto' } : undefined}>
@@ -146,9 +175,9 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
           <p>{justCompleted.event === 'takeoff.saved'
             ? 'Saved. You can keep editing freely - add or remove anything - or continue to the next step. Your customer quote will use exactly what you saved.'
             : 'Saved and recorded - nice work. Ready for the next one?'}</p>
-          {step ? <a className="qc-demo-continue" href={destination} onClick={() => setJustCompleted(null)}>Do the next task →</a>
-            : nextChapter ? <><QcButton variant="primary" disabled={pending} onClick={() => { setJustCompleted(null); void command({ action: 'chapter', chapter: nextChapter }, true); }}>Continue to {DEMO_GUIDE_CHAPTERS[chapterIndex + 1].title}</QcButton>{justCompleted.event === 'takeoff.saved' && <button type="button" className="qc-demo-secondary-link" onClick={() => setJustCompleted(null)}>Keep editing the takeoff</button>}</>
-              : <QcButton variant="primary" onClick={() => { setJustCompleted(null); setCompleteOpen(true); }}>Review your demo</QcButton>}
+          {step ? <div className="qc-demo-actions"><a className="qc-demo-continue" href={destination} onClick={() => setJustCompleted(null)}>Do the next task →</a></div>
+            : nextChapter ? <div className="qc-demo-actions"><QcButton variant="primary" disabled={pending} onClick={() => { setJustCompleted(null); void command({ action: 'chapter', chapter: nextChapter }, true); }}>Continue to {DEMO_GUIDE_CHAPTERS[chapterIndex + 1].title}</QcButton>{justCompleted.event === 'takeoff.saved' && <button type="button" className="qc-demo-secondary-link" onClick={() => setJustCompleted(null)}>Keep editing the takeoff</button>}</div>
+              : <div className="qc-demo-actions"><QcButton variant="primary" onClick={() => { setJustCompleted(null); setCompleteOpen(true); }}>Review your demo</QcButton></div>}
           <button type="button" className="qc-demo-secondary-link" onClick={() => setJustCompleted(null)}>{step ? 'Show the next step here' : 'Stay on this chapter'}</button>
         </> : awaitingPage ? <><p className="qc-demo-eyebrow">LOADING</p><h2>Opening the next task…</h2>
           <p className="qc-demo-loading">The next page is on its way. Hold tight - nothing to click yet.</p>
@@ -158,30 +187,39 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
             ? <p className="qc-demo-note"><strong>Skylight added ✓</strong> Look around freely - add, edit or remove anything. Press <strong>Finish &amp; Save</strong> when you’re ready; you’ll land straight in the customer quote editor.</p>
             : <p className="qc-demo-note"><strong>Your one job:</strong> add your component{state.guided_created_component_name ? <> (“{state.guided_created_component_name}”)</> : null} and draw a rectangle anywhere on the roof. Everything else is already measured and priced.</p>)}
           {state.chapter === 'smart-assistant' && <p className="qc-demo-note">{allowance?.configured ? `${allowance.turnsRemaining} of ${allowance.turnsLimit} user turns remain. Reset does not restore them.` : 'Real Smart Assistant requires calibrated cost controls on this deployment. The rest of the demo remains available.'}</p>}
+          {state.chapter === 'smart-assistant' && onExpectedPage && <div className="qc-demo-script"><span>{step.event === 'assistant.found' ? 'ASK THIS' : 'TRY THIS'}</span><p>{step.event === 'assistant.created' ? saCreateScript : step.event === 'assistant.edited' ? saEditScript : saFindScript}</p></div>}
+          {step.event === 'email.sent' && onExpectedPage && <p className="qc-demo-note"><strong>Then check your inbox.</strong> The email and its customer page are exactly what a real customer receives.</p>}
           {step.event === 'component.viewed' && onExpectedPage ? <QcButton variant="primary" disabled={pending || expired} onClick={() => void skipStep()}>I&apos;ve had a look - next step →</QcButton>
-          : step.event === 'quote.previewed' && onExpectedPage ? <>
-            <p className="qc-demo-note"><strong>1.</strong> Press <strong>Save &amp; Return</strong> (top right). Your quote is saved and you land in the Job Space.</p>
-            <p className="qc-demo-note"><strong>2.</strong> Send it to your own email. In this demo the Send button only ever emails you.</p>
-            {selfSendEnabled && <a className="qc-demo-continue" href={`/${workspaceSlug}/demo-guide/send`}>Email it to myself →</a>}
-            <p className="qc-demo-note">Attachments and automatic follow-ups are main-app features.</p></>
             : !onExpectedPage ? <a className="qc-demo-continue" href={destination}>Resume this task →</a>
             : step.event === 'component.created' ? <a className="qc-demo-continue" href={destination}>Open the component creator →</a>
             : step.event === 'component.tested' || step.event === 'component.edited' ? <a className="qc-demo-continue" href={destination}>Open the component →</a>
+            : assistantStep ? <QcButton variant="primary" onClick={() => window.dispatchEvent(new Event('qc-open-assistant'))}>Open Smart Assistant →</QcButton>
             : null}
           {!(step.event === 'component.viewed' && onExpectedPage) && <button type="button" className="qc-demo-secondary-link" disabled={pending || expired} onClick={() => void skipStep()}>Skip this task →</button>}
-          {state.chapter === 'customer-quote' && selfSendEnabled && <a className="qc-demo-secondary-link" href={`/${workspaceSlug}/demo-guide/send`}>Send this demo quote to yourself</a>}
-        </> : <><h2>{chapter.title} complete</h2><p>Your successful saved actions have been recorded. Nicely done.</p>{state.chapter === 'customer-quote' && selfSendEnabled && <a className="qc-demo-secondary-link" href={`/${workspaceSlug}/demo-guide/send`}>Send this demo quote to yourself</a>}{nextChapter ? <QcButton variant="primary" disabled={pending} onClick={() => void command({action:'chapter',chapter:nextChapter},true)}>Continue to {DEMO_GUIDE_CHAPTERS[chapterIndex+1].title}</QcButton> : <QcButton variant="primary" onClick={() => setCompleteOpen(true)}>Review your demo</QcButton>}</>}
+        </> : <><h2>{chapter.title} complete</h2><p>Your successful saved actions have been recorded. Nicely done.</p><div className="qc-demo-actions">{nextChapter ? <QcButton variant="primary" disabled={pending} onClick={() => void command({action:'chapter',chapter:nextChapter},true)}>Continue to {DEMO_GUIDE_CHAPTERS[chapterIndex+1].title}</QcButton> : <QcButton variant="primary" onClick={() => setCompleteOpen(true)}>Review your demo</QcButton>}</div></>}
         {error && <p role="alert" className="qc-demo-error">{error}</p>}
         <div className="qc-demo-guide-links"><button type="button" disabled={pending} onClick={() => void command({action:'explore'})}>Explore / resume later</button><a href={`/${workspaceSlug}/demo-guide`}>All chapters</a><button type="button" onClick={() => setPosition(null)}>Reset position</button></div>
       </div>
     </aside>}
     <QcDialog open={resetOpen} pending={pending} onRequestClose={() => setResetOpen(false)} title="Start again from the QCP seed?" description="This removes your edits, created records, measurements and guide progress, and shows the welcome as a first-time visitor. It takes about 15 seconds - keep this tab open. AI and email allowances are not restored. Other open demo tabs will become invalid."
-      footer={<><QcButton disabled={pending} variant="secondary" onClick={() => setResetOpen(false)}>Keep exploring</QcButton><QcButton disabled={pending} onClick={reset}>{pending ? 'Preparing your fresh demo…' : 'Reset demo'}</QcButton></>}>{error && <p role="alert" className="qc-demo-error">{error}</p>}</QcDialog>
+      footer={<div className="qc-demo-actions"><QcButton disabled={pending} variant="secondary" onClick={() => setResetOpen(false)}>Keep exploring</QcButton><QcButton disabled={pending} onClick={reset}>{pending ? 'Preparing your fresh demo…' : 'Reset demo'}</QcButton></div>}>{error && <p role="alert" className="qc-demo-error">{error}</p>}</QcDialog>
     <QcDialog open={expired} onRequestClose={() => window.location.assign('/demo')} title="This demo has ended" description="It expired or was reset in another tab. Start again for a fresh fictional workspace. Your remaining resource allowances do not reset.">
-      <Link className="qc-demo-continue" href="/demo">Start a fresh demo</Link><a className="qc-demo-secondary-link" href={normalAccountHref(mounted ? window.location.hostname : '')}>Get your own account</a>
+      <div className="qc-demo-actions"><Link className="qc-demo-continue" href="/demo">Start a fresh demo</Link><a className="qc-demo-secondary-link" href={normalAccountHref(mounted ? window.location.hostname : '')}>Get your own account</a></div>
     </QcDialog>
-    <QcDialog open={completeOpen} onRequestClose={() => setCompleteOpen(false)} title={progress.done === progress.total ? 'You’ve tried the QuoteCore+ workflow' : 'Keep exploring QuoteCore+'} description="Digital Takeoff and Smart Assistant are optional. Existing measurements can be entered directly. Orders, invoices and the rest of the sandbox are still here."
-      footer={<><a className="qc-demo-continue" href={normalAccountHref(mounted ? window.location.hostname : '')}>Get your own account</a><a className="qc-demo-secondary-link" href="https://quote-core.com/done-for-you-setup">Ask about Done For You</a><QcButton variant="secondary" onClick={() => setCompleteOpen(false)}>Continue exploring</QcButton></>}><p>{progress.done} of {progress.total} guided actions completed. This is only part of what QuoteCore+ can do.</p></QcDialog>
+    <QcDialog open={completeOpen} onRequestClose={() => setCompleteOpen(false)} title={progress.done === progress.total ? 'You’ve tried the QuoteCore+ workflow' : 'Keep exploring QuoteCore+'}
+      footer={<div className="qc-demo-actions"><a className="qc-demo-continue" href={normalAccountHref(mounted ? window.location.hostname : '')}>Get your own account</a><a className="qc-demo-secondary-link" href="https://quote-core.com/done-for-you-setup">Ask about Done For You</a><QcButton variant="secondary" onClick={() => setCompleteOpen(false)}>Continue exploring</QcButton></div>}>
+      <div className="qc-demo-complete">
+        <div className="qc-demo-progress" role="progressbar" aria-label="Completed demo actions" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.done}><i style={{ width: `${100 * progress.done / progress.total}%` }} /></div>
+        <p className="qc-demo-complete-count">{progress.done} OF {progress.total} GUIDED ACTIONS COMPLETED</p>
+        <ul>
+          <li>Priced a reusable roofing component</li>
+          <li>Measured a prepared roof plan with real pitch + waste maths</li>
+          <li>Presented and sent a customer quote</li>
+          <li>Drafted work with Smart Assistant in plain English</li>
+        </ul>
+        <p>Digital Takeoff and Smart Assistant are optional — real accounts can enter measurements directly. Orders, invoices and the rest of this sandbox are still yours to explore.</p>
+      </div>
+    </QcDialog>
   </>;
   return <><div className="qc-demo-banner"><strong>DEMO</strong><span>Fictional · available until {expiryLabel}</span><button type="button" onClick={() => setOpen(true)}>Demo guide</button><button type="button" onClick={() => setResetOpen(true)}>Start again</button><a href={normalAccountHref(mounted ? window.location.hostname : '')}>Get your own account</a></div>{mounted && createPortal(<div data-qc-ui="v2">{guide}</div>, document.body)}</>;
 }

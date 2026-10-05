@@ -14,15 +14,30 @@ export function selectedProduct(brief: WorkingBrief, m: WorkingBrief['measuremen
 /** Deterministic resolution, on a copy: no cross-library defaults and no stale IDs. */
 export function resolveWorkingBrief(source: WorkingBrief, catalog: LibraryCatalogItem[], concepts: readonly AssistantConcept[]) {
   const brief = structuredClone(source), questions: WorkflowQuestion[] = [], issues = briefIssues(brief);
+  // Owner 2026-10-05 (pass 5): unstated plan/actual asks with buttons, never a
+  // free-text interrogation. Any question (including this one) blocks proposals.
+  if (brief.basisPending) questions.push({ key: 'basis', label: 'Are these measurements plan or actual?', role: 'roof_area',
+    options: [ { id: 'plan', label: 'Plan measurements', detail: 'Measured flat / from the drawing - pitch is applied' },
+      { id: 'actual', label: 'Actual measurements', detail: 'Measured on the roof surface - pitch already included' } ] });
   const collections = [...new Map(catalog.map(c => [c.collectionId, c.collectionName])).entries()];
   if (brief.collectionId && !collections.some(([id]) => id === brief.collectionId)) {
     issues.push('The selected library is no longer enabled or has no eligible products. Choose an enabled library; no replacement was guessed.');
     return { brief, questions, issues, catalog: [] as LibraryCatalogItem[] };
   }
   if (!brief.collectionId && brief.collectionName) {
-    const matches = collections.filter(([,name]) => labelKey(name) === labelKey(brief.collectionName!));
+    const requested = labelKey(brief.collectionName);
+    const stripWords = (value: string) => labelKey(value).split(' ').filter(word => !['library','libraries','collection','collections','catalogue','catalog','lib'].includes(word)).join(' ');
+    const matches = collections.filter(([,name]) => labelKey(name) === requested);
     if (matches.length === 1) brief.collectionId = matches[0][0];
-    else issues.push(`The requested library “${brief.collectionName}” did not match one enabled library exactly.`);
+    else {
+      // Owner 2026-10-05 (pass 5): tolerate natural phrasing like "the roofing
+      // library" against an enabled "Roofing" collection - a unique match
+      // resolves; ambiguity still asks instead of guessing.
+      const stripped = stripWords(brief.collectionName);
+      const loose = collections.filter(([,name]) => { const candidate = stripWords(name); return !!stripped && !!candidate && (candidate === stripped || (stripped.length >= 3 && (candidate.includes(stripped) || stripped.includes(candidate)))); });
+      if (loose.length === 1) brief.collectionId = loose[0][0];
+      else issues.push(`The requested library “${brief.collectionName}” did not match one enabled library exactly.`);
+    }
   }
   if (!brief.collectionId && !brief.collectionName && collections.length === 1) brief.collectionId = collections[0][0];
   if (!brief.collectionId) {

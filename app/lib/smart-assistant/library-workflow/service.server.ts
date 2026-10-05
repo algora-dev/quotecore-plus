@@ -142,6 +142,15 @@ export async function applyDraftChoice(client:SupabaseClient,access:Access,conve
     throw new ProposalError('Choose at least one of the current product options. Selecting an option is not confirmation.');
   for(const [key,id] of Object.entries(choice.selections)){
     const question=decision.questions.find(q=>q.key===key);
+    // Owner 2026-10-05 (pass 5): the plan/actual button answer (ids are the
+    // literals 'plan'/'actual', not record identities) applies the blanket
+    // basis to every area and measurement, then clears the pending flag.
+    if(key==='basis'){
+      if(!question||(id!=='plan'&&id!=='actual'))throw new ProposalError('Those options are not current for this working brief. Review the current choices again.');
+      brief.areas=brief.areas.map(a=>({...a,basis:id==='plan'?'plan' as const:'surface' as const}));
+      brief.measurements=brief.measurements.map(m=>({...m,basis:id as 'plan'|'actual'}));
+      delete brief.basisPending;continue;
+    }
     if(!question||!isUuid(id)||!question.options.some(o=>o.id===id))throw new ProposalError('Those options are not current for this working brief. Review the current choices again.');
     if(key==='collection'){brief.collectionId=id;brief.collectionName=question.options.find(o=>o.id===id)!.label;brief.selections={};brief.selectionSources={};}
     else{brief.selections[key]=id;brief.selectionSources[key]='explicit';}

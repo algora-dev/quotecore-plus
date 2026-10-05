@@ -1,5 +1,5 @@
 import type { DemoGuideChapter, DemoGuideState, DemoEvent } from './model';
-export type DemoStep = { event: DemoEvent; title: string; copy: string; target: 'components' | 'takeoff' | 'customer' | 'assistant' };
+export type DemoStep = { event: DemoEvent; title: string; copy: string; target: 'components' | 'takeoff' | 'customer' | 'job' | 'assistant' };
 /** Steps that cannot be skipped: later chapters depend on the real records
  * they create (the created component, the tested gate, the saved takeoff). */
 export const SKIP_REQUIRED_EVENTS: DemoEvent[] = ['component.created', 'component.tested', 'takeoff.saved'];
@@ -17,12 +17,12 @@ export const DEMO_GUIDE_CHAPTERS: { id: DemoGuideChapter; title: string; summary
     { event: 'quote.template', title: 'Apply the QCP template', target: 'customer', copy: 'Click the header area in the preview, or select “Company & Logo (Header)” in the left Editor. A real account uses your own branding.' },
     { event: 'quote.presentation', title: 'Tidy the presentation', target: 'customer', copy: 'Click a line in the preview (or use the left toolbar) to select it. Edit its description or price, or hide details - show or hide each line’s price with the eye toggle. Change something if you want, then press Save & Return.' },
     { event: 'quote.edited', title: 'Make the description yours', target: 'customer', copy: 'Select a line and rewrite its description so it reads the way you’d say it to this customer. Then press Save & Return - the quote stays based on your saved measurements.' },
-    { event: 'quote.previewed', title: 'Send to customer', target: 'customer', copy: 'Press Save & Return (top right) to save your customer quote. Then send it to your own email. In this demo the Send button only ever emails you. Attachments and automatic follow-ups come with the main app.' },
+    { event: 'email.sent', title: 'Send the quote', target: 'job', copy: 'You landed in the Job Space. Press the Send Quote button, enter your own email address and press Send - in this demo it only ever emails you. Then check your inbox: the email and its customer page are exactly what a real customer receives.' },
   ] },
-  { id: 'smart-assistant', title: 'Use Smart Assistant', summary: 'Real account control-not Q, the chatbot.', steps: [
-    { event: 'assistant.created', title: 'Create work naturally', target: 'assistant', copy: 'Ask Smart Assistant to create a draft roofing job. Use your own wording and confirm its proposed action. The guide advances when the draft exists.' },
-    { event: 'assistant.edited', title: 'Change the draft', target: 'assistant', copy: 'Ask Smart Assistant to change the draft it just created, then confirm and save. The saved change-not the reply alone-counts.' },
-    { event: 'assistant.found', title: 'Find work needing attention', target: 'assistant', copy: 'Ask: “Do I have any accepted quotes without a material order?” Open the matching result to inspect the prepared job.' },
+  { id: 'smart-assistant', title: 'Use Smart Assistant', summary: 'Your work, in plain English.', steps: [
+    { event: 'assistant.created', title: 'Create a job by asking', target: 'assistant', copy: 'Open Smart Assistant (bottom right) and use voice or text - the example below is ready to paste. Review what it drafts from your words, then press Confirm.' },
+    { event: 'assistant.edited', title: 'Change it in one line', target: 'assistant', copy: 'Ask the assistant to change the draft it just created - try the example below - then confirm the update. The saved change is what counts.' },
+    { event: 'assistant.found', title: 'Find work needing attention', target: 'assistant', copy: 'Ask the example below. The assistant searches your workspace and opens the matching job - one sentence, zero digging.' },
   ] },
 ];
 export function currentChapter(state: DemoGuideState): DemoGuideChapter { return state.chapter; }
@@ -43,9 +43,12 @@ export function canEnterChapter(state: DemoGuideState, chapter: DemoGuideChapter
 export function guideHref(slug: string, state: DemoGuideState, step = nextGuideStep(state)): string {
   const root = `/${encodeURIComponent(slug)}`;
   const target = step?.target ?? (state.chapter === 'takeoff' ? 'takeoff' : state.chapter === 'customer-quote' ? 'customer' : state.chapter === 'smart-assistant' ? 'assistant' : 'components');
+  // The Smart Assistant popup opens from any workspace page (never the
+  // standalone /assistant page), so the chapter's destination is simply home.
+  if (target === 'assistant') return root;
   if (target === 'takeoff' && state.seed.guided_roof_job) return `${root}/quotes/${state.seed.guided_roof_job}/takeoff`;
+  if (target === 'job' && state.seed.guided_roof_job) return `${root}/quotes/${state.seed.guided_roof_job}/summary`;
   if (target === 'customer' && state.seed.guided_roof_job) return `${root}/quotes/${state.seed.guided_roof_job}/customer-edit`;
-  if (target === 'assistant') return `${root}/assistant`;
   if (step?.event === 'component.created') return `${root}/components?demoCreate=1`;
   const id = step?.event === 'component.edited' ? state.seed.maintenance_component : state.guided_created_component_id;
   return `${root}/components${id ? `?demoComponent=${encodeURIComponent(id)}${step?.event === 'component.tested' ? '&demoTest=1' : ''}` : ''}`;

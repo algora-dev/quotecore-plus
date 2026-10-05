@@ -2,6 +2,7 @@ import 'server-only';
 import { createHash } from 'node:crypto';
 import { NextRequest } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { readSectionPermissions, writeSectionPermissions } from '@/app/lib/smart-assistant/section-permissions.server';
 import { DEFAULT_SECTION_PERMISSIONS } from '@/app/lib/smart-assistant/section-permissions';
 import { loadAccess } from '@/app/lib/smart-assistant/v2/runtime.server';
@@ -37,8 +38,48 @@ export async function prepareDemoAssistant(context: ActiveDemoContext, client: A
     const saved = await writeSectionPermissions(client,{permissions:desired,expectedCompanyId:context.companyId,expectedRevision:current.snapshot.revision});
     if (!saved.ok) throw new DemoError('Smart Assistant permissions could not be saved. Nothing was simulated.',503,'demo_sa_permissions');
   }
+  await ensureDemoAssistantLibrary(context);
   const access = await loadAccess(client);
   if (access.companyId !== context.companyId || !access.phases.p1 || !access.phases.p3 || !access.phases.p4) throw new DemoError('The demo company must be enabled in the existing Smart Assistant V2 rollout before create/edit can be tested.',503,'demo_sa_rollout');
+}
+/** Owner 2026-10-05 (pass 5): the demo's Smart Assistant must work with the
+ * seeded Roofing library out of the box. Enables exactly that library and maps
+ * every seeded roofing product to its built-in concept with defaults, so
+ * "using the roofing library" resolves with zero setup questions. Idempotent:
+ * configuration is written only when it differs. */
+const DEMO_LIBRARY_CONCEPTS: { name: string; concept: string }[] = [
+  { name: 'Roof covering', concept: 'roof_area' }, { name: 'Roofing underlay', concept: 'underlay' },
+  { name: 'Ridge capping', concept: 'ridge' }, { name: 'Hip capping', concept: 'hip' },
+  { name: 'Valley flashing', concept: 'valley' }, { name: 'Barge flashing', concept: 'barge' },
+  { name: 'Rainwater gutter', concept: 'spouting' },
+];
+async function ensureDemoAssistantLibrary(context: ActiveDemoContext): Promise<void> {
+  const collectionId = context.tutorialState.seed.seed_roofing_library;
+  if (!collectionId) throw new DemoError('The demo roofing library is missing.', 503, 'demo_sa_library');
+  // assistant_v2_* tables are additive and not in database.types.ts yet; the established pattern (workflow-controller/configuration.server.ts) is an untyped client for these local-contract tables.
+  const admin = createAdminClient() as any;
+  const [profile, members, products] = await Promise.all([
+    admin.from('assistant_v2_library_profiles').select('collection_id,enabled,include_all').eq('company_id', context.companyId).eq('collection_id', collectionId).maybeSingle(),
+    admin.from('assistant_v2_library_members').select('component_id,included,concept_key,is_default').eq('company_id', context.companyId).eq('collection_id', collectionId),
+    admin.from('component_library').select('id,name').eq('company_id', context.companyId).eq('collection_id', collectionId).eq('is_active', true),
+  ]);
+  if (profile.error || members.error || products.error) throw new DemoError('The demo Smart Assistant library setup could not be read.', 503, 'demo_sa_library');
+  const productList = (products.data ?? []) as Array<{ id: string; name: string }>;
+  const memberList = (members.data ?? []) as Array<{ component_id: string; included: boolean; concept_key: string | null; is_default: boolean }>;
+  const byName = new Map(productList.map(product => [product.name.toLowerCase(), product.id] as const));
+  const wanted = DEMO_LIBRARY_CONCEPTS.flatMap(mapping => { const componentId = byName.get(mapping.name.toLowerCase()); return componentId ? [{ componentId, concept: mapping.concept }] : []; });
+  if (wanted.length !== DEMO_LIBRARY_CONCEPTS.length) throw new DemoError('The demo roofing library is incomplete on this deployment.', 503, 'demo_sa_library');
+  const memberRows = new Map(memberList.map(row => [row.component_id, row] as const));
+  const configured = profile.data?.enabled === true && profile.data?.include_all === false
+    && wanted.every(want => { const row = memberRows.get(want.componentId); return row?.included === true && row?.concept_key === want.concept && row?.is_default === true; })
+    && memberList.every(row => row.included === true && wanted.some(want => want.componentId === row.component_id));
+  if (configured) return;
+  if (profile.data) { const cleared = await admin.from('assistant_v2_library_members').delete().eq('company_id', context.companyId).eq('collection_id', collectionId);
+    if (cleared.error) throw new DemoError('The demo Smart Assistant library could not be updated.', 503, 'demo_sa_library'); }
+  const savedProfile = await admin.from('assistant_v2_library_profiles').upsert({ company_id: context.companyId, collection_id: collectionId, enabled: true, include_all: false, updated_by: context.anonUserId });
+  if (savedProfile.error) throw new DemoError('The demo Smart Assistant library could not be enabled.', 503, 'demo_sa_library');
+  const savedMembers = await admin.from('assistant_v2_library_members').insert(wanted.map(want => ({ company_id: context.companyId, collection_id: collectionId, component_id: want.componentId, included: true, concept_key: want.concept, is_default: true, updated_by: context.anonUserId })));
+  if (savedMembers.error) throw new DemoError('The demo Smart Assistant product mappings could not be saved.', 503, 'demo_sa_library');
 }
 /** Leaves the production turn pipeline, admission and trusted finalization intact.
  * Demo-only requests use its existing JSON path for unambiguous settlement. */

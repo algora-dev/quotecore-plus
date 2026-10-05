@@ -33,7 +33,11 @@ function entries(v: unknown, id: () => string) {
   return v.map(raw => { const e = object(raw); return { id: id(), quantity: positive(e.quantity), unit: text(e.unit, 20, 'Unit') }; });
 }
 function area(raw: Record<string, unknown>, id: () => string): WorkingArea {
-  return { id: id(), label: text(raw.label, 120, 'Area label'), quantity: positive(raw.quantity), unit: oneOf(raw.unit, ['m2','ft2','rs'], 'area unit'), basis: oneOf(raw.basis, ['plan','surface'], 'area basis'), pitchDegrees: pitch(raw.pitch_degrees) };
+  // Owner 2026-10-05 (pass 5): basis may be omitted when the user never stated
+  // plan vs actual; 'surface' is the provisional value and the brief is marked
+  // basisPending so resolution asks with buttons instead of guessing.
+  const basis = raw.basis == null ? 'surface' as const : oneOf(raw.basis, ['plan','surface'], 'area basis');
+  return { id: id(), label: text(raw.label, 120, 'Area label'), quantity: positive(raw.quantity), unit: oneOf(raw.unit, ['m2','ft2','rs'], 'area unit'), basis, pitchDegrees: pitch(raw.pitch_degrees) };
 }
 function covering(a: WorkingArea, id: () => string): WorkingMeasurement {
   return { id: id(), conceptKey: 'roof_area', role: 'roof_area', areaId: a.id, entries: [{ id: id(), quantity: a.quantity, unit: a.unit }], basis: a.basis === 'plan' ? 'plan' : 'actual', fromArea: true, requestedProduct: null };
@@ -47,6 +51,9 @@ export function createWorkingBrief(input: Record<string, unknown>, context: Reco
   const jobName = input.job_name == null ? (siteAddress ?? customerName).slice(0, 200) : text(input.job_name, 200, 'Job');
   if (!Array.isArray(input.areas) || input.areas.length > 12) throw new ProposalError('Use at most twelve areas.');
   const areas = input.areas.map(v => area(object(v), id));
+  // Owner 2026-10-05 (pass 5): unstated plan/actual becomes a button question.
+  const basisPending = input.areas.some(v => object(v).basis == null)
+    || (Array.isArray(input.measurements) && input.measurements.some(v => object(v).basis == null));
   if (!Array.isArray(input.measurements) || input.measurements.length > 24) throw new ProposalError('Use at most 24 measured components.');
   const measurements: WorkingMeasurement[] = input.measurements.map(v => {
     const raw = object(v), concept = resolveConcept(String(raw.concept ?? raw.role ?? ''), concepts);
@@ -54,7 +61,7 @@ export function createWorkingBrief(input: Record<string, unknown>, context: Reco
     const index = raw.area_index == null ? null : raw.area_index;
     if (index !== null && (typeof index !== 'number' || !Number.isInteger(index) || !areas[index])) throw new ProposalError('The measurement must refer to one of the supplied areas.');
     const a = index == null ? null : areas[index as number];
-    const values = entries(raw.entries, id), basis = oneOf(raw.basis, ['plan','actual'], 'measurement basis');
+    const values = entries(raw.entries, id), basis = raw.basis == null ? 'actual' as const : oneOf(raw.basis, ['plan','actual'], 'measurement basis');
     const exactArea = !!a && values.length === 1 && values[0].quantity === a.quantity && values[0].unit === a.unit && basis === (a.basis === 'plan' ? 'plan' : 'actual');
     const fromArea = raw.from_area === true || (raw.from_area !== false && concept.behavior === 'roof_area' && exactArea);
     if (fromArea && (!exactArea || !['roof_area','underlay'].includes(concept.behavior))) throw new ProposalError('An area-linked covering/underlay must match its area measurement and basis.');
@@ -71,6 +78,7 @@ export function createWorkingBrief(input: Record<string, unknown>, context: Reco
     collectionId: input.collection_id == null ? null : isUuid(input.collection_id) ? input.collection_id : (() => { throw new ProposalError('Invalid library identity.'); })(),
     collectionName: input.collection_name == null ? null : text(input.collection_name, 200, 'Library name'),
     areas, measurements, selections: {}, selectionSources: {},
+    ...(basisPending ? { basisPending: true } : {}),
   };
   for (const key of Object.keys(brief.selections)) if (key.startsWith('measurement:') && !brief.measurements.some(m => `measurement:${m.id}` === key)) { delete brief.selections[key]; delete brief.selectionSources[key]; }
   validateWorkingBrief(brief, concepts);
@@ -235,6 +243,10 @@ export function applyWorkingDeltas(original: WorkingBrief, raw: unknown, concept
       brief.collectionId = d.collection_id; brief.collectionName = null; brief.selections = {}; brief.selectionSources = {};
     }
   }
+  // An explicit basis delta answers the pending plan/actual question
+  // (owner 2026-10-05): the button path clears basisPending, and so does a
+  // typed correction that states the basis directly.
+  if (raw.some((value: unknown) => { const d = value as Record<string, unknown>; return !!d && typeof d === 'object' && Object.prototype.hasOwnProperty.call(d, 'basis'); })) delete brief.basisPending;
   for (const key of Object.keys(brief.selections)) if (key.startsWith('measurement:') && !brief.measurements.some(m => `measurement:${m.id}` === key)) { delete brief.selections[key]; delete brief.selectionSources[key]; }
   validateWorkingBrief(brief, concepts);
   return brief;

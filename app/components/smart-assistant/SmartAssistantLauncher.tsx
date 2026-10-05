@@ -15,6 +15,9 @@ export function SmartAssistantLauncher(props:Props){
  const state=useCapability();const [open,setOpen]=useState(false);const [started,setStarted]=useState(false);
  const dialog=useRef<HTMLDialogElement>(null);const trigger=useRef<HTMLButtonElement>(null);
  useEffect(()=>{if(state.access&&!standalone){const path=pathname+window.location.search;if(isSafeReturnDestination(path,props.workspaceSlug)){try{sessionStorage.setItem(`sa-last-page:${state.access.userId}:${state.access.companyId}`,path);}catch{/* navigation still works without storage */}}}},[pathname,standalone,state.access,props.workspaceSlug]);
+ // Demo guide integration (owner 2026-10-05): the guided demo opens the
+ // popup from any workspace page instead of navigating to /assistant.
+ useEffect(()=>{if(standalone||!state.access)return;const openFromDemo=()=>{setStarted(true);setOpen(true);};window.addEventListener('qc-open-assistant',openFromDemo);return()=>window.removeEventListener('qc-open-assistant',openFromDemo);},[standalone,state.access]);
  useEffect(()=>{const node=dialog.current;if(!node)return;if(open&&!standalone){if(!node.open)node.showModal();const previous=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.body.style.overflow=previous;};}node.close();trigger.current?.focus();},[open,state.access,standalone]);
  if(!state.ready)return null;
  if(state.error)return <div data-qc-ui="v2" className={s.launcher}><QcButton onClick={()=>setOpen(!open)}>Assistant unavailable</QcButton>{open&&<p role="alert">{state.error} Reload this page after setup is checked.</p>}</div>;

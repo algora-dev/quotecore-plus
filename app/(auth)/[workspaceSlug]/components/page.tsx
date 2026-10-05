@@ -2,6 +2,7 @@ import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections,
 import { ComponentList } from './component-list';
 import { PendingUpdatesBanner } from './PendingUpdatesBanner';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
+import { isDemoCompany } from '@/app/lib/demo/context';
 import { BackButton } from '@/app/components/BackButton';
 import { getPendingSupplierUpdates } from '../supplier-directory/actions';
 import { TakeoffDraftNoteBanner } from '../TakeoffDraftNoteBanner';
@@ -40,6 +41,11 @@ export default async function ComponentsPage(props: {
   const introSeen = await hasSeenComponentsIntro();
   const collections = await loadComponentCollections();
   const editWarningDismissed = await hasDismissedComponentEditWarning();
+  // Demo (owner 2026-10-05): fresh demo visitors land on the Roofing library
+  // (the seeded default takeoff library) instead of "All Libraries".
+  const demoDefaultLibraryId = company?.id && await isDemoCompany(company.id)
+    ? collections.find(c => (c as { is_default_takeoff_library?: boolean }).is_default_takeoff_library)?.id
+    : undefined;
 
   // Fetch pending supplier updates (non-blocking, best-effort)
   let pendingUpdates: PendingUpdate[] = [];
@@ -71,6 +77,7 @@ export default async function ComponentsPage(props: {
         showPricingIntroduction={learn === '1' || (!introSeen && !restoreDraftId && !createdComponentId)}
         companyDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
         componentCollections={collections}
+        demoDefaultLibraryId={demoDefaultLibraryId}
         editWarningDismissed={editWarningDismissed}
         restoreDraftId={restoreDraftId}
         highlightComponentId={createdComponentId}

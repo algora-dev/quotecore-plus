@@ -22,6 +22,9 @@ export type WorkingBrief = {
   areas: WorkingArea[]; measurements: WorkingMeasurement[];
   selections: Record<string, string>;
   selectionSources: Record<string, 'explicit' | 'default' | 'single'>;
+  /** Owner 2026-10-05 (pass 5): true when the user did not state plan vs
+   *  actual; the workflow asks with buttons before any proposal is built. */
+  basisPending?: boolean;
 };
 export type WorkflowDelta =
   | { op: 'set_job_details'; customer_name?: string; job_name?: string; site_address?: string | null; pitch_degrees?: number }

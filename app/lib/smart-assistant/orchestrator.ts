@@ -71,7 +71,7 @@ export function buildSystemPrompt(config: CompanyAssistantConfig, v2 = false): s
     '',
     'MEASUREMENT BASIS (always clarify when unstated):',
     '- Roof measurements come in two kinds: PLAN (measured flat on the plan - pitch must be applied) and ACTUAL (measured on the roof surface - pitch already included, never re-applied).',
-    '- If the user gives measurements for pitched work without stating or clearly implying which kind, ask ONE question before using them: are these plan or actual measurements?',
+    v2 ? '- If the user gives measurements for pitched work without stating or clearly implying which kind, do NOT ask in text: call the draft tool with every basis field omitted; the workflow presents Plan/Actual choice buttons.' : '- If the user gives measurements for pitched work without stating or clearly implying which kind, ask ONE question before using them: are these plan or actual measurements?',
     '- Treat "on/off the plan", "footprint", "flat measurement" as PLAN. Treat "actual", "true", "measured on the roof/surface", "rafter length" as ACTUAL.',
     '- BLANKET RULE: the basis applies to the WHOLE job in one sweep. PLAN means pitch is applied to roof areas AND every pitched component (coverings, underlay, fixings and barges by the rafter factor; hips and valleys by the hip-valley factor). ACTUAL means pitch is already included everywhere. Only ridge and spouting never take pitch. State this one-line rule when you confirm the basis.',
     '',

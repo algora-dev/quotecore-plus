@@ -46,6 +46,7 @@ export function ComponentList({
   restoreDraftId,
   highlightComponentId,
   isSupplier = false,
+  demoDefaultLibraryId,
 }: {
   initialComponents: ComponentLibraryRow[];
   workspaceSlug: string;
@@ -58,6 +59,8 @@ export function ComponentList({
   reviewImported?: boolean;
   /** Component collections for the company (for library assignment UI). */
   componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
+  /** Demo only: library pre-selected on first landing instead of "All Libraries" (owner 2026-10-05). */
+  demoDefaultLibraryId?: string;
   /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
   editWarningDismissed?: boolean;
   /** Draft ID from ?restore= query param - loads a saved calculator draft. */
@@ -130,6 +133,9 @@ export function ComponentList({
     const saved = localStorage.getItem(LOCAL_KEY);
     // Validate saved id still exists in collections list before applying.
     if (saved && componentCollections.some(c => c.id === saved)) return saved;
+    // Demo (owner 2026-10-05): first landing shows the seeded default (Roofing)
+    // library rather than a mixed "All Libraries" view.
+    if (demoDefaultLibraryId && componentCollections.some(c => c.id === demoDefaultLibraryId)) return demoDefaultLibraryId;
     return '';
   });
   const [defaultLibraryFlash, setDefaultLibraryFlash] = useState<string | null>(null);
