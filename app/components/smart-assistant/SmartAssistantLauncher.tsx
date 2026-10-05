@@ -31,7 +31,7 @@ export function SmartAssistantLauncher(props: Props) {
   const recovering = useRef(false);
   const recoveryAttempted = useRef(false);
 
-  useEffect(() => { mounted.current = true; return () => { mounted.current = false; ++requestId.current; }; }, []);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
     // No event exists in ordinary accounts: normal launcher behavior is unchanged.
     const report = (event: Event) => setDemoOwnsEntry((event as CustomEvent).detail?.ownsAssistantEntry === true);
@@ -54,17 +54,18 @@ export function SmartAssistantLauncher(props: Props) {
     const restore = !!panel.current?.contains(document.activeElement);
     if (restore) requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true }));
   }, []);
+  const refreshAccess = state.refresh;
   const openAssistant = useCallback(async () => {
     if (isOpen.current) { panel.current?.focus({ preventScroll: true }); return; }
     const id = ++requestId.current;
     isOpen.current = true; recoveryAttempted.current = false;
     setOpen(true); setOpening(true); setLocalError('');
-    const fresh = await state.refresh();
+    const fresh = await refreshAccess();
     if (!mounted.current || id !== requestId.current || !isOpen.current) return;
     setOpening(false);
     if (fresh) setStarted(true);
     else setLocalError('Assistant access could not be opened. Retry below; your workspace is unchanged.');
-  }, [state.refresh]);
+  }, [refreshAccess]);
 
   const refreshAssistant = useCallback(async (automatic = false) => {
     if (recovering.current || !isOpen.current) return;
@@ -74,13 +75,13 @@ export function SmartAssistantLauncher(props: Props) {
     }
     recoveryAttempted.current = true; recovering.current = true;
     const id = ++requestId.current; setOpening(true); setLocalError('');
-    const fresh = await state.refresh();
+    const fresh = await refreshAccess();
     recovering.current = false;
     if (!mounted.current || id !== requestId.current || !isOpen.current) return;
     setOpening(false);
     if (fresh) { setStarted(true); setAccessEpoch(epoch => epoch + 1); }
     else setLocalError('Could not refresh Assistant access. Please try again; no request has been retried.');
-  }, [state.refresh]);
+  }, [refreshAccess]);
 
   useEffect(() => {
     if (standalone) return;

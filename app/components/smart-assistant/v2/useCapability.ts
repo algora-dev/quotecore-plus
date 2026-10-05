@@ -31,7 +31,7 @@ export function useCapability() {
   }, []);
   useEffect(() => {
     mounted.current = true; void refresh();
-    return () => { mounted.current = false; ++sequence.current; controller.current?.abort(); };
+    return () => { mounted.current = false; controller.current?.abort(); };
   }, [refresh]);
   return { ...state, refresh };
 }
