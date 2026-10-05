@@ -5,6 +5,7 @@ import DemoCTACard from "@/components/DemoCTACard";
 import BlogHeader from "@/components/BlogHeader";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import SiteFooter from "@/components/SiteFooter";
+import { MarketingCalculator } from "@/app/components/pricing/MarketingCalculator";
 import { pricingPlans } from "@/lib/pricing";
 import { buildBreadcrumbSchema, buildFaqSchema, buildPricingOffers } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
@@ -105,6 +106,7 @@ const dfyPackages = [
 ];
 
 export default function PricingPage() {
+  const customSetupUi = process.env.CUSTOM_SETUP_UI_ENABLED === "true";
   return (
     <>
       <Script id="pricing-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingSchema) }} />
@@ -113,6 +115,13 @@ export default function PricingPage() {
       <BlogHeader />
       <main className="bg-white text-zinc-950">
         <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Pricing" }]} />
+        {customSetupUi ? (
+          <section className="pb-6">
+            <h1 className="sr-only">QuoteCore+ pricing</h1>
+            <MarketingCalculator />
+          </section>
+        ) : (
+        <>
         <section className="mx-auto max-w-7xl px-6 pb-14 pt-12 text-center lg:px-8 lg:pb-20">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">Simple monthly plans</p>
           <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
@@ -195,6 +204,8 @@ export default function PricingPage() {
           </div>
           <p className="mx-auto mt-8 max-w-3xl px-6 text-center text-sm text-zinc-600">All prices are shown in USD. Taxes are calculated at checkout where applicable.</p>
         </section>
+        </>
+        )}
 
         <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
           <div>

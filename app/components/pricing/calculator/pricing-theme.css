@@ -1,0 +1,25 @@
+/* PS02: approved dark/glint composition, UX Standard v2.15 Dark Focus.
+   Canonical v2 tokens are unchanged.
+   Uses brand/workstation tokens; local dark-surface companions exist only here. */
+[data-qc-ui="v2"].qcp {
+  --qcp-bg: var(--qc-color-ink, #191B20);
+  --qcp-deep: var(--qc-color-workstation-bg, #141820);
+  --qcp-text: var(--qc-color-workstation-text, #F8FAFC);
+  --qcp-muted: #B8BEC9;
+  --qcp-line: #3E4550;
+  --qcp-control: var(--qc-border-control, #7C8798);
+  --qcp-accent: var(--qc-color-orange-light, #FFB36B);
+  --qcp-inset: rgba(255,255,255,.035);
+  --qcp-selected: linear-gradient(110deg, rgba(255,138,61,.12), rgba(255,138,61,.025));
+  --qcp-atmosphere: radial-gradient(ellipse at 14% 3%, rgba(255,107,53,.12), transparent 58%);
+  --qcp-glint: linear-gradient(110deg, transparent 18%, rgba(255,255,255,.13) 48%, transparent 78%);
+  --qcp-glass: rgba(255,255,255,.04);
+  --qcp-glass-hover: rgba(255,255,255,.09);
+  --qcp-glass-solid: #272B33;
+  --qcp-glass-edge: rgba(255,255,255,.14);
+  --qcp-glass-highlight: inset 0 1px 0 rgba(255,255,255,.12);
+  --qcp-shell-shadow: 0 24px 72px rgba(0,0,0,.22);
+  --qcp-header-offset: 16px;
+  --qcp-bottom-offset: 0px;
+  --qcp-surface-radius: var(--qc-radius-dialog, 20px);
+}
