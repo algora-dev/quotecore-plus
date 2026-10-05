@@ -51,7 +51,11 @@ export async function consumeDemoResource(context: ActiveDemoContext, kind: stri
   try {
     for (const key of keys(context, kind)) await debitCounter(counterStore(key.scope, key.key), amount, maximum);
   } catch (error) {
-    if (error instanceof CounterLimit) throw new DemoError('This demo allowance is used. Your other sandbox features still work.', 402, 'demo_allowance_used');
+    if (error instanceof CounterLimit) throw new DemoError(
+      kind === 'assistant-turns' || kind === 'speech-requests' || kind === 'voice-requests'
+        ? 'Come back tomorrow - you have used your allowance for the day. Or get your own account and use this feature as much or as little as you like.'
+        : 'This demo allowance is used. Your other sandbox features still work.',
+      402, 'demo_allowance_used');
     throw new DemoError('Allowance verification is unavailable. No paid action was started.', 503, 'demo_budget_unavailable');
   }
 }

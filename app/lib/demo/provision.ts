@@ -4,7 +4,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 import { checkRateLimit } from '@/app/lib/security/rateLimit';
 import { getDemoControl } from './control';
 import { DemoError } from './errors';
-import { fictionalCompany } from './seed-data';
+import { fictionalCompany, type DemoMeasurementSystem } from './seed-data';
 import { seedDemoCompany } from './seed';
 import { DEMO_SEED_VERSION, DEMO_SESSION_MS, initialDemoGuide } from './model';
 import { ipHmacFor } from './identity';
@@ -16,7 +16,22 @@ type Json = Database['public']['Tables']['demo_sessions']['Insert']['tutorial_st
  * Auth user remains stable through Reset, so it cannot replenish allowances.
  * The existing rate-limit RPC serializes provisioning admission; a persisted
  * provisioning row prevents a second attempt while the first is in progress. */
-export async function provisionDemo(anonUserId: string, ip: string | null, reset = false): Promise<{ slug: string; sessionId: string; resumed: boolean; expiresAt: string | null }> {
+/** Read-only entry probe: returns the resumable session, if any, without
+ * provisioning. Lets the entry screen ask for the visitor's measurement
+ * system BEFORE any seed write happens. */
+export async function probeDemo(anonUserId: string): Promise<{ slug: string; sessionId: string; expiresAt: string | null } | null> {
+  const admin = createAdminClient();
+  const now = new Date().toISOString();
+  const previous = await admin.from('demo_sessions').select('id,company_id,status,expires_at,template_version')
+    .eq('anon_user_id', anonUserId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (previous.error || !previous.data) return null;
+  const old = previous.data;
+  if (old.template_version !== DEMO_SEED_VERSION || old.status !== 'active' || !old.company_id || !old.expires_at || old.expires_at <= now) return null;
+  const company = await admin.from('companies').select('slug,plan_code').eq('id', old.company_id).maybeSingle();
+  if (company.error || !company.data?.slug || company.data.plan_code !== 'demo') return null;
+  return { slug: company.data.slug, sessionId: old.id, expiresAt: old.expires_at };
+}
+export async function provisionDemo(anonUserId: string, ip: string | null, reset = false, system?: DemoMeasurementSystem): Promise<{ slug: string; sessionId: string; resumed: boolean; expiresAt: string | null }> {
   if (!(await getDemoControl()).demoEnabled) throw new DemoError('The demo is currently switched off.', 503, 'demo_off');
   const admin = createAdminClient();
   const verified = await admin.auth.admin.getUserById(anonUserId);
@@ -59,6 +74,17 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
   }
   const sessionId = randomUUID(), companyId = randomUUID();
   const slug = `demo-${randomUUID().replace(/-/g, '').slice(0, 16)}`;
+  // "Start again" re-seeds in the visitor's chosen measurement system: when the
+  // caller does not pass one (reset path), carry over the previous demo
+  // company's setting so imperial/squares visitors keep their units.
+  let chosenSystem: DemoMeasurementSystem = system ?? 'metric';
+  if (!system && old?.company_id) {
+    const previousCompany = await admin.from('companies').select('default_measurement_system').eq('id', old.company_id).eq('plan_code', 'demo').maybeSingle();
+    if (!previousCompany.error && previousCompany.data) {
+      const previous = previousCompany.data.default_measurement_system;
+      if (previous === 'imperial_ft' || previous === 'imperial_rs' || previous === 'metric') chosenSystem = previous;
+    }
+  }
   const created = await admin.from('demo_sessions').insert({ id: sessionId, anon_user_id: anonUserId,
     template_version: DEMO_SEED_VERSION, ip_hmac: ipHmac, status: 'provisioning', reset_count: (old?.reset_count ?? 0) + (reset ? 1 : 0) });
   if (created.error) {
@@ -67,7 +93,7 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
   }
   let profileMoved = false; let companyCreated = false;
   try {
-    const co = await admin.from('companies').insert(fictionalCompany(companyId, slug, now));
+    const co = await admin.from('companies').insert(fictionalCompany(companyId, slug, now, chosenSystem));
     if (co.error) throw new Error(`company: ${co.error.message}`);
     companyCreated = true;
     const linked = await admin.from('demo_sessions').update({ company_id: companyId }).eq('id', sessionId);
@@ -79,7 +105,7 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
       : await admin.from('users').insert({ id: anonUserId, ...userFields });
     if (user.error) throw new Error(`profile: ${user.error.message}`);
     profileMoved = true;
-    const seed = await seedDemoCompany(companyId, anonUserId);
+    const seed = await seedDemoCompany(companyId, anonUserId, chosenSystem);
     const activeAt = new Date().toISOString();
     const activated = await admin.from('demo_sessions').update({ status: 'active', activated_at: activeAt, last_seen_at: activeAt,
       expires_at: new Date(Date.now() + DEMO_SESSION_MS).toISOString(), tutorial_state: initialDemoGuide(seed) as unknown as Json })

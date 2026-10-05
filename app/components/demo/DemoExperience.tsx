@@ -43,7 +43,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   }, [sessionId]);
   useEffect(() => { setMounted(true); const controller = new AbortController(); void refresh(controller.signal);
     const listener = () => { if (document.visibilityState === 'visible') void refresh(controller.signal); };
-    const timer = window.setInterval(listener, 8000); document.addEventListener('visibilitychange', listener); window.addEventListener('qc-demo-refresh', listener);
+    const timer = window.setInterval(listener, 2500); document.addEventListener('visibilitychange', listener); window.addEventListener('qc-demo-refresh', listener);
     return () => { controller.abort(); clearInterval(timer); document.removeEventListener('visibilitychange', listener); window.removeEventListener('qc-demo-refresh', listener); };
   }, [refresh]);
   // Catch acknowledgements that land server-side as the visitor navigates
@@ -85,6 +85,11 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const chapter = DEMO_GUIDE_CHAPTERS[chapterIndex] ?? DEMO_GUIDE_CHAPTERS[0];
   const destination = guideHref(workspaceSlug, state); const destinationPath = destination.split('?')[0];
   const onExpectedPage = pathname === destinationPath;
+  // Owner 2026-10-05: when a completion card is showing but the visitor has
+  // ALREADY arrived on the next task's page (Finish & Save lands straight in
+  // the customer quote editor), skip the celebration card and show the actual
+  // next instruction immediately.
+  useEffect(() => { if (justCompleted && step && pathname === destinationPath) setJustCompleted(null); }, [justCompleted, step, pathname, destinationPath]);
   async function command(input: GuideCommand, navigate = false) {
     if (pending || expired) return; setPending(true); setError('');
     try {
@@ -107,17 +112,6 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
       const result = await response.json(); if (!response.ok) throw new Error(result.error ?? 'Reset could not complete.');
       window.location.assign(`/${encodeURIComponent(result.slug)}`);
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Reset could not complete.'); setPending(false); }
-  }
-  async function openPreview() {
-    // Open synchronously while the click gesture is active, avoiding popup blockers.
-    const tab = window.open('about:blank', '_blank'); if (tab) tab.opener = null;
-    setPending(true); setError('');
-    try {
-      const response = await fetch('/api/demo/preview', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
-      const result = await response.json(); if (!response.ok) throw new Error(result.error ?? 'Save your customer quote first.');
-      if (tab) tab.location.replace(result.href); else window.location.assign(result.href);
-      await refresh();
-    } catch (cause) { tab?.close(); setError(cause instanceof Error ? cause.message : 'Preview could not open.'); } finally { setPending(false); }
   }
   function startDrag(event: ReactPointerEvent<HTMLElement>) {
     // Draggable from the whole header, including the grip handle - only the
@@ -144,9 +138,11 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
       <div className="qc-demo-guide-body">
         {!state.welcomed && !expired ? <><p className="qc-demo-eyebrow">WELCOME TO YOUR DEMO</p><h2>Welcome to your workspace</h2>
           <p>This is a fictional QCP Roofing &amp; Construction sandbox. Every price, job and measurement in here is part of the demo, and it is yours to try for up to 24 hours.</p>
-          <QcButton variant="primary" disabled={pending} onClick={() => void command({ action: 'welcome', mode: 'guided' }, true)}>Start the guided demo →</QcButton>
-          <button type="button" className="qc-demo-secondary-link" disabled={pending} onClick={() => void command({ action: 'welcome', mode: 'explore' })}>I&apos;ll explore myself</button>
-        </> : justCompleted ? <><p className="qc-demo-eyebrow">NICE WORK — TASK COMPLETE</p><h2>{justCompleted.title} ✓</h2>
+          <div className="qc-demo-welcome-actions">
+            <QcButton variant="primary" disabled={pending} onClick={() => void command({ action: 'welcome', mode: 'guided' }, true)}>Start the guided demo →</QcButton>
+            <button type="button" className="qc-demo-secondary-link" disabled={pending} onClick={() => void command({ action: 'welcome', mode: 'explore' })}>I&apos;ll explore myself</button>
+          </div>
+        </> : justCompleted ? <><p className="qc-demo-eyebrow">NICE WORK - TASK COMPLETE</p><h2>{justCompleted.title} ✓</h2>
           <p>{justCompleted.event === 'takeoff.saved'
             ? 'Saved. You can keep editing freely - add or remove anything - or continue to the next step. Your customer quote will use exactly what you saved.'
             : 'Saved and recorded - nice work. Ready for the next one?'}</p>
@@ -162,12 +158,11 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
             ? <p className="qc-demo-note"><strong>Skylight added ✓</strong> Look around freely - add, edit or remove anything. Press <strong>Finish &amp; Save</strong> when you’re ready; you’ll land straight in the customer quote editor.</p>
             : <p className="qc-demo-note"><strong>Your one job:</strong> add your component{state.guided_created_component_name ? <> (“{state.guided_created_component_name}”)</> : null} and draw a rectangle anywhere on the roof. Everything else is already measured and priced.</p>)}
           {state.chapter === 'smart-assistant' && <p className="qc-demo-note">{allowance?.configured ? `${allowance.turnsRemaining} of ${allowance.turnsLimit} user turns remain. Reset does not restore them.` : 'Real Smart Assistant requires calibrated cost controls on this deployment. The rest of the demo remains available.'}</p>}
-          {step.event === 'component.viewed' && onExpectedPage ? <QcButton variant="primary" disabled={pending || expired} onClick={() => void skipStep()}>I&apos;ve had a look — next step →</QcButton>
+          {step.event === 'component.viewed' && onExpectedPage ? <QcButton variant="primary" disabled={pending || expired} onClick={() => void skipStep()}>I&apos;ve had a look - next step →</QcButton>
           : step.event === 'quote.previewed' && onExpectedPage ? <>
             <p className="qc-demo-note"><strong>1.</strong> Press <strong>Save &amp; Return</strong> (top right). Your quote is saved and you land in the Job Space.</p>
-            <p className="qc-demo-note"><strong>2.</strong> Send it to your own email, or open it in a browser. In this demo the Send button only ever emails you.</p>
+            <p className="qc-demo-note"><strong>2.</strong> Send it to your own email. In this demo the Send button only ever emails you.</p>
             {selfSendEnabled && <a className="qc-demo-continue" href={`/${workspaceSlug}/demo-guide/send`}>Email it to myself →</a>}
-            <QcButton variant="secondary" disabled={pending || expired} onClick={openPreview}>View in browser ↗</QcButton>
             <p className="qc-demo-note">Attachments and automatic follow-ups are main-app features.</p></>
             : !onExpectedPage ? <a className="qc-demo-continue" href={destination}>Resume this task →</a>
             : step.event === 'component.created' ? <a className="qc-demo-continue" href={destination}>Open the component creator →</a>

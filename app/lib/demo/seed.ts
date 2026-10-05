@@ -3,9 +3,9 @@ import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { applyPitchAndWaste, computeMaterialCostByStrategy, rafterPitchFactor, hipValleyPitchFactor } from '@/app/lib/pricing/engine';
-import { DEMO_COMPONENTS, DEMO_JOBS, DEMO_PRICE_NOTICE, DEMO_FOOTER, QCP_DEMO_NAME } from './seed-data';
-import { DEMO_CALIBRATION, DEMO_ROOF_AREA, DEMO_LINES, DEMO_PITCH_DEGREES, demoLineLengthM, demoTotalLengthM, demoRoofPlanAreaM2 } from './seed-plan';
+import { applyPitchAndWaste, applyWaste, computeMaterialCostByStrategy, rafterPitchFactor, hipValleyPitchFactor } from '@/app/lib/pricing/engine';
+import { DEMO_COMPONENTS, DEMO_JOBS, DEMO_PRICE_NOTICE, DEMO_FOOTER, QCP_DEMO_NAME, type DemoMeasurementSystem } from './seed-data';
+import { DEMO_CALIBRATION, DEMO_ROOF_AREA, DEMO_LINES, DEMO_PITCH_DEGREES, demoLineLengthM, demoRoofPlanAreaM2 } from './seed-plan';
 import type { DemoSeedManifest } from './model';
 import { DemoError } from './errors';
 function checked(result: { error: { message: string } | null }, step: string) {
@@ -13,29 +13,33 @@ function checked(result: { error: { message: string } | null }, step: string) {
 }
 /** Static authored inserts only. All identities belong to the new demo company.
  * The session is not made active until ALL mandatory seed writes succeed. */
-export async function seedDemoCompany(companyId: string, userId: string): Promise<DemoSeedManifest> {
+export async function seedDemoCompany(companyId: string, userId: string, system: DemoMeasurementSystem = 'metric'): Promise<DemoSeedManifest> {
   const db = createAdminClient(); const now = Date.now();
   const libraries = { roofing: randomUUID(), construction: randomUUID(), flooring: randomUUID() };
   const ids: Record<string, string> = Object.fromEntries(DEMO_COMPONENTS.map(c => [c.key, randomUUID()]));
   const jobs = Object.fromEntries(DEMO_JOBS.map(j => [j.key, randomUUID()]));
   const templateId = randomUUID(), emailId = randomUUID(), pageId = randomUUID(), takeoffId = randomUUID();
   checked(await db.from('component_collections').insert([
-    { id: libraries.roofing, company_id: companyId, name: 'Roofing', currency: 'GBP', unit_system: 'metric', takeoff_enabled: true, is_default_takeoff_library: true },
-    { id: libraries.construction, company_id: companyId, name: 'General Construction', currency: 'GBP', unit_system: 'metric', takeoff_enabled: false, is_default_takeoff_library: false },
-    { id: libraries.flooring, company_id: companyId, name: 'Flooring / Interiors', currency: 'GBP', unit_system: 'metric', takeoff_enabled: false, is_default_takeoff_library: false },
+    { id: libraries.roofing, company_id: companyId, name: 'Roofing', currency: 'GBP', unit_system: system, takeoff_enabled: true, is_default_takeoff_library: true },
+    { id: libraries.construction, company_id: companyId, name: 'General Construction', currency: 'GBP', unit_system: system, takeoff_enabled: false, is_default_takeoff_library: false },
+    { id: libraries.flooring, company_id: companyId, name: 'Flooring / Interiors', currency: 'GBP', unit_system: system, takeoff_enabled: false, is_default_takeoff_library: false },
   ]), 'libraries');
   checked(await db.from('component_library').insert(DEMO_COMPONENTS.map((c, index) => ({
     id: ids[c.key], company_id: companyId, collection_id: libraries[c.library], name: c.name,
     measurement_type: c.type, component_type: 'main' as const, default_material_rate: c.material,
-    default_labour_rate: c.labour, default_waste_type: 'none' as const, default_pitch_type: 'none' as const,
-    default_waste_percent: 0, default_waste_fixed: 0, pricing_strategy: 'per_unit' as const,
+    default_labour_rate: c.labour,
+    default_waste_type: (c.waste?.type ?? 'none') as 'percent' | 'fixed' | 'none' | 'fixed_per_segment',
+    default_pitch_type: (c.pitch ?? 'none') as 'none' | 'rafter' | 'valley_hip',
+    default_waste_percent: c.waste?.type === 'percent' ? c.waste.value : 0,
+    default_waste_fixed: c.waste?.type === 'fixed_per_segment' ? c.waste.value : 0,
+    pricing_strategy: 'per_unit' as const,
     eligible_for_orders: true, is_active: true, is_system: false, sort_order: index, notes: DEMO_PRICE_NOTICE,
     ...(c.slot ? { takeoff_slot: c.slot } : { takeoff_slot: null }),
   }))), 'components');
   checked(await db.from('quotes').insert(DEMO_JOBS.map((j, index) => ({
     id: jobs[j.key], company_id: companyId, customer_name: j.customer, customer_email: `customer-${index + 1}@example.invalid`,
     job_name: j.job, site_address: `${index + 1} Example Lane, Fictional Demo Town`, quote_number: 1001 + index,
-    status: j.status, currency: 'GBP', measurement_system: 'metric' as const, trade: 'roofing' as const,
+    status: j.status, currency: 'GBP', measurement_system: system, trade: 'roofing' as const,
     tax_rate: 20, created_by_user_id: userId, created_by_email: `demo-${userId.slice(0, 8)}@example.invalid`,
     component_collection_id: libraries.roofing, entry_mode: j.key === 'guided_roof_job' ? 'digital' : 'manual',
     notes_internal: `${DEMO_PRICE_NOTICE} Fictional demonstration record.`,
@@ -139,31 +143,40 @@ export async function seedDemoCompany(companyId: string, userId: string): Promis
         is_visible: true, page_id: pageId, quote_roof_area_id: null })),
     ];
     checked(await db.from('quote_takeoff_measurements').insert(measurementRows), 'measured canvas entries');
-    const pricedDefs: { key: string; qty: number; perEntry: number[]; pitch: 'rafter' | 'valley_hip' | 'none' }[] = [
-      { key: 'roof_covering', qty: pitchedAreaM2, perEntry: [planAreaM2], pitch: 'rafter' },
-      { key: 'roof_underlay', qty: pitchedAreaM2, perEntry: [planAreaM2], pitch: 'rafter' },
-      { key: 'roof_ridge', qty: demoTotalLengthM('ridges'), perEntry: DEMO_LINES.filter(l => l.cls === 'ridges').map(demoLineLengthM), pitch: 'none' },
-      { key: 'roof_hip', qty: demoTotalLengthM('hips') * hipValleyPitchFactor(DEMO_PITCH_DEGREES), perEntry: DEMO_LINES.filter(l => l.cls === 'hips').map(demoLineLengthM), pitch: 'valley_hip' },
-      { key: 'roof_valley', qty: demoTotalLengthM('valleys') * hipValleyPitchFactor(DEMO_PITCH_DEGREES), perEntry: DEMO_LINES.filter(l => l.cls === 'valleys').map(demoLineLengthM), pitch: 'valley_hip' },
-      { key: 'roof_barge', qty: demoTotalLengthM('barges') * rafterPitchFactor(DEMO_PITCH_DEGREES), perEntry: DEMO_LINES.filter(l => l.cls === 'barges').map(demoLineLengthM), pitch: 'rafter' },
-      { key: 'roof_gutter', qty: demoTotalLengthM('spouting'), perEntry: DEMO_LINES.filter(l => l.cls === 'spouting').map(demoLineLengthM), pitch: 'none' },
+    const pricedDefs: { key: string; perEntry: number[]; pitch: 'rafter' | 'valley_hip' | 'none' }[] = [
+      { key: 'roof_covering', perEntry: [planAreaM2], pitch: 'rafter' },
+      { key: 'roof_underlay', perEntry: [planAreaM2], pitch: 'rafter' },
+      { key: 'roof_ridge', perEntry: DEMO_LINES.filter(l => l.cls === 'ridges').map(demoLineLengthM), pitch: 'none' },
+      { key: 'roof_hip', perEntry: DEMO_LINES.filter(l => l.cls === 'hips').map(demoLineLengthM), pitch: 'valley_hip' },
+      { key: 'roof_valley', perEntry: DEMO_LINES.filter(l => l.cls === 'valleys').map(demoLineLengthM), pitch: 'valley_hip' },
+      { key: 'roof_barge', perEntry: DEMO_LINES.filter(l => l.cls === 'barges').map(demoLineLengthM), pitch: 'rafter' },
+      { key: 'roof_gutter', perEntry: DEMO_LINES.filter(l => l.cls === 'spouting').map(demoLineLengthM), pitch: 'none' },
     ];
+    // Owner-locked 2026-10-05: seeded priced rows mirror their library
+    // component's waste exactly (10% area goods, 0.25 m per measured length on
+    // linear goods), applied per entry after pitch, so inspecting any seeded
+    // row shows the same chain the component library declares.
     for (const def of pricedDefs) {
       const meta = DEMO_COMPONENTS.find(c => c.key === def.key)!;
       const componentId = randomUUID();
-      const pricedQty = round4(def.qty);
+      const entryFactor = def.pitch === 'rafter' ? rafterPitchFactor(DEMO_PITCH_DEGREES)
+        : def.pitch === 'valley_hip' ? hipValleyPitchFactor(DEMO_PITCH_DEGREES) : 1;
+      const wasteType = meta.waste?.type ?? 'none';
+      const wastePercent = meta.waste?.type === 'percent' ? meta.waste.value : 0;
+      const wasteFixed = meta.waste?.type === 'fixed_per_segment' ? meta.waste.value : 0;
+      const entryAfterWaste = def.perEntry.map(raw => applyWaste(raw * entryFactor, wasteType, wastePercent, wasteFixed));
+      const pricedQty = round4(entryAfterWaste.reduce((sum, value) => sum + value, 0));
       checked(await db.from('quote_components').insert({ id: componentId, quote_id: jobs.guided_roof_job,
         quote_roof_area_id: roofAreaId, component_library_id: ids[def.key], name: meta.name,
         measurement_type: meta.type, component_type: 'main' as const, input_mode: 'final',
         final_quantity: pricedQty, final_value: pricedQty, material_rate: meta.material, labour_rate: meta.labour,
         material_cost: round4(pricedQty * meta.material), labour_cost: round4(pricedQty * meta.labour),
-        waste_type: 'none', pitch_type: def.pitch, priced_quantity: pricedQty, calc_pitch_degrees: DEMO_PITCH_DEGREES,
+        waste_type: wasteType as 'percent' | 'fixed' | 'none' | 'fixed_per_segment', waste_percent: wastePercent, waste_fixed: wasteFixed,
+        pitch_type: def.pitch, priced_quantity: pricedQty, calc_pitch_degrees: DEMO_PITCH_DEGREES,
       }), `measured component ${def.key}`);
-      const entryFactor = def.pitch === 'rafter' ? rafterPitchFactor(DEMO_PITCH_DEGREES)
-        : def.pitch === 'valley_hip' ? hipValleyPitchFactor(DEMO_PITCH_DEGREES) : 1;
       checked(await db.from('quote_component_entries').insert(def.perEntry.map((raw, index) => ({
         quote_component_id: componentId, raw_value: round4(raw),
-        value_after_waste: round4(raw * entryFactor), sort_order: index }))), `measured entries ${def.key}`);
+        value_after_waste: round4(entryAfterWaste[index]), sort_order: index }))), `measured entries ${def.key}`);
     }
   }
   checked(await db.from('assistant_configs').insert({ company_id: companyId, enabled: true, name: 'Smart Assistant',

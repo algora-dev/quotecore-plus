@@ -1,64 +1,93 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createDemoBrowserClient } from '@/app/lib/demo/browser-client';
 
 type StartResult = { slug: string; sessionId: string; resumed?: boolean; expiresAt?: string | null };
+type DemoSystem = 'metric' | 'imperial_ft' | 'imperial_rs';
 
 /**
- * Launcher (owner direction 2026-10-04): landing on /demo offers a clear choice
- * when a demo is already active - continue it, or start a completely fresh
- * workspace. First-time visitors go straight in. Landing inside the ~15s
- * provisioning window waits and auto-retries instead of dead-ending, and
- * "Try again" after an interrupted start retries a FRESH start rather than
- * silently resuming an older session.
+ * Launcher (owner direction 2026-10-05): the measurement system is the single
+ * choice at entry - first-time visitors pick Metric / Imperial / Roofing
+ * squares and the sandbox is seeded for it. Returning visitors get the
+ * continue-or-start-again card. Landing inside the ~15s provisioning window
+ * waits and auto-retries with the SAME chosen system instead of dead-ending.
  */
 export function DemoLauncher() {
   const router = useRouter();
   const [error, setError] = useState<{ message: string; retryPreparing?: boolean } | null>(null);
   const [existing, setExisting] = useState<StartResult | null>(null);
+  const [needsSetup, setNeedsSetup] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const [resetting, setResetting] = useState(false);
   const started = useRef(false);
+  const chosenSystem = useRef<DemoSystem>('metric');
+
+  async function establishIdentity() {
+    // Expiry cleanup may have deleted the old anonymous identity while its
+    // browser cookie still exists. Clear this namespace only, then remint.
+    const demo = createDemoBrowserClient();
+    const { data: { user }, error: identityError } = await demo.auth.getUser();
+    if (user && user.is_anonymous !== true) throw new Error('The demo requires its own anonymous session. Your normal account has not been changed.');
+    if (identityError || !user) {
+      await demo.auth.signOut({ scope: 'local' });
+      const { error: signInError } = await demo.auth.signInAnonymously();
+      if (signInError) throw new Error(signInError.message);
+    }
+  }
+
+  const startWithSystem = useCallback(async (system: DemoSystem): Promise<void> => {
+    chosenSystem.current = system;
+    setError(null);
+    setPreparing(true);
+    try {
+      const res = await fetch('/api/demo/start', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ system }),
+      });
+      const body = (await res.json().catch(() => ({}))) as StartResult & { error?: string; code?: string };
+      if (!res.ok || !body.slug) {
+        // Seeding is in flight (~15s): wait, then retry automatically.
+        if (body.code === 'demo_provisioning') { setError({ message: 'Your demo workspace is still being prepared - one moment.', retryPreparing: true }); return; }
+        throw new Error(body.error || 'Could not start the demo. Try again shortly.');
+      }
+      if (body.resumed) { setExisting(body); return; }
+      router.replace('/' + body.slug);
+    } finally {
+      setPreparing(false);
+    }
+  }, [router]);
 
   useEffect(() => {
     if (started.current) return;
     started.current = true;
     void (async () => {
       try {
-        const demo = createDemoBrowserClient();
-        const { data: { user }, error: identityError } = await demo.auth.getUser();
-        if (user && user.is_anonymous !== true) throw new Error('The demo requires its own anonymous session. Your normal account has not been changed.');
-        if (identityError || !user) {
-          // Expiry cleanup may have deleted the old anonymous identity while its
-          // browser cookie still exists. Clear this namespace only, then remint.
-          await demo.auth.signOut({ scope: 'local' });
-          const { error: signInError } = await demo.auth.signInAnonymously();
-          if (signInError) throw new Error(signInError.message);
-        }
-        const res = await fetch('/api/demo/start', { method: 'POST' });
-        const body = (await res.json().catch(() => ({}))) as StartResult & { error?: string; code?: string };
-        if (!res.ok || !body.slug) {
-          // Seeding is in flight (~15s): wait, then retry automatically.
-          if (body.code === 'demo_provisioning') { setError({ message: 'Your demo workspace is still being prepared - one moment.', retryPreparing: true }); return; }
-          throw new Error(body.error || 'Could not start the demo. Try again shortly.');
-        }
-        if (body.resumed) { setExisting(body); return; }
-        router.replace('/' + body.slug);
+        await establishIdentity();
+        // Read-only probe: resumable session or first-time setup? The units
+        // choice must land BEFORE any seed write, so nothing is provisioned
+        // until the visitor picks a system.
+        const res = await fetch('/api/demo/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ probe: true }) });
+        const body = (await res.json().catch(() => ({}))) as Partial<StartResult> & { needsSetup?: boolean; error?: string };
+        if (!res.ok) throw new Error(body.error || 'Could not start the demo. Try again shortly.');
+        if (body.slug && body.sessionId) { setExisting({ slug: body.slug, sessionId: body.sessionId, expiresAt: body.expiresAt ?? null }); return; }
+        setNeedsSetup(true);
       } catch (e) {
         setError({ message: e instanceof Error ? e.message : 'Could not start the demo. Try again shortly.' });
       }
     })();
-  }, [router]);
+  }, []);
 
-  // Auto-retry while seeding is in flight. If a provisioning row ever gets
-  // stuck, the 3-minute server lockout expires and the next start provisions
-  // fresh - so this loop always terminates in a working demo.
+  // Auto-retry while seeding is in flight, preserving the chosen system.
   useEffect(() => {
     if (!error?.retryPreparing) return;
-    const timer = setTimeout(() => window.location.reload(), 5000);
+    const timer = setTimeout(() => {
+      void startWithSystem(chosenSystem.current).catch(e => setError({ message: e instanceof Error ? e.message : 'Could not start the demo. Try again shortly.' }));
+    }, 5000);
     return () => clearTimeout(timer);
-  }, [error]);
+  }, [error, startWithSystem]);
 
   async function startFresh() {
     if (!existing || resetting) return;
@@ -94,6 +123,34 @@ export function DemoLauncher() {
           <button onClick={() => router.replace('/' + existing.slug)} className="qc-flow-control qc-button px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors">Continue my demo</button>
           <button onClick={() => void startFresh()} className="qc-flow-control qc-button px-6 py-3 bg-white text-slate-800 font-semibold rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors">Start again - fresh workspace</button>
         </div>
+        {error && <p className="text-sm text-red-700" role="alert">{error.message}</p>}
+      </div>
+    );
+  }
+
+  if (needsSetup) {
+    const choices: { system: DemoSystem; title: string; subtitle: string }[] = [
+      { system: 'metric', title: 'Metric', subtitle: 'm, m²' },
+      { system: 'imperial_ft', title: 'Imperial', subtitle: 'ft, ft²' },
+      { system: 'imperial_rs', title: 'Roofing squares', subtitle: 'ft, RS' },
+    ];
+    return (
+      <div className="w-full max-w-sm rounded-lg border border-amber-200 bg-amber-50 p-6 space-y-4 text-center">
+        <p className="text-sm font-semibold text-slate-800">How do you measure?</p>
+        <p className="text-xs text-slate-600">Pick your measurement system. This is the only choice - everything in the demo works in it. Pricing currency follows your location automatically.</p>
+        <div className="flex flex-col gap-2">
+          {choices.map(choice => (
+            <button
+              key={choice.system}
+              disabled={preparing}
+              onClick={() => void startWithSystem(choice.system).catch(e => setError({ message: e instanceof Error ? e.message : 'Could not start the demo. Try again shortly.' }))}
+              className="qc-flow-control qc-button px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-60"
+            >
+              {choice.title} <span className="ml-1 text-xs font-normal text-slate-300">{choice.subtitle}</span>
+            </button>
+          ))}
+        </div>
+        {preparing && <p className="text-xs text-slate-600" role="status">Preparing your demo workspace… this takes about 15 seconds.</p>}
         {error && <p className="text-sm text-red-700" role="alert">{error.message}</p>}
       </div>
     );

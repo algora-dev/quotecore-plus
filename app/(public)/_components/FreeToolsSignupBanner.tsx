@@ -7,7 +7,7 @@ import { useFreeToolsEmail } from './useFreeToolsEmail';
  * Must be rendered INSIDE <FreeToolsAuthProvider> so it can access the
  * auth context (openAuthModal, user, tierInfo, etc).
  *
- * v2.14 (2026-10-05): dark charcoal feature banner — orange gradient glow,
+ * v2.14 (2026-10-05): dark charcoal feature banner - orange gradient glow,
  * glint CTA. Copy + behaviour unchanged.
  *
  * - Not logged in: charcoal banner with signup CTA

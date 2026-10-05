@@ -1,5 +1,5 @@
 /** Serializable demo contracts. No server imports: safe for the guide/browser. */
-export const DEMO_SEED_VERSION = 'qcp-v2.2-20261003';
+export const DEMO_SEED_VERSION = 'qcp-v2.3-20261005';
 export const DEMO_SESSION_MS = 24 * 60 * 60 * 1000;
 export type DemoGuideChapter = 'pricing' | 'takeoff' | 'customer-quote' | 'smart-assistant' | 'complete';
 export type DemoEvent = 'component.viewed' | 'component.created' | 'component.tested' | 'component.edited'

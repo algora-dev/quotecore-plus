@@ -4,14 +4,17 @@ type ComponentInsert = Database['public']['Tables']['component_library']['Insert
 export const QCP_DEMO_NAME = 'QCP Roofing & Construction';
 export const DEMO_PRICE_NOTICE = 'Example/demo pricing only. Not recommended real-world prices.';
 export const DEMO_FOOTER = 'DEMO - NOT A REAL QUOTE. Fictional QCP Roofing & Construction example. No payment is due.';
-export const DEMO_COMPONENTS: { key: string; library: 'roofing' | 'construction' | 'flooring'; name: string; type: ComponentInsert['measurement_type']; material: number; labour: number; slot?: string; pitch?: 'rafter' | 'valley_hip' }[] = [
-  { key: 'roof_covering', library: 'roofing', name: 'Roof covering', type: 'area', material: 32, labour: 18, slot: 'roof_area', pitch: 'rafter' },
-  { key: 'roof_underlay', library: 'roofing', name: 'Roofing underlay', type: 'area', material: 6, labour: 3, pitch: 'rafter' },
-  { key: 'roof_ridge', library: 'roofing', name: 'Ridge capping', type: 'lineal', material: 15, labour: 9, slot: 'ridge' },
-  { key: 'roof_hip', library: 'roofing', name: 'Hip capping', type: 'lineal', material: 15, labour: 10, slot: 'hip', pitch: 'valley_hip' },
-  { key: 'roof_valley', library: 'roofing', name: 'Valley flashing', type: 'lineal', material: 18, labour: 11, slot: 'valley', pitch: 'valley_hip' },
-  { key: 'roof_barge', library: 'roofing', name: 'Barge flashing', type: 'lineal', material: 14, labour: 8, slot: 'barge', pitch: 'rafter' },
-  { key: 'roof_gutter', library: 'roofing', name: 'Rainwater gutter', type: 'lineal', material: 12, labour: 8, slot: 'spouting' },
+export const DEMO_COMPONENTS: { key: string; library: 'roofing' | 'construction' | 'flooring'; name: string; type: ComponentInsert['measurement_type']; material: number; labour: number; slot?: string; pitch?: 'rafter' | 'valley_hip'; waste?: { type: 'percent' | 'fixed_per_segment'; value: number } }[] = [
+  // Owner-locked 2026-10-05: roofing library carries the real pitch-calculation
+  // type per component and sensible waste (10% on area goods, 0.25 m per
+  // measured length on linear goods) so every component makes sense on inspect.
+  { key: 'roof_covering', library: 'roofing', name: 'Roof covering', type: 'area', material: 32, labour: 18, slot: 'roof_area', pitch: 'rafter', waste: { type: 'percent', value: 10 } },
+  { key: 'roof_underlay', library: 'roofing', name: 'Roofing underlay', type: 'area', material: 6, labour: 3, pitch: 'rafter', waste: { type: 'percent', value: 10 } },
+  { key: 'roof_ridge', library: 'roofing', name: 'Ridge capping', type: 'lineal', material: 15, labour: 9, slot: 'ridge', waste: { type: 'fixed_per_segment', value: 0.25 } },
+  { key: 'roof_hip', library: 'roofing', name: 'Hip capping', type: 'lineal', material: 15, labour: 10, slot: 'hip', pitch: 'valley_hip', waste: { type: 'fixed_per_segment', value: 0.25 } },
+  { key: 'roof_valley', library: 'roofing', name: 'Valley flashing', type: 'lineal', material: 18, labour: 11, slot: 'valley', pitch: 'valley_hip', waste: { type: 'fixed_per_segment', value: 0.25 } },
+  { key: 'roof_barge', library: 'roofing', name: 'Barge flashing', type: 'lineal', material: 14, labour: 8, slot: 'barge', pitch: 'rafter', waste: { type: 'fixed_per_segment', value: 0.25 } },
+  { key: 'roof_gutter', library: 'roofing', name: 'Rainwater gutter', type: 'lineal', material: 12, labour: 8, slot: 'spouting', waste: { type: 'fixed_per_segment', value: 0.25 } },
   { key: 'roof_vent', library: 'roofing', name: 'Roof vent', type: 'count', material: 25, labour: 15 },
   { key: 'wall_lining', library: 'construction', name: 'Internal wall lining', type: 'area', material: 14, labour: 12 },
   { key: 'insulation', library: 'construction', name: 'Wall insulation', type: 'area', material: 9, labour: 6 },
@@ -36,9 +39,10 @@ export const DEMO_JOBS: { key: string; job: string; customer: string; status: Da
   { key: 'ordered_job', job: 'Materials ordered - annex roof', customer: 'Jordan Example', status: 'accepted', area: 48, days: 6 },
   { key: 'invoiced_job', job: 'Completed - fictional garage roof', customer: 'Cameron Sample', status: 'accepted', area: 30, days: 8 },
 ];
-export function fictionalCompany(id: string, slug: string, now: string): Database['public']['Tables']['companies']['Insert'] {
+export type DemoMeasurementSystem = 'metric' | 'imperial_ft' | 'imperial_rs';
+export function fictionalCompany(id: string, slug: string, now: string, system: DemoMeasurementSystem = 'metric'): Database['public']['Tables']['companies']['Insert'] {
   return { id, slug, name: QCP_DEMO_NAME, plan_code: 'demo', subscription_status: 'active',
-    default_currency: 'GBP', default_language: 'en', default_measurement_system: 'metric', default_trade: 'roofing',
+    default_currency: 'GBP', default_language: 'en', default_measurement_system: system, default_trade: 'roofing',
     default_tax_rate: 20, default_material_margin_percent: 0, default_labor_margin_percent: 0,
     onboarding_completed_at: now, plan_started_at: now, notify_on_recipient_view: false,
     notification_prefs: {}, payment_details: { instructions: 'Demo only. No payment is due.' },

@@ -104,7 +104,7 @@ export function LineEditForm({
       ? initialUnitPrice.toString()
       : initialAmount.toString();
   });
-  const [showPrice, setShowPrice] = useState(initialShowPrice);
+  const [showPrice] = useState(initialShowPrice);
   const [qty, setQty] = useState(initialQty.toString());
 
   // ── Margin state ─────────────────────────────────────────────────────────────
@@ -312,18 +312,6 @@ export function LineEditForm({
               />
             </div>
           </div>
-          <div className="flex items-center gap-1 pb-1">
-            <input
-              type="checkbox"
-              id="edit-showPrice"
-              checked={showPrice}
-              onChange={(e) => setShowPrice(e.target.checked)}
-              className="w-4 h-4 text-orange-600 rounded"
-            />
-            <label htmlFor="edit-showPrice" className="text-xs text-slate-600 whitespace-nowrap">
-              Show price
-            </label>
-          </div>
         </div>
       ) : (
         <div className="flex gap-2 items-center">
@@ -342,18 +330,6 @@ export function LineEditForm({
                 required
               />
             </div>
-          </div>
-          <div className="flex items-center gap-1 self-end pb-1">
-            <input
-              type="checkbox"
-              id="edit-showPrice"
-              checked={showPrice}
-              onChange={(e) => setShowPrice(e.target.checked)}
-              className="w-4 h-4 text-orange-600 rounded"
-            />
-            <label htmlFor="edit-showPrice" className="text-xs text-slate-600 whitespace-nowrap">
-              Show price
-            </label>
           </div>
         </div>
       )}

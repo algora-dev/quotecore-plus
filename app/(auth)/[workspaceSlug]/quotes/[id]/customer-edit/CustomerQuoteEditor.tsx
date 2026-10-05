@@ -882,7 +882,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
   // Phase 5B: UI selection does not own data or document saving.
   const studioOptions = [
-    { id: 'header', label: 'Company & logo', description: 'Your details on this document' },
+    { id: 'header', label: 'Company & Logo (Header)', description: 'Your details on this document' },
     { id: 'appearance', label: 'Prices & quantities', description: 'Choose what the recipient sees' },
     { id: 'footer', label: 'Footer & terms', description: 'Notes and conditions' },
     { id: 'templates', label: 'Branding templates', description: 'Load or save your branding' },
@@ -946,7 +946,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             onBack={() => selectStudioSection('document')} onCollapse={() => setPanelCollapsed(true)} />
           <QcStudioSection active={studioSection === 'document'}><QcStudioOverview options={studioOptions} onSelect={selectStudioSection} /></QcStudioSection>
           <QcStudioSection active={studioSection === 'header'}>
-            <QcDocumentSection title="Company & logo" description="These details apply to this document. Customer and job details are managed in Job Space.">
+            <QcDocumentSection title="Company & Logo (Header)" description="These details apply to this document. Customer and job details are managed in Job Space.">
               <label className="qc-document-order-label">Load from saved template
                 <select aria-label="Branding template" value="" data-copilot="cl-template-dropdown"
                   onChange={(e) => {
