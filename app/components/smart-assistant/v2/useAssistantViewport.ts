@@ -6,8 +6,8 @@ export function useAssistantViewport(root: RefObject<HTMLDivElement>, visible: b
   useEffect(() => {
     if (!visible || !root.current) return;
     const node = root.current;
-    // Both existing hosts are assistant-owned: the native dialog and standalone wrapper.
-    const host = node.parentElement;
+    // Both existing hosts are assistant-owned: the floating panel and standalone wrapper.
+    const host = node.closest<HTMLElement>('[data-sa-host]') ?? node.parentElement;
     if (!host) return;
     const targets = [node, host];
     const names = ['--sa-viewport-height', '--sa-viewport-top', '--sa-viewport-width'];

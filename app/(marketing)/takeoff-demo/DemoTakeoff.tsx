@@ -94,7 +94,9 @@ export function DemoTakeoff() {
 
   // The demo keeps the roofing config (roof terminology + pitch flow) but
   // points internal back-links at the demo itself instead of the roof tool.
-  const demoConfig = useMemo(() => ({ ...ROOFING_TAKEOFF_CONFIG, slug: 'takeoff-demo' }), []);
+  // Demo keeps the AI surfaces enabled: its scan is a captured replay (no
+  // real API calls) and the seeded flow depends on aiScan (see tradeConfig).
+  const demoConfig = useMemo(() => ({ ...ROOFING_TAKEOFF_CONFIG, slug: 'takeoff-demo', aiScan: true }), []);
 
   if (stage.phase === 'quote') {
     return <DemoQuoteView payload={stage.payload} elapsedMs={Date.now() - stage.startedAt} onRestart={restart} />;

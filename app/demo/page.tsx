@@ -15,8 +15,8 @@ export default async function DemoEntryPage() {
 
   if (!control.demoEnabled) {
     return (
-      <main className="flex min-h-[70vh] items-center justify-center px-4">
-        <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 text-center">
+      <main className="flex min-h-[78vh] items-center justify-center bg-[var(--qc-bg-app)] px-4 py-10">
+        <div data-qc-ui="v2" className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
           <h1 className="text-lg font-semibold text-slate-900">Live demo coming soon</h1>
           <p className="mt-2 text-sm text-slate-600">
             The interactive QuoteCore+ demo is being prepared. Everything else on this site works today.
@@ -33,7 +33,7 @@ export default async function DemoEntryPage() {
   }
 
   return (
-    <main className="flex min-h-[70vh] items-center justify-center px-4">
+    <main className="flex min-h-[78vh] items-center justify-center bg-[var(--qc-bg-app)] px-4 py-10">
       <DemoLauncher />
     </main>
   );

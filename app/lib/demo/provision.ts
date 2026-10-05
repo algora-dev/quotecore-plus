@@ -19,19 +19,23 @@ type Json = Database['public']['Tables']['demo_sessions']['Insert']['tutorial_st
 /** Read-only entry probe: returns the resumable session, if any, without
  * provisioning. Lets the entry screen ask for the visitor's measurement
  * system BEFORE any seed write happens. */
-export async function probeDemo(anonUserId: string): Promise<{ slug: string; sessionId: string; expiresAt: string | null } | null> {
+export async function probeDemo(anonUserId: string): Promise<{ slug: string; sessionId: string; expiresAt: string | null; system: DemoMeasurementSystem } | null> {
   const admin = createAdminClient();
   const now = new Date().toISOString();
-  const previous = await admin.from('demo_sessions').select('id,company_id,status,expires_at,template_version')
+  const previous = await admin.from('demo_sessions').select('id,company_id,status,expires_at,template_version,created_at')
     .eq('anon_user_id', anonUserId).order('created_at', { ascending: false }).limit(1).maybeSingle();
-  if (previous.error || !previous.data) return null;
+  if (previous.error) throw new DemoError('Could not check your existing workspace. Please retry.', 503, 'demo_probe_failed');
+  if (!previous.data) return null;
   const old = previous.data;
+  if (old.status === 'provisioning' && Date.parse(old.created_at) > Date.now() - 3 * 60_000) throw new DemoError('Your demo is still being prepared.', 409, 'demo_provisioning');
   if (old.template_version !== DEMO_SEED_VERSION || old.status !== 'active' || !old.company_id || !old.expires_at || old.expires_at <= now) return null;
-  const company = await admin.from('companies').select('slug,plan_code').eq('id', old.company_id).maybeSingle();
-  if (company.error || !company.data?.slug || company.data.plan_code !== 'demo') return null;
-  return { slug: company.data.slug, sessionId: old.id, expiresAt: old.expires_at };
+  const company = await admin.from('companies').select('slug,plan_code,default_measurement_system').eq('id', old.company_id).maybeSingle();
+  if (company.error) throw new DemoError('Could not check your existing workspace. Please retry.', 503, 'demo_probe_failed');
+  if (!company.data?.slug || company.data.plan_code !== 'demo') return null;
+  const system: DemoMeasurementSystem = company.data.default_measurement_system === 'imperial_ft' || company.data.default_measurement_system === 'imperial_rs' ? company.data.default_measurement_system : 'metric';
+  return { slug: company.data.slug, sessionId: old.id, expiresAt: old.expires_at, system };
 }
-export async function provisionDemo(anonUserId: string, ip: string | null, reset = false, system?: DemoMeasurementSystem): Promise<{ slug: string; sessionId: string; resumed: boolean; expiresAt: string | null }> {
+export async function provisionDemo(anonUserId: string, ip: string | null, reset = false, system?: DemoMeasurementSystem): Promise<{ slug: string; sessionId: string; resumed: boolean; expiresAt: string | null; system: DemoMeasurementSystem }> {
   if (!(await getDemoControl()).demoEnabled) throw new DemoError('The demo is currently switched off.', 503, 'demo_off');
   const admin = createAdminClient();
   const verified = await admin.auth.admin.getUserById(anonUserId);
@@ -48,9 +52,9 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
     throw new DemoError('Your demo is still being prepared. Please retry shortly.', 409, 'demo_provisioning');
   }
   if (!reset && old?.template_version === DEMO_SEED_VERSION && old?.status === 'active' && old.expires_at && old.expires_at > now && old.company_id) {
-    const company = await admin.from('companies').select('slug,plan_code').eq('id', old.company_id).maybeSingle();
+    const company = await admin.from('companies').select('slug,plan_code,default_measurement_system').eq('id', old.company_id).maybeSingle();
     if (company.error) throw new DemoError('Could not resume the demo.', 503);
-    if (company.data?.slug && company.data.plan_code === 'demo') return { slug: company.data.slug, sessionId: old.id, resumed: true, expiresAt: old.expires_at ?? null };
+    if (company.data?.slug && company.data.plan_code === 'demo') return { slug: company.data.slug, sessionId: old.id, resumed: true, expiresAt: old.expires_at ?? null, system: company.data.default_measurement_system === 'imperial_ft' || company.data.default_measurement_system === 'imperial_rs' ? company.data.default_measurement_system : 'metric' };
   }
   if (!await checkRateLimit(`demo:provision:user:${anonUserId}`, 1, 60_000, { failClosed: true }) ||
       !await checkRateLimit(`demo:provision:ip:${ipHmac}`, 5, 3_600_000, { failClosed: true })) {
@@ -107,12 +111,13 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
     profileMoved = true;
     const seed = await seedDemoCompany(companyId, anonUserId, chosenSystem);
     const activeAt = new Date().toISOString();
+    const expiresAt = new Date(Date.parse(activeAt) + DEMO_SESSION_MS).toISOString();
     const activated = await admin.from('demo_sessions').update({ status: 'active', activated_at: activeAt, last_seen_at: activeAt,
-      expires_at: new Date(Date.now() + DEMO_SESSION_MS).toISOString(), tutorial_state: initialDemoGuide(seed) as unknown as Json })
+      expires_at: expiresAt, tutorial_state: initialDemoGuide(seed) as unknown as Json })
       .eq('id', sessionId).eq('status', 'provisioning').select('id').maybeSingle();
     if (activated.error || !activated.data) throw new Error('activation failed');
     if (old) await admin.from('demo_sessions').update({ status: 'cleanup_pending' }).eq('id', old.id);
-    return { slug, sessionId, resumed: false, expiresAt: null };
+    return { slug, sessionId, resumed: false, expiresAt, system: chosenSystem };
   } catch (error) {
     console.error('[demo/provision] stage failed', error instanceof Error ? error.message : 'unknown');
     // Restore the old binding before its company is eligible for cleanup.

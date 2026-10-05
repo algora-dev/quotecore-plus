@@ -26,6 +26,11 @@ export async function ensureDemoAssistantRollout(companyId:string):Promise<void>
  if(process.env.DEMO_SA_CLEANUP_RPC_READY!=='true'||process.env.DEMO_SA_WRITES_APPROVED!=='true')throw new DemoError('The integration team must approve the demo assistant rollout and its expiry cleanup first.',503,'demo_sa_integration');
  const db=client();const company=await db.from('companies').select('plan_code').eq('id',companyId).maybeSingle();
  if(company.error||company.data?.plan_code!=='demo')throw new DemoError('A verified demo company is required.',403);
- const result=await db.from('assistant_v2_rollout').upsert({company_id:companyId,p1:true,p2:true,p3:true,p4:true,write_policy:'propose_then_confirm',confirmation_policy:'requester_button',ledger_policy:'retain_action_fields'});
+ const desired={company_id:companyId,p1:true,p2:true,p3:true,p4:true,write_policy:'propose_then_confirm',confirmation_policy:'requester_button',ledger_policy:'retain_action_fields'} as const;
+ const existing=await db.from('assistant_v2_rollout').select('company_id,p1,p2,p3,p4,write_policy,confirmation_policy,ledger_policy').eq('company_id',companyId).maybeSingle();
+ if(existing.error)throw new DemoError('Demo assistant rollout could not be verified. No action was simulated.',503,'demo_sa_rollout');
+ const row=existing.data;
+ if(row&&row.p1===desired.p1&&row.p2===desired.p2&&row.p3===desired.p3&&row.p4===desired.p4&&row.write_policy===desired.write_policy&&row.confirmation_policy===desired.confirmation_policy&&row.ledger_policy===desired.ledger_policy)return;
+ const result=await db.from('assistant_v2_rollout').upsert(desired);
  if(result.error)throw new DemoError('Demo assistant rollout could not be initialized. No action was simulated.',503,'demo_sa_rollout');
 }

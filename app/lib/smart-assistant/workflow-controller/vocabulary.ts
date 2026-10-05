@@ -51,8 +51,18 @@ export function validateVocabulary(concepts: readonly AssistantConcept[]): void 
 
 export function resolveConcept(value: string, concepts: readonly AssistantConcept[]): AssistantConcept | null {
   const normalized = normalizeConceptAlias(value);
-  const hits = concepts.filter(c => [c.key, c.displayName, ...c.aliases].some(a => normalizeConceptAlias(a) === normalized));
-  return hits.length === 1 ? hits[0] : null;
+  const exact = concepts.filter(c => [c.key, c.displayName, ...c.aliases].some(a => normalizeConceptAlias(a) === normalized));
+  if (exact.length === 1) return exact[0];
+  if (exact.length > 1) return null;
+  // Bugfix 2026-10-05 (BUG B replay): the model often quotes the user verbatim
+  // ("roofing underlay") instead of the bare alias ("underlay"). Fall back to a
+  // UNIQUE whole-word containment of a key/alias inside the input. Two or more
+  // candidate concepts remain unresolved - ambiguity is never guessed.
+  const contained = concepts.filter(c => [c.key, ...c.aliases].some(a => {
+    const alias = normalizeConceptAlias(a);
+    return !!alias && new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\b`).test(normalized);
+  }));
+  return contained.length === 1 ? contained[0] : null;
 }
 
 /** A concept cannot invent dimensions or calculation rules through its label. */

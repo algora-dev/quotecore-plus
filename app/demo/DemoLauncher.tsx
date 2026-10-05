@@ -1,181 +1,154 @@
 'use client';
-
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { DemoUnitChoice } from '@/app/components/demo/DemoUnitChoice';
 import { createDemoBrowserClient } from '@/app/lib/demo/browser-client';
+import { demoSystemLabel, type DemoSystem } from '@/app/lib/demo/presentation';
+import { DemoRequestError, demoJsonRequest, demoRequest, safeDemoHref } from '@/app/lib/demo/client-request';
+import './demo-launcher.css';
 
-type StartResult = { slug: string; sessionId: string; resumed?: boolean; expiresAt?: string | null };
-type DemoSystem = 'metric' | 'imperial_ft' | 'imperial_rs';
+type StartResult = { slug: string; sessionId: string; resumed?: boolean; expiresAt?: string | null; system?: DemoSystem };
+type Probe = Partial<StartResult> & { needsSetup?: boolean };
+type Screen = 'checking' | 'choose' | 'resume' | 'fresh' | 'building' | 'slow' | 'error';
 
-/**
- * Launcher (owner direction 2026-10-05): the measurement system is the single
- * choice at entry - first-time visitors pick Metric / Imperial / Roofing
- * squares and the sandbox is seeded for it. Returning visitors get the
- * continue-or-start-again card. Landing inside the ~15s provisioning window
- * waits and auto-retries with the SAME chosen system instead of dead-ending.
- */
+async function establishIdentity() {
+  const demo = createDemoBrowserClient();
+  const { data: { user }, error } = await demo.auth.getUser();
+  if (user) {
+    if (user.is_anonymous !== true) throw new Error('This is not a demo session. Your normal QuoteCore+ account has not been changed.');
+    return;
+  }
+  // A network/server error is not evidence that an existing session is invalid.
+  // In particular, never sign a visitor out merely because Supabase is offline.
+  if (error && error.name !== 'AuthSessionMissingError' && error.status !== 400 && error.status !== 401 && error.status !== 403) {
+    throw new Error('Could not verify your demo session. Check your connection and try again.');
+  }
+  await demo.auth.signOut({ scope: 'local' });
+  const result = await demo.auth.signInAnonymously();
+  if (result.error) throw new Error('Could not start an anonymous demo session. Please try again shortly.');
+}
+
 export function DemoLauncher() {
   const router = useRouter();
-  const [error, setError] = useState<{ message: string; retryPreparing?: boolean } | null>(null);
+  const [screen, setScreen] = useState<Screen>('checking');
   const [existing, setExisting] = useState<StartResult | null>(null);
-  const [needsSetup, setNeedsSetup] = useState(false);
-  const [preparing, setPreparing] = useState(false);
-  const [resetting, setResetting] = useState(false);
-  const started = useRef(false);
-  const chosenSystem = useRef<DemoSystem>('metric');
+  const [system, setSystem] = useState<DemoSystem | null>(null);
+  const [error, setError] = useState('');
+  const [opening, setOpening] = useState(false);
+  const [checkVersion, setCheckVersion] = useState(0);
+  const busy = useRef(false);
+  const alive = useRef(false);
+  const identity = useRef<Promise<void> | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const previousScreen = useRef(screen);
+  const isReset = useRef(false);
 
-  async function establishIdentity() {
-    // Expiry cleanup may have deleted the old anonymous identity while its
-    // browser cookie still exists. Clear this namespace only, then remint.
-    const demo = createDemoBrowserClient();
-    const { data: { user }, error: identityError } = await demo.auth.getUser();
-    if (user && user.is_anonymous !== true) throw new Error('The demo requires its own anonymous session. Your normal account has not been changed.');
-    if (identityError || !user) {
-      await demo.auth.signOut({ scope: 'local' });
-      const { error: signInError } = await demo.auth.signInAnonymously();
-      if (signInError) throw new Error(signInError.message);
-    }
+  function acceptProbe(body: Probe) {
+    if (body.slug && body.sessionId && safeDemoHref(`/${body.slug}`, body.slug)) {
+      setExisting(body as StartResult); setSystem(body.system ?? null); setScreen('resume');
+    } else { setExisting(null); setScreen('choose'); }
   }
 
-  const startWithSystem = useCallback(async (system: DemoSystem): Promise<void> => {
-    chosenSystem.current = system;
-    setError(null);
-    setPreparing(true);
-    try {
-      const res = await fetch('/api/demo/start', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ system }),
-      });
-      const body = (await res.json().catch(() => ({}))) as StartResult & { error?: string; code?: string };
-      if (!res.ok || !body.slug) {
-        // Seeding is in flight (~15s): wait, then retry automatically.
-        if (body.code === 'demo_provisioning') { setError({ message: 'Your demo workspace is still being prepared - one moment.', retryPreparing: true }); return; }
-        throw new Error(body.error || 'Could not start the demo. Try again shortly.');
-      }
-      if (body.resumed) { setExisting(body); return; }
-      router.replace('/' + body.slug);
-    } finally {
-      setPreparing(false);
-    }
-  }, [router]);
+  useEffect(() => {
+    alive.current = true;
+    const controller = new AbortController();
+    setScreen('checking'); setError('');
+    // Reuse the initial auth operation across Strict Mode effect setup/cleanup.
+    identity.current ??= establishIdentity().catch(cause => { identity.current = null; throw cause; });
+    let timeout: ReturnType<typeof setTimeout>;
+    const deadline = new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Checking your demo is taking longer than expected. Please try again.')), 25_000); });
+    void Promise.race([identity.current, deadline]).then(async () => {
+      if (controller.signal.aborted) return;
+      const body = await demoRequest<Probe>('/api/demo/start', { ...demoJsonRequest({ probe: true }), signal: controller.signal });
+      if (!controller.signal.aborted) acceptProbe(body);
+    }).catch(cause => {
+      if (controller.signal.aborted) return;
+      if (cause instanceof DemoRequestError && cause.code === 'demo_provisioning') setScreen('slow');
+      else { setError(cause instanceof Error ? cause.message : 'Could not open the demo.'); setScreen('error'); }
+    }).finally(() => clearTimeout(timeout));
+    return () => { alive.current = false; controller.abort(); clearTimeout(timeout); };
+  }, [checkVersion]);
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    void (async () => {
-      try {
-        await establishIdentity();
-        // Read-only probe: resumable session or first-time setup? The units
-        // choice must land BEFORE any seed write, so nothing is provisioned
-        // until the visitor picks a system.
-        const res = await fetch('/api/demo/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ probe: true }) });
-        const body = (await res.json().catch(() => ({}))) as Partial<StartResult> & { needsSetup?: boolean; error?: string };
-        if (!res.ok) throw new Error(body.error || 'Could not start the demo. Try again shortly.');
-        if (body.slug && body.sessionId) { setExisting({ slug: body.slug, sessionId: body.sessionId, expiresAt: body.expiresAt ?? null }); return; }
-        setNeedsSetup(true);
-      } catch (e) {
-        setError({ message: e instanceof Error ? e.message : 'Could not start the demo. Try again shortly.' });
-      }
-    })();
-  }, []);
+    if (previousScreen.current !== screen) heading.current?.focus({ preventScroll: true });
+    previousScreen.current = screen;
+  }, [screen]);
 
-  // Auto-retry while seeding is in flight, preserving the chosen system.
   useEffect(() => {
-    if (!error?.retryPreparing) return;
+    if (!opening) return;
     const timer = setTimeout(() => {
-      void startWithSystem(chosenSystem.current).catch(e => setError({ message: e instanceof Error ? e.message : 'Could not start the demo. Try again shortly.' }));
-    }, 5000);
+      setOpening(false);
+      setError('Opening your workspace took longer than expected. Your demo has not been reset. Please try Continue again.');
+    }, 10_000);
     return () => clearTimeout(timer);
-  }, [error, startWithSystem]);
+  }, [opening]);
 
-  async function startFresh(system?: DemoSystem) {
-    if (!existing || resetting) return;
-    setResetting(true); setError(null);
+  async function build(reset: boolean) {
+    if (busy.current || !system || (reset && !existing)) return;
+    busy.current = true; isReset.current = reset; setError(''); setScreen('building');
     try {
-      const res = await fetch('/api/demo/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId: existing.sessionId, confirm: 'RESET', ...(system ? { system } : {}) }) });
-      const body = (await res.json().catch(() => ({}))) as StartResult & { error?: string };
-      if (!res.ok || !body.slug) throw new Error(body.error || 'Could not start a fresh demo. Try again shortly.');
-      window.location.assign('/' + body.slug);
-    } catch (e) {
-      setError({ message: e instanceof Error ? e.message : 'Could not start a fresh demo. Try again shortly.' });
-      setResetting(false);
-    }
+      const result = await demoRequest<StartResult>(reset ? '/api/demo/reset' : '/api/demo/start', demoJsonRequest(
+        reset ? { sessionId: existing!.sessionId, confirm: 'RESET', system } : { system }
+      ), 135_000);
+      if (!alive.current) return;
+      if (!result.slug || !safeDemoHref(`/${result.slug}`, result.slug)) throw new DemoRequestError('The workspace could not be opened. Please check its status before starting again.', 502);
+      if (result.resumed && !reset) {
+        // Another tab may have completed provisioning while units were shown.
+        // Do not silently replace that workspace or pretend the selection applied.
+        setExisting(result); setSystem(result.system ?? null); setScreen('resume');
+        setError('A demo is already open in this browser. Continue it, or choose Start fresh to change units.');
+      } else { window.location.assign(`/${result.slug}`); }
+    } catch (cause) {
+      if (!alive.current) return;
+      if (cause instanceof DemoRequestError && (cause.code === 'demo_provisioning' || cause.status === 0)) {
+        setScreen('slow');
+      } else {
+        setError(cause instanceof Error ? cause.message : 'Could not prepare the demo.');
+        setScreen(reset ? 'fresh' : 'choose');
+      }
+    } finally { busy.current = false; }
   }
 
-  if (resetting) {
-    return (
-      <div className="w-full max-w-sm rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-orange-500" aria-hidden="true" />
-        <p className="mt-3 text-sm font-semibold text-slate-800">Preparing your fresh demo</p>
-        <p className="mt-1 text-xs text-slate-600">This takes about 15 seconds. Keep this tab open.</p>
-      </div>
-    );
+  function continueDemo() {
+    if (!existing || opening) return;
+    setOpening(true); router.replace(`/${existing.slug}`);
   }
+  function fresh() { setSystem(existing?.system ?? null); setError(''); setScreen('fresh'); }
+  const title = screen === 'checking' ? 'Opening your demo' : screen === 'building' ? (isReset.current ? 'Preparing a fresh workspace' : 'Preparing your workspace')
+    : screen === 'slow' ? 'Your workspace may still be preparing' : screen === 'error' ? 'Let’s try that again'
+    : screen === 'resume' ? 'Welcome back' : screen === 'fresh' ? 'Start with a clean workspace' : 'How do you measure?';
+  const until = existing?.expiresAt && Number.isFinite(Date.parse(existing.expiresAt))
+    ? new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(existing.expiresAt)) : null;
 
-  if (existing) {
-    const until = existing.expiresAt ? new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(existing.expiresAt)) : null;
-    return (
-      <div className="w-full max-w-sm rounded-lg border border-amber-200 bg-amber-50 p-6 space-y-4 text-center">
-        <p className="text-sm font-semibold text-slate-800">You have a demo in progress{until ? ` (available until ${until})` : ''}</p>
-        <p className="text-xs text-slate-600">Continue where you left off, or start again with a completely fresh workspace. Your Smart Assistant and send allowances carry over either way.</p>
-        <div className="flex flex-col gap-2">
-          <button onClick={() => router.replace('/' + existing.slug)} className="qc-flow-control qc-button px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors">Continue my demo</button>
-        </div>
-        <p className="text-xs font-semibold text-slate-700 border-t border-amber-200 pt-3">Start again - fresh workspace, in your units:</p>
-        <div className="flex flex-col gap-2">
-          {([['metric', 'Metric (m, m²)'], ['imperial_ft', 'Imperial (ft, ft²)'], ['imperial_rs', 'Roofing squares (ft, RS)']] as const).map(([value, label]) => (
-            <button key={value} disabled={resetting} onClick={() => void startFresh(value)} className="qc-flow-control qc-button px-6 py-3 bg-white text-slate-800 font-semibold rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors">{label}</button>
-          ))}
-        </div>
-        {error && <p className="text-sm text-red-700" role="alert">{error.message}</p>}
-      </div>
-    );
-  }
-
-  if (needsSetup) {
-    const choices: { system: DemoSystem; title: string; subtitle: string }[] = [
-      { system: 'metric', title: 'Metric', subtitle: 'm, m²' },
-      { system: 'imperial_ft', title: 'Imperial', subtitle: 'ft, ft²' },
-      { system: 'imperial_rs', title: 'Roofing squares', subtitle: 'ft, RS' },
-    ];
-    return (
-      <div className="w-full max-w-sm rounded-lg border border-amber-200 bg-amber-50 p-6 space-y-4 text-center">
-        <p className="text-sm font-semibold text-slate-800">How do you measure?</p>
-        <p className="text-xs text-slate-600">Pick your measurement system. This is the only choice - everything in the demo works in it. Pricing currency follows your location automatically.</p>
-        <div className="flex flex-col gap-2">
-          {choices.map(choice => (
-            <button
-              key={choice.system}
-              disabled={preparing}
-              onClick={() => void startWithSystem(choice.system).catch(e => setError({ message: e instanceof Error ? e.message : 'Could not start the demo. Try again shortly.' }))}
-              className="qc-flow-control qc-button px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-60"
-            >
-              {choice.title} <span className="ml-1 text-xs font-normal text-slate-300">{choice.subtitle}</span>
-            </button>
-          ))}
-        </div>
-        {preparing && <p className="text-xs text-slate-600" role="status">Preparing your demo workspace… this takes about 15 seconds.</p>}
-        {error && <p className="text-sm text-red-700" role="alert">{error.message}</p>}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="w-full max-w-sm rounded-lg border border-amber-200 bg-amber-50 p-4 text-center">
-        <p className="text-sm text-slate-700">{error.message}</p>
-        {error.retryPreparing
-          ? <p className="mt-2 text-xs text-slate-500">Retrying automatically every few seconds…</p>
-          : <button onClick={() => window.location.reload()} className="qc-flow-control qc-button mt-3 px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors">Try again</button>}
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-3" role="status" aria-live="polite">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-orange-500" aria-hidden="true" />
-      <p className="text-sm text-slate-600">Preparing your demo workspace…</p>
-    </div>
-  );
+  return <section data-qc-ui="v2" className="qc-demo-launch-card" aria-busy={screen === 'checking' || screen === 'building' || opening}>
+    <div className="qc-demo-launch-brand"><span aria-hidden="true">QCP</span><p>QUOTECORE+ <strong>LIVE DEMO</strong></p></div>
+    <h1 ref={heading} tabIndex={-1}>{title}</h1>
+    {screen === 'checking' || screen === 'building' ? <div className="qc-demo-launch-loading" role="status">
+      <span className="qc-demo-launch-spinner" aria-hidden="true" />
+      <p>{screen === 'checking' ? 'Checking for your existing workspace…' : 'Setting up fictional jobs, component prices and the prepared roof plan. You don’t need to do anything else.'}</p>
+    </div> : screen === 'slow' ? <>
+      <p>We haven’t confirmed the result yet. Check its status before trying to create another demo.</p>
+      <QcButton className="qc-demo-launch-primary" variant="primary" size="lg" onClick={() => setCheckVersion(v => v + 1)}>Check workspace status</QcButton>
+      <p className="qc-demo-launch-footnote">This checks the existing request. It does not reset your work or allowances.</p>
+    </> : screen === 'error' ? <>
+      <p role="alert" className="qc-demo-launch-error">{error}</p>
+      <QcButton className="qc-demo-launch-primary" variant="primary" size="lg" onClick={() => setCheckVersion(v => v + 1)}>Try again</QcButton>
+    </> : screen === 'resume' ? <>
+      <p>Your fictional QCP workspace is ready where you left it.</p>
+      <dl className="qc-demo-launch-summary"><div><dt>Measurements</dt><dd>{demoSystemLabel(existing?.system)}</dd></div>{until && <div><dt>Available until</dt><dd>{until}</dd></div>}</dl>
+      <QcButton className="qc-demo-launch-primary" variant="primary" size="lg" pending={opening} onClick={continueDemo}>{opening ? 'Opening your workspace…' : 'Continue my demo'}</QcButton>
+      <QcButton className="qc-demo-launch-secondary" variant="ghost" size="lg" disabled={opening} onClick={fresh}>Start fresh or change units</QcButton>
+      {error && <p role="status" className="qc-demo-launch-footnote">{error}</p>}
+    </> : <>
+      <p>{screen === 'fresh' ? 'Your current demo edits will be removed. Choose the measurements for your new workspace.' : 'Choose one system for the whole demo. Your component prices, measurements and example tasks will follow it.'}</p>
+      <div className="qc-demo-launch-choice"><DemoUnitChoice value={system} onChange={setSystem} /></div>
+      {error && <p role="alert" className="qc-demo-launch-error">{error}</p>}
+      <QcButton className="qc-demo-launch-primary" variant="primary" size="lg" disabled={!system} onClick={() => void build(screen === 'fresh')}>{screen === 'fresh' ? 'Replace my demo & start fresh' : 'Open my demo workspace'}</QcButton>
+      {screen === 'fresh' ? <>
+        <QcButton className="qc-demo-launch-secondary" variant="ghost" size="lg" onClick={() => { setError(''); setScreen('resume'); }}>Keep my current demo</QcButton>
+        <p className="qc-demo-launch-footnote">AI and email allowances carry over. Starting fresh does not renew them.</p>
+      </> : <p className="qc-demo-launch-footnote">No signup or card. Fictional data. Yours to explore for up to 24 hours.</p>}
+    </>}
+  </section>;
 }

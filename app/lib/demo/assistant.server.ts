@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { readSectionPermissions, writeSectionPermissions } from '@/app/lib/smart-assistant/section-permissions.server';
-import { DEFAULT_SECTION_PERMISSIONS } from '@/app/lib/smart-assistant/section-permissions';
+import { DEFAULT_SECTION_PERMISSIONS, permissionsEqual } from '@/app/lib/smart-assistant/section-permissions';
 import { loadAccess } from '@/app/lib/smart-assistant/v2/runtime.server';
 import { isDemoCompany, readActiveDemoContext } from './context';
 import { assertSameOrigin, readSmallJson, demoJson, demoErrorResponse } from './http';
@@ -34,7 +34,9 @@ export async function prepareDemoAssistant(context: ActiveDemoContext, client: A
   const current = await readSectionPermissions(client);
   if (!current.ok || current.snapshot.companyId !== context.companyId || !current.snapshot.canManage) throw new DemoError('The existing Smart Assistant permission setup needs integration review.',503,'demo_sa_permissions');
   const desired = { ...DEFAULT_SECTION_PERMISSIONS, quotes:'edit' as const, draft_quotes:'edit' as const, components:'edit' as const, customers:'edit' as const };
-  if (JSON.stringify(current.snapshot.permissions) !== JSON.stringify(desired)) {
+  // Compare semantically, not by JSON key order. Rewriting identical
+  // permissions bumps the revision and invalidates a mounted Assistant client.
+  if (!permissionsEqual(current.snapshot.permissions, desired)) {
     const saved = await writeSectionPermissions(client,{permissions:desired,expectedCompanyId:context.companyId,expectedRevision:current.snapshot.revision});
     if (!saved.ok) throw new DemoError('Smart Assistant permissions could not be saved. Nothing was simulated.',503,'demo_sa_permissions');
   }

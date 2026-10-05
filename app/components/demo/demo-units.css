@@ -1,0 +1,15 @@
+.qc-demo-units { display: grid; gap: 10px; min-inline-size: 0; margin: 0; padding: 0; border: 0; }
+.qc-demo-units legend { padding: 0; margin-bottom: 10px; color: var(--qc-text-primary, #17202d); font-size: 13px; font-weight: 650; }
+.qc-demo-unit-option { display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 14px; border: 1px solid var(--qc-border-input, #b8bec7); border-radius: var(--qc-radius-control, 12px); background: var(--qc-bg-surface, white); cursor: pointer; transition: border-color 120ms, background-color 120ms; }
+.qc-demo-unit-option input { flex: 0 0 18px; width: 18px; height: 18px; margin: 0; accent-color: var(--qc-color-orange-ink, #ad4200); }
+.qc-demo-unit-label { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.qc-demo-unit-label strong { font-size: 15px; line-height: 1.3; font-weight: 650; color: var(--qc-text-primary, #17202d); }
+.qc-demo-unit-label small { font-size: 12px; line-height: 1.45; color: var(--qc-text-secondary, #596273); }
+.qc-demo-unit-symbol { font-size: 12px; font-weight: 650; white-space: nowrap; color: var(--qc-text-secondary, #596273); }
+.qc-demo-unit-option[data-selected="true"] { border-color: var(--qc-color-orange-ink, #ad4200); box-shadow: inset 3px 0 0 var(--qc-color-orange-ink, #ad4200); background: var(--qc-color-orange-wash, #fff7ef); }
+.qc-demo-unit-option:has(input:focus-visible) { outline: 2px solid var(--qc-focus-ring, #ad4200); outline-offset: 3px; }
+.qc-demo-units:disabled .qc-demo-unit-option { cursor: wait; opacity: .65; }
+@media (hover: hover) { .qc-demo-unit-option:hover { border-color: var(--qc-color-orange-ink, #ad4200); background: var(--qc-bg-subtle, #f4f6f8); } }
+@media (max-width: 360px) { .qc-demo-unit-option { gap: 9px; padding: 12px; } .qc-demo-unit-symbol { display: none; } }
+@media (prefers-reduced-motion: reduce) { .qc-demo-unit-option { transition: none; } }
+@media (forced-colors: active) { .qc-demo-unit-option { background: Canvas; border-color: ButtonText; } .qc-demo-unit-option[data-selected="true"] { outline: 2px solid Highlight; } }

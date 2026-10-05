@@ -60,8 +60,25 @@ export function createWorkingBrief(input: Record<string, unknown>, context: Reco
     if (!concept) throw new ProposalError(`No unambiguous workspace concept matches “${String(raw.concept ?? raw.role ?? '').slice(0, 80)}”. Use a configured concept or add its alias in settings.`);
     const index = raw.area_index == null ? null : raw.area_index;
     if (index !== null && (typeof index !== 'number' || !Number.isInteger(index) || !areas[index])) throw new ProposalError('The measurement must refer to one of the supplied areas.');
-    const a = index == null ? null : areas[index as number];
-    const values = entries(raw.entries, id), basis = raw.basis == null ? 'actual' as const : oneOf(raw.basis, ['plan','actual'], 'measurement basis');
+    let a = index == null ? null : areas[index as number];
+    const values = entries(raw.entries, id);
+    // Bugfix 2026-10-05 (BUG B): the model marks a covering/underlay as
+    // from_area=true but omits area_index. When exactly one area exists whose
+    // size matches the entries exactly, the link is unambiguous - attach it
+    // instead of failing the whole prepare. Multiple/no matches still fail with
+    // the corrective message.
+    const sizeMatch = (candidate: WorkingArea) => values.length === 1 && values[0].quantity === candidate.quantity && values[0].unit === candidate.unit;
+    if (!a && raw.from_area === true && ['roof_area','underlay'].includes(concept.behavior)) {
+        const unique = areas.filter(sizeMatch);
+        if (unique.length === 1) a = unique[0];
+    }
+    let basis: 'plan' | 'actual' = raw.basis == null ? 'actual' as const : oneOf(raw.basis, ['plan','actual'], 'measurement basis');
+    // Bugfix 2026-10-05 (BUG B replay): an area-linked covering/underlay whose
+    // entries exactly match its area follows the AREA's basis when the basis was
+    // omitted - the omitted default ('actual') contradicted a 'plan' area and
+    // failed the whole prepare. An explicitly contradictory basis still fails.
+    if (raw.basis == null && a && values.length === 1 && values[0].quantity === a.quantity && values[0].unit === a.unit && ['roof_area','underlay'].includes(concept.behavior))
+        basis = a.basis === 'plan' ? 'plan' as const : 'actual' as const;
     const exactArea = !!a && values.length === 1 && values[0].quantity === a.quantity && values[0].unit === a.unit && basis === (a.basis === 'plan' ? 'plan' : 'actual');
     const fromArea = raw.from_area === true || (raw.from_area !== false && concept.behavior === 'roof_area' && exactArea);
     if (fromArea && (!exactArea || !['roof_area','underlay'].includes(concept.behavior))) throw new ProposalError('An area-linked covering/underlay must match its area measurement and basis.');

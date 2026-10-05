@@ -145,7 +145,9 @@ async function handlePost(req: NextRequest) {
             if (result) send('final', { ok: true, status: 'completed', run_id: admit.runId, reply: result.content, requestMs });
             else send('error', { ok: false, status: failure?.httpStatus ?? 500, error: failure?.message ?? 'Assistant error', error_code: failure?.errorCode, requestMs });
           }
-        } catch {
+        } catch (routeError) {
+          console.error('[smart-assistant] turn failed (500):', routeError instanceof Error ? routeError.message : String(routeError),
+            routeError instanceof Error && routeError.stack ? '\n' + routeError.stack.split('\n').slice(0, 8).join('\n') : '');
           if (!finished) {
             finished = true;
             send('error', { ok: false, status: 500, error: 'Assistant error' });
@@ -198,6 +200,8 @@ async function executePipeline(input: {
       companyId: profile.company_id, conversationId, pageContext,
     }, input.onText);
   } catch (error) {
+    console.error('[smart-assistant] turn pipeline failed:', error instanceof Error ? error.message : String(error),
+      error instanceof Error && error.stack ? '\n' + error.stack.split('\n').slice(0, 12).join('\n') : '');
     failure = pipelineFailureDetails(error);
   }
 

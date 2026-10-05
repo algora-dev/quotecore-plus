@@ -80,6 +80,14 @@ export function useTouchComponents(
   modeRef.current = options.mode;
   const componentsRef = useRef(options.components);
   componentsRef.current = options.components;
+  // Stale-closure fix (2026-10-05, owner bug report): onSaveContinue's deps
+  // ([router, options.finishHref]) never change, so the captured
+  // options.onFinish stayed frozen at the FIRST render - an emitFinish whose
+  // outlineAdapter was still null. "Save & continue" then persisted fine but
+  // finished into a silent no-op. Keep options fresh through a ref like the
+  // other mutable inputs above.
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
   const activeRef = useRef(active);
   activeRef.current = active;
   const [phase, setPhase] = useState<TouchComponentsPhase>(options.mode === 'ai' ? 'scanning' : 'review');
@@ -384,8 +392,9 @@ export function useTouchComponents(
         return;
       }
       logTakeoffEvent('components.save.succeeded', { rows });
-      if (options.onFinish) options.onFinish();
-      else router.push(options.finishHref);
+      const finish = optionsRef.current;
+      if (finish.onFinish) finish.onFinish();
+      else router.push(finish.finishHref);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'The save failed. Your entries are kept.';
       setError(message);
@@ -394,7 +403,7 @@ export function useTouchComponents(
       savingRef.current = false;
       setSaving(false);
     }
-  }, [router, options.finishHref]);
+  }, [router]);
 
   const filteredComponents = libraryId
     ? options.components.filter(c => (c.collection_id ?? null) === libraryId)
