@@ -145,8 +145,10 @@ export function TouchWorkspaceShell({
   // viewport must not push the return-to-touch button off a phone screen.
   const viewportBounds = useVisualViewportBounds(active || mounted);
   const [backGuardOpen, setBackGuardOpen] = useState(false);
-  const [portraitHintDismissed, setPortraitHintDismissed] = useState(false);
-  const [showPortraitHint, setShowPortraitHint] = useState(false);
+  // Landscape lock (owner 2026-10-07): phone-class landscape hands a third of
+  // the canvas to browser chrome (address/bookmark bars) - blocked with a
+  // rotate prompt. Supersedes the old "turn sideways" hint (§3.2).
+  const [landscapeBlocked, setLandscapeBlocked] = useState(false);
   // M9: owner-run diagnostics - 'Send diagnostics' in the hamburger menu.
   const [diagState, setDiagState] = useState<
     { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; id: string } | { kind: 'failed'; error: string }
@@ -187,22 +189,26 @@ export function TouchWorkspaceShell({
     setDiagState(result.ok ? { kind: 'sent', id: result.id } : { kind: 'failed', error: result.error });
   }, []);
 
-  // Portrait detection via matchMedia (no orientation lock; §3.2). Dismissal
-  // persists for the session only.
+  // Landscape lock (owner 2026-10-07): phone-class landscape (coarse pointer +
+  // short edge at most the touch threshold 820px) is blocked with a rotate
+  // prompt - browser chrome (address/bookmark bars) steals too much canvas.
+  // Tablets and desktops are unaffected (fine pointer or short edge > 820).
   useEffect(() => {
-    if (!active) return;
-    let mq: MediaQueryList | null = null;
-    try {
-      mq = window.matchMedia('(orientation: portrait)');
-    } catch {
-      mq = null;
-    }
-    if (!mq) return;
-    const update = () => setShowPortraitHint(mq!.matches && !portraitHintDismissed);
-    queueMicrotask(update);
-    mq.addEventListener('change', update);
-    return () => mq!.removeEventListener('change', update);
-  }, [active, portraitHintDismissed]);
+    if (!active) { setLandscapeBlocked(false); return; }
+    const orientationMq = window.matchMedia('(orientation: landscape)');
+    const pointerMq = window.matchMedia('(pointer: coarse)');
+    const update = () => {
+      const shortEdge = Math.min(window.innerWidth, window.innerHeight);
+      setLandscapeBlocked(orientationMq.matches && pointerMq.matches && shortEdge <= 820);
+    };
+    update();
+    orientationMq.addEventListener('change', update);
+    window.addEventListener('resize', update);
+    return () => {
+      orientationMq.removeEventListener('change', update);
+      window.removeEventListener('resize', update);
+    };
+  }, [active]);
 
   // U1 (plan section 3.2): lock underlying page scrolling while the immersive
   // touch presentation is active. Pre-existing styles and scroll position are
@@ -286,21 +292,21 @@ export function TouchWorkspaceShell({
           {children}
         </div>
         {active && overlay}
-        {/* Portrait hint - dismissible, FLOATS over the canvas (M8), no CSS
-            rotation (§3.2). z-40 keeps it visible above sheets/modals. */}
-        {active && showPortraitHint && (
-          <div className="absolute inset-x-2 top-2 z-40 flex items-center gap-2 rounded-xl bg-slate-800/95 px-3 py-2 text-xs text-slate-200 shadow-lg">
-            <span className="min-w-0 flex-1">
-              Turn your phone sideways for more drawing space. You can continue in portrait.
-            </span>
-            <button
-              type="button"
-              aria-label="Dismiss turn-phone hint"
-              onClick={() => setPortraitHintDismissed(true)}
-              className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold hover:bg-white/20"
-            >
-              OK
-            </button>
+        {/* Landscape lock (owner 2026-10-07): full-cover rotate prompt above
+            every sheet/rail layer while a phone-class device is sideways. */}
+        {active && landscapeBlocked && (
+          <div className="absolute inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-slate-950 px-10 text-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-14 w-14 text-[#FF6B35]" aria-hidden="true">
+              <rect x="8.5" y="3.5" width="7" height="17" rx="2" />
+              <path d="M5.5 8.5A7.5 7.5 0 0 1 8 5" strokeLinecap="round" />
+              <path d="M5.5 8.5V6M5.5 8.5H8" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M18.5 15.5A7.5 7.5 0 0 1 16 19" strokeLinecap="round" />
+              <path d="M18.5 15.5V18M18.5 15.5H16" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div className="text-base font-semibold text-white">Rotate your phone to portrait</div>
+            <div className="max-w-xs text-sm text-slate-400">
+              The takeoff workspace is built for portrait. Sideways, the browser&rsquo;s address and bookmark bars take too much of the screen.
+            </div>
           </div>
         )}
         {/* O16: dirty-draft Back guard - Save / Discard / Stay. */}

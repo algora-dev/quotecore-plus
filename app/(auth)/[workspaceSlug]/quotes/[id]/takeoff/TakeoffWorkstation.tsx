@@ -3724,6 +3724,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const touchComponentEntriesRef = useRef<TouchComponentEntry[]>([]);
   // F4: stable palette colour per custom component (session-scoped).
   const touchComponentColoursRef = useRef<Map<string, string>>(new Map());
+  // Hydration (2026-10-07): saved rows mapped into the touch step as display
+  // entries (demo pre-measured state + re-entry); ids tracked so the persist
+  // path skips them (the standard save re-sends hydrated rows already).
+  const touchHydratedEntryIdsRef = useRef<Set<string>>(new Set());
+  const touchEntriesHydratedRef = useRef(false);
   // P4: latest-ref to the persist function (recreated each render) so the
   // stable adapter always calls the fresh closure over component state.
   const touchPersistTakeoffRef = useRef(persistTakeoffData);
@@ -4295,6 +4300,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           const extraMeasurements: Array<ComponentMeasurement & { componentId: string }> = [];
           for (const e of touchComponentEntriesRef.current) {
             if (!e.componentId) continue; // uncertain detections: review-only
+            // Hydrated (saved) rows are display/review-only: the standard
+            // save path re-sends them from componentMeasurements state -
+            // pushing them here too would duplicate quote_component_entries.
+            if (touchHydratedEntryIdsRef.current.has(e.id)) continue;
             // M11: rows follow the entry kind. Attached roof-area entries
             // persist exactly like the desktop area-attach flow (no canvas
             // geometry, entryInputs basis + plan snapshot + source link) so
@@ -4621,6 +4630,62 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (onTouchOutlineAdapter) onTouchOutlineAdapter(touchOutlineAdapterRef.current!);
     if (changed) touchBridgeListeners.current.forEach(listener => listener());
   });
+
+  // Saved component rows -> touch review entries (owner 2026-10-07 report:
+  // demo/re-entry showed "just the blank plan"). One-shot per mount: the
+  // pre-measured demo and any re-entering touch user see their saved
+  // components in the grid and on the canvas. Hydrated ids are tracked so
+  // persistReviewedComponents skips them - the standard save path already
+  // re-sends hydrated rows from componentMeasurements state (pushing them
+  // again as extraMeasurements would duplicate quote_component_entries).
+  useEffect(() => {
+    if (touchEntriesHydratedRef.current || !hydrationData) return;
+    const pageId = pages[currentPageIndex]?.id ?? null;
+    if (!pageId) return; // pages resolve from the same hydration; re-runs then
+    touchEntriesHydratedRef.current = true;
+    const adapter = touchOutlineAdapterRef.current;
+    let added = false;
+    for (const m of hydrationData.measurements ?? []) {
+      if (!m.componentId) continue; // outline/area rows are not component entries
+      if (m.pageId && m.pageId !== pageId) continue; // page-scoped like getAreas (O09)
+      if (touchComponentEntriesRef.current.some((e) => e.id === m.id)) continue;
+      const target = adapter?.getComponentTarget?.(m.componentId);
+      if (!target) continue;
+      const kind: TouchComponentEntry['kind'] = m.type === 'line' ? 'line' : m.type === 'area' ? 'area' : 'point';
+      const inputs = m.entryInputs ?? null;
+      const basis = inputs?.value_basis ?? null;
+      const attached = kind === 'area' && basis === 'pitched';
+      const corner = kind === 'point' && !!basis && basis.startsWith('corner_');
+      touchComponentEntriesRef.current.push({
+        id: m.id,
+        key: m.componentId,
+        componentId: m.componentId,
+ displayName: target.displayName,
+        colour: target.colour,
+        value: m.value,
+        kind,
+        hidden: !m.visible,
+        points: m.points ?? [],
+        quoteRoofAreaId: m.quoteRoofAreaId ?? null,
+        ...(attached && inputs?.source_geometry_id
+          ? {
+              fromRoofAreaId: inputs.source_geometry_id,
+              ...(typeof inputs.plan_value === 'number' ? { planValue: inputs.plan_value } : {}),
+            }
+          : {}),
+        ...(corner && basis
+          ? {
+              cornerBasis: basis.slice('corner_'.length) as TouchComponentEntry['cornerBasis'],
+              ...(typeof inputs?.corner_count === 'number' ? { cornerCount: inputs.corner_count } : {}),
+              ...(inputs?.source_geometry_id ? { sourceGeometryId: inputs.source_geometry_id } : {}),
+            }
+          : {}),
+      });
+      touchHydratedEntryIdsRef.current.add(m.id);
+      added = true;
+    }
+    if (added) touchBridgeListeners.current.forEach((listener) => listener());
+  }, [hydrationData, pages, currentPageIndex]);
   // Captures the component ID at the moment area mode is activated for a component.
   // Unlike selectedComponentIdRef, this is NOT cleared by Fabric canvas deselection
   // events that fire on the same click that closes the polygon.
