@@ -130,12 +130,17 @@ export function TakeoffPage({
   const pageHasDependents = (hydrationData?.measurements?.some((m) => !m.pageId || m.pageId === activePageId) ?? false)
     || (outlineAdapter?.getAreas().length ?? 0) > 0;
   const [touchTool, setTouchTool] = useState<'outline' | 'calibrate' | 'components'>(() => {
+    // Demo lands pre-measured (seed): open straight into the components step
+    // so phones show the measured plan immediately (owner 2026-10-07 report).
+    if (demoFinishHref && calibrationPage) return 'components';
     const decoded = decodeCalibrationMetadata(calibrationPage?.calibrationMetadata ?? calibrationPage?.scaleCalibration);
     const count = decoded.kind === 'v1' ? decoded.metadata.references.length : decoded.kind === 'legacy' ? decoded.references.length : 0;
     return count > 0 ? 'outline' : 'calibrate';
   });
   // M10: component phase entry mode chosen on the outline finish screen.
-  const [componentsMode, setComponentsMode] = useState<'ai' | 'manual'>('ai');
+  // Demo starts in manual review - the scan is demo-gated off and the seeded
+  // components are already on the plan.
+  const [componentsMode, setComponentsMode] = useState<'ai' | 'manual'>(demoFinishHref ? 'manual' : 'ai');
   const enterComponents = useCallback((mode: 'ai' | 'manual') => {
     setComponentsMode(mode);
     setTouchTool('components');

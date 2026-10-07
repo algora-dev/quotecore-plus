@@ -175,9 +175,11 @@ export function useTouchComponents(
     if (!startedRef.current && adapter?.startComponentScan) void runScan();
   }, [active, adapter, runScan]);
 
-  // Leaving the step resets the lifecycle (a fresh entry re-scans).
+  // Entering the step refreshes the grid from the adapter (saved/hydrated +
+  // session entries - owner 2026-10-07: the grid stayed empty until a
+  // mutation); leaving resets the lifecycle (a fresh entry re-scans).
   useEffect(() => {
-    if (active) return;
+    if (active) { refreshFromAdapter(); return; }
     startedRef.current = false;
     setPhase(modeRef.current === 'ai' ? 'scanning' : 'review');
     setScanStage('lines');
@@ -188,7 +190,7 @@ export function useTouchComponents(
     setHighlighted(null);
     setAttachNoticeOpen(false);
     cancelDraw();
-  }, [active, cancelDraw]);
+  }, [active, cancelDraw, refreshFromAdapter]);
 
   // Detail view: isolation is a canvas RENDER state (the overlay hides other
   // groups); nothing touches the adapter.
