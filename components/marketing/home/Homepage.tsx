@@ -53,6 +53,18 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
         </div>
       </section>
 
+      <section id="how-to-measure" className={`${s.section} ${s.dark} ${s.waysSection}`} aria-labelledby="ways-title">
+        <div className={s.container}>
+          <div className={s.sectionIntro}><div><p className={s.eyebrow}>How to measure</p><h2 id="ways-title" className={s.sectionTitle}>3 easy ways to price your job.<br /><span className={s.mutedHeading}>1 simple app.</span></h2></div><p className={s.introAside}>However you measure today, there’s a way in that fits.</p></div>
+          <div className={s.waysGrid}>{([
+            ['calculator', 'Enter measurements in the app', 'Already have the numbers? Type them straight in.'],
+            ['ruler', 'Measure in the app', 'Upload a plan or photo and measure on screen.'],
+            ['spark', 'Tell QuoteCore+ the measurements', 'Chat the numbers through — the assistant builds the job.'],
+          ] as [IconName, string, string][]).map(([icon, title, text], i) => <div className={s.wayCard} key={title}><span className={s.wayIcon}><Icon name={icon} size={24} /></span><span className={s.tinyLabel}>0{i + 1}</span><h3>{title}</h3><p>{text}</p></div>)}
+          </div>
+        </div>
+      </section>
+
       <section id="setup" className={`${s.section} ${s.setupSection}`} aria-labelledby="setup-title">
         <div className={`${s.container} ${s.setupGrid}`}>
           <div className={s.setupPortrait}><img src="/shaun-smiling.jpg" width={795} height={1066} alt="Shaun, the founder of QuoteCore+" loading="lazy" decoding="async" /><div className={s.founderCaption}><strong>Real people. Practical help.</strong><span>Shaun · Founder, QuoteCore+</span></div></div>
@@ -91,9 +103,9 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
       <section id="free-tools" className={`${s.section} ${s.toolsSection}`} aria-labelledby="tools-title"><div className={s.container}>
         <div className={s.sectionIntro}><div><p className={s.eyebrow}>Start with something useful</p><h2 id="tools-title" className={s.sectionTitle}>Your plan. Our free tools.</h2></div><a href="/free-tools" className={s.textLink}>Explore all free tools<Icon name="arrow" size={18} /></a></div>
         <div className={s.toolsGrid}>{([
-          ['ruler', 'Free roofing digital takeoff', 'Upload your own roof plan and try the measurement tools for yourself.', '/free-roof-takeoff'],
-          ['calculator', 'Roofing calculators', 'Useful calculations for your next job, without another spreadsheet.', '/free-calculators'],
-          ['document', 'Find your next tool', 'Explore the free tool library and find what fits the job in front of you.', '/free-tools'],
+          ['ruler', 'Free roofing digital takeoff', 'Upload a plan and try the measuring tools.', '/free-roof-takeoff'],
+          ['calculator', 'Roofing calculators', 'Useful calculations, no spreadsheet needed.', '/free-calculators'],
+          ['document', 'Find your next tool', 'Something useful for the job in front of you.', '/free-tools'],
         ] as [IconName, string, string, string][]).map(([icon, title, text, href]) => <a href={href} className={s.toolCard} key={title}><Icon name={icon} size={28} /><h3>{title}</h3><p>{text}</p><span>Open tool<Icon name="arrow" size={18} /></span></a>)}</div>
       </div></section>
 
