@@ -122,7 +122,7 @@ export function DemoLauncher() {
     ? new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(existing.expiresAt)) : null;
 
   return <section data-qc-ui="v2" className="qc-demo-launch-card" aria-busy={screen === 'checking' || screen === 'building' || opening}>
-    <div className="qc-demo-launch-brand"><span aria-hidden="true">QCP</span><p>QUOTECORE+ <strong>LIVE DEMO</strong></p></div>
+    <div className="qc-demo-launch-brand"><img src="/marketing/brand/quotecore-logo-transparent.png" alt="QuoteCore+" width={481} height={119} decoding="async" /><span className="qc-demo-launch-tag">LIVE DEMO</span></div>
     <h1 ref={heading} tabIndex={-1}>{title}</h1>
     {screen === 'checking' || screen === 'building' ? <div className="qc-demo-launch-loading" role="status">
       <span className="qc-demo-launch-spinner" aria-hidden="true" />

@@ -12,6 +12,8 @@
 .qc-demo-guide-head strong { font-size: 14px; line-height: 20px; font-weight: 650; color: var(--qc-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qc-demo-icon,.qc-demo-drag { display: grid; place-items: center; width: 36px; height: 40px; flex: 0 0 36px; border: 0; border-radius: 9px; background: transparent; color: var(--qc-text-secondary); font: inherit; font-size: 24px; cursor: pointer; }
 .qc-demo-drag { cursor: grab; font-size: 20px; touch-action: none; }
+.qc-demo-hide { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; padding: 8px 12px; border: 0; border-bottom: 1px solid var(--qc-border-divider); background: var(--qc-color-orange-wash); color: var(--qc-color-orange-ink); font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .05em; cursor: pointer; }
+.qc-demo-hide span:last-child { font-size: 10px; }
 .qc-demo-guide-body { padding: 18px; overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
 .qc-demo-guide h2 { margin: 5px 0 10px; color: var(--qc-text-primary); font-size: 19px; line-height: 1.25; font-weight: 700; letter-spacing: -.015em; }
 .qc-demo-guide p,.qc-demo-copy { margin: 0; color: var(--qc-text-secondary); font-size: 13px; line-height: 1.6; }
@@ -68,6 +70,7 @@
   .qc-demo-guide-head { touch-action: auto; padding: 6px 12px; }
   .qc-demo-drag,.qc-demo-reset-position { display: none; }
   .qc-demo-icon { height: 44px; width: 44px; flex-basis: 44px; }
+  .qc-demo-hide { min-height: 46px; font-size: 13px; }
   .qc-demo-guide-body { padding: 14px; }
   .qc-demo-guide h2 { font-size: 17px; }
   .qc-demo-guide .qc-button,.qc-demo-why summary,.qc-demo-guide-links .qc-button { min-height: 44px; }
@@ -77,6 +80,7 @@
   .qc-demo-reopen { bottom: max(10px,env(safe-area-inset-bottom)); left: 10px; right: auto; max-width: calc(100vw - 174px); }
 }
 @media (hover: hover) {
+  .qc-demo-hide:hover { background: var(--qc-gradient-primary); color: var(--qc-action-primary-text, #1b1b1b); }
   .qc-demo-banner button:hover,.qc-demo-banner a:hover,.qc-demo-icon:hover,.qc-demo-drag:hover,.qc-demo-reset-position:hover { background: var(--qc-color-orange-wash); color: var(--qc-color-orange-ink); }
   .qc-demo-reopen:hover { border-color: var(--qc-color-orange-ink); }
   .qc-demo-continue:hover { background: var(--qc-gradient-primary-hover); }
