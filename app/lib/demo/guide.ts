@@ -20,7 +20,7 @@ export const DEMO_GUIDE_CHAPTERS: { id: DemoGuideChapter; title: string; summary
     { event: 'component.edited', title: 'Update an existing price', target: 'components', copy: 'Open the seeded Roof covering component, change one material price and save.', hint: 'One library change can be reused on future quotes.' },
   ] },
   { id: 'takeoff', title: 'Measure the job', summary: 'Use the prepared roof plan, then save your real final canvas.', steps: [
-    { event: 'takeoff.saved', title: 'Add your component to the roof', target: 'takeoff', copy: 'The prepared roof is already measured. Add the component you created, draw one rectangle on the roof, then press Finish & Save.', hint: 'After the rectangle is added you can freely change anything. The quote uses whatever you actually save.' },
+    { event: 'takeoff.saved', title: 'Add your component to the roof', target: 'takeoff', copy: 'The prepared roof is already measured. Add the component you created, draw one rectangle on the roof, then save the takeoff.', hint: 'After the rectangle is added you can freely change anything. The quote uses whatever you actually save.' },
   ] },
   { id: 'customer-quote', title: 'Prepare the customer quote', summary: 'Turn the measured job into a clean customer-facing quote.', steps: [
     { event: 'quote.template', title: 'Apply the QCP branding', target: 'customer', copy: 'Apply the QCP header/template from the editor. A real account would use your own logo and company details.' },

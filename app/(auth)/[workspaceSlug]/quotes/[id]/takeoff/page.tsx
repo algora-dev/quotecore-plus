@@ -43,7 +43,11 @@ export default async function Page({
   const aiCalibrationEnabled = !demoContext && await companyHasAiCalibration(profile.company_id);
 
   // M2: mobile takeoff touch workspace dark-launch flag (patch_051 pattern).
-  const takeoffTouchEnabled = await companyHasTakeoffTouch(profile.company_id);
+  // Demo (2026-10-07): the demo rides the SAME touch experience as flagged
+  // accounts. A fresh demo company has no takeoff_touch row, which served the
+  // desktop canvas to phones. Demo forces the flag on; the auto view-mode
+  // heuristic still resolves desktop for pointer-fine visitors.
+  const takeoffTouchEnabled = !!demoContext || (await companyHasTakeoffTouch(profile.company_id));
 
   // M2 §3.4/L08: compact required-notice lines for the touch top strip. The
   // full banners in layout.tsx remain untouched; the touch shell surfaces the
