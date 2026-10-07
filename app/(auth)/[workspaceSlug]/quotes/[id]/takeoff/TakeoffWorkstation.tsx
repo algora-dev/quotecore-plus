@@ -8806,6 +8806,12 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                             offcutsModalRef.current = await launchLiveQuoteCoreOffcuts(readCurrentOffcutsSnapshot, {
                               signal: abort.signal,
                               reviewRepository: reviewRepository ?? undefined,
+                              onSaveOnePager: async (payload) => {
+                                const { saveOffcutOnePagerToJob } = await import('@/app/lib/takeoff/offcutOnePager');
+                                const jobLabel = String(quote.quote_number ?? '') || 'Quote';
+                                const result = await saveOffcutOnePagerToJob(quote.id, payload, { jobLabel });
+                                if (!result.ok) throw new Error(result.message);
+                              },
                               readContext: () => {
                                 const live = offcutsLiveSnapshotRef.current;
                                 if (!live) throw new Error('The takeoff workspace is not ready.');
