@@ -85,7 +85,9 @@
 /* Hero: untouched workspace + palette-only nav overlay, two live glass layers. */
 .hero { position: relative; overflow: clip; background: #f6f7f9; }
 .heroBackground, .heroBackground img, .heroWash { position: absolute; inset: 0; width: 100%; height: 100%; }
-.heroBackground img { object-fit: cover; object-position: center 47%; }
+/* Slow hero drift (owner 2026-10-07): permanent 1.08 over-scale creates pan bleed on every aspect ratio; translateX is % of the element box, GPU-composited. Reduced-motion users get the static frame via the global animation kill. */
+@keyframes heroDrift { from { transform: translateX(-1.7%) scale(1.08); } to { transform: translateX(1.7%) scale(1.08); } }
+.heroBackground img { object-fit: cover; object-position: center 47%; animation: heroDrift 60s var(--ease, ease-in-out) infinite alternate; will-change: transform; }
 .heroWash { background: linear-gradient(90deg,rgba(250,251,253,.99) 0%,rgba(250,251,253,.97) 25%,rgba(250,251,253,.90) 36%,rgba(250,251,253,.55) 49%,rgba(250,251,253,.04) 66%,transparent 85%); }
 .heroGrid { display: grid; grid-template-columns: 47% 53%; align-items: center; min-height: 658px; }
 .heroCopy { position: relative; z-index: 2; padding-block: 64px 76px; max-width: 563px; }
