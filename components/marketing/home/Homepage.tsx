@@ -53,15 +53,29 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
         </div>
       </section>
 
-      <section id="how-to-measure" className={`${s.section} ${s.dark} ${s.waysSection}`} aria-labelledby="ways-title">
+      <section id="how-it-works" className={`${s.section} ${s.dark} ${s.waysSection}`} aria-labelledby="ways-title">
         <div className={s.container}>
-          <div className={s.sectionIntro}><div><p className={s.eyebrow}>How to measure</p><h2 id="ways-title" className={s.sectionTitle}>3 easy ways to price your job.<br /><span className={s.mutedHeading}>1 simple app.</span></h2></div><p className={s.introAside}>However you measure today, there’s a way in that fits.</p></div>
-          <div className={s.waysGrid}>{([
-            ['calculator', 'Enter measurements in the app', 'Already have the numbers? Type them straight in.'],
-            ['ruler', 'Measure in the app', 'Upload a plan or photo and measure on screen.'],
-            ['spark', 'Tell QuoteCore+ the measurements', 'Chat the numbers through — the assistant builds the job.'],
-          ] as [IconName, string, string][]).map(([icon, title, text], i) => <div className={s.wayCard} key={title}><span className={s.wayIcon}><Icon name={icon} size={24} /></span><span className={s.tinyLabel}>0{i + 1}</span><h3>{title}</h3><p>{text}</p></div>)}
+          <div className={s.sectionIntro}><div><p className={s.eyebrow}>How it works</p><h2 id="ways-title" className={s.sectionTitle}>Two steps to your first quote.<br /><span className={s.mutedHeading}>One step for every job after.</span></h2></div><p className={s.introAside}>Most of the work happens once.</p></div>
+          <div className={s.waysFlow}>
+            <div className={s.stepCard}>
+              <span className={s.stepBadge}>Step 1 · Once</span>
+              <h3>Create your pricing</h3>
+              <p>Your materials, labour, waste and margins — saved as Smart Components™. Set it up once, or let us do it with you.</p>
+              <a href="/features/smart-components" className={s.textLink}>See Smart Components<Icon name="arrow" size={16} /></a>
+            </div>
+            <div className={s.stepCard}>
+              <span className={s.stepBadge}>Step 2 · Every job</span>
+              <h3>Add your measurements — any way you like</h3>
+              <div className={s.wayChips}>{([
+                ['document', 'Enter the numbers'],
+                ['ruler', 'Measure in the app'],
+                ['spark', 'Tell the assistant'],
+              ] as [IconName, string][]).map(([icon, label]) => <span className={s.wayChip} key={label}><Icon name={icon} size={15} />{label}</span>)}
+              </div>
+              <p className={s.chipNote}>Any of the three — the price builds itself.</p>
+            </div>
           </div>
+          <div className={s.waysOutcome}><Icon name="arrow" size={18} /><p>Quote, materials order, invoice — <strong>ready to send in a click or two.</strong></p></div>
         </div>
       </section>
 

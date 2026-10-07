@@ -313,18 +313,25 @@
 .toolCard > span { display: flex; gap: 30px; align-items: center; margin-top: auto; font-size: 13px; font-weight: 600; min-height: 30px; }
 .toolCard > span svg { transition: transform 120ms var(--ease); }
 
-/* "3 easy ways" dark band (owner 2026-10-07): compact, simple cards, reviews-card hover language. */
+/* "How it works" two-step band (owner 2026-10-07): 2 step cards + slim outcome strip. */
 .waysSection { background: radial-gradient(ellipse at 50% 0%,rgba(255,107,53,.07),transparent 42%),var(--focus-canvas); padding-block: 72px; }
 .waysSection .sectionIntro { margin-bottom: 34px; }
-.waysGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; }
-.wayCard { display: flex; flex-direction: column; padding: 26px 26px 24px; border: 1px solid var(--focus-border); border-radius: 16px; background: var(--focus-surface); box-shadow: 0 4px 18px rgba(0,0,0,.28); transition: transform 200ms var(--ease), border-color 200ms var(--ease), box-shadow 200ms var(--ease), background-color 200ms var(--ease); }
-.wayIcon { width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--orange-bright); background: rgba(255,138,61,.12); border: 1px solid rgba(255,138,61,.24); margin-bottom: 16px; }
-.wayCard .tinyLabel { color: var(--orange-bright); margin-bottom: 5px; }
-.wayCard h3 { font-size: 17px; font-weight: 650; line-height: 1.35; letter-spacing: -.015em; color: var(--focus-text); }
-.wayCard p { margin-top: 8px; font-size: 13px; line-height: 1.65; color: var(--focus-muted); }
+.waysFlow { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; }
+.stepCard { display: flex; flex-direction: column; align-items: flex-start; padding: 28px 28px 26px; border: 1px solid var(--focus-border); border-radius: 16px; background: var(--focus-surface); box-shadow: 0 4px 18px rgba(0,0,0,.28); transition: transform 200ms var(--ease), border-color 200ms var(--ease), box-shadow 200ms var(--ease), background-color 200ms var(--ease); }
+.stepBadge { display: inline-flex; padding: 5px 11px; border-radius: 999px; border: 1px solid rgba(255,138,61,.26); background: rgba(255,138,61,.1); color: var(--orange-bright); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 18px; }
+.stepCard h3 { font-size: 20px; font-weight: 650; line-height: 1.3; letter-spacing: -.02em; color: var(--focus-text); }
+.stepCard > p { margin-top: 10px; font-size: 13.5px; line-height: 1.7; color: var(--focus-muted); }
+.stepCard .textLink { margin-top: auto; padding-top: 18px; font-size: 13px; }
+.wayChips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.wayChip { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--focus-border); background: var(--focus-canvas); color: var(--focus-text); font-size: 12.5px; font-weight: 600; }
+.wayChip svg { color: var(--orange-bright); }
+.stepCard .chipNote { margin-top: auto; padding-top: 14px; }
+.waysOutcome { display: flex; align-items: center; gap: 14px; margin-top: 24px; padding: 17px 24px; border-radius: 14px; border: 1px solid rgba(255,138,61,.22); background: rgba(255,138,61,.08); }
+.waysOutcome svg { color: var(--orange-bright); flex: 0 0 auto; }
+.waysOutcome p { font-size: 14px; line-height: 1.6; color: var(--focus-text); }
+.waysOutcome strong { font-weight: 650; }
 @media (hover:hover) {
-  .wayCard:hover { transform: translateY(-4px); border-color: var(--focus-border-strong); background: var(--focus-raised); box-shadow: 0 20px 46px rgba(0,0,0,.4), 0 0 0 1px rgba(255,138,61,.14), 0 0 30px rgba(255,107,53,.1); }
-  .wayCard:hover .wayIcon { box-shadow: 0 0 18px rgba(255,107,53,.25); }
+  .stepCard:hover { transform: translateY(-4px); border-color: var(--focus-border-strong); background: var(--focus-raised); box-shadow: 0 20px 46px rgba(0,0,0,.4), 0 0 0 1px rgba(255,138,61,.14), 0 0 30px rgba(255,107,53,.1); }
 }
 
 .faqSection { background: radial-gradient(ellipse at 50% 100%,rgba(255,107,53,.075),transparent 38%),var(--focus-canvas); }
@@ -469,8 +476,8 @@
   .toolsSection { padding-block: 46px; }
   .toolsSection .sectionIntro { margin-bottom: 26px; }
   .waysSection { padding-block: 56px; }
-  .waysGrid { gap: 16px; }
-  .wayCard { padding: 22px 20px; }
+  .waysFlow { gap: 16px; }
+  .stepCard { padding: 24px 22px; }
   .faqGrid { gap: 40px; grid-template-columns: .8fr 1.2fr; }
   .footerWrap footer > div > div:first-child { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 28px; }
   .footerWrap footer > div > div:first-child > div { grid-column: 1 / -1; }
@@ -554,8 +561,10 @@
   .toolsSection { padding-block: 40px; }
   .waysSection { padding-block: 48px; }
   .waysSection .sectionIntro { margin-bottom: 28px; }
-  .waysGrid { grid-template-columns: 1fr; gap: 12px; }
-  .wayCard { padding: 24px 22px; }
+  .waysFlow { grid-template-columns: 1fr; gap: 12px; }
+  .stepCard { padding: 24px 22px; }
+  .waysOutcome { padding: 15px 18px; }
+  .waysOutcome p { font-size: 13px; }
   .faqItem summary { font-size: 13px; }
   .faqItem p { font-size: 13px; padding-inline: 0; }
   .closing { margin-top: 55px; padding-top: 55px; }
