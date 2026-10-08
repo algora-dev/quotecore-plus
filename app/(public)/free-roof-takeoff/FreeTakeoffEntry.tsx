@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useRef,type ReactNode} from 'react';
+import Link from 'next/link';
 import {Button,ActionLink,Icon,Steps} from './TakeoffUI';
 import {componentLimit,specUnit,TAKEOFF_CURRENCIES,type TakeoffCurrency} from './takeoff-examples';
 import type {TakeoffTradeConfig,TakeoffUnitSystem,TakeoffUnitOption,TakeoffComponentChoice,TakeoffComponentSpec} from './tradeConfig';
@@ -24,7 +25,7 @@ export function FreeTakeoffEntry({config,step,unitSystem,unitOption,componentCho
  const description=step===1?'Choose how measurements and prices appear in this takeoff.':step===2?'Start with our examples. Use them as they are, or adjust them for your job.':'Upload a drawing or use a sample. You’ll set the scale on the canvas next.';
  return <div className={`${s.root} ${s.page}`} data-takeoff-setup>
   <div className={s.container}>
-   <div className={s.crumb}><a href="/free-tools">Free tools</a><Icon name="chevron"/><span>Digital takeoff</span><span>/</span><span>{trade}</span></div>
+   <div className={s.crumb}><Link href="/free-tools">Free tools</Link><Icon name="chevron"/><span>Digital takeoff</span><span>/</span><span>{trade}</span></div>
    <div className={s.titleBar}><div><h2>{trade} digital takeoff</h2><p>Your plan, connected to quantities and a clearer price. No account needed to start.</p></div>
     {onChangeTrade?<Button onClick={onChangeTrade}><Icon name="layers"/>Change trade</Button>:<ActionLink href="/free-digital-takeoff"><Icon name="layers"/>All trades</ActionLink>}</div>
    <div className={s.layout}>

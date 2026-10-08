@@ -345,7 +345,7 @@ function TakeoffPhaseInner({
       trackFreeToolEvent('finish-no-payload');
       setFinishError('The report is not ready yet - nothing was lost. Tap Save & continue again.');
     }
-  }, [outlineAdapter, onFinish]);
+  }, [outlineAdapter, onFinish, config.tradeName]);
 
   const calib = useTouchCalibration({
     active: visible && touchActive && touchTool === 'calibrate',
@@ -542,7 +542,6 @@ export function FreeTakeoffApp({
   const orientationShownRef = useRef(false);
   useEffect(() => {
     if (stage.phase !== 'takeoff' || orientationShownRef.current) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (detectDevice() === 'mobile') {
       orientationShownRef.current = true;
       setOrientationNoticeOpen(true);

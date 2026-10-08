@@ -31,7 +31,9 @@ export function ActionLink({primary=false,quiet=false,className='',children,...p
 /** Native dialog supplies modal semantics, focus containment and Escape. */
 export function Dialog({title,description,children,footer,onClose}:{title:string;description?:string;children:ReactNode;footer?:ReactNode;onClose:()=>void}){
   const ref=useRef<HTMLDialogElement>(null),id=useId();
-  const closeRef=useRef(onClose);closeRef.current=onClose;
+  const closeRef=useRef(onClose);
+  // Latest-value ref, refreshed after each render (refs must not be written during render).
+  useEffect(() => { closeRef.current = onClose; });
   useEffect(()=>{const el=ref.current;if(!el)return;const focus=document.activeElement as HTMLElement|null;
     const previous=document.body.style.overflow;document.body.style.overflow='hidden';el.showModal();el.querySelector<HTMLElement>('[data-initial-focus]')?.focus();
     return()=>{el.close();document.body.style.overflow=previous;focus?.focus();};},[]);

@@ -13,7 +13,7 @@ const number=(n:number)=>n.toLocaleString(undefined,{maximumFractionDigits:2,min
 const money=(n:number,currency:string)=>new Intl.NumberFormat('en-NZ',{style:'currency',currency,currencyDisplay:'code'}).format(n);
 function Benefits(){return <div className={s.upsell}><p className={s.eyebrow}>Keep the momentum</p><h3>Set it up once.<br/>Use it on every job.</h3><p>In the paid QuoteCore+ app, your work doesn’t end with this session.</p>
   <ul><li><Icon name="check"/>Save your component library and reuse your pricing.</li><li><Icon name="check"/>Keep takeoffs and documents together with your jobs.</li><li><Icon name="check"/>Create and send quotes, orders and invoices.</li></ul>
-  <ActionLink href="/takeoff-demo" target="_blank" rel="noopener noreferrer"><Icon name="play"/>Try the app demo</ActionLink>
+  <ActionLink href="/demo" target="_blank" rel="noopener noreferrer"><Icon name="play"/>Try the app demo</ActionLink>
   <div className={s.upsellLinks}><a href="/" target="_blank" rel="noopener noreferrer">Explore QuoteCore+</a><span>·</span><a href="/done-for-you-setup" target="_blank" rel="noopener noreferrer">Done For You Setup</a></div>
  </div>;}
 function TransferDialog({report,onClose,onOpenQuote}:{report:ReportModel;onClose:()=>void;onOpenQuote?:(url:string)=>void}){
