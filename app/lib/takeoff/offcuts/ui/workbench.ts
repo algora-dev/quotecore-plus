@@ -1,3 +1,7 @@
+import { CalculationController } from '../reliability/calculation';
+import { STAGE_LABELS, type CalculationJournal, type CheckedPlan, type WorkerMessage } from '../reliability/protocol';
+import { loadCalculationJournal, storeCalculationJournal } from '../reliability/journalStore';
+import type { ReviewDocument } from '../persistence/reviews';
 import { cleanupPanel, sharedEditPanel, geometryStyles } from './geometryReview';
 import { moveSharedVertex, moveSharedEdge, assertReviewEdit } from '../core/sharedTopology';
 import { mergeSharedFaces, replaceSharedVertices, splitSharedFace, retainUnchangedReview } from '../core/sharedEditing';
@@ -11,7 +15,7 @@ import { confirmReviewedFace, flowAngle, flowFromAngle, hasFlow, nextFlowAngle, 
 import type { MaterialSection } from '../core/sections';
 import { rootSheetLedger, purchaseLedgerCsv } from '../core/purchaseLedger';
 import { quantitySummary, quoteQuantityProposal, type QuantitySummary, type QuoteQuantityBasis, type QuoteQuantityProposal } from '../core/quantities';
-import type { AlternativePlanResult, DecisionTrace, Draft, Issue, Point, RoofFace, RoofInput, Solution } from '../core/types';
+import type { DecisionTrace, Draft, Issue, Point, RoofFace, RoofInput, Solution } from '../core/types';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../core/types';
 import { deriveFaces } from '../core/graph';
 import { auditFaceBehaviour, FACE_GEOMETRY_MODEL } from '../core/faceGeometry';
@@ -61,6 +65,12 @@ export interface OffcutOnePagerPayload {
   meta: { savedAt: string; engineVersion: string; pageId: string; areaScopeId: string | null };
 }
 export interface WorkbenchOptions {
+  /** Host must persist source + reviewed faces before the worker starts. */
+  beforeCalculation?: (document: ReviewDocument, journal: CalculationJournal) => Promise<void>;
+  onReviewCheckpoint?: (document: ReviewDocument) => void;
+  onCalculationChange?: (journal: CalculationJournal) => void;
+  initialCalculation?: CalculationJournal|null;
+  calculationLimitMs?: number;
   initialDraft?: Draft;
   /** Authenticated repository supplied by host; no service-role client. */
   reviewRepository?: ReviewRepository;
@@ -133,7 +143,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   }
   let savingOnePager=false;
   let phase: 'faces'|'solution' = draft.solution?'solution':'faces';
-  let selectedFaceId='', selectedOffcutId='', selectedGroupId='', advancedOpen=false, editPieces=false, worker: Worker|null=null, jobId='', busy=false, progress='', disposed=false;
+  let selectedFaceId='', selectedOffcutId='', selectedGroupId='', advancedOpen=false, editPieces=false, calculation: CalculationController|null=null, jobId='', busy=false, progress='', disposed=false;
   let issues: Issue[] = [...adapterIssues()], error='', stale=false, notice='';
   let repairs:BoundaryRepair[]=[], drawingAdjustments:DrawingAdjustment[]=[], selectedRepairId='';
   let drawHover:Point|undefined, snapHint:DrawingSnap|null=null, drawingFrame:number|null=null;
@@ -192,17 +202,37 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     selectedSectionId='';quotePreviewOpen=false;panelTarget='#qc-salvage-comparison';render();
   }
 
+  let lastCalculation:CalculationJournal|null=options.initialCalculation??loadCalculationJournal(reviewScope(capturedRoof));
+  let validationCache:{solution:Solution;key:string;checks:Issue[]}|null=null;
+  let recoverySignature='';
+  function calculationChanged(journal:CalculationJournal):void {
+    lastCalculation=journal;storeCalculationJournal(reviewScope(capturedRoof),journal);
+    try{options.onCalculationChange?.(journal);}catch(e){saveState={status:'error',revision:saveState?.revision??0,message:message(e)};}
+    progress=STAGE_LABELS[journal.stage]+(journal.stage==='layout-search'&&journal.total?` ${journal.completed} / ${journal.total} layouts`: '');
+    // Progress must not repeatedly rebuild geometry, material ledgers or the sidebar.
+    const text=shadow.querySelector<HTMLElement>('[data-run-progress]');if(text)text.textContent=progress;
+  }
+  function reviewDocument():ReviewDocument {return createReviewDocument({draft,sourceRoof:capturedRoof,capture:options.inputCapture,plans:layouts,selectedPlanIndex:layoutIndex,diagnostics:{initialDetection,issues,repairs,adjustments:drawingAdjustments}});}
+  function validationKey():string{return fingerprint([draft.roof,draft.faces,draft.profile,draft.settings]);}
+  function checkedDraftIssues():Issue[]{
+    if(!draft.solution)return [];const key=validationKey();
+    if(validationCache?.solution!==draft.solution||validationCache.key!==key)validationCache={solution:draft.solution,key,checks:validateDraft(draft)};
+    return validationCache.checks;
+  }
+  function rememberChecked(plan:CheckedPlan):void {if(draft.solution)validationCache={solution:draft.solution,key:validationKey(),checks:plan.checks};}
   let storedReview:StoredReview|null=null, saveReady=false, saveSignature='';
   let saveState:SaveState|null=options.reviewRepository?{status:'loading',revision:0,message:'Checking for a saved review…'}:null;
   const reviewSaver=options.reviewRepository?new ReviewSaver(options.reviewRepository,reviewScope(capturedRoof),state=>{saveState=state;if(!disposed)render();}):null;
   function queueReviewSave():void {
     if(salvagePreview)return;
-    if(!reviewSaver||!saveReady||disposed||stale)return;
-    const signature=fingerprint([draft,layouts,layoutIndex,issues,repairs,drawingAdjustments]);if(signature===saveSignature)return;
+    if(disposed||stale)return;
+    const signature=fingerprint([draft,layouts,layoutIndex,issues,repairs,drawingAdjustments]);
+    if(signature===saveSignature&&signature===recoverySignature)return;
     try{
       const document=createReviewDocument({draft,sourceRoof:capturedRoof,capture:options.inputCapture,plans:layouts,selectedPlanIndex:layoutIndex,
         diagnostics:{initialDetection,issues,repairs,adjustments:drawingAdjustments}});
-      saveSignature=signature;reviewSaver.queue(document);
+      if(signature!==recoverySignature){options.onReviewCheckpoint?.(document);recoverySignature=signature;}
+      if(reviewSaver&&saveReady&&signature!==saveSignature){saveSignature=signature;reviewSaver.queue(document);}
     }catch(e){saveState={status:'error',revision:saveState?.revision??0,message:message(e)};}
   }
   function applySavedReview(record:StoredReview):void {
@@ -240,7 +270,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if (history.length > 40) history.shift();
     redoHistory.length = 0;
   }
-  function cancel(): void { worker?.terminate(); worker = null; busy = false; jobId = ''; }
+  function cancel(): void { calculation?.dispose(); calculation = null; busy = false; jobId = ''; }
+  function cancelByUser():void {calculation?.cancel();cancel();notice='Calculation cancelled. Reviewed faces and any original plan are kept.';render(true);}
   function invalidate(): void { options.onPlanInvalidated?.(); salvagePreview=null;salvageBase=null;salvageDialog=false;lastSalvageSearch=null;alternativeDialog=null;alternativeFocus=null;
     cancel(); draft.solution = null; layouts=[];layoutIndex=0; phase = 'faces'; selectedOffcutId = ''; selectedGroupId = '';
     selectedSectionId='';quotePreviewOpen=false;quantityCache=null;
@@ -287,7 +318,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     return partitionCache;
   }
   function allIssues(): Issue[] {
-    const current = draft.solution ? validateDraft(draft) : validationAttempted
+    const current = draft.solution ? checkedDraftIssues() : validationAttempted
       ? validateInputs(draft.roof, draft.faces, draft.profile, draft.settings)
       : [...partition().issues, ...draft.faces.flatMap(f => validateRing(f.polygon) ? [] : validateFaceDirections(f, draft.roof))];
     const small = draft.faces.filter(f => !validateRing(f.polygon) && narrowFace(f, draft.roof)).map(f => ({
@@ -529,6 +560,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     const focused = coverage.find(r => r.id === focusedDiagnosticId) ?? coverage.find(r => r.severity === 'error') ?? coverage[0];
     const focusedIndex = focused ? coverage.indexOf(focused) : 0;
     const coverageLabel = focused?.kind === 'gap' ? 'Uncovered roof area' : focused?.kind === 'outside' ? 'Face outside the roof' : focused?.kind === 'overlap' ? 'Faces overlap' : 'Roof outlines overlap';
+    const interrupted=!busy&&!error&&lastCalculation&&['saving','running','failed','timed-out'].includes(lastCalculation.status)?`<div class="qc-note" role="status"><b>Previous calculation did not finish</b><p>Your reviewed faces are kept. Last stage: ${esc(STAGE_LABELS[lastCalculation.stage])}</p><button data-action="export-trace">Export diagnostics</button></div>`:'';
     const coverageAlert = focused ? `<div class="qc-note ${focused.severity === 'error' ? 'qc-error' : ''}"><div class="qc-check-title">${icon('warning')}${esc(coverageLabel)}</div><p>${(focused.areaMm2 / 1e6).toFixed(4)} m² · ${focused.severity === 'error' ? 'Check the highlighted region before calculating.' : 'Small drawing discrepancy. Shown in amber; draft calculation can continue.'}</p><div class="qc-view-issues"><button data-action="focus-issue" data-id="${focused.id}">${icon('focus')}Show on plan</button>${coverage.length > 1 ? `<button data-action="next-issue">Next (${focusedIndex + 1}/${coverage.length})</button>` : ''}${focused.severity==='warning'?`<button data-action="ignore-warning" data-id="${warningKey(partition().issues.find(i=>i.objectId===focused.id)!,draft)}">Ignore</button>`:`<button data-action="align-review">Align small gaps</button><button data-action="add-face">Draw missing face</button>`}</div></div>` : '';
     // Show an actionable input problem before routine confirmation reminders.
     // A changed cover must expose an incompatible locked setout immediately.
@@ -558,10 +590,10 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       ${errors.length>1?`<small>${errors.length} checks remain. Other valid faces are preserved.</small>`:''}</div>`:'';
     const advisory=visibleIssues.find(i=>i.code==='BACKGROUND_IMAGE'&&i.severity==='warning')??visibleIssues.find(i=>i.severity==='warning'&&!partition().regions.some(r=>r.id===i.objectId)&&!['SNAPPED_ENDPOINTS','NARROW_FACE','FLOW_REVIEW'].includes(i.code));
     const advisoryCard=advisory?`<details class="qc-advisory"><summary>${esc(issueTitle(advisory,draft.faces))}</summary><p>${esc(advisory.message)}</p><button data-action="ignore-warning" data-id="${warningKey(advisory,draft)}">Ignore</button></details>`:'';
-    shadow.innerHTML = `<style>${styles}${geometryStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.19 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    shadow.innerHTML = `<style>${styles}${geometryStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.20 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
-      <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${geometryTool==='split'?'Click two boundary points · Esc cancels':geometryTool==='merge'?'Click a neighbouring face · Esc cancels':drawPoints ? 'Click corners · click first point / Enter to finish · Backspace removes last · Esc cancels · Alt bypasses snap' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
-      <aside class="qc-sidebar" aria-label="Offcut review controls">${storageCard}${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}<button data-action="dismiss-action-error">Dismiss message</button></div>` : ''}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advisoryCard}${advanced}</aside></main>
+      <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${geometryTool==='split'?'Click two boundary points · Esc cancels':geometryTool==='merge'?'Click a neighbouring face · Esc cancels':drawPoints ? 'Click corners · click first point / Enter to finish · Backspace removes last · Esc cancels · Alt bypasses snap' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span data-run-progress>${esc(progress)}</span><span class="qc-muted">The layout count is only one stage. Cancel keeps your reviewed faces.</span><div class="qc-actions"><button data-action="cancel">Cancel</button><button data-action="export-trace">Export diagnostics</button></div></div>` : ''}</section>
+      <aside class="qc-sidebar" aria-label="Offcut review controls">${storageCard}${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}<button data-action="export-trace">Export diagnostics</button><button data-action="dismiss-action-error">Dismiss message</button></div>` : ''}${interrupted}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advisoryCard}${advanced}</aside></main>
       <footer class="qc-footer"><span>Draft only - verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>${salvageDialog&&salvagePreview?salvageResultDialog(salvagePreview,draft.faces):alternativeDialog?noAlternativeDialog(alternativeDialog,draft.solution):''}`;
     renderScene(); restoreView(view, resetScroll);
     if(panelTarget){const target=panelTarget;panelTarget=null;revealPanel(target);}
@@ -588,10 +620,11 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     let currentIssues:Issue[]=issues;
     try{currentIssues=allIssues();}catch(e){currentIssues=[...issues,{severity:'error',code:'DIAGNOSTIC_CHECK_FAILED',message:message(e)}];}
     const source=structuredClone(capturedRoof);delete source.imageUrl;
-    return JSON.stringify({schemaVersion:1,kind:'quotecore-offcut-debug',engineVersion:'2.19',phase,planningModel:FACE_GEOMETRY_MODEL,
+    return JSON.stringify({schemaVersion:1,kind:'quotecore-offcut-debug',engineVersion:'2.20',phase,planningModel:FACE_GEOMETRY_MODEL,
       boundaryBehaviour:auditFaceBehaviour(draft.faces),
       liveInputSnapshot:options.inputCapture?JSON.parse(exportLiveCapture(options.inputCapture)):null,
       persistence:{kind:options.reviewRepository?.kind??'not-connected',state:saveState},
+      calculation:lastCalculation,
       sourceRoofAtOpen:source,initialDetection,
       inputEvidence:options.inputCapture?'live-workspace-capture':'direct-roof-input; host adapter evidence not supplied',
       selectedPlanIndex:layoutIndex,approvedDraft:JSON.parse(exportDraft(committed)),
@@ -604,66 +637,68 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function ensureCurrent():void { if(stale||options.readCurrentSourceRevision&&options.readCurrentSourceRevision()!==capturedRevision)throw new Error('Takeoff changed. Reopen this review from the current canvas.'); }
   function run(objective?:'simpler'|'less-material'|'salvage'):void {
     if(busy)return;
-    ensureCurrent();
-    validationAttempted = true;
-    const detected = currentDetectionIssues(issues, draft.faces);
-    if (detected.some(i => i.severity === 'error')) { pendingSourceAck = true; render(true); return; }
-    if (validateInputs(draft.roof, draft.faces, draft.profile, draft.settings).some(i => i.severity === 'error')) { render(true); return; }
+    ensureCurrent();validationAttempted=true;
+    if(storedReview){error='Choose Resume saved review or Use current takeoff before calculating.';render();return;}
+    if(currentDetectionIssues(issues,draft.faces).some(i=>i.severity==='error')){pendingSourceAck=true;render(true);return;}
+    if(validateInputs(draft.roof,draft.faces,draft.profile,draft.settings).some(i=>i.severity==='error')){render(true);return;}
     if(objective&&!draft.solution)throw new Error('Create a first plan before asking for an alternative.');
-    if(objective&&layouts.length>=12)throw new Error('Export the chosen plan; this session already has 12 alternatives.');
+    if(objective&&layouts.length>=12)throw new Error('This session already has 12 alternatives.');
     if(salvagePreview)throw new Error('Choose or discard the reuse preview first.');
     const isSalvage=objective==='salvage';
     const previous=objective?structuredClone(isSalvage?draft.solution!:alternativeReference(draft.solution!,layouts,objective as AlternativeObjective)):null;
     if(isSalvage&&previous?.salvage)throw new Error('Choose the original plan to check more reuse.');
     if(objective&&!isSalvage&&hasQualifyingAlternative(layouts,previous,objective as AlternativeObjective))return;
-    alternativeDialog=null;alternativeFocus=null;notice='';
-    checkpoint();cancel();error='';selectedSectionId='';quotePreviewOpen=false;selectedOffcutId='';busy=true;
-    progress=isSalvage?'Checking unused cuts against straight filler runs…':objective==='simpler'?'Looking for a worthwhile simpler plan…':objective==='less-material'?'Looking for worthwhile material savings with limited extra cutting…':'Testing longest banks and complete offcut sets…';jobId=localId();
-    const id=jobId;
-    try {
-      worker=options.createWorker?.()??new Worker(new URL('../worker.ts',import.meta.url),{type:'module'});
-      worker.onmessage=(event:MessageEvent)=>{
-        if(disposed||event.data.id!==jobId||id!==jobId)return;
-        if(event.data.kind==='progress'){progress=`${event.data.completed} / ${event.data.total} layout trials`;render();return;}
-        if(isSalvage&&event.data.kind!=='salvage-result'&&event.data.kind!=='error'){
-          error='The loaded worker does not support this reuse check. Your original plan was kept. Reload the updated application and try again.';cancel();render();return;
-        }
-        if(event.data.kind==='result'){
-          try{ensureCurrent();}catch(e){error=message(e);cancel();render();return;}layouts=[structuredClone(event.data.solution as Solution)];layoutIndex=0;draft.solution=structuredClone(layouts[0]);lastSearchTrace=null;alternativeAttempt=0;phase='solution';selectedOffcutId='';selectedGroupId='';advancedOpen=false;editPieces=false;
-          // Suggestions become visible arrows without mutating the locked input
-          // face state used to fingerprint the original solve request.
-          notice=''; cancel();render(true);
-        }else if(event.data.kind==='salvage-result'){
-          try{ensureCurrent();}catch(e){error=message(e);cancel();render();return;}
-          const result=event.data.result as SalvageResult;
-          if(!isSalvage||!result?.report||result.report.model!=='terminal-filler-salvage-v1'||!['found','no-worthwhile-reuse'].includes(result.status)||
-            (result.status==='found')!==!!result.solution||result.solution&&result.solution.engineVersion!=='2.19'){
-            error='The reuse worker returned an unsupported result. Original plan kept.';cancel();render();return;
-          }
-          if(!previous||!draft.solution||salvagePhysicalFingerprint(draft.solution)!==salvagePhysicalFingerprint(previous)||result.report.basePhysicalFingerprint!==salvagePhysicalFingerprint(previous)){
-            error='The selected plan changed while checking reuse. The original was kept.';cancel();render();return;
-          }
-          try{if(result.solution&&validateDraft({...draft,solution:result.solution}).some(i=>i.severity==='error'))throw new Error('Invalid reuse preview.');}
-          catch{error='The reuse preview failed validation. Original plan kept.';cancel();render();return;}
+    alternativeDialog=null;alternativeFocus=null;notice='';checkpoint();cancel();error='';selectedSectionId='';quotePreviewOpen=false;selectedOffcutId='';busy=true;jobId=localId();
+    const id=jobId,request=structuredClone({roof:draft.roof,faces:draft.faces,profile:draft.profile,settings:draft.settings});
+    const original={solution:structuredClone(draft.solution),layouts:structuredClone(layouts),layoutIndex,phase};
+    const active=new CalculationController(request,objective??'recommended',{
+      progress:calculationChanged,
+      failure:(text,fallback)=>{
+        if(disposed||jobId!==id)return;
+        try{
+          ensureCurrent();
+          draft.solution=original.solution;layouts=original.layouts;layoutIndex=original.layoutIndex;phase=original.phase;salvagePreview=null;salvageBase=null;salvageDialog=false;
+          if(fallback&&!objective){layouts=[structuredClone(fallback.solution)];layoutIndex=0;draft.solution=structuredClone(layouts[0]);rememberChecked(fallback);phase='solution';notice='Using the last fully checked complete plan; later improvements did not finish.';}
+          error=text;
+        }catch(e){error=message(e);}
+        finally{cancel();try{render(true);}catch(renderError){shadow.querySelector('.qc-busy')?.remove();const alert=document.createElement('div');alert.setAttribute('role','alert');alert.textContent='The result view could not render. Use Export diagnostics; reviewed data is kept. '+message(renderError);shadow.prepend(alert);}}
+      },
+      result:(event:WorkerMessage)=>{
+        if(disposed||jobId!==id)return;ensureCurrent();
+        if(event.kind==='result'){
+          layouts=[structuredClone(event.plan.solution)];layoutIndex=0;draft.solution=structuredClone(layouts[0]);rememberChecked(event.plan);
+          lastSearchTrace=null;alternativeAttempt=0;phase='solution';selectedGroupId='';advancedOpen=false;editPieces=false;
+        }else if(event.kind==='salvage-result'){
+          const result=event.result;
+          if(!isSalvage||!result?.report||result.report.model!=='terminal-filler-salvage-v1'||!['found','no-worthwhile-reuse'].includes(result.status)||(result.status==='found')!==!!result.solution)throw new Error('Unsupported reuse result');
+          if(!previous||!draft.solution||salvagePhysicalFingerprint(draft.solution)!==salvagePhysicalFingerprint(previous)||result.report.basePhysicalFingerprint!==salvagePhysicalFingerprint(previous))throw new Error('Reuse parent changed');
           editPieces=false;editGroups=false;salvageBase=structuredClone(previous);salvagePreview=result;lastSalvageSearch=result.report;salvageDialog=true;salvageViewingBase=true;
-          cancel();render();
-        }else if(event.data.kind==='alternative-result'){
-          try{ensureCurrent();}catch(e){error=message(e);cancel();render();return;}
-          const result=event.data.result as AlternativePlanResult;lastSearchTrace=result.trace;
-          if(result.status==='found'&&result.solution){
+        }else if(event.kind==='alternative-result'){
+          const result=event.result;lastSearchTrace=result.trace;
+          if(result.status==='found'&&result.solution&&event.plan){
             const signature=planSignature(result.solution);
-            if(layouts.some(s=>planSignature(s)===signature)){notice='';alternativeDialog=(objective==='less-material'?'less-material':'simpler');}
-            else {layouts.push(structuredClone(result.solution));layoutIndex=layouts.length-1;draft.solution=structuredClone(result.solution);phase='solution';notice='';lastSearchTrace=null;panelTarget='#qc-plan-choice';}
-          }else {notice='';alternativeDialog=(objective==='less-material'?'less-material':'simpler');}
-          selectedOffcutId='';selectedGroupId='';cancel();render();
-        }else if(event.data.kind==='error'){error=event.data.message;cancel();render();}
-      };
-      worker.onerror=(e)=>{error=`Worker failed: ${e.message}. Check the module-worker path / Content Security Policy.`;cancel();render();};
-      worker.postMessage({id,request:{roof:draft.roof,faces:draft.faces,profile:draft.profile,settings:draft.settings},
-        ...(isSalvage&&previous?{salvage:{base:previous}}:objective&&previous?{alternative:{objective,previous,attempt:++alternativeAttempt,
-          excludedSignatures:layouts.map(planSignature),maxExtraMaterialPercent:SIMPLER_POLICY.maxExtraPercent}}:{})});
-    } catch(e){error=message(e);cancel();}
-    render();
+            if(layouts.some(s=>planSignature(s)===signature))alternativeDialog=objective==='less-material'?'less-material':'simpler';
+            else{layouts.push(structuredClone(result.solution));layoutIndex=layouts.length-1;draft.solution=structuredClone(result.solution);rememberChecked(event.plan);phase='solution';lastSearchTrace=null;panelTarget='#qc-plan-choice';}
+          }else alternativeDialog=objective==='less-material'?'less-material':'simpler';
+        }
+        selectedOffcutId='';selectedGroupId='';busy=false;render(true);cancel();
+      },
+    },options.calculationLimitMs,id);
+    calculation=active;calculationChanged(active.journal());render();
+    // Save/flush has its own bound and cannot swallow cancellation. The worker
+    // starts ONLY after confirmed persistence in a connected host.
+    void (async()=>{
+      let timer:ReturnType<typeof setTimeout>|undefined;
+      try{
+        const document=reviewDocument();
+        await Promise.race([(async()=>{await options.beforeCalculation?.(document,active.journal());if(reviewSaver){if(!saveReady)throw new Error('Review saving is not ready. Retry or export before calculating.');queueReviewSave();await reviewSaver.flush();}})(),
+          new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error('Saving the recovery checkpoint took too long. Retry saving; no calculation has started.')),25_000);})]);
+        if(disposed||!busy||calculation!==active||jobId!==id)return;ensureCurrent();
+        active.start(()=>options.createWorker?.()??new Worker(new URL('../worker.ts',import.meta.url),{type:'module'}),
+          isSalvage&&previous?{salvage:{base:previous}}:objective&&previous?{alternative:{objective:objective as AlternativeObjective,previous,attempt:++alternativeAttempt,excludedSignatures:layouts.map(planSignature),maxExtraMaterialPercent:SIMPLER_POLICY.maxExtraPercent}}:{});
+      }catch(e){if(!disposed&&calculation===active)active.fail('failed',message(e));}
+      finally{if(timer)clearTimeout(timer);}
+    })();
   }
   function click(event:Event):void {
     const target=(event.target as Element).closest<HTMLElement>('[data-action]');if(!target)return;
@@ -671,6 +706,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if(salvagePreview&&!['salvage-keep','salvage-accept','salvage-review','salvage-view-base','salvage-view-candidate','salvage-locate','clear-selection','select-section','close','fit','zoom-in','zoom-out','pan','toggle-pan','export-trace'].includes(action??''))return;
 
     if (target instanceof HTMLButtonElement && target.disabled) return;
+    if(busy&&!['cancel','export-trace','export-json','export-input','close'].includes(action??''))return;
     try {
       if(action==='resume-review'&&storedReview){applySavedReview(storedReview);return;}
       if(action==='start-fresh-review'){storedReview=null;saveReady=true;saveSignature='';notice='Current takeoff kept. Saving this review does not change the main takeoff.';render();return;}
@@ -680,7 +716,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         void reviewSaver?.flush().catch(()=>{});return;
       }
       if(action==='close'){options.onClose?.();return;}
-      if(action==='cancel'){cancel();render();return;}
+      if(action==='cancel'){cancelByUser();return;}
       if(action==='salvage-search'){run('salvage');return;}
       if(action==='salvage-keep'){endSalvage(false);return;}
       if(action==='salvage-accept'){endSalvage(true);return;}
@@ -697,8 +733,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='alternative-simpler'){run('simpler');return;}
             if(action==='export-ledger'||action==='export-stock-csv'){
         ensureCurrent();const ledger=rootSheetLedger(draft.solution!);
-        if(action==='export-ledger')download('quotecore-v2.19-material-ledger.json',JSON.stringify({engineVersion:'2.19',ledger,receiverSafety:draft.solution!.receiverSafety,stockLengthRefinement:draft.solution!.stockLengthRefinement,stockEndRows:stockLengthRows(draft.solution!)},null,2),'application/json');
-        else download('quotecore-v2.19-new-sheets.csv',purchaseLedgerCsv(ledger),'text/csv');
+        if(action==='export-ledger')download('quotecore-v2.20-material-ledger.json',JSON.stringify({engineVersion:'2.20',ledger,receiverSafety:draft.solution!.receiverSafety,stockLengthRefinement:draft.solution!.stockLengthRefinement,stockEndRows:stockLengthRows(draft.solution!)},null,2),'application/json');
+        else download('quotecore-v2.20-new-sheets.csv',purchaseLedgerCsv(ledger),'text/csv');
         notice='Purchased parent-sheet audit exported; offcuts are not additional purchases.';render();return;
       }
       if(action==='export-input'){
@@ -716,7 +752,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       }
       if(action==='export-trace'||action==='copy-trace'){
         if(action==='export-trace'){
-          download('quotecore-offcuts-v2.19-debug.json',debugBundle(),'application/json');
+          download('quotecore-offcuts-v2.20-debug.json',debugBundle(),'application/json');
           notice='Debug bundle exported with the captured input and face diagnostics. No cut plan is required.';render();return;
         }
         if(!draft.solution)throw new Error('No cut-plan trace exists yet. Export the debug bundle for face-detection diagnostics.');
@@ -1158,6 +1194,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     flushReview: async()=>{queueReviewSave();await reviewSaver?.flush();if(options.reviewRepository&&!saveReady&&!storedReview)throw new Error('Saving is not ready. Retry or export before closing.');},
     getSaveState:()=>saveState,
     destroy: () => {
+      calculation?.cancel('Calculation stopped because the review was closed.');
       disposed = true; reviewSaver?.dispose(); if(drawingFrame!==null)cancelAnimationFrame(drawingFrame); viewport.destroy();if(background){background.onload=null;background.onerror=null;background=null;} cancel(); pointerCancel(); if (watch) clearInterval(watch);
       for (const [type, fn, config] of listeners) shadow.removeEventListener(type, fn, config);
       window.removeEventListener('keydown', globalKeyDown); window.removeEventListener('keyup', globalKeyUp); window.removeEventListener('blur', blur);

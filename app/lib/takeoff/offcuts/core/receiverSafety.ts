@@ -363,7 +363,7 @@ export function validateReceiverSafety(s:Solution):Issue[] {
 }
 function validateReceiverCertificate(s:Solution):Issue[] {
   const issues:Issue[]=[],r=s.receiverSafety;
-  if(!r)return (s.engineVersion==='2.13'||s.engineVersion==='2.14'||s.engineVersion==='2.15'||s.engineVersion==='2.16'||s.engineVersion==='2.17'||s.engineVersion==='2.18'||s.engineVersion==='2.19')&&s.settings.stockMode==='bank-first'
+  if(!r)return (s.engineVersion==='2.13'||s.engineVersion==='2.14'||s.engineVersion==='2.15'||s.engineVersion==='2.16'||s.engineVersion==='2.17'||s.engineVersion==='2.18'||(s.engineVersion==='2.19'||s.engineVersion==='2.20'))&&s.settings.stockMode==='bank-first'
     ?[{severity:'error',code:'RECEIVER_SAFETY',message:'This plan is missing its receiver check. Recalculate from the reviewed roof.'}]:issues;
   const error=(message:string,faceId?:string)=>issues.push({severity:'error' as const,code:'RECEIVER_SAFETY',message,faceId});
   if(r.model!==RECEIVER_SAFETY_MODEL||!Array.isArray(r.families)||r.mode!==(s.settings.receiverPhaseMode??'quote-safe')||r.basis!=='fixed-purchased-parents-and-receiver-grid'){error('Unknown valley receiver safety model.');return issues;}

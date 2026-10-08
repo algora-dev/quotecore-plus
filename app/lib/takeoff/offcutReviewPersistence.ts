@@ -1,3 +1,4 @@
+import { withTimeout } from './offcuts/reliability/timeout';
 /**
  * Host adapter: connects the isolated Find Offcuts module's account review
  * repository to the app's authenticated Supabase browser client.
@@ -22,17 +23,13 @@ export async function getAccountReviewRepository(): Promise<ReviewRepository | n
     const { createClient } = await import('@/app/lib/supabase/client');
     const { createAccountReviewRepository } = await import('@/app/lib/takeoff/offcuts/persistence/browserReviewStore');
     const client = createClient();
-    const rpcLike = client.rpc.bind(client) as unknown as ReviewRpcClient['rpc'];
-    // Belt-and-braces timeout: supabase-js has no default request timeout, and a
-    // hung draft save must never block the review UI indefinitely.
-    const rpc: ReviewRpcClient = {
-      rpc: (name, args) => Promise.race([
-        Promise.resolve(rpcLike(name, args)),
-        new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('The offcut draft store did not respond in time. Retry or export the draft.')), RPC_TIMEOUT_MS);
-        }),
-      ]),
-    };
+    type Abortable = ReturnType<ReviewRpcClient['rpc']> & {abortSignal(signal:AbortSignal):ReturnType<ReviewRpcClient['rpc']>};
+    const rpcLike = client.rpc.bind(client) as unknown as (name:string,args:Record<string,unknown>)=>Abortable;
+    const rpc: ReviewRpcClient = {rpc:(name,args)=>{
+      const abort=new AbortController();
+      return withTimeout(rpcLike(name,args).abortSignal(abort.signal),RPC_TIMEOUT_MS,
+        'The offcut draft store did not respond. Reload its saved revision or export before retrying.',()=>abort.abort());
+    }};
     cached = createAccountReviewRepository(rpc);
     return cached;
   } catch {

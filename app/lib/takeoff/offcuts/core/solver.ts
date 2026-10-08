@@ -1,3 +1,4 @@
+import type { CalculationStage } from '../reliability/protocol';
 import { refinePurchasedStock } from './stockLength';
 import { validateSalvageCertificate } from './salvageModel';
 import { replayProvisionalDestinations } from './provisionalReuse';
@@ -19,6 +20,9 @@ export function facesRevision(request: SolveRequest): string {
   return fingerprint({ faces: request.faces, profile: request.profile, settings: request.settings });
 }
 export interface SearchHooks {
+  onStage?: (stage: CalculationStage) => void;
+  /** Advisory complete incumbent; the worker must validate the FULL draft before publishing it. */
+  onCheckedCandidate?: (solution: Solution) => void;
   onProgress?: (completed: number, total: number) => void;
   shouldCancel?: () => boolean; now?: () => number;
   onDecisionTrace?: (trace: DecisionTrace) => void;
@@ -28,14 +32,18 @@ export interface SearchHooks {
 }
 /** Returns distinct complete layouts, never random reruns of the same plan. */
 export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}): Solution[] {
+  hooks.onStage?.('layout-search');
   let solutions = request.settings.stockMode === 'bank-first'
     ? optimiseBankLayouts(request, hooks) : [optimiseLegacy(request, hooks)];
   for (const solution of solutions) {
+    hooks.onStage?.('receiver-safety');
     if(request.settings.stockMode==='bank-first')protectValleyReceivers(request,solution,hooks.shouldCancel);
-    solution.engineVersion='2.19';
+    solution.engineVersion='2.20';
     solution.layoutId=planSignature(solution);
+    hooks.onStage?.('physical-validation');
     solution.issues.push(...validateSolution(solution));
     if (solution.issues.some(i => i.severity === 'error')) solution.status = 'invalid';
+    else if((hooks.planSearch?.objective??'recommended')==='recommended')hooks.onCheckedCandidate?.(solution);
   }
   // V2.16 leaves the proven sequential plans intact. Only the best physically
   // checked Recommended incumbent is eligible for a transactional destination
@@ -43,6 +51,7 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
   if(request.settings.stockMode==='bank-first'&&(hooks.planSearch?.objective??'recommended')==='recommended'){
     const incumbent=solutions.filter(s=>s.status!=='invalid').sort((a,b)=>a.metrics.newMaterialMm2-b.metrics.newMaterialMm2||planQuality(a).complexity-planQuality(b).complexity)[0];
     if(incumbent){
+      hooks.onStage?.('reassigning');
       const replay=replayProvisionalDestinations(request,incumbent,validateSolution,hooks);
       const selected=replay.solution;
       selected.provisionalReuse=replay.report;
@@ -56,17 +65,19 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
   // Refine purchases only after the final cut tree/receiver certificates exist.
   // Alternatives are compared AFTER refinement too: never compare a reduced
   // Recommended schedule with an artificially unrefined alternative.
+  hooks.onStage?.('stock-lengths');
   solutions=solutions.map(s=>{
     if(s.status==='invalid')return s;
     const refined=refinePurchasedStock(request,s,validateSolution,hooks),selected=refined.solution;
     selected.stockLengthRefinement=refined.report;selected.search.elapsedMs+=refined.report.elapsedMs;
     if(selected.decisionTrace){
-      selected.decisionTrace.engineVersion='2.19';
+      selected.decisionTrace.engineVersion='2.20';
       selected.decisionTrace.events.push({step:selected.decisionTrace.events.length+1,action:'end-specific-stock-refinement',
         message:refined.report.status==='improved'?'Removed unused square-ended stock; complete offcut families, descendants, lap and receiver certificates unchanged.':'Retained the checked purchase schedule; no unverified shorter blank can replace it.',data:{report:refined.report}});
     }
     return selected;
   });
+  hooks.onStage?.('final-validation');
   // The bank search retains coherent macro candidates first. Compare the actual
   // protected purchase cost of those retained candidates, never the stale
   // pre-allowance cost or the number of sheets alone.

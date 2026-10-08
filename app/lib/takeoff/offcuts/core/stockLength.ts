@@ -71,7 +71,7 @@ export function refinePurchasedStock(request:SolveRequest,incumbent:Solution,val
     report.placementsUnchanged=fingerprint(trial.placements)===fingerprint(incumbent.placements);
     report.receiverSafetyUnchanged=fingerprint(trial.receiverSafety)===fingerprint(incumbent.receiverSafety);
     if(!report.placementsUnchanged||!report.receiverSafetyUnchanged)throw new Error('Cut sequence or receiver certificate changed.');
-    trial.engineVersion='2.19';
+    trial.engineVersion='2.20';
     const failures=validate(trial).filter(i=>i.severity==='error');
     if(failures.length){report.status='rejected';report.reason='failed-final-physical-check';report.rejectionCodes=[...new Set(failures.map(i=>i.code))];return finish();}
     const after=lineals(trial);if(after>=before-1e-7)return finish();
