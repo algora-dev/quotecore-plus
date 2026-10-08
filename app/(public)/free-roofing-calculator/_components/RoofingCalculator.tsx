@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { calculate, calculateArea, componentPayload, convertSystem, exampleFor, format, initialState, money,
   quoteHref, resetActive, restoreState, resultText, STORAGE_KEY, TABS, transferToBattens, transferToPricing,
-  type Result, type RoofState, type Tab } from './roofing-model';
+  type RoofState, type Tab } from './roofing-model';
 import { Dialog, Icon, RoofDiagram, Segments } from './RoofingUI';
 import { RoofingForms } from './RoofingForms';
 

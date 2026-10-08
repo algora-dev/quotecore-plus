@@ -208,7 +208,7 @@ export function convertSystem(state:RoofState,to:System):RoofState {
 }
 export function exampleFor(state:RoofState):RoofState {
   const metric=state.system==='metric'?state:convertSystem(state,'metric');
-  let next:RoofState={...metric};
+  const next:RoofState={...metric};
   const a={...makeArea(),width:'10',length:'8',pitch:makePitch('35')};
   if(state.tab==='area')next.area=a;
   if(state.tab==='members')next.members={kind:state.members.kind,run:'5',diagonal:'7.07106781187',pitch:makePitch('35')};

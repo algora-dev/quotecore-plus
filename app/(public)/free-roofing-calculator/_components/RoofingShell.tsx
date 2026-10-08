@@ -7,7 +7,6 @@ export function RoofingShell({children,account,linkOrigin=''}:{children:ReactNod
   return <div className="qcr" data-qc-ui="v2" data-qc-experience="roofing-calculator-v1"><a href="#qcr-main" className="qcr-skip">Skip to calculator</a>
     <header className="qcr-header"><div className="qcr-container qcr-header-inner"><a href={link('/')} className="qcr-brand" aria-label="QuoteCore+ home">
       {/* Existing transparent asset; intrinsic box avoids a layout shift. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/marketing/brand/quotecore-logo-transparent.png" alt="QuoteCore+" width="193" height="42"/>
     </a><span className="qcr-header-label">Tools for the way you work.</span><nav className="qcr-header-actions" aria-label="Site navigation"><a className="qcr-header-all-tools" href={link('/free-tools')}><Icon name="back" size={14}/> All free tools</a>{account}<a className="qcr-button qcr-primary qcr-demo-button" href={link('/takeoff-demo')}>Demo <Icon name="arrow" size={16}/></a></nav></div></header>
     {children}
