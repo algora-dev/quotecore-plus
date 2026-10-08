@@ -98,7 +98,8 @@ type SaveFileMetadataInput = {
     | 'customer_quote_pdf'
     | 'takeoff_report_pdf'
     | 'takeoff_data_json'
-    | 'labour_sheet_pdf';
+    | 'labour_sheet_pdf'
+    | 'offcuts';
   fileName: string;
   /** Ignored. Kept in signature for back-compat; real size is read from Storage. */
   fileSize?: number;

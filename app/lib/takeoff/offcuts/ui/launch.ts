@@ -2,11 +2,11 @@ import { restoreReviewDocument, type ReviewRepository, type ReviewScope, type St
 import { fromQuoteCore, type QuoteCoreSnapshot } from '../adapters/quotecore';
 import { captureLiveTakeoff, prepareLiveCapture, type CaptureHooks, type LiveInputCapture } from '../adapters/liveSnapshot';
 import { checkpointLiveCapture, type SnapshotStorage } from '../adapters/snapshotStore';
-import { mountWorkbench, type WorkbenchHandle } from './workbench';
+import { mountWorkbench, type WorkbenchHandle, type OffcutOnePagerPayload } from './workbench';
 import type { QuoteQuantityProposal } from '../core/quantities';
 import type { Draft } from '../core/types';
 import { tokenFallbacks } from './theme';
-export interface LaunchOptions { createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void;
+export interface LaunchOptions { createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void; onSaveOnePager?: (payload:OffcutOnePagerPayload)=>void|Promise<void>;
   reviewRepository?:ReviewRepository;
   /** Explicit restore; normally use launchStoredQuoteCoreOffcuts. */
   initialSavedReview?:StoredReview; savedInputMode?:boolean;
@@ -99,7 +99,7 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
     // Establish real layout dimensions BEFORE the first SVG/handle render.
     modal.showModal();
     handle = mountWorkbench(host, captured.roof, {
-      inputCapture: capture, initialIssues: captured.issues, reviewRepository:options.reviewRepository, initialSavedReview:options.initialSavedReview, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal,
+      inputCapture: capture, initialIssues: captured.issues, reviewRepository:options.reviewRepository, initialSavedReview:options.initialSavedReview, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal, onSaveOnePager:options.onSaveOnePager,
       readCurrentSourceRevision: options.savedInputMode?undefined:() => fromQuoteCore(readSnapshot()).roof.sourceRevision,
       createWorker: options.createWorker ?? (() => new Worker(new URL('../worker.ts', import.meta.url), { type: 'module' })),
     });

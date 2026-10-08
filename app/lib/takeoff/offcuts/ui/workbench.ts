@@ -36,6 +36,25 @@ import { styles } from './styles';
 import { planChoices, noAlternativeDialog, hasQualifyingAlternative, type AlternativeObjective } from './alternativePlans';
 import { icon } from './icons';
 import { sceneScale, watchSceneViewport } from './viewport';
+/** Print-ready one-pager payload for the host to persist (Phase 1, owner
+ * 2026-10-07). The SVG is the full solution plan (print mode); figures and
+ * schedule come from the same quantity + purchase-ledger sources the review
+ * panel shows. */
+export interface OffcutOnePagerPayload {
+  svg: string;
+  figures: {
+    netRoofAreaM2: number;
+    purchasedLinealM: number;
+    suppliedCoverAreaM2: number;
+    suppliedProfileAreaM2: number;
+    newSheetCount: number;
+    reusedPositions: number;
+    coverUpliftPercent: number | null;
+    profileUpliftPercent: number | null;
+  } | null;
+  schedule: Array<{ faceId: string; count: number; lengthM: number; linealM: number }>;
+  meta: { savedAt: string; engineVersion: string; pageId: string; areaScopeId: string | null };
+}
 export interface WorkbenchOptions {
   initialDraft?: Draft;
   /** Authenticated repository supplied by host; no service-role client. */
@@ -49,6 +68,9 @@ export interface WorkbenchOptions {
   onExport?: (draft: Draft) => void;
   /** Optional host hook: a proposal only, after explicit basis selection. The host confirms a target material line. */
   onQuantityProposal?: (proposal: QuoteQuantityProposal) => void;
+  /** Optional host hook (Phase 1, owner 2026-10-07): persist an A4 one-pager
+   * of the current plan to the job's Files & Documents. Throws on failure. */
+  onSaveOnePager?: (payload: OffcutOnePagerPayload) => void | Promise<void>;
   /** Returns the original workspace revision, not the edited review draft. */
   readCurrentSourceRevision?: () => string;
 }
@@ -415,7 +437,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         <p class="qc-muted">Lineals count each new sheet once. Offcuts and recuts add no second purchase. Profile-width area includes configured side laps; neither area is developed coil area. Cutting remainder may include reusable stock.</p>
         <label class="qc-field">Rate / quantity basis<select data-quantity-basis><option value="lineal-metres" ${quantityBasis==='lineal-metres'?'selected':''}>Lineal metres</option><option value="cover-square-metres" ${quantityBasis==='cover-square-metres'?'selected':''}>Square metres - effective cover</option><option value="profile-square-metres" ${quantityBasis==='profile-square-metres'?'selected':''}>Square metres - configured profile width</option></select></label>
         <button data-action="preview-quantity" class="qc-wide" ${s.status==='invalid'||stale?'disabled':''}>Review material quantity</button>
-        ${quotePreviewOpen?`<div class="qc-quantity-proposal"><b>${basisValue.toFixed(2)} ${quantityBasis==='lineal-metres'?'lm':'m²'} for the selected material scope</b><p>Keep the measured roof area and labour quantities. This plan already includes cutting stock and configured allowances; do not apply the old waste factor again automatically. Spares are separate.</p><p class="qc-muted">Match this basis to the quote line’s rate. No quote is changed by this preview or export.</p><div class="qc-actions"><button data-action="export-quantity">Export quantity proposal</button>${options.onQuantityProposal?'<button data-action="send-quantity" class="primary">Send to quote review</button>':''}</div></div>`:''}
+        ${quotePreviewOpen?`<div class="qc-quantity-proposal"><b>${basisValue.toFixed(2)} ${quantityBasis==='lineal-metres'?'lm':'m²'} for the selected material scope</b><p>Keep the measured roof area and labour quantities. This plan already includes cutting stock and configured allowances; do not apply the old waste factor again automatically. Spares are separate.</p><p class="qc-muted">Match this basis to the quote line’s rate. No quote is changed by this preview or export.</p><div class="qc-actions"><button data-action="export-quantity">Export quantity proposal</button>${options.onQuantityProposal?'<button data-action="send-quantity" class="primary">Send to quote review</button>':''}${options.onSaveOnePager?'<button data-action="save-one-pager" class="primary">Save one-pager to job</button>':''}</div></div>`:''}
         <details><summary>Purchase breakdown by section</summary><table class="qc-stock"><thead><tr><th>Section</th><th>Sheets</th><th>New lm</th></tr></thead><tbody>${sections.filter(a=>a.purchasedDemandIds.length).map(a=>`<tr><td>${esc(faceName(a.faceId))}.${sectionNumber(a)}</td><td>${a.purchasedDemandIds.length}</td><td>${displayQuantity(a.purchasedLinealM)}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><td>${q.newSheetCount}</td><td>${displayQuantity(q.purchasedLinealM)}</td></tr></tfoot></table></details></details>`;
       normal = `<h2>Sheet & offcut plan</h2><p class="qc-plan-total"><strong>${q.newSheetCount} new sheets</strong><strong class="qc-lineal-total">${displayQuantity(q.purchasedLinealM)} <small>purchased lineal metres</small></strong><span>${displayQuantity(q.suppliedCoverAreaM2)} m² material required (cover basis)<br/>${displayQuantity(q.netRoofAreaM2)} m² net roof · ${displayQuantity(q.suppliedCoverAreaM2-q.netRoofAreaM2)} m² extra (${q.coverUpliftPercent?.toFixed(1)??'-'}%)<br/>This roof scope only · no spares</span></p>
         ${salvagePreview?.solution&&!salvageDialog?salvageSummary(salvagePreview.solution,draft.faces,true,salvageViewingBase):planChoices(s,layouts,layoutIndex,busy||stale||s.status==='invalid')+(s.salvage?salvageSummary(s,draft.faces,false):salvageOffer(s,layouts,busy||stale||s.status==='invalid'))}
@@ -731,6 +753,21 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         if(action==='send-quantity'){options.onQuantityProposal?.(proposal);notice='Quantity proposal sent to the host quote review. Confirm the target material line there.';}
         else {download('quotecore-offcuts-material-quantity.json',JSON.stringify({proposal,totals:quantities()},null,2),'application/json');notice='Quantity proposal exported. No quote or measured roof area has been changed.';}
         render();return;
+      }
+      if(action==='save-one-pager'){
+        ensureCurrent();
+        const host=options.onSaveOnePager;
+        if(!host||!draft.solution){notice=host?'Create a cut plan before saving a one-pager.':'One-pager saving is not connected.';render();return;}
+        const q=quantities();
+        const ledger=rootSheetLedger(draft.solution);
+        const payload:OffcutOnePagerPayload={svg:renderSvg(draft,{phase:'solution',print:true,showSheets,showEnvelope,showDetailedLabels,coverage:partition().regions}),
+          figures:q?{netRoofAreaM2:q.netRoofAreaM2,purchasedLinealM:q.purchasedLinealM,suppliedCoverAreaM2:q.suppliedCoverAreaM2,suppliedProfileAreaM2:q.suppliedProfileAreaM2,newSheetCount:q.newSheetCount,reusedPositions:q.reusedPositions,coverUpliftPercent:q.coverUpliftPercent,profileUpliftPercent:q.profileUpliftPercent}:null,
+          schedule:ledger.stockSchedule.map(r=>({faceId:r.faceId,count:r.count,lengthM:r.lengthM,linealM:r.linealM})),
+          meta:{savedAt:new Date().toISOString(),engineVersion:'2.17',pageId:draft.roof.pageId,areaScopeId:draft.roof.areaScopeId??null}};
+        notice='Saving one-pager to this job…';render();
+        void Promise.resolve(host(payload)).then(()=>{notice='One-pager saved to this job - see Files & Documents.';render();})
+          .catch((error:unknown)=>{notice=error instanceof Error?error.message:'The one-pager could not be saved. Your review is unchanged.';render();});
+        return;
       }
       if(action==='next-layout'){
         if(layouts.length<2)return;

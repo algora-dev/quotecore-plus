@@ -175,7 +175,7 @@ interface ComponentMeasurement {
     /** P3 (spec 10.3): attached-entry provenance. value_basis + plan_value
      *  snapshot and the source-polygon link participate in calibration
      *  recompute - these are NOT display-only fields. */
-    value_basis?: 'plan' | 'pitched' | 'corner_all' | 'corner_external' | 'corner_internal';
+    value_basis?: 'plan' | 'pitched' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal';
     plan_value?: number;
     pitch_applied?: boolean;
     source_geometry_id?: string;
@@ -639,7 +639,9 @@ export function TakeoffWorkstation({
     plan: number;
     pitched: number;
     pitch: number;
-    basis: 'pitched' | 'plan';
+    /** Phase 2 (2026-10-07): offcut cover-m2 figure when one exists for this page. */
+    offcuts?: number;
+    basis: 'pitched' | 'plan' | 'offcuts';
   }>(null);
 
   // Volume (L ×- W ×- D) - depth prompt state.
@@ -2432,6 +2434,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       plan: ra.area,
       pitched,
       pitch: ra.pitch || 0,
+      ...(offcutAreaFigure ? { offcuts: offcutAreaFigure.m2 } : {}),
       basis: 'pitched',
     });
   };
@@ -2442,7 +2445,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const ra = roofAreas.find(a => a.id === choice.roofAreaId);
     if (!ra || !(ra.area > 0)) { setAreaAttachChoice(null); return; }
     pushHistorySnapshot();
-    const value = choice.basis === 'pitched' ? choice.pitched : choice.plan;
+    const value = choice.basis === 'pitched' ? choice.pitched : choice.basis === 'offcuts' ? (choice.offcuts ?? choice.plan) : choice.plan;
     const newMeasurement: ComponentMeasurement = {
       id: `apply-${Date.now()}`,
       type: 'area' as ComponentMeasurement['type'],
@@ -2460,11 +2463,18 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       //   basis 'plan'    -> plan, no pitch        (flat/plan takeoff)
       // P3 (spec 10.3): durable source-polygon link so recalibration can
       // refresh this entry when its source area rescales.
-      entryInputs: {
-        value_basis: choice.basis,
-        plan_value: choice.plan,
-        source_geometry_id: ra.id,
-      },
+      entryInputs: choice.basis === 'offcuts'
+        ? {
+            // Phase 2 (2026-10-07): final material figure from the offcut
+            // cutting plan - no pitch and no waste factor at save time.
+            value_basis: 'offcuts',
+            plan_value: choice.offcuts ?? choice.plan,
+          }
+        : {
+            value_basis: choice.basis,
+            plan_value: choice.plan,
+            source_geometry_id: ra.id,
+          },
     };
     const compData = componentMeasurements.find(c => c.componentId === choice.componentId);
     if (compData) {
@@ -4251,6 +4261,30 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         touchBridgeListeners.current.forEach(listener => listener());
         return { ...entry };
       },
+      // Phase 2 (2026-10-07): attach the offcut figure - final material m2,
+      // no canvas geometry, basis 'offcuts' (no pitch/waste at save time).
+      getOffcutAreaFigure: (): { m2: number } | null => (offcutAreaFigureRef.current && offcutAreaFigureRef.current.m2 > 0 ? { m2: offcutAreaFigureRef.current.m2 } : null),
+      addOffcutAreaEntry: (target: TouchComponentTarget, figure: { m2: number }): TouchComponentEntry | null => {
+        if (!(figure.m2 > 0)) return null;
+        const round2 = (n: number) => Math.round(n * 100) / 100;
+        const entry: TouchComponentEntry = {
+          id: crypto.randomUUID(),
+          key: target.componentId,
+          componentId: target.componentId,
+          displayName: target.displayName,
+          colour: target.colour,
+          value: round2(figure.m2),
+          kind: 'area',
+          hidden: false,
+          points: [],
+          fromOffcuts: true,
+          planValue: round2(figure.m2),
+          quoteRoofAreaId: null,
+        };
+        touchComponentEntriesRef.current.push(entry);
+        touchBridgeListeners.current.forEach(listener => listener());
+        return { ...entry };
+      },
       // Corner counting (2026-09-30): apply detected corner counts to a
       // count-based component. The entry carries every counted vertex so
       // the plan highlights exactly what was counted; provenance rides
@@ -4308,7 +4342,22 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             // persist exactly like the desktop area-attach flow (no canvas
             // geometry, entryInputs basis + plan snapshot + source link) so
             // the save path recomputes from the LIVE pitch.
-            if (e.kind === 'area' && e.fromRoofAreaId) {
+            if (e.kind === 'area' && e.fromOffcuts) {
+              extraMeasurements.push({
+                componentId: e.componentId,
+                id: e.id,
+                type: 'area' as const,
+                value: e.value,
+                points: [],
+                visible: !e.hidden,
+                fromPageId: pageId,
+                quoteRoofAreaId: e.quoteRoofAreaId ?? areaId,
+                entryInputs: {
+                  value_basis: 'offcuts',
+                  plan_value: e.planValue ?? e.value,
+                },
+              });
+            } else if (e.kind === 'area' && e.fromRoofAreaId) {
               extraMeasurements.push({
                 componentId: e.componentId,
                 id: e.id,
@@ -4655,6 +4704,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       const inputs = m.entryInputs ?? null;
       const basis = inputs?.value_basis ?? null;
       const attached = kind === 'area' && basis === 'pitched';
+      const offcutAttached = kind === 'area' && basis === 'offcuts';
       const corner = kind === 'point' && !!basis && basis.startsWith('corner_');
       touchComponentEntriesRef.current.push({
         id: m.id,
@@ -4671,6 +4721,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           ? {
               fromRoofAreaId: inputs.source_geometry_id,
               ...(typeof inputs.plan_value === 'number' ? { planValue: inputs.plan_value } : {}),
+            }
+          : {}),
+        ...(offcutAttached
+          ? {
+              fromOffcuts: true,
+              ...(typeof inputs?.plan_value === 'number' ? { planValue: inputs.plan_value } : {}),
             }
           : {}),
         ...(corner && basis
@@ -7681,6 +7737,32 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const offcutsLiveSnapshotRef = useRef<QuoteCoreSnapshot | null>(null);
   const offcutsModalRef = useRef<WorkbenchHandle | null>(null);
   const [openingOffcuts, setOpeningOffcuts] = useState(false);
+  // Phase 2 (owner 2026-10-07): the offcut cover-m2 figure for the current
+  // page - from the workbench's live quantity proposal or the saved offcut
+  // review. Offered in the area-component attach dropdowns (desktop + touch).
+  const [offcutAreaFigure, setOffcutAreaFigure] = useState<{ m2: number } | null>(null);
+  const offcutAreaFigureRef = useRef<{ m2: number } | null>(null);
+  const applyOffcutFigure = useCallback((figure: { m2: number } | null) => {
+    offcutAreaFigureRef.current = figure && figure.m2 > 0 ? figure : null;
+    setOffcutAreaFigure(offcutAreaFigureRef.current);
+  }, []);
+  const refreshOffcutAreaFigure = useCallback(async () => {
+    try {
+      const pageId = currentPageIdRef.current;
+      if (!pageId) return;
+      const { getAccountReviewRepository } = await import('@/app/lib/takeoff/offcutReviewPersistence');
+      const repository = await getAccountReviewRepository();
+      if (!repository) return;
+      const stored = await repository.load({ quoteId: quote.id, pageId, areaScopeId: null });
+      const plan = stored?.document.plans[stored.document.selectedPlanIndex] ?? null;
+      if (!plan) return;
+      const { quantitySummary } = await import('@/app/lib/takeoff/offcuts/core/quantities');
+      applyOffcutFigure({ m2: quantitySummary(plan).suppliedCoverAreaM2 });
+    } catch {
+      // No saved review or figure unavailable - the attach option stays hidden.
+    }
+  }, [quote.id, applyOffcutFigure]);
+  useEffect(() => { void refreshOffcutAreaFigure(); }, [refreshOffcutAreaFigure, pages, currentPageIndex]);
   const [, forceOffcutsCommit] = useState(0);
   const offcutsCaptureAbortRef = useRef<AbortController | null>(null);
   useEffect(() => {
@@ -8803,9 +8885,18 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                             if (abort.signal.aborted) return;
                             const previous = offcutsModalRef.current;
                             if (previous) { void previous.flushReview?.().catch(() => {}); previous.destroy(); offcutsModalRef.current = null; }
-                            offcutsModalRef.current = await launchLiveQuoteCoreOffcuts(readCurrentOffcutsSnapshot, {
+                            const offcutsHandle = await launchLiveQuoteCoreOffcuts(readCurrentOffcutsSnapshot, {
                               signal: abort.signal,
                               reviewRepository: reviewRepository ?? undefined,
+                              onQuantityProposal: (proposal) => {
+                                if (proposal.unit === 'm2' && proposal.quantity > 0) applyOffcutFigure({ m2: proposal.quantity });
+                              },
+                              onSaveOnePager: async (payload) => {
+                                const { saveOffcutOnePagerToJob } = await import('@/app/lib/takeoff/offcutOnePager');
+                                const jobLabel = String(quote.quote_number ?? '') || 'Quote';
+                                const result = await saveOffcutOnePagerToJob(quote.id, payload, { jobLabel });
+                                if (!result.ok) throw new Error(result.message);
+                              },
                               readContext: () => {
                                 const live = offcutsLiveSnapshotRef.current;
                                 if (!live) throw new Error('The takeoff workspace is not ready.');
@@ -8834,6 +8925,9 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                                 fabricRef.current?.requestRenderAll();
                               },
                             });
+                            const baseOffcutsDestroy = offcutsHandle.destroy.bind(offcutsHandle);
+                            offcutsHandle.destroy = () => { baseOffcutsDestroy(); void refreshOffcutAreaFigure(); };
+                            offcutsModalRef.current = offcutsHandle;
                           } catch (error) {
                             if (!abort.signal.aborted) window.alert(error instanceof Error ? error.message : String(error));
                           } finally {
@@ -9406,13 +9500,34 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 </div>
                 <p className="text-xs text-slate-500 mt-1">No pitch applied - footprint measurement only.</p>
               </QcHostedButton>
+              {areaAttachChoice.offcuts != null && areaAttachChoice.offcuts > 0 && (
+                <QcHostedButton aria-pressed={areaAttachChoice.basis === 'offcuts'} data-qc-choice="true" variant="ghost"
+                  type="button"
+                  onClick={() => setAreaAttachChoice(c => c && { ...c, basis: 'offcuts' })}
+                  className={`w-full text-left rounded-xl border px-4 py-3 transition ${
+                    areaAttachChoice.basis === 'offcuts'
+                      ? 'border-orange-400 bg-orange-50/50 ring-1 ring-orange-300'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-900">Offcut plan (exact material)</span>
+                    <span className="text-sm font-bold text-slate-900 tabular-nums">
+                      {areaAttachChoice.offcuts.toFixed(2)} m²
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    From your saved offcut cutting plan - includes cutting stock and configured allowances. No pitch or waste factor is applied again.
+                  </p>
+                </QcHostedButton>
+              )}
             </div>
             <div className="flex gap-3">
               <QcHostedButton variant="secondary"
                 onClick={handleConfirmAreaAttach}
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
               >
-                Attach {areaAttachChoice.basis === 'pitched' ? 'pitched' : 'plan'} ({(areaAttachChoice.basis === 'pitched' ? areaAttachChoice.pitched : areaAttachChoice.plan).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'})
+                Attach {areaAttachChoice.basis === 'pitched' ? 'pitched' : areaAttachChoice.basis === 'offcuts' ? 'offcuts' : 'plan'} ({(areaAttachChoice.basis === 'pitched' ? areaAttachChoice.pitched : areaAttachChoice.basis === 'offcuts' ? (areaAttachChoice.offcuts ?? 0) : areaAttachChoice.plan).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'})
               </QcHostedButton>
               <QcHostedButton variant="ghost"
                 onClick={() => setAreaAttachChoice(null)}

@@ -241,10 +241,23 @@ export function useTouchComponents(
 
   // M11: area component + saved outline - attach the roof area instead of
   // redrawing it (pitched value; the save path recomputes from live pitch).
+  // Phase 2 (2026-10-07): '__offcut_plan__' attaches the offcut cover-m2
+  // figure instead - a final material entry (no pitch/waste recompute).
   const onAttachRoofArea = useCallback((geometryId: string) => {
     const current = adapterRef.current();
+    if (!detail) return;
+    if (geometryId === '__offcut_plan__') {
+      const figure = current?.getOffcutAreaFigure?.();
+      if (!current?.addOffcutAreaEntry || !figure) return;
+      const offcutEntry = current.addOffcutAreaEntry(detail, figure);
+      if (offcutEntry) {
+        refreshFromAdapter();
+        logTakeoffEvent('components.entry.offcut.attached', { component: detail.displayName });
+      }
+      return;
+    }
     const area = current?.getAreas?.().find(a => a.geometryId === geometryId);
-    if (!current?.addRoofAreaEntry || !area || !detail) return;
+    if (!current?.addRoofAreaEntry || !area) return;
     const entry = current.addRoofAreaEntry(detail, area);
     if (entry) {
       refreshFromAdapter();
@@ -417,7 +430,13 @@ export function useTouchComponents(
   // pitched value the entry will carry (recomputed live at save time).
   const roofAreas: TouchRoofAreaOption[] = (() => {
     const areas = adapter?.getAreas() ?? [];
-    return areas
+    // Phase 2 (2026-10-07): the offcut cover-m2 figure rides at the top of the
+    // attach list as a pseudo-option (final material - no pitch/waste at save).
+    const offcutFigure = adapter?.getOffcutAreaFigure?.() ?? null;
+    const offcutOption: TouchRoofAreaOption[] = offcutFigure
+      ? [{ geometryId: '__offcut_plan__', name: 'Offcut plan', label: `${offcutFigure.m2.toFixed(1)} m² (exact material)`, points: [] }]
+      : [];
+    return [...offcutOption, ...areas
       .filter(a => a.points.length >= 3 && !!a.geometryId && !!a.quoteRoofAreaId)
       .map(a => {
         const plan = scale ? polygonAreaCanvas(a.points.map(p => ({ x: p.x, y: p.y }))) * scale.scale * scale.scale : 0;
@@ -429,7 +448,7 @@ export function useTouchComponents(
           points: a.points.map(p => ({ x: p.x, y: p.y })),
           label: `${pitched.toFixed(1)} ${unit2}${a.pitch ? ` (pitch ${Math.round(a.pitch)}°)` : ''}`,
         };
-      });
+      })];
   })();
   const detailEntries = detailKey ? entries.filter(e => e.key === detailKey) : [];
   const draftReady = (() => {

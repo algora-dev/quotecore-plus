@@ -64,6 +64,12 @@ export interface TouchOutlineAdapter {
   /** M11: attach a saved roof area to an area component instead of
    *  redrawing it (pitched value; recomputed live at save time). */
   addRoofAreaEntry?(target: TouchComponentTarget, area: SavedOutlineRecord): TouchComponentEntry | null;
+  /** Phase 2 (2026-10-07): the page's offcut cover-m2 figure - from the live
+   *  workbench proposal or the saved offcut review. Null when none exists. */
+  getOffcutAreaFigure?(): { m2: number } | null;
+  /** Phase 2: attach the offcut figure as a FINAL material area entry - the
+   *  save path applies no pitch and no waste factor to it. */
+  addOffcutAreaEntry?(target: TouchComponentTarget, figure: { m2: number }): TouchComponentEntry | null;
   /** Corner counting (2026-09-30): apply detected corner counts to a
    *  count-based component (all/external/internal) as one entry. */
   addCornerCountEntry?(target: TouchComponentTarget, basis: 'all' | 'external' | 'internal'): TouchComponentEntry | null;

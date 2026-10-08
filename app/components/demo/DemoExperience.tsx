@@ -225,9 +225,9 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
           if (delta[event.key] && widget.current) { event.preventDefault(); const rect = widget.current.getBoundingClientRect(); setPosition(clampGuidePosition({ x: rect.left + delta[event.key].x, y: rect.top + delta[event.key].y }, rect.width, rect.height, window.innerWidth, window.innerHeight)); }
         }}><span aria-hidden="true">⠿</span></button>
         <div><span>CHAPTER {chapterIndex + 1} OF 4</span><strong>{chapter.title}</strong></div>
-        <button className="qc-demo-icon" type="button" aria-label="Collapse demo guide" aria-expanded={true} onClick={collapse}>−</button>
       </header>
       <div className="qc-demo-progress" role="progressbar" aria-label="Guide lessons handled" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.handled} aria-valuetext={`${progress.done} completed, ${progress.skipped} skipped, ${progress.total} total`}><i style={{ width: `${100 * progress.handled / progress.total}%` }} /></div>
+      <button type="button" className="qc-demo-hide" onClick={collapse} aria-label="Hide the demo guide"><span>Hide guide</span><span aria-hidden="true">▾</span></button>
       <div className="qc-demo-guide-body">
         {!state.welcomed ? <>
           <p className="qc-demo-eyebrow">WELCOME TO QCP ROOFING &amp; CONSTRUCTION</p><h2>Try a real workflow, step by step</h2>
@@ -270,7 +270,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
         {syncError && <div className="qc-demo-sync" role="status"><p>{syncError}</p><QcButton size="sm" variant="ghost" onClick={() => void refresh()}>Refresh guide progress</QcButton></div>}
       </div>
       {state.welcomed && !awaitingPath && assistantStep && location.onPage && !assistantUnavailable && !assistantExhausted && <div className="qc-demo-task-action"><div className="qc-demo-actions"><QcButton variant="primary" disabled={copying || !units} onClick={() => void copyPrompt(true)}>{copying ? 'Copying…' : assistantOpen ? 'Copy example & return to Assistant' : 'Copy example & open Assistant'}</QcButton>{copyStatus.startsWith('Clipboard') && <QcButton variant="secondary" onClick={() => window.dispatchEvent(new Event('qc-open-assistant'))}>Open Assistant without copying</QcButton>}</div></div>}
-      <footer className="qc-demo-guide-links"><QcButton variant="ghost" size="sm" onClick={collapse}>Collapse guide</QcButton><QcLinkButton variant="ghost" size="sm" href={`/${workspaceSlug}/demo-guide`}>All chapters</QcLinkButton><button type="button" className="qc-demo-reset-position" onClick={() => setPosition(null)}>Reset position</button></footer>
+      <footer className="qc-demo-guide-links"><QcLinkButton variant="ghost" size="sm" href={`/${workspaceSlug}/demo-guide`}>All chapters</QcLinkButton><button type="button" className="qc-demo-reset-position" onClick={() => setPosition(null)}>Reset position</button></footer>
     </aside>}
     <QcDialog open={resetOpen && (!expired || resetting)} pending={resetting} onRequestClose={() => setResetOpen(false)} title={resetting ? 'Preparing your fresh demo' : 'Start this demo again?'} description={resetting ? 'Keep this tab open while we prepare your fictional workspace.' : 'This removes your demo edits and guide progress. Choose the units for the fresh workspace. AI and email allowances do not renew.'}
       footer={!resetting && <div className="qc-demo-actions"><QcButton variant="primary" disabled={!resetUnits} onClick={() => void reset()}>Replace my demo &amp; start fresh</QcButton><QcButton variant="ghost" onClick={() => setResetOpen(false)}>Keep my current demo</QcButton></div>}>
