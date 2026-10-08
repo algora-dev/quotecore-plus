@@ -93,7 +93,25 @@
 .heroCopy { position: relative; z-index: 2; padding-block: 64px 76px; max-width: 563px; }
 .heroCopy .eyebrow { margin-bottom: 25px !important; }
 .heroCopy h1 { font-size: clamp(43px,4.16vw,60px); line-height: 1.045; letter-spacing: -.053em; font-weight: 700; }
-.heroOrange { color: var(--orange-ink); }
+.heroOrange { color: var(--orange); }
+/* Check Pricing: dark glass surface matching the overview Watch button (owner 2026-10-08). */
+.heroPricing {
+  --qc-glass-ink: #f7f8fa;
+  --qc-glass-fill: #14181e;
+  --qc-glass-hover: #1d222a;
+  --qc-glass-edge: rgba(124,135,152,.6);
+  --qc-glass-accent: #ffb36b;
+  --qc-glass-highlight: rgba(255,255,255,.14);
+  --qc-glass-lowlight: rgba(0,0,0,.4);
+  --qc-glass-shadow: rgba(14,17,22,.2);
+  --qc-glass-hover-shadow: rgba(255,100,31,.22);
+  --qc-glass-sheen: rgba(255,255,255,.06);
+  --qc-glass-toe: rgba(255,255,255,.02);
+  --qc-glass-rim: rgba(255,255,255,.24);
+  --qc-glass-glint: rgba(255,255,255,.3);
+  --qc-glass-solid: #14181e;
+  --qc-glass-pressed: #10141a;
+}
 .heroLead { margin-top: 25px !important; max-width: 460px; font-size: 18px; font-weight: 550; line-height: 1.55; color: #3e4653; letter-spacing: -.015em; }
 .heroBody { margin-top: 13px !important; max-width: 460px; font-size: 15px; line-height: 1.75; color: #515968; }
 .heroActions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 28px; }

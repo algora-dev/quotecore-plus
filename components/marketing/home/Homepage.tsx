@@ -31,7 +31,7 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
             <h1 id="hero-title"><span className={s.heroOrange}>Measure</span> the job.<br />Calculate the <span className={s.heroOrange}>price</span>.<br /><span className={s.heroOrange}>Send</span> the quote.</h1>
             <p className={s.heroLead}>Faster estimating and quoting for roofing and construction businesses.</p>
             <p className={s.heroBody}>Built from industry experience and contractor feedback. Powerful tools, made simple.</p>
-            <div className={s.heroActions}>{demo()}<DemoCallButton bookingHref={config.bookingHref} /><MarketingButton href="#pricing" variant="dark" size="large" className={s.button} icon={<Icon name="arrow" />}>Check Pricing</MarketingButton></div>
+            <div className={s.heroActions}>{demo()}<DemoCallButton bookingHref={config.bookingHref} /><MarketingButton href="#pricing" variant="glass" size="large" className={`${s.button} ${s.heroPricing}`} icon={<Icon name="arrow" />}>Check Pricing</MarketingButton></div>
             <div className={s.reassurance}><span><Icon name="check" size={16} />No signup for the demo</span><span><Icon name="check" size={16} />Real project data</span></div>
           </div>
           <HeroVisual review={config.showPlaceholderReview ? placeholderReview : publishedHeroReview} />
