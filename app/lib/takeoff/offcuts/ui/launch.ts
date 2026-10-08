@@ -1,15 +1,11 @@
-import { restoreReviewDocument, type ReviewRepository, type ReviewScope, type StoredReview } from '../persistence/reviews';
 import { fromQuoteCore, type QuoteCoreSnapshot } from '../adapters/quotecore';
 import { captureLiveTakeoff, prepareLiveCapture, type CaptureHooks, type LiveInputCapture } from '../adapters/liveSnapshot';
 import { checkpointLiveCapture, type SnapshotStorage } from '../adapters/snapshotStore';
-import { mountWorkbench, type WorkbenchHandle, type OffcutOnePagerPayload } from './workbench';
+import { mountWorkbench, type WorkbenchHandle } from './workbench';
 import type { QuoteQuantityProposal } from '../core/quantities';
 import type { Draft } from '../core/types';
 import { tokenFallbacks } from './theme';
-export interface LaunchOptions { onPlanInvalidated?:()=>void; onClosed?:()=>void; createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void; onSaveOnePager?: (payload:OffcutOnePagerPayload)=>void|Promise<void>;
-  reviewRepository?:ReviewRepository;
-  /** Explicit restore; normally use launchStoredQuoteCoreOffcuts. */
-  initialSavedReview?:StoredReview; savedInputMode?:boolean;
+export interface LaunchOptions { createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void;
   snapshotStorage?:SnapshotStorage|null; onCapture?:(capture:LiveInputCapture)=>void;
 }
 export interface LiveLaunchOptions extends LaunchOptions, CaptureHooks {}
@@ -63,34 +59,21 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
   const previousOverflow = document.body.style.overflow;
   document.body.style.overflow = 'hidden'; document.head.append(css); document.body.append(modal);
   let closed = false, handle: WorkbenchHandle | undefined, closeDialog: HTMLDialogElement | null = null;
-  const beforeUnload=(event:BeforeUnloadEvent):void=>{
-    const status=handle?.getSaveState?.()?.status;
-    if(options.reviewRepository&&status&&['dirty','saving','error','conflict'].includes(status)){event.preventDefault();event.returnValue='';}
-  };
-  window.addEventListener('beforeunload',beforeUnload);
   function destroy(): void {
-    if (closed) return; closed = true;window.removeEventListener('beforeunload',beforeUnload);
+    if (closed) return; closed = true;
     closeDialog?.close(); closeDialog?.remove(); closeDialog = null;
     handle?.destroy(); modal.close(); modal.remove(); css.remove();
     document.body.style.overflow = previousOverflow;
     if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
-    options.onClosed?.();
   }
   function requestClose(): void {
     if (closed || closeDialog) return;
     const confirm = document.createElement('dialog'); closeDialog = confirm;
     confirm.className = 'qc-offcuts-close'; confirm.setAttribute('aria-label', 'Close this draft?');
-    confirm.innerHTML = `<h2>Close this draft?</h2><p>${options.reviewRepository?'Save this structured review before closing. This does not change takeoff measurements or quote prices.':'Account saving is not connected. Export the draft before closing to keep it.'}</p><div class="qc-offcuts-close-actions"><button data-keep autofocus>Keep reviewing</button><button data-discard>${options.reviewRepository?'Save & close':'Close draft'}</button></div>`;
+    confirm.innerHTML = `<h2>Close this draft?</h2><p>Offcut reviews are not saved automatically. Keep reviewing to export the draft, or close without keeping these local changes.</p><div class="qc-offcuts-close-actions"><button data-keep autofocus>Keep reviewing</button><button data-discard>Close draft</button></div>`;
     const keep = (): void => { confirm.close(); confirm.remove(); closeDialog = null; host.shadowRoot?.querySelector<HTMLElement>('[data-action="close"]')?.focus(); };
     confirm.querySelector('[data-keep]')!.addEventListener('click', keep);
-    confirm.querySelector('[data-discard]')!.addEventListener('click',async()=>{
-      if(!options.reviewRepository){destroy();return;}
-      const button=confirm.querySelector<HTMLButtonElement>('[data-discard]')!;button.disabled=true;
-      try{await handle?.flushReview?.();destroy();}catch(error){button.disabled=false;
-        confirm.querySelector('p')!.textContent=error instanceof Error?error.message:'Save failed. Keep reviewing and export a backup.';
-        if(!confirm.querySelector('[data-close-unsaved]')){const leave=document.createElement('button');leave.dataset.closeUnsaved='true';leave.textContent='Close without saving';leave.onclick=destroy;confirm.querySelector('.qc-offcuts-close-actions')!.append(leave);}
-      }
-    });
+    confirm.querySelector('[data-discard]')!.addEventListener('click', destroy);
     confirm.addEventListener('cancel', event => { event.preventDefault(); event.stopPropagation(); keep(); });
     // Backdrop clicks intentionally do not dismiss either dialog.
     modal.append(confirm); confirm.showModal(); confirm.querySelector<HTMLButtonElement>('[data-keep]')!.focus();
@@ -100,23 +83,11 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
     // Establish real layout dimensions BEFORE the first SVG/handle render.
     modal.showModal();
     handle = mountWorkbench(host, captured.roof, {
-      inputCapture: capture, initialIssues: captured.issues, reviewRepository:options.reviewRepository, initialSavedReview:options.initialSavedReview, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal, onSaveOnePager:options.onSaveOnePager, onPlanInvalidated:options.onPlanInvalidated,
-      readCurrentSourceRevision: options.savedInputMode?undefined:() => fromQuoteCore(readSnapshot()).roof.sourceRevision,
+      inputCapture: capture, initialIssues: captured.issues, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal,
+      readCurrentSourceRevision: () => fromQuoteCore(readSnapshot()).roof.sourceRevision,
       createWorker: options.createWorker ?? (() => new Worker(new URL('../worker.ts', import.meta.url), { type: 'module' })),
     });
     host.shadowRoot?.querySelector<HTMLElement>('[data-action="close"]')?.focus();
   } catch (error) { destroy(); throw error; }
-  return { destroy, getDraft: () => handle!.getDraft(), getDebugBundle:()=>handle!.getDebugBundle!(), flushReview:()=>handle!.flushReview!(), getSaveState:()=>handle!.getSaveState!() };
-}
-
-/** Explicit recovery entry for a fresh browser visit with no in-memory calibration.
- * Restores the saved input in its own review, never merges it into live takeoff.
- * The host must provide current image access separately; signed URLs aren't saved. */
-export async function launchStoredQuoteCoreOffcuts(scope:ReviewScope,options:LaunchOptions&{imageUrl?:string}):Promise<WorkbenchHandle>{
-  if(!options.reviewRepository)throw new Error('Account draft saving is not connected.');
-  const stored=await options.reviewRepository.load(scope);if(!stored)throw new Error('No saved offcut review exists for this roof.');
-  const restored=restoreReviewDocument(stored.document,scope),capture=restored.document.capture;
-  if(!capture)throw new Error('This saved review has no original live-input capture. Import its reviewed draft explicitly.');
-  if(options.imageUrl){capture.snapshot.imageUrl=options.imageUrl;capture.adapted.roof.imageUrl=options.imageUrl;}
-  return mountCapturedLive(()=>capture.snapshot,capture,{...options,savedInputMode:true,initialSavedReview:{revision:stored.revision,document:restored.document}});
+  return { destroy, getDraft: () => handle!.getDraft(), getDebugBundle:()=>handle!.getDebugBundle!() };
 }

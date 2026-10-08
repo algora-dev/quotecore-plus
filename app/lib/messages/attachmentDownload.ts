@@ -1,5 +1,4 @@
 import 'server-only';
-import { isDemoCompany } from '@/app/lib/demo/context';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 
 /**
@@ -74,7 +73,6 @@ async function resolveSourceFile(
   admin: ReturnType<typeof createAdminClient>,
   row: AttachmentRowShape,
 ): Promise<ResolvedDownload | null> {
-  if (await isDemoCompany(row.company_id)) return null;
   if (row.library_attachment_id) {
     const { data } = await admin
       .from('company_attachments')

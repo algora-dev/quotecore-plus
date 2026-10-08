@@ -5,10 +5,9 @@
  * other trades (cladding, etc.). A new trade fork = new config object +
  * a thin landing page. Everything downstream (workstation, report) reads
  * from here + the passed component list, so no fork edits are needed in
- * the shell (FreeTakeoffApp) or TakeoffOutputView.
+ * DemoWorkstation or TakeoffOutputView.
  *
- * Roofing is currently the only trade that uses pitch and the only trade
- * whose AI scan (roof-trained) is offered.
+ * Roofing is currently the only trade that uses pitch.
  */
 
 export type TakeoffUnitSystem = 'metric' | 'imperial' | 'squares';
@@ -34,34 +33,17 @@ export interface TakeoffTradeConfig {
   slug: string;
   /** Human trade name shown in copy. */
   tradeName: string;
-  /** Noun for the thing being measured, used in entry copy
-   *  ("Add your roof plan" / "Add your wall plan"). */
-  planNoun: string;
-  /** Entry step-2 summary of the standard components (exact copy). */
-  standardComponentsSummary: string;
   /** Whether areas need a pitch/slope entry. Roofing only, for now. */
   requiresPitch: boolean;
-  /** Whether the trade's AI scan is offered. The scan model is roof-trained
-   *  (ridges/hips/valleys/barges) - non-roof trades measure manually only,
-   *  so they see no AI entry points in the shell. */
-  aiScan: boolean;
   /** Unit choices offered in step 1. */
   unitOptions: TakeoffUnitOption[];
   /** Default placeholder components offered in step 2. */
   placeholderComponents: TakeoffPlaceholderComponent[];
   /** Max custom components a guest can build before signup. */
   maxCustomComponents: number;
-  /** Extra note line appended to the report footer (P4 wiring). Null for
-   *  roofing: the roof note paragraph in TakeoffOutputView already carries
-   *  the hip/valley true-length detail, so the roof footer stays unchanged. */
+  /** Extra note line appended to the report footer. */
   reportNote: string | null;
-  /** One-click test-plan download offered under the step-3 upload target.
-   *  Trades gain it as their plan assets land (roofing first). */
-  samplePlan?: { href: string; download: string };
 }
-
-/** Step-2 component source: standard set as-is / standard set made editable / fully custom. */
-export type TakeoffComponentChoice = 'ours' | 'edit-standard' | 'own';
 
 /** Metric: lengths in m, areas in m2. */
 const METRIC: TakeoffUnitOption = {
@@ -84,13 +66,7 @@ const SQUARES: TakeoffUnitOption = {
 export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   slug: 'free-roof-takeoff',
   tradeName: 'roofing',
-  planNoun: 'roof',
-  standardComponentsSummary: 'Roof area, ridge, hip, valley, barge and spouting.',
   requiresPitch: true,
-  // Owner directive 2026-10-05: scan assist disabled for the free roofing
-  // tool (and the future MCP plugin version). The marketing demo overrides
-  // this to true - its scan is a captured replay, not a real API call.
-  aiScan: false,
   unitOptions: [METRIC, IMPERIAL, SQUARES],
   placeholderComponents: [
     { id: 'd711bd93-2225-467e-8278-80f26c838b38', name: 'Hip', measurement_type: 'lineal' },
@@ -101,17 +77,14 @@ export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
     { id: 'b2d33024-e32b-4809-b0ed-3b5e90babcba', name: 'Roof Area', measurement_type: 'area' },
   ],
   maxCustomComponents: 7,
-  reportNote: null,
-  samplePlan: { href: '/takeoff-demo/roofplan-baseline.png', download: 'QuoteCore-test-roof-plan.png' },
+  reportNote:
+    'Hip and valley entries are calculated as true lengths: the system derives the hip/valley pitch from the roof pitch you entered for each area.',
 };
 
 export const CLADDING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   slug: 'free-cladding-takeoff',
   tradeName: 'cladding',
-  planNoun: 'wall',
-  standardComponentsSummary: 'Building wrap, cavity battens, cladding, trims, soffits and openings.',
   requiresPitch: false,
-  aiScan: false,
   unitOptions: [METRIC, IMPERIAL],
   placeholderComponents: [
     { id: 'clad-wrap-01', name: 'Building Wrap', measurement_type: 'area' },
@@ -131,10 +104,7 @@ export const CLADDING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
 export const FLOORING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   slug: 'free-flooring-takeoff',
   tradeName: 'flooring',
-  planNoun: 'floor',
-  standardComponentsSummary: 'Timber plank, carpet, tile, underlay, skirting, scotia and transitions.',
   requiresPitch: false,
-  aiScan: false,
   unitOptions: [METRIC, IMPERIAL],
   placeholderComponents: [
     { id: 'floor-timber-plank-01', name: 'Timber Plank Flooring', measurement_type: 'area' },

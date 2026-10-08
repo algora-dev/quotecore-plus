@@ -5,24 +5,24 @@
 // Pure, UI/IO-free orchestration decisions AROUND the M5 draft/save layer:
 //
 // - OUTLINE-ONLY STOP (O10): the touch AI scan runs ONLY the existing
-//   authorised `scan1` (outline) stage and STOPS there - internal line
+//   authorised `scan1` (outline) stage and STOPS there — internal line
 //   detection (scan2) and classification (scan3) never auto-run in the touch
 //   path, and their data is NEVER converted into committed measurements when
 //   accepting only an outline. This is a CLIENT ORCHESTRATION decision only:
 //   the request APIs, entitlement checks and ledger are untouched.
 // - BILLING (owner decision 2026-09-21): billing is IDENTICAL mobile vs
-//   desktop - the full scan1 charge applies to the outline-only action.
+//   desktop — the full scan1 charge applies to the outline-only action.
 //   NO new pricing tiers, NO cheaper outline-only variant. The touch action
 //   uses the exact same canonical point cost as the desktop pipeline's
 //   scan1 (the server deducts the same points server-side).
 // - STALE-RESULT DISCIPLINE (O11): a scan result arriving after manual
 //   edits, a page switch, an image-revision change or a cancellation is
-//   DISCARDED with an explicit reason - never silently applied. The gate
+//   DISCARDED with an explicit reason — never silently applied. The gate
 //   compares the M1 `contextEpoch` + page identity captured at scan start
 //   against the values at resolve time.
 // - IMPORT-TO-DRAFT (O04): scan1 roof-area polygons enter the SAME M5
 //   draft/save path as manual outlines via
-//   touchOutlines.beginSavedOutlineEdit(..., origin: 'imported') - origin is
+//   touchOutlines.beginSavedOutlineEdit(..., origin: 'imported') — origin is
 //   provenance only (§8.3), the save intent routes to the existing
 //   create-new flow (handleSaveArea) for a new area. Accept-unchanged and
 //   edit-then-accept are the same path; no duplicate rows.
@@ -50,14 +50,14 @@ export function outlineOnlyScanCharge(qualityLevel: string): number {
 // ─── O04: scan1 polygon → editable outline candidates ────────────────────
 
 /** One detected roof outline, already in this page's scene frame
- *  (`takeoff-scene-v1`). Points are used as returned by scan1 - the desktop
+ *  (`takeoff-scene-v1`). Points are used as returned by scan1 — the desktop
  *  accept path (applyAiResults) consumes them identically. */
 export interface AiOutlineCandidate {
   name: string;
   pitch: number;
   points: readonly ScenePoint[];
   /** Polygon-level sanity at import: at least 3 finite points. Full M1
-   *  validation (simple polygon, nonzero area…) still runs in the draft -
+   *  validation (simple polygon, nonzero area…) still runs in the draft —
    *  an unusable outline imports as an INVALID editable draft with save
    *  blocked (§8.2), never as fabricated/corrected geometry. */
   usable: boolean;
@@ -94,7 +94,7 @@ function toFinitePoints(raw: unknown): ScenePoint[] | null {
 /**
  * Extract outline candidates from a scan1 result payload. ONLY roof-area
  * polygons are read: lines/classification fields (present in the shared
- * AiScanData type) are deliberately ignored - an outline-only import never
+ * AiScanData type) are deliberately ignored — an outline-only import never
  * converts AI internal components into measurements (O10).
  */
 export function aiOutlineCandidatesFromScanData(
@@ -145,16 +145,16 @@ export type AiOutlineApplicationDecision =
     };
 
 const DISCARD_MESSAGES: Record<Exclude<AiOutlineApplicationDecision, { action: 'apply' }>['reason'], string> = {
-  'page-changed': 'AI outline discarded - you switched pages while scanning.',
-  'image-revision-changed': 'AI outline discarded - the plan image changed while scanning.',
-  'context-epoch-changed': 'AI outline discarded - the scan was cancelled or is no longer current.',
-  'manual-edits': 'AI outline discarded - you made edits while scanning. Search again to replace them.',
+  'page-changed': 'AI outline discarded — you switched pages while scanning.',
+  'image-revision-changed': 'AI outline discarded — the plan image changed while scanning.',
+  'context-epoch-changed': 'AI outline discarded — the scan was cancelled or is no longer current.',
+  'manual-edits': 'AI outline discarded — you made edits while scanning. Search again to replace them.',
 };
 
 /**
  * Decide whether a resolved scan result may still be applied (O11): a result
  * arriving after manual edits, a page switch, an image-revision change or a
- * cancellation is DISCARDED with an explicit user-facing reason - never
+ * cancellation is DISCARDED with an explicit user-facing reason — never
  * silently applied over human work.
  */
 export function resolveAiOutlineApplication(
@@ -187,7 +187,7 @@ export type OutlineScanGate =
 /**
  * M8 hard gate: the AI outline scan is UNAVAILABLE until the current page
  * has a completed calibration (effective scale). The owner managed to scan
- * before finishing calibration on a live iPhone - that must be impossible.
+ * before finishing calibration on a live iPhone — that must be impossible.
  * `scale` is the adapter's effective page scale (null = uncalibrated).
  */
 export function outlineScanCalibrationGate(scale: { scale: number } | null): OutlineScanGate {
@@ -195,7 +195,7 @@ export function outlineScanCalibrationGate(scale: { scale: number } | null): Out
     return {
       allowed: false,
       reason: 'uncalibrated',
-      message: 'Set the scale first - calibrate this page before scanning an outline.',
+      message: 'Set the scale first — calibrate this page before scanning an outline.',
     };
   }
   return { allowed: true };
@@ -207,7 +207,7 @@ export function outlineScanCalibrationGate(scale: { scale: number } | null): Out
  *  unavailable = the manual journey stays fully functional (R01/O17). */
 export interface AiOutlineScanInfo {
   available: true;
-  /** Points exhausted - offer a clean message, never a block on manual work. */
+  /** Points exhausted — offer a clean message, never a block on manual work. */
   blocked: boolean;
   /** The charge the UI must display = the backend scan1 charge (O10). */
   cost: number;
@@ -222,7 +222,7 @@ export type AiOutlineScanResult =
 
 /** Import a detected outline INTO the M5 edit draft with origin 'imported'.
  *  The candidate is NOT saved geometry yet: geometryId is null so the M5
- *  save intent routes to create-new (the existing handleSaveArea flow) -
+ *  save intent routes to create-new (the existing handleSaveArea flow) —
  *  accept-unchanged and edit-then-accept share this exact path, and an
  *  existing area edited later goes update-in-place through the same M5
  *  editor (no duplicate rows, no AI-internal components committed). */

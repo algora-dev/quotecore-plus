@@ -12,7 +12,7 @@
   --sa-glow: 0 4px 18px rgba(255,107,53,.24);
   --sa-ring: #ffb17f;
   height: 100%; min-height: 0; min-width: 0; width: 100%; position: relative;
-  display: grid; grid-template-rows: minmax(0,1fr); overflow: clip; isolation: isolate; color: var(--sa-ink); color-scheme: dark;
+  overflow: hidden; isolation: isolate; color: var(--sa-ink); color-scheme: dark;
   background: radial-gradient(ellipse at 90% 80%,#27191a 0,transparent 57%),var(--sa-bg);
   font-family: var(--qc-font-sans,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);
   font-size: 15px; line-height: 1.5;
@@ -31,7 +31,7 @@
 .root button[data-qc-component]:disabled { background: #24262c; color: #8f949f; border-color: #3e424c; box-shadow: none; cursor: not-allowed; transform: none; }
 .root :is(button,a,input,select,textarea,[tabindex]):focus-visible { outline: 2px solid var(--sa-ring); outline-offset: 3px; box-shadow: none; }
 .root button svg { flex-shrink: 0; width: 20px; height: 20px; }
-.frame { min-height: 0; min-width: 0; width: 100%; display: grid; grid-template-rows: auto minmax(0,1fr) auto; overflow: hidden; }
+.frame { height: 100%; width: 100%; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 
 /* One row at ALL phone widths. No mobile one-column rule is permitted here. */
 .header { flex: 0 0 auto; display: grid; grid-template-columns: 44px minmax(0,1fr) 44px 52px; align-items: center; gap: 10px; min-height: 68px; padding: 10px max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left)); background: #111216e8; border-bottom: 1px solid #ffffff0d; }
@@ -46,7 +46,7 @@
 .root button.hideButton { display: flex; flex-direction: column; gap: 0; border: 0; padding: 3px; min-width: 44px; background: transparent; color: var(--sa-muted); font-size: 11px; }
 .root button.hideButton svg { width: 21px; height: 21px; }
 
-.messages { min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scroll-padding: 20px; scrollbar-width: thin; scrollbar-color: #545964 transparent; padding: 22px 20px 14px; }
+.messages { flex: 1 1 0%; min-height: 64px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scroll-padding: 20px; scrollbar-width: thin; scrollbar-color: #545964 transparent; padding: 22px 20px 14px; }
 .conversationContent { width: 100%; max-width: 740px; margin-inline: auto; }
 .welcome { padding-top: clamp(8px,4vh,40px); padding-bottom: 18px; }
 .welcomeEyebrow { color: var(--sa-orange); font-size: 10px; font-weight: 700; letter-spacing: 1.7px; }
@@ -54,10 +54,6 @@
 .welcome > p { margin: 0 0 24px; color: var(--sa-muted); line-height: 1.65; max-width: 39ch; font-size: 14px; }
 .quickActions { display: grid; gap: 9px; max-width: 460px; }
 .root .quickActions button { text-align: left; display: grid; grid-template-columns: 20px 1fr 16px; justify-content: start; font-size: 14px; font-weight: 500; padding: 13px 14px; min-height: 50px; background: linear-gradient(120deg,#2a2c34,#22242a); border-color: #464a55; border-radius: 15px; }
-/* Quick replies contain plain text, not icon | label | chevron children. Keep
-   their labels horizontal and normal-height while welcome actions retain the
-   three-column grid above. */
-.root .quickActions[data-sa-quick-replies='true'] button { display: flex; align-items: center; white-space: nowrap; }
 .quickActions svg:first-child { color: #dfd5d2; }
 .quickActions svg:last-child { width: 15px; color: #a7aab4; }
 .turn { margin: 0 0 18px; }
@@ -106,9 +102,7 @@
 .working { display: flex; gap: 10px; align-items: center; color: #cbcdd5; padding: 4px 0 14px; font-size: 13px; }
 .spinner { width: 20px; height: 20px; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(255, 138, 77, 0.65)); }
 
-.bottomArea { width: 100%; max-width: 780px; margin-inline: auto; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-/* Notice/playback/voice/transcript scroll here, capped; the dock below stays pinned to the bottom at all times. */
-.extras { flex: 0 1 auto; min-height: 0; max-height: 42dvh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.bottomArea { flex: 0 0 auto; width: 100%; max-width: 780px; max-height: 65%; margin-inline: auto; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .notice { display: flex; align-items: center; gap: 8px; background: #312327; color: #ffd6c5; padding: 8px 12px; border-top: 1px solid #7c4d45; font-size: 12px; }
 .notice > span { flex: 1; }
 .notice > svg { width: 18px; height: 18px; flex: 0 0 auto; }
@@ -119,7 +113,7 @@
 .playbackCopy span { display: block; font-size: 10px; line-height: 1.5; color: var(--sa-muted); }
 
 /* Silver input dock is the sole light surface, matching the approved concept. */
-.dock { flex: 0 0 auto; position: relative; color-scheme: light; padding: 10px max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); border-radius: 25px 25px 0 0; background: linear-gradient(135deg,#f8f8fa,#e4e6eb); border-top: 1px solid #ffffff; box-shadow: 0 -8px 24px #00000018; color: #22242b; }
+.dock { position: relative; color-scheme: light; padding: 10px max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); border-radius: 25px 25px 0 0; background: linear-gradient(135deg,#f8f8fa,#e4e6eb); border-top: 1px solid #ffffff; box-shadow: 0 -8px 24px #00000018; color: #22242b; }
 .root .dock button[data-qc-component] { color: #373943; background: transparent; border-color: transparent; }
 .modeBar { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
 .root button.modeButton { display: flex; flex-direction: column; gap: 5px; padding: 9px 8px; min-height: 60px; font-size: 11px; font-weight: 650; border-radius: 17px; line-height: 1.1; }
@@ -206,14 +200,10 @@
 .root .conversationList button[aria-current='page'] { border-color: #bf8865; background: #373032; }
 @keyframes sa-sheet { from { transform: translateY(12px); opacity: .6; } to { transform: none; opacity: 1; } }
 
-.dialog { padding: 0; margin: 0; position: fixed; z-index: var(--qc-z-assistant,45); inset: auto 18px 18px auto; width: min(468px,calc(100vw - 36px)); height: min(820px,calc(var(--sa-viewport-height,100dvh) - 36px)); max-width: none; max-height: none; border: 1px solid #50525a; border-radius: 24px; box-shadow: 0 24px 70px #0005; background: #111216; color: #f5f6f8; overflow: hidden; }
+.dialog { padding: 0; margin: 0; position: fixed; inset: auto 18px 18px auto; width: min(468px,calc(100vw - 36px)); height: min(820px,calc(var(--sa-viewport-height,100dvh) - 36px)); max-width: none; max-height: none; border: 1px solid #50525a; border-radius: 24px; box-shadow: 0 24px 70px #0005; background: #111216; color: #f5f6f8; overflow: hidden; }
+.dialog::backdrop { background: #080c1018; }
 .launcher { position: fixed; right: max(16px,env(safe-area-inset-right)); bottom: max(16px,env(safe-area-inset-bottom)); z-index: 45; }
-/* v15 (2026-10-04): the band also reproduces in desktop Chrome, so this is
-   not a Safari-only under-page problem. The assistant frame now uses an explicit
-   three-row grid (header / scrollable conversation / bottom controls) so the
-   bottom controls own the final row and cannot stop short because of flex or
-   percentage-height arithmetic. Standalone remains in normal document flow. */
-.standalone { position: static; height: 100dvh; min-height: 100dvh; background: #111216; }
+.standalone { position: fixed; inset: 0; z-index: 45; height: 100vh; height: var(--sa-viewport-height,100dvh); background: #111216; }
 
 @media (hover:hover) and (pointer:fine) {
   .root button[data-qc-component]:hover:not(:disabled) { background: #343740; border-color: #8f8a86; }
@@ -226,10 +216,12 @@
 }
 @media (max-width:767px), (pointer:coarse) and (max-height:600px) {
   .dialog { inset: var(--sa-viewport-top,0px) 0 auto 0; width: 100%; height: 100vh; height: var(--sa-viewport-height,100dvh); border: 0; border-radius: 0; }
+  .standalone { top: var(--sa-viewport-top,0px); bottom: auto; }
   .header { padding-top: max(10px,env(safe-area-inset-top)); }
 }
 @media (min-width:768px) {
   .standalone .header { padding-inline: max(24px,calc((100vw - 780px)/2)); }
+  .standalone .bottomArea { padding-bottom: 16px; }
   .standalone .dock { border-radius: 24px; }
   .standalone .sheet { margin-bottom: 16px; border: 1px solid #4b4b55; border-radius: 24px; }
 }
@@ -303,18 +295,3 @@
 .briefOption small {display:block;color:var(--sa-muted,var(--qc-text-secondary));font-size:12px;margin-top:4px;}
 .briefQuestion:disabled {opacity:.65;}
 .cardFooter {display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;}
-
-/* Non-modal host: explicit hidden guards prevent future display rules exposing
-   a parked conversation. These affect presentation, not assistant behavior. */
-.dialog[hidden], .launcher[hidden] { display: none !important; }
-.dialog:focus { outline: none; }
-.dialog:focus-visible { outline: 2px solid var(--qc-focus-ring,#ff862b); outline-offset: 3px; }
-.accessState { display: flex; flex-direction: column; gap: 16px; padding: 20px; min-height: 220px; color: #f5f6f8; }
-.accessState header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.accessState h2 { margin: 0; font-size: 18px; }
-.accessState p { margin: 0; font-size: 14px; line-height: 1.6; }
-.accessState header button { color: #f5f6f8; }
-.accessState .accessHint { color: #b9c0ca; font-size: 12px; }
-
-.chatMount { height: 100%; min-height: 0; }
-.chatMount[hidden] { display: none !important; }

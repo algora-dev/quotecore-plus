@@ -533,7 +533,7 @@ export function SmartComponentTab() {
           {/* Calculate button */}
           <button
             onClick={calculate}
-            className="qc-button inline-flex items-center gap-1.5" data-qc-component="C01" data-qc-variant="primary" data-qc-size="md"
+            className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
           >
             Calculate
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -633,7 +633,7 @@ export function SmartComponentTab() {
               </button>
               <a
                 href={signupHref(config, savedDraftId ?? undefined)}
-                className="qc-button inline-flex items-center" data-qc-component="C01" data-qc-variant="primary" data-qc-size="md"
+                className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800"
               >
                 Create free account
               </a>

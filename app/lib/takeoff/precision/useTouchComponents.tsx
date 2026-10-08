@@ -42,9 +42,6 @@ export interface TouchComponentsOptions {
   mode: 'ai' | 'manual';
   components: { id: string; name: string; collection_id?: string | null; is_system?: boolean; measurement_type?: string | null }[];
   collections: { id: string; name: string }[];
-  /** P4 trade wording: noun for saved outlines in area/count copy
-   *  ("roof", "wall", "floor"). Default keeps the historical roof copy. */
-  planNoun?: string;
 }
 
 /** Active drawing draft. Line = two confirm-locked endpoints; polygon =
@@ -80,14 +77,6 @@ export function useTouchComponents(
   modeRef.current = options.mode;
   const componentsRef = useRef(options.components);
   componentsRef.current = options.components;
-  // Stale-closure fix (2026-10-05, owner bug report): onSaveContinue's deps
-  // ([router, options.finishHref]) never change, so the captured
-  // options.onFinish stayed frozen at the FIRST render - an emitFinish whose
-  // outlineAdapter was still null. "Save & continue" then persisted fine but
-  // finished into a silent no-op. Keep options fresh through a ref like the
-  // other mutable inputs above.
-  const optionsRef = useRef(options);
-  optionsRef.current = options;
   const activeRef = useRef(active);
   activeRef.current = active;
   const [phase, setPhase] = useState<TouchComponentsPhase>(options.mode === 'ai' ? 'scanning' : 'review');
@@ -175,11 +164,9 @@ export function useTouchComponents(
     if (!startedRef.current && adapter?.startComponentScan) void runScan();
   }, [active, adapter, runScan]);
 
-  // Entering the step refreshes the grid from the adapter (saved/hydrated +
-  // session entries - owner 2026-10-07: the grid stayed empty until a
-  // mutation); leaving resets the lifecycle (a fresh entry re-scans).
+  // Leaving the step resets the lifecycle (a fresh entry re-scans).
   useEffect(() => {
-    if (active) { refreshFromAdapter(); return; }
+    if (active) return;
     startedRef.current = false;
     setPhase(modeRef.current === 'ai' ? 'scanning' : 'review');
     setScanStage('lines');
@@ -190,7 +177,7 @@ export function useTouchComponents(
     setHighlighted(null);
     setAttachNoticeOpen(false);
     cancelDraw();
-  }, [active, cancelDraw, refreshFromAdapter]);
+  }, [active, cancelDraw]);
 
   // Detail view: isolation is a canvas RENDER state (the overlay hides other
   // groups); nothing touches the adapter.
@@ -241,23 +228,10 @@ export function useTouchComponents(
 
   // M11: area component + saved outline - attach the roof area instead of
   // redrawing it (pitched value; the save path recomputes from live pitch).
-  // Phase 2 (2026-10-07): '__offcut_plan__' attaches the offcut cover-m2
-  // figure instead - a final material entry (no pitch/waste recompute).
   const onAttachRoofArea = useCallback((geometryId: string) => {
     const current = adapterRef.current();
-    if (!detail) return;
-    if (geometryId === '__offcut_plan__') {
-      const figure = current?.getOffcutAreaFigure?.();
-      if (!current?.addOffcutAreaEntry || !figure) return;
-      const offcutEntry = current.addOffcutAreaEntry(detail, figure);
-      if (offcutEntry) {
-        refreshFromAdapter();
-        logTakeoffEvent('components.entry.offcut.attached', { component: detail.displayName });
-      }
-      return;
-    }
     const area = current?.getAreas?.().find(a => a.geometryId === geometryId);
-    if (!current?.addRoofAreaEntry || !area) return;
+    if (!current?.addRoofAreaEntry || !area || !detail) return;
     const entry = current.addRoofAreaEntry(detail, area);
     if (entry) {
       refreshFromAdapter();
@@ -407,9 +381,8 @@ export function useTouchComponents(
         return;
       }
       logTakeoffEvent('components.save.succeeded', { rows });
-      const finish = optionsRef.current;
-      if (finish.onFinish) finish.onFinish();
-      else router.push(finish.finishHref);
+      if (options.onFinish) options.onFinish();
+      else router.push(options.finishHref);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'The save failed. Your entries are kept.';
       setError(message);
@@ -418,7 +391,7 @@ export function useTouchComponents(
       savingRef.current = false;
       setSaving(false);
     }
-  }, [router]);
+  }, [router, options.finishHref]);
 
   const filteredComponents = libraryId
     ? options.components.filter(c => (c.collection_id ?? null) === libraryId)
@@ -430,13 +403,7 @@ export function useTouchComponents(
   // pitched value the entry will carry (recomputed live at save time).
   const roofAreas: TouchRoofAreaOption[] = (() => {
     const areas = adapter?.getAreas() ?? [];
-    // Phase 2 (2026-10-07): the offcut cover-m2 figure rides at the top of the
-    // attach list as a pseudo-option (final material - no pitch/waste at save).
-    const offcutFigure = adapter?.getOffcutAreaFigure?.() ?? null;
-    const offcutOption: TouchRoofAreaOption[] = offcutFigure
-      ? [{ geometryId: '__offcut_plan__', name: 'Offcut plan', label: `${offcutFigure.m2.toFixed(1)} m² (exact material)`, points: [] }]
-      : [];
-    return [...offcutOption, ...areas
+    return areas
       .filter(a => a.points.length >= 3 && !!a.geometryId && !!a.quoteRoofAreaId)
       .map(a => {
         const plan = scale ? polygonAreaCanvas(a.points.map(p => ({ x: p.x, y: p.y }))) * scale.scale * scale.scale : 0;
@@ -448,7 +415,7 @@ export function useTouchComponents(
           points: a.points.map(p => ({ x: p.x, y: p.y })),
           label: `${pitched.toFixed(1)} ${unit2}${a.pitch ? ` (pitch ${Math.round(a.pitch)}°)` : ''}`,
         };
-      })];
+      });
   })();
   const detailEntries = detailKey ? entries.filter(e => e.key === detailKey) : [];
   const draftReady = (() => {
@@ -485,8 +452,7 @@ export function useTouchComponents(
     onStartNewEntry={onStartNewEntry} onConfirmPoint={onConfirmPoint}
     onUndoPolygonPoint={onUndoPolygonPoint} onClosePolygon={onClosePolygon} onCancelDraw={cancelDraw}
     onRetry={onRetry} onCancelScan={onCancelScan}
-    onSaveContinue={onSaveContinue}
-    planNoun={options.planNoun} /> : null;
+    onSaveContinue={onSaveContinue} /> : null;
 
   // F1: the canvas is mounted for the ENTIRE step - the plan (raster +
   // outline + entries) is the source of truth and never goes blank. The

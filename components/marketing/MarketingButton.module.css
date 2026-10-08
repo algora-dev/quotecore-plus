@@ -39,50 +39,12 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* G-C / pricing-selector qcp-clear. Light companions keep the same edge,
-   inset highlight and one-pass 110deg glint; Dark Focus overrides the vars.
-   These are marketing controls only, not global application tokens. */
 .glass {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  color: var(--qc-glass-ink, #191b20);
-  border-color: var(--qc-glass-edge, rgba(105, 119, 139, .43));
-  background:
-    linear-gradient(145deg, var(--qc-glass-sheen, rgba(255,255,255,.42)), transparent 46%, var(--qc-glass-toe, rgba(255,255,255,.17))),
-    var(--qc-glass-fill, rgba(255,255,255,.18));
-  box-shadow:
-    inset 0 1px 0 var(--qc-glass-highlight, rgba(255,255,255,.94)),
-    inset 0 -1px 0 var(--qc-glass-lowlight, rgba(97,111,131,.10)),
-    0 2px 3px var(--qc-glass-shadow, rgba(25,27,32,.035)),
-    0 6px 18px var(--qc-glass-shadow, rgba(25,27,32,.035));
-  -webkit-backdrop-filter: blur(14px) saturate(1.08);
-  backdrop-filter: blur(14px) saturate(1.08);
-  transition: border-color 120ms cubic-bezier(.2,0,0,1), background-color 120ms cubic-bezier(.2,0,0,1), box-shadow 120ms cubic-bezier(.2,0,0,1), color 120ms cubic-bezier(.2,0,0,1);
-}
-/* An embossed, hairline rim stays visible even before the pointer arrives. */
-.glass::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(120deg, var(--qc-glass-rim, rgba(255,255,255,.95)), transparent 36%, transparent 67%, var(--qc-glass-rim, rgba(255,255,255,.95)));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-.glass::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 18%, var(--qc-glass-glint, rgba(255,255,255,.76)) 48%, transparent 78%);
-  transform: translateX(-120%);
-  pointer-events: none;
-  /* Exit resets out of sight rather than replaying the sweep in reverse. */
-  transition: none;
+  background: rgba(255, 255, 255, 0.62);
+  border-color: rgba(221, 225, 231, 0.92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 2px 8px rgba(25, 27, 32, 0.06);
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  backdrop-filter: blur(16px) saturate(1.12);
 }
 
 .ghost {
@@ -117,14 +79,10 @@
     transform: translateY(-1px);
   }
 
-  .glass:hover:not(:disabled) {
-    background-color: var(--qc-glass-hover, rgba(255,255,255,.34));
-    border-color: var(--qc-glass-accent, #b63d0a);
-    box-shadow: inset 0 1px 0 var(--qc-glass-highlight, #fff), inset 0 -1px 0 var(--qc-glass-lowlight, rgba(97,111,131,.10)), 0 4px 16px var(--qc-glass-hover-shadow, rgba(255,107,53,.095));
-  }
-  .glass:hover:not(:disabled)::after {
-    transform: translateX(120%);
-    transition: transform 220ms cubic-bezier(.2,0,0,1);
+  .glass:hover {
+    background: rgba(255, 244, 235, 0.76);
+    border-color: var(--qc-marketing-orange-ink);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88), 0 4px 14px rgba(255, 107, 53, 0.16);
   }
 
   .ghost:hover {
@@ -138,28 +96,17 @@
   box-shadow: inset 0 2px 3px rgba(25, 27, 32, 0.12);
 }
 
-.glass:active:not(:disabled) {
-  background-color: var(--qc-glass-pressed, rgba(224,228,234,.5));
-  box-shadow: inset 0 1px 3px rgba(0,0,0,.15);
-}
-
 .primary:active {
   background: var(--qc-marketing-gradient-pressed);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .button { transition: none; }
-  .glass::after { display: none; }
-}
-
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
-  .glass { background: var(--qc-glass-solid, #f7f8fa); }
 }
 
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
-  .glass::before, .glass::after { display: none; }
   .glass {
-    background: var(--qc-glass-solid, #f7f8fa);
+    background: #fff;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     box-shadow: none;
@@ -167,7 +114,7 @@
 }
 
 @media (forced-colors: active) {
-  .button, .glass {
+  .button {
     background: ButtonFace;
     color: ButtonText;
     border: 1px solid ButtonText;

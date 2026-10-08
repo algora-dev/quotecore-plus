@@ -1,6 +1,4 @@
 'use client';
-import { demoComponentCalculated, refreshDemoGuide } from '@/app/lib/demo/client-events';
-import { useSearchParams } from 'next/navigation';
 import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { useQcActionNotice } from '@/app/components/ui/v2/QcActionNotice';
 import { SmartComponentEditor, type ComponentEditorSettings, type ComponentEditorInitial } from '@/app/components/pricing/SmartComponentEditor';
@@ -46,7 +44,6 @@ export function ComponentList({
   restoreDraftId,
   highlightComponentId,
   isSupplier = false,
-  demoDefaultLibraryId,
 }: {
   initialComponents: ComponentLibraryRow[];
   workspaceSlug: string;
@@ -59,8 +56,6 @@ export function ComponentList({
   reviewImported?: boolean;
   /** Component collections for the company (for library assignment UI). */
   componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
-  /** Demo only: library pre-selected on first landing instead of "All Libraries" (owner 2026-10-05). */
-  demoDefaultLibraryId?: string;
   /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
   editWarningDismissed?: boolean;
   /** Draft ID from ?restore= query param - loads a saved calculator draft. */
@@ -71,8 +66,6 @@ export function ComponentList({
   /** Whether this company is an approved supplier. Shows publishing controls. */
   isSupplier?: boolean;
 }) {
-  const demoSearch = useSearchParams();
-  const openedDemoTarget = useRef<string | null>(null);
   const { notify, ask, feedback } = useQcFeedback();
   const { notice, showNotice } = useQcActionNotice();
   const [learning, setLearning] = useState(showPricingIntroduction);
@@ -114,9 +107,7 @@ export function ComponentList({
   // Component collection (library) state
   const [collections, setCollections] = useState(componentCollections);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
-    (componentCollections.find(c => (c as { is_default_takeoff_library?: boolean }).is_default_takeoff_library)
-      ?? componentCollections.find(c => c.is_bootstrap)
-      ?? componentCollections[0])?.id ?? ''
+    componentCollections.find(c => c.is_bootstrap)?.id ?? componentCollections[0]?.id ?? ''
   );
   const [showCreateLibraryModal, setShowCreateLibraryModal] = useState(false);
   const [showCatalogModal, setShowCatalogModal] = useState(false);
@@ -133,9 +124,6 @@ export function ComponentList({
     const saved = localStorage.getItem(LOCAL_KEY);
     // Validate saved id still exists in collections list before applying.
     if (saved && componentCollections.some(c => c.id === saved)) return saved;
-    // Demo (owner 2026-10-05): first landing shows the seeded default (Roofing)
-    // library rather than a mixed "All Libraries" view.
-    if (demoDefaultLibraryId && componentCollections.some(c => c.id === demoDefaultLibraryId)) return demoDefaultLibraryId;
     return '';
   });
   const [defaultLibraryFlash, setDefaultLibraryFlash] = useState<string | null>(null);
@@ -349,60 +337,6 @@ export function ComponentList({
     );
   }
 
-  useEffect(() => {
-    if (!workspaceSlug.startsWith('demo-')) return;
-    const id = demoSearch.get('demoComponent');
-    const key = `${id}:${demoSearch.get('demoTest')}:${demoSearch.get('demoVisit') ?? ''}`;
-    if (!id || openedDemoTarget.current === key) return;
-    const component = components.find(item => item.id === id);
-    if (!component) return;
-    openedDemoTarget.current = key;
-    setActiveLibraryId('');
-    void startEdit(component, demoSearch.get('demoTest') === '1');
-    // Only an explicit navigation request opens the editor. Subsequent typing
-    // must not re-open/reset it as component or editor state changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demoSearch, workspaceSlug]);
-
-  // Demo guide: ?demoCreate=1 opens the create form directly (guide CTA).
-  const openedDemoCreateRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!workspaceSlug.startsWith('demo-')) return;
-    const visit = demoSearch.get('demoVisit') ?? 'initial';
-    if (demoSearch.get('demoCreate') !== '1' || openedDemoCreateRef.current === visit) return;
-    openedDemoCreateRef.current = visit;
-    // Same dirty-state protection as a normal editor switch. A guide link must
-    // never silently discard a visitor's in-progress component.
-    void (async () => {
-      if (!(await mayLeaveEditor()) || openedDemoCreateRef.current !== visit) return;
-      setEditorDirty(false); setEditingId(null); setTestOnOpen(false); setTestRequest(0);
-      // Keep demo rates illustrative; do not alter product calculation logic.
-      setRestoredName(''); setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false);
-      setFormPricingStrategy('per_unit'); setRestoredMaterialRate('10'); setRestoredLabourRate('5'); setRestoredWasteAmount('');
-      setSelectedCollectionId(demoDefaultLibraryId || activeLibraryId || collections.find(c => c.is_bootstrap)?.id || collections[0]?.id || '');
-      setEditorVersion(value => value + 1);
-      setShowForm(true);
-      requestAnimationFrame(() => editorAnchor.current?.scrollIntoView({ block: 'start', behavior: 'auto' }));
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demoSearch, workspaceSlug]);
-
-  // Demo-only surface signal: the helper follows the actual editor, not just
-  // a ?demoComponent URL that may remain after Cancel. No product save is implied.
-  useEffect(() => {
-    if (!workspaceSlug.startsWith('demo-')) return;
-    const report = () => window.dispatchEvent(new CustomEvent('qc-demo-component-surface', { detail: {
-      kind: editingId ? (testOnOpen ? 'test' : 'edit') : showForm ? 'create' : 'closed',
-      ...(editingId ? { componentId: editingId } : {}),
-    } }));
-    report();
-    window.addEventListener('qc-demo-component-surface-request', report);
-    return () => {
-      window.removeEventListener('qc-demo-component-surface-request', report);
-      window.dispatchEvent(new CustomEvent('qc-demo-component-surface', { detail: { kind: 'closed' } }));
-    };
-  }, [workspaceSlug, editingId, showForm, testOnOpen]);
-
   function cancelEdit() {
     setEditorDirty(false);
     setShowForm(false);
@@ -581,7 +515,7 @@ export function ComponentList({
       setEditorDirty(false);
       setCreateDefaults(null);
       setCreatedInSession(true);
-      setLastCreatedId(result.data.id); refreshDemoGuide();
+      setLastCreatedId(result.data.id);
       setOwnTested(draftTested);
       setDraftTested(false);
       setActiveLibraryId(selectedCollectionId);
@@ -1163,7 +1097,6 @@ export function ComponentList({
             saving={saving} error={formError} onSubmit={editingComponent ? event => handleUpdate(event, editingComponent.id) : handleCreate}
             onCancel={() => { void mayLeaveEditor().then(leave => { if (leave) cancelEdit(); }); }}
             onDirty={() => { setEditorDirty(true); setDraftTested(false); }} onCalculated={() => {
-            void demoComponentCalculated(editingId);
               setTestedInSession(true);
               if (showForm) setDraftTested(true);
               if (editingId && editingId === lastCreatedId) setOwnTested(true);

@@ -2,13 +2,13 @@
 // trap 1 + §10). PURE module: no React/Fabric/DOM.
 //
 // The four spaces of §10.1 map onto:
-//   sceneDescriptor  - the page's stable measurement frame (takeoff-scene-v1,
+//   sceneDescriptor  — the page's stable measurement frame (takeoff-scene-v1,
 //                      long edge capped at MAX_CANVAS_DIM = 2000, image
 //                      processing + AI canvasDimensions payloads use THIS).
-//   viewportSize     - visible logical drawing surface (CSS px, changes on
+//   viewportSize     — visible logical drawing surface (CSS px, changes on
 //                      rotation / layout switch / browser chrome changes).
-//   camera           - user pan/zoom over the scene (changes constantly).
-//   client           - pointer coordinates in the interaction surface's own
+//   camera           — user pan/zoom over the scene (changes constantly).
+//   client           — pointer coordinates in the interaction surface's own
 //                      rect (bounded by getBoundingClientRect at the caller).
 //
 // INVARIANT (R11): scene dimensions, stored geometry and measurement scale
@@ -86,7 +86,7 @@ export function scenePointToViewport(camera: Camera, p: Point): Point {
 
 /**
  * Remote-drag delta conversion (§5.2 / §10.2): use ONLY the inverse transform's
- * linear part - never its translation - on a delta vector. Client deltas are
+ * linear part — never its translation — on a delta vector. Client deltas are
  * CSS px; DPR must NOT be applied (render backing resolution is not a
  * measurement unit). Re-exported shape matching M1's sceneDeltaFromClientDelta
  * semantics but camera-parameterised.

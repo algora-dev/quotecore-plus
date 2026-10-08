@@ -1,4 +1,3 @@
-import { canEnterChapter } from '@/app/lib/demo/guide';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { getSignedUrl } from '@/app/lib/storage/helpers';
 import { BUCKETS } from '@/app/lib/storage/buckets';
@@ -8,8 +7,6 @@ import { notFound } from 'next/navigation';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { companyHasAiCalibration } from '@/app/lib/takeoff/calibrationFlag';
 import { companyHasTakeoffTouch } from '@/app/lib/takeoff/takeoffTouchFlag';
-import { getActiveDemoContext } from '@/app/lib/demo/context';
-import { DemoFeatureGate } from '@/app/components/demo/DemoFeatureGate';
 
 export default async function Page({
   params,
@@ -18,10 +15,6 @@ export default async function Page({
 }) {
   const { workspaceSlug, id: quoteId } = await params;
   const profile = await requireCompanyContext();
-  const demoContext = await getActiveDemoContext(profile.company_id);
-  if (demoContext && (!canEnterChapter(demoContext.tutorialState, 'takeoff') || demoContext.tutorialState.guided_takeoff_job_id !== quoteId)) {
-    return <DemoFeatureGate title="Try Digital Takeoff" description="Digital Takeoff is available through the guided demo. We’ll use the prepared fictional roof plan so you can experience the full workflow without setting anything up." chapter="takeoff" workspaceSlug={workspaceSlug} href={`/${workspaceSlug}/quotes`} secondaryHref="https://quote-core.com/free-roof-takeoff" secondaryLabel="Measure your own plan in the Free Takeoff Tool" />;
-  }
   const supabase = await createSupabaseServerClient();
 
   // Load quote
@@ -40,19 +33,15 @@ export default async function Page({
   const isOverStorage = ent.isOverStorage;
 
   // P2 AI-assisted calibration: per-company flag (defaults false until the P4 migration).
-  const aiCalibrationEnabled = !demoContext && await companyHasAiCalibration(profile.company_id);
+  const aiCalibrationEnabled = await companyHasAiCalibration(profile.company_id);
 
   // M2: mobile takeoff touch workspace dark-launch flag (patch_051 pattern).
-  // Demo (2026-10-07): the demo rides the SAME touch experience as flagged
-  // accounts. A fresh demo company has no takeoff_touch row, which served the
-  // desktop canvas to phones. Demo forces the flag on; the auto view-mode
-  // heuristic still resolves desktop for pointer-fine visitors.
-  const takeoffTouchEnabled = !!demoContext || (await companyHasTakeoffTouch(profile.company_id));
+  const takeoffTouchEnabled = await companyHasTakeoffTouch(profile.company_id);
 
   // M2 §3.4/L08: compact required-notice lines for the touch top strip. The
   // full banners in layout.tsx remain untouched; the touch shell surfaces the
   // same required facts compactly while immersive.
-  const takeoffCompactNotices: string[] = demoContext ? ['PREPARED MEASURED PLAN · Already measured for you · Example prices only'] : [];
+  const takeoffCompactNotices: string[] = [];
   if (isOverStorage) takeoffCompactNotices.push('Storage limit reached');
   if ('isBeingImpersonated' in profile && profile.isBeingImpersonated) {
     takeoffCompactNotices.push('Impersonation active');
@@ -66,13 +55,11 @@ export default async function Page({
     .single();
   const aiTakeoffEnabled = process.env.AI_TAKEOFF_ENABLED === 'true';
   const isRoofingCompany = companyRow?.default_trade === 'roofing';
-  // Demo lands pre-measured (owner 2026-10-04): the staged scan walkthrough is
-  // gone and a fresh Scan would replace the seeded entries - no AI button.
-  const aiTakeoffAvailable = !demoContext && aiTakeoffEnabled && isRoofingCompany;
+  const aiTakeoffAvailable = aiTakeoffEnabled && isRoofingCompany;
 
   // AI Assist points: fetch current usage for UI display.
   let aiAssistPoints: { used: number; limit: number; remaining: number; isBlocked: boolean } | null = null;
-  if (aiTakeoffAvailable && !demoContext) {
+  if (aiTakeoffAvailable) {
     const { data: pointsData } = await supabase
       .rpc('get_ai_assist_points_status', { p_company_id: profile.company_id });
     if (pointsData) {
@@ -176,7 +163,6 @@ export default async function Page({
 
   return (
     <TakeoffPage
-      demoFinishHref={demoContext ? `/${workspaceSlug}/demo-guide/finish` : undefined}
       workspaceSlug={workspaceSlug}
       quoteId={quoteId}
       quote={quote}

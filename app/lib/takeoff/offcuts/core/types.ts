@@ -19,10 +19,6 @@ export interface RoofInput {
   /** Face-review only; physical cut tolerances are unchanged. */
   draftingTolerance?: 'tight' | 'balanced' | 'relaxed';
   faceDetectionIgnoredEdgeIds?: string[];
-  /** Review-only exception: keep these original measurements as distinct boundaries. */
-  geometryKeepSeparateEdgeIds?: string[];
-  /** Explicit recovery/reset tool; absent means automatic canonical linework. */
-  geometryCleanupMode?: 'auto' | 'raw';
 }
 export interface Issue {
   severity: 'error' | 'warning'; code: string; message: string;
@@ -38,7 +34,6 @@ export interface RoofFace {
   pitchDeg: number | null;
   /** Origin of the displayed vector; approval below is bound to exact reviewed geometry. */
   flowSource?: 'inferred' | 'manual';
-  flowSuggestionBasis?: 'spouting-hint' | 'outer-boundary' | 'geometry-topology' | 'needs-review';
   /** Explicit review acknowledgement. Invalidated by changes to polygon/vector/labels. */
   directionApproval?: string;
   /** Phase measured from the local minimum cross-slope coordinate. */
@@ -74,16 +69,6 @@ export interface SolveSettings {
   maxSourceBlocksPerFace?: number;
   /** Requested overlap into the valley for a self-fill donor run. Not spares. */
   selfFillTransitionMm?: number;
-  /** Quoting sensitivity: one COMMON cross-sheet phase band per valley parent.
-   * Fixed registration is an explicit site-setout assumption, not a silent default. */
-  receiverPhaseMode?: 'quote-safe' | 'fixed-registration';
-  /** Total source phase band as a fraction of one effective cover (0..1).
-   * The default is +/- half a cover, not two unrelated full-cover allowances. */
-  receiverPhaseCoverFraction?: number;
-  /** Conservative destination-only replay. Missing = enabled; false keeps the V2.15 search. */
-  provisionalReuse?: boolean;
-  /** Additional replay budget, 0..20000 ms. Does not enlarge the bank-search budget. */
-  provisionalMaxMilliseconds?: number;
   optimiseLapDirections: boolean;
   maxTrials: number; maxMilliseconds: number; maxSheets: number;
 }
@@ -94,7 +79,7 @@ export const DEFAULT_PROFILE: Profile = {
 };
 export const DEFAULT_SETTINGS: SolveSettings = {
   stockMode: 'bank-first', optimiseLapDirections: true, maxBankExtensionMm: 100,
-  maxSourceBlocksPerFace: 2, selfFillTransitionMm: 100, receiverPhaseMode: 'quote-safe', receiverPhaseCoverFraction: 1,
+  maxSourceBlocksPerFace: 2, selfFillTransitionMm: 100,
   maxTrials: 32, maxMilliseconds: 4000, maxSheets: 600,
 };
 export interface FaceFrame {
@@ -111,9 +96,7 @@ export interface Demand {
   stockRole?: 'primary-cut' | 'filler' | 'supplement';
   /** Only hip/valley/broken-hip cuts enter reusable inventory. */
   reusableCut?: boolean;
-  /** Canonically verified removal of nonproductive square stock, never a shorter offcut family. */
-  stockEndProof?: import('./stockEnds').StockEndProof;
-  /** Shape-derived upper/lower cuts in this physical sheet's local millimetres. */
+  /** Approved cut boundaries in this physical sheet's local millimetres. */
   cutEdges?: RoofEdge[];
   materialBankId?: string;
   /** Planning role is independent of whether the final sheet has angled cuts. */
@@ -135,9 +118,6 @@ export interface Offcut {
   cutKind?: 'hip' | 'valley' | 'broken_hip';
   sourceLaneIndex?: number;
   sourceCrossMm?: number;
-  /** Geometric arm of the lower cut, in the source's local sheet frame.
-   * An apex-spanning physical piece remains ONE piece, not two ideal triangles. */
-  cutArm?: 'negative' | 'positive' | 'apex';
 }
 export interface Placement {
   demandId: string;
@@ -156,9 +136,6 @@ export interface MaterialBank {
   cutLengthMm: number; crossMinMm: number; crossMaxMm: number;
 }
 export interface BankLayout {
-  /** Only IDs, never user-supplied blank dimensions. Canonical regeneration recomputes every shorter blank.
-   * Missing retains historical bank-envelope behaviour for existing saved plans. */
-  stockEndRefinement?: { model: 'preserve-cut-ends-v1'; demandIds: string[] };
   primaryFaceIds: string[];
   laneOffsetByFace: Record<string, number>;
   /** Extra length applies to angled primary cuts, not short straight fillers. */
@@ -167,17 +144,15 @@ export interface BankLayout {
   cutLengthByFace?: Record<string, number>;
   /** Geometry-derived donor-zone choices, reported instead of hidden allowances. */
   selfFillFaceIds?: string[];
-  /** Downstream stock extension is shared by every angled lane in the cutting block. */
+  /** Extra downstream stock only on lanes with an angled downstream boundary. */
   tailExtensionByFace?: Record<string, number>;
   primarySequence?: string[];
-  /** Dedicated local receiver starter length; not a new main elevation bank. */
-  receiverStockLengthByFace?: Record<string, number>;
   /** Real common-grid purchasing operations; not every parallel face is joined. */
-  primaryOperations?: { id: string; bankId: string; faceIds: string[]; phaseMm: number; stockLengthMm: number; coverStations?: import('./bankLanes').CoverStationPlan; oneRootPerColumn?: boolean }[];
+  primaryOperations?: { id: string; bankId: string; faceIds: string[]; phaseMm: number; stockLengthMm: number }[];
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19';
+  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9';
   layoutId?: string;
   layoutLabel?: string;
   objective?: PlanObjective;
@@ -198,12 +173,6 @@ export interface Solution {
   status: 'prototype-review' | 'invalid';
   /** V1 never produces an approved manufacturing/order list. */
   orderReady: false;
-  receiverSafety?: import('./receiverSafety').ReceiverSafetyReport;
-  provisionalReuse?: import('./provisionalReuse').ProvisionalReuseReport;
-  /** Post-plan purchasing audit; quantities/UI are independently derived from canonical demands. */
-  stockLengthRefinement?: import('./stockLength').StockLengthReport;
-  /** Optional terminal-filler substitutions; original plan remains a separate saved plan. */
-  salvage?: import('./salvageModel').SalvageCertificate;
 }
 export interface SolveRequest { roof: RoofInput; faces: RoofFace[]; profile: Profile; settings: SolveSettings }
 export interface Draft {
@@ -211,8 +180,6 @@ export interface Draft {
   profile: Profile; settings: SolveSettings; solution: Solution | null;
   exportedAt?: string;
   reviewNotes?: Issue[];
-  /** Diagnostic only. Geometry authority remains the reviewed polygons. */
-  geometryReview?: import('./geometryPolicy').GeometryCleanupReport;
   /** UI acknowledgements, bound to geometry/rules; never bypass errors. */
   dismissedWarnings?: string[];
   /** Local review meanings, never written back to the component library. */
@@ -229,56 +196,11 @@ export interface PlanQuality {
   /** Explicit site-complexity proxy. Lower is simpler, not a measured labour time. */
   complexity: number;
 }
-/** V2.14 workflow proxy: repeated sheet cuts are grouped into runs.
- * These are observable operation groups, NOT measured labour time. */
-export interface WorkflowQuality {
-  model: 'site-workflow-v1';
-  sourceRelationships: number; splitSets: number; reuseRuns: number;
-  recutRuns: number; freshCutRuns: number; fillerSeparators: number;
-  primaryOperations: number; stockLengthGroups: number; score: number;
-}
-export interface SimplerAssessment {
-  accepted: boolean;
-  reason: 'within-policy' | 'material-limit' | 'extra-sheet-limit' | 'no-workflow-benefit' | 'insufficient-workflow-improvement';
-  baselineLayoutId: string;
-  maxExtraPercent: number; maxExtraCoverAreaM2: number; maxExtraNewSheets: number;
-  baselineLinealM: number; proposedLinealM: number; extraLinealM: number;
-  extraCoverAreaM2: number; extraNewSheets: number;
-  previousWorkflow: WorkflowQuality; proposedWorkflow: WorkflowQuality;
-  minimumScoreReduction: number; scoreReduction: number;
-  benefits: string[];
-}
-/** Bounded material saving is measured in effective-cover m², never prices or
- * percentage of the roof. These are product guardrails, not labour estimates. */
-export type MaterialSavingTier = 'equivalent' | 'very-small' | 'small' | 'moderate';
-export type WorkflowMetric = Exclude<keyof WorkflowQuality, 'model' | 'score'>;
-export interface MaterialSavingAssessment {
-  policy: 'material-trade-off-v1';
-  accepted: boolean;
-  reason: 'within-policy' | 'insufficient-material-saving' | 'workflow-budget' | 'workflow-limit' | 'reuse-depth-limit';
-  baselineLayoutId: string;
-  tier: MaterialSavingTier;
-  baselineCoverAreaM2: number; proposedCoverAreaM2: number;
-  baselineLinealM: number; proposedLinealM: number;
-  savedCoverAreaM2: number; savedLinealM: number; newSheetDelta: number;
-  minimumSavingM2: number; strongSavingM2: number;
-  previousWorkflow: WorkflowQuality; proposedWorkflow: WorkflowQuality;
-  workflowDelta: Record<WorkflowMetric, number>;
-  previousReuseDepth: number; proposedReuseDepth: number;
-  /** Increases cannot be cancelled out by improvements elsewhere. */
-  addedWorkPoints: number; maxAddedWorkPoints: number;
-  maxIncreases: Record<WorkflowMetric, number>;
-  maxAdditionalReuseDepth: number; maximumReuseDepth: number;
-  exceededLimits: string[];
-}
 export interface PlanComparison {
   objective: 'simpler' | 'less-material'; previousLayoutId: string;
   previous: PlanQuality; proposed: PlanQuality;
   suppliedDeltaMm2: number; newSheetDelta: number; complexityDelta: number;
   changedFaceIds: string[];
-  /** Final, physically checked trade-off against Recommended, never an accumulating allowance. */
-  simplification?: SimplerAssessment;
-  materialSaving?: MaterialSavingAssessment;
 }
 export interface TraceEvent {
   step: number; action: string; message: string;
@@ -290,12 +212,9 @@ export interface TraceCandidate {
   trial: number; seedFaceId: string; objective: PlanObjective;
   signature: string; quality: PlanQuality; completed: boolean;
   selected: boolean; reason: string;
-  evaluationStage?: 'bank-search' | 'final-physical';
-  simplification?: SimplerAssessment;
-  materialSaving?: MaterialSavingAssessment;
 }
 export interface DecisionTrace {
-  schemaVersion: 1; engineVersion: '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19'; requestFingerprint: string;
+  schemaVersion: 1; engineVersion: '2.9'; requestFingerprint: string;
   objective: PlanObjective; selectedTrial: number | null;
   events: TraceEvent[]; candidates: TraceCandidate[];
   truncated: boolean; droppedEvents: number;
@@ -306,12 +225,11 @@ export interface DecisionTrace {
 }
 export interface AlternativePlanOptions {
   objective: 'simpler' | 'less-material';
-  /** Compatible Recommended anchor for either objective, not the currently displayed alternative. */
   previous: Solution;
   /** Full solutions are not needed to exclude plans already shown. */
   excludedSignatures?: string[];
   attempt?: number;
-  /** Optional tighter limit (0–3%). Also capped at 10 m² effective cover and a small sheet increase. */
+  /** Simpler may buy more material, but never without an explicit bounded cap. */
   maxExtraMaterialPercent?: number;
 }
 export interface AlternativePlanResult {

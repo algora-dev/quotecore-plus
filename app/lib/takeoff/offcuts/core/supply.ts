@@ -71,7 +71,7 @@ export function supplyView(s: Pick<Solution,'demands'|'placements'|'offcuts'|'ba
       const r=demands.get(o?.rootDemandId??'');
       return p?.kind==='reuse'&&r?.faceId!==faceId&&!blocks.find(b=>b.id===blockByPlacement.get(d.id))?.faceIds.includes(faceId);
     });
-    const length=(d:Demand)=>{const b=bounds(d.stockEndProof?.originalBlank??d.blank);return b.maxY-b.minY;};
+    const length=(d:Demand)=>{const b=bounds(d.blank);return b.maxY-b.minY;};
     const longest=Math.max(0,...own.map(length));
     for(const d of own){
       const ridge=d.zoneRole==='ridge-fill'||d.stockRole==='filler';

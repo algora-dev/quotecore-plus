@@ -14,8 +14,6 @@ import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { FreeToolsAuthButton } from '../_components/FreeToolsAuthButton';
 import { useFreeToolsEmail } from '../_components/useFreeToolsEmail';
 import { FreeToolsSignupBanner } from '../_components/FreeToolsSignupBanner';
-import '../_components/free-tools-v2.css';
-import { QcButton } from '@/app/components/ui/v2/QcButton';
 
 /**
  * Free Quote Generator - no signup required.
@@ -344,7 +342,7 @@ function QuoteGeneratorForm() {
   }
 
   return (
-    <main data-qc-ui="v2" className="qc-ft min-h-screen">
+    <main className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
@@ -372,9 +370,9 @@ function QuoteGeneratorForm() {
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Hero */}
         <section className="mb-8 print:hidden">
-          <h1 className="qc-ft-title">Free Quote Generator</h1>
-          <p className="qc-ft-eyebrow mt-1">QuoteCore Plus Free Quote Generator - free, no signup required.</p>
-          <p className="mt-2 text-sm qc-ft-muted max-w-xl">
+          <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Quote Generator</h1>
+          <p className="mt-1 text-sm font-medium text-[#BD4A1A]">QuoteCore Plus Free Quote Generator - free, no signup required.</p>
+          <p className="mt-2 text-sm text-slate-500 max-w-xl">
             Create a professional roofing or construction quote in minutes. Upload a photo of your
             existing quote and AI will fill in the form - or type it manually. No signup required.
           </p>
@@ -427,21 +425,21 @@ function QuoteGeneratorForm() {
               </div>
 
               {/* Settings bar */}
-              <div className="qc-ft-card p-5">
-                <h2 className="qc-ft-heading mb-4">Document settings</h2>
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <h2 className="text-sm font-semibold text-slate-900 mb-4">Document settings</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Measurement system</label>
                     <div className="mt-1 flex rounded-lg border border-slate-300 overflow-hidden">
                       <button
                         onClick={() => handleMeasurementChange('metric', measurementType)}
-                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'metric' ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'metric' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                       >
                         Metric
                       </button>
                       <button
                         onClick={() => handleMeasurementChange('imperial', measurementType)}
-                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'imperial' ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'imperial' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                       >
                         Imperial
                       </button>
@@ -521,8 +519,8 @@ function QuoteGeneratorForm() {
               </div>
 
               {/* Your details */}
-              <div className="qc-ft-card p-5">
-                <h2 className="qc-ft-heading mb-4">Your business</h2>
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <h2 className="text-sm font-semibold text-slate-900 mb-4">Your business</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Company name</label>
@@ -617,8 +615,8 @@ function QuoteGeneratorForm() {
               </div>
 
               {/* Client details */}
-              <div className="qc-ft-card p-5">
-                <h2 className="qc-ft-heading mb-4">Client details</h2>
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <h2 className="text-sm font-semibold text-slate-900 mb-4">Client details</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Client name</label>
@@ -654,9 +652,9 @@ function QuoteGeneratorForm() {
               </div>
 
               {/* Line items */}
-              <div className="qc-ft-card p-5">
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="qc-ft-heading">Line items</h2>
+                  <h2 className="text-sm font-semibold text-slate-900">Line items</h2>
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 text-xs text-slate-600">
                       <input type="checkbox" checked={hideAllPrices} onChange={(e) => setHideAllPrices(e.target.checked)} className="rounded border-slate-300" />
@@ -772,7 +770,7 @@ function QuoteGeneratorForm() {
               </div>
 
               {/* Notes */}
-              <div className="qc-ft-card p-5">
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <label className="text-xs font-medium text-slate-600">Notes / terms</label>
                 <textarea
                   value={notes}
@@ -784,19 +782,19 @@ function QuoteGeneratorForm() {
               </div>
 
               {/* Footer */}
-              <div className="qc-ft-card p-5">
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-medium text-slate-600">Footer</label>
                   <div className="flex rounded-lg border border-slate-300 overflow-hidden">
                     <button
                       onClick={() => setFooterItalic(false)}
-                      className={`px-3 py-1 text-xs font-medium transition ${!footerItalic ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                      className={`px-3 py-1 text-xs font-medium transition ${!footerItalic ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                     >
                       Normal
                     </button>
                     <button
                       onClick={() => setFooterItalic(true)}
-                      className={`px-3 py-1 text-xs font-medium transition ${footerItalic ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                      className={`px-3 py-1 text-xs font-medium transition ${footerItalic ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                       style={{ fontStyle: 'italic' }}
                     >
                       Italic
@@ -814,28 +812,24 @@ function QuoteGeneratorForm() {
               </div>
 
               {/* Generate */}
-              <QcButton
-                variant="primary"
-                size="lg"
+              <button
                 onClick={generateQuote}
-                className="inline-flex items-center gap-1.5"
+                className="inline-flex items-center gap-1.5 rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
               >
                 Generate quote
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </QcButton>
+              </button>
               {docLimitError && (
                 <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
                   <p className="text-sm text-slate-700">{docLimitError}</p>
-                  <QcButton
-                    variant="primary"
-                    size="sm"
+                  <button
                     onClick={() => openAuthModal('signup')}
-                    className="mt-2"
+                    className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#FF6B35] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#ff5722] transition-colors"
                   >
                     Sign up free
-                  </QcButton>
+                  </button>
                 </div>
               )}
             </div>
@@ -939,16 +933,15 @@ function QuoteGeneratorForm() {
 
             {/* Actions */}
             <div className="mt-6 flex flex-wrap gap-3 print:hidden">
-              <QcButton
-                variant="primary"
+              <button
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5"
+                className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
                 Download PDF
-              </QcButton>
+              </button>
               <span ref={saveToAppBtnRef} className="inline-flex">
               <SaveToAppButton
                 documentType="quote"
@@ -1030,9 +1023,9 @@ function QuoteGeneratorForm() {
         {/* SEO content */}
         <section className="mt-16 space-y-8 print:hidden">
           <div>
-            <h2 className="qc-ft-section">How to use this free quote generator</h2>
+            <h2 className="text-lg font-semibold text-slate-900">How to use this free quote generator</h2>
             <div className="mt-4 space-y-2">
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
                   Can I use this quote generator without signing up?
                 </summary>
@@ -1040,7 +1033,7 @@ function QuoteGeneratorForm() {
                   <p className="text-sm text-slate-600">Yes - this tool is completely free with no signup required. Fill in your details, generate the quote, and download it as a PDF using your browser&apos;s print function. The quote form itself runs entirely in your browser. If you use the AI document scanner (upload a photo or paste text), that content is sent to our server for AI processing and is not stored.</p>
                 </div>
               </details>
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
                   Can I pre-fill the quote from a calculator result?
                 </summary>
@@ -1048,7 +1041,7 @@ function QuoteGeneratorForm() {
                   <p className="text-sm text-slate-600">Yes. If you came from one of our free calculators (e.g. the roofing calculator), your calculation results are automatically pre-filled as a line item. You can add more lines, adjust quantities, and set your rates before generating the quote.</p>
                 </div>
               </details>
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
                   How do I download the quote as a PDF?
                 </summary>
@@ -1056,7 +1049,7 @@ function QuoteGeneratorForm() {
                   <p className="text-sm text-slate-600">After generating your quote, click &quot;Download PDF&quot;. This opens your browser&apos;s print dialog - select &quot;Save as PDF&quot; as the destination. The quote is formatted to print cleanly on A4.</p>
                 </div>
               </details>
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
                   What&apos;s the difference between this and QuoteCore+?
                 </summary>
@@ -1064,7 +1057,7 @@ function QuoteGeneratorForm() {
                   <p className="text-sm text-slate-600">This free tool generates a one-off quote. QuoteCore+ gives you a complete quoting and business management platform in one place - track and store all your quotes, send automatic follow-ups to clients, and auto-update quote statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#BD4A1A] font-medium">Plans from $19/mo &rarr;</Link></p>
                 </div>
               </details>
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
                   How do I remove the QuoteCore+ branding and create more free quotes?
                 </summary>

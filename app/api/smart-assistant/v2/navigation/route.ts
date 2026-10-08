@@ -1,5 +1,3 @@
-import { demoAssistantActor } from '@/app/lib/demo/assistant.server';
-import { demoAssistantNavigated } from '@/app/lib/demo/assistant-events';
 import type { NextRequest } from 'next/server';
 import { body, exactKeys, failure, reply } from '@/app/lib/smart-assistant/v2/http.server';
 import { isUuid, parseTarget, type RecordTarget } from '@/app/lib/smart-assistant/v2/contracts';
@@ -10,7 +8,6 @@ import { sameTarget } from '@/app/lib/smart-assistant/v2/navigation';
 export const runtime = 'nodejs';
 export async function POST(req: NextRequest) {
     try {
-        await demoAssistantActor();
         const input = await body(req);
         const target = parseTarget(input.target);
         if (!exactKeys(input, ['conversationId', 'cardId', 'target', 'companyId']) || !isUuid(input.conversationId) || !isUuid(input.cardId) || !target || !isUuid(input.companyId))
@@ -33,9 +30,7 @@ export async function POST(req: NextRequest) {
         }
         if (!allowed.some((t) => sameTarget(t, target)))
             throw new AssistantV2Error('not_found', 'This navigation action is no longer available.', 404);
-        const destination = await navigationDestination(client, access, target);
-        await demoAssistantNavigated(access.companyId,target.id);
-        return reply({ ok: true, destination });
+        return reply({ ok: true, destination: await navigationDestination(client, access, target) });
     }
     catch (error) {
         return failure(error);

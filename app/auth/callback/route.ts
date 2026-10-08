@@ -1,5 +1,3 @@
-import { safeReturnPath } from '@/app/lib/auth/resume-contract';
-import { sessionNoStore } from '@/app/lib/auth/session-trace';
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
@@ -9,8 +7,6 @@ import { ensureCompanyHasCollection } from '@/app/lib/data/ensure-company-has-co
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const requestedDestination = safeReturnPath(searchParams.get('redirect'));
-  const go = (destination: string) => sessionNoStore(NextResponse.redirect(destination));
 
   if (code) {
     const supabase = await createSupabaseServerClient();
@@ -103,7 +99,7 @@ export async function GET(request: Request) {
               const dashUrl = draftId
                 ? `${origin}/${slug}?restore_doc=${draftId}`
                 : `${origin}/${slug}`;
-              return go(!draftId && requestedDestination ? new URL(requestedDestination, origin).href : dashUrl);
+              return NextResponse.redirect(dashUrl);
             }
           }
         }
@@ -162,7 +158,7 @@ export async function GET(request: Request) {
               // the same timing the Google path already uses.
 
               // Redirect to onboarding so the user sets trade/preferences.
-              return go(`${origin}/onboarding`);
+              return NextResponse.redirect(`${origin}/onboarding`);
             } else {
               // Profile insert failed - clean up the company to avoid orphans.
               await admin.from('companies').delete().eq('id', company.id);
@@ -197,7 +193,7 @@ export async function GET(request: Request) {
           const dashUrl = draftId
             ? `${origin}/${slug}?restore_doc=${draftId}`
             : `${origin}/${slug}`;
-          return go(!draftId && requestedDestination ? new URL(requestedDestination, origin).href : dashUrl);
+          return NextResponse.redirect(dashUrl);
         }
 
         // No profile or no company - redirect to onboarding.
@@ -205,10 +201,10 @@ export async function GET(request: Request) {
         // A bad refactor (bc6f9af) left it unreachable inside the block,
         // which sent every brand-new Google user to /login?error=auth_failed
         // instead of onboarding - the "forced to log in again" bug.
-        return go(`${origin}/onboarding`);
+        return NextResponse.redirect(`${origin}/onboarding`);
       }
     }
   }
 
-  return go(`${origin}/login?error=auth_failed`);
+  return NextResponse.redirect(`${origin}/login?error=auth_failed`);
 }

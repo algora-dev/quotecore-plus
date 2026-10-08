@@ -52,7 +52,7 @@ export default function HeroVideo() {
         }
         const rect = block.getBoundingClientRect();
         // Once the bottom of the entire hero block is above the viewport top,
-        // the user has fully scrolled past it - collapse it.
+        // the user has fully scrolled past it — collapse it.
         if (rect.bottom < 0) {
           setHeroCollapsed(true);
         }

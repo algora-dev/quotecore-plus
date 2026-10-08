@@ -14,8 +14,6 @@ import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { FreeToolsAuthButton } from '../_components/FreeToolsAuthButton';
 import { useFreeToolsEmail } from '../_components/useFreeToolsEmail';
 import { FreeToolsSignupBanner } from '../_components/FreeToolsSignupBanner';
-import '../_components/free-tools-v2.css';
-import { QcButton } from '@/app/components/ui/v2/QcButton';
 
 /**
  * Free Invoice Generator - no signup required.
@@ -328,7 +326,7 @@ function InvoiceGeneratorForm() {
   }
 
   return (
-    <main data-qc-ui="v2" className="qc-ft min-h-screen">
+    <main className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
@@ -356,9 +354,9 @@ function InvoiceGeneratorForm() {
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Hero */}
         <section className="mb-8 print:hidden">
-          <h1 className="qc-ft-title">Free Invoice Generator</h1>
-          <p className="qc-ft-eyebrow mt-1">QuoteCore Plus Free Invoice Generator - free, no signup required.</p>
-          <p className="mt-2 text-sm qc-ft-muted max-w-xl">
+          <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Invoice Generator</h1>
+          <p className="mt-1 text-sm font-medium text-[#BD4A1A]">QuoteCore Plus Free Invoice Generator - free, no signup required.</p>
+          <p className="mt-2 text-sm text-slate-500 max-w-xl">
             Create a professional invoice in minutes. Upload a photo of your existing invoice and
             AI will fill in the form - or paste your details, or type it manually. No signup required.
           </p>
@@ -411,21 +409,21 @@ function InvoiceGeneratorForm() {
               </div>
 
               {/* Settings bar */}
-              <div className="qc-ft-card p-5">
-                <h2 className="qc-ft-heading mb-4">Document settings</h2>
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <h2 className="text-sm font-semibold text-slate-900 mb-4">Document settings</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Measurement system</label>
                     <div className="mt-1 flex rounded-lg border border-slate-300 overflow-hidden">
                       <button
                         onClick={() => handleMeasurementChange('metric', measurementType)}
-                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'metric' ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'metric' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                       >
                         Metric
                       </button>
                       <button
                         onClick={() => handleMeasurementChange('imperial', measurementType)}
-                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'imperial' ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'imperial' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                       >
                         Imperial
                       </button>
@@ -495,8 +493,8 @@ function InvoiceGeneratorForm() {
               </div>
 
               {/* Your details */}
-              <div className="qc-ft-card p-5">
-                <h2 className="qc-ft-heading mb-4">Your business</h2>
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <h2 className="text-sm font-semibold text-slate-900 mb-4">Your business</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Company name</label>
@@ -596,8 +594,8 @@ function InvoiceGeneratorForm() {
               </div>
 
               {/* Bill to */}
-              <div className="qc-ft-card p-5">
-                <h2 className="qc-ft-heading mb-4">Bill to</h2>
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
+                <h2 className="text-sm font-semibold text-slate-900 mb-4">Bill to</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium text-slate-600">Client name</label>
@@ -633,9 +631,9 @@ function InvoiceGeneratorForm() {
               </div>
 
               {/* Line items */}
-              <div className="qc-ft-card p-5">
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="qc-ft-heading">Line items</h2>
+                  <h2 className="text-sm font-semibold text-slate-900">Line items</h2>
                   <div className="flex items-center gap-4">
                     <label className="flex items-center gap-2 text-xs text-slate-600">
                       <input type="checkbox" checked={hideAllPrices} onChange={(e) => setHideAllPrices(e.target.checked)} className="rounded border-slate-300" />
@@ -755,7 +753,7 @@ function InvoiceGeneratorForm() {
               </div>
 
               {/* Notes */}
-              <div className="qc-ft-card p-5">
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <label className="text-xs font-medium text-slate-600">Notes / payment terms</label>
                 <textarea
                   value={notes}
@@ -767,19 +765,19 @@ function InvoiceGeneratorForm() {
               </div>
 
               {/* Footer */}
-              <div className="qc-ft-card p-5">
+              <div className="rounded-xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-medium text-slate-600">Footer</label>
                   <div className="flex rounded-lg border border-slate-300 overflow-hidden">
                     <button
                       onClick={() => setFooterItalic(false)}
-                      className={`px-3 py-1 text-xs font-medium transition ${!footerItalic ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                      className={`px-3 py-1 text-xs font-medium transition ${!footerItalic ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                     >
                       Normal
                     </button>
                     <button
                       onClick={() => setFooterItalic(true)}
-                      className={`px-3 py-1 text-xs font-medium transition ${footerItalic ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                      className={`px-3 py-1 text-xs font-medium transition ${footerItalic ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                       style={{ fontStyle: 'italic' }}
                     >
                       Italic
@@ -797,28 +795,24 @@ function InvoiceGeneratorForm() {
               </div>
 
               {/* Generate */}
-              <QcButton
-                variant="primary"
-                size="lg"
+              <button
                 onClick={generateInvoice}
-                className="inline-flex items-center gap-1.5"
+                className="inline-flex items-center gap-1.5 rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
               >
                 Generate invoice
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </QcButton>
+              </button>
               {docLimitError && (
                 <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
                   <p className="text-sm text-slate-700">{docLimitError}</p>
-                  <QcButton
-                    variant="primary"
-                    size="sm"
+                  <button
                     onClick={() => openAuthModal('signup')}
-                    className="mt-2"
+                    className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#FF6B35] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#ff5722] transition-colors"
                   >
                     Sign up free
-                  </QcButton>
+                  </button>
                 </div>
               )}
             </div>
@@ -922,16 +916,15 @@ function InvoiceGeneratorForm() {
 
             {/* Actions */}
             <div className="mt-6 flex flex-wrap gap-3 print:hidden">
-              <QcButton
-                variant="primary"
+              <button
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5"
+                className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
                 Download PDF
-              </QcButton>
+              </button>
               <span ref={saveToAppBtnRef} className="inline-flex">
               <SaveToAppButton
                 documentType="invoice"
@@ -979,33 +972,33 @@ function InvoiceGeneratorForm() {
         {/* SEO content */}
         <section className="mt-16 space-y-8 print:hidden">
           <div>
-            <h2 className="qc-ft-section">Free invoice generator FAQ</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Free invoice generator FAQ</h2>
             <div className="mt-4 space-y-2">
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Is this invoice generator really free?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes - completely free with no signup. Generate as many invoices as you need. Download as PDF using your browser&apos;s print function. You can also upload a photo of an existing invoice and our AI will extract the details automatically, or paste your invoice text and let AI fill in the form.</p></div>
               </details>
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I upload a photo of my invoice and have AI fill it in?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. Click the upload area to upload a photo or screenshot of an existing invoice. Our AI will extract the company name, client details, line items, dates, and amounts - then fill in the form for you to review and edit before generating. You get 5 free scans per day.</p></div>
               </details>
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I turn a quote into an invoice?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. If you generated a quote with our <Link href="/free-quote-generator" className="text-[#BD4A1A] font-medium">free quote generator</Link>, the invoice is pre-filled with the same amount and client details automatically.</p></div>
               </details>
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Does the invoice include VAT?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Tax is calculated at 20% by default. Toggle the "Include tax" checkbox in document settings to show or hide tax entirely. You can change the rate and name when enabled. Adjust line item rates to work ex-VAT or inc-VAT as needed.</p></div>
               </details>
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I use different currencies?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. The currency selector in the document settings bar supports GBP, USD, EUR, AUD, CAD, and NZD. All amounts in the form and the generated invoice will use the selected currency symbol.</p></div>
               </details>
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">What&apos;s the difference between this and QuoteCore+?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">This free tool generates a one-off invoice. QuoteCore+ gives you a complete quoting and business management platform in one place - track and store all your documents, send follow-ups to clients, and auto-update statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#BD4A1A] font-medium">Plans from $19/mo &rarr;</Link></p></div>
               </details>
-              <details className="qc-ft-card">
+              <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">How do I remove the QuoteCore+ branding and create more free invoices?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free invoices and remove the QuoteCore+ branding, or subscribe to the full QuoteCore+ app (plans from $19/mo, 30-day money-back guarantee) for higher limits and loads of extra features.</p></div>
               </details>

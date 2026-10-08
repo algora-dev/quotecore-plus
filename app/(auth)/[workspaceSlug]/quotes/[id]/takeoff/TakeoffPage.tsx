@@ -44,7 +44,6 @@ interface ComponentCollection {
 }
 
 interface Props {
-  demoFinishHref?: string;
   workspaceSlug: string;
   quoteId: string;
   quote: QuoteRow;
@@ -82,7 +81,6 @@ interface Props {
 }
 
 export function TakeoffPage({
-  demoFinishHref,
   workspaceSlug,
   quoteId,
   quote,
@@ -112,7 +110,7 @@ export function TakeoffPage({
   useEffect(() => outlineAdapter?.subscribe?.(() => refreshBridge((n) => n + 1)), [outlineAdapter]);
   const backHref = `/${workspaceSlug}/quotes/${quoteId}`;
   // Match the desktop Finish and Save destination, not the quote detail page.
-  const finishHref = demoFinishHref ?? `/${workspaceSlug}/quotes/${quoteId}/build?step=roof-areas`;
+  const finishHref = `/${workspaceSlug}/quotes/${quoteId}/build?step=roof-areas`;
   const [pitch, setPitch] = useState(DEFAULT_ROOF_PITCH);
   const [resolvedPage1Id, setResolvedPage1Id] = useState<string | null>(null);
   const [confirmedCalibration, setConfirmedCalibration] = useState<{ pageId: string; payload: CalibrationCommitPayload } | null>(null);
@@ -130,17 +128,12 @@ export function TakeoffPage({
   const pageHasDependents = (hydrationData?.measurements?.some((m) => !m.pageId || m.pageId === activePageId) ?? false)
     || (outlineAdapter?.getAreas().length ?? 0) > 0;
   const [touchTool, setTouchTool] = useState<'outline' | 'calibrate' | 'components'>(() => {
-    // Demo lands pre-measured (seed): open straight into the components step
-    // so phones show the measured plan immediately (owner 2026-10-07 report).
-    if (demoFinishHref && calibrationPage) return 'components';
     const decoded = decodeCalibrationMetadata(calibrationPage?.calibrationMetadata ?? calibrationPage?.scaleCalibration);
     const count = decoded.kind === 'v1' ? decoded.metadata.references.length : decoded.kind === 'legacy' ? decoded.references.length : 0;
     return count > 0 ? 'outline' : 'calibrate';
   });
   // M10: component phase entry mode chosen on the outline finish screen.
-  // Demo starts in manual review - the scan is demo-gated off and the seeded
-  // components are already on the plan.
-  const [componentsMode, setComponentsMode] = useState<'ai' | 'manual'>(demoFinishHref ? 'manual' : 'ai');
+  const [componentsMode, setComponentsMode] = useState<'ai' | 'manual'>('ai');
   const enterComponents = useCallback((mode: 'ai' | 'manual') => {
     setComponentsMode(mode);
     setTouchTool('components');
@@ -182,7 +175,6 @@ export function TakeoffPage({
   );
   const workstation = (
     <TakeoffWorkstation
-      demoFinishHref={demoFinishHref}
       desktopAppearance={!touchActive}
       workspaceSlug={workspaceSlug}
       quote={quote}

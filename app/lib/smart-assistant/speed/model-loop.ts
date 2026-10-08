@@ -103,11 +103,6 @@ export async function runModelLoop(input: {
           const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
           if (['access_changed','permissions_changed','unauthenticated'].includes(code)) fail('access_changed');
           if (code === 'turn_timeout') fail('turn_timeout');
-          // Full server-side diagnosis for one-query root-causing (owner directive
-          // 2026-10-05: never swallow tool failure details again).
-          const detail = error instanceof Error ? error.message : String(error);
-          console.error(`[smart-assistant] tool ${call.name} failed (${code || 'exception'}):`, detail,
-            error instanceof Error && error.stack ? '\n' + error.stack.split('\n').slice(0, 8).join('\n') : '');
           // Persist a sanitized tool:class marker for one-query diagnosis; the
           // class (e.g. migration_required) is a safe identifier, never a message.
           telemetry.recordToolError(call.name, code || 'exception');

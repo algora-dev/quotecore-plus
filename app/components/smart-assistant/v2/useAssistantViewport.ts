@@ -6,8 +6,8 @@ export function useAssistantViewport(root: RefObject<HTMLDivElement>, visible: b
   useEffect(() => {
     if (!visible || !root.current) return;
     const node = root.current;
-    // Both existing hosts are assistant-owned: the floating panel and standalone wrapper.
-    const host = node.closest<HTMLElement>('[data-sa-host]') ?? node.parentElement;
+    // Both existing hosts are assistant-owned: the native dialog and standalone wrapper.
+    const host = node.parentElement;
     if (!host) return;
     const targets = [node, host];
     const names = ['--sa-viewport-height', '--sa-viewport-top', '--sa-viewport-width'];
@@ -19,10 +19,8 @@ export function useAssistantViewport(root: RefObject<HTMLDivElement>, visible: b
       raf = requestAnimationFrame(() => {
         // Don't turn accessibility pinch-zoom into a miniature unzoomed interface.
         if (viewport && Math.abs(viewport.scale - 1) > 0.05) return;
-        // Clamp so a transient visualViewport glitch (keyboard opening,
-        // URL-bar mid-animation, focus shift) can never collapse the panel.
-        const height = Math.max(320, Math.round(viewport?.height ?? window.innerHeight));
-        const width = Math.max(280, Math.round(viewport?.width ?? window.innerWidth));
+        const height = Math.round(viewport?.height ?? window.innerHeight);
+        const width = Math.round(viewport?.width ?? window.innerWidth);
         for (const t of targets) {
           t.style.setProperty(names[0], `${height}px`);
           t.style.setProperty(names[1], `${Math.round(viewport?.offsetTop ?? 0)}px`);

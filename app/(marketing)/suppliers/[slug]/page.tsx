@@ -15,7 +15,7 @@ interface PageProps {
 // Demo profiles that showcase the supplier system. Kept visible so users can
 // see how supplier search works, but clearly marked as test data.
 
-// Force dynamic rendering - supplier publication state can change at any time,
+// Force dynamic rendering — supplier publication state can change at any time,
 // so we always SSR rather than serving stale static pages.
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +24,7 @@ const COUNTRY_CODES: Record<string, string> = {
   NZ: 'NZ', AU: 'AU', GB: 'UK', US: 'US', CA: 'CA', IE: 'IE',
 };
 
-/** Build an SEO-optimised title: [Name] - [Types] in [City], [Country] | QuoteCore+ */
+/** Build an SEO-optimised title: [Name] — [Types] in [City], [Country] | QuoteCore+ */
 function buildSeoTitle(s: SupplierDetail['supplier']): string {
   const parts: string[] = [s.supplier_name, ' - '];
 
@@ -211,7 +211,7 @@ function buildStructuredData(data: SupplierDetail) {
 
   schemas.push(org);
 
-  // FAQPage - dynamic from supplier data
+  // FAQPage — dynamic from supplier data
   const faqs: { q: string; a: string }[] = [];
   if (s.roofing_types?.length) {
     faqs.push({
@@ -266,7 +266,7 @@ function buildStructuredData(data: SupplierDetail) {
     });
   }
 
-  // WebApplication - free roof takeoff calculator
+  // WebApplication — free roof takeoff calculator
   if (data.eligibility.calculator_available) {
     const calcSlug = s.slug;
     schemas.push({
@@ -383,7 +383,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           </nav>
         </div>
 
-        {/* Banner image - static override for demo suppliers, DB URL otherwise */}
+        {/* Banner image — static override for demo suppliers, DB URL otherwise */}
         {(() => {
           const staticBanners: Record<string, string> = {
             'rs-roofing': '/images/suppliers/rs-roofing-banner-v2.png',
@@ -403,7 +403,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           );
         })()}
 
-        {/* Test supplier notice - shown for demo profiles */}
+        {/* Test supplier notice — shown for demo profiles */}
         {isTestSupplier && (
           <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pt-6">
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
@@ -424,7 +424,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* 1. Supplier header - logo, name, location, verification badge */}
+        {/* 1. Supplier header — logo, name, location, verification badge */}
         <section className="pb-6 pt-8">
           <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
@@ -632,7 +632,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           </section>
         )}
 
-        {/* Takeoff library info (kept - relevant to calculator) */}
+        {/* Takeoff library info (kept — relevant to calculator) */}
         {lib && (
           <section className="pb-8">
             <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
@@ -668,7 +668,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           </section>
         )}
 
-        {/* Price list download (legacy upload - kept if supplier has one) */}
+        {/* Price list download (legacy upload — kept if supplier has one) */}
         {s.price_list_url && (
           <section className="pb-8">
             <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
@@ -911,7 +911,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
   );
 }
 
-// Version history section (Section 11) - server component
+// Version history section (Section 11) — server component
 async function VersionHistorySection({ slug, supplierName }: { slug: string; supplierName: string }) {
   const history = await getCatalogueVersionHistory(slug);
   if (history.length <= 1) return null; // Don't show if only one version

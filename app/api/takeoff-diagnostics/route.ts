@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
  * POST /api/takeoff-diagnostics (M9, owner-run diagnostics capture).
  * Auth required. Writes the client diagnostics buffer (recent 200 events:
  * user actions, errors, failed fetches/server actions) into the
- * takeoff_diagnostics table (patch_054) with the SERVICE ROLE - clients
+ * takeoff_diagnostics table (patch_054) with the SERVICE ROLE — clients
  * never write directly; RLS only allows members to read their own company.
  * Returns the stored row id so the owner can reference it ("diagnostics
  * sent" is enough for support to pull the payload).

@@ -24,7 +24,7 @@ export const roofrPage: CompetitorPageData = {
   positioning: "Roofr Alternative",
   hero: {
     title: "Looking for a Roofr alternative?",
-    sub: "Roofr is a broad roofing CRM and sales platform - leads, job boards, measurement reports, proposals and payments. QuoteCore+ focuses on the estimating job itself: turning roof measurements into materials, pricing, quotes, orders and invoices.",
+    sub: "Roofr is a broad roofing CRM and sales platform — leads, job boards, measurement reports, proposals and payments. QuoteCore+ focuses on the estimating job itself: turning roof measurements into materials, pricing, quotes, orders and invoices.",
     qualifier:
       "Already happy with your CRM? QuoteCore+ improves the estimating workflow without moving your whole roofing business onto a new platform.",
     primaryCta: { href: "/free-trial", label: "See if QuoteCore+ fits your estimating workflow" },
@@ -38,60 +38,60 @@ export const roofrPage: CompetitorPageData = {
     competitorBestFor: [
       {
         title: "You want one platform for the whole business",
-        body: "Roofr's CRM, job boards, automations, lead management and reporting wrap around the estimating workflow - one vendor for most of the operation.",
+        body: "Roofr's CRM, job boards, automations, lead management and reporting wrap around the estimating workflow — one vendor for most of the operation.",
       },
       {
         title: "You want ordered aerial measurement reports",
-        body: "Roofr Reports are delivered in 2–24 hours depending on plan, $13–$19 per report - fast, no drawing, no plan required.",
+        body: "Roofr Reports are delivered in 2–24 hours depending on plan, $13–$19 per report — fast, no drawing, no plan required.",
       },
       {
         title: "Integrated payments and e-signatures matter",
-        body: "Credit card and ACH payments, signable contracts and unlimited e-signatures arrive on the Essentials plan - the commercial loop closes inside Roofr.",
+        body: "Credit card and ACH payments, signable contracts and unlimited e-signatures arrive on the Essentials plan — the commercial loop closes inside Roofr.",
       },
     ],
     qcBestFor: [
       {
         title: "Estimating is the bottleneck you're solving",
-        body: "Takeoff, materials, labour, pricing and the quote itself - the workflow between 'I have a plan' and 'customer said yes' is all QuoteCore+ does.",
+        body: "Takeoff, materials, labour, pricing and the quote itself — the workflow between 'I have a plan' and 'customer said yes' is all QuoteCore+ does.",
       },
       {
         title: "You already have a CRM you like",
-        body: "JobNimbus, HubSpot, spreadsheets, your supplier's portal - QuoteCore+ sits beside them instead of replacing them. Roofr is designed around its own connected CRM ecosystem, while QuoteCore+ can be adopted specifically for estimating without replacing the system you already use to manage customers and jobs.",
+        body: "JobNimbus, HubSpot, spreadsheets, your supplier's portal — QuoteCore+ sits beside them instead of replacing them. Roofr is designed around its own connected CRM ecosystem, while QuoteCore+ can be adopted specifically for estimating without replacing the system you already use to manage customers and jobs.",
       },
       {
         title: "You estimate from architectural plans regularly",
-        body: "Upload the PDF, let AI Scan Assist find the roof geometry, verify it, price it - no per-report fees for roofs you can measure yourself.",
+        body: "Upload the PDF, let AI Scan Assist find the roof geometry, verify it, price it — no per-report fees for roofs you can measure yourself.",
       },
       {
         title: "You want quote → order → invoice without a migration",
-        body: "The commercial workflow runs in one focused tool at $19–$59/mo - not as step one of moving your entire company onto a new platform.",
+        body: "The commercial workflow runs in one focused tool at $19–$59/mo — not as step one of moving your entire company onto a new platform.",
       },
     ],
   },
   replace: {
     verdict: {
-      pill: "Partly - estimating yes, platform no",
+      pill: "Partly — estimating yes, platform no",
       tone: "mixed",
       answer:
-        "If Roofr is your CRM, payment platform and crew system, no - QuoteCore+ is not a replacement. If your core workflow is measure → materials → labour → price → quote → order → invoice, QuoteCore+ covers it closely.",
+        "If Roofr is your CRM, payment platform and crew system, no — QuoteCore+ is not a replacement. If your core workflow is measure → materials → labour → price → quote → order → invoice, QuoteCore+ covers it closely.",
     },
-    body: "Switching from Roofr to QuoteCore+ makes sense when Roofr's breadth is the problem rather than the point: you're paying platform prices for CRM, job boards, automation and payments you don't use, while the estimating workflow - the reason you bought software - needs roofing-specific depth. It doesn't make sense if Roofr genuinely runs your business: leads, crews, payments and reporting all in one place is a real product, and QuoteCore+ has no equivalent for most of it.",
+    body: "Switching from Roofr to QuoteCore+ makes sense when Roofr's breadth is the problem rather than the point: you're paying platform prices for CRM, job boards, automation and payments you don't use, while the estimating workflow — the reason you bought software — needs roofing-specific depth. It doesn't make sense if Roofr genuinely runs your business: leads, crews, payments and reporting all in one place is a real product, and QuoteCore+ has no equivalent for most of it.",
     bullets: [
       { label: "Roof measurement and takeoff", detail: "Plan-based takeoff with AI Scan Assist; measurement stays yours, with no $13–$19 per-report fees.", positive: true },
       { label: "Estimating depth", detail: "Smart Components apply waste, coverage, labour and margin rules to roof areas, ridges, hips, valleys and barges automatically.", positive: true },
       { label: "Quote → order → invoice", detail: "The full commercial workflow in one focused tool, $19–$59/mo by quote volume.", positive: true },
-      { label: "CRM, job boards and automation", detail: "Roofr's lead management, automations and job boards have no QuoteCore+ equivalent - we build estimating software, not a CRM.", positive: false },
+      { label: "CRM, job boards and automation", detail: "Roofr's lead management, automations and job boards have no QuoteCore+ equivalent — we build estimating software, not a CRM.", positive: false },
       { label: "Payments and crew management", detail: "Card/ACH processing, e-signatures and crew tools are part of Roofr's platform, not QuoteCore+.", positive: false },
     ],
   },
   switching: {
     intro:
-      "What actually changes if you move your estimating to QuoteCore+ - and what stays where it is:",
+      "What actually changes if you move your estimating to QuoteCore+ — and what stays where it is:",
     rows: [
       {
         current: "Jobs live in the Roofr CRM; measurement reports ordered per roof ($13–$19 each, or DIY on imagery and blueprints)",
         qc: "Plans come straight from the builder or architect PDF; AI Scan Assist finds the roof geometry and you verify and correct it",
-        benefit: "No per-report fees on roofs you measure yourself - and your existing CRM stays untouched",
+        benefit: "No per-report fees on roofs you measure yourself — and your existing CRM stays untouched",
       },
       {
         current: "Roofr's estimating tools apply material calculations and waste factor (Measure+ and above)",
@@ -118,22 +118,22 @@ export const roofrPage: CompetitorPageData = {
       {
         number: "01",
         title: "Where the job starts",
-        body: "Roofr: a lead in the CRM - contact, property, job board, automations - then a measurement report ordered ($13–$19, hours-fast) or DIY measurement on imagery and blueprints. QuoteCore+: the plan itself. Upload the PDF, AI Scan Assist detects roof areas, ridges, hips, valleys, barges and spouting, and you verify the result before anything is priced.",
+        body: "Roofr: a lead in the CRM — contact, property, job board, automations — then a measurement report ordered ($13–$19, hours-fast) or DIY measurement on imagery and blueprints. QuoteCore+: the plan itself. Upload the PDF, AI Scan Assist detects roof areas, ridges, hips, valleys, barges and spouting, and you verify the result before anything is priced.",
       },
       {
         number: "02",
         title: "Turning measurements into money",
-        body: "Roofr: measurement reports include material lists and waste factor, and templates convert reports into proposals in minutes. QuoteCore+: Smart Components attach your own coverage, pack sizes, fixed or percentage waste, labour and margin rules to every measurement - the estimate prices itself with an audit trail behind each number.",
+        body: "Roofr: measurement reports include material lists and waste factor, and templates convert reports into proposals in minutes. QuoteCore+: Smart Components attach your own coverage, pack sizes, fixed or percentage waste, labour and margin rules to every measurement — the estimate prices itself with an audit trail behind each number.",
       },
       {
         number: "03",
         title: "Winning the work",
-        body: "Roofr: proposals with unlimited e-signatures, SMS follow-ups and online payments - all inside its CRM. QuoteCore+: a branded quote with accept/decline tracking that closes the deal - while your CRM (JobNimbus, HubSpot, spreadsheets, whatever already works) stays exactly where it is.",
+        body: "Roofr: proposals with unlimited e-signatures, SMS follow-ups and online payments — all inside its CRM. QuoteCore+: a branded quote with accept/decline tracking that closes the deal — while your CRM (JobNimbus, HubSpot, spreadsheets, whatever already works) stays exactly where it is.",
       },
       {
         number: "04",
         title: "After the yes",
-        body: "Roofr: work orders, invoicing, card/ACH payments and job management across the platform - genuinely broader. QuoteCore+: the accepted quote converts to a material order and an invoice in the same workflow. If you need crew management and payment processing on top, Roofr's platform is the wider tool - that's a real reason to stay.",
+        body: "Roofr: work orders, invoicing, card/ACH payments and job management across the platform — genuinely broader. QuoteCore+: the accepted quote converts to a material order and an invoice in the same workflow. If you need crew management and payment processing on top, Roofr's platform is the wider tool — that's a real reason to stay.",
       },
     ],
     proof: {
@@ -142,12 +142,12 @@ export const roofrPage: CompetitorPageData = {
         {
           src: "/images/features/digital-roof-takeoff.png",
           alt: "QuoteCore+ roof takeoff showing colour-coded measurement lines over a roof plan",
-          caption: "Roof takeoff in QuoteCore+ - colour-coded measurements over the plan, every area named and pitched.",
+          caption: "Roof takeoff in QuoteCore+ — colour-coded measurements over the plan, every area named and pitched.",
         },
         {
           src: "/images/features/smart-components-quote.png",
           alt: "Smart Components applying material quantities and pricing inside a QuoteCore+ quote",
-          caption: "Smart Components turning those measurements into materials and a priced quote - the part after the drawing.",
+          caption: "Smart Components turning those measurements into materials and a priced quote — the part after the drawing.",
         },
       ],
     },
@@ -155,7 +155,7 @@ export const roofrPage: CompetitorPageData = {
   comparison: {
     heading: "Roofr vs QuoteCore+ feature comparison",
     intro:
-      "A broad roofing platform vs a focused estimating workflow - based on each vendor's official published information.",
+      "A broad roofing platform vs a focused estimating workflow — based on each vendor's official published information.",
     rows: [
       {
         feature: "Roofing-specific product",
@@ -179,7 +179,7 @@ export const roofrPage: CompetitorPageData = {
       },
       {
         feature: "Ordered measurement reports",
-        qc: { status: "no", note: "You measure from plans you supply - no per-report service" },
+        qc: { status: "no", note: "You measure from plans you supply — no per-report service" },
         competitor: { status: "yes", note: "$13–$19/report, 2–24 hr delivery by plan" },
       },
       {
@@ -219,7 +219,7 @@ export const roofrPage: CompetitorPageData = {
       },
       {
         feature: "CRM / job boards",
-        qc: { status: "no", note: "No full CRM - sits beside your existing system" },
+        qc: { status: "no", note: "No full CRM — sits beside your existing system" },
         competitor: { status: "yes", note: "1 board on Starter up to 7 on Scale" },
       },
       {
@@ -242,29 +242,29 @@ export const roofrPage: CompetitorPageData = {
   pricing: {
     heading: "Roofr pricing vs QuoteCore+: pay for the workflow you need",
     intro:
-      "Roofr has a genuinely free Starter plan, and its higher prices buy a much broader product - CRM, payments, automation, job boards. The question is whether you need that breadth. QuoteCore+ pricing is built around quote volume instead:",
+      "Roofr has a genuinely free Starter plan, and its higher prices buy a much broader product — CRM, payments, automation, job boards. The question is whether you need that breadth. QuoteCore+ pricing is built around quote volume instead:",
     sourceNote:
       "Roofr pricing from roofr.com/pricing, checked August 2026. Monthly prices shown; annual billing saves up to ~15%. All Roofr plans include unlimited users; measurement reports are pay-as-you-go on every plan ($13–$19 per report). Instant Estimator and Roofr Sites are priced as separate add-ons.",
     competitorTiers: [
       { name: "Starter", price: "$0/mo", detail: "$19 reports (24 hr), 10 trial proposals/invoices/work orders, material ordering" },
-      { name: "Measure+", price: "from $109/mo", detail: "With pricing varying by report turnaround - $13 reports, 2-6 hr delivery, material calculations, waste factor" },
+      { name: "Measure+", price: "from $109/mo", detail: "With pricing varying by report turnaround — $13 reports, 2-6 hr delivery, material calculations, waste factor" },
       { name: "Essentials", price: "$249/mo ($209 annual)", detail: "Unlimited proposals/invoices/work orders, card & ACH payments, e-signatures, SMS" },
       { name: "Scale", price: "$349/mo ($299 annual)", detail: "7 job boards, crew management, reporting, QuickBooks" },
     ],
     scenarios: [
       {
         label: "Estimating-focused roofer (CRM already handled elsewhere)",
-        competitor: "Essentials $249/mo ($209 annual) to unlock unlimited proposals - plus $13–$19 per measurement report",
-        qc: "$19–$39/mo (Starter or Pro) - takeoff and measurements included, no per-report fees",
+        competitor: "Essentials $249/mo ($209 annual) to unlock unlimited proposals — plus $13–$19 per measurement report",
+        qc: "$19–$39/mo (Starter or Pro) — takeoff and measurements included, no per-report fees",
       },
       {
         label: "Team that wants the whole platform",
-        competitor: "Scale $349/mo ($299 annual) - CRM, 7 job boards, crew management, payments, QuickBooks",
-        qc: "Not an equivalent - QuoteCore+ has no CRM, crew management or payment processing. If this is you, Roofr is the better choice.",
+        competitor: "Scale $349/mo ($299 annual) — CRM, 7 job boards, crew management, payments, QuickBooks",
+        qc: "Not an equivalent — QuoteCore+ has no CRM, crew management or payment processing. If this is you, Roofr is the better choice.",
       },
       {
         label: "Just starting out",
-        competitor: "Starter $0 - $19/report measurements, 10 trial proposals",
+        competitor: "Starter $0 — $19/report measurements, 10 trial proposals",
         qc: "Free tools (no signup) + paid plans from $19/month, 30-day money-back guarantee",
       },
     ],
@@ -274,18 +274,18 @@ export const roofrPage: CompetitorPageData = {
   video: {
     heading: "What happens after the drawing",
     intro:
-      "The difference isn't drawing the roof - it's what the measurements do next. Watch Smart Components turn roof geometry into materials, labour and a priced quote automatically.",
+      "The difference isn't drawing the roof — it's what the measurements do next. Watch Smart Components turn roof geometry into materials, labour and a priced quote automatically.",
     videoKey: "smartComponents",
     ctaHref: "/free-trial",
     ctaLabel: "See it on your own plan",
   },
   honestWhen: {
     heading: "When Roofr is the better choice",
-    intro: "If these describe you, Roofr isn't the wrong tool - it's the right one:",
+    intro: "If these describe you, Roofr isn't the wrong tool — it's the right one:",
     cards: [
       {
         title: "You want a full roofing CRM",
-        body: "Lead and customer management, job boards, automations and reporting in one place is a legitimate way to run a roofing business - and it's Roofr's core, not ours.",
+        body: "Lead and customer management, job boards, automations and reporting in one place is a legitimate way to run a roofing business — and it's Roofr's core, not ours.",
       },
       {
         title: "Ordered aerial reports are central to your sales motion",
@@ -293,13 +293,13 @@ export const roofrPage: CompetitorPageData = {
       },
       {
         title: "Payments, e-signatures and crews belong in one system",
-        body: "Card/ACH processing, contracts and crew management under one subscription is real value - QuoteCore+ deliberately doesn't build any of it.",
+        body: "Card/ACH processing, contracts and crew management under one subscription is real value — QuoteCore+ deliberately doesn't build any of it.",
       },
     ],
   },
   freeTool: {
     heading: "Only calculating one roof?",
-    body: "Skip the platform decision entirely - run the numbers free. The roofing calculator handles areas, pitch and materials; the free takeoff builder measures a full roof in your browser.",
+    body: "Skip the platform decision entirely — run the numbers free. The roofing calculator handles areas, pitch and materials; the free takeoff builder measures a full roof in your browser.",
     primaryHref: "/free-roofing-calculator",
     primaryLabel: "Use the free roofing calculator",
     secondaryLinks: [
@@ -311,12 +311,12 @@ export const roofrPage: CompetitorPageData = {
     {
       question: "Is QuoteCore+ a full replacement for Roofr?",
       answer:
-        "No - and we won't pretend it is. Roofr is a broad CRM and business platform covering leads, job boards, automation, payments and crew management. QuoteCore+ replaces the estimating slice: measuring roofs from plans, calculating materials and labour, and producing quotes, material orders and invoices. If Roofr runs your whole operation, keep it. If estimating is the part that needs to get better, QuoteCore+ does that job at a fraction of the cost.",
+        "No — and we won't pretend it is. Roofr is a broad CRM and business platform covering leads, job boards, automation, payments and crew management. QuoteCore+ replaces the estimating slice: measuring roofs from plans, calculating materials and labour, and producing quotes, material orders and invoices. If Roofr runs your whole operation, keep it. If estimating is the part that needs to get better, QuoteCore+ does that job at a fraction of the cost.",
     },
     {
       question: "Can Roofr measure roofs from blueprints?",
       answer:
-        "Yes. Roofr's DIY measurement lets you pull up imagery and measure roofs yourself, and it's explicitly recommended for drone photos and new-build blueprints. Both platforms support blueprint-based measurement - the difference is what happens to those measurements afterwards.",
+        "Yes. Roofr's DIY measurement lets you pull up imagery and measure roofs yourself, and it's explicitly recommended for drone photos and new-build blueprints. Both platforms support blueprint-based measurement — the difference is what happens to those measurements afterwards.",
     },
     {
       question: "Is QuoteCore+ cheaper than Roofr?",
@@ -331,7 +331,7 @@ export const roofrPage: CompetitorPageData = {
     {
       question: "Does QuoteCore+ provide aerial measurement reports?",
       answer:
-        "No. QuoteCore+ works from plans and imagery you supply - architectural PDFs, drone photos, screenshots - with AI Scan Assist accelerating the takeoff. If you want professionally ordered aerial reports delivered in hours, that's a genuine Roofr strength.",
+        "No. QuoteCore+ works from plans and imagery you supply — architectural PDFs, drone photos, screenshots — with AI Scan Assist accelerating the takeoff. If you want professionally ordered aerial reports delivered in hours, that's a genuine Roofr strength.",
     },
   ],
   related: [
@@ -359,7 +359,7 @@ export const roofrPage: CompetitorPageData = {
   ],
   finalCta: {
     heading: "Improve the estimating. Keep the rest.",
-    body: "Upload a plan, verify the roof, apply your material and pricing rules, send the quote. Browser-based, nothing to install - and your CRM stays exactly where it is.",
+    body: "Upload a plan, verify the roof, apply your material and pricing rules, send the quote. Browser-based, nothing to install — and your CRM stays exactly where it is.",
     ctaLabel: "Try QuoteCore+ on your next roof",
   },
 };

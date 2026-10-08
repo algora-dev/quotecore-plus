@@ -23,7 +23,7 @@ export async function QuoteIndexPage({
   const { company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  const [quotesRes, entitlements, usageRow, componentCollections, pendingRevisionsRes] = await Promise.all([
+  const [quotesRes, entitlements, usageRow, componentCollections] = await Promise.all([
     supabase
       .from('quotes')
       .select('id, customer_name, job_name, status, quote_number, created_at, updated_at, job_status, viewed_at')
@@ -52,19 +52,17 @@ export async function QuoteIndexPage({
       .eq('company_id', profile.company_id)
       .order('is_bootstrap', { ascending: false })
       .order('name', { ascending: true }),
-    supabase
-      .from('quote_revision_requests')
-      .select('quote_id')
-      .eq('company_id', profile.company_id)
-      .is('resolved_at', null),
   ]);
 
   const rawQuotes = quotesRes.data ?? [];
 
   // Quotes with at least one UNRESOLVED revision request -> "Action Required"
-  // in the Status column. Fetched in the parallel batch above (owner
-  // 2026-10-02: was a sequential roundtrip after it).
-  const pendingRevisionRows = pendingRevisionsRes.data ?? [];
+  // in the Status column. One lightweight query, merged in below.
+  const { data: pendingRevisionRows } = await supabase
+    .from('quote_revision_requests')
+    .select('quote_id')
+    .eq('company_id', profile.company_id)
+    .is('resolved_at', null);
   const pendingRevisionQuoteIds = new Set(
     (pendingRevisionRows ?? []).map((r) => r.quote_id).filter((x): x is string => !!x),
   );

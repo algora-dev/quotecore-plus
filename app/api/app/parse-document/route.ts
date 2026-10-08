@@ -1,4 +1,3 @@
-import { rejectUnapprovedDemoPaidRoute } from '@/app/lib/demo/paid-route.server';
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
@@ -231,8 +230,6 @@ async function incrementParseUsage(
 }
 
 export async function POST(req: NextRequest) {
-  const demoDenied = await rejectUnapprovedDemoPaidRoute();
-  if (demoDenied) return demoDenied;
   // 1. Authentication - require a valid Supabase session
   const supabase = await createSupabaseServerClient();
   const {

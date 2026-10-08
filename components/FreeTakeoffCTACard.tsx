@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 /**
- * Free Roof Takeoff entry card - Tier 2 of the two-tier funnel.
+ * Free Roof Takeoff entry card — Tier 2 of the two-tier funnel.
  * Collapsed by default (attractive teaser row); expands to reveal the
  * full plan-image card with the "Upload Your Own Plan" CTA.
  */
@@ -15,7 +15,7 @@ export default function FreeTakeoffCTACard({ className = "" }: { className?: str
     <div
       className={`group relative w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.10)] ${className}`}
     >
-      {/* Collapsed teaser row - always visible */}
+      {/* Collapsed teaser row — always visible */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -66,7 +66,7 @@ export default function FreeTakeoffCTACard({ className = "" }: { className?: str
           {/* Copy overlay */}
           <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-4 sm:p-5">
             <p className="text-base font-semibold leading-snug text-white sm:text-lg">
-              Measure your own roof plan - free, no signup
+              Measure your own roof plan — free, no signup
             </p>
             <p className="hidden text-sm leading-6 text-zinc-200 sm:block">
               Upload a real plan and test the takeoff workflow on your own job - no account needed.

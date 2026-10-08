@@ -12,12 +12,12 @@ function text(value:unknown,max=1200):string {
 export function rowLabel(row:QueryRow,source:string):string {
  if(source==='quotes'||row._kind==='quote'||row._kind==='draft_quote'){
   const draft=row.status==='draft'||row.quote_status==='draft'||row._kind==='draft_quote';
-  const parent=`${draft?'Draft':`Quote${row.quote_number!=null?' #'+text(row.quote_number):''}`} - ${text(row.job_name||row.customer_name||'Unnamed job',160)}`;
+  const parent=`${draft?'Draft':`Quote${row.quote_number!=null?' #'+text(row.quote_number):''}`} — ${text(row.job_name||row.customer_name||'Unnamed job',160)}`;
   const item=row.name||row.label||row.text||row.component_name;
   return item?`${text(item,140)} · ${parent}`:parent;
  }
- if(row.invoice_number)return `Invoice ${text(row.invoice_number,60)}${row.title?' · '+text(row.title,140):row.customer_name?' - '+text(row.customer_name,140):''}`;
- if(row.order_number)return `Order ${text(row.order_number,60)}${row.item_name||row.text?' · '+text(row.item_name||row.text,140):row.job_name?' - '+text(row.job_name,140):''}`;
+ if(row.invoice_number)return `Invoice ${text(row.invoice_number,60)}${row.title?' · '+text(row.title,140):row.customer_name?' — '+text(row.customer_name,140):''}`;
+ if(row.order_number)return `Order ${text(row.order_number,60)}${row.item_name||row.text?' · '+text(row.item_name||row.text,140):row.job_name?' — '+text(row.job_name,140):''}`;
  if(row.file_name)return `${text(row.file_name,180)}${row.chunk_index!=null?' · chunk '+text(row.chunk_index,12):''}`;
  return text(row.name||row.description||row.catalogue_name||row.id||source,220);
 }

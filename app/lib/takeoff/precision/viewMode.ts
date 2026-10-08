@@ -1,5 +1,5 @@
 // Mobile takeoff M2: workspace view-mode resolution (spec 2026-09-21 §3.1).
-// PURE module: no React, no DOM access - all environment inputs are injected
+// PURE module: no React, no DOM access — all environment inputs are injected
 // so the Auto heuristic, preference precedence and persistence fallback are
 // fully unit-testable (spec §14.6 L01/L02/L04).
 //
@@ -8,7 +8,7 @@
 //   device (Desktop stays Desktop on a phone; Mobile/touch works with a mouse).
 // - Auto resolves from layout-viewport size + primary pointer capability, never
 //   from a UA string and never from the visual viewport (which shrinks when the
-//   software keyboard opens - L04 no-oscillation rule).
+//   software keyboard opens — L04 no-oscillation rule).
 // - Storage is versioned, takeoff-only, and per-browser/device; any failure
 //   falls back to session memory.
 
@@ -25,7 +25,7 @@ export const VIEW_PREFERENCE_STORAGE_KEY = 'quotecore.takeoff.view-mode.v1';
 /**
  * Capability snapshot for the Auto heuristic (§3.1). Values come from
  * matchMedia('(pointer: coarse|fine)') and the LAYOUT viewport
- * (window.innerWidth/innerHeight) - never from the visual viewport and never
+ * (window.innerWidth/innerHeight) — never from the visual viewport and never
  * from a user-agent string.
  */
 export type ViewModeCapabilities = Readonly<{
@@ -33,14 +33,14 @@ export type ViewModeCapabilities = Readonly<{
   primaryPointerCoarse: boolean;
   /** Layout viewport dimensions in CSS px (NOT visual viewport). */
   layoutViewport: Readonly<{ width: number; height: number }>;
-  /** Optional PWA display mode - contextual information only (L02): never
+  /** Optional PWA display mode — contextual information only (L02): never
    *  establishes screen size or pointer precision by itself. */
   displayMode?: 'standalone' | 'browser' | string | undefined;
 }>;
 
 /** Auto heuristic (§3.1): prefer touch when the primary pointer is coarse AND
- *  the shorter layout-viewport edge is at most 820 CSS px. Anything else -
- *  fine pointers, large screens, hybrid laptops with touch - resolves to
+ *  the shorter layout-viewport edge is at most 820 CSS px. Anything else —
+ *  fine pointers, large screens, hybrid laptops with touch — resolves to
  *  desktop. The manual switch exists precisely because detection can be wrong;
  *  ambiguity is resolved by retaining the initial presentation, not by
  *  oscillating. */
@@ -117,7 +117,7 @@ export function createPreferencePersistence(store: PreferenceStore | null | unde
       try {
         store.setItem(VIEW_PREFERENCE_STORAGE_KEY, preference);
       } catch {
-        // Session memory above already holds the value - non-fatal.
+        // Session memory above already holds the value — non-fatal.
       }
     }
   };
@@ -129,7 +129,7 @@ export function createPreferencePersistence(store: PreferenceStore | null | unde
  * Read the layout viewport as an environment capability source. Kept separate
  * from the pure heuristic so tests can exercise fixtures without a DOM.
  * Uses window.innerWidth/innerHeight (layout viewport); the visual viewport
- * (window.visualViewport) is intentionally NOT consulted - it shrinks under
+ * (window.visualViewport) is intentionally NOT consulted — it shrinks under
  * the software keyboard and must never change the resolved mode (L04).
  */
 export function readLayoutViewportCapabilities(

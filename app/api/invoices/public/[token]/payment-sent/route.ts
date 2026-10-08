@@ -1,5 +1,3 @@
-
-import { isDemoCompany } from '@/app/lib/demo/context';
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { alertEnabled, emailAlertEnabled } from '@/app/lib/alerts/prefs';
@@ -33,9 +31,6 @@ export async function POST(
     .select('id, company_id, invoice_number, customer_name, status, total, currency')
     .eq('public_token', token)
     .maybeSingle();
-
-  // Demo documents use the separate expiring demo-token surface, never production notifications.
-  if (invoice && await isDemoCompany(invoice.company_id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   if (!invoice) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

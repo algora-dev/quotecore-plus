@@ -1,4 +1,3 @@
-import { isDemoCompany } from '@/app/lib/demo/context';
 /**
  * Outbound Messages pipeline - single entry point.
  *
@@ -197,7 +196,6 @@ export async function sendOutboundMessage(
   // caught most of these; we re-check so library callers can't accidentally
   // bypass the rules.
   if (!input.companyId) return { ok: false, messageId: null, error: 'companyId required' };
-  if (await isDemoCompany(input.companyId)) return { ok: false, messageId: null, error: 'External messages are disabled in the demo. Use the guided self-send flow.' };
   if (!input.senderUserId) return { ok: false, messageId: null, error: 'senderUserId required' };
   if (!input.recipientEmail) return { ok: false, messageId: null, error: 'recipientEmail required' };
   if (input.relatedQuoteId && input.relatedOrderId) {

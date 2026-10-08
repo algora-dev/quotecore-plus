@@ -1,12 +1,10 @@
-import { authFailureCategory } from '@/app/lib/auth/auth-errors';
-import { createSessionTrace, sessionNoStore } from '@/app/lib/auth/session-trace';
-import { isDemoRequest, DEMO_NAMESPACE_HEADER } from '@/app/lib/demo/routing';
-import { guardDemoRequest } from '@/app/lib/demo/request-gate';
 import { NextResponse, type NextRequest } from 'next/server';
-import { createAuthCookieBatch } from '@/app/lib/supabase/cookie-batch';
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import {
-  authCookieOptionsForLocation,
+  AUTH_COOKIE_NAME,
+  authCookieOptions,
+  demoAuthCookieOptions,
+  DEMO_COOKIE_NAME,
   legacyAuthCookiePrefix,
 } from '@/app/lib/supabase/cookie-config';
 import {
@@ -143,6 +141,13 @@ function isAal1Allowed(pathname: string): boolean {
   return AAL1_ALLOWED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+/** AI-costing/assistant API routes (demo guard scope, Architecture V2 §11
+ *  interim). Calls carrying a demo cookie are treated as demo-context:
+ *  master-switch check + cookie-view rewrite so routes resolve the demo
+ *  tenant. Normal users' calls (no demo cookie) are untouched. */
+const DEMO_AI_API_PATTERN =
+  /^\/api\/(smart-assistant(\/|$)|takeoff\/(ai-scan-v3|scan-jobs)|app\/(parse-document|ai-quota))/;
+
 function isPublicPath(pathname: string): boolean {
   // All /free-* paths are public (calculators, generators, hub page).
   // This covers all current and future free tool routes without needing
@@ -160,7 +165,6 @@ function isStaticAsset(pathname: string): boolean {
     pathname.startsWith('/api') ||
     // P9: Next's public metadata response must not be redirected to HTML login.
     pathname === '/manifest.webmanifest' ||
-    pathname === '/assistant-manifest.webmanifest' || pathname === '/qcp-push-sw.js' ||
         pathname === '/favicon.ico' ||
     pathname === '/favicon.png' ||
     pathname === '/logo.png' ||
@@ -179,26 +183,6 @@ function isStaticAsset(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.nextUrl.hostname;
-  // These headers are derived here; ignore incoming copies from a caller.
-  request.headers.delete(DEMO_NAMESPACE_HEADER);
-  request.headers.delete('x-qcp-request-path');
-  request.headers.delete('x-qcp-session-trace');
-  const demoNamespace = isDemoRequest(hostname, pathname, request.nextUrl.origin, request.headers.get('referer'));
-  request.headers.set(DEMO_NAMESPACE_HEADER, demoNamespace ? 'demo' : 'normal');
-  request.headers.set('x-qcp-request-path', pathname);
-  if (hostname === 'demo.quote-core.com' && /^\/(login|signup|onboarding|2fa|auth)(\/|$)/.test(pathname)) {
-    return NextResponse.redirect(new URL(pathname + request.nextUrl.search, 'https://app.quote-core.com'), 307);
-  }
-  if ((hostname === 'quote-core.com' || hostname === 'app.quote-core.com') && (pathname === '/demo' || /^\/demo-[a-z0-9-]+(?:\/|$)/i.test(pathname))) {
-    return NextResponse.redirect(new URL(pathname + request.nextUrl.search, 'https://demo.quote-core.com'), 307);
-  }
-  if (hostname === 'demo.quote-core.com' && pathname === '/') return NextResponse.redirect(new URL('/demo', request.url));
-  // Static assets are shared. Dynamic demo routes/APIs cannot use the normal
-  // preview/public-domain shortcut, which previously skipped the demo guard.
-  if (demoNamespace && !pathname.startsWith('/_next') && !/\.(svg|png|jpg|jpeg|webp|ico|css|js|woff2?|ttf|mp4|pdf)$/.test(pathname)) {
-    return guardDemoRequest(request);
-  }
-
 
   // -- /var/* hard-404 (2026-09-25) ----------------------------------
   // Docs RSC payloads leaked absolute /var/task/... paths (AWS Lambda
@@ -255,33 +239,23 @@ export async function middleware(request: NextRequest) {
   //   is fully self-contained.
   const isPreview = isPreviewHost(hostname);
   const isPublicDomain = isProductionMarketingHost(hostname);
-  const publicNext = () => {
-    const next = NextResponse.next({ request });
-    if (pathname === '/login') {
-      const trace = createSessionTrace(request, 'middleware');
-      trace.finish('public_login_document', { names: [], deletions: 0 });
-      if (trace.enabled) next.headers.set('X-QCP-Session-Trace', trace.id);
-      return sessionNoStore(next);
-    }
-    return next;
-  };
 
   if (isPreview) {
     // On preview hosts, skip all cross-domain redirects. The homepage
     // renders marketing (via shouldRenderMarketing in app/page.tsx) and
     // auth paths stay on the same origin.
     if (isStaticAsset(pathname)) {
-      return NextResponse.next({ request });
+      return NextResponse.next();
     }
     // Public paths and root are allowed without auth
     if (pathname === '/' || isPublicPath(pathname)) {
-      return publicNext();
+      return NextResponse.next();
     }
     // Fall through to auth check below (same as app domain)
   } else if (isPublicDomain) {
     // Allow static assets, API routes, and public paths on the public domain
     if (isStaticAsset(pathname)) {
-      return NextResponse.next({ request });
+      return NextResponse.next();
     }
     // Auth journey paths ALWAYS run on the app domain (2026-07-15).
     // Previously /login, /signup, /onboarding and /auth/* rendered on the
@@ -297,7 +271,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(appUrl, 308);
     }
     if (pathname === '/' || isPublicPath(pathname)) {
-      return publicNext();
+      return NextResponse.next();
     }
     // Redirect everything else to the app domain
     const appUrl = new URL(pathname, `https://app.quote-core.com`);
@@ -305,14 +279,49 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(appUrl, 308);
   }
 
+  // ── Demo AI guard (interim wiring; full route metering lands with the SA
+  // agent return). Runs before the static-asset skip because /api/* short-
+  // circuits there. Demo cookie present + AI route = demo-context call. ──
+  if (
+    DEMO_AI_API_PATTERN.test(pathname) &&
+    request.cookies.getAll().some(c => c.name.startsWith(DEMO_COOKIE_NAME))
+  ) {
+    const check = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/demo_ai_enabled`,
+      {
+        method: 'POST',
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Content-Type': 'application/json',
+        },
+        body: '{}',
+      }
+    );
+    const enabled = check.ok ? (await check.json()) === true : false;
+    if (!enabled) {
+      return NextResponse.json({ error: 'Demo AI is currently switched off.' }, { status: 403 });
+    }
+    const legacyPrefix = legacyAuthCookiePrefix();
+    const demoChunks = request.cookies.getAll().filter(c => c.name.startsWith(DEMO_COOKIE_NAME));
+    for (const c of request.cookies.getAll()) {
+      if (c.name.startsWith(AUTH_COOKIE_NAME) || (legacyPrefix && c.name.startsWith(legacyPrefix))) {
+        request.cookies.delete(c.name);
+      }
+    }
+    for (const c of demoChunks) {
+      request.cookies.set(c.name.replace(DEMO_COOKIE_NAME, AUTH_COOKIE_NAME), c.value);
+    }
+    return NextResponse.next({ request });
+  }
+
   // Skip static assets and API routes
   if (isStaticAsset(pathname)) {
-    return NextResponse.next({ request });
+    return NextResponse.next();
   }
 
   // Skip public paths
   if (pathname === '/' || isPublicPath(pathname)) {
-    return publicNext();
+    return NextResponse.next();
   }
 
   // Demo workspace routes (slug prefix demo-) authenticate via the DEMO
@@ -322,15 +331,6 @@ export async function middleware(request: NextRequest) {
   const isDemoWorkspace = firstSegment.startsWith('demo-');
 
   // Create Supabase client for middleware
-  const trace = createSessionTrace(request, 'middleware');
-  if (trace.enabled) request.headers.set('x-qcp-session-trace', trace.id);
-  const cookieUpdates = createAuthCookieBatch();
-  const finishAuth = (result: NextResponse, outcome: string, destination?: string, authCategory?: string) => {
-    const finished = sessionNoStore(cookieUpdates.apply(result));
-    if (trace.enabled) finished.headers.set('X-QCP-Session-Trace', trace.id);
-    trace.finish(outcome, cookieUpdates.summary(), { destination, authCategory });
-    return finished;
-  };
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -339,32 +339,45 @@ export async function middleware(request: NextRequest) {
     {
       // Cross-subdomain auth cookies (see cookie-config.ts): sessions
       // refreshed here must stay valid on all quote-core.com subdomains.
-      cookieOptions: authCookieOptionsForLocation(hostname, pathname),
-      global: { fetch: trace.fetch(fetch) },
+      cookieOptions: isDemoWorkspace ? demoAuthCookieOptions(hostname) : authCookieOptions(hostname),
       cookies: {
-        getAll() { return request.cookies.getAll(); },
-        setAll(changes, sdkHeaders?: Record<string, string>) {
-          for (const {name,value} of changes) request.cookies.set(name,value);
-          cookieUpdates.record(changes, sdkHeaders);
-          response=cookieUpdates.apply(NextResponse.next({request}));
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({ name, value, ...options });
+          response = NextResponse.next({ request });
+          response.cookies.set({ name, value, ...options });
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({ name, value: '', ...options });
+          response = NextResponse.next({ request });
+          response.cookies.set({ name, value: '', ...options });
         },
       },
     }
   );
 
-  let verification;
-  try { verification = await supabase.auth.getUser(); }
-  catch { return finishAuth(new NextResponse('Your session could not be verified. Reconnect and reload.', { status: 503, headers: { 'Retry-After': '5' } }), 'auth_unavailable'); }
-  const {data:{user},error:authError}=verification;
-  // SSR refreshes expired tokens itself. Do not rotate a second time after an
-  // auth-network outage, and do not turn an unverified/offline request into an
-  // authenticated response or a destructive sign-out.
-  const authCategory = authFailureCategory(authError);
-  if (authError && (user || authCategory === 'temporary' || authCategory === 'unknown')) {
-    return finishAuth(new NextResponse('Your session could not be verified. Reconnect and reload this page.',{status:503,headers:{'Retry-After':'5','Content-Type':'text/plain; charset=utf-8'}}), 'auth_unavailable', undefined, authCategory);
+  let { data: { user } } = await supabase.auth.getUser();
+
+  // If getUser() returned null but auth cookies exist, the JWT likely
+  // expired while the user was on a page without a client-side Supabase
+  // client (e.g. /onboarding after Google OAuth from free tools). The
+  // server client has autoRefreshToken: false, so it won't auto-refresh.
+  // Try an explicit refreshSession() — if the refresh token is still
+  // valid, this mintes a new access token and updates the cookies on the
+  // response. Only redirect to login if the refresh also fails.
+  if (!user) {
+    const hasAuthCookies = request.cookies
+      .getAll()
+      .some(c => c.name.startsWith(isDemoWorkspace ? DEMO_COOKIE_NAME : AUTH_COOKIE_NAME));
+    if (hasAuthCookies) {
+      const { data: refreshData } = await supabase.auth.refreshSession();
+      user = refreshData.user ?? null;
+    }
   }
 
-  // No verified user (including legitimate expiry/revocation) — redirect to login
+  // No user (and refresh failed) — redirect to login
   // (demo workspaces bounce to /demo for a fresh sandbox instead)
   if (!user) {
     const url = request.nextUrl.clone();
@@ -373,10 +386,28 @@ export async function middleware(request: NextRequest) {
       url.search = '';
     } else {
       url.pathname = '/login';
-      url.search = '';
-      url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''));
+      url.searchParams.set('redirect', pathname);
     }
-    return finishAuth(expireLegacyAuthCookies(request, NextResponse.redirect(url)), 'login_required', url.pathname, authCategory);
+    return expireLegacyAuthCookies(request, NextResponse.redirect(url));
+  }
+
+  // Demo workspace cookie-view rewrite (Architecture V2 §5, testing-phase
+  // path-based variant): make the demo session visible to the app's normal
+  // clients under the NORMAL cookie name for this request only, so workspace
+  // pages resolve the anon demo user transparently under normal RLS. A stale
+  // normal session in the same browser is masked while inside demo slugs.
+  if (isDemoWorkspace && user) {
+    const legacyPrefix = legacyAuthCookiePrefix();
+    const demoChunks = request.cookies.getAll().filter(c => c.name.startsWith(DEMO_COOKIE_NAME));
+    for (const c of request.cookies.getAll()) {
+      if (c.name.startsWith(AUTH_COOKIE_NAME) || (legacyPrefix && c.name.startsWith(legacyPrefix))) {
+        request.cookies.delete(c.name);
+      }
+    }
+    for (const c of demoChunks) {
+      request.cookies.set(c.name.replace(DEMO_COOKIE_NAME, AUTH_COOKIE_NAME), c.value);
+    }
+    response = NextResponse.next({ request });
   }
 
   // 2FA gate. getAuthenticatorAssuranceLevel() is a local JWT decode, not a
@@ -391,32 +422,30 @@ export async function middleware(request: NextRequest) {
   // 2FA off in settings doesn't get challenged. The DB read is one indexed PK
   // lookup; cheap and runs after we've already paid for getUser().
   if (!isAal1Allowed(pathname)) {
-    const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel().catch(() => null);
-    if (!aal?.data || aal.error) return finishAuth(new NextResponse('Two-factor status could not be verified. Reconnect and reload.', { status: 503 }), 'mfa_unavailable');
+    const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     const factorPending =
       aal.data?.nextLevel === 'aal2' && aal.data.currentLevel !== 'aal2';
 
     if (factorPending) {
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from('users')
         .select('mfa_required')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (profileError) return finishAuth(new NextResponse('Two-factor settings could not be verified. Reconnect and reload.', { status: 503 }), 'mfa_unavailable');
       if (profile?.mfa_required) {
         const url = request.nextUrl.clone();
         url.pathname = '/2fa';
         // Preserve where they were trying to go so we can bounce them back.
         url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''));
-        return finishAuth(NextResponse.redirect(url), 'mfa_required', '/2fa');
+        return NextResponse.redirect(url);
       }
     }
   }
 
   // User exists (and 2FA, if applicable, has been satisfied). Page-level checks
   // continue to handle company context.
-  return finishAuth(expireLegacyAuthCookies(request, response), 'verified');
+  return expireLegacyAuthCookies(request, response);
 }
 
 export const config = {

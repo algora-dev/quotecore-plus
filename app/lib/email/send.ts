@@ -1,4 +1,3 @@
-import { isDemoWebRequest } from '@/app/lib/demo/egress';
 /**
  * Typed wrapper around Resend's send call. Always best-effort: caller paths
  * (quote acceptance, settings updates, etc.) must not fail if email sending
@@ -74,7 +73,6 @@ export type SendEmailResult =
  * callers can ignore the result safely.
  */
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
-  if (await isDemoWebRequest()) return { ok: false, error: 'Use the restricted demo delivery service; arbitrary demo mail is disabled.' };
   const client = getResendClient();
   if (!client) {
     return { ok: false, error: 'RESEND_API_KEY not configured' };

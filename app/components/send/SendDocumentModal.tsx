@@ -12,8 +12,6 @@ import { QcJourneyDialog, QcJourneySteps } from '@/app/components/ui/v2/QcJourne
 import type { SendDocumentProps } from './types';
 import type { useSendDocument } from './useSendDocument';
 import { AttachmentSendPicker } from '@/app/components/attachments/AttachmentSendPicker';
-import { isDemoLocation } from '@/app/lib/demo/routing';
-import { DemoSendDialog } from '@/app/components/demo/DemoSendDialog';
 
 type Hook = ReturnType<typeof useSendDocument>;
 
@@ -50,19 +48,19 @@ export function SendDocumentModal(props: SendDocumentProps & { hook: Hook }) {
     handleProceedToGate,
     handleSendNow,
     handleOpenFollowUps,
+    handleConfirmFollowUpsAndSend,
+    draftRules,
+    addDraftRule,
+    updateDraftRule,
+    removeDraftRule,
+    followUpSaving,
+    followUpError,
     bodyHasExtraUrls,
     goCreateTemplate,
     emailTemplates,
   } = hook;
 
   if (!open) return null;
-
-  // Demo lockdown (owner 2026-10-04): in the demo the send modal shows ONLY
-  // the self-send form - email + send. No attachments, follow-ups, templates,
-  // editable email content or public links.
-  if (typeof window !== 'undefined' && isDemoLocation(window.location.hostname, window.location.pathname) && props.entityKind === 'quote') {
-    return <DemoSendDialog quoteId={props.entityId} workspaceSlug={props.workspaceSlug} onClose={() => setOpen(false)} />;
-  }
 
   const showAttachments = config.attachments !== 'none';
   const showQuoteFiles = config.attachments === 'library+entity';

@@ -1,4 +1,3 @@
-import { PushSessionBridge } from '@/app/components/pwa/PushSessionBridge';
 import { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 
@@ -19,8 +18,6 @@ import { GlobalAnnouncementBanner } from '@/app/components/GlobalAnnouncementBan
 import { ImpersonationBanner } from '@/app/components/ImpersonationBanner';
 import { UserImpersonationBanner } from '@/app/components/UserImpersonationBanner';
 import { getAnnouncement } from '@/app/admin/(dashboard)/settings/actions';
-import { getActiveDemoContext } from '@/app/lib/demo/context';
-import { DemoExperience } from '@/app/components/demo/DemoExperience';
 
 export default async function WorkspaceLayout({
   children,
@@ -56,7 +53,6 @@ export default async function WorkspaceLayout({
 
   const _workspaceLabel = company.name ? company.name.slice(0, 10) : 'Workspace';
   const profile = await getCurrentProfile();
-  const demoContext = await getActiveDemoContext(company.id);
 
   const supabase = await createSupabaseServerClient();
 
@@ -135,7 +131,6 @@ export default async function WorkspaceLayout({
 
   return (
     <HelpDrawerProvider>
-      {!demoContext && process.env.PWA_PUSH_ENABLED === 'true' && <PushSessionBridge />}
       <HelpDrawerPanel />
       <HelpDrawerLayout>
         <QcAppShell
@@ -146,7 +141,6 @@ export default async function WorkspaceLayout({
           isSupplier={(company as { is_supplier?: boolean }).is_supplier ?? false}
           assistantAvailable={!!smartAssistantOn}
           notices={<>
-            {demoContext && <DemoExperience sessionId={demoContext.sessionId} workspaceSlug={slug} expiresAt={demoContext.expiresAt} initialState={demoContext.tutorialState} />}
             {announcement && <GlobalAnnouncementBanner config={announcement} />}
             {'isImpersonating' in profile && profile.isImpersonating && (
               <ImpersonationBanner adminEmail={profile.impersonationAdminEmail ?? null} targetEmail={profile.email} />
@@ -158,9 +152,7 @@ export default async function WorkspaceLayout({
           inbox={<InboxLink workspaceSlug={slug} unreadCount={inboxUnreadCount} />}
           help={<HelpDrawerTrigger />}
           logout={<LogoutButton className="qc-button qc-shell-logout-button" />}
-          assistant={demoContext && demoContext.tutorialState.chapter !== 'smart-assistant' && demoContext.tutorialState.chapter !== 'complete' ? (
-            null
-          ) : smartAssistantProps ? (
+          assistant={smartAssistantProps ? (
             <SmartAssistantLauncher workspaceSlug={slug} initialConversations={smartAssistantProps.conversations}
               assistantName={smartAssistantProps.name} greeting={smartAssistantProps.greeting} />
           ) : (

@@ -1,4 +1,4 @@
-// Worked examples from spec §17.4 (D, E, F - the geometry/command-relevant
+// Worked examples from spec §17.4 (D, E, F — the geometry/command-relevant
 // ones) plus §6.2 perimeter-order navigation semantics proven through commands.
 // A/B/C calibration-scale examples live in calibration.test.ts (existing).
 import { test } from 'node:test';
@@ -27,7 +27,7 @@ function ctx(): EditContext {
 
 const outlineTarget: EditTarget = { kind: 'outline', geometryId: 'g1', quoteRoofAreaId: null };
 
-// ─── §17.4 D - insertion on the closing edge ─────────────────────────────
+// ─── §17.4 D — insertion on the closing edge ─────────────────────────────
 
 test('D: insert after last vertex of square lands at (0,50), area+perimeter unchanged', () => {
   const square = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }, { x: 0, y: 100 }];
@@ -53,7 +53,7 @@ test('D: insert after last vertex of square lands at (0,50), area+perimeter unch
   assert.equal(moved.session.draft.vertices[4].point.x, -10);
 });
 
-// ─── §17.4 F - outline edit at unchanged scale ───────────────────────────
+// ─── §17.4 F — outline edit at unchanged scale ───────────────────────────
 
 test('F: moving one vertex changes area to 11000; at 0.01 m/px plan area is 1.1 m²', () => {
   const square = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }, { x: 0, y: 100 }];
@@ -72,12 +72,12 @@ test('F: moving one vertex changes area to 11000; at 0.01 m/px plan area is 1.1 
   assert.equal(calibratedArea(save.plan.recompute.sceneAreaPx2, 0.01), 1.1);
 });
 
-// ─── §6.2 - stored perimeter order navigation (wrap on closed, no wrap open) ──
+// ─── §6.2 — stored perimeter order navigation (wrap on closed, no wrap open) ──
 
 test('closed navigation wraps; index display order, not coordinate order', () => {
   // Concave polygon: stored order is not x/y sorted.
   const pts = [
-    { x: 60, y: 0 },  // 0 - stored first although not leftmost
+    { x: 60, y: 0 },  // 0 — stored first although not leftmost
     { x: 100, y: 100 }, // 1
     { x: 50, y: 50 }, // 2 concave
     { x: 0, y: 100 },  // 3
@@ -104,7 +104,7 @@ test('open path does not wrap at the ends', () => {
   assert.equal(idx0, 0);
   const prevOfFirst = (idx0 - 1 + 3) % 3; // would be 2 if wrongly wrapped
   assert.notEqual(prevOfFirst, idx0);
-  // And insert at the last open vertex is rejected (no successor) - §6.3.
+  // And insert at the last open vertex is rejected (no successor) — §6.3.
   assert.equal(insertAfter(s, last).rejected, 'no-successor-open-path');
 });
 

@@ -1,6 +1,5 @@
 'use client';
 
-import { safeReturnPath } from '@/app/lib/auth/resume-contract';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/client';
@@ -44,7 +43,7 @@ export function TwoFactorChallengeForm({ factorId, redirectTo }: Props) {
       }
 
       // Session is now AAL2. Send the user where they were going.
-      const target = safeReturnPath(redirectTo) ?? '/';
+      const target = redirectTo && redirectTo.startsWith('/') ? redirectTo : '/';
       router.replace(target);
       router.refresh();
     });
@@ -52,7 +51,7 @@ export function TwoFactorChallengeForm({ factorId, redirectTo }: Props) {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    router.replace('/login?signedOut=1');
+    router.replace('/login');
   }
 
   return (

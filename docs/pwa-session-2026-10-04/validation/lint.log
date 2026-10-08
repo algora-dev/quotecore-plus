@@ -1,6 +1,0 @@
-COMMAND: npm run lint -- app/lib/auth/resume-contract.ts app/lib/auth/login-recovery.ts app/components/auth/LoginSessionRecovery.tsx
-
-> quotecore-app@0.1.0 lint
-> eslint app/lib/auth/resume-contract.ts app/lib/auth/login-recovery.ts app/components/auth/LoginSessionRecovery.tsx
-
-sh: 1: eslint: not found

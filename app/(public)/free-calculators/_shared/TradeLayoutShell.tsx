@@ -6,7 +6,6 @@ import { hreflangLanguages } from '@/lib/seo/hreflang';
 import { signupHref } from './types';
 import { FreeToolsAuthProvider } from '../../_components/FreeToolsAuthProvider';
 import { FreeToolsAuthButton } from '../../_components/FreeToolsAuthButton';
-import '../../_components/free-tools-v2.css';
 
 const SITE_URL = 'https://quote-core.com';
 
@@ -58,7 +57,7 @@ export function TradeLayoutShell({ config, children }: { config: TradeConfig; ch
 
   return (
     <FreeToolsAuthProvider>
-    <div data-qc-ui="v2" className="qc-ft min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
 

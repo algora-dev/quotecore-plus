@@ -31,11 +31,7 @@ export async function uploadCanvasImage(
   // requireCompanyContext above; bypass storage RLS via the admin client.
   const admin = createAdminClient();
 
-  // Convert data URL to blob. The full-canvas snapshot is exported as JPEG
-  // (native-resolution plan PNGs exceed the server-action body limit), so
-  // derive the extension + content type from the data URL prefix.
-  const isJpeg = dataUrl.startsWith('data:image/jpeg');
-  const contentType = isJpeg ? 'image/jpeg' : 'image/png';
+  // Convert data URL to blob
   const base64Data = dataUrl.split(',')[1];
   if (!base64Data) {
     return { ok: false, error: 'Invalid canvas data URL' };
@@ -47,13 +43,13 @@ export async function uploadCanvasImage(
   // Generate unique filename. Path prefix is `${companyId}/${quoteId}/...`
   // which is what the storage RLS policy keys on.
   const timestamp = Date.now();
-  const filename = `canvas-${quoteId}${suffix ? '-' + suffix : ''}-${timestamp}.${isJpeg ? 'jpg' : 'png'}`;
+  const filename = `canvas-${quoteId}${suffix ? '-' + suffix : ''}-${timestamp}.png`;
   const filePath = `${profile.company_id}/${quoteId}/${filename}`;
 
   const { data, error } = await admin.storage
     .from(BUCKETS.QUOTE_DOCUMENTS)
     .upload(filePath, blob, {
-      contentType,
+      contentType: 'image/png',
       upsert: false,
     });
 

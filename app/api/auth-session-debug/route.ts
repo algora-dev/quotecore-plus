@@ -1,34 +1,43 @@
 import { NextResponse } from 'next/server';
-import { createSessionTrace, sessionNoStore } from '@/app/lib/auth/session-trace';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
-/** Compatibility sink for old installed bundles. The previous route accepted
- * arbitrary anonymous telemetry into a service-role table. New diagnostics
- * are opt-in console events with cookie NAMES/counts only and never write DB.
- * No existing table or migration is removed. This can be deleted once old
- * bundles are gone; current LoginSessionRecovery uses /api/auth/resume. */
+/**
+ * POST /api/auth-session-debug (patch_055, TEMPORARY debug round).
+ *
+ * One-row-per-browser-session telemetry from the login page so the iOS PWA
+ * "logged out after fully closing the app" issue can be diagnosed from
+ * data: which sb-* cookies the browser actually sent (server-side view,
+ * including httpOnly cookies the page cannot see), whether the load came
+ * from a standalone PWA or a browser tab, and where the /login load
+ * originated (middleware redirect vs direct cold start).
+ *
+ * Deliberately unauthenticated (users on /login have no session by
+ * definition). No PII beyond the user agent; payload fields are clamped.
+ * Best-effort: always 204, never blocks the page. Remove this route (and
+ * the auth_session_debug table + AuthSessionDebugPing component) once the
+ * issue is resolved.
+ */
 export async function POST(request: Request) {
-  const done = () => sessionNoStore(new NextResponse(null, { status: 204 }));
-  if (process.env.PWA_SESSION_DIAGNOSTICS_ENABLED !== 'true') return done();
-  if (request.headers.get('origin') !== new URL(request.url).origin ||
-      request.headers.get('sec-fetch-site') === 'cross-site' ||
-      !request.headers.get('content-type')?.startsWith('application/json')) return done();
-  const reader = request.body?.getReader();
-  if (!reader) return done();
-  let size = 0;
   try {
-    // Consume a bounded legacy body but do not retain/log any field, especially
-    // document.referrer, which may contain private identifiers or auth tokens.
-    for (;;) {
-      const { value, done: ended } = await reader.read();
-      if (ended) break;
-      size += value.byteLength;
-      if (size > 1024) { await reader.cancel(); return done(); }
-    }
-    createSessionTrace(request, 'resume').finish('legacy_login_document', { names: [], deletions: 0 });
-  } catch { /* Diagnostic failure never changes sign-in. */ }
-  finally { reader.releaseLock(); }
-  return done();
+    const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+    const clamp = (value: unknown, max: number) => String(value ?? '').slice(0, max);
+    const cookieNames = (request.headers.get('cookie') ?? '')
+      .split(';')
+      .map(c => c.trim().split('=')[0])
+      .filter(name => name.startsWith('sb-'))
+      .join(',');
+    const admin = createAdminClient();
+    await admin.from('auth_session_debug').insert({
+      user_agent: clamp(request.headers.get('user-agent'), 300),
+      referer: clamp(body.referer, 300),
+      display_mode: clamp(body.displayMode, 40),
+      cookie_names: cookieNames.slice(0, 300),
+      source: clamp(body.source, 40),
+    });
+  } catch {
+    // Best-effort telemetry - never surface an error to the login page.
+  }
+  return new NextResponse(null, { status: 204 });
 }

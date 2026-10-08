@@ -1,9 +1,3 @@
-# Current return — Workflow Controller V1 (2 October 2026)
-
-Read `AGENT_INTEGRATION_WORKFLOW_V1.md` and `RETURN_NOTES.md` first. This source return is **not deployed or live-validated**. The new gates, migration order and limitations are under `docs/sa-workflow-controller-v1-2026-10-02/`. Historical P1.7 integration notes below are retained for provenance; their live-test results do not certify the new controller/PWA/push changes.
-
----
-
 # START HERE — Smart Assistant P1.7 integration return
 
 This is the **integrated and live-tested P1.7 return** (2026-09-26 evening).

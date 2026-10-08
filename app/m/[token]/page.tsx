@@ -1,6 +1,3 @@
-
-import { isDemoCompany } from '@/app/lib/demo/context';
-import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { verifyMessageReplyToken } from '@/app/lib/messages/replyToken';
@@ -62,9 +59,6 @@ export default async function MessageReplyPage({ params }: Props) {
     )
     .eq('id', payload.mid)
     .maybeSingle();
-
-  // Demo documents use the separate expiring demo-token surface, never production notifications.
-  if (message && await isDemoCompany(message.company_id)) notFound();
 
   if (error || !message) {
     return <ExpiredOrInvalidScreen />;

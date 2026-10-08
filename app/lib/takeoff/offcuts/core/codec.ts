@@ -1,5 +1,3 @@
-import { validateCleanupOptions } from './geometryPolicy';
-import { cleanBoundaryGraph } from './geometryCleanup';
 import type { Draft, RoofInput, RoofFace } from './types';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from './types';
 import { validateRing } from './math';
@@ -26,7 +24,6 @@ export function parseDraft(text: string): Draft {
   for (const e of roof.edges) if (!e || !e.a || !e.b || ![e.a.x, e.a.y, e.b.x, e.b.y].every(Number.isFinite) || !['ridge','hip','valley','broken_hip','barge','spouting','unknown'].includes(e.kind)) throw new Error('Invalid roof edge.');
   if(roof.draftingTolerance!==undefined&&!['tight','balanced','relaxed'].includes(roof.draftingTolerance))throw new Error('Unknown drawing tolerance.');
   if(roof.faceDetectionIgnoredEdgeIds!==undefined&&(!Array.isArray(roof.faceDetectionIgnoredEdgeIds)||roof.faceDetectionIgnoredEdgeIds.length>1200||roof.faceDetectionIgnoredEdgeIds.some(id=>typeof id!=='string'||!roof.edges.some(e=>e.id===id))))throw new Error('Invalid excluded face boundary references.');
-  validateCleanupOptions(roof);
   const faces = (Array.isArray(data.faces) ? data.faces : []) as RoofFace[];
   if (faces.length > 200) throw new Error('Too many faces.');
   for (const f of faces) {
@@ -39,8 +36,6 @@ export function parseDraft(text: string): Draft {
   if(mappings!==undefined&&(!mappings||typeof mappings!=='object'||Array.isArray(mappings)||Object.keys(mappings).length>1000||Object.values(mappings).some(v=>!isBoundaryMeaning(v))))throw new Error('Invalid line type overrides.');
   // Do NOT hydrate executable URLs or trust precomputed material allocations.
   delete roof.imageUrl; roof.sourceRevision = roofRevision(roof);
-  const geometryReview=data.geometryReview?cleanBoundaryGraph(roof,roof.outlines.flatMap(o=>o.polygon.map((a,i)=>({id:`${o.id}:boundary:${i}`,a,b:o.polygon[(i+1)%o.polygon.length],kind:'unknown' as const})))).report:undefined;
-  if(geometryReview)geometryReview.edited=faces.some(f=>f.provenance!=='derived');
-  return { schemaVersion: 1, roof, faces, ...(geometryReview?{geometryReview}:{}), profile: { ...DEFAULT_PROFILE, ...(data.profile as object ?? {}), rulesConfirmed: false },
+  return { schemaVersion: 1, roof, faces, profile: { ...DEFAULT_PROFILE, ...(data.profile as object ?? {}), rulesConfirmed: false },
     settings: { ...DEFAULT_SETTINGS, ...(data.settings as object ?? {}) }, ...(mappings?{componentBoundaryOverrides:{...mappings} as Draft['componentBoundaryOverrides']}:{ }), solution: null };
 }

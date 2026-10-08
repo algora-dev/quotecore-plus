@@ -1,5 +1,5 @@
 /**
- * Centralised video registry - single source of truth for all YouTube videos
+ * Centralised video registry — single source of truth for all YouTube videos
  * used across the site (page schemas, video sitemap, YouTubeLite component).
  *
  * When a new video is added, update this file and both the page schema and

@@ -27,7 +27,7 @@ export default async function InboxPage({
   if (!ent.features.message_center) {
     const requiredPlan = FEATURE_MIN_PLAN.message_center;
     return (
-      <QcLibrary className="max-w-5xl mx-auto px-0 md:px-4 py-3 md:py-6 space-y-3 md:space-y-5">
+      <div className="max-w-5xl mx-auto px-0 md:px-4 py-3 md:py-6 space-y-3 md:space-y-5">
         <div>
           <h1 className="qc-library-title text-xl md:text-2xl font-bold text-slate-900">Message Center</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">Available on the Starter plan and above.</p>
@@ -55,7 +55,7 @@ export default async function InboxPage({
             </div>
           </div>
         </div>
-      </QcLibrary>
+      </div>
     );
   }
 
@@ -84,7 +84,7 @@ export default async function InboxPage({
       <div className="mb-4 md:mb-5">
         <h1 className="qc-library-title text-xl md:text-2xl font-bold text-slate-900">Message Center</h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">
-          Replies and updates about your jobs and documents.
+          Every alert and message from your quotes, orders and invoices in one place.
         </p>
       </div>
       {alertsError || preferencesError ? <QcLibraryError title="Message Center could not be loaded">

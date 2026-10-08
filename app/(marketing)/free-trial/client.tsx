@@ -3,7 +3,7 @@
 import { trackEvent } from "@/lib/analytics";
 
 /**
- * Get started page CTA - free tools (no signup) + choose a plan.
+ * Get started page CTA — free tools (no signup) + choose a plan.
  */
 export default function FreeTrialClient() {
   return (

@@ -2,7 +2,7 @@
 // Spec: §6.3 midpoint insertion, §6.4 deletion minimums, §8.4 validity rules,
 // §17.3 tolerances. Reuses existing domain conventions (coordinate tolerance
 // mirrors calibrationCoordinates COORD_TOLERANCE); keeps everything pure and
-// node-testable. No simplification is ever applied here - a collinear midpoint
+// node-testable. No simplification is ever applied here — a collinear midpoint
 // inserted by the user must survive (spec §6.3/§8.4).
 
 import type { Point } from '../calibrationTypes';
@@ -168,7 +168,7 @@ export type ValidationOptions = Readonly<{
  * Validate a draft outline. Severity policy:
  *  - blocking issues must be repaired before saveEdit will produce a save plan;
  *  - warnings do not block but must be surfaced.
- * A collinear midpoint is deliberately permitted (spec §6.3/§8.4) - never an issue.
+ * A collinear midpoint is deliberately permitted (spec §6.3/§8.4) — never an issue.
  */
 export function validateOutline(
   draft: EditableGeometry,

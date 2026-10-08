@@ -1,4 +1,3 @@
-import { withDemoAssistantTurn } from '@/app/lib/demo/assistant.server';
 import { NextRequest, NextResponse } from 'next/server';
 import { isUuid } from '@/app/lib/smart-assistant/v2/contracts';
 import { isRecord } from '@/app/lib/smart-assistant/section-permissions';
@@ -26,7 +25,7 @@ export const runtime = 'nodejs';
  * narration is invalidated with `discard`, and every stream ends with exactly
  * one labelled terminal event (`final` or `error`) carrying the same payload
  * shape the non-streaming client consumes. On any mid-stream failure the
- * client falls back to the existing session/pending flow - never a partial
+ * client falls back to the existing session/pending flow — never a partial
  * unlabelled payload.
  *
  * Authority split (patch 045): the authenticated user client handles
@@ -34,7 +33,7 @@ export const runtime = 'nodejs';
  * trusted finalization uses the service-role client. The browser can
  * request runs but never certify model output or token usage.
  */
-async function handlePost(req: NextRequest) {
+export async function POST(req: NextRequest) {
   let payload: {
     conversationId?: string;
     message?: string;
@@ -145,9 +144,7 @@ async function handlePost(req: NextRequest) {
             if (result) send('final', { ok: true, status: 'completed', run_id: admit.runId, reply: result.content, requestMs });
             else send('error', { ok: false, status: failure?.httpStatus ?? 500, error: failure?.message ?? 'Assistant error', error_code: failure?.errorCode, requestMs });
           }
-        } catch (routeError) {
-          console.error('[smart-assistant] turn failed (500):', routeError instanceof Error ? routeError.message : String(routeError),
-            routeError instanceof Error && routeError.stack ? '\n' + routeError.stack.split('\n').slice(0, 8).join('\n') : '');
+        } catch {
           if (!finished) {
             finished = true;
             send('error', { ok: false, status: 500, error: 'Assistant error' });
@@ -200,8 +197,6 @@ async function executePipeline(input: {
       companyId: profile.company_id, conversationId, pageContext,
     }, input.onText);
   } catch (error) {
-    console.error('[smart-assistant] turn pipeline failed:', error instanceof Error ? error.message : String(error),
-      error instanceof Error && error.stack ? '\n' + error.stack.split('\n').slice(0, 12).join('\n') : '');
     failure = pipelineFailureDetails(error);
   }
 
@@ -259,5 +254,3 @@ async function classicTurn(input: {
   return NextResponse.json(body, { status: 200, headers: { 'Cache-Control': 'no-store',
     'Server-Timing': `sa;dur=${requestMs}, sa_admission;dur=${input.admissionMs}, sa_finish;dur=${finishMs}` } });
 }
-
-export async function POST(req: NextRequest) { return withDemoAssistantTurn(req, handlePost); }

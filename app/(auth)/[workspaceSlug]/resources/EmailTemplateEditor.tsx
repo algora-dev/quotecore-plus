@@ -44,7 +44,7 @@ const KIND_LABELS: Record<MessageTemplateKind, string> = {
   order_send: 'Send a material order',
   followup: 'Follow up on a quote',
   decline_response: 'Response to a declined quote',
-  custom: 'General - quotes, invoices & orders',
+  custom: 'General — quotes, invoices & orders',
 };
 
 const KIND_HINTS: Record<MessageTemplateKind, string> = {

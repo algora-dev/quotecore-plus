@@ -82,7 +82,7 @@ export async function getPublicSupplierCatalogueCount(slug: string): Promise<num
 
 /**
  * Fetch ALL items for a supplier's published catalogue (for CSV/JSON export).
- * No pagination - returns everything.
+ * No pagination — returns everything.
  */
 export async function getAllPublicSupplierCatalogueItems(
   slug: string,

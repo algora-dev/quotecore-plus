@@ -1,6 +1,4 @@
 'use server';
-import { isDemoCompany } from '@/app/lib/demo/context';
-
 
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
@@ -73,9 +71,6 @@ export async function submitMessageReply(
     )
     .eq('id', payload.mid)
     .maybeSingle();
-
-  // Demo documents use the separate expiring demo-token surface, never production notifications.
-  if (message && await isDemoCompany(message.company_id)) throw new Error('This demonstration document is only available through its expiring demo link.');
 
   if (loadErr || !message) {
     return { ok: false, error: 'This message no longer exists.' };
@@ -151,9 +146,6 @@ export async function suppressMessageRecipient(
     .select('id, company_id, recipient_email')
     .eq('id', payload.mid)
     .maybeSingle();
-
-  // Demo documents use the separate expiring demo-token surface, never production notifications.
-  if (message && await isDemoCompany(message.company_id)) throw new Error('This demonstration document is only available through its expiring demo link.');
   if (!message || message.recipient_email !== payload.to) {
     return { ok: false, error: 'This link is no longer valid.' };
   }

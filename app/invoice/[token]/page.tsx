@@ -1,6 +1,3 @@
-
-import { isDemoCompany } from '@/app/lib/demo/context';
-import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
@@ -58,9 +55,6 @@ export default async function PublicInvoicePage({ params }: Props) {
     .select('*')
     .eq('public_token', token)
     .maybeSingle();
-
-  // Demo documents use the separate expiring demo-token surface, never production notifications.
-  if (invoice && await isDemoCompany(invoice.company_id)) notFound();
 
   if (!invoice || invoice.status === 'cancelled') return <InvalidScreen />;
 

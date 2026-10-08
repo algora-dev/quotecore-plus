@@ -1,5 +1,4 @@
 'use server';
-import { assertDemoExternalAllowed } from '@/app/lib/demo/egress';
 
 /**
  * Billing server actions.
@@ -77,7 +76,6 @@ export async function createCheckoutSession(
     return { ok: false, code: 'unauthenticated', message: 'Please sign in to manage billing.' };
   }
   const { profile, company: ctxCompany } = ctx;
-  await assertDemoExternalAllowed(profile.company_id);
   const slug = ctxCompany.slug;
 
   let checkout: { priceId: string } | null;
@@ -207,7 +205,6 @@ export async function changePlan(
     return { ok: false, code: 'unauthenticated', message: 'Please sign in to manage billing.' };
   }
   const { profile, company: ctxCompany } = ctx;
-  await assertDemoExternalAllowed(profile.company_id);
   const slug = ctxCompany.slug;
 
   const admin = createAdminClient();
@@ -352,7 +349,6 @@ export async function createCustomerPortalSession(): Promise<BillingActionResult
     return { ok: false, code: 'unauthenticated', message: 'Please sign in to manage billing.' };
   }
   const { profile, company: ctxCompany } = ctx;
-  await assertDemoExternalAllowed(profile.company_id);
   const slug = ctxCompany.slug;
 
   const admin = createAdminClient();

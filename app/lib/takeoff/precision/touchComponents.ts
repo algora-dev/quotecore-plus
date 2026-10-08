@@ -52,9 +52,6 @@ export interface TouchComponentEntry {
   quoteRoofAreaId?: string | null;
   /** Plan-space area snapshot for attached entries (entryInputs.plan_value). */
   planValue?: number;
-  /** Phase 2 (2026-10-07): attached offcut figure - final material m2,
-   *  persisted as entryInputs.value_basis 'offcuts' (no pitch/waste recompute). */
-  fromOffcuts?: boolean;
   /** Corner-derived entry (kind 'point'): which corner set was counted
    * (2026-09-30). Persisted via entryInputs.value_basis 'corner_*'. */
   cornerBasis?: 'all' | 'external' | 'internal';

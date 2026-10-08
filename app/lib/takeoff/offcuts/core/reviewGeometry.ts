@@ -105,7 +105,6 @@ export function currentDetectionIssues(issues: Issue[], faces: RoofFace[]): Issu
   const recomputed = /^(UNCOVERED_ROOF|FACE_OUTSIDE_ROOF|FACE_OVERLAP|OUTLINE_OVERLAP|INVALID_POLYGON|DRAWING_SLIVER|NARROW_FACE)$/;
   return issues.filter(i => {
     if (recomputed.test(i.code)) return false;
-    if (/^(UNMAPPED_COMPONENT|CONFLICTING_EDGE|FLOW_EAVE_CONFLICT|RIDGE_DIRECTION|BARGE_DIRECTION)$/.test(i.code)) return false;
     if (i.faceId && !byId.has(i.faceId)) return false;
     if (i.code === 'FLOW_REVIEW' && i.faceId) {
       const flow = byId.get(i.faceId)?.flow;
@@ -121,12 +120,24 @@ export function validateFaceDirections(face: RoofFace, roof: RoofInput): Issue[]
   const issues: Issue[] = [], v = face.flow;
   if (!v || !Number.isFinite(v.x) || !Number.isFinite(v.y) || Math.hypot(v.x, v.y) < EPS) return issues;
   const flow = unit(v), across = { x: flow.y, y: -flow.x }, toDeg = 180 / Math.PI;
+  const angleBetween = (a: Point, b: Point): number => Math.acos(Math.max(-1, Math.min(1, dot(a, b)))) * toDeg;
   let maxAcceptableDeviation = 0;
   const hard = (code: string, message: string, objectId?: string): void => {
-    issues.push({ severity: 'warning', code, faceId: face.id, objectId, message });
+    const approved = directionApproved(face);
+    issues.push({ severity: approved ? 'warning' : 'error', code, faceId: face.id, objectId,
+      message: approved ? `${face.name}: User-confirmed water direction is used. An inferred boundary label differs; this does not prevent calculation.` : message });
   };
-  // Original component labels are not constraints on reviewed drainage. The
-  // solver derives cut roles from polygon normals, not product names.
+  const boundary = boundaryForPolygon(face.polygon, face.boundary ?? [], 1e-4);
+  for (const e of boundary) {
+    const d = unit(sub(e.b, e.a));
+    let deviation = 0, code = '', description = '';
+    if (e.kind === 'spouting') { deviation = angleBetween(flow, { x: d.y, y: -d.x }); code = 'FLOW_EAVE_CONFLICT'; description = 'water must point out through its spouting, not inward or along it'; }
+    else if (e.kind === 'ridge') { deviation = Math.abs(90 - angleBetween(flow, d)); code = 'RIDGE_DIRECTION'; description = 'the ridge should run across the water direction'; }
+    else if (e.kind === 'barge') { deviation = Math.min(angleBetween(flow, d), angleBetween(flow, { x: -d.x, y: -d.y })); code = 'BARGE_DIRECTION'; description = 'the barge should run with the water direction'; }
+    else continue;
+    if (deviation > REVIEW_LIMITS.maxAngleDeviationDeg + EPS) hard(code, `${face.name}: ${description} (${deviation.toFixed(1)}° away). Check the arrow or boundary classification.`, e.id);
+    else maxAcceptableDeviation = Math.max(maxAcceptableDeviation, deviation);
+  }
   let worst = 0, shortEdges = 0;
   face.polygon.forEach((a, i) => {
     const b = face.polygon[(i + 1) % face.polygon.length], len = distance(a, b);

@@ -1,49 +1,69 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import {
-  DEMO_SCAN,
-  DEMO_CALIBRATION,
+  DEMO_QUOTE,
   DEMO_PLAN_URL,
   DEMO_COMPONENTS,
   DEMO_COLLECTIONS,
   DEMO_AI_POINTS,
-  type DemoFinishPayload,
 } from './demo-data/baseline';
-import {
-  FreeTakeoffApp,
-  prewarmTakeoffWorkstation,
-  type FreeTakeoffSeed,
-} from '@/app/(public)/free-roof-takeoff/FreeTakeoffApp';
-import { ROOFING_TAKEOFF_CONFIG } from '@/app/(public)/free-roof-takeoff/tradeConfig';
+import type { DemoFinishPayload } from './DemoWorkstation';
 import { DemoQuoteView } from './DemoQuoteView';
 import { trackEvent } from '@/lib/analytics';
 import { trackFreeToolEvent } from '@/app/(public)/lib/trackFreeToolEvent';
+
+type DemoDevice = 'desktop' | 'tablet' | 'mobile';
+
+/** DEMO device detection - best effort via UA + screen metrics.
+ *  Mobile = phones only. Tablets are detected separately so we can warn
+ *  (works, but not optimized) instead of block. */
+function detectDemoDevice(): DemoDevice {
+  if (typeof window === 'undefined') return 'desktop';
+  const ua = navigator.userAgent;
+  const isIpad = /iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  const isTabletUA = isIpad || /Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua);
+  if (isTabletUA) return 'tablet';
+  const isMobileUA = /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
+  if (isMobileUA) return 'mobile';
+  // Touch-capable small screens ( Surface/phones in desktop mode )
+  if (navigator.maxTouchPoints > 0 && window.innerWidth < 768) return 'mobile';
+  return 'desktop';
+}
+
+// Fabric.js + the full workstation load ONLY when the user enters the demo.
+const DemoWorkstation = dynamic(
+  () => import('./DemoWorkstation').then(mod => ({ default: mod.DemoWorkstation })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[60vh] bg-slate-900 flex items-center justify-center">
+        <div className="text-white text-sm">Loading canvas...</div>
+      </div>
+    ),
+  },
+);
 
 type DemoStage =
   | { phase: 'landing' }
   | { phase: 'takeoff'; mode: 'scan' | 'manual'; run: number; startedAt: number }
   | { phase: 'quote'; payload: DemoFinishPayload; run: number; startedAt: number };
 
-/**
- * Interactive demo wrapper on the free-tool shell (FreeTakeoffApp).
- *
- * The takeoff stage renders the REAL app workstation, seeded with the
- * captured baseline (plan + calibration + component library +, in scan mode,
- * the captured AI scan replay). Visitors are measuring in ~5 seconds:
- * click -> plan loads -> pretend scan applies -> play. The quote stage keeps
- * the original demo conversion funnel (DemoQuoteView) untouched.
- */
 export function DemoTakeoff() {
   const [stage, setStage] = useState<DemoStage>({ phase: 'landing' });
   const [run, setRun] = useState(0);
+  const [device, setDevice] = useState<DemoDevice>('desktop');
+  const [deviceNoticeOpen, setDeviceNoticeOpen] = useState(false);
+  // Mobile never renders the interactive UI - the page-level video fallback
+  // section (md:hidden) takes over instead.
+  const [suppressMobile, setSuppressMobile] = useState(false);
   const deepLinked = useRef(false);
 
   const enter = useCallback((mode: 'scan' | 'manual') => {
     trackEvent('demo_start', { mode });
     trackEvent(mode === 'scan' ? 'demo_scan_used' : 'demo_measure_used');
     trackFreeToolEvent('start', undefined, mode === 'scan' ? 'demo-takeoff-ai' : 'demo-takeoff-manual');
-    setSeedMode(mode);
     setRun(r => r + 1);
     setStage({ phase: 'takeoff', mode, run: run + 1, startedAt: Date.now() });
   }, [run]);
@@ -53,14 +73,16 @@ export function DemoTakeoff() {
     if (typeof window !== 'undefined') window.scrollTo(0, 0);
   }, []);
 
-  // Warm the (large) workstation chunk while the visitor reads the landing
-  // panel, so the takeoff canvas is ready the moment they click.
   useEffect(() => {
-    prewarmTakeoffWorkstation();
-  }, []);
+    const d = detectDemoDevice();
+    setDevice(d);
+    if (d === 'mobile') {
+      setSuppressMobile(true);
+      return;
+    }
+    if (d === 'tablet') setDeviceNoticeOpen(true);
 
-  // Deep-link support: /takeoff-demo?mode=ai|manual opens the demo at that stage.
-  useEffect(() => {
+    // Deep-link support: /takeoff-demo?mode=ai|manual opens the demo at that stage.
     if (!deepLinked.current) {
       deepLinked.current = true;
       const params = new URLSearchParams(window.location.search);
@@ -77,26 +99,7 @@ export function DemoTakeoff() {
     setStage(s => ({ phase: 'quote', payload, run: s.phase === 'takeoff' ? s.run : 0, startedAt: s.phase === 'takeoff' ? s.startedAt : Date.now() }));
   }, []);
 
-  // The seed object must stay referentially stable for the shell's one-shot
-  // bootstrap, so it is memoised on the mode it was entered with.
-  const [seedMode, setSeedMode] = useState<'scan' | 'manual'>('scan');
-  const seed = useMemo<FreeTakeoffSeed>(() => ({
-    planUrl: DEMO_PLAN_URL,
-    unitSystem: 'metric',
-    components: DEMO_COMPONENTS,
-    collections: DEMO_COLLECTIONS,
-    calibration: DEMO_CALIBRATION,
-    aiAssistPoints: DEMO_AI_POINTS,
-    // Scan mode replays the CAPTURED scan (no /api/free-tools/ai-scan call):
-    // the pretend scan applies automatically, then the user plays.
-    autoScan: seedMode === 'scan' ? { data: DEMO_SCAN, pitch: 25 } : undefined,
-  }), [seedMode]);
-
-  // The demo keeps the roofing config (roof terminology + pitch flow) but
-  // points internal back-links at the demo itself instead of the roof tool.
-  // Demo keeps the AI surfaces enabled: its scan is a captured replay (no
-  // real API calls) and the seeded flow depends on aiScan (see tradeConfig).
-  const demoConfig = useMemo(() => ({ ...ROOFING_TAKEOFF_CONFIG, slug: 'takeoff-demo', aiScan: true }), []);
+  if (suppressMobile) return null;
 
   if (stage.phase === 'quote') {
     return <DemoQuoteView payload={stage.payload} elapsedMs={Date.now() - stage.startedAt} onRestart={restart} />;
@@ -104,12 +107,18 @@ export function DemoTakeoff() {
 
   if (stage.phase === 'takeoff') {
     return (
-      <FreeTakeoffApp
+      <DemoWorkstation
         key={stage.run}
-        seed={seed}
-        config={demoConfig}
+        workspaceSlug="demo"
+        quote={DEMO_QUOTE as never}
+        planUrl={DEMO_PLAN_URL}
+        components={DEMO_COMPONENTS}
+        collections={DEMO_COLLECTIONS}
+        hydrationData={null}
+        aiTakeoffAvailable
+        aiAssistPoints={DEMO_AI_POINTS}
+        demoMode={stage.mode}
         onFinish={payload => finish(payload, stage.mode)}
-        onExit={restart}
       />
     );
   }
@@ -117,13 +126,37 @@ export function DemoTakeoff() {
   // Landing panel - same visual language as the marketing site.
   return (
     <div className="flex items-center justify-center px-4 py-10 md:py-14">
+      {/* Device notice - tablet users get one clear warning up front. */}
+      {deviceNoticeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="p-6">
+              <h3 className="text-base font-semibold text-slate-900">
+                Not optimized for tablets
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                You can use this tool on a tablet, but it is not optimized - touch input is less accurate for placing
+                points and some things may be buggy. For the best experience, use a desktop computer.
+              </p>
+              <div className="mt-6 flex flex-col gap-2">
+                <button
+                  onClick={() => setDeviceNoticeOpen(false)}
+                  className="w-full py-2.5 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                >
+                  Continue anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-lg p-8 md:p-10">
         <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Interactive demo</p>
         <h2 className="mt-2 text-2xl font-semibold text-slate-900">Try the digital takeoff</h2>
         <p className="mt-2 text-sm text-slate-500">
           The full QuoteCore+ takeoff workstation with a sample roof plan. Scan it with AI or measure
           it yourself, then see the customer quote your measurements produce. No sign-in, nothing
-          is saved. Works on desktop, tablet and mobile.
+          is saved.
         </p>
 
         <div className="mt-8 grid gap-3">
@@ -149,9 +182,15 @@ export function DemoTakeoff() {
 
         <p className="mt-6 text-xs text-slate-400">
           Sample plan and AI scan captured from a real QuoteCore+ takeoff session.
-          Roof pitch fixed at 25 degrees. Touch input is supported - the same
-          precision tools the app uses.
+          Roof pitch fixed at 25 degrees. Optimized for desktop computers - tablets
+          work but are not optimized.
         </p>
+
+        {device === 'tablet' && (
+          <p className="mt-3 text-xs font-medium text-[#BD4A1A]">
+            You are on a tablet - this tool works but is not optimized. A desktop gives the most accurate results.
+          </p>
+        )}
       </div>
     </div>
   );

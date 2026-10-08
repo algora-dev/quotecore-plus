@@ -12,7 +12,7 @@ Master file of all QuoteCore+ YouTube video scripts, timestamps, and blog cross-
 - When adding a new video, copy the structure from an existing entry and fill in all fields.
 - When embedding a video in a new blog post, update the `**Referenced in:**` field for that video.
 
-**Last updated:** 2026-08-11 by Tom (SEO/GEO Strategist) - revised blog embed scan
+**Last updated:** 2026-08-11 by Tom (SEO/GEO Strategist) — revised blog embed scan
 **Live doc (legacy):** https://docs.google.com/document/d/1RR6ZDbFMWRPnl39U-whJ_beX7CzsX79aUu7sWk2_-SE/edit
 
 ## 1. How to Use the Free Quote Generator
@@ -1552,7 +1552,7 @@ What? How? QuoteCore+. Finished it while you were looking for the long weight, b
 
 **Referenced in:** Not currently embedded in any blog post
 **Date added:** See YouTube publish date
-**Status:** Script needed (YouTube Short - scripts not tracked for Shorts per Shaun's direction)
+**Status:** Script needed (YouTube Short — scripts not tracked for Shorts per Shaun's direction)
 
 ---
 

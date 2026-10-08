@@ -52,7 +52,6 @@ export type WorkflowQuestion = { key:string; label:string; role:AssistantLibrary
 export type WorkflowCard = {
   kind:'draft_workflow';
   title:string;
-  workflowState?: import('../workflow-controller/contracts').WorkflowState;
   stateId:string;
   revision:number;
   taskId:string;
@@ -63,7 +62,7 @@ export type WorkflowCard = {
 export type DraftChoiceWire = { version:1; stateId:string; revision:number; selections:Record<string,string>; choice?:'apply'|'cancel' };
 export type LibraryCatalogItem = {
   id:string; collectionId:string; collectionName:string; name:string; role:AssistantLibraryRole|null; isDefault:boolean;
-  conceptKey?:string|null; measurementType:string; takeoffSlot:string|null; unit:string; active:boolean;
+  measurementType:string; takeoffSlot:string|null; unit:string; active:boolean;
 };
 export type WorkflowResult =
   | { state:'awaiting_input'; answer:string; card:WorkflowCard }

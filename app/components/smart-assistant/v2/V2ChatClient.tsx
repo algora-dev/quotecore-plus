@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createConversation, type ConversationRow } from '@/app/(auth)/[workspaceSlug]/assistant/actions';
 import { displayTaskMessage } from '@/app/lib/smart-assistant/tasks/wire';
-import { failedTurns, staleTaskCard } from '@/app/lib/smart-assistant/tasks/presentation';
+import { failedTurns, staleTaskCard, awaitingProceed } from '@/app/lib/smart-assistant/tasks/presentation';
 import { displayResolutionMessage } from '@/app/lib/smart-assistant/resolver/wire';
 import { displayDraftChoice } from '@/app/lib/smart-assistant/library-workflow/wire';
 import { SafeMessage } from '../SafeMessage';
@@ -20,7 +20,6 @@ import { useVoiceNote } from './useVoiceNote';
 import { useSpeechPlayback } from './useSpeechPlayback';
 import { useBuildVersion } from './useBuildVersion';
 import { AssistantIcon } from './AssistantIcon';
-import { SaViewportDebugInline, saDebugHostEnabled } from './SaViewportDebug';
 import { AssistantSpinner } from './AssistantSpinner';
 import { AssistantSheet } from './AssistantSheet';
 import { VoiceCapture } from './VoiceCapture';
@@ -48,13 +47,11 @@ export type V2ChatProps = {
   settingsHref: string;
   visible?: boolean;
   onHide: () => void;
-  /** Owner 2026-10-05 (pass 6): fired on access/permission changes so the launcher remounts with fresh access. */
-  onStaleAccess?: () => void;
 };
 
 const MAX_INPUT = 16000;
 
-export function V2ChatClient({ access, initialConversations, assistantName, greeting, settingsHref, visible = true, onHide, onStaleAccess }: V2ChatProps) {
+export function V2ChatClient({ access, initialConversations, assistantName, greeting, settingsHref, visible = true, onHide }: V2ChatProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [conversations, setConversations] = useState(initialConversations);
@@ -68,18 +65,6 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const [attachments, setAttachments] = useState<LocalAttachment[]>([]);
   const [unresolved, setUnresolved] = useState(false);
   const [locked, setLocked] = useState(false);
-  // Auto-speak reads a short spoken line, never the full detail block:
-  // label lines ("Confirmed:") and bullet lists stay on screen as text for
-  // reading, while voice users get a concise confirmation (owner 2026-10-02).
-  const spokenReplyLine = (content: string): string => {
-    const text = displayTaskMessage(content).trim();
-    if (text.length <= 140) return text;
-    const meaningful = text
-      .split(/\n+/)
-      .map(l => l.trim())
-      .find(l => l.length > 3 && !l.endsWith(':') && !l.startsWith('-') && !l.startsWith('•') && !l.startsWith('*'));
-    return meaningful && meaningful.length <= 160 ? meaningful : 'Ready. Review the details on screen.';
-  };
   const pending = useRef(new Map<string, Pending>());
   const current = useRef(active);
   current.current = active;
@@ -92,9 +77,6 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const root = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
-  // Tracks the assistant message that was visible on the previous snapshot so
-  // completed tasks can anchor at their beginning instead of the chat bottom.
-  const lastAssistantAnchor = useRef<string | null | undefined>(undefined);
   const attachmentUrls = useRef(new Set<string>());
   const attachmentCount = useRef(0);
   attachmentCount.current = attachments.length;
@@ -111,21 +93,6 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const visibility = useRef(visible);
   visibility.current = visible;
   const end = useRef<HTMLDivElement>(null);
-  // v16: scroll ONLY the conversation surface. scrollIntoView()/focus() scroll
-  // every scrollable ancestor - including the overflow panel root, which is
-  // what actually produced the bottom band (root.scrollTop !== 0).
-  const followThreadBottom = () => { const el = scroll.current; if (el) el.scrollTop = el.scrollHeight; };
-  // v16: on a normal-flow page (standalone route below the app header) reveal
-  // the whole panel once by scrolling the WINDOW directly - never
-  // scrollIntoView, which would also scroll the panel root and recreate the band.
-  useEffect(() => {
-    const el = root.current;
-    if (!el) return;
-    if (getComputedStyle(el).position === 'fixed') return; // overlays never move the page
-    const rect = el.getBoundingClientRect();
-    if (rect.bottom <= window.innerHeight) return; // fully visible already
-    window.scrollTo({ top: rect.top + window.scrollY, behavior: 'auto' });
-  }, []);
   const composer = useRef<HTMLTextAreaElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
   const uploadInput = useRef<HTMLInputElement>(null);
@@ -223,7 +190,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         setNotice(null);
         if (outcome.status === 'completed' && !capturing.current) {
           const reply = next.messages.filter(m => m.role === 'assistant' && m.runId === outcome.id).at(-1);
-          if (reply) speech.autoSpeak(reply.id, spokenReplyLine(displayResolutionMessage(reply.content)));
+          if (reply) speech.autoSpeak(reply.id, displayTaskMessage(displayResolutionMessage(reply.content)));
         }
         setInput(value => value.trim() === p?.message.trim() ? '' : value);
       }
@@ -256,35 +223,14 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     return () => clearInterval(timer);
   }, [visible, active, refresh, snapshot?.activeRunId]);
 
-  // When an assistant turn completes, show the beginning of that answer so
-  // the user can read the instruction and review the draft from the top.
-  // Interim updates still follow the bottom while the user is already there.
   useEffect(() => {
-    if (!visible) return;
-    const lastAssistantId = [...(snapshot?.messages ?? [])].reverse().find(m => m.role === 'assistant')?.id ?? null;
-    if (lastAssistantAnchor.current === undefined) {
-      // Initial load keeps the existing chat behaviour.
-      lastAssistantAnchor.current = lastAssistantId;
-      if (nearBottom.current) followThreadBottom();
-      return;
-    }
-    if (lastAssistantId && lastAssistantId !== lastAssistantAnchor.current) {
-      lastAssistantAnchor.current = lastAssistantId;
-      const assistantTurn = scroll.current?.querySelector('[data-sa-assistant-turn="true"]');
-      if (assistantTurn instanceof HTMLElement && scroll.current) {
-        // v16: scope the jump to the conversation surface only.
-        const list = scroll.current;
-        list.scrollTop = assistantTurn.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop - 8;
-        return;
-      }
-    }
-    if (nearBottom.current) followThreadBottom();
-  }, [snapshot, busy, visible]);
+    if (nearBottom.current && visible) end.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
+  }, [snapshot?.messages.length, snapshot?.cards.length, busy, visible]);
 
   // Streamed provisional text follows the same bottom-anchored scroll as
   // persisted messages (answers stream token-by-token when enabled).
   useEffect(() => {
-    if (nearBottom.current && visible && streamText) followThreadBottom();
+    if (nearBottom.current && visible && streamText) end.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
   }, [streamText, visible]);
 
   useEffect(() => {
@@ -347,7 +293,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   };
 
   const newChat = async () => {
-    if (operation.current) return;
+    if (operation.current || unresolved) return;
     operation.current = true;
     setBusy(true);
     voice.cancel();
@@ -437,14 +383,12 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         }
         const code = isRecord(result) ? String(result.error_code ?? '') : '';
         const serverMessage = isRecord(result) && typeof result.error === 'string' ? result.error : '';
-        const staleAccess = ['access_changed', 'permissions_changed', 'workspace_changed'].includes(code);
-        if (staleAccess) onStaleAccess?.(); // Owner 2026-10-05 (pass 6): auto-reopen with fresh access instead of a dead end.
         throw new Error(code === 'quota_exceeded'
           ? 'This workspace has reached its assistant limit.'
           : code === 'migration_required'
             ? (serverMessage || 'Smart Assistant setup is incomplete on this deployment. Ask an administrator to finish setup.')
-            : staleAccess
-              ? (serverMessage || 'Your Smart Assistant access changed. Reopening the assistant…')
+            : ['access_changed', 'permissions_changed', 'workspace_changed'].includes(code)
+              ? (serverMessage || 'Your Smart Assistant access changed. Reopen the assistant.')
               : res.status === 409
                 ? 'A turn is already in progress or the request conflicts. Refresh before trying again.'
                 : 'The reply could not be verified. Retry the same message rather than send a duplicate.');
@@ -540,13 +484,13 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const refineAnswer = () => {
     changeMode('text');
     setInput(value => value || 'Not quite. ');
-    requestAnimationFrame(() => composer.current?.focus({ preventScroll: true }));
+    requestAnimationFrame(() => composer.current?.focus());
   };
 
   const failures = failedTurns(snapshot?.messages ?? [], snapshot?.runs ?? []);
   const failureByMessage = new Map(failures.map(f => [f.messageId, f]));
   const latestUser = snapshot?.messages.filter(m => m.role === 'user').at(-1)?.id;
-  const staleChoice = (card: ConversationCard) => staleTaskCard(card, snapshot?.task) || (card.content.kind === 'draft_workflow' && (snapshot?.cards ?? []).some(newer => newer.content.kind === 'draft_workflow' && card.content.kind === 'draft_workflow' && newer.content.stateId === card.content.stateId && newer.content.revision > card.content.revision));
+  const staleChoice = (card: ConversationCard) => staleTaskCard(card, snapshot?.task);
   const canConfirm = (action: ActionView) => {
     const live = snapshot?.access ?? access;
     return live.phases.p3 && (action.actionKind !== 'draft_create' || live.phases.p4) && action.sections.every(section => live.permissions[section] === 'edit');
@@ -557,7 +501,20 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
   const orphanCards = lastCardOnly(snapshot?.cards.filter(c => !replies.has(c.runId)) ?? []);
 
   const controlsBusy = busy || locked || unresolved || !!snapshot?.activeRunId;
+  // Owner 2026-10-01 (voice): questions with a known finite answer set get
+  // tappable replies instead of forcing a typed/voice answer. A tap sends
+  // ordinary text through send(), so the server binds it like any answer and
+  // nothing here is ever write authority (Confirm cards keep their protocol).
+  const quickRepliesFor = (text: string): { label: string; answer: string }[] => {
+    if (!text) return [];
+    if (/\b(?:plan|actual)[^.?!]{0,60}?\bor\b[^.?!]{0,60}?\b(?:plan|actual)\b/i.test(text)) return [
+      { label: 'Plan measurements', answer: 'Plan measurements' },
+      { label: 'Actual measurements', answer: 'Actual measurements' },
+    ];
+    return [];
+  };
   const lastAssistantMessage = [...(snapshot?.messages ?? [])].reverse().find(m => m.role === 'assistant');
+  const quickReplies = !streamText && lastAssistantMessage ? quickRepliesFor(lastAssistantMessage.content) : [];
   const hasMessages = !!snapshot?.messages.length;
   const currentAccess = snapshot?.access ?? access;
   const task = snapshot?.task;
@@ -567,34 +524,13 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     if (item?.previewUrl) { URL.revokeObjectURL(item.previewUrl); attachmentUrls.current.delete(item.previewUrl); }
     setAttachments(prev => prev.filter(a => a.id !== id));
   };
-  const [geo, setGeo] = useState('');
-  useEffect(() => {
-    const read = () => {
-      const vv = window.visualViewport;
-      const r = root.current?.getBoundingClientRect();
-      const f = frame.current?.getBoundingClientRect();
-      const d = root.current?.querySelector<HTMLElement>('[data-sa-dock="true"]')?.getBoundingClientRect();
-      setGeo(`v16 ih:${window.innerHeight} vv:${Math.round(vv?.height ?? 0)}@${Math.round(vv?.offsetTop ?? 0)} s:${vv?.scale?.toFixed(2) ?? '?'} p:${Math.round(r?.height ?? 0)} t:${Math.round(r?.top ?? 0)} f:${Math.round(f?.height ?? 0)} db:${Math.round(d?.bottom ?? 0)} rb:${Math.round(r?.bottom ?? 0)} w:${Math.round(r?.width ?? 0)} scr:${window.screen.width}x${window.screen.height}`);
-    };
-    read();
-    window.visualViewport?.addEventListener('resize', read);
-    window.addEventListener('resize', read);
-    const t = window.setInterval(read, 1500);
-    return () => { window.visualViewport?.removeEventListener('resize', read); window.removeEventListener('resize', read); window.clearInterval(t); };
-  }, []);
-  const [saDbg, setSaDbg] = useState(false);
-  useEffect(() => {
-    const gate = () => { if (saDebugHostEnabled()) setSaDbg(true); };
-    gate();
-  }, []);
   const hide = () => { voice.cancel(); speech.stop(); setSheet(null); onHide(); };
   const openAttachmentSheet = () => { voice.cancel(); speech.stop(); setSheet('attach'); };
 
-  return <div ref={root} data-sa-root="true" className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true" data-sa-experience="visual-v2" data-mode={mode}>
-    {saDbg ? <SaViewportDebugInline/> : null}
+  return <div ref={root} className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true" data-sa-experience="visual-v2" data-mode={mode}>
     <div className={s.frame} ref={frame}>
       <header className={s.header}>
-        <QcButton className={s.brandButton} aria-label="Assistant menu" aria-haspopup="dialog" aria-expanded={sheet === 'menu'} onClick={() => { voice.cancel(); setSheet('menu'); }}>
+        <QcButton autoFocus className={s.brandButton} aria-label="Assistant menu" aria-haspopup="dialog" aria-expanded={sheet === 'menu'} onClick={() => { voice.cancel(); setSheet('menu'); }}>
           <img src="/smart-assistant/q-menu.webp" alt="" width="44" height="44" draggable="false" />
         </QcButton>
         <div className={s.headerCopy}><h1>{assistantName || 'Smart Assistant'}</h1><p title={taskLabel}>{taskLabel}</p></div>
@@ -623,7 +559,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             {access.historyAfter && <p className={s.detail}>Earlier messages may be withheld after an access change.</p>}
           </section>}
 
-          {snapshot?.messages.map(m => <div key={m.id} className={s.turn} data-sa-assistant-turn={m.role === 'assistant' && m.id === lastAssistantMessage?.id ? 'true' : undefined}>
+          {snapshot?.messages.map(m => <div key={m.id} className={s.turn}>
             <div className={m.role === 'user' ? s.userMessage : s.assistantMessage}>
               {m.role === 'assistant' && <div className={s.assistantHeading}><span className={s.messageLabel}>ASSISTANT</span>{speech.available && <QcButton className={s.readAloud} aria-label="Read this answer aloud" disabled={locked || voice.state !== 'off'} onClick={() => speech.play(displayTaskMessage(displayResolutionMessage(displayDraftChoice(m.content))))}><AssistantIcon name="speaker"/></QcButton>}</div>}
               <SafeMessage content={displayTaskMessage(displayResolutionMessage(displayDraftChoice(m.content)))}/>
@@ -635,7 +571,9 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             {m.role === 'assistant' && <>
               <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={cardsFor(m.runId)} actions={snapshot.actions} busy={controlsBusy || voice.state !== 'off'} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>
             </>}
-
+            {m.role === 'assistant' && m.id === lastAssistantMessage?.id && quickReplies.length > 0 && <div className={s.quickActions} data-sa-quick-replies="true">
+              {quickReplies.map(reply => <QcButton key={reply.answer} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void send(reply.answer)}>{reply.label}</QcButton>)}
+            </div>}
           </div>)}
           <ConversationCards isStale={staleChoice} canConfirm={canConfirm} cards={orphanCards} actions={snapshot?.actions ?? []} busy={controlsBusy || voice.state !== 'off'} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>
           {streamText && <div className={s.turn} data-sa-streaming="true">
@@ -645,7 +583,14 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             </div>
           </div>}
           {task && <div className={s.taskFooter} data-sa-task={task.id}>
-            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task closed. Ask something new whenever you’re ready.</p> : <>
+            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task closed. Ask something new whenever you’re ready.</p> : awaitingProceed(task, snapshot?.messages ?? []) ? <>
+              {/* Assistant asked for confirmation to continue: Proceed is UX sugar over
+                  sending "Yes, proceed." through the normal turn pipeline. Never a write
+                  confirmation — action cards keep their own Confirm/Cancel protocol. */}
+              <QcButton variant="primary" disabled={controlsBusy || voice.state !== 'off'} onClick={() => void send('Yes, proceed.')}><AssistantIcon name="chevron"/><span>Proceed</span></QcButton>
+              <QcButton className={s.quietButton} disabled={controlsBusy || voice.state !== 'off'} onClick={refineAnswer}>Not quite</QcButton>
+              <QcButton className={s.doneButton} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void finishTask('done')}><AssistantIcon name="check"/><span>Done</span></QcButton>
+            </> : <>
               <QcButton className={s.doneButton} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void finishTask(task.status === 'answered' ? 'done' : 'move_on')}><AssistantIcon name={task.status === 'answered' ? 'check' : 'chevron'}/>{task.status === 'answered' ? 'Done' : 'Move on'}</QcButton>
               {task.status === 'answered' && <QcButton className={s.quietButton} disabled={controlsBusy || voice.state !== 'off'} onClick={refineAnswer}>Not quite</QcButton>}
             </>}
@@ -657,7 +602,6 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
       </div>
 
       <div className={s.bottomArea}>
-        <div className={s.extras}>
         {notice && <div className={s.notice} role="alert"><AssistantIcon name="alert"/><span>{notice}</span>{locked && active ? <QcButton size="sm" disabled={busy} onClick={() => void refresh(active)}>Check status</QcButton> : <QcButton className={s.iconButton} aria-label="Dismiss notice" onClick={() => setNotice(null)}><AssistantIcon name="close"/></QcButton>}</div>}
         {speech.state !== 'off' && <div className={s.playback}>
           <AssistantIcon name="speaker"/><div className={s.playbackCopy}><strong>{speech.state === 'error' ? 'Audio unavailable' : speech.state === 'paused' ? 'Paused' : speech.state === 'loading' ? 'Preparing audio…' : 'Speaking response'}</strong><span>{speech.error || 'Your text answer stays in the conversation'}</span></div>
@@ -670,9 +614,8 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
           <div className={s.transcriptHeader}><span>{draftOrigin === 'voice' ? 'YOUR VOICE NOTE' : 'YOUR MESSAGE'}</span><QcButton className={s.quietButton} onClick={() => changeMode('text', true)}><AssistantIcon name="edit"/>Edit</QcButton></div>
           <p>{input}</p><div className={s.transcriptActions}><QcButton disabled={controlsBusy} onClick={() => setInput('')}>Discard</QcButton><QcButton variant="primary" disabled={controlsBusy || !!attachments.length} onClick={() => void send()}><AssistantIcon name="send"/>Send message</QcButton></div>
         </section>}
-        </div>
 
-        <div className={s.dock} data-sa-dock="true">
+        <div className={s.dock}>
           {attachments.length > 0 && <div className={s.attachments}>
             <div className={s.attachmentList}>{attachments.map(item => <div key={item.id} className={s.attachmentItem}>
               {item.previewUrl ? <img src={item.previewUrl} alt="Local attachment preview" width="40" height="40"/> : <AssistantIcon name="file"/>}
@@ -692,7 +635,6 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             <QcButton className={s.modeButton} aria-pressed={mode === 'voice'} onClick={() => changeMode('voice')}><AssistantIcon name="mic"/><span>Voice</span></QcButton>
             <QcButton className={s.modeButton} aria-haspopup="dialog" aria-expanded={sheet === 'attach'} aria-label="Attach a photo or file" onClick={openAttachmentSheet}><AssistantIcon name="attach"/><span>Attach</span></QcButton>
           </div>
-          <div aria-hidden="true" style={{ position: 'absolute', right: 6, bottom: 3, zIndex: 5, fontSize: 9, fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace', color: '#c56a3f', opacity: 0.9, pointerEvents: 'none' }}>{geo}</div>
         </div>
       </div>
     </div>
@@ -700,7 +642,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     {sheet && <AssistantSheet title={sheet === 'menu' ? 'Your assistant' : 'Add an attachment'} background={frame} onClose={() => setSheet(null)}>
       {sheet === 'menu' ? <>
         <div className={s.menuActions}>
-          <QcButton disabled={busy || locked || !!snapshot?.activeRunId} onClick={() => void newChat()}><AssistantIcon name="plus"/>New conversation</QcButton>
+          <QcButton disabled={controlsBusy} onClick={() => void newChat()}><AssistantIcon name="plus"/>New conversation</QcButton>
           <QcButton onClick={() => { voice.cancel(); speech.stop(); router.push(settingsHref); hide(); }}><AssistantIcon name="settings"/>Assistant settings</QcButton>
         </div>
         <div className={s.voicePreference}>

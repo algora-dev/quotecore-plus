@@ -5,7 +5,7 @@
  * back-derived here, not converted by the model).
  *
  * Scope guard (calc-audit parity, honestly scoped): takeoff-derived areas are
- * REFUSED - their geometry belongs to quote_takeoff_measurements canvas data
+ * REFUSED — their geometry belongs to quote_takeoff_measurements canvas data
  * and requires the takeoff editor's calibration math. Manual/builder component
  * quantities are independent snapshots by design (the builder's
  * updateQuoteRoofArea does not recalculate them either), so no component rows

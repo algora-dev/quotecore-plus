@@ -137,7 +137,7 @@ export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult>
   // synthesis step keeps 'low'.
   // 2026-09-28: provider-alias-proof gate + completion-token clamp. OpenAI
   // rejects max_completion_tokens above the model cap (400 request_rejected)
-  // and rejects function tools unless reasoning_effort is explicitly set -
+  // and rejects function tools unless reasoning_effort is explicitly set —
   // infer neither from defaults; pin both explicitly for any gpt-5 id.
   const chatModelId = MODEL_CONFIG.chatModel.includes('/') ? MODEL_CONFIG.chatModel.split('/').pop() ?? MODEL_CONFIG.chatModel : MODEL_CONFIG.chatModel;
   const reasoning: { reasoning_effort?: 'low' | 'none' } = {};

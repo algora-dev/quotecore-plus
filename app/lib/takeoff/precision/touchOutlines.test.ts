@@ -1,6 +1,6 @@
 // Mobile takeoff M5 tests: manual outlines + update-in-place editing of
 // saved outlines (spec §8.1/§8.3–8.5, §11.3/§11.4; O01/O03/O05/O06/O07/O12/
-// O13/O16, R13). Pure layer only - persistence execution is delegated by
+// O13/O16, R13). Pure layer only — persistence execution is delegated by
 // design (the adapter/RPC boundary is exercised through intent semantics).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -105,7 +105,7 @@ test('isPersistedOutlineGeometryId distinguishes DB ids from client-local ids', 
   assert.equal(isPersistedOutlineGeometryId(null), false);
 });
 
-// ─── O03/§8.1: manual creation journey - tap-place, explicit close ────────
+// ─── O03/§8.1: manual creation journey — tap-place, explicit close ────────
 
 test('O03: manual creation is an open path; Close requires 3 distinct points; no double-tap needed', () => {
   const s0 = beginManualOutlineDraft(ctx());
@@ -126,7 +126,7 @@ test('O03: manual creation is an open path; Close requires 3 distinct points; no
   const closed = closeOutline(s);
   assert.equal(closed.rejected, undefined);
   assert.equal(closed.session.draft.closed, true);
-  // First point identity preserved - Close joins without duplicating it.
+  // First point identity preserved — Close joins without duplicating it.
   assert.equal(closed.session.draft.vertices.length, 4);
 
   const r = outlineSaveIntent(closed.session, ctx(), SCALE);
@@ -157,7 +157,7 @@ test('O06: a move producing a bowtie blocks save; the draft stays editable and u
   assert.ok(repaired.planArea != null);
 });
 
-test('O06: a degenerate (collinear) outline blocks save - min 3 distinct, nonzero area', () => {
+test('O06: a degenerate (collinear) outline blocks save — min 3 distinct, nonzero area', () => {
   const s0 = beginSaved();
   const s1 = deleteVertex(s0, s0.draft.vertices[0].id).session;
   // 3 vertices left: the engine rejects further deletes on a closed outline
@@ -182,7 +182,7 @@ test('O12: rebuilding the intent after a lost save response yields the SAME upda
   assert.deepEqual(first.intent, second.intent);
   if (first.intent.kind !== 'update-in-place' || second.intent.kind !== 'update-in-place') return;
   assert.equal(first.intent.geometryId, second.intent.geometryId);
-  // No create intent is ever produced for persisted geometry - a retry
+  // No create intent is ever produced for persisted geometry — a retry
   // physically cannot insert a second row.
   assert.equal(second.intent.kind, 'update-in-place');
 });
@@ -198,7 +198,7 @@ test('O13: STALE_TAKEOFF_VERSION is classified; the local draft is untouched', (
   const s = move(s0, s0.draft.vertices[0].id, { x: 3, y: 3 });
   // On conflict the adapter surfaces reload/review and KEEPS the session.
   const guard = outlineExitGuard(s);
-  assert.equal(guard.dirty, true); // draft survives - never force-discarded
+  assert.equal(guard.dirty, true); // draft survives — never force-discarded
 });
 
 test('O13: stale-context edits are rejected at the boundary (page/image/epoch changed)', () => {
@@ -245,14 +245,14 @@ test('O07: geometry change at constant scale recomputes source-linked entries fr
   const derived = byId.get('m-derived');
   assert.ok(derived);
   // New plan = trapezoid (0,0),(200,0),(100,100),(0,100) = 15000 px² × 0.25
-  // = 3750 - from the NEW points.
+  // = 3750 — from the NEW points.
   assert.ok(Math.abs((derived?.value ?? 0) - 3750) < 1e-6);
   const pitched = byId.get('m-pitched');
   assert.ok(pitched);
   // pitch 30° → /cos(30°) applied exactly once on the NEW plan value.
   assert.ok(Math.abs((pitched?.value ?? 0) - 3750 / Math.cos((30 * Math.PI) / 180)) < 1e-6);
   // Independent entries untouched: the point count is skipped entirely, and
-  // the independent line's value is UNCHANGED (constant scale - the service
+  // the independent line's value is UNCHANGED (constant scale — the service
   // may echo it, but it never moves).
   assert.equal(byId.has('m-point'), false);
   const line = byId.get('m-line');
@@ -360,7 +360,7 @@ test('out-of-raster points are a warning (non-blocking); duplicate vertices are 
   const s0 = beginSaved();
   const out = move(s0, s0.draft.vertices[1].id, { x: 1500, y: 0 });
   const review = outlineReview(out, SCALE, { sceneWidth: 1000, sceneHeight: 1000 });
-  assert.equal(review.blocking.length, 0); // warning only - still saveable
+  assert.equal(review.blocking.length, 0); // warning only — still saveable
   assert.ok(review.issues.some((i) => i.severity === 'warning'));
 
   const dup = move(s0, s0.draft.vertices[1].id, { x: 100, y: 100 });

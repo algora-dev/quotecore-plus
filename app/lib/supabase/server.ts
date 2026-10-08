@@ -1,6 +1,6 @@
 import { cookies, headers } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
-import { authCookieOptionsForLocation } from './cookie-config';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { authCookieOptions } from './cookie-config';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { cache } from 'react';
 import type { Database } from './database.types';
@@ -31,11 +31,9 @@ export async function createSupabaseServerClient() {
   // request host so sessions minted here (OAuth code exchange, refresh)
   // are valid on all quote-core.com subdomains. See cookie-config.ts.
   let host: string | null = null;
-  let namespace: string | null = null;
   try {
     const headerStore = await headers();
     host = headerStore.get('host');
-    namespace = headerStore.get('x-qcp-auth-namespace');
   } catch {
     // headers() unavailable in some contexts (e.g. during static
     // generation) - fall back to host-only cookies.
@@ -45,15 +43,23 @@ export async function createSupabaseServerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: authCookieOptionsForLocation(host, null, namespace),
+      cookieOptions: authCookieOptions(host),
       cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(changes) {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
           try {
-            for (const {name,value,options} of changes) cookieStore.set({name,value,...options});
+            cookieStore.set({ name, value, ...options });
           } catch {
-            // Server Components cannot mutate cookies. Middleware handles the
-            // complete refreshed batch; Server Actions/Route Handlers can write.
+            // ignore in contexts where cookies cannot be mutated
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options });
+          } catch {
+            // ignore in contexts where cookies cannot be mutated
           }
         },
       },
@@ -95,17 +101,6 @@ export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Da
 
   if (!data) {
     throw new Error('Profile not found');
-  }
-
-  // Demo lifetime is enforced in the shared data-access layer as well as
-  // middleware. Never let an expired anonymous profile act like a paid user.
-  if (user.is_anonymous) {
-    const { readActiveDemoContext } = await import('@/app/lib/demo/context');
-    const { getDemoControl } = await import('@/app/lib/demo/control');
-    if (!(await getDemoControl()).demoEnabled || !(await readActiveDemoContext(data.company_id, user.id))) {
-      throw new Error('Demo expired or unavailable. Open /demo to start again.');
-    }
-    return data; // Demo sessions never inherit an admin impersonation cookie.
   }
 
   // Check if this is an impersonation session (admin viewing user's account)

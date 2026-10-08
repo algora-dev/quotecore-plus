@@ -166,7 +166,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
                     onClick={() => setActiveTab(tab.id)}
                     className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${
                       active?.id === tab.id
-                        ? 'qc-ft-seg-active'
+                        ? 'bg-slate-900 text-white'
                         : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
@@ -181,7 +181,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
                   <button
                     onClick={() => setSystem('metric')}
                     className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                      system === 'metric' ? 'qc-ft-seg-active' : 'text-slate-500 hover:text-slate-700'
+                      system === 'metric' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
                     Metric
@@ -189,7 +189,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
                   <button
                     onClick={() => setSystem('imperial')}
                     className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                      system === 'imperial' ? 'qc-ft-seg-active' : 'text-slate-500 hover:text-slate-700'
+                      system === 'imperial' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
                     Imperial
@@ -209,7 +209,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
             </div>
 
             {/* Tab content */}
-            <div className="qc-ft-card p-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               {active && renderTab(active.kind)}
             </div>
 

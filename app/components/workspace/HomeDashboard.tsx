@@ -8,7 +8,7 @@ export interface RecentWorkItem {
   statusLabel: string; statusTone: 'neutral' | 'success' | 'warning' | 'info'; updatedLabel: string;
 }
 interface Props {
-  workspaceSlug: string; firstName: string; newUser: boolean; notificationCount: number; isDemo?: boolean;
+  workspaceSlug: string; firstName: string; newUser: boolean; notificationCount: number;
   canCreateQuote: boolean; assistantAvailable: boolean; measureAction: ReactNode;
   /** undefined means not loaded, NOT an empty company. No demo rows in application code. */
   recentWork?: RecentWorkItem[];
@@ -17,7 +17,7 @@ interface Props {
   allowPricingInvitation?: boolean;
 }
 /** T01/C48. Read-only dashboard composition. Data is owned by the existing server page. */
-export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationCount, isDemo = false,
+export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationCount,
   canCreateQuote, assistantAvailable, measureAction, recentWork, allowPricingInvitation = true }: Props) {
   const base = `/${workspaceSlug}`;
   // Only a successful, empty recent-work read can select the getting-started
@@ -26,11 +26,11 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
   const resume = recentWork?.[0];
   return <div className="qc-home" data-qc-ui="v2">
     <header className="qc-home-heading">
-      <div><p className="qc-eyebrow">{isDemo ? 'Your demo' : 'Your workspace'}</p><h1>{isDemo ? 'Welcome to your demo workspace' : <>Welcome {newUser ? '' : 'back, '}{firstName}</>}</h1>
+      <div><p className="qc-eyebrow">Your workspace</p><h1>Welcome {newUser ? '' : 'back, '}{firstName}</h1>
         <p>Measure with confidence. Price your work. Send a great quote.</p></div>
       <Link href={`${base}/tutorials`} prefetch={false} className="qc-button" data-qc-variant="glass"><QcIcon name="help" /> Tutorials</Link>
     </header>
-    {!isDemo && <section className="qc-home-start" aria-labelledby="qc-home-start-title">
+    <section className="qc-home-start" aria-labelledby="qc-home-start-title">
       <div className="qc-home-start-copy"><span className="qc-eyebrow">{pricingFirst ? 'Build your pricing system' : resume ? 'Pick up where you left off' : 'Start something new'}</span>
         <h2 id="qc-home-start-title">{pricingFirst ? 'Make QuoteCore use your prices' : resume ? 'Continue your work' : 'What are we pricing today?'}</h2>
         <p>{pricingFirst
@@ -48,7 +48,7 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
           </Link>}
           <div className="qc-home-measure">{measureAction}</div>
         </div>
-        {pricingFirst && <p className="qc-home-pricing-note">Starter rates are examples, not recommended prices. Already using your company&apos;s pricing? Go straight to a job.</p>}
+        {pricingFirst && <p className="qc-home-pricing-note">Starter rates are examples, not recommended prices. Already using your company's pricing? Go straight to a job.</p>}
       </div>
       <div className="qc-home-process" aria-label={pricingFirst ? 'Check a component, make your own, price a job' : 'Measure, price, quote'}>
         {(pricingFirst ? (['pricing','library','quote'] as const) : (['measure','pricing','quote'] as const)).map((name, index) => <div key={name}>
@@ -57,10 +57,10 @@ export function HomeDashboard({ workspaceSlug, firstName, newUser, notificationC
           <span>{(pricingFirst ? ['Test a familiar item','Use your costs','Apply measurements'] : ['Capture the job','Use your pricing','Make it yours'])[index]}</span>
         </div>)}
       </div>
-    </section>}
+    </section>
     <div className="qc-home-grid">
       <section className="qc-home-work qc-hub-surface" aria-labelledby="qc-recent-title">
-        <div className="qc-section-heading"><div><p className="qc-eyebrow">{isDemo ? 'Demo sandbox' : 'Pick up where you left off'}</p><h2 id="qc-recent-title">{isDemo ? 'Jobs prepared for you' : 'Continue your work'}</h2></div>
+        <div className="qc-section-heading"><div><p className="qc-eyebrow">Pick up where you left off</p><h2 id="qc-recent-title">Continue your work</h2></div>
           <Link href={`${base}/quotes`} prefetch={false} className="qc-text-link">All quotes <QcIcon name="arrow" /></Link></div>
         {recentWork === undefined ? (
           <Link href={`${base}/quotes`} prefetch={false} className="qc-home-resume">

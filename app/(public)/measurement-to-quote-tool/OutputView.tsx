@@ -199,7 +199,7 @@ export default function OutputView({ areas, components, measureMode, unitSystem,
             </button>
             <a
               href={buildConvertToQuoteUrl()}
-              className="qc-glint inline-flex items-center justify-center px-6 py-3 text-sm font-semibold rounded-full bg-[#FF6B35] bg-gradient-to-r from-[#FF6B35] to-[#FF8C1F] text-white shadow-[0_10px_24px_rgba(255,107,53,0.25)] transition-all hover:shadow-[0_14px_30px_rgba(255,107,53,0.4)] hover:brightness-105"
+              className="px-6 py-3 text-sm font-semibold rounded-full bg-[#FF6B35] text-white transition hover:bg-[#A03E15]"
             >
               Continue in free quote generator
             </a>

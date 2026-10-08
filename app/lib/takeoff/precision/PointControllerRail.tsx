@@ -1,6 +1,6 @@
 'use client';
 // Mobile takeoff M3: right-rail point controller UI (spec §3.3/§3.5/§6/§5.7).
-// Presentational only - every action is a prop; the harness owns state and
+// Presentational only — every action is a prop; the harness owns state and
 // routes ALL geometry through the M1 command engine. 48×48 targets (§3.3),
 // "Points" label separates geometric +/− from zoom (§3.5), states are never
 // colour-only (§3.5/L07: text counter, armed cue text, ARIA labels).
@@ -187,7 +187,7 @@ export function PointControllerRail(props: PointControllerRailProps) {
         </div>
       )}
 
-      {/* View controls (M9 owner prescription): compact - Fit plan + zoom ±
+      {/* View controls (M9 owner prescription): compact — Fit plan + zoom ±
           icon buttons in one row. 'Move plan' is REMOVED entirely: panning is
           already a one-finger drag gesture. */}
       <div className="mt-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400">

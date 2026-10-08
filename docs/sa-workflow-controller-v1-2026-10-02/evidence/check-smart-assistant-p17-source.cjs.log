@@ -1,5 +1,0 @@
-Verified 2 files; 16 sources; schema feaff3719950d5d17cd163326b06d5641f1b03a915fe947aa9b9abfa94b6eaad
-Verified P1.7 SQL draft; registry feaff3719950d5d17cd163326b06d5641f1b03a915fe947aa9b9abfa94b6eaad. NOT APPLIED.
-Locked-file manifest not yet emitted: run again after packaging preparation.
-PASS P1.7 SQL/template/static guards. PostgreSQL parsing, real RLS, semantic results, scale and effective cancellation NOT established by this check.
-PASS syntax of two existing quote components with the minimal focus bridge (NOT full semantic typechecking).

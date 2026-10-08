@@ -1,6 +1,3 @@
-
-import { isDemoCompany } from '@/app/lib/demo/context';
-import { notFound } from 'next/navigation';
 import { QuotePreview } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/QuotePreview';
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
@@ -63,9 +60,6 @@ export default async function AcceptQuotePage({
     .select('*')
     .eq('acceptance_token', token)
     .single();
-
-  // Demo documents use the separate expiring demo-token surface, never production notifications.
-  if (quote && await isDemoCompany(quote.company_id)) notFound();
 
   if (error || !quote) {
     // No quote at all - we can't show a re-quote button because we have no

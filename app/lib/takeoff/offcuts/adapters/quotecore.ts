@@ -60,16 +60,16 @@ export interface InputAudit {
 export interface AdaptedTakeoff { roof: RoofInput; issues: Issue[]; audit: InputAudit }
 function meaning(s: QuoteCoreSnapshot, component: SnapshotComponent | undefined, m: SnapshotMeasurement, componentId: string): Pick<InputAuditLine,'semanticType'|'semanticBasis'> {
   if (m.semanticType !== undefined) {
-    if (!isBoundaryMeaning(m.semanticType)) return {semanticType:'unknown',semanticBasis:'unmapped'};
+    if (!isBoundaryMeaning(m.semanticType)) throw new Error(`Unknown explicit roof type for measurement ${m.id}.`);
     return { semanticType: m.semanticType, semanticBasis: 'measurement' };
   }
   const mapped = s.semanticByComponentId && Object.hasOwn(s.semanticByComponentId,componentId) ? s.semanticByComponentId[componentId] : undefined;
   if (mapped !== undefined) {
-    if (!isBoundaryMeaning(mapped)) return {semanticType:'unknown',semanticBasis:'unmapped'};
+    if (!isBoundaryMeaning(mapped)) throw new Error(`Unknown explicit roof type for component ${componentId}.`);
     return { semanticType: mapped, semanticBasis: 'explicit-map' };
   }
   if (component?.semanticType !== undefined) {
-    if (!isBoundaryMeaning(component.semanticType)) return {semanticType:'unknown',semanticBasis:'unmapped'};
+    if (!isBoundaryMeaning(component.semanticType)) throw new Error(`Unknown explicit roof type for component ${componentId}.`);
     return { semanticType: component.semanticType, semanticBasis: 'component' };
   }
   const key = component?.name.toLowerCase().replace(/[\s_-]+/g, '') ?? '';
@@ -148,8 +148,8 @@ export function fromQuoteCore(s: QuoteCoreSnapshot): AdaptedTakeoff {
     }
   }
   audit.unresolvedComponents=[...unresolved.values()];
-  // Unmapped names are normal for manual takeoff. Kept in the audit, not a
-  // user-facing problem: geometry closes faces and approved flow defines cuts.
+  for(const u of audit.unresolvedComponents)issues.push({severity:'warning',code:'UNMAPPED_COMPONENT',objectId:u.componentId,
+    message:`${u.name}: ${u.lineCount} line(s) retained as roof boundaries. Choose their roof type to identify cuts correctly, or mark them as not a roof boundary.`});
   const roof: RoofInput = { schemaVersion: 1, quoteId: s.quoteId, pageId: s.pageId, areaScopeId: s.areaScopeId,
     imageRevision: s.imageRevision, imageUrl: s.imageUrl, sceneWidth: s.width, sceneHeight: s.height,
     mmPerSceneUnit: calibrationMmPerSceneUnit(s.calibrations), calibrationConfirmed: s.calibrationConfirmed,

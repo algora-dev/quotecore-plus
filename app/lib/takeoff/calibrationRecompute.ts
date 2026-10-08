@@ -27,7 +27,7 @@ export interface RecomputeEntryInputs {
   /** Corner bases (2026-09-30) ride point rows, which the recompute skips
    *  as scale-independent counts - never triggers the derived-area path
    *  (that still requires type 'area' + plan/pitched basis). */
-  value_basis?: 'plan' | 'pitched' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal';
+  value_basis?: 'plan' | 'pitched' | 'corner_all' | 'corner_external' | 'corner_internal';
   plan_value?: number;
   pitch_applied?: boolean;
   source_geometry_id?: string;
@@ -220,13 +220,6 @@ export function computeCalibrationRecompute(input: RecomputeInput): RecomputeRes
     // Scale-independent: point counts.
     if (m.type === 'point') {
       skipped.push({ id: m.id, type: m.type, reason: 'count is scale-independent' });
-      continue;
-    }
-
-    // Phase 2 (2026-10-07): offcut figures are FINAL material quantities from
-    // the cutting plan - calibration-independent, no geometry to rescale.
-    if (m.type === 'area' && m.entryInputs?.value_basis === 'offcuts') {
-      skipped.push({ id: m.id, type: m.type, reason: 'offcut material figure is scale-independent' });
       continue;
     }
 

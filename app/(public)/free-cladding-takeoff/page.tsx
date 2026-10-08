@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { FreeTakeoffApp } from '../free-roof-takeoff/FreeTakeoffApp';
-import { CLADDING_TAKEOFF_CONFIG } from '../free-roof-takeoff/tradeConfig';
+import { CladdingTakeoff } from './CladdingTakeoff';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { buildFaqSchema } from '@/lib/schema';
@@ -141,7 +140,7 @@ export default function FreeCladdingTakeoffPage() {
 
       {/* The tool */}
       <div id="free-cladding-takeoff" className="scroll-mt-24">
-        <FreeTakeoffApp config={CLADDING_TAKEOFF_CONFIG} />
+        <CladdingTakeoff />
       </div>
 
       {/* What can you measure */}

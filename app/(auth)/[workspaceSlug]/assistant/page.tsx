@@ -1,8 +1,6 @@
-import { getActiveDemoContext } from '@/app/lib/demo/context';
-import { DemoFeatureGate } from '@/app/components/demo/DemoFeatureGate';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import type { Metadata, Viewport } from 'next';
+import type { Metadata } from 'next';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { ChatClient } from './ChatClient';
 import type { ConversationRow } from './actions';
@@ -17,33 +15,17 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'QC Assistant' },
 };
 
-// v14 (2026-10-03): the owner's v13 shot proved Safari paints the zone below the
-// layout viewport itself (page canvas stops at 699) - the black band is Safari's
-// dark-mode under-page. Per the external agent's Step 3 ("route-specific Safari
-// theme colour"), declaring a light page scheme + silver theme-color makes Safari
-// render that zone light instead of black. The assistant surface keeps its own
-// local color-scheme: dark on .root, so the app's look is unchanged.
-export const viewport: Viewport = {
-  colorScheme: 'light',
-  themeColor: '#e9ebef',
-};
-
 /**
  * Smart Assistant chat (dark launch). Flag-off companies get a 404.
  */
 export default async function SmartAssistantChatPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { workspaceSlug } = await params;
-  const sp = searchParams ? await searchParams : {};
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
-  const demo = await getActiveDemoContext(profile.company_id);
-  if (demo && demo.tutorialState.chapter !== 'smart-assistant' && demo.tutorialState.chapter !== 'complete') return <DemoFeatureGate title="Try Smart Assistant" description="This is real account control, not Q. Start this guide chapter to use the demo's limited allowance." chapter="smart-assistant" workspaceSlug={workspaceSlug} href={`/${workspaceSlug}/assistant`} />;
 
   const { data: flagOn } = await supabase.rpc('smart_assistant_enabled', {
     p_company_id: profile.company_id,
@@ -68,7 +50,7 @@ export default async function SmartAssistantChatPage({
   // Mobile three-destination bar (Assistant / Messages / Settings): keeps the
   // phone experience to the three surfaces that matter, per the V1.5 spec.
   const mobileNav = (
-    <nav className="!hidden sticky top-0 z-10 flex border-b border-slate-200 bg-white">
+    <nav className="md:hidden sticky top-0 z-10 flex border-b border-slate-200 bg-white">
       <span className="flex flex-1 items-center justify-center gap-1.5 border-b-2 border-slate-900 py-2.5 text-xs font-semibold text-slate-900">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
         Assistant
@@ -98,7 +80,6 @@ export default async function SmartAssistantChatPage({
       assistantName={config?.enabled === false ? 'Assistant (disabled)' : (config?.name ?? 'Assistant')}
       greeting={config?.greeting ?? ''}
       settingsHref={`/${workspaceSlug}/account/smart-assistant`}
-      viewportDebug={sp?.saViewportDebug !== undefined}
     />
     </div>
   );

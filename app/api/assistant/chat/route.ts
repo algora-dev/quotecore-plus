@@ -1,4 +1,3 @@
-import { rejectUnapprovedDemoPaidRoute } from '@/app/lib/demo/paid-route.server';
 /**
  * POST /api/assistant/chat  - AI Assistant chat endpoint (Phase 1)
  * ================================================================
@@ -62,8 +61,6 @@ function errorResponse(code: AssistantErrorCode, message: string, status: number
 // --- handler ---------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
-  const demoDenied = await rejectUnapprovedDemoPaidRoute();
-  if (demoDenied) return demoDenied;
   // 1. Feature flag.
   if (!ASSISTANT_ENABLED) {
     return errorResponse('invalid_request', 'Assistant is not enabled.', 404);

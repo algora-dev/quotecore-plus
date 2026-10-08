@@ -1,21 +1,169 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { QcLibrary, QcLibraryEmpty } from '@/app/components/ui/v2/QcLibrary';
-import { QcButton } from '@/app/components/ui/v2/QcButton';
-import { QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
-import { QcIcon } from '@/app/components/ui/v2/QcIcon';
+import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
+import { useMemo, useRef, useState } from 'react';
 import { useQcActionNotice } from '@/app/components/ui/v2/QcActionNotice';
 import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { resolveInboxOutcome } from './inbox-outcomes';
+import { useRouter } from 'next/navigation';
 import { updateNotificationPref, updateChannelMaster } from './settings-actions';
 import type { EventPref, PrefSurface } from '@/app/lib/alerts/prefs';
-import { NOTIFICATION_MATRIX, FOLDERS, TYPE_FILTERS, categoryOf,
-  type Alert, type AlertStatus, type NotificationChannelKey, type Props, type TypeFilter } from './message-center-model';
-import { MessageCenterPreferences } from './MessageCenterPreferences';
-import { MessageCenterRow } from './MessageCenterRow';
-import './message-center.css';
+
+type NotificationChannelKey = 'quotes' | 'orders' | 'invoices' | 'suppliers';
+
+/**
+ * The notification matrix - the REAL alert_type taxonomy in the codebase.
+ * Orders splits supplier responses into distinct events (accepted / declined /
+ * info requested) plus Read, and Invoices surfaces Payment Made / Dispute
+ * Opened / Read, so the matrix renders only these real events.
+ */
+const NOTIFICATION_MATRIX: {
+  key: NotificationChannelKey;
+  label: string;
+  events: { key: string; label: string }[];
+}[] = [
+  {
+    key: 'quotes',
+    label: 'Quotes',
+    events: [
+      { key: 'quote_accepted', label: 'Accepted' },
+      { key: 'quote_declined', label: 'Declined' },
+      { key: 'revision_requested', label: 'Request Info' },
+      { key: 'quote_viewed', label: 'Viewed' },
+      { key: 'quote_expired', label: 'Expired' },
+    ],
+  },
+  {
+    key: 'orders',
+    label: 'Orders',
+    events: [
+      { key: 'order_accepted', label: 'Accepted' },
+      { key: 'order_declined', label: 'Declined' },
+      { key: 'order_info_requested', label: 'Info Requested' },
+      { key: 'order_viewed', label: 'Viewed' },
+    ],
+  },
+  {
+    key: 'invoices',
+    label: 'Invoices',
+    events: [
+      { key: 'invoice_payment_reported', label: 'Payment Made' },
+      { key: 'invoice_disputed', label: 'Dispute Opened' },
+      { key: 'invoice_viewed', label: 'Viewed' },
+    ],
+  },
+  {
+    key: 'suppliers',
+    label: 'Suppliers',
+    events: [
+      { key: 'supplier_update', label: 'Component Updates' },
+    ],
+  },
+];
+
+/**
+ * Shared toggle switch - the exact rounded-full w-11 h-6 accent pattern used
+ * throughout the app. `color` selects the ON tint: orange for the in-app
+ * surface, blue for the email surface. Reused for every matrix row + master.
+ */
+function Toggle({
+  checked,
+  disabled,
+  onChange,
+  label,
+  color = 'orange',
+  size = 'md',
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: () => void;
+  label: string;
+  color?: 'orange' | 'blue';
+  /** `md` (default) is the full-size master toggle (w-11 h-6). `sm` is the
+   *  ~30%-smaller per-line toggle (w-8 h-[18px]) used on per-event rows. */
+  size?: 'sm' | 'md';
+}) {
+  const onClass = color === 'blue' ? 'bg-blue-500' : 'bg-[#FF6B35]';
+  const isSm = size === 'sm';
+  // Track + knob sizing. `md`: w-11 h-6 track, w-4 knob, travel translate-x-6.
+  // `sm`: ~30% smaller track w-8 h-[18px], w-3.5 knob, travel translate-x-[14px].
+  const trackClass = isSm ? 'h-[18px] w-8' : 'h-6 w-11';
+  const knobSizeClass = isSm ? 'h-3.5 w-3.5' : 'h-4 w-4';
+  const knobOnClass = isSm ? 'translate-x-[14px]' : 'translate-x-6';
+  const knobOffClass = isSm ? 'translate-x-0.5' : 'translate-x-1';
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onChange}
+      className="qc-flow-control qc-library-toggle"
+    >
+      <span aria-hidden="true" className={`qc-library-toggle-track ${trackClass} ${checked ? onClass : 'bg-slate-300'} ${disabled ? 'opacity-60' : ''}`}>
+        <span className={`inline-block ${knobSizeClass} transform rounded-full bg-white transition ${checked ? knobOnClass : knobOffClass}`} />
+      </span>
+    </button>
+  );
+}
+
+type AlertStatus = 'active' | 'todo' | 'archived';
+
+interface Alert {
+  id: string;
+  alert_type: string;
+  title: string;
+  message: string | null;
+  is_read: boolean | null;
+  status: AlertStatus;
+  created_at: string | null;
+  quote_id: string | null;
+  invoice_id: string | null;
+  order_id: string | null;
+}
+
+interface Props {
+  initialAlerts: Alert[];
+  workspaceSlug: string;
+  /** Resolved notification matrix: { "<alert_type>": { app, email } } for every
+   *  known event. `app` gates the in-app alert, `email` gates the alert email. */
+  initialNotificationPrefs: Record<string, EventPref>;
+}
+
+type TypeFilter = 'all' | 'quotes' | 'orders' | 'invoices' | 'messages' | 'suppliers';
+
+function categoryOf(a: Alert): Exclude<TypeFilter, 'all'> {
+  const t = a.alert_type;
+  if (t === 'message_reply') return 'messages';
+  if (t.startsWith('supplier')) return 'suppliers';
+  if (t.startsWith('invoice') || a.invoice_id) return 'invoices';
+  if (t.startsWith('order') || a.order_id) return 'orders';
+  return 'quotes';
+}
+
+const CATEGORY_BADGE: Record<string, { label: string; cls: string }> = {
+  quotes: { label: 'Quote', cls: 'bg-orange-100 text-orange-700' },
+  orders: { label: 'Order', cls: 'bg-blue-100 text-blue-700' },
+  invoices: { label: 'Invoice', cls: 'bg-emerald-100 text-emerald-700' },
+  messages: { label: 'Message', cls: 'bg-purple-100 text-purple-700' },
+  suppliers: { label: 'Supplier', cls: 'bg-amber-100 text-amber-700' },
+};
+
+const FOLDERS: { key: AlertStatus; label: string; icon: string }[] = [
+  { key: 'active', label: 'Active', icon: 'M4 6h16M4 12h16M4 18h7' },
+  { key: 'todo', label: 'To-Do', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
+  { key: 'archived', label: 'Archived', icon: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' },
+];
+
+const TYPE_FILTERS: { key: TypeFilter; label: string }[] = [
+  { key: 'all', label: 'All types' },
+  { key: 'quotes', label: 'Quotes' },
+  { key: 'orders', label: 'Orders' },
+  { key: 'invoices', label: 'Invoices' },
+  { key: 'messages', label: 'Messages' },
+  { key: 'suppliers', label: 'Suppliers' },
+];
 
 export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPrefs }: Props) {
   const router = useRouter();
@@ -33,17 +181,6 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
-  const settingsTrigger = useRef<HTMLButtonElement>(null);
-  const settingsHeading = useRef<HTMLHeadingElement>(null);
-  const previousView = useRef(view);
-  useEffect(() => {
-    if (previousView.current !== view) {
-      if (view === 'settings') settingsHeading.current?.focus({ preventScroll: true });
-      else settingsTrigger.current?.focus({ preventScroll: true });
-      previousView.current = view;
-    }
-  }, [view]);
-
 
   function toggleExpand(id: string) {
     setExpanded((prev) => {
@@ -241,83 +378,327 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
     setSavingPref(false);
   }
 
-  const unreadInFolder = alerts.filter(a => a.status === folder && !a.is_read).length;
-  const folderLabel = FOLDERS.find(f => f.key === folder)?.label ?? 'Active';
-
   return (
-    <QcLibrary className="qc-message-center">
+    <QcLibrary className="space-y-4">
       {feedback}
       {notice}
-      <div className="qc-messages-navigation">
-        {view === 'inbox' ? <>
-          <nav aria-label="Message folders" className="qc-messages-folders" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
-            {FOLDERS.map(f => <button key={f.key} type="button"
-              aria-current={folder === f.key ? 'page' : undefined}
-              data-assistant-id={`inbox-folder-${f.key}`}
-              onClick={() => { setFolder(f.key); setSelected(new Set()); }}>
-              <span>{f.label}</span><span className="qc-messages-count">{folderCounts[f.key]}</span>
-            </button>)}
-          </nav>
-          <QcButton ref={settingsTrigger} className="qc-messages-settings" size="sm" onClick={() => setView('settings')} aria-label="Open notification settings">
-            <svg className="qc-messages-settings-icon" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round">
-              <path d="M4 7h4m4 0h8M4 17h10m4 0h2" /><circle cx="10" cy="7" r="2" /><circle cx="16" cy="17" r="2" />
-            </svg><span className="qc-messages-settings-label">Notification settings</span>
-          </QcButton>
-        </> : <QcButton onClick={() => setView('inbox')}><QcIcon name="back" />Back to messages</QcButton>}
+      {busy && <p role="status" className="qc-flow-description">Updating selected messages...</p>}
+      {/* Top tabs: Inbox / Settings (rounded-full pill tabs). */}
+      <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-fit max-w-full">
+        <button
+          type="button"
+          aria-pressed={view === 'inbox'} onClick={() => setView('inbox')}
+          className={"qc-flow-control qc-library-choice " + (`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+            view === 'inbox' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+          }`)}
+        >
+          Inbox
+        </button>
+        <button
+          type="button"
+          aria-pressed={view === 'settings'} onClick={() => setView('settings')}
+          className={"qc-flow-control qc-library-choice " + (`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+            view === 'settings' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+          }`)}
+        >
+          Notification settings
+        </button>
       </div>
 
-      {view === 'settings' ? <MessageCenterPreferences headingRef={settingsHeading} prefs={prefs} saving={savingPref}
-        eventOn={eventOn} masterOn={channelMasterOn} onToggleEvent={toggleEvent} onToggleMaster={toggleMaster} /> : <>
-        <div className="qc-messages-search" data-assistant-id="inbox-search" data-copilot="inbox-search">
-          <label className="qc-messages-search-field">
-            <span className="qc-label">Search messages</span>
-            <QcInput type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search a job, document or message" />
-          </label>
-          <label className="qc-messages-type-field">
-            <span className="qc-label">Type</span>
-            <QcSelect value={typeFilter} onChange={e => setTypeFilter(e.target.value as TypeFilter)}>
-              {TYPE_FILTERS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
-            </QcSelect>
-          </label>
+      {view === 'settings' ? (
+        <div className="space-y-4 max-w-2xl">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Notifications</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Email + in-app alerts are configured per event below. The{' '}
+              <span className="font-medium text-[#FF6B35]">In-app</span> column
+              controls the Message Center alert; the{' '}
+              <span className="font-medium text-blue-500">Email</span> column
+              controls whether your team is emailed too. The underlying status
+              (Read, Accepted, Disputed…) always updates either way - these
+              toggles only control notifications.
+            </p>
+          </div>
+
+          {NOTIFICATION_MATRIX.map((channel) => {
+            const appMasterOn = channelMasterOn(channel.key, 'app');
+            const emailMasterOn = channelMasterOn(channel.key, 'email');
+            return (
+              <div
+                key={channel.key}
+                className="rounded-xl border border-slate-200 bg-white overflow-hidden"
+              >
+                {/* Channel header row + per-surface MASTER toggles + column labels */}
+                <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-slate-100 bg-slate-50/60">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">{channel.label}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">All {channel.label} alerts</p>
+                  </div>
+                  <div className="qc-inbox-switch-columns flex items-end gap-2 md:gap-6">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-[11px] font-medium uppercase tracking-wide text-[#FF6B35]">In-app</span>
+                      <Toggle
+                        color="orange"
+                        checked={appMasterOn}
+                        disabled={savingPref}
+                        onChange={() => toggleMaster(channel.key, 'app')}
+                        label={`All ${channel.label} in-app alerts`}
+                      />
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-[11px] font-medium uppercase tracking-wide text-blue-500">Email</span>
+                      <Toggle
+                        color="blue"
+                        checked={emailMasterOn}
+                        disabled={savingPref}
+                        onChange={() => toggleMaster(channel.key, 'email')}
+                        label={`All ${channel.label} emails`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Per-event child rows: two toggles each (in-app + email). */}
+                <div className="divide-y divide-slate-100">
+                  {channel.events.map((event) => {
+                    const appOn = eventOn(event.key, 'app');
+                    const emailOn = eventOn(event.key, 'email');
+                    return (
+                      <div
+                        key={event.key}
+                        className="flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-orange-50/40 transition"
+                      >
+                        <p className="text-sm text-slate-700">{event.label}</p>
+                        <div className="qc-inbox-switch-columns flex items-center gap-2 md:gap-6">
+                          <Toggle
+                            size="sm"
+                            color="orange"
+                            checked={appOn}
+                            disabled={savingPref}
+                            onChange={() => toggleEvent(event.key, 'app')}
+                            label={`${channel.label} – ${event.label} – in-app`}
+                          />
+                          <Toggle
+                            size="sm"
+                            color="blue"
+                            checked={emailOn}
+                            disabled={savingPref}
+                            onChange={() => toggleEvent(event.key, 'email')}
+                            label={`${channel.label} – ${event.label} – email`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <div className="qc-messages-list-summary">
-          <div className="qc-messages-summary-copy">
-            <strong>{folderLabel}</strong><span>{visible.length} {visible.length === 1 ? 'message' : 'messages'}{unreadInFolder ? ` · ${unreadInFolder} unread in this folder` : ''}</span>
+      ) : (
+    <div className="flex flex-col md:flex-row gap-4 md:gap-5">
+      {/* LEFT PANEL - folders */}
+      <aside className="w-full md:w-44 flex-shrink-0">
+        {/* The guide highlight targets this <nav> (only the 3 folder buttons),
+            not the <aside> - the aside stretches to the full list height. */}
+        <nav aria-label="Message folders" className="qc-inbox-folders" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
+          {FOLDERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => {
+                setFolder(f.key);
+                setSelected(new Set());
+              }}
+              aria-current={folder === f.key ? 'page' : undefined} data-assistant-id={`inbox-folder-${f.key}`}
+              className={"qc-flow-control qc-library-choice " + (`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 md:py-2 text-sm font-medium transition whitespace-nowrap md:whitespace-normal min-h-[44px] md:min-h-0 ${
+                folder === f.key
+                  ? 'border-slate-900 bg-slate-900 text-white'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-orange-200 hover:bg-orange-50/40'
+              }`)}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={f.icon} />
+                </svg>
+                {f.label}
+              </span>
+              <span className={folder === f.key ? 'text-slate-300' : 'text-slate-400'}>
+                {folderCounts[f.key]}
+              </span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      {/* RIGHT - search/filter bar + list */}
+      <div className="flex-1 min-w-0 space-y-3">
+        {/* Search + type filters (these are filters, not navigation) */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:flex-wrap" data-assistant-id="inbox-search" data-copilot="inbox-search">
+          <div className="relative flex-1 min-w-[180px]">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search messages" placeholder="Search messages…"
+              className="qc-input qc-library-control w-full rounded-full border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-base md:text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            />
           </div>
-          {visible.length > 0 && <label className="qc-messages-select-all">
-            <input type="checkbox" className="qc-checkbox" checked={allVisibleSelected} disabled={busy} onChange={toggleAll} />Select all in view
-          </label>}
+          <div className="qc-library-filters" role="group" aria-label="Filter messages by type">
+          {TYPE_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              aria-pressed={typeFilter === f.key} onClick={() => setTypeFilter(f.key)}
+              className={"qc-flow-control qc-library-choice " + (`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                typeFilter === f.key
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+              }`)}
+            >
+              {f.label}
+            </button>
+          ))}
+          </div>
         </div>
-        {selected.size > 0 && <div className="qc-messages-selection" data-assistant-id="inbox-bulk-bar" aria-label="Selected message actions">
-          <div className="qc-messages-selection-count"><strong>{selInVisible.length} selected in this view</strong>
-            {selected.size > selInVisible.length && <span>{selected.size - selInVisible.length} selected outside this view; these actions do not affect them.</span>}
+
+        {/* Bulk action toolbar - appears when rows are selected */}
+        {selInVisible.length > 0 && (
+          <div className="qc-inbox-bulk flex items-center gap-2 flex-wrap rounded-xl border border-orange-200 bg-orange-50/60 px-3 py-2 text-xs" data-assistant-id="inbox-bulk-bar">
+            <span className="font-medium text-slate-700">{selInVisible.length} selected</span>
+            <span className="h-4 w-px bg-orange-200" />
+            <button data-qc-variant="ghost" disabled={busy} onClick={() => bulk('read', selInVisible)} className="qc-button qc-flow-control qc-library-control ">Mark read</button>
+            {folder !== 'todo' && (
+              <button data-qc-variant="ghost" disabled={busy} onClick={() => bulk('todo', selInVisible)} className="qc-button qc-flow-control qc-library-control ">To-Do</button>
+            )}
+            {folder !== 'active' && (
+              <button data-qc-variant="ghost" disabled={busy} onClick={() => bulk('active', selInVisible)} className="qc-button qc-flow-control qc-library-control ">Move to Active</button>
+            )}
+            {folder !== 'archived' ? (
+              <button data-qc-variant="ghost" disabled={busy} onClick={() => bulk('archive', selInVisible)} className="qc-button qc-flow-control qc-library-control ">Done (Archive)</button>
+            ) : (
+              <button data-qc-variant="ghost" disabled={busy} onClick={() => bulk('delete', selInVisible)} className="qc-button qc-flow-control qc-library-control ">Delete permanently</button>
+            )}
           </div>
-          <div className="qc-messages-bulk-actions">
-            <QcButton size="sm" disabled={busy || !selInVisible.length} onClick={() => bulk('read', selInVisible)}>Mark read</QcButton>
-            {folder !== 'todo' && <QcButton size="sm" disabled={busy || !selInVisible.length} onClick={() => bulk('todo', selInVisible)}>To-do</QcButton>}
-            {folder !== 'active' && <QcButton size="sm" disabled={busy || !selInVisible.length} onClick={() => bulk('active', selInVisible)}>Move to Active</QcButton>}
-            {folder !== 'archived'
-              ? <QcButton size="sm" disabled={busy || !selInVisible.length} onClick={() => bulk('archive', selInVisible)}>Done · Archive</QcButton>
-              : <QcButton size="sm" variant="danger" disabled={busy || !selInVisible.length} onClick={() => bulk('delete', selInVisible)}>Delete permanently</QcButton>}
-            <QcButton size="sm" disabled={busy} onClick={() => setSelected(new Set())}>Clear selection</QcButton>
+        )}
+
+        {/* Select-all row */}
+        {visible.length > 0 && (
+          <label className="flex items-center gap-2 text-xs text-slate-500 px-1">
+            <input type="checkbox" checked={allVisibleSelected} disabled={busy} onChange={toggleAll} className="qc-checkbox qc-library-control rounded border-slate-300 text-orange-600 focus:ring-orange-500" />
+            Select all
+          </label>
+        )}
+
+        {/* Rows */}
+        {visible.length === 0 ? (
+          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-400">
+            {search.trim() || typeFilter !== 'all' ? 'No messages match these filters.' : `Nothing in ${FOLDERS.find(f => f.key === folder)?.label}.`}
           </div>
-        </div>}
-        {busy && <p role="status" className="qc-messages-pending">Updating messages…</p>}
-        {visible.length === 0 ? <QcLibraryEmpty
-          title={search.trim() || typeFilter !== 'all' ? 'No matching messages' : `Nothing in ${folderLabel} yet`}
-          action={search.trim() || typeFilter !== 'all' ? <QcButton onClick={() => { setSearch(''); setTypeFilter('all'); }}>Clear filters</QcButton> : undefined}>
-          {search.trim() || typeFilter !== 'all' ? 'Try another search or show all message types.'
-            : folder === 'todo' ? 'Move an active message to To-do when you want to follow it up.'
-              : folder === 'archived' ? 'Messages marked Done or dismissed appear here. You can restore them later.'
-                : 'Replies and updates will appear here as activity happens on your quotes, orders and invoices.'}
-        </QcLibraryEmpty> : <ul className="qc-messages-list" aria-label={`${folderLabel} messages`}>
-          {visible.map(a => <MessageCenterRow key={a.id} alert={a} folder={folder} busy={busy}
-            selected={selected.has(a.id)} expanded={expanded.has(a.id)} date={fmt(a.created_at)} href={openHref(a)}
-            onSelect={() => toggle(a.id)} onExpand={() => { toggleExpand(a.id); if (!a.is_read) void bulk('read', [a.id], true); }}
-            onOpen={() => open(a)} onAction={action => bulk(action, [a.id])} />)}
-        </ul>}
-        {initialAlerts.length >= 1000 && <p className="qc-messages-limit">This view loads the latest 1,000 messages. Counts and search apply to those messages.</p>}
-      </>}
+        ) : (
+          <ul className="space-y-2">
+            {visible.map((a) => {
+              const cat = categoryOf(a);
+              const badge = CATEGORY_BADGE[cat];
+              const href = openHref(a);
+              const checked = selected.has(a.id);
+              const isOpen = expanded.has(a.id);
+              return (
+                <li
+                  key={a.id}
+                  className={`rounded-xl border-2 bg-white transition hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] ${
+                    a.is_read
+                      ? 'border-slate-300'
+                      : 'border-orange-300 bg-orange-50/40'
+                  }`}
+                >
+                  {/* Collapsed row - single line. Clicking the body expands
+                      in place; we no longer navigate on row click, so a
+                      missing/broken link can never 404. */}
+                  <div className="flex items-center gap-3 px-3 py-2.5">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${a.title}`}
+                      checked={checked}
+                      disabled={busy} onChange={() => toggle(a.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="qc-checkbox qc-library-control rounded border-slate-300 text-orange-600 focus:ring-orange-500 flex-shrink-0"
+                    />
+                    <button data-qc-variant="ghost"
+                      type="button"
+                      onClick={() => {
+                        toggleExpand(a.id);
+                        if (!a.is_read) void bulk('read', [a.id], true);
+                      }}
+                      className="qc-inbox-item-control"
+                      aria-expanded={isOpen}
+                    >
+                      {!a.is_read && <span className="qc-inbox-unread w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />}
+                      <span className={`qc-inbox-category rounded-full px-2.5 py-0.5 text-xs font-medium flex-shrink-0 ${badge.cls}`}>{badge.label}</span>
+                      <span className="qc-inbox-message-title">{a.title}</span>
+                      <span className="qc-inbox-date text-xs text-slate-400 flex-shrink-0 md:ml-auto">{fmt(a.created_at)}</span>
+                      <svg
+                        className={`w-4 h-4 text-slate-300 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Expanded view - full message + contextual actions.
+                      Open only renders when openHref resolves (has FK). */}
+                  {isOpen && (
+                    <div className="qc-inbox-expanded border-t border-slate-100 px-3 py-3 pl-10">
+                      {a.message ? (
+                        <p className="text-sm text-slate-600 whitespace-pre-line">{a.message}</p>
+                      ) : (
+                        <p className="text-sm text-slate-400 italic">No additional details.</p>
+                      )}
+                      <div className="flex items-center gap-2 flex-wrap mt-3">
+                        {href && (
+                          <button aria-label="Click to open the full summary page" data-qc-variant="primary" type="button" onClick={() => open(a)} title="Click to open the full summary page" className="qc-button qc-flow-control qc-library-control ">
+                            Open {badge.label.toLowerCase()}
+                          </button>
+                        )}
+                        {/* Folder-contextual actions. Link-less alerts simply
+                            omit To-Do/Done flow and offer Dismiss. */}
+                        {folder === 'active' && (
+                          href ? (
+                            <>
+                              <button aria-label='Click to add this alert to your "To Do" list' data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('todo', [a.id])} title='Click to add this alert to your "To Do" list' className="qc-button qc-flow-control qc-library-control ">To-Do</button>
+                              <button aria-label='Click to mark this alert "Done" and add to archive list' data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="qc-button qc-flow-control qc-library-control ">Done</button>
+                            </>
+                          ) : (
+                            <button data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('archive', [a.id])} className="qc-button qc-flow-control qc-library-control ">Dismiss</button>
+                          )
+                        )}
+                        {folder === 'todo' && (
+                          <>
+                            <button data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('active', [a.id])} className="qc-button qc-flow-control qc-library-control ">Move to Active</button>
+                            <button aria-label='Click to mark this alert "Done" and add to archive list' data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('archive', [a.id])} title='Click to mark this alert "Done" and add to archive list' className="qc-button qc-flow-control qc-library-control ">Done</button>
+                          </>
+                        )}
+                        {folder === 'archived' && (
+                          <>
+                            <button data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('active', [a.id])} className="qc-button qc-flow-control qc-library-control ">Restore</button>
+                            <button data-qc-variant="ghost" type="button" disabled={busy} onClick={() => bulk('delete', [a.id])} className="qc-button qc-flow-control qc-library-control ">Delete</button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </div>
+      )}
     </QcLibrary>
   );
 }

@@ -55,7 +55,6 @@ export function SummaryFileRow({ quoteId, id, fileName, fileType, fileSize, stor
     fileType === 'plan' ? 'Roof Plan'
     : fileType === 'takeoff_canvas' || fileType === 'canvas' ? 'Digital Takeoff'
     : fileType === 'takeoff_lines' ? 'Digital Takeoff'
-    : fileType === 'offcuts' ? 'Offcut Plan'
     : 'Supporting File';
   const sizeText = fileSize > 0 ? ` • ${(fileSize / 1024 / 1024).toFixed(2)} MB` : '';
 

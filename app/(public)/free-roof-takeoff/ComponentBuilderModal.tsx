@@ -1,11 +1,6 @@
 'use client';
 
-import { useId, useRef, useState } from 'react';
-import { QcButton } from '@/app/components/ui/v2/QcButton';
-import '@/app/components/ui/v2/qc-dialog-actions.css';
-import { QcDialog } from '@/app/components/ui/v2/QcDialog';
-import { QcField, QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
-import './free-takeoff-ui.css';
+import { useState } from 'react';
 import type { TakeoffComponentSpec } from './tradeConfig';
 
 /**
@@ -26,18 +21,11 @@ const MEASUREMENT_TYPES: { value: TakeoffComponentSpec['measurementType']; label
   { value: 'quantity', label: 'Quantity', hint: 'Screws, brackets, fixings - counted by click' },
 ];
 
-/** Flooring variant: floor-area / lineal / single item only, no roofing hints. */
+/** Flooring variant: area / lineal / single item only, no roofing hints. */
 const FLOORING_MEASUREMENT_TYPES: typeof MEASUREMENT_TYPES = [
   { value: 'area', label: 'Floor Area', hint: 'Plank, carpet, tile, underlay - measured by area' },
   { value: 'lineal', label: 'Lineal', hint: 'Skirting, scotia, transition strips - measured by length' },
   { value: 'quantity', label: 'Single Item', hint: 'Glue buckets, sundries, trims - counted by click' },
-];
-
-/** Cladding variant: wall terminology instead of roofing hints. */
-const CLADDING_MEASUREMENT_TYPES: typeof MEASUREMENT_TYPES = [
-  { value: 'area', label: 'Area', hint: 'Wall areas, wrap, soffits, cladding sheets' },
-  { value: 'lineal', label: 'Lineal', hint: 'Trims, battens, flashings, junctions - measured by length' },
-  { value: 'quantity', label: 'Quantity', hint: 'Openings, brackets, fixings - counted by click' },
 ];
 
 const WASTE_TYPES: { value: TakeoffComponentSpec['wasteType']; label: string }[] = [
@@ -51,7 +39,6 @@ export function ComponentBuilderModal({
   initial,
   measurementSystem = 'metric',
   trade = 'roofing',
-  showPitchRules = true,
   onSave,
   onClose,
 }: {
@@ -60,14 +47,10 @@ export function ComponentBuilderModal({
   measurementSystem?: MeasurementSystemLite;
   /** Trade variant: flooring swaps measurement-type labels/hints and hides pitch. */
   trade?: 'roofing' | 'cladding' | 'flooring';
-  /** Whether the pitch-calculation rules section is offered at all.
-   *  Driven by the trade config (requiresPitch) - flat trades never see it. */
-  showPitchRules?: boolean;
   onSave: (spec: TakeoffComponentSpec, isNew: boolean) => void;
   onClose: () => void;
 }) {
-  const typeOptions =
-    trade === 'flooring' ? FLOORING_MEASUREMENT_TYPES : trade === 'cladding' ? CLADDING_MEASUREMENT_TYPES : MEASUREMENT_TYPES;
+  const typeOptions = trade === 'flooring' ? FLOORING_MEASUREMENT_TYPES : MEASUREMENT_TYPES;
   const metric = measurementSystem === 'metric';
   const lengthUnit = metric ? 'm' : 'ft';
   const areaUnit = metric ? 'm\u00b2' : 'ft\u00b2';
@@ -114,87 +97,199 @@ export function ComponentBuilderModal({
 
   const rateUnit = unitLabelFor(measurementType);
 
-  const fieldId = useId();
-  const nameRef = useRef<HTMLInputElement>(null);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/40">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-slate-900">{isNew ? 'Create component' : 'Edit component'}</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Same fields as the app - on sign up these become real components in your account.
+          </p>
 
-  return <QcDialog open pending onRequestClose={onClose} size="md" className="qc-free-component-dialog qc-dialog-fixed-actions"
-    title={isNew ? 'Create component' : 'Edit component'}
-    description="A component is an item you measure. Add your own costs to include an estimate in the report."
-    initialFocusRef={nameRef}
-    footer={<><QcButton onClick={onClose}>Cancel</QcButton>
-      <QcButton variant="primary" onClick={handleSave} disabled={!canSave}>{isNew ? 'Create component' : 'Save changes'}</QcButton></>}>
-    <div className="qc-free-component-form">
-      <QcField label="Component name" htmlFor={`${fieldId}-name`} help="Use a name you will recognise when measuring.">
-        <QcInput id={`${fieldId}-name`} ref={nameRef} value={name} aria-required="true"
-          onChange={e => setName(e.target.value)} placeholder={trade === 'flooring' ? 'e.g. Skirting' : trade === 'cladding' ? 'e.g. Window Trim' : 'e.g. Ridge Flashing'} />
-      </QcField>
-      <fieldset className="qc-free-choices"><legend>How is it measured?</legend>
-        {typeOptions.map(t => <label key={t.value} className="qc-free-choice" data-selected={measurementType === t.value || undefined}>
-          <input type="radio" name="measurement-type" checked={measurementType === t.value}
-            onChange={() => {
-              setMeasurementType(t.value);
-              if (t.value === 'quantity') { setPitchEnabled(false); setPricingStrategy('per_unit'); }
-              if (t.value === 'area' && pricingStrategy === 'per_pack_length') setPricingStrategy('per_pack_area');
-              if (t.value === 'lineal' && pricingStrategy === 'per_pack_area') setPricingStrategy('per_pack_length');
-            }} />
-          <span><strong>{t.label}</strong><span>{t.hint}</span></span>
-        </label>)}
-      </fieldset>
-      <div className="qc-free-component-section">
-        <h3>Your costs</h3><p className="qc-free-help">Rates are optional. Leave them at zero for measurements only.</p>
-        <div className="qc-free-field-pair">
-          <QcField label={`Material ($ / ${rateUnit})`} htmlFor={`${fieldId}-material`}>
-            <QcInput id={`${fieldId}-material`} type="number" inputMode="decimal" step="0.01" min="0" value={materialRate}
-              onChange={e => setMaterialRate(e.target.value)} placeholder="e.g. 18.50" disabled={isPack} />
-          </QcField>
-          <QcField label={`Labour ($ / ${rateUnit})`} htmlFor={`${fieldId}-labour`}>
-            <QcInput id={`${fieldId}-labour`} type="number" inputMode="decimal" step="0.01" min="0" value={labourRate}
-              onChange={e => setLabourRate(e.target.value)} placeholder="e.g. 11.00" />
-          </QcField>
-        </div>
-        {packStrategies.length > 0 && <div className="qc-free-pack-settings">
-          <label className="qc-free-check-label"><input type="checkbox" checked={isPack}
-            onChange={e => setPricingStrategy(e.target.checked ? packStrategies[0] : 'per_unit')} />
-            <span>Material is bought in fixed-size packs</span></label>
-          {isPack && <div className="qc-free-field-pair">
-            <QcField label="Pack price ($)" htmlFor={`${fieldId}-pack-price`}>
-              <QcInput id={`${fieldId}-pack-price`} type="number" inputMode="decimal" step="0.01" min="0" value={packPrice}
-                onChange={e => setPackPrice(e.target.value)} placeholder="e.g. 500" />
-            </QcField>
-            <QcField label={`Pack size (${measurementType === 'area' ? areaUnit : lengthUnit})`} htmlFor={`${fieldId}-pack-size`}>
-              <QcInput id={`${fieldId}-pack-size`} type="number" inputMode="decimal" step="0.01" min="0" value={packSize}
-                onChange={e => setPackSize(e.target.value)} placeholder="e.g. 50" />
-            </QcField>
-          </div>}
-        </div>}
-      </div>
-      <div className="qc-free-component-section">
-        <h3>Allowances</h3>
-        <div className="qc-free-field-pair">
-          <QcField label="Waste allowance" htmlFor={`${fieldId}-waste-type`}>
-            <QcSelect id={`${fieldId}-waste-type`} value={wasteType}
-              onChange={e => setWasteType(e.target.value as TakeoffComponentSpec['wasteType'])}>
-              {WASTE_TYPES.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
-            </QcSelect>
-          </QcField>
-          {wasteType !== 'none' && <QcField label={wasteType === 'percent' ? 'Waste (%)' : `Waste (${rateUnit})`} htmlFor={`${fieldId}-waste-value`}>
-            <QcInput id={`${fieldId}-waste-value`} type="number" inputMode="decimal" step="0.01" min="0" value={wasteValue}
-              onChange={e => setWasteValue(e.target.value)} placeholder={wasteType === 'percent' ? '%' : rateUnit} />
-          </QcField>}
-        </div>
-        {showPitchRules && measurementType !== 'quantity' && <div className="qc-free-pitch-settings">
-          <label className="qc-free-check-label"><input type="checkbox" checked={pitchEnabled} onChange={e => setPitchEnabled(e.target.checked)} />
-            <span>Apply pitch calculation</span></label>
-          {pitchEnabled && <>
-            <div className="qc-free-pitch-choice" role="group" aria-label="Pitch factor">
-              <QcButton aria-pressed={pitchType === 'rafter'} onClick={() => setPitchType('rafter')}>Rafter</QcButton>
-              <QcButton aria-pressed={pitchType === 'valley_hip'} onClick={() => setPitchType('valley_hip')}>Hip / Valley</QcButton>
+          <div className="mt-5 space-y-4">
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Component name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder={trade === 'flooring' ? 'e.g. Skirting' : 'e.g. Ridge Flashing'}
+                autoFocus
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+              />
             </div>
-            <p className="qc-free-help">Plan measurements use the pitch of the area they are drawn on. You enter the pitch while measuring.</p>
-          </>}
-        </div>}
+
+            {/* Measurement type */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Measurement type</label>
+              <div className="space-y-1.5">
+                {typeOptions.map(t => (
+                  <label key={t.value} className="flex items-start gap-2.5 p-2.5 rounded-xl border border-slate-200 cursor-pointer hover:border-orange-200 hover:bg-orange-50/40">
+                    <input
+                      type="radio"
+                      name="measurement-type"
+                      checked={measurementType === t.value}
+                      onChange={() => {
+                        setMeasurementType(t.value);
+                        if (t.value === 'quantity') { setPitchEnabled(false); setPricingStrategy('per_unit'); }
+                        if (t.value === 'area' && pricingStrategy === 'per_pack_length') setPricingStrategy('per_pack_area');
+                        if (t.value === 'lineal' && pricingStrategy === 'per_pack_area') setPricingStrategy('per_pack_length');
+                      }}
+                      className="mt-0.5 w-4 h-4 accent-orange-500"
+                    />
+                    <span>
+                      <span className="block text-sm text-slate-900">{t.label}</span>
+                      <span className="block text-xs text-slate-400">{t.hint}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Pricing */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Pricing</label>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <span className="block text-xs text-slate-500 mb-1">Material (${metric ? '$' : '$'}/{rateUnit})</span>
+                  <input
+                    type="number" step="0.01" min="0" value={materialRate}
+                    onChange={e => setMaterialRate(e.target.value)}
+                    placeholder="e.g. 18.50" disabled={isPack}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
+                  />
+                </div>
+                <div className="flex-1">
+                  <span className="block text-xs text-slate-500 mb-1">Labour (${metric ? '$' : '$'}/{rateUnit})</span>
+                  <input
+                    type="number" step="0.01" min="0" value={labourRate}
+                    onChange={e => setLabourRate(e.target.value)}
+                    placeholder="e.g. 11.00"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Fixed-quantity pack option */}
+              {packStrategies.length > 0 && (
+                <label className="mt-2 flex items-start gap-2.5 p-2.5 rounded-xl border border-slate-200 cursor-pointer hover:border-orange-200 hover:bg-orange-50/40">
+                  <input
+                    type="checkbox"
+                    checked={isPack}
+                    onChange={e => setPricingStrategy(e.target.checked ? packStrategies[0] : 'per_unit')}
+                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                  />
+                  <span className="flex-1">
+                    <span className="block text-sm text-slate-900">Fixed quantity (sold in packs)</span>
+                    {isPack && (
+                      <span className="mt-2 flex gap-2">
+                        <span className="flex-1">
+                          <span className="block text-xs text-slate-500 mb-1">Pack price ($)</span>
+                          <input
+                            type="number" step="0.01" min="0" value={packPrice}
+                            onChange={e => setPackPrice(e.target.value)} placeholder="e.g. 500"
+                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                          />
+                        </span>
+                        <span className="flex-1">
+                          <span className="block text-xs text-slate-500 mb-1">Pack size ({measurementType === 'area' ? areaUnit : lengthUnit})</span>
+                          <input
+                            type="number" step="0.01" min="0" value={packSize}
+                            onChange={e => setPackSize(e.target.value)} placeholder="e.g. 50"
+                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                          />
+                        </span>
+                      </span>
+                    )}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            {/* Waste */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Waste</label>
+              <div className="flex gap-2">
+                <select
+                  value={wasteType}
+                  onChange={e => setWasteType(e.target.value as TakeoffComponentSpec['wasteType'])}
+                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                >
+                  {WASTE_TYPES.map(w => (
+                    <option key={w.value} value={w.value}>{w.label}</option>
+                  ))}
+                </select>
+                {wasteType !== 'none' && (
+                  <div className="w-32">
+                    <input
+                      type="number" step="0.01" min="0" value={wasteValue}
+                      onChange={e => setWasteValue(e.target.value)}
+                      placeholder={wasteType === 'percent' ? '%' : rateUnit}
+                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Pitch - roofing only; flooring has no pitch concept. */}
+            {measurementType !== 'quantity' && trade !== 'flooring' && (
+              <div>
+                <label className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 cursor-pointer hover:border-orange-200 hover:bg-orange-50/40">
+                  <input
+                    type="checkbox"
+                    checked={pitchEnabled}
+                    onChange={e => setPitchEnabled(e.target.checked)}
+                    className="w-4 h-4 accent-orange-500"
+                  />
+                  <span className="text-sm text-slate-900">Apply pitch calculation</span>
+                </label>
+                {pitchEnabled && (
+                  <div className="mt-2 px-1">
+                    <span className="block text-xs text-slate-500 mb-1">Pitch factor</span>
+                    <div className="flex rounded-full border border-slate-200 overflow-hidden w-fit">
+                      <button
+                        type="button"
+                        onClick={() => setPitchType('rafter')}
+                        className={`px-3 py-1.5 text-xs font-medium ${pitchType === 'rafter' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        Rafter
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPitchType('valley_hip')}
+                        className={`px-3 py-1.5 text-xs font-medium ${pitchType === 'valley_hip' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        Hip / Valley
+                      </button>
+                    </div>
+                    <p className="mt-1.5 text-xs text-slate-400">
+                      Quantities measured on the plan get multiplied by the pitch factor of each roof area.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="mt-6 flex gap-2 justify-end">
+            <button onClick={onClose} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!canSave}
+              className="px-5 py-2 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40"
+            >
+              {isNew ? 'Create component' : 'Save changes'}
+            </button>
+          </div>
+        </div>
       </div>
-      <p className="qc-free-help">These settings are for this takeoff session. They travel with the takeoff when you choose to save it to QuoteCore+.</p>
     </div>
-  </QcDialog>;
+  );
 }

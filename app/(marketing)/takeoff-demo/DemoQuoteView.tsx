@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
-import type { DemoFinishPayload } from './demo-data/baseline';
+import type { DemoFinishPayload } from './DemoWorkstation';
 
 /**
  * Demo customer quote view.

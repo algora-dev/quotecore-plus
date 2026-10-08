@@ -1,6 +1,4 @@
 'use server';
-import { isDemoCompany } from '@/app/lib/demo/context';
-
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { alertEnabled, emailAlertEnabled } from '@/app/lib/alerts/prefs';
@@ -42,9 +40,6 @@ export async function getQuoteContactInfo(token: string): Promise<{
     .select('id, customer_name, quote_number, cq_company_name, cq_company_email, created_by_user_id, company_id')
     .eq('acceptance_token', token)
     .single();
-
-  // Demo documents use the separate expiring demo-token surface, never production notifications.
-  if (quote && await isDemoCompany(quote.company_id)) throw new Error('This demonstration document is only available through its expiring demo link.');
 
   if (!quote) return null;
 
@@ -124,9 +119,6 @@ export async function submitRevisionRequest(
     .select('id, company_id, quote_number, customer_name, accepted_at, declined_at, acceptance_token_expires_at, withdrawn_at')
     .eq('acceptance_token', token)
     .single();
-
-  // Demo documents use the separate expiring demo-token surface, never production notifications.
-  if (quote && await isDemoCompany(quote.company_id)) throw new Error('This demonstration document is only available through its expiring demo link.');
 
   if (fetchErr || !quote) {
     return { success: false, error: 'Quote not found.' };
@@ -350,9 +342,6 @@ export async function respondToQuote(token: string, action: 'accept' | 'decline'
     .select('id, company_id, customer_name, quote_number, accepted_at, declined_at, acceptance_token_expires_at, withdrawn_at')
     .eq('acceptance_token', token)
     .single();
-
-  // Demo documents use the separate expiring demo-token surface, never production notifications.
-  if (quote && await isDemoCompany(quote.company_id)) throw new Error('This demonstration document is only available through its expiring demo link.');
 
   if (fetchErr || !quote) throw new Error('Quote not found');
   if (quote.accepted_at || quote.declined_at) throw new Error('This quote has already been responded to');

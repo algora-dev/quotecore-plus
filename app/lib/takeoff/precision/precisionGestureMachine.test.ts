@@ -125,7 +125,7 @@ test('tap priority 3: explicit placement state, nothing armed → exactly one po
   assert.deepEqual(click.effects, []);
 });
 
-test('tap priority 4: closed-outline review - blank taps NEVER add vertices', () => {
+test('tap priority 4: closed-outline review — blank taps NEVER add vertices', () => {
   const e = env(); // canAppend false, nothing armed
   const s = run(IDLE_GESTURE_STATE, [{ type: 'pointerDown', pointerId: 1, position: p(10, 10) }], e);
   const r = dispatchGesture(s, { type: 'pointerUp', pointerId: 1 }, e);
@@ -189,7 +189,7 @@ test('T08: lostpointercapture AFTER a completed pointer-up does NOT roll back th
   s = dispatchGesture(s, { type: 'pointerUp', pointerId: 1 }, e).state;
   const r = dispatchGesture(s, { type: 'captureLost', pointerId: 1 }, e);
   assert.equal(r.state.phase, 'idle');
-  assert.deepEqual(r.effects, []); // committed move stands - completion token path
+  assert.deepEqual(r.effects, []); // committed move stands — completion token path
   assert.equal(r.state.completedSequences, 1);
 });
 
@@ -296,7 +296,7 @@ test('controller buttons live outside the machine (§5.3 row: buttons do not for
 
 // ─── Environment freshness (T11 sibling guarantee) ──────────────────────────
 
-test('slop decision reads the environment at EVENT time - arming between press and move switches to move', () => {
+test('slop decision reads the environment at EVENT time — arming between press and move switches to move', () => {
   let armed = false;
   const e = env({ armedVertexId: () => (armed ? 'v1' : null) });
   const s = dispatchGesture(IDLE_GESTURE_STATE, { type: 'pointerDown', pointerId: 1, position: p(0, 0) }, e).state;

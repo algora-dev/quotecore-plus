@@ -3,7 +3,7 @@
 // Replaces the M3 point grid while calibrating: Start/End endpoint selection,
 // "Place end point" to accept the current point without a drag (U3: no
 // separate Adjust button - selecting Start/End re-arms). Customer
-// copy per §1.3 (Start, End, Point - no "vertex"/"m/px" jargon). 48×48
+// copy per §1.3 (Start, End, Point — no "vertex"/"m/px" jargon). 48×48
 // targets, states not colour-only (labels + status text), presentational only.
 
 import type { ReactNode } from 'react';
@@ -45,7 +45,7 @@ export type CalibrationWizardStep = 'place-a' | 'adjust-a' | 'place-b' | 'adjust
 export interface EndpointControllerRailProps {
   /** Which endpoint (A or B) the current placement/adjust step targets. */
   step: CalibrationWizardStep;
-  /** 'a' | 'b' | null - currently selected+armed endpoint. */
+  /** 'a' | 'b' | null — currently selected+armed endpoint. */
   selected: 'a' | 'b' | null;
   /** True while an endpoint is armed for off-point dragging. */
   armed: boolean;

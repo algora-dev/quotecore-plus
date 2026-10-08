@@ -179,7 +179,7 @@ test('delete on open path may reduce to zero points (returns to placement state)
 
 test('crossing draft from an edit stays editable with save blocked; undo available', () => {
   // Spec §6.4/§8.4: an invalid draft (however produced) is never silently
-  // saved or rearranged - it stays editable with blocking validation + undo.
+  // saved or rearranged — it stays editable with blocking validation + undo.
   const s = beginSquare();
   // Move (100,100) far left across the polygon: edge (100,0)->(-100,50)
   // crosses the closing edge (0,100)->(0,0).

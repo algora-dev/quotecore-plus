@@ -12,7 +12,7 @@
 //  - pointer capture on pointerdown; explicit pointercancel / unexpected
 //    lostpointercapture / window blur / surface resize → layoutInterrupt or
 //    cancellation rollback (a captureLost AFTER a completed pointer-up is
-//    inert - the machine's completion token guarantees it);
+//    inert — the machine's completion token guarantees it);
 //  - `touch-action: none` ONLY on this surface (inline style; panels and forms
 //    keep native scrolling);
 //  - the surface context menu is suppressed (not text selection elsewhere);
@@ -57,7 +57,7 @@ export interface PrecisionInputHandlers {
   onViewGestureEnd: () => void;
   /** A view gesture just began (freeze hook for the caller). */
   onViewGestureStart?: () => void;
-  /** Non-move gesture cancelled (pending/pan/two-finger) - informational. */
+  /** Non-move gesture cancelled (pending/pan/two-finger) — informational. */
   onGestureCancelled: () => void;
 }
 
@@ -87,11 +87,11 @@ export function usePrecisionPointerInput(
   const [phase, setPhase] = useState<GesturePhase>('idle');
   const stateRef = useRef<GestureState>(IDLE_GESTURE_STATE);
   const frozenRef = useRef<GestureFrozen | null>(null);
-  // Latest handler/env references - decisions always use CURRENT closures
+  // Latest handler/env references — decisions always use CURRENT closures
   // (§5.3/T11: rapid interactions must not read stale state).
   const handlersRef = useRef(handlers);
   const envRef = useRef(env);
-  // Latest handler/env references - decisions always use CURRENT closures
+  // Latest handler/env references — decisions always use CURRENT closures
   // (§5.3/T11). Synced in an effect (react-hooks/refs): effects run after
   // render but strictly before any pointer event can be dispatched.
   useEffect(() => {
@@ -105,7 +105,7 @@ export function usePrecisionPointerInput(
   // and can REMOUNT (the outline overlay unmounts while the calibration tool
   // is active and remounts afterwards). A dependency-driven effect never
   // re-runs in those cases, leaving the listeners bound to null or to a
-  // detached element - every tap/drag silently ignored. Tracking the attached
+  // detached element — every tap/drag silently ignored. Tracking the attached
   // element makes re-attachment automatic and idempotent.
   const attachedSurfaceRef = useRef<HTMLElement | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -237,8 +237,8 @@ export function usePrecisionPointerInput(
     const onPointerDown = (ev: PointerEvent) => {
       // T09 (M7 fix): DOM controls (sheets, dialogs, forms) mounted INSIDE the
       // overlay must own their input. Engaging pointer capture for a press on
-      // such a control would retarget the whole pointer sequence - including
-      // the click - to the surface, so button handlers would never fire.
+      // such a control would retarget the whole pointer sequence — including
+      // the click — to the surface, so button handlers would never fire.
       // Only presses that begin on the surface itself own the gesture.
       if (ev.target !== surface) return;
       if (ev.button !== 0 && ev.pointerType === 'mouse') return; // explicit mouse-left rule (§5.6)

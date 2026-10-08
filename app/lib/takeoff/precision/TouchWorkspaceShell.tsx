@@ -1,9 +1,9 @@
 'use client';
-// Mobile takeoff M8: touch presentation shell - OWNER PRESCRIPTION 2026-09-21
+// Mobile takeoff M8: touch presentation shell — OWNER PRESCRIPTION 2026-09-21
 // (refined 16:59: NO step-switching tab row).
 //
 // FULL-BLEED CANVAS: edge-to-edge, full height. No top strip and no bottom
-// strip - the plan canvas gets every pixel that is not the control rail.
+// strip — the plan canvas gets every pixel that is not the control rail.
 //
 // Single RIGHT-SIDE RAIL (208px normally, 272px during number entry,
 // still operable at 568×320) showing ONLY the current step's controls: the
@@ -23,7 +23,7 @@
 // children) is ALWAYS mounted, including in desktop presentation, so
 // switching Desktop ↔ Mobile/touch never remounts the workstation. In desktop
 // presentation every wrapper is `display: contents` / `hidden` and the root
-// carries the exact original `w-[125%] -ml-[12.5%]` widening classes - the
+// carries the exact original `w-[125%] -ml-[12.5%]` widening classes — the
 // desktop layout is bit-for-bit (extra contents-divs only, no layout effect).
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -48,7 +48,7 @@ interface TouchWorkspaceShellProps {
   children: ReactNode;
   /** e.g. "Plan page 1". */
   planLabel: string;
-  /** M8 (16:59 refinement): compact current-step label at the rail top - the
+  /** M8 (16:59 refinement): compact current-step label at the rail top — the
    *  flow, not a tab row, drives which control set is shown. */
   railTitle: string;
   /** Rail content for the CURRENT step (its own controls only). */
@@ -82,7 +82,7 @@ const VIEW_OPTIONS: readonly { value: WorkspaceViewPreference; label: string }[]
  *  M9: press feedback (scale + brightness, CSS in globals.css scoped to the
  *  immersive attribute) and haptics (navigator.vibrate(10) where supported,
  *  silent no-op otherwise) are applied document-wide while the touch
- *  workspace is active - see the delegated listener in the shell - so every
+ *  workspace is active — see the delegated listener in the shell — so every
  *  interactive control gets them, not only TouchButton. */
 function TouchButton({
   onClick,
@@ -145,25 +145,23 @@ export function TouchWorkspaceShell({
   // viewport must not push the return-to-touch button off a phone screen.
   const viewportBounds = useVisualViewportBounds(active || mounted);
   const [backGuardOpen, setBackGuardOpen] = useState(false);
-  // Landscape lock (owner 2026-10-07): phone-class landscape hands a third of
-  // the canvas to browser chrome (address/bookmark bars) - blocked with a
-  // rotate prompt. Supersedes the old "turn sideways" hint (§3.2).
-  const [landscapeBlocked, setLandscapeBlocked] = useState(false);
-  // M9: owner-run diagnostics - 'Send diagnostics' in the hamburger menu.
+  const [portraitHintDismissed, setPortraitHintDismissed] = useState(false);
+  const [showPortraitHint, setShowPortraitHint] = useState(false);
+  // M9: owner-run diagnostics — 'Send diagnostics' in the hamburger menu.
   const [diagState, setDiagState] = useState<
     { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; id: string } | { kind: 'failed'; error: string }
   >({ kind: 'idle' });
   useImmersiveTakeoffAttribute(active);
 
   // M9: diagnostics capture hooks (window errors, unhandled rejections,
-  // failed fetches) - installed once per page; intentionally never removed.
+  // failed fetches) — installed once per page; intentionally never removed.
   useEffect(() => {
     if (!active) return;
     installTakeoffDiagnostics();
   }, [active]);
 
   // M9 TOUCH FEEL: haptic feedback for every enabled button in the touch
-  // presentation via one delegated capture-phase listener - navigator.vibrate
+  // presentation via one delegated capture-phase listener — navigator.vibrate
   // is a no-op on platforms without support (iOS Safari), never throws.
   useEffect(() => {
     if (!active) return;
@@ -189,26 +187,22 @@ export function TouchWorkspaceShell({
     setDiagState(result.ok ? { kind: 'sent', id: result.id } : { kind: 'failed', error: result.error });
   }, []);
 
-  // Landscape lock (owner 2026-10-07): phone-class landscape (coarse pointer +
-  // short edge at most the touch threshold 820px) is blocked with a rotate
-  // prompt - browser chrome (address/bookmark bars) steals too much canvas.
-  // Tablets and desktops are unaffected (fine pointer or short edge > 820).
+  // Portrait detection via matchMedia (no orientation lock; §3.2). Dismissal
+  // persists for the session only.
   useEffect(() => {
-    if (!active) { setLandscapeBlocked(false); return; }
-    const orientationMq = window.matchMedia('(orientation: landscape)');
-    const pointerMq = window.matchMedia('(pointer: coarse)');
-    const update = () => {
-      const shortEdge = Math.min(window.innerWidth, window.innerHeight);
-      setLandscapeBlocked(orientationMq.matches && pointerMq.matches && shortEdge <= 820);
-    };
-    update();
-    orientationMq.addEventListener('change', update);
-    window.addEventListener('resize', update);
-    return () => {
-      orientationMq.removeEventListener('change', update);
-      window.removeEventListener('resize', update);
-    };
-  }, [active]);
+    if (!active) return;
+    let mq: MediaQueryList | null = null;
+    try {
+      mq = window.matchMedia('(orientation: portrait)');
+    } catch {
+      mq = null;
+    }
+    if (!mq) return;
+    const update = () => setShowPortraitHint(mq!.matches && !portraitHintDismissed);
+    queueMicrotask(update);
+    mq.addEventListener('change', update);
+    return () => mq!.removeEventListener('change', update);
+  }, [active, portraitHintDismissed]);
 
   // U1 (plan section 3.2): lock underlying page scrolling while the immersive
   // touch presentation is active. Pre-existing styles and scroll position are
@@ -242,7 +236,7 @@ export function TouchWorkspaceShell({
   }, [exitGuard, router, backHref, busy]);
 
   // Desktop presentation: root keeps the EXACT original widening classes and
-  // every intermediate wrapper is display:contents - layout bit-for-bit.
+  // every intermediate wrapper is display:contents — layout bit-for-bit.
   return (
     <div
       className={
@@ -274,7 +268,7 @@ export function TouchWorkspaceShell({
           : undefined
       }
     >
-      {/* Canvas slot - FULL-BLEED (M8): every pixel left of the rail, full
+      {/* Canvas slot — FULL-BLEED (M8): every pixel left of the rail, full
           height. Stable mount position for the workstation. */}
       <div className={active ? 'relative min-w-0 flex-1 overflow-hidden bg-slate-950' : 'contents'}>
         {/* U1 (plan section 3.1): opaque, isolated touch presentation. While
@@ -292,24 +286,24 @@ export function TouchWorkspaceShell({
           {children}
         </div>
         {active && overlay}
-        {/* Landscape lock (owner 2026-10-07): full-cover rotate prompt above
-            every sheet/rail layer while a phone-class device is sideways. */}
-        {active && landscapeBlocked && (
-          <div className="absolute inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-slate-950 px-10 text-center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-14 w-14 text-[#FF6B35]" aria-hidden="true">
-              <rect x="8.5" y="3.5" width="7" height="17" rx="2" />
-              <path d="M5.5 8.5A7.5 7.5 0 0 1 8 5" strokeLinecap="round" />
-              <path d="M5.5 8.5V6M5.5 8.5H8" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M18.5 15.5A7.5 7.5 0 0 1 16 19" strokeLinecap="round" />
-              <path d="M18.5 15.5V18M18.5 15.5H16" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <div className="text-base font-semibold text-white">Rotate your phone to portrait</div>
-            <div className="max-w-xs text-sm text-slate-400">
-              The takeoff workspace is built for portrait. Sideways, the browser&rsquo;s address and bookmark bars take too much of the screen.
-            </div>
+        {/* Portrait hint — dismissible, FLOATS over the canvas (M8), no CSS
+            rotation (§3.2). z-40 keeps it visible above sheets/modals. */}
+        {active && showPortraitHint && (
+          <div className="absolute inset-x-2 top-2 z-40 flex items-center gap-2 rounded-xl bg-slate-800/95 px-3 py-2 text-xs text-slate-200 shadow-lg">
+            <span className="min-w-0 flex-1">
+              Turn your phone sideways for more drawing space. You can continue in portrait.
+            </span>
+            <button
+              type="button"
+              aria-label="Dismiss turn-phone hint"
+              onClick={() => setPortraitHintDismissed(true)}
+              className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold hover:bg-white/20"
+            >
+              OK
+            </button>
           </div>
         )}
-        {/* O16: dirty-draft Back guard - Save / Discard / Stay. */}
+        {/* O16: dirty-draft Back guard — Save / Discard / Stay. */}
         {active && backGuardOpen && exitGuard?.dirty && (
           <div className="absolute inset-0 z-30 flex items-center justify-center p-4" role="dialog" aria-label="Unsaved takeoff edits">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setBackGuardOpen(false)} aria-hidden="true" />
@@ -352,7 +346,7 @@ export function TouchWorkspaceShell({
         )}
       </div>
 
-      {/* M8 (16:59 refinement) FLOW-DRIVEN RAIL - no step-switching tabs.
+      {/* M8 (16:59 refinement) FLOW-DRIVEN RAIL — no step-switching tabs.
           Compact current-step label + Menu (⋯); only the current step's
           controls; content scrolls internally so the rail can never overflow
           the screen. */}
@@ -441,7 +435,7 @@ export function TouchWorkspaceShell({
               <div className="text-center text-[11px] text-slate-500">
                 Saved on this device for takeoff only.
               </div>
-              {/* M9: owner-run diagnostics - POST the recent-events buffer and
+              {/* M9: owner-run diagnostics — POST the recent-events buffer and
                   surface the stored reference id. */}
               <TouchButton
                 label="Send diagnostics"
@@ -454,7 +448,7 @@ export function TouchWorkspaceShell({
               </TouchButton>
               {diagState.kind === 'sent' && (
                 <div role="status" className="rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-2 text-[11px] text-emerald-200">
-                  Diagnostics sent - ref {diagState.id.slice(0, 8)}.
+                  Diagnostics sent — ref {diagState.id.slice(0, 8)}.
                 </div>
               )}
               {diagState.kind === 'failed' && (

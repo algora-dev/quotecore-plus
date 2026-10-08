@@ -107,9 +107,9 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     date: '2026-08-31',
     lastModified: '2026-08-31',
     faqs: [
-      { question: 'Is QuoteCore+ custom software?', answer: "It's configurable software. The platform is purpose-built for roofing estimating and commercial workflows, but the content - your components, products, prices, labour, waste rules and documents - is entirely yours. That gets you the fit of custom software without funding a from-scratch build." },
+      { question: 'Is QuoteCore+ custom software?', answer: "It's configurable software. The platform is purpose-built for roofing estimating and commercial workflows, but the content — your components, products, prices, labour, waste rules and documents — is entirely yours. That gets you the fit of custom software without funding a from-scratch build." },
       { question: 'What does custom roofing software cost vs QuoteCore+?', answer: 'QuoteCore+ is a subscription from $19/month. A bespoke roofing platform is a five-to-six figure development project. If configuration solves your problem, that difference stays in your pocket.' },
-      { question: 'Can QuoteCore+ be customised further if I need something specific?', answer: 'Configuration covers products, pricing, labour, waste, documents and workflow. Requirements beyond that - portals, unique integrations, standalone applications - are handled by our development partner T3 Labs.' },
+      { question: 'Can QuoteCore+ be customised further if I need something specific?', answer: 'Configuration covers products, pricing, labour, waste, documents and workflow. Requirements beyond that — portals, unique integrations, standalone applications — are handled by our development partner T3 Labs.' },
       { question: 'Who is T3 Labs?', answer: 'T3 Labs is the product studio behind QuoteCore+. They build custom estimating, pricing, portal and workflow software for businesses whose requirements genuinely exceed what existing platforms offer.' },
     ],
   },
@@ -139,14 +139,14 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     category: 'construction-quoting',
     title: 'How to Turn a Spreadsheet Into a Professional Quote (3 Ways)',
     description:
-      'Three ways to turn your Excel or Google Sheets estimate into a professional quote - manual, free converter, or reusable components. Free, no signup.',
+      'Three ways to turn your Excel or Google Sheets estimate into a professional quote — manual, free converter, or reusable components. Free, no signup.',
     date: '2026-08-29',
     lastModified: '2026-08-29',
     faqs: [
       { question: 'Is there an Excel to quote converter?', answer: 'Yes. The free Quote Generator converts pasted spreadsheet rows into a formatted, downloadable quote with no account required. To convert the pricing itself into reusable rules, the Catalog-to-Component Converter turns CSV rows into Smart Components.' },
-      { question: 'Can I turn a Google Sheets estimate into a quote?', answer: 'Yes - the same three options apply. Copy rows out of Google Sheets and paste them into the free quote generator, or export the sheet as CSV and convert your pricing into reusable components.' },
-      { question: 'Spreadsheet vs quoting software - which should I use for quotes?', answer: 'Spreadsheets work for estimating, but the copy-paste step into a customer document is where errors and time pile up. Quoting software removes that step by generating the customer document directly from the priced estimate.' },
-      { question: 'How do I stop rebuilding the same quote every job?', answer: 'Convert your pricing into reusable Smart Components once. After that, each quote reuses the same priced components - measure the job, drop them in, and the totals recalculate.' },
+      { question: 'Can I turn a Google Sheets estimate into a quote?', answer: 'Yes — the same three options apply. Copy rows out of Google Sheets and paste them into the free quote generator, or export the sheet as CSV and convert your pricing into reusable components.' },
+      { question: 'Spreadsheet vs quoting software — which should I use for quotes?', answer: 'Spreadsheets work for estimating, but the copy-paste step into a customer document is where errors and time pile up. Quoting software removes that step by generating the customer document directly from the priced estimate.' },
+      { question: 'How do I stop rebuilding the same quote every job?', answer: 'Convert your pricing into reusable Smart Components once. After that, each quote reuses the same priced components — measure the job, drop them in, and the totals recalculate.' },
     ],
   },
   {
@@ -184,9 +184,9 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'simple-roofing-estimating-software',
     category: 'roofing-estimating',
-    title: 'I Need Better Estimating Software - But I Don\u2019t Want Another Complicated App',
+    title: 'I Need Better Estimating Software — But I Don\u2019t Want Another Complicated App',
     description:
-      'Need better roofing estimating software but don\u2019t want another complicated app? Learn what simple estimating software should actually do - and how to switch without the setup pain.',
+      'Need better roofing estimating software but don\u2019t want another complicated app? Learn what simple estimating software should actually do — and how to switch without the setup pain.',
     date: '2026-08-26',
     lastModified: '2026-08-26',
     faqs: [
@@ -230,7 +230,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     category: 'comparisons',
     title: 'Creating Roofing Quotes: Spreadsheet vs Quoting Software',
     description:
-      'Turning a finished roofing estimate into the customer quote - spreadsheet workflow vs quoting software, with a side-by-side comparison and a quote QA checklist.',
+      'Turning a finished roofing estimate into the customer quote — spreadsheet workflow vs quoting software, with a side-by-side comparison and a quote QA checklist.',
     date: '2026-05-11',
     lastModified: '2026-08-29',
   },
@@ -264,9 +264,9 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'best-quoting-software-nz',
     category: 'comparisons',
-    title: 'Best Quoting Software NZ 2026 - Pricing Compared',
+    title: 'Best Quoting Software NZ 2026 — Pricing Compared',
     description:
-      'Six quoting tools for NZ tradies compared on NZD pricing, GST and features: QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact and Xero - from free to $149/mo, side by side.',
+      'Six quoting tools for NZ tradies compared on NZD pricing, GST and features: QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact and Xero — from free to $149/mo, side by side.',
     date: '2026-07-15',
     lastModified: '2026-09-21',
   },
@@ -556,7 +556,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     category: 'contractor-business',
     title: 'How to Follow Up on a Quote and Win More Jobs',
     description:
-      'The follow-up timing that doubles quote acceptance, plus copy-paste message templates for contractors - follow up without sounding pushy or desperate.',
+      'The follow-up timing that doubles quote acceptance, plus copy-paste message templates for contractors — follow up without sounding pushy or desperate.',
     date: '2026-07-31',
     lastModified: '2026-09-21',
     video: {
@@ -613,7 +613,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     faqs: [
       { question: 'Is estimating the same as quoting?', answer: 'No. Estimating calculates the true cost of delivering the job. Quoting presents a price to the customer. They are connected stages, but they serve different purposes and produce different outputs.' },
       { question: 'Can I estimate without creating a quote?', answer: 'Yes. Estimating is an internal exercise. You can estimate a job to decide whether to tender, what margin to target, or whether the work fits your schedule. You only create a quote when you are ready to present a price to the customer.' },
-      { question: 'Do I need separate software for estimating and quoting?', answer: 'Not necessarily. QuoteCore+ handles both in one workflow - the estimate is built from takeoff measurements and Smart Components, and the quote is generated from the same data.' },
+      { question: 'Do I need separate software for estimating and quoting?', answer: 'Not necessarily. QuoteCore+ handles both in one workflow — the estimate is built from takeoff measurements and Smart Components, and the quote is generated from the same data.' },
       { question: 'What\'s included in a roofing estimate vs a quote?', answer: 'An estimate typically includes material quantities, waste allowances, labour hours, rates, and a total cost. A quote includes the price the customer pays, scope of work, terms, payment schedule, and validity period. The quote may simplify or group the estimate\'s line items for presentation.' },
     ],
   },
@@ -643,7 +643,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     faqs: [
       { question: 'Is digital roof takeoff accurate?', answer: 'Yes, when the plan is accurately scaled and the software uses the embedded scale correctly. Digital takeoff eliminates the measurement error of a physical scale ruler and the transcription error of moving numbers from paper to spreadsheet. Always verify key dimensions, especially if the plan may have been re-scaled.' },
       { question: 'Do I need special hardware for digital takeoff?', answer: 'No. QuoteCore+ runs in a web browser on any laptop or desktop. You upload a PDF plan and measure on screen. No drawing tablet, large monitor, or specialised hardware is required.' },
-      { question: 'Can AI really measure a roof from a plan?', answer: 'AI Scan Assist can identify roof areas, ridges, hips, valleys, and barges from a digital roof plan. It does the initial detection - you review and adjust every measurement before committing. The AI speeds up the first pass, but the estimator stays in control of the final numbers.' },
+      { question: 'Can AI really measure a roof from a plan?', answer: 'AI Scan Assist can identify roof areas, ridges, hips, valleys, and barges from a digital roof plan. It does the initial detection — you review and adjust every measurement before committing. The AI speeds up the first pass, but the estimator stays in control of the final numbers.' },
       { question: 'How long does digital takeoff take compared to manual?', answer: 'For a standard residential roof, digital takeoff typically takes 10-20 minutes compared to 45-90 minutes for manual. With AI Scan Assist, the initial detection can take as little as 5-10 minutes, with additional time for review and adjustment. The exact time depends on roof complexity and plan quality.' },
     ],
   },
@@ -674,7 +674,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     faqs: [
       { question: 'What is a typical waste percentage for roofing?', answer: 'It depends on the material. Metal roofing typically needs 5-10%, concrete tiles 5-8%, clay tiles 7-12%, asphalt shingles 10-15%, and slate 15-20%. Roof complexity, crew experience, and site conditions also affect the actual waste generated.' },
       { question: 'How do I calculate roofing waste?', answer: 'Calculate the net quantity (measured area or length), apply the waste percentage for the material type, and round up to the nearest supplier pack size. For example: 120 m² net area at 8% waste = 129.6 m² gross. If packs cover 2.4 m², order 54 packs.' },
-      { question: 'Does roof pitch affect waste?', answer: 'Pitch itself does not directly increase waste, but steeper roofs can be harder to work on, which may increase breakage and cutting errors. Pitch does affect the total surface area - a steeper roof has more covering area than the plan area, which must be calculated correctly before applying waste.' },
+      { question: 'Does roof pitch affect waste?', answer: 'Pitch itself does not directly increase waste, but steeper roofs can be harder to work on, which may increase breakage and cutting errors. Pitch does affect the total surface area — a steeper roof has more covering area than the plan area, which must be calculated correctly before applying waste.' },
       { question: 'Can software calculate waste automatically?', answer: 'Yes. QuoteCore+ Smart Components™ store waste rules by material type. When you measure a roof area or length, the component applies the correct waste percentage and produces the gross quantity automatically. This eliminates manual calculation errors and ensures consistent allowances across jobs.' },
     ],
   },
@@ -758,7 +758,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     category: 'digital-takeoffs',
     title: 'How to Measure Walls & Cladding From Plans: Complete Takeoff Guide',
     description:
-      'Step-by-step: measure wall and cladding areas from plans and elevations - scale check, gables, irregular walls, opening deductions, material zones. Free PDF takeoff tool included.',
+      'Step-by-step: measure wall and cladding areas from plans and elevations — scale check, gables, irregular walls, opening deductions, material zones. Free PDF takeoff tool included.',
     date: '2026-08-30',
     lastModified: '2026-08-30',
     faqs: [
@@ -780,7 +780,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     category: 'digital-takeoffs',
     title: 'How to Measure Anything From PDF Plans: Areas, Lengths & Quantities',
     description:
-      'Measure areas, lengths and quantities directly from PDF construction plans - calibration, irregular shapes, opening deductions, elevations vs floor plans. Free online tool.',
+      'Measure areas, lengths and quantities directly from PDF construction plans — calibration, irregular shapes, opening deductions, elevations vs floor plans. Free online tool.',
     date: '2026-08-30',
     lastModified: '2026-08-30',
     faqs: [

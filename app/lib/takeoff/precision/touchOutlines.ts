@@ -3,19 +3,19 @@
 // O12/O13/O16).
 //
 // Pure, UI/IO-free orchestration AROUND the M1 command engine
-// (precisionEditor) - this module never mutates geometry itself and never
+// (precisionEditor) — this module never mutates geometry itself and never
 // performs IO. It provides:
 //
 // - Draft construction for the two outline origins (manual open-path creation
 //   §8.1; re-entry editing of a saved outline §8.5). The origin is
 //   PROVENANCE ONLY: manual and imported (M6 AI) outlines share the identical
 //   draft/validation/save path (spec §8.3), so M6 plugs in by passing
-//   origin: 'imported' - nothing else changes.
+//   origin: 'imported' — nothing else changes.
 // - Validation-aware review (blocking vs warning, plan-area preview from the
-//   CURRENT draft at the page's constant scale - never a ratio multiply of a
+//   CURRENT draft at the page's constant scale — never a ratio multiply of a
 //   stale area, §8.5).
 // - Save intents: 'update-in-place' for persisted geometry IDs (NEVER
-//   delete+insert - the patch_052 RPC updates the existing measurement row)
+//   delete+insert — the patch_052 RPC updates the existing measurement row)
 //   and 'create-new' for first-time outlines (existing handleSaveArea flow,
 //   unchanged).
 // - Constant-scale dependent recomputation through the EXISTING
@@ -64,7 +64,7 @@ export interface SavedOutlineRecord {
   points: readonly ScenePoint[];
 }
 
-/** Client-local outline ids (never persisted) - created by handleSaveArea
+/** Client-local outline ids (never persisted) — created by handleSaveArea
  *  (`area-<ts>`), the M3 harness (`harness-`) and manual drafts (`draft-`). */
 const CLIENT_ID_PREFIXES = ['area-', 'harness-', 'draft-'] as const;
 
@@ -127,7 +127,7 @@ export interface OutlineReview {
   closed: boolean;
   vertexCount: number;
   /** Plan-area preview derived from the CURRENT draft at the CURRENT scale
-   *  (§8.5) - null while the outline is open or invalid. */
+   *  (§8.5) — null while the outline is open or invalid. */
   planArea: number | null;
   perimeter: number;
 }
@@ -163,7 +163,7 @@ export function outlineReview(
 export type OutlineSaveIntent =
   | {
       kind: 'update-in-place';
-      /** Durable measurement-row id - the SAME row is updated, never
+      /** Durable measurement-row id — the SAME row is updated, never
        *  duplicated (O05/O12). */
       geometryId: string;
       quoteRoofAreaId: string | null;
@@ -191,7 +191,7 @@ export type OutlineSaveIntentResult =
 
 /**
  * The M1 `saveEdit` boundary specialised for outlines (§4.3/§11.3): the
- * returned intent tells the adapter WHICH existing authorised route to use -
+ * returned intent tells the adapter WHICH existing authorised route to use —
  * `update-in-place` → the patch_052 RPC through actions.ts; `create-new` →
  * the existing handleSaveArea flow (owner fields/name/pitch handled there).
  */
@@ -245,7 +245,7 @@ export function outlineSaveIntent(
 
 /** Page-scoped dependent records available to the adapter (geometry-free
  *  attached entries + geometry-bearing entries). Independent typed
- *  quantities (point counts) never enter recompute - the existing service
+ *  quantities (point counts) never enter recompute — the existing service
  *  skips them. */
 export interface OutlineDependents {
   measurements: readonly RecomputeMeasurementRecord[];
@@ -260,7 +260,7 @@ export interface OutlineRecomputeInput {
     pitch: number;
     quoteRoofAreaId?: string | null;
   };
-  /** Page scale BEFORE and AFTER the edit - identical: a geometry edit at
+  /** Page scale BEFORE and AFTER the edit — identical: a geometry edit at
    *  constant calibration scale (§8.5). */
   scale: OutlineScale;
   dependents: OutlineDependents;
@@ -310,7 +310,7 @@ export type AreaSaveErrorKind =
 
 /** Map a save error (RPC message or action error string) to a stable kind so
  *  presentations can offer reload/review on conflict while KEEPING the
- *  user's unsaved draft (O13 - never a force-overwrite invitation). */
+ *  user's unsaved draft (O13 — never a force-overwrite invitation). */
 export function classifyAreaSaveError(message: string): AreaSaveErrorKind {
   const m = message ?? '';
   if (/STALE_TAKEOFF_VERSION/i.test(m)) return 'stale-version';
@@ -326,7 +326,7 @@ export interface OutlineExitGuard {
   dirty: boolean;
 }
 
-/** True when the outline draft differs from its saved base (layer 2 only -
+/** True when the outline draft differs from its saved base (layer 2 only —
  *  transient gesture previews are not "unsaved edits"). */
 export function outlineExitGuard(session: PrecisionEditSession | null): OutlineExitGuard {
   return { dirty: session != null && isDirty(session) };
@@ -337,7 +337,7 @@ export type OutlineExitDecision = 'save' | 'discard' | 'stay';
 /**
  * Resolve an exit decision against a session (pure). 'stay' changes nothing;
  * 'discard' restores the saved base (the adapter then drops the draft) and
- * can NEVER roll back an already-acknowledged checkpoint save - the saved
+ * can NEVER roll back an already-acknowledged checkpoint save — the saved
  * base only ever advances through the authorised save path (O16). The
  * 'save' decision is executed by the adapter via outlineSaveIntent; this
  * helper deliberately performs no IO.

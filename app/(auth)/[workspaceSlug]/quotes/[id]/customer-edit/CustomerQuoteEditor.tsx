@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
 import { LineEditForm } from './LineEditForm';
-import { refreshDemoGuide } from '@/app/lib/demo/client-events';
 import { QcStudioToolbar, QcStudioInspectorHeading, QcStudioOverview, QcStudioSection } from '@/app/components/ui/v2/QcDocumentStudio';
 import { AddLineItemModal, type LineItemPayload } from '@/app/components/AddLineItemModal';
 import { EditHeaderModal } from './EditHeaderModal';
@@ -146,7 +145,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   // values with the stale initial state (e.g. 0 for old quotes where the
   // margin fields were null).
   const [marginsDirty, setMarginsDirty] = useState(false);
-  // Margin visibility warning: shown before "Save Quote" when showMarginInPreview is true.
+  // Margin visibility warning: shown before "Save & Return" when showMarginInPreview is true.
   const [showMarginSaveWarning, setShowMarginSaveWarning] = useState(false);
   // Used by handleApplyGlobalMargins to pass reset lines into handleSave without
   // fighting React's batched state updates.
@@ -703,23 +702,11 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setCompanyLogoUrl(template.company_logo_url || defaultLogoUrl || '');
     setFooterText(template.footer_text || '');
 
-    // Persist immediately: applying a template used to be local state only, so
-    // navigating away (or re-opening the task) silently dropped it. A full Save
-    // still re-persists everything.
-    void saveCustomerQuoteBranding(quote.id, {
-      companyName: template.company_name || '',
-      companyAddress: template.company_address || '',
-      companyPhone: template.company_phone || '',
-      companyEmail: template.company_email || '',
-      companyLogoUrl: template.company_logo_url || defaultLogoUrl || '',
-      footerText: template.footer_text || '',
-    }).catch(() => undefined);
-
     setIsDirty(true);
   }
 
   // AGENT-TODO P5-SAVE-01 (Gavin): the existing save catches failures without
-  // returning a success result; Save Quote still navigates after awaiting it.
+  // returning a success result; Save & return still navigates after awaiting it.
   // Preserve this owned contract here; add an explicit success gate separately.
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -805,9 +792,6 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       setLastSaved(new Date());
       setIsDirty(false);
       linesOverrideRef.current = null;
-      // Demo guide: server acks guide steps on this save - refresh the helper now
-      // so it reacts instantly instead of waiting for the next poll.
-      refreshDemoGuide();
     } catch (err) {
       console.error('Failed to save:', err);
       alert('Failed to save changes. Please try again.');
@@ -882,7 +866,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
   // Phase 5B: UI selection does not own data or document saving.
   const studioOptions = [
-    { id: 'header', label: 'Company & Logo (Header)', description: 'Your details on this document' },
+    { id: 'header', label: 'Company & logo', description: 'Your details on this document' },
     { id: 'appearance', label: 'Prices & quantities', description: 'Choose what the recipient sees' },
     { id: 'footer', label: 'Footer & terms', description: 'Notes and conditions' },
     { id: 'templates', label: 'Branding templates', description: 'Load or save your branding' },
@@ -915,12 +899,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         status={<QcDocumentSaveState saving={saving} dirty={isDirty} lastSaved={lastSaved} />}
         actions={<QcButton variant="primary" size="md" type="submit"
                 onClick={async () => {
-                  // Only warn when a margin actually exists (owner 2026-10-04): the
-                  // old gate fired for every quote with the preview flag on,
-                  // even when no margin was ever added.
-                  const hasActualMargin = globalMarginPercent > 0 || globalLaborMarginPercent > 0
-                    || lines.some(l => (l.lineMarginPercent ?? 0) > 0 || (l.lineLaborMarginPercent ?? 0) > 0);
-                  if (showMarginInPreview && hasActualMargin) {
+                  if (showMarginInPreview) {
                     setShowMarginSaveWarning(true);
                     return;
                   }
@@ -932,7 +911,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 data-copilot="cl-save-return"
                 
               >
-                {saving ? 'Saving...' : 'Save Quote'}
+                {saving ? 'Saving...' : 'Save & return'}
               </QcButton>}
       />
       <QcStudioToolbar section={studioSection} onSelect={selectStudioSection} options={studioOptions}
@@ -946,7 +925,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             onBack={() => selectStudioSection('document')} onCollapse={() => setPanelCollapsed(true)} />
           <QcStudioSection active={studioSection === 'document'}><QcStudioOverview options={studioOptions} onSelect={selectStudioSection} /></QcStudioSection>
           <QcStudioSection active={studioSection === 'header'}>
-            <QcDocumentSection title="Company & Logo (Header)" description="These details apply to this document. Customer and job details are managed in Job Space.">
+            <QcDocumentSection title="Company & logo" description="These details apply to this document. Customer and job details are managed in Job Space.">
               <label className="qc-document-order-label">Load from saved template
                 <select aria-label="Branding template" value="" data-copilot="cl-template-dropdown"
                   onChange={(e) => {
@@ -976,7 +955,6 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             {studioLine && <>
               <div className="qc-studio-line-controls"><div className="qc-document-line-toggles">
                 <label><input type="checkbox" checked={studioLine.isVisible} onChange={() => toggleVisibility(studioLine.id)} />Show item</label>
-                <label><input type="checkbox" checked={studioLine.showPrice} disabled={!studioLine.isVisible} onChange={() => toggleShowPrice(studioLine.id)} />Show price</label>
                 <label><input type="checkbox" checked={studioLine.includeInTotal} onChange={() => toggleIncludeInTotal(studioLine.id)} />In total</label>
                 <label><input type="checkbox" checked={studioLine.showUnits} disabled={!studioLine.isVisible} onChange={() => toggleShowUnits(studioLine.id)} />Show units</label>
               </div><p className="qc-document-help">Hidden items can still contribute to this quote's total when In total is selected.</p>
@@ -1668,7 +1646,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         }}
       />
 
-      {/* Margin visibility warning - shown before Save Quote when breakdown is customer-visible */}
+      {/* Margin visibility warning - shown before Save & Return when breakdown is customer-visible */}
       <ConfirmModal appearance="v2"
         open={showMarginSaveWarning}
         title="Margin breakdown is visible to the customer"

@@ -5,7 +5,7 @@ import { setDemoSwitch } from './actions';
 export const dynamic = 'force-dynamic';
 
 /**
- * Live Demo control room (Architecture V2 - docs/demo/ARCHITECTURE_V2_2026-09-26.md).
+ * Live Demo control room (Architecture V2 — docs/demo/ARCHITECTURE_V2_2026-09-26.md).
  * Owner requirement 2026-09-28: see what the demo is doing + kill switches that
  * take effect on the next request without a deploy. Everything ships dark;
  * switches live in demo_control row 1.
@@ -46,7 +46,7 @@ export default async function AdminDemoPage() {
       <div>
         <h1 className="text-xl font-semibold text-slate-900">Live Demo</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Public sandbox on Architecture V2. Switches apply instantly on the next request - no deploy needed.
+          Public sandbox on Architecture V2. Switches apply instantly on the next request — no deploy needed.
           {updatedAt && <span className="text-slate-400"> Last changed {new Date(updatedAt).toLocaleString('en-GB')}.</span>}
         </p>
       </div>

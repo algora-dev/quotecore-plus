@@ -201,7 +201,7 @@ export function QuotePreview({
                     </td>
                     {showQuantityColumn && (
                       <td className="qc-output-numeric">
-                        {line.qty ?? '-'}
+                        {line.qty ?? '—'}
                       </td>
                     )}
                     <td className="qc-output-numeric">

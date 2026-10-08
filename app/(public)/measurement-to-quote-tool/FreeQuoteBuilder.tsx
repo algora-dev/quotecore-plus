@@ -44,12 +44,12 @@ const STORAGE_KEY = 'free-quote-builder-v2';
 /** Free Quote Builder - manual version of the Free Roof Takeoff tool.
  * Same wizard shell (units -> components -> gate), then the Free Roofing
  * Takeoff Builder measurement UX (areas + component sections + entries). */
-export default function FreeQuoteBuilder({ initialMode }: { initialMode?: MeasureMode }) {
+export default function FreeQuoteBuilder() {
   const [step, setStep] = useState(1);
   const [components, setComponents] = useState<BuilderComponent[]>([]);
   const [areas, setAreas] = useState<ParentArea[]>([]);
   const [unitSystem, setUnitSystem] = useState<UnitSystem | null>(null);
-  const [measureMode, setMeasureMode] = useState<MeasureMode | null>(initialMode ?? null);
+  const [measureMode, setMeasureMode] = useState<MeasureMode | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -263,7 +263,7 @@ export default function FreeQuoteBuilder({ initialMode }: { initialMode?: Measur
             setComponents={setComponents}
             unitSystem={unitSystem}
             onBack={() => setStep(1)}
-            onContinue={() => setStep(measureMode ? 4 : 3)}
+            onContinue={() => setStep(3)}
             onSaveToApp={() => saveToApp(true)}
             saving={saving}
             saveError={saveError}

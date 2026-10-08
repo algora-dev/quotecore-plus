@@ -198,7 +198,6 @@ export function FreeToolsAuthProvider({ children, authTheme }: { children: React
               .spt-auth-theme .focus\\:border-\\[\\#FF6B35\\]:focus { border-color: ${authTheme.accent}; }
               .spt-auth-theme .text-\\[\\#BD4A1A\\] { color: ${authTheme.accentHover}; }
               .spt-auth-theme .hover\\:text-\\[\\#ff5722\\]:hover { color: ${authTheme.accentHover}; }
-              .spt-auth-theme .bg-gradient-to-r { background-image: none; }
             `}</style>
           )}
           <div className={authTheme ? 'spt-auth-theme' : undefined}>
@@ -247,44 +246,8 @@ function FreeToolsAuthModal({
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
     >
       <div
-        className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-[0_24px_60px_rgba(9,9,11,0.35)] sm:max-w-lg sm:grid sm:grid-cols-[212px_1fr]"
+        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
       >
-        {/* Feature side (v2.14): charcoal panel with orange glow - desktop only */}
-        <aside className="relative hidden flex-col justify-between overflow-hidden bg-zinc-900 bg-gradient-to-b from-zinc-900 to-[#241610] p-5 text-white sm:flex">
-          <div aria-hidden className="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-[#FF6B35]/20 blur-3xl" />
-          <div className="relative">
-            <div className="flex items-center gap-2">
-              <img src="/MainQCP.png" alt="" className="h-7 w-auto" />
-              <span className="text-xs font-semibold tracking-wide text-zinc-300">QuoteCore+ free tools</span>
-            </div>
-            <p className="mt-6 text-sm font-semibold text-white">
-              {mode === 'signup' ? 'Create a free account' : 'Welcome back'}
-            </p>
-            <ul className="mt-3 space-y-2.5">
-              <li className="flex items-start gap-2 text-xs leading-snug text-zinc-400">
-                <svg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                More free generations every day
-              </li>
-              <li className="flex items-start gap-2 text-xs leading-snug text-zinc-400">
-                <svg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                Remove QuoteCore+ branding from results
-              </li>
-              <li className="flex items-start gap-2 text-xs leading-snug text-zinc-400">
-                <svg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                Free to create - no card needed
-              </li>
-            </ul>
-          </div>
-          <p className="relative text-[11px] leading-snug text-zinc-500">
-            Need the full quoting app? Plans from $19/mo with a 30-day money-back guarantee.
-          </p>
-        </aside>
-        <div className="relative p-6">
-        {/* Mobile brand strip (v2.14) - keeps the charcoal brand moment on phones */}
-        <div className="-mx-6 -mt-6 mb-5 flex items-center gap-2 bg-zinc-900 px-5 py-3 sm:hidden">
-          <img src="/MainQCP.png" alt="" className="h-6 w-auto" />
-          <span className="text-[11px] font-semibold tracking-wide text-zinc-300">QuoteCore+ free tools</span>
-        </div>
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-semibold text-slate-900">
             {mode === 'signup' ? 'Create your account' : 'Log in'}
@@ -304,7 +267,7 @@ function FreeToolsAuthModal({
         {/* Google sign-in */}
         <button
           onClick={signInWithGoogle}
-          className="qc-glint mt-4 w-full flex items-center justify-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 shadow-[0_6px_18px_rgba(0,0,0,0.04)] transition-colors hover:border-[#FF6B35]/40"
+          className="mt-4 w-full flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -368,7 +331,7 @@ function FreeToolsAuthModal({
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email address"
             required
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#FF6B35] focus:outline-none"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#FF6B35] focus:outline-none"
           />
           <input
             type="password"
@@ -376,7 +339,7 @@ function FreeToolsAuthModal({
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (optional - leave blank for an email link)"
             minLength={6}
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#FF6B35] focus:outline-none"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#FF6B35] focus:outline-none"
           />
           <p className="text-[11px] text-slate-400">
             No password? We'll email you a secure login link instead.
@@ -386,7 +349,7 @@ function FreeToolsAuthModal({
           <button
             type="submit"
             disabled={busy}
-            className="qc-glint w-full rounded-full bg-[#FF6B35] bg-gradient-to-r from-[#FF6B35] to-[#FF8C1F] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(255,107,53,0.28)] transition-all hover:shadow-[0_14px_30px_rgba(255,107,53,0.4)] hover:brightness-105 disabled:opacity-60"
+            className="w-full rounded-full bg-[#FF6B35] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#ff5722] transition-colors disabled:opacity-60"
           >
             {busy ? 'Working…' : mode === 'signup' ? 'Create account' : 'Log in'}
           </button>
@@ -416,7 +379,6 @@ function FreeToolsAuthModal({
             </>
           )}
         </p>
-        </div>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import { assertDemoExternalAllowed } from '@/app/lib/demo/egress';
 /**
  * Order adapter for the unified send-document pipeline.
  *
@@ -38,7 +37,6 @@ async function ensureOrderSupplierToken(
   orderId: string,
   companyId: string,
 ): Promise<string | null> {
-  await assertDemoExternalAllowed(companyId);
   // Check if there's already a live token.
   const { data: order } = await supabase
     .from('material_orders')

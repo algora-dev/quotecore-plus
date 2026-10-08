@@ -85,7 +85,7 @@ export interface UseCalibrationControllerOptions {
   onFinish: (accepted: readonly AcceptedReferenceDraft[]) => Promise<CalibrationCommitResult> | CalibrationCommitResult;
   onCancel: () => void;
   /** M4 (mobile spec §7.1): when false the initial search is NOT armed on
-   *  mount - the touch presentation requires a deliberate "Find with AI"
+   *  mount — the touch presentation requires a deliberate "Find with AI"
    *  press so credits are never auto-spent by entering touch view. Defaults
    *  true (desktop behaviour unchanged). */
   autoStart?: boolean;

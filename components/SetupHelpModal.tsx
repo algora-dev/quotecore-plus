@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
- * SetupHelpModal - homepage conversion modal.
+ * SetupHelpModal — homepage conversion modal.
  *
  * Two paths: Done-For-You setup help, or free tools (no commitment).
  *
@@ -24,7 +24,7 @@ function trackEvent(event: string, cta?: string) {
     w.dataLayer?.push(payload);
     w.gtag?.("event", event, cta ? { cta } : undefined);
   } catch {
-    /* analytics not loaded - non-blocking */
+    /* analytics not loaded — non-blocking */
   }
 }
 
@@ -38,7 +38,7 @@ export default function SetupHelpModal() {
     try {
       sessionStorage.setItem(SESSION_KEY, "1");
     } catch {
-      /* private mode - non-blocking */
+      /* private mode — non-blocking */
     }
     setVisible(true);
     trackEvent("setup_modal_view");
@@ -56,11 +56,11 @@ export default function SetupHelpModal() {
 
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Path 1: 25s after the visitor lands on the page - no scroll or any
+    // Path 1: 25s after the visitor lands on the page — no scroll or any
     // other action required.
     timers.push(setTimeout(show, PAGE_LOAD_DELAY_MS));
 
-    // Path 2: visitor started watching the video showcase - cancel pending
+    // Path 2: visitor started watching the video showcase — cancel pending
     // triggers so the modal never interrupts an active viewer.
     const onVideoPlay = () => {
       timers.forEach(clearTimeout);
@@ -93,7 +93,7 @@ export default function SetupHelpModal() {
 
   return (
     <>
-      {/* Backdrop - click does NOT close (prevent accidental dismissal) */}
+      {/* Backdrop — click does NOT close (prevent accidental dismissal) */}
       <div
         className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
         aria-hidden="true"
@@ -108,7 +108,7 @@ export default function SetupHelpModal() {
       >
         <div className="pointer-events-auto relative flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_32px_80px_rgba(0,0,0,0.25)] sm:flex-row">
 
-          {/* Left - founder photo (desktop) / top (mobile) */}
+          {/* Left — founder photo (desktop) / top (mobile) */}
           <div className="relative h-64 w-full flex-shrink-0 bg-[#fdf6ee] sm:h-auto sm:w-48">
             <img
               src="/shaun-smiling.jpg"
@@ -118,7 +118,7 @@ export default function SetupHelpModal() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent sm:bg-gradient-to-r sm:from-transparent sm:to-white/10" />
           </div>
 
-          {/* Right - copy + CTAs */}
+          {/* Right — copy + CTAs */}
           <div className="flex flex-1 flex-col p-6 sm:p-8">
             <h2
               id="setup-modal-headline"

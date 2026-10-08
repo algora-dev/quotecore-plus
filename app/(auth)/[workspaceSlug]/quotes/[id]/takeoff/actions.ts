@@ -1,6 +1,4 @@
 'use server';
-import { assertDemoTakeoffQuote } from '@/app/lib/demo/takeoff.server';
-import { demoTakeoffSaved } from '@/app/lib/demo/product-events';
 
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -35,7 +33,7 @@ interface TakeoffMeasurement {
   entryInputs?: {
     height_m?: number | null;
     depth_m?: number | null;
-    value_basis?: 'pitched' | 'plan' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal';
+    value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal';
     plan_value?: number;
     pitch_applied?: boolean;
     source_geometry_id?: string;
@@ -74,8 +72,6 @@ export async function saveTakeoffMeasurements(
    *  stamped on the same row update. */
   calibrationMetadata?: unknown,
 ): Promise<{ success: true } | { success: false; error: string }> {
-  const demoContext = await assertDemoTakeoffQuote(quoteId, currentPageId);
-  if (demoContext && measurements.length > 300) return { success: false, error: 'This demo accepts up to 300 measurements on its prepared plan.' };
   const supabase = await createSupabaseServerClient();
 
   // Ownership check (RLS still applies inside the RPC, but this gives us a clearer error
@@ -352,13 +348,9 @@ export async function saveTakeoffMeasurements(
           // pitch set/changed AFTER attaching always corrects the numbers:
           //   basis 'pitched' -> plan x live pitch factor (roof sheets etc.)
           //   basis 'plan'    -> plan, no pitch
-          const ei = (m as { entryInputs?: { value_basis?: 'pitched' | 'plan' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal'; plan_value?: number; pitch_applied?: boolean; source_geometry_id?: string; corner_count?: number } | null }).entryInputs;
+          const ei = (m as { entryInputs?: { value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal'; plan_value?: number; pitch_applied?: boolean; source_geometry_id?: string; corner_count?: number } | null }).entryInputs;
           const hasLiveBasis = m.type === 'area' && ei && (ei.value_basis === 'pitched' || ei.value_basis === 'plan') && typeof ei.plan_value === 'number' && ei.plan_value > 0;
-          // Phase 2 (2026-10-07): basis 'offcuts' = the FINAL material figure
-          // from the offcut cutting plan (already includes cutting stock and
-          // configured allowances). No pitch AND no waste factor re-applied.
-          const basisOffcuts = m.type === 'area' && ei?.value_basis === 'offcuts' && typeof ei.plan_value === 'number' && ei.plan_value > 0;
-          if (hasLiveBasis || basisOffcuts) {
+          if (hasLiveBasis) {
             metricValue = toMetricArea(ei!.plan_value!);
           }
 
@@ -371,11 +363,11 @@ export async function saveTakeoffMeasurements(
           const result = applyPitchAndWaste(
             metricValue,
             true,
-            (pitchPreApplied || basisPlanOnly || basisOffcuts ? 'none' : pitchType) as any,
-            (pitchPreApplied || basisPlanOnly || basisOffcuts) ? 0 : groupPitch,
-            (basisOffcuts ? 'none' : effectiveWasteType) as any,
+            (pitchPreApplied || basisPlanOnly ? 'none' : pitchType) as any,
+            (pitchPreApplied || basisPlanOnly) ? 0 : groupPitch,
+            effectiveWasteType as any,
             wastePercent,
-            basisOffcuts ? 0 : effectiveWasteFixed
+            effectiveWasteFixed
           );
           return {
             raw_value: metricValue,
@@ -383,7 +375,7 @@ export async function saveTakeoffMeasurements(
             sort_order: index,
             // Per-entry pitch (2026-07-08): actual pitch used for this entry so
             // the calc audit + UI can report it faithfully per page/area.
-            pitch_degrees: (basisPlanOnly || basisOffcuts) ? 0 : groupPitch,
+            pitch_degrees: basisPlanOnly ? 0 : groupPitch,
             // v8: input reference snapshot (display only).
             // P6 (deferred P4 item): the durable source-polygon link is preserved
             // on EVERY branch, not only the live-basis branch, so attached entries
@@ -634,8 +626,6 @@ export async function saveTakeoffMeasurements(
     }
   }
 
-  if (demoContext) await demoTakeoffSaved(quote.company_id, quoteId);
-
   // revalidatePath removed: TakeoffWorkstation manages all state client-side.
   // Server re-render was causing the canvas/panels to reset during auto-save
   // on area/page switches.
@@ -684,7 +674,7 @@ export interface TakeoffHydrationMeasurement {
   entryInputs: {
     height_m?: number | null;
     depth_m?: number | null;
-    value_basis?: 'pitched' | 'plan' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal';
+    value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal';
     plan_value?: number;
     pitch_applied?: boolean;
     source_geometry_id?: string;
@@ -707,7 +697,6 @@ export interface TakeoffHydrationData {
 export async function loadTakeoffHydrationData(
   quoteId: string,
 ): Promise<TakeoffHydrationData | null> {
-  await assertDemoTakeoffQuote(quoteId);
   const supabase = await createSupabaseServerClient();
   const { getSignedUrl } = await import('@/app/lib/storage/helpers');
   const { BUCKETS } = await import('@/app/lib/storage/buckets');
@@ -861,7 +850,6 @@ export async function loadTakeoffHydrationData(
 }
 
 export async function loadTakeoffMeasurements(quoteId: string) {
-  await assertDemoTakeoffQuote(quoteId);
   const supabase = await createSupabaseServerClient();
   
   const { data: measurements, error } = await supabase
@@ -934,7 +922,6 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
  * Returns null when no session row exists yet.
  */
 export async function getTakeoffSessionVersion(quoteId: string): Promise<number | null> {
-  await assertDemoTakeoffQuote(quoteId);
   const supabase = await createSupabaseServerClient();
   // RLS scopes this read to the caller's company via the quotes join policy.
   const { data, error } = await supabase
@@ -989,7 +976,6 @@ export async function loadTakeoffPages(quoteId: string): Promise<{
   page_name: string | null;
   scale_calibration: unknown;
 }[]> {
-  await assertDemoTakeoffQuote(quoteId);
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('takeoff_pages')
@@ -1515,7 +1501,6 @@ export async function persistPageCalibration(
   calibrations: unknown,
   calibrationMetadata?: unknown,
 ): Promise<{ success: true; imageRevision: string | null } | { success: false; error: string }> {
-  await assertDemoTakeoffQuote(quoteId);
   const supabase = await createSupabaseServerClient();
 
   const { data: quote, error: quoteError } = await supabase
@@ -1618,7 +1603,7 @@ export async function updateTakeoffAreaGeometry(
     return { success: false, error: 'Quote not found.' };
   }
 
-  // The generated RPC name union does not know the patch_052 function yet -
+  // The generated RPC name union does not know the patch_052 function yet —
   // cast once at the boundary (same pattern as saveTakeoffMeasurements v2).
   const rpcFn = 'update_takeoff_area_geometry_v1' as 'save_takeoff_atomic';
   const { data, error } = await supabase.rpc(rpcFn, {

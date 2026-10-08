@@ -53,7 +53,7 @@ export function projectBank(bank: MaterialBank, request: SolveRequest): BankProj
   const footprintIntervals=mergeIntervals(members.map(f=>{
     const xs=f.polygon.map(p=>dot(p,u)*scale);return [Math.min(...xs),Math.max(...xs)];
   }));
-  const eaveFaces=request.faces.filter(f=>bank.faceIds.includes(f.id)&&planningBoundary(f).some(e=>e.kind==='hip')&&!isSelfFillCandidate(f,request.roof));
+  const eaveFaces=request.faces.filter(f=>bank.faceIds.includes(f.id)&&f.boundary.some(e=>e.kind==='hip')&&!isSelfFillCandidate(f,request.roof));
   // Receiving projections can complete the elevation's spouting span without
   // becoming additional new-stock anchors (C + E still spans the same width).
   const eaveIntervals=mergeIntervals((eaveFaces.length?eaveFaces:members).flatMap(f=>planningBoundary(f).filter(e=>e.kind==='spouting').map(e=>{
@@ -70,7 +70,7 @@ export function projectBank(bank: MaterialBank, request: SolveRequest): BankProj
  * is still generated separately and must be supplied in full. This is a supply
  * anchor selection, never removal of approved roof geometry. */
 export function bankAnchorFaces(members: RoofFace[], roof: RoofInput): RoofFace[] {
-  const main=members.filter(f=>planningBoundary(f).some(e=>e.kind==='hip')&&!isSelfFillCandidate(f,roof));
+  const main=members.filter(f=>f.boundary.some(e=>e.kind==='hip')&&!isSelfFillCandidate(f,roof));
   if(!main.length)return members;
   // A small hip receiver wholly inside a larger same-direction projection is
   // a destination, not another purchasing anchor (the C valley -> E case).
@@ -90,11 +90,9 @@ export function bankAnchorFaces(members: RoofFace[], roof: RoofInput): RoofFace[
  * the new donor run. Ordinary two-hip/two-valley main faces are NOT self-fill. */
 export function isSelfFillCandidate(face: RoofFace, roof: RoofInput): boolean {
   if (!face.flow || face.pitchDeg===null) return false;
-  if (edgeIntervals(face,roof,'spouting').length!==1) return false;
-  // A barge-ended parallel hip/valley strip can self-fill without a ridge.
-  // The exact donor-window/fit test below still decides whether it actually can.
+  if (!planningBoundary(face).some(e=>e.kind==='ridge') || edgeIntervals(face,roof,'spouting').length!==1) return false;
   const frame=frameFor(face,roof);
-  const edges=planningBoundary(face).filter(e=>['hip','valley','broken_hip'].includes(e.kind));
+  const edges=face.boundary.filter(e=>['hip','valley','broken_hip'].includes(e.kind));
   if(edges.length<2 || !edges.some(e=>e.kind==='hip') || !edges.some(e=>e.kind==='valley'||e.kind==='broken_hip'))return false;
   const angles=edges.map(e=>{
     const a=sceneToSurface(e.a,frame),b=sceneToSurface(e.b,frame);

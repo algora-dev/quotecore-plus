@@ -11,7 +11,7 @@ export function PointMeasurementModal({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  // Owner 2026-10-01: same as LineMeasurementModal - capture-phase window
+  // Owner 2026-10-01: same as LineMeasurementModal — capture-phase window
   // listener so Enter/Esc work regardless of where focus sits.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

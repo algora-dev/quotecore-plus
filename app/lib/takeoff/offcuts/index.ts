@@ -34,27 +34,3 @@ export type { LocalRepairResult } from './core/faceRepair';
 export * from './adapters/liveSnapshot';
 export * from './adapters/snapshotStore';
 export * from './adapters/canvasSnapshot';
-
-export * from './persistence/reviews';
-export * from './persistence/browserReviewStore';
-
-export * from './core/cutStrategy';
-
-export * from './core/faceGeometry';
-
-export * from './core/purchaseLedger';
-export * from './core/receiverSafety';
-
-export * from './core/simplerPolicy';
-export * from './core/lessMaterialPolicy';
-
-export { PROVISIONAL_REUSE_POLICY, fixedSourceFaces, displacedValleyReceivers, acceptsReplay, replayProvisionalDestinations } from './core/provisionalReuse';
-export type { ProvisionalReuseReport } from './core/provisionalReuse';
-
-export { searchSalvage, salvageEligibility, SALVAGE_POLICY, validateSalvageCertificate } from './core/salvage';
-export type { SalvageResult, SalvageSearchReport, SalvageCertificate, SalvageGroup } from './core/salvageModel';
-
-export { STOCK_END_MODEL, STOCK_END_POLICY, samePhysicalCuts } from './core/stockEnds';
-export type { StockEndProof } from './core/stockEnds';
-export { refinePurchasedStock, stockLengthRows } from './core/stockLength';
-export type { StockLengthReport, StockLengthRow } from './core/stockLength';

@@ -1,7 +1,6 @@
 /** Wire contracts shared by the assistant UI and server. No privileged imports. */
 import { ASSISTANT_SECTIONS, isRecord, parseSectionPermissions, type AssistantSection, type SectionPermissions } from '../section-permissions';
 import { parseTaskView, type TaskView } from '../tasks/contracts';
-import { WORKFLOW_STATES } from '../workflow-controller/contracts';
 import { ASSISTANT_LIBRARY_ROLES, type WorkflowCard } from '../library-workflow/contracts';
 export type EntityKind = 'quote' | 'draft_quote' | 'order' | 'invoice' | 'component' | 'customer';
 export type SearchKind = EntityKind | 'all';
@@ -118,15 +117,9 @@ export type RunOutcome = {
     errorCode: string | null;
 };
 export function parseRunOutcome(value: unknown): RunOutcome | null {
-    // Bugfix 2026-10-05 (BUG A): client_request_id is an opaque string at the
-    // turn API/admission boundary (no UUID contract). Requiring a UUID here
-    // fail-closed the whole session read after any non-UUID request id,
-    // 500-ing every later turn on that conversation. Accept any non-empty
-    // string; consumers only ever compare it for equality.
-    if (!isRecord(value) || !isUuid(value.id) || typeof value.client_request_id !== 'string' || !value.client_request_id
-        || !['accepted', 'running', 'completed', 'failed', 'cancelled', 'aborted', 'timed_out'].includes(String(value.status)))
+    if (!isRecord(value) || !isUuid(value.id) || !isUuid(value.client_request_id) || !['accepted', 'running', 'completed', 'failed', 'cancelled', 'aborted', 'timed_out'].includes(String(value.status)))
         return null;
-    return { id: value.id, requestId: value.client_request_id.slice(0, 240), status: String(value.status),
+    return { id: value.id, requestId: value.client_request_id, status: String(value.status),
         errorCode: typeof value.error_code === 'string' ? value.error_code.slice(0, 240) : null };
 }
 export type SessionSnapshot = {
@@ -252,12 +245,12 @@ export function parseCard(value: unknown): ConversationCard | null {
     else if (c.kind === 'draft_workflow') {
         if (!isUuid(c.stateId) || typeof c.revision !== 'number' || !Number.isInteger(c.revision) || c.revision < 1 || typeof c.taskId !== 'string'
             || !Array.isArray(c.summary) || c.summary.length > 80 || c.summary.some((x:unknown)=>typeof x !== 'string' || x.length > 800)
-            || !Array.isArray(c.issues) || c.issues.length > 64 || c.issues.some((x:unknown)=>typeof x !== 'string' || x.length > 800)
-            || !Array.isArray(c.questions) || c.questions.length > 25) return null;
+            || !Array.isArray(c.issues) || c.issues.length > 20 || c.issues.some((x:unknown)=>typeof x !== 'string' || x.length > 800)
+            || !Array.isArray(c.questions) || c.questions.length > 10) return null;
         const questions: WorkflowCard['questions'] = [];
         for (const q of c.questions) {
             if (!isRecord(q) || typeof q.key !== 'string' || q.key.length > 120 || typeof q.label !== 'string' || q.label.length > 300
-                || !ASSISTANT_LIBRARY_ROLES.includes(q.role as never) || !Array.isArray(q.options) || q.options.length < 1 || q.options.length > 50) return null;
+                || !ASSISTANT_LIBRARY_ROLES.includes(q.role as never) || !Array.isArray(q.options) || q.options.length < 1 || q.options.length > 5) return null;
             const options: WorkflowCard['questions'][number]['options'] = [];
             for (const o of q.options) {
                 if (!isRecord(o) || !isUuid(o.id) || !boundedText(o.label, 300) || typeof o.detail !== 'string' || o.detail.length > 600) return null;
@@ -265,8 +258,7 @@ export function parseCard(value: unknown): ConversationCard | null {
             }
             questions.push({key:q.key,label:q.label,role:q.role as WorkflowCard['questions'][number]['role'],options});
         }
-        if (c.workflowState !== undefined && !WORKFLOW_STATES.includes(c.workflowState as never)) return null;
-        content = {kind:'draft_workflow',...(c.workflowState ? {workflowState:c.workflowState as WorkflowCard['workflowState']} : {}),title:String(c.title),stateId:c.stateId,revision:Number(c.revision),taskId:c.taskId,summary:c.summary as string[],issues:c.issues as string[],questions};
+        content = {kind:'draft_workflow',title:String(c.title),stateId:c.stateId,revision:Number(c.revision),taskId:c.taskId,summary:c.summary as string[],issues:c.issues as string[],questions};
     }
     else if (c.kind === 'attention') {
         if (!Array.isArray(c.groups) || c.groups.length > 5 || typeof c.asOf !== 'string' || typeof c.note !== 'string')

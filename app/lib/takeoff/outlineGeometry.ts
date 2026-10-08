@@ -164,33 +164,16 @@ function findNearestVertex(
   return nearest;
 }
 
-// ─── Part 4: Hip/valley angle gate ─────────────────────────────────────
-
-/** Ray-cast point-in-polygon over the ordered outline vertices. Used to pick
- *  the inward direction of a corner's angle bisector (parity test is
- *  winding-invariant, so it works for CW and CCW outlines). */
-function pointInsidePolygon(vertices: Array<{ x: number; y: number }>, x: number, y: number): boolean {
-  let inside = false;
-  for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
-    const xi = vertices[i].x, yi = vertices[i].y;
-    const xj = vertices[j].x, yj = vertices[j].y;
-    const intersects = (yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-    if (intersects) inside = !inside;
-  }
-  return inside;
-}
+// ─── Part 4: Hip/valley 45-degree angle gate ─────────────────────────────
 
 /**
- * Post-Scan 3 angle enforcement: hips and valleys must travel roughly along
- * the INWARD ANGLE BISECTOR of the outline corner they terminate on
- * (rotation- and corner-angle-invariant). A hip/valley running parallel or
- * perpendicular to the corner's bisector direction is demoted to 'uncertain'.
+ * Post-Scan 3 angle enforcement: hips and valleys must run diagonally
+ * (within tolerance of 45 degrees) relative to the outline edges meeting
+ * at the corner they terminate on. A hip/valley whose orientation is
+ * parallel or perpendicular to the corner's edges (i.e. horizontal or
+ * vertical relative to the roof) is demoted to 'uncertain'.
  *
- * Corner-relative bisector, not a fixed 45-degrees-from-both-edges test: on
- * stepped roofs with non-90-degree corners the old rule was mathematically
- * impossible to satisfy and vetoed legitimate hips/valleys. The bisector is
- * 45 degrees from both edges on square corners (identical to the old rule)
- * and generalises correctly to any corner angle.
+ * Corner-relative (not image-axis) so it is rotation-invariant.
  * Conservative: only demotes, never promotes or renames to another type.
  */
 export function enforceHipValleyAngleRule(
@@ -203,6 +186,13 @@ export function enforceHipValleyAngleRule(
   for (const v of vertices) vertexById.set(v.id, v);
   const lineMap = new Map<string, AugmentedLine>();
   for (const l of augmentedLines) lineMap.set(l.id, l);
+
+  const fold90 = (deg: number) => {
+    let d = Math.abs(deg) % 180;
+    if (d > 90) d = 180 - d;
+    return d;
+  };
+  const angleOf = (dx: number, dy: number) => Math.atan2(-dy, dx) * 180 / Math.PI;
 
   const corrections: EnforcementCorrection[] = [];
 
@@ -221,35 +211,17 @@ export function enforceHipValleyAngleRule(
     const n = vertices.length;
     const prev = vertices[(vertex.index - 1 + n) % n];
     const next = vertices[(vertex.index + 1) % n];
+    const lineAngle = angleOf(line.end.x - line.start.x, line.end.y - line.start.y);
+    const edgeAngles = [
+      angleOf(vertex.x - prev.x, vertex.y - prev.y),
+      angleOf(next.x - vertex.x, next.y - vertex.y),
+    ];
 
-    // Inward angle bisector: unit vectors from the vertex along both edges;
-    // their sum bisects the smaller angle between them. If that direction
-    // points outside the roof (concave corners), negate it.
-    const u1x = prev.x - vertex.x, u1y = prev.y - vertex.y;
-    const u2x = next.x - vertex.x, u2y = next.y - vertex.y;
-    const l1 = Math.hypot(u1x, u1y) || 1, l2 = Math.hypot(u2x, u2y) || 1;
-    let bisX = (u1x / l1 + u2x / l2), bisY = (u1y / l1 + u2y / l2);
-    const bisLen = Math.hypot(bisX, bisY);
-    if (bisLen < 1e-6) return c; // collinear edges: no bisector, skip gate
-    bisX /= bisLen; bisY /= bisLen;
-    if (!pointInsidePolygon(vertices, vertex.x + bisX * 2, vertex.y + bisY * 2)) {
-      bisX = -bisX; bisY = -bisY;
-    }
-
-    // Direction from the matched vertex endpoint along the line (undirected
-    // check: the acute angle between the line and the bisector must be within
-    // tolerance, covering both diagonals of an X at the corner).
-    const startIsVertex = line.startOutlineVertexId === vertexId;
-    const px = startIsVertex ? line.start.x : line.end.x;
-    const py = startIsVertex ? line.start.y : line.end.y;
-    const qx = startIsVertex ? line.end.x : line.start.x;
-    const qy = startIsVertex ? line.end.y : line.start.y;
-    const lineLen = Math.hypot(qx - px, qy - py) || 1;
-    const dot = ((qx - px) * bisX + (qy - py) * bisY) / lineLen;
-    const directed = Math.acos(Math.max(-1, Math.min(1, dot))) * 180 / Math.PI;
-    const acute = Math.min(directed, 180 - directed);
-
-    const withinTolerance = acute <= toleranceDeg;
+    // The line must be within tolerance of 45 degrees from BOTH incident
+    // edges (folded to 0-90). This covers both diagonals of an X shape.
+    const withinTolerance = edgeAngles.every(ea =>
+      Math.abs(fold90(lineAngle - ea) - 45) <= toleranceDeg
+    );
 
     if (withinTolerance) return c;
 
@@ -257,12 +229,12 @@ export function enforceHipValleyAngleRule(
       line_id: c.line_id,
       from: c.type as 'hip' | 'valley',
       to: 'uncertain',
-      reason: `Line does not follow the corner's inward bisector within ${toleranceDeg} degrees`,
+      reason: `Line is not diagonal (~45 deg) to the corner edges (tolerance ${toleranceDeg} deg)`,
     });
     return {
       ...c,
       type: 'uncertain',
-      reason: `Backend angle gate: ${c.type} demoted - line runs parallel/perpendicular to the corner's inward bisector, not along it`,
+      reason: `Backend angle gate: ${c.type} demoted - line runs parallel/perpendicular to the corner edges, not ~45 deg`,
     };
   });
 

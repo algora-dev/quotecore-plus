@@ -1,8 +1,8 @@
-// Mobile takeoff & precision geometry editor - shared edit-draft contracts.
+// Mobile takeoff & precision geometry editor — shared edit-draft contracts.
 // Spec: docs/MOBILE_TAKEOFF_PRECISION_EDITOR_IMPLEMENTATION_PLAN_2026-09-21.md §4.2.
 // M0 gap review §4 mapping: plain serialisable data only; no React, Fabric, Supabase
 // or provider SDK imports. Scene-coordinate convention reuses the existing
-// calibrationTypes Point + calibrationCoordinates affine machinery - nothing here
+// calibrationTypes Point + calibrationCoordinates affine machinery — nothing here
 // redefines a coordinate frame.
 
 import type { Point } from '../calibrationTypes';
@@ -10,7 +10,7 @@ import type { Point } from '../calibrationTypes';
 /**
  * Scene point in the existing `takeoff-scene-v1` frame (see
  * CalibrationImageDescriptor.coordinateFrame / buildSourceToScene).
- * Alias of the existing domain Point - do not define a second point type.
+ * Alias of the existing domain Point — do not define a second point type.
  */
 export type ScenePoint = Point;
 
@@ -45,7 +45,7 @@ export type EditTarget =
       geometryId: string;
       quoteRoofAreaId: string | null;
       /** M5 (spec §8.2/§8.3): where the draft's points came from. Manual and
-       *  imported (M6 AI) outlines share the IDENTICAL draft/save path - the
+       *  imported (M6 AI) outlines share the IDENTICAL draft/save path — the
        *  origin is provenance only, never a behaviour switch. */
       origin?: 'manual' | 'imported';
     }
@@ -112,7 +112,7 @@ export type PrecisionEditSession = Readonly<{
 }>;
 
 /** Outcome of a command: either an unchanged-session rejection with a machine
- *  readable reason, or the next session state. Pure - no side effects. */
+ *  readable reason, or the next session state. Pure — no side effects. */
 export type CommandResult = Readonly<{
   session: PrecisionEditSession;
   /** Set when the command was rejected without any state change (spec §6.4

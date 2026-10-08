@@ -1,4 +1,4 @@
-import type { DecisionTrace, PlanComparison, PlanQuality, Solution, TraceEvent, WorkflowQuality } from './types';
+import type { DecisionTrace, PlanComparison, PlanQuality, Solution, TraceEvent } from './types';
 import { fingerprint } from './math';
 import { area, bounds, subtract } from './regions';
 import { materialAtDestination } from './inventory';
@@ -66,57 +66,6 @@ export function planQuality(s: Plan): PlanQuality {
   return { suppliedMm2, newSheets, reusedPositions, sourceRelationships: relationships.size, reuseRuns,
     splitSets, recutOperations, fillerSeparators, primaryOperations, complexity };
 }
-/** Group repeatable site work rather than rewarding the removal of each
- * individual reused sheet. New angled sheets still have to be cut, so they
- * contribute freshCutRuns instead of disappearing from the simplicity score.
- * The legacy complexity score remains unchanged for Recommended regression. */
-export function workflowQuality(s: Plan, base = planQuality(s)): WorkflowQuality {
-  const ds = new Map(s.demands.map(d => [d.id, d]));
-  const os = new Map(s.offcuts.map(o => [o.id, o]));
-  const ps = new Map(s.placements.map(p => [p.demandId, p]));
-  const view = supplyView(s);
-  const slope = (a:number,b:number,width:number):string => Math.abs(b-a)/Math.max(width,1)<.02?'0':b>a?'+':'-';
-  const pattern = (d: Solution['demands'][number]):string => ['top','bottom'].map(side => {
-    const sequence:string[]=[];
-    for(const b of d.required){
-      const v=side==='top'?slope(b.top0,b.top1,b.x1-b.x0):slope(b.bottom0,b.bottom1,b.x1-b.x0);
-      if(sequence[sequence.length-1]!==v)sequence.push(v);
-    }
-    return sequence.join('');
-  }).join('/');
-  let recutRuns=0, freshCutRuns=0;
-  const stockGroups=new Set<string>();
-  for(const p of s.placements){
-    if(p.kind!=='new')continue;
-    const d=ds.get(p.demandId)!;const b=bounds(d.blank);
-    stockGroups.add(`${view.blockByPlacement.get(d.id)??d.faceId}/${Math.round(b.maxY-b.minY)}`);
-  }
-  for(const id of new Set(s.demands.map(d=>d.faceId))){
-    let previousRecut='',previousFresh='',previousLane=-2;
-    for(const d of s.demands.filter(d=>d.faceId===id).sort((a,b)=>a.laneIndex-b.laneIndex)){
-      const p=ps.get(d.id),o=os.get(p?.offcutId??'');
-      const contiguous=d.laneIndex===previousLane+1;
-      let recut='',fresh='';
-      if(p?.kind==='reuse'&&o&&!view.continuationDemandIds.has(d.id) &&
-        area(subtract(materialAtDestination(o,p),d.required))>Math.max(1,area(d.required)*.00001)){
-        recut=`${o.sourceFaceId}/${o.cutSetId??''}/${p.rotation}/${pattern(d)}`;
-      }
-      if(p?.kind==='new'&&d.reusableCut){
-        const b=bounds(d.blank);
-        fresh=`${view.blockByPlacement.get(d.id)??d.faceId}/${Math.round(b.maxY-b.minY)}/${pattern(d)}`;
-      }
-      if(recut&&(!contiguous||recut!==previousRecut))recutRuns++;
-      if(fresh&&(!contiguous||fresh!==previousFresh))freshCutRuns++;
-      previousRecut=recut;previousFresh=fresh;previousLane=d.laneIndex;
-    }
-  }
-  const score=12*base.sourceRelationships+10*base.splitSets+4*base.reuseRuns+
-    3*base.fillerSeparators+4*base.primaryOperations+2*stockGroups.size+recutRuns+freshCutRuns;
-  return {model:'site-workflow-v1',sourceRelationships:base.sourceRelationships,splitSets:base.splitSets,
-    reuseRuns:base.reuseRuns,recutRuns,freshCutRuns,fillerSeparators:base.fillerSeparators,
-    primaryOperations:base.primaryOperations,stockLengthGroups:stockGroups.size,score};
-}
-
 export function comparePlans(previous: Solution, proposed: Solution, objective: 'simpler' | 'less-material'): PlanComparison {
   const a = planQuality(previous), b = planQuality(proposed);
   const faceSignature = (s: Solution, id: string) => planSignature({ ...s, placements: s.placements.filter(p => s.demands.find(d => d.id === p.demandId)?.faceId === id) });
@@ -125,10 +74,8 @@ export function comparePlans(previous: Solution, proposed: Solution, objective: 
     changedFaceIds: [...new Set(proposed.demands.map(d => d.faceId))].filter(id => faceSignature(previous, id) !== faceSignature(proposed, id)) };
 }
 export function traceText(trace: DecisionTrace): string {
-  const header = [`Find Offcuts ${trace.engineVersion} - ${trace.objective}`, `Request: ${trace.requestFingerprint}`,
-    `Selected trial: ${trace.selectedTrial ?? 'none'}; budget reached: ${trace.budgetReached}`, 'Legacy ranking proxy (not site labour): 8×relationships + 3×reuse runs + 5×split sets + recut operations + 2×filler separators + 2×primary operations.'];
-  if(trace.objective==='simpler')header.push('V2.14 simpler workflow: 12×relationships + 10×split sets + 4×reuse runs + 3×filler groups + 4×primary operations + 2×stock-length groups + recut runs + fresh-cut runs. Final acceptance also requires a bounded material/sheet increase and meaningful benefit.');
-  if(trace.objective==='less-material')header.push('V2.15 material trade-off: effective-cover m² saved versus additional grouped work. No percentage or money threshold. 10 m² is substantial; smaller savings require progressively fewer extra tasks. Positive increases, component limits and reuse depth are checked after physical validation.');
+  const header = [`Find Offcuts ${trace.engineVersion} — ${trace.objective}`, `Request: ${trace.requestFingerprint}`,
+    `Selected trial: ${trace.selectedTrial ?? 'none'}; budget reached: ${trace.budgetReached}`, 'Complexity proxy: 8×relationships + 3×reuse runs + 5×split sets + recut operations + 2×filler separators + 2×primary operations.'];
   if (trace.historic) header.push('HISTORIC: the plan was manually edited after this search.');
   for (const e of trace.events) header.push(`\n${String(e.step).padStart(3, '0')} ${e.action}: ${e.message}`, e.faceIds?.join(', ') ?? '', e.data ? JSON.stringify(e.data, null, 2) : '');
   header.push('\nCANDIDATE COMPARISON', JSON.stringify(trace.candidates, null, 2));

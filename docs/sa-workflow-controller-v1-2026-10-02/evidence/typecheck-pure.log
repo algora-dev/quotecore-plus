@@ -1,8 +1,0 @@
-app/lib/supabase/admin.ts(1,30): error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
-app/lib/supabase/server.ts(1,34): error TS2307: Cannot find module 'next/headers' or its corresponding type declarations.
-app/lib/supabase/server.ts(2,36): error TS2307: Cannot find module '@supabase/ssr' or its corresponding type declarations.
-app/lib/supabase/server.ts(4,37): error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
-app/lib/supabase/server.ts(5,23): error TS2307: Cannot find module 'react' or its corresponding type declarations.
-app/lib/supabase/server.ts(49,16): error TS7006: Parameter 'changes' implicitly has an 'any' type.
-app/lib/supabase/server.ts(183,39): error TS2307: Cannot find module 'next/navigation' or its corresponding type declarations.
-app/lib/supabase/server.ts(212,37): error TS2307: Cannot find module 'next/navigation' or its corresponding type declarations.

@@ -64,12 +64,6 @@ export interface TouchOutlineAdapter {
   /** M11: attach a saved roof area to an area component instead of
    *  redrawing it (pitched value; recomputed live at save time). */
   addRoofAreaEntry?(target: TouchComponentTarget, area: SavedOutlineRecord): TouchComponentEntry | null;
-  /** Phase 2 (2026-10-07): the page's offcut cover-m2 figure - from the live
-   *  workbench proposal or the saved offcut review. Null when none exists. */
-  getOffcutAreaFigure?(): { m2: number } | null;
-  /** Phase 2: attach the offcut figure as a FINAL material area entry - the
-   *  save path applies no pitch and no waste factor to it. */
-  addOffcutAreaEntry?(target: TouchComponentTarget, figure: { m2: number }): TouchComponentEntry | null;
   /** Corner counting (2026-09-30): apply detected corner counts to a
    *  count-based component (all/external/internal) as one entry. */
   addCornerCountEntry?(target: TouchComponentTarget, basis: 'all' | 'external' | 'internal'): TouchComponentEntry | null;
@@ -87,17 +81,7 @@ interface EditorOptions {
   onFinish?: () => void; finishHref?: string; pitch?: number; onPitchChange?: (pitch: number) => void;
   /** M10: called instead of navigating away when the user chooses a
    * components path on the finish screen (outline is already saved). */
-  onEnterComponents?: (mode: 'ai' | 'manual') => void;
-  /** P4 trade wording (free-tool forks): rail copy + new-outline default
-   * name. Optional + additive - defaults keep the historical roof copy
-   * (main app callers pass nothing). */
-  planNoun?: string;
-  /** P4: trades that do not measure pitch skip the finish-stage pitch
-   * confirmation entirely. Default true = unchanged roof behaviour. */
-  requiresPitch?: boolean;
-  /** P4: name given to a NEW outline on save (roof default: "Main Roof"). */
-  defaultAreaName?: string;
-}
+  onEnterComponents?: (mode: 'ai' | 'manual') => void }
 interface PendingLeave { label: string; proceed: () => void }
 
 export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOutlineAdapter | null,
@@ -131,10 +115,6 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
   const onPitchChange = options.onPitchChange ?? setLocalPitch;
   const onPitchChangeAndUnconfirm = useCallback((value: number) => { onPitchChange(value); setPitchConfirmed(false); }, [onPitchChange]);
   const [pendingLeave, setPendingLeave] = useState<PendingLeave | null>(null);
-  // P4 trade wording: defaults keep the historical roof copy/behaviour.
-  const planNoun = options.planNoun ?? 'roof';
-  const requiresPitch = options.requiresPitch !== false;
-  const defaultAreaName = options.defaultAreaName ?? DEFAULT_ROOF_NAME;
   const busyRef = useRef(false);
   const presentationMounted = useRef(active);
   useEffect(() => {
@@ -247,7 +227,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
       clear(); const next = beginManualOutlineDraft(ctx); setSession(next); sessionRef.current = next;
     });
   };
-  const openArea = (area: SavedOutlineRecord) => requestLeave(`Open another ${planNoun} outline`, () => {
+  const openArea = (area: SavedOutlineRecord) => requestLeave('Open another roof outline', () => {
     const ctx = adapter?.getEditContext();
     if (!ctx) return;
     clear();
@@ -289,7 +269,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
         if (!result.ok) throw new Error(result.error);
       } else if (!isSaved) {
         // New manual and unchanged AI imports share this validation/adapter.
-        const result = await currentAdapter.createOutline(defaultAreaName, pitch, s.draft.vertices.map((v) => ({ ...v.point })));
+        const result = await currentAdapter.createOutline(DEFAULT_ROOF_NAME, pitch, s.draft.vertices.map((v) => ({ ...v.point })));
         if (!result.ok) throw new Error(result.message);
       }
       logTakeoffEvent('outline.save.succeeded');
@@ -306,7 +286,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
         else if (options.finishHref) router.push(options.finishHref);
       else if (backHref) router.push(backHref);
     } catch (err) {
-      const message = err instanceof Error ? err.message : `The ${planNoun} could not be saved.`;
+      const message = err instanceof Error ? err.message : 'The roof could not be saved.';
       setError(`${message} Your outline is kept.`);
       logTakeoffEvent('outline.save.failed', { error: message });
     } finally { busyRef.current = false; setSaving(false); }
@@ -336,7 +316,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
       if (decision.action === 'discard') throw new Error(decision.message);
       if (!result.ok) { if (!result.cancelled) throw new Error(result.error); return; }
       const found = aiOutlineCandidatesFromScanData(result.data).filter((c) => c.usable);
-      if (!found.length) throw new Error(`No usable ${planNoun} outline was found. You can draw it manually.`);
+      if (!found.length) throw new Error('No usable roof outline was found. You can draw it manually.');
       importCandidate(found, 0, now);
     } catch (err) {
       if (sequence === scanSequence.current) setError(err instanceof Error ? err.message : 'The scan failed. Try manually.');
@@ -373,7 +353,6 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
       canUndo={!!session?.history.undo.length} canRedo={!!session?.history.redo.length}
       planArea={review?.planArea == null ? null : `Plan area ${review.planArea.toFixed(2)} ${scale?.unit === 'meters' ? 'm²' : 'ft²'}`}
       savedArea={savedArea} areas={adapter?.getAreas() ?? []} pitch={pitch} pitchConfirmed={pitchConfirmed}
-      planNoun={planNoun} requiresPitch={requiresPitch} defaultAreaName={defaultAreaName}
       onConfirmPitch={() => setPitchConfirmed(true)}
       scanInfo={adapter?.getAiOutlineScanInfo() ?? null}
       candidateCount={candidates.length} candidateIndex={candidateIndex} viewControls={viewControls}

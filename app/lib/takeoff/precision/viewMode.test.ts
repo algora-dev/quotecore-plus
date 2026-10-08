@@ -77,7 +77,7 @@ test('L02: PWA display mode alone never flips the recommendation', () => {
   assert.equal(recommendViewMode({ ...phonePortrait, displayMode: 'browser' }), 'mobile-touch');
 });
 
-test('L04: heuristic consumes only the layout viewport - a keyboard-shrunk visual viewport is invisible', () => {
+test('L04: heuristic consumes only the layout viewport — a keyboard-shrunk visual viewport is invisible', () => {
   // The capabilities type physically has no visual-viewport input; simulate the
   // keyboard case by showing layout viewport stays the authoritative source:
   // phone with keyboard open still reports full-height layout viewport.

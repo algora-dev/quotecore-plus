@@ -13,20 +13,20 @@ export const eagleViewPage: CompetitorPageData = {
   positioning: "EagleView Alternative for Roofers",
   hero: {
     title: "Looking for an EagleView alternative?",
-    sub: "EagleView sells expertly produced aerial measurement reports. QuoteCore+ is quoting software where you measure your own plans - PDF takeoff, AI Scan Assist, automatic materials and pricing - and own the whole estimate. Different tools for different jobs.",
+    sub: "EagleView sells expertly produced aerial measurement reports. QuoteCore+ is quoting software where you measure your own plans — PDF takeoff, AI Scan Assist, automatic materials and pricing — and own the whole estimate. Different tools for different jobs.",
     qualifier: "Need another aerial measurement provider? QuoteCore+ isn't one. Already have plans or usable imagery and want to stop paying per report? That's where QuoteCore+ fits.",
     primaryCta: { href: "/free-roofing-takeoff-builder", label: "See what you can measure without buying another report" },
     ghostCta: { href: "/free-trial", label: "Get started with QuoteCore+" },
   },
   quickAnswer: {
     heading: "The short answer",
-    body: "EagleView is a reports business: you pay per report ($32.75–$89.50 for construction reports at list price, with volume tiers) and receive a professionally measured roof report. QuoteCore+ does not generate aerial reports - it's estimating software where you measure your own PDF plans or images (AI Scan Assist speeds this up), and Smart Components turn every measurement into materials, labour, waste and a priced quote. If you want externally flown measurements, EagleView does that well. If you want to stop paying per roof and run measure-to-quote yourself, that's what QuoteCore+ is built for. Some businesses use both.",
+    body: "EagleView is a reports business: you pay per report ($32.75–$89.50 for construction reports at list price, with volume tiers) and receive a professionally measured roof report. QuoteCore+ does not generate aerial reports — it's estimating software where you measure your own PDF plans or images (AI Scan Assist speeds this up), and Smart Components turn every measurement into materials, labour, waste and a priced quote. If you want externally flown measurements, EagleView does that well. If you want to stop paying per roof and run measure-to-quote yourself, that's what QuoteCore+ is built for. Some businesses use both.",
   },
   bestFor: {
     competitorBestFor: [
       {
         title: "You want a measured report without visiting the site",
-        body: "EagleView flies and measures the property, delivering a report you can quote from - no ladder, no site visit needed.",
+        body: "EagleView flies and measures the property, delivering a report you can quote from — no ladder, no site visit needed.",
       },
       {
         title: "You quote high volume and value speed",
@@ -34,13 +34,13 @@ export const eagleViewPage: CompetitorPageData = {
       },
       {
         title: "You need property data beyond the roof",
-        body: "EagleView's property-intelligence products cover walls, solar and gutters - a data business, not just a roof tool.",
+        body: "EagleView's property-intelligence products cover walls, solar and gutters — a data business, not just a roof tool.",
       },
     ],
     qcBestFor: [
       {
         title: "You want to stop paying per roof",
-        body: "QuoteCore+ is a subscription from $19 to $59/mo - no per-report fees, no matter how many roofs you measure.",
+        body: "QuoteCore+ is a subscription from $19 to $59/mo — no per-report fees, no matter how many roofs you measure.",
       },
       {
         title: "You already have the plans",
@@ -48,11 +48,11 @@ export const eagleViewPage: CompetitorPageData = {
       },
       {
         title: "You want measurements that become quotes automatically",
-        body: "Smart Components apply your materials, waste, labour and margins to every measurement - the takeoff prices itself.",
+        body: "Smart Components apply your materials, waste, labour and margins to every measurement — the takeoff prices itself.",
       },
       {
         title: "You want one workflow, not report + spreadsheet",
-        body: "Takeoff, quote, material order and invoice stay connected - the measurement isn't a PDF that dies in a folder.",
+        body: "Takeoff, quote, material order and invoice stay connected — the measurement isn't a PDF that dies in a folder.",
       },
     ],
   },
@@ -118,33 +118,33 @@ export const eagleViewPage: CompetitorPageData = {
       {
         number: "01",
         title: "Get the roof measurements",
-        body: "EagleView: place a report order for the address and receive a measured report - construction reports list from $32.75 to $89.50 depending on size and tier. QuoteCore+: upload the PDF plan or image, run AI Scan Assist to detect areas, ridges, hips, valleys, barges and spouting, verify and adjust. You hold the measurement, not a per-report invoice.",
+        body: "EagleView: place a report order for the address and receive a measured report — construction reports list from $32.75 to $89.50 depending on size and tier. QuoteCore+: upload the PDF plan or image, run AI Scan Assist to detect areas, ridges, hips, valleys, barges and spouting, verify and adjust. You hold the measurement, not a per-report invoice.",
       },
       {
         number: "02",
         title: "Turn measurements into materials",
-        body: "EagleView: reports include measurement detail you can price from - typically in a spreadsheet or estimating tool. QuoteCore+: measurements flow straight into Smart Components, which apply stored materials, coverage, pack sizes, waste and labour automatically.",
+        body: "EagleView: reports include measurement detail you can price from — typically in a spreadsheet or estimating tool. QuoteCore+: measurements flow straight into Smart Components, which apply stored materials, coverage, pack sizes, waste and labour automatically.",
       },
       {
         number: "03",
         title: "Send the quote",
-        body: "EagleView: the report is the deliverable - quoting typically continues in your own tools. QuoteCore+: a branded quote goes to the customer with accept/decline tracking, then converts to a material order and invoice when approved.",
+        body: "EagleView: the report is the deliverable — quoting typically continues in your own tools. QuoteCore+: a branded quote goes to the customer with accept/decline tracking, then converts to a material order and invoice when approved.",
       },
       {
         number: "04",
         title: "Next job, and every job after",
-        body: "EagleView: each new property is a new report order. QuoteCore+: your components and pricing rules carry over - every roof after the first quotes faster, at no extra per-roof cost.",
+        body: "EagleView: each new property is a new report order. QuoteCore+: your components and pricing rules carry over — every roof after the first quotes faster, at no extra per-roof cost.",
       },
     ],
   },
   comparison: {
     heading: "EagleView vs QuoteCore+ feature comparison",
-    intro: "These tools overlap less than they first appear - one sells measurement reports, the other is estimating software. The honest comparison:",
+    intro: "These tools overlap less than they first appear — one sells measurement reports, the other is estimating software. The honest comparison:",
     rows: [
       {
         feature: "Aerial imagery / property reports",
         qc: { status: "no", note: "QuoteCore+ does not generate aerial reports" },
-        competitor: { status: "yes", note: "Core product - flown imagery and measured reports" },
+        competitor: { status: "yes", note: "Core product — flown imagery and measured reports" },
       },
       {
         feature: "PDF/plan takeoff",
@@ -153,7 +153,7 @@ export const eagleViewPage: CompetitorPageData = {
       },
       {
         feature: "AI-assisted measurement",
-        qc: { status: "yes", note: "AI Scan Assist detects roof geometry from your plan - you verify" },
+        qc: { status: "yes", note: "AI Scan Assist detects roof geometry from your plan — you verify" },
         competitor: { status: "yes", note: "Reports are produced with aerial measurement technology" },
       },
       {
@@ -174,7 +174,7 @@ export const eagleViewPage: CompetitorPageData = {
       {
         feature: "Material orders & invoices",
         qc: { status: "yes", note: "Quote converts to order and invoice" },
-        competitor: { status: "unconfirmed", note: "Not a core advertised capability - published products centre on measurement reports and property data" },
+        competitor: { status: "unconfirmed", note: "Not a core advertised capability — published products centre on measurement reports and property data" },
       },
       {
         feature: "Cloud / browser access",
@@ -192,11 +192,11 @@ export const eagleViewPage: CompetitorPageData = {
     heading: "EagleView vs QuoteCore+ pricing",
     intro: "EagleView charges per report with volume-tier discounts. QuoteCore+ is a flat subscription. Depending on volume, the economics differ sharply:",
     sourceNote:
-      "EagleView report prices from eagleview.com/pricing (list, Bronze tier), checked August 2026. Volume tiers (Silver/Gold/Platinum) discount per report; some products are quote-only. Prices may have changed - check their site.",
+      "EagleView report prices from eagleview.com/pricing (list, Bronze tier), checked August 2026. Volume tiers (Silver/Gold/Platinum) discount per report; some products are quote-only. Prices may have changed — check their site.",
     competitorTiers: [
-      { name: "Construction report - small roof (~20 sq)", price: "$32.75/report", detail: "List price; $24.25 at Gold tier" },
-      { name: "Construction report - medium (~40 sq)", price: "$60.00/report", detail: "List price; $49.00 at Gold tier" },
-      { name: "Construction report - large (40+ sq)", price: "$87.00/report", detail: "List price; $75.50 at Gold tier" },
+      { name: "Construction report — small roof (~20 sq)", price: "$32.75/report", detail: "List price; $24.25 at Gold tier" },
+      { name: "Construction report — medium (~40 sq)", price: "$60.00/report", detail: "List price; $49.00 at Gold tier" },
+      { name: "Construction report — large (40+ sq)", price: "$87.00/report", detail: "List price; $75.50 at Gold tier" },
       { name: "Gutter report (residential)", price: "$13.75/report", detail: "Flat across tiers" },
       { name: "Full House™ report", price: "$105.00/report", detail: "Residential; $91.00 at Gold tier" },
     ],
@@ -214,7 +214,7 @@ export const eagleViewPage: CompetitorPageData = {
       {
         label: "High-volume storm season",
         competitor: "Per-report costs scale with every quote you send",
-        qc: "$59/mo Pro Plus - unlimited measuring, 200 quotes/mo",
+        qc: "$59/mo Pro Plus — unlimited measuring, 200 quotes/mo",
       },
     ],
     scenarioNote:
@@ -222,7 +222,7 @@ export const eagleViewPage: CompetitorPageData = {
   },
   video: {
     heading: "From plan to quote, without ordering a report",
-    intro: "See a PDF plan become a fully priced roofing quote in one workflow - the alternative to report-plus-spreadsheet.",
+    intro: "See a PDF plan become a fully priced roofing quote in one workflow — the alternative to report-plus-spreadsheet.",
     videoKey: "quoteWalkthrough",
     ctaHref: "/free-trial",
     ctaLabel: "Try it on your next roof plan",
@@ -241,13 +241,13 @@ export const eagleViewPage: CompetitorPageData = {
       },
       {
         title: "You need property data beyond roofing",
-        body: "EagleView's property intelligence spans walls, solar and gutters. QuoteCore+ doesn't do any of that - and won't pretend to.",
+        body: "EagleView's property intelligence spans walls, solar and gutters. QuoteCore+ doesn't do any of that — and won't pretend to.",
       },
     ],
   },
   freeTool: {
     heading: "Measure a roof yourself, free",
-    body: "Try the takeoff workflow that replaces per-report ordering. The free roof takeoff builder measures areas, ridges, hips and valleys from your plan - right in your browser, no account needed.",
+    body: "Try the takeoff workflow that replaces per-report ordering. The free roof takeoff builder measures areas, ridges, hips and valleys from your plan — right in your browser, no account needed.",
     primaryHref: "/free-roofing-takeoff-builder",
     primaryLabel: "Use the free takeoff builder",
     secondaryLinks: [
@@ -264,22 +264,22 @@ export const eagleViewPage: CompetitorPageData = {
     {
       question: "Is QuoteCore+ cheaper than EagleView?",
       answer:
-        "They use different models, so it depends on volume. EagleView charges per report ($13.75–$105 each). QuoteCore+ is a subscription from free to $59/month with no per-roof cost. At 5+ roofs a month, QuoteCore+ is usually significantly cheaper - but if you need aerial measurements you can't take yourself, a report may be worth paying for.",
+        "They use different models, so it depends on volume. EagleView charges per report ($13.75–$105 each). QuoteCore+ is a subscription from free to $59/month with no per-roof cost. At 5+ roofs a month, QuoteCore+ is usually significantly cheaper — but if you need aerial measurements you can't take yourself, a report may be worth paying for.",
     },
     {
       question: "Does QuoteCore+ generate aerial measurement reports?",
       answer:
-        "No - and we won't pretend otherwise. QuoteCore+ measures from plans and images you supply (with AI Scan Assist to speed up detection). If you need externally flown aerial reports, EagleView does that. Some contractors use both: reports for remote properties, QuoteCore+ for everything they can measure themselves.",
+        "No — and we won't pretend otherwise. QuoteCore+ measures from plans and images you supply (with AI Scan Assist to speed up detection). If you need externally flown aerial reports, EagleView does that. Some contractors use both: reports for remote properties, QuoteCore+ for everything they can measure themselves.",
     },
     {
       question: "Can I do takeoffs from PDF plans instead of ordering reports?",
       answer:
-        "Yes - that's exactly what QuoteCore+ is built for. Upload the architect's PDF or your own photos, calibrate scale, measure or AI-scan the roof geometry, and the measurements flow straight into priced quotes. The free roof takeoff builder lets you try the workflow with no account.",
+        "Yes — that's exactly what QuoteCore+ is built for. Upload the architect's PDF or your own photos, calibrate scale, measure or AI-scan the roof geometry, and the measurements flow straight into priced quotes. The free roof takeoff builder lets you try the workflow with no account.",
     },
     {
       question: "Does QuoteCore+ calculate material quantities like a report does?",
       answer:
-        "Yes, and further - Smart Components convert each measurement into material quantities with waste, labour and your pricing rules applied, producing a customer-ready quote rather than just a measurement document.",
+        "Yes, and further — Smart Components convert each measurement into material quantities with waste, labour and your pricing rules applied, producing a customer-ready quote rather than just a measurement document.",
     },
   ],
   related: [
@@ -309,6 +309,6 @@ export const eagleViewPage: CompetitorPageData = {
   ],
   finalCta: {
     heading: "Own the measurements. Own the margin.",
-    body: "Stop paying per roof. Measure your own plans, let Smart Components price them, and send the quote - all in one workflow. Free tools, no signup; paid plans from $19/month with a 30-day money-back guarantee.",
+    body: "Stop paying per roof. Measure your own plans, let Smart Components price them, and send the quote — all in one workflow. Free tools, no signup; paid plans from $19/month with a 30-day money-back guarantee.",
   },
 };

@@ -1,38 +1,29 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { requireAssistantManager } from './actions';
-import { isUuid } from '@/app/lib/smart-assistant/v2/contracts';
-import { validateVocabulary, type AssistantConcept } from '@/app/lib/smart-assistant/workflow-controller/vocabulary';
-type MemberInput={componentId:string;included:boolean;conceptKey:string|null;isDefault:boolean};
-type Saved = {ok:true;epoch:number;message:string}|{ok:false;error:string};
-function message(error:{code?:string;message?:string}):string {
-  if(error.code==='40001')return 'Assistant settings changed in another session. Reload this page and review the current settings before saving.';
-  if(error.code==='23503')return 'A removed concept is still mapped to products. Remove those mappings before deleting the concept.';
-  if(error.code==='23505')return 'An alias or default is ambiguous. Use unique aliases and one default per concept.';
-  if(error.code==='42501')return 'Your permission or workspace changed. Reload before saving.';
-  return 'These settings could not be saved. Check concept compatibility, aliases and defaults, and confirm the Workflow Controller migrations are installed.';
-}
-function epochValid(epoch:number){return Number.isSafeInteger(epoch)&&epoch>0;}
-export async function saveAssistantVocabulary(input:{epoch:number;concepts:AssistantConcept[]}):Promise<Saved>{
-  const gate=await requireAssistantManager();if(!gate.ok)return gate;
-  try{if(!epochValid(input.epoch))return {ok:false,error:'Reload the current assistant settings.'};validateVocabulary(input.concepts);}catch(error){return {ok:false,error:error instanceof Error?error.message:'Invalid vocabulary.'};}
-  const {data,error}=await (createAdminClient() as any).rpc('sa_v2_save_assistant_vocabulary',{p_user_id:gate.userId,p_expected_epoch:input.epoch,p_concepts:input.concepts});
-  if(error)return {ok:false,error:message(error)};
-  revalidatePath('/[workspaceSlug]/account/smart-assistant','page');
-  return {ok:true,epoch:Number(data),message:'Workspace vocabulary saved. Existing proposals will require a fresh review.'};
-}
-export async function saveAssistantLibrary(input:{epoch:number;collectionId:string;enabled:boolean;includeAll:boolean;members:MemberInput[]}):Promise<Saved>{
-  const gate=await requireAssistantManager();if(!gate.ok)return gate;
-  if(!epochValid(input.epoch)||!isUuid(input.collectionId)||typeof input.enabled!=='boolean'||typeof input.includeAll!=='boolean'||!Array.isArray(input.members)||input.members.length>500)return {ok:false,error:'Use a current library with at most 500 configured active products. No partial settings were saved.'};
-  const ids=new Set<string>(),defaults=new Set<string>();
-  for(const m of input.members){
-    if(!m||!isUuid(m.componentId)||ids.has(m.componentId)||typeof m.included!=='boolean'||typeof m.isDefault!=='boolean'||m.conceptKey!==null&&(typeof m.conceptKey!=='string'||!/^[a-z][a-z0-9_]{0,63}$/.test(m.conceptKey)))return {ok:false,error:'Invalid or duplicate component mapping. Nothing was saved.'};
-    ids.add(m.componentId);
-    if(m.isDefault){if(!m.included||!m.conceptKey||defaults.has(m.conceptKey))return {ok:false,error:'Choose one included default per concept.'};defaults.add(m.conceptKey);}
-  }
-  const {data,error}=await (createAdminClient() as any).rpc('sa_v2_save_assistant_library',{p_user_id:gate.userId,p_expected_epoch:input.epoch,p_collection_id:input.collectionId,p_enabled:input.enabled,p_include_all:input.includeAll,p_members:input.members});
-  if(error)return {ok:false,error:message(error)};
-  revalidatePath('/[workspaceSlug]/account/smart-assistant','page');
-  return {ok:true,epoch:Number(data),message:'Assistant library saved atomically. Existing proposals will require a fresh review.'};
+import { ASSISTANT_LIBRARY_ROLES, type AssistantLibraryRole } from '@/app/lib/smart-assistant/library-workflow/contracts';
+
+type MemberInput={componentId:string;included:boolean;role:AssistantLibraryRole|null;isDefault:boolean};
+export async function saveAssistantLibrary(input:{collectionId:string;enabled:boolean;includeAll:boolean;members:MemberInput[]}){
+ const gate=await requireAssistantManager();if(!gate.ok)return gate;
+ if(!/^[0-9a-f-]{36}$/i.test(input.collectionId))return {ok:false as const,error:'Invalid library.'};
+ const supabase=await createSupabaseServerClient();
+ const {data:collection}=await supabase.from('component_collections').select('id').eq('id',input.collectionId).eq('company_id',gate.companyId).maybeSingle();
+ if(!collection)return {ok:false as const,error:'Library not found in this workspace.'};
+ const ids=[...new Set(input.members.map(m=>m.componentId))];
+ const {data:components}=ids.length?await supabase.from('component_library').select('id').eq('company_id',gate.companyId).eq('collection_id',input.collectionId).in('id',ids):{data:[] as {id:string}[]};
+ const allowed=new Set((components??[]).map(c=>c.id));
+ const clean=input.members.filter(m=>allowed.has(m.componentId)&&(!m.role||ASSISTANT_LIBRARY_ROLES.includes(m.role))).slice(0,500);
+ const defaults=new Set<string>();
+ for(const m of clean){if(m.isDefault&&m.role){if(defaults.has(m.role))return {ok:false as const,error:`Choose only one default for ${m.role.replace('_',' ')}.`};defaults.add(m.role);}}
+ const admin=createAdminClient() as any;
+ const {error:pErr}=await admin.from('assistant_v2_library_profiles').upsert({company_id:gate.companyId,collection_id:input.collectionId,enabled:!!input.enabled,include_all:!!input.includeAll,updated_by:gate.userId,updated_at:new Date().toISOString()},{onConflict:'company_id,collection_id'});
+ if(pErr)return {ok:false as const,error:pErr.message};
+ const {error:delErr}=await admin.from('assistant_v2_library_members').delete().eq('company_id',gate.companyId).eq('collection_id',input.collectionId);
+ if(delErr)return {ok:false as const,error:delErr.message};
+ if(clean.length){const {error:mErr}=await admin.from('assistant_v2_library_members').insert(clean.map(m=>({company_id:gate.companyId,collection_id:input.collectionId,component_id:m.componentId,included:m.included,assistant_role:m.role,is_default:m.isDefault&&!!m.role,updated_by:gate.userId})));if(mErr)return {ok:false as const,error:mErr.message};}
+ revalidatePath('/account/smart-assistant','page');
+ return {ok:true as const,message:'Smart Assistant library access saved.'};
 }

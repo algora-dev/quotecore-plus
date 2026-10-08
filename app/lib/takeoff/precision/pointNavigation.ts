@@ -1,15 +1,15 @@
 // Mobile takeoff M3: four-button point controller semantics (spec §6) and
 // fine-adjustment nudge math (spec §5.7). PURE module.
 //
-// ‹ › traverse the perimeter in STORED order (R07) - never by screen position.
+// ‹ › traverse the perimeter in STORED order (R07) — never by screen position.
 // Wrap on closed outlines; disable the missing neighbour on open paths; with no
 // selection either arrow selects the first vertex (§6.2). Insert-after uses the
-// selected vertex's successor midpoint (§6.3 - geometry lives in the M1 command
+// selected vertex's successor midpoint (§6.3 — geometry lives in the M1 command
 // engine insertAfter; this module only answers ENABLEMENT). Delete enablement
 // follows §6.4 (closed outline keeps a minimum of 3 vertices).
 //
 // Nudge (§5.7): each tap moves the selected vertex by the inverse-transformed
-// screen vector for the chosen step (1 or 5 visible CSS px) - zooming in gives
+// screen vector for the chosen step (1 or 5 visible CSS px) — zooming in gives
 // finer scene adjustment. Direction vectors are in VIEW space, converted with
 // the linear part only (same rule as remote drag, §5.2).
 
@@ -42,7 +42,7 @@ export function nudgeSceneDelta(camera: Camera, direction: NudgeDirection, stepP
 /**
  * §6.2 previous/next target index in stored perimeter order.
  *  - closed: wraps with modular arithmetic;
- *  - open: no wrap - the missing neighbour is null;
+ *  - open: no wrap — the missing neighbour is null;
  *  - no selection (currentIndex < 0): either arrow selects the first vertex.
  */
 export function neighbourIndex(
@@ -59,7 +59,7 @@ export function neighbourIndex(
   return target >= 0 && target < count ? target : null;
 }
 
-/** §6.3: midpoint insert-after needs a REAL successor - open path at its last
+/** §6.3: midpoint insert-after needs a REAL successor — open path at its last
  *  vertex has none (use explicit place-next instead; never append silently). */
 export function canInsertAfter(count: number, closed: boolean, currentIndex: number): boolean {
   if (currentIndex < 0) return false;

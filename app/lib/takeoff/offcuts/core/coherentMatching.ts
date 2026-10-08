@@ -23,14 +23,14 @@ export interface CoherentMatch extends FaceMatch {
  * This matcher does not decide source policy. The bank search provides one or
  * two coherent pools; it does not offer every scrap from the whole roof. */
 export function matchCoherentSets(demands: Demand[], inventory: Offcut[], profile: Profile,
-  check:()=>void=()=>{}, preserveBankRegistration=false, maxRuns=4, placementPreference: 'centre'|'lower'|'upper' = 'centre'): CoherentMatch {
+  check:()=>void=()=>{}, preserveBankRegistration=false, maxRuns=4): CoherentMatch {
   const cuts=demands.filter(d=>!isStraightFiller(d.required));
   const cutArea=cuts.reduce((n,d)=>n+area(d.required),0);
   const byLane=new Map(demands.map(d=>[d.laneIndex,d]));
   const stockById=new Map(inventory.map(o=>[o.id,o]));
   const buckets=new Map<string,Offcut[]>();
   for(const o of inventory){
-    const key=(o.cutSetId??`${o.sourceFaceId}:legacy`)+(o.cutKind==='valley'?`:${o.cutArm??'legacy'}`:'');
+    const key=o.cutSetId??`${o.sourceFaceId}:legacy`;
     const list=buckets.get(key)??[];list.push(o);buckets.set(key,list);
   }
   const groups:Offcut[][]=[];
@@ -83,7 +83,7 @@ export function matchCoherentSets(demands: Demand[], inventory: Offcut[], profil
           let fit=fitCache.get(cacheKey);
           if(fit===undefined){
             const stock=rotation===180?rotate180(o.region,o.widthMm):o.region;
-            const dy=area(stock)+1e-3>=area(d.required)?fitY(stock,d.required,placementPreference):null;
+            const dy=area(stock)+1e-3>=area(d.required)?fitY(stock,d.required):null;
             fit=dy===null?null:{demandId:d.id,kind:'reuse',offcutId:o.id,rotation,translateY:dy};fitCache.set(cacheKey,fit);
           }
           if(fit)fitted.push(fit);

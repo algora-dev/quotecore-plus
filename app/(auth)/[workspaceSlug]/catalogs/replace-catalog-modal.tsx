@@ -1,9 +1,7 @@
 'use client';
 
-import '@/app/components/ui/v2/qc-dialog-actions.css';
-import { QcDialog } from '@/app/components/ui/v2/QcDialog';
-import { QcJourney } from '@/app/components/ui/v2/QcJourney';
-import { QcButton } from '@/app/components/ui/v2/QcButton';
+import '@/app/components/ui/v2/qc.css';
+import '@/app/components/ui/v2/qc-journeys.css';
 import { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import { type CatalogRow } from './actions';
@@ -152,22 +150,22 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
   }
 
   return (
-    <QcDialog className="qc-dialog-fixed-actions" open pending onRequestClose={onClose} title="Upload new version" size="md"
-      footer={<QcButton onClick={onClose} disabled={replacing || parsing}>Cancel</QcButton>}>
-      <QcJourney>
+    <div data-qc-ui="v2" className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold text-slate-900">Upload New Version</h3>
         <p className="text-sm text-slate-400 mb-4">
           Replace the data in <strong className="text-slate-600">{catalog.name}</strong> with a new CSV file.
           The column mapping will be preserved.
         </p>
 
         {error && (
-          <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>
+          <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>
         )}
 
         {!preview && (
           <div
             onClick={() => fileRef.current?.click()}
-            role="button" tabIndex={0} aria-label="Choose replacement CSV" aria-busy={parsing}
+            role="button" tabIndex={0} aria-label="Choose replacement CSV"
             onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
             className="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 px-6 py-10 text-center transition"
           >
@@ -232,7 +230,7 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
               </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-2 pt-2">
+            <div className="flex items-center gap-2 pt-2">
               <button data-qc-variant="primary" onClick={handleReplace} disabled={replacing}
                 className="qc-flow-control qc-button cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-40">
                 {replacing ? `Replacing... ${uploadProgress}%` : `Replace ${preview.rowCount} rows`}
@@ -242,11 +240,14 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
                 className="qc-flow-control qc-button cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-40">
                 Choose different file
               </button>
-
+              <button data-qc-variant="ghost" onClick={onClose}
+                className="qc-flow-control qc-button cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
+                Cancel
+              </button>
             </div>
           </div>
         )}
-      </QcJourney>
-    </QcDialog>
+      </div>
+    </div>
   );
 }

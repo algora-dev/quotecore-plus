@@ -1,4 +1,3 @@
-/** Shared marketing CTAs. Glass uses the pricing-selector G-C glint surface. */
 import type { ReactNode } from 'react';
 import styles from './MarketingButton.module.css';
 
@@ -13,8 +12,6 @@ type Props = {
   onClick?: () => void;
   ariaLabel?: string;
   icon?: ReactNode;
-  target?: string;
-  rel?: string;
 };
 
 export function MarketingButton({
@@ -26,14 +23,10 @@ export function MarketingButton({
   onClick,
   ariaLabel,
   icon,
-  target,
-  rel,
 }: Props) {
   return (
     <a
       href={href}
-      target={target}
-      rel={rel}
       aria-label={ariaLabel}
       onClick={onClick}
       className={[styles.button, styles[variant], size === 'large' ? styles.large : '', className].filter(Boolean).join(' ')}

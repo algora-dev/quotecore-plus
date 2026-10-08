@@ -1,4 +1,5 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
       "path": "/api/cron/prune-rate-limits",
@@ -27,18 +28,6 @@
     {
       "path": "/api/cron/integrations",
       "schedule": "*/2 * * * *"
-    },
-    {
-      "path": "/api/cron/dispatch-push",
-      "schedule": "*/2 * * * *"
-    },
-    {
-      "path": "/api/cron/free-ai-scan-budget",
-      "schedule": "23 * * * *"
-    },
-    {
-      "path": "/api/cron/demo-sweep",
-      "schedule": "11 * * * *"
     }
   ]
 }

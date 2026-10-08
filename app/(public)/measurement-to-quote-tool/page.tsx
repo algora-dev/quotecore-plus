@@ -5,16 +5,7 @@ import FreeQuoteBuilder from './FreeQuoteBuilder';
 const TOOL_HREF = '/measurement-to-quote-tool';
 const link = 'font-medium text-[#BD4A1A] hover:underline';
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams?: Promise<{ mode?: string }>;
-}) {
-  // Entry flow (owner 2026-10-03): the tool landing links here with the
-  // actual-vs-plan choice already made; the builder starts in that
-  // configuration and skips its own mode-selection step.
-  const params = (await searchParams) ?? {};
-  const initialMode = params.mode === 'actual' || params.mode === 'plan' ? params.mode : undefined;
+export default function Page() {
   return (
     <>
       {/* Accessible summary (screen readers / crawlers) */}
@@ -43,7 +34,7 @@ export default async function Page({
         </p>
       </section>
       <BlogHeader />
-      <FreeQuoteBuilder initialMode={initialMode} />
+      <FreeQuoteBuilder />
 
       {/* What this tool does */}
       <section className="border-t border-slate-200 bg-white px-4 py-12">

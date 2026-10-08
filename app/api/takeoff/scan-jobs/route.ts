@@ -1,4 +1,3 @@
-import { rejectUnapprovedDemoPaidRoute } from '@/app/lib/demo/paid-route.server';
 /**
  * Scan Jobs API - submit new scans and poll status.
  *
@@ -21,8 +20,6 @@ export const maxDuration = 60;
 // ── POST: Submit a new scan job ─────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const demoDenied = await rejectUnapprovedDemoPaidRoute();
-  if (demoDenied) return demoDenied;
   try {
     const profile = await requireCompanyContext();
     const supabase = await createSupabaseServerClient();

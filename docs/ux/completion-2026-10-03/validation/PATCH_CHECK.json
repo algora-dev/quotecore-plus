@@ -1,7 +1,0 @@
-{
-  "passed": true,
-  "command": "git apply --check changes.patch; git apply changes.patch",
-  "baseline": "LF-normalized changed files extracted from the received ZIP",
-  "files_reconstructed": 17,
-  "every_result_matches_return": true
-}

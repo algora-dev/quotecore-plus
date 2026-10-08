@@ -1,8 +1,8 @@
 /**
- * Takeoff actions context - the injection seam for running the REAL
+ * Takeoff actions context — the injection seam for running the REAL
  * takeoff workstation outside the authenticated app.
  *
- * Default: the app's real server actions + storage helpers - bit-for-bit
+ * Default: the app's real server actions + storage helpers — bit-for-bit
  * current behaviour. No provider mounted = real actions, exactly as before.
  *
  * Wrapped (free tool / MCP plugin): <TakeoffSessionProvider actions={...}>

@@ -1,7 +1,7 @@
 // Precision edit draft command engine (spec §4.3, §6, §8.3–8.5, §11.2).
 //
 // Pure reducer/function style: every command takes a session and returns a
-// CommandResult. The ONLY boundary is saveEdit(), which is still pure - it
+// CommandResult. The ONLY boundary is saveEdit(), which is still pure — it
 // validates the draft, checks the expected context for staleness, and returns
 // a SavePlan that the adapter layer must execute through the EXISTING
 // authorised atomic save path (actions.ts save_takeoff_atomic_v2 /
@@ -139,7 +139,7 @@ export function selectVertex(session: PrecisionEditSession, id: string | null, a
 
 /**
  * Open-outline creation only (spec §4.3/§8.1): create, select and arm a new
- * point. Rejected on a closed draft - closed review adds points via insert.
+ * point. Rejected on a closed draft — closed review adds points via insert.
  */
 export function appendVertex(session: PrecisionEditSession, point: ScenePoint): CommandResult {
   if (session.draft.closed) {
@@ -283,7 +283,7 @@ export function discardEdit(session: PrecisionEditSession): CommandResult {
 // ─── undo / redo (spec §11.2) ────────────────────────────────────────────
 
 /**
- * Undo the last logical operation. Restores the exact prior draft snapshot -
+ * Undo the last logical operation. Restores the exact prior draft snapshot —
  * including vertex IDs, metadata and localGeometryRevision. Never crosses the
  * saved base and never touches another page/target.
  */
@@ -328,7 +328,7 @@ export function isDirty(session: PrecisionEditSession): boolean {
 
 // ─── saveEdit boundary (spec §4.3 / §11.3) ──────────────────────────────
 
-/** Where the adapter must route the save - existing paths only. */
+/** Where the adapter must route the save — existing paths only. */
 export type SaveRoute =
   | { kind: 'atomic-takeoff-save-v2' }                       // actions.ts save_takeoff_atomic_v2
   | { kind: 'page-calibration-persist' }                     // actions.ts persistPageCalibration
@@ -345,7 +345,7 @@ export type SavePlan = Readonly<{
   vertices: readonly Vertex[];
   closed: boolean;
   /** Primitive recomputations derived from the CURRENT draft at the CURRENT
-   *  scale (spec §8.5: polygon edits recompute from new points - never a
+   *  scale (spec §8.5: polygon edits recompute from new points — never a
    *  scale-ratio multiply of stale areas). Scale itself is NOT recomputed here
    *  (that is the calibration path, spec §7.6). */
   recompute: Readonly<{
@@ -390,7 +390,7 @@ function validationIssuesForTarget(
  * dependencies, and hand a plan to the existing atomic save path. Returns
  * `clean` (nothing to save) when the draft equals the base, `stale-context`
  * when the expected context no longer matches the session (page/image/epoch
- * changed underneath us), and `blocking-validation` when validation fails -
+ * changed underneath us), and `blocking-validation` when validation fails —
  * an invalid draft stays editable for repair, it is never silently saved.
  */
 export function saveEdit(
@@ -417,7 +417,7 @@ export function saveEdit(
   const route: SaveRoute = (() => {
     if (session.target.kind === 'calibration') return { kind: 'page-calibration-persist' };
     if (session.target.kind === 'outline') {
-      // Update-in-place: keep geometryId/quoteRoofAreaId ownership - never a
+      // Update-in-place: keep geometryId/quoteRoofAreaId ownership — never a
       // new roof-area row (spec §8.5). The underlying RPC gap is tracked for M5.
       return {
         kind: 'outline-geometry-update',

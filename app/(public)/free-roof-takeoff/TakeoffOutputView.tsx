@@ -2,15 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { QcButton } from '@/app/components/ui/v2/QcButton';
-import { QcIcon } from '@/app/components/ui/v2/QcIcon';
-import { QcJourney } from '@/app/components/ui/v2/QcJourney';
-import './free-takeoff-ui.css';
 import { buildConvertUrl } from '../shared/convertLines';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import { getStoredPitchMode } from '@/app/components/PitchInput';
 import { fromDegrees } from '@/app/lib/pitch-inputs';
-import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/demo-data/baseline';
+import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/DemoWorkstation';
 import type { TakeoffUnitSystem, TakeoffComponentSpec } from './tradeConfig';
 
 /** Trade variant for shared report copy (default roofing). Cladding switches
@@ -34,6 +30,7 @@ export interface TakeoffOutputExtras {
 }
 
 const FT2_PER_M2 = 10.7639104;
+const SQM_PER_SQ = 9.290304; // 1 roofing square = 100 ft2
 
 /** Format a raw (already-in-unit) number. */
 const fmt = (n: number, dp = 2) => n.toLocaleString('en-NZ', { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -73,13 +70,18 @@ function placeholderPitchType(row: { semantic: string | null; name: string }): '
   return 'none';
 }
 
+function isHipOrValley(row: ComponentRow): boolean {
+  if (row.semantic && (HIP_SEMANTICS.includes(row.semantic) || VALLEY_SEMANTICS.includes(row.semantic))) return true;
+  const n = row.name.toLowerCase();
+  return n.startsWith('hip') || n.startsWith('valley');
+}
+
 export function TakeoffOutputView({
   payload,
-  extras: _extras,
+  extras,
   unitSystem = 'metric',
   specs = [],
   trade = 'roofing',
-  reportNote = null,
   onRestart,
   onBackToCanvas,
 }: {
@@ -93,9 +95,6 @@ export function TakeoffOutputView({
   /** Trade copy variant: roofing (default) or cladding (wall terminology,
    *  no pitch language). */
   trade?: TakeoffTrade;
-  /** Trade-config note appended under the report footer paragraph (P4).
-   *  Null (roofing) leaves the roof footer byte-identical. */
-  reportNote?: string | null;
   onRestart: () => void;
   onBackToCanvas: () => void;
 }) {
@@ -104,6 +103,7 @@ export function TakeoffOutputView({
   // Non-roof trades: no pitch language anywhere.
   const isFlat = isCladding || isFlooring;
   const toolSlug = trade === 'cladding' ? 'free-cladding-takeoff' : trade === 'flooring' ? 'free-flooring-takeoff' : 'free-roof-takeoff';
+  const areaNoun = isFlooring ? 'Floor' : 'Wall';
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   // Show pitch in the mode the user entered it (degrees / ratio / gradient).
@@ -132,6 +132,7 @@ export function TakeoffOutputView({
     return system === 'squares' ? ft2 / 100 : ft2;
   };
   const areaUnitLabel = system === 'metric' ? 'm\u00b2' : system === 'squares' ? 'sq' : 'ft\u00b2';
+  const areaUnitSup = system === 'metric' ? 'm\u00b2' : system === 'squares' ? 'squares' : 'ft\u00b2';
 
   const areas: AreaRow[] = useMemo(
     () =>
@@ -187,7 +188,7 @@ export function TakeoffOutputView({
           if (spec && g.measurementType !== 'quantity') {
             // Waste applies PER ENTRY on top of the pitch-adjusted length
             // (pitch was already applied per-entry above, from that entry's area).
-            const adjusted = entries.reduce((sum, e) => {
+            const adjusted = entries.reduce((sum, e, i) => {
               const r = applyPitchAndWaste(
                 e.adjusted ?? e.value,
                 false, // pitch already applied - only waste runs here
@@ -272,10 +273,10 @@ export function TakeoffOutputView({
       ? c.entries.reduce((s, e) => s + (e.cost ?? 0), 0)
       : null;
     return (
-      <div key={c.key} className="avoid-break qc-free-report-group">
-        <div className="qc-free-report-group-heading">
+      <div key={c.key} className="avoid-break">
+        <div className="flex items-center justify-between pb-1">
           <span className="text-black font-semibold">{c.name}</span>
-          <span className="qc-free-report-group-quantities">
+          <span className="text-black font-semibold whitespace-nowrap text-sm">
             {c.measurementType === 'quantity'
               ? `${c.entries.length} ea`
               : `${fmt(planTotal)} ${u} plan`}
@@ -290,9 +291,9 @@ export function TakeoffOutputView({
         </div>
         <div className="space-y-0.5">
           {c.entries.map((m, i) => (
-            <div key={i} className="qc-free-report-entry">
+            <div key={i} className="flex items-center justify-between py-1 pl-4 text-sm border-b border-black/5">
               <span className="text-black/70">Entry {i + 1}</span>
-              <span className="qc-free-report-entry-value">
+              <span className="text-black/80 whitespace-nowrap">
                 {c.measurementType === 'quantity'
                   ? '1 ea'
                   : m.afterWaste != null
@@ -353,23 +354,21 @@ export function TakeoffOutputView({
     }
   };
 
-  // A normal link is retained after saving in case the browser blocked the
-  // existing asynchronous window.open. It reuses the same saved draft, not a new request.
-  const savedDraftHref = savedDraftId && typeof window !== 'undefined'
-    ? `${window.location.hostname.endsWith('.quote-core.com') ? 'https://app.quote-core.com' : ''}/signup?ref=${toolSlug}&draft=${savedDraftId}`
-    : null;
-
   if (!hasMeasurements) {
-    return <QcJourney className="qc-free-output qc-free-output-empty">
-      <div className="qc-flow-empty"><QcIcon name="measure" /><h2>No measurements yet</h2>
-        <p>Return to the canvas and add a measurement to see your report.</p>
-        <QcButton variant="primary" onClick={onBackToCanvas}>Back to the canvas</QcButton>
+    return (
+      <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex items-center justify-center px-4">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center max-w-md">
+          <p className="text-sm text-slate-500">No measurements on the canvas yet - measure something first.</p>
+          <button onClick={onBackToCanvas} className="mt-4 px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
+            Back to the canvas
+          </button>
+        </div>
       </div>
-    </QcJourney>;
+    );
   }
 
   return (
-    <QcJourney className="qc-free-output">
+    <div className="min-h-[calc(100vh-64px)] bg-slate-50 px-4 py-10">
       {/* Print/PDF: output document ONLY. 2026-09-07 fix: the old approach
           (visibility:hidden on body + position:absolute report) left all hidden
           marketing sections occupying layout, which produced 3-4 trailing blank
@@ -401,19 +400,14 @@ export function TakeoffOutputView({
           .avoid-break { break-inside: avoid; page-break-inside: avoid; }
         }
       `}</style>
-      <div className="qc-free-output-inner">
-        <div className="qc-free-output-heading print-hide">
-          <div><p className="qc-free-eyebrow">Measurement complete</p><h2>Your takeoff report</h2>
-            <p>Review the measurements below, then print them or continue with a quote.</p></div>
-          <QcButton variant="glass" onClick={() => window.print()}><QcIcon name="download" />Print / Save PDF</QcButton>
-        </div>
+      <div className="mx-auto max-w-4xl">
         {/* Takeoff report - clean measurement document, same format the app
             hands to the quote builder. */}
-        <div id="takeoff-report" className="qc-free-report">
-          <div className="qc-free-report-heading">
+        <div id="takeoff-report" className="bg-white rounded-xl border border-black p-8 md:p-12 space-y-8">
+          <div className="border-b-2 border-black pb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/MainQCP.png" alt={`QuoteCore+ ${isCladding ? 'Cladding' : isFlooring ? 'Flooring' : 'Roofing'}`} className="qc-free-report-logo" />
-            <h1 className="qc-free-report-title">{isCladding ? 'WALL & CLADDING TAKEOFF REPORT' : isFlooring ? 'FLOORING TAKEOFF REPORT' : 'ROOF TAKEOFF REPORT'}</h1>
+            <img src="/MainQCP.png" alt="QuoteCore+ Roofing" className="h-14 object-contain" />
+            <h1 className="mt-4 text-xl font-bold text-black">{isCladding ? 'WALL & CLADDING TAKEOFF REPORT' : isFlooring ? 'FLOORING TAKEOFF REPORT' : 'ROOF TAKEOFF REPORT'}</h1>
             <p className="mt-1 text-sm text-black">Generated {today} - QuoteCore+ free digital takeoff</p>
             <p className="mt-1 text-xs text-black/60">
               Measurement units: {system === 'squares' ? 'Roofing squares (areas) / feet (lengths)' : system === 'imperial' ? 'Imperial (ft / ft\u00b2)' : 'Metric (m / m\u00b2)'}
@@ -429,7 +423,7 @@ export function TakeoffOutputView({
               the first area. */}
           {components.length > 0 && (
             <div>
-              <h2 className="qc-free-report-section-title">{areas.length > 0 ? (isCladding ? 'Wall Areas & Components' : isFlooring ? 'Floor Areas & Components' : 'Roof Areas & Components') : 'Components'}</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">{areas.length > 0 ? (isCladding ? 'Wall Areas & Components' : isFlooring ? 'Floor Areas & Components' : 'Roof Areas & Components') : 'Components'}</h2>
               <div className="mt-3 space-y-6">
                 {/* 2026-08-30: no roof areas - components stand alone (flat list,
                     same as the app's no-area flow). Previously this section only
@@ -453,15 +447,15 @@ export function TakeoffOutputView({
                           individual component groups below each avoid being
                           split mid-item, but the area section itself flows
                           across pages naturally (2026-09-07 pagination fix). */}
-                      <div className="avoid-break qc-free-report-area-heading">
+                      <div className="avoid-break flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
                         <span className="text-black font-bold">{a.name}{isFlat ? '' : <span className="font-medium"> - pitch {fmtPitch(a.pitch)}</span>}</span>
-                        <span className="qc-free-report-area-values">
+                        <span className="text-black font-medium whitespace-nowrap text-sm">
                           {isFlat
                             ? <>{fmt(a.planArea)} {areaUnitLabel} area</>
                             : <>{fmt(a.planArea)} {areaUnitLabel} plan &middot; {fmt(a.pitchedArea)} {areaUnitLabel} pitched</>}
                         </span>
                       </div>
-                      <div className="qc-free-report-area-groups">
+                      <div className="pl-6 pt-2 space-y-3">
                         {groupsHere.map(renderGroup)}
                       </div>
                     </div>
@@ -474,20 +468,20 @@ export function TakeoffOutputView({
 
           {/* Totals - always the last block of the report */}
           <div className="pt-2 avoid-break">
-            <h2 className="qc-free-report-section-title">Totals</h2>
-            <div className="qc-free-report-totals">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">Totals</h2>
+            <div className="mt-3 space-y-2">
               {areas.length > 0 && (
-                <div className="qc-free-report-total-row">
+                <div className="flex items-center justify-between py-2 border-b border-black/10">
                   <span className="text-black">{isFlooring ? 'Total floor area' : isCladding ? 'Total wall area' : 'Total plan area'}</span>
                   <span className="text-black font-medium">{isFlat ? <>{fmt(totalPlanArea)} {areaUnitLabel}</> : <>{fmt(totalPlanArea)} {areaUnitLabel} plan &middot; {fmt(totalPitchedArea)} {areaUnitLabel} pitched</>}</span>
                 </div>
               )}
-              <div className="qc-free-report-total-row">
+              <div className="flex items-center justify-between py-2 border-b border-black/10">
                 <span className="text-black">Total components measured</span>
                 <span className="text-black font-medium">{components.length}</span>
               </div>
               {hasAnyCost && (
-                <div className="qc-free-report-total-row qc-free-report-grand-total">
+                <div className="flex items-center justify-between py-1 mt-1">
                   <span className="text-black font-bold">Estimated total</span>
                   <span className="text-black font-bold text-lg">${fmt(totalCost)}</span>
                 </div>
@@ -495,40 +489,62 @@ export function TakeoffOutputView({
             </div>
           </div>
 
-          <div className="qc-free-report-note">
+          <div className="pt-4 border-t border-black">
             <p className="text-sm text-black italic">
-              {isFlat
-                ? 'Measurements taken with the QuoteCore+ digital takeoff system. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
-                : 'Measurements taken with the QuoteCore+ digital takeoff system. Roof areas use the rafter pitch factor for each area. Hips and valleys are adjusted using the hip and valley pitch calculated from the pitch of their roof area; barges use the rafter pitch factor. Ridge and spouting require no pitch adjustment. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'}
+              {isFlooring
+                ? 'Measurements taken with the QuoteCore+ digital takeoff system. Floor areas are measured as drawn - no pitch adjustment applies. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
+                : isCladding
+                ? 'Measurements taken with the QuoteCore+ digital takeoff system. Wall areas are measured as drawn - no pitch adjustment applies. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
+                : 'Measurements taken with the QuoteCore+ digital takeoff system. Roof areas use the rafter pitch factor for each area. Hips and valleys are adjusted using the hip &amp; valley pitch calculated from their roof area&apos;s pitch; barges use the rafter pitch factor. Ridge and spouting require no pitch adjustment. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'}
             </p>
-            {reportNote && <p className="mt-1 text-sm italic text-black/70">{reportNote}</p>}
           </div>
         </div>
 
-        {/* Both existing continuations remain. One prepares a free document;
-            the other persists a takeoff draft and opens the account journey. */}
-        <div className="print-hide qc-free-output-actions">
-          <div><h2>What would you like to do next?</h2>
-            <p>Make a quote in the free generator, or save your takeoff to continue in QuoteCore+.</p></div>
-          <div className="qc-free-output-next-actions">
-            <Link href={convertToQuoteUrl} target="_blank" rel="noopener noreferrer"
-              className="qc-button" data-qc-variant="primary">Create a quote<QcIcon name="arrow" /></Link>
-            <QcButton onClick={handleSendToApp} disabled={saveState === 'saving' || saveState === 'saved'}
-              pending={saveState === 'saving'}>
-              {saveState === 'saving' ? 'Saving takeoff…' : saveState === 'saved' ? 'Takeoff saved' : 'Save to QuoteCore+'}
-            </QcButton>
+        {/* Actions */}
+        <div className="print-hide mt-8 bg-white border border-slate-200 rounded-2xl p-8 text-center">
+          <h2 className="text-xl font-semibold text-slate-900">Your takeoff is ready.</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Price it with your own rates, save it, and turn it into a customer quote - the exact
+            measurements above carry straight into the QuoteCore+ quote builder.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href={convertToQuoteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-orange-600 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+            >
+              Convert to quote - free quote generator
+            </Link>
+            <button
+              onClick={handleSendToApp}
+              disabled={saveState === 'saving' || saveState === 'saved'}
+              className="inline-flex items-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
+            >
+              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved - sign up opened in a new tab' : 'Save my takeoff - it comes with you'}
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="px-5 py-3 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+            >
+              Print / Save PDF
+            </button>
+            <button onClick={onRestart} className="px-5 py-3 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
+              New takeoff
+            </button>
           </div>
-          <p className="qc-free-help">Create a quote opens the free quote generator in a new tab. Saving to QuoteCore+ opens sign up to keep and price the takeoff in your account.</p>
-          {saveState === 'error' && <p role="alert" className="qc-free-error">Could not save your takeoff right now. Your report is still here; try saving again.</p>}
-          {savedDraftId && <div role="status" className="qc-free-save-status">
-            <strong>Draft saved ({savedDraftId.slice(0, 8)}…).</strong>
-            <p>Continue in the sign-up tab. If it did not open, use the link below.</p>
-            {savedDraftHref && <a href={savedDraftHref} target="_blank" rel="noopener noreferrer" className="qc-free-text-link">Open saved takeoff<QcIcon name="arrow" /></a>}
-          </div>}
-          <div className="qc-free-output-other-actions"><QcButton onClick={onRestart}>New takeoff</QcButton>
-            <span>Already have an account? <Link href="/login" className="qc-free-text-link">Sign in</Link></span></div>
+          {saveState === 'error' && (
+            <p className="mt-3 text-sm text-[#BD4A1A]">Could not save your takeoff right now - please try again.</p>
+          )}
+          {savedDraftId && (
+            <p className="mt-3 text-xs text-slate-400">Draft saved ({savedDraftId.slice(0, 8)}...). Complete sign up to open it.</p>
+          )}
+          <p className="mt-4 text-xs text-slate-400">
+            Already have an account?{' '}
+            <Link href="/login" className="underline hover:text-slate-600">Log in</Link>
+          </p>
         </div>
       </div>
-    </QcJourney>
+    </div>
   );
 }

@@ -23,7 +23,6 @@ import type {
 } from '@/app/lib/takeoff/precision/touchAiOutline';
 import { outlineDependentRecompute, type SavedOutlineRecord } from '@/app/lib/takeoff/precision/touchOutlines';
 import { cornerTotalsAcross, cornerSelection, cornerValueBasis, isCornerValueBasis, type CornerBasis } from '@/app/lib/takeoff/cornerCount';
-import { snapshotSceneAtImageBounds } from './canvasSnapshot';
 
 /** Measurement types whose entries are counts (draw mode = single-tap
  *  point). Corner counting applies to these (2026-09-30). */
@@ -39,9 +38,7 @@ import type { TakeoffFinishPayload } from '@/app/lib/takeoff/finishPayload';
 // Offcuts V1: isolated review module; no quote/persistence changes.
 import type { QuoteCoreSnapshot } from '@/app/lib/takeoff/offcuts/adapters/quotecore';
 import { reconcileCanvasSnapshot, type SceneMeasurementObject } from '@/app/lib/takeoff/offcuts/adapters/canvasSnapshot';
-import type { WorkbenchHandle, OffcutOnePagerPayload } from '@/app/lib/takeoff/offcuts/ui/workbench';
-import type { QuoteQuantityProposal } from '@/app/lib/takeoff/offcuts/core/quantities';
-import { checkedReviewFigure, proposalCoverFigure, type OffcutAreaFigure } from '@/app/lib/takeoff/offcuts/persistence/materialFigure';
+import type { WorkbenchHandle } from '@/app/lib/takeoff/offcuts/ui/workbench';
 import { fingerprint as offcutFingerprint } from '@/app/lib/takeoff/offcuts/core/math';
 import { flushSync } from 'react-dom';
 import { AlertModal } from '@/app/components/AlertModal';
@@ -50,7 +47,6 @@ import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModa
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
 import { rafterPitchFactor } from '@/app/lib/pricing/engine';
-import { refreshDemoGuide } from '@/app/lib/demo/client-events';
 // F-15: Extracted modal components
 import { AreaNameModal } from './modals/AreaNameModal';
 import { PointMeasurementModal } from './modals/PointMeasurementModal';
@@ -177,13 +173,10 @@ interface ComponentMeasurement {
     /** P3 (spec 10.3): attached-entry provenance. value_basis + plan_value
      *  snapshot and the source-polygon link participate in calibration
      *  recompute - these are NOT display-only fields. */
-    value_basis?: 'plan' | 'pitched' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal';
+    value_basis?: 'plan' | 'pitched' | 'corner_all' | 'corner_external' | 'corner_internal';
     plan_value?: number;
     pitch_applied?: boolean;
     source_geometry_id?: string;
-    offcut_layout_id?: string;
-    offcut_source_revision?: string;
-    offcut_faces_revision?: string;
     /** Corner-derived point entries (2026-09-30): count snapshot at attach
      *  time - verification reference, the value IS the count. */
     corner_count?: number;
@@ -199,8 +192,6 @@ interface ComponentWithMeasurements {
 }
 
 interface Props {
-  /** Demo presentation only; the real save + pricing still complete first. */
-  demoFinishHref?: string;
   /** Presentation only. False for the mounted desktop owner under touch. */
   desktopAppearance?: boolean;
   workspaceSlug: string;
@@ -230,21 +221,10 @@ interface Props {
   aiTakeoffAvailable?: boolean;
   /** AI Assist points: current usage for UI display. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
-  /** Seeded replay mode (demo/preview hosts): when provided, every AI Assist
-   *  scan replays this captured AiScanData instead of calling the network
-   *  endpoints, and when `autoRun` is set the replay fires once as soon as
-   *  the canvas and a calibration are ready. Absent = live scans, unchanged. */
-  seededScan?: {
-    data: AiScanData;
-    autoRun?: boolean;
-    /** Fixed pitch applied to every detected area (replays default to the
-     *  captured per-area pitch when omitted). */
-    pitch?: number;
-  };
   /** P2/P6 AI-assisted calibration: per-company flag read server-side. */
   aiCalibrationEnabled?: boolean;
   /** M5: registers the touch-outline bridge adapter (single data owner stays
-   *  this workstation - the touch presentation only reads/calls back, R14). */
+   *  this workstation — the touch presentation only reads/calls back, R14). */
   /** Free-tool / MCP-plugin mode: emit the completed takeoff as data instead
    *  of navigating into the app quote-build step. Absent = app behaviour. */
   onFreeFinish?: (payload: TakeoffFinishPayload) => void;
@@ -336,7 +316,6 @@ interface TakeoffSnapshot {
 }
 
 export function TakeoffWorkstation({
-  demoFinishHref,
   desktopAppearance = true,
   workspaceSlug,
   quote,
@@ -353,7 +332,6 @@ export function TakeoffWorkstation({
   allRoofAreas = [],
   aiTakeoffAvailable = false,
   aiAssistPoints = null,
-  seededScan,
   aiCalibrationEnabled = false,
   onFreeFinish,
   onExitFree,
@@ -446,11 +424,6 @@ export function TakeoffWorkstation({
   // mouse correction before scans 2+3 run on the corrected points
   // (desktop parity with the touch flow).
   const [aiStagedPageId, setAiStagedPageId] = useState<string | null>(null);
-  // 2026-10-03: the outline editor is open for THIS area id (null = closed).
-  // Single source of truth for the review/edit card and vertex-marker arming:
-  // the staged AI flow opens it automatically, the area-card pencil re-opens
-  // it any time later. While null, NO vertex markers stay on the canvas.
-  const [outlineEditingAreaId, setOutlineEditingAreaId] = useState<string | null>(null);
   // Owner 2026-09-25: guided desktop outline review - point tools alongside
   // drag. 'add' inserts a vertex on the nearest outline edge (click),
   // 'remove' deletes a clicked vertex (minimum 3 kept). Armed only while the
@@ -465,27 +438,17 @@ export function TakeoffWorkstation({
   const outlineHighlightRef = useRef<Array<Line>>([]);
   useEffect(() => { outlineToolRef.current = outlineTool; }, [outlineTool]);
   useEffect(() => { outlineSelectedRef.current = outlineSelectedVertex; }, [outlineSelectedVertex]);
-  useEffect(() => { outlineReviewActiveRef.current = (aiStagedPageId != null || outlineEditingAreaId != null) && !aiResults; }, [aiStagedPageId, outlineEditingAreaId, aiResults]);
-  useEffect(() => { if (aiStagedPageId == null && outlineEditingAreaId == null) { setOutlineTool(null); setOutlineSelectedVertex(null); setOutlineHistory(null); } }, [aiStagedPageId, outlineEditingAreaId]);
+  useEffect(() => { outlineReviewActiveRef.current = aiStagedPageId != null && !aiResults; }, [aiStagedPageId, aiResults]);
+  useEffect(() => { if (aiStagedPageId == null) { setOutlineTool(null); setOutlineSelectedVertex(null); setOutlineHistory(null); } }, [aiStagedPageId]);
   const aiAbortRef = useRef<AbortController | null>(null);
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
-  // Free tool: High quality is main-app only (cost control + gentle upsell).
-  useEffect(() => {
-    if (freeToolMode && aiQualityLevel === 'high') setAiQualityLevel('medium');
-  }, [freeToolMode, aiQualityLevel]);
   // AI Assist points: track locally so we can update after a scan without a page reload.
   const [aiPoints, setAiPoints] = useState(aiAssistPoints);
-  // Free tool (anonymous) AI scan credits + exhaustion modal. Populated from
-  // the free endpoint's scan1 responses (see /api/free-tools/ai-scan).
-  const [freeScanCredits, setFreeScanCredits] = useState<{ used: number; limit: number; remaining: number } | null>(null);
-  const [showFreeScanExhaustion, setShowFreeScanExhaustion] = useState(false);
   // Owner 2026-09-25 (13:20): which uncertain row currently shows its
   // "assign to component" dropdown.
   const [uncertainAssignOpenFor, setUncertainAssignOpenFor] = useState<string | null>(null);
   // V3: 3-scan pipeline (outline → line detection → classification)
-  // Free tool (anonymous) runs the same 3-scan pipeline through the gated free
-  // endpoint (per-device daily credits + global daily cap).
-  const aiScanEndpoint = freeToolMode ? '/api/free-tools/ai-scan' : '/api/takeoff/ai-scan-v3';
+  const aiScanEndpoint = '/api/takeoff/ai-scan-v3';
   // Once the user dismisses the "Calibration complete" popup, never show it again
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
@@ -644,9 +607,7 @@ export function TakeoffWorkstation({
     plan: number;
     pitched: number;
     pitch: number;
-    /** Phase 2 (2026-10-07): offcut cover-m2 figure when one exists for this page. */
-    offcuts?: number;
-    basis: 'pitched' | 'plan' | 'offcuts';
+    basis: 'pitched' | 'plan';
   }>(null);
 
   // Volume (L ×- W ×- D) - depth prompt state.
@@ -752,12 +713,6 @@ export function TakeoffWorkstation({
   // H-03: mark dirty whenever measurements or areas change.
   useEffect(() => {
     if (componentMeasurements.length > 0 || roofAreas.length > 0) setIsDirty(true);
-    // Demo guide: fire qc-demo-skylight the moment the visitor's created
-    // component gains an entry on this canvas (live hint switch, pre-save).
-    const guidedId = (window as unknown as { __qcDemoGuidedComponentId?: string }).__qcDemoGuidedComponentId;
-    if (guidedId && componentMeasurements.some(group => group.componentId === guidedId)) {
-      window.dispatchEvent(new CustomEvent('qc-demo-skylight'));
-    }
   }, [componentMeasurements, roofAreas]);
 
   // M-04 (Gerald round-5): ensure page-1 has a real DB row on mount.
@@ -2439,7 +2394,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       plan: ra.area,
       pitched,
       pitch: ra.pitch || 0,
-      ...(offcutAreaFigure ? { offcuts: offcutAreaFigure.m2 } : {}),
       basis: 'pitched',
     });
   };
@@ -2449,13 +2403,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (!choice) return;
     const ra = roofAreas.find(a => a.id === choice.roofAreaId);
     if (!ra || !(ra.area > 0)) { setAreaAttachChoice(null); return; }
-    if (choice.basis === 'offcuts' && (!offcutAreaFigureRef.current || offcutAreaFigureRef.current.m2 !== choice.offcuts)) {
-      setAreaAttachChoice(null);
-      window.alert('The offcut material figure changed. Reopen the quantity chooser after reviewing the current plan.');
-      return;
-    }
     pushHistorySnapshot();
-    const value = choice.basis === 'pitched' ? choice.pitched : choice.basis === 'offcuts' ? (choice.offcuts ?? choice.plan) : choice.plan;
+    const value = choice.basis === 'pitched' ? choice.pitched : choice.plan;
     const newMeasurement: ComponentMeasurement = {
       id: `apply-${Date.now()}`,
       type: 'area' as ComponentMeasurement['type'],
@@ -2473,21 +2422,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       //   basis 'plan'    -> plan, no pitch        (flat/plan takeoff)
       // P3 (spec 10.3): durable source-polygon link so recalibration can
       // refresh this entry when its source area rescales.
-      entryInputs: choice.basis === 'offcuts'
-        ? {
-            // Phase 2 (2026-10-07): final material figure from the offcut
-            // cutting plan - no pitch and no waste factor at save time.
-            value_basis: 'offcuts',
-            plan_value: choice.offcuts ?? choice.plan,
-            offcut_layout_id: offcutAreaFigureRef.current?.layoutId,
-            offcut_source_revision: offcutAreaFigureRef.current?.sourceRevision,
-            offcut_faces_revision: offcutAreaFigureRef.current?.facesRevision,
-          }
-        : {
-            value_basis: choice.basis,
-            plan_value: choice.plan,
-            source_geometry_id: ra.id,
-          },
+      entryInputs: {
+        value_basis: choice.basis,
+        plan_value: choice.plan,
+        source_geometry_id: ra.id,
+      },
     };
     const compData = componentMeasurements.find(c => c.componentId === choice.componentId);
     if (compData) {
@@ -3067,7 +3006,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         // navigateAfter=true means the user clicked "Save & Continue" with no
         // new data drawn - also fine to navigate, but we do NOT mark dirty=false.
         if (navigateAfter) {
-          if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(demoFinishHref ?? `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+          if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
         }
         return true;
       }
@@ -3082,35 +3021,36 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (fabricRef.current) {
         const canvas = fabricRef.current;
         
-        // 1. Export FULL canvas (plan image + drawings) at the plan image's
-        // own bounds and native resolution - NOT the user's current view
-        // (owner rule 2026-10-02: viewport snapshots stored zoomed-in crops).
+        // 1. Export FULL canvas (plan image + drawings)
         console.log('[SaveTakeoff] Exporting full canvas image...');
-        const fullDataUrl = snapshotSceneAtImageBounds(canvas, { includeBackground: true, format: 'jpeg', quality: 0.92 });
-
-        if (fullDataUrl) {
-          try {
-            const uploadResult = await takeoffActions.uploadCanvasImage(quote.id, fullDataUrl);
-            if (uploadResult.ok) {
-              canvasImagePath = uploadResult.path;
-              console.log('[SaveTakeoff] Full canvas image uploaded (path):', canvasImagePath);
-            } else {
-              console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadResult.error);
-            }
-          } catch (uploadError) {
-            console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadError);
+        const fullDataUrl = canvas.toDataURL({
+          format: 'png',
+          quality: 0.9,
+          multiplier: 1,
+        });
+        
+        try {
+          const uploadResult = await takeoffActions.uploadCanvasImage(quote.id, fullDataUrl);
+          if (uploadResult.ok) {
+            canvasImagePath = uploadResult.path;
+            console.log('[SaveTakeoff] Full canvas image uploaded (path):', canvasImagePath);
+          } else {
+            console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadResult.error);
           }
+        } catch (uploadError) {
+          console.error('[SaveTakeoff] Failed to upload full canvas image:', uploadError);
         }
-        // 2. Export LINES-ONLY (drawings only, full plan bounds - helper hides bg)
+        
+        // 2. Export LINES-ONLY (hide bg image + area fills, convert all to black)
         console.log('[SaveTakeoff] Exporting lines-only image...');
         try {
           const objects = canvas.getObjects();
           const bgImage = canvas.backgroundImage;
           
-          // Store original state for all objects (styles only - the
-          // snapshot helper owns background visibility + canvas colour).
+          // Store original state for all objects
+          const originalBg = canvas.backgroundColor;
           const originalStates: { obj: any; fill: any; stroke: any; visible: boolean }[] = [];
-
+          
           objects.forEach((obj: any) => {
             originalStates.push({
               obj,
@@ -3119,60 +3059,65 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               visible: obj.visible !== false,
             });
           });
-
-          // Convert all drawable objects to black, remove area fills, then
-          // export at the plan image's bounds - full plan extent,
-          // independent of the user's zoom/pan (owner rule 2026-10-02).
-          let linesDataUrl: string | null = null;
-          try {
-            objects.forEach((obj: any) => {
-              if (obj === bgImage) return;
-
-              // Polygons: remove fill overlay, black stroke
-              if (obj.type === 'polygon') {
-                obj.set({ fill: 'transparent', stroke: '#000000' });
-              }
-              // Lines: black stroke
-              else if (obj.type === 'line') {
-                obj.set({ stroke: '#000000' });
-              }
-              // Circles (markers): black fill and stroke
-              else if (obj.type === 'circle') {
-                obj.set({ fill: '#000000', stroke: '#000000' });
-              }
-              // Triangles (arrow markers): black
-              else if (obj.type === 'triangle') {
-                obj.set({ fill: '#000000', stroke: '#000000' });
-              }
-              // Any other drawn object: try black
-              else if (obj !== bgImage) {
-                if (obj.stroke) obj.set({ stroke: '#000000' });
-                if (obj.fill && obj.fill !== 'transparent') obj.set({ fill: '#000000' });
-              }
-            });
-
-            canvas.renderAll();
-            linesDataUrl = snapshotSceneAtImageBounds(canvas, { includeBackground: false });
-          } finally {
-            // Restore ALL original states. finally: never leave the live
-            // canvas restyled if the export throws.
-            originalStates.forEach(({ obj, fill, stroke, visible }) => {
-              obj.set({ fill, stroke, visible });
-            });
-            canvas.renderAll();
-          }
-
-          // Upload lines-only image
-          if (linesDataUrl) {
-            const linesResult = await takeoffActions.uploadCanvasImage(quote.id, linesDataUrl, 'lines');
-            if (linesResult.ok) {
-              linesImagePath = linesResult.path;
-              console.log('[SaveTakeoff] Lines-only image uploaded (path):', linesImagePath);
-            } else {
-              console.error('[SaveTakeoff] Failed to upload lines-only image:', linesResult.error);
+          
+          // Hide background image
+          const originalBgVisible = bgImage ? (bgImage as any).visible : true;
+          if (bgImage) (bgImage as any).set('visible', false);
+          canvas.backgroundColor = '#ffffff';
+          
+          // Convert all drawable objects to black, remove area fills
+          objects.forEach((obj: any) => {
+            if (obj === bgImage) return;
+            
+            // Polygons: remove fill overlay, black stroke
+            if (obj.type === 'polygon') {
+              obj.set({ fill: 'transparent', stroke: '#000000' });
             }
+            // Lines: black stroke
+            else if (obj.type === 'line') {
+              obj.set({ stroke: '#000000' });
+            }
+            // Circles (markers): black fill and stroke
+            else if (obj.type === 'circle') {
+              obj.set({ fill: '#000000', stroke: '#000000' });
+            }
+            // Triangles (arrow markers): black
+            else if (obj.type === 'triangle') {
+              obj.set({ fill: '#000000', stroke: '#000000' });
+            }
+            // Any other drawn object: try black
+            else if (obj !== bgImage) {
+              if (obj.stroke) obj.set({ stroke: '#000000' });
+              if (obj.fill && obj.fill !== 'transparent') obj.set({ fill: '#000000' });
+            }
+          });
+          
+          canvas.renderAll();
+          
+          // Export
+          const linesDataUrl = canvas.toDataURL({
+            format: 'png',
+            quality: 0.9,
+            multiplier: 1,
+          });
+          
+          // Restore ALL original states
+          originalStates.forEach(({ obj, fill, stroke, visible }) => {
+            obj.set({ fill, stroke, visible });
+          });
+          if (bgImage) (bgImage as any).set('visible', originalBgVisible);
+          canvas.backgroundColor = originalBg as string;
+          canvas.renderAll();
+          
+          // Upload lines-only image
+          const linesResult = await takeoffActions.uploadCanvasImage(quote.id, linesDataUrl, 'lines');
+          if (linesResult.ok) {
+            linesImagePath = linesResult.path;
+            console.log('[SaveTakeoff] Lines-only image uploaded (path):', linesImagePath);
+          } else {
+            console.error('[SaveTakeoff] Failed to upload lines-only image:', linesResult.error);
           }
-          } catch (linesError) {
+        } catch (linesError) {
           console.error('[SaveTakeoff] Failed to export lines-only image:', linesError);
         }
       }
@@ -3375,12 +3320,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // P1-3: only navigate to Quote Builder when the user clicked the
       // primary "Save & Continue to Components" CTA. The multi-page upload
       // flow stays inside the workstation and reloads to the new page.
-      // Demo guide: the server acks takeoff.saved on this save - refresh the
-      // helper immediately so completion feedback lands without a poll wait.
-      refreshDemoGuide();
       if (navigateAfter) {
         console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
-        if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(demoFinishHref ?? `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
+        if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(`/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
       } else {
         console.log('[SaveTakeoff] Save complete (no navigation).');
       }
@@ -3450,7 +3392,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (uploadAnotherTarget === 'existing' && !uploadAnotherAreaId) {
       setUploadAnotherError('Please select an area to add measurements to.'); return;
     }
-    // M7 (O16): uploading another plan switches the active page afterwards -
+    // M7 (O16): uploading another plan switches the active page afterwards —
     // resolve a dirty touch draft through the shared guard first.
     if (touchExitGuardRef.current?.isDirty()) {
       touchExitGuardRef.current.request('Upload another plan', () => {
@@ -3731,7 +3673,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const touchCreateRetryRef = useRef<((name: string, pitch: number, points: { x: number; y: number }[]) => Promise<TouchCreateResult>) | null>(null);
   const touchCreateFlight = useRef(createSingleFlight<TouchCreateResult>());
   const touchBridgeListeners = useRef(new Set<() => void>());
-  // M6 (O11): touch context epoch - bumped on page switch / image-revision
+  // M6 (O11): touch context epoch — bumped on page switch / image-revision
   // change / touch-scan cancellation so stale client/AI work is discarded
   // rather than silently applied. Safe for M5 saves: it only changes in
   // situations that already invalidate the M1 stale-context boundary.
@@ -3747,11 +3689,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const touchComponentEntriesRef = useRef<TouchComponentEntry[]>([]);
   // F4: stable palette colour per custom component (session-scoped).
   const touchComponentColoursRef = useRef<Map<string, string>>(new Map());
-  // Hydration (2026-10-07): saved rows mapped into the touch step as display
-  // entries (demo pre-measured state + re-entry); ids tracked so the persist
-  // path skips them (the standard save re-sends hydrated rows already).
-  const touchHydratedEntryIdsRef = useRef<Set<string>>(new Set());
-  const touchEntriesHydratedRef = useRef(false);
   // P4: latest-ref to the persist function (recreated each render) so the
   // stable adapter always calls the fresh closure over component state.
   const touchPersistTakeoffRef = useRef(persistTakeoffData);
@@ -3827,7 +3764,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     };
   };
   const touchOutlineAdapterRef = useRef<TouchOutlineAdapter | null>(null);
-  // M7: hydration snapshot for the adapter's scale fallback - a calibration
+  // M7: hydration snapshot for the adapter's scale fallback — a calibration
   // saved by the touch calibration layer updates the SERVER data (and, via
   // router.refresh, this prop) even though the workstation's own `calibrations`
   // state only restores on mount/reload.
@@ -3949,7 +3886,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         const serverVersion = result.sessionVersion;
         // Acknowledged save: apply the server-derived values to OUR state so
         // the next full save (delete+insert per page) rewrites exactly what
-        // the RPC committed - no silent rollback of the approved checkpoint.
+        // the RPC committed — no silent rollback of the approved checkpoint.
         setRoofAreas((prev) =>
           prev.map((ra) =>
             ra.id === intent.geometryId
@@ -3959,7 +3896,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         );
         // O07 client mirror: source-linked dependent entries follow the new
         // polygon; independent entries untouched (server recomputed the same
-        // values - this keeps the local panel consistent until the next save).
+        // values — this keeps the local panel consistent until the next save).
         const scale = touchOutlineAdapterRef.current?.getScale();
         if (scale && target) {
           const deps: RecomputeMeasurementRecord[] = [];
@@ -4029,11 +3966,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         if (result.ok) touchCreateRetryRef.current = null;
         return result;
       }),
-      // ── M6: AI outline scan (touch) - scan1 ONLY (O10), same billing as
+      // ── M6: AI outline scan (touch) — scan1 ONLY (O10), same billing as
       // desktop (owner decision 2026-09-21: full scan1 charge, no cheaper
       // outline-only variant). Client orchestration only: the same
       // authorised endpoint, entitlement gating and server-side ledger as
-      // the desktop pipeline - this path just STOPS after the outline stage
+      // the desktop pipeline — this path just STOPS after the outline stage
       // and never converts AI internal lines/classification into data.
       getAiOutlineScanInfo: (): AiOutlineScanInfo | null => {
         const ai = touchOutlineLiveRef.current?.ai ?? null;
@@ -4041,8 +3978,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         return {
           available: true,
           blocked: ai.blocked,
-          // Free tool: credits replace points (display shows free scans, not point costs).
-          cost: freeToolMode ? 0 : getAiScanPointCost('low'),
+          cost: getAiScanPointCost('low'),
           qualityLevel: 'low',
         };
       },
@@ -4078,7 +4014,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           });
           const compressed = await compressImageForAiScan(dataUrl);
           // O10: the touch action requests ONLY the existing authorised scan1
-          // (outline) stage - scan2/scan3 never auto-run here.
+          // (outline) stage — scan2/scan3 never auto-run here.
           const response = await fetch(aiScanEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -4101,11 +4037,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               setAiPoints(prev =>
                 prev ? { ...prev, remaining: result.pointsRemaining ?? 0, isBlocked: true } : null,
               );
-              return { ok: false, error: 'Out of AI points - draw the outline manually.', pointsExhausted: true };
-            }
-            if (response.status === 429 && result.code === 'identity_cap') {
-              setShowFreeScanExhaustion(true);
-              return { ok: false, error: 'No free AI scans left today - draw the outline manually, or create a free account.', pointsExhausted: true };
+              return { ok: false, error: 'Out of AI points — draw the outline manually.', pointsExhausted: true };
             }
             let errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
             if (response.status === 413) {
@@ -4127,7 +4059,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               ? { ...prev, used: prev.used + cost, remaining: Math.max(prev.remaining - cost, 0) }
               : null,
           );
-          if (freeToolMode && result.credits) setFreeScanCredits(result.credits);
           return { ok: true, data: result.data };
         } catch (err) {
           if (err instanceof DOMException && err.name === 'AbortError') {
@@ -4274,30 +4205,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         touchBridgeListeners.current.forEach(listener => listener());
         return { ...entry };
       },
-      // Phase 2 (2026-10-07): attach the offcut figure - final material m2,
-      // no canvas geometry, basis 'offcuts' (no pitch/waste at save time).
-      getOffcutAreaFigure: (): { m2: number } | null => (offcutAreaFigureRef.current && offcutAreaFigureRef.current.m2 > 0 ? { m2: offcutAreaFigureRef.current.m2 } : null),
-      addOffcutAreaEntry: (target: TouchComponentTarget, figure: { m2: number }): TouchComponentEntry | null => {
-        if (!(figure.m2 > 0) || offcutAreaFigureRef.current?.m2 !== figure.m2) return null;
-        const round2 = (n: number) => Math.round(n * 100) / 100;
-        const entry: TouchComponentEntry = {
-          id: crypto.randomUUID(),
-          key: target.componentId,
-          componentId: target.componentId,
-          displayName: target.displayName,
-          colour: target.colour,
-          value: round2(figure.m2),
-          kind: 'area',
-          hidden: false,
-          points: [],
-          fromOffcuts: true,
-          planValue: round2(figure.m2),
-          quoteRoofAreaId: null,
-        };
-        touchComponentEntriesRef.current.push(entry);
-        touchBridgeListeners.current.forEach(listener => listener());
-        return { ...entry };
-      },
       // Corner counting (2026-09-30): apply detected corner counts to a
       // count-based component. The entry carries every counted vertex so
       // the plan highlights exactly what was counted; provenance rides
@@ -4347,30 +4254,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           const extraMeasurements: Array<ComponentMeasurement & { componentId: string }> = [];
           for (const e of touchComponentEntriesRef.current) {
             if (!e.componentId) continue; // uncertain detections: review-only
-            // Hydrated (saved) rows are display/review-only: the standard
-            // save path re-sends them from componentMeasurements state -
-            // pushing them here too would duplicate quote_component_entries.
-            if (touchHydratedEntryIdsRef.current.has(e.id)) continue;
             // M11: rows follow the entry kind. Attached roof-area entries
             // persist exactly like the desktop area-attach flow (no canvas
             // geometry, entryInputs basis + plan snapshot + source link) so
             // the save path recomputes from the LIVE pitch.
-            if (e.kind === 'area' && e.fromOffcuts) {
-              extraMeasurements.push({
-                componentId: e.componentId,
-                id: e.id,
-                type: 'area' as const,
-                value: e.value,
-                points: [],
-                visible: !e.hidden,
-                fromPageId: pageId,
-                quoteRoofAreaId: e.quoteRoofAreaId ?? areaId,
-                entryInputs: {
-                  value_basis: 'offcuts',
-                  plan_value: e.planValue ?? e.value,
-                },
-              });
-            } else if (e.kind === 'area' && e.fromRoofAreaId) {
+            if (e.kind === 'area' && e.fromRoofAreaId) {
               extraMeasurements.push({
                 componentId: e.componentId,
                 id: e.id,
@@ -4463,54 +4351,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         const dims = live?.canvasDims ?? { width: 2000, height: 1700 };
         const abortController = new AbortController();
         touchComponentScanAbortRef.current = abortController;
-        // Seeded replay (demo/preview hosts): no network - stage the same
-        // progress animation, classify from the captured scan, and feed the
-        // exact same data-only entry mapping the live tail produces below.
-        if (seededScan) {
-          const wait = (ms: number) => new Promise<void>((resolve, reject) => {
-            const id = setTimeout(resolve, ms);
-            abortController.signal.addEventListener('abort', () => {
-              clearTimeout(id);
-              reject(new DOMException('Scan cancelled.', 'AbortError'));
-            }, { once: true });
-          });
-          try {
-            onStage?.('lines');
-            await wait(900);
-            onStage?.('classify');
-            await wait(700);
-            const systemComponentIds = buildSystemComponentIds(components);
-            const applied = applyAiResults({
-              aiData: seededScan.data,
-              calibrations: calibrationsNow,
-              systemComponentIds,
-              canvasWidth: dims.width,
-              canvasHeight: dims.height,
-            });
-            touchComponentEntriesRef.current = applied.measurements.map(m => ({
-              id: m.id,
-              key: m.componentId ?? 'uncertain',
-              componentId: m.componentId ?? null,
-              displayName: AI_COMPONENT_REGISTRY[m.semanticKey].displayName,
-              colour: getSemanticColour(m.semanticKey),
-              value: m.value,
-              kind: 'line' as const,
-              hidden: false,
-              points: m.canvasPoints.map(p => ({ x: p.x, y: p.y })),
-            }));
-            touchBridgeListeners.current.forEach(listener => listener());
-            return { ok: true, data: seededScan.data };
-          } catch (err) {
-            if (err instanceof DOMException && err.name === 'AbortError') {
-              return { ok: false, error: 'cancelled', cancelled: true };
-            }
-            return { ok: false, error: err instanceof Error ? err.message : 'Scan replay failed.' };
-          } finally {
-            if (touchComponentScanAbortRef.current === abortController) {
-              touchComponentScanAbortRef.current = null;
-            }
-          }
-        }
         try {
           const imgResponse = await fetch(imageUrl, { signal: abortController.signal });
           if (!imgResponse.ok) return { ok: false, error: 'Failed to load plan image for AI scan.' };
@@ -4525,21 +4365,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             reader.readAsDataURL(imgBlob);
           });
           const compressed = await compressImageForAiScan(dataUrl);
-          // Calibration-derived scale (owner rule 2026-10-02): the scan
-          // pipeline converts its pixel tolerances to real-world 150mm
-          // distances using the user's own calibration for this page.
-          const scanPxPerMm = (() => {
-            try {
-              if (!calibrations.length) return null;
-              const scale = effectiveScaleFromLegacyCalibrations(calibrations);
-              if (!Number.isFinite(scale) || scale <= 0) return null;
-              const metersPerPx = (calibrations[0]?.unit ?? 'feet') === 'meters' ? scale : scale * 0.3048;
-              const mmPerPx = metersPerPx * 1000;
-              return mmPerPx > 0 ? 1 / mmPerPx : null;
-            } catch {
-              return null;
-            }
-          })();
           // scan2: line detection on the corrected outline (canvas space).
           onStage?.('lines');
           const scan2Response = await fetch(aiScanEndpoint, {
@@ -4555,28 +4380,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               outlinePoints,
               analysisDimensions: dims,
               qualityLevel,
-              pxPerMm: scanPxPerMm,
             }),
             signal: abortController.signal,
           });
           const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
           if (!scan2Response.ok || !scan2Result.success) {
-            if (scan2Response.status === 402 && scan2Result.pointsExhausted) {
-              setAiPoints(prev =>
-                prev ? { ...prev, remaining: scan2Result.pointsRemaining ?? 0, isBlocked: true } : null,
-              );
-              return { ok: false, error: 'Out of AI points - measure the components manually.' };
-            }
-            if (scan2Response.status === 429 && scan2Result.code === 'identity_cap') {
-              setShowFreeScanExhaustion(true);
-              return { ok: false, error: 'No free AI scans left today - finish measuring manually, or create a free account.' };
-            }
             return { ok: false, error: scan2Result.error || `Line detection failed (HTTP ${scan2Response.status}).` };
           }
           const detectedLines = scan2Result.data?.lines ?? [];
-          // Review lines (previously dropped candidates) feed Scan 3's corner
-          // completeness pass or surface as pink review lines - never lost.
-          const scan2ReviewLines = scan2Result.data?.reviewLines ?? [];
           // scan3: classification of the detected lines.
           onStage?.('classify');
           const scan3Response = await fetch(aiScanEndpoint, {
@@ -4591,24 +4402,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               pageId,
               outlinePoints,
               lines: detectedLines,
-              reviewLines: scan2ReviewLines,
-              scan2Summary: scan2Result.summary ?? null,
               analysisDimensions: dims,
               qualityLevel,
-              pxPerMm: scanPxPerMm,
             }),
             signal: abortController.signal,
           });
           const scan3Result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
           if (!scan3Response.ok || !scan3Result.success) {
-            if (scan3Response.status === 429 && scan3Result.code === 'identity_cap') {
-              setShowFreeScanExhaustion(true);
-              return { ok: false, error: 'No free AI scans left today - finish measuring manually, or create a free account.' };
-            }
             const violations = Array.isArray(scan3Result.topologyViolations) ? ` ${scan3Result.topologyViolations.join(' ')}` : '';
             return { ok: false, error: `${scan3Result.error || `AI scan failed (HTTP ${scan3Response.status}).`}${violations}` };
           }
-          if (freeToolMode && scan3Result.credits) setFreeScanCredits(scan3Result.credits);
           // Shared post-processing (perimeter accounting, snapping,
           // clustering, calibration lengths) then a dedicated overlay
           // layer grouped by semantic key.
@@ -4656,7 +4459,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const hydratedPage = hydrationData?.pages.find((p) => p.id === pageId) ?? null;
     const pageImageRevision = (pageId ? aiCalMetadataRef.current.get(pageId)?.imageRevision : null) || hydratedPage?.imageRevision || null;
     // M6 (O11): bump the touch context epoch when the page identity or the
-    // immutable image revision changes - in-flight scan results and open
+    // immutable image revision changes — in-flight scan results and open
     // drafts are invalidated instead of silently applied. The first
     // observation seeds the key without bumping.
     const epochKey = `${pageId ?? 'none'}|${pageImageRevision ?? 'none'}`;
@@ -4692,69 +4495,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (onTouchOutlineAdapter) onTouchOutlineAdapter(touchOutlineAdapterRef.current!);
     if (changed) touchBridgeListeners.current.forEach(listener => listener());
   });
-
-  // Saved component rows -> touch review entries (owner 2026-10-07 report:
-  // demo/re-entry showed "just the blank plan"). One-shot per mount: the
-  // pre-measured demo and any re-entering touch user see their saved
-  // components in the grid and on the canvas. Hydrated ids are tracked so
-  // persistReviewedComponents skips them - the standard save path already
-  // re-sends hydrated rows from componentMeasurements state (pushing them
-  // again as extraMeasurements would duplicate quote_component_entries).
-  useEffect(() => {
-    if (touchEntriesHydratedRef.current || !hydrationData) return;
-    const pageId = pages[currentPageIndex]?.id ?? null;
-    if (!pageId) return; // pages resolve from the same hydration; re-runs then
-    touchEntriesHydratedRef.current = true;
-    const adapter = touchOutlineAdapterRef.current;
-    let added = false;
-    for (const m of hydrationData.measurements ?? []) {
-      if (!m.componentId) continue; // outline/area rows are not component entries
-      if (m.pageId && m.pageId !== pageId) continue; // page-scoped like getAreas (O09)
-      if (touchComponentEntriesRef.current.some((e) => e.id === m.id)) continue;
-      const target = adapter?.getComponentTarget?.(m.componentId);
-      if (!target) continue;
-      const kind: TouchComponentEntry['kind'] = m.type === 'line' ? 'line' : m.type === 'area' ? 'area' : 'point';
-      const inputs = m.entryInputs ?? null;
-      const basis = inputs?.value_basis ?? null;
-      const attached = kind === 'area' && basis === 'pitched';
-      const offcutAttached = kind === 'area' && basis === 'offcuts';
-      const corner = kind === 'point' && !!basis && basis.startsWith('corner_');
-      touchComponentEntriesRef.current.push({
-        id: m.id,
-        key: m.componentId,
-        componentId: m.componentId,
- displayName: target.displayName,
-        colour: target.colour,
-        value: m.value,
-        kind,
-        hidden: !m.visible,
-        points: m.points ?? [],
-        quoteRoofAreaId: m.quoteRoofAreaId ?? null,
-        ...(attached && inputs?.source_geometry_id
-          ? {
-              fromRoofAreaId: inputs.source_geometry_id,
-              ...(typeof inputs.plan_value === 'number' ? { planValue: inputs.plan_value } : {}),
-            }
-          : {}),
-        ...(offcutAttached
-          ? {
-              fromOffcuts: true,
-              ...(typeof inputs?.plan_value === 'number' ? { planValue: inputs.plan_value } : {}),
-            }
-          : {}),
-        ...(corner && basis
-          ? {
-              cornerBasis: basis.slice('corner_'.length) as TouchComponentEntry['cornerBasis'],
-              ...(typeof inputs?.corner_count === 'number' ? { cornerCount: inputs.corner_count } : {}),
-              ...(inputs?.source_geometry_id ? { sourceGeometryId: inputs.source_geometry_id } : {}),
-            }
-          : {}),
-      });
-      touchHydratedEntryIdsRef.current.add(m.id);
-      added = true;
-    }
-    if (added) touchBridgeListeners.current.forEach((listener) => listener());
-  }, [hydrationData, pages, currentPageIndex]);
   // Captures the component ID at the moment area mode is activated for a component.
   // Unlike selectedComponentIdRef, this is NOT cleared by Fabric canvas deselection
   // events that fire on the same click that closes the polygon.
@@ -4841,8 +4581,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     // component once on mount. Without cleanup the remount created a SECOND
     // Canvas on the same DOM element; the orphaned first instance then threw
     // ("Cannot destructure property 'el' of 'this.lower'") inside its image
-    // onload, breaking every later fabricRef call - including the touch
-    // adapter's handleSaveArea - for the whole local session. Disposing on
+    // onload, breaking every later fabricRef call — including the touch
+    // adapter's handleSaveArea — for the whole local session. Disposing on
     // unmount + a disposed guard restores the one-instance invariant.
     let canvasDisposed = false;
 
@@ -5723,7 +5463,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // points array (used by add/remove point; drag keeps the object:modified
   // path above). Mirrors the same tagging contract: measurementId = area id,
   // vertexIndex = sequential position.
-  const applyStagedAreaPoints = useCallback((areaId: string, pts: Array<{ x: number; y: number }>, opts?: { markDirty?: boolean }) => {
+  const applyStagedAreaPoints = useCallback((areaId: string, pts: Array<{ x: number; y: number }>) => {
     const canvas = fabricRef.current;
     if (!canvas || pts.length < 3) return;
     canvas.getObjects()
@@ -5760,9 +5500,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       ? { ...ra, points: pts, polygon, markers, area: calculatePolygonArea(pts) }
       : ra));
     setAreaList(prev => prev.map(a => a.id === areaId ? { ...a, area: calculatePolygonArea(pts) } : a));
-    // markDirty:false = canvas-only re-arm (merely opening the editor) - the
-    // user has not changed anything yet, so no unsaved-work flag.
-    if (opts?.markDirty !== false) setIsDirty(true);
+    setIsDirty(true);
   }, []);
 
   // ── Owner 2026-09-25: outline vertex selection (mobile parity) ──────────
@@ -5817,73 +5555,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     canvas.requestRenderAll();
   }, [outlineSelectedVertex, roofAreas]);
 
-  // Auto-select the first vertex once the editor opens so the stepper
-  // always has a live selection to walk.
+  // Auto-select the first staged vertex once the outline is on the canvas so
+  // the stepper always has a live selection to walk.
   useEffect(() => {
-    if (outlineEditingAreaId == null || outlineSelectedVertex) return;
-    const ra = roofAreas.find(r => (r.quoteRoofAreaId ?? r.id) === outlineEditingAreaId && r.points.length >= 3);
-    if (ra) setOutlineSelectedVertex({ areaId: outlineEditingAreaId, vertexIndex: 0 });
-  }, [outlineEditingAreaId, roofAreas, outlineSelectedVertex]);
-
-  // 2026-10-03: the staged AI review opens the outline editor automatically
-  // for the staged area (the area-card pencil opens it manually any time).
-  useEffect(() => {
-    if (aiStagedPageId == null || outlineEditingAreaId != null) return;
-    if (aiStagedPageId !== (pages[currentPageIndex]?.id ?? null)) return;
+    if (aiStagedPageId == null || outlineSelectedVertex) return;
     const ra = roofAreas.find(r => r.fromPageId === aiStagedPageId && r.quoteRoofAreaId && r.points.length >= 3);
-    if (ra) setOutlineEditingAreaId(ra.quoteRoofAreaId ?? ra.id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiStagedPageId, roofAreas, outlineEditingAreaId, currentPageIndex, pages]);
-
-  // 2026-10-03 (fixes AI outlines fighting component measuring): vertex
-  // markers live ONLY while the editor is open. Closing it strips every
-  // marker from the canvas (the polygon stays, passive like manual areas);
-  // opening it re-arms the editing area's markers and removes any other
-  // area's markers.
-  useEffect(() => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-    if (outlineEditingAreaId == null) {
-      let removed = false;
-      canvas.getObjects().forEach(o => {
-        if ((o as { vertexIndex?: number }).vertexIndex != null) { canvas.remove(o); removed = true; }
-      });
-      if (removed) {
-        canvas.requestRenderAll();
-        setRoofAreas(prev => prev.map(ra => ra.markers?.length ? { ...ra, markers: [] } : ra));
-      }
-      return;
-    }
-    const ra = roofAreas.find(r => (r.quoteRoofAreaId ?? r.id) === outlineEditingAreaId);
-    if (!ra || ra.points.length < 3) { setOutlineEditingAreaId(null); return; }
-    const editingId = ra.quoteRoofAreaId ?? ra.id;
-    // Rebuild the editing area's polygon + armed markers from state (manual
-    // areas never had markers; AI areas get fresh ones). markDirty:false.
-    applyStagedAreaPoints(editingId, ra.points, { markDirty: false });
-    canvas.getObjects().forEach(o => {
-      const t = o as { measurementId?: string; vertexIndex?: number };
-      if (t.vertexIndex == null) return;
-      if (t.measurementId !== editingId) canvas.remove(o);
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outlineEditingAreaId]);
-
-  // Safety net: arming ANY measurement mode closes the outline editor and
-  // the staged review so vertex markers can never steal clicks meant for
-  // component placement.
-  const measureModeActive = !!(calibrationMode || areaMode || lineMode || pointMode || multiLinealMode);
-  useEffect(() => {
-    if (!measureModeActive) return;
-    setOutlineEditingAreaId(null);
-    setAiStagedPageId(null);
-    setOutlineTool(null);
-    setOutlineSelectedVertex(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [measureModeActive]);
-
-  // Switching plan pages closes the editor (markers belong to that page's
-  // canvas; going back re-opens via the staged mirror or the pencil).
-  useEffect(() => { setOutlineEditingAreaId(null); }, [currentPageIndex]);
+    if (ra) setOutlineSelectedVertex({ areaId: ra.quoteRoofAreaId ?? ra.id, vertexIndex: 0 });
+  }, [aiStagedPageId, roofAreas, outlineSelectedVertex]);
 
   const stepOutlineSelection = useCallback((dir: 1 | -1) => {
     setOutlineSelectedVertex(sel => {
@@ -5924,13 +5602,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // while the outline review is open (it would restore a pre-AI snapshot
   // and wipe the outline while the area row stays live).
   useEffect(() => {
-    if (outlineEditingAreaId == null) return;
-    const ra = roofAreas.find(r => (r.quoteRoofAreaId ?? r.id) === outlineEditingAreaId);
-    if (!ra || ra.points.length < 3) return;
-    setOutlineHistory(h => (h && h.areaId === outlineEditingAreaId)
+    if (aiStagedPageId == null) return;
+    const ra = roofAreas.find(r => r.fromPageId === aiStagedPageId && r.quoteRoofAreaId && r.points.length >= 3);
+    if (!ra) return;
+    const areaId = ra.quoteRoofAreaId ?? ra.id;
+    setOutlineHistory(h => (h && h.areaId === areaId)
       ? h
-      : { areaId: outlineEditingAreaId, stack: [ra.points.map(p => ({ x: p.x, y: p.y }))], index: 0 });
-  }, [outlineEditingAreaId, roofAreas]);
+      : { areaId, stack: [ra.points.map(p => ({ x: p.x, y: p.y }))], index: 0 });
+  }, [aiStagedPageId, roofAreas]);
 
   const handleOutlineUndo = useCallback(() => {
     if (!outlineHistory || outlineHistory.index <= 0) return;
@@ -5964,10 +5643,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (!tool) {
         // Owner 2026-09-25, mobile parity: clicking a blue vertex selects it.
         // The selection drives the enlarged orange vertex, the adjacent-edge
-        // highlight and the prev/next stepper in the review card. Only while
-        // the editor is open (2026-10-03) - locked markers never re-select.
+        // highlight and the prev/next stepper in the review card.
         const t = opt.target as { measurementId?: string; vertexIndex?: number } | undefined;
-        if (t && t.vertexIndex != null && t.measurementId && outlineReviewActiveRef.current) {
+        if (t && t.vertexIndex != null && t.measurementId) {
           setOutlineSelectedVertex({ areaId: t.measurementId, vertexIndex: t.vertexIndex });
         }
         return;
@@ -6063,7 +5741,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // shares the same clamping rules (see ./canvasViewport).
   // Owner 2026-10-01 (free tool width / canvas stuck at 800x600): Fabric wraps
   // the <canvas> in a .canvas-container div, so parentElement is the Fabric
-  // wrapper - which is sized BY the canvas itself. Measuring it makes sizing
+  // wrapper — which is sized BY the canvas itself. Measuring it makes sizing
   // self-referential (800x600 forever). Always measure the real viewport
   // wrapper (the plan border), falling back to parentElement only if missing.
   const canvasViewportWrapper = (): HTMLElement | null =>
@@ -6435,88 +6113,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     }
   };
 
-  // ── AI Takeoff: seeded replay (demo/preview hosts) ─────────────
-  // Replays a CAPTURED scan instead of calling the network endpoints: the
-  // same staged progress animation the live pipeline shows, then the same
-  // handleApplyAiResults path the results modal uses (auto-applied with the
-  // captured area names, skipping the confirmation modal). Abort works at
-  // every stage exactly like a live scan.
-  const runSeededScan = async () => {
-    if (!seededScan || !quote) return;
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-    const bgImage = canvas.backgroundImage;
-    if (!bgImage) { setAiScanError('No plan image loaded.'); return; }
-
-    const abortController = new AbortController();
-    aiAbortRef.current = abortController;
-    setAiScanning(true);
-    setAiScanStage('outline');
-    setAiScanError(null);
-    setAiResults(null);
-    setAiScanRaw(null);
-    setAiStagedPageId(null);
-
-    const wait = (ms: number) => new Promise<void>((resolve, reject) => {
-      const id = setTimeout(resolve, ms);
-      abortController.signal.addEventListener('abort', () => {
-        clearTimeout(id);
-        reject(new DOMException('Scan cancelled.', 'AbortError'));
-      }, { once: true });
-    });
-
-    try {
-      await wait(900);
-      setAiScanStage('lines');
-      await wait(900);
-      setAiScanStage('classify');
-      await wait(700);
-
-      const data = seededScan.data;
-      setAiScanRaw(data);
-      // Skip the AiResultsModal confirmation entirely - apply the captured
-      // scan straight to the canvas with its area names and the fixed pitch.
-      const autoOverrides: Record<number, { name: string; pitch: number }> = {};
-      (data.roof_areas ?? []).forEach((area, idx) => {
-        autoOverrides[idx] = {
-          name: area.name || `Roof Area ${idx + 1}`,
-          pitch: seededScan.pitch ?? area.pitch_degrees ?? 0,
-        };
-      });
-      await handleApplyAiResults(autoOverrides, { aiDataOverride: data });
-    } catch (err) {
-      if (!(err instanceof DOMException && err.name === 'AbortError')) {
-        setAiScanError('Scan replay failed.');
-      }
-    } finally {
-      setAiScanning(false);
-      setAiScanStage('outline');
-      if (aiAbortRef.current === abortController) aiAbortRef.current = null;
-    }
-  };
-
-  // Seeded hosts with autoRun: fire the replay once, as soon as the canvas
-  // and a calibration are both ready (visitors land on a measured plan).
-  const seededAutoRunRef = useRef(false);
-  useEffect(() => {
-    if (!seededScan?.autoRun || seededAutoRunRef.current) return;
-    if (!canvasReady || calibrations.length === 0) return;
-    seededAutoRunRef.current = true;
-    const timer = setTimeout(() => {
-      void runSeededScan();
-    }, 400);
-    return () => clearTimeout(timer);
-  // runSeededScan closes over current scan state by design (same as the
-  // button handler); the ref guard makes this strictly one-shot.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seededScan, canvasReady, calibrations.length]);
-
   // ── AI Takeoff: scan handler (direct 3-scan pipeline) ──────────
   const handleAiScan = async () => {
-    if (seededScan) {
-      await runSeededScan();
-      return;
-    }
     const canvas = fabricRef.current;
     if (!canvas || !quote) return;
 
@@ -6587,13 +6185,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         if (response.status === 402 && result.pointsExhausted) {
           setAiPoints(prev => prev ? { ...prev, remaining: result.pointsRemaining ?? 0, isBlocked: true } : null);
         }
-        if (response.status === 429 && result.code === 'identity_cap') {
-          // Free tool: daily credits exhausted. Show the signup/continue-manual
-          // modal instead of the choice modal (finally-block reopen suppressed).
-          scanCompleted = true;
-          setShowFreeScanExhaustion(true);
-          return;
-        }
         setAiScanError(errMsg);
         return;
       }
@@ -6618,9 +6209,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             : null,
         };
       });
-
-      // Free tool: the anonymous endpoint reports remaining daily credits.
-      if (freeToolMode && result.credits) setFreeScanCredits(result.credits);
 
       // Points were deducted server-side on scan1; update local state.
       // Costs come from the shared canonical constant (2/6/12).
@@ -6701,21 +6289,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
     const confirmedAreas = outlineData.roof_areas;
     setAiScanStage('lines');
-    // Calibration-derived scale (owner rule 2026-10-02): pixel tolerances in
-    // the scan pipeline become real-world 150mm distances via the user's own
-    // calibration for this page.
-    const scanPxPerMm = (() => {
-      try {
-        if (!calibrations.length) return null;
-        const scale = effectiveScaleFromLegacyCalibrations(calibrations);
-        if (!Number.isFinite(scale) || scale <= 0) return null;
-        const metersPerPx = (calibrations[0]?.unit ?? 'feet') === 'meters' ? scale : scale * 0.3048;
-        const mmPerPx = metersPerPx * 1000;
-        return mmPerPx > 0 ? 1 / mmPerPx : null;
-      } catch {
-        return null;
-      }
-    })();
     try {
       // ── Scan 2: Internal line detection ──
       const scan2Response = await fetch(aiScanEndpoint, {
@@ -6731,33 +6304,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           outlinePoints: confirmedAreas[0]?.points ?? [],
           analysisDimensions,
           qualityLevel,
-          pxPerMm: scanPxPerMm,
         }),
         signal: abortController.signal,
       });
       const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
       if (!scan2Response.ok || !scan2Result.success) {
-        if (scan2Response.status === 402 && scan2Result.pointsExhausted) {
-          setAiPoints(prev =>
-            prev ? { ...prev, remaining: scan2Result.pointsRemaining ?? 0, isBlocked: true } : null,
-          );
-          setAiScanError('Out of AI points - measure the components manually.');
-          return { completed: false };
-        }
-        if (scan2Response.status === 429 && scan2Result.code === 'identity_cap') {
-          setShowFreeScanExhaustion(true);
-          setAiScanError(scan2Result.error || 'Out of free AI scans for today.');
-          return { completed: false };
-        }
         setAiScanError(scan2Result.error || `Line detection failed (HTTP ${scan2Response.status}).`);
         return { completed: false };
       }
-      if (freeToolMode && scan2Result.credits) setFreeScanCredits(scan2Result.credits);
 
       const detectedLines = scan2Result.data?.lines ?? [];
-      // Review lines (previously dropped candidates) feed Scan 3's corner
-      // completeness pass or surface as pink review lines - never lost.
-      const scan2ReviewLines = scan2Result.data?.reviewLines ?? [];
       const outlinePoints = scan2Result.data?.outlinePoints ?? confirmedAreas[0]?.points ?? [];
       console.log(`[AI Takeoff V3] scan2 complete: ${detectedLines.length} lines detected (raw=${scan2Result.summary?.rawLines}, rejected=${scan2Result.summary?.angleRejected}, floating=${scan2Result.summary?.floating})`);
 
@@ -6775,27 +6331,18 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           pageId,
           outlinePoints: outlinePoints,
           lines: detectedLines,
-          reviewLines: scan2ReviewLines,
-          scan2Summary: scan2Result.summary ?? null,
           analysisDimensions,
           qualityLevel,
-          pxPerMm: scanPxPerMm,
         }),
         signal: abortController.signal,
       });
       const result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
       if (!scan3Response.ok || !result.success) {
-        if (scan3Response.status === 429 && result.code === 'identity_cap') {
-          setShowFreeScanExhaustion(true);
-          setAiScanError(result.error || 'Out of free AI scans for today.');
-          return { completed: false };
-        }
         const violations = Array.isArray(result.topologyViolations)
           ? ` ${result.topologyViolations.join(' ')}` : '';
         setAiScanError(`${result.error || `AI scan failed (HTTP ${scan3Response.status}).`}${violations}`);
         return { completed: false };
       }
-      if (freeToolMode && result.credits) setFreeScanCredits(result.credits);
 
       if (!silent) {
         setAiScanRaw(result.data);
@@ -6877,7 +6424,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // Apply ONLY the components: the outline areas are already applied.
       await handleApplyAiResults({}, { areasAlreadyApplied: true, aiDataOverride: outcome.data });
       setAiStagedPageId(null);
-      setOutlineEditingAreaId(null);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       setAiScanError(err instanceof Error ? err.message : 'Network error.');
@@ -6908,7 +6454,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // quote builder (Measurements & Pricing).
   const handleOutlineFinishAndSave = async () => {
     setAiStagedPageId(null);
-    setOutlineEditingAreaId(null);
     setOutlineTool(null);
     setOutlineSelectedVertex(null);
     await handleSaveTakeoff();
@@ -7750,57 +7295,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const offcutsLiveSnapshotRef = useRef<QuoteCoreSnapshot | null>(null);
   const offcutsModalRef = useRef<WorkbenchHandle | null>(null);
   const [openingOffcuts, setOpeningOffcuts] = useState(false);
-  // Phase 2 (owner 2026-10-07): the offcut cover-m2 figure for the current
-  // page - from the workbench's live quantity proposal or the saved offcut
-  // review. Offered in the area-component attach dropdowns (desktop + touch).
-  const [offcutAreaFigure, setOffcutAreaFigure] = useState<OffcutAreaFigure | null>(null);
-  const offcutAreaFigureRef = useRef<OffcutAreaFigure | null>(null);
-  const figureRequestRef = useRef(0);
-  const applyOffcutFigure = useCallback((figure: OffcutAreaFigure | null) => {
-    offcutAreaFigureRef.current = figure && Number.isFinite(figure.m2) && figure.m2 > 0 ? figure : null;
-    setOffcutAreaFigure(offcutAreaFigureRef.current);
-  }, []);
-  const invalidateOffcutFigure = useCallback(() => {
-    figureRequestRef.current++; // invalidate in-flight reads as well as the offered value
-    applyOffcutFigure(null);
-    // Previously attached material entries are historical quantities, not deleted here.
-  }, [applyOffcutFigure]);
-  const refreshOffcutAreaFigure = useCallback(async () => {
-    const request = ++figureRequestRef.current;
-    const pageId = currentPageIdRef.current;
-    const areaScopeId = activeAreaIdRef.current ?? null;
-    const scope = { quoteId: quote.id, pageId: pageId ?? '', areaScopeId };
-    applyOffcutFigure(null);
-    if (!pageId) return;
-    try {
-      const { getAccountReviewRepository } = await import('@/app/lib/takeoff/offcutReviewPersistence');
-      const repository = await getAccountReviewRepository();
-      if (!repository) return;
-      const stored = await repository.load(scope);
-      const figure = stored ? checkedReviewFigure(stored.document, scope) : null;
-      if (request !== figureRequestRef.current || currentPageIdRef.current !== pageId || (activeAreaIdRef.current ?? null) !== areaScopeId) return;
-      applyOffcutFigure(figure);
-    } catch {
-      // Missing, stale, invalid or wrong-scope reviews must not leave an old offer visible.
-      if (request === figureRequestRef.current) applyOffcutFigure(null);
-    }
-  }, [quote.id, applyOffcutFigure]);
-  const offcutFigurePageId = pages[currentPageIndex]?.id ?? null;
-  useEffect(() => {
-    void refreshOffcutAreaFigure();
-    return () => { figureRequestRef.current++; };
-  }, [refreshOffcutAreaFigure, offcutFigurePageId, activeAreaId]);
-  const receiveOffcutQuantity = useCallback((proposal: QuoteQuantityProposal) => {
-    const scope = { quoteId: quote.id, pageId: currentPageIdRef.current ?? '', areaScopeId: activeAreaIdRef.current ?? null };
-    const figure = proposalCoverFigure(proposal, scope);
-    if (figure) { figureRequestRef.current++; applyOffcutFigure(figure); }
-  }, [quote.id, applyOffcutFigure]);
-  const saveOffcutOnePager = useCallback(async (payload: OffcutOnePagerPayload) => {
-    const { saveOffcutOnePagerToJob } = await import('@/app/lib/takeoff/offcutOnePager');
-    const jobLabel = String(quote.quote_number ?? '') || 'Quote';
-    const result = await saveOffcutOnePagerToJob(quote.id, payload, { jobLabel });
-    if (!result.ok) throw new Error(result.message);
-  }, [quote.id, quote.quote_number]);
   const [, forceOffcutsCommit] = useState(0);
   const offcutsCaptureAbortRef = useRef<AbortController | null>(null);
   useEffect(() => {
@@ -7861,20 +7355,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     return () => {
       offcutsCaptureAbortRef.current?.abort();
       offcutsCaptureAbortRef.current = null;
-      // Best-effort flush of a pending review save before teardown; the
-      // network write continues in the background after the UI is gone.
-      const modal = offcutsModalRef.current;
-      if (modal) { void modal.flushReview?.().catch(() => {}); modal.destroy(); }
+      offcutsModalRef.current?.destroy();
       offcutsModalRef.current = null;
     };
   }, [pages[currentPageIndex]?.id, activeAreaId]);
-
-  // Free tool (owner rule 2026-10-02): the Finish CTA must ALWAYS be visible,
-  // greyed out only until the user has at least one measurement (roof area or
-  // component line/point) - never hidden by any flow state. Offcuts buttons
-  // stay hidden in the free tool (functionality untouched, just not offered).
-  const freeToolMeasurementCount =
-    roofAreas.length + componentMeasurements.reduce((n, c) => n + c.measurements.length, 0);
 
   return (
     <QcHostedDialogScope enabled={desktopAppearance}>
@@ -7901,10 +7385,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             </QcHostedButton>
             <div className="qc-takeoff-finish">
               <QcHostedButton onClick={handleSaveTakeoff}
-                disabled={freeToolMode ? (isSaving || freeToolMeasurementCount === 0) : (calibrations.length === 0 || isSaving)}
+                disabled={calibrations.length === 0 || isSaving}
                 data-copilot="takeoff-save" variant="primary" size="sm" aria-busy={isSaving}
                 className="qc-takeoff-finish-btn"
-                title={(freeToolMode && freeToolMeasurementCount === 0) ? `Measure at least one ${tradeConfig.areaSingularLabel.toLowerCase()} or component to finish` : calibrations.length === 0 ? 'Calibrate the plan first' : freeToolMode ? 'Finish and view your measurement report' : 'Save and continue to Measurements & Pricing'}>
+                title={calibrations.length === 0 ? 'Calibrate the plan first' : freeToolMode ? 'Finish and view your measurement report' : 'Save and continue to Measurements & Pricing'}>
                 <span className="qc-takeoff-finish-main">{isSaving ? 'Saving…' : freeToolMode ? 'Finish & view report' : 'Finish & save'}<QcIcon name="arrow" /></span>
                 <span className="qc-takeoff-finish-next">{freeToolMode ? 'Next: Measurement report & download' : 'Next: Measurements & Pricing'}</span>
               </QcHostedButton>
@@ -7955,9 +7439,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           } else if (!calibrationConfirmed) {
             guidance = 'Set a known distance before measuring this plan.';
           } else if (roofAreas.length === 0 && activeComponentIds.length === 0) {
-            guidance = aiTakeoffAvailable
-              ? `Calibrated - trace the ${tradeConfig.areaSingularLabel.toLowerCase()} next: AI Assist or draw it manually.`
-              : `Calibrated - trace the ${tradeConfig.areaSingularLabel.toLowerCase()} next: draw it manually.`;
+            guidance = 'Calibrated - trace the roof area next: AI Assist or draw it manually.';
           } else if (activeComponentIds.length === 0) {
             guidance = 'Area measured - now add components: AI scan for components or add them manually.';
           } else {
@@ -7975,17 +7457,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 {calibrationMode ? 'Calibrating' : calibrationConfirmed ? 'Calibrated' : 'Needs calibration'}
               </QcStatusBadge>
             </div>
-            <div className="flex items-center justify-between gap-3">
-              <p className="qc-takeoff-guidance">{guidance}</p>
-              {freeToolMode && (
-                <QcHostedButton onClick={handleSaveTakeoff}
-                  disabled={isSaving || freeToolMeasurementCount === 0}
-                  data-copilot="takeoff-save-free" variant="primary" size="sm" className="flex-shrink-0"
-                  title={freeToolMeasurementCount === 0 ? `Measure at least one ${tradeConfig.areaSingularLabel.toLowerCase()} or component to finish` : 'Finish and view your measurement report'}>
-                  <span className="flex items-center gap-1.5">{isSaving ? 'Saving.' : 'Finish & view report'}<QcIcon name="arrow" /></span>
-                </QcHostedButton>
-              )}
-            </div>
+            <p className="qc-takeoff-guidance">{guidance}</p>
           </div>
         );
       })()}
@@ -8243,22 +7715,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                         </button>
                         <div className="qc-takeoff-row-actions">
                           {matchingAreas.length > 0 && <>
-                            {/* 2026-10-03: outline editor entry point. Pencil
-                                re-arms this area's vertex markers and opens the
-                                edit card; Done locks them again. Only for
-                                geometry that lives on the current page. */}
-                            {matchingAreas.some(ra => (ra.fromPageId ?? pages[currentPageIndex]?.id) === (pages[currentPageIndex]?.id ?? '')) && (
-                              <button type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setLineMode(false); setPointMode(false); setAreaMode(false); setMultiLinealMode(false);
-                                  setOutlineEditingAreaId(area.id);
-                                  setOutlineTool(null);
-                                }}
-                                className="qc-takeoff-icon-action" aria-label={`Edit ${area.label} outline`} aria-pressed={outlineEditingAreaId === area.id} title="Edit outline points">
-                                <QcIcon name="edit" />
-                              </button>
-                            )}
                             <button type="button"
                               onClick={(e) => { e.stopPropagation(); handleToggleAreaVisibility(area.id); }}
                               className="qc-takeoff-icon-action" aria-label={`${matchingAreas[0].visible ? 'Hide' : 'Show'} ${area.label}`}
@@ -8560,10 +8016,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                             }
                                           }}
                                           defaultValue=""
-                                          aria-label={`Use ${tradeConfig.areaSingularLabel.split(' ')[0].toLowerCase()} corners for ${comp.name}`}
+                                          aria-label={`Use roof corners for ${comp.name}`}
                                           className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
                                         >
-                                          <option value="">Use {tradeConfig.areaSingularLabel.split(' ')[0].toLowerCase()} corners...</option>
+                                          <option value="">Use roof corners...</option>
                                           <option value="all">All corners ({ct.totalCount})</option>
                                           <option value="external">External corners ({ct.externalCount})</option>
                                           <option value="internal">Internal corners ({ct.internalCount})</option>
@@ -8866,7 +8322,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                     }}
                     disabled={calibrationMode || calibrations.length === 0}
                     data-copilot="takeoff-tool-area"
-                    title={calibrations.length === 0 ? 'Calibrate first' : `Measure ${tradeConfig.areaSingularLabel.toLowerCase()}`}
+                    title={calibrations.length === 0 ? 'Calibrate first' : 'Measure roof area'}
                     selected={areaMode}><QcIcon name="polygon" />Area</QcToolButton><QcToolButton
                       onClick={() => {
                         const isActive = lineMode || multiLinealMode;
@@ -8902,8 +8358,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       data-copilot="takeoff-tool-pitch-estimator"
                       title="Estimate roof pitch from a photo"
                     ><QcIcon name="pitch" />Estimate pitch</QcToolButton>
-                    {process.env.NEXT_PUBLIC_TAKEOFF_OFFCUTS_V1 === 'true' && !freeToolMode && (
-                      <>
+                    {process.env.NEXT_PUBLIC_TAKEOFF_OFFCUTS_V1 === 'true' && (
                       <button
                         data-copilot="takeoff-tool-offcuts"
                         className="px-3 py-2 rounded-full text-sm bg-slate-900 text-white disabled:opacity-40"
@@ -8917,19 +8372,11 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                           setOpeningOffcuts(true);
                           try {
                             const { launchLiveQuoteCoreOffcuts } = await import('@/app/lib/takeoff/offcuts/ui/launch');
-                            const { getAccountReviewRepository } = await import('@/app/lib/takeoff/offcutReviewPersistence');
                             if (abort.signal.aborted) return;
-                            const reviewRepository = await getAccountReviewRepository();
-                            if (abort.signal.aborted) return;
-                            const previous = offcutsModalRef.current;
-                            if (previous) { void previous.flushReview?.().catch(() => {}); previous.destroy(); offcutsModalRef.current = null; }
-                            const offcutsHandle = await launchLiveQuoteCoreOffcuts(readCurrentOffcutsSnapshot, {
+                            offcutsModalRef.current?.destroy();
+                            offcutsModalRef.current = null;
+                            offcutsModalRef.current = await launchLiveQuoteCoreOffcuts(readCurrentOffcutsSnapshot, {
                               signal: abort.signal,
-                              reviewRepository: reviewRepository ?? undefined,
-                              onQuantityProposal: receiveOffcutQuantity,
-                              onSaveOnePager: saveOffcutOnePager,
-                              onPlanInvalidated: invalidateOffcutFigure,
-                              onClosed: () => { void refreshOffcutAreaFigure(); },
                               readContext: () => {
                                 const live = offcutsLiveSnapshotRef.current;
                                 if (!live) throw new Error('The takeoff workspace is not ready.');
@@ -8958,7 +8405,6 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                                 fabricRef.current?.requestRenderAll();
                               },
                             });
-                            offcutsModalRef.current = offcutsHandle;
                           } catch (error) {
                             if (!abort.signal.aborted) window.alert(error instanceof Error ? error.message : String(error));
                           } finally {
@@ -8969,60 +8415,6 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                           }
                         }}
                       >{openingOffcuts ? 'Preparing current takeoff…' : 'Find offcuts'}</button>
-                      <button
-                        data-copilot="takeoff-tool-offcuts-resume"
-                        className="px-3 py-2 rounded-full text-sm border border-slate-300 bg-white text-slate-700 hover:border-orange-200 hover:bg-orange-50/40 disabled:opacity-40"
-                        disabled={openingOffcuts || !pages[currentPageIndex]?.id || isSaving || aiScanning}
-                        title="Open the saved offcut review for this roof area, even after closing the tab or losing the current takeoff. Does not read or change the current takeoff."
-                        onClick={async () => {
-                          if (offcutsCaptureAbortRef.current) return;
-                          const pageId = pages[currentPageIndex]?.id;
-                          if (!pageId) return;
-                          const abort = new AbortController();
-                          offcutsCaptureAbortRef.current = abort;
-                          setOpeningOffcuts(true);
-                          try {
-                            const scope = { quoteId: quote.id, pageId, areaScopeId: activeAreaId };
-                            const { getAccountReviewRepository } = await import('@/app/lib/takeoff/offcutReviewPersistence');
-                            const { launchStoredQuoteCoreOffcuts } = await import('@/app/lib/takeoff/offcuts/ui/launch');
-                            if (abort.signal.aborted) return;
-                            const reviewRepository = await getAccountReviewRepository();
-                            if (!reviewRepository) throw new Error('Account draft saving is not connected. Sign in again and retry.');
-                            if (abort.signal.aborted) return;
-                            let stored = null;
-                            try { stored = await reviewRepository.load(scope); }
-                            catch (error) { throw new Error(error instanceof Error ? error.message : 'Could not read the saved offcut review.'); }
-                            if (abort.signal.aborted) return;
-                            if (!stored) { window.alert('No saved offcut review exists for this roof area yet.'); return; }
-                            const previous = offcutsModalRef.current;
-                            if (previous) { void previous.flushReview?.().catch(() => {}); previous.destroy(); offcutsModalRef.current = null; }
-                            const image = pages[currentPageIndex]?.url ?? planUrl;
-                            const handle = await launchStoredQuoteCoreOffcuts(scope, {
-                              reviewRepository,
-                              onQuantityProposal: receiveOffcutQuantity,
-                              onSaveOnePager: saveOffcutOnePager,
-                              onPlanInvalidated: invalidateOffcutFigure,
-                              onClosed: () => { void refreshOffcutAreaFigure(); },
-                              imageUrl: /^https?:/i.test(image) ? image : undefined,
-                            });
-                            offcutsModalRef.current = handle;
-                            const live = offcutsLiveSnapshotRef.current;
-                            if (!live || live.pageId !== scope.pageId || (live.areaScopeId ?? null) !== (scope.areaScopeId ?? null)) {
-                              handle.destroy();
-                              offcutsModalRef.current = null;
-                              throw new Error('The selected roof changed while opening the saved review.');
-                            }
-                          } catch (error) {
-                            if (!abort.signal.aborted) window.alert(error instanceof Error ? error.message : String(error));
-                          } finally {
-                            if (offcutsCaptureAbortRef.current === abort) {
-                              offcutsCaptureAbortRef.current = null;
-                              setOpeningOffcuts(false);
-                            }
-                          }
-                        }}
-                      >{openingOffcuts ? 'Opening…' : 'Resume offcuts'}</button>
-                      </>
                     )}</QcCanvasToolGroup>
                 </div>
                 <div className="qc-takeoff-toolbar-context">
@@ -9058,9 +8450,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       aria-label="Zoom out" title="Zoom out" className="qc-canvas-icon-tool"><QcIcon name="minus" /></QcToolButton>
                       <span className="qc-takeoff-zoom-value" aria-label="Current zoom">{Math.round(zoom * 100)}%</span><QcToolButton
                         onClick={handleZoomIn}
-                        aria-label="Zoom in" title="Zoom in" className="qc-canvas-icon-tool"><QcIcon name="plus" /></QcToolButton><QcToolButton
-                        onClick={() => fitPlanToViewport(true)}
-                        aria-label="Fit to plan" title="Fit to plan - show the whole image" className="qc-canvas-icon-tool"><svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></svg></QcToolButton>
+                        aria-label="Zoom in" title="Zoom in" className="qc-canvas-icon-tool"><QcIcon name="plus" /></QcToolButton>
                     </QcCanvasToolGroup>
                   </div>
                 </div>
@@ -9268,15 +8658,8 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
               </div>
               {aiTakeoffAvailable && (
                 <div className="space-y-2 rounded-xl border-2 border-[#FF6B35]/30 p-3 bg-[#FF6B35]/5">
-                  {/* Points display (free tool: daily scan credits) */}
-                  {freeToolMode ? (
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600" title="Outline scan uses 1 scan; component detection uses 2">Free AI scans</span>
-                      <span className="font-semibold text-slate-900">
-                        {freeScanCredits ? `${freeScanCredits.remaining} of ${freeScanCredits.limit} left today` : '9 per day'}
-                      </span>
-                    </div>
-                  ) : aiPoints && !aiPoints.isBlocked && (
+                  {/* Points display */}
+                  {aiPoints && !aiPoints.isBlocked && (
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-600">AI Assist points</span>
                       <span className={`font-semibold ${aiPoints.remaining <= 4 ? 'text-orange-600' : 'text-slate-900'}`}>
@@ -9298,13 +8681,12 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                     <>
                       <div className="flex gap-1.5">
                         {([
-                          { value: 'low', label: 'Low', hint: freeToolMode ? 'Small, simple roofs' : 'Small, simple roofs · 2 points' },
-                          { value: 'medium', label: 'Medium', hint: freeToolMode ? 'Medium size & complexity' : 'Medium size & complexity · 6 points' },
-                          { value: 'high', label: 'High', hint: freeToolMode ? 'Larger, complex roofs' : 'Larger, complex roofs · 12 points' },
+                          { value: 'low', label: 'Low', hint: 'Small, simple roofs · 2 points' },
+                          { value: 'medium', label: 'Medium', hint: 'Medium size & complexity · 6 points' },
+                          { value: 'high', label: 'High', hint: 'Larger, complex roofs · 12 points' },
                         ] as const).map(opt => {
                           const cost = opt.value === 'low' ? 2 : opt.value === 'medium' ? 4 : 8;
-                          const freeHighLock = freeToolMode && opt.value === 'high';
-                          const canAfford = freeToolMode ? !freeHighLock : (!aiPoints || aiPoints.remaining >= cost);
+                          const canAfford = !aiPoints || aiPoints.remaining >= cost;
                           return (
                             <QcHostedButton aria-pressed={aiQualityLevel === opt.value} variant={aiQualityLevel === opt.value ? 'secondary' : 'ghost'}
                               key={opt.value}
@@ -9317,7 +8699,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                                     ? 'text-slate-600 border-slate-300 hover:bg-slate-50'
                                     : 'text-slate-300 border-slate-200 cursor-not-allowed'
                               }`}
-                              title={freeHighLock ? 'Only available in the main QuoteCore+ app' : opt.hint}
+                              title={opt.hint}
                             >
                               {opt.label}
                             </QcHostedButton>
@@ -9348,38 +8730,6 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 className="py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
                 Skip
-              </QcHostedButton>
-            </div>
-          </div>
-        </QcHostedDialog>
-      )}
-
-      {/* Free tool: daily AI scan credits exhausted */}
-      {freeToolMode && showFreeScanExhaustion && (
-        <QcHostedDialog label="Free AI scans used" size="md" className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm border border-gray-200 shadow-xl">
-            <h2 className="text-lg font-semibold mb-1">You've used your free AI scans</h2>
-            <p className="text-sm text-slate-500 mb-4">
-              That's all 9 free AI scans for today. Create a free QuoteCore+ account for full AI takeoffs on
-              every plan, or keep measuring manually below - no limits.
-            </p>
-            <div className="flex flex-col gap-3">
-              <a
-                href="https://app.quote-core.com/signup"
-                className="w-full py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-full hover:bg-[#E55A2B] transition-colors text-center"
-              >
-                Create free account
-              </a>
-              <QcHostedButton variant="ghost"
-                onClick={() => {
-                  setShowFreeScanExhaustion(false);
-                  // Re-offer the manual measurement choices (polygon / rectangle).
-                  roofAreaInstructionsDismissedRef.current = false;
-                  setShowRoofAreaInstructions(true);
-                }}
-                className="py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
-              >
-                Continue with manual measurement
               </QcHostedButton>
             </div>
           </div>
@@ -9535,34 +8885,13 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 </div>
                 <p className="text-xs text-slate-500 mt-1">No pitch applied - footprint measurement only.</p>
               </QcHostedButton>
-              {areaAttachChoice.offcuts != null && areaAttachChoice.offcuts > 0 && (
-                <QcHostedButton aria-pressed={areaAttachChoice.basis === 'offcuts'} data-qc-choice="true" variant="ghost"
-                  type="button"
-                  onClick={() => setAreaAttachChoice(c => c && { ...c, basis: 'offcuts' })}
-                  className={`w-full text-left rounded-xl border px-4 py-3 transition ${
-                    areaAttachChoice.basis === 'offcuts'
-                      ? 'border-orange-400 bg-orange-50/50 ring-1 ring-orange-300'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-900">Offcut plan (exact material)</span>
-                    <span className="text-sm font-bold text-slate-900 tabular-nums">
-                      {areaAttachChoice.offcuts.toFixed(2)} m²
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    From your saved offcut cutting plan - includes cutting stock and configured allowances. No pitch or waste factor is applied again.
-                  </p>
-                </QcHostedButton>
-              )}
             </div>
             <div className="flex gap-3">
               <QcHostedButton variant="secondary"
                 onClick={handleConfirmAreaAttach}
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
               >
-                Attach {areaAttachChoice.basis === 'pitched' ? 'pitched' : areaAttachChoice.basis === 'offcuts' ? 'offcuts' : 'plan'} ({(areaAttachChoice.basis === 'pitched' ? areaAttachChoice.pitched : areaAttachChoice.basis === 'offcuts' ? (areaAttachChoice.offcuts ?? 0) : areaAttachChoice.plan).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'})
+                Attach {areaAttachChoice.basis === 'pitched' ? 'pitched' : 'plan'} ({(areaAttachChoice.basis === 'pitched' ? areaAttachChoice.pitched : areaAttachChoice.plan).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'})
               </QcHostedButton>
               <QcHostedButton variant="ghost"
                 onClick={() => setAreaAttachChoice(null)}
@@ -10043,25 +9372,20 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
           guided, draggable, NON-modal card (canvas stays interactive so points
           can be dragged/added/removed while it is open); touch keeps the
           original bottom banner - the mobile flow is locked. */}
-      {outlineEditingAreaId != null && !aiScanning && !aiResults && (
+      {aiStagedPageId === (pages[currentPageIndex]?.id ?? null) && !aiScanning && !aiResults && (
         desktopAppearance ? (() => {
-          // Staged AI review and manual re-edit (pencil) share this card.
-          const stagedFlow = aiStagedPageId != null;
-          const editorAreas = roofAreas.filter(ra => (ra.quoteRoofAreaId ?? ra.id) === outlineEditingAreaId);
-          if (editorAreas.length === 0) return null;
+          const stagedAreas = roofAreas.filter(ra => ra.fromPageId === (pages[currentPageIndex]?.id ?? null) && ra.quoteRoofAreaId);
           const selArea = outlineSelectedVertex
-            ? editorAreas.find(ra => ra.id === outlineSelectedVertex.areaId || ra.quoteRoofAreaId === outlineSelectedVertex.areaId)
-            : editorAreas[0];
+            ? stagedAreas.find(ra => ra.id === outlineSelectedVertex.areaId || ra.quoteRoofAreaId === outlineSelectedVertex.areaId)
+            : undefined;
           const selN = selArea?.points.length ?? 0;
           const selIdx = outlineSelectedVertex ? Math.min(outlineSelectedVertex.vertexIndex, Math.max(selN - 1, 0)) : 0;
           return (
             <QcHostedDialog label="Check the AI outline" modeless>
               <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xl">
-                <h2 className="text-base font-semibold mb-1 text-slate-900">{stagedFlow ? 'Check the AI outline' : 'Edit outline'}</h2>
+                <h2 className="text-base font-semibold mb-1 text-slate-900">Check the AI outline</h2>
                 <p className="text-xs text-slate-500 mb-3">
-                  {stagedFlow
-                    ? 'Drag the blue points to fix the shape - your next step runs on the corrected outline.'
-                    : 'Drag the blue points to adjust the shape. Done locks the outline so it will not interfere with measuring.'}
+                  Drag the blue points to fix the shape - your next step runs on the corrected outline.
                 </p>
                 {/* Vertex stepper (mobile parity): the selected point renders
                     enlarged in orange on the canvas with its two edges lit. */}
@@ -10124,9 +9448,8 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 {/* Owner 2026-09-25 (12:46): component-scan quality. Defaults
                     to the level used for the area scan; the user can bump it
                     up or down before running (scans 2+3 are free
-                    continuations - only scan1 charges points). Staged flow
-                    only - a manual re-edit has no component scan to run. */}
-                {stagedFlow && <div className="mb-2">
+                    continuations - only scan1 charges points). */}
+                <div className="mb-2">
                   <div className="text-[11px] font-medium text-slate-500 mb-1">Component scan quality</div>
                   <div className="flex gap-1.5">
                     {([
@@ -10138,41 +9461,29 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                         key={opt.value}
                         type="button"
                         onClick={() => setAiQualityLevel(opt.value)}
-                        disabled={freeToolMode && opt.value === 'high'}
-                        title={freeToolMode && opt.value === 'high' ? 'Only available in the main QuoteCore+ app' : undefined}
                         className={`flex-1 justify-center py-1.5 text-xs font-medium rounded-full border transition-colors ${
                           aiQualityLevel === opt.value
                             ? 'bg-slate-900 text-white border-slate-900'
-                            : freeToolMode && opt.value === 'high'
-                              ? 'text-slate-300 border-slate-200 cursor-not-allowed'
-                              : 'text-slate-600 border-slate-300 hover:bg-slate-50'
+                            : 'text-slate-600 border-slate-300 hover:bg-slate-50'
                         }`}>
                         {opt.label}
                       </QcHostedButton>
                     ))}
                   </div>
-                </div>}
+                </div>
                 {/* Owner 2026-09-25: three real next steps - scan components,
                     add them manually, or finish with the area measured so far. */}
-                {stagedFlow ? (
                 <QcHostedButton variant="primary" type="button"
                   onClick={handleContinueAiScan}
                   className="w-full justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e55a28] transition-colors">
                   AI scan for components
                 </QcHostedButton>
-                ) : (
-                <QcHostedButton variant="primary" type="button"
-                  onClick={() => { setOutlineEditingAreaId(null); setOutlineTool(null); setOutlineSelectedVertex(null); }}
-                  className="w-full justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e55a28] transition-colors">
-                  Done
-                </QcHostedButton>
-                )}
                 <div className="flex gap-2 mt-2">
-                  {stagedFlow && <QcHostedButton variant="ghost" type="button"
-                    onClick={() => { setAiStagedPageId(null); setOutlineEditingAreaId(null); setOutlineTool(null); setOutlineSelectedVertex(null); }}
+                  <QcHostedButton variant="ghost" type="button"
+                    onClick={() => { setAiStagedPageId(null); setOutlineTool(null); setOutlineSelectedVertex(null); }}
                     className="flex-1 justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">
                     Add components manually
-                  </QcHostedButton>}
+                  </QcHostedButton>
                   <QcHostedButton variant="ghost" type="button"
                     onClick={handleOutlineFinishAndSave}
                     className="flex-1 justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">
@@ -10194,7 +9505,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 Detect components
               </QcHostedButton>
               <QcHostedButton variant="ghost"
-                onClick={() => { setAiStagedPageId(null); setOutlineEditingAreaId(null); }}
+                onClick={() => setAiStagedPageId(null)}
                 className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Not now

@@ -81,8 +81,8 @@ test('zero-area degenerate outline is blocking', () => {
 });
 
 test('self-intersecting bowtie is blocking with vertex ids', () => {
-  // Asymmetric bowtie (nonzero area) so the self-intersection rule - not the
-  // degenerate-area rule - is what fires.
+  // Asymmetric bowtie (nonzero area) so the self-intersection rule — not the
+  // degenerate-area rule — is what fires.
   const bowtie = [{ x: 0, y: 0 }, { x: 100, y: 80 }, { x: 100, y: 0 }, { x: 0, y: 100 }];
   const issues = validateOutline(draft(bowtie));
   const si = issues.find((i) => i.code === 'self-intersection');
@@ -145,7 +145,7 @@ test('vertex ids are random and never coordinate-derived', () => {
   assert.equal(new Set(imported.map((v) => v.id)).size, 4);
 });
 
-// Spec §17.4 E - remote-drag invariance.
+// Spec §17.4 E — remote-drag invariance.
 test('worked example E: client delta maps through inverse linear part only', () => {
   // scene->client zoom 2 (uniform), translation arbitrary. Inverse linear part
   // for zoom z is 1/z in both axis slots of the affine (a=1/2, d=1/2).
