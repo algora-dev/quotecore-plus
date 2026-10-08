@@ -205,6 +205,19 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     try {
       const next = await session(id);
       if (!mounted.current || ticket !== epoch.current || current.current !== id) return null;
+      if ('conversationReset' in next) {
+        // Stale conversation id (demo reset/expiry cleanup, another device):
+        // recover to a fresh start instead of locking the panel with an
+        // access error the user cannot resolve by reopening.
+        pending.current.delete(id);
+        try { sessionStorage.removeItem(lastConversationKey); } catch { /* optional */ }
+        setActive(null);
+        setSnapshot(null);
+        setLocked(false);
+        setNotice(null);
+        setUnresolved(false);
+        return null;
+      }
       if (next.access.companyId !== access.companyId || next.access.userId !== access.userId) {
         setSnapshot(null);
         setLocked(true);
@@ -235,7 +248,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
       }
       return null;
     }
-  }, [access.companyId, access.userId, speech.autoSpeak]);
+  }, [access.companyId, access.userId, speech.autoSpeak, lastConversationKey]);
 
   useEffect(() => {
     setSnapshot(null);

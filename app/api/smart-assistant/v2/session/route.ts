@@ -23,6 +23,15 @@ export async function GET(req: NextRequest) {
         const id = req.nextUrl.searchParams.get('conversationId');
         if (!id)
             return reply({ enabled: true, access });
+        // A stale id (demo reset/expiry cleanup, another device) must recover to
+        // a fresh start instead of dead-ending the panel with an access error.
+        // RLS scopes this existence check to the caller's own conversations.
+        if (!isUuid(id))
+            return reply({ enabled: true, access, conversationReset: true });
+        const { data: conversation } = await client.from('smart_assistant_conversations').select('id').eq('id', id)
+            .eq('user_id', access.userId).eq('company_id', access.companyId).limit(1).maybeSingle();
+        if (!conversation)
+            return reply({ enabled: true, access, conversationReset: true });
         const [snapshot, task] = await Promise.all([
             readSession(client, access, id),
             taskContextEnabled() ? taskSnapshot(client, id) : Promise.resolve(undefined),

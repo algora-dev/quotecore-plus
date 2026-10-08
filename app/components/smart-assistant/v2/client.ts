@@ -20,8 +20,13 @@ export async function capability(signal?: AbortSignal): Promise<Access | null> {
         throw new Error('Assistant configuration could not be verified.');
     return access;
 }
-export async function session(conversationId: string): Promise<SessionSnapshot> {
+export type SessionResult = SessionSnapshot | { conversationReset: true };
+export async function session(conversationId: string): Promise<SessionResult> {
     const data = await request(`/api/smart-assistant/v2/session?conversationId=${encodeURIComponent(conversationId)}`);
+    // The server reports a stale conversation id (demo reset/expiry/another
+    // device) instead of an access error so the client can start fresh.
+    if (data.conversationReset === true)
+        return { conversationReset: true };
     const decoded = parsePublicSession(data);
     if (!decoded || data.enabled !== true)
         throw new Error('Assistant access changed. Reopen this page.');
