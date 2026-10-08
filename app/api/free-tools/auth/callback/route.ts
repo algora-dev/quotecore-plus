@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { authCookieOptions } from '@/app/lib/supabase/cookie-config';
 export const runtime='nodejs';
-/** Dedicated free-document return. Destination is fixed: no open redirect and no
+/** Dedicated free-document return. Destinations are an exact three-route allowlist: no open redirect and no
  * customer content/tokens copied into the quote URL. Works with PKCE code or a
  * configured email token-hash template. Do not replace the app's auth routes. */
 export async function GET(req:NextRequest) {
-  const input=req.nextUrl, destination=new URL('/free-quote-generator',input.origin);
+  const input=req.nextUrl;
+  // Never accept an arbitrary redirect URL, path, host or protocol from the query.
+  const kind=input.searchParams.get('document');
+  const path=kind==='invoice'?'/free-invoice-generator':kind==='order'?'/free-purchase-order-generator':'/free-quote-generator';
+  const destination=new URL(path,input.origin);
   const id=input.searchParams.get('resume');
   if(id&&/^[a-f0-9-]{32,64}$/.test(id))destination.searchParams.set('qc_resume',id);
   const response=NextResponse.redirect(destination);

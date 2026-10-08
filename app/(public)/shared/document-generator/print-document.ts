@@ -4,7 +4,7 @@ import { DOCUMENT_CSS } from './DocumentPaper';
  * into HTML or scripts. No new PDF dependency and no network upload. */
 export async function printDocument(source: HTMLElement, name: string): Promise<void> {
   const frame=document.createElement('iframe');
-  frame.title='Printable quote';frame.setAttribute('aria-hidden','true');frame.dataset.qcDocumentPrint='true';
+  frame.title='Printable document';frame.setAttribute('aria-hidden','true');frame.dataset.qcDocumentPrint='true';
   Object.assign(frame.style,{position:'fixed',width:'1px',height:'1px',right:'0',bottom:'0',border:'0',opacity:'0',pointerEvents:'none'});
   document.body.appendChild(frame);
   const target=frame.contentDocument,win=frame.contentWindow;

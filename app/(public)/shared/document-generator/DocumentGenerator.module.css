@@ -451,3 +451,21 @@
 @media(forced-colors:active){.assistStarter,.paidDiscovery,.accountBenefits,.allowanceComparison>div,.emailIllustration{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important;}}
 
 .faqs,.taxSettings{min-width:0;}
+
+/* Document-specific extensions share V2 controls; the dense workspace stays light. */
+.dateShortcuts{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin:-2px 0 14px;font-size:11px;color:var(--muted,#596579);}
+.dateShortcuts>span{flex-basis:100%;margin-bottom:2px;}
+.dateShortcuts button{font:inherit;font-weight:600;color:var(--accent,#ab3a08);background:transparent;border:1px solid #dce0e7;border-radius:6px;padding:5px 8px;cursor:pointer;min-height:30px;}
+.dateShortcuts button:hover{background:#fff2e9;border-color:#efb798;}
+.twoFields{display:grid;grid-template-columns:1fr 1.5fr;gap:20px;}
+.documentSpecificSummary{padding:18px 20px;border-top:1px solid #e0e4eb;background:#f8f9fc;}
+.documentSpecificSummary p{margin:4px 0;color:#596579;font-size:12px;line-height:1.6;}
+.documentSpecificSummary strong{color:#252b33;}
+@media(max-width:640px){.twoFields{grid-template-columns:1fr;gap:0;}.dateShortcuts button{min-height:40px;padding:8px 10px;}}
+@media(forced-colors:active){.dateShortcuts button{border:1px solid ButtonText;background:Canvas;color:ButtonText;}}
+
+/* The extraction review exposes the exact details that will be applied. */
+.extractedDetails{display:grid;gap:0;border:1px solid var(--qc-line,rgba(160,170,188,.25));border-radius:12px;padding:0 16px;margin:18px 0;max-height:250px;overflow:auto;}
+.extractedDetails>div{display:grid;grid-template-columns:minmax(112px,34%) 1fr;gap:16px;padding:12px 0;border-bottom:1px solid rgba(160,170,188,.15);}
+.extractedDetails>div:last-child{border-bottom:0;}.extractedDetails dt{font-size:12px;opacity:.75;}.extractedDetails dd{font-size:13px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;}
+@media(max-width:440px){.extractedDetails>div{grid-template-columns:1fr;gap:5px;}}

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { calculate, currencyFor, visibleLines, type DocumentDraft } from './document-model';
+import { calculate, currencyFor, visibleLines, documentIdentity, type DocumentDraft } from './document-model';
 import s from './DocumentGenerator.module.css';
 /** Customer-document boundary: keep the original light quote structure,
  * logo top-right, parties, item columns, notes, footer and guest branding.
@@ -26,24 +26,31 @@ export const DOCUMENT_CSS = `
 .qcd-total-row{display:flex;justify-content:space-between;gap:12px;margin:6px 0;color:#596273;}
 .qcd-total-row strong{color:#191b20;font-weight:500;}.qcd-total-final{border-top:1px solid #dde1e7;margin-top:10px;padding-top:10px;font-size:17px;font-weight:bold;color:#191b20;}.qcd-total-final strong{font-weight:bold;}
 .qcd-notes,.qcd-footer{border-top:1px solid #edf0f4;padding-top:16px;margin-top:18px;white-space:pre-wrap;}.qcd-footer{color:#596273;}.qcd-branding{border-top:1px solid #edf0f4;padding-top:18px;margin-top:40px;display:flex;align-items:center;justify-content:center;gap:8px;color:#687181;font-size:10px;}.qcd-branding img{width:100px;height:auto;}
+.qcd-document .qcd-doc-title{font:700 25px/1.2 Arial,Helvetica,sans-serif;letter-spacing:2px;margin:0 0 28px;color:#191b20;}
+.qcd-delivery{display:flex;justify-content:space-between;gap:28px;white-space:pre-wrap;background:#f6f7f9;border:1px solid #e6e8ee;padding:16px;margin:0 0 28px;break-inside:avoid;}.qcd-delivery>div{flex:1;min-width:0;}
+.qcd-payment{break-inside:avoid;border-top:1px solid #e6e8ee;padding-top:16px;margin-top:18px;white-space:pre-wrap;}.qcd-payment-ref{margin-top:10px!important;}.qcd-currency{text-align:right;color:#687181;font-size:11px;margin:0 0 14px!important;}
 @media print{@page{size:A4;margin:18mm;}html,body{margin:0!important;padding:0!important;background:white!important;}.qcd-document{width:auto;min-height:0;padding:0;font-size:10pt;}.qcd-document table{overflow:visible;}.qcd-document thead{display:table-header-group;}.qcd-document tr{break-inside:avoid;}.qcd-document th{font-size:9pt;}.qcd-document td{font-size:10pt;}.qcd-parties,.qcd-totals,.qcd-branding{break-inside:avoid;}.qcd-notes,.qcd-footer{break-inside:auto;}.qcd-document .qcd-placeholder-row{display:none;}.qcd-logo{max-height:18mm;}.qcd-document .qcd-meta{color:#424a56;}}
 `;
 function exactMoney(n:number,code:string){return `${currencyFor(code).symbol}${(Number.isFinite(n)?n:0).toFixed(2)}`;}
 export function DocumentPaper({draft:d,guest=true,placeholders=false}: {draft:DocumentDraft;guest?:boolean;placeholders?:boolean}) {
-  const totals=calculate(d),lines=visibleLines(d);
-  return <article className="qcd-document" aria-label="Customer quote document">
+  const totals=calculate(d),lines=visibleLines(d),meta=documentIdentity(d),order=meta.kind==='order',invoice=meta.kind==='invoice';
+  return <article className="qcd-document" aria-label={`${order?'Supplier':'Customer'} ${meta.noun} document`}>
+    {meta.kind!=='quote'&&<h1 className="qcd-doc-title">{invoice?'INVOICE':'PURCHASE ORDER'}</h1>}
     <div className="qcd-parties"><div className="qcd-recipient">
       {d.logo&&<div className="qcd-logo-spacer"/>}
-      <p className="qcd-num">{d.quoteNumber || (placeholders?'Q-001':'')}</p><p className="qcd-kicker">Quote to:</p>
-      <p className={`qcd-name ${!d.clientName&&placeholders?'qcd-placeholder':''}`}>{d.clientName || (placeholders?'Customer name':'Client name')}</p>
-      {d.clientEmail&&<p className="qcd-meta">{d.clientEmail}</p>}{d.clientAddress&&<p className="qcd-meta">{d.clientAddress}</p>}
-      <p className="qcd-meta qcd-date">Date: {d.quoteDate}</p><p className="qcd-meta">Valid for: {d.validDays} days</p>
+      <p className="qcd-num">{meta.number || (placeholders?invoice?'INV-001':order?'PO-001':'Q-001':'')}</p><p className="qcd-kicker">{order?'Supplier:':invoice?'Bill to:':'Quote to:'}</p>
+      <p className={`qcd-name ${!meta.recipient&&placeholders?'qcd-placeholder':''}`}>{meta.recipient || (order?'Supplier name':placeholders?'Customer name':'Client name')}</p>
+      {meta.email&&<p className="qcd-meta">{meta.email}</p>}{meta.address&&<p className="qcd-meta">{meta.address}</p>}
+      <p className="qcd-meta qcd-date">{order?'Order date':'Date'}: {meta.date}</p>
+      {invoice?(d.dueDate&&<p className="qcd-meta">Due: {d.dueDate}</p>):order?(d.jobReference&&<p className="qcd-meta">Reference: {d.jobReference}</p>):<p className="qcd-meta">Valid for: {d.validDays} days</p>}
     </div><div className="qcd-sender">
       {d.logo&&<img src={d.logo} alt="Business logo" className="qcd-logo"/>}
-      <p className="qcd-kicker">From:</p>{d.fromName&&<p className="qcd-name">{d.fromName}</p>}
+      <p className="qcd-kicker">{order?'Ordered by:':'From:'}</p>{d.fromName&&<p className="qcd-name">{d.fromName}</p>}
       <p className={!d.companyName&&placeholders?'qcd-placeholder':''}>{d.companyName || (placeholders?'Your business name':'')}</p>
+      {meta.kind!=='quote'&&d.fromAddress&&<p className="qcd-meta">{d.fromAddress}</p>}{meta.kind!=='quote'&&d.taxId&&<p className="qcd-meta">Tax / registration: {d.taxId}</p>}
       {d.fromPhone&&<p className="qcd-meta">{d.fromPhone}</p>}{d.fromEmail&&<p className="qcd-meta">{d.fromEmail}</p>}
     </div></div>
+    {order&&(d.deliveryAddress||d.deliveryDate)&&<div className="qcd-delivery"><div><p className="qcd-kicker">Deliver to</p><p>{d.deliveryAddress||'To be confirmed'}</p></div>{d.deliveryDate&&<div><p className="qcd-kicker">Requested delivery</p><p>{d.deliveryDate}</p></div>}</div>}
     <table><thead><tr><th scope="col">Description</th><th scope="col">Qty</th><th scope="col">Unit</th><th scope="col">Rate</th><th scope="col">Total</th></tr></thead>
       <tbody>{lines.map(l=><tr key={l.id}><td>{l.description}</td><td>{l.qty}</td><td>{l.unit}</td><td>{d.hideAllPrices?'-':exactMoney(l.rate,d.currencyCode)}</td><td>{d.hideAllPrices?'-':exactMoney(l.qty*l.rate,d.currencyCode)}</td></tr>)}
         {!lines.length&&placeholders&&<tr className="qcd-placeholder-row"><td>Your items will appear here</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>}
@@ -51,9 +58,11 @@ export function DocumentPaper({draft:d,guest=true,placeholders=false}: {draft:Do
     {!d.hideTotals&&<div className="qcd-totals"><div className="qcd-total-row"><span>Subtotal</span><strong>{exactMoney(totals.subtotal,d.currencyCode)}</strong></div>
       {d.taxEnabled&&<div className="qcd-total-row"><span>{d.taxName} ({d.taxRate}%)</span><strong>{exactMoney(totals.tax,d.currencyCode)}</strong></div>}
       <div className="qcd-total-row qcd-total-final"><span>Total</span><strong>{exactMoney(totals.total,d.currencyCode)}</strong></div></div>}
-    {d.notes&&<div className="qcd-notes"><p className="qcd-kicker">Notes</p><p>{d.notes}</p></div>}
+    {meta.kind!=='quote'&&<p className="qcd-currency">Amounts in {d.currencyCode}</p>}
+    {invoice&&(d.paymentDetails||d.paymentReference)&&<section className="qcd-payment"><p className="qcd-kicker">Payment details</p>{d.paymentDetails&&<p>{d.paymentDetails}</p>}{d.paymentReference&&<p className="qcd-payment-ref"><strong>Payment reference:</strong> {d.paymentReference}</p>}</section>}
+    {d.notes&&<div className="qcd-notes"><p className="qcd-kicker">{order?'Notes for supplier':'Notes'}</p><p>{d.notes}</p></div>}
     {d.footer&&<div className="qcd-footer" style={{fontStyle:d.footerItalic?'italic':'normal'}}>{d.footer}</div>}
-    {guest&&<div className="qcd-branding"><img src="/marketing/brand/quotecore-logo-transparent.png" alt="QuoteCore+"/><span>This quote was generated using QuoteCore+ Free Tools — quotecoreplus.com</span></div>}
+    {guest&&<div className="qcd-branding"><img src="/marketing/brand/quotecore-logo-transparent.png" alt="QuoteCore+"/><span>This {meta.noun} was generated using QuoteCore+ Free Tools — quotecoreplus.com</span></div>}
   </article>;
 }
 export function ScaledPaper({draft,guest,placeholders=false}: {draft:DocumentDraft;guest:boolean;placeholders?:boolean}) {

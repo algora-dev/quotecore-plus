@@ -16,13 +16,13 @@ export function useDocumentAccount() {
   const refresh=useCallback(async():Promise<boolean>=>{
     const seq=++sequence.current;let token:string|null=null;const controller=new AbortController();
     let timeout:ReturnType<typeof setTimeout>|undefined;
-    const deadline=new Promise<never>((_,reject)=>{timeout=setTimeout(()=>{controller.abort();reject(new Error('Your account check timed out. Your quote is safe; try again.'));},8000);});
+    const deadline=new Promise<never>((_,reject)=>{timeout=setTimeout(()=>{controller.abort();reject(new Error('Your account check timed out. Your document is safe; try again.'));},8000);});
     try {
       const {data,error}=await Promise.race([client.auth.getSession(),deadline]);if(error)throw error;
       token=data.session?.access_token??null;
       if(!token){if(mounted.current&&seq===sequence.current)setState({token:null,status:null,error:'',pending:false});return false;}
       const response=await Promise.race([fetch('/api/free-tools/account-status',{headers:{Authorization:`Bearer ${token}`},cache:'no-store',signal:controller.signal}),deadline]);
-      if(!response.ok)throw new Error('Your account benefits could not be checked. Your quote is safe; try again.');
+      if(!response.ok)throw new Error('Your account benefits could not be checked. Your document is safe; try again.');
       const status:Status=await response.json();
       const valid=[1,2,3].includes(status.tier)&&status.limits&&typeof status.canRemoveBranding==='boolean';
       if(!valid)throw new Error('Your account benefits could not be checked. Please try again.');
