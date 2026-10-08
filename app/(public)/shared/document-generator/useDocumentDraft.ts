@@ -13,8 +13,10 @@ export function useDocumentDraft(sessionKey: string, search: string, services: D
   const [notice, setNotice] = useState('');
   const [authResume,setAuthResume]=useState<AuthResume|null>(null);
   const storageOK = useRef(true), currencyPinned = useRef(false), initializedQuery = useRef<string | null>(null);
-  const current = useRef(draft); current.current = draft;
-  const serviceRef = useRef(services); serviceRef.current = services;
+  const current = useRef(draft);
+  const serviceRef = useRef(services);
+  // Latest-value refs, refreshed after each render (refs must not be written during render).
+  useEffect(() => { current.current = draft; serviceRef.current = services; });
   useEffect(() => {
     if (initializedQuery.current === search) return;
     initializedQuery.current = search;
@@ -28,6 +30,7 @@ export function useDocumentDraft(sessionKey: string, search: string, services: D
     } catch { storageOK.current = false; }
     const recovery=readAuthResume(new URLSearchParams(search).get('qc_resume'));
     if(recovery){
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time mount restore of an external auth backup into state
       if(!restored || sameQuote(restored,recovery.draft)){restored=recovery.draft;setAuthResume(recovery);}
       else restoreWarning='A different quote is already open in this tab. It has been kept instead of replacing it with the sign-in backup.';
     }
@@ -53,6 +56,7 @@ export function useDocumentDraft(sessionKey: string, search: string, services: D
   }, [ready,search]);
   useEffect(() => {
     if (!ready || !storageOK.current) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- status flag around the debounced external sessionStorage write
     setStatus('saving');
     const timer = window.setTimeout(() => {
       try { sessionStorage.setItem(sessionKey,JSON.stringify(current.current)); setStatus('saved'); }

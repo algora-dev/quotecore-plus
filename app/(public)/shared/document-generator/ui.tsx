@@ -18,6 +18,7 @@ export function Field({label,hint,error,optional,children,id,...props}:InputHTML
  * intermediate minus signs and selection/caret are never eaten by rerenders. */
 export function NumberField({value,onNumber,...props}:Omit<InputHTMLAttributes<HTMLInputElement>,'value'|'onChange'|'type'>&{value:number;onNumber:(n:number)=>void}) {
   const [raw,setRaw] = useState(String(value)), focused = useRef(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- one-way external-value sync while the control is unfocused (repo precedent: FreeTakeoffApp.tsx)
   useEffect(() => {if (!focused.current) setRaw(String(value));},[value]);
   return <input {...props} type="text" inputMode="decimal" value={raw}
     onFocus={e=>{focused.current=true;props.onFocus?.(e);}}

@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import { CURRENCIES, type DocumentDraft, type ValidationIssue } from './document-model';
 import { rasterize } from './document-media';
-import { Button, Disclosure, Field } from './ui';
+import { Disclosure, Field } from './ui';
 import { Icon } from './Icon';
 import s from './DocumentGenerator.module.css';
 export type ChangeField = <K extends keyof DocumentDraft>(field:K,value:DocumentDraft[K])=>void;
