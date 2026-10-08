@@ -30,7 +30,7 @@ export default function DemoCTACard({
   const Buttons = ({ compact = false }: { compact?: boolean }) => (
     <div className={`flex flex-col gap-2 ${compact ? "" : "sm:flex-row"}`}>
       <a
-        href="/takeoff-demo?mode=ai"
+        href="/demo?mode=ai"
         onClick={() => go("ai")}
         className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition-colors ${
           primaryMode === "manual"
@@ -41,7 +41,7 @@ export default function DemoCTACard({
         Try AI Scan Assist
       </a>
       <a
-        href="/takeoff-demo?mode=manual"
+        href="/demo?mode=manual"
         onClick={() => go("manual")}
         className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition-colors ${
           primaryMode === "ai"
@@ -81,7 +81,7 @@ export default function DemoCTACard({
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <a
-                href="/takeoff-demo?mode=ai"
+                href="/demo?mode=ai"
                 onClick={() => go("ai")}
                 className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
                   primaryMode === "manual"
@@ -92,7 +92,7 @@ export default function DemoCTACard({
                 Try AI Scan Assist
               </a>
               <a
-                href="/takeoff-demo?mode=manual"
+                href="/demo?mode=manual"
                 onClick={() => go("manual")}
                 className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
                   primaryMode === "ai"

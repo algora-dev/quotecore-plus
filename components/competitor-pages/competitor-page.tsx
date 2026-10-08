@@ -790,7 +790,7 @@ export default function CompetitorPage({
             is separate from the mobile paid app.
           </p>
           <div className="mt-5">
-            <TrackedCta slug={slug} location="roofing_takeoff_demo" href="/takeoff-demo" label="View Roofing Takeoff Demo" variant="ghost" />
+            <TrackedCta slug={slug} location="roofing_takeoff_demo" href="/demo" label="View Roofing Takeoff Demo" variant="ghost" />
           </div>
         </div>
       </section>

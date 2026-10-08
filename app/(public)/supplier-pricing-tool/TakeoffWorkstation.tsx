@@ -5021,7 +5021,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     <div className="-my-8 h-[calc(120vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden">
       {/* Back link sits above the canvas card so it never crowds the header */}
       <Link
-        href={demoMode === 'upload' ? '/free-roof-takeoff' : '/takeoff-demo'}
+        href={demoMode === 'upload' ? '/free-roof-takeoff' : '/demo'}
         className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
       >
         <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to demo start

@@ -39,14 +39,14 @@ export default function DemoToolCard() {
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <a
-              href={`https://quote-core.com/takeoff-demo?mode=ai`}
+              href={`https://quote-core.com/demo?mode=ai`}
               onClick={() => go("ai")}
               className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-[#FF6B35] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
             >
               Try AI Scan Assist
             </a>
             <a
-              href={`https://quote-core.com/takeoff-demo?mode=manual`}
+              href={`https://quote-core.com/demo?mode=manual`}
               onClick={() => go("manual")}
               className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-white/60 bg-white/10 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white hover:text-zinc-950"
             >
