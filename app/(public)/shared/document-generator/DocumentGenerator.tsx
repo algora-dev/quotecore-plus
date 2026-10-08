@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { buildConvertUrl } from '../convertLines';
 import { applyParsed, blankDraft, blankLine, calculate, documentWarnings, hasWork, money, newId, sampleDraft, unitFor, validateDraft, visibleLines, type DocumentConfig, type DocumentDraft, type DocumentLine, type ParsedDocument, type ValidationIssue } from './document-model';
 import { DocumentServiceError, type DocumentServices } from './document-services';
@@ -113,8 +114,8 @@ export function DocumentGenerator({config,search,services,account,auth,onAuthCom
     <div className={s.screen}>
       <a className={s.skip} href="#quote-workspace">Skip to quote editor</a>
       <header className={s.header}><div className={s.headerInner}>
-        <a href="/" aria-label="QuoteCore+ home" className={s.brand}><img src="/marketing/brand/quotecore-logo-transparent.png" alt="QuoteCore+"/></a><span className={s.toolBadge}>Free tools</span>
-        <div className={s.headerActions}><a href="/free-tools" className={s.backTools} aria-label="All free tools"><Icon name="back"/><span>All free tools</span></a>
+        <Link href="/" aria-label="QuoteCore+ home" className={s.brand}><img src="/marketing/brand/quotecore-logo-transparent.png" alt="QuoteCore+"/></Link><span className={s.toolBadge}>Free tools</span>
+        <div className={s.headerActions}><Link href="/free-tools" className={s.backTools} aria-label="All free tools"><Icon name="back"/><span>All free tools</span></Link>
           {account.signedIn?<><span className={s.accountEmail}>{account.email}</span><Button onClick={()=>void signOut()}>Sign out</Button></>:<Button onClick={()=>openAccount('signin')} disabled={!account.ready}>Sign in</Button>}
         </div>
       </div></header>
