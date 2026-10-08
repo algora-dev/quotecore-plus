@@ -25,7 +25,7 @@ export type EmailLayoutInput = {
   preheader?: string;
 };
 
-const LOGO_URL = 'https://quote-core.com/icon.png';
+const LOGO_URL = 'https://quotecore-plus-main.vercel.app/logo-email.png';
 
 const escapeHtml = (s: string) =>
   s
@@ -48,7 +48,7 @@ ${preheaderHtml}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9FAFB;padding:32px 16px;"><tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;">
 <tr><td style="padding:28px 32px 16px 32px;border-bottom:1px solid #F3F4F6;">
-<img src="${LOGO_URL}" alt="QuoteCore+" width="44" height="44" style="display:block;border:0;height:auto;width:44px;max-width:44px;" />
+<img src="${LOGO_URL}" alt="QuoteCore+" width="160" style="display:block;border:0;height:auto;max-width:160px;" />
 </td></tr>
 <tr><td style="padding:32px;">
 <h1 style="margin:0 0 16px 0;font-size:22px;line-height:28px;font-weight:600;color:#0A0A0A;">${escapeHtml(heading)}</h1>

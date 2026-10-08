@@ -1,5 +1,6 @@
-import { CalculatorClient } from '../_components/calculators-v1/CalculatorClient';
+import { birdsmouthConfig } from '../free-calculators/configs/birdsmouth';
+import { TradePage } from '../free-calculators/_shared/TradePage';
 
 export default function Page() {
-  return <CalculatorClient trade="birdsmouth" />;
+  return <TradePage config={birdsmouthConfig} />;
 }

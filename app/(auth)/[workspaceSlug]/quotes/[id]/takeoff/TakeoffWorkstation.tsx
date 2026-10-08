@@ -44,8 +44,6 @@ import type { QuoteQuantityProposal } from '@/app/lib/takeoff/offcuts/core/quant
 import { checkedReviewFigure, proposalCoverFigure, type OffcutAreaFigure } from '@/app/lib/takeoff/offcuts/persistence/materialFigure';
 import { fingerprint as offcutFingerprint } from '@/app/lib/takeoff/offcuts/core/math';
 import { flushSync } from 'react-dom';
-import { useOffcutRecovery } from '@/app/lib/takeoff/useOffcutRecovery';
-import { stableRecoveryImageKey, type WorkstationRecoveryState } from '@/app/lib/takeoff/offcuts/persistence/recoveryData';
 import { AlertModal } from '@/app/components/AlertModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
@@ -3381,7 +3379,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // helper immediately so completion feedback lands without a poll wait.
       refreshDemoGuide();
       if (navigateAfter) {
-        await recovery.complete().catch(()=>{}); // Quote is already saved; checkpoint failure must not roll it back.
         console.log('[SaveTakeoff] Save complete, navigating to:', `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
         if (onFreeFinish) onFreeFinish(buildFinishPayload()); else router.push(demoFinishHref ?? `/${workspaceSlug}/quotes/${quote.id}/build?step=roof-areas`);
       } else {
@@ -7837,50 +7834,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       })),
     };
   });
-  // V2.20: editable recovery data is distinct from the solver's geometry-only
-  // capture. Keep values, ownership stamps, final-quantity basis and touch ids.
-  const recoveryStateRef=useRef<WorkstationRecoveryState|null>(null);
-  useEffect(()=>{
-    recoveryStateRef.current={
-      componentMeasurements:componentMeasurements.map(g=>({componentId:g.componentId,expanded:g.expanded,
-        measurements:g.measurements.map(m=>({id:m.id,type:m.type,value:m.value,points:m.points?.map(p=>({...p})),visible:m.visible,
-          fromPageId:m.fromPageId,quoteRoofAreaId:m.quoteRoofAreaId,entryInputs:m.entryInputs?{...m.entryInputs}:m.entryInputs,aiOrigin:m.aiOrigin}))})),
-      roofAreas:roofAreas.map(a=>({id:a.id,name:a.name,points:a.points.map(p=>({...p})),area:a.area,pitch:a.pitch,visible:a.visible,fromPageId:a.fromPageId,quoteRoofAreaId:a.quoteRoofAreaId})),
-      calibrations:calibrations.map(c=>({...c,point1:{...c.point1},point2:{...c.point2}})),calibrationConfirmed,
-      activeComponentIds:[...activeComponentIds],selectedComponentId,activeSaveRoofAreaId,componentColors:componentColors.map(c=>({...c})),
-      touchEntries:structuredClone(touchComponentEntriesRef.current),touchHydratedIds:[...touchHydratedEntryIdsRef.current],
-      calibrationMetadataText:currentPageIdRef.current&&aiCalMetadataRef.current.has(currentPageIdRef.current)?JSON.stringify(aiCalMetadataRef.current.get(currentPageIdRef.current)):null,
-      measurementSystem:String(quote.measurement_system??'metric'),sessionVersion:sessionVersionRef.current,
-    };
-  });
-  const recovery=useOffcutRecovery({
-    scope:{quoteId:quote.id,pageId:pages[currentPageIndex]?.id??'',areaScopeId:activeAreaId??null},
-    imageKey:stableRecoveryImageKey(pages[currentPageIndex]?.id??'',pages[currentPageIndex]?.url??planUrl,canvasDims.width,canvasDims.height,
-      hydrationData?.pages.find(p=>p.id===pages[currentPageIndex]?.id)?.imageRevision),
-    ready:canvasReady&&canvasDims.width>0&&canvasDims.height>0,disabled:!!onFreeFinish,
-    openScope:async scope=>{if(!scope.areaScopeId||!areaList.some(a=>a.id===scope.areaScopeId))throw new Error('Open the original roof area from the area list to recover its drawing.');await handleSwitchArea(scope.areaScopeId,scope.pageId);},
-    readState:()=>{const state=recoveryStateRef.current;if(!state)throw new Error('Takeoff is still loading.');
-      return{...state,touchEntries:structuredClone(touchComponentEntriesRef.current),touchHydratedIds:[...touchHydratedEntryIdsRef.current]};},
-    restoreState:state=>{
-      if(state.measurementSystem!==String(quote.measurement_system??'metric'))throw new Error('The quote measurement units have changed. Export this checkpoint for review rather than restoring it automatically.');
-      const library=new Set(components.map(c=>c.id));
-      if(state.componentMeasurements.some(g=>!library.has(g.componentId))||state.touchEntries.some(e=>e.componentId&&!library.has(e.componentId)))throw new Error('A checkpoint component is no longer in this library. Restore the component or export recovery before continuing.');
-      const metadata=state.calibrationMetadataText?decodeCalibrationMetadata(JSON.parse(state.calibrationMetadataText)):null;
-      if(metadata&&metadata.kind!=='v1')throw new Error('Calibration metadata needs review before restoring.');
-      pushHistorySnapshot();hydrationAppliedRef.current=true;reconstructAppliedRef.current=true;touchEntriesHydratedRef.current=true;
-      setComponentMeasurements(state.componentMeasurements.map(g=>({...g,measurements:g.measurements.map(m=>({...m,canvasObjects:[]}))})));
-      setRoofAreas(state.roofAreas.map(a=>({...a,polygon:undefined,markers:[]})));
-      setCalibrations(state.calibrations);setCalibrationConfirmed(state.calibrationConfirmed);setCalibrationMode(false);setCalibrationPoints([]);setShowCalibrationHelp(false);
-      const pageId=currentPageIdRef.current;if(pageId){pageCalibrationsRef.current.set(pageId,state.calibrations);if(metadata?.kind==='v1')aiCalMetadataRef.current.set(pageId,metadata.metadata);else aiCalMetadataRef.current.delete(pageId);}
-      setActiveComponentIds(state.activeComponentIds);setSelectedComponentId(state.selectedComponentId);setActiveSaveRoofAreaId(state.activeSaveRoofAreaId);setComponentColors(state.componentColors);
-      touchComponentEntriesRef.current=structuredClone(state.touchEntries);touchHydratedEntryIdsRef.current=new Set(state.touchHydratedIds);
-      touchBridgeListeners.current.forEach(listener=>listener());
-      setAreaMode(false);setAreaPoints([]);setLineMode(false);setLinePoints([]);setPointMode(false);setMultiLinealMode(false);setMultiLinealPoints([]);
-      setIsDirty(true);setRedrawNonce(n=>n+1);invalidateOffcutFigure();
-      // Preserve the CURRENT server session revision; restoring an older drawing
-      // must not roll back the quote's optimistic-concurrency version.
-    },
-  });
   // Offcuts V2.9: the reader runs while opening, after blur/flushSync commits,
   // so it reads the refs above only (never a stale render closure).
   const readCurrentOffcutsSnapshot = useCallback((): QuoteCoreSnapshot => {
@@ -7959,7 +7912,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           </div>
         </header>
 
-      {recovery.banner}
       {/* Plan indicator + dynamic tool guidance bar */}
       {(() => {
         const selCompType = selectedComponentId
@@ -8957,7 +8909,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                         className="px-3 py-2 rounded-full text-sm bg-slate-900 text-white disabled:opacity-40"
                         disabled={openingOffcuts || !calibrationConfirmed || !pages[currentPageIndex]?.id || roofAreas.length === 0 || isSaving || aiScanning}
                         aria-busy={openingOffcuts}
-                        title="Save a recovery checkpoint of these measurements, then review faces. Quote prices are not changed."
+                        title="Review faces and prototype offcut reuse. Reads the current unsaved takeoff; does not change pricing or saved measurements."
                         onClick={async () => {
                           if (offcutsCaptureAbortRef.current) return;
                           const abort = new AbortController();
@@ -8974,10 +8926,6 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                             const offcutsHandle = await launchLiveQuoteCoreOffcuts(readCurrentOffcutsSnapshot, {
                               signal: abort.signal,
                               reviewRepository: reviewRepository ?? undefined,
-                              persistCapture: recovery.persistCapture,
-                              beforeCalculation: recovery.beforeCalculation,
-                              onReviewCheckpoint: recovery.onReviewCheckpoint,
-                              onCalculationChange: recovery.onCalculationChange,
                               onQuantityProposal: receiveOffcutQuantity,
                               onSaveOnePager: saveOffcutOnePager,
                               onPlanInvalidated: invalidateOffcutFigure,
@@ -9020,7 +8968,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                             }
                           }
                         }}
-                      >{openingOffcuts ? 'Saving measurements & opening…' : 'Find offcuts'}</button>
+                      >{openingOffcuts ? 'Preparing current takeoff…' : 'Find offcuts'}</button>
                       <button
                         data-copilot="takeoff-tool-offcuts-resume"
                         className="px-3 py-2 rounded-full text-sm border border-slate-300 bg-white text-slate-700 hover:border-orange-200 hover:bg-orange-50/40 disabled:opacity-40"
@@ -9045,25 +8993,16 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                             try { stored = await reviewRepository.load(scope); }
                             catch (error) { throw new Error(error instanceof Error ? error.message : 'Could not read the saved offcut review.'); }
                             if (abort.signal.aborted) return;
-                            const recovered=await recovery.getRecoveredReview();
-                            if(recovered?.review&&(!stored||recovered.review.savedAt>stored.document.savedAt)){
-                              stored={revision:stored?.revision??0,document:recovered.review};
-                            }
                             if (!stored) { window.alert('No saved offcut review exists for this roof area yet.'); return; }
                             const previous = offcutsModalRef.current;
                             if (previous) { void previous.flushReview?.().catch(() => {}); previous.destroy(); offcutsModalRef.current = null; }
                             const image = pages[currentPageIndex]?.url ?? planUrl;
                             const handle = await launchStoredQuoteCoreOffcuts(scope, {
                               reviewRepository,
-                              beforeCalculation: recovery.beforeCalculation,
-                              onReviewCheckpoint: recovery.onReviewCheckpoint,
-                              onCalculationChange: recovery.onCalculationChange,
                               onQuantityProposal: receiveOffcutQuantity,
                               onSaveOnePager: saveOffcutOnePager,
                               onPlanInvalidated: invalidateOffcutFigure,
                               onClosed: () => { void refreshOffcutAreaFigure(); },
-                              initialSavedReview:stored,
-                              initialCalculation:recovered?.calculation,
                               imageUrl: /^https?:/i.test(image) ? image : undefined,
                             });
                             offcutsModalRef.current = handle;

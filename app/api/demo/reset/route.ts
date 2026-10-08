@@ -4,8 +4,6 @@ import { assertSameOrigin, requireDemoRequest, demoJson, demoErrorResponse, read
 import { requestIp } from '@/app/lib/demo/identity';
 import { DemoError } from '@/app/lib/demo/errors';
 import { isRecord } from '@/app/lib/demo/model';
-import { createDemoRouteClient } from '@/app/lib/demo/route-client';
-import { seedDemoAssistantPermissionsBestEffort } from '@/app/lib/demo/assistant.server';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -21,8 +19,6 @@ export async function POST(request: NextRequest) {
     // measurement system; without one the previous demo's units carry over.
     const system = ['metric', 'imperial_ft', 'imperial_rs'].includes(String(body.system))
       ? String(body.system) as 'metric' | 'imperial_ft' | 'imperial_rs' : undefined;
-    const result = await provisionDemo(user.id, requestIp(request.headers), true, system);
-    await seedDemoAssistantPermissionsBestEffort(await createDemoRouteClient(request.nextUrl.hostname));
-    return demoJson(result);
+    return demoJson(await provisionDemo(user.id, requestIp(request.headers), true, system));
   } catch (error) { return demoErrorResponse(error); }
 }

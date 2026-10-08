@@ -12,7 +12,7 @@ function buildNavItems() {
   return [
     { label: "Features", href: "/features" },
     { label: "Pricing", href: "/pricing" },
-    { label: "Demo", href: "/demo" },
+    { label: "Demo", href: "/takeoff-demo" },
     { label: "Free Tools", href: "/free-tools" },
     { label: "Blog", href: "/blog" },
     { label: "Contact us", href: "/contact" },
@@ -105,7 +105,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
               Sign in
             </MarketingButton>
             <MarketingButton
-              href="/demo"
+              href="/takeoff-demo"
               variant="primary"
               size="large"
               onClick={() => trackDemo("nav")}
@@ -115,7 +115,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
           </div>
 
           <MarketingButton
-            href="/demo"
+            href="/takeoff-demo"
             variant="primary"
             className={styles.mobileDemo}
             onClick={() => trackDemo("nav-mobile")}

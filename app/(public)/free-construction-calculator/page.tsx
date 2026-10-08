@@ -1,5 +1,6 @@
-import { CalculatorClient } from '../_components/calculators-v1/CalculatorClient';
+import { TradePage } from '../free-calculators/_shared/TradePage';
+import { constructionConfig } from '../free-calculators/configs/construction';
 
 export default function Page() {
-  return <CalculatorClient trade="construction" />;
+  return <TradePage config={constructionConfig} />;
 }

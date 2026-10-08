@@ -43,11 +43,11 @@ export function useFreeToolsEmail() {
   }
 
   // Human-readable daily limits line for the auth status cards.
-  const docLimit = tierInfo?.limits.docPerDay ?? 2;
+  const docLimit = tierInfo?.limits.docPerDay ?? 3;
   const aiLimit = tierInfo?.limits.aiPerDay ?? 1;
   const limitsLine = isAuthed
     ? `${tierInfo?.hasAppAccount ? 'App account' : 'Logged in'} · Documents: ${tierInfo?.limits.docPerDay === null ? 'Unlimited' : docLimit + '/day'} · AI: ${aiLimit}/day`
-    : `Documents: 2/day · AI: 1/day`;
+    : `Documents: 3/day · AI: 1/day`;
 
   return {
     email,

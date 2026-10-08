@@ -3,7 +3,7 @@
  *
  * Tier 1 - anonymous (no login): IP-based limits
  * Tier 2 - free tools account (Google OAuth or confirmed email): user-based limits
- * Tier 3 - confirmed free tools user with an active paid app company: highest limits
+ * Tier 3 - free tools account whose email also has a QuoteCore+ app account: highest limits
  *
  * Server-side source of truth for daily parse quotas. The client only ever
  * displays these numbers - enforcement happens in the parse-document route.
@@ -23,9 +23,9 @@ export interface TierLimits {
 }
 
 export const TIER_LIMITS: Record<FreeToolsTier, TierLimits> = {
-  1: { aiPerDay: 1, docPerDay: 2, imagePerDay: 1, textPerDay: 1, label: 'Free' },
+  1: { aiPerDay: 1, docPerDay: 3, imagePerDay: 1, textPerDay: 1, label: 'Free' },
   2: { aiPerDay: 3, docPerDay: 10, imagePerDay: 3, textPerDay: 3, label: 'Free account' },
-  3: { aiPerDay: 10, docPerDay: null, imagePerDay: 10, textPerDay: 10, label: 'Paid app account' },
+  3: { aiPerDay: 10, docPerDay: null, imagePerDay: 10, textPerDay: 10, label: 'App account' },
 };
 
 export const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;

@@ -28,10 +28,10 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
         <div className={`${s.container} ${s.heroGrid}`}>
           <div className={s.heroCopy}>
             <p className={s.eyebrow}>Built for roofing first</p>
-            <h1 id="hero-title"><span className={s.heroOrange}>Measure</span> the job.<br />Calculate the <span className={s.heroOrange}>price</span>.<br /><span className={s.heroOrange}>Send</span> the quote.</h1>
-            <p className={s.heroLead}>Faster estimating and quoting for roofing and construction businesses.</p>
-            <p className={s.heroBody}>Built from industry experience and contractor feedback. Powerful tools, made simple.</p>
-            <div className={s.heroActions}>{demo()}<DemoCallButton bookingHref={config.bookingHref} /><MarketingButton href="#pricing" variant="glass" size="large" className={`${s.button} ${s.heroPricing}`} icon={<Icon name="arrow" />}>Check Pricing</MarketingButton></div>
+            <h1 id="hero-title">Measure the job.<br />Calculate the price.<br />Send the quote.</h1>
+            <p className={s.heroLead}>From a plan to a priced quote.<br className={s.leadBreak} /> Without the back and forth.</p>
+            <p className={s.heroBody}>Measure from an uploaded plan or image, or start with measurements you already have. Smart Components™ turn your areas, lengths and quantities into materials, labour, waste and pricing.</p>
+            <div className={s.heroActions}>{demo()}<DemoCallButton bookingHref={config.bookingHref} /></div>
             <div className={s.reassurance}><span><Icon name="check" size={16} />No signup for the demo</span><span><Icon name="check" size={16} />Real project data</span></div>
           </div>
           <HeroVisual review={config.showPlaceholderReview ? placeholderReview : publishedHeroReview} />
@@ -88,17 +88,6 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
           <div className={`${s.dark} ${s.setupCard}`}><p className={s.eyebrow}>Done For You Setup</p><h2 id="setup-title" className={s.sectionTitle}>Another app to set up?<br /><span className={s.mutedHeading}>Not another thing<br />on your list.</span></h2><p className={s.bodyCopy}>Let’s build it around the way you already work. We’ll help load your pricing and services, shape your setup around your business, and teach you using your own jobs.</p>
             <div className={s.setupPoints}><span><Icon name="check" size={18} />Your products and pricing</span><span><Icon name="check" size={18} />Your workflow, configured</span><span><Icon name="check" size={18} />Personal, practical training</span></div>
             <MarketingButton href="/done-for-you-setup" variant="primary" size="large" className={s.button} icon={<Icon name="arrow" />}>Explore Done For You Setup</MarketingButton><p className={s.smallNote}>Start with a conversation. Scope and pricing agreed with you.</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="pricing" className={`${s.section} ${s.pricingBand}`} aria-labelledby="pricing-title">
-        <div className={s.container}>
-          <div className={s.pricingInner}>
-            <p className={s.eyebrow}>Pricing that fits</p>
-            <h2 id="pricing-title" className={s.pricingTitle}>Most businesses don’t need every feature.</h2>
-            <p className={s.pricingSub}>Tell us how you work and what you need, and our tool helps you build a subscription that fits your business.</p>
-            <MarketingButton href="/pricing" variant="primary" size="large" className={s.button} icon={<Icon name="arrow" />}>Check your pricing</MarketingButton>
           </div>
         </div>
       </section>

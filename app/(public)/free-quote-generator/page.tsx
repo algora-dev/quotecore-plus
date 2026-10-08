@@ -1,9 +1,1110 @@
-import { Suspense } from 'react';
+'use client';
+
+import { useState, useEffect, Suspense, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { PostGenerationModal } from '../shared/PostGenerationModal';
+import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
+import { buildConvertUrl, parseConvertLines } from '../shared/convertLines';
+import { PublicFooter } from '@/app/components/PublicFooter';
+import { ImageUpload, type ParsedUploadResult } from './ImageUpload';
+import { PromptBox } from './PromptBox';
+import { SaveToAppButton, type FreeDocumentData } from '../shared/SaveToAppButton';
 import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
-import QuoteGeneratorClient from './QuoteGeneratorClient';
+import { FreeToolsAuthButton } from '../_components/FreeToolsAuthButton';
+import { useFreeToolsEmail } from '../_components/useFreeToolsEmail';
+import { FreeToolsSignupBanner } from '../_components/FreeToolsSignupBanner';
+import '../_components/free-tools-v2.css';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+
+/**
+ * Free Quote Generator - no signup required.
+ * Pre-fills from URL params: ?area=122.1&pitch=35&ref=free-roofing-calculator
+ * Generates a printable quote that can be downloaded as PDF (print-to-PDF).
+ * Shows conversion popup after generation → "Turn into an order or invoice?"
+ */
+
+interface QuoteLine {
+  id: string;
+  description: string;
+  qty: number;
+  unit: string;
+  rate: number;
+  lineHidden: boolean;
+}
+
+type MeasurementSystem = 'metric' | 'imperial';
+type MeasurementType = 'unit' | 'length' | 'small_length' | 'area' | 'volume' | 'squares';
+
+const MEASUREMENT_OPTIONS: { value: MeasurementType; label: string; metric: string; imperial: string }[] = [
+  { value: 'unit', label: 'Unit (pieces)', metric: 'pcs', imperial: 'pcs' },
+  { value: 'length', label: 'M / Ft', metric: 'm', imperial: 'ft' },
+  { value: 'small_length', label: 'mm / in', metric: 'mm', imperial: 'in' },
+  { value: 'area', label: 'm² / ft²', metric: 'm²', imperial: 'ft²' },
+  { value: 'volume', label: 'm³ / ft³', metric: 'm³', imperial: 'ft³' },
+  { value: 'squares', label: 'Roofing Squares', metric: 'Rs', imperial: 'Rs' },
+];
+
+const CURRENCIES = [
+  { code: 'GBP', symbol: '£', label: 'GBP (£)' },
+  { code: 'USD', symbol: '$', label: 'USD ($)' },
+  { code: 'EUR', symbol: '€', label: 'EUR (€)' },
+  { code: 'AUD', symbol: 'A$', label: 'AUD (A$)' },
+  { code: 'CAD', symbol: 'C$', label: 'CAD (C$)' },
+  { code: 'NZD', symbol: 'NZ$', label: 'NZD (NZ$)' },
+];
+
+function unitForSystem(type: MeasurementType, system: MeasurementSystem): string {
+  const opt = MEASUREMENT_OPTIONS.find(o => o.value === type)!;
+  return system === 'metric' ? opt.metric : opt.imperial;
+}
+
+function formatMoney(amount: number, symbol: string): string {
+  return `${symbol}${amount.toFixed(2)}`;
+}
+
+function QuoteGeneratorForm() {
+  const searchParams = useSearchParams();
+  const qtyParam = searchParams.get('qty');
+  const unitParam = searchParams.get('unit');
+  const pitchParam = searchParams.get('pitch');
+  const linesParam = searchParams.get('lines');
+  const amountParam = searchParams.get('amount');
+  const clientParam = searchParams.get('client');
+  const currencyParam = searchParams.get('currency');
+  const convertedLines = parseConvertLines(linesParam);
+
+  // Settings
+  const [measurementSystem, setMeasurementSystem] = useState<MeasurementSystem>('metric');
+  const [measurementType, setMeasurementType] = useState<MeasurementType>('unit');
+  const [currency, setCurrency] = useState(() => {
+    if (currencyParam) {
+      const found = CURRENCIES.find(c => c.code === currencyParam);
+      if (found) return found;
+    }
+    // Default to NZD on NZ domain
+    if (typeof window !== 'undefined' && window.location.hostname.includes('quote-core.co.nz')) {
+      return CURRENCIES.find(c => c.code === 'NZD') || CURRENCIES[0];
+    }
+    return CURRENCIES[0];
+  });
+  const [logo, setLogo] = useState<string | null>(null);
+  const defaultUnit = unitForSystem(measurementType, measurementSystem);
+
+  const [companyName, setCompanyName] = useState('');
+  const [fromName, setFromName] = useState('');
+  const [fromPhone, setFromPhone] = useState('');
+  const [fromEmail, setFromEmail] = useState('');
+  const [clientName, setClientName] = useState(clientParam || '');
+  const [clientEmail, setClientEmail] = useState('');
+  const [clientAddress, setClientAddress] = useState('');
+  const [quoteDate, setQuoteDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [quoteNumber, setQuoteNumber] = useState('Q-001');
+  const [validDays, setValidDays] = useState('30');
+  const [notes, setNotes] = useState('');
+  const [footer, setFooter] = useState('');
+  const [footerItalic, setFooterItalic] = useState(false);
+  const [taxEnabled, setTaxEnabled] = useState(true);
+  const isNzDomain = typeof window !== 'undefined' && window.location.hostname.includes('quote-core.co.nz');
+  const [taxRate, setTaxRate] = useState(isNzDomain ? 15 : 20);
+  const [taxName, setTaxName] = useState(isNzDomain ? 'GST' : 'Tax');
+
+  const [lines, setLines] = useState<QuoteLine[]>(() => {
+    if (convertedLines && convertedLines.length > 0) {
+      return convertedLines.map((l, i) => ({
+        id: String(Date.now() + i),
+        description: l.description,
+        qty: l.qty,
+        unit: l.unit,
+        rate: l.rate,
+        lineHidden: false,
+      }));
+    }
+    if (qtyParam) {
+      const unit = unitParam || 'm\u00b2';
+      return [{
+        id: '1',
+        description: `Roofing work - ${qtyParam} ${unit}${pitchParam ? ` at ${pitchParam}\u00b0 pitch` : ''}`,
+        qty: parseFloat(qtyParam) || 0,
+        unit,
+        rate: 0,
+        lineHidden: false,
+      }];
+    }
+    return [{ id: '1', description: '', qty: 0, unit: 'pcs', rate: 0, lineHidden: false }];
+  });
+
+  const [hideAllPrices, setHideAllPrices] = useState(false);
+  const [hideTotals, setHideTotals] = useState(false);
+  const [generated, setGenerated] = useState(false);
+  const [popupTrigger, setPopupTrigger] = useState(false);
+  const [saveToAppTrigger, setSaveToAppTrigger] = useState(0);
+  const saveToAppBtnRef = useRef<HTMLButtonElement>(null);
+  const [uploadError, setUploadError] = useState('');
+  const [aiNotice, setAiNotice] = useState('');
+
+  const [docLimitError, setDocLimitError] = useState('');
+
+  // Unified email/auth state
+  const { email: userEmail, isAuthed, emailSaved, clearLocalEmail, loadingEmail, openAuthModal, limitsLine, accessToken } = useFreeToolsEmail();
+
+  // Country-to-currency mapping for IP-based default
+  const COUNTRY_CURRENCY: Record<string, string> = {
+    GB: 'GBP', US: 'USD', AU: 'AUD', CA: 'CAD', NZ: 'NZD',
+    IE: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR',
+    BE: 'EUR', AT: 'EUR', PT: 'EUR', FI: 'EUR', GR: 'EUR', LU: 'EUR',
+    SK: 'EUR', SI: 'EUR', EE: 'EUR', LV: 'EUR', LT: 'EUR', MT: 'EUR', CY: 'EUR', HR: 'EUR',
+  };
+
+  useEffect(() => {
+    // Set currency from visitor's country via Vercel geo header
+    fetch('/api/geo').then(r => r.json()).then(({ country }) => {
+      const code = COUNTRY_CURRENCY[country] || 'GBP';
+      const found = CURRENCIES.find(c => c.code === code);
+      if (found) setCurrency(found);
+    }).catch(() => {});
+  }, []);
+
+  // Session persistence - save form state to sessionStorage
+  const SESSION_KEY = 'qcp:free-quote-session';
+  useEffect(() => {
+    const saved = sessionStorage.getItem(SESSION_KEY);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.measurementSystem) setMeasurementSystem(data.measurementSystem);
+        if (data.measurementType) setMeasurementType(data.measurementType);
+        if (data.currencyCode) setCurrency(CURRENCIES.find(c => c.code === data.currencyCode) || CURRENCIES[0]);
+        if (data.logo) setLogo(data.logo);
+        if (data.companyName !== undefined) setCompanyName(data.companyName);
+        if (data.fromName !== undefined) setFromName(data.fromName);
+        if (data.fromPhone !== undefined) setFromPhone(data.fromPhone);
+        if (data.fromEmail !== undefined) setFromEmail(data.fromEmail);
+        if (data.clientName !== undefined) setClientName(data.clientName);
+        if (data.clientEmail !== undefined) setClientEmail(data.clientEmail);
+        if (data.clientAddress !== undefined) setClientAddress(data.clientAddress);
+        if (data.quoteDate) setQuoteDate(data.quoteDate);
+        if (data.quoteNumber) setQuoteNumber(data.quoteNumber);
+        if (data.validDays) setValidDays(data.validDays);
+        if (data.notes !== undefined) setNotes(data.notes);
+        if (data.footer !== undefined) setFooter(data.footer);
+        if (data.footerItalic !== undefined) setFooterItalic(data.footerItalic);
+        if (data.taxEnabled !== undefined) setTaxEnabled(data.taxEnabled);
+        if (data.taxRate !== undefined) setTaxRate(data.taxRate);
+        if (data.taxName !== undefined) setTaxName(data.taxName);
+        if (data.hideAllPrices !== undefined) setHideAllPrices(data.hideAllPrices);
+        if (data.hideTotals !== undefined) setHideTotals(data.hideTotals);
+        if (data.lines) setLines(data.lines);
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+          measurementSystem, measurementType, currencyCode: currency.code, logo,
+          companyName, fromName, fromPhone, fromEmail, clientName, clientEmail, clientAddress,
+          quoteDate, quoteNumber, validDays, notes, footer, footerItalic,
+          taxEnabled, taxRate, taxName, hideAllPrices, hideTotals, lines,
+        }));
+      } catch {}
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [measurementSystem, measurementType, currency, logo, companyName, fromName, fromPhone, fromEmail, clientName, clientEmail, clientAddress, quoteDate, quoteNumber, validDays, notes, footer, footerItalic, taxEnabled, taxRate, taxName, hideAllPrices, hideTotals, lines]);
+
+  function resetForm() {
+    if (!confirm('Reset all fields? This will clear everything and cannot be undone.')) return;
+    sessionStorage.removeItem(SESSION_KEY);
+    setMeasurementSystem('metric');
+    setMeasurementType('unit');
+    const isNz = typeof window !== 'undefined' && window.location.hostname.includes('quote-core.co.nz');
+    setCurrency(isNz ? (CURRENCIES.find(c => c.code === 'NZD') || CURRENCIES[0]) : CURRENCIES[0]);
+    setLogo(null);
+    setCompanyName(''); setFromName(''); setFromPhone(''); setFromEmail('');
+    setClientName(''); setClientEmail(''); setClientAddress('');
+    setQuoteDate(new Date().toISOString().slice(0, 10));
+    setQuoteNumber('Q-001'); setValidDays('30');
+    setNotes(''); setFooter(''); setFooterItalic(false);
+    setTaxEnabled(true); setTaxRate(isNz ? 15 : 20); setTaxName(isNz ? 'GST' : 'Tax');
+    setHideAllPrices(false); setHideTotals(false);
+    setLines([{ id: '1', description: '', qty: 0, unit: 'pcs', rate: 0, lineHidden: false }]);
+    setGenerated(false); setPopupTrigger(false);
+  }
+
+  const subtotal = lines.reduce((sum, l) => sum + (l.qty * l.rate), 0);
+  const vat = taxEnabled ? subtotal * (taxRate / 100) : 0;
+  const total = subtotal + vat;
+
+  useEffect(() => {
+    if (saveToAppTrigger > 0 && saveToAppBtnRef.current) {
+      const btn = saveToAppBtnRef.current.querySelector('button');
+      btn?.click();
+    }
+  }, [saveToAppTrigger]);
+  const sym = currency.symbol;
+
+  function addLine() {
+    setLines([...lines, { id: String(Date.now()), description: '', qty: 0, unit: defaultUnit, rate: 0, lineHidden: false }]);
+  }
+
+  function handleMeasurementChange(system: MeasurementSystem, type: MeasurementType) {
+    const newUnit = unitForSystem(type, system);
+    const oldUnit = unitForSystem(measurementType, measurementSystem);
+    setMeasurementSystem(system);
+    setMeasurementType(type);
+    setLines(prev => prev.map(l => l.unit === oldUnit ? { ...l, unit: newUnit } : l));
+  }
+
+  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) { setUploadError('Logo too large. Maximum 5MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 300;
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) { const r = Math.min(maxDim / w, maxDim / h); w = Math.round(w * r); h = Math.round(h * r); }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (ctx) { ctx.drawImage(img, 0, 0, w, h); setLogo(canvas.toDataURL('image/png')); }
+        else { setLogo(reader.result as string); }
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeLine(id: string) {
+    setLines(lines.filter(l => l.id !== id));
+  }
+
+  function updateLine(id: string, field: keyof QuoteLine, value: string | number | boolean) {
+    setLines(lines.map(l => l.id === id ? { ...l, [field]: value } : l));
+  }
+
+  function handleParsed(data: ParsedUploadResult) {
+    if (data.companyName) setCompanyName(data.companyName);
+    if (data.clientName) setClientName(data.clientName);
+    if (data.clientEmail) setClientEmail(data.clientEmail);
+    if (data.clientAddress) setClientAddress(data.clientAddress);
+    if (data.quoteNumber) setQuoteNumber(data.quoteNumber);
+    if (data.quoteDate) setQuoteDate(data.quoteDate);
+    if (data.validDays) setValidDays(data.validDays);
+    if (data.notes) setNotes(data.notes);
+    if (data.lines && data.lines.length > 0) {
+      setLines(data.lines.map((l, i) => ({
+        id: String(Date.now() + i),
+        description: l.description,
+        qty: l.qty,
+        unit: l.unit || defaultUnit,
+        rate: l.rate,
+        lineHidden: false,
+      })));
+    }
+    const noticeParts: string[] = [];
+    if (data.confidence === 'medium') noticeParts.push('medium confidence');
+    if (data.confidence === 'low') noticeParts.push('low confidence');
+    if (data.warnings && data.warnings.length > 0) noticeParts.push(data.warnings.join('; '));
+    if (data.remaining <= 2) noticeParts.push(`${data.remaining} free scans left today`);
+    setAiNotice(noticeParts.length > 0 ? `AI extraction: ${noticeParts.join(' · ')}` : '');
+    setUploadError('');
+  }
+
+  async function generateQuote() {
+    setDocLimitError('');
+    try {
+      const res = await fetch('/api/free-tools/check-doc-limit', {
+        method: 'POST',
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        body: JSON.stringify({ tool: 'quote' }),
+      });
+      if (res.status === 429) {
+        const data = await res.json();
+        setDocLimitError(data.message || 'Daily limit reached. Sign up free for more.');
+        return;
+      }
+      if (!res.ok) return;
+    } catch {
+      // Network error - don't block the user from generating
+    }
+    trackFreeToolEvent('generate');
+    setGenerated(true);
+    setPopupTrigger(false);
+    setTimeout(() => setPopupTrigger(true), 1500);
+  }
+
+  function resetQuote() {
+    setGenerated(false);
+    setPopupTrigger(false);
+  }
+
+  return (
+    <main data-qc-ui="v2" className="qc-ft min-h-screen">
+      {/* Header */}
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
+          <Link href="/free-tools" className="flex items-center gap-2">
+            <img src="/logo.png" alt="QuoteCore+" className="h-8" />
+          </Link>
+          <div className="flex items-center gap-3">
+            <FreeToolsAuthButton compact />
+          </div>
+        </div>
+      </header>
+
+      {/* Breadcrumb */}
+      <div className="border-b border-slate-100 bg-white">
+        <div className="mx-auto max-w-4xl px-4 py-2">
+          <Link href="/free-tools" prefetch={false} className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition-colors">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Free Tools
+          </Link>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        {/* Hero */}
+        <section className="mb-8 print:hidden">
+          <h1 className="qc-ft-title">Free Quote Generator</h1>
+          <p className="qc-ft-eyebrow mt-1">QuoteCore Plus Free Quote Generator - free, no signup required.</p>
+          <p className="mt-2 text-sm qc-ft-muted max-w-xl">
+            Create a professional roofing or construction quote in minutes. Upload a photo of your
+            existing quote and AI will fill in the form - or type it manually. No signup required.
+          </p>
+        </section>
+
+        {/* Signup notification banner - always shows content, never blank */}
+        <FreeToolsSignupBanner />
+
+        {!generated ? (
+          <>
+            {/* Quote form */}
+            <div className="space-y-6 print:hidden">
+              {/* AI upload */}
+              <ImageUpload
+                documentType="quote"
+                onParsed={handleParsed}
+                onError={(msg) => { setUploadError(msg); setAiNotice(''); }}
+              />
+
+              {uploadError && (
+                <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2.5">
+                  <p className="text-sm text-red-700">{uploadError}</p>
+                </div>
+              )}
+
+              {aiNotice && (
+                <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-2.5">
+                  <p className="text-sm text-blue-700">{aiNotice}</p>
+                </div>
+              )}
+
+              {/* Text prompt */}
+              <PromptBox
+                documentType="quote"
+                onParsed={(data) => handleParsed(data)}
+                onError={(msg) => { setUploadError(msg); setAiNotice(''); }}
+              />
+
+              {/* Reset button */}
+              <div className="flex justify-end">
+                <button
+                  onClick={resetForm}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-500 hover:border-red-300 hover:text-red-500 transition"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Reset all
+                </button>
+              </div>
+
+              {/* Settings bar */}
+              <div className="qc-ft-card p-5">
+                <h2 className="qc-ft-heading mb-4">Document settings</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Measurement system</label>
+                    <div className="mt-1 flex rounded-lg border border-slate-300 overflow-hidden">
+                      <button
+                        onClick={() => handleMeasurementChange('metric', measurementType)}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'metric' ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        Metric
+                      </button>
+                      <button
+                        onClick={() => handleMeasurementChange('imperial', measurementType)}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition ${measurementSystem === 'imperial' ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        Imperial
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Default unit type</label>
+                    <select
+                      value={measurementType}
+                      onChange={(e) => handleMeasurementChange(measurementSystem, e.target.value as MeasurementType)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                    >
+                      {MEASUREMENT_OPTIONS.map(o => (
+                        <option key={o.value} value={o.value}>{measurementSystem === 'metric' ? o.metric : o.imperial}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Currency</label>
+                    <select
+                      value={currency.code}
+                      onChange={(e) => setCurrency(CURRENCIES.find(c => c.code === e.target.value)!)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                    >
+                      {CURRENCIES.map(c => (
+                        <option key={c.code} value={c.code}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Quote number</label>
+                    <input
+                      type="text"
+                      value={quoteNumber}
+                      onChange={(e) => setQuoteNumber(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="Q-001"
+                    />
+                  </div>
+                  <div className="sm:col-span-2 flex items-center gap-2 pt-1">
+                    <input
+                      type="checkbox"
+                      id="taxEnabled"
+                      checked={taxEnabled}
+                      onChange={(e) => setTaxEnabled(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-[#BD4A1A] focus:ring-[#FF6B35]"
+                    />
+                    <label htmlFor="taxEnabled" className="text-xs font-medium text-slate-600">Include tax</label>
+                  </div>
+                  {taxEnabled && (
+                    <>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Tax rate (%)</label>
+                        <input
+                          type="number"
+                          value={taxRate}
+                          onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                          min="0"
+                          max="100"
+                          step="0.5"
+                          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Tax name</label>
+                        <input
+                          type="text"
+                          value={taxName}
+                          onChange={(e) => setTaxName(e.target.value)}
+                          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                          placeholder="Tax"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Your details */}
+              <div className="qc-ft-card p-5">
+                <h2 className="qc-ft-heading mb-4">Your business</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Company name</label>
+                    <input
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="Your Company Ltd"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Contact name</label>
+                    <input
+                      type="text"
+                      value={fromName}
+                      onChange={(e) => setFromName(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="John Smith"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Phone</label>
+                    <input
+                      type="text"
+                      value={fromPhone}
+                      onChange={(e) => setFromPhone(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="+44 1234 567890"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Email</label>
+                    <input
+                      type="email"
+                      value={fromEmail}
+                      onChange={(e) => setFromEmail(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="you@company.com"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">Quote date</label>
+                      <input
+                        type="date"
+                        value={quoteDate}
+                        onChange={(e) => setQuoteDate(e.target.value)}
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">Valid for</label>
+                      <div className="mt-1 flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={validDays}
+                          onChange={(e) => setValidDays(e.target.value)}
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                        />
+                        <span className="text-xs text-slate-500 whitespace-nowrap">days</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Logo upload */}
+                <div className="mt-4">
+                  <label className="text-xs font-medium text-slate-600">Business logo (optional)</label>
+                  <div className="mt-1 flex items-center gap-3">
+                    {logo ? (
+                      <div className="flex items-center gap-3">
+                        <img src={logo} alt="Logo" className="h-12 w-auto rounded border border-slate-200" />
+                        <button
+                          onClick={() => setLogo(null)}
+                          className="text-xs font-medium text-red-500 hover:text-red-600 transition"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:text-[#BD4A1A] transition">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Upload logo
+                        <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                      </label>
+                    )}
+                    <span className="text-xs text-slate-400">Shown in top-right of quote</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Client details */}
+              <div className="qc-ft-card p-5">
+                <h2 className="qc-ft-heading mb-4">Client details</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Client name</label>
+                    <input
+                      type="text"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="John Smith"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Email</label>
+                    <input
+                      type="email"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="client@example.com"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-medium text-slate-600">Address</label>
+                    <input
+                      type="text"
+                      value={clientAddress}
+                      onChange={(e) => setClientAddress(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="123 Main Street, Town, Postcode"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Line items */}
+              <div className="qc-ft-card p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="qc-ft-heading">Line items</h2>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-xs text-slate-600">
+                      <input type="checkbox" checked={hideAllPrices} onChange={(e) => setHideAllPrices(e.target.checked)} className="rounded border-slate-300" />
+                      Hide line prices
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-slate-600">
+                      <input type="checkbox" checked={hideTotals} onChange={(e) => setHideTotals(e.target.checked)} className="rounded border-slate-300" />
+                      Hide totals
+                    </label>
+                    <button
+                      onClick={addLine}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:text-[#BD4A1A] transition"
+                    >
+                      + Add line
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {lines.map((line) => (
+                    <div key={line.id} className={`grid grid-cols-12 gap-2 items-start ${line.lineHidden ? 'opacity-40' : ''}`}>
+                      <div className="col-span-12 sm:col-span-5">
+                        <input
+                          type="text"
+                          value={line.description}
+                          onChange={(e) => updateLine(line.id, 'description', e.target.value)}
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                          placeholder="Description"
+                        />
+                      </div>
+                      <div className="col-span-3 sm:col-span-2">
+                        <input
+                          type="number"
+                          value={line.qty || ''}
+                          onChange={(e) => updateLine(line.id, 'qty', parseFloat(e.target.value) || 0)}
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                          placeholder="Qty"
+                        />
+                      </div>
+                      <div className="col-span-3 sm:col-span-1">
+                        <select
+                          value={line.unit}
+                          onChange={(e) => updateLine(line.id, 'unit', e.target.value)}
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                        >
+                          <option value="">-</option>
+                          {MEASUREMENT_OPTIONS.map(o => (
+                            <option key={o.value} value={measurementSystem === 'metric' ? o.metric : o.imperial}>
+                              {measurementSystem === 'metric' ? o.metric : o.imperial}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {!hideAllPrices && (
+                        <div className="col-span-3 sm:col-span-2">
+                          <input
+                            type="number"
+                            value={line.rate || ''}
+                            onChange={(e) => updateLine(line.id, 'rate', parseFloat(e.target.value) || 0)}
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                            placeholder="Rate"
+                            step="0.01"
+                          />
+                        </div>
+                      )}
+                      {!hideAllPrices && <p className="text-sm font-semibold text-slate-700 pt-2 col-span-2 sm:col-span-1">{formatMoney(line.qty * line.rate, sym)}</p>}
+                      <div className="col-span-1 flex justify-end gap-1">
+                        <button onClick={() => updateLine(line.id, 'lineHidden', !line.lineHidden)} className="p-2 text-slate-400 hover:text-[#BD4A1A] transition" title={line.lineHidden ? 'Show line in quote' : 'Hide line in quote (price still counts in total)'}>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            {line.lineHidden ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            ) : (
+                              <>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </>
+                            )}
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => removeLine(line.id)}
+                          className="p-2 text-slate-400 hover:text-red-500 transition"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Totals - always shown unless hideTotals is checked */}
+                {!hideTotals && (
+                <div className="mt-4 flex justify-end">
+                  <div className="w-full sm:w-64 space-y-1.5">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Subtotal</span>
+                      <span className="font-medium text-slate-900">{formatMoney(subtotal, sym)}</span>
+                    </div>
+                    {taxEnabled && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">{taxName} ({taxRate}%)</span>
+                        <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
+                      <span className="text-slate-900">Total</span>
+                      <span className="text-slate-900">{formatMoney(total, sym)}</span>
+                    </div>
+                  </div>
+                </div>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div className="qc-ft-card p-5">
+                <label className="text-xs font-medium text-slate-600">Notes / terms</label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                  placeholder="Payment terms, validity, scope notes..."
+                />
+              </div>
+
+              {/* Footer */}
+              <div className="qc-ft-card p-5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-slate-600">Footer</label>
+                  <div className="flex rounded-lg border border-slate-300 overflow-hidden">
+                    <button
+                      onClick={() => setFooterItalic(false)}
+                      className={`px-3 py-1 text-xs font-medium transition ${!footerItalic ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Normal
+                    </button>
+                    <button
+                      onClick={() => setFooterItalic(true)}
+                      className={`px-3 py-1 text-xs font-medium transition ${footerItalic ? 'qc-ft-seg-active' : 'text-slate-600 hover:bg-slate-50'}`}
+                      style={{ fontStyle: 'italic' }}
+                    >
+                      Italic
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  value={footer}
+                  onChange={(e) => setFooter(e.target.value)}
+                  rows={2}
+                  className={`mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none ${footerItalic ? 'italic' : ''}`}
+                  placeholder="Thank you for your business. Contact us for any questions."
+                />
+                <p className="mt-1 text-xs text-slate-400">Appears at the bottom of the quote, below the notes.</p>
+              </div>
+
+              {/* Generate */}
+              <QcButton
+                variant="primary"
+                size="lg"
+                onClick={generateQuote}
+                className="inline-flex items-center gap-1.5"
+              >
+                Generate quote
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </QcButton>
+              {docLimitError && (
+                <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
+                  <p className="text-sm text-slate-700">{docLimitError}</p>
+                  <QcButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => openAuthModal('signup')}
+                    className="mt-2"
+                  >
+                    Sign up free
+                  </QcButton>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Generated quote - printable */}
+            <div className="rounded-xl border border-slate-200 bg-white p-8 print:border-0 print:p-0" id="quote-print" style={{ position: 'relative', overflow: 'hidden' }}>
+              <div>
+              <div className="flex items-start justify-between mb-8">
+                {/* Left: Spacer matching logo height, then Quote number + Quote to: below */}
+                <div>
+                  {logo && <div style={{ height: '4rem' }} />}
+                  <p className="text-sm font-semibold text-slate-900 mb-2">{quoteNumber}</p>
+                  <p className="text-xs font-medium text-slate-400 mb-1">Quote to:</p>
+                  <p className="text-sm font-semibold text-slate-900">{clientName || 'Client name'}</p>
+                  {clientEmail && <p className="text-sm text-slate-500">{clientEmail}</p>}
+                  {clientAddress && <p className="text-sm text-slate-500">{clientAddress}</p>}
+                  <p className="text-sm text-slate-500 mt-1">Date: {quoteDate}</p>
+                  <p className="text-sm text-slate-500">Valid for: {validDays} days</p>
+                </div>
+                {/* Right: Logo at top (highest item), From: below */}
+                <div className="text-right">
+                  {logo && <img src={logo} alt="Company logo" className="h-16 w-auto object-contain ml-auto mb-2" />}
+                  <p className="text-xs font-medium text-slate-400 mb-1">From:</p>
+                  {fromName && <p className="text-sm font-semibold text-slate-900">{fromName}</p>}
+                  {companyName && <p className="text-sm text-slate-700">{companyName}</p>}
+                  {fromPhone && <p className="text-sm text-slate-500">{fromPhone}</p>}
+                  {fromEmail && <p className="text-sm text-slate-500">{fromEmail}</p>}
+                </div>
+              </div>
+
+              <table className="w-full mb-6">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left text-xs font-medium text-slate-500 pb-2">Description</th>
+                    <th className="text-right text-xs font-medium text-slate-500 pb-2 w-20">Qty</th>
+                    <th className="text-right text-xs font-medium text-slate-500 pb-2 w-16">Unit</th>
+                    <th className="text-right text-xs font-medium text-slate-500 pb-2 w-24">Rate</th>
+                    <th className="text-right text-xs font-medium text-slate-500 pb-2 w-28">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lines.filter(l => l.description && !l.lineHidden).map((line) => (
+                    <tr key={line.id} className="border-b border-slate-100">
+                      <td className="py-2 text-sm text-slate-700">{line.description}</td>
+                      <td className="py-2 text-sm text-slate-700 text-right">{line.qty}</td>
+                      <td className="py-2 text-sm text-slate-500 text-right">{line.unit}</td>
+                      <td className="py-2 text-sm text-slate-700 text-right">{hideAllPrices ? '-' : formatMoney(line.rate, sym)}</td>
+                      <td className="py-2 text-sm font-medium text-slate-900 text-right">{hideAllPrices ? '-' : formatMoney(line.qty * line.rate, sym)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {!hideTotals && (
+                <div className="flex justify-end mb-6">
+                  <div className="w-64 space-y-1.5">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Subtotal</span>
+                      <span className="font-medium text-slate-900">{formatMoney(subtotal, sym)}</span>
+                    </div>
+                    {taxEnabled && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">{taxName} ({taxRate}%)</span>
+                        <span className="font-medium text-slate-900">{formatMoney(vat, sym)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
+                      <span className="text-slate-900">Total</span>
+                      <span className="text-slate-900">{formatMoney(total, sym)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {notes && (
+                <div className="border-t border-slate-100 pt-4">
+                  <p className="text-xs font-medium text-slate-400 mb-1">Notes</p>
+                  <p className="text-sm text-slate-600 whitespace-pre-wrap">{notes}</p>
+                </div>
+              )}
+
+              {footer && (
+                <div className="border-t border-slate-100 pt-4 mt-4">
+                  <p className={`text-sm text-slate-500 whitespace-pre-wrap ${footerItalic ? 'italic' : ''}`}>{footer}</p>
+                </div>
+              )}
+
+              {!isAuthed && (
+                <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 opacity-60">
+                  <img src="/logo.png" alt="QuoteCore+" className="h-4 w-auto" />
+                  <p className="text-[10px] text-slate-400">
+                    This quote was generated using QuoteCore+ Free Tools -{" "}
+                    <span className="text-slate-500 font-medium">quotecoreplus.com</span>
+                  </p>
+                </div>
+              )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-6 flex flex-wrap gap-3 print:hidden">
+              <QcButton
+                variant="primary"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Download PDF
+              </QcButton>
+              <span ref={saveToAppBtnRef} className="inline-flex">
+              <SaveToAppButton
+                documentType="quote"
+                documentData={{
+                  companyName,
+                  fromName,
+                  fromPhone,
+                  fromEmail,
+                  clientName,
+                  clientEmail,
+                  clientAddress,
+                  documentNumber: quoteNumber,
+                  documentDate: quoteDate,
+                  validDays,
+                  notes,
+                  footer,
+                  logo,
+                  currency: currency.code,
+                  taxRate,
+                  taxName,
+                  taxEnabled,
+                  lines: lines.filter(l => !l.lineHidden).map(l => ({ description: l.description, qty: l.qty, unit: l.unit, rate: l.rate })),
+                } as FreeDocumentData}
+                userEmail={userEmail}
+              />
+              </span>
+              <a
+                href={buildConvertUrl({ targetPath: '/free-purchase-order-generator', amount: total, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
+                title="One click - populates your quote details into an order form"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                Convert to Order
+              </a>
+              <a
+                href={buildConvertUrl({ targetPath: '/free-invoice-generator', amount: total, clientName, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
+                title="One click - populates your quote details into an invoice form"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                Convert to Invoice
+              </a>
+              <a
+                href={buildConvertUrl({ targetPath: '/free-margin-calculator', amount: total, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
+                title="Send every line into the free margin calculator - set margin per line and send prices back"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                Check / Add Margin
+              </a>
+              <button
+                onClick={resetQuote}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
+              >
+                Edit quote
+              </button>
+            </div>
+
+            {/* Post-generation modal */}
+            <PostGenerationModal
+              toolType="quote"
+              toolSlug="free-quote-generator"
+              trigger={popupTrigger}
+              resultLabel={`${formatMoney(total, sym)} quote`}
+              resultDetails={`${lines.length} line item${lines.length !== 1 ? 's' : ''} for ${clientName || 'client'}`}
+              convertToOrderUrl={buildConvertUrl({ targetPath: '/free-purchase-order-generator', amount: total, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
+              convertToInvoiceUrl={buildConvertUrl({ targetPath: '/free-invoice-generator', amount: total, clientName, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
+              onSaveToApp={() => setSaveToAppTrigger(c => c + 1)}
+            />
+          </>
+        )}
+
+        {/* SEO content */}
+        <section className="mt-16 space-y-8 print:hidden">
+          <div>
+            <h2 className="qc-ft-section">How to use this free quote generator</h2>
+            <div className="mt-4 space-y-2">
+              <details className="qc-ft-card">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
+                  Can I use this quote generator without signing up?
+                </summary>
+                <div className="px-4 pb-4">
+                  <p className="text-sm text-slate-600">Yes - this tool is completely free with no signup required. Fill in your details, generate the quote, and download it as a PDF using your browser&apos;s print function. The quote form itself runs entirely in your browser. If you use the AI document scanner (upload a photo or paste text), that content is sent to our server for AI processing and is not stored.</p>
+                </div>
+              </details>
+              <details className="qc-ft-card">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
+                  Can I pre-fill the quote from a calculator result?
+                </summary>
+                <div className="px-4 pb-4">
+                  <p className="text-sm text-slate-600">Yes. If you came from one of our free calculators (e.g. the roofing calculator), your calculation results are automatically pre-filled as a line item. You can add more lines, adjust quantities, and set your rates before generating the quote.</p>
+                </div>
+              </details>
+              <details className="qc-ft-card">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
+                  How do I download the quote as a PDF?
+                </summary>
+                <div className="px-4 pb-4">
+                  <p className="text-sm text-slate-600">After generating your quote, click &quot;Download PDF&quot;. This opens your browser&apos;s print dialog - select &quot;Save as PDF&quot; as the destination. The quote is formatted to print cleanly on A4.</p>
+                </div>
+              </details>
+              <details className="qc-ft-card">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
+                  What&apos;s the difference between this and QuoteCore+?
+                </summary>
+                <div className="px-4 pb-4">
+                  <p className="text-sm text-slate-600">This free tool generates a one-off quote. QuoteCore+ gives you a complete quoting and business management platform in one place - track and store all your quotes, send automatic follow-ups to clients, and auto-update quote statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#BD4A1A] font-medium">Plans from $19/mo &rarr;</Link></p>
+                </div>
+              </details>
+              <details className="qc-ft-card">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
+                  How do I remove the QuoteCore+ branding and create more free quotes?
+                </summary>
+                <div className="px-4 pb-4">
+                  <p className="text-sm text-slate-600">Sign up at the top of the page to gain more free quotes and remove the QuoteCore+ branding, or subscribe to the full QuoteCore+ app (plans from $19/mo, 30-day money-back guarantee) for higher limits and loads of extra features.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </section>
+      </div>
+      <section className="mx-auto max-w-5xl px-4 pb-14">
+        <p className="text-center text-sm text-slate-600">
+          Got measurements but no prices yet? Turn them into priced lines with the{' '}
+          <Link href="/measurement-to-quote-tool" className="font-medium text-[#BD4A1A] hover:underline">Measurement-to-Quote Tool</Link>{' '}
+          - then convert the result straight into a quote here.
+        </p>
+      </section>
+      <PublicFooter />
+
+      <style jsx global>{`
+        @media print {
+          @page { margin: 0; }
+          body { background: white; }
+          header, footer, button { display: none !important; }
+          /* Hide everything except the printable document */
+          main > div > *:not(#quote-print) { display: none !important; }
+          #quote-print { border: none !important; padding: 2cm !important; }
+        }
+      `}</style>
+    </main>
+  );
+}
 
 export default function FreeQuoteGeneratorPage() {
-  return <Suspense fallback={<p role="status" style={{padding:'3rem',textAlign:'center'}}>Opening your quote editor…</p>}>
-    <FreeToolsAuthProvider><QuoteGeneratorClient/></FreeToolsAuthProvider>
-  </Suspense>;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+      <FreeToolsAuthProvider>
+        <QuoteGeneratorForm />
+      </FreeToolsAuthProvider>
+    </Suspense>
+  );
 }

@@ -195,7 +195,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(assistantScript);
       if (!alive.current) return;
-      setCopyStatus(openAfter ? 'Copied. Paste the request into Smart Assistant and send it.' : 'Prompt copied.');
+      setCopyStatus(openAfter ? 'Copied. Paste the request into Smart Assistant.' : 'Prompt copied.');
       if (openAfter) window.dispatchEvent(new Event('qc-open-assistant'));
       copyTimer.current = setTimeout(() => { if (alive.current) setCopyStatus(''); }, 7000);
     } catch {
@@ -246,7 +246,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
             <p>{stepCopy}</p>
             {step.event === 'component.created' && <p className="qc-demo-note qc-demo-note-soft">Example rates are already filled in. Give it any name. These are demo values, not pricing recommendations.</p>}
             {step.event === 'component.tested' && <p className="qc-demo-note qc-demo-note-soft">{testExample} Choose <strong>Test Component</strong>, then <strong>Calculate</strong>.</p>}
-            {step.target === 'takeoff' && <p className="qc-demo-note">{triedAdding || session.skylightAdded ? <><strong>Nice, you added your component.</strong> Keep experimenting if you like, then click “Finish &amp; Save” to progress. Whatever is on the final canvas is what you save.</> : <><strong>Add your component{state.guided_created_component_name ? `: “${state.guided_created_component_name}”` : ''}.</strong> Click the “+ Add component” button in the Components panel, find the component you named, then click it. In the toolbar under “Area”, select Polygon or Rectangle and draw the area on the plan. The prepared scan is precomputed; your measurements and edits are real.</>}</p>}
+            {step.target === 'takeoff' && <p className="qc-demo-note">{triedAdding || session.skylightAdded ? <><strong>You’ve tried adding your component.</strong> Keep experimenting, then save the takeoff. Whatever is on the final canvas is what you save.</> : <><strong>Use your component{state.guided_created_component_name ? `: “${state.guided_created_component_name}”` : ''}.</strong> Add it to the plan and draw a rectangle. The prepared scan is precomputed; your measurements and edits are real.</>}</p>}
             {step.hint && <details className="qc-demo-why"><summary>Why this matters</summary><p>{step.hint}</p></details>}
           </>}
           {assistantStep && location.onPage && <>
@@ -254,7 +254,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
               : <>
                 <div className="qc-demo-script"><label htmlFor="qc-demo-prompt">EXAMPLE REQUEST</label><textarea id="qc-demo-prompt" ref={promptBox} readOnly value={assistantScript} aria-label="Smart Assistant example to copy" rows={step.event === 'assistant.created' ? 4 : 2} />
                   <QcButton variant="ghost" size="sm" disabled={copying || !units} onClick={() => void copyPrompt()}>{copyStatus === 'Prompt copied.' ? 'Copied' : 'Copy example'}</QcButton></div>
-                <p className="qc-demo-copy-status" role="status">{copyStatus || (units ? 'Paste the example into the Assistant and send it. Review the change card it shows you, then choose Confirm to apply the changes.' : 'Loading your measurement system…')}</p>
+                <p className="qc-demo-copy-status" role="status">{copyStatus || (units ? 'Paste the example into the Assistant, then review and confirm its proposal.' : 'Loading your measurement system…')}</p>
 
               </>}
             {allowance?.configured && <p className="qc-demo-allowance">{allowance.turnsRemaining} of {allowance.turnsLimit} demo requests remain. Review and confirm in the Assistant; you do not need to type “confirm”.</p>}

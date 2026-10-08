@@ -1,6 +1,0 @@
-import { QcLinkButton } from '@/app/components/ui/v2/QcButton';
-import { Icon } from './Icon';
-import s from './DocumentGenerator.module.css';
-/** Public destinations from the supplied homepage handoff. No quote/customer data
- * is appended, and these links do not start a subscription or save to the app. */
-export function PaidAppDiscovery(){return <section className={s.paidDiscovery} aria-labelledby="paid-app-title"><p className={s.eyebrow}>THE NEXT STEP, WHEN YOU’RE READY</p><h3 id="paid-app-title">Less retyping. More quoting.</h3><p>Connect measurements, your pricing and customer documents in the full QuoteCore+ app.</p><div className={s.discoveryLinks}><QcLinkButton variant="glass" className={s.button} href="/takeoff-demo" target="_blank" rel="noopener noreferrer"><Icon name="play"/>Try the Demo<Icon name="external"/></QcLinkButton><QcLinkButton variant="glass" className={s.button} href="/" target="_blank" rel="noopener noreferrer">Explore QuoteCore+<Icon name="arrow"/></QcLinkButton></div><p className={s.paidNote}>A paid product, separate from these free tools.</p><a className={s.setupPath} href="/done-for-you-setup" target="_blank" rel="noopener noreferrer">Prefer it set up for you? <strong>Done For You Setup</strong><Icon name="arrow"/></a></section>;}

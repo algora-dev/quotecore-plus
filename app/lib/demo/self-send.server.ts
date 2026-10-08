@@ -1,7 +1,6 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { getResendClient } from '@/app/lib/email/client';
-import { renderEmailLayout, para, ctaBlock, note } from '@/app/lib/email/baseLayout';
 import { checkRateLimit } from '@/app/lib/security/rateLimit';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { consumeDemoResource, demoBudgetConfig } from './budget';
@@ -46,13 +45,7 @@ export async function sendDemoQuote(context: ActiveDemoContext, value: unknown):
   if (stored.error) throw new DemoError('Could not record the demo send.', 503);
   const href = `${origin}/demo/quote/${token}`;
   await deliver(email, 'QuoteCore+ Demo (NOT A REAL QUOTE)',
-    renderEmailLayout({
-      heading: 'DEMO — Not a real quote',
-      preheader: 'Open your fictional QuoteCore+ demo customer quote.',
-      innerHtml: para('You requested this fictional QuoteCore+ demonstration. No contract, order or payment is involved.')
-        + ctaBlock('Open your demo customer quote', href, 'If the button does not work, copy and paste this link into your browser:')
-        + note('The link expires when this demo ends or is reset. The customer response buttons affect only your fictional sandbox. This requested delivery is not a marketing subscription.'),
-    }),
+    `<h1>DEMO - NOT A REAL QUOTE</h1><p>You requested this fictional QuoteCore+ demonstration. No contract, order or payment is involved.</p><p><a href="${href}">Open your demo customer quote</a></p><p>The link expires when this demo ends or is reset. The customer response buttons affect only your fictional sandbox.</p><p>This requested delivery is not a marketing subscription.</p>`,
     `DEMO - NOT A REAL QUOTE. You requested this fictional QuoteCore+ demonstration. No contract or payment is involved. Open: ${href}\nThe link expires with the demo. No marketing subscription was created.`,
     `qcp-demo-quote-${id}`);
   await db.from('demo_usage').update({ status: 'settled', settled_at: new Date().toISOString() }).eq('id', id).eq('status', 'reserved');

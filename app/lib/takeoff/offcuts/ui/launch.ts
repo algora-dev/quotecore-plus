@@ -2,13 +2,11 @@ import { restoreReviewDocument, type ReviewRepository, type ReviewScope, type St
 import { fromQuoteCore, type QuoteCoreSnapshot } from '../adapters/quotecore';
 import { captureLiveTakeoff, prepareLiveCapture, type CaptureHooks, type LiveInputCapture } from '../adapters/liveSnapshot';
 import { checkpointLiveCapture, type SnapshotStorage } from '../adapters/snapshotStore';
-import { mountWorkbench, type WorkbenchHandle, type WorkbenchOptions, type OffcutOnePagerPayload } from './workbench';
+import { mountWorkbench, type WorkbenchHandle, type OffcutOnePagerPayload } from './workbench';
 import type { QuoteQuantityProposal } from '../core/quantities';
 import type { Draft } from '../core/types';
 import { tokenFallbacks } from './theme';
-export interface LaunchOptions extends Pick<WorkbenchOptions,'beforeCalculation'|'onReviewCheckpoint'|'onCalculationChange'|'initialCalculation'|'calculationLimitMs'> {
-  /** Durable host checkpoint gate, separate from review/source measurement saving. */
-  persistCapture?: (capture:LiveInputCapture) => Promise<void>; onPlanInvalidated?:()=>void; onClosed?:()=>void; createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void; onSaveOnePager?: (payload:OffcutOnePagerPayload)=>void|Promise<void>;
+export interface LaunchOptions { onPlanInvalidated?:()=>void; onClosed?:()=>void; createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void; onSaveOnePager?: (payload:OffcutOnePagerPayload)=>void|Promise<void>;
   reviewRepository?:ReviewRepository;
   /** Explicit restore; normally use launchStoredQuoteCoreOffcuts. */
   initialSavedReview?:StoredReview; savedInputMode?:boolean;
@@ -23,10 +21,6 @@ export async function launchLiveQuoteCoreOffcuts(readSnapshot:()=>QuoteCoreSnaps
   openingReaders.add(readSnapshot);
   try {
     const capture=checkpointLiveCapture(await prepareLiveCapture(readSnapshot,options),options.snapshotStorage);
-    await options.persistCapture?.(capture);
-    if(options.signal?.aborted)throw new Error('Opening Find offcuts cancelled. The checkpoint is retained.');
-    const current=captureLiveTakeoff(readSnapshot());
-    if(current.inputFingerprint!==capture.inputFingerprint)throw new Error('The takeoff changed while its checkpoint was saving. Open Find offcuts again.');
     options.onCapture?.(capture);
     return mountCapturedLive(readSnapshot,capture,options);
   } finally {openingReaders.delete(readSnapshot);}
@@ -106,7 +100,6 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
     // Establish real layout dimensions BEFORE the first SVG/handle render.
     modal.showModal();
     handle = mountWorkbench(host, captured.roof, {
-      beforeCalculation:options.beforeCalculation,onReviewCheckpoint:options.onReviewCheckpoint,onCalculationChange:options.onCalculationChange,initialCalculation:options.initialCalculation,calculationLimitMs:options.calculationLimitMs,
       inputCapture: capture, initialIssues: captured.issues, reviewRepository:options.reviewRepository, initialSavedReview:options.initialSavedReview, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal, onSaveOnePager:options.onSaveOnePager, onPlanInvalidated:options.onPlanInvalidated,
       readCurrentSourceRevision: options.savedInputMode?undefined:() => fromQuoteCore(readSnapshot()).roof.sourceRevision,
       createWorker: options.createWorker ?? (() => new Worker(new URL('../worker.ts', import.meta.url), { type: 'module' })),
@@ -121,7 +114,7 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
  * The host must provide current image access separately; signed URLs aren't saved. */
 export async function launchStoredQuoteCoreOffcuts(scope:ReviewScope,options:LaunchOptions&{imageUrl?:string}):Promise<WorkbenchHandle>{
   if(!options.reviewRepository)throw new Error('Account draft saving is not connected.');
-  const stored=options.initialSavedReview??await options.reviewRepository.load(scope);if(!stored)throw new Error('No saved offcut review exists for this roof.');
+  const stored=await options.reviewRepository.load(scope);if(!stored)throw new Error('No saved offcut review exists for this roof.');
   const restored=restoreReviewDocument(stored.document,scope),capture=restored.document.capture;
   if(!capture)throw new Error('This saved review has no original live-input capture. Import its reviewed draft explicitly.');
   if(options.imageUrl){capture.snapshot.imageUrl=options.imageUrl;capture.adapted.roof.imageUrl=options.imageUrl;}

@@ -12,15 +12,12 @@
 
 import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useSendDocument } from './useSendDocument';
-import { usePathname } from 'next/navigation';
 import { SendTestTipModal } from './SendTestTipModal';
 import { SendDocumentModal } from './SendDocumentModal';
 import type { SendDocumentProps } from './types';
 
 export function SendDocumentButton(props: SendDocumentProps) {
   const hook = useSendDocument(props);
-  // Owner 2026-10-08: one-time "test it on yourself first" tip is main-app guidance; never show it inside a demo workspace.
-  const demoWorkspace = (usePathname() ?? '').startsWith('/demo-');
 
   if (props.hidden) return null;
 
@@ -39,7 +36,7 @@ export function SendDocumentButton(props: SendDocumentProps) {
         {config.sendButtonLabel}
       </button>
 
-      {showTestTip && !demoWorkspace && (
+      {showTestTip && (
         <SendTestTipModal
           docType={props.entityKind}
           canEmail={props.canEmail}
