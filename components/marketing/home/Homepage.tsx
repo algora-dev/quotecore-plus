@@ -5,6 +5,7 @@ import { HeroVisual } from './HeroVisual';
 import { DemoCallButton } from './DemoCall';
 import { OverviewVideo } from './OverviewVideo';
 import { WorkflowExplorer } from './WorkflowExplorer';
+import { FitQuizSection } from './FitQuiz';
 import { Icon, type IconName } from './Icon';
 import { homepageConfig, type HomepageConfig } from './homepage-config';
 import { homepageFaqs, testimonials, comparisonRows, placeholderReview, publishedHeroReview } from './homepage-content';
@@ -78,6 +79,8 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
           <div className={s.waysOutcome}><Icon name="arrow" size={18} /><p>Quote, materials order, invoice — <strong>ready to send in a click or two.</strong></p></div>
         </div>
       </section>
+
+      <FitQuizSection />
 
       <section id="setup" className={`${s.section} ${s.setupSection}`} aria-labelledby="setup-title">
         <div className={`${s.container} ${s.setupGrid}`}>
