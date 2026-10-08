@@ -31,18 +31,38 @@ export async function demoAssistantActor() {
 export async function prepareDemoAssistant(context: ActiveDemoContext, client: Awaited<ReturnType<typeof createSupabaseServerClient>>): Promise<void> {
   if (!demoBudgetConfig().configured || !(await getDemoControl()).aiEnabled) throw new DemoError('Smart Assistant is not enabled/calibrated on this testing deployment yet. Pricing and prepared Takeoff are available.',503,'demo_ai_setup');
   await ensureDemoAssistantRollout(context.companyId);
-  const current = await readSectionPermissions(client);
-  if (!current.ok || current.snapshot.companyId !== context.companyId || !current.snapshot.canManage) throw new DemoError('The existing Smart Assistant permission setup needs integration review.',503,'demo_sa_permissions');
-  const desired = { ...DEFAULT_SECTION_PERMISSIONS, quotes:'edit' as const, draft_quotes:'edit' as const, components:'edit' as const, customers:'edit' as const };
-  // Compare semantically, not by JSON key order. Rewriting identical
-  // permissions bumps the revision and invalidates a mounted Assistant client.
-  if (!permissionsEqual(current.snapshot.permissions, desired)) {
-    const saved = await writeSectionPermissions(client,{permissions:desired,expectedCompanyId:context.companyId,expectedRevision:current.snapshot.revision});
-    if (!saved.ok) throw new DemoError('Smart Assistant permissions could not be saved. Nothing was simulated.',503,'demo_sa_permissions');
-  }
+  await ensureDemoAssistantPermissions(client, context.companyId);
   await ensureDemoAssistantLibrary(context);
   const access = await loadAccess(client);
   if (access.companyId !== context.companyId || !access.phases.p1 || !access.phases.p3 || !access.phases.p4) throw new DemoError('The demo company must be enabled in the existing Smart Assistant V2 rollout before create/edit can be tested.',503,'demo_sa_rollout');
+}
+/** The exact permission map the demo Smart Assistant chapter requires:
+ *  defaults everywhere except edit on quotes, drafts, components, customers. */
+export const DEMO_ASSISTANT_PERMISSIONS = { ...DEFAULT_SECTION_PERMISSIONS, quotes: 'edit' as const, draft_quotes: 'edit' as const, components: 'edit' as const, customers: 'edit' as const };
+/** Strict variant used at chapter entry: any mismatch is an integration error. */
+export async function ensureDemoAssistantPermissions(client: Awaited<ReturnType<typeof createSupabaseServerClient>>, companyId: string): Promise<void> {
+  const current = await readSectionPermissions(client);
+  if (!current.ok || current.snapshot.companyId !== companyId || !current.snapshot.canManage) throw new DemoError('The existing Smart Assistant permission setup needs integration review.',503,'demo_sa_permissions');
+  // Compare semantically, not by JSON key order. Rewriting identical
+  // permissions bumps the revision and invalidates a mounted Assistant client.
+  if (!permissionsEqual(current.snapshot.permissions, DEMO_ASSISTANT_PERMISSIONS)) {
+    const saved = await writeSectionPermissions(client,{permissions:DEMO_ASSISTANT_PERMISSIONS,expectedCompanyId:companyId,expectedRevision:current.snapshot.revision});
+    if (!saved.ok) throw new DemoError('Smart Assistant permissions could not be saved. Nothing was simulated.',503,'demo_sa_permissions');
+  }
+}
+/** Best-effort seed at demo start/reset (owner 2026-10-08): writing the FINAL
+ *  permissions before any assistant session exists removes the mid-demo rewrite
+ *  that invalidated mounted assistant clients and dead-ended the Smart Assistant
+ *  chapter ("Your workspace or assistant permissions changed. Reopen the
+ *  assistant."). Failures are ignored; chapter entry re-checks authoritatively. */
+export async function seedDemoAssistantPermissionsBestEffort(client: Awaited<ReturnType<typeof createSupabaseServerClient>>): Promise<void> {
+  try {
+    const current = await readSectionPermissions(client);
+    if (!current.ok || !current.snapshot.canManage) return;
+    if (!permissionsEqual(current.snapshot.permissions, DEMO_ASSISTANT_PERMISSIONS)) {
+      await writeSectionPermissions(client,{permissions:DEMO_ASSISTANT_PERMISSIONS,expectedCompanyId:current.snapshot.companyId,expectedRevision:current.snapshot.revision});
+    }
+  } catch { /* best-effort only */ }
 }
 /** Owner 2026-10-05 (pass 5): the demo's Smart Assistant must work with the
  * seeded Roofing library out of the box. Enables exactly that library and maps
