@@ -235,7 +235,7 @@ export function convertSystem(state:CalculatorState,to:System):CalculatorState {
 export function exampleFor(state: CalculatorState): CalculatorState {
   const metric = state.system === 'metric' ? state : convertSystem(state, 'metric');
   const defaults = initialState(state.trade);
-  let next: CalculatorState = { ...metric };
+  const next: CalculatorState = { ...metric };
   if (state.tab === 'area') {
     const surface = state.area.surface;
     next.area = { ...makeArea(), surface, basis: surface === 'slope' ? 'plan' : 'surface', width: '6', length: surface === 'wall' ? '2.4' : '4', deduction: surface === 'wall' ? '1.89' : '', pitch: makePitch(surface === 'slope' ? '30' : '0') };

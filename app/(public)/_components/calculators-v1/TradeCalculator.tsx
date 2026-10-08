@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { calculate, calculateArea, componentPayload, convertSystem, exampleFor, format, initialState, money,
   quoteHref, resetActive, restoreState, resultText, transferToBattens, transferToPricing,
-  type Result, type CalculatorState, type Tab } from './calculator-model';
+  type CalculatorState, type Tab } from './calculator-model';
 import { Dialog, Icon, Segments } from './CalculatorUI';
 import { CalculatorDiagram } from './CalculatorDiagrams';
 import { profileFor, storageKey, type Trade } from './calculator-profile';

@@ -7,7 +7,6 @@ export function CalculatorShell({trade,children,account,linkOrigin=''}:{trade:Tr
   return <div className="qck" data-qc-ui="v2" data-qc-experience={profile.slug+'-v1'}><a href="#qck-main" className="qck-skip">Skip to calculator</a>
     <header className="qck-header"><div className="qck-container qck-header-inner"><a href={link('/')} className="qck-brand" aria-label="QuoteCore+ home">
       {/* Existing transparent asset; intrinsic box avoids a layout shift. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/marketing/brand/quotecore-logo-transparent.png" alt="QuoteCore+" width="193" height="42"/>
     </a><span className="qck-header-label">Tools for the way you work.</span><nav className="qck-header-actions" aria-label="Site navigation"><a className="qck-header-all-tools" href={link('/free-tools')}><Icon name="back" size={14}/> All free tools</a>{account}<a className="qck-button qck-primary qck-demo-button" href={link('/takeoff-demo')}>Demo <Icon name="arrow" size={16}/></a></nav></div></header>
     {children}

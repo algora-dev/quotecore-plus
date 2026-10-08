@@ -64,6 +64,7 @@ export function Dialog({title,children,onClose}:{title:string;children:ReactNode
 /** Open a disclosure to reveal invalid inputs; keep it open while the user fixes them. */
 export function Disclosure({children,hasError=false}:{children:ReactNode;hasError?:boolean}) {
   const [open,setOpen]=useState(hasError);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- one-way validity sync: an errored optional section auto-opens and stays open while corrected (repo precedent: FreeTakeoffApp.tsx)
   useEffect(()=>{if(hasError)setOpen(true);},[hasError]);
   return <details className="qck-disclosure" open={open} onToggle={e=>setOpen(e.currentTarget.open)}>{children}</details>;
 }
