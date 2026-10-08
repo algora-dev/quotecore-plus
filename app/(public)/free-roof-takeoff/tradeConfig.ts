@@ -58,10 +58,12 @@ export interface TakeoffTradeConfig {
   /** One-click test-plan download offered under the step-3 upload target.
    *  Trades gain it as their plan assets land (roofing first). */
   samplePlan?: { href: string; download: string };
+  /** Optional YouTube workflow guide. No link is rendered until configured. */
+  tutorial?: { href: string; olderLayout?: boolean };
 }
 
-/** Step-2 component source: standard set as-is / standard set made editable / fully custom. */
-export type TakeoffComponentChoice = 'ours' | 'edit-standard' | 'own';
+/** Two entry choices: use priced examples, or customise that same library. */
+export type TakeoffComponentChoice = 'ours' | 'edit-standard';
 
 /** Metric: lengths in m, areas in m2. */
 const METRIC: TakeoffUnitOption = {
@@ -161,6 +163,8 @@ export function resolveUnitOption(system: TakeoffUnitSystem, config: TakeoffTrad
 /** Full user-built component spec - mirrors the app's Add Component form
  *  (component_library columns) so it can be persisted 1:1 on signup. */
 export interface TakeoffComponentSpec {
+  /** Example provenance survives naming/waste edits; only rate confirmation clears it. */
+  pricingOrigin?: 'example' | 'user';
   /** Session id (custom-*). NOT a DB id. */
   id: string;
   name: string;

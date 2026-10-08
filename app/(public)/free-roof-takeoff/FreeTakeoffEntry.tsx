@@ -1,142 +1,88 @@
 'use client';
-
-import { useEffect, useRef, type ReactNode } from 'react';
-import Link from 'next/link';
-import { QcButton } from '@/app/components/ui/v2/QcButton';
-import { QcDialog } from '@/app/components/ui/v2/QcDialog';
-import { QcIcon } from '@/app/components/ui/v2/QcIcon';
-import { QcJourney, QcJourneySteps } from '@/app/components/ui/v2/QcJourney';
-import { QcHostedDialogScope } from '@/app/components/ui/v2/QcHostedDialog';
-import { type TakeoffComponentChoice, type TakeoffComponentSpec, type TakeoffTradeConfig, type TakeoffUnitOption, type TakeoffUnitSystem } from './tradeConfig';
-import './free-takeoff-ui.css';
-
-/** Presentation only. The existing free-tool owner keeps every stage, upload,
- * session, device, component and canvas callback. No second wizard state. */
-export function FreeTakeoffEntry({ config, step, unitSystem, unitOption, componentChoice, specs, componentCount, error,
-  orientationNoticeOpen, onDismissOrientation, onUnitChange, onChoiceChange, onBack, onContinue,
-  onCreateComponent, onEditComponent, onRemoveComponent, onFile, onExamplePlan, exampleLoading, children, pdfModal }: {
-  config: TakeoffTradeConfig; step: 1 | 2 | 3; unitSystem: TakeoffUnitSystem; unitOption: TakeoffUnitOption;
-  componentChoice: TakeoffComponentChoice; specs: TakeoffComponentSpec[]; componentCount: number;
-  error: string | null; orientationNoticeOpen: boolean; onDismissOrientation: () => void;
-  onUnitChange: (unit: TakeoffUnitSystem) => void; onChoiceChange: (choice: TakeoffComponentChoice) => void;
-  onBack: () => void; onContinue: () => void; onCreateComponent: () => void;
-  onEditComponent: (id: string) => void; onRemoveComponent: (id: string) => void;
-  onFile: (file: File) => void; onExamplePlan: () => void; exampleLoading: boolean;
-  children?: ReactNode; pdfModal: ReactNode;
-}) {
-  const heading = useRef<HTMLHeadingElement>(null);
-  const previousStep = useRef(step);
-  useEffect(() => {
-    if (previousStep.current !== step) heading.current?.focus({ preventScroll: true });
-    previousStep.current = step;
-  }, [step]);
-  const title = step === 1 ? 'Which units do you use?' : step === 2 ? 'What would you like to measure?' : `Add your ${config.planNoun} plan`;
-  const description = step === 1 ? 'Choose the units you want to measure and report in.'
-    : step === 2 ? `Use the standard ${config.tradeName} items as-is, open them to add pricing, or build your own.`
-      : 'Choose an image or a page from a PDF. You’ll set its scale on the canvas next.';
-
-  const unitsSummary = (() => {
-    const labels = config.unitOptions.map(o => o.label.toLowerCase());
-    const joined = labels.length > 1 ? `${labels.slice(0, -1).join(', ')} or ${labels[labels.length - 1]}` : labels[0];
-    return `${joined[0].toUpperCase()}${joined.slice(1)}.`;
-  })();
-  return <QcJourney className="qc-free-entry">
-    {orientationNoticeOpen && <QcDialog open pending onRequestClose={onDismissOrientation}
-      title="Measure on your phone" description="This tool works in portrait or landscape. Rotate your phone for more drawing room, or use a desktop."
-      footer={<QcButton variant="primary" onClick={onDismissOrientation}>Continue</QcButton>} />}
-    <div className="qc-free-entry-layout">
-      <aside className="qc-free-entry-guide">
-        <p className="qc-free-eyebrow">Your plan. Your measurements.</p>
-        <h2>Three small steps.<br />Then you’re measuring.</h2>
-        <p>Use the same measuring engine as the QuoteCore+ app. No account is needed to try it.</p>
-        <ol><li><strong>Choose your units</strong><span>{unitsSummary}</span></li>
-          <li><strong>Choose what to measure</strong><span>Start with familiar {config.tradeName} items.</span></li>
-          <li><strong>Upload a plan</strong><span>Set the scale, then draw your measurements.</span></li></ol>
-        <Link href="/takeoff-demo" className="qc-free-text-link">No plan handy? Try a sample plan<QcIcon name="arrow" /></Link>
-      </aside>
-      <div className="qc-free-entry-card">
-        <QcJourneySteps steps={['Units', 'Components', 'Plan']} current={step - 1} label="Takeoff setup" />
-        <div className="qc-free-step-heading">
-          {step > 1 && <QcButton size="sm" className="qc-free-back" onClick={onBack}><QcIcon name="back" />Back</QcButton>}
-          <h2 ref={heading} tabIndex={-1}>{title}</h2><p>{description}</p>
+import {useEffect,useRef,type ReactNode} from 'react';
+import {Button,ActionLink,Icon,Steps} from './TakeoffUI';
+import {componentLimit,specUnit,TAKEOFF_CURRENCIES,type TakeoffCurrency} from './takeoff-examples';
+import type {TakeoffTradeConfig,TakeoffUnitSystem,TakeoffUnitOption,TakeoffComponentChoice,TakeoffComponentSpec} from './tradeConfig';
+import s from './TakeoffExperience.module.css';
+export function FreeTakeoffEntry({config,step,unitSystem,unitOption,componentChoice,specs,componentCount,error,currency='NZD',
+ onUnitChange,onCurrencyChange,onChoiceChange,onBack,onContinue,onStepChange,onCreateComponent,onEditComponent,onRemoveComponent,
+ onFile,onExamplePlan,exampleLoading,busy=false,children,pdfModal,onChangeTrade,removedName,onUndoRemove}: {
+ config:TakeoffTradeConfig;step:1|2|3;unitSystem:TakeoffUnitSystem;unitOption:TakeoffUnitOption;componentChoice:TakeoffComponentChoice;
+ specs:TakeoffComponentSpec[];componentCount:number;error:string|null;currency?:TakeoffCurrency;
+ onUnitChange:(u:TakeoffUnitSystem)=>void;onCurrencyChange?:(c:TakeoffCurrency)=>void;onChoiceChange:(c:TakeoffComponentChoice)=>void;
+ onBack:()=>void;onContinue:()=>void;onStepChange?:(n:1|2|3)=>void;onCreateComponent:()=>void;onEditComponent:(id:string)=>void;onRemoveComponent:(id:string)=>void;
+ onFile:(f:File)=>void;onExamplePlan:()=>void;exampleLoading:boolean;busy?:boolean;children?:ReactNode;pdfModal:ReactNode;onChangeTrade?:()=>void;
+ removedName?:string;onUndoRemove?:()=>void;
+ // Compatibility props retained for hosts that still pass the old presentation contract.
+ orientationNoticeOpen?:boolean;onDismissOrientation?:()=>void;
+}){
+ const heading=useRef<HTMLHeadingElement>(null),last=useRef(step);
+ useEffect(()=>{if(last.current!==step){heading.current?.focus({preventScroll:true});heading.current?.scrollIntoView({block:'nearest',behavior:'auto'});}last.current=step;},[step]);
+ const trade=config.tradeName[0].toUpperCase()+config.tradeName.slice(1);
+ const custom=componentChoice==='edit-standard';const limit=componentLimit(config);
+ const title=step===1?'Which units do you use?':step===2?'Make the components yours.':`Add your ${config.planNoun} plan.`;
+ const description=step===1?'Choose how measurements and prices appear in this takeoff.':step===2?'Start with our examples. Use them as they are, or adjust them for your job.':'Upload a drawing or use a sample. You’ll set the scale on the canvas next.';
+ return <div className={`${s.root} ${s.page}`} data-takeoff-setup>
+  <div className={s.container}>
+   <div className={s.crumb}><a href="/free-tools">Free tools</a><Icon name="chevron"/><span>Digital takeoff</span><span>/</span><span>{trade}</span></div>
+   <div className={s.titleBar}><div><h2>{trade} digital takeoff</h2><p>Your plan, connected to quantities and a clearer price. No account needed to start.</p></div>
+    {onChangeTrade?<Button onClick={onChangeTrade}><Icon name="layers"/>Change trade</Button>:<ActionLink href="/free-digital-takeoff"><Icon name="layers"/>All trades</ActionLink>}</div>
+   <div className={s.layout}>
+    <aside className={`${s.guide} ${s.dark}`}><p className={s.eyebrow}>From plan to possibility</p><h2>A few choices.<br/>Then you’re<br/>measuring.</h2><p>The same measurement workspace as the QuoteCore+ app. Just a simpler place to start.</p>
+      <ol className={s.guideSteps}><li><Icon name="ruler"/><div><strong>Set up your takeoff</strong><span>Choose units and the items you’ll measure.</span></div></li><li><Icon name="layers"/><div><strong>Measure your plan</strong><span>Set the scale. Trace areas, lengths and counts.</span></div></li><li><Icon name="file"/><div><strong>Put the result to work</strong><span>Download it or turn it into a free quote.</span></div></li></ol>
+      <p className={s.miniNote}>A component links a measurement to a material, labour rate and allowance. Measure once; let your settings do the maths.</p>
+    </aside>
+    <div><div className={s.card}>
+      <Steps current={step} onSelect={n=>onStepChange?onStepChange(n):onBack()}/>
+      <div className={s.stepHeading}><h2 ref={heading} tabIndex={-1}>{title}</h2><p>{description}</p></div>
+      {step===1&&<>
+        <fieldset className={s.choices}><legend className={s.srOnly}>Measurement units</legend>{config.unitOptions.map(option=><label key={option.value} className={s.choice} data-selected={unitSystem===option.value}>
+          <input type="radio" name="takeoff-units" value={option.value} checked={unitSystem===option.value} onChange={()=>onUnitChange(option.value)}/>
+          <div><strong>{option.label}</strong><small>{option.description}</small></div>
+        </label>)}</fieldset>
+        <label className={`${s.formField} ${s.currencyField}`}><span>Pricing currency</span><select value={currency} onChange={e=>onCurrencyChange?.(e.target.value as TakeoffCurrency)} aria-label="Pricing currency">{TAKEOFF_CURRENCIES.map(code=><option key={code}>{code}</option>)}</select><small>For your rates and report. Changing currency does not exchange prices.</small></label>
+        {config.requiresPitch&&<p className={s.help}>You’ll enter roof pitch while measuring, not here.</p>}
+      </>}
+      {step===2&&<>
+        <fieldset className={`${s.choices} ${s.splitChoices}`}><legend className={s.srOnly}>Component starting point</legend>
+          <label className={s.choice} data-selected={!custom}><input type="radio" name="takeoff-components" checked={!custom} onChange={()=>onChoiceChange('ours')}/><div><strong>Use example components</strong><small>A ready-made set with example pricing. Get a feel for the tool.</small></div></label>
+          <label className={s.choice} data-selected={custom}><input type="radio" name="takeoff-components" checked={custom} onChange={()=>onChoiceChange('edit-standard')}/><div><strong>Customise the examples</strong><small>Same starting set. Edit names, prices and rules, or add your own.</small></div></label>
+        </fieldset>
+        {specs.some(x=>x.pricingOrigin==='example')&&<div className={s.notice}><Icon name="info"/><p><strong>Example pricing, not market rates.</strong> Replace or review these fictitious rates before making a customer quote.</p></div>}
+        <div className={s.library}><div className={s.libraryHead}><strong>{custom?'Your component library':'Included in your example'}</strong><span className={s.chip}>{specs.length} components · {currency}</span></div>
+          {specs.map(spec=><div key={spec.id} className={s.libraryRow}><span className={s.typeIcon}><Icon name={spec.measurementType==='area'?'layers':spec.measurementType==='quantity'?'plus':'ruler'}/></span>
+            <div className={s.libraryContent}><strong>{spec.name}</strong><small>{spec.measurementType==='area'?'Area':spec.measurementType==='lineal'?'Length':'Count'} · {spec.pricingStrategy==='per_unit'?`${(spec.materialRate+spec.labourRate).toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:2})} / ${specUnit(spec.measurementType,unitSystem)}`:'Pack pricing'} · {spec.pricingOrigin==='example'?'Example rates':'Your rates'}</small></div>
+            {custom&&<div className={s.rowActions}><Button quiet aria-label={`Edit ${spec.name}`} onClick={()=>onEditComponent(spec.id)}><Icon name="edit"/><span>Edit</span></Button><Button quiet aria-label={`Remove ${spec.name}`} onClick={()=>onRemoveComponent(spec.id)}><Icon name="trash"/></Button></div>}
+          </div>)}
         </div>
-        {step === 1 && <>
-          <fieldset className="qc-free-choices"><legend className="qc-flow-sr-only">Measurement units</legend>
-            {config.unitOptions.map(option => <label key={option.value} className="qc-free-choice" data-selected={unitSystem === option.value || undefined}>
-              <input type="radio" name="unit-system" checked={unitSystem === option.value} onChange={() => onUnitChange(option.value)} />
-              <span><strong>{option.label}</strong><span>{option.description}</span></span>
-            </label>)}
-          </fieldset>
-          {config.requiresPitch && <p className="qc-free-help">With imperial or roofing squares, pitch can be entered in degrees or as a ratio, such as 6:12.</p>}
-          <QcButton variant="primary" className="qc-free-next" onClick={onContinue}>Choose components<QcIcon name="arrow" /></QcButton>
-        </>}
-        {step === 2 && <>
-          <fieldset className="qc-free-choices"><legend className="qc-flow-sr-only">Components to measure</legend>
-            <label className="qc-free-choice" data-selected={componentChoice === 'ours' || undefined}>
-              <input type="radio" name="component-choice" checked={componentChoice === 'ours'} onChange={() => onChoiceChange('ours')} />
-              <span><strong>Use standard {config.tradeName} components</strong><span>{config.standardComponentsSummary} Measurements only, without prices.</span></span>
-            </label>
-            <label className="qc-free-choice" data-selected={componentChoice === 'own' || undefined}>
-              <input type="radio" name="component-choice" checked={componentChoice === 'own'} onChange={() => onChoiceChange('own')} />
-              <span><strong>Build my own components</strong><span>Add names, material and labour rates, purchasing, waste and pitch rules. Up to {config.maxCustomComponents} components.</span></span>
-            </label>
-            <label className="qc-free-choice" data-selected={componentChoice === 'edit-standard' || undefined}>
-              <input type="radio" name="component-choice" checked={componentChoice === 'edit-standard'} onChange={() => onChoiceChange('edit-standard')} />
-              <span><strong>Standard components, my pricing</strong><span>{config.standardComponentsSummary} Open the set, edit names, rates and rules, then measure with your version.</span></span>
-            </label>
-          </fieldset>
-          {componentChoice !== 'ours' && <div className="qc-free-custom-components">
-            {specs.length > 0 && <ul>{specs.map(spec => <li key={spec.id}>
-              <div><strong>{spec.name}</strong><span>{spec.measurementType === 'lineal' ? 'Length' : spec.measurementType === 'area' ? 'Area' : 'Quantity'}
-                {spec.materialRate > 0 || spec.labourRate > 0 ? ` · $${spec.materialRate} material / $${spec.labourRate} labour` : ''}
-                {spec.wasteType !== 'none' ? ` · waste ${spec.wasteType === 'percent' ? spec.wasteValue + '%' : spec.wasteValue}` : ''}
-                {spec.pitchEnabled ? ' · pitch calculation' : ''}</span></div>
-              <div className="qc-free-component-actions"><QcButton size="sm" onClick={() => onEditComponent(spec.id)} aria-label={`Edit ${spec.name}`}>Edit</QcButton>
-                <QcButton size="sm" onClick={() => onRemoveComponent(spec.id)} aria-label={`Remove ${spec.name}`}>Remove</QcButton></div>
-            </li>)}</ul>}
-            {specs.length < config.maxCustomComponents
-              ? <QcButton className="qc-free-add-component" onClick={onCreateComponent}><QcIcon name="plus" />Create component{specs.length ? ` (${specs.length}/${config.maxCustomComponents})` : ''}</QcButton>
-              : <p className="qc-free-help">You’ve reached this tool’s {config.maxCustomComponents}-component limit. Edit or remove one to add another.</p>}
-          </div>}
-          <QcButton variant="primary" className="qc-free-next" onClick={onContinue} disabled={componentCount === 0}>Continue to plan<QcIcon name="arrow" /></QcButton>
-          {componentCount === 0 && <p className="qc-free-help">Create at least one component to continue.</p>}
-        </>}
-        {step === 3 && <>
-          <div className="qc-free-setup-summary"><span><strong>{unitOption.label}</strong> measurements</span>
-            <span><strong>{componentCount}</strong> {componentChoice === 'ours' ? 'standard' : componentChoice === 'own' ? 'custom' : 'standard, edited'} components</span></div>
-          <label className="qc-free-upload" onDragOver={event => event.preventDefault()} onDrop={event => {
-            event.preventDefault(); const file = event.dataTransfer.files?.[0]; if (file) onFile(file);
-          }}>
-            <QcIcon name="upload" />
-            <strong>Drop your plan here</strong><span>or choose a file from your device</span>
-            <span className="qc-button" data-qc-variant="primary" aria-hidden="true">Choose plan</span>
-            <span className="qc-free-upload-limits" id="qc-free-upload-help">PNG, JPG or WebP · up to 10 MB<br />PDF · up to 50 MB · choose one page</span>
-            <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" aria-label={`Upload your ${config.planNoun} plan`}
-              aria-describedby={error ? 'qc-free-upload-help qc-free-upload-error' : 'qc-free-upload-help'} aria-invalid={!!error}
-              onChange={event => { const file = event.target.files?.[0]; if (file) onFile(file); }} />
-          </label>
-          <div className="qc-free-example-row">
-            <QcButton className="qc-free-example" onClick={onExamplePlan} disabled={exampleLoading}>
-              {exampleLoading ? 'Loading the example plan…' : 'Try the example plan'}
-            </QcButton>
-            <p className="qc-free-help">Loads straight into the tool - nothing to download.</p>
-          </div>
-          {error && <p id="qc-free-upload-error" role="alert" className="qc-free-error">{error}</p>}
-          {config.samplePlan && <div className="qc-free-sample-row">
-            <a className="qc-button" href={config.samplePlan.href} download={config.samplePlan.download}>
-              <QcIcon name="download" />Get a test {config.planNoun} plan
-            </a>
-            <p className="qc-free-sample-help">No {config.planNoun} plan to hand? Save our test plan, then upload it above.</p>
-          </div>}
-          <details className="qc-free-help-details"><summary>What makes a good plan?</summary>
-            <ul><li>A clear, high-quality image with sharp lines.</li><li>A straight, overhead view, square to the page.</li>
-              <li>At least one known dimension, such as a wall length, to set the scale.</li></ul>
-          </details>
-        </>}
-        <p className="qc-free-session-note"><QcIcon name="info" />Keep this page open while you work. Your takeoff stays in this session unless you choose to save it to QuoteCore+.</p>
+        {removedName&&onUndoRemove&&<div className={s.removed} role="status"><span>{removedName} removed.</span><Button quiet onClick={onUndoRemove}>Undo</Button></div>}
+        {custom&&<div className={s.formActions}><Button onClick={onCreateComponent} disabled={specs.length>=limit}><Icon name="plus"/>Add component</Button><span>{specs.length} of {limit} components</span></div>}
+        {custom&&specs.length>=limit&&<p className={s.help}>You can edit every example. Remove an unused component to make room for a new one.</p>}
+        {custom&&specs.length===0&&<p className={s.help}>Add at least one component, or switch back to the examples.</p>}
+        <details className={s.disclosure}><summary>How do Smart Components work?</summary><p>Give an item a name, choose how it’s measured, then set its material and labour prices. When you draw a measurement and assign that item, the report calculates its quantity and cost. Waste, pack sizes and roofing pitch are optional rules.</p><p>Only assign the layers you need. For example, carpet and tile are alternatives—not two coverings to add to the same floor.</p></details>
+      </>}
+      {step===3&&<>
+        <div className={s.summaryChips}><span className={s.chip}>{unitOption.label}</span><span className={s.chip}>{componentCount} components</span><span className={s.chip}>{currency}</span><span className={`${s.chip} ${specs.some(x=>x.pricingOrigin==='example')?s.exampleChip:''}`}>{specs.some(x=>x.pricingOrigin==='example')?'Includes example pricing':'Your rates'}</span></div>
+        <label className={s.upload} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(!busy&&!exampleLoading){const f=e.dataTransfer.files[0];if(f)onFile(f);}}}>
+          <Icon name="upload"/><strong>{busy?'Preparing your plan…':'Drop your plan here'}</strong><span>or choose a file from your device</span>
+          <span className={`${s.control} ${s.primary}`} aria-hidden="true">Choose plan <Icon name="arrow"/></span>
+          <small>PNG, JPG or WebP · 10 MB max<br/>PDF · 50 MB max · choose one page</small>
+          <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" aria-label={`Upload your ${config.planNoun} plan`} disabled={busy||exampleLoading}
+            onChange={e=>{const f=e.target.files?.[0];if(f)onFile(f);e.currentTarget.value='';}}/>
+        </label>
+        {error&&<div className={s.error} role="alert">{error}</div>}
+        <div className={s.sample}>{config.samplePlan?<img src={config.samplePlan.href} alt={`Preview of the ${config.planNoun} sample plan`}/>:<Icon name="file"/>}
+          <div><strong>No plan handy?</strong><p>{config.samplePlan?'Load the sample straight into the canvas. You’ll calibrate it yourself.':`The ${config.planNoun} sample plan is not available yet. Upload your own plan to continue.`}</p>
+            {config.samplePlan&&<Button onClick={onExamplePlan} disabled={exampleLoading||busy}>{exampleLoading?'Loading sample…':'Use sample plan'}<Icon name="arrow"/></Button>}
+          </div></div>
+        <details className={s.disclosure}><summary>What happens next?</summary><p>Set the scale using a known length on your plan. Check it against a second dimension, then draw an area, line or count and assign a component. The workspace’s tip bar guides the next action.</p><p>Keep this page open. Plans and measurements are not saved to an account in this free session.</p></details>
+        {config.tutorial&&<div className={s.formActions}><ActionLink href={config.tutorial.href} target="_blank" rel="noopener noreferrer"><Icon name="play"/>Watch the workflow guide</ActionLink>{config.tutorial.olderLayout&&<span>Shows the earlier layout.</span>}</div>}
+      </>}
+      <div className={s.formActions}>{step>1?<Button onClick={onBack} disabled={busy||exampleLoading}><Icon name="back"/>Back</Button>:<span>1. Set your measurement preferences</span>}
+        {step<3&&<Button primary onClick={onContinue} disabled={step===2&&componentCount===0}>{step===1?'Choose components':'Continue to plan'}<Icon name="arrow"/></Button>}
       </div>
-    </div>
-    {children}
-    <QcHostedDialogScope enabled>{pdfModal}</QcHostedDialogScope>
-  </QcJourney>;
+    </div><p className={s.sessionNote}><Icon name="info"/>Session only. Download your results before closing this page.</p></div>
+   </div>
+  </div>{children}{pdfModal}
+ </div>;
 }
