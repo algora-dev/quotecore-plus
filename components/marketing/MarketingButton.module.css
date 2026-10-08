@@ -39,6 +39,15 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
+/* Owner-requested black CTA (2026-10-08): app-primary surface with an
+   orange hover glow, mirroring the design-standard primary treatment. */
+.dark {
+  background: linear-gradient(180deg, #1b1f26, #0e1116);
+  border-color: #0b0d10;
+  color: #f7f8fa;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 6px 16px rgba(14, 17, 22, 0.18);
+}
+
 /* G-C / pricing-selector qcp-clear. Light companions keep the same edge,
    inset highlight and one-pass 110deg glint; Dark Focus overrides the vars.
    These are marketing controls only, not global application tokens. */
@@ -117,6 +126,12 @@
     transform: translateY(-1px);
   }
 
+  .dark:hover {
+    background: linear-gradient(180deg, #262b33, #13161c);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 10px 26px rgba(255, 107, 53, 0.28), 0 5px 14px rgba(14, 17, 22, 0.22);
+    transform: translateY(-1px);
+  }
+
   .glass:hover:not(:disabled) {
     background-color: var(--qc-glass-hover, rgba(255,255,255,.34));
     border-color: var(--qc-glass-accent, #b63d0a);
@@ -145,6 +160,10 @@
 
 .primary:active {
   background: var(--qc-marketing-gradient-pressed);
+}
+
+.dark:active {
+  background: linear-gradient(180deg, #161a20, #0b0d10);
 }
 
 @media (prefers-reduced-motion: reduce) {

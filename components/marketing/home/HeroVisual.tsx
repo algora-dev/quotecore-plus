@@ -15,7 +15,7 @@ export function HeroVisual({ review }: { review: Testimonial }) {
     <div className={s.heroApp} data-testid="hero-app">
       <div className={s.appChrome} aria-hidden="true">
         <span className={s.windowDots}><i /><i /><i /></span>
-        <span>QuoteCore+ <span className={s.chromeSlash}>/</span> Digital takeoff</span>
+        <span>QuoteCore+ <span className={s.chromeSlash}>/</span> Home</span>
         <span className={s.chromeIndicator} />
       </div>
       <div className={s.appViewport}><ProductScreenshot eager /></div>

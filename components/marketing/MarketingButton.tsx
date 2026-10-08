@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react';
 import styles from './MarketingButton.module.css';
 
-type Variant = 'primary' | 'glass' | 'ghost';
+type Variant = 'primary' | 'dark' | 'glass' | 'ghost';
 
 type Props = {
   href: string;

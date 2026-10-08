@@ -28,8 +28,10 @@ export const placeholderReview: Testimonial = {
   quote: 'I’d given up on other roofing apps. With the Done For You Setup, QuoteCore+ was ready for our business. Getting started was so much easier.',
 };
 export const publishedHeroReview: Testimonial = {
-  ...testimonials[2],
-  quote: "We'd tried other options and just couldn't get their systems working the way we needed. QuoteCore+ nailed it with their Smart Components system…",
+  name: 'RJ',
+  business: 'Right Roofing',
+  initials: 'RJ',
+  quote: 'We chose the Done For You package. I’ve never had an easier experience, we save so much time with our pricing, this app is a game changer for roofers!',
 };
 
 export interface WorkflowStep {
