@@ -1,3 +1,8 @@
+import { cleanupPanel, sharedEditPanel, geometryStyles } from './geometryReview';
+import { moveSharedVertex, moveSharedEdge, assertReviewEdit } from '../core/sharedTopology';
+import { mergeSharedFaces, replaceSharedVertices, splitSharedFace, retainUnchangedReview } from '../core/sharedEditing';
+import { stockLengthDetails } from './stockLength';
+import { stockLengthRows } from '../core/stockLength';
 import { salvagePhysicalFingerprint, type SalvageResult, type SalvageSearchReport } from '../core/salvageModel';
 import { salvageOffer, salvageSummary, salvageResultDialog, salvageGroupHtml, salvageReportText } from './salvagePlans';
 import { bankLaneAudit, purchaseOperations } from '../core/bankLanes';
@@ -17,7 +22,7 @@ import { alternativeReference, lowestMaterialSavedPlan } from '../core/alternati
 import { SIMPLER_POLICY } from '../core/simplerPolicy';
 import { analysePartition, type PartitionReport } from '../core/partition';
 import { currentDetectionIssues, narrowFace, refreshFaceBoundary, validateFaceDirections } from '../core/reviewGeometry';
-import { centroid, distance, unit, sub, validateRing, fingerprint } from '../core/math';
+import { centroid, distance, unit, sub, validateRing, fingerprint, projection } from '../core/math';
 import { area, pointInRegion, bounds } from '../core/regions';
 import { scenePointToDemand, validateInputs } from '../core/material';
 import { findFit } from '../core/solver';
@@ -27,7 +32,7 @@ import { planSignature, traceText } from '../core/diagnostics';
 import { projectBank } from '../core/zones';
 import { materialColors } from './materialColors';
 import { moveReuseGroup } from '../core/groupEditing';
-import { editPlacement, mergeFaces, splitFace, validateDraft } from '../core/editing';
+import { editPlacement, splitFace, validateDraft } from '../core/editing';
 import { exportDraft } from '../core/codec';
 import { roofRevision } from '../adapters/quotecore';
 import { exportLiveCapture, type LiveInputCapture } from '../adapters/liveSnapshot';
@@ -68,6 +73,8 @@ export interface WorkbenchOptions {
   onExport?: (draft: Draft) => void;
   /** Optional host hook: a proposal only, after explicit basis selection. The host confirms a target material line. */
   onQuantityProposal?: (proposal: QuoteQuantityProposal) => void;
+  /** Clears the host's CURRENT offered figure; existing quote entries remain historical. */
+  onPlanInvalidated?: () => void;
   /** Optional host hook (Phase 1, owner 2026-10-07): persist an A4 one-pager
    * of the current plan to the job's Files & Documents. Throws on failure. */
   onSaveOnePager?: (payload: OffcutOnePagerPayload) => void | Promise<void>;
@@ -81,7 +88,7 @@ function displayQuantity(value:number):string { return (Math.round((value+Math.s
 let localIdCounter = 0;
 function localId(): string { return globalThis.crypto?.randomUUID?.() ?? `review-${Date.now().toString(36)}-${++localIdCounter}`; }
 interface Drag {
-  kind: 'vertex' | 'flow' | 'offcut' | 'group' | 'pan'; groupId?: string; faceId?: string; vertex?: number; offcutId?: string;
+  kind: 'vertex' | 'edge' | 'flow' | 'offcut' | 'group' | 'pan'; edgeEnd?: Point; groupId?: string; faceId?: string; vertex?: number; offcutId?: string;
   start: Point; last: Point; original?: Point; pointerId: number;
   clientStart: Point; initialView?: number[]; inverse?: { a: number; b: number; c: number; d: number };
 }
@@ -124,6 +131,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       return `<div class="qc-boundary-row"><span>${esc(g.name)} · ${g.edges.length} lines</span><button data-action="toggle-boundary-group" data-id="${esc(id)}">${excluded?'Include lines':'Exclude lines'}</button></div>`;
     }).join('')}`;
   }
+  let savingOnePager=false;
   let phase: 'faces'|'solution' = draft.solution?'solution':'faces';
   let selectedFaceId='', selectedOffcutId='', selectedGroupId='', advancedOpen=false, editPieces=false, worker: Worker|null=null, jobId='', busy=false, progress='', disposed=false;
   let issues: Issue[] = [...adapterIssues()], error='', stale=false, notice='';
@@ -132,6 +140,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let hiddenFaceIds = new Set<string>(), panMode = false, spaceHeld = false, pointerOverCanvas = false;
   let focusedDiagnosticId = '', validationAttempted = false, pendingSourceAck = false;
   let partitionKey = '', partitionCache: PartitionReport | null = null;
+  let reviewEditing=false, geometryTool:'split'|'merge'|null=null, splitPoints:Point[]=[], cleanupChangeId='';
   let showSheets=false, showSources=false, showEnvelope=false, drawPoints: Point[]|null=null, drag:Drag|null=null;
   let layouts:Solution[] = draft.solution ? [draft.solution] : [], layoutIndex=0;
   let backgroundFailed=false;
@@ -224,7 +233,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let background:HTMLImageElement|null=null;
   let viewBox = [-30,-30,roof.sceneWidth+60,roof.sceneHeight+60];
   const history: string[] = [], redoHistory: string[] = [];
-  function snapshot(): string { return JSON.stringify({ draft, issues, repairs, drawingAdjustments, hiddenFaceIds: [...hiddenFaceIds], selectedFaceId, phase, layoutIndex }); }
+  function snapshot(): string { return JSON.stringify({ draft, issues, repairs, drawingAdjustments, hiddenFaceIds: [...hiddenFaceIds], selectedFaceId, phase, layoutIndex, layouts }); }
   function checkpoint(): void {
     const value = snapshot();
     if (history[history.length - 1] !== value) history.push(value);
@@ -232,10 +241,29 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     redoHistory.length = 0;
   }
   function cancel(): void { worker?.terminate(); worker = null; busy = false; jobId = ''; }
-  function invalidate(): void { salvagePreview=null;salvageBase=null;salvageDialog=false;lastSalvageSearch=null;alternativeDialog=null;alternativeFocus=null;
+  function invalidate(): void { options.onPlanInvalidated?.(); salvagePreview=null;salvageBase=null;salvageDialog=false;lastSalvageSearch=null;alternativeDialog=null;alternativeFocus=null;
     cancel(); draft.solution = null; layouts=[];layoutIndex=0; phase = 'faces'; selectedOffcutId = ''; selectedGroupId = '';
     selectedSectionId='';quotePreviewOpen=false;quantityCache=null;
     error = ''; pendingSourceAck = false; partitionKey = ''; lastSearchTrace=null;alternativeAttempt=0;
+  }
+  function commitGeometry(next:RoofFace[],text:string):void {
+    checkpoint();invalidate();draft.faces=next;geometryTool=null;splitPoints=[];drawHover=undefined;snapHint=null;
+    if(draft.geometryReview)draft.geometryReview.edited=true;
+    // A user-edited partition supersedes raw detection observations, not coverage checks.
+    issues=issues.filter(i=>!['DANGLING_LINE','OPEN_TOPOLOGY','FLOW_REVIEW','SNAPPED_ENDPOINTS'].includes(i.code));
+    if(!next.some(f=>f.id===selectedFaceId))selectedFaceId=next[0]?.id??'';
+    notice=text;render();
+  }
+  function rebuildCleanup(keep:string[]):void {
+    if(draft.faces.some(f=>f.provenance!=='derived')&&!window.confirm('Rebuild from your original linework? This replaces edited shapes. Undo can restore this review. Source takeoff is unchanged.'))return;
+    const before=structuredClone(draft.faces);checkpoint();
+    draft.roof.geometryKeepSeparateEdgeIds=[...new Set(keep)];draft.roof.geometryCleanupMode='auto';draft.roof.sourceRevision=roofRevision(draft.roof);
+    detect(false);
+    const proposed=draft.faces;draft.faces=retainUnchangedReview(before,proposed);
+    const ids=new Map(proposed.map((f,i)=>[f.id,draft.faces[i].id]));
+    issues=issues.map(i=>i.faceId?{...i,faceId:ids.get(i.faceId)??i.faceId}:i);
+    if(draft.geometryReview?.flowEvidence)draft.geometryReview.flowEvidence=draft.geometryReview.flowEvidence.map(e=>({...e,faceId:ids.get(e.faceId)??e.faceId}));
+    selectedFaceId=draft.faces[0]?.id??'';notice='Review rebuilt. Your kept-separate lines are retained. Undo restores the previous review.';render();
   }
   function detect(record = true): void {
     if (record) {checkpoint();draft.roof=revertAutomaticJoins(draft.roof,drawingAdjustments);}
@@ -244,10 +272,10 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       const result = deriveFaces(draft.roof);
       draft.faces = result.faces.map(f => ({ ...f, flowSource: 'inferred' }));
       issues = [...adapterIssues(), ...result.issues];
-      if(result.normalisedEdges){draft.roof.edges=structuredClone(result.normalisedEdges);draft.roof.sourceRevision=roofRevision(draft.roof);}
+      draft.geometryReview=result.geometryReview;
       if(initialDetection===null)initialDetection=structuredClone(result);
       repairs=result.repairs;drawingAdjustments=result.adjustments;selectedRepairId='';
-      selectedFaceId = draft.faces[0]?.id ?? '';
+      selectedFaceId = draft.faces[0]?.id ?? '';geometryTool=null;splitPoints=[];cleanupChangeId='';
     } catch (e) { error = message(e); draft.faces = []; }
   }
   const message = (e: unknown): string => e instanceof Error ? e.message : String(e);
@@ -264,7 +292,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       : [...partition().issues, ...draft.faces.flatMap(f => validateRing(f.polygon) ? [] : validateFaceDirections(f, draft.roof))];
     const small = draft.faces.filter(f => !validateRing(f.polygon) && narrowFace(f, draft.roof)).map(f => ({
       severity: 'warning' as const, code: 'NARROW_FACE', faceId: f.id,
-      message: `${f.name}: narrow face. Hide it to inspect what lies underneath; delete only if it is a false face. It still participates in the calculation while hidden.`,
+      message: `${f.name}: narrow face. Join it to a neighbour if it is a false strip, or confirm its water direction if it is a real narrow face. Hiding does not remove material.`,
     }));
     const extras:Issue[]=[];
     if(backgroundFailed)extras.push({severity:'warning',code:'BACKGROUND_IMAGE',message:'The plan image did not load. Reviewed vector faces remain available; reopen the takeoff to refresh the image.'});
@@ -283,7 +311,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function drawingSnap(p:Point,excludePoint?:Point):DrawingSnap|null {
     const canvas=shadow.querySelector<HTMLElement>('.qc-canvas'),box=canvas?.getBoundingClientRect();
     const scale=box?sceneScale(viewBox,box.width,box.height):null;
-    return scale? snapDrawingPoint(p,draft.roof,draft.faces,{sceneUnitsPerPixel:scale,pending:drawPoints??undefined,excludePoint}):null;
+    return scale? snapDrawingPoint(p,phase==='faces'&&draft.geometryReview?.enabled?{...draft.roof,edges:[]}:draft.roof,draft.faces,{sceneUnitsPerPixel:scale,pending:drawPoints??undefined,excludePoint}):null;
   }
   function finishPolygon():void {
     if(!drawPoints||drawPoints.length<3)throw new Error('Add at least three corners, then click the first point or Finish.');
@@ -296,7 +324,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function applyAlignment():void {
     const aligned=alignReviewedFaces(draft.roof,draft.faces);
     if(!aligned.adjustments.length){notice='No unambiguous small alignments found. Use Show on plan, then adjust or redraw the affected area.';return;}
-    checkpoint();invalidate();draft.faces=aligned.faces.map(f=>refreshFaceBoundary(f,draft.roof));
+    const next=aligned.faces.map(f=>refreshFaceBoundary(f,draft.roof));assertReviewEdit(draft.roof,draft.faces,next);checkpoint();invalidate();draft.faces=next;
     drawingAdjustments.push(...aligned.adjustments);notice=`Aligned ${aligned.adjustments.length} nearby points in this review. Check the faces; Undo restores the previous drawing. Takeoff measurements are unchanged.`;
   }
   function scenePoint(e:PointerEvent|MouseEvent|WheelEvent):Point {
@@ -313,10 +341,10 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     canvas.dataset.renderWidth=String(box.width);canvas.dataset.renderHeight=String(box.height);canvas.dataset.renderScale=String(scale);
     canvas.dataset.pan = String(panMode || spaceHeld);
     canvas.dataset.drawing=String(drawPoints!==null);
-    canvas.dataset.dragging = String(drag?.kind === 'pan');
+    canvas.dataset.dragging = String(drag?.kind === 'pan');canvas.dataset.reviewTool=geometryTool??'';
     const focussedSection = shadow.activeElement?.getAttribute('data-section');
-    canvas.innerHTML = renderSvg(draft, { phase, selectedFaceId, selectedOffcutId, selectedGroupId, editPieces,
-      showSheets, showSources, showEnvelope, editGroups, selectedSectionId, sections:quantities()?.sections, showDetailedLabels, viewBox: viewBox.join(' '), pendingPolygon: drawPoints ?? undefined,
+    canvas.innerHTML = renderSvg(draft, { reviewEditing, cleanupChange:draft.geometryReview?.changes.find(c=>c.id===cleanupChangeId), phase, selectedFaceId, selectedOffcutId, selectedGroupId, editPieces,
+      showSheets, showSources, showEnvelope, editGroups, selectedSectionId, sections:quantities()?.sections, showDetailedLabels, viewBox: viewBox.join(' '), pendingPolygon: geometryTool==='split'?splitPoints:drawPoints ?? undefined,
       hiddenFaceIds, coverage: visibleCoverage(), focusedDiagnosticId,
       pendingCursor:drawHover,snapHint:snapHint??undefined,
       boundaryRepair:repairs.find(r=>r.id===selectedRepairId),
@@ -389,7 +417,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       <button class="qc-direction-custom" data-action="custom-flow" aria-expanded="${customFlowOpen}">Custom angle</button>${customFlowOpen?`<div class="qc-fields">${inputField('Angle ° (0 right, 90 down)','flowAngle',flowAngle(f.flow),'0.1')}</div><p class="qc-muted">Screen directions, not compass bearings. Drag the plan arrow for fine adjustment.</p>`:''}
       ${!hasFlow(f.flow)?'<p class="qc-direction-required">Choose a direction. No direction has been assumed.</p>':''}</div>`:'';
     const faceButtons = `<div class="qc-face-grid" aria-label="Roof faces">${draft.faces.map(g => `<button class="qc-face ${g.id === selectedFaceId ? 'active' : ''}" data-action="select-face" data-id="${esc(g.id)}" aria-pressed="${g.id === selectedFaceId}" data-hidden="${hiddenFaceIds.has(g.id)}"><span class="qc-face-label">${esc(g.name)}</span><span class="qc-face-meta">${!hasFlow(g.flow)?'<span class="qc-flow-missing" title="Water direction needed">! Flow</span>':''}${reported.some(i=>i.faceId===g.id&&i.severity==='error')?'<span class="qc-small-tag">Review</span>':smallIds.has(g.id) ? '<span class="qc-small-tag">Small</span>' : ''}${hiddenFaceIds.has(g.id) ? icon('eyeOff') + '<span class="qc-sr-only">Hidden</span>' : g.confirmed ? icon('check') + '<span class="qc-sr-only">Confirmed</span>' : ''}</span></button>`).join('')}</div>`;
-    const quickTools = f ? `<div class="qc-face-tools"><div class="qc-face-tools-head"><strong>${esc(f.name)}</strong>${hiddenFaceIds.has(f.id) ? '<span class="qc-badge">Hidden</span>' : smallIds.has(f.id) ? '<span class="qc-small-tag">Narrow face</span>' : ''}</div><small>${hiddenFaceIds.has(f.id) ? 'Hidden on screen only - still part of the roof.' : smallIds.has(f.id) ? 'Hide to inspect underneath, or delete if incorrect.' : 'Select a face to inspect, hide or remove it.'}</small><div class="qc-quick-actions"><button data-action="focus-face" data-id="${esc(f.id)}" title="Zoom to ${esc(f.name)}">${icon('focus')}Locate</button><button data-action="toggle-face" aria-label="${hiddenFaceIds.has(f.id) ? 'Show' : 'Hide'} ${esc(f.name)}">${icon(hiddenFaceIds.has(f.id) ? 'eye' : 'eyeOff')}${hiddenFaceIds.has(f.id) ? 'Show' : 'Hide'}</button><button data-action="delete-face" class="quiet-danger" aria-label="Delete ${esc(f.name)}">${icon('trash')}Delete</button></div>${directionControl}</div>` : '';
+    const quickTools = f ? `<div class="qc-face-tools"><div class="qc-face-tools-head"><strong>${esc(f.name)}</strong>${hiddenFaceIds.has(f.id) ? '<span class="qc-badge">Hidden</span>' : smallIds.has(f.id) ? '<span class="qc-small-tag">Narrow face</span>' : ''}</div><small>${hiddenFaceIds.has(f.id) ? 'Hidden on screen only - still part of the roof.' : smallIds.has(f.id) ? 'Join a false strip to its neighbour, or keep a real narrow face.' : 'Select a face to inspect, hide or remove it.'}</small><div class="qc-quick-actions"><button data-action="focus-face" data-id="${esc(f.id)}" title="Zoom to ${esc(f.name)}">${icon('focus')}Locate</button><button data-action="toggle-face" aria-label="${hiddenFaceIds.has(f.id) ? 'Show' : 'Hide'} ${esc(f.name)}">${icon(hiddenFaceIds.has(f.id) ? 'eye' : 'eyeOff')}${hiddenFaceIds.has(f.id) ? 'Show' : 'Hide'}</button><button data-action="delete-face" class="quiet-danger" aria-label="Delete ${esc(f.name)}">${icon('trash')}Delete</button><button data-action="deselect-face">Deselect</button></div>${directionControl}${sharedEditPanel(draft,f,reviewEditing,geometryTool)}</div>` : '';
     const faceTools = f ? `<h3>${esc(f.name)} - face tools</h3><label class="qc-field">Name<input data-field="name" value="${esc(f.name)}"/></label>
       <div class="qc-fields">${inputField('This face’s pitch °', 'pitch', f.pitchDeg, '0.5')}${inputField('Lane start offset, mm', 'laneOffset', f.laneOffsetMm)}<label>Lap direction<select data-field="lap"><option value="1" ${f.lap === 1 ? 'selected' : ''}>Along +cross-slope</option><option value="-1" ${f.lap === -1 ? 'selected' : ''}>Along −cross-slope</option></select></label></div>
       <label class="qc-check"><input data-field="lapLocked" type="checkbox" ${f.lapLocked ? 'checked' : ''}/>Lock this face’s lap direction</label>
@@ -397,7 +425,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       <div class="qc-actions"><button data-action="confirm-face">Confirm this face</button><button data-action="apply-pitch">Apply pitch to all</button></div>
       <details><summary>Split, join or edit vertices</summary><div class="qc-fields"><label>Split axis<select id="split-axis"><option value="x">Vertical (x)</option><option value="y">Horizontal (y)</option></select></label><label>Scene coordinate<input id="split-at" type="number" value="${centroid(f.polygon).x.toFixed(1)}"/></label></div><button data-action="split">Split selected face</button>
       <label class="qc-field">Join with<select id="merge-target">${draft.faces.filter(g => g.id !== f.id).map(g => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('')}</select></label><button data-action="merge" ${draft.faces.length < 2 ? 'disabled' : ''}>Join faces</button>
-      <label class="qc-field">Vertices: x,y per line<textarea id="polygon-points">${f.polygon.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join('\n')}</textarea></label><button data-action="apply-polygon">Apply polygon</button></details>` : '';
+      <label class="qc-field">Vertices: x,y per line<textarea id="polygon-points">${f.polygon.map(p => `${p.x},${p.y}`).join('\n')}</textarea></label><button data-action="apply-polygon">Apply polygon</button></details>` : '';
     const materialTools = `<h3>Material rules</h3><label class="qc-field">Stock strategy<select data-field="stockMode"><option value="bank-first" ${draft.settings.stockMode === 'bank-first' ? 'selected' : ''}>Primary banks + straight fillers</option><option value="face-envelope" ${draft.settings.stockMode === 'face-envelope' ? 'selected' : ''}>Legacy: full face envelopes</option><option value="per-lane" ${draft.settings.stockMode === 'per-lane' ? 'selected' : ''}>Legacy: independent sheet lengths</option></select></label>
       <div class="qc-fields">${inputField('Self-fill valley transition, mm', 'selfFillTransitionMm', draft.settings.selfFillTransitionMm??100)}${inputField('Physical left lap, mm', 'leftLapMm', draft.profile.leftLapMm)}${inputField('Physical right lap, mm', 'rightLapMm', draft.profile.rightLapMm)}${inputField('Cut clearance, mm', 'cutGapMm', draft.profile.cutGapMm)}${inputField('End allowance, mm', 'endAllowanceMm', draft.profile.endAllowanceMm)}${inputField('Maximum sheet length, mm', 'maxLengthMm', draft.profile.maxLengthMm)}${inputField('Length increment, mm', 'lengthIncrementMm', draft.profile.lengthIncrementMm)}${inputField('Max extra reuse stock, mm', 'maxBankExtensionMm', draft.settings.maxBankExtensionMm ?? 100)}</div>
       <p class="qc-muted">Extra reuse stock is optional, counted as supplied length and reported on the plan. Set its limit to 0 to prohibit it. Physical overlaps and cut allowances require profile-specific checks.</p>
@@ -424,7 +452,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         ${section.sourceFaceIds.length?`<dt>From</dt><dd>${section.sourceFaceIds.map(id=>id===section.faceId?'This face’s own cuts':esc(faceName(id))).join(' + ')}</dd>`:''}
         <dt>New purchase</dt><dd>${displayQuantity(section.purchasedLinealM)} lm${section.purchasedDemandIds.length?` · ${section.purchasedDemandIds.length} sheets`:' (already bought at source)'}</dd>
         <dt>Suggested lap</dt><dd>${lap===1?'Left → right':'Right → left'}</dd></dl>
-        <p class="qc-muted">Lap viewed from the spouting, looking up the roof. Follow the lap arrow on the plan.</p>
+        <p class="qc-muted">Lap viewed from the spouting, looking up the roof. Follow the lap arrow on the plan.</p>${stockLengthDetails(s,draft.faces,section.demandIds)}
         ${salvageSection?salvageGroupHtml(salvageSection,draft.faces):''}
         ${receiverFamily?.starterAllocationMayVary?`<p class="qc-muted">${receiverFamily.newSheetsAfter} fresh starter sheets are included across ${receiverFamily.faceIds.map(id=>esc(faceName(id))).join(' / ')}. Which side uses the extra sheet can change with the source setout; the drawing shows the planned starting arrangement.</p>`:''}
         <details><summary>Lengths & material origin</summary><p>Net cut-piece run lengths: ${section.cutPieceRunLinealM.toFixed(2)} lm (sum of each piece’s maximum sheet-run extent; <b>not</b> a purchased quantity).</p><p>Original supplied bank: ${sourceStyle!.blocks.find(b=>b.id===section.supplyBlockId)?.faceIds.map(id=>esc(faceName(id))).join(' + ')??'See physical trace'}.</p>
@@ -437,12 +465,13 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         <p class="qc-muted">Lineals count each new sheet once. Offcuts and recuts add no second purchase. Profile-width area includes configured side laps; neither area is developed coil area. Cutting remainder may include reusable stock.</p>
         <label class="qc-field">Rate / quantity basis<select data-quantity-basis><option value="lineal-metres" ${quantityBasis==='lineal-metres'?'selected':''}>Lineal metres</option><option value="cover-square-metres" ${quantityBasis==='cover-square-metres'?'selected':''}>Square metres - effective cover</option><option value="profile-square-metres" ${quantityBasis==='profile-square-metres'?'selected':''}>Square metres - configured profile width</option></select></label>
         <button data-action="preview-quantity" class="qc-wide" ${s.status==='invalid'||stale?'disabled':''}>Review material quantity</button>
-        ${quotePreviewOpen?`<div class="qc-quantity-proposal"><b>${basisValue.toFixed(2)} ${quantityBasis==='lineal-metres'?'lm':'m²'} for the selected material scope</b><p>Keep the measured roof area and labour quantities. This plan already includes cutting stock and configured allowances; do not apply the old waste factor again automatically. Spares are separate.</p><p class="qc-muted">Match this basis to the quote line’s rate. No quote is changed by this preview or export.</p><div class="qc-actions"><button data-action="export-quantity">Export quantity proposal</button>${options.onQuantityProposal?'<button data-action="send-quantity" class="primary">Send to quote review</button>':''}${options.onSaveOnePager?'<button data-action="save-one-pager" class="primary">Save one-pager to job</button>':''}</div></div>`:''}
+        ${quotePreviewOpen?`<div class="qc-quantity-proposal"><b>${basisValue.toFixed(2)} ${quantityBasis==='lineal-metres'?'lm':'m²'} for the selected material scope</b><p>Keep the measured roof area and labour quantities. This plan already includes cutting stock and configured allowances; do not apply the old waste factor again automatically. Spares are separate.</p><p class="qc-muted">Match this basis to the quote line’s rate. No quote is changed by this preview or export.</p><div class="qc-actions"><button data-action="export-quantity">Export quantity proposal</button>${options.onQuantityProposal?'<button data-action="send-quantity" class="primary">Send to quote review</button>':''}${options.onSaveOnePager?`<button data-action="save-one-pager" class="primary" ${savingOnePager?'disabled':''}>${savingOnePager?'Saving one-pager…':'Save one-pager to job'}</button>`:''}</div></div>`:''}
         <details><summary>Purchase breakdown by section</summary><table class="qc-stock"><thead><tr><th>Section</th><th>Sheets</th><th>New lm</th></tr></thead><tbody>${sections.filter(a=>a.purchasedDemandIds.length).map(a=>`<tr><td>${esc(faceName(a.faceId))}.${sectionNumber(a)}</td><td>${a.purchasedDemandIds.length}</td><td>${displayQuantity(a.purchasedLinealM)}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><td>${q.newSheetCount}</td><td>${displayQuantity(q.purchasedLinealM)}</td></tr></tfoot></table></details></details>`;
       normal = `<h2>Sheet & offcut plan</h2><p class="qc-plan-total"><strong>${q.newSheetCount} new sheets</strong><strong class="qc-lineal-total">${displayQuantity(q.purchasedLinealM)} <small>purchased lineal metres</small></strong><span>${displayQuantity(q.suppliedCoverAreaM2)} m² material required (cover basis)<br/>${displayQuantity(q.netRoofAreaM2)} m² net roof · ${displayQuantity(q.suppliedCoverAreaM2-q.netRoofAreaM2)} m² extra (${q.coverUpliftPercent?.toFixed(1)??'-'}%)<br/>This roof scope only · no spares</span></p>
         ${salvagePreview?.solution&&!salvageDialog?salvageSummary(salvagePreview.solution,draft.faces,true,salvageViewingBase):planChoices(s,layouts,layoutIndex,busy||stale||s.status==='invalid')+(s.salvage?salvageSummary(s,draft.faces,false):salvageOffer(s,layouts,busy||stale||s.status==='invalid'))}
         <p class="qc-muted qc-material-key">Solid = new bank · crosshatch = offcuts · parallel lines = recut offcuts · grey = filler. Dots mark effective cover at the spouting.</p>${sectionDetail}
         <details class="qc-bank-purchases"><summary>Banks & purchased sheets</summary><p class="qc-muted">One row per stock length in a source block. Shared faces consume the same purchased parents; offcuts add 0 lm.</p><table class="qc-stock"><thead><tr><th>Source</th><th>Sheets × length</th><th>New lm</th></tr></thead><tbody>${purchaseOperations(s).map(b=>`<tr><td>${b.faceIds.map(id=>esc(faceName(id))).join(' + ')}${b.role==='spacer'?'<small>New spacers / starters</small>':''}</td><td>${b.count} × ${(b.lengthMm/1000).toFixed(3)} m</td><td>${displayQuantity(b.linealM)}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><td>${q.newSheetCount} sheets</td><td>${displayQuantity(q.purchasedLinealM)}</td></tr></tfoot></table>${bankLaneAudit(s).map(b=>`<p class="qc-muted" data-bank-audit="${esc(b.operationId)}">${b.faceIds.map(id=>esc(faceName(id))).join(' + ')}: ${(b.spanMm/1000).toFixed(3)} m ÷ ${b.effectiveCoverMm} mm cover → ${b.minimumColumns} minimum columns; ${b.registeredColumns} on the selected setout, ${b.newRoots} purchased parents.${b.duplicateColumns.length?' Separate stock is needed at '+b.duplicateColumns.length+' columns: shared reuse did not physically fit.':''}</p>`).join('')}</details>
+        ${stockLengthDetails(s,draft.faces)}
         ${quantityPanel}<details class="qc-faces-summary"><summary>Faces & sections (${rows.length})</summary><div class="qc-material-plan">${rows.map(row => {
           const type = row.primaryOperationFaceIds.length>1 ? 'MAIN BANK' : row.selfFill ? `${row.newCount} NEW + ${row.reuseCount} SELF-FILL` : row.newCount === row.sheetCount ? `NEW · ${row.sheetCount} sheets` : row.newCount === 0 ? `OFFCUT · ${row.sheetCount} sheets` : `${row.newCount} NEW + ${row.reuseCount} OFFCUT`;
           const sourceBlocks=new Set(s.placements.filter(p=>p.kind==='reuse'&&s.demands.find(d=>d.id===p.demandId)?.faceId===row.faceId).map(p=>sourceStyle!.blockByPlacement.get(p.demandId)));
@@ -476,14 +505,14 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         </details>
         <details><summary>Simpler-plan limits</summary><p class="qc-muted">Compared with Recommended, not the last alternative. Extra purchased material is limited to the smaller of 3% or 10 m² of effective cover. Extra new sheets are limited to 5% of the reference count (at least 2, at most 6). A candidate must reduce the grouped workflow score by at least 5% and 8 points after physical checks. Repeated cuts are counted as runs; cutting fresh sheets still counts. A percentage is a ceiling, not added waste, spares or a guarantee of lower labour cost.</p></details><details><summary>Less-material limits</summary><p class="qc-muted">Compared with Recommended in effective-cover m², not prices or a percentage saving. 10 m² or more permits limited additional cutting work; 7.5–10 permits less, 5–7.5 very little, and 1–5 requires no increases in the tracked workflow groups. Sub-1 m² variants are not offered. Source changes, splits, runs and reuse depth have independent limits, so a simpler task elsewhere cannot hide an extreme new one. These are initial product thresholds, not measured labour hours. Every alternative must still pass physical and receiver checks. Full acceptance/rejection details are in the decision trace.</p></details>`;
     } else {
-      normal = `<h2>Review roof faces</h2><p class="qc-muted qc-geometry-summary">${draft.faces.length} shapes from ${draft.roof.edges.filter(e=>!draft.roof.faceDetectionIgnoredEdgeIds?.includes(e.id)).length} drawing lines${drawingAdjustments.length?` · ${drawingAdjustments.length} small joins aligned`:''}. Check the shapes and water arrows. Component names are not required.</p>${missing.length?`<div class="qc-note" role="status"><b>${missing.length} water direction${missing.length===1?'':'s'} needed</b><p>${missing.map(g=>esc(g.name)).join(', ')}</p><button data-action="choose-flow" data-id="${esc(missing[0].id)}">Set next direction</button></div>`:''}${quickTools}${faceButtons}
+      normal = `<h2>Review roof faces</h2><p class="qc-muted qc-geometry-summary">${draft.faces.length} shapes from ${draft.roof.edges.filter(e=>!draft.roof.faceDetectionIgnoredEdgeIds?.includes(e.id)).length} drawing lines${drawingAdjustments.length?` · ${drawingAdjustments.length} small joins aligned`:''}. Check the shapes and water arrows. Component names are not required.</p>${cleanupPanel(draft)}${missing.length?`<div class="qc-note" role="status"><b>${missing.length} water direction${missing.length===1?'':'s'} needed</b><p>${missing.map(g=>esc(g.name)).join(', ')}</p><button data-action="choose-flow" data-id="${esc(missing[0].id)}">Set next direction</button></div>`:''}${quickTools}${faceButtons}
         ${hiddenFaceIds.size ? `<div class="qc-hidden-summary"><span>${hiddenFaceIds.size} hidden · still included</span><button data-action="show-all">Show all</button></div>` : ''}
         <div class="qc-actions"><button data-action="add-face">${icon('plus')}Add face</button></div>
         <div class="qc-fields">${inputField('Effective cover, mm', 'coverMm', draft.profile.coverMm, '0.1')}${inputField('Pitch ° - all faces', 'allPitch', pitch, '0.5')}</div>
         ${draft.faces.some(g => g.pitchDeg !== pitch) ? '<p class="qc-muted">Mixed pitches: keep them, or enter a common pitch. Individual pitches are in Advanced.</p>' : ''}
         ${!draft.profile.allowEndForEnd ? '<div class="qc-note">End-for-end reuse is off. This may reduce matches; change it under Advanced → Material rules.</div>' : ''}
         ${drawPoints ? '<div class="qc-actions"><button data-action="finish-polygon">Finish polygon</button><button data-action="cancel-polygon">Cancel polygon</button></div>' : ''}
-        <p class="qc-muted qc-approval-note">These shapes and water arrows will be used for the cut plan. The original takeoff will not be changed.</p><button data-action="confirm-run" class="primary qc-wide" ${busy || stale || drawPoints ? 'disabled' : ''}>Faces correct - find offcuts ${icon('arrow')}</button>`;
+        <p class="qc-muted qc-approval-note">These shapes and water arrows will be used for the cut plan. The original takeoff will not be changed.</p><button data-action="confirm-run" class="primary qc-wide" ${busy || stale || drawPoints || geometryTool ? 'disabled' : ''}>Faces correct - find offcuts ${icon('arrow')}</button>`;
 
     }
     const advanced = `<details id="qc-advanced" ${advancedOpen ? 'open' : ''}><summary>Advanced</summary>${phase === 'solution' ? solutionTools : `<details><summary>Selected roof outlines</summary>${sourceOutlines.map(o => `<label class="qc-check"><input data-outline="${esc(o.id)}" type="checkbox" ${draft.roof.outlines.some(a => a.id === o.id) ? 'checked' : ''}/>${esc(o.name)}</label>`).join('')}<button data-action="detect">Rebuild from linework</button></details><div class="qc-actions"><button data-action="confirm-all">Confirm reviewed faces</button></div>${faceTools}${materialTools}`}
@@ -529,9 +558,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       ${errors.length>1?`<small>${errors.length} checks remain. Other valid faces are preserved.</small>`:''}</div>`:'';
     const advisory=visibleIssues.find(i=>i.code==='BACKGROUND_IMAGE'&&i.severity==='warning')??visibleIssues.find(i=>i.severity==='warning'&&!partition().regions.some(r=>r.id===i.objectId)&&!['SNAPPED_ENDPOINTS','NARROW_FACE','FLOW_REVIEW'].includes(i.code));
     const advisoryCard=advisory?`<details class="qc-advisory"><summary>${esc(issueTitle(advisory,draft.faces))}</summary><p>${esc(advisory.message)}</p><button data-action="ignore-warning" data-id="${warningKey(advisory,draft)}">Ignore</button></details>`:'';
-    shadow.innerHTML = `<style>${styles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.17 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    shadow.innerHTML = `<style>${styles}${geometryStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.19 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
-      <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${drawPoints ? 'Click corners · click first point / Enter to finish · Backspace removes last · Esc cancels · Alt bypasses snap' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
+      <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${geometryTool==='split'?'Click two boundary points · Esc cancels':geometryTool==='merge'?'Click a neighbouring face · Esc cancels':drawPoints ? 'Click corners · click first point / Enter to finish · Backspace removes last · Esc cancels · Alt bypasses snap' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span>${esc(progress)}</span><button data-action="cancel">Cancel</button></div>` : ''}</section>
       <aside class="qc-sidebar" aria-label="Offcut review controls">${storageCard}${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}<button data-action="dismiss-action-error">Dismiss message</button></div>` : ''}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advisoryCard}${advanced}</aside></main>
       <footer class="qc-footer"><span>Draft only - verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>${salvageDialog&&salvagePreview?salvageResultDialog(salvagePreview,draft.faces):alternativeDialog?noAlternativeDialog(alternativeDialog,draft.solution):''}`;
     renderScene(); restoreView(view, resetScroll);
@@ -559,7 +588,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     let currentIssues:Issue[]=issues;
     try{currentIssues=allIssues();}catch(e){currentIssues=[...issues,{severity:'error',code:'DIAGNOSTIC_CHECK_FAILED',message:message(e)}];}
     const source=structuredClone(capturedRoof);delete source.imageUrl;
-    return JSON.stringify({schemaVersion:1,kind:'quotecore-offcut-debug',engineVersion:'2.17',phase,planningModel:FACE_GEOMETRY_MODEL,
+    return JSON.stringify({schemaVersion:1,kind:'quotecore-offcut-debug',engineVersion:'2.19',phase,planningModel:FACE_GEOMETRY_MODEL,
       boundaryBehaviour:auditFaceBehaviour(draft.faces),
       liveInputSnapshot:options.inputCapture?JSON.parse(exportLiveCapture(options.inputCapture)):null,
       persistence:{kind:options.reviewRepository?.kind??'not-connected',state:saveState},
@@ -568,6 +597,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       selectedPlanIndex:layoutIndex,approvedDraft:JSON.parse(exportDraft(committed)),
       reviewDiagnostics:{issues:currentIssues,repairs,drawingAdjustments,ignoredWarnings:draft.dismissedWarnings??[],componentBoundaryOverrides:draft.componentBoundaryOverrides??{},policy:draftingPolicy(draft.roof),stale},
       quantitySummary:committed.solution?quantitySummary(committed.solution):null,bankCoverage:committed.solution?bankLaneAudit(committed.solution):null,purchaseOperations:committed.solution?purchaseOperations(committed.solution):null,purchaseLedger:committed.solution?rootSheetLedger(committed.solution):null,receiverSafety:committed.solution?.receiverSafety??null,selectedSectionId,selectedTrace:committed.solution?.decisionTrace??null,lastAlternativeSearch:lastSearchTrace,
+      stockLengthRefinement:committed.solution?.stockLengthRefinement??null,stockEndRows:committed.solution?stockLengthRows(committed.solution):[],
       lastSalvageSearch,salvagePreview:salvagePreview?{previewOnly:true,result:salvagePreview,baseLayoutId:salvageBase?.layoutId,viewingBase:salvageViewingBase}:null,
       sessionPlans:layouts.map(p=>({layoutId:p.layoutId,objective:p.objective,metrics:p.metrics,quantities:{purchasedLinealM:quantitySummary(p).purchasedLinealM,suppliedCoverAreaM2:quantitySummary(p).suppliedCoverAreaM2},comparison:p.comparison,salvage:p.salvage,decisionTrace:p.decisionTrace??null}))},null,2);
   }
@@ -607,7 +637,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
           try{ensureCurrent();}catch(e){error=message(e);cancel();render();return;}
           const result=event.data.result as SalvageResult;
           if(!isSalvage||!result?.report||result.report.model!=='terminal-filler-salvage-v1'||!['found','no-worthwhile-reuse'].includes(result.status)||
-            (result.status==='found')!==!!result.solution||result.solution&&result.solution.engineVersion!=='2.17'){
+            (result.status==='found')!==!!result.solution||result.solution&&result.solution.engineVersion!=='2.19'){
             error='The reuse worker returned an unsupported result. Original plan kept.';cancel();render();return;
           }
           if(!previous||!draft.solution||salvagePhysicalFingerprint(draft.solution)!==salvagePhysicalFingerprint(previous)||result.report.basePhysicalFingerprint!==salvagePhysicalFingerprint(previous)){
@@ -667,8 +697,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='alternative-simpler'){run('simpler');return;}
             if(action==='export-ledger'||action==='export-stock-csv'){
         ensureCurrent();const ledger=rootSheetLedger(draft.solution!);
-        if(action==='export-ledger')download('quotecore-v2.17-material-ledger.json',JSON.stringify({engineVersion:'2.17',ledger,receiverSafety:draft.solution!.receiverSafety},null,2),'application/json');
-        else download('quotecore-v2.17-new-sheets.csv',purchaseLedgerCsv(ledger),'text/csv');
+        if(action==='export-ledger')download('quotecore-v2.19-material-ledger.json',JSON.stringify({engineVersion:'2.19',ledger,receiverSafety:draft.solution!.receiverSafety,stockLengthRefinement:draft.solution!.stockLengthRefinement,stockEndRows:stockLengthRows(draft.solution!)},null,2),'application/json');
+        else download('quotecore-v2.19-new-sheets.csv',purchaseLedgerCsv(ledger),'text/csv');
         notice='Purchased parent-sheet audit exported; offcuts are not additional purchases.';render();return;
       }
       if(action==='export-input'){
@@ -686,7 +716,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       }
       if(action==='export-trace'||action==='copy-trace'){
         if(action==='export-trace'){
-          download('quotecore-offcuts-v2.17-debug.json',debugBundle(),'application/json');
+          download('quotecore-offcuts-v2.19-debug.json',debugBundle(),'application/json');
           notice='Debug bundle exported with the captured input and face diagnostics. No cut plan is required.';render();return;
         }
         if(!draft.solution)throw new Error('No cut-plan trace exists yet. Export the debug bundle for face-detection diagnostics.');
@@ -755,7 +785,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         render();return;
       }
       if(action==='save-one-pager'){
+        if(savingOnePager)return;
         ensureCurrent();
+        if(!draft.solution||validateDraft(draft).some(i=>i.severity==='error'))throw new Error('Fix the highlighted plan issues before saving a one-pager.');
         const host=options.onSaveOnePager;
         if(!host||!draft.solution){notice=host?'Create a cut plan before saving a one-pager.':'One-pager saving is not connected.';render();return;}
         const q=quantities();
@@ -763,10 +795,10 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         const payload:OffcutOnePagerPayload={svg:renderSvg(draft,{phase:'solution',print:true,showSheets,showEnvelope,showDetailedLabels,coverage:partition().regions}),
           figures:q?{netRoofAreaM2:q.netRoofAreaM2,purchasedLinealM:q.purchasedLinealM,suppliedCoverAreaM2:q.suppliedCoverAreaM2,suppliedProfileAreaM2:q.suppliedProfileAreaM2,newSheetCount:q.newSheetCount,reusedPositions:q.reusedPositions,coverUpliftPercent:q.coverUpliftPercent,profileUpliftPercent:q.profileUpliftPercent}:null,
           schedule:ledger.stockSchedule.map(r=>({faceId:r.faceId,count:r.count,lengthM:r.lengthM,linealM:r.linealM})),
-          meta:{savedAt:new Date().toISOString(),engineVersion:'2.17',pageId:draft.roof.pageId,areaScopeId:draft.roof.areaScopeId??null}};
-        notice='Saving one-pager to this job…';render();
-        void Promise.resolve(host(payload)).then(()=>{notice='One-pager saved to this job - see Files & Documents.';render();})
-          .catch((error:unknown)=>{notice=error instanceof Error?error.message:'The one-pager could not be saved. Your review is unchanged.';render();});
+          meta:{savedAt:new Date().toISOString(),engineVersion:draft.solution?.engineVersion??'2.19',pageId:draft.roof.pageId,areaScopeId:draft.roof.areaScopeId??null}};
+        savingOnePager=true;notice='Saving one-pager to this job…';render();
+        void Promise.resolve().then(()=>host(payload)).then(()=>{savingOnePager=false;notice='One-pager saved to this job - see Files & Documents.';render();})
+          .catch((error:unknown)=>{savingOnePager=false;notice=error instanceof Error?error.message:'The one-pager could not be saved. Your review is unchanged.';render();});
         return;
       }
       if(action==='next-layout'){
@@ -800,9 +832,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='undo'||action==='redo'){
         const from=action==='undo'?history:redoHistory,to=action==='undo'?redoHistory:history,item=from.pop();
         if(item){
-          to.push(snapshot());cancel();const saved=JSON.parse(item) as {draft:Draft;issues:Issue[];repairs?:BoundaryRepair[];drawingAdjustments?:DrawingAdjustment[];hiddenFaceIds:string[];selectedFaceId:string;phase:'faces'|'solution';layoutIndex?:number};
+          to.push(snapshot());cancel();const saved=JSON.parse(item) as {draft:Draft;issues:Issue[];repairs?:BoundaryRepair[];drawingAdjustments?:DrawingAdjustment[];hiddenFaceIds:string[];selectedFaceId:string;phase:'faces'|'solution';layoutIndex?:number;layouts?:Solution[]};
           draft=saved.draft;issues=saved.issues;repairs=saved.repairs??[];drawingAdjustments=saved.drawingAdjustments??[];hiddenFaceIds=new Set(saved.hiddenFaceIds);selectedFaceId=saved.selectedFaceId;
-          phase=saved.phase;layoutIndex=saved.layoutIndex??0;
+          phase=saved.phase;layoutIndex=saved.layoutIndex??0;if(saved.layouts)layouts=saved.layouts;geometryTool=null;splitPoints=[];
           if(draft.solution && !layouts.some(s=>s.layoutId===draft.solution?.layoutId)){layouts=[structuredClone(draft.solution)];layoutIndex=0;}
           selectedOffcutId='';selectedGroupId='';partitionKey='';drawPoints=null;drawHover=undefined;snapHint=null;pendingSourceAck=false;validationAttempted=false;
           notice=action==='undo'?'Previous change undone.':'Change restored.';
@@ -817,6 +849,16 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         download('quotecore-offcuts-PROTOTYPE.svg',renderSvg(draft,{phase:'solution',print:true,showSheets,showEnvelope,showDetailedLabels,coverage:partition().regions}),'image/svg+xml');return;
       }
       if(action==='run'){run();return;}
+      if(action==='deselect-face'){selectedFaceId='';geometryTool=null;splitPoints=[];render();return;}
+      if(action==='edit-boundaries'){reviewEditing=!reviewEditing;geometryTool=null;splitPoints=[];render();return;}
+      if(action==='split-on-plan'){if(!face())throw new Error('Select a face.');geometryTool='split';reviewEditing=false;splitPoints=[];panMode=false;drawPoints=null;notice='Click two boundary points to split the selected face.';render();return;}
+      if(action==='merge-on-plan'){geometryTool='merge';splitPoints=[];panMode=false;notice='Click the neighbouring face to join.';render();return;}
+      if(action==='cancel-geometry-tool'){geometryTool=null;splitPoints=[];drawHover=undefined;snapHint=null;render();return;}
+      if(action==='join-neighbour'){const target=shadow.querySelector<HTMLSelectElement>('#qc-neighbour')?.value;if(!target)throw new Error('Choose a neighbour.');commitGeometry(mergeSharedFaces(draft.roof,draft.faces,selectedFaceId,target),'Faces joined. Check the resulting water arrow.');return;}
+      if(action==='show-cleanup'){cleanupChangeId=target.dataset.id??'';renderScene();return;}
+      if(action==='hide-cleanup'){cleanupChangeId='';renderScene();return;}
+      if(action==='keep-cleanup-separate'){const change=draft.geometryReview?.changes.find(c=>c.id===target.dataset.id);if(change)rebuildCleanup([...(draft.roof.geometryKeepSeparateEdgeIds??[]),...change.sourceIds]);return;}
+      if(action==='reset-cleanup-exceptions'){rebuildCleanup([]);return;}
       if(action==='back'){cancel();phase='faces';render();return;}
       if(action==='detect'){detect();render();return;}
       if(action==='add-face'){checkpoint();invalidate();panMode=false;drawPoints=[];drawHover=undefined;snapHint=null;notice='Draw the missing face. Click the first point to close, then choose water direction.';render();shadow.querySelector<HTMLElement>('.qc-canvas')?.focus({preventScroll:true});return;}
@@ -848,9 +890,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         draft.faces=draft.faces.filter(g=>g.id!==f.id);selectedFaceId=draft.faces[Math.min(index,draft.faces.length-1)]?.id??'';
         notice=`${f.name} deleted. Undo restores it. The roof perimeter has not been changed.`;render();return;
       }
-      if(action==='merge'&&f){const id=(shadow.querySelector('#merge-target') as HTMLSelectElement).value,g=draft.faces.find(g=>g.id===id);if(!g)throw new Error('Choose an adjacent face.');const combined=refreshFaceBoundary(mergeFaces(f,g),draft.roof);checkpoint();invalidate();draft.faces=draft.faces.filter(h=>h.id!==g.id).map(h=>h.id===f.id?combined:h);hiddenFaceIds.delete(g.id);hiddenFaceIds.delete(f.id);render();return;}
-      if(action==='split'&&f){const axis=(shadow.querySelector('#split-axis') as HTMLSelectElement).value as 'x'|'y',at=Number((shadow.querySelector('#split-at') as HTMLInputElement).value);const parts=splitFace(f,axis,at).map(g=>refreshFaceBoundary(g,draft.roof));checkpoint();invalidate();draft.faces=draft.faces.flatMap(g=>g.id===f.id?parts:[g]);hiddenFaceIds.delete(f.id);selectedFaceId=parts[0].id;render();return;}
-      if(action==='apply-polygon'&&f){const text=(shadow.querySelector('#polygon-points') as HTMLTextAreaElement).value,ps=text.trim().split(/\n+/).map(line=>{const nums=line.trim().split(/[,\s]+/).map(Number);if(nums.length!==2||!nums.every(Number.isFinite))throw new Error('Use one x,y vertex per line.');return{x:nums[0],y:nums[1]};});checkpoint();invalidate();f.polygon=ps;Object.assign(f,refreshFaceBoundary(f,draft.roof));f.confirmed=false;f.provenance='edited';render();return;}
+      if(action==='merge'&&f){const id=shadow.querySelector<HTMLSelectElement>('#merge-target')?.value;if(!id)throw new Error('Choose a neighbouring face.');commitGeometry(mergeSharedFaces(draft.roof,draft.faces,f.id,id),'Faces joined. Check the water arrow.');return;}
+      if(action==='split'&&f){const axis=(shadow.querySelector('#split-axis') as HTMLSelectElement).value as 'x'|'y',at=Number((shadow.querySelector('#split-at') as HTMLInputElement).value);const parts=splitFace(f,axis,at).map(g=>refreshFaceBoundary(g,draft.roof));const next=draft.faces.flatMap(g=>g.id===f.id?parts:[g]);assertReviewEdit(draft.roof,draft.faces,next);commitGeometry(next,'Face split. Review the new boundary and water arrows.');return;}
+      if(action==='apply-polygon'&&f){const text=(shadow.querySelector('#polygon-points') as HTMLTextAreaElement).value,ps=text.trim().split(/\n+/).map(line=>{const nums=line.trim().split(/[,\s]+/).map(Number);if(nums.length!==2||!nums.every(Number.isFinite))throw new Error('Use one x,y vertex per line.');return{x:nums[0],y:nums[1]};});commitGeometry(replaceSharedVertices(draft.roof,draft.faces,f.id,ps),'Shared vertices updated. Check the shape and water arrow.');return;}
       if((action==='apply-placement'||action==='rotate-offcut'||action==='fit-placement')&&draft.solution){
         const o=draft.solution.offcuts.find(o=>o.id===selectedOffcutId);if(!o)throw new Error('Select an offcut.');
         const p=draft.solution.placements.find(p=>p.kind==='reuse'&&p.offcutId===selectedOffcutId) ?? {rotation:0 as const,translateY:0};
@@ -921,6 +963,13 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       canvas.focus({ preventScroll: true }); canvas.dataset.dragging = 'true';
     } else {
       if (e.button !== 0 || busy || stale) return;
+      if(geometryTool==='split'){
+        e.preventDefault();const f=face();if(!f)return;
+        const nearest=f.polygon.map((a,i)=>projection(p,a,f.polygon[(i+1)%f.polygon.length])).sort((a,b)=>a.distance-b.distance)[0];
+        if(!nearest||nearest.distance>Math.min(14*(Number(canvas.dataset.renderScale)||1),draftingPolicy(draft.roof).suggestScene)){error='Click near the selected face boundary.';render();return;}
+        splitPoints.push(nearest.point);if(splitPoints.length===2){try{commitGeometry(splitSharedFace(draft.roof,draft.faces,f.id,splitPoints[0],splitPoints[1]),'Face split. Check both water arrows.');}catch(err){splitPoints=[];error=message(err);render();}}
+        else renderScene();return;
+      }
       if (drawPoints) {
         e.preventDefault();canvas.focus({preventScroll:true});snapHint=e.altKey?null:drawingSnap(p);
         if(snapHint?.kind==='close'){try{finishPolygon();}catch(err){error=message(err);}render();return;}
@@ -929,21 +978,23 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if (target.closest('[data-action]')) return; // lap/diagnostic buttons own clicks
       const section=target.closest<SVGElement>('[data-section]');
       if(section&&phase==='solution'&&!editPieces&&!editGroups){e.preventDefault();canvas.focus({preventScroll:true});selectSection(section.dataset.section??'');return;}
+      const edgeHandle=target.closest<SVGElement>('[data-review-edge]');
       const vertex = target.closest<SVGElement>('[data-vertex]'), flow = target.closest<SVGElement>('[data-flow]');
       const offcut = target.closest<SVGElement>('[data-offcut]'), group = target.closest<SVGElement>('[data-group]'), faceEl = target.closest<SVGElement>('[data-face]');
-      if (vertex) {
+      if(edgeHandle){const f=face(),index=Number(edgeHandle.dataset.reviewEdge);if(f&&Number.isInteger(index))drag={...base,kind:'edge',faceId:f.id,vertex:index,original:{...f.polygon[index]},edgeEnd:{...f.polygon[(index+1)%f.polygon.length]}};
+      } else if (vertex) {
         const f = draft.faces.find(f => f.id === vertex.dataset.faceId);
         if (f) drag = { ...base, kind: 'vertex', faceId: f.id, vertex: Number(vertex.dataset.vertex), original: { ...f.polygon[Number(vertex.dataset.vertex)] } };
       } else if (flow) drag = { ...base, kind: 'flow', faceId: flow.dataset.flow };
       else if (group && phase === 'solution') { selectedGroupId = group.dataset.group ?? ''; selectedOffcutId = ''; drag = { ...base, kind: 'group', groupId: selectedGroupId }; }
       else if (offcut && phase === 'solution') { selectedOffcutId = offcut.dataset.offcut ?? ''; drag = { ...base, kind: 'offcut', offcutId: selectedOffcutId }; }
-      else if (faceEl && phase === 'faces') { selectedFaceId = faceEl.dataset.face ?? ''; notice = ''; render(); shadow.querySelector<HTMLElement>('.qc-canvas')?.focus({ preventScroll: true }); return; }
+      else if (faceEl && phase === 'faces') { if(geometryTool==='merge'){try{commitGeometry(mergeSharedFaces(draft.roof,draft.faces,selectedFaceId,faceEl.dataset.face??''),'Faces joined. Check the water arrow.');}catch(err){error=message(err);render();}return;} selectedFaceId = faceEl.dataset.face ?? ''; notice = ''; render(); shadow.querySelector<HTMLElement>('.qc-canvas')?.focus({ preventScroll: true }); return; }
     }
     if (drag) { e.preventDefault(); canvas.setPointerCapture(e.pointerId); }
   }
   function pointerMove(event: Event): void {
     const e = event as PointerEvent;
-    if(drawPoints&&!drag&&(e.target as Element).closest('.qc-canvas')){
+    if((drawPoints||geometryTool==='split')&&!drag&&(e.target as Element).closest('.qc-canvas')){
       const p=scenePoint(e);snapHint=e.altKey?null:drawingSnap(p);drawHover=snapHint?.point??p;
       if(drawingFrame===null)drawingFrame=requestAnimationFrame(()=>{drawingFrame=null;renderScene();});return;
     }
@@ -963,13 +1014,11 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     } else if (drag.kind === 'offcut') {
       const group = [...shadow.querySelectorAll<SVGGElement>('[data-offcut]')].find(g => g.dataset.offcut === drag!.offcutId);
       group?.setAttribute('transform', `translate(${drag.last.x - drag.start.x} ${drag.last.y - drag.start.y})`);
-    } else if (drag.kind === 'vertex') {
-      const handle = [...shadow.querySelectorAll<SVGCircleElement>('[data-vertex]')].find(g => g.dataset.faceId === drag!.faceId && Number(g.dataset.vertex) === drag!.vertex);
-      handle?.setAttribute('cx', String(drag.last.x)); handle?.setAttribute('cy', String(drag.last.y));
-      for (const f of draft.faces) {
-        const polygon = [...shadow.querySelectorAll<SVGPolygonElement>('polygon[data-face]')].find(g => g.dataset.face === f.id);
-        polygon?.setAttribute('points', f.polygon.map(q => distance(q, drag!.original!) < .01 ? drag!.last : q).map(p => `${p.x},${p.y}`).join(' '));
-      }
+    } else if (drag.kind === 'vertex'||drag.kind==='edge') {
+      try{
+        const next=drag.kind==='vertex'?moveSharedVertex(draft.roof,draft.faces,drag.original!,drag.last):moveSharedEdge(draft.roof,draft.faces,drag.original!,drag.edgeEnd!,sub(drag.last,drag.start));
+        for(const f of next){const polygon=[...shadow.querySelectorAll<SVGPolygonElement>('polygon[data-face]')].find(g=>g.dataset.face===f.id);polygon?.setAttribute('points',f.polygon.map(p=>`${p.x},${p.y}`).join(' '));}
+      }catch{/* An invalid preview never changes the stored draft. Commit explains why. */}
     } else {
       const handle = [...shadow.querySelectorAll<SVGCircleElement>('[data-flow]')].find(g => g.dataset.flow === drag!.faceId);
       handle?.setAttribute('cx', String(drag.last.x)); handle?.setAttribute('cy', String(drag.last.y));
@@ -986,13 +1035,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       const raw=scenePoint(e), snapped=state.kind==='vertex'&&!e.altKey?drawingSnap(raw,state.original):null,p=snapped?.point??raw;
       snapHint=null;
       if (distance({ x: e.clientX, y: e.clientY }, state.clientStart) < 3) { render(); return; }
-      if (state.kind === 'vertex') {
-        checkpoint(); invalidate();
-        for (const f of draft.faces) {
-          let changed = false;
-          f.polygon = f.polygon.map(q => { if (distance(q, state.original!) < .01) { changed = true; return p; } return q; });
-          if (changed) { f.confirmed = false; f.provenance = 'edited'; Object.assign(f, refreshFaceBoundary(f, draft.roof)); }
-        }
+      if (state.kind === 'vertex'||state.kind==='edge') {
+        const next=state.kind==='vertex'?moveSharedVertex(draft.roof,draft.faces,state.original!,p):moveSharedEdge(draft.roof,draft.faces,state.original!,state.edgeEnd!,sub(p,state.start));
+        commitGeometry(next,'Shared boundary updated. All neighbouring faces remain joined. Check affected water arrows.');
       } else if (state.kind === 'flow') {
         const f = draft.faces.find(f => f.id === state.faceId);
         if (f) { const flow = unit(sub(p, interiorAnchor(f.polygon))); checkpoint(); invalidate(); f.flow = flow; f.flowSource = 'manual'; f.confirmed = false; delete f.directionApproval; }
@@ -1055,7 +1100,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if(drawPoints&&(e.key==='Backspace'||e.key==='Delete')){e.preventDefault();e.stopPropagation();drawPoints.pop();drawHover=undefined;snapHint=null;renderScene();return;}
     if(drawPoints&&e.key==='Enter'){e.preventDefault();e.stopPropagation();try{finishPolygon();}catch(err){error=message(err);}render();return;}
     if(e.key==='Escape'&&selectedSectionId){e.preventDefault();e.stopPropagation();selectedSectionId='';selectedFaceId='';render();return;}
-    if (e.key === 'Escape' && (drag || drawPoints || pendingSourceAck)) {
+    if (e.key === 'Escape' && (drag || drawPoints || pendingSourceAck || geometryTool)) {
+      geometryTool=null;splitPoints=[];
       e.preventDefault(); e.stopPropagation(); pointerCancel(); drawPoints = null; drawHover=undefined;snapHint=null; pendingSourceAck = false; render(); return;
     }
     if ((e.ctrlKey || e.metaKey) && !e.altKey && ['z', 'y'].includes(e.key.toLowerCase())) {
@@ -1092,8 +1138,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   for (const [type, fn, config] of listeners) shadow.addEventListener(type, fn, config);
   window.addEventListener('keydown', globalKeyDown); window.addEventListener('keyup', globalKeyUp); window.addEventListener('blur', blur);
   const watch = options.readCurrentSourceRevision ? setInterval(() => {
-    try { if (!stale && options.readCurrentSourceRevision!() !== capturedRevision) { stale = true; cancel(); pointerCancel(); render(); } }
-    catch { stale = true; cancel(); pointerCancel(); render(); }
+    try { if (!stale && options.readCurrentSourceRevision!() !== capturedRevision) { stale = true; options.onPlanInvalidated?.(); cancel(); pointerCancel(); render(); } }
+    catch { stale = true; options.onPlanInvalidated?.(); cancel(); pointerCancel(); render(); }
   }, 1000) : null;
   if(options.initialSavedReview&&reviewSaver){
     reviewSaver.initialise(options.initialSavedReview.revision);saveReady=true;

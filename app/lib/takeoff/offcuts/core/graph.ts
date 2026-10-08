@@ -1,3 +1,7 @@
+import { geometryFeatures } from './geometryFeatures';
+import { cleanBoundaryGraph } from './geometryCleanup';
+import { topologyFlowSuggestions } from './geometryFlow';
+import type { GeometryCleanupReport } from './geometryPolicy';
 import type { Issue, Point, RoofEdge, RoofFace, RoofInput } from './types';
 import { EPS, distance, projection, segmentHits, signedArea, validateRing, containsPoint } from './math';
 import { area, fromRing, intersect, subtract, unionAll } from './regions';
@@ -5,7 +9,7 @@ import { validatePartition } from './partition';
 import { suggestGeometryFlow } from './faceGeometry';
 import { normaliseLinework, type BoundaryRepair, type DrawingAdjustment } from './drafting';
 export { validatePartition } from './partition';
-export interface FaceDetection { faces: RoofFace[]; issues: Issue[]; repairs: BoundaryRepair[]; adjustments: DrawingAdjustment[]; normalisedEdges?: RoofEdge[] }
+export interface FaceDetection { faces: RoofFace[]; issues: Issue[]; repairs: BoundaryRepair[]; adjustments: DrawingAdjustment[]; normalisedEdges?: RoofEdge[]; geometryReview?: GeometryCleanupReport }
 /** Node real crossings, conservatively repair near misses, and polygonise the
  * cyclic graph. Dangling bridges are diagnosed LOCALLY, not walked twice into
  * an invalid outer cycle that discards otherwise closed neighbouring cells. */
@@ -19,7 +23,8 @@ export function deriveFaces(roof: RoofInput, snapTolerance?: number): FaceDetect
   }
   if(perimeter.length+roof.edges.length>1200)throw new Error('This review supports at most 1200 selected boundary/component segments.');
   if(roof.edges.some(e=>![e.a.x,e.a.y,e.b.x,e.b.y].every(Number.isFinite)))throw new Error('A roof boundary has invalid coordinates.');
-  const prepared=normaliseLinework(roof,perimeter,snapTolerance);
+  const cleaned=cleanBoundaryGraph(snapTolerance===0?{...roof,geometryCleanupMode:'raw'}:roof,perimeter);
+  const prepared=normaliseLinework({...roof,edges:cleaned.edges},perimeter,snapTolerance);
   const input=[...perimeter,...prepared.edges],splits=input.map(e=>[e.a,e.b]);
   if(prepared.adjustments.length)issues.push({severity:'warning',code:'SNAPPED_ENDPOINTS',message:`Aligned ${prepared.adjustments.length} nearby boundary endpoints for this review. Original takeoff measurements are unchanged.`});
   for(let i=0;i<input.length;i++)for(let j=i+1;j<input.length;j++){
@@ -105,6 +110,13 @@ export function deriveFaces(roof: RoofInput, snapTolerance?: number): FaceDetect
     issues.push({severity:'error',code:'DANGLING_LINE',faceId:f?.id,objectId:e.id,location,suggestionId:repair?.id,
       message:`A drawn line ends inside ${f?.name??'this area'}. Connect it if it separates two planes, or approve the face as drawn.`});
   }
+  if(cleaned.report.enabled){
+    cleaned.report.features=geometryFeatures(roof,prepared.edges);
+    const suggested=topologyFlowSuggestions(roof,faces,prepared.edges);
+    faces.splice(0,faces.length,...suggested.faces);cleaned.report.flowEvidence=suggested.evidence;
+    for(let i=issues.length-1;i>=0;i--)if(issues[i].code==='FLOW_REVIEW')issues.splice(i,1);
+    for(const f of faces)if(!f.flow)issues.push({severity:'warning',code:'FLOW_REVIEW',faceId:f.id,message:'Choose the water direction for this face.'});
+  }
   issues.push(...validatePartition(roof,faces));
-  return{faces,issues,repairs:prepared.repairs,adjustments:prepared.adjustments,normalisedEdges:roof.edges.map(e=>structuredClone(prepared.edges.find(n=>n.id===e.id)??e))};
+  return{faces,issues,repairs:prepared.repairs,adjustments:prepared.adjustments,normalisedEdges:roof.edges.flatMap(e=>{const next=prepared.edges.find(n=>n.id===e.id);return next?[structuredClone(next)]:roof.faceDetectionIgnoredEdgeIds?.includes(e.id)?[structuredClone(e)]:[];}),geometryReview:cleaned.report};
 }

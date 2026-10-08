@@ -6,7 +6,7 @@ import { mountWorkbench, type WorkbenchHandle, type OffcutOnePagerPayload } from
 import type { QuoteQuantityProposal } from '../core/quantities';
 import type { Draft } from '../core/types';
 import { tokenFallbacks } from './theme';
-export interface LaunchOptions { createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void; onSaveOnePager?: (payload:OffcutOnePagerPayload)=>void|Promise<void>;
+export interface LaunchOptions { onPlanInvalidated?:()=>void; onClosed?:()=>void; createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void; onSaveOnePager?: (payload:OffcutOnePagerPayload)=>void|Promise<void>;
   reviewRepository?:ReviewRepository;
   /** Explicit restore; normally use launchStoredQuoteCoreOffcuts. */
   initialSavedReview?:StoredReview; savedInputMode?:boolean;
@@ -74,6 +74,7 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
     handle?.destroy(); modal.close(); modal.remove(); css.remove();
     document.body.style.overflow = previousOverflow;
     if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    options.onClosed?.();
   }
   function requestClose(): void {
     if (closed || closeDialog) return;
@@ -99,7 +100,7 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
     // Establish real layout dimensions BEFORE the first SVG/handle render.
     modal.showModal();
     handle = mountWorkbench(host, captured.roof, {
-      inputCapture: capture, initialIssues: captured.issues, reviewRepository:options.reviewRepository, initialSavedReview:options.initialSavedReview, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal, onSaveOnePager:options.onSaveOnePager,
+      inputCapture: capture, initialIssues: captured.issues, reviewRepository:options.reviewRepository, initialSavedReview:options.initialSavedReview, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal, onSaveOnePager:options.onSaveOnePager, onPlanInvalidated:options.onPlanInvalidated,
       readCurrentSourceRevision: options.savedInputMode?undefined:() => fromQuoteCore(readSnapshot()).roof.sourceRevision,
       createWorker: options.createWorker ?? (() => new Worker(new URL('../worker.ts', import.meta.url), { type: 'module' })),
     });

@@ -24,7 +24,7 @@ export function applyLocalFaceRepair(roof: RoofInput, previous: RoofFace[], repa
   const before = structuredClone(edge);
   edge[repair.end] = { ...repair.to };
   const detected = deriveFaces(next);
-  if(detected.normalisedEdges)next.edges=structuredClone(detected.normalisedEdges);
+  // Keep original source measurements; canonical edges are a derived review graph.
   const samples = [repair.from, ...[.1, .25, .5, .75, .9].map(t => ({
     x: before.a.x + t * (before.b.x - before.a.x), y: before.a.y + t * (before.b.y - before.a.y),
   }))];

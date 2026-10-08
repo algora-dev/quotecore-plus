@@ -53,3 +53,8 @@ export type { ProvisionalReuseReport } from './core/provisionalReuse';
 
 export { searchSalvage, salvageEligibility, SALVAGE_POLICY, validateSalvageCertificate } from './core/salvage';
 export type { SalvageResult, SalvageSearchReport, SalvageCertificate, SalvageGroup } from './core/salvageModel';
+
+export { STOCK_END_MODEL, STOCK_END_POLICY, samePhysicalCuts } from './core/stockEnds';
+export type { StockEndProof } from './core/stockEnds';
+export { refinePurchasedStock, stockLengthRows } from './core/stockLength';
+export type { StockLengthReport, StockLengthRow } from './core/stockLength';

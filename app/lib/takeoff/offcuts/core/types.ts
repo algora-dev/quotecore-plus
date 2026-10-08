@@ -19,6 +19,10 @@ export interface RoofInput {
   /** Face-review only; physical cut tolerances are unchanged. */
   draftingTolerance?: 'tight' | 'balanced' | 'relaxed';
   faceDetectionIgnoredEdgeIds?: string[];
+  /** Review-only exception: keep these original measurements as distinct boundaries. */
+  geometryKeepSeparateEdgeIds?: string[];
+  /** Explicit recovery/reset tool; absent means automatic canonical linework. */
+  geometryCleanupMode?: 'auto' | 'raw';
 }
 export interface Issue {
   severity: 'error' | 'warning'; code: string; message: string;
@@ -34,7 +38,7 @@ export interface RoofFace {
   pitchDeg: number | null;
   /** Origin of the displayed vector; approval below is bound to exact reviewed geometry. */
   flowSource?: 'inferred' | 'manual';
-  flowSuggestionBasis?: 'spouting-hint' | 'outer-boundary' | 'needs-review';
+  flowSuggestionBasis?: 'spouting-hint' | 'outer-boundary' | 'geometry-topology' | 'needs-review';
   /** Explicit review acknowledgement. Invalidated by changes to polygon/vector/labels. */
   directionApproval?: string;
   /** Phase measured from the local minimum cross-slope coordinate. */
@@ -107,6 +111,8 @@ export interface Demand {
   stockRole?: 'primary-cut' | 'filler' | 'supplement';
   /** Only hip/valley/broken-hip cuts enter reusable inventory. */
   reusableCut?: boolean;
+  /** Canonically verified removal of nonproductive square stock, never a shorter offcut family. */
+  stockEndProof?: import('./stockEnds').StockEndProof;
   /** Shape-derived upper/lower cuts in this physical sheet's local millimetres. */
   cutEdges?: RoofEdge[];
   materialBankId?: string;
@@ -150,6 +156,9 @@ export interface MaterialBank {
   cutLengthMm: number; crossMinMm: number; crossMaxMm: number;
 }
 export interface BankLayout {
+  /** Only IDs, never user-supplied blank dimensions. Canonical regeneration recomputes every shorter blank.
+   * Missing retains historical bank-envelope behaviour for existing saved plans. */
+  stockEndRefinement?: { model: 'preserve-cut-ends-v1'; demandIds: string[] };
   primaryFaceIds: string[];
   laneOffsetByFace: Record<string, number>;
   /** Extra length applies to angled primary cuts, not short straight fillers. */
@@ -168,7 +177,7 @@ export interface BankLayout {
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14' | '2.15' | '2.16' | '2.17';
+  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19';
   layoutId?: string;
   layoutLabel?: string;
   objective?: PlanObjective;
@@ -191,6 +200,8 @@ export interface Solution {
   orderReady: false;
   receiverSafety?: import('./receiverSafety').ReceiverSafetyReport;
   provisionalReuse?: import('./provisionalReuse').ProvisionalReuseReport;
+  /** Post-plan purchasing audit; quantities/UI are independently derived from canonical demands. */
+  stockLengthRefinement?: import('./stockLength').StockLengthReport;
   /** Optional terminal-filler substitutions; original plan remains a separate saved plan. */
   salvage?: import('./salvageModel').SalvageCertificate;
 }
@@ -200,6 +211,8 @@ export interface Draft {
   profile: Profile; settings: SolveSettings; solution: Solution | null;
   exportedAt?: string;
   reviewNotes?: Issue[];
+  /** Diagnostic only. Geometry authority remains the reviewed polygons. */
+  geometryReview?: import('./geometryPolicy').GeometryCleanupReport;
   /** UI acknowledgements, bound to geometry/rules; never bypass errors. */
   dismissedWarnings?: string[];
   /** Local review meanings, never written back to the component library. */
@@ -282,7 +295,7 @@ export interface TraceCandidate {
   materialSaving?: MaterialSavingAssessment;
 }
 export interface DecisionTrace {
-  schemaVersion: 1; engineVersion: '2.13' | '2.14' | '2.15' | '2.16' | '2.17'; requestFingerprint: string;
+  schemaVersion: 1; engineVersion: '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19'; requestFingerprint: string;
   objective: PlanObjective; selectedTrial: number | null;
   events: TraceEvent[]; candidates: TraceCandidate[];
   truncated: boolean; droppedEvents: number;

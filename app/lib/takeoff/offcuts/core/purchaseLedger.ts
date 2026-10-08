@@ -3,7 +3,8 @@
  * new purchases and consumed ancestors are not counted as remaining stock.
  * Areas (not sums of angled maximum lengths) conserve material through cuts. */
 import type { Issue, Lap, Placement, Point, Region, Solution } from './types';
-import { isStraightFiller } from './material';
+import { isStraightFiller, validStockEndProof } from './material';
+import { STOCK_END_MODEL } from './stockEnds';
 import { bankLaneAudit } from './bankLanes';
 import { area, bounds, intersect, rotate180, subtract, translate, unionAll } from './regions';
 
@@ -19,6 +20,7 @@ export interface PurchasedRoot {
   stockAreaM2:number; installedPhysicalAreaM2:number; netCoverAreaM2:number;
   terminalReusableAreaM2:number; otherRemainderAreaM2:number; balanceErrorM2:number;
   pieces:LedgerPiece[]; unusedOffcutIds:string[];
+  originalLengthM?:number; lengthBasis?:'unchanged-bank-stock'|'square-end-refined'; removedEnd?:'upstream'|'downstream'|'both'; preservedCutCount?:number;
 }
 export interface PurchaseLedger {
   model:typeof PURCHASE_LEDGER_MODEL; valid:boolean; issues:Issue[];
@@ -62,6 +64,19 @@ export function rootSheetLedger(s:Solution):PurchaseLedger {
   for(const o of s.offcuts){const source=locations.get(o.sourceDemandId);if(source&&o.rootDemandId&&source.root!==o.rootDemandId)error('LEDGER_ROOT','An unused or reused piece changed its purchased root identity.',o.id);}
   const used=new Set<string>();
   for(const p of s.placements)if(p.kind==='reuse'){if(used.has(p.offcutId??''))error('LEDGER_DOUBLE_USE','The same offcut is consumed twice.',p.offcutId);used.add(p.offcutId??'');}
+  // A stored exception never disables continuity. Recompute it, and require the
+  // canonical layout directive + an actual unedited purchase, not a used offcut.
+  const certified=new Set<string>(),endModel=s.bankLayout?.stockEndRefinement;
+  if(endModel&&(endModel.model!==STOCK_END_MODEL||!Array.isArray(endModel.demandIds)||!endModel.demandIds.length||new Set(endModel.demandIds).size!==endModel.demandIds.length))
+    error('STOCK_END_PROOF','Malformed stock-end refinement; recalculate the reviewed roof.');
+  const declared=new Set(Array.isArray(endModel?.demandIds)?endModel.demandIds:[]);
+  for(const id of declared)if(!ds.has(id))error('STOCK_END_PROOF','Refinement references missing purchased stock.',id);
+  const phaseFresh=new Set(s.receiverSafety?.families.flatMap(f=>f.freshDemandIds)??[]);
+  for(const d of s.demands)if(d.stockEndProof||declared.has(d.id)){
+    if(placements.get(d.id)?.kind!=='new'||placements.get(d.id)?.manual||phaseFresh.has(d.id)||!validStockEndProof(d,s.profile,s.bankLayout))
+      error('STOCK_END_PROOF','The shorter stock does not preserve its canonical end allowances and complete offcut envelope.',d.id);
+    else certified.add(d.id);
+  }
   // Parent-stock continuity is independent of the final short installed piece.
   // A cuttable primary lane may not silently use a shorter lower-ridge blank.
   for(const d of s.demands){
@@ -69,7 +84,9 @@ export function rootSheetLedger(s:Solution):PurchaseLedger {
     const length=s.bankLayout.cutLengthByFace?.[d.faceId];if(length===undefined)continue;
     const requiredLength=length+2*s.profile.endAllowanceMm+(s.bankLayout.extraLengthByFace[d.faceId]??0)+(s.bankLayout.tailExtensionByFace?.[d.faceId]??0);
     const actual=bounds(d.blank).maxY-bounds(d.blank).minY;
-    if(actual+1e-5<requiredLength)error('CUT_STOCK_CONTINUITY','An angled primary lane was shortened below its controlling stock length, breaking its reusable cut set.',d.id);
+    const original=certified.has(d.id)?bounds(d.stockEndProof!.originalBlank):undefined;
+    const protectedLength=original?original.maxY-original.minY:actual;
+    if(protectedLength+1e-5<requiredLength)error('CUT_STOCK_CONTINUITY','An angled primary lane was shortened below its controlling stock length, breaking its reusable cut set.',d.id);
   }
   for(const bank of bankLaneAudit(s)){
     const op=s.bankLayout!.primaryOperations!.find(o=>o.id===bank.operationId)!;
@@ -104,7 +121,10 @@ export function rootSheetLedger(s:Solution):PurchaseLedger {
     const balance=stockArea-installedArea-area(reusable)-area(other);
     if(Math.abs(balance)>tolerance)error('LEDGER_BALANCE','Purchased stock does not reconcile with installed and remaining metal.',id);
     roots.push({rootDemandId:id,faceId:d.faceId,lengthM:length/1000,widthM:width/1000,coverM:s.profile.coverMm/1000,stockAreaM2:stockArea/1e6,
-      installedPhysicalAreaM2:installedArea/1e6,netCoverAreaM2:area(net)/1e6,terminalReusableAreaM2:area(reusable)/1e6,otherRemainderAreaM2:area(other)/1e6,balanceErrorM2:balance/1e6,pieces,unusedOffcutIds:terminal.map(o=>o.id)});
+      installedPhysicalAreaM2:installedArea/1e6,netCoverAreaM2:area(net)/1e6,terminalReusableAreaM2:area(reusable)/1e6,otherRemainderAreaM2:area(other)/1e6,balanceErrorM2:balance/1e6,pieces,unusedOffcutIds:terminal.map(o=>o.id),
+      ...(d.stockEndProof?{originalLengthM:(bounds(d.stockEndProof.originalBlank).maxY-bounds(d.stockEndProof.originalBlank).minY)/1000,
+        lengthBasis:'square-end-refined' as const,removedEnd:d.stockEndProof.upstreamRemovedMm>1e-6?(d.stockEndProof.downstreamRemovedMm>1e-6?'both' as const:'upstream' as const):'downstream' as const,
+        preservedCutCount:d.stockEndProof.preservedOffcutIds.length}:{})});
   }
   const sum=(f:(r:PurchasedRoot)=>number)=>roots.reduce((n,r)=>n+f(r),0);
   const schedule=new Map<string,PurchaseLedger['stockSchedule'][number]>();
@@ -120,8 +140,8 @@ export function rootSheetLedger(s:Solution):PurchaseLedger {
 export function purchaseLedgerCsv(ledger:PurchaseLedger):string {
   if(!ledger.valid)throw new Error('Correct material-ledger errors before exporting purchase quantities.');
   const cell=(x:unknown)=>'"'+String(x??'').replace(/^([=+@\-\t\r\n])/,"'$1").replace(/"/g,'""')+'"';
-  const header=['parent_sheet','face','length_m','cover_width_m','physical_width_m','supply_m2','installed_physical_m2','unused_reusable_m2','other_remainder_m2','installed_pieces'];
-  const rows=ledger.roots.map(r=>[r.rootDemandId,r.faceId,r.lengthM,r.coverM,r.widthM,r.stockAreaM2,r.installedPhysicalAreaM2,r.terminalReusableAreaM2,r.otherRemainderAreaM2,r.pieces.length]);
+  const header=['parent_sheet','face','length_m','cover_width_m','physical_width_m','supply_m2','installed_physical_m2','unused_reusable_m2','other_remainder_m2','installed_pieces','original_length_m','length_basis','removed_end','preserved_cut_count'];
+  const rows=ledger.roots.map(r=>[r.rootDemandId,r.faceId,r.lengthM,r.coverM,r.widthM,r.stockAreaM2,r.installedPhysicalAreaM2,r.terminalReusableAreaM2,r.otherRemainderAreaM2,r.pieces.length,r.originalLengthM??r.lengthM,r.lengthBasis??'unchanged-bank-stock',r.removedEnd??'',r.preservedCutCount??'']);
   return [header,...rows].map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';
 }
 /** Lap wording is eave-relative. Equal screen arrows on opposite-facing planes

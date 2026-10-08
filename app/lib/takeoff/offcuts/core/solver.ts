@@ -1,3 +1,4 @@
+import { refinePurchasedStock } from './stockLength';
 import { validateSalvageCertificate } from './salvageModel';
 import { replayProvisionalDestinations } from './provisionalReuse';
 import type { AlternativePlanOptions, AlternativePlanResult, DecisionTrace, PlanObjective, PlanQuality, Demand, Issue, Lap, Offcut, Placement, Solution, SolveRequest } from './types';
@@ -31,7 +32,7 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
     ? optimiseBankLayouts(request, hooks) : [optimiseLegacy(request, hooks)];
   for (const solution of solutions) {
     if(request.settings.stockMode==='bank-first')protectValleyReceivers(request,solution,hooks.shouldCancel);
-    solution.engineVersion='2.17';
+    solution.engineVersion='2.19';
     solution.layoutId=planSignature(solution);
     solution.issues.push(...validateSolution(solution));
     if (solution.issues.some(i => i.severity === 'error')) solution.status = 'invalid';
@@ -52,6 +53,20 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
       if(selected!==incumbent)solutions=[selected,...solutions.filter(s=>s!==incumbent)];
     }
   }
+  // Refine purchases only after the final cut tree/receiver certificates exist.
+  // Alternatives are compared AFTER refinement too: never compare a reduced
+  // Recommended schedule with an artificially unrefined alternative.
+  solutions=solutions.map(s=>{
+    if(s.status==='invalid')return s;
+    const refined=refinePurchasedStock(request,s,validateSolution,hooks),selected=refined.solution;
+    selected.stockLengthRefinement=refined.report;selected.search.elapsedMs+=refined.report.elapsedMs;
+    if(selected.decisionTrace){
+      selected.decisionTrace.engineVersion='2.19';
+      selected.decisionTrace.events.push({step:selected.decisionTrace.events.length+1,action:'end-specific-stock-refinement',
+        message:refined.report.status==='improved'?'Removed unused square-ended stock; complete offcut families, descendants, lap and receiver certificates unchanged.':'Retained the checked purchase schedule; no unverified shorter blank can replace it.',data:{report:refined.report}});
+    }
+    return selected;
+  });
   // The bank search retains coherent macro candidates first. Compare the actual
   // protected purchase cost of those retained candidates, never the stale
   // pre-allowance cost or the number of sheets alone.

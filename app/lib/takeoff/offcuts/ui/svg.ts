@@ -1,3 +1,5 @@
+import type { GeometryChange } from '../core/geometryPolicy';
+import { buildSharedTopology } from '../core/sharedTopology';
 import { eaveCoverPoints } from '../core/bankLanes';
 import { reuseDepth } from '../core/reuseDepth';
 import type { DrawingSnap, BoundaryRepair } from '../core/drafting';
@@ -55,6 +57,7 @@ export interface RenderOptions {
   pendingCursor?:Point; snapHint?:DrawingSnap; boundaryRepair?:BoundaryRepair; boundaryIssues?:Issue[];
   coverage?: CoverageRegion[]; focusedDiagnosticId?: string;
   sceneUnitsPerPixel?: number;
+  reviewEditing?: boolean; cleanupChange?: GeometryChange;
 }
 export function renderSvg(draft: Draft, options: RenderOptions): string {
   const {roof,faces,solution:s} = draft, colors = new Map(faces.map((f,i)=>[f.id,PALETTE[i%PALETTE.length]]));
@@ -75,7 +78,7 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
   // separately; external image URLs must never leak in downloadable drawings.
   if (!options.print && roof.imageUrl && /^(https?:|blob:|data:image\/)/.test(roof.imageUrl)) shapes += `<image href="${escapeHtml(roof.imageUrl)}" x="0" y="0" width="${roof.sceneWidth}" height="${roof.sceneHeight}" preserveAspectRatio="none" opacity="0.82"/>`;
   for (const outline of roof.outlines) shapes += `<polygon points="${points(outline.polygon)}" fill="#f3f5f7" fill-opacity="${roof.imageUrl ? '.05' : '.65'}" stroke="#253443" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
-  if(options.phase==='faces'||options.showSources)for (const edge of roof.edges) shapes += `<line x1="${n(edge.a.x)}" y1="${n(edge.a.y)}" x2="${n(edge.b.x)}" y2="${n(edge.b.y)}" stroke="${edge.kind==='valley'?'#a96c23':edge.kind==='broken_hip'?'#d36f25':'#697784'}" stroke-width="1.2" vector-effect="non-scaling-stroke"${edge.kind==='spouting'?' stroke-dasharray="6 4"':''}/>`;
+  if(options.showSources)for (const edge of roof.edges) shapes += `<line x1="${n(edge.a.x)}" y1="${n(edge.a.y)}" x2="${n(edge.b.x)}" y2="${n(edge.b.y)}" stroke="${edge.kind==='valley'?'#a96c23':edge.kind==='broken_hip'?'#d36f25':'#697784'}" stroke-width="1.2" vector-effect="non-scaling-stroke"${edge.kind==='spouting'?' stroke-dasharray="6 4"':''}/>`;
   for (const f of faces) {
     if (hidden(f.id)) continue;
     if (options.phase === 'faces') shapes += `<polygon data-face="${escapeHtml(f.id)}" points="${points(f.polygon)}" fill="#FF6B35" fill-opacity="${options.selectedFaceId===f.id?'.22':'.10'}" stroke="${options.selectedFaceId===f.id?'#B63D0A':'#825000'}" stroke-width="${options.selectedFaceId===f.id?3:1.5}" vector-effect="non-scaling-stroke"/>`;
@@ -199,8 +202,20 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
       }
     }
     if(options.phase==='faces'&&!hasFlow(flow)&&!options.print)shapes+=`<g data-action="choose-flow" data-id="${escapeHtml(f.id)}" role="button" tabindex="0" aria-label="Set water direction for ${escapeHtml(f.name)}" style="cursor:pointer"><rect x="${n(c.x-36*px)}" y="${n(c.y-5*px)}" width="${n(72*px)}" height="${n(26*px)}" rx="${n(5*px)}" fill="#FFF1E7" stroke="#B63D0A" vector-effect="non-scaling-stroke"/><text x="${n(c.x)}" y="${n(c.y+12*px)}" text-anchor="middle" font-size="${n(11*px)}" fill="#9F3509">Set flow</text></g>`;
+    if(options.phase==='faces'&&options.selectedFaceId===f.id&&!options.print&&options.reviewEditing){
+      try { const mesh=buildSharedTopology(roof,faces);
+        f.polygon.forEach((a,i)=>{const b=f.polygon[(i+1)%f.polygon.length],mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+          if(mesh.edges.some(e=>e.faceIds.length===2&&e.faceIds.includes(f.id)&&projection(mid,mesh.nodes.find(n=>n.id===e.a)!.point,mesh.nodes.find(n=>n.id===e.b)!.point).distance<1e-5))
+            shapes+=`<rect data-review-edge="${i}" x="${n(mid.x-5*px)}" y="${n(mid.y-5*px)}" width="${n(10*px)}" height="${n(10*px)}" fill="#fff" stroke="#46505E" stroke-width="2" vector-effect="non-scaling-stroke"><title>Drag shared boundary</title></rect>`;
+        });
+      } catch { /* Invalid imported polygons are shown with existing diagnostics. */ }
+    }
     if(options.phase==='faces'&&options.selectedFaceId===f.id&&!options.print)f.polygon.forEach((p,i)=>{shapes+=`<circle data-vertex="${i}" data-face-id="${escapeHtml(f.id)}" cx="${n(p.x)}" cy="${n(p.y)}" r="${n(5*px)}" fill="#fff" stroke="#B63D0A" stroke-width="2"/>`;});
     shapes+='</g>';
+  }
+  if(options.cleanupChange){
+    const change=options.cleanupChange;
+    shapes+=`<g pointer-events="none" data-cleanup-preview>${change.before.map(e=>`<line x1="${n(e.a.x)}" y1="${n(e.a.y)}" x2="${n(e.b.x)}" y2="${n(e.b.y)}" stroke="#c04883" stroke-width="4" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>`).join('')}${change.after.map(e=>`<line x1="${n(e.a.x)}" y1="${n(e.a.y)}" x2="${n(e.b.x)}" y2="${n(e.b.y)}" stroke="#087d64" stroke-width="2" vector-effect="non-scaling-stroke"/>`).join('')}</g>`;
   }
   if(options.pendingPolygon?.length){
     const p=options.pendingPolygon,preview=options.pendingCursor?[...p,options.pendingCursor]:p;

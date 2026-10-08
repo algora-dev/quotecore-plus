@@ -1,3 +1,4 @@
+import { STOCK_END_MODEL, proposeStockEnds, originalStockDemand, sameStockData } from './stockEnds';
 import type { BankLayout, Demand, FaceFrame, Issue, Offcut, Point, Profile, Region, RoofEdge, RoofFace, RoofInput, SolveSettings } from './types';
 import { EPS, add, dot, mul, sub, unit, validateRing } from './math';
 import { area, bounds, boundarySegments, components, extendY, fromRing, intersect, isMonotone, rectangle, subtract, translate } from './regions';
@@ -67,6 +68,11 @@ export function isStraightFiller(required: Demand['required']): boolean {
 }
 export function validateBankLayout(faces: RoofFace[], profile: Profile, settings: SolveSettings, layout: BankLayout): void {
   if (settings.stockMode !== 'bank-first') throw new Error('A bank layout requires bank-first mode.');
+  if(layout.stockEndRefinement){
+    const q=layout.stockEndRefinement;
+    if(q.model!==STOCK_END_MODEL||!Array.isArray(q.demandIds)||!q.demandIds.length||q.demandIds.length>settings.maxSheets||
+      q.demandIds.some(id=>typeof id!=='string')||new Set(q.demandIds).size!==q.demandIds.length)throw new Error('Invalid stock-end refinement model.');
+  }
   const ids = new Set(faces.map(f => f.id));
   if (new Set(layout.primaryFaceIds).size !== layout.primaryFaceIds.length || layout.primaryFaceIds.some(id => !ids.has(id))) throw new Error('Invalid primary face selection.');
   if (Object.keys(layout.laneOffsetByFace).length !== faces.length || Object.keys(layout.extraLengthByFace).length !== faces.length ||
@@ -213,7 +219,32 @@ export function generateDemands(roof: RoofInput, faces: RoofFace[], profile: Pro
     layout?.cutLengthByFace?.[face.id], layout?.tailExtensionByFace?.[face.id] ?? 0,
     layout?.materialBanks?.find(b => b.faceIds.includes(face.id))?.id, layout?.receiverStockLengthByFace?.[face.id]));
   if (result.length > settings.maxSheets) throw new Error(`Sheet limit exceeded (${settings.maxSheets}). Check the calibration/cover or reduce the selected roof scope.`);
+  if(layout?.stockEndRefinement){
+    const ids=new Set(layout.stockEndRefinement.demandIds);
+    if([...ids].some(id=>!result.some(d=>d.id===id)))throw new Error('Stock-end refinement references a missing lane.');
+    return result.map(d=>{
+      if(!ids.has(d.id))return d;
+      if(!layout.primaryFaceIds.includes(d.faceId)||layout.selfFillFaceIds?.includes(d.faceId)||layout.receiverStockLengthByFace?.[d.faceId]!==undefined)
+        throw new Error('Only unprotected primary purchasing stock may use the stock-end refinement.');
+      const refined=proposeStockEnds(d,profile,layout.extraLengthByFace[d.faceId]??0,layout.tailExtensionByFace?.[d.faceId]??0,offcutsFrom);
+      if(!refined)throw new Error('This lane cannot be shortened without changing its physical cut envelope.');
+      return refined;
+    });
+  }
   return result;
+}
+/** Solution-only validation replays the deterministic proof. validateDraft ALSO
+ * regenerates original blanks from the reviewed roof, so an imported proof
+ * cannot define a different original roof/bank geometry. */
+export function validStockEndProof(d:Demand,profile:Profile,layout?:BankLayout):boolean {
+  try{
+    const proof=d.stockEndProof,q=layout?.stockEndRefinement;
+    if(!proof||proof.model!==STOCK_END_MODEL||q?.model!==STOCK_END_MODEL||!q.demandIds.includes(d.id)||
+      !layout!.primaryFaceIds.includes(d.faceId)||layout!.selfFillFaceIds?.includes(d.faceId)||layout!.receiverStockLengthByFace?.[d.faceId]!==undefined)return false;
+    const original=originalStockDemand(d);
+    const expected=proposeStockEnds(original,profile,layout!.extraLengthByFace[d.faceId]??0,layout!.tailExtensionByFace?.[d.faceId]??0,offcutsFrom);
+    return !!expected&&sameStockData(expected,d);
+  }catch{return false;}
 }
 /** Produce inventory only at an approved hip/valley cut, from ACTUAL available
  * metal. The same operation is used when a reused sheet is trimmed again.
