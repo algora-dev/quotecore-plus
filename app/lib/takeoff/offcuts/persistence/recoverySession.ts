@@ -1,9 +1,9 @@
-import { fingerprint } from '../core/math';
+import { canonicalFingerprint } from '../core/math';
 import { withTimeout } from '../reliability/timeout';
 import { type RecoveryDocument, type RecoveryRecord, parseRecoveryDocument } from './recoveryData';
 import type { RecoveryBackup, RecoveryRepository } from './recoveryStore';
 import type { CalculationJournal } from '../reliability/protocol';
-import type { ReviewDocument } from './reviews';
+import type { ReviewDocument, ReviewScope } from './reviews';
 /** Serial compare-and-swap writes; source state is separate from quote prices.
  * Device backup is written before network I/O. An uncertain network write blocks
  * further cloud writes until explicit reload, never blind retry at a stale revision. */
@@ -11,8 +11,9 @@ export class RecoverySession {
   private latest:RecoveryDocument;
   private pending:RecoveryDocument|null=null;private active:Promise<void>|null=null;
   private timer:ReturnType<typeof setTimeout>|null=null;private blocked=false;private lastCloudAt=0;private lastSent:RecoveryDocument|null=null;
-  constructor(private repository:RecoveryRepository,private backup:RecoveryBackup|null,private record:RecoveryRecord,
-    private onStatus:(message:string)=>void=()=>{}){this.latest=structuredClone(record.document);}
+  private scope:ReviewScope;private record:RecoveryRecord;
+  constructor(private repository:RecoveryRepository,private backup:RecoveryBackup|null,record:RecoveryRecord&{document:RecoveryDocument},
+    private onStatus:(message:string)=>void=()=>{}){this.record=record;this.scope=record.document.scope;this.latest=structuredClone(record.document);}
   revision():number{return this.record.revision;}
   document():RecoveryDocument{return structuredClone(this.latest);}
   async checkpoint(document:RecoveryDocument):Promise<void>{this.queue(document);await this.flush();}
@@ -36,9 +37,12 @@ export class RecoverySession {
   /** Explicit retry only. Reconcile a lost acknowledgement without overwriting
    * another tab. Aborting HTTP does not establish that the server rolled back. */
   async retry():Promise<void>{
-    const current=await withTimeout(this.repository.load(this.record.document.scope),20_000,'Checkpoint reload timed out.');
+    const current=await withTimeout(this.repository.load(this.scope),20_000,'Checkpoint reload timed out.');
+    // A stored document that can no longer be verified is never restored, but
+    // the row can be replaced: adopt its revision and let the CAS update run.
+    if(current&&!current.document){this.record=current;this.blocked=false;await this.flush();return;}
     if((current?.revision??0)!==this.record.revision){
-      if(!current||!this.lastSent||fingerprint(current.document)!==fingerprint(this.lastSent))throw new Error('A newer checkpoint exists. Reload or export rather than overwrite another tab.');
+      if(!current||!this.lastSent||canonicalFingerprint(current.document)!==canonicalFingerprint(this.lastSent))throw new Error('A newer checkpoint exists. Reload or export rather than overwrite another tab.');
       this.record=current;
     }
     this.blocked=false;await this.flush();

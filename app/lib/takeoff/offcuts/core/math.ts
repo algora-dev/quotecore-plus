@@ -72,3 +72,17 @@ export function fingerprint(value: unknown): string {
   for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
   return (h >>> 0).toString(16).padStart(8, '0');
 }
+/** Postgres jsonb and structured clones do not preserve object key order, so a
+ * raw JSON.stringify hash of the same data differs after a persistence
+ * round-trip. Canonical hashing sorts object keys (arrays keep their order)
+ * so equal data always hashes equal, on creation and on verification. */
+export function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') {
+    const source = value as Record<string, unknown>, out: Record<string, unknown> = {};
+    for (const key of Object.keys(source).sort()) out[key] = canonicalize(source[key]);
+    return out;
+  }
+  return value;
+}
+export function canonicalFingerprint(value: unknown): string { return fingerprint(canonicalize(value)); }

@@ -1,5 +1,5 @@
 import type { Point } from '../core/types';
-import { fingerprint } from '../core/math';
+import { canonicalFingerprint, fingerprint } from '../core/math';
 import { fromQuoteCore, type AdaptedTakeoff, type QuoteCoreSnapshot } from './quotecore';
 
 export interface LiveInputCapture {
@@ -33,8 +33,16 @@ export function cloneTakeoffSnapshot(s: QuoteCoreSnapshot): QuoteCoreSnapshot {
   if(JSON.stringify(copy).length>3_000_000)throw new Error('This live takeoff exceeds the 3 MB snapshot limit. Select a smaller roof scope.');
   return copy;
 }
-/** Display URL refreshes must not make a correct geometric snapshot stale. */
+/** Display URL refreshes must not make a correct geometric snapshot stale.
+ * Canonical hashing keeps the value stable across jsonb/clone key reordering. */
 export function liveInputFingerprint(s: QuoteCoreSnapshot): string {
+  const copy=cloneTakeoffSnapshot(s);delete copy.imageUrl;
+  return canonicalFingerprint(copy);
+}
+/** Captures saved before the canonical-hash switch hashed insertion key order.
+ * Read-only verification fallback for those existing copies (device storage
+ * preserves their original key order); never used to write new fingerprints. */
+export function legacyLiveInputFingerprint(s: QuoteCoreSnapshot): string {
   const copy=cloneTakeoffSnapshot(s);delete copy.imageUrl;
   return fingerprint(copy);
 }

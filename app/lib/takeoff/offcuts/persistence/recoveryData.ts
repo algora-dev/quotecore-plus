@@ -1,6 +1,6 @@
 import {recoveryId} from '../reliability/id';
-import { captureLiveTakeoff, exportLiveCapture, type LiveInputCapture } from '../adapters/liveSnapshot';
-import { fingerprint } from '../core/math';
+import { captureLiveTakeoff, exportLiveCapture, legacyLiveInputFingerprint, type LiveInputCapture } from '../adapters/liveSnapshot';
+import { canonicalFingerprint, fingerprint } from '../core/math';
 import type { Point } from '../core/types';
 import { sameReviewScope, type ReviewDocument, type ReviewScope } from './reviews';
 import {validCalculationJournal,type CalculationJournal} from '../reliability/protocol';
@@ -22,7 +22,10 @@ export interface RecoveryDocument {
   imageKey:string;savedAt:string;status:'active'|'completed'|'discarded';capture:LiveInputCapture;
   workstation:WorkstationRecoveryState;review:ReviewDocument|null;calculation:CalculationJournal|null;
 }
-export interface RecoveryRecord {revision:number;document:RecoveryDocument;}
+/** A null document means the stored row exists but its content can no longer
+ * be verified (pre-canonical jsonb rows). It is never restored; the revision is
+ * reported so the next compare-and-swap save replaces the row. */
+export interface RecoveryRecord {revision:number;document:RecoveryDocument|null;}
 export const RECOVERY_MAX_BYTES=12_000_000;
 const record=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
 const finite=(n:unknown):n is number=>typeof n==='number'&&Number.isFinite(n);
@@ -67,16 +70,23 @@ export function parseRecoveryDocument(value:unknown,scope?:ReviewScope):Recovery
   if(d?.schemaVersion!==1||d.kind!=='quotecore-takeoff-recovery'||d.engineVersion!=='2.20'||typeof d.id!=='string'||!d.scope||typeof d.scope.quoteId!=='string'||typeof d.scope.pageId!=='string'||typeof d.imageKey!=='string'||!['active','completed','discarded'].includes(d.status)||!Number.isFinite(Date.parse(d.savedAt)))throw new Error('Invalid takeoff recovery document.');
   if(scope&&!sameReviewScope(d.scope,scope))throw new Error('Recovery belongs to a different quote, page or roof area.');
   const capture=captureLiveTakeoff(d.capture?.snapshot);
-  if(!sameReviewScope(d.scope,{quoteId:capture.snapshot.quoteId,pageId:capture.snapshot.pageId,areaScopeId:capture.snapshot.areaScopeId??null})||capture.inputFingerprint!==d.capture.inputFingerprint)throw new Error('Recovery source does not match its scope or fingerprint.');
+  // Canonical hashing is immune to jsonb/clone key reordering; the legacy hash
+  // still verifies copies saved before the canonical switch (their original
+  // key order is preserved in device storage). Neither branch accepts altered
+  // data: both are exact-content checks of the same parsed snapshot.
+  const stored=d.capture?.inputFingerprint;
+  const verifiedFingerprint=stored===capture.inputFingerprint?capture.inputFingerprint:stored===legacyLiveInputFingerprint(capture.snapshot)?stored:null;
+  if(!sameReviewScope(d.scope,{quoteId:capture.snapshot.quoteId,pageId:capture.snapshot.pageId,areaScopeId:capture.snapshot.areaScopeId??null})||verifiedFingerprint===null)throw new Error('Recovery source does not match its scope or fingerprint.');
   d.capture=JSON.parse(exportLiveCapture({...capture,captureId:d.capture.captureId,capturedAt:d.capture.capturedAt})) as LiveInputCapture;
   d.workstation=checkedWorkstationState(d.workstation);
-  if(d.review&&(!sameReviewScope(d.review.scope,d.scope)||d.review.sourceFingerprint!==capture.inputFingerprint))throw new Error('Recovery review is not derived from this captured input.');
+  if(d.review&&(!sameReviewScope(d.review.scope,d.scope)||d.review.sourceFingerprint!==verifiedFingerprint))throw new Error('Recovery review is not derived from this captured input.');
   if(d.calculation&&!validCalculationJournal(d.calculation))throw new Error('Invalid calculation journal.');
   return d;
 }
 export function recoveryStateFingerprint(state:WorkstationRecoveryState):string {
   // Display selection and collapsed rails do not mean the measured roof changed.
-  return fingerprint([state.componentMeasurements.map(g=>[g.componentId,g.measurements]),state.roofAreas,state.calibrations,state.calibrationConfirmed,state.touchEntries,state.measurementSystem]);
+  // Canonical: one side of every comparison crossed a persistence round-trip.
+  return canonicalFingerprint([state.componentMeasurements.map(g=>[g.componentId,g.measurements]),state.roofAreas,state.calibrations,state.calibrationConfirmed,state.touchEntries,state.measurementSystem]);
 }
 export function stableRecoveryImageKey(pageId:string,url:string,width:number,height:number,revision?:string|null):string {
   let path=url.split(/[?#]/)[0];try{path=new URL(url).pathname;}catch{/* local/demo URL */}

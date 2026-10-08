@@ -4,7 +4,7 @@ import { salvagePhysicalFingerprint } from '../core/salvageModel';
  * No stored result is accepted without re-running geometric/material checks. */
 import type { Draft, RoofInput, Solution, Issue } from '../core/types';
 import type { LiveInputCapture } from '../adapters/liveSnapshot';
-import { exportLiveCapture, captureLiveTakeoff } from '../adapters/liveSnapshot';
+import { exportLiveCapture, captureLiveTakeoff, legacyLiveInputFingerprint } from '../adapters/liveSnapshot';
 import { fingerprint } from '../core/math';
 import { parseDraft } from '../core/codec';
 import { validateDraft } from '../core/editing';
@@ -62,7 +62,8 @@ export function restoreReviewDocument(value:unknown,scope:ReviewScope):{document
   const source=parseDraft(JSON.stringify({schemaVersion:1,roof:d.sourceRoof,faces:[],profile:d.draft.profile,settings:d.draft.settings})).roof;
   if(d.capture){
     const rebuilt=captureLiveTakeoff(d.capture.snapshot);
-    if(!sameReviewScope(reviewScope(rebuilt.adapted.roof),scope)||rebuilt.inputFingerprint!==d.sourceFingerprint||
+    // Canonical for new saves; the legacy hash still verifies pre-canonical copies.
+    if(!sameReviewScope(reviewScope(rebuilt.adapted.roof),scope)||(rebuilt.inputFingerprint!==d.sourceFingerprint&&legacyLiveInputFingerprint(rebuilt.snapshot)!==d.sourceFingerprint)||
       roofRevision(source)!==roofRevision(rebuilt.adapted.roof))throw new Error('Saved capture does not match its source roof or scope.');
     d.capture=JSON.parse(exportLiveCapture(rebuilt)) as LiveInputCapture;
   }else if(sourceFingerprint(source)!==d.sourceFingerprint)throw new Error('Saved source geometry fingerprint changed.');

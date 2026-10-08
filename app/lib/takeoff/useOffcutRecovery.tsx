@@ -54,7 +54,7 @@ export function useOffcutRecovery(options:Options){
     if(session.current){try{await session.current.retry();knownRevision.current=session.current.revision();}catch(error){setSaveError(true);setNotice(error instanceof Error?error.message:'Checkpoint save failed.');throw error;}}
     let previous;
     try{previous=await s.repository.load(opts.scope);
-      if(!session.current&&previous?.document.status==='active'&&previous.document.id!==dismissed.current&&previous.document.imageKey===opts.imageKey&&recoveryStateFingerprint(previous.document.workstation)!==recoveryStateFingerprint(state)){setCandidate(previous.document);throw new Error('An unfinished takeoff already exists. Restore it or choose Keep current before replacing the checkpoint.');}
+      if(!session.current&&previous?.document?.status==='active'&&previous.document.id!==dismissed.current&&previous.document.imageKey===opts.imageKey&&recoveryStateFingerprint(previous.document.workstation)!==recoveryStateFingerprint(state)){setCandidate(previous.document);throw new Error('An unfinished takeoff already exists. Restore it or choose Keep current before replacing the checkpoint.');}
       if(knownRevision.current!==null&&(previous?.revision??0)!==knownRevision.current)throw new Error('A newer takeoff checkpoint was saved in another tab. Reload or export your drawing before replacing it.');
     }catch(error){setSaveError(true);setNotice(error instanceof Error?error.message:'Account recovery failed.');throw error;}
     if(generation!==epoch.current)throw new Error('Page changed while saving the takeoff checkpoint.');
@@ -69,8 +69,8 @@ export function useOffcutRecovery(options:Options){
       // Resume may have been opened without a fresh Find offcuts click.
       const s=services.current??await getOffcutRecoveryServices();services.current=s;
       const existing=await s.repository.load(latest.current.scope);
-      if(!existing||existing.document.capture.inputFingerprint!==document.sourceFingerprint)throw new Error('Restore the saved measurements, then open Find offcuts to create a recovery checkpoint before calculating.');
-      session.current=new RecoverySession(s.repository,s.backup,existing,setNotice);
+      if(!existing?.document||existing.document.capture.inputFingerprint!==document.sourceFingerprint)throw new Error('Restore the saved measurements, then open Find offcuts to create a recovery checkpoint before calculating.');
+      session.current=new RecoverySession(s.repository,s.backup,{revision:existing.revision,document:existing.document},setNotice);
     }
     await session.current.beforeCalculation(document,journal);
   },[]);

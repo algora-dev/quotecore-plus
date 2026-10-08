@@ -18,7 +18,13 @@ export function createAccountRecoveryRepository(client:ReviewRpcClient):Recovery
     const r=await client.rpc('qc_takeoff_checkpoint_list',{p_quote:quoteId,p_page:pageId});
     if(r.error)throw new Error(r.error.message);if(!Array.isArray(r.data))throw new Error('Invalid checkpoint index.');
     return r.data.filter((row:unknown)=>{const h=row as RecoveryHint;return !!h?.scope&&h.scope.quoteId===quoteId&&h.scope.pageId===pageId&&typeof h.imageKey==='string'&&Number.isFinite(Date.parse(h.savedAt))&&['active','completed','discarded'].includes(h.status);}) as RecoveryHint[];
-  },async load(scope){const r=await client.rpc('qc_takeoff_checkpoint_load',args(scope));if(r.error)throw new Error(`Recovery store unavailable: ${r.error.message}. The V2.20 checkpoint migration may need to be applied.`);return unwrap(r.data,scope);},
+  },async load(scope){const r=await client.rpc('qc_takeoff_checkpoint_load',args(scope));if(r.error)throw new Error(`Recovery store unavailable: ${r.error.message}. The V2.20 checkpoint migration may need to be applied.`);
+    if(r.data==null)return null;const row=(Array.isArray(r.data)?r.data[0]:r.data) as {revision?:unknown;document?:unknown};
+    if(!row||typeof row.revision!=='number'||!Number.isSafeInteger(row.revision)||row.revision<1)throw new Error('Invalid checkpoint revision.');const revision:number=row.revision;
+    // Quarantine, not a hard failure: an unverifiable document must not block
+    // the scope, and its revision feeds the CAS update that replaces it.
+    try{return {revision,document:parseRecoveryDocument(row.document,scope)};}catch{return {revision,document:null};}
+  },
     async save(scope,document,expectedRevision){
       const checked=parseRecoveryDocument(document,scope);
       const r=await client.rpc('qc_takeoff_checkpoint_save',{...args(scope),p_document:checked,p_expected_revision:expectedRevision});
@@ -56,7 +62,7 @@ export function createRecoveryBackup(accountId:string):RecoveryBackup {
   });}};
 }
 export function memoryRecoveryRepository():RecoveryRepository {
-  const rows=new Map<string,RecoveryRecord>();return{async listPage(quoteId,pageId){return [...rows.values()].filter(r=>r.document.scope.quoteId===quoteId&&r.document.scope.pageId===pageId).map(r=>({scope:r.document.scope,savedAt:r.document.savedAt,imageKey:r.document.imageKey,status:r.document.status}));},async load(s){return structuredClone(rows.get(reviewScopeKey(s))??null);},async save(s,d,expected){
+  const rows=new Map<string,RecoveryRecord>();return{async listPage(quoteId,pageId){return [...rows.values()].filter(r=>r.document&&r.document.scope.quoteId===quoteId&&r.document.scope.pageId===pageId).map(r=>r.document?({scope:r.document.scope,savedAt:r.document.savedAt,imageKey:r.document.imageKey,status:r.document.status}):null).filter((h):h is RecoveryHint=>h!==null);},async load(s){return structuredClone(rows.get(reviewScopeKey(s))??null);},async save(s,d,expected){
     if(!sameReviewScope(s,d.scope))throw new Error('Wrong scope');const k=reviewScopeKey(s),old=rows.get(k);if((old?.revision??0)!==expected)throw new ReviewConflict();const row={revision:expected+1,document:parseRecoveryDocument(d,s)};rows.set(k,row);return structuredClone(row);
   }};
 }
