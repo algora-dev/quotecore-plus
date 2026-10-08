@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const ip = getClientIP(req.headers);
   const allowed = await checkRateLimit(`free-tools-status:${ip}`, 60, 60 * 60 * 1000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Cache-Control': 'private, no-store' } });
   }
 
   const resolved = await resolveFreeToolsTier(req.headers.get('authorization'));
@@ -24,6 +24,9 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     tier: resolved.tier,
     hasAppAccount: resolved.hasAppAccount,
+    hasPaidAppAccess: resolved.hasPaidAppAccess,
+    canRemoveBranding: resolved.canRemoveBranding,
+    verifiedUserId: resolved.userId,
     limits: {
       aiPerDay: resolved.limits.aiPerDay,
       docPerDay: resolved.limits.docPerDay,
@@ -31,5 +34,5 @@ export async function GET(req: NextRequest) {
       textPerDay: resolved.limits.textPerDay,
       label: resolved.limits.label,
     },
-  });
+  }, { headers: { 'Cache-Control': 'private, no-store' } });
 }

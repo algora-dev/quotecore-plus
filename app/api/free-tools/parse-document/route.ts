@@ -1,8 +1,9 @@
+import { consumeFreeToolsQuota } from '@/app/lib/free-tools/consumeQuota';
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/lib/supabase/database.types';
-import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
+import { getClientIP } from '@/app/lib/security/rateLimit';
 import { resolveFreeToolsTier } from '@/app/lib/free-tools/resolveTier';
 import { parseRateLimitKey, RATE_LIMIT_WINDOW_MS } from '@/app/lib/free-tools/tiers';
 // Note: parseRateLimitKey is now a single combined key (no mode param).
@@ -194,7 +195,7 @@ export async function POST(req: NextRequest) {
 
   // 2. Resolve caller tier from optional free-tools auth token.
   //    Tier 1 = anonymous (IP-keyed limits), tier 2 = free-tools account,
-  //    tier 3 = free-tools account with a QuoteCore+ app account.
+  //    tier 3 = verified account with active paid app access.
   const resolved = await resolveFreeToolsTier(req.headers.get('authorization'));
   const ip = getClientIP(req.headers);
 
@@ -206,6 +207,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json({error:'Invalid request body.'},{status:400});
+  }
   const { type, mode, content, image } = body;
 
   // 4. Validate fields
@@ -217,35 +221,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid or missing "mode"' }, { status: 400 });
   }
 
-  // 5. Rate limit - combined AI limit per tier (durable, Supabase-backed).
-  //    Authed users are keyed by user id so limits follow the account,
-  //    not the network. Anonymous users are keyed by IP.
-  //    AI limit is shared across image + text + all document types.
-  const maxPerDay = resolved.limits.aiPerDay;
-  const rateLimitKey = parseRateLimitKey(
-    resolved.userId ? { userId: resolved.userId } : { ip }
-  );
-  const allowed = await checkRateLimit(rateLimitKey, maxPerDay, RATE_LIMIT_WINDOW_MS, {
-    failClosed: true,
-  });
-  if (!allowed) {
-    const upgradeHint =
-      resolved.tier === 1
-        ? ' Sign up free at the top of the page for higher daily limits.'
-        : resolved.tier === 2
-          ? ' QuoteCore+ app accounts (plans from /mo, 30-day money-back guarantee) get higher daily limits.'
-          : ' Try again tomorrow.';
-    return NextResponse.json(
-      {
-        error: `Daily AI limit reached (${maxPerDay}/day).${upgradeHint}`,
-        tier: resolved.tier,
-      },
-      { status: 429 }
-    );
-  }
-
   if (mode === 'text') {
-    if (!content?.trim()) {
+    if (typeof content !== 'string' || !content.trim()) {
       return NextResponse.json({ error: 'Missing "content" for text mode' }, { status: 400 });
     }
     if (content.length > MAX_TEXT_LENGTH) {
@@ -255,7 +232,7 @@ export async function POST(req: NextRequest) {
       );
     }
   } else {
-    if (!image) {
+    if (typeof image !== 'string' || !image) {
       return NextResponse.json({ error: 'Missing "image" for image mode' }, { status: 400 });
     }
     if (image.length > MAX_IMAGE_BASE64_BYTES) {
@@ -273,6 +250,19 @@ export async function POST(req: NextRequest) {
       );
     }
   }
+
+  // Validate payload completely BEFORE consuming the shared AI allowance.
+  const maxPerDay = resolved.limits.aiPerDay;
+  const rateLimitKey = parseRateLimitKey(resolved.userId ? {userId:resolved.userId} : {ip});
+  const allowance = await consumeFreeToolsQuota(rateLimitKey, maxPerDay, RATE_LIMIT_WINDOW_MS);
+  if (allowance === 'unavailable') return NextResponse.json(
+    {error:'Quote Assist could not check your allowance. Your quote is unchanged. Please try again shortly.'},{status:503});
+  if (allowance === 'limited') return NextResponse.json({
+    error: resolved.tier === 1
+      ? 'Your 1 guest AI draft for this 24-hour allowance has been used. A free account gives you 3 AI drafts and 10 documents per day. You can also keep entering details manually.'
+      : `Your ${maxPerDay} AI drafts for this 24-hour allowance have been used. You can still enter details manually.`,
+    tier:resolved.tier, limit:maxPerDay,
+  },{status:429});
 
   // 6. Log usage (fire-and-forget, never blocks)
   const toolMeta = TOOL_META[type] ?? { code: 'unknown', name: type };

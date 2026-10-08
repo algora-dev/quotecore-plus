@@ -1,66 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveFreeToolsTier } from '@/app/lib/free-tools/resolveTier';
-import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
-import { docRateLimitKey, RATE_LIMIT_WINDOW_MS, TIER_LIMITS } from '@/app/lib/free-tools/tiers';
-
-export const runtime = 'nodejs';
-
-/**
- * POST /api/free-tools/check-doc-limit
- *
- * Called by the "Generate" button on free quote/invoice/PO generators.
- * Atomically consumes one document-generation credit and returns whether
- * the caller is allowed to proceed.
- *
- * Body: { tool: 'quote' | 'invoice' | 'order' }
- * Response: { allowed: boolean, remaining: number | null, tier: number }
- */
-export async function POST(req: NextRequest) {
-  const resolved = await resolveFreeToolsTier(req.headers.get('authorization'));
-  const ip = getClientIP(req.headers);
-
-  // Tier 3 (app account) - unlimited, no rate limit check needed
-  if (resolved.tier === 3 || resolved.limits.docPerDay === null) {
-    return NextResponse.json({
-      allowed: true,
-      remaining: null, // unlimited
-      tier: resolved.tier,
-    });
-  }
-
-  const maxPerDay = resolved.limits.docPerDay;
-  const key = docRateLimitKey(
-    resolved.userId ? { userId: resolved.userId } : { ip }
-  );
-
-  // Atomically consume one credit
-  const allowed = await checkRateLimit(key, maxPerDay, RATE_LIMIT_WINDOW_MS, {
-    failClosed: true,
-  });
-
-  if (!allowed) {
-    const upgradeHint =
-      resolved.tier === 1
-        ? 'Sign up free at the top of the page for higher daily limits.'
-        : 'Get QuoteCore+ (plans from /mo, 30-day money-back guarantee) for unlimited document generation.';
-    return NextResponse.json(
-      {
-        allowed: false,
-        remaining: 0,
-        tier: resolved.tier,
-        limit: maxPerDay,
-        message: `You have reached your daily limit of ${maxPerDay} free documents. ${upgradeHint}`,
-      },
-      { status: 429 }
-    );
-  }
-
-  // We don't know exact remaining without a separate count query,
-  // but the client can decrement locally. Return the tier limit.
-  return NextResponse.json({
-    allowed: true,
-    remaining: maxPerDay, // upper bound; client decrements
-    tier: resolved.tier,
-    limit: maxPerDay,
-  });
+import { getClientIP } from '@/app/lib/security/rateLimit';
+import { docRateLimitKey, RATE_LIMIT_WINDOW_MS } from '@/app/lib/free-tools/tiers';
+import { consumeFreeToolsQuota } from '@/app/lib/free-tools/consumeQuota';
+export const runtime='nodejs';
+const headers={'Cache-Control':'private, no-store'};
+/** Consumes one generation. GET/account-status is the non-consuming lookup.
+ * Quotes, invoices and POs share a bucket. Reprinting is a client output action,
+ * not another call here. A lost response can still consume a credit: no auto retry. */
+export async function POST(req:NextRequest) {
+  let body:unknown;
+  try {body=await req.json();}catch{return NextResponse.json({error:'Invalid JSON body'},{status:400,headers});}
+  const tool=(body as {tool?:unknown}|null)?.tool;
+  if (!['quote','invoice','order'].includes(String(tool)))return NextResponse.json({error:'Choose a supported document type.'},{status:400,headers});
+  const resolved=await resolveFreeToolsTier(req.headers.get('authorization'));
+  const max=resolved.limits.docPerDay;
+  if(max===null)return NextResponse.json({allowed:true,remaining:null,tier:resolved.tier,limit:null,canRemoveBranding:resolved.canRemoveBranding},{headers});
+  const subject=resolved.userId?{userId:resolved.userId}:{ip:getClientIP(req.headers)};
+  const result=await consumeFreeToolsQuota(docRateLimitKey(subject),max,RATE_LIMIT_WINDOW_MS);
+  if(result==='unavailable')return NextResponse.json({allowed:false,error:'We could not check your allowance. Your quote is still here. Please try again shortly.'},{status:503,headers});
+  if(result==='limited')return NextResponse.json({allowed:false,remaining:0,remainingIsExact:true,tier:resolved.tier,limit:max,
+    message:resolved.tier===1?`Your ${max} guest documents for this 24-hour allowance have been used. A free account gives you 10 documents and 3 AI drafts per day, without QuoteCore+ branding.`:`Your ${max} free documents for this 24-hour allowance have been used. You can keep editing, or explore the paid QuoteCore+ app.`},
+    {status:429,headers});
+  // Preserve the legacy response shape for the other generators; do NOT display
+  // this upper bound as a remaining count. The quote V2 client reads daily caps.
+  return NextResponse.json({allowed:true,remaining:max,remainingIsExact:false,tier:resolved.tier,limit:max,canRemoveBranding:resolved.canRemoveBranding},{headers});
 }
