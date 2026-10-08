@@ -75,7 +75,7 @@ export function QcAppShell({ workspaceSlug, userId, companyName, entitlements, i
       aria-hidden={mode === 'hidden' ? true : undefined} aria-label="Workspace sidebar">
       <div className="qc-sidebar-brand">
         <Link href={`/${workspaceSlug}`} prefetch={false} className="qc-brand" aria-label="QuoteCore Plus home">
-          <img src="/MainQCP.png" alt="QuoteCore Plus" /><img src="/q-mark.png" alt="" aria-hidden="true" className="qc-brand-compact" />
+          <img src="/MainQCP-light.png" alt="QuoteCore Plus" /><img src="/q-mark.png" alt="" aria-hidden="true" className="qc-brand-compact" />
         </Link>
       </div>
       <div className="qc-workspace-identity"><span>Workspace</span><strong title={companyName}>{companyName}</strong></div>

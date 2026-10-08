@@ -1,6 +1,6 @@
 .qc-demo-launch-card { width: min(540px, 100%); padding: 32px; border: 1px solid var(--qc-border-divider, #d9dee6); border-radius: var(--qc-radius-dialog, 24px); background: var(--qc-bg-surface, #fff); box-shadow: var(--qc-shadow-dialog, 0 16px 54px #16253714); color: var(--qc-text-body, #293343); }
 .qc-demo-launch-brand { display: flex; gap: 10px; align-items: center; margin-bottom: 24px; }
-.qc-demo-launch-brand>img { display: block; height: 36px; width: auto; }
+.qc-demo-launch-brand img { display: block; height: 36px; width: auto; }
 .qc-demo-launch-tag { display: inline-flex; align-items: center; min-height: 22px; padding: 3px 10px; border-radius: var(--qc-radius-pill, 999px); background: var(--qc-gradient-primary); color: var(--qc-action-primary-text, #1b1b1b); font-size: 10px; font-weight: 750; letter-spacing: .12em; }
 .qc-demo-launch-brand-link { display: inline-flex; border-radius: 8px; }
 .qc-demo-launch-brand-link img { transition: transform .15s ease, filter .15s ease; }
