@@ -24,8 +24,8 @@ export function parseResult(value: unknown): ParsedDocument {
   });
   if (!lines.some(l => l.description.trim())) throw new DocumentServiceError('The extracted items have no descriptions. Try a clearer image or add the items manually.');
   const result: ParsedDocument = { lines };
-  for (const key of ['companyName','clientName','clientEmail','clientAddress','quoteNumber','quoteDate','validDays','notes'] as const)
-    if (typeof p[key] === 'string') result[key] = (p[key] as string).slice(0,key === 'notes' ? 12000 : 2000);
+  for (const key of ['companyName','clientName','clientEmail','clientAddress','quoteNumber','quoteDate','validDays','notes','invoiceNumber','invoiceDate','dueDate','supplierName','supplierEmail','supplierAddress','poNumber','poDate','deliveryDate','deliveryAddress','paymentDetails','paymentReference','jobReference'] as const)
+    if (typeof p[key] === 'string') result[key] = (p[key] as string).slice(0,key === 'notes' || key === 'paymentDetails' ? 12000 : 2000);
   if (['high','medium','low'].includes(String(p.confidence))) result.confidence = p.confidence as ParsedDocument['confidence'];
   if (Array.isArray(p.warnings)) result.warnings = p.warnings.filter((w):w is string => typeof w === 'string').map(w => w.slice(0,1000));
   if (typeof p.remaining === 'number' && Number.isFinite(p.remaining)) result.remaining = p.remaining;
@@ -38,7 +38,7 @@ export function createDocumentServices(accessToken: string | null): DocumentServ
       response = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json', ...(accessToken ? {Authorization:`Bearer ${accessToken}`} : {})}, body:JSON.stringify(body), signal });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') throw error;
-      throw new DocumentServiceError('We could not connect. Your quote is still here. Check your connection and try again.');
+      throw new DocumentServiceError('We could not connect. Your document is still here. Check your connection and try again.');
     }
     const data = await response.json().catch(() => null);
     if (!response.ok) throw new DocumentServiceError(
@@ -50,7 +50,7 @@ export function createDocumentServices(accessToken: string | null): DocumentServ
     preview:false,
     async generation(kind, signal) {
       const data = await post('/api/free-tools/check-doc-limit', { tool:kind }, signal);
-      if (data?.allowed !== true) throw new DocumentServiceError('We could not verify your document allowance. Your quote has not been changed. Please try again.');
+      if (data?.allowed !== true) throw new DocumentServiceError('We could not verify your document allowance. Your document has not been changed. Please try again.');
       // `remaining` in this API is an upper bound, NOT a reliable remaining count.
     },
     async parse(kind, request, signal) { return parseResult(await post('/api/free-tools/parse-document', {type:kind,...request}, signal)); },

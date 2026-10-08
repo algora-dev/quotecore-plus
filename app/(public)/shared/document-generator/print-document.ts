@@ -4,7 +4,7 @@ import { DOCUMENT_CSS } from './DocumentPaper';
  * into HTML or scripts. No new PDF dependency and no network upload. */
 export async function printDocument(source: HTMLElement, name: string): Promise<void> {
   const frame=document.createElement('iframe');
-  frame.title='Printable quote';frame.setAttribute('aria-hidden','true');frame.dataset.qcDocumentPrint='true';
+  frame.title='Printable document';frame.setAttribute('aria-hidden','true');frame.dataset.qcDocumentPrint='true';
   Object.assign(frame.style,{position:'fixed',width:'1px',height:'1px',right:'0',bottom:'0',border:'0',opacity:'0',pointerEvents:'none'});
   document.body.appendChild(frame);
   const target=frame.contentDocument,win=frame.contentWindow;
@@ -17,7 +17,8 @@ export async function printDocument(source: HTMLElement, name: string): Promise<
   target.body.appendChild(copy);
   await Promise.all(Array.from(target.images).map(img=>img.complete?Promise.resolve():new Promise<void>(resolve=>{img.onload=()=>resolve();img.onerror=()=>resolve();setTimeout(resolve,2000);} )));
   await new Promise<void>(resolve=>win.requestAnimationFrame(()=>resolve()));
+  let timer:ReturnType<typeof setTimeout>;
   const clean=()=>{clearTimeout(timer);frame.remove();};
-  const timer=setTimeout(clean,120000);win.addEventListener('afterprint',clean,{once:true});
+  timer=setTimeout(clean,120000);win.addEventListener('afterprint',clean,{once:true});
   try{win.focus();win.print();}catch{clean();throw new Error('Printing is unavailable in this preview window. Open the HTML in a separate browser tab and try again.');}
 }
