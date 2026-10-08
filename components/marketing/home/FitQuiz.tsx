@@ -6,12 +6,14 @@ import { Icon, type IconName } from './Icon';
 import s from './Homepage.module.css';
 
 /**
- * "Is QuoteCore+ for you?" - four-tap self-qualification quiz (owner audio 2026-10-08).
+ * "Is QuoteCore+ for you?" - four-tap self-qualification quiz.
  * Dark Focus card styled as a sibling of the /pricing V5 calculator.
- * Owner rules: every result tier is positive, "because" lines are built from the
- * visitor's own answers, the catch-all option reads "Two or more of these",
- * single taps auto-advance, about 20 seconds end to end, no em dashes in copy.
- * Sits between How it works and Done For You. CTAs: pricing, demo, DFY anchor.
+ * Owner review 2026-10-08: clickable progress bars for completed steps,
+ * Back moved under the progress label, equal gaps around the progress bar,
+ * fixed body height so steps never resize the card, Q4 heading removed with
+ * an orange "Want to speed up your pricing process?", result sub-line removed,
+ * CTAs open in new tabs, all-positive tiers, "because" lines from the
+ * visitor's own answers, no em dashes in copy.
  */
 
 type FitOption = {
@@ -32,7 +34,7 @@ const QUESTIONS: FitQuestion[] = [
     title: 'How do you measure roofs today?',
     options: [
       { id: 'plans', label: 'Printed plans, scaled by hand', icon: 'ruler', weight: 2, because: 'You measure from printed plans. QuoteCore+ reads the same plan digitally, so the ruler stays in the drawer.' },
-      { id: 'satellite', label: 'Satellite images like Google Earth', icon: 'roof', weight: 2, because: 'You measure from satellite images. AI Scan Assist finds the roof areas and edge lengths for you.' },
+      { id: 'satellite', label: 'Satellite images like Google Earth', icon: 'roof', weight: 2, because: 'You measure from satellite images, so our digital takeoff speeds that process up.' },
       { id: 'onsite', label: 'On site, with a tape', icon: 'people', weight: 2, because: 'You climb the roof to measure. Most of those trips become optional once a plan or photo can do the measuring.' },
       { id: 'mix', label: 'Two or more of these', icon: 'check', weight: 2, because: 'You mix measuring methods to get the job done. One digital workflow replaces the lot.' },
     ],
@@ -68,9 +70,9 @@ const ACCURACY_OPTIONS: Array<{ id: string; label: string; weight: number; becau
 ];
 
 const TIERS = [
-  { min: 7, verdict: 'Strong fit.', sub: 'You are exactly who we built QuoteCore+ for.' },
-  { min: 4, verdict: 'Great fit.', sub: 'QuoteCore+ will save you real time on every job.' },
-  { min: 0, verdict: 'Good fit.', sub: 'There is clear upside here for you.' },
+  { min: 7, verdict: 'Strong fit.' },
+  { min: 4, verdict: 'Great fit.' },
+  { min: 0, verdict: 'Good fit.' },
 ];
 
 const ADVANCE_MS = 260;
@@ -121,11 +123,15 @@ export function FitQuizSection() {
     }, ADVANCE_MS);
   }
 
-  function goBack() {
-    if (step === 0) return;
-    setStep(prev => prev - 1);
-    if (step < 4) setAnswers(prev => prev.slice(0, Math.max(0, prev.length - 1)));
+  function jumpTo(target: number) {
+    if (target >= step) return;
+    setStep(target);
+    if (target < 3) setAnswers(prev => prev.slice(0, target));
     setLocked(null);
+  }
+
+  function goBack() {
+    jumpTo(step - 1);
   }
 
   function retake() {
@@ -155,11 +161,28 @@ export function FitQuizSection() {
           </div>
           <div className={s.fitCard}>
             <div className={s.fitAtmosphere} aria-hidden="true" />
-            <div className={s.fitProgress} aria-hidden="true">
-              {[0, 1, 2, 3].map(i => (
-                <span key={i} className={i <= Math.min(step, 3) ? s.fitSegDone : s.fitSeg} />
-              ))}
-              <span className={s.fitProgressLabel}>{progressLabel}</span>
+            <div className={s.fitProgressWrap}>
+              <div className={s.fitProgressBars} role="group" aria-label="Quiz progress">
+                {[0, 1, 2, 3].map(i => i < step ? (
+                  <button
+                    key={i}
+                    type="button"
+                    className={s.fitSegBtn}
+                    aria-label={`Back to question ${i + 1}`}
+                    onClick={() => jumpTo(i)}
+                  >
+                    <span className={s.fitSegDone} />
+                  </button>
+                ) : (
+                  <span key={i} className={i === step ? s.fitSegDone : s.fitSeg} aria-hidden="true" />
+                ))}
+              </div>
+              <div className={s.fitProgressSide}>
+                <span className={s.fitProgressLabel}>{progressLabel}</span>
+                {step > 0 && step < 4 && (
+                  <button type="button" className={s.fitBack} onClick={goBack}>Back</button>
+                )}
+              </div>
             </div>
             <div className={s.fitBody} key={step}>
               {step < 3 && (
@@ -180,17 +203,13 @@ export function FitQuizSection() {
                       </button>
                     ))}
                   </div>
-                  {step > 0 && (
-                    <button type="button" className={s.fitBack} onClick={goBack}>Back</button>
-                  )}
                 </div>
               )}
               {step === 3 && (
                 <div className={s.fitAnimate}>
-                  <p className={s.fitQuestion}>Nearly there. Two quick ones.</p>
                   <div className={s.fitDuo}>
                     <fieldset className={s.fitFieldset}>
-                      <legend className={s.fitDuoLegend}>Actively looking to speed up your quoting?</legend>
+                      <legend className={s.fitDuoLegendAccent}>Want to speed up your pricing process?</legend>
                       <div className={s.fitPills}>
                         {SPEED_OPTIONS.map(o => (
                           <button key={o.id} type="button" className={s.fitPill} aria-pressed={speed?.id === o.id} onClick={() => setSpeed(o)}>{o.label}</button>
@@ -212,13 +231,11 @@ export function FitQuizSection() {
                       <Icon name="arrow" size={16} />
                     </button>
                   </div>
-                  <button type="button" className={s.fitBack} onClick={goBack}>Back</button>
                 </div>
               )}
               {step === 4 && (
                 <div className={s.fitAnimate}>
                   <h3 className={s.fitResultHeadline}><span>{tier.verdict}</span></h3>
-                  <p className={s.fitResultSub}>{tier.sub}</p>
                   <p className={s.fitBecauseLabel}>Because you told us:</p>
                   <ul className={s.fitBecauseList}>
                     {because.map(b => (
@@ -229,6 +246,8 @@ export function FitQuizSection() {
                     <MarketingButton
                       href="/pricing"
                       variant="primary"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       icon={<Icon name="arrow" size={16} />}
                       onClick={() => track('quiz_cta_click', { cta: 'build_plan' })}
                     >
@@ -237,6 +256,8 @@ export function FitQuizSection() {
                     <a
                       className={s.fitCtaSecondary}
                       href="/demo"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => track('quiz_cta_click', { cta: 'demo' })}
                     >
                       <span>See how it works</span>
@@ -245,6 +266,8 @@ export function FitQuizSection() {
                     <a
                       className={s.fitCtaSecondary}
                       href="#setup"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => track('quiz_cta_click', { cta: 'done_for_you' })}
                     >
                       <span>Have us set it up</span>

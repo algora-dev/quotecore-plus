@@ -658,16 +658,21 @@
 
 /* ============ Fit quiz: Is QuoteCore+ for you? (Dark Focus card) ============ */
 .fitSection { padding-block: 84px; }
-.fitGrid { display: grid; grid-template-columns: .84fr 1.16fr; gap: 48px; align-items: center; }
+.fitGrid { display: grid; grid-template-columns: .84fr 1.16fr; gap: 48px; align-items: start; }
 .fitCard { position: relative; overflow: clip; border: 1px solid #3e4550; border-radius: 20px; background: #191b20; color: #f8fafc; box-shadow: 0 24px 72px rgba(0, 0, 0, .22); color-scheme: dark; }
 .fitAtmosphere { position: absolute; inset: 0; background: radial-gradient(ellipse at 14% 3%, rgba(255, 107, 53, .12), transparent 58%); pointer-events: none; }
-.fitProgress { display: flex; align-items: center; gap: 6px; padding: 20px 24px 0; }
+.fitProgressWrap { display: flex; align-items: flex-start; gap: 14px; padding: 20px 24px 20px; }
+.fitProgressBars { flex: 1; display: flex; gap: 6px; padding-top: 8px; }
+.fitSegBtn { flex: 1; height: 19px; display: flex; align-items: center; background: none; border: 0; padding: 0; cursor: pointer; }
+.fitSegBtn:focus-visible { outline: 2px solid #ffb36b; outline-offset: 2px; border-radius: 2px; }
+.fitSegBtn:hover .fitSeg, .fitSegBtn:focus-visible .fitSeg { background: #ffb36b; }
+.fitProgressSide { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .fitSeg, .fitSegDone { height: 3px; flex: 1; border-radius: 2px; }
 .fitSeg { background: #3e4550; }
 .fitSegDone { background: #ff8a3d; }
-.fitProgressLabel { margin-left: 12px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #b8bec9; white-space: nowrap; }
-.fitBody { position: relative; padding: 24px 24px 28px; }
-.fitQuestion { font-size: clamp(22px, 2.6vw, 28px); font-weight: 600; line-height: 1.18; letter-spacing: -.035em; margin: 0 0 20px; }
+.fitProgressLabel { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #b8bec9; white-space: nowrap; }
+.fitBody { position: relative; padding: 0 24px 24px; min-height: 390px; }
+.fitQuestion { font-size: clamp(22px, 2.6vw, 28px); font-weight: 600; line-height: 1.18; letter-spacing: -.035em; margin: 0 0 26px; }
 .fitChoices { display: grid; gap: 10px; }
 .fitChoice { min-width: 0; min-height: 64px; display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 14px 16px; border: 1px solid #7c8798; border-radius: 12px; background: rgba(255, 255, 255, .035); color: #f8fafc; font: inherit; font-size: 15px; font-weight: 600; line-height: 1.35; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 120ms cubic-bezier(.2, 0, 0, 1), background-color 120ms cubic-bezier(.2, 0, 0, 1); }
 .fitChoice:hover { border-color: #ffb36b; }
@@ -679,11 +684,12 @@
 .fitCheck svg { opacity: 0; }
 .fitChoice[data-selected='true'] .fitCheck { background: #ffb36b; border-color: #ffb36b; color: #191b20; }
 .fitChoice[data-selected='true'] .fitCheck svg { opacity: 1; }
-.fitBack { margin-top: 18px; background: none; border: 0; padding: 0; color: #b8bec9; font: inherit; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.fitBack { background: none; border: 0; padding: 0; color: #b8bec9; font: inherit; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
 .fitBack:hover { color: #f8fafc; }
 .fitFieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
 .fitDuo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .fitDuoLegend { padding: 0; margin: 0 0 10px; font-size: 14px; font-weight: 600; line-height: 1.4; color: #f8fafc; }
+.fitDuoLegendAccent { padding: 0; margin: 0 0 10px; font-size: 14px; font-weight: 650; line-height: 1.4; color: #ffb36b; }
 .fitPills { display: flex; flex-wrap: wrap; gap: 8px; }
 .fitPill { min-height: 44px; padding: 8px 18px; border: 1px solid #7c8798; border-radius: 999px; background: rgba(255, 255, 255, .035); color: #f8fafc; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 120ms, background-color 120ms; }
 .fitPill:hover { border-color: #ffb36b; }
@@ -692,9 +698,7 @@
 .fitContinueRow { margin-top: 22px; display: flex; }
 .fitPrimary { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #ff641f; border-radius: 12px; padding: 9px 18px; background: linear-gradient(135deg, #ff641f 0%, #ff8a3d 55%, #ffb36b 100%); color: #191b20; font: inherit; font-size: 14px; font-weight: 600; line-height: 20px; cursor: pointer; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8); -webkit-tap-highlight-color: transparent; }
 .fitPrimary:disabled { opacity: .4; cursor: not-allowed; }
-.fitResultHeadline { font-size: clamp(28px, 3.2vw, 40px); font-weight: 650; line-height: 1.1; letter-spacing: -.045em; margin: 0 0 8px; }
-.fitResultHeadline span { background: linear-gradient(135deg, #ff641f, #ffb36b); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-.fitResultSub { margin: 0; color: #b8bec9; font-size: 15px; line-height: 1.6; }
+.fitResultHeadline { font-size: clamp(28px, 3.2vw, 40px); font-weight: 650; line-height: 1.1; letter-spacing: -.045em; margin: 0 0 12px; }
 .fitBecauseLabel { margin: 22px 0 12px; font-size: 11px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; color: #ffb36b; }
 .fitBecauseList { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
 .fitBecauseList li { display: flex; gap: 10px; align-items: flex-start; color: #e6e9ee; font-size: 14.5px; line-height: 1.55; }
@@ -714,6 +718,7 @@
 }
 @media (max-width: 640px) {
   .fitDuo { grid-template-columns: 1fr; }
+  .fitBody { min-height: 420px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .fitAnimate { animation: none; }
