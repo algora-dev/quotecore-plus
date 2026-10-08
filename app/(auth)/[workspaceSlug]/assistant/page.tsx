@@ -33,13 +33,10 @@ export const viewport: Viewport = {
  */
 export default async function SmartAssistantChatPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { workspaceSlug } = await params;
-  const sp = searchParams ? await searchParams : {};
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   const demo = await getActiveDemoContext(profile.company_id);
@@ -98,7 +95,6 @@ export default async function SmartAssistantChatPage({
       assistantName={config?.enabled === false ? 'Assistant (disabled)' : (config?.name ?? 'Assistant')}
       greeting={config?.greeting ?? ''}
       settingsHref={`/${workspaceSlug}/account/smart-assistant`}
-      viewportDebug={sp?.saViewportDebug !== undefined}
     />
     </div>
   );

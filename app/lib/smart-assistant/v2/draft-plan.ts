@@ -80,7 +80,7 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
   const changes: ChangeRow[] = [
     { label: 'Customer', before: 'New draft', after: spec.customerName },
     { label: 'Job', before: '', after: spec.jobName },
-    ...(spec.siteAddress !== undefined ? [{ label: 'Site address', before: '', after: spec.siteAddress ?? 'Not provided' }] : []),
+    ...(spec.siteAddress ? [{ label: 'Site address', before: '', after: spec.siteAddress }] : []),
     { label: 'Measurement system (locked on creation)', before: '', after: spec.measurementSystem },
     { label: 'Currency', before: '', after: currency },
     { label: 'Trade', before: '', after: spec.trade },

@@ -20,7 +20,6 @@ import { useVoiceNote } from './useVoiceNote';
 import { useSpeechPlayback } from './useSpeechPlayback';
 import { useBuildVersion } from './useBuildVersion';
 import { AssistantIcon } from './AssistantIcon';
-import { SaViewportDebugInline, saDebugHostEnabled } from './SaViewportDebug';
 import { AssistantSpinner } from './AssistantSpinner';
 import { AssistantSheet } from './AssistantSheet';
 import { VoiceCapture } from './VoiceCapture';
@@ -567,31 +566,10 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     if (item?.previewUrl) { URL.revokeObjectURL(item.previewUrl); attachmentUrls.current.delete(item.previewUrl); }
     setAttachments(prev => prev.filter(a => a.id !== id));
   };
-  const [geo, setGeo] = useState('');
-  useEffect(() => {
-    const read = () => {
-      const vv = window.visualViewport;
-      const r = root.current?.getBoundingClientRect();
-      const f = frame.current?.getBoundingClientRect();
-      const d = root.current?.querySelector<HTMLElement>('[data-sa-dock="true"]')?.getBoundingClientRect();
-      setGeo(`v16 ih:${window.innerHeight} vv:${Math.round(vv?.height ?? 0)}@${Math.round(vv?.offsetTop ?? 0)} s:${vv?.scale?.toFixed(2) ?? '?'} p:${Math.round(r?.height ?? 0)} t:${Math.round(r?.top ?? 0)} f:${Math.round(f?.height ?? 0)} db:${Math.round(d?.bottom ?? 0)} rb:${Math.round(r?.bottom ?? 0)} w:${Math.round(r?.width ?? 0)} scr:${window.screen.width}x${window.screen.height}`);
-    };
-    read();
-    window.visualViewport?.addEventListener('resize', read);
-    window.addEventListener('resize', read);
-    const t = window.setInterval(read, 1500);
-    return () => { window.visualViewport?.removeEventListener('resize', read); window.removeEventListener('resize', read); window.clearInterval(t); };
-  }, []);
-  const [saDbg, setSaDbg] = useState(false);
-  useEffect(() => {
-    const gate = () => { if (saDebugHostEnabled()) setSaDbg(true); };
-    gate();
-  }, []);
   const hide = () => { voice.cancel(); speech.stop(); setSheet(null); onHide(); };
   const openAttachmentSheet = () => { voice.cancel(); speech.stop(); setSheet('attach'); };
 
   return <div ref={root} data-sa-root="true" className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true" data-sa-experience="visual-v2" data-mode={mode}>
-    {saDbg ? <SaViewportDebugInline/> : null}
     <div className={s.frame} ref={frame}>
       <header className={s.header}>
         <QcButton className={s.brandButton} aria-label="Assistant menu" aria-haspopup="dialog" aria-expanded={sheet === 'menu'} onClick={() => { voice.cancel(); setSheet('menu'); }}>
@@ -692,7 +670,6 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             <QcButton className={s.modeButton} aria-pressed={mode === 'voice'} onClick={() => changeMode('voice')}><AssistantIcon name="mic"/><span>Voice</span></QcButton>
             <QcButton className={s.modeButton} aria-haspopup="dialog" aria-expanded={sheet === 'attach'} aria-label="Attach a photo or file" onClick={openAttachmentSheet}><AssistantIcon name="attach"/><span>Attach</span></QcButton>
           </div>
-          <div aria-hidden="true" style={{ position: 'absolute', right: 6, bottom: 3, zIndex: 5, fontSize: 9, fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace', color: '#c56a3f', opacity: 0.9, pointerEvents: 'none' }}>{geo}</div>
         </div>
       </div>
     </div>

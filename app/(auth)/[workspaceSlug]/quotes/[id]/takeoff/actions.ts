@@ -1,5 +1,6 @@
 'use server';
 import { assertDemoTakeoffQuote } from '@/app/lib/demo/takeoff.server';
+import { DemoError } from '@/app/lib/demo/errors';
 import { demoTakeoffSaved } from '@/app/lib/demo/product-events';
 
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
@@ -861,7 +862,16 @@ export async function loadTakeoffHydrationData(
 }
 
 export async function loadTakeoffMeasurements(quoteId: string) {
-  await assertDemoTakeoffQuote(quoteId);
+  try {
+    await assertDemoTakeoffQuote(quoteId);
+  } catch (error) {
+    // The v1 builder page loads takeoff measurements for EVERY manual quote.
+    // A demo-company quote that is not the guided takeoff job (e.g. one the
+    // Smart Assistant just created) must read as "no takeoff data" instead of
+    // failing the whole page (owner report 2026-10-08: ERROR 1285360622).
+    if (error instanceof DemoError && error.code === 'demo_takeoff_gate') return [];
+    throw error;
+  }
   const supabase = await createSupabaseServerClient();
   
   const { data: measurements, error } = await supabase

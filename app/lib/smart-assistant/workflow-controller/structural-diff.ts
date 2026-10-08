@@ -36,11 +36,11 @@ export function draftReviewDiff(before: PlannedDraft, after: PlannedDraft, colle
   const changes: ChangeRow[] = [];
   for (const [key,label] of [['customerName','Customer'],['jobName','Job'],['siteAddress','Site address'],['componentCollectionId','Component library'],['measurementSystem','Measurement system (locked on creation)'],['trade','Trade']] as const) {
     if (before.params[key] !== after.params[key]) {
-      const render = (v: unknown) => key === 'componentCollectionId' ? collectionNames[String(v)] ?? String(v ?? 'Not selected') : String(v ?? 'Not provided');
+      const render = (v: unknown) => key === 'componentCollectionId' ? collectionNames[String(v)] ?? String(v ?? '—') : String(v ?? '—');
       changes.push({label,before:render(before.params[key]),after:render(after.params[key])});
     }
   }
-  if (before.currency !== after.currency) changes.push({label:'Currency',before:before.currency || 'Not selected',after:after.currency});
+  if (before.currency !== after.currency) changes.push({label:'Currency',before:before.currency || '—',after:after.currency});
   if (before.pitch !== after.pitch) changes.push({label:'Default pitch',before:before.pitch < 0 ? 'Not set' : `${before.pitch}°`,after:`${after.pitch}°`});
   const compare = (kind: 'areas'|'components', render: (r: Row)=>string) => {
     const old = index(before.children[kind]), next = index(after.children[kind]);

@@ -1,27 +1,16 @@
 'use client';
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef} from 'react';
 import {isSafeReturnDestination} from '@/app/lib/smart-assistant/v2/navigation';
 import {useRouter} from 'next/navigation';
 import {LegacyChatClient} from './LegacyChatClient';
 import type {ConversationRow} from './actions';
 import {V2ChatClient} from '@/app/components/smart-assistant/v2/V2ChatClient';
 import {useCapability} from '@/app/components/smart-assistant/v2/useCapability';
-import {SaViewportDebug} from '@/app/components/smart-assistant/v2/SaViewportDebug';
 import s from '@/app/components/smart-assistant/v2/assistant.module.css';
-type Props={initialConversations:ConversationRow[];assistantName:string;greeting:string;settingsHref:string;embedded?:boolean;viewportDebug?:boolean};
+type Props={initialConversations:ConversationRow[];assistantName:string;greeting:string;settingsHref:string;embedded?:boolean};
 export function ChatClient(props:Props){
  const state=useCapability();const router=useRouter();
  const hostRef = useRef<HTMLDivElement>(null);
- const [hostH, setHostH] = useState(0);
- const [vpDebug, setVpDebug] = useState(!!props.viewportDebug);
- useEffect(() => { const el = hostRef.current; if (!el) return; const ro = new ResizeObserver(() => setHostH(Math.round(el.getBoundingClientRect().height))); ro.observe(el); return () => ro.disconnect(); }, []);
- useEffect(() => { try {
-   const urlHas = new URLSearchParams(window.location.search).has('saViewportDebug');
-   const stored = sessionStorage.getItem('saViewportDebug') === '1';
-   if (urlHas) sessionStorage.setItem('saViewportDebug', '1');
-   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-shot post-mount URL/session flag read (debug-only; owner-smoke runs with debug off)
-   if (urlHas || stored) setVpDebug(true);
- } catch { /* private mode / storage blocked: debug stays off */ } }, []);
  useEffect(() => { const el = document.documentElement; const prev = el.style.background; el.style.background = '#e9ebef'; return () => { el.style.background = prev; }; }, []);
  if(!state.ready)return <p role="status">Opening assistant...</p>;
  if(state.error)return <p role="alert">{state.error}</p>;
@@ -33,6 +22,5 @@ export function ChatClient(props:Props){
    try{const previous=sessionStorage.getItem(`sa-last-page:${access.userId}:${access.companyId}`);if(isSafeReturnDestination(previous,access.workspaceSlug))destination=previous;}catch{/* safe workspace fallback */}
    router.push(destination);
  }}/>
- {vpDebug ? <SaViewportDebug hostRef={hostRef}/> : null}
- <div aria-hidden="true" style={{ position: 'absolute', left: 6, bottom: 3, zIndex: 99, fontSize: 9, fontFamily: 'ui-monospace,monospace', color: '#7dd3fc', opacity: 0.9, pointerEvents: 'none' }}>host:{hostH}{vpDebug?' D1':' D0'}</div></div>;
+</div>;
 }
