@@ -1,5 +1,7 @@
 'use client';
 
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+
 /**
  * Download button on the public quote accept page. Uses the browser's
  * print-to-PDF dialog instead of `html2canvas` rasterisation \u2014 the same
@@ -51,17 +53,14 @@ export function DownloadQuoteButton({ printTargetId }: { printTargetId: string }
         }
       `}</style>
 
-      <button
-        onClick={handleClick}
-        data-print-hide
-        // Blue-outline blue-text styling to match the rest of the app's
-        // tertiary buttons (and the Accept/Decline pattern). Hover
-        // brightens the fill and adds the same brand-glow shadow used
-        // throughout the action bar.
-        className="px-6 py-2.5 text-sm font-semibold rounded-full bg-white text-blue-600 border border-blue-300 hover:bg-blue-50 hover:shadow-[0_0_12px_rgba(59,130,246,0.35)] transition-all"
-      >
-        Download / Print PDF
-      </button>
+      <div data-print-hide>
+        <QcButton variant="ghost" size="lg" onClick={handleClick}>
+          <svg className="qc-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h3.9a2 2 0 011.69.9l.81 1.2a2 2 0 001.67.9H18a2 2 0 012 2v10a2 2 0 01-2 2z" />
+          </svg>
+          Download / Print PDF
+        </QcButton>
+      </div>
     </>
   );
 }

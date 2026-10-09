@@ -32,8 +32,8 @@ export default async function AcceptQuotePage({
   // Reject obviously-bad tokens before any DB or rate-limiter work.
   if (!token || !isValidUUID(token)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="bg-white rounded-xl p-8 max-w-md text-center shadow-lg">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50" data-qc-ui="v2">
+        <div className="bg-white rounded-2xl p-8 max-w-md text-center shadow-xl border border-slate-200">
           <h1 className="text-xl font-semibold text-slate-900 mb-2">Quote Not Found</h1>
           <p className="text-sm text-slate-500">This link may be invalid or expired.</p>
         </div>
@@ -46,8 +46,8 @@ export default async function AcceptQuotePage({
   const ip = getClientIP(hdrs);
   if (!(await checkRateLimit(`accept:${ip}`, 20, 60 * 60 * 1000))) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-md text-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6" data-qc-ui="v2">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-md text-center">
           <h1 className="text-xl font-bold text-slate-900 mb-2">Too Many Requests</h1>
           <p className="text-sm text-slate-600">Please try again later.</p>
         </div>
@@ -71,8 +71,8 @@ export default async function AcceptQuotePage({
     // No quote at all - we can't show a re-quote button because we have no
     // company to route the request to. Show the original generic message.
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="bg-white rounded-xl p-8 max-w-md text-center shadow-lg">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50" data-qc-ui="v2">
+        <div className="bg-white rounded-2xl p-8 max-w-md text-center shadow-xl border border-slate-200">
           <h1 className="text-xl font-semibold text-slate-900 mb-2">Quote Not Found</h1>
           <p className="text-sm text-slate-500">This link may be invalid or expired.</p>
         </div>
@@ -86,7 +86,7 @@ export default async function AcceptQuotePage({
   // withdrawn for any number of reasons.
   if ((quote as any).withdrawn_at) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6" data-qc-ui="v2">
         <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-lg">
           <div className="text-center mb-6">
             <h1 className="text-xl font-semibold text-slate-900 mb-2">Quote No Longer Valid</h1>
@@ -109,7 +109,7 @@ export default async function AcceptQuotePage({
   // link becomes an inbound lead instead of a dead end.
   if (quote.acceptance_token_expires_at && new Date(quote.acceptance_token_expires_at) < new Date()) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6" data-qc-ui="v2">
         <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-lg">
           <div className="text-center mb-6">
             <h1 className="text-xl font-semibold text-slate-900 mb-2">Link Expired</h1>
@@ -196,7 +196,7 @@ export default async function AcceptQuotePage({
   }));
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50" data-qc-ui="v2">
       {/* Recipient-view stamping via idempotent POST server action (not GET). */}
       <StampRecipientView kind="quote" token={token} />
       <div className="max-w-4xl mx-auto p-3 sm:p-8 space-y-6">

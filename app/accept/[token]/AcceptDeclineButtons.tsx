@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { respondToQuote } from './actions';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
 
 interface AcceptDeclineProps {
   token: string;
@@ -47,18 +48,20 @@ export function AcceptDeclineButtons({
   );
   const [loading, setLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'accept' | 'decline' | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const decided = status !== 'pending';
 
   async function handleRespond(action: 'accept' | 'decline') {
     setLoading(true);
+    setError(null);
     try {
       await respondToQuote(token, action);
       setStatus(action === 'accept' ? 'accepted' : 'declined');
       setDecidedAt(new Date().toISOString());
     } catch (err) {
       console.error('Failed to respond to quote:', err);
-      alert('Something went wrong. Please try again.');
+      setError('Something went wrong sending your response. Please try again.');
     } finally {
       setLoading(false);
       setConfirmAction(null);
@@ -93,37 +96,45 @@ export function AcceptDeclineButtons({
         </div>
       ) : null}
 
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 text-center space-y-4">
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 text-center space-y-4">
         {!decided ? (
           <p className="text-sm text-slate-600">
             Please accept or decline this quote using the buttons below.
           </p>
         ) : null}
+        {error ? (
+          <p className="text-sm text-[#C72B3D] bg-[#FFF0F2] border border-[#C72B3D]/20 rounded-xl p-2 text-center">
+            {error}
+          </p>
+        ) : null}
         <div className="flex gap-3 justify-center flex-wrap">
-          <button
+          <QcButton
+            variant="primary"
+            size="lg"
             onClick={() => setConfirmAction('accept')}
             disabled={loading || decided}
-            className="px-6 py-2.5 text-sm font-semibold rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-all hover:shadow-[0_0_12px_rgba(16,185,129,0.4)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
           >
             Accept Quote
-          </button>
+          </QcButton>
           {middleAction}
-          <button
+          <QcButton
+            variant="ghost"
+            size="lg"
             onClick={() => setConfirmAction('decline')}
             disabled={loading || decided}
-            className="px-6 py-2.5 text-sm font-semibold rounded-full bg-white text-red-600 border border-red-300 hover:bg-red-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-[#C72B3D]"
           >
             Decline Quote
-          </button>
+          </QcButton>
           {secondaryAction}
         </div>
       </div>
 
       {/* Confirmation Modal */}
       {confirmAction && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-sm mx-4 space-y-4">
-            <h3 className={`text-lg font-semibold ${confirmAction === 'accept' ? 'text-emerald-700' : 'text-red-700'}`}>
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm mx-4 space-y-4 shadow-xl">
+            <h3 className={`text-lg font-semibold ${confirmAction === 'accept' ? 'text-slate-900' : 'text-[#C72B3D]'}`}>
               {confirmAction === 'accept' ? 'Accept this quote?' : 'Decline this quote?'}
             </h3>
             <p className="text-sm text-slate-600">
@@ -132,24 +143,21 @@ export function AcceptDeclineButtons({
                 : 'Are you sure you want to decline this quote? The company will be notified.'}
             </p>
             <div className="flex gap-3 justify-end">
-              <button
+              <QcButton
+                variant="ghost"
                 onClick={() => setConfirmAction(null)}
                 disabled={loading}
-                className="px-4 py-2 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
               >
                 Cancel
-              </button>
-              <button
+              </QcButton>
+              <QcButton
+                variant={confirmAction === 'accept' ? 'primary' : 'danger'}
                 onClick={() => handleRespond(confirmAction)}
                 disabled={loading}
-                className={`px-4 py-2 text-sm font-medium rounded-full text-white disabled:opacity-50 ${
-                  confirmAction === 'accept'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
+                pending={loading}
               >
                 {loading ? 'Processing...' : confirmAction === 'accept' ? 'Confirm Accept' : 'Confirm Decline'}
-              </button>
+              </QcButton>
             </div>
           </div>
         </div>

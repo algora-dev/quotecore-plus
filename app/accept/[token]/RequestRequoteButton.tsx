@@ -16,6 +16,7 @@
 
 import { useState } from 'react';
 import { submitRevisionRequest, getQuoteContactInfo } from './actions';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
 
 type Variant = 'active' | 'responded' | 'expired';
 
@@ -65,14 +66,18 @@ export function RequestRequoteButton({ token, variant, defaultCustomerName, defa
   const copy = VARIANT_COPY[variant];
 
   // Trigger style differs by context:
-  //  - active:    orange pill, sits inline between Accept and Decline,
-  //               same size/weight so the three options read as siblings.
-  //  - responded/expired: bold black pill because it's the only action
-  //               available on those dead-end screens.
-  const triggerClass =
-    variant === 'active'
-      ? 'px-6 py-2.5 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
-      : 'inline-flex items-center justify-center w-full rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition';
+  //  - active:    near-black secondary control, sits inline between the
+  //               orange-gradient Accept and the ghost Decline so the three
+  //               options read as siblings of one decision surface (v2).
+  //  - responded/expired: orange-gradient primary because it's the only
+  //               action available on those dead-end screens.
+  const trigger = variant === 'active'
+    ? <QcButton variant="secondary" size="lg" onClick={() => setOpen(true)}>{copy.trigger}</QcButton>
+    : (
+      <QcButton variant="primary" size="lg" className="w-full" onClick={() => setOpen(true)}>
+        {copy.trigger}
+      </QcButton>
+    );
 
   async function handleSubmit() {
     setError(null);
@@ -127,9 +132,7 @@ export function RequestRequoteButton({ token, variant, defaultCustomerName, defa
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={triggerClass}>
-        {copy.trigger}
-      </button>
+      {trigger}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50 p-4">
@@ -152,7 +155,7 @@ export function RequestRequoteButton({ token, variant, defaultCustomerName, defa
                     rows={5}
                     maxLength={4000}
                     placeholder="e.g. Could you re-quote with metal roofing instead of tile? Also need to add a new shed."
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                   />
                   <p className="text-xs text-slate-400 mt-1 text-right">{notes.length} / 4000</p>
                 </div>
@@ -168,7 +171,7 @@ export function RequestRequoteButton({ token, variant, defaultCustomerName, defa
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       maxLength={120}
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -181,7 +184,7 @@ export function RequestRequoteButton({ token, variant, defaultCustomerName, defa
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       maxLength={254}
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -193,22 +196,21 @@ export function RequestRequoteButton({ token, variant, defaultCustomerName, defa
                 )}
 
                 <div className="flex gap-3 justify-end pt-2">
-                  <button
-                    type="button"
+                  <QcButton
+                    variant="ghost"
                     onClick={reset}
                     disabled={submitting}
-                    className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
                   >
                     Cancel
-                  </button>
-                  <button
-                    type="button"
+                  </QcButton>
+                  <QcButton
+                    variant="primary"
                     onClick={handleSubmit}
                     disabled={submitting || notes.trim().length < 5}
-                    className="px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    pending={submitting}
                   >
                     {submitting ? 'Sending...' : 'Send request'}
-                  </button>
+                  </QcButton>
                 </div>
               </div>
             ) : (
@@ -248,13 +250,9 @@ export function RequestRequoteButton({ token, variant, defaultCustomerName, defa
                 )}
 
                 <div className="flex justify-end pt-2">
-                  <button
-                    type="button"
-                    onClick={reset}
-                    className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
-                  >
+                  <QcButton variant="primary" onClick={reset}>
                     Done
-                  </button>
+                  </QcButton>
                 </div>
               </div>
             )}
