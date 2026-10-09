@@ -400,9 +400,22 @@ export async function saveTakeoffMeasurements(
           };
         });
 
-        const totalQuantity = entries.reduce((sum, e) => sum + e.value_after_waste, 0);
-        const materialCost = totalQuantity * materialRate;
-        const labourCost = totalQuantity * labourRate;
+        // Lineal-with-cover basis (owner directive 2026-10-09): an area
+        // component sold as lineal metres converts at the LINE level:
+        // qty_lm = qty_m2 / cover_m. Rates scale for cost parity:
+        // rate_lm = rate_m2 x cover_m (so lm x rate_lm = m2 x rate_m2).
+        // Offcut-plan figures divide exactly the same way (supplied cover
+        // m2 = purchased lm x cover), so no entry-level special case is
+        // needed and measurement rows stay canonical m2.
+        const soldByLineal = (libComp as unknown as Record<string, unknown>).sold_by === 'lineal';
+        const coverWidthMm = Number((libComp as unknown as Record<string, unknown>).cover_width_mm ?? 0) || 0;
+        const linealCoverM = soldByLineal && coverWidthMm > 0 ? coverWidthMm / 1000 : 0;
+        const totalQuantityM2 = entries.reduce((sum, e) => sum + e.value_after_waste, 0);
+        const totalQuantity = linealCoverM > 0 ? totalQuantityM2 / linealCoverM : totalQuantityM2;
+        const lineMaterialRate = linealCoverM > 0 ? materialRate * linealCoverM : materialRate;
+        const lineLabourRate = linealCoverM > 0 ? labourRate * linealCoverM : labourRate;
+        const materialCost = totalQuantity * lineMaterialRate;
+        const labourCost = totalQuantity * lineLabourRate;
 
         return {
           component_library_id: componentId,
@@ -413,9 +426,9 @@ export async function saveTakeoffMeasurements(
           // M-02 (Gerald round-5): include the real measurement_type from
           // component_library so the RPC doesn't hardcode 'lineal' for every
           // component regardless of type.
-          measurement_type: libComp.measurement_type,
-          material_rate: materialRate,
-          labour_rate: labourRate,
+          measurement_type: (linealCoverM > 0 ? 'lineal' : libComp.measurement_type) as typeof libComp.measurement_type,
+          material_rate: lineMaterialRate,
+          labour_rate: lineLabourRate,
           waste_type: wasteType,
           waste_percent: wastePercent,
           waste_fixed: wasteFixed,

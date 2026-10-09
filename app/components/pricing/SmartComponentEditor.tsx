@@ -13,6 +13,7 @@ export interface ComponentEditorSettings {
   measurementType: MeasurementType; wasteType: WasteType; pitchEnabled: boolean;
   pricingStrategy: PricingStrategy; packPrice: string; packSize: string; packCoverage: string;
   heightMm: string; depthMm: string; hoursUnit: 'hr' | 'day'; wasteUnit: WasteUnit; notes: string;
+  soldBy: 'area' | 'lineal'; coverWidthMm: string;
 }
 export interface ComponentEditorInitial {
   name: string; sku: string; componentType: ComponentType; materialRate: string; labourRate: string;
@@ -133,6 +134,11 @@ export function SmartComponentEditor(props: Props) {
               {genericTradesEnabled && ['length_x_height', 'multi_lineal_lxh'].includes(s.measurementType) && numberField('height', 'Preset height (mm)', s.heightMm, value => set({ heightMm: value }), { step: '1', help: 'Measured length × this height gives the priced area.' })}
               {genericTradesEnabled && s.measurementType === 'volume' && numberField('depth', 'Preset depth (mm)', s.depthMm, value => set({ depthMm: value }), { step: '1', help: 'Measured area × this depth gives the priced volume.' })}
               {genericTradesEnabled && s.measurementType === 'hours_days' && <QcField htmlFor={`${id}-time`} label="Time unit for this test" help="Keep your quoted time and rate on the same basis. This display choice does not convert rates."><QcSelect id={`${id}-time`} value={s.hoursUnit} onChange={e => set({ hoursUnit: e.target.value as 'hr' | 'day' })}><option value="hr">Hours</option><option value="day">Days</option></QcSelect></QcField>}
+              {genericTradesEnabled && s.measurementType === 'area' && strategy === 'per_unit' && <div data-copilot="component-sold-by"><QcField htmlFor={`${id}-sold-by`} label="Sold as" help="Measure in m2 on the plan, then show the quote line in lineal metres using the cover width. Rates stay per m2.">
+                <QcSelect id={`${id}-sold-by`} value={s.soldBy} onChange={e => set({ soldBy: e.target.value as 'area' | 'lineal' })}>
+                  <option value="area">Square metres (m²)</option><option value="lineal">Lineal metres</option>
+                </QcSelect></QcField></div>}
+              {genericTradesEnabled && s.measurementType === 'area' && strategy === 'per_unit' && s.soldBy === 'lineal' && numberField('cover', 'Cover width (mm)', s.coverWidthMm, value => set({ coverWidthMm: value }), { step: '1', help: 'Lineal metres = area ÷ cover. Example: 100 m² at 760 = 131.6 lm. An attached offcut plan supplies its exact purchased figure.' })}
             </div>
           </section>
           <section className="qc-pricing-section" aria-labelledby={`${id}-costs`}>

@@ -1306,7 +1306,7 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
       combined_from?: Array<{ raw: number; after: number; sort: number }> | null;
       pitch_degrees?: number | string | null;
     }> | null; error: Error | null };
-  const totalQty = (entries ?? []).reduce((sum, e) => sum + Number(e.value_after_waste), 0);
+  const totalQtyRaw = (entries ?? []).reduce((sum, e) => sum + Number(e.value_after_waste), 0);
   const { data: comp } = await supabase
     .from('quote_components')
     .select('material_rate, labour_rate, component_library_id, name, measurement_type, waste_type, waste_percent, waste_fixed, pitch_type, calc_pitch_degrees, calc_audit')
@@ -1322,6 +1322,8 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
   let packPrice: number | null = null;
   let packSize: number | null = null;
   let packCoverageM2: number | null = null;
+  let libSoldBy: string | null = null;
+  let libCoverWidthMm = 0;
   if (comp?.component_library_id) {
     const { data: libRow } = await (supabase as unknown as {
       from: (t: string) => {
@@ -1333,6 +1335,8 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
                 pack_price?: number | null;
                 pack_size?: number | null;
                 pack_coverage_m2?: number | null;
+                sold_by?: string | null;
+                cover_width_mm?: number | null;
               } | null;
               error: Error | null;
             }>;
@@ -1341,7 +1345,7 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
       };
     })
       .from('component_library')
-      .select('pricing_strategy, pack_price, pack_size, pack_coverage_m2')
+      .select('pricing_strategy, pack_price, pack_size, pack_coverage_m2, sold_by, cover_width_mm')
       .eq('id', comp.component_library_id)
       .maybeSingle();
     if (libRow) {
@@ -1349,8 +1353,17 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
       packPrice = libRow.pack_price ?? null;
       packSize = libRow.pack_size ?? null;
       packCoverageM2 = libRow.pack_coverage_m2 ?? null;
+      libSoldBy = libRow.sold_by ?? null;
+      libCoverWidthMm = Number(libRow.cover_width_mm ?? 0) || 0;
     }
   }
+
+  // Lineal-with-cover basis (owner directive 2026-10-09): sold-by-lineal
+  // components convert the m2 entry total to lineal metres at the line
+  // level: qty_lm = qty_m2 / cover_m. Line rates already hold the per-lm
+  // figure (rate_m2 x cover from the takeoff save path), so only the
+  // quantity converts here.
+  const totalQty = libSoldBy === 'lineal' && libCoverWidthMm > 0 ? totalQtyRaw / (libCoverWidthMm / 1000) : totalQtyRaw;
 
   const { computeMaterialCostByStrategy, computePackCount, rafterPitchFactor, hipValleyPitchFactor } = await import('@/app/lib/pricing/engine');
   const costResult = computeMaterialCostByStrategy({

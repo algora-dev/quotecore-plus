@@ -200,6 +200,8 @@ const UPDATABLE_COMPONENT_FIELDS = [
   'collection_id',
   'height_value_mm',
   'depth_value_mm',
+  'sold_by',
+  'cover_width_mm',
   'waste_unit',
   'pricing_strategy',
   'pack_price',
@@ -541,7 +543,7 @@ export async function updateLibraryVisibility(
           default_pitch_type, waste_unit,
           pack_price, pack_size, pack_coverage_m2,
           pricing_strategy, show_price_default, show_dimensions_default,
-          eligible_for_orders, height_value_mm, depth_value_mm
+          eligible_for_orders, height_value_mm, depth_value_mm, sold_by, cover_width_mm
         `)
         .eq('collection_id', id)
         .order('name');

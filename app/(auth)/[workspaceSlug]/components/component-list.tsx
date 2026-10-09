@@ -171,6 +171,11 @@ export function ComponentList({
   const [formHoursUnit, setFormHoursUnit] = useState<'hr' | 'day'>('hr');
   const [formWasteUnit, setFormWasteUnit] = useState<WasteUnit>('percent');
   const [formPricingStrategy, setFormPricingStrategy] = useState<PricingStrategy>('per_unit');
+  // Lineal-with-cover basis (owner directive 2026-10-09): area components
+  // sold as lineal metres via cover width. Falls back to m2 unless both
+  // sold-by=lineal and a cover width are set (enforced again at save).
+  const [formSoldBy, setFormSoldBy] = useState<'area' | 'lineal'>('area');
+  const [formCoverWidthMm, setFormCoverWidthMm] = useState('');
 
   // Calculator draft restore (H-04): pre-fill form from a saved draft
   const [restoredName, setRestoredName] = useState<string>('');
@@ -334,6 +339,8 @@ export function ComponentList({
     const c = comp as unknown as Record<string, unknown>;
     setFormHeightMm(c.height_value_mm != null ? String(c.height_value_mm) : '');
     setFormDepthMm(c.depth_value_mm != null ? String(c.depth_value_mm) : '');
+    setFormSoldBy(c.sold_by === 'lineal' ? 'lineal' : 'area');
+    setFormCoverWidthMm(c.cover_width_mm != null ? String(c.cover_width_mm) : '');
     setFormWasteUnit((c.waste_unit as WasteUnit) ?? 'percent');
     setFormPricingStrategy((c.pricing_strategy as PricingStrategy) ?? 'per_unit');
     setFormPackPrice(c.pack_price != null ? String(c.pack_price) : '');
@@ -379,6 +386,7 @@ export function ComponentList({
       // Keep demo rates illustrative; do not alter product calculation logic.
       setRestoredName(''); setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false);
       setFormPricingStrategy('per_unit'); setRestoredMaterialRate('10'); setRestoredLabourRate('5'); setRestoredWasteAmount('');
+      setFormSoldBy('area'); setFormCoverWidthMm('');
       setSelectedCollectionId(demoDefaultLibraryId || activeLibraryId || collections.find(c => c.is_bootstrap)?.id || collections[0]?.id || '');
       setEditorVersion(value => value + 1);
       setShowForm(true);
@@ -411,6 +419,8 @@ export function ComponentList({
     setFormWasteType('none');
     setFormMeasurementType('area');
     setFormPitchEnabled(false);
+    setFormSoldBy('area');
+    setFormCoverWidthMm('');
     setAssignedFlashings([]);
     setSelectedFlashingId('');
     setFormNotes('');
@@ -568,6 +578,12 @@ export function ComponentList({
               : null,
           collection_id: selectedCollectionId || null,
           notes: formNotes.trim() || null,
+          sold_by: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm
+            ? 'lineal'
+            : null,
+          cover_width_mm: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm
+            ? Number(formCoverWidthMm)
+            : null,
         } as unknown as ComponentLibraryInsert)
       : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null } as unknown as ComponentLibraryInsert;
 
@@ -693,6 +709,12 @@ export function ComponentList({
               : null,
           collection_id: selectedCollectionId || null,
           notes: formNotes.trim() || null,
+          sold_by: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm
+            ? 'lineal'
+            : null,
+          cover_width_mm: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm
+            ? Number(formCoverWidthMm)
+            : null,
         } as unknown as Partial<ComponentLibraryInsert>)
       : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null };
 
@@ -785,7 +807,7 @@ export function ComponentList({
   const editorSettings: ComponentEditorSettings = { measurementType: formMeasurementType, wasteType: formWasteType,
     pitchEnabled: formPitchEnabled, pricingStrategy: formPricingStrategy, packPrice: formPackPrice, packSize: formPackSize,
     packCoverage: formPackCoverageM2, heightMm: formHeightMm, depthMm: formDepthMm, hoursUnit: formHoursUnit,
-    wasteUnit: formWasteUnit, notes: formNotes };
+    wasteUnit: formWasteUnit, notes: formNotes, soldBy: formSoldBy, coverWidthMm: formCoverWidthMm };
   function updateEditorSettings(patch: Partial<ComponentEditorSettings>) {
     setEditorDirty(true); setDraftTested(false);
     if (patch.measurementType !== undefined) setFormMeasurementType(patch.measurementType);
@@ -797,6 +819,8 @@ export function ComponentList({
     if (patch.packCoverage !== undefined) setFormPackCoverageM2(patch.packCoverage);
     if (patch.heightMm !== undefined) setFormHeightMm(patch.heightMm);
     if (patch.depthMm !== undefined) setFormDepthMm(patch.depthMm);
+    if (patch.soldBy !== undefined) setFormSoldBy(patch.soldBy);
+    if (patch.coverWidthMm !== undefined) setFormCoverWidthMm(patch.coverWidthMm);
     if (patch.hoursUnit !== undefined) setFormHoursUnit(patch.hoursUnit);
     if (patch.wasteUnit !== undefined) setFormWasteUnit(patch.wasteUnit);
     if (patch.notes !== undefined) setFormNotes(patch.notes);
