@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import {DEMO_HREF} from './hub-catalog';
 import {hubEvent} from './hub-events';
 import {ActionLink,Eyebrow,Icon} from './HubUi';
@@ -11,9 +12,8 @@ export default function HubAppBridge(){return <section className={`${s.appSectio
  </div>
  <div className={s.appVisual}><div className={s.productFrame}><div className={s.productBar}><span className={s.productDots} aria-hidden="true"><i/><i/><i/></span><span>YOUR WORK, CONNECTED</span><span>QuoteCore<span className={s.plus}>+</span></span></div>
   {/* Genuine supplied app image, not a generated interface. */}
-  {/* eslint-disable-next-line @next/next/no-img-element */}
   <img src="/marketing/free-tools/takeoff-workspace.webp" alt="QuoteCore+ digital takeoff workspace with a measured roof and navigation for quotes, orders and invoices" width="1050" height="571" loading="lazy" decoding="async"/>
   <div className={s.productJourney}><span>Measure</span><Icon name="arrow"/><span>Price</span><Icon name="arrow"/><span>Quote</span><Icon name="arrow"/><span>Send</span></div></div>
-  <a href="/done-for-you-setup" className={s.setupLink} onClick={()=>hubEvent('free_tools_setup_explore',{source:'app-bridge'})}><Icon name="help"/><span><strong>Prefer a hand getting set up?</strong>See our Done For You Setup.</span><Icon name="arrow"/></a>
+  <Link href="/done-for-you-setup" className={s.setupLink} onClick={()=>hubEvent('free_tools_setup_explore',{source:'app-bridge'})}><Icon name="help"/><span><strong>Prefer a hand getting set up?</strong>See our Done For You Setup.</span><Icon name="arrow"/></Link>
  </div>
 </div></section>;}

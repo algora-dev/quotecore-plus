@@ -11,8 +11,9 @@ type SpeechWindow=Window & {SpeechRecognition?:new()=>Recognition;webkitSpeechRe
 export function useSpeechInput(onTranscript:(text:string)=>void) {
  const [supported,setSupported]=useState(false),[listening,setListening]=useState(false),[notice,setNotice]=useState('');
  const ref=useRef<Recognition|null>(null),timer=useRef<ReturnType<typeof setTimeout>|null>(null),callback=useRef(onTranscript);
- callback.current=onTranscript;
+ useEffect(()=>{callback.current=onTranscript;});
  useEffect(()=>{
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-only window speech API feature detection (external system); not derivable during render
   const w=window as SpeechWindow;setSupported(!!(w.SpeechRecognition||w.webkitSpeechRecognition));
   return()=>{if(timer.current)clearTimeout(timer.current);if(ref.current){ref.current.onresult=null;ref.current.onerror=null;ref.current.onend=null;ref.current.abort();ref.current=null;}};
  },[]);

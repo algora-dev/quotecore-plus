@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {CATEGORIES,DIRECTORY_TOOLS,categoryOf,type HubCategory} from './hub-catalog';
 import {normaliseQuery} from './tool-registry';
@@ -37,6 +38,6 @@ export default function HubDirectory(){
    </details>;})}
   </div>
   {query&&!matches.length&&<div className={s.noResults}><p>No tools match that search. Try a simpler term or describe the task to the assistant.</p><button type="button" className={s.textButton} onClick={()=>setQuery('')}>Clear search</button><a href="#tool-finder">Ask the assistant <Icon name="arrow"/></a></div>}
-  <p className={s.directoryTip}>Also in the library: concrete, landscaping, paint, tiles, guttering and margin calculators. <a href="/free-calculators" onClick={()=>hubEvent('free_tools_directory_jump',{source:'all-calculators'})}>Browse calculators <Icon name="arrow"/></a></p>
+  <p className={s.directoryTip}>Also in the library: concrete, landscaping, paint, tiles, guttering and margin calculators. <Link href="/free-calculators" onClick={()=>hubEvent('free_tools_directory_jump',{source:'all-calculators'})}>Browse calculators <Icon name="arrow"/></Link></p>
  </div></section>;
 }
