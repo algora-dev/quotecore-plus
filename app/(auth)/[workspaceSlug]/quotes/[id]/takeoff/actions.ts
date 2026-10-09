@@ -475,6 +475,32 @@ export async function saveTakeoffMeasurements(
     };
   }
 
+  // Duplicate-component guard (2026-10-09, owner-approved fix for quote #1023):
+  // when this save routes a component to a roof area, legacy page-scoped rows
+  // (quote_roof_area_id NULL) for the same quote+component do not match the
+  // RPC's (component, area) lookup, so the RPC INSERTs a second row beside
+  // them (this doubled every lineal on quote #1023). Adopt those rows first:
+  // point them at the group's area so the RPC's exact match finds and UPDATES
+  // them. Multi-area components stay correct: only the NULL row is adopted
+  // per group; a second area group legitimately keeps its own row.
+  for (const groupKey of componentGroupKeys) {
+    const sepIdx = groupKey.indexOf('::');
+    const groupComponentId = groupKey.slice(0, sepIdx);
+    const groupAreaId = groupKey.slice(sepIdx + 2);
+    if (!groupAreaId) continue;
+    const { error: adoptError } = await supabase
+      .from('quote_components')
+      .update({ quote_roof_area_id: groupAreaId })
+      .eq('quote_id', quoteId)
+      .eq('component_library_id', groupComponentId)
+      .is('quote_roof_area_id', null);
+    if (adoptError) {
+      // Non-fatal by design: a failed adoption falls back to the RPC's own
+      // matching (previous behaviour) rather than blocking the save.
+      console.warn('[saveTakeoffMeasurements] area adoption skipped for component', groupComponentId, adoptError.message);
+    }
+  }
+
   // Pass STORAGE PATHS to the RPC (Gerald audit pass 2). The RPC keeps
   // accepting the legacy *_url keys for one release so an in-flight deploy
   // doesn't drop snapshots, but we should never send them from new code.
