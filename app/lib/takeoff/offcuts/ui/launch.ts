@@ -6,7 +6,7 @@ import { mountWorkbench, type WorkbenchHandle, type WorkbenchOptions, type Offcu
 import type { QuoteQuantityProposal } from '../core/quantities';
 import type { Draft } from '../core/types';
 import { tokenFallbacks } from './theme';
-export interface LaunchOptions extends Pick<WorkbenchOptions,'beforeCalculation'|'onReviewCheckpoint'|'onCalculationChange'|'initialCalculation'|'calculationLimitMs'> {
+export interface LaunchOptions extends Pick<WorkbenchOptions,'beforeCalculation'|'onReviewCheckpoint'|'onCalculationChange'|'initialCalculation'|'calculationLimitMs'|'getRecoveryState'|'createExportWorker'> {
   /** Durable host checkpoint gate, separate from review/source measurement saving. */
   persistCapture?: (capture:LiveInputCapture) => Promise<void>; onPlanInvalidated?:()=>void; onClosed?:()=>void; createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void; onSaveOnePager?: (payload:OffcutOnePagerPayload)=>void|Promise<void>;
   reviewRepository?:ReviewRepository;
@@ -106,14 +106,14 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
     // Establish real layout dimensions BEFORE the first SVG/handle render.
     modal.showModal();
     handle = mountWorkbench(host, captured.roof, {
-      beforeCalculation:options.beforeCalculation,onReviewCheckpoint:options.onReviewCheckpoint,onCalculationChange:options.onCalculationChange,initialCalculation:options.initialCalculation,calculationLimitMs:options.calculationLimitMs,
+      beforeCalculation:options.beforeCalculation,onReviewCheckpoint:options.onReviewCheckpoint,onCalculationChange:options.onCalculationChange,initialCalculation:options.initialCalculation,calculationLimitMs:options.calculationLimitMs,getRecoveryState:options.getRecoveryState,createExportWorker:options.createExportWorker,
       inputCapture: capture, initialIssues: captured.issues, reviewRepository:options.reviewRepository, initialSavedReview:options.initialSavedReview, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal, onSaveOnePager:options.onSaveOnePager, onPlanInvalidated:options.onPlanInvalidated,
       readCurrentSourceRevision: options.savedInputMode?undefined:() => fromQuoteCore(readSnapshot()).roof.sourceRevision,
       createWorker: options.createWorker ?? (() => new Worker(new URL('../worker.ts', import.meta.url), { type: 'module' })),
     });
     host.shadowRoot?.querySelector<HTMLElement>('[data-action="close"]')?.focus();
   } catch (error) { destroy(); throw error; }
-  return { destroy, getDraft: () => handle!.getDraft(), getDebugBundle:()=>handle!.getDebugBundle!(), flushReview:()=>handle!.flushReview!(), getSaveState:()=>handle!.getSaveState!() };
+  return { destroy, getDraft: () => handle!.getDraft(), getDebugBundle:()=>handle!.getDebugBundle!(), getDebugBlob:()=>handle!.getDebugBlob!(), getPerformance:()=>handle!.getPerformance!(), flushReview:()=>handle!.flushReview!(), getSaveState:()=>handle!.getSaveState!() };
 }
 
 /** Explicit recovery entry for a fresh browser visit with no in-memory calibration.

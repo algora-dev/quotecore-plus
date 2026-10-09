@@ -307,7 +307,7 @@ export function replayProvisionalDestinations(r:SolveRequest,incumbent:Solution,
   const faceOrder=new Map(r.faces.map((f,i)=>[f.id,i]));
   best.demands.sort((a,b)=>faceOrder.get(a.faceId)!-faceOrder.get(b.faceId)!||a.laneIndex-b.laneIndex);
   best.placements.sort((a,b)=>a.demandId.localeCompare(b.demandId));
-  best.engineVersion='2.20';
+  best.engineVersion='2.21';
   best.layoutId=planSignature(best);best.layoutLabel='Recommended';best.objective='recommended';
   const scale=profile.coverMm/(profile.coverMm+profile.leftLapMm+profile.rightLapMm);
   const saved=incumbent.metrics.newMaterialMm2-best.metrics.newMaterialMm2;
@@ -320,6 +320,6 @@ export function replayProvisionalDestinations(r:SolveRequest,incumbent:Solution,
       sources:[...new Set(best!.placements.filter(p=>p.kind==='reuse'&&best!.demands.find(d=>d.id===p.demandId)?.faceId===f.id).map(p=>om.get(p.offcutId!)?.sourceFaceId))]}))});
   best.search={...incumbent.search};
   best.decisionTrace=structuredClone(incumbent.decisionTrace);
-  if(best.decisionTrace)best.decisionTrace.engineVersion='2.20';
+  if(best.decisionTrace)best.decisionTrace.engineVersion='2.21';
   return finish(best);
 }

@@ -1,3 +1,6 @@
+import { ViewPerformance } from '../reliability/viewPerformance';
+import { buildDiagnosticData, type DiagnosticInput } from '../reliability/diagnosticData';
+import { diagnosticExport } from '../reliability/diagnosticExport';
 import { CalculationController } from '../reliability/calculation';
 import { STAGE_LABELS, type CalculationJournal, type CheckedPlan, type WorkerMessage } from '../reliability/protocol';
 import { loadCalculationJournal, storeCalculationJournal } from '../reliability/journalStore';
@@ -18,7 +21,6 @@ import { quantitySummary, quoteQuantityProposal, type QuantitySummary, type Quot
 import type { DecisionTrace, Draft, Issue, Point, RoofFace, RoofInput, Solution } from '../core/types';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../core/types';
 import { deriveFaces } from '../core/graph';
-import { auditFaceBehaviour, FACE_GEOMETRY_MODEL } from '../core/faceGeometry';
 import { applyLocalFaceRepair } from '../core/faceRepair';
 import { revertAutomaticJoins, alignReviewedFaces, draftingPolicy, snapDrawingPoint, type DrawingSnap, type BoundaryRepair, type DrawingAdjustment } from '../core/drafting';
 import { dismissWarning, warningDismissed, warningKey, issueTitle } from '../core/reviewIssues';
@@ -79,6 +81,8 @@ export interface WorkbenchOptions {
   inputCapture?: LiveInputCapture;
   initialIssues?: Issue[];
   createWorker?: () => Worker;
+  createExportWorker?: () => Worker;
+  getRecoveryState?: () => unknown;
   onClose?: () => void;
   onExport?: (draft: Draft) => void;
   /** Optional host hook: a proposal only, after explicit basis selection. The host confirms a target material line. */
@@ -91,7 +95,7 @@ export interface WorkbenchOptions {
   /** Returns the original workspace revision, not the edited review draft. */
   readCurrentSourceRevision?: () => string;
 }
-export interface WorkbenchHandle { destroy: () => void; getDraft: () => Draft; getDebugBundle?: () => string; flushReview?: () => Promise<void>; getSaveState?: () => SaveState|null }
+export interface WorkbenchHandle { destroy: () => void; getDraft: () => Draft; getDebugBundle?: () => string; getDebugBlob?: () => Promise<Blob>; getPerformance?: () => unknown; flushReview?: () => Promise<void>; getSaveState?: () => SaveState|null }
 // Display only: remove sub-nanometre accumulation noise at a decimal rounding tie.
 // Purchase rows, ledger areas and optimiser objectives retain their full precision.
 function displayQuantity(value:number):string { return (Math.round((value+Math.sign(value)*1e-9)*100)/100).toFixed(2); }
@@ -104,6 +108,9 @@ interface Drag {
 }
 export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: WorkbenchOptions = {}): WorkbenchHandle {
   const shadow = host.shadowRoot ?? host.attachShadow({ mode: 'open' });
+  const uiPerformance = new ViewPerformance(); uiPerformance.observe();
+  let exportAbort:AbortController|null=null;
+  let cleanupConfirm:{keep:string[];revision:string}|null=null;
   let draft: Draft = options.initialDraft ? structuredClone(options.initialDraft) : {
     schemaVersion: 1, roof: structuredClone(roof), faces: [], profile: { ...DEFAULT_PROFILE }, settings: { ...DEFAULT_SETTINGS }, solution: null,
   };
@@ -156,12 +163,15 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let backgroundFailed=false;
   let selectedSectionId='', editGroups=false, showDetailedLabels=false, customFlowOpen=false;
   let quantityBasis:QuoteQuantityBasis='lineal-metres', quotePreviewOpen=false;
-  let quantityCache:{solution:Solution;summary:QuantitySummary}|null=null;
-  function quantities():QuantitySummary|null {
-    if(!draft.solution)return null;
-    if(quantityCache?.solution!==draft.solution)quantityCache={solution:draft.solution,summary:quantitySummary(draft.solution)};
-    return quantityCache.summary;
+  // Workbench-owned immutable solution objects: replacing/editing a plan creates
+  // a new object. Weak caches cannot leak whole plans after they leave history.
+  const quantityCache=new WeakMap<Solution,QuantitySummary>();
+  function quantitiesFor(solution:Solution):QuantitySummary {
+    let value=quantityCache.get(solution);
+    if(!value){value=uiPerformance.measure('section-summary',()=>quantitySummary(solution));quantityCache.set(solution,value);}
+    return value;
   }
+  function quantities():QuantitySummary|null { return draft.solution?quantitiesFor(draft.solution):null; }
   function sectionLabel(section:MaterialSection):string {
     return section.salvagedFiller?'Salvaged filler':section.role==='new-bank'?'New bank':section.role==='new-filler'?'New filler':section.role==='self-fill'?'Self-fill':section.role==='bank-continuation'?'Shared bank stock':section.reuseGeneration>=2?'Recut offcuts':'Offcuts';
   }
@@ -222,15 +232,20 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function rememberChecked(plan:CheckedPlan):void {if(draft.solution)validationCache={solution:draft.solution,key:validationKey(),checks:plan.checks};}
   let storedReview:StoredReview|null=null, saveReady=false, saveSignature='';
   let saveState:SaveState|null=options.reviewRepository?{status:'loading',revision:0,message:'Checking for a saved review…'}:null;
-  const reviewSaver=options.reviewRepository?new ReviewSaver(options.reviewRepository,reviewScope(capturedRoof),state=>{saveState=state;if(!disposed)render();}):null;
+  const reviewSaver=options.reviewRepository?new ReviewSaver(options.reviewRepository,reviewScope(capturedRoof),state=>{
+    const previous=saveState?.status;saveState=state;if(disposed)return;
+    // A save acknowledgement must not replace the canvas, focus or scroll state.
+    const text=shadow.querySelector<HTMLElement>('.qc-save-status');if(text&&!salvagePreview)text.textContent=state.message;
+    if(['error','conflict'].includes(state.status)||['error','conflict'].includes(previous??''))render();
+  }):null;
   function queueReviewSave():void {
     if(salvagePreview)return;
     if(disposed||stale)return;
     const signature=fingerprint([draft,layouts,layoutIndex,issues,repairs,drawingAdjustments]);
-    if(signature===saveSignature&&signature===recoverySignature)return;
+    if((!reviewSaver||!saveReady||signature===saveSignature)&&(!options.onReviewCheckpoint||signature===recoverySignature))return;
     try{
-      const document=createReviewDocument({draft,sourceRoof:capturedRoof,capture:options.inputCapture,plans:layouts,selectedPlanIndex:layoutIndex,
-        diagnostics:{initialDetection,issues,repairs,adjustments:drawingAdjustments}});
+      const document=uiPerformance.measure('review-snapshot',()=>createReviewDocument({draft,sourceRoof:capturedRoof,capture:options.inputCapture,plans:layouts,selectedPlanIndex:layoutIndex,
+        diagnostics:{initialDetection,issues,repairs,adjustments:drawingAdjustments}}));
       if(signature!==recoverySignature){options.onReviewCheckpoint?.(document);recoverySignature=signature;}
       if(reviewSaver&&saveReady&&signature!==saveSignature){saveSignature=signature;reviewSaver.queue(document);}
     }catch(e){saveState={status:'error',revision:saveState?.revision??0,message:message(e)};}
@@ -274,7 +289,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function cancelByUser():void {calculation?.cancel();cancel();notice='Calculation cancelled. Reviewed faces and any original plan are kept.';render(true);}
   function invalidate(): void { options.onPlanInvalidated?.(); salvagePreview=null;salvageBase=null;salvageDialog=false;lastSalvageSearch=null;alternativeDialog=null;alternativeFocus=null;
     cancel(); draft.solution = null; layouts=[];layoutIndex=0; phase = 'faces'; selectedOffcutId = ''; selectedGroupId = '';
-    selectedSectionId='';quotePreviewOpen=false;quantityCache=null;
+    selectedSectionId='';quotePreviewOpen=false;
     error = ''; pendingSourceAck = false; partitionKey = ''; lastSearchTrace=null;alternativeAttempt=0;
   }
   function commitGeometry(next:RoofFace[],text:string):void {
@@ -285,8 +300,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if(!next.some(f=>f.id===selectedFaceId))selectedFaceId=next[0]?.id??'';
     notice=text;render();
   }
-  function rebuildCleanup(keep:string[]):void {
-    if(draft.faces.some(f=>f.provenance!=='derived')&&!window.confirm('Rebuild from your original linework? This replaces edited shapes. Undo can restore this review. Source takeoff is unchanged.'))return;
+  function rebuildCleanup(keep:string[],approved=false):void {
+    if(!approved&&draft.faces.some(f=>f.provenance!=='derived')){cleanupConfirm={keep:[...keep],revision:validationKey()};render();return;}
     const before=structuredClone(draft.faces);checkpoint();
     draft.roof.geometryKeepSeparateEdgeIds=[...new Set(keep)];draft.roof.geometryCleanupMode='auto';draft.roof.sourceRevision=roofRevision(draft.roof);
     detect(false);
@@ -363,7 +378,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if(!svg)return{x:0,y:0};const matrix=svg.getScreenCTM();if(!matrix)return{x:0,y:0};
     const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(matrix.inverse());return{x:p.x,y:p.y};
   }
-  function renderScene(): void {
+  function renderScene(): void { uiPerformance.measure('render-scene',renderSceneNow); }
+  function renderSceneNow(): void {
     if(disposed)return;
     const canvas = shadow.querySelector<HTMLElement>('.qc-canvas'); if (!canvas) return;
     viewport.observe(canvas);
@@ -423,13 +439,21 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if (main) main.scrollTop = resetScroll ? 0 : view.mainScroll;
   }
   function inputField(label:string,field:string,value:number|null,step='1'):string {return `<label>${esc(label)}<input data-field="${field}" type="number" step="${step}" value="${value===null?'':value}"/></label>`;}
+  const traceContent=new Map<string,DecisionTrace>();
+  const loadedTraces=new Set<string>();
   function tracePanel(trace:DecisionTrace):string {
-    return `<p class="qc-muted">V${trace.engineVersion} · ${esc(trace.objective)} · selected trial ${trace.selectedTrial??'none'} · ${trace.candidates.length} candidate trials${trace.budgetReached?' · budget reached':''}${trace.historic?(draft.solution?.salvage?' · base search retained; optional filler reuse recorded below':' · historic (manually edited plan)'):''}</p>
-      <ol class="qc-trace-events">${trace.events.slice(0,100).map(e=>`<li><details><summary>${esc(e.action)} - ${esc(e.message)}</summary>${e.faceIds?.length?`<p>${e.faceIds.map(id=>esc(draft.faces.find(f=>f.id===id)?.name??id)).join(', ')}</p>`:''}${e.data?`<pre>${esc(JSON.stringify(e.data,null,2))}</pre>`:''}</details></li>`).join('')}</ol>
-      <details><summary>Why this candidate was selected</summary><pre>${esc(JSON.stringify(trace.candidates,null,2))}</pre></details>
-      ${trace.truncated||trace.events.length>100?'<p class="qc-muted">Detailed events are bounded; export the trace for all retained events and truncation counts.</p>':''}`;
+    const id=trace===lastSearchTrace?'last-alternative':'selected-plan';traceContent.set(id,trace);
+    const lead=`<p class="qc-muted">V${trace.engineVersion} · ${esc(trace.objective)} · selected trial ${trace.selectedTrial??'none'} · ${trace.candidates.length} candidate trials${trace.budgetReached?' · budget reached':''}</p>`;
+    return `<details data-lazy-trace="${id}" ${loadedTraces.has(id)?'open':''}><summary>Detailed decision log</summary>${lead}<div data-trace-body="${id}">${loadedTraces.has(id)?traceBody(trace):'<p class="qc-muted">Open to load details. The full retained trace is always included in Export diagnostics.</p>'}</div></details>`;
+  }
+  function traceBody(trace:DecisionTrace):string {
+    return `<ol class="qc-trace-events">${trace.events.slice(0,100).map(e=>`<li><details><summary>${esc(e.action)} — ${esc(e.message)}</summary>${e.data?`<pre>${esc(JSON.stringify(e.data,null,2))}</pre>`:''}</details></li>`).join('')}</ol><details><summary>Candidate comparisons</summary><pre>${esc(JSON.stringify(trace.candidates,null,2))}</pre></details>`;
   }
   function render(resetScroll = false): void {
+    if(disposed)return;
+    uiPerformance.measure('render',()=>renderNow(resetScroll));
+  }
+  function renderNow(resetScroll = false): void {
     if (disposed) return;
     const view = captureView();
     const f = face(), s = draft.solution, reported = allIssues(), errors = reported.filter(i => i.severity === 'error');
@@ -590,17 +614,21 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       ${errors.length>1?`<small>${errors.length} checks remain. Other valid faces are preserved.</small>`:''}</div>`:'';
     const advisory=visibleIssues.find(i=>i.code==='BACKGROUND_IMAGE'&&i.severity==='warning')??visibleIssues.find(i=>i.severity==='warning'&&!partition().regions.some(r=>r.id===i.objectId)&&!['SNAPPED_ENDPOINTS','NARROW_FACE','FLOW_REVIEW'].includes(i.code));
     const advisoryCard=advisory?`<details class="qc-advisory"><summary>${esc(issueTitle(advisory,draft.faces))}</summary><p>${esc(advisory.message)}</p><button data-action="ignore-warning" data-id="${warningKey(advisory,draft)}">Ignore</button></details>`:'';
-    shadow.innerHTML = `<style>${styles}${geometryStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.20 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    shadow.innerHTML = `<style>${styles}${geometryStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.21 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
       <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${geometryTool==='split'?'Click two boundary points · Esc cancels':geometryTool==='merge'?'Click a neighbouring face · Esc cancels':drawPoints ? 'Click corners · click first point / Enter to finish · Backspace removes last · Esc cancels · Alt bypasses snap' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span data-run-progress>${esc(progress)}</span><span class="qc-muted">The layout count is only one stage. Cancel keeps your reviewed faces.</span><div class="qc-actions"><button data-action="cancel">Cancel</button><button data-action="export-trace">Export diagnostics</button></div></div>` : ''}</section>
-      <aside class="qc-sidebar" aria-label="Offcut review controls">${storageCard}${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}<button data-action="export-trace">Export diagnostics</button><button data-action="dismiss-action-error">Dismiss message</button></div>` : ''}${interrupted}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advisoryCard}${advanced}</aside></main>
-      <footer class="qc-footer"><span>Draft only - verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>${salvageDialog&&salvagePreview?salvageResultDialog(salvagePreview,draft.faces):alternativeDialog?noAlternativeDialog(alternativeDialog,draft.solution):''}`;
+      <aside class="qc-sidebar" aria-label="Offcut review controls">${storageCard}<div id="qc-export-status" role="status" aria-live="polite"></div>${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}<button data-action="export-trace">Export diagnostics</button><button data-action="dismiss-action-error">Dismiss message</button></div>` : ''}${interrupted}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advisoryCard}${advanced}</aside></main>
+      <footer class="qc-footer"><span>Draft only - verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>${cleanupConfirm?`<dialog class="qc-result-dialog" data-cleanup-confirm aria-labelledby="qc-cleanup-title"><h2 id="qc-cleanup-title">Rebuild reviewed shapes?</h2><p>This replaces edited shapes with your original linework. Undo can restore this review. The source takeoff and quote prices are unchanged.</p><button data-action="cancel-cleanup" autofocus>Keep current shapes</button><button data-action="confirm-cleanup" class="primary">Rebuild shapes</button></dialog>`:salvageDialog&&salvagePreview?salvageResultDialog(salvagePreview,draft.faces):alternativeDialog?noAlternativeDialog(alternativeDialog,draft.solution):''}`;
     renderScene(); restoreView(view, resetScroll);
     if(panelTarget){const target=panelTarget;panelTarget=null;revealPanel(target);}
     if(salvagePreview){
       for(const control of shadow.querySelectorAll<HTMLInputElement>('.qc-sidebar input,.qc-sidebar select'))control.disabled=true;
     }
-    if(salvageDialog&&salvagePreview){
+    updateExportStatus();
+    if(cleanupConfirm){
+      const dialog=shadow.querySelector<HTMLDialogElement>('[data-cleanup-confirm]');
+      if(dialog){dialog.addEventListener('cancel',e=>{e.preventDefault();e.stopPropagation();cleanupConfirm=null;render();});dialog.showModal();}
+    }else if(salvageDialog&&salvagePreview){
       const dialog=shadow.querySelector<HTMLDialogElement>('.qc-result-dialog');
       if(dialog){dialog.addEventListener('cancel',e=>{e.preventDefault();e.stopPropagation();endSalvage(false);});dialog.showModal();}
     }else if(alternativeDialog){
@@ -615,25 +643,44 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function download(name:string,contents:string,mime:string):void {
     const blob=new Blob([contents],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  function debugBundle():string {
+  function diagnosticInput():DiagnosticInput {
     const committed=salvagePreview&&salvageBase?{...draft,solution:salvageBase}:draft;
     let currentIssues:Issue[]=issues;
     try{currentIssues=allIssues();}catch(e){currentIssues=[...issues,{severity:'error',code:'DIAGNOSTIC_CHECK_FAILED',message:message(e)}];}
-    const source=structuredClone(capturedRoof);delete source.imageUrl;
-    return JSON.stringify({schemaVersion:1,kind:'quotecore-offcut-debug',engineVersion:'2.20',phase,planningModel:FACE_GEOMETRY_MODEL,
-      boundaryBehaviour:auditFaceBehaviour(draft.faces),
-      liveInputSnapshot:options.inputCapture?JSON.parse(exportLiveCapture(options.inputCapture)):null,
-      persistence:{kind:options.reviewRepository?.kind??'not-connected',state:saveState},
-      calculation:lastCalculation,
-      sourceRoofAtOpen:source,initialDetection,
-      inputEvidence:options.inputCapture?'live-workspace-capture':'direct-roof-input; host adapter evidence not supplied',
-      selectedPlanIndex:layoutIndex,approvedDraft:JSON.parse(exportDraft(committed)),
-      reviewDiagnostics:{issues:currentIssues,repairs,drawingAdjustments,ignoredWarnings:draft.dismissedWarnings??[],componentBoundaryOverrides:draft.componentBoundaryOverrides??{},policy:draftingPolicy(draft.roof),stale},
-      quantitySummary:committed.solution?quantitySummary(committed.solution):null,bankCoverage:committed.solution?bankLaneAudit(committed.solution):null,purchaseOperations:committed.solution?purchaseOperations(committed.solution):null,purchaseLedger:committed.solution?rootSheetLedger(committed.solution):null,receiverSafety:committed.solution?.receiverSafety??null,selectedSectionId,selectedTrace:committed.solution?.decisionTrace??null,lastAlternativeSearch:lastSearchTrace,
-      stockLengthRefinement:committed.solution?.stockLengthRefinement??null,stockEndRows:committed.solution?stockLengthRows(committed.solution):[],
-      lastSalvageSearch,salvagePreview:salvagePreview?{previewOnly:true,result:salvagePreview,baseLayoutId:salvageBase?.layoutId,viewingBase:salvageViewingBase}:null,
-      sessionPlans:layouts.map(p=>({layoutId:p.layoutId,objective:p.objective,metrics:p.metrics,quantities:{purchasedLinealM:quantitySummary(p).purchasedLinealM,suppliedCoverAreaM2:quantitySummary(p).suppliedCoverAreaM2},comparison:p.comparison,salvage:p.salvage,decisionTrace:p.decisionTrace??null}))},null,2);
+    return {phase,draft:committed,sourceRoof:capturedRoof,capture:options.inputCapture,
+      persistence:{kind:options.reviewRepository?.kind??'not-connected',state:saveState,takeoffCheckpoint:options.getRecoveryState?.()??null},
+      calculation:lastCalculation,initialDetection,selectedPlanIndex:layoutIndex,issues:currentIssues,repairs,drawingAdjustments,stale,
+      selectedSectionId,lastSearchTrace,layouts,lastSalvageSearch,
+      salvagePreview:salvagePreview?{previewOnly:true,result:salvagePreview,baseLayoutId:salvageBase?.layoutId,viewingBase:salvageViewingBase}:null,
+      uiPerformance:uiPerformance.snapshot()};
   }
+  // Retained for existing host/test integrations. Interactive export uses the
+  // asynchronous worker path below; callers needing a file should use getDebugBlob.
+  function debugBundle():string {return uiPerformance.measure('debug-sync-api',()=>JSON.stringify(buildDiagnosticData(diagnosticInput()),null,2));}
+  let exportStatus='';
+  function updateExportStatus():void {
+    const slot=shadow.querySelector<HTMLElement>('#qc-export-status');
+    if(slot){slot.textContent=exportStatus;
+      if(exportAbort){const button=document.createElement('button');button.dataset.action='cancel-export';button.textContent='Cancel export';slot.append(button);}}
+    for(const b of shadow.querySelectorAll<HTMLButtonElement>('[data-action="export-trace"]'))b.disabled=!!exportAbort;
+  }
+  async function exportDebug(downloadFile=true):Promise<Blob> {
+    if(exportAbort)throw new Error('A diagnostic export is already running.');
+    const abort=new AbortController();exportAbort=abort;exportStatus='Preparing diagnostic export…';updateExportStatus();
+    const start=performance.now();
+    try{
+      // Yield a paint before cloning/dispatching, including on a busy worker view.
+      await new Promise<void>(r=>setTimeout(r,0));
+      const result=await diagnosticExport(diagnosticInput(),abort.signal,options.createExportWorker);
+      if(disposed||abort.signal.aborted)throw new DOMException('Export cancelled.','AbortError');
+      uiPerformance.record('debug-export',performance.now()-start);
+      if(downloadFile)downloadBlob('quotecore-offcuts-v2.21-debug.json',result.blob);
+      exportStatus=result.mode==='worker'?'Diagnostic export ready.':'Diagnostic export ready (compatible fallback).';
+      return result.blob;
+    }catch(e){exportStatus=e instanceof Error&&e.name==='AbortError'?'Export cancelled. Your plan is unchanged.':message(e);throw e;}
+    finally{if(exportAbort===abort)exportAbort=null;if(!disposed)updateExportStatus();}
+  }
+  function downloadBlob(name:string,blob:Blob):void {const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   function ensureCurrent():void { if(stale||options.readCurrentSourceRevision&&options.readCurrentSourceRevision()!==capturedRevision)throw new Error('Takeoff changed. Reopen this review from the current canvas.'); }
   function run(objective?:'simpler'|'less-material'|'salvage'):void {
     if(busy)return;
@@ -703,11 +750,15 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function click(event:Event):void {
     const target=(event.target as Element).closest<HTMLElement>('[data-action]');if(!target)return;
     const action=target.dataset.action;error='';
-    if(salvagePreview&&!['salvage-keep','salvage-accept','salvage-review','salvage-view-base','salvage-view-candidate','salvage-locate','clear-selection','select-section','close','fit','zoom-in','zoom-out','pan','toggle-pan','export-trace'].includes(action??''))return;
+    if(salvagePreview&&!['salvage-keep','salvage-accept','salvage-review','salvage-view-base','salvage-view-candidate','salvage-locate','clear-selection','select-section','close','fit','zoom-in','zoom-out','pan','toggle-pan','export-trace','cancel-export'].includes(action??''))return;
 
     if (target instanceof HTMLButtonElement && target.disabled) return;
-    if(busy&&!['cancel','export-trace','export-json','export-input','close'].includes(action??''))return;
+    if(busy&&!['cancel','cancel-export','export-trace','export-json','export-input','close'].includes(action??''))return;
+    if(cleanupConfirm&&!['confirm-cleanup','cancel-cleanup'].includes(action??''))return;
     try {
+      if(action==='cancel-export'){exportAbort?.abort();return;}
+      if(action==='cancel-cleanup'){cleanupConfirm=null;render();return;}
+      if(action==='confirm-cleanup'){const pending=cleanupConfirm;cleanupConfirm=null;if(!pending)return;if(pending.revision!==validationKey())throw new Error('The reviewed shapes changed. Review them before rebuilding.');rebuildCleanup(pending.keep,true);return;}
       if(action==='resume-review'&&storedReview){applySavedReview(storedReview);return;}
       if(action==='start-fresh-review'){storedReview=null;saveReady=true;saveSignature='';notice='Current takeoff kept. Saving this review does not change the main takeoff.';render();return;}
       if(action==='export-saved-review'&&storedReview){download('quotecore-saved-offcut-review.json',JSON.stringify(storedReview.document,null,2),'application/json');return;}
@@ -733,8 +784,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='alternative-simpler'){run('simpler');return;}
             if(action==='export-ledger'||action==='export-stock-csv'){
         ensureCurrent();const ledger=rootSheetLedger(draft.solution!);
-        if(action==='export-ledger')download('quotecore-v2.20-material-ledger.json',JSON.stringify({engineVersion:'2.20',ledger,receiverSafety:draft.solution!.receiverSafety,stockLengthRefinement:draft.solution!.stockLengthRefinement,stockEndRows:stockLengthRows(draft.solution!)},null,2),'application/json');
-        else download('quotecore-v2.20-new-sheets.csv',purchaseLedgerCsv(ledger),'text/csv');
+        if(action==='export-ledger')download('quotecore-v2.21-material-ledger.json',JSON.stringify({engineVersion:'2.21',ledger,receiverSafety:draft.solution!.receiverSafety,stockLengthRefinement:draft.solution!.stockLengthRefinement,stockEndRows:stockLengthRows(draft.solution!)},null,2),'application/json');
+        else download('quotecore-v2.21-new-sheets.csv',purchaseLedgerCsv(ledger),'text/csv');
         notice='Purchased parent-sheet audit exported; offcuts are not additional purchases.';render();return;
       }
       if(action==='export-input'){
@@ -752,8 +803,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       }
       if(action==='export-trace'||action==='copy-trace'){
         if(action==='export-trace'){
-          download('quotecore-offcuts-v2.20-debug.json',debugBundle(),'application/json');
-          notice='Debug bundle exported with the captured input and face diagnostics. No cut plan is required.';render();return;
+          void exportDebug().catch(()=>{});return;
         }
         if(!draft.solution)throw new Error('No cut-plan trace exists yet. Export the debug bundle for face-detection diagnostics.');
         const trace=draft.solution.decisionTrace;
@@ -1114,8 +1164,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function invoke(action: string): void { shadow.querySelector<HTMLButtonElement>(`button[data-action="${action}"]`)?.click(); }
   function keyDown(event: Event): void {
     const e = event as KeyboardEvent;
-    if(alternativeDialog||salvageDialog){
-      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(salvageDialog)endSalvage(false);else dismissAlternativeDialog();}
+    if(alternativeDialog||salvageDialog||cleanupConfirm){
+      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(cleanupConfirm){cleanupConfirm=null;render();}else if(salvageDialog)endSalvage(false);else dismissAlternativeDialog();}
       else if(e.key==='Tab'){
         // Keep keyboard focus inside the nested informational dialog, including
         // browsers that otherwise move from its last button into browser chrome.
@@ -1150,7 +1200,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if ((e.key === 'Enter' || e.key === ' ') && (e.target as Element).closest('[data-action="flip-lap"],[data-action="focus-issue"],[data-action="choose-flow"]')) { e.preventDefault(); click(e); }
   }
   function globalKeyDown(e: KeyboardEvent): void {
-    if (alternativeDialog || salvageDialog || e.code !== 'Space' || isEditing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (alternativeDialog || salvageDialog || cleanupConfirm || e.code !== 'Space' || isEditing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
     const canvas = shadow.querySelector<HTMLElement>('.qc-canvas');
     if (!pointerOverCanvas && shadow.activeElement !== canvas) return;
     spaceHeld = true; e.preventDefault();
@@ -1164,7 +1214,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function over(event: Event): void { pointerOverCanvas = !!(event.target as Element).closest('.qc-canvas'); }
   function out(event: Event): void { const to = (event as PointerEvent).relatedTarget; if (!(to instanceof Element) || !to.closest('.qc-canvas')) pointerOverCanvas = false; }
   function auxClick(event: Event): void { if ((event as MouseEvent).button === 1 && (event.target as Element).closest('.qc-canvas')) event.preventDefault(); }
-  function toggle(event: Event): void { const target = event.target as HTMLDetailsElement; if (target.id === 'qc-advanced') advancedOpen = target.open; }
+  function toggle(event: Event): void { const target=event.target as HTMLDetailsElement;if(target.id==='qc-advanced')advancedOpen=target.open;
+    const id=target.dataset.lazyTrace;if(id&&target.open&&!loadedTraces.has(id)){const trace=traceContent.get(id),body=target.querySelector<HTMLElement>('[data-trace-body]');if(trace&&body){loadedTraces.add(id);uiPerformance.measure('trace-disclosure',()=>{body.innerHTML=traceBody(trace);});}}
+  }
   const listeners: [string, EventListener, boolean | AddEventListenerOptions | undefined][] = [
     ['toggle', toggle, true], ['keydown', keyDown, undefined], ['click', click, undefined], ['change', change, undefined],
     ['pointerdown', pointerDown, undefined], ['pointermove', pointerMove, undefined], ['pointerup', pointerUp, undefined],
@@ -1191,11 +1243,12 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   return {
     getDraft: () => structuredClone(salvagePreview&&salvageBase?{...draft,solution:salvageBase}:draft),
     getDebugBundle: () => debugBundle(),
+    getDebugBlob: () => exportDebug(false), getPerformance:()=>uiPerformance.snapshot(),
     flushReview: async()=>{queueReviewSave();await reviewSaver?.flush();if(options.reviewRepository&&!saveReady&&!storedReview)throw new Error('Saving is not ready. Retry or export before closing.');},
     getSaveState:()=>saveState,
     destroy: () => {
       calculation?.cancel('Calculation stopped because the review was closed.');
-      disposed = true; reviewSaver?.dispose(); if(drawingFrame!==null)cancelAnimationFrame(drawingFrame); viewport.destroy();if(background){background.onload=null;background.onerror=null;background=null;} cancel(); pointerCancel(); if (watch) clearInterval(watch);
+      disposed = true; exportAbort?.abort();uiPerformance.destroy();reviewSaver?.dispose(); if(drawingFrame!==null)cancelAnimationFrame(drawingFrame); viewport.destroy();if(background){background.onload=null;background.onerror=null;background=null;} cancel(); pointerCancel(); if (watch) clearInterval(watch);
       for (const [type, fn, config] of listeners) shadow.removeEventListener(type, fn, config);
       window.removeEventListener('keydown', globalKeyDown); window.removeEventListener('keyup', globalKeyUp); window.removeEventListener('blur', blur);
       shadow.innerHTML = '';

@@ -15,6 +15,10 @@ export class RecoverySession {
   constructor(private repository:RecoveryRepository,private backup:RecoveryBackup|null,record:RecoveryRecord&{document:RecoveryDocument},
     private onStatus:(message:string)=>void=()=>{}){this.record=record;this.scope=record.document.scope;this.latest=structuredClone(record.document);}
   revision():number{return this.record.revision;}
+  /** Small identity/status receipt, not another copy of the entire checkpoint. */
+  status():{revision:number;documentId:string;pending:boolean;saving:boolean;blocked:boolean;lastAccountSaveAt:string|null}{
+    return{revision:this.record.revision,documentId:this.latest.id,pending:!!this.pending,saving:!!this.active,blocked:this.blocked,lastAccountSaveAt:this.lastCloudAt?new Date(this.lastCloudAt).toISOString():null};
+  }
   document():RecoveryDocument{return structuredClone(this.latest);}
   async checkpoint(document:RecoveryDocument):Promise<void>{this.queue(document);await this.flush();}
   queue(document:RecoveryDocument):void {

@@ -18,7 +18,7 @@ export interface WorkstationRecoveryState {
   calibrationMetadataText:string|null;measurementSystem:string;sessionVersion:number|null;
 }
 export interface RecoveryDocument {
-  schemaVersion:1;kind:'quotecore-takeoff-recovery';engineVersion:'2.20';id:string;scope:ReviewScope;
+  schemaVersion:1;kind:'quotecore-takeoff-recovery';engineVersion:'2.20'|'2.21';id:string;scope:ReviewScope;
   imageKey:string;savedAt:string;status:'active'|'completed'|'discarded';capture:LiveInputCapture;
   workstation:WorkstationRecoveryState;review:ReviewDocument|null;calculation:CalculationJournal|null;
 }
@@ -61,13 +61,13 @@ export function createRecoveryDocument(capture:LiveInputCapture,workstation:Work
   const sourceRows=new Map(c.snapshot.componentMeasurements.flatMap(g=>g.measurements.map(m=>[m.id,m] as const)));
   for(const group of workstation.componentMeasurements)for(const m of group.measurements){const drawn=sourceRows.get(m.id);if(drawn?.points)m.points=structuredClone(drawn.points);}
   for(const area of workstation.roofAreas){const drawn=c.snapshot.roofAreas.find(a=>a.id===area.id);if(drawn)area.points=structuredClone(drawn.points);}
-  return parseRecoveryDocument({schemaVersion:1,kind:'quotecore-takeoff-recovery',engineVersion:'2.20',id:recoveryId(),
+  return parseRecoveryDocument({schemaVersion:1,kind:'quotecore-takeoff-recovery',engineVersion:'2.21',id:recoveryId(),
     scope:{quoteId:c.snapshot.quoteId,pageId:c.snapshot.pageId,areaScopeId:c.snapshot.areaScopeId??null},imageKey,savedAt:new Date().toISOString(),status:'active',capture:c,workstation,review:null,calculation:null});
 }
 export function parseRecoveryDocument(value:unknown,scope?:ReviewScope):RecoveryDocument {
   const text=JSON.stringify(value);if(!text||new TextEncoder().encode(text).length>RECOVERY_MAX_BYTES)throw new Error('The recovery checkpoint exceeds its 12 MB limit.');
   const d=JSON.parse(text) as RecoveryDocument;
-  if(d?.schemaVersion!==1||d.kind!=='quotecore-takeoff-recovery'||d.engineVersion!=='2.20'||typeof d.id!=='string'||!d.scope||typeof d.scope.quoteId!=='string'||typeof d.scope.pageId!=='string'||typeof d.imageKey!=='string'||!['active','completed','discarded'].includes(d.status)||!Number.isFinite(Date.parse(d.savedAt)))throw new Error('Invalid takeoff recovery document.');
+  if(d?.schemaVersion!==1||d.kind!=='quotecore-takeoff-recovery'||!['2.20','2.21'].includes(d.engineVersion)||typeof d.id!=='string'||!d.scope||typeof d.scope.quoteId!=='string'||typeof d.scope.pageId!=='string'||typeof d.imageKey!=='string'||!['active','completed','discarded'].includes(d.status)||!Number.isFinite(Date.parse(d.savedAt)))throw new Error('Invalid takeoff recovery document.');
   if(scope&&!sameReviewScope(d.scope,scope))throw new Error('Recovery belongs to a different quote, page or roof area.');
   const capture=captureLiveTakeoff(d.capture?.snapshot);
   // Canonical hashing is immune to jsonb/clone key reordering; the legacy hash

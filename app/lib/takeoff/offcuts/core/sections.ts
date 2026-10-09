@@ -32,6 +32,24 @@ export function mapRegion(region: Region, map: (p: Point) => Point): Region {
     return clean.length >= 3 ? [fromRing(clean)] : [];
   }));
 }
+/** Affine view metrics only. Do NOT Boolean-union a scene partition after
+ * rotating it back into a sheet frame: nearly axial manual faces can produce
+ * thousands of sweep bands in that round-trip. The existing scene partition
+ * is disjoint, so its area scales by the affine determinant, and a linear
+ * sheet-run coordinate reaches its extrema at the band's vertices.
+ * Physical fitting/validation still uses the unchanged sheet geometry. */
+export function sectionPartMetrics(part: Region, demand: Demand): { netCoverAreaM2: number; cutPieceRunLinealM: number } {
+  if (!part.length) return { netCoverAreaM2: 0, cutPieceRunLinealM: 0 };
+  const f = demand.frame;
+  const determinant = Math.abs(f.u.x * f.v.y - f.u.y * f.v.x) * f.mmPerSceneUnit ** 2 / f.pitchCos;
+  if (!Number.isFinite(determinant) || determinant <= 0) throw new Error('Invalid sheet frame for section metrics.');
+  let low = Infinity, high = -Infinity;
+  for (const band of part) for (const p of bandRing(band)) {
+    const y = scenePointToDemand(p, demand).y;
+    low = Math.min(low, y); high = Math.max(high, y);
+  }
+  return { netCoverAreaM2: area(part) * determinant / 1e6, cutPieceRunLinealM: (high - low) / 1000 };
+}
 export function purchasedLengthMm(demand: Demand): number {
   const b = bounds(demand.blank); return b.maxY - b.minY;
 }
@@ -69,8 +87,8 @@ export function materialSections(s: Solution): MaterialSection[] {
       const first=included[0].m, unique=(values:(string|undefined)[])=>[...new Set(values.filter((v):v is string=>!!v))].sort();
       let netCoverAreaM2=0,cutPieceRunLinealM=0;
       for (const {m,part} of included) {
-        const local=mapRegion(part,p=>scenePointToDemand(p,m.demand));
-        const b=bounds(local); netCoverAreaM2+=area(local)/1e6;cutPieceRunLinealM+=(b.maxY-b.minY)/1000;
+        const metrics=sectionPartMetrics(part,m.demand);
+        netCoverAreaM2+=metrics.netCoverAreaM2;cutPieceRunLinealM+=metrics.cutPieceRunLinealM;
       }
       sections.push({id:`section:${first.demand.faceId}:${fingerprint([key,index,included.map(i=>i.m.demand.id)])}`,
         ...(s.salvage?.groups.some(g=>g.replacements.some(r=>r.demandId===first.demand.id))?{salvagedFiller:true}:{}),

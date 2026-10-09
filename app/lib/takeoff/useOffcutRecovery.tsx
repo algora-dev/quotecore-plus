@@ -7,6 +7,8 @@ import {reviewScopeKey,type ReviewDocument,type ReviewScope} from './offcuts/per
 import type {CalculationJournal} from './offcuts/reliability/protocol';
 import type {LiveInputCapture} from './offcuts/adapters/liveSnapshot';
 import {getOffcutRecoveryServices,type RecoveryServices} from './offcutRecoveryPersistence';
+import {ConfirmModal} from '../../components/ConfirmModal';
+import {serializeJsonAsync} from './offcuts/reliability/jsonExport';
 import {withTimeout} from './offcuts/reliability/timeout';
 interface Options {scope:ReviewScope;imageKey:string;ready:boolean;disabled:boolean;readState:()=>WorkstationRecoveryState;restoreState:(state:WorkstationRecoveryState)=>void;openScope?:(scope:ReviewScope)=>Promise<void>;}
 export function useOffcutRecovery(options:Options){
@@ -15,9 +17,11 @@ export function useOffcutRecovery(options:Options){
   const [otherScope,setOtherScope]=useState<RecoveryHint|null>(null);
   const [candidate,setCandidate]=useState<RecoveryDocument|null>(null),[notice,setNotice]=useState(''),[restoring,setRestoring]=useState(false);
   const dismissed=useRef<string|null>(null),lastLocal=useRef<RecoveryDocument|null>(null),knownRevision=useRef<number|null>(null);
+  const [restorePrompt,setRestorePrompt]=useState<{id:string;generation:number}|null>(null);
+  const [exporting,setExporting]=useState(false);const restoreInFlight=useRef(false);
   const [saveError,setSaveError]=useState(false);const scopeKey=reviewScopeKey(options.scope);
   useEffect(()=>{
-    const generation=++epoch.current;session.current?.dispose();session.current=null;services.current=null;setCandidate(null);setOtherScope(null);setNotice('');dismissed.current=null;knownRevision.current=null;lastLocal.current=null;setSaveError(false);
+    const generation=++epoch.current;session.current?.dispose();session.current=null;services.current=null;setCandidate(null);setOtherScope(null);setNotice('');dismissed.current=null;knownRevision.current=null;lastLocal.current=null;setSaveError(false);setRestorePrompt(null);
     if(options.disabled||!options.ready||!options.scope.pageId)return;
     void (async()=>{
       try{
@@ -76,23 +80,33 @@ export function useOffcutRecovery(options:Options){
   },[]);
   const onReviewCheckpoint=useCallback((document:ReviewDocument)=>{session.current?.review(document);},[]);
   const onCalculationChange=useCallback((journal:CalculationJournal)=>{session.current?.journal(journal);},[]);
-  const exportCheckpoint=useCallback(()=>{
+  const exportCheckpoint=useCallback(async()=>{
+    if(exporting)return;
     const d=candidate??session.current?.document()??lastLocal.current;if(!d)return;
-    const url=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='quotecore-takeoff-recovery-v2.20.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  },[candidate]);
-  const restore=useCallback(async()=>{
-    if(!candidate||restoring)return;const opts=latest.current,generation=epoch.current;
-    if(candidate.imageKey!==opts.imageKey)throw new Error('The plan image changed. Do not restore coordinates onto another image.');
-    if(!window.confirm('Restore the measurements saved before Find offcuts? This replaces the current drawing for this roof area only. It does not change quote prices.'))return;
-    setRestoring(true);
+    setExporting(true);
     try{
+      const blob=await serializeJsonAsync(structuredClone(d));
+      const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='quotecore-takeoff-recovery-v2.21.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }catch(e){setNotice(e instanceof Error?e.message:'Recovery export failed. The saved checkpoint was kept.');}
+    finally{setExporting(false);}
+  },[candidate,exporting]);
+  const restore=useCallback(async()=>{
+    if(!candidate||!restorePrompt||restoring||restoreInFlight.current)return;
+    const opts=latest.current,generation=epoch.current;
+    restoreInFlight.current=true;setRestoring(true);
+    try{
+      if(restorePrompt.generation!==generation||restorePrompt.id!==candidate.id)throw new Error('The recovery selection changed. Review the current roof before restoring.');
+      if(candidate.imageKey!==opts.imageKey)throw new Error('The plan image changed. Do not restore coordinates onto another image.');
       const d=parseRecoveryDocument(candidate,opts.scope);
       if(generation!==epoch.current)return;
       opts.restoreState(d.workstation);dismissed.current=d.id;setCandidate(null);
       setNotice('Measurements restored. Resume offcuts reopens the saved review; Find offcuts starts from this restored drawing.');
-    }catch(e){setNotice(e instanceof Error?e.message:'Recovery failed. The current drawing was kept.');}
-    finally{setRestoring(false);}
-  },[candidate,restoring]);
+    }catch(e){if(generation===epoch.current)setNotice(e instanceof Error?e.message:'Recovery failed. The current drawing was kept.');}
+    finally{restoreInFlight.current=false;setRestoring(false);setRestorePrompt(null);}
+  },[candidate,restorePrompt,restoring]);
+  const getRecoveryState=useCallback(()=>({scope:latest.current.scope,imageKey:latest.current.imageKey,
+    checkpoint:session.current?.status()??null,accountRevision:knownRevision.current,
+    notice:session.current?'This receipt describes the takeoff recovery checkpoint, separately from review autosave.':'No active checkpoint session in this view.'}),[]);
   const complete=useCallback(async()=>{const active=session.current;if(!active)return;const d=active.document();d.status='completed';await active.checkpoint(d);},[]);
   const getRecoveredReview=useCallback(async()=>{
     if(latest.current.disabled)return null;const s=services.current??await getOffcutRecoveryServices();services.current=s;
@@ -101,8 +115,12 @@ export function useOffcutRecovery(options:Options){
     if(!d&&cloud.status==='rejected')throw cloud.reason;
     return d?.imageKey===latest.current.imageKey?d:null;
   },[]);
-  const banner=otherScope&&options.openScope?<section role="status" className="mx-3 my-2 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm"><strong>Unfinished takeoff saved for another roof area</strong><p>This plan has a recovery checkpoint in another area. Open that area to restore it without mixing measurements.</p><button type="button" className="mt-2 rounded-lg border bg-white px-3 py-2" onClick={()=>void options.openScope?.(otherScope.scope).catch(e=>setNotice(e instanceof Error?e.message:'Could not open the saved area.'))}>Open saved roof area</button><button type="button" className="ml-2 px-3 py-2" onClick={()=>setOtherScope(null)}>Keep current area</button></section>:candidate?<section role="status" className="mx-3 my-2 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-slate-800" data-takeoff-recovery>
+  const bannerContent=otherScope&&options.openScope?<section role="status" className="mx-3 my-2 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm"><strong>Unfinished takeoff saved for another roof area</strong><p>This plan has a recovery checkpoint in another area. Open that area to restore it without mixing measurements.</p><button type="button" className="mt-2 rounded-lg border bg-white px-3 py-2" onClick={()=>void options.openScope?.(otherScope.scope).catch(e=>setNotice(e instanceof Error?e.message:'Could not open the saved area.'))}>Open saved roof area</button><button type="button" className="ml-2 px-3 py-2" onClick={()=>setOtherScope(null)}>Keep current area</button></section>:candidate?<section role="status" className="mx-3 my-2 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-slate-800" data-takeoff-recovery>
     <strong>Resume your unfinished takeoff</strong><p>Measurements saved before Find offcuts ({new Date(candidate.savedAt).toLocaleString()}). {candidate.calculation?.status==='running'?'The previous calculation was interrupted; it will not restart automatically.':''}</p>
-    <div className="mt-2 flex flex-wrap gap-2"><button type="button" className="rounded-lg border bg-white px-3 py-2" disabled={restoring} onClick={()=>void restore()}>Restore measurements</button><button type="button" className="rounded-lg border bg-white px-3 py-2" onClick={exportCheckpoint}>Export recovery</button><button type="button" className="rounded-lg border bg-white px-3 py-2" onClick={()=>{dismissed.current=candidate.id;setCandidate(null);setNotice('Current drawing kept. The saved checkpoint has not been deleted.');}}>Keep current</button></div></section>:notice?<div className="mx-3 my-2 text-xs text-slate-600" role="status">{notice}{saveError?<button type="button" className="ml-3 rounded-lg border bg-white px-3 py-2" onClick={exportCheckpoint}>Export recovery copy</button>:null}</div>:null;
-  return{persistCapture,beforeCalculation,onReviewCheckpoint,onCalculationChange,getRecoveredReview,complete,banner};
+    <div className="mt-2 flex flex-wrap gap-2"><button type="button" className="rounded-lg border bg-white px-3 py-2" disabled={restoring} onClick={()=>setRestorePrompt({id:candidate.id,generation:epoch.current})}>Restore measurements</button><button type="button" className="rounded-lg border bg-white px-3 py-2" disabled={exporting} onClick={()=>void exportCheckpoint()}>Export recovery</button><button type="button" className="rounded-lg border bg-white px-3 py-2" onClick={()=>{dismissed.current=candidate.id;setCandidate(null);setNotice('Current drawing kept. The saved checkpoint has not been deleted.');}}>Keep current</button></div></section>:notice?<div className="mx-3 my-2 text-xs text-slate-600" role="status">{notice}{saveError?<button type="button" className="ml-3 rounded-lg border bg-white px-3 py-2" disabled={exporting} onClick={()=>void exportCheckpoint()}>Export recovery copy</button>:null}</div>:null;
+  const banner=<>{bannerContent}<ConfirmModal appearance="v2" open={!!restorePrompt} title="Restore saved measurements?"
+    description="Replace the current drawing for this roof area with the recovery checkpoint. Other roof areas and quote prices will not change."
+    confirmLabel="Restore measurements" cancelLabel="Keep current drawing" destructive={false} pending={restoring} pendingLabel="Restoring…"
+    onCancel={()=>{if(!restoring)setRestorePrompt(null);}} onConfirm={()=>void restore()}/></>;
+  return{getRecoveryState,persistCapture,beforeCalculation,onReviewCheckpoint,onCalculationChange,getRecoveredReview,complete,banner};
 }

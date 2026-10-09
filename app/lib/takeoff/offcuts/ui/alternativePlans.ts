@@ -53,7 +53,7 @@ export function planChoices(current:Solution,saved:Solution[],selectedIndex:numb
   const reference=recommendedFor(current,saved),isReference=!!reference&&planSignature(current)===planSignature(reference);
   const simpler=hasQualifyingAlternative(saved,reference,'simpler'),material=hasQualifyingAlternative(saved,reference,'less-material');
   const disabledAttr=disabled||!reference||saved.length>=12?'disabled':'';
-  const label=(s:Solution)=>name(s)+(s.engineVersion!=='2.20'?` (saved V${s.engineVersion??'older'})`:'');
+  const label=(s:Solution)=>name(s)+(s.engineVersion!=='2.21'?` (saved V${s.engineVersion??'older'})`:'');
   return `<section class="qc-plan-variants" id="qc-plan-choice" aria-label="Cut plan choices">
     ${saved.length>1?`<label class="qc-field">Cut plan<select data-plan-index aria-label="Choose saved cut plan" ${disabled?'disabled':''}>${saved.map((s,i)=>`<option value="${i}" ${i===selectedIndex?'selected':''}>${esc(label(s))}</option>`).join('')}</select></label>`:`<p class="qc-choice-title">${esc(label(current))}</p>`}
     <p class="qc-muted qc-choice-description">${esc(current.salvage?'Optional filler reuse. Retain the source cuts and follow the stated cut-first sequence.':descriptions[current.objective??'recommended']??'Saved cutting plan.')}</p>

@@ -2453,7 +2453,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (!ra || !(ra.area > 0)) { setAreaAttachChoice(null); return; }
     if (choice.basis === 'offcuts' && (!offcutAreaFigureRef.current || offcutAreaFigureRef.current.m2 !== choice.offcuts)) {
       setAreaAttachChoice(null);
-      window.alert('The offcut material figure changed. Reopen the quantity chooser after reviewing the current plan.');
+      showAlert('Offcut quantity needs checking', 'The offcut material figure changed. Reopen the quantity chooser after reviewing the current plan.', 'info');
       return;
     }
     pushHistorySnapshot();
@@ -8976,6 +8976,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                               reviewRepository: reviewRepository ?? undefined,
                               persistCapture: recovery.persistCapture,
                               beforeCalculation: recovery.beforeCalculation,
+                              getRecoveryState: recovery.getRecoveryState,
                               onReviewCheckpoint: recovery.onReviewCheckpoint,
                               onCalculationChange: recovery.onCalculationChange,
                               onQuantityProposal: receiveOffcutQuantity,
@@ -9012,7 +9013,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                             });
                             offcutsModalRef.current = offcutsHandle;
                           } catch (error) {
-                            if (!abort.signal.aborted) window.alert(error instanceof Error ? error.message : String(error));
+                            if (!abort.signal.aborted) showAlert('Find offcuts could not open', error instanceof Error ? error.message : String(error), 'error');
                           } finally {
                             if (offcutsCaptureAbortRef.current === abort) {
                               offcutsCaptureAbortRef.current = null;
@@ -9049,13 +9050,14 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                             if(recovered?.review&&(!stored||recovered.review.savedAt>stored.document.savedAt)){
                               stored={revision:stored?.revision??0,document:recovered.review};
                             }
-                            if (!stored) { window.alert('No saved offcut review exists for this roof area yet.'); return; }
+                            if (!stored) { showAlert('No saved offcut plan', 'No saved offcut review exists for this roof area yet. Use Find offcuts to create one.', 'info'); return; }
                             const previous = offcutsModalRef.current;
                             if (previous) { void previous.flushReview?.().catch(() => {}); previous.destroy(); offcutsModalRef.current = null; }
                             const image = pages[currentPageIndex]?.url ?? planUrl;
                             const handle = await launchStoredQuoteCoreOffcuts(scope, {
                               reviewRepository,
                               beforeCalculation: recovery.beforeCalculation,
+                              getRecoveryState: recovery.getRecoveryState,
                               onReviewCheckpoint: recovery.onReviewCheckpoint,
                               onCalculationChange: recovery.onCalculationChange,
                               onQuantityProposal: receiveOffcutQuantity,
@@ -9074,7 +9076,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                               throw new Error('The selected roof changed while opening the saved review.');
                             }
                           } catch (error) {
-                            if (!abort.signal.aborted) window.alert(error instanceof Error ? error.message : String(error));
+                            if (!abort.signal.aborted) showAlert('Find offcuts could not open', error instanceof Error ? error.message : String(error), 'error');
                           } finally {
                             if (offcutsCaptureAbortRef.current === abort) {
                               offcutsCaptureAbortRef.current = null;
