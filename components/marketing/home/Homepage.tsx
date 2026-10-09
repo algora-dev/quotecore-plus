@@ -3,6 +3,7 @@ import SiteFooter from '@/components/SiteFooter';
 import { MarketingButton } from '@/components/marketing/MarketingButton';
 import { HeroVisual } from './HeroVisual';
 import { DemoCallButton } from './DemoCall';
+import { DemoCarousel } from './DemoCarousel';
 import { OverviewVideo } from './OverviewVideo';
 import { WorkflowExplorer } from './WorkflowExplorer';
 import { FitQuizSection } from './FitQuiz';
@@ -43,14 +44,11 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
 
       <section id="try-it" className={`${s.section} ${s.demoSection}`} aria-labelledby="demo-title">
         <div className={`${s.container} ${s.demoGrid}`}>
-          <div><p className={s.eyebrow}>Try it yourself</p><h2 id="demo-title" className={s.sectionTitle}>A real job.<br />A proper test drive.</h2><p className={s.bodyCopy}>Explore a sample roof plan and see how measurements become a customer-ready quote. No signup. No blank screen to figure out.</p><div className={s.inlineActions}>{demo()}<span className={s.demoNote}><Icon name="clock" size={21} /><span>Jump straight in.<br /><strong>It’s your time to explore.</strong></span></span></div></div>
-          <div className={s.demoSteps}>
-            {([
-              ['roof', 'Measure the roof', 'Try the digital takeoff tools on a real sample plan.'],
-              ['calculator', 'See the calculations', 'Explore components, quantities and pricing.'],
-              ['document', 'Generate the quote', 'See the professional quote your customer receives.'],
-            ] as [IconName, string, string][]).map(([icon, title, text], i) => <div className={s.demoStep} key={title}><span className={s.demoStepIcon}><Icon name={icon} size={26} /></span><div><span className={s.tinyLabel}>0{i + 1}</span><h3>{title}</h3><p>{text}</p></div><Icon name="arrow" size={18} /></div>)}
+          <div><p className={s.eyebrow}>Try it yourself</p><h2 id="demo-title" className={s.sectionTitle}>Step inside a real<br />roofing business.</h2><p className={s.bodyCopy}>One click drops you into a live QuoteCore+ account, already loaded with real jobs, pricing and materials. No signup. No card. A built-in helper walks you through three quick tasks so you see exactly how it works, then the rest is yours to explore.</p>
+            <div className={s.demoCtas}>{demo()}<DemoCallButton bookingHref={config.bookingHref} location="try-it" /></div>
+            <div className={s.reassurance}><span><Icon name="check" size={16} />No signup</span><span><Icon name="check" size={16} />Free to explore</span><span><Icon name="check" size={16} />Takes 2 minutes</span></div>
           </div>
+          <DemoCarousel />
         </div>
       </section>
 

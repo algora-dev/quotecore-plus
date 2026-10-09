@@ -214,18 +214,29 @@
 .demoSection { background: radial-gradient(ellipse at 82% 40%,#e8edf3,transparent 50%),radial-gradient(ellipse at 95% 0%,#fff0e4,transparent 40%),#f8fafc; padding-block: 78px; }
 .demoGrid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 105px; align-items: center; }
 .demoGrid .sectionTitle { font-size: clamp(34px,3.35vw,47px); }
-.inlineActions { display: flex; align-items: center; flex-wrap: wrap; gap: 26px; }
-.demoNote { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; line-height: 1.6; }
-.demoNote > svg { color: var(--orange-ink); }
-.demoNote strong { font-weight: 400; }
-.demoSteps { border: 1px solid rgba(255,255,255,.88); background: rgba(255,255,255,.52); box-shadow: inset 0 1px 0 #fff,0 15px 40px rgba(34,45,65,.05); border-radius: 22px; padding: 12px 28px; }
-.demoStep { display: flex; align-items: center; gap: 18px; padding-block: 24px; }
-.demoStep + .demoStep { border-top: 1px solid rgba(136,148,166,.17); }
-.demoStep > svg { color: #8b949f; margin-left: auto; }
-.demoStep h3 { font-size: 15px; font-weight: 650; line-height: 1.4; letter-spacing: -.015em; }
-.demoStep p { font-size: 12px; line-height: 1.6; color: var(--muted); margin-top: 4px; }
-.demoStepIcon { width: 49px; height: 49px; display: flex; align-items: center; justify-content: center; flex: 0 0 49px; border-radius: 12px; background: linear-gradient(135deg,#fff4eb,#ffffff80); border: 1px solid #edcab2; box-shadow: inset 0 1px 0 #fff; }
-.tinyLabel { display: block; font-size: 9px; letter-spacing: .14em; color: var(--orange-ink); margin-bottom: 4px; }
+.demoCtas { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 28px; }
+/* Demo walkthrough carousel: same quiet glass as before, now carrying the product story. */
+.demoCarousel { position: relative; outline: none; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.demoCarousel:focus-visible { outline: 2px solid var(--orange); outline-offset: 6px; border-radius: 26px; }
+.demoFrame { border: 1px solid rgba(255,255,255,.88); background: rgba(255,255,255,.52); box-shadow: inset 0 1px 0 #fff,0 15px 40px rgba(34,45,65,.05); border-radius: 22px; padding: 12px 12px 7px; }
+.demoViewport { overflow: hidden; position: relative; border-radius: 13px; border: 1px solid rgba(31,40,56,.27); background: #f7f8fa; box-shadow: 0 0 0 1px rgba(255,255,255,.42),0 3px 10px rgba(14,20,30,.07); }
+.demoTrack { display: flex; transition: transform 480ms cubic-bezier(.22,.61,.36,1); will-change: transform; }
+.demoSlide { flex: 0 0 100%; min-width: 100%; }
+.demoSlide img { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 800; background: #f7f8fa; }
+.demoCaption { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 11px 6px 3px; font-size: 11px; font-weight: 550; letter-spacing: -.01em; line-height: 1.5; color: var(--muted); }
+.demoCounter { flex: 0 0 auto; font-family: var(--font-geist-mono,monospace); font-size: 10px; color: #97a1af; }
+.demoArrow { position: absolute; top: 46%; z-index: 4; display: flex; align-items: center; justify-content: center; width: 41px; height: 41px; border-radius: 50%; border: 1px solid rgba(31,40,56,.14); background: rgba(255,255,255,.9); color: #343c47; box-shadow: 0 2px 9px rgba(17,24,36,.16),inset 0 1px 0 #fff; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); cursor: pointer; opacity: 0; transform: translateY(-50%) scale(.9); transition: opacity 170ms var(--ease),transform 170ms var(--ease),border-color 120ms var(--ease),color 120ms var(--ease); pointer-events: none; }
+.demoCarousel:hover .demoArrow, .demoCarousel:focus-within .demoArrow { opacity: 1; transform: translateY(-50%) scale(1); pointer-events: auto; }
+.demoArrow:hover { color: var(--orange-ink); border-color: rgba(255,138,61,.5); }
+.demoArrowPrev { left: -15px; }
+.demoArrowNext { right: -15px; }
+.demoArrowPrev svg { transform: rotate(90deg); }
+.demoArrowNext svg { transform: rotate(-90deg); }
+.demoDots { display: flex; justify-content: center; gap: 7px; margin-top: 15px; }
+.demoDot, .demoDotActive { width: 8px; height: 8px; border-radius: 999px; border: 5px solid transparent; background-clip: padding-box; background-color: rgba(52,60,71,.24); cursor: pointer; padding: 0; transition: width 200ms var(--ease),background-color 200ms var(--ease); }
+.demoDot:hover { background-color: rgba(52,60,71,.45); }
+.demoDotActive { width: 24px; background-color: var(--orange); }
+@media (hover:none) { .demoArrow { display: none; } }
 
 /* Six-step working product explorer. Fixed media box prevents layout jumps. */
 .workflow { background: radial-gradient(ellipse at 60% 95%,rgba(255,100,31,.07),transparent 55%),var(--focus-canvas); }
@@ -481,9 +492,8 @@
   .posterDuration { font-size: 8px; }
   .playOrb { width: 66px; height: 66px; }
   .demoGrid { gap: 32px; }
-  .demoSteps { padding-inline: 20px; }
-  .demoStep { gap: 12px; }
-  .demoStep > svg { display: none; }
+  .demoArrowPrev { left: -10px; }
+  .demoArrowNext { right: -10px; }
   .sectionIntro { gap: 36px; }
   .introAside { max-width: 270px; font-size: 14px; }
   .workflowTab { padding: 10px; gap: 8px; font-size: 12px !important; }
@@ -543,10 +553,10 @@
   .posterDuration { font-size: 9px; }
   .posterHeadline { font-size: 28px; left: 22px; }
   .posterBottom { padding: 17px 22px; }
-  .demoSteps { padding-inline: 23px; border-radius: 18px; }
-  .demoStep > svg { display: block; }
-  .demoStep { gap: 18px; padding-block: 22px; }
-  .demoStep p { font-size: 12px; }
+  .demoFrame { border-radius: 18px; padding: 9px 9px 5px; }
+  .demoArrow { width: 37px; height: 37px; }
+  .demoArrowPrev { left: -8px; }
+  .demoArrowNext { right: -8px; }
   .sectionIntro { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; margin-bottom: 32px; }
   .introAside { max-width: 500px; font-size: 15px; flex-shrink: 1; }
   .workflowTabs { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; padding-bottom: 20px; margin-bottom: 28px; }
@@ -617,10 +627,8 @@
   .reassurance { gap: 9px 17px; font-size: 10px; margin-top: 17px; }
   .heroCopy { padding-bottom: 15px; }
   .heroReview { width: 245px; }
-  .inlineActions { gap: 18px; }
-  .inlineActions .button { padding-inline: 19px; }
-  .demoNote { font-size: 10px; gap: 8px; }
-  .demoNote > svg { width: 18px; height: 18px; }
+  .demoCtas { gap: 9px; }
+  .demoCtas .button { width: 100%; min-height: 50px; }
   .posterHeadline { font-size: 23px; max-width: 123px; }
   .posterBrand { font-size: 14px; }
   .posterBrand img { width: 23px; height: 23px; }
@@ -628,11 +636,7 @@
   .posterTopline { padding: 18px; }
   .posterBottom { padding: 15px 18px; font-size: 9px; }
   .playOrb { width: 63px; height: 63px; }
-  .demoStepIcon { width: 43px; height: 43px; flex-basis: 43px; }
-  .demoSteps { padding-inline: 18px; }
-  .demoStep { gap: 13px; }
-  .demoStep > svg { display: none; }
-  .demoStep h3 { font-size: 14px; }
+  .demoDots { margin-top: 12px; }
   .root .setupGrid .button { white-space: normal; width: 100%; font-size: 13px; }
   .closingActions { gap: 11px; }
   .closingActions .button { padding-inline: 17px; font-size: 12px; }
@@ -661,11 +665,11 @@
 }
 @media (prefers-reduced-motion:reduce) and (max-width:767px) { .heroApp { transform: none; } }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
-  .heroApp, .heroReview, .demoSteps { background: #f8fafc; }
+  .heroApp, .heroReview, .demoFrame { background: #f8fafc; }
   .playOrb { background: #181c22; }
 }
 @media (prefers-reduced-transparency:reduce) {
-  .heroApp, .heroReview, .demoSteps { background: #f8fafc; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .heroApp, .heroReview, .demoFrame { background: #f8fafc; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .heroApp::after, .heroApp::before, .heroReview::before { display: none; }
   .playOrb { background: #181c22; }
   .dialog::backdrop { background: #06080ceb; -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -674,7 +678,7 @@
   .root, .dark, .dialog { background: Canvas; color: CanvasText; }
   .heroBackground, .heroWash { display: none; }
   .root .button, .root .iconButton, .workflowTab, .videoPoster, .playOrb { background: ButtonFace; color: ButtonText; border: 1px solid ButtonText; box-shadow: none; }
-  .heroApp, .heroReview, .demoSteps { background: Canvas; color: CanvasText; }
+  .heroApp, .heroReview, .demoFrame { background: Canvas; color: CanvasText; }
   .heroApp::after, .heroApp::before, .heroReview::before { display: none; }
   .root :focus-visible { outline: 2px solid Highlight; }
   .workflowTab[aria-selected="true"] { border: 2px solid Highlight; }
