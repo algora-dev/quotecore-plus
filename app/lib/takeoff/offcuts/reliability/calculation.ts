@@ -21,7 +21,7 @@ export class CalculationController {
     private limitMs=CALCULATION_LIMIT_MS,runId:string=recoveryId()) {
     const at=new Date().toISOString();
     this.limitMs=Number.isFinite(limitMs)?Math.max(1,Math.min(120_000,limitMs)):CALCULATION_LIMIT_MS;
-    this.state={schemaVersion:1,runId,engineVersion:'2.21',kind,status:'saving',stage:'saving-input',startedAt:at,updatedAt:at,
+    this.state={schemaVersion:1,runId,engineVersion:'2.22',kind,status:'saving',stage:'saving-input',startedAt:at,updatedAt:at,
       elapsedMs:0,limitMs:this.limitMs,requestFingerprint:requestFingerprint(request),completed:0,total:0,
       checkedFallbackAvailable:false,message:STAGE_LABELS['saving-input'],events:[]};
   }

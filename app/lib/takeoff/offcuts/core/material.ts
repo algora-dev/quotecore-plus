@@ -31,6 +31,8 @@ export function validateInputs(roof: RoofInput, faces: RoofFace[], p: Profile, s
   // End-for-end is a long-run planning default, NOT manufacturer approval.
   // Unverified rules remain a visible warning and every output is draft-only.
   if (![settings.maxSheets, settings.maxTrials, settings.maxMilliseconds].every(n => Number.isFinite(n) && n > 0) || settings.maxSheets > 2000 || settings.maxTrials > 64 || settings.maxMilliseconds > 30000) error('BUDGET', 'Use positive search limits: at most 2000 sheets, 64 trials and 30000 milliseconds.');
+  if(settings.globalBankSearch!==undefined&&typeof settings.globalBankSearch!=='boolean')error('GLOBAL_BANK_SETTINGS','Global donor search must be enabled or disabled.');
+  if(settings.globalBankMaxMilliseconds!==undefined&&(!Number.isFinite(settings.globalBankMaxMilliseconds)||settings.globalBankMaxMilliseconds<0||settings.globalBankMaxMilliseconds>12000))error('GLOBAL_BANK_BUDGET','Global donor search must be between zero and 12000 milliseconds.');
   if (settings.provisionalReuse!==undefined&&typeof settings.provisionalReuse!=='boolean') error('REPLAY_SETTINGS','Provisional reuse must be enabled or disabled.');
   if (settings.provisionalMaxMilliseconds!==undefined&&(!Number.isFinite(settings.provisionalMaxMilliseconds)||settings.provisionalMaxMilliseconds<0||settings.provisionalMaxMilliseconds>20000)) error('REPLAY_BUDGET','The extra offcut-replay budget must be between 0 and 20000 milliseconds.');
   if (!['bank-first', 'per-lane', 'face-envelope'].includes(settings.stockMode)) error('STOCK_MODE', 'Unknown sheet layout mode.');

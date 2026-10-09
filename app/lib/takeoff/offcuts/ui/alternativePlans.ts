@@ -1,3 +1,4 @@
+import { coordinatedMaterialAssessment, coherentWorkflow } from '../core/globalBanks';
 import type { Solution, WorkflowMetric } from '../core/types';
 import { alternativeReference } from '../core/alternatives';
 import { planQuality, planSignature, workflowQuality, comparePlans } from '../core/diagnostics';
@@ -20,7 +21,7 @@ export function hasQualifyingAlternative(saved:Solution[],reference:Solution|nul
   return saved.some(s=>{
     if(s.salvage||s.objective!==objective||s.status==='invalid'||s.sourceRevision!==reference.sourceRevision||s.facesRevision!==reference.facesRevision||
       s.comparison?.previousLayoutId!==(reference.layoutId??planSignature(reference))||s.decisionTrace?.historic)return false;
-    try{return objective==='simpler'?simplerAssessment(reference,s,reference.profile).accepted:lessMaterialAssessment(reference,s,reference.profile).accepted;}
+    try{return objective==='simpler'?simplerAssessment(reference,s,reference.profile).accepted:(s.globalDonorSearch?.status==='improved'?coordinatedMaterialAssessment(reference,s):lessMaterialAssessment(reference,s,reference.profile)).accepted;}
     catch{return false;}
   });
 }
@@ -32,7 +33,8 @@ export function comparisonCard(reference:Solution,s:Solution):string {
   const deltaLineals=(b.suppliedMm2-a.suppliedMm2)/width/1000,deltaCover=deltaLineals*s.profile.coverMm/1000;
   const deltaSheets=b.newSheets-a.newSheets;
   const changes=comparePlans(reference,s,s.objective==='simpler'?'simpler':'less-material').changedFaceIds.length;
-  const wa=workflowQuality(reference,a),wb=workflowQuality(s,b);
+  const coordinated=s.globalDonorSearch?.status==='improved';
+  const wa=coordinated?coherentWorkflow(reference):workflowQuality(reference,a),wb=coordinated?coherentWorkflow(s):workflowQuality(s,b);
   const metrics:[WorkflowMetric,string][]=[['sourceRelationships','material transfer'],['splitSets','split cut set'],
     ['reuseRuns','separate reuse run'],['recutRuns','recut run'],['fillerSeparators','filler group'],
     ['freshCutRuns','fresh cutting run'],['primaryOperations','new cutting operation'],['stockLengthGroups','stock-length group']];
@@ -53,7 +55,7 @@ export function planChoices(current:Solution,saved:Solution[],selectedIndex:numb
   const reference=recommendedFor(current,saved),isReference=!!reference&&planSignature(current)===planSignature(reference);
   const simpler=hasQualifyingAlternative(saved,reference,'simpler'),material=hasQualifyingAlternative(saved,reference,'less-material');
   const disabledAttr=disabled||!reference||saved.length>=12?'disabled':'';
-  const label=(s:Solution)=>name(s)+(s.engineVersion!=='2.21'?` (saved V${s.engineVersion??'older'})`:'');
+  const label=(s:Solution)=>name(s)+(s.engineVersion!=='2.22'?` (saved V${s.engineVersion??'older'})`:'');
   return `<section class="qc-plan-variants" id="qc-plan-choice" aria-label="Cut plan choices">
     ${saved.length>1?`<label class="qc-field">Cut plan<select data-plan-index aria-label="Choose saved cut plan" ${disabled?'disabled':''}>${saved.map((s,i)=>`<option value="${i}" ${i===selectedIndex?'selected':''}>${esc(label(s))}</option>`).join('')}</select></label>`:`<p class="qc-choice-title">${esc(label(current))}</p>`}
     <p class="qc-muted qc-choice-description">${esc(current.salvage?'Optional filler reuse. Retain the source cuts and follow the stated cut-first sequence.':descriptions[current.objective??'recommended']??'Saved cutting plan.')}</p>

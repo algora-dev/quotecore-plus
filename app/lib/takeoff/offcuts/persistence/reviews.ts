@@ -13,7 +13,7 @@ import { roofRevision } from '../adapters/quotecore';
 
 export interface ReviewScope { quoteId:string; pageId:string; areaScopeId:string|null }
 export interface ReviewDocument {
-  schemaVersion:1; kind:'quotecore-offcut-review'; engineVersion:'2.10'|'2.11'|'2.12'|'2.13'|'2.14'|'2.15'|'2.16'|'2.17'|'2.18'|'2.19'|'2.20'|'2.21';
+  schemaVersion:1; kind:'quotecore-offcut-review'; engineVersion:'2.10'|'2.11'|'2.12'|'2.13'|'2.14'|'2.15'|'2.16'|'2.17'|'2.18'|'2.19'|'2.20'|'2.21'|'2.22';
   scope:ReviewScope; sourceFingerprint:string; sourceRevision:string;
   savedAt:string; capture:LiveInputCapture|null; sourceRoof:RoofInput;
   draft:Draft; plans:Solution[]; selectedPlanIndex:number;
@@ -38,7 +38,7 @@ export function createReviewDocument(args:{draft:Draft;sourceRoof:RoofInput;capt
   const draft=structuredClone({...args.draft,solution:null}),sourceRoof=structuredClone(args.sourceRoof);delete draft.roof.imageUrl;delete sourceRoof.imageUrl;
   // Store each potentially large plan once; selectedPlanIndex restores the view.
   draft.solution=null;
-  const result:ReviewDocument={schemaVersion:1,kind:'quotecore-offcut-review',engineVersion:'2.21',scope:reviewScope(sourceRoof),
+  const result:ReviewDocument={schemaVersion:1,kind:'quotecore-offcut-review',engineVersion:'2.22',scope:reviewScope(sourceRoof),
     sourceFingerprint:sourceFingerprint(sourceRoof,args.capture),sourceRevision:sourceRoof.sourceRevision,savedAt:new Date().toISOString(),
     capture:args.capture?JSON.parse(exportLiveCapture(args.capture)) as LiveInputCapture:null,sourceRoof,draft,
     plans:structuredClone(args.plans).slice(0,12),selectedPlanIndex:args.selectedPlanIndex,diagnostics:structuredClone(args.diagnostics)};
@@ -50,12 +50,12 @@ export function createReviewDocument(args:{draft:Draft;sourceRoof:RoofInput;capt
 export function restoreReviewDocument(value:unknown,scope:ReviewScope):{document:ReviewDocument;draft:Draft;plans:Solution[];warnings:string[]}{
   const text=JSON.stringify(value);if(!text||text.length>REVIEW_MAX_BYTES)throw new Error('Invalid or oversized saved review.');
   const d=JSON.parse(text) as ReviewDocument;
-  if(d?.schemaVersion!==1||d.kind!=='quotecore-offcut-review'||!['2.10','2.11','2.12','2.13','2.14','2.15','2.16','2.17','2.18','2.19','2.20','2.21'].includes(d.engineVersion)||!d.scope||!sameReviewScope(d.scope,scope)||
+  if(d?.schemaVersion!==1||d.kind!=='quotecore-offcut-review'||!['2.10','2.11','2.12','2.13','2.14','2.15','2.16','2.17','2.18','2.19','2.20','2.21','2.22'].includes(d.engineVersion)||!d.scope||!sameReviewScope(d.scope,scope)||
     !d.draft?.roof||!sameReviewScope(reviewScope(d.draft.roof),scope)||!d.sourceRoof||!sameReviewScope(reviewScope(d.sourceRoof),scope)||
     !Array.isArray(d.plans)||d.plans.length>12||typeof d.sourceFingerprint!=='string')throw new Error('Saved review does not belong to this quote, page and roof area.');
   const warnings:string[]=[];
-  const legacy=!['2.13','2.14','2.15','2.16','2.17','2.18','2.19','2.20','2.21'].includes(d.engineVersion);
-  if(d.engineVersion==='2.13'||d.engineVersion==='2.14'||d.engineVersion==='2.15'||d.engineVersion==='2.16'||d.engineVersion==='2.17'||d.engineVersion==='2.18'||d.engineVersion==='2.19'||d.engineVersion==='2.20')warnings.push(`Saved V${d.engineVersion} plans were rechecked and retained with their original version. New plans use V2.21. Original plans and their provenance are preserved. New plans also check removable square-ended stock; optional filler reuse still needs explicit acceptance.`);
+  const legacy=!['2.13','2.14','2.15','2.16','2.17','2.18','2.19','2.20','2.21','2.22'].includes(d.engineVersion);
+  if(d.engineVersion==='2.13'||d.engineVersion==='2.14'||d.engineVersion==='2.15'||d.engineVersion==='2.16'||d.engineVersion==='2.17'||d.engineVersion==='2.18'||d.engineVersion==='2.19'||d.engineVersion==='2.20'||d.engineVersion==='2.21')warnings.push(`Saved V${d.engineVersion} plans were rechecked and retained with their original version. New plans use V2.22. Original plans and their provenance are preserved. New plans also check removable square-ended stock; optional filler reuse still needs explicit acceptance.`);
   if(legacy)warnings.push('Your saved shapes and water arrows were kept. Recalculate once for the updated continuous-cut stock and valley-phase checks; old cut plans were not reused.');
   // The original saved capture is data too: rebuild its adapter output rather
   // than allowing a forged cached `.adapted` object to enter the face builder.
@@ -99,7 +99,7 @@ export function restoreReviewDocument(value:unknown,scope:ReviewScope):{document
   draft.solution=plans.find(p=>p.layoutId===chosen?.layoutId)??null;
   delete d.sourceRoof.imageUrl;delete d.draft.roof.imageUrl;
   if(d.capture){delete d.capture.snapshot.imageUrl;delete d.capture.adapted.roof.imageUrl;}
-  d.engineVersion='2.21';d.draft=draft;d.plans=plans;d.selectedPlanIndex=draft.solution?plans.indexOf(draft.solution):0;
+  d.engineVersion='2.22';d.draft=draft;d.plans=plans;d.selectedPlanIndex=draft.solution?plans.indexOf(draft.solution):0;
   return{document:d,draft,plans,warnings};
 }
 export type SaveState={status:'loading'|'ready'|'dirty'|'saving'|'saved'|'error'|'conflict';revision:number;message:string};

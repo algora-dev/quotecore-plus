@@ -66,6 +66,9 @@ export interface Profile {
   rulesConfirmed: boolean;
 }
 export interface SolveSettings {
+  /** Additional bounded donor portfolios; missing enables opportunity-triggered search. */
+  globalBankSearch?: boolean;
+  globalBankMaxMilliseconds?: number;
   stockMode: 'bank-first' | 'per-lane' | 'face-envelope';
   /** Bounded, explicitly reported extra stock at the upstream end of cut lanes. */
   maxBankExtensionMm?: number;
@@ -177,7 +180,7 @@ export interface BankLayout {
 }
 export interface Solution {
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19' | '2.20' | '2.21';
+  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19' | '2.20' | '2.21' | '2.22';
   layoutId?: string;
   layoutLabel?: string;
   objective?: PlanObjective;
@@ -199,6 +202,7 @@ export interface Solution {
   /** V1 never produces an approved manufacturing/order list. */
   orderReady: false;
   receiverSafety?: import('./receiverSafety').ReceiverSafetyReport;
+  globalDonorSearch?: import('./globalBanks').GlobalBankReport;
   provisionalReuse?: import('./provisionalReuse').ProvisionalReuseReport;
   /** Post-plan purchasing audit; quantities/UI are independently derived from canonical demands. */
   stockLengthRefinement?: import('./stockLength').StockLengthReport;
@@ -232,7 +236,7 @@ export interface PlanQuality {
 /** V2.14 workflow proxy: repeated sheet cuts are grouped into runs.
  * These are observable operation groups, NOT measured labour time. */
 export interface WorkflowQuality {
-  model: 'site-workflow-v1';
+  model: 'site-workflow-v1' | 'coherent-workflow-v2';
   sourceRelationships: number; splitSets: number; reuseRuns: number;
   recutRuns: number; freshCutRuns: number; fillerSeparators: number;
   primaryOperations: number; stockLengthGroups: number; score: number;
@@ -295,7 +299,7 @@ export interface TraceCandidate {
   materialSaving?: MaterialSavingAssessment;
 }
 export interface DecisionTrace {
-  schemaVersion: 1; engineVersion: '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19' | '2.20' | '2.21'; requestFingerprint: string;
+  schemaVersion: 1; engineVersion: '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19' | '2.20' | '2.21' | '2.22'; requestFingerprint: string;
   objective: PlanObjective; selectedTrial: number | null;
   events: TraceEvent[]; candidates: TraceCandidate[];
   truncated: boolean; droppedEvents: number;

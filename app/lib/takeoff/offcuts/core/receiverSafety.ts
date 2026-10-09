@@ -340,7 +340,14 @@ export function protectValleyReceivers(request:SolveRequest,s:Solution,cancel?:(
       if(inventory.unresolved.length)continue;trial.offcuts=inventory.offcuts;
       trial.receiverSafety=undefined;
       protectFixedReceiverGrids(request,trial,cancel);
-      const valid=!validateReceiverSafety(trial).some(i=>i.severity==='error');
+      // A syntactically empty certificate is not proof of a checked family.
+      // A shifted grid can make one arm unsupported: retain the original grid,
+      // rather than choosing a cheaper trial that fails the full draft later.
+      const expected=[...adjacentValleyParents(request.faces,request.roof)]
+        .filter(([id])=>receiverFreshOrder(trial.demands.filter(d=>d.faceId===id)))
+        .map(([id,source])=>`${source}/${id}`).sort();
+      const certified=((trial as Solution).receiverSafety?.families??[]).flatMap(f=>f.faceIds.map(id=>`${f.sourceFaceId}/${id}`)).sort();
+      const valid=JSON.stringify(expected)===JSON.stringify(certified)&&!validateReceiverSafety(trial).some(i=>i.severity==='error');
       assessed.push({phaseByFace:offsets,valid,purchasedMm2:trial.metrics.newMaterialMm2,newSheets:trial.metrics.newSheetCount});
       if(valid&&trial.metrics.newMaterialMm2<best.metrics.newMaterialMm2-1)best=trial;
     }
@@ -363,7 +370,7 @@ export function validateReceiverSafety(s:Solution):Issue[] {
 }
 function validateReceiverCertificate(s:Solution):Issue[] {
   const issues:Issue[]=[],r=s.receiverSafety;
-  if(!r)return (s.engineVersion==='2.13'||s.engineVersion==='2.14'||s.engineVersion==='2.15'||s.engineVersion==='2.16'||s.engineVersion==='2.17'||s.engineVersion==='2.18'||(s.engineVersion==='2.19'||s.engineVersion==='2.20'||s.engineVersion==='2.21'))&&s.settings.stockMode==='bank-first'
+  if(!r)return (s.engineVersion==='2.13'||s.engineVersion==='2.14'||s.engineVersion==='2.15'||s.engineVersion==='2.16'||s.engineVersion==='2.17'||s.engineVersion==='2.18'||(s.engineVersion==='2.19'||s.engineVersion==='2.20'||(s.engineVersion==='2.21'||s.engineVersion==='2.22')))&&s.settings.stockMode==='bank-first'
     ?[{severity:'error',code:'RECEIVER_SAFETY',message:'This plan is missing its receiver check. Recalculate from the reviewed roof.'}]:issues;
   const error=(message:string,faceId?:string)=>issues.push({severity:'error' as const,code:'RECEIVER_SAFETY',message,faceId});
   if(r.model!==RECEIVER_SAFETY_MODEL||!Array.isArray(r.families)||r.mode!==(s.settings.receiverPhaseMode??'quote-safe')||r.basis!=='fixed-purchased-parents-and-receiver-grid'){error('Unknown valley receiver safety model.');return issues;}

@@ -11,6 +11,8 @@ import { planningBoundary } from './directions';
 
 export interface CoverStationPlan {
   bankId: string;
+  /** Member-axis registry aligns setout numbers without changing approved face axes. */
+  basis?: 'member-axis-v1';
   faceIds: string[];
   coverMm: number;
   spanMm: number;
@@ -33,22 +35,22 @@ export function coverRemainder(value: number, cover: number): number {
 /** End-anchored grids have exactly ceil(span/cover) columns. An explicit manual
  * registration may require one more and is never rounded down to hide it. */
 export function coverStations(bank: MaterialBank, members: RoofFace[], request: SolveRequest,
-  anchor: 'start' | 'end' = 'start', explicitPhaseMm?: number): CoverStationPlan {
+  anchor: 'start' | 'end' = 'start', explicitPhaseMm?: number, memberAxes = false): CoverStationPlan {
   if(!members.length)throw new Error('A physical bank needs at least one reviewed face.');
   const u = frameFor(members[0],request.roof).u, w = request.profile.coverMm;
-  const xs = members.flatMap(f => f.polygon.map(p => dot(p,u)*request.roof.mmPerSceneUnit));
+  const xs = members.flatMap(f => f.polygon.map(p => dot(p,memberAxes?frameFor(f,request.roof).u:u)*request.roof.mmPerSceneUnit));
   const lo = Math.min(...xs), hi = Math.max(...xs), span = hi-lo;
   const minimumColumns = sheetCount(span,w);
   const phase = explicitPhaseMm ?? (anchor==='end' ? minimumColumns*w-span : 0);
   const columns = sheetCount(span,w,Math.max(0,phase));
   const start = lo-phase;
   return {
-    bankId: bank.id, faceIds: members.map(f=>f.id), coverMm:w, spanMm:span,
+    ...(memberAxes?{basis:'member-axis-v1' as const}:{}), bankId: bank.id, faceIds: members.map(f=>f.id), coverMm:w, spanMm:span,
     minimumColumns, columns, crossStartMm:start, crossEndMm:start+columns*w,
     stationsMm:Array.from({length:columns+1},(_,i)=>start+i*w), phaseMm:phase,
     origin:explicitPhaseMm!==undefined?'explicit-registration':anchor==='end'?'opposite-hip-end':'hip-end',
     offsetByFace:Object.fromEntries(members.map(f=>{
-      const fx = Math.min(...f.polygon.map(p=>dot(p,u)*request.roof.mmPerSceneUnit));
+      const fx = Math.min(...f.polygon.map(p=>dot(p,memberAxes?frameFor(f,request.roof).u:u)*request.roof.mmPerSceneUnit));
       return [f.id,coverRemainder(fx-start,w)];
     })),
   };
@@ -90,7 +92,7 @@ export function bankLaneAudit(solution:Solution):BankLaneAudit[] {
     const actualCross=memberDemands.flatMap(d=>d.cover.flatMap(b=>[b.x0,b.x1].map(x=>dot(d.frame.origin,d.frame.u)*d.frame.mmPerSceneUnit+d.origin.x+x)));
     const lo=Math.min(...actualCross),hi=Math.max(...actualCross);
     const numeric=[grid.columns,grid.minimumColumns,grid.coverMm,grid.spanMm,grid.crossStartMm,grid.crossEndMm,grid.phaseMm];
-    const invalid= !numeric.every(Number.isFinite)||!Number.isInteger(grid.columns)||grid.columns<1||grid.columns>10000||
+    const invalid= (grid.basis!==undefined&&grid.basis!=='member-axis-v1')||!numeric.every(Number.isFinite)||!Number.isInteger(grid.columns)||grid.columns<1||grid.columns>10000||
       !Number.isInteger(grid.minimumColumns)||grid.coverMm<=0||grid.phaseMm<0||grid.phaseMm>=grid.coverMm||
       Math.abs(grid.coverMm-solution.profile.coverMm)>1e-5||!Array.isArray(grid.stationsMm)||grid.stationsMm.length!==grid.columns+1||
       grid.stationsMm.some((x,i)=>!Number.isFinite(x)||Math.abs(x-grid.crossStartMm-i*grid.coverMm)>.001)||
@@ -98,7 +100,8 @@ export function bankLaneAudit(solution:Solution):BankLaneAudit[] {
       grid.minimumColumns!==Math.ceil((grid.spanMm-1e-7)/grid.coverMm)||
       grid.columns!==Math.ceil((grid.spanMm+grid.phaseMm-1e-7)/grid.coverMm)||
       Math.abs(grid.crossEndMm-grid.crossStartMm-grid.columns*grid.coverMm)>.001;
-    if(invalid)return{operationId:op.id,faceIds:op.faceIds,invalidReason:'Cover stations do not match the actual bank span and cover.',spanMm:grid.spanMm,effectiveCoverMm:grid.coverMm,minimumColumns:grid.minimumColumns,registeredColumns:grid.columns,newRoots:0,duplicateColumns:[],columns:[]};
+    const unregistered=grid.basis==='member-axis-v1'&&memberDemands.some(d=>{const x=dot(d.frame.origin,d.frame.u)*d.frame.mmPerSceneUnit+d.origin.x+solution.profile.leftLapMm,k=Math.round((x-grid.crossStartMm)/grid.coverMm);return k<0||k>=grid.columns||Math.abs(x-grid.crossStartMm-k*grid.coverMm)>.001;});
+    if(invalid||unregistered)return{operationId:op.id,faceIds:op.faceIds,invalidReason:'Cover stations do not match the actual bank span and cover.',spanMm:grid.spanMm,effectiveCoverMm:grid.coverMm,minimumColumns:grid.minimumColumns,registeredColumns:grid.columns,newRoots:0,duplicateColumns:[],columns:[]};
     const columns=Array.from({length:grid.columns},(_,index)=>({index,rootDemandIds:[] as string[],demandIds:[] as string[]}));
     for(const d of memberDemands){
       const x=dot(d.frame.origin,d.frame.u)*d.frame.mmPerSceneUnit+d.origin.x+solution.profile.leftLapMm;

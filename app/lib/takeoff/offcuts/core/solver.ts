@@ -1,3 +1,4 @@
+import { searchGlobalBanks, coordinatedMaterialAssessment, GLOBAL_BANK_POLICY, coherentWorkflow, validateGlobalInput } from './globalBanks';
 import type { CalculationStage } from '../reliability/protocol';
 import { refinePurchasedStock } from './stockLength';
 import { validateSalvageCertificate } from './salvageModel';
@@ -7,7 +8,7 @@ import { fingerprint } from './math';
 import { area, bounds, rotate180, subtract, translate } from './regions';
 import { findFit } from './fit';
 export { findFit } from './fit';
-import { optimiseBankLayouts } from './banks';
+import { optimiseBankLayouts, type BankSearchVariant } from './banks';
 import { rebuildInventory, materialAtDestination } from './inventory';
 import { generateDemands, offcutsFrom, validateInputs } from './material';
 import { supplyView } from './supply';
@@ -20,6 +21,8 @@ export function facesRevision(request: SolveRequest): string {
   return fingerprint({ faces: request.faces, profile: request.profile, settings: request.settings });
 }
 export interface SearchHooks {
+  /** Internal structural candidate; never alters reviewed geometry/profile rules. */
+  bankVariant?: BankSearchVariant;
   onStage?: (stage: CalculationStage) => void;
   /** Advisory complete incumbent; the worker must validate the FULL draft before publishing it. */
   onCheckedCandidate?: (solution: Solution) => void;
@@ -38,10 +41,10 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
   for (const solution of solutions) {
     hooks.onStage?.('receiver-safety');
     if(request.settings.stockMode==='bank-first')protectValleyReceivers(request,solution,hooks.shouldCancel);
-    solution.engineVersion='2.21';
+    solution.engineVersion='2.22';
     solution.layoutId=planSignature(solution);
     hooks.onStage?.('physical-validation');
-    solution.issues.push(...validateSolution(solution));
+    solution.issues.push(...(request.settings.stockMode==='bank-first'?validateGlobalInput(request,solution,validateSolution):validateSolution(solution)));
     if (solution.issues.some(i => i.severity === 'error')) solution.status = 'invalid';
     else if((hooks.planSearch?.objective??'recommended')==='recommended')hooks.onCheckedCandidate?.(solution);
   }
@@ -71,12 +74,28 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
     const refined=refinePurchasedStock(request,s,validateSolution,hooks),selected=refined.solution;
     selected.stockLengthRefinement=refined.report;selected.search.elapsedMs+=refined.report.elapsedMs;
     if(selected.decisionTrace){
-      selected.decisionTrace.engineVersion='2.21';
+      selected.decisionTrace.engineVersion='2.22';
       selected.decisionTrace.events.push({step:selected.decisionTrace.events.length+1,action:'end-specific-stock-refinement',
         message:refined.report.status==='improved'?'Removed unused square-ended stock; complete offcut families, descendants, lap and receiver certificates unchanged.':'Retained the checked purchase schedule; no unverified shorter blank can replace it.',data:{report:refined.report}});
     }
     return selected;
   });
+  // V2.22 compares complete alternative source portfolios against the checked
+  // sequential incumbent. No edits to accepted inventory are made in place.
+  // Less Material can use its reference even when the old search found nothing.
+  const globalGoal=hooks.planSearch?.objective??'recommended';
+  let globalReport:ReturnType<typeof searchGlobalBanks>['report']|undefined;
+  if(request.settings.stockMode==='bank-first'&&globalGoal!=='simpler'){
+    const incumbent=globalGoal==='less-material'?hooks.planSearch?.referenceSolution:
+      solutions.filter(s=>s.status!=='invalid').sort((a,b)=>a.metrics.newMaterialMm2-b.metrics.newMaterialMm2)[0];
+    if(incumbent){
+      const global=searchGlobalBanks(request,incumbent,validateSolution,hooks);
+      globalReport=global.report;
+      // The original fully checked sequential candidate remains in the set.
+      solutions=[...global.solutions,...solutions];
+      if(globalGoal==='recommended'&&global.solutions[0])hooks.onCheckedCandidate?.(global.solutions[0]);
+    }
+  }
   hooks.onStage?.('final-validation');
   // The bank search retains coherent macro candidates first. Compare the actual
   // protected purchase cost of those retained candidates, never the stale
@@ -84,14 +103,26 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
   const goal=hooks.planSearch?.objective??'recommended';
   const reference=hooks.planSearch?.referenceSolution;
   const assessments=new Map(goal==='simpler'&&reference?solutions.map(s=>[s,simplerAssessment(reference,s,request.profile,hooks.planSearch?.maxExtraMaterialPercent)]):[]);
-  const materialAssessments=new Map(goal==='less-material'&&reference?solutions.map(s=>[s,lessMaterialAssessment(reference,s,request.profile)]):[]);
+  const materialAssessments=new Map(goal==='less-material'&&reference?solutions.map(s=>[s,s.globalDonorSearch?.status==='improved'?coordinatedMaterialAssessment(reference,s):lessMaterialAssessment(reference,s,request.profile)]):[]);
   solutions.sort((a,b)=>Number(a.status==='invalid')-Number(b.status==='invalid') ||
     (goal==='simpler'?Number(!assessments.get(a)?.accepted)-Number(!assessments.get(b)?.accepted)||
       (assessments.get(a)?.proposedWorkflow.score??planQuality(a).complexity)-(assessments.get(b)?.proposedWorkflow.score??planQuality(b).complexity)||a.metrics.newMaterialMm2-b.metrics.newMaterialMm2
-      :a.metrics.newMaterialMm2-b.metrics.newMaterialMm2||planQuality(a).complexity-planQuality(b).complexity));
+      :a.globalDonorSearch&&b.globalDonorSearch&&Math.abs(a.metrics.newMaterialMm2-b.metrics.newMaterialMm2)<=GLOBAL_BANK_POLICY.nearTieM2*1e6*(request.profile.coverMm+request.profile.leftLapMm+request.profile.rightLapMm)/request.profile.coverMm?coherentWorkflow(a).score-coherentWorkflow(b).score||a.metrics.newMaterialMm2-b.metrics.newMaterialMm2:a.metrics.newMaterialMm2-b.metrics.newMaterialMm2||planQuality(a).complexity-planQuality(b).complexity));
   if(goal==='less-material'&&reference){
     const valid=solutions.filter(s=>s.status!=='invalid');
     solutions=[...rankMaterialCandidates(valid,s=>materialAssessments.get(s)!),...solutions.filter(s=>s.status==='invalid')];
+  }
+  if(globalReport&&solutions[0]){
+    const selected=solutions[0],won=!!selected.globalDonorSearch;
+    const width=request.profile.coverMm+request.profile.leftLapMm+request.profile.rightLapMm;
+    const report={...globalReport,status:won?'improved' as const:globalReport.status==='improved'?'kept-incumbent' as const:globalReport.status,
+      selectedLayoutId:planSignature(selected),selectedSheets:selected.metrics.newSheetCount,
+      selectedLinealM:selected.metrics.newMaterialMm2/width/1000,
+      selectedVariantId:won?globalReport.trials.find(t=>t.layoutId===planSignature(selected))?.id??null:null};
+    report.savedCoverM2=(report.baselineLinealM-report.selectedLinealM)*request.profile.coverMm/1000;
+    selected.globalDonorSearch=report;
+    if(selected.decisionTrace)selected.decisionTrace.events.push({step:selected.decisionTrace.events.length+1,action:'coordinated-search-outcome',
+      message:won?'Selected a complete physically verified donor portfolio; the checked sequential layout remains the fallback.':'Kept the sequential layout. Coordinated search is bounded and does not prove an optimum.',data:{report}});
   }
   for(const s of solutions)if(s.decisionTrace){
     const quality=planQuality(s);
@@ -146,7 +177,7 @@ export function optimiseAlternative(request: SolveRequest, options: AlternativeP
     const comparison=comparePlans(previous,solution,objective);
     // Independent result gate: objective labels must describe a real improvement.
     const assessment=objective==='simpler'?simplerAssessment(previous,solution,request.profile,cap):undefined;
-    const materialSaving=objective==='less-material'?lessMaterialAssessment(previous,solution,request.profile):undefined;
+    const materialSaving=objective==='less-material'?(solution.globalDonorSearch?.status==='improved'?coordinatedMaterialAssessment(previous,solution):lessMaterialAssessment(previous,solution,request.profile)):undefined;
     const improved=assessment?.accepted??materialSaving?.accepted??false;
     if(improved&&comparison.changedFaceIds.length){
       if(assessment)comparison.simplification=assessment;
@@ -241,7 +272,7 @@ export function optimiseLegacy(request: SolveRequest, hooks: SearchHooks = {}): 
     status: 'prototype-review', orderReady: false,
   };
   // Independently recheck every proposed placement and source dependency.
-  solution.issues.push(...validateSolution(solution));
+  solution.issues.push(...(request.settings.stockMode==='bank-first'?validateGlobalInput(request,solution,validateSolution):validateSolution(solution)));
   if (solution.issues.some(i => i.severity === 'error')) solution.status = 'invalid';
   void byId;
   return solution;

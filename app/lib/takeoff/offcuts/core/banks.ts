@@ -18,6 +18,12 @@ import { supplyView } from './supply';
 import { simplerAssessment, SIMPLER_POLICY } from './simplerPolicy';
 import { lessMaterialAssessment, rankMaterialCandidates, LESS_MATERIAL_POLICY } from './lessMaterialPolicy';
 
+export interface BankSearchVariant {
+  id:string; primaryBankIds:string[]; seedFaceId:string; registrationVariant:number; preferredReceiverFaceId?:string;
+  /** Permit exactly checked continuation cuts between near-parallel member axes. */
+  memberAxisContinuation:boolean;
+}
+
 interface Info { face:RoofFace; bank:MaterialBank; offsets:number[]; net:number; length:number; ridgeLength:number; selfComplement:boolean }
 interface State {
   demands:Demand[]; placements:Placement[]; inventory:Offcut[]; used:Set<string>;
@@ -70,7 +76,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const sorted=[...infos].sort((a,b)=>Math.round(b.ridgeLength)-Math.round(a.ridgeLength)||Math.round(b.length)-Math.round(a.length)||b.net-a.net||a.face.id.localeCompare(b.face.id));
 
   const longestRidge=Math.max(...infos.map(i=>i.ridgeLength));
-  const mainBanks=new Set(infos.filter(i=>i.ridgeLength>=longestRidge*.97&&!i.selfComplement).map(i=>i.bank.id));
+  const mainBanks=new Set(hooks.bankVariant?.primaryBankIds??infos.filter(i=>i.ridgeLength>=longestRidge*.97&&!i.selfComplement).map(i=>i.bank.id));
   // Protect the whole longest elevation operation, including apex-only faces
   // with no ridge of their own. A face such as A must not be stolen while its
   // registered J continuation is waiting to start.
@@ -146,10 +152,10 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const seedBase=objective==='less-material'?[...leaders,...sorted.filter(i=>!leaders.includes(i)).slice(0,2)]:recommendedSeeds;
   const seeds=seedBase.length?seedBase:leaders;
   const start=attempt%Math.max(1,seeds.length);
-  const trialCount=Math.min(settings.maxTrials,Math.max(1,seeds.length)*(objective==='recommended'?6:6));
+  const trialCount=hooks.bankVariant?1:Math.min(settings.maxTrials,Math.max(1,seeds.length)*(objective==='recommended'?6:6));
   let totalProgress=trialCount;
-  const trials=Array.from({length:trialCount},(_,i)=>({seed:seeds[(i+start)%seeds.length],
-    shift:Math.floor(i/seeds.length)+Math.floor(attempt/Math.max(1,seeds.length)),extend:true}));
+  const trials=Array.from({length:trialCount},(_,i)=>({seed:hooks.bankVariant?infos.find(x=>x.face.id===hooks.bankVariant!.seedFaceId)!:seeds[(i+start)%seeds.length],
+    shift:hooks.bankVariant?.registrationVariant??(Math.floor(i/seeds.length)+Math.floor(attempt/Math.max(1,seeds.length))),extend:true}));
   const reservedSelf=new Set(infos.filter(i=>i.selfComplement).map(i=>i.face.id));
 
   function receivingFillers(info:Info,ds:Demand[]):Set<string> {
@@ -167,6 +173,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     return {...match,freshArea:match.freshArea+ds.filter(d=>fillers.has(d.id)).reduce((n,d)=>n+area(d.blank),0),
       placements:ds.map((d):Placement=>placements.get(d.id)??{demandId:d.id,kind:'new',rotation:0,translateY:0})};
   }
+  const strategySaving=(ds:Demand[],m:CoherentMatch)=>{const ids=new Set(m.placements.filter(p=>p.kind==='reuse').map(p=>p.demandId));return ds.filter(d=>ids.has(d.id)).reduce((n,d)=>n+area(d.blank),0);};
   function bestOffer(state:State,shift:number,extend:boolean):Offer|undefined {
     while(state.commitments.length){
       const reserved=state.commitments.shift()!;
@@ -225,7 +232,9 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
             // the same elevation bank may create the bank's next primary strip.
             const extension=sharedRegistration && pool.some(o=>match.used.has(o.id)&&o.cutKind==='broken_hip');
             const positions=match.placements.filter(p=>p.kind==='reuse').length;
-            if(Math.max(coverage,positions/Math.max(1,ds.length))<(primary?.30:.45) || positions<Math.min(2,ds.length) || match.sourceUtilisation<.20){reject(info.face.id,'insufficient-coherent-contribution');continue;}
+            const partialBatch=!!hooks.bankVariant&&!primary&&positions>=2&&match.retainedFraction>=.40&&
+              strategySaving(ds,match)>=2e6;
+            if((Math.max(coverage,positions/Math.max(1,ds.length))<(primary?.30:.45)&&!partialBatch) || positions<Math.min(2,ds.length) || match.sourceUtilisation<.20){reject(info.face.id,'insufficient-coherent-contribution');continue;}
             if(sharedRegistration&&!extension&&(match.retainedFraction<.80||coverage<.70)){reject(info.face.id,'incomplete-common-bank-continuation');continue;}
             const exactValley=pool.every(o=>o.cutKind==='valley')&&match.newCutCount===0&&match.retainedFraction>.90;
             const adjacentValley=localParent&&pool.every(o=>o.sourceFaceId===localParent&&o.cutKind==='valley');
@@ -247,6 +256,11 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     const ranked=[...offers.values()].sort((a,b)=>b.strategy.tier-a.strategy.tier||b.score-a.score||b.match.reusedArea-a.match.reusedArea||a.info.face.id.localeCompare(b.info.face.id));
     const batch=chooseCutCommitments(ranked.map((offer,i)=>({id:`offer-${i}`,faceId:offer.info.face.id,pieceIds:[...offer.match.used],strategy:offer.strategy,score:offer.score,offer})));
     let selected=batch[0]?.offer;
+    // Transactional global candidate: try another complete coherent destination.
+    // Conflicting reservations are released below; only a fully checked whole
+    // roof can replace the incumbent, never this local preference by itself.
+    const preferred=hooks.bankVariant?.preferredReceiverFaceId;
+    if(preferred){const alternative=ranked.find(o=>o.info.face.id===preferred);if(alternative)selected=alternative;}
     // Deliberate alternatives may change a near-equal partial relationship, not
     // break an already superior whole hip pair or valley complement.
     if(objective!=='recommended'&&shift%2&&selected&&selected.strategy.tier<2&&ranked.length>1&&ranked[1].strategy.tier===selected.strategy.tier&&ranked[1].score>=selected.score-.3){
@@ -421,24 +435,25 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
       .sort((a,b)=>b.ridgeLength-a.ridgeLength||b.net-a.net||a.face.id.localeCompare(b.face.id));
     if(!members.length)return;
     const locked=members.find(i=>i.face.laneOffsetLocked);
-    let grid=coverStations(leader.bank,members.map(i=>i.face),request,shift%2?'end':'start');
+    const memberAxes=hooks.bankVariant?.memberAxisContinuation===true;
+    let grid=coverStations(leader.bank,members.map(i=>i.face),request,shift%2?'end':'start',undefined,memberAxes);
     if(locked){
       const frame=frameFor(locked.face,roof);
       const lo=Math.min(...locked.face.polygon.map(p=>dot(p,frame.u)*roof.mmPerSceneUnit));
       const mod=(n:number)=>((n%profile.coverMm)+profile.coverMm)%profile.coverMm;
-      grid=coverStations(leader.bank,members.map(i=>i.face),request,'start',mod(locked.face.laneOffsetMm-(lo-grid.crossStartMm)));
+      grid=coverStations(leader.bank,members.map(i=>i.face),request,'start',mod(locked.face.laneOffsetMm-(lo-grid.crossStartMm)),memberAxes);
     }
     const bankLap=members.find(i=>i.face.lapLocked)?.face.lap??leader.face.lap;
     const referenceFrame=frameFor(members[0].face,roof);
-    const separated=members.filter(i=>dot(frameFor(i.face,roof).u,referenceFrame.u)<1-1e-10 || i.face.laneOffsetLocked&&Math.abs(i.face.laneOffsetMm-grid.offsetByFace[i.face.id])>.01 || i.face.lapLocked&&i.face.lap!==bankLap);
+    const separated=members.filter(i=>!memberAxes&&dot(frameFor(i.face,roof).u,referenceFrame.u)<1-1e-10 || i.face.laneOffsetLocked&&Math.abs(i.face.laneOffsetMm-grid.offsetByFace[i.face.id])>.01 || i.face.lapLocked&&i.face.lap!==bankLap);
     if(separated.length){
       state.record.add('locked-registration-separation','Different run axes or incompatible explicit setout/lap locks remain separate physical operations.',separated.map(i=>i.face.id));
       members=members.filter(i=>!separated.includes(i));
       if(members.length){
         const u=frameFor(members[0].face,roof).u;
-        const lo=Math.min(...members.flatMap(i=>i.face.polygon.map(p=>dot(p,u)*roof.mmPerSceneUnit)));
+        const lo=Math.min(...members.flatMap(i=>i.face.polygon.map(p=>dot(p,memberAxes?frameFor(i.face,roof).u:u)*roof.mmPerSceneUnit)));
         const phase=((lo-grid.crossStartMm)%profile.coverMm+profile.coverMm)%profile.coverMm;
-        grid=coverStations(leader.bank,members.map(i=>i.face),request,'start',phase<1e-7||profile.coverMm-phase<1e-7?0:phase);
+        grid=coverStations(leader.bank,members.map(i=>i.face),request,'start',phase<1e-7||profile.coverMm-phase<1e-7?0:phase,memberAxes);
       }
     }
     if(!members.length)return;
@@ -490,7 +505,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     state.record.add('start-primary-operation','Measured the full bank span, fixed cover stations at an end, then fitted all member faces to shared physical parents.',operation.faceIds,{
       operation,spanMm:grid.spanMm,coverMm:profile.coverMm,minimumColumns:grid.minimumColumns,registeredColumns:grid.columns,
       purchasedRoots:chosen.fresh,extraRootsInSharedColumns:chosen.duplicates,allowanceTrials:trials,
-      rule:'one-cover-interval-one-parent-when-physical-fit-permits',
+      rule:memberAxes?'member-axis-stations-exact-physical-continuation':'one-cover-interval-one-parent-when-physical-fit-permits',
       note:chosen.duplicates?'No one-parent continuation fit within the allowed extra stock; additional physical sheets are explicitly reported.':'Every shared column uses one purchased parent.'
     });
     for(const part of chosen.parts){
@@ -553,6 +568,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     const state=blankState();state.trial=candidates.length+1;state.seedFaceId=trial.seed.face.id;
     state.record.add('trial-start','Started an independently searched strategy.',undefined,{
       objective,trial:state.trial,seedFaceId:trial.seed.face.id,registrationVariant:trial.shift,
+      ...(hooks.bankVariant?{globalVariant:hooks.bankVariant}:{}),
       protectedMainFaces:[...mainMembers],selfFillCandidates:[...reservedSelf],valleyReceivingParents:Object.fromEntries(valleyParents),attempt
     });
     try{
@@ -622,7 +638,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     evaluationStage:'bank-search' as const,...(assessments.has(state)?{simplification:assessments.get(state)}:{}),
     ...(materialAssessments.has(state)?{materialSaving:materialAssessments.get(state)}:{}),
     reason:excluded.has(signatures.get(state)!)?'already-shown-physical-layout':!eligible.includes(state)?'does-not-improve-requested-objective-within-material-cap':'eligible-candidate'}));
-  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.21' as const,
+  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.22' as const,
     requestFingerprint:fingerprint({faces,profile,settings}),objective,selectedTrial:state?.trial??null,
     events:state?.record.events??[{step:1,action:'no-selection',message:'No unseen candidate improved the requested objective within its material cap. The previous plan is retained.',data:{objective,referenceQuality:reference,excludedSignatures:[...excluded],maxExtraMaterialPercent:maxExtra}}],candidates:summaries.map(c=>({...c,selected:c.trial===state?.trial,
       reason:c.trial===state?.trial?'selected-by-'+objective:c.reason})),
@@ -655,7 +671,7 @@ function toSolution(request:SolveRequest,state:State,inputIssues:Issue[],complet
   }
   if(budgetReached)issues.push({severity:'warning',code:'SEARCH_BUDGET',message:'Time budget reached. Unsolved positions have been supplied new; this complete draft is not proof that no better reuse exists.'});
   issues.push({severity:'warning',code:'PROTOTYPE_ONLY',message:'Draft material-bank plan. Verify profile, sheet registration and site lengths. No guaranteed minimum, manufacturer approval or spare sheets are implied.'});
-  return{schemaVersion:1,engineVersion:'2.21',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
+  return{schemaVersion:1,engineVersion:'2.22',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
     profile:structuredClone(profile),settings:structuredClone(settings),demands:state.demands,placements:state.placements.sort((a,b)=>a.demandId.localeCompare(b.demandId)),
     offcuts:state.inventory,lapByFace:state.laps,bankLayout:state.layout,
     metrics:{newMaterialMm2:cost,baselineNewMaterialMm2:baseline,netRoofMm2:state.demands.reduce((n,d)=>n+area(d.cover),0),installedPhysicalMm2:installed,
