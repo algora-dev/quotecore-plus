@@ -32,7 +32,7 @@ const FAQS = [
   {
     question: 'Do I need to create an account?',
     answer:
-      'No. You can upload a plan, measure it, and get the full output without an account. An account is only needed if you want to save a takeoff and continue into the QuoteCore+ app.',
+      'No. You can upload a plan, measure it, and get the full output without an account. Use the free Quote Generator to continue with a document, or explore the paid QuoteCore+ app for saved jobs and reusable pricing.',
   },
   {
     question: 'What is a cladding takeoff?',
@@ -52,7 +52,7 @@ const FAQS = [
   {
     question: 'Can I use my own cladding components and prices?',
     answer:
-      'Yes. Instead of the standard placeholder components, you can build up to 7 custom components with your own measurement types, material and labour rates, pack pricing and waste. The output then shows priced quantities for each.',
+      'Yes. Start with example components and fictitious pricing, or customise the same set with your own names, material and labour rates, pack sizes and waste. Review example prices before preparing a customer quote.',
   },
   {
     question: 'Does it work for internal walls or other materials?',
@@ -62,7 +62,7 @@ const FAQS = [
   {
     question: 'Are my plans or measurements saved?',
     answer:
-      'No. Nothing is saved and the session refreshes every time you leave. Your plan is used only for that takeoff session. If you want to keep a result, send it into the QuoteCore+ app from the output screen.',
+      'No. Nothing is saved and the session refreshes every time you leave. Your plan is used only for that takeoff session. Download your report before closing the page, or open your quantities in the free Quote Generator. Saved libraries and jobs are available in the paid app.',
   },
 ];
 
@@ -95,7 +95,7 @@ const TRUST_POINTS = [
   'No signup required',
   'No credit card',
   'Metric & imperial',
-  'Nothing saved unless you continue in QuoteCore+',
+  'Session only — download your results',
 ];
 
 const MEASUREMENTS = [

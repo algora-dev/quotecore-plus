@@ -1,200 +1,49 @@
 'use client';
-
-import { useId, useRef, useState } from 'react';
-import { QcButton } from '@/app/components/ui/v2/QcButton';
-import '@/app/components/ui/v2/qc-dialog-actions.css';
-import { QcDialog } from '@/app/components/ui/v2/QcDialog';
-import { QcField, QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
-import './free-takeoff-ui.css';
-import type { TakeoffComponentSpec } from './tradeConfig';
-
-/**
- * Component builder modal for the free takeoff tool (step 2, "build your own").
- *
- * Mirrors the app's Add Component form fields (component_library columns):
- * name, measurement type, material + labour rates, pricing strategy
- * (per-unit or fixed-quantity packs), waste (percent / fixed / per-segment)
- * and pitch calculation. The saved spec persists through the session and,
- * on signup, becomes a real component_library row (import-takeoff-draft).
- */
-
-type MeasurementSystemLite = 'metric' | 'imperial_ft' | 'imperial_rs';
-
-const MEASUREMENT_TYPES: { value: TakeoffComponentSpec['measurementType']; label: string; hint: string }[] = [
-  { value: 'lineal', label: 'Linear', hint: 'Ridges, hips, valleys, barges, spouting, flashings' },
-  { value: 'area', label: 'Area', hint: 'Roof planes, underlay, cladding sheets' },
-  { value: 'quantity', label: 'Quantity', hint: 'Screws, brackets, fixings - counted by click' },
-];
-
-/** Flooring variant: floor-area / lineal / single item only, no roofing hints. */
-const FLOORING_MEASUREMENT_TYPES: typeof MEASUREMENT_TYPES = [
-  { value: 'area', label: 'Floor Area', hint: 'Plank, carpet, tile, underlay - measured by area' },
-  { value: 'lineal', label: 'Lineal', hint: 'Skirting, scotia, transition strips - measured by length' },
-  { value: 'quantity', label: 'Single Item', hint: 'Glue buckets, sundries, trims - counted by click' },
-];
-
-/** Cladding variant: wall terminology instead of roofing hints. */
-const CLADDING_MEASUREMENT_TYPES: typeof MEASUREMENT_TYPES = [
-  { value: 'area', label: 'Area', hint: 'Wall areas, wrap, soffits, cladding sheets' },
-  { value: 'lineal', label: 'Lineal', hint: 'Trims, battens, flashings, junctions - measured by length' },
-  { value: 'quantity', label: 'Quantity', hint: 'Openings, brackets, fixings - counted by click' },
-];
-
-const WASTE_TYPES: { value: TakeoffComponentSpec['wasteType']; label: string }[] = [
-  { value: 'none', label: 'None' },
-  { value: 'percent', label: 'Percentage' },
-  { value: 'fixed', label: 'Fixed (total)' },
-  { value: 'fixed_per_segment', label: 'Fixed (per segment)' },
-];
-
-export function ComponentBuilderModal({
-  initial,
-  measurementSystem = 'metric',
-  trade = 'roofing',
-  showPitchRules = true,
-  onSave,
-  onClose,
-}: {
-  /** Existing spec to edit, or null to create. */
-  initial: TakeoffComponentSpec | null;
-  measurementSystem?: MeasurementSystemLite;
-  /** Trade variant: flooring swaps measurement-type labels/hints and hides pitch. */
-  trade?: 'roofing' | 'cladding' | 'flooring';
-  /** Whether the pitch-calculation rules section is offered at all.
-   *  Driven by the trade config (requiresPitch) - flat trades never see it. */
-  showPitchRules?: boolean;
-  onSave: (spec: TakeoffComponentSpec, isNew: boolean) => void;
-  onClose: () => void;
-}) {
-  const typeOptions =
-    trade === 'flooring' ? FLOORING_MEASUREMENT_TYPES : trade === 'cladding' ? CLADDING_MEASUREMENT_TYPES : MEASUREMENT_TYPES;
-  const metric = measurementSystem === 'metric';
-  const lengthUnit = metric ? 'm' : 'ft';
-  const areaUnit = metric ? 'm\u00b2' : 'ft\u00b2';
-  const unitLabelFor = (mt: TakeoffComponentSpec['measurementType']) =>
-    mt === 'area' ? areaUnit : mt === 'lineal' ? lengthUnit : 'ea';
-
-  const isNew = !initial;
-  const [name, setName] = useState(initial?.name ?? '');
-  const [measurementType, setMeasurementType] = useState<TakeoffComponentSpec['measurementType']>(initial?.measurementType ?? 'lineal');
-  const [materialRate, setMaterialRate] = useState(initial ? String(initial.materialRate) : '');
-  const [labourRate, setLabourRate] = useState(initial ? String(initial.labourRate) : '');
-  const [pricingStrategy, setPricingStrategy] = useState<TakeoffComponentSpec['pricingStrategy']>(initial?.pricingStrategy ?? 'per_unit');
-  const [packPrice, setPackPrice] = useState(initial?.packPrice != null ? String(initial.packPrice) : '');
-  const [packSize, setPackSize] = useState(initial?.packSize != null ? String(initial.packSize) : '');
-  const [wasteType, setWasteType] = useState<TakeoffComponentSpec['wasteType']>(initial?.wasteType ?? 'none');
-  const [wasteValue, setWasteValue] = useState(initial && initial.wasteValue > 0 ? String(initial.wasteValue) : '');
-  const [pitchEnabled, setPitchEnabled] = useState(initial?.pitchEnabled ?? false);
-  const [pitchType, setPitchType] = useState<TakeoffComponentSpec['pitchType']>(initial?.pitchType ?? 'rafter');
-
-  const isPack = pricingStrategy !== 'per_unit';
-  const packStrategies: TakeoffComponentSpec['pricingStrategy'][] =
-    measurementType === 'area' ? ['per_pack_area'] : ['per_pack_length'];
-
-  const canSave = name.trim().length > 0;
-
-  const handleSave = () => {
-    if (!canSave) return;
-    const spec: TakeoffComponentSpec = {
-      id: initial?.id ?? `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name: name.trim().slice(0, 120),
-      measurementType,
-      materialRate: Math.max(0, parseFloat(materialRate) || 0),
-      labourRate: Math.max(0, parseFloat(labourRate) || 0),
-      pricingStrategy: isPack ? packStrategies[0] : 'per_unit',
-      packPrice: isPack ? Math.max(0, parseFloat(packPrice) || 0) : null,
-      packSize: isPack ? Math.max(0, parseFloat(packSize) || 0) : null,
-      wasteType,
-      wasteValue: wasteType === 'none' ? 0 : Math.max(0, parseFloat(wasteValue) || 0),
-      pitchEnabled: pitchEnabled && measurementType !== 'quantity',
-      pitchType,
-    };
-    onSave(spec, isNew);
-  };
-
-  const rateUnit = unitLabelFor(measurementType);
-
-  const fieldId = useId();
-  const nameRef = useRef<HTMLInputElement>(null);
-
-  return <QcDialog open pending onRequestClose={onClose} size="md" className="qc-free-component-dialog qc-dialog-fixed-actions"
-    title={isNew ? 'Create component' : 'Edit component'}
-    description="A component is an item you measure. Add your own costs to include an estimate in the report."
-    initialFocusRef={nameRef}
-    footer={<><QcButton onClick={onClose}>Cancel</QcButton>
-      <QcButton variant="primary" onClick={handleSave} disabled={!canSave}>{isNew ? 'Create component' : 'Save changes'}</QcButton></>}>
-    <div className="qc-free-component-form">
-      <QcField label="Component name" htmlFor={`${fieldId}-name`} help="Use a name you will recognise when measuring.">
-        <QcInput id={`${fieldId}-name`} ref={nameRef} value={name} aria-required="true"
-          onChange={e => setName(e.target.value)} placeholder={trade === 'flooring' ? 'e.g. Skirting' : trade === 'cladding' ? 'e.g. Window Trim' : 'e.g. Ridge Flashing'} />
-      </QcField>
-      <fieldset className="qc-free-choices"><legend>How is it measured?</legend>
-        {typeOptions.map(t => <label key={t.value} className="qc-free-choice" data-selected={measurementType === t.value || undefined}>
-          <input type="radio" name="measurement-type" checked={measurementType === t.value}
-            onChange={() => {
-              setMeasurementType(t.value);
-              if (t.value === 'quantity') { setPitchEnabled(false); setPricingStrategy('per_unit'); }
-              if (t.value === 'area' && pricingStrategy === 'per_pack_length') setPricingStrategy('per_pack_area');
-              if (t.value === 'lineal' && pricingStrategy === 'per_pack_area') setPricingStrategy('per_pack_length');
-            }} />
-          <span><strong>{t.label}</strong><span>{t.hint}</span></span>
-        </label>)}
-      </fieldset>
-      <div className="qc-free-component-section">
-        <h3>Your costs</h3><p className="qc-free-help">Rates are optional. Leave them at zero for measurements only.</p>
-        <div className="qc-free-field-pair">
-          <QcField label={`Material ($ / ${rateUnit})`} htmlFor={`${fieldId}-material`}>
-            <QcInput id={`${fieldId}-material`} type="number" inputMode="decimal" step="0.01" min="0" value={materialRate}
-              onChange={e => setMaterialRate(e.target.value)} placeholder="e.g. 18.50" disabled={isPack} />
-          </QcField>
-          <QcField label={`Labour ($ / ${rateUnit})`} htmlFor={`${fieldId}-labour`}>
-            <QcInput id={`${fieldId}-labour`} type="number" inputMode="decimal" step="0.01" min="0" value={labourRate}
-              onChange={e => setLabourRate(e.target.value)} placeholder="e.g. 11.00" />
-          </QcField>
-        </div>
-        {packStrategies.length > 0 && <div className="qc-free-pack-settings">
-          <label className="qc-free-check-label"><input type="checkbox" checked={isPack}
-            onChange={e => setPricingStrategy(e.target.checked ? packStrategies[0] : 'per_unit')} />
-            <span>Material is bought in fixed-size packs</span></label>
-          {isPack && <div className="qc-free-field-pair">
-            <QcField label="Pack price ($)" htmlFor={`${fieldId}-pack-price`}>
-              <QcInput id={`${fieldId}-pack-price`} type="number" inputMode="decimal" step="0.01" min="0" value={packPrice}
-                onChange={e => setPackPrice(e.target.value)} placeholder="e.g. 500" />
-            </QcField>
-            <QcField label={`Pack size (${measurementType === 'area' ? areaUnit : lengthUnit})`} htmlFor={`${fieldId}-pack-size`}>
-              <QcInput id={`${fieldId}-pack-size`} type="number" inputMode="decimal" step="0.01" min="0" value={packSize}
-                onChange={e => setPackSize(e.target.value)} placeholder="e.g. 50" />
-            </QcField>
-          </div>}
-        </div>}
-      </div>
-      <div className="qc-free-component-section">
-        <h3>Allowances</h3>
-        <div className="qc-free-field-pair">
-          <QcField label="Waste allowance" htmlFor={`${fieldId}-waste-type`}>
-            <QcSelect id={`${fieldId}-waste-type`} value={wasteType}
-              onChange={e => setWasteType(e.target.value as TakeoffComponentSpec['wasteType'])}>
-              {WASTE_TYPES.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
-            </QcSelect>
-          </QcField>
-          {wasteType !== 'none' && <QcField label={wasteType === 'percent' ? 'Waste (%)' : `Waste (${rateUnit})`} htmlFor={`${fieldId}-waste-value`}>
-            <QcInput id={`${fieldId}-waste-value`} type="number" inputMode="decimal" step="0.01" min="0" value={wasteValue}
-              onChange={e => setWasteValue(e.target.value)} placeholder={wasteType === 'percent' ? '%' : rateUnit} />
-          </QcField>}
-        </div>
-        {showPitchRules && measurementType !== 'quantity' && <div className="qc-free-pitch-settings">
-          <label className="qc-free-check-label"><input type="checkbox" checked={pitchEnabled} onChange={e => setPitchEnabled(e.target.checked)} />
-            <span>Apply pitch calculation</span></label>
-          {pitchEnabled && <>
-            <div className="qc-free-pitch-choice" role="group" aria-label="Pitch factor">
-              <QcButton aria-pressed={pitchType === 'rafter'} onClick={() => setPitchType('rafter')}>Rafter</QcButton>
-              <QcButton aria-pressed={pitchType === 'valley_hip'} onClick={() => setPitchType('valley_hip')}>Hip / Valley</QcButton>
-            </div>
-            <p className="qc-free-help">Plan measurements use the pitch of the area they are drawn on. You enter the pitch while measuring.</p>
-          </>}
-        </div>}
-      </div>
-      <p className="qc-free-help">These settings are for this takeoff session. They travel with the takeoff when you choose to save it to QuoteCore+.</p>
-    </div>
-  </QcDialog>;
+import {useId,useState} from 'react';
+import type {TakeoffComponentSpec,TakeoffUnitSystem} from './tradeConfig';
+import {EMPTY_SPEC} from './tradeConfig';
+import {specUnit,validateSpec,type TakeoffCurrency} from './takeoff-examples';
+import {Button,Dialog,Icon} from './TakeoffUI';
+import s from './TakeoffExperience.module.css';
+export function ComponentBuilderModal({initial,measurementSystem='metric',trade='roofing',showPitchRules=true,currency='NZD',onSave,onClose}:{
+ initial:TakeoffComponentSpec|null;measurementSystem?:'metric'|'imperial_ft'|'imperial_rs';trade?:'roofing'|'cladding'|'flooring';showPitchRules?:boolean;
+ currency?:TakeoffCurrency;onSave:(s:TakeoffComponentSpec,isNew:boolean)=>void;onClose:()=>void;
+}){
+ const [draft,setDraft]=useState<TakeoffComponentSpec>(()=>initial?{...initial}:{...EMPTY_SPEC,id:`custom-${typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now()}`,name:'',pricingOrigin:'user'});
+ const [reviewed,setReviewed]=useState(initial?.pricingOrigin!=='example');
+ const [issues,setIssues]=useState<string[]>([]);const [dirty,setDirty]=useState(false);const id=useId();
+ const system:TakeoffUnitSystem=measurementSystem==='metric'?'metric':measurementSystem==='imperial_rs'?'squares':'imperial';
+ const unit=specUnit(draft.measurementType,system),isPack=draft.pricingStrategy!=='per_unit';
+ function change<K extends keyof TakeoffComponentSpec>(key:K,value:TakeoffComponentSpec[K]){setDraft(prev=>({...prev,[key]:value}));setDirty(true);}
+ function close(){if(!dirty||window.confirm('Discard your unsaved component changes?'))onClose();}
+ function numberField(key:'materialRate'|'labourRate'|'packPrice'|'packSize'|'wasteValue',label:string,disabled=false){return <label className={s.formField}><span>{label}</span><input type="number" inputMode="decimal" min="0" step="any" value={Number.isFinite(draft[key])?Number(Number(draft[key]).toPrecision(12)):''} disabled={disabled}
+   onChange={e=>change(key,e.target.value===''?NaN:Number(e.target.value))}/></label>;}
+ function save(){const next={...draft,name:draft.name.trim(),pitchEnabled:showPitchRules&&draft.measurementType!=='quantity'&&draft.pitchEnabled,
+   pricingOrigin:reviewed?'user' as const:'example' as const};const errors=validateSpec(next,showPitchRules);setIssues(errors);if(!errors.length)onSave(next,!initial);}
+ return <Dialog title={initial?'Edit component':'Add a component'} description="Name it, set its rates, then measure it on the plan." onClose={close}
+   footer={<><Button onClick={close}>Cancel</Button><Button primary onClick={save}>{initial?'Save changes':'Add component'}<Icon name="check"/></Button></>}>
+   <div className={s.editor}>
+    <label className={s.formField}><span>Component name</span><input data-initial-focus maxLength={120} value={draft.name} onChange={e=>change('name',e.target.value)} placeholder={trade==='roofing'?'e.g. Ridge flashing':trade==='cladding'?'e.g. Window trim':'e.g. Skirting'}/></label>
+    <fieldset className={s.choices}><legend className={s.srOnly}>How is it measured?</legend>{(['area','lineal','quantity'] as const).map(type=><label key={type} className={s.choice} data-selected={draft.measurementType===type}>
+      <input type="radio" name={`${id}-type`} checked={draft.measurementType===type} onChange={()=>{
+        setDraft(d=>({...d,measurementType:type,pricingStrategy:type==='quantity'?'per_unit':d.pricingStrategy==='per_unit'?'per_unit':type==='area'?'per_pack_area':'per_pack_length',pitchEnabled:type==='quantity'?false:d.pitchEnabled}));setDirty(true);
+      }}/><strong>{type==='area'?'Area':type==='lineal'?'Length':'Count'}</strong></label>)}</fieldset>
+    <p className={s.help}>Changing the measurement type keeps the numbers you entered. Check the rates against the new unit.</p>
+    <div className={s.fieldPair}>{numberField('materialRate',`Material (${currency} / ${unit})`,isPack)}{numberField('labourRate',`Labour (${currency} / ${unit})`)}</div>
+    {initial?.pricingOrigin==='example'&&<div className={s.notice}><Icon name="info"/><div><p>These are fictitious example prices. Keep them for practice, or enter and confirm your own rates.</p><label className={s.check} style={{marginTop:10}}><input type="checkbox" checked={reviewed} onChange={e=>{setReviewed(e.target.checked);setDirty(true);}}/>I’ve checked these prices for my own use.</label></div></div>}
+    <details className={s.disclosure} open={isPack||draft.wasteType!=='none'||draft.pitchEnabled||undefined}><summary>Pack sizes, waste &amp; {showPitchRules?'pitch rules':'allowances'}</summary>
+      <div className={s.editor} style={{marginTop:16}}>
+       {draft.measurementType!=='quantity'&&<><label className={s.check}><input type="checkbox" checked={isPack} onChange={e=>change('pricingStrategy',e.target.checked?(draft.measurementType==='area'?'per_pack_area':'per_pack_length'):'per_unit')}/>Buy material in fixed-size packs or lengths</label>
+       {isPack&&<><div className={s.fieldPair}>{numberField('packPrice',`Pack price (${currency})`)}{numberField('packSize',`Pack size (${unit})`)}</div><p className={s.help}>Material rounds up to whole packs across this component. Labour uses the measured quantity including waste.</p></>}</>}
+       <div className={s.fieldPair}><label className={s.formField}><span>Waste allowance</span><select value={draft.wasteType} onChange={e=>change('wasteType',e.target.value as TakeoffComponentSpec['wasteType'])}>
+        <option value="none">None</option><option value="percent">Percentage</option><option value="fixed">Fixed total</option><option value="fixed_per_segment">Per measured entry</option></select></label>
+        {draft.wasteType!=='none'&&numberField('wasteValue',draft.wasteType==='percent'?'Waste (%)':`Allowance (${unit})`)}</div>
+       {draft.wasteType==='fixed_per_segment'&&<p className={s.help}>One allowance per saved measurement. A polyline counts as one entry here, not one entry per segment.</p>}
+       {showPitchRules&&draft.measurementType!=='quantity'&&<><label className={s.check}><input type="checkbox" checked={draft.pitchEnabled} onChange={e=>change('pitchEnabled',e.target.checked)}/>Apply roof pitch to plan measurements</label>
+        {draft.pitchEnabled&&<label className={s.formField}><span>Pitch factor</span><select value={draft.pitchType} onChange={e=>change('pitchType',e.target.value as 'rafter'|'valley_hip')}><option value="rafter">Rafter / roof surface</option><option value="valley_hip">Hip / valley</option></select><small>Uses the pitch of the roof area the measurement belongs to.</small></label>}</>}
+      </div></details>
+    {issues.length>0&&<div className={s.error} role="alert"><strong>Check these settings</strong><ul>{issues.map(i=><li key={i}>{i}</li>)}</ul></div>}
+    <p className={s.help}>This library is for this session. The paid app saves reusable components and pricing between jobs.</p>
+   </div>
+ </Dialog>;
 }

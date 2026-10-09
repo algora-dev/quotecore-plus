@@ -1,534 +1,86 @@
 'use client';
-
-import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import { QcButton } from '@/app/components/ui/v2/QcButton';
-import { QcIcon } from '@/app/components/ui/v2/QcIcon';
-import { QcJourney } from '@/app/components/ui/v2/QcJourney';
-import './free-takeoff-ui.css';
-import { buildConvertUrl } from '../shared/convertLines';
-import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
-import { getStoredPitchMode } from '@/app/components/PitchInput';
-import { fromDegrees } from '@/app/lib/pitch-inputs';
-import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/demo-data/baseline';
-import type { TakeoffUnitSystem, TakeoffComponentSpec } from './tradeConfig';
-
-/** Trade variant for shared report copy (default roofing). Cladding switches
- *  headings to wall terminology and hides pitch language entirely. */
-export type TakeoffTrade = 'roofing' | 'cladding' | 'flooring';
-
-/**
- * Free Roof Takeoff output view.
- *
- * Renders the finished takeoff as a clean MEASUREMENT report (not a quote):
- * every roof area with plan + pitch-adjusted area, and EVERY measurement
- * entry per component (not just totals). Quantities go through the REAL
- * pricing engine (applyPitchAndWaste) so pitch factors match the app.
- * Unit-aware: metric (m / m2), imperial (ft / ft2), roofing squares
- * (lineal ft + areas in squares).
- */
-
-export interface TakeoffOutputExtras {
-  planDataUrl: string;
-  elapsedMs: number;
+import {useEffect,useMemo,useRef,useState} from 'react';
+import type {TakeoffFinishPayload} from '@/app/lib/takeoff/finishPayload';
+import type {TakeoffUnitSystem,TakeoffComponentSpec,TakeoffTradeConfig} from './tradeConfig';
+import {buildReport,quoteTransferUrl,quoteLines,reportCsv,type TakeoffTrade,type ReportModel} from './takeoff-report-model';
+import type {TakeoffCurrency} from './takeoff-examples';
+import {Button,ActionLink,Dialog,Icon} from './TakeoffUI';
+import {printTakeoffReport} from './takeoff-print';
+import s from './TakeoffExperience.module.css';
+export type {TakeoffTrade} from './takeoff-report-model';
+export interface TakeoffOutputExtras {planDataUrl:string;elapsedMs:number;}
+const number=(n:number)=>n.toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:0});
+const money=(n:number,currency:string)=>new Intl.NumberFormat('en-NZ',{style:'currency',currency,currencyDisplay:'code'}).format(n);
+function Benefits(){return <div className={s.upsell}><p className={s.eyebrow}>Keep the momentum</p><h3>Set it up once.<br/>Use it on every job.</h3><p>In the paid QuoteCore+ app, your work doesn’t end with this session.</p>
+  <ul><li><Icon name="check"/>Save your component library and reuse your pricing.</li><li><Icon name="check"/>Keep takeoffs and documents together with your jobs.</li><li><Icon name="check"/>Create and send quotes, orders and invoices.</li></ul>
+  <ActionLink href="/demo" target="_blank" rel="noopener noreferrer"><Icon name="play"/>Try the app demo</ActionLink>
+  <div className={s.upsellLinks}><a href="/" target="_blank" rel="noopener noreferrer">Explore QuoteCore+</a><span>·</span><a href="/done-for-you-setup" target="_blank" rel="noopener noreferrer">Done For You Setup</a></div>
+ </div>;}
+function TransferDialog({report,onClose,onOpenQuote}:{report:ReportModel;onClose:()=>void;onOpenQuote?:(url:string)=>void}){
+ const [priced,setPriced]=useState(!report.hasExamples&&report.hasPrices),[ack,setAck]=useState(false);
+ const lines=quoteLines(report,priced);
+ const needsAck=priced&&report.hasExamples;
+ const url=needsAck&&!ack?'':quoteTransferUrl(report,priced,ack);
+ return <Dialog title="Create your free quote" description="Your measured quantities are ready. Choose how you’d like to carry the prices across." onClose={onClose}
+   footer={<><Button onClick={onClose}>Back to results</Button>{url?<ActionLink primary href={url} target="_blank" rel="noopener noreferrer" onClick={onOpenQuote?e=>{e.preventDefault();onOpenQuote(url);}:undefined}>Open Quote Generator<Icon name="arrow"/></ActionLink>:<Button primary disabled>Open Quote Generator<Icon name="arrow"/></Button>}</>}>
+   <fieldset className={s.choices}><legend className={s.srOnly}>Quote pricing</legend>
+     <label className={s.choice} data-selected={!priced}><input type="radio" name="quote-transfer" checked={!priced} onChange={()=>setPriced(false)}/><div><strong>Quantities only</strong><small>Leave prices at zero. Add your own selling prices in the Quote Generator.</small></div></label>
+     <label className={s.choice} data-selected={priced}><input type="radio" name="quote-transfer" checked={priced} onChange={()=>setPriced(true)} disabled={!report.hasPrices}/><div><strong>Include current pricing</strong><small>Carry material and labour costs across as an effective unit rate. Tax and margin are not added.</small></div></label>
+   </fieldset>
+   {needsAck&&<div className={s.notice}><Icon name="info"/><div><p><strong>This includes fictitious example prices.</strong> They are marked in the imported item names so they cannot be mistaken for reviewed selling prices.</p><label className={s.check} style={{marginTop:10}}><input type="checkbox" checked={ack} onChange={e=>setAck(e.target.checked)}/>I understand these are example prices and will replace them before sending a customer quote.</label></div></div>}
+   <table className={s.transferTable}><thead><tr><th>Item</th><th>Quantity</th><th>Unit price</th></tr></thead><tbody>{lines.map((l,i)=><tr key={i}><td>{l.description}</td><td>{number(l.qty)} {l.unit}</td><td>{money(l.rate,report.currency)}</td></tr>)}</tbody></table>
+   <div className={`${s.notice} ${s.info}`}><Icon name="info"/><p>Quantities already include the applicable pitch and waste. Don’t add them again. Check selling prices and tax in the Quote Generator before generating your document.</p></div>
+   <p className={s.help}>Opens in a new tab so your takeoff stays here. The free document generators have their own shared daily allowance; opening the editor does not use a generation credit.</p>
+ </Dialog>;
 }
-
-const FT2_PER_M2 = 10.7639104;
-
-/** Format a raw (already-in-unit) number. */
-const fmt = (n: number, dp = 2) => n.toLocaleString('en-NZ', { minimumFractionDigits: dp, maximumFractionDigits: dp });
-
-interface AreaRow {
-  key: string;
-  name: string;
-  planArea: number;
-  pitch: number;
-  pitchedArea: number;
-}
-
-interface ComponentRow {
-  key: string;
-  name: string;
-  count: number;
-  total: number;
-  measurementType?: string;
-  entries: { value: number; adjusted: number | null; afterWaste: number | null; cost: number | null; areaId: string | null }[];
-  semantic: string | null;
-  /** Pitch/waste-adjusted total (user-built components only). */
-  adjustedTotal: number | null;
-  /** Material + labour cost at the spec rates (user-built only). */
-  cost: number | null;
-}
-
-const HIP_SEMANTICS = ['hips', 'broken_hips'];
-const VALLEY_SEMANTICS = ['valleys'];
-
-/** Placeholder/system component pitch handling (matches main-app system defaults):
- *  ridge + spouting = none, barge = rafter, hip/valley = hip & valley. */
-function placeholderPitchType(row: { semantic: string | null; name: string }): 'none' | 'rafter' | 'valley_hip' {
-  const n = row.name.toLowerCase();
-  if (row.semantic && (HIP_SEMANTICS.includes(row.semantic) || VALLEY_SEMANTICS.includes(row.semantic))) return 'valley_hip';
-  if (n.startsWith('hip') || n.startsWith('valley')) return 'valley_hip';
-  if (n.startsWith('barge')) return 'rafter';
-  return 'none';
-}
-
-export function TakeoffOutputView({
-  payload,
-  extras: _extras,
-  unitSystem = 'metric',
-  specs = [],
-  trade = 'roofing',
-  reportNote = null,
-  onRestart,
-  onBackToCanvas,
-}: {
-  payload: DemoFinishPayload;
-  extras: TakeoffOutputExtras;
-  /** Chosen in the landing wizard. Falls back to the calibration unit. */
-  unitSystem?: TakeoffUnitSystem;
-  /** User-built component specs (step 2 "build your own"). When present,
-   *  quantities are pitch/waste-adjusted and costs shown per component. */
-  specs?: TakeoffComponentSpec[];
-  /** Trade copy variant: roofing (default) or cladding (wall terminology,
-   *  no pitch language). */
-  trade?: TakeoffTrade;
-  /** Trade-config note appended under the report footer paragraph (P4).
-   *  Null (roofing) leaves the roof footer byte-identical. */
-  reportNote?: string | null;
-  onRestart: () => void;
-  onBackToCanvas: () => void;
-}) {
-  const isCladding = trade === 'cladding';
-  const isFlooring = trade === 'flooring';
-  // Non-roof trades: no pitch language anywhere.
-  const isFlat = isCladding || isFlooring;
-  const toolSlug = trade === 'cladding' ? 'free-cladding-takeoff' : trade === 'flooring' ? 'free-flooring-takeoff' : 'free-roof-takeoff';
-  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
-  // Show pitch in the mode the user entered it (degrees / ratio / gradient).
-  const pitchMode = getStoredPitchMode();
-  const fmtPitch = (deg: number) => {
-    if (pitchMode === 'degrees') return `${fmt(deg, 0)}\u00b0`;
-    if (pitchMode === 'ratio') return `1:${fromDegrees('ratio', deg)}`;
-    return `${fromDegrees('gradient', deg)}%`;
-  };
-
-  // Determine the display system: explicit choice first, else infer from calibration.
-  const calibUnit = payload.calibrationUnit;
-  const system: TakeoffUnitSystem =
-    unitSystem ?? (calibUnit === 'feet' ? 'imperial' : 'metric');
-
-  // Raw measurements arrive in the calibration length unit (m or ft).
-  const lengthsInFeet = calibUnit === 'feet';
-  const L = lengthsInFeet ? 'ft' : 'm';
-
-  // Area conversions from raw (m2 or ft2) to the display unit.
-  const toDisplayArea = (rawArea: number): number => {
-    // rawArea is in lengthUnit^2 (m2 if meters, ft2 if feet)
-    const m2 = lengthsInFeet ? rawArea / FT2_PER_M2 : rawArea;
-    if (system === 'metric') return m2;
-    const ft2 = m2 * FT2_PER_M2;
-    return system === 'squares' ? ft2 / 100 : ft2;
-  };
-  const areaUnitLabel = system === 'metric' ? 'm\u00b2' : system === 'squares' ? 'sq' : 'ft\u00b2';
-
-  const areas: AreaRow[] = useMemo(
-    () =>
-      payload.roofAreas.map(ra => {
-        const r = applyPitchAndWaste(ra.area, true, 'rafter', ra.pitch || 0, 'none', 0, 0);
-        return { key: ra.id, name: ra.name, planArea: toDisplayArea(ra.area), pitch: ra.pitch, pitchedArea: toDisplayArea(r.afterWaste) };
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [payload, system, calibUnit],
-  );
-
-  const components: ComponentRow[] = useMemo(
-    () =>
-      payload.componentGroups
-        .filter(g => g.count > 0)
-        .map(g => {
-          const spec = specs.find(s => s.id === g.componentId) ?? null;
-          let adjustedTotal: number | null = null;
-          let cost: number | null = null;
-          // Per-measurement pitch adjustment (2026-08-21): each measurement is
-          // stamped with the roof area it was drawn on, so pitch comes from THAT
-          // area. Placeholder (no spec) components use the system pitch mapping:
-          // ridge/spouting = none, barge = rafter, hip/valley = hip & valley.
-          const fallbackPitchType = placeholderPitchType(g);
-          const pitchTypeFor = (): 'none' | 'rafter' | 'valley_hip' => {
-            if (spec) return spec.pitchEnabled ? (spec.pitchType as any) : 'none';
-            return fallbackPitchType;
-          };
-          const areaPitchFor = (m: { quoteRoofAreaId?: string | null }) => {
-            if (m.quoteRoofAreaId) {
-              const area = payload.roofAreas.find(a => a.id === m.quoteRoofAreaId);
-              if (area) return area.pitch || 0;
-            }
-            // Un-stamped (single-area sessions): first pitched area.
-            return payload.roofAreas.find(a => (a.pitch || 0) > 0)?.pitch ?? 0;
-          };
-          const entries = g.measurements.map(m => {
-            // Area-measured components (e.g. Roofing) get the RAFTER pitch of
-            // the roof area they sit under, then waste on top - same as the
-            // area itself (fixed 2026-08-23: was skipping pitch entirely).
-            const pt = g.measurementType === 'quantity'
-              ? 'none'
-              : g.measurementType === 'area'
-                ? 'rafter'
-                : pitchTypeFor();
-            const areaId = (m as any).quoteRoofAreaId ?? null;
-            if (pt === 'none') return { value: m.value, adjusted: null, afterWaste: null, cost: null as number | null, areaId };
-            const r = applyPitchAndWaste(m.value, true, pt as any, areaPitchFor(m as any), 'none', 0, 0);
-            return { value: m.value, adjusted: r.afterPitch, afterWaste: null as number | null, cost: null as number | null, areaId };
-          });
-          const anyAdjusted = entries.some(e => e.adjusted != null);
-          const pitchAdjustedTotal = anyAdjusted ? entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
-          if (spec && g.measurementType !== 'quantity') {
-            // Waste applies PER ENTRY on top of the pitch-adjusted length
-            // (pitch was already applied per-entry above, from that entry's area).
-            const adjusted = entries.reduce((sum, e) => {
-              const r = applyPitchAndWaste(
-                e.adjusted ?? e.value,
-                false, // pitch already applied - only waste runs here
-                'none',
-                0,
-                spec.wasteType,
-                spec.wasteType === 'percent' ? spec.wasteValue : 0,
-                spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment' ? spec.wasteValue : 0,
-              );
-              // Stamp waste + cost onto the entry itself so each roof-area
-              // section sums ITS OWN entries (index-safe: same array object).
-              e.afterWaste = r.afterWaste;
-              e.cost = spec.pricingStrategy === 'per_unit'
-                ? r.afterWaste * ((spec.materialRate || 0) + (spec.labourRate || 0))
-                : null; // pack pricing stays group-level
-              return sum + r.afterWaste;
-            }, 0);
-            adjustedTotal = adjusted;
-            if (spec.pricingStrategy === 'per_unit') {
-              cost = adjusted * (spec.materialRate + spec.labourRate);
-            } else if (spec.packPrice && spec.packSize) {
-              const packs = Math.ceil(adjusted / spec.packSize);
-              cost = packs * spec.packPrice + adjusted * spec.labourRate;
-            }
-          } else if (spec && g.measurementType === 'quantity') {
-            adjustedTotal = g.count;
-            cost = g.count * (spec.materialRate + spec.labourRate);
-            entries.forEach(e => { e.cost = (spec.materialRate || 0) + (spec.labourRate || 0); });
-          }
-          return {
-            key: g.componentId,
-            name: g.name,
-            count: g.count,
-            total: g.total,
-            measurementType: g.measurementType,
-            entries,
-            semantic: g.semantic,
-            adjustedTotal: adjustedTotal ?? pitchAdjustedTotal,
-            cost,
-          };
-        }),
-    [payload, specs],
-  );
-
-  const totalCost = components.reduce((s, c) => s + (c.cost ?? 0), 0);
-  const hasAnyCost = components.some(c => c.cost != null);
-
-  // 2026-08-30: "Convert to quote" routes to the FREE QUOTE GENERATOR with the
-  // takeoff's component lines pre-filled (same cross-tool conversion pattern as
-  // the other free document generators), NOT the app signup funnel.
-  const convertToQuoteUrl = buildConvertUrl({
-    targetPath: '/free-quote-generator',
-    amount: totalCost,
-    lines: components.map(c => {
-      const qty = c.measurementType === 'quantity' ? c.count : (c.adjustedTotal ?? c.total);
-      const unit = c.measurementType === 'quantity' ? 'pcs' : c.measurementType === 'area' ? areaUnitLabel : L;
-      const rate = c.cost != null && qty > 0 ? c.cost / qty : 0;
-      return { description: c.name, qty, unit, rate };
-    }).filter(l => l.qty > 0),
-    ref: toolSlug,
-  });
-
-  const totalPlanArea = areas.reduce((s, a) => s + a.planArea, 0);
-  const totalPitchedArea = areas.reduce((s, a) => s + a.pitchedArea, 0);
-
-  const today = new Date().toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
-
-  const hasMeasurements = areas.length > 0 || components.length > 0;
-
-  // Shared renderer for one component group (used both under a roof-area
-  // heading and in the no-areas layout). 2026-08-30: components with NO roof
-  // areas must still show in the report - previously the whole components
-  // section looped over areas only, so a no-area takeoff rendered nothing.
-  const renderGroup = (c: ComponentRow) => {
-    const u = c.measurementType === 'area' ? areaUnitLabel : L; // 2026-08-30: m2 for area components, not m
-    const planTotal = c.entries.reduce((s, e) => s + e.value, 0);
-    const anyAdj = c.entries.some(e => e.adjusted != null);
-    const adjTotal = anyAdj ? c.entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
-    const anyWaste = c.entries.some(e => e.afterWaste != null);
-    const wasteTotal = anyWaste ? c.entries.reduce((s, e) => s + (e.afterWaste ?? e.adjusted ?? e.value), 0) : null;
-    const groupCost = c.entries.some(e => e.cost != null)
-      ? c.entries.reduce((s, e) => s + (e.cost ?? 0), 0)
-      : null;
-    return (
-      <div key={c.key} className="avoid-break qc-free-report-group">
-        <div className="qc-free-report-group-heading">
-          <span className="text-black font-semibold">{c.name}</span>
-          <span className="qc-free-report-group-quantities">
-            {c.measurementType === 'quantity'
-              ? `${c.entries.length} ea`
-              : `${fmt(planTotal)} ${u} plan`}
-            {adjTotal != null && c.measurementType !== 'quantity' && (
-              <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(adjTotal)} {u} pitched</span>
-            )}
-            {wasteTotal != null && c.measurementType !== 'quantity' && (
-              <span className="ml-2 text-black/70 font-medium">&middot; {fmt(wasteTotal)} {u} incl waste</span>
-            )}
-            {groupCost != null && <span className="ml-2">&middot; ${fmt(groupCost)}</span>}
-          </span>
-        </div>
-        <div className="space-y-0.5">
-          {c.entries.map((m, i) => (
-            <div key={i} className="qc-free-report-entry">
-              <span className="text-black/70">Entry {i + 1}</span>
-              <span className="qc-free-report-entry-value">
-                {c.measurementType === 'quantity'
-                  ? '1 ea'
-                  : m.afterWaste != null
-                    ? `${fmt(m.value)} ${u} plan \u2192 ${fmt(m.adjusted ?? m.value)} ${u} pitched \u2192 ${fmt(m.afterWaste)} ${u} incl waste`
-                    : m.adjusted != null
-                      ? `${fmt(m.value)} ${u} plan \u2192 ${fmt(m.adjusted)} ${u} pitched`
-                      : `${fmt(m.value)} ${u}`}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  /** Persist the takeoff as a server-side draft (free_document_drafts,
-   *  draft_type='takeoff') and send the user to signup/app with the draft
-   *  id - the app restores it into the quote-builder stage after signup. */
-  const handleSendToApp = async () => {
-    setSaveState('saving');
-    try {
-      const res = await fetch('/api/free-tools/drafts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          draftType: 'takeoff',
-          payload: {
-            tool: toolSlug,
-            unit: payload.calibrationUnit,
-            unitSystem: system,
-            componentSpecs: specs,
-            roofAreas: payload.roofAreas,
-            componentGroups: payload.componentGroups.map(g => ({
-              componentId: g.componentId,
-              name: g.name,
-              isSystem: g.isSystem,
-              semantic: g.semantic,
-              count: g.count,
-              total: g.total,
-              measurementType: g.measurementType,
-              measurements: g.measurements,
-            })),
-            savedAt: new Date().toISOString(),
-          },
-        }),
-      });
-      if (!res.ok) throw new Error('save failed');
-      const json = await res.json();
-      setSavedDraftId(json.id);
-      setSaveState('saved');
-      // Hand off to the app signup with the draft id in the URL chain.
-      const appOrigin = window.location.hostname.endsWith('.quote-core.com')
-        ? 'https://app.quote-core.com'
-        : '';
-      window.open(`${appOrigin}/signup?ref=${toolSlug}&draft=${json.id}`, '_blank', 'noopener');
-    } catch {
-      setSaveState('error');
-    }
-  };
-
-  // A normal link is retained after saving in case the browser blocked the
-  // existing asynchronous window.open. It reuses the same saved draft, not a new request.
-  const savedDraftHref = savedDraftId && typeof window !== 'undefined'
-    ? `${window.location.hostname.endsWith('.quote-core.com') ? 'https://app.quote-core.com' : ''}/signup?ref=${toolSlug}&draft=${savedDraftId}`
-    : null;
-
-  if (!hasMeasurements) {
-    return <QcJourney className="qc-free-output qc-free-output-empty">
-      <div className="qc-flow-empty"><QcIcon name="measure" /><h2>No measurements yet</h2>
-        <p>Return to the canvas and add a measurement to see your report.</p>
-        <QcButton variant="primary" onClick={onBackToCanvas}>Back to the canvas</QcButton>
-      </div>
-    </QcJourney>;
-  }
-
-  return (
-    <QcJourney className="qc-free-output">
-      {/* Print/PDF: output document ONLY. 2026-09-07 fix: the old approach
-          (visibility:hidden on body + position:absolute report) left all hidden
-          marketing sections occupying layout, which produced 3-4 trailing blank
-          pages, and multi-page absolutely-positioned content paginates badly in
-          print engines (content pushed to page 2 with page 1 empty). Now the
-          report stays IN FLOW, page chrome is removed with display:none, and
-          break-inside:avoid applies at the item level so nothing is cut in
-          half while sections flow naturally from page 1. */}
-      <style jsx global>{`
-        @media print {
-          html, body {
-            background: #fff !important;
-            height: auto !important;
-            overflow: visible !important;
-          }
-          /* Page chrome (site header + marketing/FAQ sections) removed from
-             layout entirely so it cannot create blank pages. The report uses
-             only divs internally, so this can never clip report content. */
-          header, section, footer { display: none !important; }
-          .print-hide { display: none !important; }
-          #takeoff-report {
-            position: static !important;
-            border: none !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            max-width: 100% !important;
-          }
-          .avoid-break { break-inside: avoid; page-break-inside: avoid; }
-        }
-      `}</style>
-      <div className="qc-free-output-inner">
-        <div className="qc-free-output-heading print-hide">
-          <div><p className="qc-free-eyebrow">Measurement complete</p><h2>Your takeoff report</h2>
-            <p>Review the measurements below, then print them or continue with a quote.</p></div>
-          <QcButton variant="glass" onClick={() => window.print()}><QcIcon name="download" />Print / Save PDF</QcButton>
-        </div>
-        {/* Takeoff report - clean measurement document, same format the app
-            hands to the quote builder. */}
-        <div id="takeoff-report" className="qc-free-report">
-          <div className="qc-free-report-heading">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/MainQCP.png" alt={`QuoteCore+ ${isCladding ? 'Cladding' : isFlooring ? 'Flooring' : 'Roofing'}`} className="qc-free-report-logo" />
-            <h1 className="qc-free-report-title">{isCladding ? 'WALL & CLADDING TAKEOFF REPORT' : isFlooring ? 'FLOORING TAKEOFF REPORT' : 'ROOF TAKEOFF REPORT'}</h1>
-            <p className="mt-1 text-sm text-black">Generated {today} - QuoteCore+ free digital takeoff</p>
-            <p className="mt-1 text-xs text-black/60">
-              Measurement units: {system === 'squares' ? 'Roofing squares (areas) / feet (lengths)' : system === 'imperial' ? 'Imperial (ft / ft\u00b2)' : 'Metric (m / m\u00b2)'}
-            </p>
-          </div>
-
-          {/* Roof areas summary removed (2026-08-30): each area is listed once
-              with its components below - no separate duplicate area list. */}
-
-          {/* Components grouped under their roof area (2026-08-21): each
-              area is a clear heading, its components sit indented underneath,
-              so the pitch context is self-evident. Un-stamped entries fall to
-              the first area. */}
-          {components.length > 0 && (
-            <div>
-              <h2 className="qc-free-report-section-title">{areas.length > 0 ? (isCladding ? 'Wall Areas & Components' : isFlooring ? 'Floor Areas & Components' : 'Roof Areas & Components') : 'Components'}</h2>
-              <div className="mt-3 space-y-6">
-                {/* 2026-08-30: no roof areas - components stand alone (flat list,
-                    same as the app's no-area flow). Previously this section only
-                    looped over areas, so a no-area takeoff rendered nothing. */}
-                {areas.length === 0 && (
-                  <div className="space-y-3">
-                    {components.map(renderGroup)}
-                  </div>
-                )}
-                {areas.map(a => {
-                  // Entries for this area: stamped with its id, or un-stamped (first area only).
-                  // Costs/waste are stamped per entry, so filtering to this area's
-                  // entries and summing them is always correct (index-safe).
-                  const groupsHere = components
-                    .map(c => ({ ...c, entries: c.entries.filter(e => e.areaId === a.key || (e.areaId === null && a.key === areas[0]?.key)) }))
-                    .filter(c => c.entries.length > 0);
-                  if (groupsHere.length === 0) return null;
-                  return (
-                    <div key={a.key}>
-                      {/* Area header stays attached to the page it starts on;
-                          individual component groups below each avoid being
-                          split mid-item, but the area section itself flows
-                          across pages naturally (2026-09-07 pagination fix). */}
-                      <div className="avoid-break qc-free-report-area-heading">
-                        <span className="text-black font-bold">{a.name}{isFlat ? '' : <span className="font-medium"> - pitch {fmtPitch(a.pitch)}</span>}</span>
-                        <span className="qc-free-report-area-values">
-                          {isFlat
-                            ? <>{fmt(a.planArea)} {areaUnitLabel} area</>
-                            : <>{fmt(a.planArea)} {areaUnitLabel} plan &middot; {fmt(a.pitchedArea)} {areaUnitLabel} pitched</>}
-                        </span>
-                      </div>
-                      <div className="qc-free-report-area-groups">
-                        {groupsHere.map(renderGroup)}
-                      </div>
-                    </div>
-                  );
-                })}
-                {/* Total component count line for orientation */}
-              </div>
-            </div>
-          )}
-
-          {/* Totals - always the last block of the report */}
-          <div className="pt-2 avoid-break">
-            <h2 className="qc-free-report-section-title">Totals</h2>
-            <div className="qc-free-report-totals">
-              {areas.length > 0 && (
-                <div className="qc-free-report-total-row">
-                  <span className="text-black">{isFlooring ? 'Total floor area' : isCladding ? 'Total wall area' : 'Total plan area'}</span>
-                  <span className="text-black font-medium">{isFlat ? <>{fmt(totalPlanArea)} {areaUnitLabel}</> : <>{fmt(totalPlanArea)} {areaUnitLabel} plan &middot; {fmt(totalPitchedArea)} {areaUnitLabel} pitched</>}</span>
-                </div>
-              )}
-              <div className="qc-free-report-total-row">
-                <span className="text-black">Total components measured</span>
-                <span className="text-black font-medium">{components.length}</span>
-              </div>
-              {hasAnyCost && (
-                <div className="qc-free-report-total-row qc-free-report-grand-total">
-                  <span className="text-black font-bold">Estimated total</span>
-                  <span className="text-black font-bold text-lg">${fmt(totalCost)}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="qc-free-report-note">
-            <p className="text-sm text-black italic">
-              {isFlat
-                ? 'Measurements taken with the QuoteCore+ digital takeoff system. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
-                : 'Measurements taken with the QuoteCore+ digital takeoff system. Roof areas use the rafter pitch factor for each area. Hips and valleys are adjusted using the hip and valley pitch calculated from the pitch of their roof area; barges use the rafter pitch factor. Ridge and spouting require no pitch adjustment. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'}
-            </p>
-            {reportNote && <p className="mt-1 text-sm italic text-black/70">{reportNote}</p>}
-          </div>
-        </div>
-
-        {/* Both existing continuations remain. One prepares a free document;
-            the other persists a takeoff draft and opens the account journey. */}
-        <div className="print-hide qc-free-output-actions">
-          <div><h2>What would you like to do next?</h2>
-            <p>Make a quote in the free generator, or save your takeoff to continue in QuoteCore+.</p></div>
-          <div className="qc-free-output-next-actions">
-            <Link href={convertToQuoteUrl} target="_blank" rel="noopener noreferrer"
-              className="qc-button" data-qc-variant="primary">Create a quote<QcIcon name="arrow" /></Link>
-            <QcButton onClick={handleSendToApp} disabled={saveState === 'saving' || saveState === 'saved'}
-              pending={saveState === 'saving'}>
-              {saveState === 'saving' ? 'Saving takeoff…' : saveState === 'saved' ? 'Takeoff saved' : 'Save to QuoteCore+'}
-            </QcButton>
-          </div>
-          <p className="qc-free-help">Create a quote opens the free quote generator in a new tab. Saving to QuoteCore+ opens sign up to keep and price the takeoff in your account.</p>
-          {saveState === 'error' && <p role="alert" className="qc-free-error">Could not save your takeoff right now. Your report is still here; try saving again.</p>}
-          {savedDraftId && <div role="status" className="qc-free-save-status">
-            <strong>Draft saved ({savedDraftId.slice(0, 8)}…).</strong>
-            <p>Continue in the sign-up tab. If it did not open, use the link below.</p>
-            {savedDraftHref && <a href={savedDraftHref} target="_blank" rel="noopener noreferrer" className="qc-free-text-link">Open saved takeoff<QcIcon name="arrow" /></a>}
-          </div>}
-          <div className="qc-free-output-other-actions"><QcButton onClick={onRestart}>New takeoff</QcButton>
-            <span>Already have an account? <Link href="/login" className="qc-free-text-link">Sign in</Link></span></div>
-        </div>
-      </div>
-    </QcJourney>
-  );
+export function TakeoffOutputView({payload,extras,unitSystem='metric',specs=[],trade='roofing',reportNote=null,currency='NZD',tutorial,onRestart,onBackToCanvas,onOpenQuote}:{
+ payload:TakeoffFinishPayload;extras:TakeoffOutputExtras;unitSystem?:TakeoffUnitSystem;specs?:TakeoffComponentSpec[];trade?:TakeoffTrade;reportNote?:string|null;
+ currency?:TakeoffCurrency;tutorial?:TakeoffTradeConfig['tutorial'];onRestart:()=>void;onBackToCanvas:()=>void;onOpenQuote?:(url:string)=>void;
+}){
+ const report=useMemo(()=>buildReport(payload,specs,unitSystem,trade,currency),[payload,specs,unitSystem,trade,currency]);
+ const paper=useRef<HTMLDivElement>(null);const [transfer,setTransfer]=useState(false),[showPlan,setShowPlan]=useState(false),[notice,setNotice]=useState(''),[confirmNew,setConfirmNew]=useState(false);
+ const hasWork=report.components.length>0||report.areas.length>0;
+ const canTransfer=!report.issues.length&&(report.components.some(c=>c.quantity>0)||(!report.components.length&&report.areas.some(a=>a.surface>0)));
+ const heading=useRef<HTMLHeadingElement>(null);useEffect(()=>{heading.current?.focus({preventScroll:true});},[]);
+ const tradeTitle=trade[0].toUpperCase()+trade.slice(1),areaNoun=trade==='roofing'?'Roof':trade==='cladding'?'Wall':'Floor';
+ function download(){try{const url=URL.createObjectURL(new Blob([reportCsv(report)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`QuoteCore-${trade}-takeoff.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setNotice('CSV download requested. Check your browser’s downloads.');}catch{setNotice('The browser blocked the download. Try Print / Save PDF.');}}
+ function print(){if(paper.current&&!printTakeoffReport(paper.current))setNotice('Your browser blocked the print window. Allow pop-ups for this page and try again.');}
+ return <div className={`${s.root} ${s.page}`} onKeyDown={e=>e.stopPropagation()} onKeyUp={e=>e.stopPropagation()} data-takeoff-output>
+  <div className={s.container}><div className={s.crumb}><span>Digital takeoff</span><span>/</span><span>{tradeTitle}</span><span>/</span><span>Results</span></div>
+   <div className={s.outputTitle}><div><p className={s.eyebrow}>Measurement complete</p><h2 ref={heading} tabIndex={-1}>Your {trade} takeoff, ready.</h2><p>Check your quantities. Download the report. Or take the next step with a quote.</p></div><div className={s.outputActions}><Button onClick={onBackToCanvas}><Icon name="back"/>Back to measurements</Button></div></div>
+   {notice&&<div className={`${s.notice} ${s.info}`} role="status">{notice}</div>}
+   {report.issues.length>0&&<div className={s.error} role="alert"><strong>Review before creating a quote</strong><ul>{report.issues.map(i=><li key={i}>{i}</li>)}</ul></div>}
+   <div className={s.resultGrid}><div>
+    <div className={s.stats}><div className={s.stat}><span>{trade==='roofing'?'Roof surface':'Measured area'}</span><strong>{number(report.surfaceArea)} <small>{report.areaUnit}</small></strong><small>{trade==='roofing'?'Pitch adjusted · before waste':'As drawn · before waste'}</small></div>
+      <div className={s.stat}><span>Components used</span><strong>{report.components.length}</strong><small>{report.components.reduce((n,c)=>n+c.entries.length,0)} measured entries</small></div>
+      <div className={s.stat}><span>{report.hasExamples?'Example estimate':'Estimated cost'}</span><strong>{report.hasPrices?number(report.total):'—'}</strong><small>{currency} · before tax</small></div></div>
+    {report.hasExamples&&<div className={s.notice}><Icon name="info"/><p><strong>Example prices are included.</strong> These figures teach the workflow; they are not market rates or a customer-ready quote.</p></div>}
+    <div ref={paper} className={`${s.root} ${s.paper}`} data-takeoff-paper>
+      <div className={s.paperHeader}><div><h2>{tradeTitle} takeoff report</h2><p>{new Date().toLocaleDateString('en-NZ',{day:'numeric',month:'long',year:'numeric'})} · {unitSystem==='squares'?'Roofing squares / feet':unitSystem==='imperial'?'Imperial':'Metric'} · {currency}</p></div><div className={s.paperMark}>QuoteCore<span>+</span></div></div>
+      {report.hasExamples&&<div className={s.notice}><strong>EXAMPLE PRICING — replace with your own rates before quoting.</strong></div>}
+      {!hasWork&&<div className={s.empty}><Icon name="ruler"/><h3>No measurements yet</h3><p>Return to your plan and add an area, length or counted item.</p><Button onClick={onBackToCanvas} data-print-hide>Back to measurements</Button></div>}
+      {report.areas.map(a=><div key={a.id} className={s.areaSummary} data-print-keep><div><strong>{a.name}</strong><small>{areaNoun} outline{trade==='roofing'?` · pitch ${number(a.pitch)}°`:''}</small></div><div><strong>{number(a.surface)} {report.areaUnit}</strong>{trade==='roofing'&&<small>{number(a.plan)} {report.areaUnit} plan</small>}</div></div>)}
+      {report.areas.length>0&&report.components.length===0&&<p className={s.help}>Outlines are measured but no priced components are assigned. You can transfer these areas as unpriced quote items.</p>}
+      {report.components.map(c=><div className={s.reportGroup} key={c.id} data-print-group>
+       <div className={s.reportGroupHead} data-print-keep><div><strong>{c.name}</strong><small>{number(c.raw)} {c.unit} measured{c.pitchApplied?` → ${number(c.pitched)} ${c.unit} pitched`:''}</small><small>{c.wasteLabel}{c.packs!=null?` · ${c.packs} whole packs`:''}</small></div>
+        <div className={s.reportGroupValue}><strong>{number(c.quantity)} {c.unit}</strong><small>{c.cost!=null?money(c.cost,currency):'Not priced'}</small>{c.example&&<span className={`${s.chip} ${s.exampleChip}`}>Example rate</span>}</div></div>
+       <details><summary>{c.entries.length} {c.entries.length===1?'measurement':'measurements'} · view working</summary><table className={s.entryTable}><thead><tr><th>Area / entry</th><th>Measured</th><th>After pitch</th><th>Incl. waste</th></tr></thead><tbody>{c.entries.map((e,i)=><tr key={i}><td>{report.areas.find(a=>a.id===e.areaId)?.name??(e.areaId===null&&report.areas.length===1?report.areas[0].name:'Unassigned')} · {i+1}</td><td>{number(e.raw)} {c.unit}</td><td>{number(e.pitched)} {c.unit}</td><td>{number(e.quantity)} {c.unit}</td></tr>)}</tbody></table>
+       {c.cost!=null&&<p>Material {money(c.material??0,currency)} + labour {money(c.labour??0,currency)}. {c.packs!=null?'Packs round up once for this component across all areas.':'Rates apply to the quantity including waste.'}</p>}</details>
+      </div>)}
+      {report.hasPrices&&<div className={s.totals} data-print-keep><p><span>Materials</span><span>{money(report.materials,currency)}</span></p><p><span>Labour</span><span>{money(report.labour,currency)}</span></p><p><span>{report.hasExamples?'Example estimate':'Estimated total'}</span><span>{money(report.total,currency)}</span></p></div>}
+      <div className={s.paperNote}><p>Measurement report, not a customer quote. Costs exclude tax and margin. Check scale, quantities and rates before ordering or quoting. {trade==='roofing'?'Roof pitch is applied once using each measurement’s assigned area and component rule. Hip/valley factors use the existing app engine.':'Wall and floor quantities are measured as drawn; no roof-pitch factor is applied.'}</p>{reportNote&&<p>{reportNote}</p>}{report.notes.map(n=><p key={n}>{n}</p>)}{report.issues.map(i=><p key={i}>CHECK REQUIRED: {i}</p>)}</div>
+    </div>
+    <div className={s.outputFoot}><div className={s.outputActions}><Button onClick={print} disabled={!hasWork}><Icon name="download"/>Print / Save PDF</Button><Button onClick={download} disabled={!hasWork}>Download CSV</Button>{extras.planDataUrl&&<Button quiet onClick={()=>setShowPlan(true)}>View plan</Button>}</div></div>
+   </div><aside className={s.resultSidebar}>
+    <div className={`${s.nextCard} ${s.dark}`}><p className={s.eyebrow}>Your next step</p><h3>Make these measurements a quote.</h3><p>Carry your quantities into the free Quote Generator. Add customer details, check prices and create your document.</p><Button primary onClick={()=>setTransfer(true)} disabled={!canTransfer}>Create a free quote<Icon name="arrow"/></Button><small>No account needed to start. Your takeoff stays open in this tab.</small></div>
+    <Benefits/>
+    {tutorial&&<div><ActionLink href={tutorial.href} target="_blank" rel="noopener noreferrer"><Icon name="play"/>Watch the workflow guide</ActionLink>{tutorial.olderLayout&&<p className={s.help}>The guide shows the earlier layout; the workflow is similar.</p>}</div>}
+   </aside></div>
+   <div className={s.mobileUpsell} style={{marginTop:24}}><Benefits/></div>
+   <div className={s.outputFoot}><Button quiet onClick={()=>setConfirmNew(true)}><Icon name="plus"/>Start a new takeoff</Button><span>Session only. Download your results before closing this page.</span></div>
+  </div>
+  {transfer&&<TransferDialog report={report} onClose={()=>setTransfer(false)} onOpenQuote={onOpenQuote}/>}
+  {showPlan&&<Dialog title="Your source plan" description="Reference image only. Open the measurement workspace to view or edit drawings." onClose={()=>setShowPlan(false)}><img src={extras.planDataUrl} alt="The plan uploaded for this takeoff" style={{width:'100%',display:'block'}}/></Dialog>}
+  {confirmNew&&<Dialog title="Start a new takeoff?" description="This clears the current measurement session. Download the report first if you need to keep it." onClose={()=>setConfirmNew(false)} footer={<><Button onClick={()=>setConfirmNew(false)}>Keep this takeoff</Button><Button primary onClick={onRestart}>Start new takeoff</Button></>}><p>Your current components stay available until you choose a different trade or close the page.</p></Dialog>}
+ </div>;
 }

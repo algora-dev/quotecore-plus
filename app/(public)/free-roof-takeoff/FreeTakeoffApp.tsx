@@ -19,7 +19,6 @@ import dynamic from 'next/dynamic';
 import { TOOL_COLLECTIONS } from '@/app/(marketing)/takeoff-demo/demo-data/baseline';
 import {
   ROOFING_TAKEOFF_CONFIG,
-  EMPTY_SPEC,
   resolveUnitOption,
   type TakeoffTradeConfig,
   type TakeoffUnitSystem,
@@ -27,9 +26,10 @@ import {
   type TakeoffComponentSpec,
   type TakeoffComponentChoice,
 } from './tradeConfig';
-import { TakeoffOutputView, type TakeoffOutputExtras, type TakeoffTrade } from './TakeoffOutputView';
+import { TakeoffOutputView, type TakeoffTrade } from './TakeoffOutputView';
 import { ComponentBuilderModal } from './ComponentBuilderModal';
 import { FreeTakeoffEntry } from './FreeTakeoffEntry';
+import { exampleSpecs, convertSpecs, componentLimit, validateSpec, type TakeoffCurrency } from './takeoff-examples';
 import { AI_PLACEHOLDER_COMPONENTS } from './aiPlaceholders';
 import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
@@ -89,6 +89,7 @@ type Stage =
       unitSystem: TakeoffUnitSystem;
       components: ToolComponent[];
       specs: TakeoffComponentSpec[];
+      currency: TakeoffCurrency;
     }
   | {
       phase: 'output';
@@ -100,6 +101,7 @@ type Stage =
       unitSystem: TakeoffUnitSystem;
       components: ToolComponent[];
       specs: TakeoffComponentSpec[];
+      currency: TakeoffCurrency;
     };
 
 type Device = 'desktop' | 'tablet' | 'mobile';
@@ -184,6 +186,8 @@ const FREE_SESSION_BUNDLE = {
 // ─── Takeoff phase (mirrors the app's TakeoffPage composition) ──────────────
 
 type TakeoffPhaseProps = {
+  /** Suspend only interaction/scroll ownership while the live canvas remains mounted behind results. */
+  visible?: boolean;
   config: TakeoffTradeConfig;
   planDataUrl: string;
   unitSystem: TakeoffUnitSystem;
@@ -215,6 +219,7 @@ function TakeoffPhase(props: TakeoffPhaseProps) {
 }
 
 function TakeoffPhaseInner({
+  visible = true,
   config,
   planDataUrl,
   unitSystem,
@@ -254,10 +259,11 @@ function TakeoffPhaseInner({
   // scroll while it is mounted so the landing page behind cannot scroll or
   // leak its position into document-based measures.
   useEffect(() => {
+    if (!visible) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = previous; };
-  }, []);
+  }, [visible]);
 
   const backHref = `/${config.slug}`;
   // Pitch is a roofing-only input: non-pitch trades start at 0 (flat), which
@@ -333,16 +339,16 @@ function TakeoffPhaseInner({
     const payload = outlineAdapter?.buildFinishPayload?.() ?? null;
     if (payload) {
       setFinishError(null);
-      trackFreeToolEvent('finish');
+      trackFreeToolEvent('finish', { trade: config.tradeName }, `${config.tradeName === 'roofing' ? 'roof' : config.tradeName}-takeoff`);
       onFinish(payload);
     } else {
       trackFreeToolEvent('finish-no-payload');
       setFinishError('The report is not ready yet - nothing was lost. Tap Save & continue again.');
     }
-  }, [outlineAdapter, onFinish]);
+  }, [outlineAdapter, onFinish, config.tradeName]);
 
   const calib = useTouchCalibration({
-    active: touchActive && touchTool === 'calibrate',
+    active: visible && touchActive && touchTool === 'calibrate',
     quoteId: quote.id,
     planUrl: outlineAdapter?.getImageUrl() ?? planDataUrl,
     page: calibrationPage,
@@ -354,7 +360,7 @@ function TakeoffPhaseInner({
   });
 
   const outlineEditor = useTouchOutlineEditor(
-    touchActive && touchTool === 'outline',
+    visible && touchActive && touchTool === 'outline',
     () => outlineAdapter,
     backHref,
     () => setTouchTool('calibrate'),
@@ -364,7 +370,7 @@ function TakeoffPhaseInner({
   );
 
   const componentsStep = useTouchComponents(
-    touchActive && touchTool === 'components',
+    visible && touchActive && touchTool === 'components',
     () => outlineAdapter,
     {
       mode: componentsMode,
@@ -495,11 +501,13 @@ function TakeoffPhaseInner({
 
 export function FreeTakeoffApp({
   config = ROOFING_TAKEOFF_CONFIG,
+  onChangeTrade,
   seed,
   onFinish,
   onExit,
 }: {
   config?: TakeoffTradeConfig;
+  onChangeTrade?: () => void;
   /** Seeded entry: skips the wizard, fetches the plan to a data URL (the
    *  same path as handleFile) and jumps straight into the takeoff stage. */
   seed?: FreeTakeoffSeed;
@@ -510,6 +518,7 @@ export function FreeTakeoffApp({
   onExit?: () => void;
 }) {
   const [stage, setStage] = useState<Stage>({ phase: 'landing' });
+  const lastCanvasFocus = useRef<HTMLElement | null>(null);
   const [orientationNoticeOpen, setOrientationNoticeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seedState, setSeedState] = useState<'idle' | 'loading' | 'error'>(seed ? 'loading' : 'idle');
@@ -518,7 +527,12 @@ export function FreeTakeoffApp({
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [unitSystem, setUnitSystem] = useState<TakeoffUnitSystem>('metric');
   const [componentChoice, setComponentChoice] = useState<TakeoffComponentChoice>('ours');
-  const [specs, setSpecs] = useState<TakeoffComponentSpec[]>([]);
+  const [specs, setSpecs] = useState<TakeoffComponentSpec[]>(() => exampleSpecs(config, 'metric'));
+  const [currency, setCurrency] = useState<TakeoffCurrency>('NZD');
+  const [uploading, setUploading] = useState(false);
+  const importFlight = useRef(false);
+  const [removed, setRemoved] = useState<{spec:TakeoffComponentSpec;index:number}|null>(null);
+  const defaultSpecs = useMemo(() => exampleSpecs(config, unitSystem), [config, unitSystem]);
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editingSpecId, setEditingSpecId] = useState<string | null>(null);
 
@@ -528,7 +542,6 @@ export function FreeTakeoffApp({
   const orientationShownRef = useRef(false);
   useEffect(() => {
     if (stage.phase !== 'takeoff' || orientationShownRef.current) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (detectDevice() === 'mobile') {
       orientationShownRef.current = true;
       setOrientationNoticeOpen(true);
@@ -541,7 +554,6 @@ export function FreeTakeoffApp({
   const seedAppliedRef = useRef(false);
   useEffect(() => {
     if (!seed || seedAppliedRef.current) return;
-    seedAppliedRef.current = true;
     let cancelled = false;
     (async () => {
       try {
@@ -556,6 +568,7 @@ export function FreeTakeoffApp({
           reader.readAsDataURL(blob);
         });
         if (cancelled) return;
+        seedAppliedRef.current = true;
         setStage({
           phase: 'takeoff',
           run: 1,
@@ -564,6 +577,7 @@ export function FreeTakeoffApp({
           unitSystem: seed.unitSystem ?? 'metric',
           components: (seed.components ?? toolComponents) as ToolComponent[],
           specs: [],
+          currency: 'NZD',
         });
         setSeedState('idle');
       } catch (err) {
@@ -580,31 +594,30 @@ export function FreeTakeoffApp({
   }, [seed]);
 
   const openBuilder = () => {
-    setEditingSpecId(null);
-    setBuilderOpen(true);
+    if (specs.length >= componentLimit(config)) return;
+    setEditingSpecId(null); setBuilderOpen(true);
   };
-  const openEditBuilder = (id: string) => {
-    setEditingSpecId(id);
-    setBuilderOpen(true);
-  };
+  const openEditBuilder = (id: string) => { setEditingSpecId(id); setBuilderOpen(true); };
   const handleBuilderSave = (spec: TakeoffComponentSpec, isNew: boolean) => {
-    setSpecs((prev) => (isNew ? [...prev, spec] : prev.map((s) => (s.id === spec.id ? spec : s))));
-    setBuilderOpen(false);
+    if (validateSpec(spec, config.requiresPitch).length) return;
+    setSpecs(prev => isNew ? (prev.length < componentLimit(config) ? [...prev, spec] : prev) : prev.map(s => s.id === spec.id ? spec : s));
+    setBuilderOpen(false); setRemoved(null);
   };
-
-  // 'edit-standard' starts from the trade's standard set, editable like 'own'.
-  // Seeded only while the list is empty so edits survive step navigation.
-  const handleChoiceChange = (choice: TakeoffComponentChoice) => {
-    setComponentChoice(choice);
-    if (choice === 'edit-standard' && specs.length === 0) {
-      setSpecs(config.placeholderComponents.map((c, index) => ({
-        id: `custom-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
-        name: c.name,
-        ...EMPTY_SPEC,
-        measurementType: c.measurement_type,
-        pitchEnabled: config.requiresPitch && c.measurement_type === 'area',
-      })));
-    }
+  const handleChoiceChange = (choice: TakeoffComponentChoice) => { setComponentChoice(choice); };
+  const handleUnitChange = (next: TakeoffUnitSystem) => {
+    if (!config.unitOptions.some(o => o.value === next)) return;
+    setSpecs(prev => convertSpecs(prev, unitSystem, next));
+    setRemoved(null); setUnitSystem(next);
+  };
+  const removeComponent = (id: string) => {
+    const index = specs.findIndex(s => s.id === id);
+    if (index < 0) return;
+    setRemoved({spec: specs[index], index}); setSpecs(prev => prev.filter(s => s.id !== id));
+  };
+  const undoRemove = () => {
+    if (!removed || specs.length >= componentLimit(config)) return;
+    setSpecs(prev => { const next = [...prev]; next.splice(removed.index, 0, removed.spec); return next; });
+    setRemoved(null);
   };
 
   const unitOption = resolveUnitOption(unitSystem, config);
@@ -640,86 +653,59 @@ export function FreeTakeoffApp({
   // Seeded runs thread the seed (calibration, scan replay, collections)
   // through every takeoff stage entry.
   const activeSeed = seed ?? null;
-  const seedCollections = seed?.collections;
+  const seedCollections = useMemo(() => seed?.collections ?? (seed ? TOOL_COLLECTIONS : [
+    { id: componentChoice === 'ours' ? 'tool-builtin' : 'tool-custom', name: `${config.tradeName[0].toUpperCase()}${config.tradeName.slice(1)} components` },
+  ]), [seed, componentChoice, config.tradeName]);
 
-  const activeSpecs = useMemo(() => (componentChoice === 'ours' ? [] : specs), [componentChoice, specs]);
+  const activeSpecs = useMemo(() => componentChoice === 'ours' ? defaultSpecs : specs, [componentChoice, defaultSpecs, specs]);
 
   const pdfPicker = usePdfPagePicker();
 
-  const handleFile = useCallback(
-    (file: File) => {
-      setError(null);
-      if (!ACCEPTED.includes(file.type)) {
-        setError('Please upload a PNG, JPG or WebP image of your plan.');
-        return;
-      }
-      if (file.size > MAX_IMAGE_BYTES) {
-        setError('Image too large - maximum 10 MB.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = String(reader.result);
-        trackFreeToolEvent('start-takeoff');
-        setStage((prev) => {
-          const run = prev.phase === 'landing' ? 1 : (prev.run ?? 0) + 1;
-          return {
-            phase: 'takeoff',
-            run,
-            planDataUrl: dataUrl,
-            startedAt: Date.now(),
-            unitSystem,
-            components: toolComponents,
-            specs: activeSpecs,
-          };
-        });
-      };
-      reader.onerror = () => setError('Could not read that image. Try a different file.');
-      reader.readAsDataURL(file);
-    },
-    [unitSystem, toolComponents, activeSpecs],
-  );
-
-  const onFileSelected = useCallback(
-    async (raw: File) => {
-      setError(null);
-      const isPdf = raw.type === 'application/pdf' || /\.pdf$/i.test(raw.name);
-      if (isPdf) {
-        if (raw.size > 50 * 1024 * 1024) {
-          setError('PDF too large - maximum 50 MB.');
-          return;
-        }
-        const converted = await pdfPicker.convertIfNeeded(raw);
-        if (!converted) return; // user cancelled the page picker
-        handleFile(converted);
-      } else {
-        handleFile(raw);
-      }
-    },
-    [pdfPicker, handleFile],
-  );
-
-  // One-tap example plan (2026-10-04, mobile-first): loads the shared sample
-  // plan straight into the tool through the same File path as a user upload -
-  // no iOS download round-trip through Files/Photos, no re-upload.
-  const EXAMPLE_PLAN_URL = '/takeoff-demo/roofplan-baseline.png';
-  const [exampleLoading, setExampleLoading] = useState(false);
-  const handleExamplePlan = useCallback(async () => {
-    if (exampleLoading) return;
-    setExampleLoading(true);
-    setError(null);
+  const onFileSelected = useCallback(async (raw: File) => {
+    if (importFlight.current) return;
+    importFlight.current = true; setUploading(true); setError(null);
     try {
-      const response = await fetch(EXAMPLE_PLAN_URL);
-      if (!response.ok) throw new Error(`Could not load the example plan (HTTP ${response.status}).`);
+      if (!activeSpecs.length) throw new Error('Choose at least one component before adding a plan.');
+      let file: File | null = raw;
+      if (raw.type === 'application/pdf' || /\.pdf$/i.test(raw.name)) {
+        if (raw.size > 50 * 1024 * 1024) throw new Error('PDF too large — maximum 50 MB.');
+        file = await pdfPicker.convertIfNeeded(raw);
+        if (!file) return;
+      }
+      if (!ACCEPTED.includes(file.type)) throw new Error('Choose a PNG, JPG, WebP or PDF plan.');
+      if (file.size > MAX_IMAGE_BYTES) throw new Error('Image too large — maximum 10 MB.');
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader(); reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error('Could not read that plan. Try another file.')); reader.readAsDataURL(file);
+      });
+      await new Promise<void>((resolve, reject) => {
+        const image = new Image(); image.onload = () => image.width && image.height ? resolve() : reject(new Error('The plan image is empty.'));
+        image.onerror = () => reject(new Error('That file could not be opened as an image. Try another plan.')); image.src = dataUrl;
+      });
+      trackFreeToolEvent('start-takeoff', { trade: config.tradeName }, `${config.tradeName === 'roofing' ? 'roof' : config.tradeName}-takeoff`);
+      setStage(prev => ({ phase:'takeoff', run:prev.phase === 'landing' ? 1 : prev.run + 1, planDataUrl:dataUrl,
+        startedAt:Date.now(), unitSystem, components:toolComponents, specs:activeSpecs, currency }));
+    } catch (err) { setError(err instanceof Error ? err.message : 'Could not open that plan. Please try again.'); }
+    finally { importFlight.current = false; setUploading(false); }
+  }, [pdfPicker, activeSpecs, toolComponents, unitSystem, currency, config.tradeName]);
+
+  const [exampleLoading, setExampleLoading] = useState(false);
+  const exampleFlight = useRef(false);
+  const handleExamplePlan = useCallback(async () => {
+    if (exampleFlight.current || importFlight.current) return;
+    if (!config.samplePlan) { setError(`The sample ${config.planNoun} plan has not been added yet. Upload your own plan to continue.`); return; }
+    exampleFlight.current = true; setExampleLoading(true); setError(null);
+    try {
+      const response = await fetch(config.samplePlan.href);
+      if (!response.ok) throw new Error('The sample plan could not be loaded. Please upload your own plan or try again.');
       const blob = await response.blob();
-      if (blob.size > MAX_IMAGE_BYTES) throw new Error('The example plan is too large to load.');
-      await onFileSelected(new File([blob], 'example-roof-plan.png', { type: 'image/png' }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load the example plan. Please try again.');
-    } finally {
-      setExampleLoading(false);
-    }
-  }, [exampleLoading, onFileSelected]);
+      const filename = config.samplePlan.download;
+      const ext = filename.split('.').pop()?.toLowerCase();
+      const mime = ext === 'pdf' ? 'application/pdf' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'webp' ? 'image/webp' : 'image/png';
+      await onFileSelected(new File([blob], filename, { type: blob.type || mime }));
+    } catch (err) { setError(err instanceof Error ? err.message : 'Could not open the sample plan.'); }
+    finally { exampleFlight.current = false; setExampleLoading(false); }
+  }, [config, onFileSelected]);
 
   const restart = useCallback(() => {
     setStage({ phase: 'landing' });
@@ -759,89 +745,54 @@ export function FreeTakeoffApp({
     );
   }
 
-  if (stage.phase === 'output') {
-    const extras: TakeoffOutputExtras = {
-      planDataUrl: stage.planDataUrl,
-      elapsedMs: stage.finishedAt - stage.startedAt,
-    };
-    return (
-      <TakeoffOutputView
-        trade={config.tradeName as TakeoffTrade}
-        reportNote={config.reportNote}
-        payload={{ ...stage.payload, unitSystem: stage.unitSystem, componentSpecs: stage.specs }}
-        extras={extras}
-        unitSystem={stage.unitSystem}
-        specs={stage.specs}
-        onRestart={restart}
-        onBackToCanvas={() =>
-          setStage({
-            phase: 'takeoff',
-            run: stage.run + 1,
-            planDataUrl: stage.planDataUrl,
-            startedAt: stage.startedAt,
-            unitSystem: stage.unitSystem,
-            components: stage.components,
-            specs: stage.specs,
-          })
-        }
-      />
-    );
-  }
-
-  if (stage.phase === 'takeoff') {
-    // Full-screen like the app's takeoff page: the workstation's own header
-    // provides the chrome; marketing page furniture is covered while measuring.
-    return (
-      <div className="fixed inset-0 z-40 overflow-hidden flex flex-col bg-slate-50">
-        <TakeoffPhase
-          key={stage.run}
-          config={config}
-          planDataUrl={stage.planDataUrl}
-          unitSystem={stage.unitSystem}
-          components={stage.components}
-          collections={seedCollections}
-          seed={activeSeed}
-          onFinish={(payload) => {
-            if (onFinish) {
-              // Host mode: the host owns the finished-takeoff presentation
-              // (the demo maps the payload into its own quote view).
-              onFinish(payload);
-              return;
-            }
-            setStage({
-              phase: 'output',
-              payload,
-              run: stage.run,
-              planDataUrl: stage.planDataUrl,
-              startedAt: stage.startedAt,
-              finishedAt: Date.now(),
-              unitSystem: stage.unitSystem,
-              components: stage.components,
-              specs: stage.specs,
-            });
-            if (typeof window !== 'undefined') window.scrollTo(0, 0);
-          }}
-          onExit={exitToStart}
-        />
+  if (stage.phase !== 'landing') {
+    const showingCanvas = stage.phase === 'takeoff';
+    // Do NOT remount when showing the report: the finish payload is a summary,
+    // not a geometry snapshot. Remounting previously discarded drawings on Back.
+    return <>
+      <div className="fixed inset-0 z-40 overflow-hidden flex flex-col bg-slate-50"
+        aria-hidden={!showingCanvas || undefined}
+        ref={element => { if (element) element.inert = !showingCanvas; }}
+        style={{ visibility:showingCanvas ? 'visible' : 'hidden', pointerEvents:showingCanvas ? 'auto' : 'none' }}>
+        <TakeoffPhase key={stage.run} visible={showingCanvas} config={config} planDataUrl={stage.planDataUrl}
+          unitSystem={stage.unitSystem} components={stage.components} collections={seedCollections} seed={activeSeed}
+          onFinish={payload => {
+            if (onFinish) { onFinish(payload); return; }
+            trackFreeToolEvent('output', { trade:config.tradeName }, `${config.tradeName === 'roofing' ? 'roof' : config.tradeName}-takeoff`);
+            lastCanvasFocus.current=document.activeElement as HTMLElement|null;
+            setStage({ ...stage, phase:'output', payload, finishedAt:Date.now() });
+            window.scrollTo(0,0);
+          }} onExit={exitToStart}/>
       </div>
-    );
+      {stage.phase === 'output' && <TakeoffOutputView
+        trade={config.tradeName as TakeoffTrade} reportNote={config.reportNote} payload={stage.payload}
+        extras={{planDataUrl:stage.planDataUrl,elapsedMs:stage.finishedAt-stage.startedAt}}
+        unitSystem={stage.unitSystem} specs={stage.specs} currency={stage.currency} tutorial={config.tutorial}
+        onRestart={restart} onBackToCanvas={() => {setStage({ ...stage, phase:'takeoff' });requestAnimationFrame(()=>lastCanvasFocus.current?.focus({preventScroll:true}));}}/>}
+    </>;
   }
 
   // The entry presentation consumes existing state; the measuring owner above
   // is deliberately unchanged (including the stable desktop/touch bridge).
   return <FreeTakeoffEntry config={config} step={step} unitSystem={unitSystem} unitOption={unitOption}
-    componentChoice={componentChoice} specs={specs} componentCount={userComponents.length} error={error}
+    componentChoice={componentChoice} specs={activeSpecs} componentCount={userComponents.length} error={error}
     orientationNoticeOpen={orientationNoticeOpen} onDismissOrientation={() => setOrientationNoticeOpen(false)}
-    onUnitChange={setUnitSystem} onChoiceChange={handleChoiceChange}
+    currency={currency} onCurrencyChange={setCurrency} busy={uploading}
+    onChangeTrade={onChangeTrade ? () => {
+      const modified = JSON.stringify(specs) !== JSON.stringify(defaultSpecs);
+      if (!modified || window.confirm('Switch trade and discard your component changes?')) onChangeTrade();
+    } : undefined}
+    removedName={removed?.spec.name} onUndoRemove={undoRemove} onStepChange={setStep}
+    onUnitChange={handleUnitChange} onChoiceChange={handleChoiceChange}
     onBack={() => setStep((s) => (s === 3 ? 2 : 1) as 1 | 2)}
     onContinue={() => setStep(step === 1 ? 2 : 3)}
     onCreateComponent={openBuilder} onEditComponent={openEditBuilder}
-    onRemoveComponent={id => setSpecs(prev => prev.filter(spec => spec.id !== id))}
+    onRemoveComponent={removeComponent}
     onFile={onFileSelected} onExamplePlan={handleExamplePlan} exampleLoading={exampleLoading}
     pdfModal={pdfPicker.modal}>
     {builderOpen && <ComponentBuilderModal key={editingSpecId ?? 'new'}
       initial={editingSpecId ? specs.find((s) => s.id === editingSpecId) ?? null : null}
-      measurementSystem={unitOption.lengthUnit === 'meters' ? 'metric' : 'imperial_ft'}
+      measurementSystem={unitSystem === 'squares' ? 'imperial_rs' : unitOption.lengthUnit === 'meters' ? 'metric' : 'imperial_ft'} currency={currency}
       trade={config.tradeName as 'roofing' | 'cladding' | 'flooring'}
       showPitchRules={config.requiresPitch}
       onSave={handleBuilderSave} onClose={() => setBuilderOpen(false)} />}
