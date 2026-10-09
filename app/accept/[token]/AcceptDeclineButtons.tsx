@@ -122,7 +122,7 @@ export function AcceptDeclineButtons({
             size="lg"
             onClick={() => setConfirmAction('decline')}
             disabled={loading || decided}
-            className="text-[#C72B3D]"
+            className="!text-[#C72B3D]"
           >
             Decline Quote
           </QcButton>
