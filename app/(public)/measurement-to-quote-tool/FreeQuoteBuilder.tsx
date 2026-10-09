@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useMemo,useRef,useState} from 'react';
+import Link from 'next/link';
 import type {MeasureMode} from './types';
 import {type Job,type Trade,type Spec,type Units,type Currency,TRADE_COPY,CONFIGS,newJob,exampleJob,calculateJob,convertJob,restoreJob,DRAFT_KEY,componentLimit} from './measurement-model';
 import {TradeEntry,Setup} from './MeasurementSetup';
@@ -18,6 +19,7 @@ export default function FreeQuoteBuilder({initialMode,initialTrade}:{initialMode
  const [resume,setResume]=useState<Job|null>(null),[ready,setReady]=useState(false),[storageError,setStorageError]=useState(false);
  const [notice,setNotice]=useState(''),[undo,setUndo]=useState<{job:Job;label:string}|null>(null),[editing,setEditing]=useState<Spec|null|undefined>(undefined),[csv,setCsv]=useState(false);
  const result=useMemo(()=>job?calculateJob(job):null,[job]);const focusRef=useRef<HTMLDivElement>(null),hasMoved=useRef(false);
+ // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-only restore of the sessionStorage tab draft (external system); not derivable during render
  useEffect(()=>{try{const raw=sessionStorage.getItem(DRAFT_KEY);if(raw){const restored=restoreJob(raw);if(restored)setResume(restored);else setNotice('A previous tab draft could not be restored safely. Start a new estimate; no account data was changed.');}}catch{setStorageError(true);}setReady(true);},[]);
  useEffect(()=>{if(!ready||!job||resume)return;const timer=setTimeout(()=>{try{sessionStorage.setItem(DRAFT_KEY,JSON.stringify(job));setStorageError(false);}catch{setStorageError(true);}},300);return()=>clearTimeout(timer);},[ready,job,resume]);
  useEffect(()=>{if(!result?.entryCount)return;const handler=(e:BeforeUnloadEvent)=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler);},[result?.entryCount]);
@@ -32,7 +34,7 @@ export default function FreeQuoteBuilder({initialMode,initialTrade}:{initialMode
  function goMeasure(){setPhase('measure');setNotice('');}
  function goReport(){if(!result?.valid){notify('Add a valid measurement and correct any errors first.');return;}setPhase('report');setNotice('');trackFreeToolEvent('result',{trade:job!.trade,areas:job!.areas.length});}
  return <main className={`${s.root} ${m.root}`}><div className={m.page} ref={focusRef} tabIndex={-1}>
- <nav className={m.breadcrumb} aria-label="Breadcrumb"><a href="/free-tools">Free tools</a><Icon name="chevron"/><span>Measurements to pricing</span>{job&&<><Icon name="chevron"/><span>{TRADE_COPY[job.trade].name}</span></>}</nav>
+ <nav className={m.breadcrumb} aria-label="Breadcrumb"><Link href="/free-tools">Free tools</Link><Icon name="chevron"/><span>Measurements to pricing</span>{job&&<><Icon name="chevron"/><span>{TRADE_COPY[job.trade].name}</span></>}</nav>
  {job&&<><header className={`${m.toolHeader} ${darkClass}`}><div><p className={m.eyebrow}>FREE MEASUREMENTS TO PRICING <span>{TRADE_COPY[job.trade].name}</span></p><h1>{phase==='setup'?'A familiar start. Your own measurements.':phase==='measure'?'You measure. Components do the maths.':'From measured work to your next quote.'}</h1><p>{phase==='measure'?TRADE_COPY[job.trade].hint:'The same Smart Components as digital takeoff, without needing a plan.'}</p></div><Button onClick={changeTrade}><Icon name="back"/> Start a new job</Button></header><div className={m.progressBar}><StepBar step={phase} onSetup={()=>setPhase('setup')} onMeasure={goMeasure} canMeasure={!!job.components.length}/><div className={m.progressMeta}><span>{job.units==='metric'?'Metric':job.units==='imperial'?'Imperial':'Roofing squares'} · {job.currency}</span>{phase!=='setup'&&<Button quiet onClick={()=>setPhase('setup')}><Icon name="edit"/> Setup &amp; rates</Button>}</div></div></>}
  {notice&&<div className={m.feedback} role="status"><span>{notice}</span><button type="button" aria-label="Dismiss message" onClick={()=>setNotice('')}><Icon name="close"/></button></div>}
  {undo&&<div className={m.undo} role="status"><span>{undo.label}.</span><Button onClick={()=>{setJob(undo.job);setUndo(null);setNotice('Restored.');}}>Undo</Button><small>Available until your next edit.</small></div>}

@@ -1,4 +1,4 @@
-import {calculateJob,referenceValue,fmt,money,specUnit,TRADE_COPY,type Job,type JobResult} from './measurement-model';
+import {calculateJob,referenceValue,fmt,money,specUnit,TRADE_COPY,type Job} from './measurement-model';
 import {csvCell} from './measurement-csv';
 export function escapeHtml(text:string|number):string{return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));}
 export function resultCsv(job:Job,r=calculateJob(job)):string{

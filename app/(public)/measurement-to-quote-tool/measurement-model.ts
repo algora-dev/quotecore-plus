@@ -136,7 +136,7 @@ export function transferToQuote(job:Job,includePrices:boolean,ackExamples=false)
  return {url,lines};
 }
 export function exampleJob(trade:Trade,units:Units='metric',currency:Currency='NZD'):Job{
- let j=newJob(trade);j.currency=currency;j.title=trade==='flooring'?'Living room & bedroom':trade==='cladding'?'Two elevations':'House & garage';
+ const j=newJob(trade);j.currency=currency;j.title=trade==='flooring'?'Living room & bedroom':trade==='cladding'?'Two elevations':'House & garage';
  const defs=trade==='roofing'?[['Main roof','120','Roof Area','Spouting','42'],['Detached garage','36','Roof Area','Spouting','24']]:trade==='cladding'?[['Front elevation  -  cedar','42','Horizontal Cladding - Cedar','Window Trim','12'],['Rear elevation  -  corrugate','36','Horizontal Cladding - Corrugate','Corner Trims','10']]:[['Living room','24','Carpet','Skirting','20'],['Bedroom 1','12','Carpet','Skirting','14']];
  j.areas=defs.map(([name,size,cover,linear],i)=>{
   let a=newArea(name);a.reference=trade==='flooring'?{mode:'dimensions',a:i?'4':'6',b:i?'3':'4',basis:'actual'}:{mode:'total',a:size,b:'',basis:'actual'};

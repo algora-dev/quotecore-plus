@@ -1,7 +1,7 @@
 'use client';
 import {useState,useId,useRef,useEffect} from 'react';
-import {type Job,type Area,type Assignment,type Measurement,type Spec,type Basis,type JobResult,type ComponentResult,TRADE_COPY,CONFIGS,newArea,newMeasurement,addAssignment,duplicateArea,referenceValue,referenceUsers,calculateEntry,id,fmt,money,specUnit,lengthUnit} from './measurement-model';
-import {Button,Icon,Dialog,Field,TextField,SelectField,Badge,Notice,darkClass,ActionLink} from './MeasurementUI';
+import {type Job,type Area,type Assignment,type Measurement,type Spec,type Basis,type JobResult,type ComponentResult,TRADE_COPY,newArea,newMeasurement,addAssignment,duplicateArea,referenceValue,referenceUsers,calculateEntry,id,fmt,money,specUnit,lengthUnit} from './measurement-model';
+import {Button,Icon,Dialog,Field,TextField,SelectField,Badge,Notice,darkClass} from './MeasurementUI';
 import m from './MeasurementPricing.module.css';
 export function MeasurementWorkspace({job,result,onChange,onEditComponent,onLibrary,onReview,onNotify}:{job:Job;result:JobResult;onChange:(j:Job,undoLabel?:string)=>void;onEditComponent:(c:Spec)=>void;onLibrary:()=>void;onReview:()=>void;onNotify:(s:string)=>void}){
  const area=job.areas.find(a=>a.id===job.selectedAreaId)??job.areas[0],copy=TRADE_COPY[job.trade],heading=useRef<HTMLHeadingElement>(null),firstSelection=useRef(true),selectId=useId();
