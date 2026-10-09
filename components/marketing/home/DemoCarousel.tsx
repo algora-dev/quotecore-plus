@@ -5,7 +5,7 @@ import { Icon } from './Icon';
 import s from './Homepage.module.css';
 
 /** Auto-advancing demo walkthrough. Pauses on hover, focus and touch; swipe and keyboard supported. */
-const AUTOPLAY_MS = 2000;
+const AUTOPLAY_MS = 3000;
 const TOUCH_PAUSE_MS = 8000;
 const SWIPE_MIN_PX = 40;
 
@@ -76,19 +76,19 @@ export function DemoCarousel() {
       <div className={s.demoFrame}>
         <div className={s.appChrome} aria-hidden="true">
           <span className={s.windowDots}><i /><i /><i /></span>
-          <span>QuoteCore+ <span className={s.chromeSlash}>/</span> {active.label}</span>
+          <span className={s.demoChromeText}>QuoteCore+ <span className={s.chromeSlash}>/</span> <span className={s.demoChromeLabel}>{active.label}</span></span>
           <span className={s.chromeIndicator} />
         </div>
         <div className={s.demoViewport}>
           <div className={s.demoTrack} style={{ transform: `translate3d(-${index * 100}%,0,0)` }}>
             {slides.map((slide, i) => (
               <div className={s.demoSlide} key={slide.src} aria-hidden={i !== index || undefined}>
-                <img src={slide.src} width={1280} height={800} alt={i === index ? slide.alt : ''} loading="lazy" decoding="async" draggable={false} />
+                <img src={slide.src} width={1440} height={792} alt={i === index ? slide.alt : ''} loading="lazy" decoding="async" draggable={false} />
               </div>
             ))}
           </div>
         </div>
-        <p className={s.demoCaption}><span>{active.caption}</span><span className={s.demoCounter} aria-hidden="true">{String(index + 1).padStart(2, '0')} / {String(count).padStart(2, '0')}</span></p>
+        <p className={s.demoCaption}><span>{active.caption}</span><span className={s.demoCounter} aria-hidden="true"><span className={s.demoCounterActive}>{String(index + 1).padStart(2, '0')}</span> / {String(count).padStart(2, '0')}</span></p>
       </div>
       <button type="button" className={`${s.demoArrow} ${s.demoArrowPrev}`} aria-label="Previous slide" onClick={() => go(index - 1, 'prev')}><Icon name="chevron" size={17} /></button>
       <button type="button" className={`${s.demoArrow} ${s.demoArrowNext}`} aria-label="Next slide" onClick={() => go(index + 1, 'next')}><Icon name="chevron" size={17} /></button>
