@@ -24,6 +24,11 @@ export interface ComponentTestDraft {
   heightMm: string;
   depthMm: string;
   timeUnit: 'hr' | 'day';
+  /** Sold-as basis for area components (lineal-with-cover, owner 2026-10-09).
+   *  Optional display metadata: when soldBy is 'lineal' with a positive
+   *  coverWidthMm, the test panel shows the converted lineal figure. */
+  soldBy?: 'area' | 'lineal';
+  coverWidthMm?: string;
 }
 export interface ComponentTestInput {
   values: string[];

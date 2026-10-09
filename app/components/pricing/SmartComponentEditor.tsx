@@ -84,7 +84,8 @@ export function SmartComponentEditor(props: Props) {
     packSize: genericTradesEnabled ? s.packSize : initial.storedPackSize ?? '',
     packCoverage: genericTradesEnabled ? s.packCoverage : initial.storedPackCoverage ?? '',
     heightMm: genericTradesEnabled ? s.heightMm : initial.storedHeightMm ?? '',
-    depthMm: genericTradesEnabled ? s.depthMm : initial.storedDepthMm ?? '', timeUnit: s.hoursUnit };
+    depthMm: genericTradesEnabled ? s.depthMm : initial.storedDepthMm ?? '', timeUnit: s.hoursUnit,
+    soldBy: s.soldBy, coverWidthMm: s.coverWidthMm };
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, []);
   useEffect(() => { if (props.error) headingRef.current?.scrollIntoView({ block: 'nearest' }); }, [props.error]);
   const numberField = (key: string, label: string, value: string, update: (value: string) => void, options?: { name?: string; help?: string; step?: string }) => (

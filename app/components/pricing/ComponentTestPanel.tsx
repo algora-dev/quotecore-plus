@@ -31,6 +31,12 @@ export function ComponentTestPanel({ draft, measurementSystem, currency, onClose
   const total = result?.ok ? result.result : null;
   const money = (value: number) => formatCurrency(value, currency);
   const qty = (value: number) => `${number(displayQuantity(value, pricedDim, system))} ${outputUnit}`;
+  // Lineal-with-cover display (owner 2026-10-09): when this area component is
+  // sold as lineal metres with a cover width, show what the required quantity
+  // becomes in lineal metres - the same conversion the takeoff save applies
+  // (qty_lm = qty_m2 / cover_m). Display-only; costs are unchanged.
+  const soldCoverMm = Number(draft.coverWidthMm ?? 0) || 0;
+  const linealM = draft.soldBy === 'lineal' && soldCoverMm > 0 && total ? total.required / (soldCoverMm / 1000) : null;
   const inputLabel = inputDim === 'length' ? 'Test length' : inputDim === 'area' ? 'Test area'
     : inputDim === 'volume' ? 'Test volume' : inputDim === 'time' ? 'Test time' : 'Test quantity';
 
@@ -102,6 +108,7 @@ export function ComponentTestPanel({ draft, measurementSystem, currency, onClose
         {total.pitchApplied && <div><dt>After {draft.pitchType === 'valley_hip' ? 'hip/valley' : 'rafter'} pitch ({pitch}°)</dt><dd>{qty(total.afterPitch)}</dd></div>}
         {draft.wasteType !== 'none' && <div><dt>Waste added{draft.wasteType === 'percent' ? ` (${draft.wasteAmount}%)` : ''}</dt><dd>{qty(total.wasteAdded)}</dd></div>}
         <div className="qc-test-emphasis"><dt>Required quantity</dt><dd>{qty(total.required)}</dd></div>
+        {linealM !== null && <div><dt>Lineal metres at {number(soldCoverMm)} mm cover</dt><dd>{number(linealM)} lm</dd></div>}
         {total.purchased !== null && <>
           <div><dt>Whole packs to buy</dt><dd>{number(total.packs)}</dd></div>
           <div><dt>Quantity purchased</dt><dd>{qty(total.purchased)}</dd></div>
@@ -115,6 +122,7 @@ export function ComponentTestPanel({ draft, measurementSystem, currency, onClose
         <p>{draft.strategy === 'per_unit'
           ? `Materials: ${number(total.required)} ${costUnit} × ${money(Number(draft.materialRate))}.`
           : `Materials: ${number(total.packs)} whole packs × ${money(Number(draft.packPrice))}.`}</p>
+        {linealM !== null && <p>Sold as lineal metres: {number(total.required)} m² ÷ {number(soldCoverMm / 1000)} m cover = {number(linealM)} lm. Costs are unchanged - the per-metre rate on a job is the m² rate × cover.</p>}
         <p>Labour: {number(total.required)} {costUnit} × {money(Number(draft.labourRate))}. Labour uses the quantity after pitch and waste, not rounded-up pack coverage.</p>
         {(draft.wasteType === 'fixed' || draft.wasteType === 'fixed_per_segment') && <p>The fixed allowance is applied to each entered measurement in this manual-entry test. Takeoff keeps its existing segment rules.</p>}
         {total.pitchApplied && <p>Pitch method: {draft.pitchType === 'valley_hip' ? 'hip/valley' : 'rafter'} multiplier at {pitch}° - plan measurements are multiplied ({qty(total.measured ?? total.entered)} → {qty(total.afterPitch)} {costUnit}). Surface measurements already include pitch and are never multiplied again.</p>}
