@@ -167,6 +167,12 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: globalHeaders,
       },
+      // The Free Tools hub offers user-initiated voice dictation only.
+      // Keep microphone denied everywhere else; never request it on load.
+      {
+        source: '/free-tools',
+        headers: [{ key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' }],
+      },
       // Strict CSP for the public docs surface (HTML).
       {
         source: '/docs/:path*',
