@@ -1,0 +1,9 @@
+/** Shared visible FAQ and structured-data copy. No duplicate hidden H1. */
+export const MEASUREMENT_FAQ=[
+ ['What is this tool for?','Enter measurements you already have for roofing, cladding or flooring. Components calculate material quantities, labour and costs. Print an estimate or transfer it to the Free Quote Generator. To measure a plan on screen, use the separate Digital Takeoff tool.'],
+ ['Do I have to give every area a size?','No. An area is a named group, such as a main roof, elevation or room. Enter an optional total area or length × width, then reuse that saved size in area-based components. The saved size is not charged on its own.'],
+ ['Can I import a spreadsheet price list?','Yes. Choose Customise the examples and Import CSV. Map name, material rate, labour rate and optional product code; choose the measurement unit for each row. The library supports up to seven roofing, nine cladding or eight flooring components. Remove unused examples to make room. Add waste, pack and pitch rules in the component editor.'],
+ ['How are pitch, waste and packs handled?','Actual measurements are not pitched again. Roofing plan measurements use the enabled component pitch rule. Waste is added once. Whole packs round separately for each component in each area. This is quantity pricing, not a cutting-layout or carpet-roll optimisation tool.'],
+ ['Are example prices real market rates?','No. All provided rates are fictitious examples. Review and replace them for your job. When transferring example results to the free quote tool, quantities-only is the default. Tax and selling margin are reviewed in the quote.'],
+ ['Does the free tool save my library?','This browser tab keeps a recoverable draft where browser storage is available. It is not an account library or permanent backup. The paid QuoteCore+ application provides saved components, reusable pricing and connected jobs, quotes, orders and invoices.'],
+] as const;

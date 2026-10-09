@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
+import {MEASUREMENT_FAQ} from './measurement-content';
 import { headers } from 'next/headers';
 import { isNzHost, canonicalOrigin, dualDomainHreflang } from '@/lib/seo/dual-domain';
 
@@ -54,53 +55,11 @@ export default async function MeasurementToQuoteLayout({ children }: { children:
   const faqLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: 'What is a measurement-to-quote tool?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'A free tool for contractors who already have measurements from a site measure, plan takeoff or estimating workflow. You build reusable pricing components, enter your measured quantities, and the tool calculates materials, labour and a priced output you can print, download, convert into a customer quote, or save to QuoteCore+.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Can I import my spreadsheet price list?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Yes. Upload a CSV export of your price list, map your columns to component fields such as name, material price, labour rate, waste and pack pricing, then select the rows to import. The free converter handles up to 7 components at a time.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'What measurement types can I use?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Area measurements such as square metres or square feet, lineal measurements such as metres or feet, and simple quantity counts. Components can include percentage waste or a fixed waste allowance per length.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Does the tool apply roof pitch calculations?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Yes. Choose plan measurements and pitch factors are applied automatically to components with pitch logic enabled, for rafter and hip or valley lengths and roof areas.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Is the measurement-to-quote tool free?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Yes. The core workflow is free to use with no signup required. You can create an account to save components and continue in the app, but the free tool works on its own.',
-        },
-      },
-    ],
+    mainEntity: MEASUREMENT_FAQ.map(([name,text])=>({'@type':'Question',name,acceptedAnswer:{'@type':'Answer',text}})),
   };
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: 'button:not(:disabled){cursor:pointer}' }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />

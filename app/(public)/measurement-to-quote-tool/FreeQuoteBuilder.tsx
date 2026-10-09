@@ -1,318 +1,49 @@
 'use client';
-
-import { useEffect, useState } from 'react';
-import type { BuilderComponent, MeasureMode, ParentArea, UnitSystem } from './types';
-import { lenLabel, areaLabel } from './types';
-import ComponentStep from './ComponentStep';
-import BuilderStep from './BuilderStep';
-import OutputView from './OutputView';
-import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
-import { entryRawValue } from './calc';
-
-// Unit conversions into metric - the app stores sqm/m internally regardless
-// of the unit system the free tool (or the app account) was created in.
-const FT_TO_M = 0.3048;
-const FT2_TO_M2 = 0.09290304;
-const SQ_TO_M2 = 9.290304;
-const toM2 = (v: number, u: UnitSystem) => (u === 'imperial' ? v * FT2_TO_M2 : u === 'squares' ? v * SQ_TO_M2 : v);
-const toM = (v: number, u: UnitSystem) => (u === 'metric' ? v : v * FT_TO_M);
-
-/** Plan area of a parent area in m2: summed from its area-type component
- * entries (raw plan values - the import route applies pitch itself). */
-function areaPlanSqmFor(areas: ParentArea[], components: BuilderComponent[], areaId: string, u: UnitSystem): number {
-  const area = areas.find(a => a.id === areaId);
-  if (!area) return 0;
-  const byId = new Map(components.map(c => [c.id, c]));
-  let total = 0;
-  for (const ac of area.components) {
-    const comp = byId.get(ac.componentId);
-    if (!comp || comp.measurementType !== 'area') continue;
-    for (const e of ac.entries) total += entryRawValue(e, comp);
-  }
-  return toM2(total, u);
-}
-
-/** Raw plan measurement for an entry in the app's internal unit (m / m2 / ea). */
-function entryValueForApp(entryValue: number, mt: 'lineal' | 'area' | 'quantity', u: UnitSystem): number {
-  if (mt === 'area') return toM2(entryValue, u);
-  if (mt === 'lineal') return toM(entryValue, u);
-  return entryValue;
-}
-
-const STORAGE_KEY = 'free-quote-builder-v2';
-
-/** Free Quote Builder - manual version of the Free Roof Takeoff tool.
- * Same wizard shell (units -> components -> gate), then the Free Roofing
- * Takeoff Builder measurement UX (areas + component sections + entries). */
-export default function FreeQuoteBuilder({ initialMode }: { initialMode?: MeasureMode }) {
-  const [step, setStep] = useState(1);
-  const [components, setComponents] = useState<BuilderComponent[]>([]);
-  const [areas, setAreas] = useState<ParentArea[]>([]);
-  const [unitSystem, setUnitSystem] = useState<UnitSystem | null>(null);
-  const [measureMode, setMeasureMode] = useState<MeasureMode | null>(initialMode ?? null);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-
-  // No sessionStorage restore: on refresh the user starts over. This is
-  // deliberate friction - the way to keep your components is to sign up.
-  useEffect(() => {
-    try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
-  }, []);
-
-  const currency = '$';
-
-  /** Save a takeoff draft and hand off to the app import flow.
-   * componentsOnly=true: import just the component library rows (no quote);
-   * otherwise import components + areas + entries as a draft quote. */
-  async function saveToApp(componentsOnly: boolean) {
-    if (components.length === 0) return;
-    const u = unitSystem ?? 'metric';
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const payload = {
-        tool: 'free-quote-builder',
-        unitSystem: unitSystem ?? 'metric',
-        componentSpecs: components.map(c => ({
-          id: c.id,
-          name: c.name,
-          measurementType: c.measurementType,
-          materialRate: c.materialRate,
-          labourRate: c.labourRate,
-          pricingStrategy: c.pricingStrategy,
-          packPrice: c.packPrice,
-          packSize: c.packSize,
-          wasteType: c.wasteType,
-          wasteValue: c.wasteValue,
-          pitchEnabled: c.pitchEnabled,
-          pitchType: c.pitchType,
-        })),
-        ...(componentsOnly ? {} : {
-          // Area rows are pitch/naming containers ONLY - the quantities live
-          // in the component entries (area components each cover the whole
-          // area, so summing them would double-count). area stays 0.
-          roofAreas: areas.map(a => ({
-            id: a.id,
-            name: a.name,
-            area: 0,
-            pitch: a.pitchDegrees,
-          })),
-          componentGroups: areas.flatMap(a => a.components
-            .filter(ac => ac.entries.length > 0)
-            .map(ac => {
-              const comp = components.find(c => c.id === ac.componentId);
-              const mt = comp?.measurementType ?? 'lineal';
-              const vals = ac.entries.map(e => entryValueForApp(entryRawValue(e, comp!), mt, u));
-              return {
-                componentId: ac.componentId,
-                name: comp?.name ?? 'Component',
-                isSystem: false,
-                semantic: null,
-                count: ac.entries.length,
-                total: vals.reduce((s, v) => s + v, 0),
-                measurementType: mt,
-                measurements: vals.map(v => ({ value: v, quoteRoofAreaId: a.id })),
-              };
-            })),
-        }),
-        savedAt: new Date().toISOString(),
-      };
-      const res = await fetch('/api/free-tools/drafts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draftType: 'takeoff', payload }),
-      });
-      if (!res.ok) {
-        setSaveError('Could not save right now. Please try again.');
-        return;
-      }
-      const { id } = await res.json() as { id: string };
-      const dest = componentsOnly ? '&dest=components' : '';
-      // Same hand-off as the Free Roof Takeoff tool: draft id goes to the
-      // signup flow and the app restores it after signup.
-      window.location.href = `/signup?ref=measurement-to-quote-tool&draft=${id}${dest}`;
-    } catch {
-      setSaveError('Could not save right now. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const stepIndicator = (
-    <div className="flex items-center gap-2">
-      {([1, 2, 3, 4] as const).map(n => (
-        <div key={n} className="flex items-center gap-2">
-          <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
-              n === step ? 'bg-black text-white' : n < step ? 'bg-[#FF6B35] text-white' : 'bg-slate-100 text-slate-400'
-            }`}
-          >
-            {n < step ? '\u2713' : n}
-          </div>
-          {n < 4 && <div className={`w-8 h-0.5 ${n < step ? 'bg-[#FF6B35]' : 'bg-slate-100'}`} />}
-        </div>
-      ))}
-    </div>
-  );
-
-  // ── Phase 4: builder (Free Roofing Takeoff Builder measurement UX) ──
-  if (step === 4 && unitSystem && measureMode) {
-    return (
-      <BuilderStep
-        components={components}
-        areas={areas}
-        setAreas={setAreas}
-        measureMode={measureMode}
-        unitSystem={unitSystem}
-        currency={currency}
-        onBack={() => setStep(3)}
-        onGenerate={() => { trackFreeToolEvent('result'); setStep(5); }}
-      />
-    );
-  }
-
-  // ── Phase 5: output (report phase, same actions as Free Roof Takeoff output) ──
-  if (step === 5 && unitSystem && measureMode) {
-    return (
-      <OutputView
-        areas={areas}
-        components={components}
-        measureMode={measureMode}
-        unitSystem={unitSystem}
-        currency={currency}
-        onBackToBuilder={() => setStep(4)}
-        onRestart={() => {
-          setStep(1);
-          setComponents([]);
-          setAreas([]);
-          setUnitSystem(null);
-          setMeasureMode(null);
-          try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
-        }}
-        onSaveToApp={() => saveToApp(false)}
-        saving={saving}
-        saveError={saveError}
-      />
-    );
-  }
-
-  const stepTitle =
-    step === 1 ? 'Choose your measurement unit'
-    : step === 2 ? 'Build your components'
-    : 'How do you want to enter your measurements?';
-
-  // ── Wizard shell (identical to Free Roof Takeoff) ──
-  return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-5xl bg-white rounded-2xl border border-slate-200 shadow-lg p-8 md:p-10">
-        <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Free measurement-to-quote tool</p>
-        <p className="mt-2 text-2xl font-semibold text-slate-900">Turn your measurements into pricing</p>
-        <p className="mt-1 text-sm font-medium text-[#BD4A1A]">Save the pricing logic once, reuse it every time you measure a new job. Free, no signup required.</p>
-        <div className="mt-4 flex items-center justify-between">
-          {stepIndicator}
-          {step > 1 && (
-            <button onClick={() => setStep(s => (s === 3 ? 2 : s === 2 ? 1 : 2) as 1 | 2)} className="text-sm text-slate-500 hover:text-slate-800">
-              Back
-            </button>
-          )}
-        </div>
-        <h2 className="mt-5 text-base font-semibold text-slate-800">{stepTitle}</h2>
-
-        {step === 1 && (
-          <div className="mt-4 space-y-3">
-            {([
-              { value: 'metric' as const, label: 'Metric', description: 'Metres and square metres (m, m\u00b2)' },
-              { value: 'imperial' as const, label: 'Imperial', description: 'Feet and square feet (ft, sq ft)' },
-              { value: 'squares' as const, label: 'Roofing Squares', description: 'Areas in roofing squares (1 square = 100 sq ft)' },
-            ]).map(o => (
-              <label
-                key={o.value}
-                className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-                  unitSystem === o.value ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="unit-system"
-                  checked={unitSystem === o.value}
-                  onChange={() => setUnitSystem(o.value)}
-                  className="mt-0.5 w-4 h-4 accent-orange-500"
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-slate-900">{o.label}</span>
-                  <span className="block text-xs text-slate-500 mt-0.5">{o.description}</span>
-                </span>
-              </label>
-            ))}
-            <p className="text-xs text-slate-400">
-              Your units apply to every component and measurement in this tool.
-            </p>
-            <button
-              onClick={() => setStep(2)}
-              disabled={!unitSystem}
-              className="mt-4 w-full py-2.5 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-40"
-            >
-              Continue
-            </button>
-          </div>
-        )}
-
-        {step === 2 && unitSystem && (
-          <ComponentStep
-            components={components}
-            setComponents={setComponents}
-            unitSystem={unitSystem}
-            onBack={() => setStep(1)}
-            onContinue={() => setStep(measureMode ? 4 : 3)}
-            onSaveToApp={() => saveToApp(true)}
-            saving={saving}
-            saveError={saveError}
-          />
-        )}
-
-        {step === 3 && (
-          <div className="mt-4 space-y-3">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-              Unit: <span className="font-semibold text-slate-800">{unitSystem === 'metric' ? 'Metric' : unitSystem === 'imperial' ? 'Imperial' : 'Roofing Squares'}</span> &middot; Components:{' '}
-              <span className="font-semibold text-slate-800">{components.length}</span> (locked for this session)
-            </div>
-            {([
-              { value: 'actual' as const, title: 'I have actual measurements', desc: 'You already have final dimensions. Just type them in - no pitch calculation needed.' },
-              { value: 'plan' as const, title: 'I\u2019m measuring from a plan', desc: 'You have a top-down plan. Enter plan dimensions and the roof pitch - we\u2019ll calculate the real sloped lengths and areas.' },
-            ]).map(o => (
-              <label
-                key={o.value}
-                className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-                  measureMode === o.value ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="measure-mode"
-                  checked={measureMode === o.value}
-                  onChange={() => setMeasureMode(o.value)}
-                  className="mt-0.5 w-4 h-4 accent-orange-500"
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-slate-900">{o.title}</span>
-                  <span className="block text-xs text-slate-500 mt-0.5">{o.desc}</span>
-                </span>
-              </label>
-            ))}
-            <button
-              onClick={() => { if (measureMode) setStep(4); }}
-              disabled={!measureMode}
-              className="w-full py-2.5 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-40"
-            >
-              Continue to quote builder
-            </button>
-          </div>
-        )}
-
-        <p className="mt-6 text-xs text-slate-400">
-          Nothing is saved unless you choose to send the result into the app.
-        </p>
-      </div>
-    </div>
-  );
+import {useEffect,useMemo,useRef,useState} from 'react';
+import type {MeasureMode} from './types';
+import {type Job,type Trade,type Spec,type Units,type Currency,TRADE_COPY,CONFIGS,newJob,exampleJob,calculateJob,convertJob,restoreJob,DRAFT_KEY,componentLimit} from './measurement-model';
+import {TradeEntry,Setup} from './MeasurementSetup';
+import {MeasurementWorkspace} from './MeasurementWorkspace';
+import {MeasurementReport} from './MeasurementReport';
+import {MeasurementComponentEditor} from './MeasurementComponentEditor';
+import {MeasurementCsvImport} from './MeasurementCsvImport';
+import {Button,Icon,StepBar,Notice,darkClass} from './MeasurementUI';
+import {trackFreeToolEvent} from '../lib/trackFreeToolEvent';
+import s from '../free-roof-takeoff/TakeoffExperience.module.css';
+import m from './MeasurementPricing.module.css';
+/** Existing public route owner. Shared component library lives with digital
+ * takeoffs; this component never imports or mounts a drawing workspace. */
+export default function FreeQuoteBuilder({initialMode,initialTrade}:{initialMode?:MeasureMode;initialTrade?:Trade}){
+ const [job,setJob]=useState<Job|null>(()=>initialTrade?newJob(initialTrade,'metric',initialMode??'actual'):null),[phase,setPhase]=useState<'setup'|'measure'|'report'>('setup');
+ const [resume,setResume]=useState<Job|null>(null),[ready,setReady]=useState(false),[storageError,setStorageError]=useState(false);
+ const [notice,setNotice]=useState(''),[undo,setUndo]=useState<{job:Job;label:string}|null>(null),[editing,setEditing]=useState<Spec|null|undefined>(undefined),[csv,setCsv]=useState(false);
+ const result=useMemo(()=>job?calculateJob(job):null,[job]);const focusRef=useRef<HTMLDivElement>(null),hasMoved=useRef(false);
+ useEffect(()=>{try{const raw=sessionStorage.getItem(DRAFT_KEY);if(raw){const restored=restoreJob(raw);if(restored)setResume(restored);else setNotice('A previous tab draft could not be restored safely. Start a new estimate; no account data was changed.');}}catch{setStorageError(true);}setReady(true);},[]);
+ useEffect(()=>{if(!ready||!job||resume)return;const timer=setTimeout(()=>{try{sessionStorage.setItem(DRAFT_KEY,JSON.stringify(job));setStorageError(false);}catch{setStorageError(true);}},300);return()=>clearTimeout(timer);},[ready,job,resume]);
+ useEffect(()=>{if(!result?.entryCount)return;const handler=(e:BeforeUnloadEvent)=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler);},[result?.entryCount]);
+ useEffect(()=>{if(!hasMoved.current){hasMoved.current=true;return;}focusRef.current?.focus({preventScroll:true});focusRef.current?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});},[phase,job?.trade]);
+ function notify(text:string){setNotice(text);}
+ function change(next:Job,undoLabel?:string){if(undoLabel&&job)setUndo({job,label:undoLabel});else setUndo(null);setJob(next);setResume(null);if(!undoLabel)setNotice('');}
+ function choose(trade:Trade){if(resume&&!window.confirm('Start a new estimate instead of the one kept in this tab?'))return;setResume(null);setJob(newJob(trade,'metric',initialMode??'actual'));setPhase('setup');setNotice('');setUndo(null);}
+ function changeTrade(){if(job&&(result?.entryCount||job.choice==='custom'||job.areas.length>1)&&!window.confirm('Start a new trade? This clears the current estimate and component edits from this tab. Export your results first if you need them.'))return;setJob(null);setResume(null);setUndo(null);setPhase('setup');setNotice('');try{sessionStorage.removeItem(DRAFT_KEY);}catch{/* browser may disallow storage */}}
+ function example(){if(!job)return;if((result?.entryCount||job.choice==='custom'||job.areas.length>1)&&!window.confirm('Replace this estimate with a filled example? All example rates are fictitious.'))return;change(exampleJob(job.trade,job.units,job.currency));setPhase('measure');notify('Loaded a practice job with fictitious prices. Edit it freely, or start a new job.');}
+ function removeSpec(c:Spec){if(!job)return;if(job.areas.some(a=>a.components.some(ac=>ac.componentId===c.id))){notify(`${c.name} is used in an area. Remove it from those areas before removing it from the library.`);return;}change({...job,components:job.components.filter(x=>x.id!==c.id)},`Removed ${c.name} from the library`);}
+ function saveSpec(c:Spec){if(!job)return;const exists=job.components.some(x=>x.id===c.id);if(!exists&&job.components.length>=componentLimit(CONFIGS[job.trade])){notify('Remove an unused component before adding another.');return;}change({...job,choice:'custom',components:exists?job.components.map(x=>x.id===c.id?c:x):[...job.components,c]});setEditing(undefined);}
+ function goMeasure(){setPhase('measure');setNotice('');}
+ function goReport(){if(!result?.valid){notify('Add a valid measurement and correct any errors first.');return;}setPhase('report');setNotice('');trackFreeToolEvent('result',{trade:job!.trade,areas:job!.areas.length});}
+ return <main className={`${s.root} ${m.root}`}><div className={m.page} ref={focusRef} tabIndex={-1}>
+ <nav className={m.breadcrumb} aria-label="Breadcrumb"><a href="/free-tools">Free tools</a><Icon name="chevron"/><span>Measurements to pricing</span>{job&&<><Icon name="chevron"/><span>{TRADE_COPY[job.trade].name}</span></>}</nav>
+ {job&&<><header className={`${m.toolHeader} ${darkClass}`}><div><p className={m.eyebrow}>FREE MEASUREMENTS TO PRICING <span>{TRADE_COPY[job.trade].name}</span></p><h1>{phase==='setup'?'A familiar start. Your own measurements.':phase==='measure'?'You measure. Components do the maths.':'From measured work to your next quote.'}</h1><p>{phase==='measure'?TRADE_COPY[job.trade].hint:'The same Smart Components as digital takeoff, without needing a plan.'}</p></div><Button onClick={changeTrade}><Icon name="back"/> Start a new job</Button></header><div className={m.progressBar}><StepBar step={phase} onSetup={()=>setPhase('setup')} onMeasure={goMeasure} canMeasure={!!job.components.length}/><div className={m.progressMeta}><span>{job.units==='metric'?'Metric':job.units==='imperial'?'Imperial':'Roofing squares'} · {job.currency}</span>{phase!=='setup'&&<Button quiet onClick={()=>setPhase('setup')}><Icon name="edit"/> Setup &amp; rates</Button>}</div></div></>}
+ {notice&&<div className={m.feedback} role="status"><span>{notice}</span><button type="button" aria-label="Dismiss message" onClick={()=>setNotice('')}><Icon name="close"/></button></div>}
+ {undo&&<div className={m.undo} role="status"><span>{undo.label}.</span><Button onClick={()=>{setJob(undo.job);setUndo(null);setNotice('Restored.');}}>Undo</Button><small>Available until your next edit.</small></div>}
+ {storageError&&<Notice>Browser storage is unavailable. Keep this page open until you export; a refresh may lose your work.</Notice>}
+ {job&&resume&&<div className={m.resume}><p>A previous estimate is still in this tab.</p><Button onClick={()=>setResume(null)}>Start fresh</Button><Button primary onClick={()=>{setJob(resume);setResume(null);setPhase('measure');}}>Resume estimate</Button></div>}
+ {!job?<TradeEntry onChoose={choose} resume={resume} onResume={()=>{if(resume){setJob(resume);setPhase(resume.areas.some(a=>a.components.length)?'measure':'setup');setResume(null);}}} onDiscard={()=>{setResume(null);try{sessionStorage.removeItem(DRAFT_KEY);}catch{setStorageError(true);}}}/>:
+ phase==='setup'?<Setup job={job} onChangeUnits={(u:Units)=>{change(convertJob(job,u));notify('Measurements and dimensional rates have been converted, not relabelled.');}} onChangeCurrency={(currency:Currency)=>{if(job.components.some(c=>c.pricingOrigin==='user')&&!window.confirm(`Change the label to ${currency}? This does not convert currency amounts. Recheck your rates.`))return;change({...job,currency});}} onChoice={choice=>{change({...job,choice});if(choice==='examples'&&job.choice==='custom')notify('Your component edits are kept. This choice does not overwrite your library.');}} onEdit={setEditing} onAdd={()=>setEditing(null)} onDelete={removeSpec} onImport={()=>setCsv(true)} onContinue={goMeasure} onExample={example} onTrade={changeTrade}/>:
+ phase==='measure'?<MeasurementWorkspace job={job} result={result!} onChange={change} onEditComponent={setEditing} onLibrary={()=>{setPhase('setup');change({...job,choice:'custom'});}} onReview={goReport} onNotify={notify}/>:
+ <MeasurementReport job={job} result={result!} onBack={goMeasure} onChange={change} onNotify={notify} onTrack={action=>trackFreeToolEvent(action,{trade:job.trade})}/>}
+ {job&&<footer className={m.toolFooter}><span><Icon name="info"/> This tab keeps your draft. The paid app saves your library and jobs.</span><a href={TRADE_COPY[job.trade].digital}>Need to measure a plan instead? <Icon name="arrow"/></a></footer>}
+ {job&&editing!==undefined&&<MeasurementComponentEditor initial={editing} job={job} onSave={saveSpec} onClose={()=>setEditing(undefined)}/>}
+ {job&&csv&&<MeasurementCsvImport job={job} onClose={()=>setCsv(false)} onSave={specs=>{change({...job,choice:'custom',components:[...job.components,...specs]});setCsv(false);notify(`Added ${specs.length} CSV components. Review their waste and pack rules before measuring.`);}}/>}
+ </div></main>;
 }

@@ -1,0 +1,14 @@
+'use client';
+import {useId,type ReactNode} from 'react';
+import s from '../free-roof-takeoff/TakeoffExperience.module.css';
+import m from './MeasurementPricing.module.css';
+export {Button,ActionLink,Dialog,Icon} from '../free-roof-takeoff/TakeoffUI';
+export function Field({label,value,onChange,suffix,placeholder='',required=false,help,error,integer=false}: {label:string;value:string;onChange:(v:string)=>void;suffix?:string;placeholder?:string;required?:boolean;help?:ReactNode;error?:string;integer?:boolean}){
+ const id=useId();return <div className={m.field}><label htmlFor={id}>{label}{required&&<span aria-hidden="true"> *</span>}</label><div className={m.inputWrap}><input id={id} type="number" inputMode={integer?'numeric':'decimal'} step={integer?'1':'any'} min="0" max="1000000000" value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} aria-required={required||undefined} aria-invalid={!!error} aria-describedby={help||error?`${id}-help`:undefined}/>{suffix&&<span>{suffix}</span>}</div>{(help||error)&&<small id={`${id}-help`} className={error?m.invalid:undefined}>{error||help}</small>}</div>;
+}
+export function SelectField({label,value,onChange,children,help}:{label:string;value:string;onChange:(v:string)=>void;children:ReactNode;help?:ReactNode}){const id=useId();return <div className={m.field}><label htmlFor={id}>{label}</label><select id={id} value={value} onChange={e=>onChange(e.target.value)} aria-describedby={help?`${id}-help`:undefined}>{children}</select>{help&&<small id={`${id}-help`}>{help}</small>}</div>;}
+export function TextField({label,value,onChange,placeholder='',maxLength=120,autoFocus=false}:{label:string;value:string;onChange:(v:string)=>void;placeholder?:string;maxLength?:number;autoFocus?:boolean}){const id=useId();return <div className={m.field}><label htmlFor={id}>{label}</label><input id={id} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} maxLength={maxLength} data-initial-focus={autoFocus||undefined}/></div>;}
+export function Badge({children,example=false}:{children:ReactNode;example?:boolean}){return <span className={`${m.badge} ${example?m.exampleBadge:''}`}>{children}</span>;}
+export function Notice({children,error=false}:{children:ReactNode;error?:boolean}){return <div className={`${m.notice} ${error?m.error:''}`} role={error?'alert':undefined}>{children}</div>;}
+export function StepBar({step,onSetup,onMeasure,canMeasure}:{step:'setup'|'measure'|'report';onSetup:()=>void;onMeasure:()=>void;canMeasure:boolean}){const i=['setup','measure','report'].indexOf(step);return <nav className={m.steps} aria-label="Pricing progress"><ol>{['Set up','Measurements','Results'].map((label,n)=><li key={label}><button type="button" onClick={n===0?onSetup:n===1?onMeasure:undefined} disabled={n>i||n===1&&!canMeasure||n===2} aria-current={i===n?'step':undefined}><span>{n<i?'✓':n+1}</span>{label}</button></li>)}</ol></nav>;}
+export const darkClass=s.dark;
