@@ -1,0 +1,41 @@
+.qc-final-learn,.qc-final-review{padding:0 30px 26px}.qc-final-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.qc-final-grid article{background:#f5f6f8;border:1px solid #e4e7ec;border-radius:16px;padding:22px}.qc-final-number{display:inline-block;background:#252930;color:#ff995c;border-radius:7px;padding:7px 11px;font-size:12px;font-weight:800}.qc-final-grid h3{font-size:18px;line-height:1.3;margin:15px 0 8px}.qc-final-grid p{font-size:14px;color:#606b7b;line-height:1.55;margin:0 0 14px}.qc-final-example{padding:13px;background:white;border:1px solid #e7e9ee;border-radius:10px;font-size:13px;line-height:1.5}.qc-final-tip{margin:16px 0 18px;background:linear-gradient(115deg,#22252c,#373139);border-left:3px solid #ff641f;color:#f7f8fa;border-radius:0 11px 11px 0;padding:16px;font-size:14px;line-height:1.6}.qc-final-summary{border:1px solid #e1e5eb;border-radius:16px;overflow:hidden;background:white}.qc-final-summary-head{padding:20px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px;background:#f7f8fa}.qc-final-summary-head span:first-child{font-size:11px;color:#6a7280;font-weight:700;letter-spacing:.08em}.qc-final-summary-head h3{margin:5px 0 0;font-size:21px;line-height:1.35;overflow-wrap:anywhere}.qc-final-ready{font-size:11px!important;letter-spacing:0!important;color:#ae4a17!important;background:#fff0e8;border-radius:20px;padding:7px 10px;white-space:nowrap}.qc-final-summary dl{margin:0;padding:8px 22px}.qc-final-summary dl>div{display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-bottom:1px solid #edf0f3;font-size:14px}.qc-final-summary dl>div:last-child{border:0}.qc-final-summary dt{color:#687383}.qc-final-summary dd{margin:0;text-align:right;font-weight:600;overflow-wrap:anywhere}.qc-final-notes{margin:16px 0;border:1px solid #e2e6ec;border-radius:14px;padding:20px}.qc-final-notes h3{font-size:16px;margin:0 0 5px}.qc-final-notes h3 span{font-size:12px;font-weight:400;color:#737d8c}.qc-final-notes p,.qc-final-disclaimer{font-size:13px;color:#667283;line-height:1.55;margin:0 0 12px}.qc-final-notes label{display:block;font-size:13px;font-weight:600;margin:10px 0 6px}.qc-final-notes textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid #cbd2dc;border-radius:9px;padding:12px;font:inherit;line-height:1.5;color:#1c2027;background:white}.qc-final-notes textarea:focus{outline:2px solid #ff9a70;outline-offset:1px}.qc-final-notes small{display:block;text-align:right;color:#737d8c;font-size:11px;margin-top:4px}.qc-final-text-action{border:0;background:none;color:#bb4a13;font:inherit;font-size:13px;cursor:pointer;padding:3px 0}.qc-final-text-action:hover{text-decoration:underline}@media(max-width:640px){.qc-final-learn,.qc-final-review{padding:0 16px 18px}.qc-final-grid{grid-template-columns:1fr}.qc-final-grid article{padding:16px}.qc-final-summary-head{padding:16px;align-items:flex-start;flex-direction:column}.qc-final-summary dl{padding:6px 16px}.qc-final-summary dl>div{gap:8px;flex-wrap:wrap}.qc-final-notes{padding:16px}}
+
+/* Final review: actual library-row presentation first, optional detail second. */
+.qc-final-product-heading{margin:0 0 12px}
+.qc-final-product-heading>span{font-size:11px;font-weight:750;letter-spacing:.065em;color:#b64a17}
+.qc-final-product-heading p{font-size:13px;color:#687383;margin:6px 0 0}
+.qc-final-library-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border:1px solid #e2e6eb;border-radius:12px;background:#fff;box-shadow:0 3px 10px rgba(30,35,43,.035)}
+.qc-final-library-meta{flex:1;min-width:0}
+.qc-final-library-title{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.qc-final-library-title strong{font-size:14px;font-weight:650;color:#20232a;overflow-wrap:anywhere}
+.qc-final-sku{font-size:11px;color:#697487;background:#f1f3f6;padding:3px 6px;border-radius:20px;font-family:monospace}
+.qc-final-main-badge{font-size:11px;color:#c44b12;background:#ffeadf;padding:3px 9px;border-radius:20px;font-weight:650}
+.qc-final-measure-label{font-size:11px;color:#8a929f}
+.qc-final-library-meta>p{font-size:12px;color:#697383;line-height:1.5;margin:6px 0 0;overflow-wrap:anywhere}
+.qc-final-library-meta>.qc-final-list-note{font-style:italic;color:#8993a1;margin-top:3px}
+.qc-final-library-actions{display:flex;gap:9px;align-items:center;flex-shrink:0}
+.qc-final-open-test{border:1px solid #e1e4ea;border-radius:7px;padding:8px 10px;color:#404854;background:#fff;font-size:12px;font-weight:600;white-space:nowrap}
+.qc-final-delete-icon{font-size:15px;color:#98a1ad;border:1px solid #e1e4ea;border-radius:7px;padding:7px 9px}
+.qc-final-details{margin:16px 0;border:1px solid #e3e7ed;border-radius:12px;background:#fff;overflow:hidden}
+.qc-final-details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;font-size:13px;font-weight:650;color:#343b46}
+.qc-final-details>summary::-webkit-details-marker{display:none}
+.qc-final-chevron{font-size:18px;transition:transform .15s}
+.qc-final-details[open] .qc-final-chevron{transform:rotate(180deg)}
+.qc-final-details .qc-final-summary{border:0;border-top:1px solid #e9edf2;border-radius:0;box-shadow:none}
+/* The three optional actions are plain text, not ghost buttons. */
+.qc-guided-identity .qc-minimal-text-action,
+.qc-guided-identity .qc-minimal-text-action:hover,
+.qc-guided-identity .qc-minimal-text-action:active{
+ display:inline!important;width:auto!important;min-height:0!important;height:auto!important;
+ padding:0!important;margin:0!important;background:transparent!important;border:0!important;
+ border-radius:0!important;box-shadow:none!important;transform:none!important;
+ text-decoration:none!important;filter:none!important;outline-offset:3px;
+ font-size:13px!important;font-weight:600!important;line-height:1.6!important;
+ cursor:pointer!important;transition:color .15s ease!important;
+}
+.qc-guided-identity .qc-minimal-text-action{color:#b74816!important}
+.qc-guided-identity .qc-minimal-text-action:hover,
+.qc-guided-identity .qc-minimal-text-action:focus-visible{color:#ff641f!important}
+.qc-guided-identity .qc-minimal-text-action span{color:inherit;opacity:.7;font-weight:400}
+@media(max-width:640px){.qc-final-library-row{align-items:flex-start;flex-direction:column}.qc-final-library-actions{align-self:flex-end}}
+.qc-final-save-error{margin:0 0 14px;padding:11px 14px;border:1px solid #f2c2bd;background:#fdeeed;color:#a0251c;border-radius:10px;font-size:13px;line-height:1.5;overflow-wrap:anywhere}

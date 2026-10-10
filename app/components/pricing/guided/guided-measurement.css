@@ -1,0 +1,110 @@
+/* Guided measurement, presentation only. Scope is the existing guided dialog. */
+.qc-measure-learn-content { padding:0 34px 28px; }
+.qc-measure-learn-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+.qc-measure-learn-card { display:flex;align-items:center;gap:20px;padding:22px;background:#f6f7f9;border:1px solid #e3e6eb;border-radius:15px;min-width:0; }
+.qc-measure-learn-art { flex:0 0 146px;text-align:center; }
+.qc-measure-picture { display:block;width:146px;height:66px; }
+.qc-measure-shape { fill:#fff0e3;stroke:#d26832;stroke-width:1.3; }
+.qc-measure-line { stroke:#ff641f;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+.qc-measure-grid { stroke:#ddb491;stroke-width:1; }
+.qc-measure-dot { fill:#ff641f; }
+.qc-measure-learn-art>span { display:block;margin-top:5px;color:#b63d0a;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums; }
+.qc-measure-learn-card h3 { font-size:17px;font-weight:650;line-height:1.4;margin-bottom:7px;letter-spacing:-.2px; }
+.qc-measure-learn-card p { font-size:13px;line-height:1.65;color:#596273; }
+.qc-measure-purchase-note { margin-top:20px;padding:20px 23px;border-radius:13px;background:linear-gradient(115deg,#282c33,#1c2027);border:1px solid #353b45;color:#fff; }
+.qc-measure-purchase-note strong { display:block;font-size:15px;line-height:1.5;color:#fff;font-weight:550; }
+.qc-measure-purchase-note p { font-size:13px;line-height:1.7;color:#d0d6df;margin-top:5px;max-width:670px; }
+.qc-measure-input-content { max-width:860px;margin:0 auto;padding:0 34px 27px; }
+.qc-measure-context { padding-bottom:20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap; }
+.qc-measure-context>span { color:#727c8b;font-size:9px;font-weight:650;letter-spacing:1.4px; }
+.qc-measure-context>strong { font-size:14px;font-weight:550;color:#303641;line-height:1.65;overflow-wrap:anywhere; }
+.qc-measure-choices { border:0;padding:0;margin:0;min-width:0; }
+.qc-measure-choices legend { font-size:14px;font-weight:650;margin-bottom:12px;padding:0; }
+.qc-measure-choice-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+.qc-measure-choice { display:flex;align-items:flex-start;gap:12px;padding:18px 16px;background:#fff;border:1px solid #bac1cc;border-radius:12px;cursor:pointer;min-height:95px;transition:border-color 120ms,background 120ms; }
+.qc-measure-choice:hover { background:#fffaf6;border-color:#d67a49; }
+.qc-measure-choice[data-selected] { background:#fff5ed;border-color:#f27235;box-shadow:inset 0 0 0 .5px #f27235; }
+.qc-measure-choice input { flex:0 0 17px;width:17px;height:17px;accent-color:#b63d0a;margin:3px 0 0;cursor:pointer; }
+.qc-measure-choice:has(input:focus-visible) { outline:2px solid #b63d0a;outline-offset:3px; }
+.qc-measure-choice-copy { display:block;min-width:0;flex:1; }
+.qc-measure-choice-copy>strong { display:block;font-size:14px;font-weight:650;line-height:1.5; }
+.qc-measure-choice-copy>span { display:block;font-size:12px;line-height:1.6;color:#596273;margin-top:3px; }
+.qc-measure-choice-unit { color:#6b7380;font-size:12px;line-height:1.5;flex-shrink:0;margin-top:2px; }
+.qc-measure-more { margin-top:20px;border-top:1px solid #e4e7ed;padding-top:4px; }
+.qc-measure-more summary { cursor:pointer;padding:13px 0;font-size:13px;font-weight:550;color:#303641;line-height:1.6; }
+.qc-measure-more summary span { color:#677282;font-weight:400;font-size:12px;margin-left:12px; }
+.qc-measure-more summary:hover { text-decoration:underline;text-underline-offset:4px; }
+.qc-measure-more-content { padding:3px 0 16px; }
+.qc-measure-selected { border-left:3px solid #ff8a3d;background:#f6f7f9;margin-top:20px;border-radius:0 9px 9px 0;padding:17px 19px; }
+.qc-measure-small-label { display:block;font-size:9px;font-weight:650;letter-spacing:1.5px;color:#737d8c;margin-bottom:6px; }
+.qc-measure-selected p { font-size:13px;line-height:1.7;color:#303641; }
+.qc-measure-editor-label { display:block;font-size:11px;line-height:1.6;color:#626d7f;margin-top:6px; }
+.qc-measure-preset { margin-top:20px;padding:20px;border:1px solid #e3e6eb;background:#fff;border-radius:12px; }
+.qc-measure-preset .qc-input,.qc-measure-preset .qc-select { max-width:360px; }
+.qc-measure-unit-note { color:#596273;font-size:12px;line-height:1.65;margin-top:12px!important; }
+.qc-measure-review { padding:0 34px 28px; }
+.qc-measure-review-card { padding:22px 24px;background:#f6f7f9;border:1px solid #e0e4ea;border-radius:14px; }
+.qc-measure-review-card h3 { font-size:20px;letter-spacing:-.4px;line-height:1.5;margin-bottom:15px; }
+.qc-measure-review-list { display:grid;gap:0;margin:0; }
+.qc-measure-review-list>div { display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:12px 0;border-top:1px solid #e1e5eb;font-size:13px; }
+.qc-measure-review-list dt { color:#697586; }
+.qc-measure-review-list dd { color:#222832;font-weight:550;text-align:right;margin:0;max-width:70%; }
+.qc-measure-review-note { max-width:670px;font-size:13px;color:#596273;line-height:1.75;padding:22px 0 0; }
+.qc-measure-review-note strong { color:#303641;display:block;font-weight:600;margin-bottom:3px; }
+.qc-identity-progress i[data-complete] { background:#79828e; }
+@media(max-width:850px) {
+ .qc-measure-learn-card { gap:12px;padding:18px; }
+ .qc-measure-learn-art { flex-basis:110px; }
+ .qc-measure-picture { width:110px;height:53px; }
+ .qc-measure-learn-card h3 { font-size:15px; }
+}
+@media(max-width:680px) {
+ .qc-measure-learn-content,.qc-measure-input-content,.qc-measure-review { padding:0 21px 22px; }
+ .qc-measure-learn-grid,.qc-measure-choice-grid { grid-template-columns:1fr;gap:10px; }
+ .qc-measure-learn-card { padding:15px;gap:15px; }
+ .qc-measure-learn-art { flex-basis:100px; }
+ .qc-measure-picture { width:100px;height:43px; }
+ .qc-measure-learn-art>span { font-size:12px;margin-top:2px; }
+ .qc-measure-learn-card h3 { margin-bottom:3px; }
+ .qc-measure-learn-card p { font-size:12px; }
+ .qc-measure-purchase-note { padding:17px;margin-top:16px; }
+ .qc-measure-purchase-note strong { font-size:14px; }
+ .qc-measure-purchase-note p { font-size:12px; }
+ .qc-measure-introduction .qc-identity-footer>.qc-button:last-child { max-width:calc(100% - 78px);white-space:normal;line-height:1.4;text-align:left; }
+ .qc-measure-context { gap:4px;display:grid;padding-bottom:18px; }
+ .qc-measure-choice { min-height:80px;padding:15px 14px; }
+ .qc-measure-more summary span { display:block;margin-left:15px;font-size:11px; }
+ .qc-measure-preset { padding:16px; }
+ .qc-measure-selected { padding:15px 16px; }
+ .qc-measure-review-card { padding:18px; }
+ .qc-measure-review-card h3 { font-size:18px; }
+ .qc-measure-review-list>div { display:grid;gap:4px;font-size:12px; }
+ .qc-measure-review-list dd { max-width:none;text-align:left; }
+ .qc-measure-review-footer { flex-wrap:wrap; }
+ .qc-measure-review-footer>.qc-button:last-child { flex:1;white-space:normal; }
+}
+@media(prefers-reduced-motion:reduce) { .qc-measure-choice { transition:none; } }
+@media(forced-colors:active) {
+ .qc-measure-purchase-note { background:Canvas;color:CanvasText; }
+ .qc-measure-purchase-note * { color:CanvasText; }
+ .qc-measure-shape,.qc-measure-line,.qc-measure-grid { stroke:CanvasText; }
+ .qc-measure-choice[data-selected] { outline:2px solid Highlight; }
+}
+
+/* V2: all additional measurement types are directly visible without an extra disclosure. */
+.qc-measure-more { margin-top:18px;padding-top:18px;border-top:1px solid #e4e7ed; }
+.qc-measure-more-content { padding:0 0 12px; }
+.qc-measure-common-note { margin:18px 0 0;padding:13px 16px;border-left:3px solid #ff641f;background:#f6f7f9;border-radius:0 9px 9px 0;color:#536070;font-size:13px;line-height:1.6; }
+
+.qc-measure-common-note {
+ background:linear-gradient(115deg,#22252c 0%,#353035 100%);
+ border:1px solid #51403a;
+ border-left:3px solid #ff641f;
+ color:#f4f4f6;
+ box-shadow:0 8px 18px rgba(26,29,36,.08);
+}
+
+/* Guided consistency: selected measurement explanation matches dark guidance panels. */
+.qc-measure-selected {background:linear-gradient(112deg,#22252c 0%,#373039 100%);border:1px solid #4b3a36;border-left:3px solid #ff641f;box-shadow:0 8px 20px rgba(24,28,35,.08);color:#f9fafb}
+.qc-measure-selected p,.qc-measure-selected .qc-measure-editor-label {color:#f0f1f5}
+.qc-measure-selected .qc-measure-small-label {color:#ffae82}

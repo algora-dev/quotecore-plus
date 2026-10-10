@@ -4,6 +4,12 @@ import { useSearchParams } from 'next/navigation';
 import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { useQcActionNotice } from '@/app/components/ui/v2/QcActionNotice';
 import { SmartComponentEditor, type ComponentEditorSettings, type ComponentEditorInitial } from '@/app/components/pricing/SmartComponentEditor';
+import { ComponentCreationActions } from '@/app/components/pricing/guided/ComponentCreationActions';
+import { GuidedIdentityDialog } from '@/app/components/pricing/guided/GuidedIdentityDialog';
+import { IdentityFields, needsProductCode, validateIdentity, normaliseIdentity } from '@/app/components/pricing/guided/identity-state';
+import { validateMaterial } from '@/app/components/pricing/guided/material-state';
+import { validateLabour } from '@/app/components/pricing/guided/labour-state';
+import { validateRules } from '@/app/components/pricing/guided/rules-state';
 import { PricingIntroduction } from '@/app/components/pricing/PricingIntroduction';
 import { canonicalUnit } from '@/app/components/pricing/componentTest';
 import { formatCurrency } from '@/app/lib/currency/currencies';
@@ -86,6 +92,15 @@ export function ComponentList({
   const [editorDirty, setEditorDirty] = useState(false);
   const [editorVersion, setEditorVersion] = useState(0);
   const [createDefaults, setCreateDefaults] = useState<ComponentEditorInitial | null>(null);
+  // Guided creation steps 1 to 4. Existing editor settings, save and test remain canonical.
+  const [guidedOpen, setGuidedOpen] = useState(false);
+  const [guidedIdentity, setGuidedIdentity] = useState<IdentityFields>({ name: '', sku: '' });
+  const [guidedMaterialRate, setGuidedMaterialRate] = useState('');
+  const [guidedLabourRate, setGuidedLabourRate] = useState('');
+  const [guidedWasteAmount, setGuidedWasteAmount] = useState('');
+  const [guidedPitchType, setGuidedPitchType] = useState<PitchType>('rafter');
+  const [guidedSaving, setGuidedSaving] = useState(false);
+  const [guidedSaveError, setGuidedSaveError] = useState<string | null>(null);
   const editorAnchor = useRef<HTMLDivElement>(null);
   const [catalogueChanged, setCatalogueChanged] = useState(false);
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
@@ -314,7 +329,7 @@ export function ComponentList({
   async function mayLeaveEditor() {
     if (saving) return false;
     if (!editorDirty) return true;
-    return ask({ title: 'Leave unsaved component settings?', description: 'Testing does not save your changes. Keep editing to save them first.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', destructive: true });
+    return ask({ title: 'Leave unsaved component settings?', description: guidedOpen ? 'Your component has not been saved. Leaving guided setup will discard these details. Libraries you explicitly created will remain.' : 'Testing does not save your changes. Keep editing to save them first.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', destructive: true });
   }
 
   async function startEdit(comp: ComponentLibraryRow, openTest = false) {
@@ -828,7 +843,7 @@ export function ComponentList({
   async function startNew(copy?: ComponentEditorInitial) {
     // Explicitly making a copy preserves its draft values. Other navigation is
     // confirmed first; never save implicitly or bypass subscription/cap guards.
-    if (!copy && !(await mayLeaveEditor())) return;
+    if (!copy && !(await mayLeaveEditor())) return false;
     setEditingId(null); setShowForm(true); setFormError(null); setEditorDirty(!!copy); setDraftTested(false);
     setCreateDefaults(copy ?? null); setEditorVersion(value => value + 1); setTestOnOpen(false); setTestRequest(0);
     // A copied legacy row is a NEW record: use the canonical linear enum.
@@ -840,6 +855,144 @@ export function ComponentList({
       setAssignedFlashings([]); setSelectedFlashingId('');
       setRestoredName(''); setRestoredMaterialRate(''); setRestoredLabourRate(''); setRestoredWasteAmount('');
       setSelectedCollectionId(activeLibraryId || collections.find(c => c.is_bootstrap)?.id || collections[0]?.id || '');
+    }
+    return true;
+  }
+  async function startGuidedIdentity() {
+    // Reuse the same reset/dirty-state guard, filter-derived type and library defaults.
+    if (!(await startNew())) return;
+    setShowForm(false);
+    setGuidedIdentity({ name: '', sku: '' });
+    setGuidedMaterialRate('');
+    setGuidedLabourRate('');
+    setGuidedWasteAmount('');
+    setGuidedPitchType('rafter');
+    setGuidedSaveError(null);
+    setGuidedOpen(true);
+  }
+  async function closeGuidedIdentity() {
+    if (guidedSaving || saving) return;
+    if (!(await mayLeaveEditor())) return;
+    setGuidedOpen(false);
+    cancelEdit();
+  }
+  async function useQuickEditorFromGuided() {
+    // Explicit handoff, NOT a save. Measurement settings, packs, library and notes stay in this
+    // controller's form state because the guided steps wrote them via updateEditorSettings;
+    // identity/rates ride into the editor via createDefaults so nothing is reset on the way through.
+    const copy: ComponentEditorInitial = { ...editorInitial, name: guidedIdentity.name.trim(), sku: guidedIdentity.sku.trim(), materialRate: guidedMaterialRate, labourRate: guidedLabourRate, wasteAmount: guidedWasteAmount, pitchType: guidedPitchType };
+    setEditingId(null); setCreateDefaults(copy); setEditorVersion(value => value + 1);
+    setShowForm(true); setFormError(null); setEditorDirty(true); setDraftTested(false);
+    setTestOnOpen(false); setTestRequest(0);
+    setGuidedOpen(false); setGuidedSaveError(null);
+    requestAnimationFrame(() => editorAnchor.current?.scrollIntoView({ block: 'start', behavior: 'auto' }));
+  }
+  async function createGuidedLibrary(name: string) {
+    const result = await createComponentCollection(name);
+    if (result.ok) {
+      setCollections(previous => previous.some(collection => collection.id === result.id) ? previous : [...previous, { id: result.id, name: result.name, is_bootstrap: false }]);
+      setSelectedCollectionId(result.id);
+      setEditorDirty(true);
+    }
+    return result;
+  }
+  async function saveGuidedComponent() {
+    // Option A: the guided flow saves directly through the same canonical createComponent
+    // pathway as Quick create. No parallel schema, no FormData detour; the payload mirrors
+    // handleCreate exactly, composed from the guided draft + shared editor settings.
+    if (guidedSaving || saving) return;
+    const identity = normaliseIdentity(guidedIdentity);
+    const identityErrors = validateIdentity(identity, selectedCollectionId, collections, needsProductCode(isSupplier, collections, selectedCollectionId));
+    const identityError = identityErrors.name || identityErrors.sku || identityErrors.library;
+    if (identityError) { setGuidedSaveError(identityError); return; }
+    const materialErrors = validateMaterial({ materialRate: guidedMaterialRate, pricingStrategy: formPricingStrategy, packPrice: formPackPrice, packSize: formPackSize }, formMeasurementType, genericTradesEnabled);
+    const materialError = materialErrors.materialRate || materialErrors.packPrice || materialErrors.packSize || materialErrors.pricingStrategy;
+    if (materialError) { setGuidedSaveError(materialError); return; }
+    const labourError = validateLabour({ labourRate: guidedLabourRate });
+    if (labourError) { setGuidedSaveError(labourError); return; }
+    const rulesErrors = validateRules(editorSettings, { wasteAmount: guidedWasteAmount, pitchType: guidedPitchType }, pitchVisible);
+    const rulesError = rulesErrors.wasteAmount || rulesErrors.pitchType;
+    if (rulesError) { setGuidedSaveError(rulesError); return; }
+    if (formWasteType === 'fixed' && guidedWasteAmount.includes('.')) {
+      const decimals = guidedWasteAmount.split('.')[1];
+      if (decimals && decimals.length > 2) { setGuidedSaveError('Reduce your decimal places to two or less (e.g. 0.25)'); return; }
+    }
+    const wasteAmount = Number(guidedWasteAmount) || 0;
+    // database.types.ts has not been regenerated since Phase 2's enum extension; cast at the
+    // boundary exactly like handleCreate. ck_component_library_strategy_compat catches drift.
+    const input: ComponentLibraryInsert = {
+      name: identity.name,
+      component_type: editorInitial.componentType,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      measurement_type: formMeasurementType as any,
+      default_material_rate: Number(guidedMaterialRate) || 0,
+      default_labour_rate: Number(guidedLabourRate) || 0,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      default_waste_type: formWasteType as any,
+      default_waste_percent: formWasteType === 'percent' ? wasteAmount : 0,
+      default_waste_fixed: (formWasteType === 'fixed' || formWasteType === 'fixed_per_segment') ? wasteAmount : 0,
+      default_pitch_type: formPitchEnabled ? guidedPitchType : 'none',
+      eligible_for_orders: editorInitial.eligibleForOrders,
+      flashing_ids: null,
+      sku: identity.sku || null,
+    };
+    const inputWithGenericTrades = genericTradesEnabled
+      ? ({
+          ...input,
+          height_value_mm: (formMeasurementType === 'length_x_height' || formMeasurementType === 'multi_lineal_lxh') && formHeightMm
+            ? Number(formHeightMm)
+            : null,
+          depth_value_mm: formMeasurementType === 'volume' && formDepthMm
+            ? Number(formDepthMm)
+            : null,
+          waste_unit: formWasteUnit,
+          pricing_strategy: formPricingStrategy,
+          pack_price: formPricingStrategy === 'per_unit' || !formPackPrice ? null : Number(formPackPrice),
+          pack_size: formPricingStrategy === 'per_unit' || !formPackSize ? null : Number(formPackSize),
+          pack_coverage_m2:
+            formPricingStrategy === 'per_pack_coverage' && formPackCoverageM2
+              ? Number(formPackCoverageM2)
+              : null,
+          collection_id: selectedCollectionId || null,
+          notes: formNotes.trim() || null,
+          sold_by: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm
+            ? 'lineal'
+            : null,
+          cover_width_mm: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm
+            ? Number(formCoverWidthMm)
+            : null,
+        } as unknown as ComponentLibraryInsert)
+      : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null } as unknown as ComponentLibraryInsert;
+    setGuidedSaving(true); setGuidedSaveError(null);
+    try {
+      const result = await createComponent(inputWithGenericTrades);
+      if (!result.ok) {
+        setGuidedSaveError(result.code === 'internal_error' ? result.message : 'Could not create component.');
+        return;
+      }
+      setComponents((prev) => [...prev, result.data]);
+      setEditorDirty(false);
+      setCreateDefaults(null);
+      setCreatedInSession(true);
+      setLastCreatedId(result.data.id); refreshDemoGuide();
+      setDraftTested(false);
+      setActiveLibraryId(selectedCollectionId);
+      setFilter('all'); setMeasurementFilter('all'); setSearchQuery('');
+      showNotice({ title: 'Component saved', tone: 'success', focus: true,
+        description: `${result.data.name} is saved in your library. Check another component or price a job when your costs are ready.` });
+      setGuidedOpen(false);
+      setGuidedIdentity({ name: '', sku: '' });
+      setGuidedMaterialRate(''); setGuidedLabourRate(''); setGuidedWasteAmount(''); setGuidedPitchType('rafter');
+      setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false); setFormPricingStrategy('per_unit');
+      setFormPackPrice(''); setFormPackSize(''); setFormPackCoverageM2('');
+      setFormHeightMm(''); setFormDepthMm(''); setFormHoursUnit('hr'); setFormWasteUnit('percent'); setFormNotes('');
+      setFormSoldBy('area'); setFormCoverWidthMm('');
+      setAssignedFlashings([]); setSelectedFlashingId('');
+      setRestoredName(''); setRestoredMaterialRate(''); setRestoredLabourRate(''); setRestoredWasteAmount('');
+    } catch (err) {
+      setGuidedSaveError(err instanceof Error ? err.message : 'Failed to create component');
+    } finally {
+      setGuidedSaving(false);
     }
   }
   function componentCostSummary(component: ComponentLibraryRow) {
@@ -1056,13 +1209,9 @@ export function ComponentList({
         </div>
         
         <div className="flex flex-col gap-2 md:flex-row">
-          <button data-qc-variant="primary"
-            onClick={() => { void startNew(); }}
-            data-copilot="add-component"
-            className="qc-button qc-flow-control qc-library-control inline-flex justify-center"
-          >
-            + Create component
-          </button>
+          <ComponentCreationActions disabled={saving}
+            onGuided={() => { void startGuidedIdentity(); }}
+            onQuick={() => { void startNew(); }} />
           <button data-qc-variant="ghost"
             onClick={() => {
               void mayLeaveEditor().then(leave => { if (leave) { cancelEdit(); setShowCatalogModal(true); } });
@@ -1172,6 +1321,36 @@ export function ComponentList({
         </div>
       </div>
 
+      {guidedOpen && <GuidedIdentityDialog
+        value={guidedIdentity} onChange={value => { setGuidedIdentity(value); setEditorDirty(true); }}
+        onDraftInteraction={() => setEditorDirty(true)}
+        libraries={collections} libraryId={selectedCollectionId}
+        onLibraryChange={id => { setSelectedCollectionId(id); setEditorDirty(true); }}
+        onCreateLibrary={createGuidedLibrary} isSupplier={isSupplier}
+        measurement={editorSettings} onMeasurementChange={updateEditorSettings}
+        measurementSystem={companyMeasurementSystem} genericTradesEnabled={genericTradesEnabled}
+        currency={companyCurrency}
+        settings={editorSettings} onSettingsChange={updateEditorSettings}
+        rules={{ wasteAmount: guidedWasteAmount, pitchType: guidedPitchType }}
+        onRulesChange={patch => {
+          if (patch.wasteAmount !== undefined) { setGuidedWasteAmount(patch.wasteAmount); setEditorDirty(true); }
+          if (patch.pitchType !== undefined) { setGuidedPitchType(patch.pitchType); setEditorDirty(true); }
+        }}
+        pitchVisible={pitchVisible} pitchHidesValleyHip={pitchHidesValleyHip}
+        pitchRafterLabel={pitchRafterLabel} pitchCheckboxLabel={pitchCheckboxLabel}
+        labour={{ labourRate: guidedLabourRate }}
+        onLabourChange={patch => { if (patch.labourRate !== undefined) { setGuidedLabourRate(patch.labourRate); setEditorDirty(true); } }}
+        material={{ materialRate: guidedMaterialRate, pricingStrategy: formPricingStrategy, packPrice: formPackPrice, packSize: formPackSize }}
+        onMaterialChange={patch => {
+          if (patch.materialRate !== undefined) { setGuidedMaterialRate(patch.materialRate); setEditorDirty(true); }
+          updateEditorSettings(patch);
+        }}
+        onRequestClose={() => { void closeGuidedIdentity(); }}
+        onUseQuickEditor={() => { void useQuickEditorFromGuided(); }}
+        onGuidedSave={() => { void saveGuidedComponent(); }}
+        guidedSaving={guidedSaving} guidedSaveError={guidedSaveError}
+        componentTypeLabel={editorInitial.componentType}
+      />}
       <div ref={editorAnchor} className="qc-pricing-editor-anchor">
         {(showForm || editingComponent) && (
           <SmartComponentEditor key={`${editingId ?? 'new'}-${editorVersion}`}
