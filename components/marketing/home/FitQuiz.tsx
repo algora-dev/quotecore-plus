@@ -13,13 +13,19 @@ import s from './Homepage.module.css';
  * Q4 heading removed with an orange "Want to speed up your pricing process?",
  * result sub-line removed, CTAs open in new tabs, all-positive tiers,
  * "because" lines from the visitor's own answers, no em dashes in copy.
- * Owner review 2026-10-09 (screenshots): all progress bars share one baseline
- * (clickable hit area extends below the bar, not around it), question text
- * pulled up closer to the bars with a clear gap before the options, both Q4
- * questions orange, "See my result" sits under the right-hand question,
- * result label optically in line with the bars, result headline aligned with
- * question titles, fixed min-height replaced by a measured shrink-to-fit
- * body that smoothly animates between steps so the card never jumps size.
+ * Owner review 2026-10-09 (round 2): all progress bars share one baseline,
+ * question text pulled up closer to the bars with a clear gap before the
+ * options, both Q4 questions orange, "See my result" under the right-hand
+ * question, result label optically in line with the bars, fixed min-height
+ * replaced by a measured shrink-to-fit body.
+ * Owner review 2026-10-09 (round 3, verified in headless Chromium): the
+ * module's scoped reset (.root h1/h2/h3/p { margin: 0 }) out-specifies
+ * single-class rules, so every question/label margin silently computed to
+ * 0. Quiz rules now carry .fitBody + element specificity to win. The Back
+ * slot is reserved on every step (including Q1 and the result) so the
+ * question baseline sits at one identical height on all screens. Body
+ * height is measured from the inner wrapper (scrollHeight floors at
+ * clientHeight, so it could grow but never shrink).
  */
 
 type FitOption = {
@@ -104,13 +110,17 @@ export function FitQuizSection() {
     if (timer.current) window.clearTimeout(timer.current);
   }, []);
 
-  // Shrink-to-fit body: measure the natural content height each step and
-  // animate to it so the card hugs its content instead of holding a fixed
-  // tall min-height (owner review 2026-10-09).
+  // Shrink-to-fit body: measure the inner wrapper's natural height each
+  // step (fitBody.scrollHeight floors at its clientHeight, so it could grow
+  // but never shrink) plus the body's own bottom padding, then animate to it.
   useEffect(() => {
     const el = bodyRef.current;
     if (!el) return;
-    const measure = () => setBodyHeight(el.scrollHeight);
+    const measure = () => {
+      const inner = el.firstElementChild as HTMLElement | null;
+      const padBottom = parseFloat(getComputedStyle(el).paddingBottom) || 0;
+      setBodyHeight((inner?.offsetHeight ?? el.scrollHeight) + padBottom);
+    };
     measure();
     document.fonts?.ready.then(measure).catch(() => {});
     window.addEventListener('resize', measure);
@@ -200,9 +210,11 @@ export function FitQuizSection() {
               </div>
               <div className={s.fitProgressSide}>
                 <span className={s.fitProgressLabel}>{progressLabel}</span>
-                {step > 0 && step < 4 && (
-                  <button type="button" className={s.fitBack} onClick={goBack}>Back</button>
-                )}
+                <span className={s.fitBackSlot}>
+                  {step > 0 && step < 4 && (
+                    <button type="button" className={s.fitBack} onClick={goBack}>Back</button>
+                  )}
+                </span>
               </div>
             </div>
             <div className={s.fitBody} key={step} ref={bodyRef} style={bodyHeight === null ? undefined : { height: bodyHeight }}>

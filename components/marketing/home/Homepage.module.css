@@ -705,7 +705,8 @@
 .fitSegDone { background: #ff8a3d; }
 .fitProgressLabel { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #b8bec9; white-space: nowrap; }
 .fitBody { position: relative; padding: 0 24px 24px; overflow: hidden; transition: height 280ms cubic-bezier(.2, 0, 0, 1); }
-.fitQuestion { font-size: clamp(22px, 2.6vw, 28px); font-weight: 600; line-height: 1.18; letter-spacing: -.035em; margin: 0 0 32px; }
+.fitBody p.fitQuestion { font-size: clamp(22px, 2.6vw, 28px); font-weight: 600; line-height: 1.18; letter-spacing: -.035em; margin: 0 0 32px; }
+/* Selector carries .fitBody + element so it beats the module's scoped reset (.root p { margin: 0 }), which silently zeroed every question-title margin in earlier builds. */
 .fitChoices { display: grid; gap: 10px; }
 .fitChoice { min-width: 0; min-height: 64px; display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 14px 16px; border: 1px solid #7c8798; border-radius: 12px; background: rgba(255, 255, 255, .035); color: #f8fafc; font: inherit; font-size: 15px; font-weight: 600; line-height: 1.35; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 120ms cubic-bezier(.2, 0, 0, 1), background-color 120ms cubic-bezier(.2, 0, 0, 1); }
 .fitChoice:hover { border-color: #ffb36b; }
@@ -719,6 +720,7 @@
 .fitChoice[data-selected='true'] .fitCheck svg { opacity: 1; }
 .fitBack { background: none; border: 0; padding: 0; color: #b8bec9; font: inherit; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
 .fitBack:hover { color: #f8fafc; }
+.fitBackSlot { height: 16px; display: flex; align-items: center; }
 .fitFieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
 .fitDuo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .fitDuoLegend { padding: 0; margin: 0 0 14px; font-size: 14px; font-weight: 650; line-height: 1.4; color: #ffb36b; }
@@ -730,8 +732,8 @@
 .fitContinue { margin-top: 18px; }
 .fitPrimary { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #ff641f; border-radius: 12px; padding: 9px 18px; background: linear-gradient(135deg, #ff641f 0%, #ff8a3d 55%, #ffb36b 100%); color: #191b20; font: inherit; font-size: 14px; font-weight: 600; line-height: 20px; cursor: pointer; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8); -webkit-tap-highlight-color: transparent; }
 .fitPrimary:disabled { opacity: .4; cursor: not-allowed; }
-.fitResultHeadline { font-size: clamp(28px, 3.2vw, 40px); font-weight: 650; line-height: 1.05; letter-spacing: -.045em; margin: -6px 0 12px; }
-.fitBecauseLabel { margin: 22px 0 12px; font-size: 11px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; color: #ffb36b; }
+.fitBody h3.fitResultHeadline { font-size: clamp(28px, 3.2vw, 40px); font-weight: 650; line-height: 1.05; letter-spacing: -.045em; margin: -6px 0 12px; }
+.fitBody p.fitBecauseLabel { margin: 22px 0 12px; font-size: 11px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; color: #ffb36b; }
 .fitBecauseList { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
 .fitBecauseList li { display: flex; gap: 10px; align-items: flex-start; color: #e6e9ee; font-size: 14.5px; line-height: 1.55; }
 .fitBecauseList svg { flex: 0 0 auto; color: #ffb36b; margin-top: 3px; }
