@@ -1,0 +1,14 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {createHash} from 'node:crypto';
+import {decodeRpc,inspectResult,MAX_RPC_BYTES} from '../inspect-response.mjs';
+const b=fs.readFileSync(new URL('../../host-roof-scan-phase1b/fixtures/synthetic-roof.png',import.meta.url));
+const plan={imageId:'fixture',sha256:createHash('sha256').update(b).digest('hex'),width:b.readUInt32BE(16),height:b.readUInt32BE(20),mimeType:'image/png'};
+const refs={version:'qc-host-outline-v1',status:'image_ready',planToken:'secret-do-not-log',plan};
+const img={type:'image',mimeType:'image/png',data:b.toString('base64')};
+const make=()=>({structuredContent:refs,content:[{type:'text',text:JSON.stringify(refs)},img],_meta:{reviewGate:'also-secret'}});
+test('parses only matching JSON-RPC id from JSON',()=>{assert.deepEqual(decodeRpc(JSON.stringify({jsonrpc:'2.0',id:7,result:{a:1}}),7),{a:1});assert.throws(()=>decodeRpc(JSON.stringify({jsonrpc:'2.0',id:8,result:{a:1}}),7));});
+test('parses MCP SSE responses after a notification',()=>{assert.deepEqual(decodeRpc('event: message\ndata: {"jsonrpc":"2.0","method":"ping"}\n\nevent: message\ndata: {"jsonrpc":"2.0","id":7,"result":{"x":1}}\n\n',7),{x:1});});
+test('rejects HTML, malformed SSE, excessive response and RPC errors without leaking response text',()=>{for(const s of ['<html>login private</html>','data: not json\n\n',' '.repeat(MAX_RPC_BYTES+1),JSON.stringify({jsonrpc:'2.0',id:7,error:{code:-1,message:'secret'}})])assert.throws(()=>decodeRpc(s,7),e=>!e.message.includes('secret'));});
+test('inspects exact image bytes and coordinates and emits no private payload',()=>{const r=inspectResult(make());assert.equal(r.sha256,plan.sha256);assert.equal(r.byteLength,b.length);assert.equal(r.hostVisibility,'NOT_TESTED');assert.ok(!JSON.stringify(r).includes('secret'));assert.ok(!JSON.stringify(r).includes(img.data));});
+test('content-only result uses structured references in text',()=>{const a=make();delete a.structuredContent;assert.equal(inspectResult(a).hasStructuredContent,false);});
+test('rejects missing image, extra images, broken base64 and mismatched hashes',()=>{for(const content of [[],[img,img],[{...img,data:'???'}],[{...img,data:'eA=='}]])assert.throws(()=>inspectResult({...make(),content}));});
+test('rejects declared dimensions and MIME that differ from the actual prepared image',()=>{assert.throws(()=>inspectResult({...make(),structuredContent:{...refs,plan:{...plan,width:5}}}));assert.throws(()=>inspectResult({...make(),content:[{...img,mimeType:'image/jpeg'}]}));});

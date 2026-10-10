@@ -21,6 +21,8 @@ export function publicAddress(ip: string): boolean {
     return false;
 }
 export function validateDownloadUrl(value: string, allowedOrigins: readonly string[]): URL {
+    if (/^(?:\/mnt\/|sandbox:|file:|data:|blob:|[a-zA-Z]:[\\/])/.test(value))
+        throw new ScanError('LOCAL_FILE_REFERENCE', 'This is a local or inline file reference, not a transferable HTTPS attachment. QuoteCore+ cannot read the chat sandbox. Upload the image in the review panel.');
     let url: URL;
     try {
         url = new URL(value);

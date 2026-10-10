@@ -2,7 +2,9 @@
 import type { V3Point } from '../../takeoff/ai-prompt-v3';
 export type Point = V3Point;
 export const VERSION = 'qc-host-outline-v1' as const;
-export const RESOURCE_URI = 'ui://quotecore/host-roof-outline-v1b.html';
+// UI resource URIs are cache keys. Refresh the connector after this deployment.
+export const RESOURCE_URI = 'ui://quotecore/host-roof-outline-v2-image-delivery.html';
+export const DELIVERY_VERSION = 'qc-image-delivery-v2' as const;
 export const LIMITS = Object.freeze({
     uploadBytes: 3 * 1024 * 1024,
     imageBytes: 2 * 1024 * 1024,

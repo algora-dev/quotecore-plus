@@ -12,7 +12,7 @@ const origin=stagingOrigin(process.env.QC_STAGE_ORIGIN,true);
 const isolated=flags.has('--isolated'),enabled=flags.has('--expect-enabled');
 if (isolated&&!enabled) throw new Error('For flag-off tests use the existing main endpoint.');
 const endpoint=origin+(isolated?'/mcp/host-scan':'/mcp');
-const resource='ui://quotecore/host-roof-outline-v1b.html';
+const resource='ui://quotecore/host-roof-outline-v2-image-delivery.html';
 const extra=process.env.QC_STAGE_PROTECTION_BYPASS?{'x-vercel-protection-bypass':process.env.QC_STAGE_PROTECTION_BYPASS}:{};
 let id=0,protocol='2025-03-26';
 async function call(method,params={},notification=false) {
@@ -31,19 +31,19 @@ const init=await call('initialize',{protocolVersion:protocol,capabilities:{exten
 console.log('PASS initialize:',init.serverInfo.name,'protocol',protocol);await call('notifications/initialized',{},true);
 const list=await call('tools/list');const names=list.tools.map(t=>t.name);assert.equal(new Set(names).size,names.length);
 const legacy=['get_roof_takeoff_schema','calculate_roof_takeoff','get_calculation_result'];
-const host=['qc_prepare_roof_outline','qc_submit_roof_outline','qc_open_roof_outline_review','qc_export_reviewed_roof_outline'];
+const host=['qc_prepare_roof_outline','qc_submit_roof_outline','qc_open_roof_outline_review','qc_export_reviewed_roof_outline','qc_get_roof_outline_image'];
 const expected=isolated?host:enabled?[...legacy,...host]:legacy;assert.deepEqual([...names].sort(),expected.sort());console.log('PASS tools/list:',names.join(', '));
 if(!isolated){
  const schema=await tool('get_roof_takeoff_schema',{});assert.ok(schema.structuredContent.calculationVersion);
  const input={mode:'actual',units:'metric',area:100,ridges:[10],spouting:[20]};
  const calculation=await tool('calculate_roof_takeoff',input);assert.equal(calculation.structuredContent.status,'complete');
  const resultUrl=calculation.structuredContent.resultUrl;assert.equal(new URL(resultUrl).origin,origin);
- const reread=await tool('get_calculation_result',{resultUrl});assert.deepEqual(reread.structuredContent,calculation.structuredContent);
+ const reread=await tool('get_calculation_result',{resultUrl});const {timestamp:smokeReadStamp,...smokeRead}=reread.structuredContent;const {timestamp:smokeCalcStamp,...smokeCalc}=calculation.structuredContent;assert.deepEqual(smokeRead,smokeCalc);
  const foreign=await call('tools/call',{name:'get_calculation_result',arguments:{resultUrl:'https://other.example/free-roofing-takeoff-builder/calculate?area=100'}});assert.equal(foreign.isError,true);
  console.log('PASS original three tools, deterministic result URL round-trip and foreign-URL rejection');
 }
 if(enabled){
- const prep=list.tools.find(t=>t.name===host[0]);assert.deepEqual([...prep._meta['openai/fileParams']],['plan']);assert.ok(prep.outputSchema);
+ const prep=list.tools.find(t=>t.name===host[0]);assert.deepEqual([...prep._meta['openai/fileParams']],['plan']);assert.ok(prep.outputSchema);assert.equal(list.tools.find(t=>t.name==='qc_get_roof_outline_image').outputSchema,undefined);
  const resources=await call('resources/list');assert.ok(resources.resources.some(r=>r.uri===resource));
  const r=await call('resources/read',{uri:resource});assert.equal(r.contents[0].mimeType,'text/html;profile=mcp-app');assert.match(r.contents[0].text,/Review your roof outline/);assert.ok(r.contents[0]._meta.ui.csp.connectDomains.includes(origin));
  const blank=await tool('qc_open_roof_outline_review',{});assert.equal(blank.structuredContent.status,'awaiting_image');assert.equal(blank.structuredContent.resultUrl,origin+'/mcp/host-scan/review');
@@ -57,13 +57,14 @@ if(flags.has('--exercise')){
  assert.equal(upload.status,200);const u=await upload.json(),planToken=u.structuredContent.planToken;assert.ok(planToken);
  try{
   const prepared=await tool(host[0],{planToken});const image=prepared.content.find(x=>x.type==='image');assert.ok(image);assert.equal(createHash('sha256').update(Buffer.from(image.data,'base64')).digest('hex'),prepared.structuredContent.plan.sha256);
+  const contentOnly=await tool('qc_get_roof_outline_image',{planToken});assert.equal(contentOnly.structuredContent,undefined);assert.equal(contentOnly.content.find(c=>c.type==='image').data,image.data);
   const submitted=await tool(host[1],{planToken,observedImageId:prepared.structuredContent.plan.imageId,outcome:'proposed',roof_areas:[shape],notes:['Synthetic software test. No model analysis.']});
   const proposalToken=submitted.structuredContent.proposalToken;
   const opened=await tool(host[2],{planToken,proposalToken});assert.ok(opened._meta.reviewGate);assert.equal(opened.structuredContent.reviewGate,undefined);
   const denied=await call('tools/call',{name:host[3],arguments:{reviewToken:proposalToken}});assert.equal(denied.isError,true);
   const confirmation=await api('confirm',{planToken,proposalToken,reviewGate:opened._meta.reviewGate,outline:shape,calibration:null,confirmed:true});
   const exported=await tool(host[3],{reviewToken:confirmation.structuredContent.reviewToken});assert.deepEqual(exported.structuredContent.export.scanData.roof_areas[0].points,shape.points);assert.equal(exported.structuredContent.measurements,null);
-  console.log('PASS full synthetic prepare/submit/review/export, model-visible image hash, unreviewed-export rejection');
+  console.log('PASS full synthetic prepare/submit/review/export, serialized image hash (host visibility untested), unreviewed-export rejection');
  } finally {await api('delete',{planToken});console.log('PASS synthetic image deleted');}
 }
 console.log('Software smoke completed. Live host vision, real human review and measurement accuracy are NOT proven by this test.');

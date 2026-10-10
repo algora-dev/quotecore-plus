@@ -30,6 +30,7 @@ export const inputShapes = {
         plan: file.optional().describe('User-supplied image file. Supply this OR planToken, never both.'),
         planToken: token.optional().describe('Temporary reference from the upload panel. Supply this OR plan.'),
     },
+    qc_get_roof_outline_image: { planToken: token.describe('Use the same planToken returned by prepare. Returns that exact image as content only.') },
     qc_submit_roof_outline: {
         planToken: token, observedImageId: z.string().max(80),
         outcome: z.enum(['proposed', 'unable_to_identify']),

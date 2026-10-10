@@ -16,12 +16,17 @@ const annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint
 const meta = { securitySchemes: [{ type: 'noauth' }] };
 export const HOST_OUTLINE_TOOLS = [
     { name: 'qc_prepare_roof_outline', title: 'Prepare a roof image for host AI review',
-        description: 'Experimental roof outline only. First use this with a user-provided roof-plan PNG, JPEG or WebP, or a planToken from the upload panel. Returns the canonical raster as MCP image content plus the existing QuoteCore+ tracing instructions. YOU, the host model, inspect the image and propose coordinates via qc_submit_roof_outline. QuoteCore+ does not run an AI inference call. PDF files must first be exported as an image. Never invent scale or pitch.',
+        description: 'Experimental roof outline only. First use this with a user-provided roof-plan PNG, JPEG or WebP, or a planToken from the upload panel. Returns the canonical raster as MCP image content plus the existing QuoteCore+ tracing instructions. image_ready is server preparation only, not verified model visibility. If pixels are missing, call qc_get_roof_outline_image once, then offer the review-panel prepared-image fallback. YOU, the host model, inspect the image and propose coordinates via qc_submit_roof_outline. QuoteCore+ does not run an AI inference call. PDF files must first be exported as an image. Never invent scale or pitch.',
         inputSchema: { type: 'object' as const, properties: {
                 plan: { type: 'object', properties: { download_url: { type: 'string', maxLength: 8192 }, file_id: { type: 'string', maxLength: 512 }, mime_type: { type: 'string', maxLength: 100 }, file_name: { type: 'string', maxLength: 255 } }, required: ['download_url', 'file_id'], additionalProperties: false }, planToken: token,
             }, oneOf: [{ required: ['plan'], not: { required: ['planToken'] } }, { required: ['planToken'], not: { required: ['plan'] } }], additionalProperties: false },
         securitySchemes: [{ type: 'noauth' }], outputSchema: OUTPUT_SCHEMA, annotations: { ...annotations, readOnlyHint: false, idempotentHint: false, openWorldHint: true },
-        _meta: { ...meta, 'openai/fileParams': ['plan'], 'openai/toolInvocation/invoking': 'Preparing roof image', 'openai/toolInvocation/invoked': 'Image ready for host analysis' },
+        _meta: { ...meta, 'openai/fileParams': ['plan'], 'openai/toolInvocation/invoking': 'Preparing roof image', 'openai/toolInvocation/invoked': 'Image prepared; visibility unverified' },
+    },
+    { name: 'qc_get_roof_outline_image', title: 'View the exact prepared roof image',
+        description: 'Use once after qc_prepare_roof_outline when only metadata is visible. Returns the SAME canonical raster and tracing references as text plus image content, without structuredContent or an output schema. Does not run AI, re-encode, crop or resize. If the image remains invisible, open the review panel so the user can share or attach the exact prepared image. Never guess coordinates from metadata.',
+        inputSchema: { type: 'object' as const, properties: { planToken: token }, required: ['planToken'], additionalProperties: false },
+        securitySchemes: [{ type: 'noauth' }], annotations, _meta: { ...meta, 'openai/toolInvocation/invoking': 'Retrieving prepared roof image', 'openai/toolInvocation/invoked': 'Prepared image returned' },
     },
     { name: 'qc_submit_roof_outline', title: 'Validate a host-proposed roof outline',
         description: 'After qc_prepare_roof_outline, send one exterior polygon in the EXACT prepared image pixel frame. This validates geometry and returns a reviewable proposal, not a certified measurement. Use outcome unable_to_identify with an empty roof_areas array when the image cannot be read. Never hallucinate geometry. Next call qc_open_roof_outline_review; only the human review UI can confirm.',
@@ -29,7 +34,7 @@ export const HOST_OUTLINE_TOOLS = [
         securitySchemes: [{ type: 'noauth' }], outputSchema: OUTPUT_SCHEMA, annotations, _meta: { ...meta, 'openai/toolInvocation/invoking': 'Checking roof outline', 'openai/toolInvocation/invoked': 'Outline requires your review' },
     },
     { name: 'qc_open_roof_outline_review', title: 'Review or manually trace the roof outline',
-        description: 'Opens the editable QuoteCore+ outline review canvas. Pass planToken and proposalToken from the preceding tools, or call with no arguments to show the upload panel. It supports manual correction and optional known-length calibration. Human confirmation is required. Do not claim a proposal is accepted. No account edits, internal component scans, quotes or paid AI calls.',
+        description: 'Opens the editable QuoteCore+ outline review canvas. Pass planToken and proposalToken from the preceding tools, or call with no arguments to show the upload panel. It supports manual correction and optional known-length calibration. Human confirmation is required. Always show the returned resultUrl when the embedded editor is absent. Do not claim a proposal is accepted. No account edits, internal component scans, quotes or paid AI calls.',
         inputSchema: { type: 'object' as const, properties: { planToken: token, proposalToken: token }, additionalProperties: false },
         securitySchemes: [{ type: 'noauth' }], outputSchema: OUTPUT_SCHEMA, annotations, _meta: { ...meta, ui: { resourceUri: RESOURCE_URI, visibility: ['model', 'app'] }, 'openai/outputTemplate': RESOURCE_URI, 'openai/widgetAccessible': true, 'openai/toolInvocation/invoking': 'Opening outline review', 'openai/toolInvocation/invoked': 'Review your roof outline' },
     },
@@ -43,7 +48,8 @@ export const SERVER_INSTRUCTIONS = [
     'QuoteCore+ host-powered roof outline prototype. No AI inference is made by this server.',
     'For a user-provided plan: qc_prepare_roof_outline -> inspect the returned canonical image -> qc_submit_roof_outline -> qc_open_roof_outline_review -> human review -> qc_export_reviewed_roof_outline.',
     'If no usable raster is supplied, open the review panel for upload. Do not fabricate file URLs or image coordinates.',
-    'Never substitute a tool description or image URL for actually viewing the model-visible image content. If the host cannot view that content, explain the limitation and use manual tracing.',
+    'Never substitute a tool description or image URL for visible pixels. If prepare only returns metadata, try qc_get_roof_outline_image once. If pixels remain unavailable, show the review link and ask the user to share or attach the exact prepared image. Do not repeat prepare in a loop. Manual tracing is always available.',
+    'A matching canonical file directly attached by the user is valid input. Never normalize an unrelated original or thumbnail by guessing its size, crop or orientation.',
     'Keep all proposals unverified until the user reviews. Never make claims about model-tier accuracy, automatic billing transfer, benchmark superiority, pitch or unseen roof components.',
     'Only outline analysis is implemented. This is not the nine-tool public plugin and it is not the paid AI Scan Assist endpoint.',
 ].join(' ');

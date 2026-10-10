@@ -3,6 +3,7 @@
 import {test,after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 
 process.env.NODE_ENV='test';delete process.env.VERCEL;process.env.VERCEL_ENV='preview';
 process.env.QC_HOST_SCAN_ORIGIN='http://127.0.0.1:3777';process.env.QC_HOST_SCAN_STORAGE='memory';
@@ -36,26 +37,35 @@ test('actual SDK: flag-off initialize and three original tools only',async()=>{
  const c=await tool('calculate_roof_takeoff',{mode:'actual',units:'metric',area:100,ridges:[10]});assert.equal(c.structuredContent.status,'complete');
  const r=await tool('get_calculation_result',{resultUrl:c.structuredContent.resultUrl});const {timestamp:offStamp,...offRead}=r.structuredContent;const {timestamp:offCalc,...offResult}=c.structuredContent;assert.deepEqual(offRead,offResult);
 });
-test('actual SDK: seven tools plus one versioned UI resource when opted in',async()=>{
+test('actual SDK: eight tools plus one versioned UI resource when opted in',async()=>{
  process.env.QC_HOST_SCAN_ENABLED='true';process.env.QC_HOST_SCAN_ON_MAIN_MCP='true';
- const list=await rpc(root,'tools/list');assert.equal(list.tools.length,7);assert.equal(new Set(list.tools.map(t=>t.name)).size,7);
- for(const t of list.tools.filter(t=>t.name.startsWith('qc_')))assert.ok(t.outputSchema);
+ const list=await rpc(root,'tools/list');assert.equal(list.tools.length,8);assert.equal(new Set(list.tools.map(t=>t.name)).size,8);
+ for(const t of list.tools.filter(t=>t.name.startsWith('qc_')))assert.equal(Boolean(t.outputSchema),t.name!=='qc_get_roof_outline_image');
  const file=list.tools.find(t=>t.name==='qc_prepare_roof_outline');assert.deepEqual(file._meta['openai/fileParams'],['plan']);
  const resources=await rpc(root,'resources/list');assert.equal(resources.resources.length,1);
  const html=await rpc(root,'resources/read',{uri:resources.resources[0].uri});assert.match(html.contents[0].text,/Review your roof outline/);
- const blank=await tool('qc_open_roof_outline_review',{});assert.equal(blank.structuredContent.status,'awaiting_image');assert.ok(blank.structuredContent.resultUrl);
+ const blank=await tool('qc_open_roof_outline_review',{});assert.equal(blank.structuredContent.status,'awaiting_image');assert.ok(blank.structuredContent.resultUrl);assert.ok(blank.content.some(c=>c.type==='text'&&c.text.includes(blank.structuredContent.resultUrl)));assert.match(resources.resources[0].uri,/v2-image-delivery/);
 });
 test('actual SDK: original calculation remains unchanged with new tools enabled',async()=>{
  const c=await tool('calculate_roof_takeoff',{mode:'actual',units:'metric',area:100,ridges:[10]});const r=await tool('get_calculation_result',{resultUrl:c.structuredContent.resultUrl});const {timestamp:cStamp,...calcResult}=c.structuredContent;const {timestamp:rStamp,...readResult}=r.structuredContent;assert.deepEqual(calcResult,readResult);
  const bad=await tool('get_calculation_result',{resultUrl:'https://evil.test/free-roofing-takeoff-builder/calculate'});assert.equal(bad.isError,true);
 });
-test('actual SDK: standalone endpoint uses same four tools',async()=>{const a=await rpc(isolated,'tools/list'),b=await rpc(root,'tools/list');assert.deepEqual(a.tools,b.tools.filter(t=>t.name.startsWith('qc_')));});
+test('actual SDK: standalone endpoint uses same five tools',async()=>{const a=await rpc(isolated,'tools/list'),b=await rpc(root,'tools/list');assert.deepEqual(a.tools,b.tools.filter(t=>t.name.startsWith('qc_')));});
 test('actual SDK: notifications and method guards have proper HTTP status',async()=>{const n=await root.POST(req('/mcp',{jsonrpc:'2.0',method:'notifications/initialized'}));assert.equal(n.status,202);const g=await root.GET(new Request('http://127.0.0.1:3777/mcp'));assert.equal(g.status,405);assert.equal(root.OPTIONS().status,204);});
 test('actual SDK: prepare/submit/open/export through combined endpoint with synthetic geometry',async()=>{
  const image=await fs.readFile(new URL('../fixtures/synthetic-roof.png',import.meta.url));const outline=JSON.parse(await fs.readFile(new URL('../fixtures/outline.json',import.meta.url),'utf8'));
  const up=await review.POST(new Request('http://127.0.0.1:3777/api/public/host-roof-scan',{method:'POST',headers:{'Content-Type':'image/png'},body:image}));assert.equal(up.status,200);const uploaded=await up.json();const planToken=uploaded.structuredContent.planToken;
  try{
   const p=await tool('qc_prepare_roof_outline',{planToken});assert.ok(!p.isError);assert.ok(p.content.some(c=>c.type==='image'));
+  const image=p.content.find(c=>c.type==='image');
+  assert.match(image.mimeType,/^image\/(png|jpeg)$/);const bytes=Buffer.from(image.data,'base64');
+  assert.equal(bytes.toString('base64'),image.data);assert.equal(createHash('sha256').update(bytes).digest('hex'),p.structuredContent.plan.sha256);
+  const metadata=await (await import('sharp')).default(bytes).metadata();assert.equal(metadata.width,p.structuredContent.plan.width);assert.equal(metadata.height,p.structuredContent.plan.height);
+  const reader=await tool('qc_get_roof_outline_image',{planToken});assert.equal('structuredContent' in reader,false);assert.equal(reader.content.find(c=>c.type==='image').data,image.data);
+  const refs=reader.content.filter(c=>c.type==='text').map(c=>{try{return JSON.parse(c.text);}catch{return null;}}).find(c=>c?.planToken);
+  assert.equal(refs.planToken,planToken);assert.equal(refs.plan.sha256,p.structuredContent.plan.sha256);assert.equal(reader._meta['quotecore/imageDelivery'].hostVisibility,'not_verified');
+  const badReader=await tool('qc_get_roof_outline_image',{planToken:'invalid-token-long-enough'});assert.equal(badReader.isError,true);assert.equal('structuredContent' in badReader,false);assert.ok(badReader.content.some(c=>c.text?.includes('/mcp/host-scan/review')));
+
   const s=await tool('qc_submit_roof_outline',{planToken,observedImageId:p.structuredContent.plan.imageId,outcome:'proposed',roof_areas:[outline],notes:['Synthetic, not AI.']});assert.ok(!s.isError);const proposalToken=s.structuredContent.proposalToken;
   const o=await tool('qc_open_roof_outline_review',{planToken,proposalToken});assert.ok(o._meta.reviewGate);
   const bad=await tool('qc_export_reviewed_roof_outline',{reviewToken:proposalToken});assert.equal(bad.isError,true);
