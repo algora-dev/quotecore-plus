@@ -36,7 +36,7 @@ export const GLOBAL_BANK_POLICY = Object.freeze({
 });
 export interface GlobalBankTrial {
   id:string; primaryBankIds:string[]; seedFaceId:string; preferredReceiverFaceId?:string;
-  registrationVariant:number; valid:boolean; eligible:boolean; reason:string;
+  registrationVariant:number; reserveValleyReceivers?:boolean; valid:boolean; eligible:boolean; reason:string;
   newSheets?:number; linealM?:number; coverM2?:number; workflowScore?:number;
   layoutId?:string; errors?:string[];
 }
@@ -110,7 +110,7 @@ interface BankOpportunity {id:string;faces:RoofFace[];leader:RoofFace;length:num
  * and opposite/adjacent direction pairs. Explicit user locks remain effective.
  * No fixture face IDs, component names, cardinal labels or desired waste target.
  */
-export function donorVariants(r:SolveRequest,incumbent:Solution):BankSearchVariant[] {
+export function donorVariants(r:SolveRequest,incumbent:Solution,comparison=false,maximumVariants:number=GLOBAL_BANK_POLICY.maximumVariants,attempt=0):BankSearchVariant[] {
   const banks=buildMaterialBanks(r);
   const length=(f:RoofFace)=>{const frame=frameFor(f,r.roof),ys=f.polygon.map(p=>sceneToSurface(p,frame).y);return Math.max(...ys)-Math.min(...ys);};
   const eligible:BankOpportunity[]=banks.map(b=>{
@@ -143,7 +143,24 @@ export function donorVariants(r:SolveRequest,incumbent:Solution):BankSearchVaria
   for(const bs of portfolios.slice(1))make(bs,0,-1);
   for(const bs of portfolios)make(bs,1,0);
   for(const bs of portfolios.slice(0,4))make(bs,0,1,true);
-  const keys=new Set<string>();return out.filter(v=>{const k=JSON.stringify([v.primaryBankIds,v.seedFaceId,v.registrationVariant,v.preferredReceiverFaceId]);if(keys.has(k))return false;keys.add(k);return true;}).slice(0,GLOBAL_BANK_POLICY.maximumVariants);
+  // The comparison pass explores both decisions: reserve coupled valley arms
+  // for their own receivers OR make them available to competing destinations.
+  // These are reversible complete-tree candidates, not a global forced rule.
+  if(comparison){
+    const reserved=out.slice(0,12).map(v=>({...v,reserveValleyReceivers:true}));
+    const mixed:BankSearchVariant[]=[];
+    for(let i=0;i<out.length;i++){if(reserved[i])mixed.push(reserved[i]);mixed.push(out[i]);}
+    // Try the opposite donor seed early, rather than spending the whole budget
+    // on receiver tweaks from one seed. This is geometry-driven scheduling, not
+    // a fixture face rule. The candidate set is unchanged.
+    const swaps=mixed.filter(v=>v.primaryBankIds.length>1&&v.primaryBankIds.join('|')===out[0].primaryBankIds.join('|')&&v.seedFaceId!==out[0].seedFaceId);
+    const diverse=[mixed[0],...swaps,...mixed.slice(1).filter(v=>!swaps.includes(v))];
+    mixed.splice(0,mixed.length,...diverse);
+    // Later attempts rotate the deterministic strategy list, never the geometry.
+    const rotate=attempt?Math.min(mixed.length-1,(attempt*7)%mixed.length):0;
+    out.splice(0,out.length,...mixed.slice(rotate),...mixed.slice(0,rotate));
+  }
+  const keys=new Set<string>();return out.filter(v=>{const k=JSON.stringify([v.primaryBankIds,v.seedFaceId,v.registrationVariant,v.preferredReceiverFaceId,!!v.reserveValleyReceivers]);if(keys.has(k))return false;keys.add(k);return true;}).slice(0,maximumVariants).map((v,i)=>({...v,id:`portfolio-${i+1}`}));
 }
 
 /** Same contract as the full draft validator, checked before candidate ranking.
@@ -188,10 +205,10 @@ export function searchGlobalBanks(r:SolveRequest,incumbent:Solution,validate:(s:
   });
   const stranded=ledger.terminalReusableAreaM2>=GLOBAL_BANK_POLICY.reusableOpportunityM2&&
     incumbent.metrics.wasteMm2>incumbent.metrics.netRoofMm2*GLOBAL_BANK_POLICY.excessOpportunityFraction;
-  if(!fragmented&&!stranded&&goal!=='less-material')return finish();
-  const variants=donorVariants(r,incumbent);report.variantsPlanned=variants.length;
+  if(!fragmented&&!stranded&&goal!=='less-material'&&!hooks.portfolioSearch)return finish();
+  const variants=donorVariants(r,incumbent,!!hooks.portfolioSearch,hooks.portfolioSearch?.maximumVariants??GLOBAL_BANK_POLICY.maximumVariants,hooks.portfolioSearch?.attempt??0);report.variantsPlanned=variants.length;
   report.status='kept-incumbent';report.reason='no-valid-worthwhile-portfolio';
-  const limit=Math.min(GLOBAL_BANK_POLICY.maximumMilliseconds,r.settings.globalBankMaxMilliseconds??GLOBAL_BANK_POLICY.defaultMilliseconds);
+  const limit=hooks.portfolioSearch?Math.max(0,Math.min(20_000,hooks.portfolioSearch.milliseconds)):Math.min(GLOBAL_BANK_POLICY.maximumMilliseconds,r.settings.globalBankMaxMilliseconds??GLOBAL_BANK_POLICY.defaultMilliseconds);
   const check=()=>{if(hooks.shouldCancel?.())throw new Error('Offcut search cancelled.');if(now()-started>=limit||performance.now()-wallStarted>=limit)throw new GlobalDeadline();};
   const candidates:Solution[]=[],signatures=new Set<string>();
   for(const variant of variants){
@@ -213,6 +230,9 @@ export function searchGlobalBanks(r:SolveRequest,incumbent:Solution,validate:(s:
       const q=planQuality(candidate);Object.assign(trial,{newSheets:q.newSheets,linealM:q.suppliedMm2/width/1000,coverM2:q.suppliedMm2/width*r.profile.coverMm/1e6,
         workflowScore:coherentWorkflow(candidate).score,layoutId:planSignature(candidate),eligible:assessment.accepted,reason:assessment.reason});
       candidate.layoutId=trial.layoutId;candidate.objective=goal;candidate.layoutLabel=goal==='less-material'?'Less material':'Recommended';
+      // Complete cuts which fail a workflow preference are comparison data, not
+      // physically invalid metal. Retain them before the Recommended gate.
+      hooks.onPortfolioCandidate?.(candidate);
       if(!assessment.accepted||signatures.has(trial.layoutId!))continue;
       signatures.add(trial.layoutId!);
       candidate.decisionTrace?.events.push({step:candidate.decisionTrace.events.length+1,action:'coordinated-donor-candidate',
@@ -221,7 +241,7 @@ export function searchGlobalBanks(r:SolveRequest,incumbent:Solution,validate:(s:
       candidates.push(candidate);
     }catch(e){
       if(e instanceof GlobalDeadline){report.budgetReached=true;trial.reason='bounded-global-search-deadline';break;}
-      if(e instanceof Error&&/cancelled|limit reached/i.test(e.message))throw e;
+      if(e instanceof Error&&(e.name==='PortfolioDeadline'||/cancelled|limit reached/i.test(e.message)))throw e;
       // An infeasible source portfolio (for example a maximum-length violation)
       // is a rejected candidate. Never turn it into an unvalidated result.
       trial.reason='candidate-rejected';trial.errors=[e instanceof Error?e.message:String(e)];

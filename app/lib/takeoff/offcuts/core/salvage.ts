@@ -104,7 +104,7 @@ export function searchSalvage(request:SolveRequest,base:Solution,hooks:SearchHoo
       baseObjective:base.objective,baseLabel:base.layoutLabel??'Recommended',baseEngineVersion:base.engineVersion,groups:structuredClone(plan),
       savedSheets:plan.reduce((n,g)=>n+g.savedSheets,0),savedLinealM:plan.reduce((n,g)=>n+g.savedLinealM,0),
       savedCoverAreaM2:plan.reduce((n,g)=>n+g.savedCoverAreaM2,0),setoutBasis:'preserve-base-source-cuts-and-laps'};
-    next.salvage=cert;next.engineVersion='2.22';next.layoutId=planSignature(next);
+    next.salvage=cert;next.engineVersion='2.23';next.layoutId=planSignature(next);
     next.layoutLabel=(base.objective==='simpler'?'Simpler cuts':base.objective==='less-material'?'Less material':'Recommended')+' + more reuse';
     delete next.comparison; // Base strategy comparison is not this explicit salvage comparison.
     const errors=validateSolution(next).filter(i=>i.severity==='error');
@@ -114,7 +114,7 @@ export function searchSalvage(request:SolveRequest,base:Solution,hooks:SearchHoo
     const ledger=rootSheetLedger(next);if(!ledger.valid){reject('ledger');continue;}
     next.issues=base.issues.filter(i=>i.severity!=='error');next.status='prototype-review';next.orderReady=false;
     if(next.decisionTrace){
-      next.decisionTrace.engineVersion='2.22';next.decisionTrace.historic=true;
+      next.decisionTrace.engineVersion='2.23';next.decisionTrace.historic=true;
       next.decisionTrace.events.push({step:next.decisionTrace.events.length+1,action:'optional-terminal-filler-salvage',message:'Explicit preview: original plan is preserved. Only unused cuts replace non-donor rectangular filler runs.',
         faceIds:plan.map(g=>g.destinationFaceId),data:{certificate:cert,sourcePlanKept:true,searchScope:'terminal-straight-fillers-only'}});
       next.decisionTrace.events.push({step:next.decisionTrace.events.length+1,action:'final-purchase-ledger',message:'Current quantities after the optional filler substitutions; all parent purchases count once.',data:{quantities:ledger.totals}});

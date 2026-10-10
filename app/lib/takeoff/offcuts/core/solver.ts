@@ -21,6 +21,13 @@ export function facesRevision(request: SolveRequest): string {
   return fingerprint({ faces: request.faces, profile: request.profile, settings: request.settings });
 }
 export interface SearchHooks {
+  /** Final physical candidates retained for an explicit comparison, BEFORE
+   * aesthetic/workflow preference gates. The consumer must validate the full
+   * draft again before publishing. Never used to bypass a physical rejection. */
+  onPortfolioCandidate?: (solution: Solution) => void;
+  /** Effort for the optional comparison pass; not a roofing/fit tolerance. */
+  portfolioSearch?: { milliseconds: number; maximumVariants: number; attempt?: number };
+
   /** Internal structural candidate; never alters reviewed geometry/profile rules. */
   bankVariant?: BankSearchVariant;
   onStage?: (stage: CalculationStage) => void;
@@ -41,7 +48,7 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
   for (const solution of solutions) {
     hooks.onStage?.('receiver-safety');
     if(request.settings.stockMode==='bank-first')protectValleyReceivers(request,solution,hooks.shouldCancel);
-    solution.engineVersion='2.22';
+    solution.engineVersion='2.23';
     solution.layoutId=planSignature(solution);
     hooks.onStage?.('physical-validation');
     solution.issues.push(...(request.settings.stockMode==='bank-first'?validateGlobalInput(request,solution,validateSolution):validateSolution(solution)));
@@ -74,7 +81,7 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
     const refined=refinePurchasedStock(request,s,validateSolution,hooks),selected=refined.solution;
     selected.stockLengthRefinement=refined.report;selected.search.elapsedMs+=refined.report.elapsedMs;
     if(selected.decisionTrace){
-      selected.decisionTrace.engineVersion='2.22';
+      selected.decisionTrace.engineVersion='2.23';
       selected.decisionTrace.events.push({step:selected.decisionTrace.events.length+1,action:'end-specific-stock-refinement',
         message:refined.report.status==='improved'?'Removed unused square-ended stock; complete offcut families, descendants, lap and receiver certificates unchanged.':'Retained the checked purchase schedule; no unverified shorter blank can replace it.',data:{report:refined.report}});
     }
@@ -143,6 +150,7 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
       data:{assessment:materialAssessments.get(s)}});
     s.decisionTrace.events.push({step:s.decisionTrace.events.length+1,action:'final-purchase-ledger',message:'Final quantities after receiver safety. The selected score is final; other bank-search candidate scores are identified as pre-refinement.',data:{quality,quantities:rootSheetLedger(s).totals}});
   }
+  for(const s of solutions)if(s.status!=='invalid')hooks.onPortfolioCandidate?.(s);
   if(solutions[0]?.decisionTrace)hooks.onDecisionTrace?.(solutions[0].decisionTrace);
   const seen=new Set<string>();
   return solutions.filter(s=>{const k=planSignature(s);if(seen.has(k))return false;seen.add(k);return true;});

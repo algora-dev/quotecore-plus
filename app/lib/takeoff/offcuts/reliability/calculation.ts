@@ -1,7 +1,7 @@
 import {recoveryId} from './id';
-import { CALCULATION_LIMIT_MS, WORKER_PROTOCOL, STAGE_LABELS, checkedPlanMatches, isStage, requestFingerprint,
+import { CALCULATION_LIMIT_MS, WORKER_PROTOCOL, STAGE_LABELS, checkedPlanMatches, checkedPortfolioMatches, isStage, requestFingerprint,
   solutionFingerprint, type CalculationJournal, type CalculationKind, type CheckedPlan, type WorkerMessage, type WorkerRequest } from './protocol';
-import type { SolveRequest } from '../core/types';
+import type { Solution, SolveRequest } from '../core/types';
 export interface WorkerPort {
   onmessage:((event:MessageEvent)=>void)|null; onerror:((event:ErrorEvent)=>void)|null;
   onmessageerror:((event:MessageEvent)=>void)|null; postMessage(value:unknown):void; terminate():void;
@@ -15,13 +15,14 @@ export interface CalculationCallbacks {
  * worker is stuck inside a synchronous geometry routine. Never reset on progress. */
 export class CalculationController {
   private port:WorkerPort|null=null; private timer:ReturnType<typeof setTimeout>|null=null;
+  private portfolioReference:Solution|undefined;
   private started=0; private finished=false; private fallback:CheckedPlan|null=null;
   private state:CalculationJournal;
   constructor(private request:SolveRequest,kind:CalculationKind,private callbacks:CalculationCallbacks,
     private limitMs=CALCULATION_LIMIT_MS,runId:string=recoveryId()) {
     const at=new Date().toISOString();
     this.limitMs=Number.isFinite(limitMs)?Math.max(1,Math.min(120_000,limitMs)):CALCULATION_LIMIT_MS;
-    this.state={schemaVersion:1,runId,engineVersion:'2.22',kind,status:'saving',stage:'saving-input',startedAt:at,updatedAt:at,
+    this.state={schemaVersion:1,runId,engineVersion:'2.23',kind,status:'saving',stage:'saving-input',startedAt:at,updatedAt:at,
       elapsedMs:0,limitMs:this.limitMs,requestFingerprint:requestFingerprint(request),completed:0,total:0,
       checkedFallbackAvailable:false,message:STAGE_LABELS['saving-input'],events:[]};
   }
@@ -31,8 +32,9 @@ export class CalculationController {
     if(message){this.state.message=message;this.state.events.push({at:this.state.updatedAt,stage:this.state.stage,message});this.state.events=this.state.events.slice(-60);}
     this.callbacks.progress(this.journal());
   }
-  start(create:()=>WorkerPort,extras:Pick<WorkerRequest,'alternative'|'salvage'>={}):void {
+  start(create:()=>WorkerPort,extras:Pick<WorkerRequest,'alternative'|'salvage'|'portfolio'>={}):void {
     if(this.finished||this.port)return;
+    this.portfolioReference=extras.portfolio?.previous;
     this.started=performance.now();this.state.status='running';this.state.stage='starting-worker';
     try {
       this.notify(STAGE_LABELS[this.state.stage]);this.port=create();
@@ -61,10 +63,12 @@ export class CalculationController {
       this.state.checkedFallbackAvailable=true;this.notify();return;
     }
     if(m.kind==='error'){this.fail(m.code==='CALCULATION_LIMIT'?'timed-out':'failed',m.message);return;}
-    const correct=this.state.kind==='recommended'?m.kind==='result':this.state.kind==='salvage'?m.kind==='salvage-result':m.kind==='alternative-result';
+    const correct=this.state.kind==='recommended'?m.kind==='result':this.state.kind==='salvage'?m.kind==='salvage-result':this.state.kind==='portfolio'?m.kind==='portfolio-result':m.kind==='alternative-result';
     if(!correct)throw new Error('Unexpected result type');
     if(m.kind==='result'&&!checkedPlanMatches(m.plan,this.request))throw new Error('Result validation receipt does not match');
     if((m.kind==='alternative-result'||m.kind==='salvage-result')&&m.result.solution&&(!m.plan||!checkedPlanMatches(m.plan,this.request)||m.result.solution.layoutId!==m.plan.solution.layoutId||solutionFingerprint(m.result.solution)!==m.plan.solutionFingerprint))throw new Error('Alternative validation receipt does not match');
+    if(m.kind==='portfolio-result'&&!checkedPortfolioMatches(m.portfolio,this.request,this.portfolioReference))throw new Error('Comparison validation receipts do not match');
+    if(m.kind==='result'&&m.portfolio&&!checkedPortfolioMatches(m.portfolio,this.request,m.plan.solution))throw new Error('Initial comparison validation receipts do not match');
     // Stop computing before applying/rendering. Exceptions are caught above and
     // surface a recoverable failure instead of leaving a stale busy overlay.
     this.stopPort();this.state.status='complete';this.state.stage='returning-result';this.notify('Checked calculation complete.');

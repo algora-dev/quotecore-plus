@@ -1,8 +1,10 @@
+import { portfolioChoices, portfolioStyles, noPortfolioDialog } from './portfolioPlans';
+import type { PortfolioReport } from '../core/portfolio';
 import { ViewPerformance } from '../reliability/viewPerformance';
 import { buildDiagnosticData, type DiagnosticInput } from '../reliability/diagnosticData';
 import { diagnosticExport } from '../reliability/diagnosticExport';
 import { CalculationController } from '../reliability/calculation';
-import { STAGE_LABELS, type CalculationJournal, type CheckedPlan, type WorkerMessage } from '../reliability/protocol';
+import { STAGE_LABELS, type CalculationJournal, type CheckedPlan, type CheckedPortfolio, type WorkerMessage } from '../reliability/protocol';
 import { loadCalculationJournal, storeCalculationJournal } from '../reliability/journalStore';
 import type { ReviewDocument } from '../persistence/reviews';
 import { cleanupPanel, sharedEditPanel, geometryStyles } from './geometryReview';
@@ -44,7 +46,7 @@ import { roofRevision } from '../adapters/quotecore';
 import { exportLiveCapture, type LiveInputCapture } from '../adapters/liveSnapshot';
 import { escapeHtml as esc, renderSvg, interiorAnchor } from './svg';
 import { styles } from './styles';
-import { planChoices, noAlternativeDialog, hasQualifyingAlternative, type AlternativeObjective } from './alternativePlans';
+import { noAlternativeDialog, hasQualifyingAlternative, type AlternativeObjective } from './alternativePlans';
 import { icon } from './icons';
 import { sceneScale, watchSceneViewport } from './viewport';
 /** Print-ready one-pager payload for the host to persist (Phase 1, owner
@@ -160,6 +162,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let reviewEditing=false, geometryTool:'split'|'merge'|null=null, splitPoints:Point[]=[], cleanupChangeId='';
   let showSheets=false, showSources=false, showEnvelope=false, drawPoints: Point[]|null=null, drag:Drag|null=null;
   let layouts:Solution[] = draft.solution ? [draft.solution] : [], layoutIndex=0;
+  let portfolio:PortfolioReport|null=null,portfolioAttempt=0,portfolioDialog=false;
+  const checkedPlanCache=new Map<string,CheckedPlan>();
   let backgroundFailed=false;
   let selectedSectionId='', editGroups=false, showDetailedLabels=false, customFlowOpen=false;
   let quantityBasis:QuoteQuantityBasis='lineal-metres', quotePreviewOpen=false;
@@ -222,14 +226,14 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     // Progress must not repeatedly rebuild geometry, material ledgers or the sidebar.
     const text=shadow.querySelector<HTMLElement>('[data-run-progress]');if(text)text.textContent=progress;
   }
-  function reviewDocument():ReviewDocument {return createReviewDocument({draft,sourceRoof:capturedRoof,capture:options.inputCapture,plans:layouts,selectedPlanIndex:layoutIndex,diagnostics:{initialDetection,issues,repairs,adjustments:drawingAdjustments}});}
+  function reviewDocument():ReviewDocument {return createReviewDocument({draft,sourceRoof:capturedRoof,capture:options.inputCapture,plans:layouts,selectedPlanIndex:layoutIndex,portfolio,diagnostics:{initialDetection,issues,repairs,adjustments:drawingAdjustments}});}
   function validationKey():string{return fingerprint([draft.roof,draft.faces,draft.profile,draft.settings]);}
   function checkedDraftIssues():Issue[]{
     if(!draft.solution)return [];const key=validationKey();
     if(validationCache?.solution!==draft.solution||validationCache.key!==key)validationCache={solution:draft.solution,key,checks:validateDraft(draft)};
     return validationCache.checks;
   }
-  function rememberChecked(plan:CheckedPlan):void {if(draft.solution)validationCache={solution:draft.solution,key:validationKey(),checks:plan.checks};}
+  function rememberChecked(plan:CheckedPlan):void {checkedPlanCache.set(planSignature(plan.solution),plan);if(draft.solution)validationCache={solution:draft.solution,key:validationKey(),checks:plan.checks};}
   let storedReview:StoredReview|null=null, saveReady=false, saveSignature='';
   let saveState:SaveState|null=options.reviewRepository?{status:'loading',revision:0,message:'Checking for a saved review…'}:null;
   const reviewSaver=options.reviewRepository?new ReviewSaver(options.reviewRepository,reviewScope(capturedRoof),state=>{
@@ -241,10 +245,10 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function queueReviewSave():void {
     if(salvagePreview)return;
     if(disposed||stale)return;
-    const signature=fingerprint([draft,layouts,layoutIndex,issues,repairs,drawingAdjustments]);
+    const signature=fingerprint([draft,layouts,layoutIndex,portfolio,issues,repairs,drawingAdjustments]);
     if((!reviewSaver||!saveReady||signature===saveSignature)&&(!options.onReviewCheckpoint||signature===recoverySignature))return;
     try{
-      const document=uiPerformance.measure('review-snapshot',()=>createReviewDocument({draft,sourceRoof:capturedRoof,capture:options.inputCapture,plans:layouts,selectedPlanIndex:layoutIndex,
+      const document=uiPerformance.measure('review-snapshot',()=>createReviewDocument({draft,sourceRoof:capturedRoof,capture:options.inputCapture,plans:layouts,selectedPlanIndex:layoutIndex,portfolio,
         diagnostics:{initialDetection,issues,repairs,adjustments:drawingAdjustments}}));
       if(signature!==recoverySignature){options.onReviewCheckpoint?.(document);recoverySignature=signature;}
       if(reviewSaver&&saveReady&&signature!==saveSignature){saveSignature=signature;reviewSaver.queue(document);}
@@ -253,7 +257,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function applySavedReview(record:StoredReview):void {
     const restored=restoreReviewDocument(record.document,reviewScope(capturedRoof));
     checkpoint();cancel();draft=restored.draft;draft.roof.imageUrl=roof.imageUrl;
-    layouts=restored.plans;layoutIndex=Math.max(0,layouts.findIndex(p=>p.layoutId===draft.solution?.layoutId));
+    portfolio=restored.document.portfolio??null;checkedPlanCache.clear();layouts=restored.plans;layoutIndex=Math.max(0,layouts.findIndex(p=>p.layoutId===draft.solution?.layoutId));
     issues=restored.document.diagnostics.issues??[];
     repairs=(restored.document.diagnostics.repairs??[]) as BoundaryRepair[];
     drawingAdjustments=(restored.document.diagnostics.adjustments??[]) as DrawingAdjustment[];
@@ -278,7 +282,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let background:HTMLImageElement|null=null;
   let viewBox = [-30,-30,roof.sceneWidth+60,roof.sceneHeight+60];
   const history: string[] = [], redoHistory: string[] = [];
-  function snapshot(): string { return JSON.stringify({ draft, issues, repairs, drawingAdjustments, hiddenFaceIds: [...hiddenFaceIds], selectedFaceId, phase, layoutIndex, layouts }); }
+  function snapshot(): string { return JSON.stringify({ draft, issues, repairs, drawingAdjustments, hiddenFaceIds: [...hiddenFaceIds], selectedFaceId, phase, layoutIndex, layouts, portfolio }); }
   function checkpoint(): void {
     const value = snapshot();
     if (history[history.length - 1] !== value) history.push(value);
@@ -287,7 +291,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   }
   function cancel(): void { calculation?.dispose(); calculation = null; busy = false; jobId = ''; }
   function cancelByUser():void {calculation?.cancel();cancel();notice='Calculation cancelled. Reviewed faces and any original plan are kept.';render(true);}
-  function invalidate(): void { options.onPlanInvalidated?.(); salvagePreview=null;salvageBase=null;salvageDialog=false;lastSalvageSearch=null;alternativeDialog=null;alternativeFocus=null;
+  function invalidate(): void { portfolio=null;portfolioAttempt=0;portfolioDialog=false;checkedPlanCache.clear();options.onPlanInvalidated?.(); salvagePreview=null;salvageBase=null;salvageDialog=false;lastSalvageSearch=null;alternativeDialog=null;alternativeFocus=null;
     cancel(); draft.solution = null; layouts=[];layoutIndex=0; phase = 'faces'; selectedOffcutId = ''; selectedGroupId = '';
     selectedSectionId='';quotePreviewOpen=false;
     error = ''; pendingSourceAck = false; partitionKey = ''; lastSearchTrace=null;alternativeAttempt=0;
@@ -523,7 +527,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         ${quotePreviewOpen?`<div class="qc-quantity-proposal"><b>${basisValue.toFixed(2)} ${quantityBasis==='lineal-metres'?'lm':'m²'} for the selected material scope</b><p>Keep the measured roof area and labour quantities. This plan already includes cutting stock and configured allowances; do not apply the old waste factor again automatically. Spares are separate.</p><p class="qc-muted">Match this basis to the quote line’s rate. No quote is changed by this preview or export.</p><div class="qc-actions"><button data-action="export-quantity">Export quantity proposal</button>${options.onQuantityProposal?'<button data-action="send-quantity" class="primary">Send to quote review</button>':''}${options.onSaveOnePager?`<button data-action="save-one-pager" class="primary" ${savingOnePager?'disabled':''}>${savingOnePager?'Saving one-pager…':'Save one-pager to job'}</button>`:''}</div></div>`:''}
         <details><summary>Purchase breakdown by section</summary><table class="qc-stock"><thead><tr><th>Section</th><th>Sheets</th><th>New lm</th></tr></thead><tbody>${sections.filter(a=>a.purchasedDemandIds.length).map(a=>`<tr><td>${esc(faceName(a.faceId))}.${sectionNumber(a)}</td><td>${a.purchasedDemandIds.length}</td><td>${displayQuantity(a.purchasedLinealM)}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><td>${q.newSheetCount}</td><td>${displayQuantity(q.purchasedLinealM)}</td></tr></tfoot></table></details></details>`;
       normal = `<h2>Sheet & offcut plan</h2><p class="qc-plan-total"><strong>${q.newSheetCount} new sheets</strong><strong class="qc-lineal-total">${displayQuantity(q.purchasedLinealM)} <small>purchased lineal metres</small></strong><span>${displayQuantity(q.suppliedCoverAreaM2)} m² material required (cover basis)<br/>${displayQuantity(q.netRoofAreaM2)} m² net roof · ${displayQuantity(q.suppliedCoverAreaM2-q.netRoofAreaM2)} m² extra (${q.coverUpliftPercent?.toFixed(1)??'-'}%)<br/>This roof scope only · no spares</span></p>
-        ${salvagePreview?.solution&&!salvageDialog?salvageSummary(salvagePreview.solution,draft.faces,true,salvageViewingBase):planChoices(s,layouts,layoutIndex,busy||stale||s.status==='invalid')+(s.salvage?salvageSummary(s,draft.faces,false):salvageOffer(s,layouts,busy||stale||s.status==='invalid'))}
+        ${salvagePreview?.solution&&!salvageDialog?salvageSummary(salvagePreview.solution,draft.faces,true,salvageViewingBase):portfolioChoices(s,layouts,layoutIndex,busy||stale||s.status==='invalid',portfolio,draft.faces)+(s.salvage?salvageSummary(s,draft.faces,false):salvageOffer(s,layouts,busy||stale||s.status==='invalid'))}
         <p class="qc-muted qc-material-key">Solid = new bank · crosshatch = offcuts · parallel lines = recut offcuts · grey = filler. Dots mark effective cover at the spouting.</p>${sectionDetail}
         <details class="qc-bank-purchases"><summary>Banks & purchased sheets</summary><p class="qc-muted">One row per stock length in a source block. Shared faces consume the same purchased parents; offcuts add 0 lm.</p><table class="qc-stock"><thead><tr><th>Source</th><th>Sheets × length</th><th>New lm</th></tr></thead><tbody>${purchaseOperations(s).map(b=>`<tr><td>${b.faceIds.map(id=>esc(faceName(id))).join(' + ')}${b.role==='spacer'?'<small>New spacers / starters</small>':''}</td><td>${b.count} × ${(b.lengthMm/1000).toFixed(3)} m</td><td>${displayQuantity(b.linealM)}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><td>${q.newSheetCount} sheets</td><td>${displayQuantity(q.purchasedLinealM)}</td></tr></tfoot></table>${bankLaneAudit(s).map(b=>`<p class="qc-muted" data-bank-audit="${esc(b.operationId)}">${b.faceIds.map(id=>esc(faceName(id))).join(' + ')}: ${(b.spanMm/1000).toFixed(3)} m ÷ ${b.effectiveCoverMm} mm cover → ${b.minimumColumns} minimum columns; ${b.registeredColumns} on the selected setout, ${b.newRoots} purchased parents.${b.duplicateColumns.length?' Separate stock is needed at '+b.duplicateColumns.length+' columns: shared reuse did not physically fit.':''}</p>`).join('')}</details>
         ${s.globalDonorSearch?.status==='improved'&&s.globalDonorSearch.selectedLayoutId===s.layoutId?`<details id="qc-global-donors"><summary>Coordinated donor banks · ${s.globalDonorSearch.savedCoverM2.toFixed(2)} m² less</summary><p>Shared cutting banks supply the larger receiver runs before buying the remaining new sheets. The saving is already included above, compared with the checked sequential layout from this same calculation.</p><p class="qc-muted">${s.globalDonorSearch.baselineSheets} → ${s.globalDonorSearch.selectedSheets} new sheets · ${s.globalDonorSearch.baselineLinealM.toFixed(2)} → ${s.globalDonorSearch.selectedLinealM.toFixed(2)} lm. Exact cuts, laps and valley allowances were checked. This bounded search does not prove the minimum.</p></details>`:''}
@@ -559,7 +563,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
           ${s.decisionTrace?tracePanel(s.decisionTrace):'<p>No trace was stored for this older plan. Calculate a new plan to record one.</p>'}
           ${lastSearchTrace&&lastSearchTrace!==s.decisionTrace?`<details><summary>Most recent alternative search</summary>${tracePanel(lastSearchTrace)}</details>`:''}
         </details>
-        <details><summary>Simpler-plan limits</summary><p class="qc-muted">Compared with Recommended, not the last alternative. Extra purchased material is limited to the smaller of 3% or 10 m² of effective cover. Extra new sheets are limited to 5% of the reference count (at least 2, at most 6). A candidate must reduce the grouped workflow score by at least 5% and 8 points after physical checks. Repeated cuts are counted as runs; cutting fresh sheets still counts. A percentage is a ceiling, not added waste, spares or a guarantee of lower labour cost.</p></details><details><summary>Less-material limits</summary><p class="qc-muted">Compared with Recommended in effective-cover m², not prices or a percentage saving. 10 m² or more permits limited additional cutting work; 7.5–10 permits less, 5–7.5 very little, and 1–5 requires no increases in the tracked workflow groups. Sub-1 m² variants are not offered. Source changes, splits, runs and reuse depth have independent limits, so a simpler task elsewhere cannot hide an extreme new one. These are initial product thresholds, not measured labour hours. Every alternative must still pass physical and receiver checks. Full acceptance/rejection details are in the decision trace.</p></details>`;
+        <details><summary>Plan comparison rules</summary><p class="qc-muted">Recommended stays unchanged. Compare more cutting plans retains up to five distinct, fully checked options. Physical coverage, material lineage, laps and valley safety are hard requirements. Extra transfers and cutting runs are shown as trade-offs instead of being hidden by the old 10 m² saving gate. Simpler options remain within the smaller of 3% extra purchased cover or 10 m². Very deep or extreme workflows are not promoted. Search is bounded and does not prove an optimum. Selecting a plan updates the preview; saving a PDF or applying a quantity remains explicit.</p></details>`;
     } else {
       normal = `<h2>Review roof faces</h2><p class="qc-muted qc-geometry-summary">${draft.faces.length} shapes from ${draft.roof.edges.filter(e=>!draft.roof.faceDetectionIgnoredEdgeIds?.includes(e.id)).length} drawing lines${drawingAdjustments.length?` · ${drawingAdjustments.length} small joins aligned`:''}. Check the shapes and water arrows. Component names are not required.</p>${cleanupPanel(draft)}${missing.length?`<div class="qc-note" role="status"><b>${missing.length} water direction${missing.length===1?'':'s'} needed</b><p>${missing.map(g=>esc(g.name)).join(', ')}</p><button data-action="choose-flow" data-id="${esc(missing[0].id)}">Set next direction</button></div>`:''}${quickTools}${faceButtons}
         ${hiddenFaceIds.size ? `<div class="qc-hidden-summary"><span>${hiddenFaceIds.size} hidden · still included</span><button data-action="show-all">Show all</button></div>` : ''}
@@ -615,11 +619,11 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       ${errors.length>1?`<small>${errors.length} checks remain. Other valid faces are preserved.</small>`:''}</div>`:'';
     const advisory=visibleIssues.find(i=>i.code==='BACKGROUND_IMAGE'&&i.severity==='warning')??visibleIssues.find(i=>i.severity==='warning'&&!partition().regions.some(r=>r.id===i.objectId)&&!['SNAPPED_ENDPOINTS','NARROW_FACE','FLOW_REVIEW'].includes(i.code));
     const advisoryCard=advisory?`<details class="qc-advisory"><summary>${esc(issueTitle(advisory,draft.faces))}</summary><p>${esc(advisory.message)}</p><button data-action="ignore-warning" data-id="${warningKey(advisory,draft)}">Ignore</button></details>`:'';
-    shadow.innerHTML = `<style>${styles}${geometryStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.22 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    shadow.innerHTML = `<style>${styles}${geometryStyles}${portfolioStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.23 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
       <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${geometryTool==='split'?'Click two boundary points · Esc cancels':geometryTool==='merge'?'Click a neighbouring face · Esc cancels':drawPoints ? 'Click corners · click first point / Enter to finish · Backspace removes last · Esc cancels · Alt bypasses snap' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span data-run-progress>${esc(progress)}</span><span class="qc-muted">The layout count is only one stage. Cancel keeps your reviewed faces.</span><div class="qc-actions"><button data-action="cancel">Cancel</button><button data-action="export-trace">Export diagnostics</button></div></div>` : ''}</section>
       <aside class="qc-sidebar" aria-label="Offcut review controls">${storageCard}<div id="qc-export-status" role="status" aria-live="polite"></div>${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}<button data-action="export-trace">Export diagnostics</button><button data-action="dismiss-action-error">Dismiss message</button></div>` : ''}${interrupted}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advisoryCard}${advanced}</aside></main>
-      <footer class="qc-footer"><span>Draft only - verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>${cleanupConfirm?`<dialog class="qc-result-dialog" data-cleanup-confirm aria-labelledby="qc-cleanup-title"><h2 id="qc-cleanup-title">Rebuild reviewed shapes?</h2><p>This replaces edited shapes with your original linework. Undo can restore this review. The source takeoff and quote prices are unchanged.</p><button data-action="cancel-cleanup" autofocus>Keep current shapes</button><button data-action="confirm-cleanup" class="primary">Rebuild shapes</button></dialog>`:salvageDialog&&salvagePreview?salvageResultDialog(salvagePreview,draft.faces):alternativeDialog?noAlternativeDialog(alternativeDialog,draft.solution):''}`;
+      <footer class="qc-footer"><span>Draft only - verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>${cleanupConfirm?`<dialog class="qc-result-dialog" data-cleanup-confirm aria-labelledby="qc-cleanup-title"><h2 id="qc-cleanup-title">Rebuild reviewed shapes?</h2><p>This replaces edited shapes with your original linework. Undo can restore this review. The source takeoff and quote prices are unchanged.</p><button data-action="cancel-cleanup" autofocus>Keep current shapes</button><button data-action="confirm-cleanup" class="primary">Rebuild shapes</button></dialog>`:portfolioDialog?noPortfolioDialog():salvageDialog&&salvagePreview?salvageResultDialog(salvagePreview,draft.faces):alternativeDialog?noAlternativeDialog(alternativeDialog,draft.solution):''}`;
     renderScene(); restoreView(view, resetScroll);
     if(panelTarget){const target=panelTarget;panelTarget=null;revealPanel(target);}
     if(salvagePreview){
@@ -632,6 +636,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     }else if(salvageDialog&&salvagePreview){
       const dialog=shadow.querySelector<HTMLDialogElement>('.qc-result-dialog');
       if(dialog){dialog.addEventListener('cancel',e=>{e.preventDefault();e.stopPropagation();endSalvage(false);});dialog.showModal();}
+    }else if(portfolioDialog){
+      const dialog=shadow.querySelector<HTMLDialogElement>('[data-portfolio-dialog]');if(dialog){dialog.showModal();dialog.addEventListener('cancel',e=>{e.preventDefault();portfolioDialog=false;render();});}
     }else if(alternativeDialog){
       const dialog=shadow.querySelector<HTMLDialogElement>('.qc-result-dialog');
       if(dialog){dialog.addEventListener('cancel',e=>{e.preventDefault();e.stopPropagation();dismissAlternativeDialog();});dialog.showModal();}
@@ -653,7 +659,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       calculation:lastCalculation,initialDetection,selectedPlanIndex:layoutIndex,issues:currentIssues,repairs,drawingAdjustments,stale,
       selectedSectionId,lastSearchTrace,layouts,lastSalvageSearch,
       salvagePreview:salvagePreview?{previewOnly:true,result:salvagePreview,baseLayoutId:salvageBase?.layoutId,viewingBase:salvageViewingBase}:null,
-      uiPerformance:uiPerformance.snapshot()};
+      uiPerformance:uiPerformance.snapshot(),portfolio};
   }
   // Retained for existing host/test integrations. Interactive export uses the
   // asynchronous worker path below; callers needing a file should use getDebugBlob.
@@ -675,7 +681,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       const result=await diagnosticExport(diagnosticInput(),abort.signal,options.createExportWorker);
       if(disposed||abort.signal.aborted)throw new DOMException('Export cancelled.','AbortError');
       uiPerformance.record('debug-export',performance.now()-start);
-      if(downloadFile)downloadBlob('quotecore-offcuts-v2.22-debug.json',result.blob);
+      if(downloadFile)downloadBlob('quotecore-offcuts-v2.23-debug.json',result.blob);
       exportStatus=result.mode==='worker'?'Diagnostic export ready.':'Diagnostic export ready (compatible fallback).';
       return result.blob;
     }catch(e){exportStatus=e instanceof Error&&e.name==='AbortError'?'Export cancelled. Your plan is unchanged.':message(e);throw e;}
@@ -683,7 +689,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   }
   function downloadBlob(name:string,blob:Blob):void {const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   function ensureCurrent():void { if(stale||options.readCurrentSourceRevision&&options.readCurrentSourceRevision()!==capturedRevision)throw new Error('Takeoff changed. Reopen this review from the current canvas.'); }
-  function run(objective?:'simpler'|'less-material'|'salvage'):void {
+  function run(objective?:'simpler'|'less-material'|'salvage'|'portfolio'):void {
     if(busy)return;
     ensureCurrent();validationAttempted=true;
     if(storedReview){error='Choose Resume saved review or Use current takeoff before calculating.';render();return;}
@@ -692,21 +698,21 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if(objective&&!draft.solution)throw new Error('Create a first plan before asking for an alternative.');
     if(objective&&layouts.length>=12)throw new Error('This session already has 12 alternatives.');
     if(salvagePreview)throw new Error('Choose or discard the reuse preview first.');
-    const isSalvage=objective==='salvage';
+    const isSalvage=objective==='salvage',isPortfolio=objective==='portfolio';
     const previous=objective?structuredClone(isSalvage?draft.solution!:alternativeReference(draft.solution!,layouts,objective as AlternativeObjective)):null;
     if(isSalvage&&previous?.salvage)throw new Error('Choose the original plan to check more reuse.');
-    if(objective&&!isSalvage&&hasQualifyingAlternative(layouts,previous,objective as AlternativeObjective))return;
-    alternativeDialog=null;alternativeFocus=null;notice='';checkpoint();cancel();error='';selectedSectionId='';quotePreviewOpen=false;selectedOffcutId='';busy=true;jobId=localId();
+    if(objective&&!isSalvage&&!isPortfolio&&hasQualifyingAlternative(layouts,previous,objective as AlternativeObjective))return;
+    portfolioDialog=false;alternativeDialog=null;alternativeFocus=null;notice='';checkpoint();cancel();error='';selectedSectionId='';quotePreviewOpen=false;selectedOffcutId='';busy=true;jobId=localId();
     const id=jobId,request=structuredClone({roof:draft.roof,faces:draft.faces,profile:draft.profile,settings:draft.settings});
-    const original={solution:structuredClone(draft.solution),layouts:structuredClone(layouts),layoutIndex,phase};
+    const original={solution:structuredClone(draft.solution),layouts:structuredClone(layouts),layoutIndex,phase,portfolio:structuredClone(portfolio)};
     const active=new CalculationController(request,objective??'recommended',{
       progress:calculationChanged,
       failure:(text,fallback)=>{
         if(disposed||jobId!==id)return;
         try{
           ensureCurrent();
-          draft.solution=original.solution;layouts=original.layouts;layoutIndex=original.layoutIndex;phase=original.phase;salvagePreview=null;salvageBase=null;salvageDialog=false;
-          if(fallback&&!objective){layouts=[structuredClone(fallback.solution)];layoutIndex=0;draft.solution=structuredClone(layouts[0]);rememberChecked(fallback);phase='solution';notice='Using the last fully checked complete plan; later improvements did not finish.';}
+          draft.solution=original.solution;layouts=original.layouts;layoutIndex=original.layoutIndex;phase=original.phase;portfolio=original.portfolio;salvagePreview=null;salvageBase=null;salvageDialog=false;
+          if(fallback&&!objective){portfolio=null;layouts=[structuredClone(fallback.solution)];layoutIndex=0;draft.solution=structuredClone(layouts[0]);rememberChecked(fallback);phase='solution';notice='Using the last fully checked complete plan; later improvements did not finish.';}
           error=text;
         }catch(e){error=message(e);}
         finally{cancel();try{render(true);}catch(renderError){shadow.querySelector('.qc-busy')?.remove();const alert=document.createElement('div');alert.setAttribute('role','alert');alert.textContent='The result view could not render. Use Export diagnostics; reviewed data is kept. '+message(renderError);shadow.prepend(alert);}}
@@ -714,8 +720,16 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       result:(event:WorkerMessage)=>{
         if(disposed||jobId!==id)return;ensureCurrent();
         if(event.kind==='result'){
-          layouts=[structuredClone(event.plan.solution)];layoutIndex=0;draft.solution=structuredClone(layouts[0]);rememberChecked(event.plan);
+          checkedPlanCache.clear();
+          layouts=event.portfolio?event.portfolio.plans.map(p=>structuredClone(p.solution)):[structuredClone(event.plan.solution)];
+          portfolio=event.portfolio?.report??null;layoutIndex=0;draft.solution=structuredClone(layouts[0]);
+          for(const receipt of event.portfolio?.plans??[])checkedPlanCache.set(planSignature(receipt.solution),receipt);
+          rememberChecked(event.plan);
           lastSearchTrace=null;alternativeAttempt=0;phase='solution';selectedGroupId='';advancedOpen=false;editPieces=false;
+        }else if(event.kind==='portfolio-result'){
+          if(!isPortfolio)throw new Error('Unexpected comparison result');
+          mergePortfolio(event.portfolio);phase='solution';panelTarget='#qc-plan-choice';portfolioDialog=event.portfolio.report.choices.length<2;
+          notice=portfolioDialog?'':'Checked options are ready. Your current plan is unchanged; select an option to compare.';
         }else if(event.kind==='salvage-result'){
           const result=event.result;
           if(!isSalvage||!result?.report||result.report.model!=='terminal-filler-salvage-v1'||!['found','no-worthwhile-reuse'].includes(result.status)||(result.status==='found')!==!!result.solution)throw new Error('Unsupported reuse result');
@@ -743,10 +757,31 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
           new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error('Saving the recovery checkpoint took too long. Retry saving; no calculation has started.')),25_000);})]);
         if(disposed||!busy||calculation!==active||jobId!==id)return;ensureCurrent();
         active.start(()=>options.createWorker?.()??new Worker(new URL('../worker.ts',import.meta.url),{type:'module'}),
-          isSalvage&&previous?{salvage:{base:previous}}:objective&&previous?{alternative:{objective:objective as AlternativeObjective,previous,attempt:++alternativeAttempt,excludedSignatures:layouts.map(planSignature),maxExtraMaterialPercent:SIMPLER_POLICY.maxExtraPercent}}:{});
+          isPortfolio&&previous?{portfolio:{previous,saved:original.layouts,attempt:portfolioAttempt++,maxMilliseconds:20000}}:isSalvage&&previous?{salvage:{base:previous}}:objective&&previous?{alternative:{objective:objective as AlternativeObjective,previous,attempt:++alternativeAttempt,excludedSignatures:layouts.map(planSignature),maxExtraMaterialPercent:SIMPLER_POLICY.maxExtraPercent}}:{});
       }catch(e){if(!disposed&&calculation===active)active.fail('failed',message(e));}
       finally{if(timer)clearTimeout(timer);}
     })();
+  }
+
+  function mergePortfolio(result:CheckedPortfolio):void {
+    const selected=draft.solution?planSignature(draft.solution):null;
+    const merged=[...layouts],seen=new Set(merged.map(planSignature));
+    for(const receipt of result.plans){
+      const id=planSignature(receipt.solution);
+      if(!seen.has(id)){if(merged.length>=12)break;merged.push(structuredClone(receipt.solution));seen.add(id);}
+      checkedPlanCache.set(id,receipt);
+    }
+    layouts=merged;portfolio={...result.report,choices:result.report.choices.filter(c=>seen.has(c.layoutId))};
+    layoutIndex=Math.max(0,layouts.findIndex(s=>planSignature(s)===selected));
+    // Searching does not select/apply a new plan, even when a cheaper one exists.
+    if(draft.solution&&selected!==planSignature(draft.solution))throw new Error('Comparison changed the selected plan unexpectedly.');
+  }
+  function choosePlan(index:number):void {
+    if(salvagePreview||busy||!Number.isInteger(index)||!layouts[index])return;
+    checkpoint();options.onPlanInvalidated?.();layoutIndex=index;draft.solution=structuredClone(layouts[index]);
+    const receipt=checkedPlanCache.get(planSignature(draft.solution));if(receipt)rememberChecked(receipt);
+    lastSearchTrace=null;selectedSectionId='';selectedGroupId='';selectedOffcutId='';quotePreviewOpen=false;
+    notice='Showing the selected saved plan. PDF and material quantities now refer to this plan; no quote price has been changed.';render();
   }
   function click(event:Event):void {
     const target=(event.target as Element).closest<HTMLElement>('[data-action]');if(!target)return;
@@ -779,14 +814,17 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         const section=quantities()?.sections.find(a=>a.demandIds.includes(target.dataset.id??''));if(section)selectSection(section.id);return;
       }
       if(action==='salvage-export'&&draft.solution){download('quotecore-filler-reuse-instructions.txt',salvageReportText(draft.solution,draft.faces),'text/plain');return;}
+      if(action==='compare-plans'){run('portfolio');return;}
+      if(action==='choose-portfolio-plan'){choosePlan(Number(target.dataset.index));return;}
+      if(action==='dismiss-portfolio-result'){portfolioDialog=false;alternativeFocus='compare-plans';render();return;}
       if(action==='dismiss-alternative-result'){dismissAlternativeDialog();return;}
       if(action==='alternative-material'){run('less-material');return;}
       if(action==='alternative-menu'){run('simpler');return;}
       if(action==='alternative-simpler'){run('simpler');return;}
             if(action==='export-ledger'||action==='export-stock-csv'){
         ensureCurrent();const ledger=rootSheetLedger(draft.solution!);
-        if(action==='export-ledger')download('quotecore-v2.22-material-ledger.json',JSON.stringify({engineVersion:'2.22',ledger,receiverSafety:draft.solution!.receiverSafety,stockLengthRefinement:draft.solution!.stockLengthRefinement,stockEndRows:stockLengthRows(draft.solution!)},null,2),'application/json');
-        else download('quotecore-v2.22-new-sheets.csv',purchaseLedgerCsv(ledger),'text/csv');
+        if(action==='export-ledger')download('quotecore-v2.23-material-ledger.json',JSON.stringify({engineVersion:'2.23',ledger,receiverSafety:draft.solution!.receiverSafety,stockLengthRefinement:draft.solution!.stockLengthRefinement,stockEndRows:stockLengthRows(draft.solution!)},null,2),'application/json');
+        else download('quotecore-v2.23-new-sheets.csv',purchaseLedgerCsv(ledger),'text/csv');
         notice='Purchased parent-sheet audit exported; offcuts are not additional purchases.';render();return;
       }
       if(action==='export-input'){
@@ -816,7 +854,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         else fallback();return;
       }
       if(action==='show-lowest-plan'&&draft.solution){
-        const best=lowestMaterialSavedPlan(draft.solution,layouts);layoutIndex=layouts.findIndex(s=>planSignature(s)===planSignature(best));draft.solution=structuredClone(best);selectedSectionId='';selectedFaceId='';notice='Showing the lowest purchased-material plan saved in this session.';render(true);return;
+        const best=lowestMaterialSavedPlan(draft.solution,layouts);choosePlan(layouts.findIndex(s=>planSignature(s)===planSignature(best)));return;
       }
       if(action==='ignore-warning'){
         const issue=allIssues().find(i=>warningKey(i,draft)===target.dataset.id);if(!issue)return;
@@ -890,8 +928,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       }
       if(action==='next-layout'){
         if(layouts.length<2)return;
-        checkpoint();layoutIndex=(layoutIndex+1)%layouts.length;draft.solution=structuredClone(layouts[layoutIndex]);
-        selectedSectionId='';selectedGroupId='';selectedOffcutId='';notice=`Layout ${layoutIndex+1} of ${layouts.length}. All sheet positions are allocated; review the changed source relationships.`;render(true);return;
+        choosePlan((layoutIndex+1)%layouts.length);return;
       }
       if(action==='select-face'){selectedFaceId=target.dataset.id??'';customFlowOpen=false;notice='';panelTarget='#qc-water-direction';render();return;}
       if(action==='focus-face'){focusFace(target.dataset.id ?? selectedFaceId);render();return;}
@@ -919,9 +956,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='undo'||action==='redo'){
         const from=action==='undo'?history:redoHistory,to=action==='undo'?redoHistory:history,item=from.pop();
         if(item){
-          to.push(snapshot());cancel();const saved=JSON.parse(item) as {draft:Draft;issues:Issue[];repairs?:BoundaryRepair[];drawingAdjustments?:DrawingAdjustment[];hiddenFaceIds:string[];selectedFaceId:string;phase:'faces'|'solution';layoutIndex?:number;layouts?:Solution[]};
+          to.push(snapshot());cancel();const saved=JSON.parse(item) as {draft:Draft;issues:Issue[];repairs?:BoundaryRepair[];drawingAdjustments?:DrawingAdjustment[];hiddenFaceIds:string[];selectedFaceId:string;phase:'faces'|'solution';layoutIndex?:number;layouts?:Solution[];portfolio?:PortfolioReport|null};
           draft=saved.draft;issues=saved.issues;repairs=saved.repairs??[];drawingAdjustments=saved.drawingAdjustments??[];hiddenFaceIds=new Set(saved.hiddenFaceIds);selectedFaceId=saved.selectedFaceId;
-          phase=saved.phase;layoutIndex=saved.layoutIndex??0;if(saved.layouts)layouts=saved.layouts;geometryTool=null;splitPoints=[];
+          phase=saved.phase;portfolio=saved.portfolio??null;layoutIndex=saved.layoutIndex??0;if(saved.layouts)layouts=saved.layouts;geometryTool=null;splitPoints=[];
           if(draft.solution && !layouts.some(s=>s.layoutId===draft.solution?.layoutId)){layouts=[structuredClone(draft.solution)];layoutIndex=0;}
           selectedOffcutId='';selectedGroupId='';partitionKey='';drawPoints=null;drawHover=undefined;snapHint=null;pendingSourceAck=false;validationAttempted=false;
           notice=action==='undo'?'Previous change undone.':'Change restored.';
@@ -984,9 +1021,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         const o=draft.solution.offcuts.find(o=>o.id===selectedOffcutId);if(!o)throw new Error('Select an offcut.');
         const p=draft.solution.placements.find(p=>p.kind==='reuse'&&p.offcutId===selectedOffcutId) ?? {rotation:0 as const,translateY:0};
         const id=(shadow.querySelector('#destination') as HTMLSelectElement).value;
-        if(action==='fit-placement'){const d=draft.solution.demands.find(d=>d.id===id)!;const fit=findFit(o,d,draft.profile);if(!fit)throw new Error('No shape- and lap-compatible fit was found for this sheet lane.');checkpoint();layouts=[];layoutIndex=0;draft.solution=editPlacement(draft.solution,selectedOffcutId,id,fit.rotation,fit.translateY);render();return;}
+        if(action==='fit-placement'){const d=draft.solution.demands.find(d=>d.id===id)!;const fit=findFit(o,d,draft.profile);if(!fit)throw new Error('No shape- and lap-compatible fit was found for this sheet lane.');checkpoint();portfolio=null;layouts=[];layoutIndex=0;draft.solution=editPlacement(draft.solution,selectedOffcutId,id,fit.rotation,fit.translateY);render();return;}
         const rot=action==='rotate-offcut'?(p.rotation===0?180:0):Number((shadow.querySelector('#offcut-rotation') as HTMLSelectElement).value) as 0|180;
-        const y=Number((shadow.querySelector('#offcut-shift') as HTMLInputElement).value);checkpoint();layouts=[];layoutIndex=0;draft.solution=editPlacement(draft.solution,selectedOffcutId,id,rot,y);render();return;
+        const y=Number((shadow.querySelector('#offcut-shift') as HTMLInputElement).value);checkpoint();portfolio=null;layouts=[];layoutIndex=0;draft.solution=editPlacement(draft.solution,selectedOffcutId,id,rot,y);render();return;
       }
     }catch(e){error=message(e);if(busy)cancel();}render();
   }
@@ -999,7 +1036,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       }
       if(target.hasAttribute('data-plan-index')){
         const index=Number(target.value);if(salvagePreview||busy||!Number.isInteger(index)||!layouts[index])return;
-        checkpoint();layoutIndex=index;draft.solution=structuredClone(layouts[index]);lastSearchTrace=null;selectedSectionId='';selectedGroupId='';selectedOffcutId='';notice=`Showing saved Plan ${index+1}; no recalculation performed.`;render();return;
+        choosePlan(index);return;
       }
       if(target.hasAttribute('data-quantity-basis')){quantityBasis=target.value as QuoteQuantityBasis;quotePreviewOpen=false;render();return;}
       if(target.dataset.display){const checked=(target as HTMLInputElement).checked;if(target.dataset.display==='editGroups'){editGroups=checked;selectedSectionId='';selectedGroupId='';render();return;}if(target.dataset.display==='showDetailedLabels'){showDetailedLabels=checked;renderScene();return;}if(target.dataset.display==='showSheets')showSheets=checked;if(target.dataset.display==='showSources')showSources=checked;if(target.dataset.display==='showEnvelope')showEnvelope=checked;if(target.dataset.display==='editPieces'){editPieces=checked;selectedOffcutId='';selectedGroupId='';render();return;}renderScene();return;}
@@ -1132,7 +1169,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         const target = draft.solution.demands.find(d => pointInRegion(d.cover, scenePointToDemand(p, d)));
         if (!target) throw new Error('Drop this offcut set onto a roof face.');
         const moved = moveReuseGroup(draft.solution, state.groupId!, target.faceId, target.laneIndex);
-        checkpoint(); layouts=[];layoutIndex=0;draft.solution = moved; selectedGroupId = '';
+        checkpoint(); portfolio=null;layouts=[];layoutIndex=0;draft.solution = moved; selectedGroupId = '';
       } else if (draft.solution) {
         const s = draft.solution, o = s.offcuts.find(o => o.id === state.offcutId); if (!o) throw new Error('Source offcut not found.');
         const placement = s.placements.find(a => a.offcutId === state.offcutId && a.kind === 'reuse') ?? { demandId: o.sourceDemandId, translateY: 0, rotation: 0 as const };
@@ -1142,7 +1179,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         let dy = placement.translateY;
         if (target.id === original.id) dy += scenePointToDemand(p, target).y - scenePointToDemand(state.start, original).y;
         else { const anchor = scenePointToDemand(state.start, original).y - placement.translateY; dy = scenePointToDemand(p, target).y - anchor; }
-        checkpoint(); layouts=[];layoutIndex=0;draft.solution = editPlacement(s, state.offcutId!, target.id, placement.rotation, dy);
+        checkpoint(); portfolio=null;layouts=[];layoutIndex=0;draft.solution = editPlacement(s, state.offcutId!, target.id, placement.rotation, dy);
       }
     } catch (e) { error = message(e); }
     render();
@@ -1165,8 +1202,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function invoke(action: string): void { shadow.querySelector<HTMLButtonElement>(`button[data-action="${action}"]`)?.click(); }
   function keyDown(event: Event): void {
     const e = event as KeyboardEvent;
-    if(alternativeDialog||salvageDialog||cleanupConfirm){
-      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(cleanupConfirm){cleanupConfirm=null;render();}else if(salvageDialog)endSalvage(false);else dismissAlternativeDialog();}
+    if(alternativeDialog||portfolioDialog||salvageDialog||cleanupConfirm){
+      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(cleanupConfirm){cleanupConfirm=null;render();}else if(portfolioDialog){portfolioDialog=false;alternativeFocus='compare-plans';render();}else if(salvageDialog)endSalvage(false);else dismissAlternativeDialog();}
       else if(e.key==='Tab'){
         // Keep keyboard focus inside the nested informational dialog, including
         // browsers that otherwise move from its last button into browser chrome.
@@ -1201,7 +1238,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if ((e.key === 'Enter' || e.key === ' ') && (e.target as Element).closest('[data-action="flip-lap"],[data-action="focus-issue"],[data-action="choose-flow"]')) { e.preventDefault(); click(e); }
   }
   function globalKeyDown(e: KeyboardEvent): void {
-    if (alternativeDialog || salvageDialog || cleanupConfirm || e.code !== 'Space' || isEditing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (alternativeDialog || portfolioDialog || salvageDialog || cleanupConfirm || e.code !== 'Space' || isEditing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
     const canvas = shadow.querySelector<HTMLElement>('.qc-canvas');
     if (!pointerOverCanvas && shadow.activeElement !== canvas) return;
     spaceHeld = true; e.preventDefault();

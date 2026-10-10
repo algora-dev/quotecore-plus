@@ -22,6 +22,9 @@ export interface BankSearchVariant {
   id:string; primaryBankIds:string[]; seedFaceId:string; registrationVariant:number; preferredReceiverFaceId?:string;
   /** Permit exactly checked continuation cuts between near-parallel member axes. */
   memberAxisContinuation:boolean;
+  /** Optional transactional strategy: keep a parent's valley family for its
+   * geometric receivers while the other donor sets supply competing hips. */
+  reserveValleyReceivers?: boolean;
 }
 
 interface Info { face:RoofFace; bank:MaterialBank; offsets:number[]; net:number; length:number; ridgeLength:number; selfComplement:boolean }
@@ -56,6 +59,10 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const simpleMode=objective==='simpler';
   const banks=buildMaterialBanks(request);
   const valleyParents=adjacentValleyParents(faces,roof);
+  const valleyChildren=new Map<string,Set<string>>();
+  for(const [child,parent] of valleyParents){const ids=valleyChildren.get(parent)??new Set<string>();ids.add(child);valleyChildren.set(parent,ids);}
+  const reservedForAnotherReceiver=(o:Offcut,target:string):boolean=>!!hooks.bankVariant?.reserveValleyReceivers&&
+    o.cutKind==='valley'&&o.sourceFaceId!==target&&!!valleyChildren.get(o.sourceFaceId)?.size&&!valleyChildren.get(o.sourceFaceId)!.has(target);
   const baseLayout:BankLayout={primaryFaceIds:[],laneOffsetByFace:Object.fromEntries(faces.map(f=>[f.id,f.laneOffsetMm])),
     extraLengthByFace:Object.fromEntries(faces.map(f=>[f.id,0])),tailExtensionByFace:Object.fromEntries(faces.map(f=>[f.id,0])),
     cutLengthByFace:Object.fromEntries(faces.map(f=>[f.id,Math.min(profile.maxLengthMm,banks.find(b=>b.faceIds.includes(f.id))!.cutLengthMm)])),
@@ -220,7 +227,9 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
         const lapChoices:Lap[]=settings.optimiseLapDirections&&!info.face.lapLocked?[info.face.lap,info.face.lap===1?-1:1]:[info.face.lap];
         for(const phase of offsets)for(const lap of lapChoices){
           check();const ds=dsFor(info,phase,lap,primary,extend,primary);
-          for(const pool of pools){
+          for(const originalPool of pools){
+            const pool=originalPool.filter(o=>!reservedForAnotherReceiver(o,info.face.id));
+            if(!pool.length){reject(info.face.id,'reserved-valley-family-for-own-receivers');continue;}
             if(localParent&&!pool.every(o=>o.sourceFaceId===localParent&&o.cutKind==='valley')){reject(info.face.id,'reserved-adjacent-valley-set');continue;}
             const sharedRegistration=primary && pool.every(o=>infos.find(i=>i.face.id===o.sourceFaceId)?.bank.id===rootFamily);
             const match=matchReceiver(info,ds,pool,sharedRegistration);
@@ -388,7 +397,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
         const existing=new Set(onFace.filter(p=>p.kind==='reuse').map(p=>view.blockByPlacement.get(p.demandId)).filter(Boolean));
         const pools=new Map<string,Offcut[]>();
         for(const o of state.inventory){
-          if(used.has(o.id)||o.sourceFaceId===info.face.id||targetIds.has(o.rootDemandId??o.sourceDemandId))continue;
+          if(used.has(o.id)||o.sourceFaceId===info.face.id||targetIds.has(o.rootDemandId??o.sourceDemandId)||reservedForAnotherReceiver(o,info.face.id))continue;
           const localParent=valleyParents.get(info.face.id);if(localParent&&(o.sourceFaceId!==localParent||o.cutKind!=='valley'))continue;
           const block=view.blockByRootDemand.get(o.rootDemandId??o.sourceDemandId);if(!block)continue;
           if(state.committedFaces.has(info.face.id)&&objective!=='less-material'&&!existing.has(block))continue;
@@ -638,7 +647,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     evaluationStage:'bank-search' as const,...(assessments.has(state)?{simplification:assessments.get(state)}:{}),
     ...(materialAssessments.has(state)?{materialSaving:materialAssessments.get(state)}:{}),
     reason:excluded.has(signatures.get(state)!)?'already-shown-physical-layout':!eligible.includes(state)?'does-not-improve-requested-objective-within-material-cap':'eligible-candidate'}));
-  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.22' as const,
+  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.23' as const,
     requestFingerprint:fingerprint({faces,profile,settings}),objective,selectedTrial:state?.trial??null,
     events:state?.record.events??[{step:1,action:'no-selection',message:'No unseen candidate improved the requested objective within its material cap. The previous plan is retained.',data:{objective,referenceQuality:reference,excludedSignatures:[...excluded],maxExtraMaterialPercent:maxExtra}}],candidates:summaries.map(c=>({...c,selected:c.trial===state?.trial,
       reason:c.trial===state?.trial?'selected-by-'+objective:c.reason})),
@@ -671,7 +680,7 @@ function toSolution(request:SolveRequest,state:State,inputIssues:Issue[],complet
   }
   if(budgetReached)issues.push({severity:'warning',code:'SEARCH_BUDGET',message:'Time budget reached. Unsolved positions have been supplied new; this complete draft is not proof that no better reuse exists.'});
   issues.push({severity:'warning',code:'PROTOTYPE_ONLY',message:'Draft material-bank plan. Verify profile, sheet registration and site lengths. No guaranteed minimum, manufacturer approval or spare sheets are implied.'});
-  return{schemaVersion:1,engineVersion:'2.22',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
+  return{schemaVersion:1,engineVersion:'2.23',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
     profile:structuredClone(profile),settings:structuredClone(settings),demands:state.demands,placements:state.placements.sort((a,b)=>a.demandId.localeCompare(b.demandId)),
     offcuts:state.inventory,lapByFace:state.laps,bankLayout:state.layout,
     metrics:{newMaterialMm2:cost,baselineNewMaterialMm2:baseline,netRoofMm2:state.demands.reduce((n,d)=>n+area(d.cover),0),installedPhysicalMm2:installed,
