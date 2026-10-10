@@ -1,0 +1,11 @@
+test_conflict_blocks_every_write (__main__.Packaging.test_conflict_blocks_every_write) ... ok
+test_dry_run_and_apply_idempotent_with_backup (__main__.Packaging.test_dry_run_and_apply_idempotent_with_backup) ... ok
+test_existing_phase1_hash_is_accepted (__main__.Packaging.test_existing_phase1_hash_is_accepted) ... ok
+test_payload_corruption_blocks_writes (__main__.Packaging.test_payload_corruption_blocks_writes) ... ok
+test_return_snapshot_records_diff_and_exclusions (__main__.Packaging.test_return_snapshot_records_diff_and_exclusions) ... ok
+test_symlink_target_is_refused (__main__.Packaging.test_symlink_target_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 6.643s
+
+OK

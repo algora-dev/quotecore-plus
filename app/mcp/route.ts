@@ -1,11 +1,18 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
 import { calculatePublicRoofTakeoff, parseQueryInput, toResultQuery } from '@/app/(public)/free-roofing-takeoff-builder/public-contract';
 import { roofTakeoffSchema } from '@/app/(public)/free-roofing-takeoff-builder/schema';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 
+import { SERVER_INSTRUCTIONS } from '../lib/free-tools/host-roof-scan/contract';
+import { exposedOnMainMcp } from '../lib/free-tools/host-roof-scan/config';
+import { corsHeaders, readLimited, parseRpc, rpcError, type RpcEnvelope } from '../lib/free-tools/host-roof-scan/request';
+import { ScanError } from '../lib/free-tools/host-roof-scan/types';
+import { runStatelessMcp } from '../lib/free-tools/mcp/transport';
+
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const maxDuration = 30;
 
 const inputSchema = {
   mode: z.enum(['actual', 'plan']).default('actual').describe('Use actual for final measurements or plan for plan-view measurements that need pitch adjustment.'),
@@ -21,10 +28,10 @@ const inputSchema = {
   fixings: z.number().positive().optional(),
 };
 
-function createServer(origin: string) {
+async function createServer(origin: string, withHostOutline: boolean) {
   const server = new McpServer(
     { name: 'quotecore-roof-takeoff', version: '1.0.0' },
-    { instructions: 'Use get_roof_takeoff_schema when input semantics are unclear. Use calculate_roof_takeoff to calculate and return the provided resultUrl. Actual measurements are not pitch-adjusted; plan measurements are.' },
+    { instructions: 'Use get_roof_takeoff_schema when input semantics are unclear. Use calculate_roof_takeoff to calculate and return the provided resultUrl. Actual measurements are not pitch-adjusted; plan measurements are.' + (withHostOutline ? ' ' + SERVER_INSTRUCTIONS : '') },
   );
 
   server.registerTool(
@@ -85,34 +92,42 @@ function createServer(origin: string) {
     },
   );
 
+  if (withHostOutline) {
+    // Do not load Sharp, storage or experimental SDK registration when the flag is off.
+    const { registerHostOutlineTools } = await import('../lib/free-tools/host-roof-scan/registration');
+    const { runtimeService } = await import('../lib/free-tools/host-roof-scan/runtime');
+    registerHostOutlineTools(server, runtimeService);
+  }
   return server;
 }
 
-async function handle(request: Request): Promise<Response> {
-  const clientIp = getClientIP(request.headers);
-  const allowed = await checkRateLimit(`public-roof-takeoff-mcp:${clientIp}`, 240, 60 * 60 * 1000);
-  if (!allowed) {
-    return Response.json({ jsonrpc: '2.0', error: { code: -32000, message: 'Too many MCP requests. Please try again later.' }, id: null }, { status: 429 });
-  }
 
-  const origin = new URL(request.url).origin;
-  const transport = new WebStandardStreamableHTTPServerTransport({ enableJsonResponse: true });
-  const server = createServer(origin);
-  await server.connect(transport);
-  return transport.handleRequest(request);
+async function handle(request: Request): Promise<Response> {
+  let rpc: RpcEnvelope | undefined;
+  try {
+    // Keep the existing distributed namespace and budget for the existing endpoint.
+    const clientIp = getClientIP(request.headers);
+    const allowed = await checkRateLimit(`public-roof-takeoff-mcp:${clientIp}`, 240, 60 * 60 * 1000);
+    if (!allowed) throw new ScanError('RATE_LIMIT', 'Too many MCP requests. Please try again later.', 429);
+    if (request.method !== 'POST')
+      return new Response(null, { status: 405, headers: { ...corsHeaders, Allow: 'POST, OPTIONS' } });
+    if ((request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase() !== 'application/json')
+      throw new ScanError('CONTENT_TYPE', 'MCP requests must use application/json.', 415);
+    const body = await readLimited(request);
+    rpc = parseRpc(body);
+    const withHostOutline = exposedOnMainMcp();
+    if (withHostOutline) {
+      const { guardHostOutlineRpc, isHostOutlineRpc } = await import('../lib/free-tools/host-roof-scan/runtime');
+      if (isHostOutlineRpc(rpc)) await guardHostOutlineRpc(request, rpc);
+    }
+    // Existing deterministic result URLs retain their original request-origin semantics.
+    // Private scan/review URLs use only QC_HOST_SCAN_ORIGIN, never a request header.
+    const server = await createServer(new URL(request.url).origin, withHostOutline);
+    return await runStatelessMcp(request, body, server);
+  } catch (error) { return rpcError(error, rpc?.id); }
 }
 
 export const GET = handle;
 export const POST = handle;
 export const DELETE = handle;
-
-export function OPTIONS() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, MCP-Protocol-Version, MCP-Session-Id, Last-Event-ID',
-    },
-  });
-}
+export function OPTIONS() { return new Response(null, { status: 204, headers: corsHeaders }); }

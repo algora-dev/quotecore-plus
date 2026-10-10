@@ -1,0 +1,3 @@
+$ npm ci --ignore-scripts --fetch-retries=0 --fetch-timeout=5000 --no-audit --no-fund
+
+EXIT TIMEOUT after 12 seconds

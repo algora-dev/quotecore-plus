@@ -1,0 +1,17 @@
+[
+  {
+    "name": "registry-access",
+    "exit": 6,
+    "seconds": 0.01
+  },
+  {
+    "name": "locked-sdk-tests",
+    "exit": 1,
+    "seconds": 0.07
+  },
+  {
+    "name": "production-build",
+    "exit": 127,
+    "seconds": 0.2
+  }
+]

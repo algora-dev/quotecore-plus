@@ -1,0 +1,31 @@
+[
+  {
+    "check": "desktop: real prepared image and polygon load; confirmation locked; initial state loaded",
+    "passed": true
+  },
+  {
+    "check": "desktop: coordinate editing and undo/redo",
+    "passed": true
+  },
+  {
+    "check": "desktop: calibration, explicit review and JSON export; no browser JS errors",
+    "passed": true
+  },
+  {
+    "check": "desktop: any geometry edit invalidates previous reviewed state",
+    "passed": true
+  },
+  {
+    "check": "browser: upload, manual trace and review without a model",
+    "passed": true
+  },
+  {
+    "check": "mobile viewport: no overflow; real touch drag, zoom, explicit review and export",
+    "passed": true
+  },
+  {
+    "check": "mock MCP Apps host: initialize, rejected-message fallback, array-content user message, synthetic tool-result, review context return",
+    "passed": true,
+    "note": "No live ChatGPT or vision model used; offline transport adapter=True"
+  }
+]

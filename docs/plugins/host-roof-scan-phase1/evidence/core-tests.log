@@ -1,0 +1,226 @@
+TAP version 13
+# Subtest: canonical raster preserves dimensions, hashes, and strips unrelated metadata
+ok 1 - canonical raster preserves dimensions, hashes, and strips unrelated metadata
+  ---
+  duration_ms: 45.246737
+  type: 'test'
+  ...
+# Subtest: large inputs normalize to the explicit 2000px frame
+ok 2 - large inputs normalize to the explicit 2000px frame
+  ---
+  duration_ms: 102.428138
+  type: 'test'
+  ...
+# Subtest: EXIF rotation is applied before coordinates are exposed
+ok 3 - EXIF rotation is applied before coordinates are exposed
+  ---
+  duration_ms: 10.722455
+  type: 'test'
+  ...
+# Subtest: PDF and SVG are rejected rather than treated as images
+ok 4 - PDF and SVG are rejected rather than treated as images
+  ---
+  duration_ms: 0.849403
+  type: 'test'
+  ...
+# Subtest: oversized, undersized and broken raster inputs fail safely
+ok 5 - oversized, undersized and broken raster inputs fail safely
+  ---
+  duration_ms: 4.497002
+  type: 'test'
+  ...
+# Subtest: valid concave roof geometry is preserved exactly
+ok 6 - valid concave roof geometry is preserved exactly
+  ---
+  duration_ms: 1.438362
+  type: 'test'
+  ...
+# Subtest: triangular roofs are valid; an exterior is not required to be a rectangle
+ok 7 - triangular roofs are valid; an exterior is not required to be a rectangle
+  ---
+  duration_ms: 0.259932
+  type: 'test'
+  ...
+# Subtest: nonfinite, out-of-bounds, duplicates and excess geometry rejected
+ok 8 - nonfinite, out-of-bounds, duplicates and excess geometry rejected
+  ---
+  duration_ms: 0.533325
+  type: 'test'
+  ...
+# Subtest: crossings, collinear collapse, self-touch and double backs fail
+ok 9 - crossings, collinear collapse, self-touch and double backs fail
+  ---
+  duration_ms: 0.413254
+  type: 'test'
+  ...
+# Subtest: host cannot add pitch or smuggle fields into geometry
+ok 10 - host cannot add pitch or smuggle fields into geometry
+  ---
+  duration_ms: 0.436449
+  type: 'test'
+  ...
+# Subtest: no calibration produces no invented physical units
+ok 11 - no calibration produces no invented physical units
+  ---
+  duration_ms: 0.348917
+  type: 'test'
+  ...
+# Subtest: known metric and imperial scales reuse area/perimeter math
+ok 12 - known metric and imperial scales reuse area/perimeter math
+  ---
+  duration_ms: 0.203237
+  type: 'test'
+  ...
+# Subtest: calibration rejects zero, negatives, nonfinite and too-short references
+ok 13 - calibration rejects zero, negatives, nonfinite and too-short references
+  ---
+  duration_ms: 0.188945
+  type: 'test'
+  ...
+# Subtest: scene adapter rescales uniformly and rejects aspect mismatch
+ok 14 - scene adapter rescales uniformly and rejects aspect mismatch
+  ---
+  duration_ms: 0.331
+  type: 'test'
+  ...
+# Subtest: tickets require a separate strong secret
+ok 15 - tickets require a separate strong secret
+  ---
+  duration_ms: 0.229877
+  type: 'test'
+  ...
+# Subtest: signed tickets reject tampering, wrong purpose and expiry
+ok 16 - signed tickets reject tampering, wrong purpose and expiry
+  ---
+  duration_ms: 1.026721
+  type: 'test'
+  ...
+# Subtest: memory store expires and enforces a small capacity
+ok 17 - memory store expires and enforces a small capacity
+  ---
+  duration_ms: 0.293022
+  type: 'test'
+  ...
+# Subtest: file URLs require exact trusted HTTPS origin, no credentials/redirect tricks/IP literals
+ok 18 - file URLs require exact trusted HTTPS origin, no credentials/redirect tricks/IP literals
+  ---
+  duration_ms: 5.837908
+  type: 'test'
+  ...
+# Subtest: private, mapped, documentation and loopback DNS addresses fail closed
+ok 19 - private, mapped, documentation and loopback DNS addresses fail closed
+  ---
+  duration_ms: 0.47001
+  type: 'test'
+  ...
+# Subtest: nonallowlisted host blocked before any outbound network request
+ok 20 - nonallowlisted host blocked before any outbound network request
+  ---
+  duration_ms: 0.23125
+  type: 'test'
+  ...
+# Subtest: prepare returns actual model-visible pixels plus exact image binding
+ok 21 - prepare returns actual model-visible pixels plus exact image binding
+  ---
+  duration_ms: 26.951486
+  type: 'test'
+  ...
+# Subtest: native attachment object accepts declared file fields using injectable safe fetch
+ok 22 - native attachment object accepts declared file fields using injectable safe fetch
+  ---
+  duration_ms: 20.359745
+  type: 'test'
+  ...
+# Subtest: ambiguous prepare input is rejected
+ok 23 - ambiguous prepare input is rejected
+  ---
+  duration_ms: 25.780002
+  type: 'test'
+  ...
+# Subtest: proposals remain unreviewed; model result contains overlay not human gate
+ok 24 - proposals remain unreviewed; model result contains overlay not human gate
+  ---
+  duration_ms: 41.862908
+  type: 'test'
+  ...
+# Subtest: stale image ID and swapped proposal rejected
+ok 25 - stale image ID and swapped proposal rejected
+  ---
+  duration_ms: 60.633574
+  type: 'test'
+  ...
+# Subtest: inability response supplies manual fallback without fabricated geometry
+ok 26 - inability response supplies manual fallback without fabricated geometry
+  ---
+  duration_ms: 24.919567
+  type: 'test'
+  ...
+# Subtest: complete model proposal -> user-edited review -> compatible export, no API inference
+ok 27 - complete model proposal -> user-edited review -> compatible export, no API inference
+  ---
+  duration_ms: 35.580174
+  type: 'test'
+  ...
+# Subtest: unchecked confirmation, wrong gate, and expired review are rejected
+ok 28 - unchecked confirmation, wrong gate, and expired review are rejected
+  ---
+  duration_ms: 35.696225
+  type: 'test'
+  ...
+# Subtest: manual trace can be reviewed without any model proposal
+ok 29 - manual trace can be reviewed without any model proposal
+  ---
+  duration_ms: 19.787236
+  type: 'test'
+  ...
+# Subtest: image hash mismatch prevents using stale or replaced pixels
+ok 30 - image hash mismatch prevents using stale or replaced pixels
+  ---
+  duration_ms: 18.707635
+  type: 'test'
+  ...
+# Subtest: deletion removes temporary image; already downloaded signed geometry is separate
+ok 31 - deletion removes temporary image; already downloaded signed geometry is separate
+  ---
+  duration_ms: 19.940077
+  type: 'test'
+  ...
+# Subtest: tool contracts separate data and rendering; no confirm tool exposed to the model
+ok 32 - tool contracts separate data and rendering; no confirm tool exposed to the model
+  ---
+  duration_ms: 0.31821
+  type: 'test'
+  ...
+# Subtest: all successful and error outputs conform to their declared top-level key contract
+ok 33 - all successful and error outputs conform to their declared top-level key contract
+  ---
+  duration_ms: 25.299502
+  type: 'test'
+  ...
+# Subtest: browser fallback CSP matches its single inline script and leaks no token in markup
+ok 34 - browser fallback CSP matches its single inline script and leaks no token in markup
+  ---
+  duration_ms: 1.656432
+  type: 'test'
+  ...
+# Subtest: new runtime path has no inference-client imports, paid routes or model sampling
+ok 35 - new runtime path has no inference-client imports, paid routes or model sampling
+  ---
+  duration_ms: 0.820219
+  type: 'test'
+  ...
+# Subtest: Supabase configuration rejects insecure bucket/origin values without networking
+ok 36 - Supabase configuration rejects insecure bucket/origin values without networking
+  ---
+  duration_ms: 0.256988
+  type: 'test'
+  ...
+1..36
+# tests 36
+# suites 0
+# pass 36
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 633.241163

@@ -1,0 +1,136 @@
+TAP version 13
+# Subtest: new tool exposure needs both flags; default is original tools only
+ok 1 - new tool exposure needs both flags; default is original tools only
+  ---
+  duration_ms: 1.373918
+  type: 'test'
+  ...
+# Subtest: Vercel production and known public production hosts are blocked regardless of flags
+ok 2 - Vercel production and known public production hosts are blocked regardless of flags
+  ---
+  duration_ms: 0.328064
+  type: 'test'
+  ...
+# Subtest: canonical origin cannot be taken from a request Host header
+ok 3 - canonical origin cannot be taken from a request Host header
+  ---
+  duration_ms: 1.221914
+  type: 'test'
+  ...
+# Subtest: http loopback is development-only and never enabled on Vercel
+ok 4 - http loopback is development-only and never enabled on Vercel
+  ---
+  duration_ms: 0.222469
+  type: 'test'
+  ...
+# Subtest: exact origin lists reject paths, trailing slashes, credentials and wildcards
+ok 5 - exact origin lists reject paths, trailing slashes, credentials and wildcards
+  ---
+  duration_ms: 0.733653
+  type: 'test'
+  ...
+# Subtest: origin guard permits own origin, explicit sandbox origins, no origin and opaque null only
+ok 6 - origin guard permits own origin, explicit sandbox origins, no origin and opaque null only
+  ---
+  duration_ms: 21.432146
+  type: 'test'
+  ...
+# Subtest: readLimited enforces actual stream size without trusting Content-Length
+ok 7 - readLimited enforces actual stream size without trusting Content-Length
+  ---
+  duration_ms: 3.881379
+  type: 'test'
+  ...
+# Subtest: advertised oversized and malformed content lengths are rejected
+ok 8 - advertised oversized and malformed content lengths are rejected
+  ---
+  duration_ms: 0.967719
+  type: 'test'
+  ...
+# Subtest: body reader cancels a stalled stream on deadline
+ok 9 - body reader cancels a stalled stream on deadline
+  ---
+  duration_ms: 16.099004
+  type: 'test'
+  ...
+# Subtest: RPC envelope accepts initialized notifications and rejects batches/invalid IDs
+ok 10 - RPC envelope accepts initialized notifications and rejects batches/invalid IDs
+  ---
+  duration_ms: 1.089388
+  type: 'test'
+  ...
+# Subtest: error responses include safe CORS and no-store, preserve RPC IDs and hide internal errors
+ok 11 - error responses include safe CORS and no-store, preserve RPC IDs and hide internal errors
+  ---
+  duration_ms: 1.766558
+  type: 'test'
+  ...
+# Subtest: response decoration preserves status and body while disabling caching
+ok 12 - response decoration preserves status and body while disabling caching
+  ---
+  duration_ms: 2.996683
+  type: 'test'
+  ...
+# Subtest: setup rejects production and unsafe origins before network access
+ok 13 - setup rejects production and unsafe origins before network access
+  ---
+  duration_ms: 1.267911
+  type: 'test'
+  ...
+# Subtest: setup refuses weak placeholders, nonisolated bucket names and wildcard file origins
+ok 14 - setup refuses weak placeholders, nonisolated bucket names and wildcard file origins
+  ---
+  duration_ms: 1.333228
+  type: 'test'
+  ...
+# Subtest: setup never changes a public bucket to private silently
+ok 15 - setup never changes a public bucket to private silently
+  ---
+  duration_ms: 19.314831
+  type: 'test'
+  ...
+# Subtest: setup creates only the named private bucket when explicitly requested
+ok 16 - setup creates only the named private bucket when explicitly requested
+  ---
+  duration_ms: 0.61012
+  type: 'test'
+  ...
+# Subtest: missing bucket without create flag is a safe error
+ok 17 - missing bucket without create flag is a safe error
+  ---
+  duration_ms: 0.232222
+  type: 'test'
+  ...
+# Subtest: rate probe verifies allow then deny on one disposable namespace
+ok 18 - rate probe verifies allow then deny on one disposable namespace
+  ---
+  duration_ms: 2.00498
+  type: 'test'
+  ...
+# Subtest: storage probe always deletes its own fixture after read failure
+ok 19 - storage probe always deletes its own fixture after read failure
+  ---
+  duration_ms: 1.42935
+  type: 'test'
+  ...
+# Subtest: storage probe checks byte-for-byte roundtrip and removes the object
+ok 20 - storage probe checks byte-for-byte roundtrip and removes the object
+  ---
+  duration_ms: 0.919628
+  type: 'test'
+  ...
+# Subtest: setup handles documented missing-bucket envelope without treating auth errors as absence
+ok 21 - setup handles documented missing-bucket envelope without treating auth errors as absence
+  ---
+  duration_ms: 2.551977
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 109.574166

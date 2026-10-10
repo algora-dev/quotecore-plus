@@ -1,0 +1,37 @@
+{
+  "frame": {
+    "width": 800,
+    "height": 600,
+    "sha256": "bcf59115f4d4612d80e5ba1ec0c506557ade85d6c2bf810c7bc384c867975347"
+  },
+  "outline": {
+    "name": "Synthetic verified outline",
+    "points": [
+      {
+        "x": 110,
+        "y": 100
+      },
+      {
+        "x": 710,
+        "y": 100
+      },
+      {
+        "x": 710,
+        "y": 300
+      },
+      {
+        "x": 510,
+        "y": 300
+      },
+      {
+        "x": 510,
+        "y": 500
+      },
+      {
+        "x": 110,
+        "y": 500
+      }
+    ],
+    "pitch_degrees": null
+  }
+}

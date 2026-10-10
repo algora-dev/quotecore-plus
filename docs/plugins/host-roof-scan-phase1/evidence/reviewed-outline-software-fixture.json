@@ -1,0 +1,63 @@
+{
+  "schema": "qc-host-outline-v1",
+  "provenance": "host-model-or-manual-user-reviewed",
+  "reviewedAt": "2026-10-10T16:19:30.760Z",
+  "edited": true,
+  "frame": {
+    "imageId": "17b93a4e-49f7-4811-be33-3ae20b6963de",
+    "sha256": "01f8528d6f097aa3a494d4cb4fdb16094c456f47a9f2d8b8c2cfb8ecbed60da7",
+    "width": 800,
+    "height": 600,
+    "mimeType": "image/png",
+    "coordinateFrame": "qc-analysis-raster-v1"
+  },
+  "calibration": {
+    "start": {
+      "x": 100,
+      "y": 99.99998474121094
+    },
+    "end": {
+      "x": 700,
+      "y": 99.99998474121094
+    },
+    "realLength": 30,
+    "unit": "m"
+  },
+  "scanData": {
+    "roof_areas": [
+      {
+        "name": "Synthetic roof",
+        "points": [
+          {
+            "x": 102,
+            "y": 100
+          },
+          {
+            "x": 700,
+            "y": 100
+          },
+          {
+            "x": 700,
+            "y": 300
+          },
+          {
+            "x": 500,
+            "y": 300
+          },
+          {
+            "x": 500,
+            "y": 500
+          },
+          {
+            "x": 100,
+            "y": 500
+          }
+        ],
+        "pitch_degrees": null
+      }
+    ],
+    "notes": [
+      "Host-model outline, reviewed by a user. Components and pitch were not inferred."
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "baselineCommit": "3228415c",
+  "instruction": "Read-only dependency preflight. Review any drift; do not overwrite these files from this package.",
+  "files": [
+    {
+      "path": "app/lib/takeoff/ai-prompt-v3.ts",
+      "sha256": "9250d492bf9afd1a9ce662bd2b8c9a3f3fc6caf990354caad3bbd1b7dcab0ad0"
+    },
+    {
+      "path": "app/lib/takeoff/scanOverlay.ts",
+      "sha256": "29b387ab2205b01b80d07f3b094c6058025dc4b14dee8269a34fce7d4de08a13"
+    },
+    {
+      "path": "app/lib/takeoff/precision/precisionGeometry.ts",
+      "sha256": "95f29551ee308481f8e736b7764f6c45a286eb37544e359c917741ef694fbfd2"
+    },
+    {
+      "path": "app/lib/takeoff/calibrationCoordinates.ts",
+      "sha256": "45be9e1e8bf539a95d3b2da39ec35d3ba0d04f025605b1621bcd9219f21c5845"
+    },
+    {
+      "path": "app/lib/security/rateLimit.ts",
+      "sha256": "a6fe60cb910a91f02877893a6fe916e61d1f35061d432b3bd894ecdb02aa3190"
+    },
+    {
+      "path": "package.json",
+      "sha256": "ccdc3702abf1769b9ca4e0caae7cd3928bc4bb5c369dd17b2fc35d6871ee54dd"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "3d58d7afa0aa4232c6bf1ccf358cb37f946f20f33fcae3b404888ecd00bfd777"
+    },
+    {
+      "path": "middleware.ts",
+      "sha256": "cf468d260b83beefc1cf6a685d0dc1fcffada1bcdf22cf86cd5179117a9171e7"
+    }
+  ]
+}

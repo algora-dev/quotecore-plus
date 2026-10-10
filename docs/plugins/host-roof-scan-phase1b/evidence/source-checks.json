@@ -1,0 +1,13 @@
+{
+  "typescript_syntax_files": 20,
+  "javascript_syntax_files": 15,
+  "legacy_tool_registrations_unchanged": 3,
+  "baseline_files_modified": [
+    "app/mcp/route.ts"
+  ],
+  "checks": [
+    "no new em dashes in code",
+    "dependencies, middleware, Vercel and Next config unchanged"
+  ],
+  "limitations": "Syntax/AST checks only. Does not validate installed MCP SDK types or runtime."
+}

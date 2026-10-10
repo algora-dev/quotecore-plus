@@ -1,0 +1,7 @@
+PASS desktop: real prepared image and polygon load; confirmation locked; initial state loaded
+PASS desktop: coordinate editing and undo/redo
+PASS desktop: calibration, explicit review and JSON export; no browser JS errors
+PASS desktop: any geometry edit invalidates previous reviewed state
+PASS browser: upload, manual trace and review without a model
+PASS mobile viewport: no overflow; real touch drag, zoom, explicit review and export
+PASS mock MCP Apps host: initialize, rejected-message fallback, array-content user message, synthetic tool-result, review context return

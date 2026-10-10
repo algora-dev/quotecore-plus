@@ -1,0 +1,9 @@
+{
+  "metricVersion": "qc-outline-benchmark-v1",
+  "imageSha256": "bcf59115f4d4612d80e5ba1ec0c506557ade85d6c2bf810c7bc384c867975347",
+  "rasterIoU": 0.9607843137254902,
+  "absoluteAreaErrorPercent": 0,
+  "verifiedVertexCount": 6,
+  "proposedVertexCount": 6,
+  "note": "IoU is rasterized at the prepared resolution. Area error uses existing polygon math; hypothetical unit scale cancels. This does not evaluate pitch, components or real-world measurement accuracy."
+}

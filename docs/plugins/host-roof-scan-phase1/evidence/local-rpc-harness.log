@@ -1,0 +1,11 @@
+PASS initialize LOCAL HARNESS NOT SDK 2025-03-26
+PASS tools/list 4
+PASS resources/read
+PASS tools/call qc_open_roof_outline_review awaiting_image
+PASS tools/call qc_prepare_roof_outline image_ready
+PASS tools/call qc_submit_roof_outline awaiting_review
+PASS tools/call qc_open_roof_outline_review review_open
+PASS unreviewed export blocked
+PASS tools/call qc_export_reviewed_roof_outline exported
+PASS structured reviewed export; live host vision and human review are NOT tested by this script.
+PASS temporary test image deleted
