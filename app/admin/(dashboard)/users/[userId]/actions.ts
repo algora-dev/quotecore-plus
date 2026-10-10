@@ -15,6 +15,7 @@ import { requireStripe, getStripeMode, resolvePlanCodeForStripePrice } from '@/a
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { checkRateLimit } from '@/app/lib/security/rateLimit';
 import type Stripe from 'stripe';
+import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -214,6 +215,126 @@ export async function adminOverridePlan(
   await writeAudit(admin, adminProfile, 'admin_override_plan', companyId, null, null, company.name, reason, { planCode, durationDays, until });
 
   return { ok: true, message: `Override set to ${planCode} for ${durationDays} days.` };
+}
+
+// ---------------------------------------------------------------------------
+// P8: Custom-setup (V5) admin powers — Done-for-You bespoke grants.
+// Payment is collected manually (bespoke Stripe charge); this grants the
+// purchased snapshot with a prepaid end date. The entitlements loader laps
+// grants whose period_end has passed.
+// ---------------------------------------------------------------------------
+
+export interface AdminCustomSetupInput {
+  capacity: 'low' | 'medium' | 'high';
+  digitalTakeoff: boolean;
+  scanTokens: number;
+  offcuts: boolean;
+  assistantTasks: number;
+  monthlyCents: number;
+}
+
+export async function adminGrantCustomSetup(
+  companyId: string,
+  setup: AdminCustomSetupInput,
+  reason: string,
+  endsAt: string,
+): Promise<ActionResult> {
+  const adminProfile = await requireAdmin();
+  const admin = createAdminClient();
+
+  const capacityRow = PREVIEW_CATALOG.core[setup.capacity];
+  if (!capacityRow) return { ok: false, error: 'Unknown capacity tier.' };
+  if (!reason.trim()) return { ok: false, error: 'A reason is required for the audit trail.' };
+  const ends = Date.parse(endsAt);
+  if (Number.isNaN(ends) || ends <= Date.now()) return { ok: false, error: 'A valid future end date is required.' };
+
+  const { data: company } = await admin.from('companies').select('id, name').eq('id', companyId).maybeSingle();
+  if (!company) return { ok: false, error: 'Company not found.' };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: mapRow } = await (admin as any)
+    .from('custom_billing_price_map')
+    .select('stripe_account_id')
+    .eq('stripe_mode', getStripeMode())
+    .limit(1)
+    .maybeSingle();
+  if (!mapRow?.stripe_account_id) return { ok: false, error: 'Price registry has no account binding; provision the catalogue first.' };
+
+  const nowIso = new Date().toISOString();
+  const entitlements = {
+    capacity: setup.capacity,
+    quotes: capacityRow.quotes,
+    storageBytes: capacityRow.storageBytes,
+    digitalTakeoff: setup.digitalTakeoff,
+    scanTokens: setup.scanTokens,
+    offcuts: setup.offcuts,
+    assistantTasks: setup.assistantTasks,
+  };
+  const componentCodes = ['core_access', `capacity_${setup.capacity}`];
+  if (setup.digitalTakeoff) componentCodes.push('digital_takeoff');
+  if (setup.scanTokens > 0) componentCodes.push('scan_medium');
+  if (setup.offcuts) componentCodes.push('offcuts_medium');
+  if (setup.assistantTasks > 0) componentCodes.push('assistant_regular');
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: snapErr } = await (admin as any)
+    .from('company_custom_billing')
+    .upsert({
+      company_id: companyId,
+      stripe_account_id: mapRow.stripe_account_id,
+      stripe_mode: getStripeMode(),
+      stripe_customer_id: 'admin-granted',
+      stripe_subscription_id: `admin-${companyId}`,
+      catalog_id: PREVIEW_CATALOG.id,
+      catalog_revision: PREVIEW_CATALOG.revision,
+      component_codes: componentCodes,
+      purchased_entitlements: entitlements,
+      provider_status: 'active',
+      currency: PREVIEW_CATALOG.currency.toLowerCase(),
+      monthly_cents: setup.monthlyCents,
+      period_start: nowIso,
+      period_end: new Date(ends).toISOString(),
+      reconciled_at: nowIso,
+    }, { onConflict: 'company_id' });
+  if (snapErr) return { ok: false, error: `Snapshot write failed: ${snapErr.message}` };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: coErr } = await (admin as any)
+    .from('companies')
+    .update({ billing_model: 'custom_setup', subscription_status: 'active' })
+    .eq('id', companyId);
+  if (coErr) return { ok: false, error: `Company update failed: ${coErr.message}` };
+
+  await writeAudit(admin, adminProfile, 'admin_grant_custom_setup', companyId, null, null, company.name, reason, { setup, endsAt });
+
+  return { ok: true, message: `Custom setup granted until ${new Date(ends).toISOString().slice(0, 10)}.` };
+}
+
+export async function adminClearCustomSetup(companyId: string, reason: string): Promise<ActionResult> {
+  const adminProfile = await requireAdmin();
+  const admin = createAdminClient();
+  if (!reason.trim()) return { ok: false, error: 'A reason is required for the audit trail.' };
+
+  const { data: company } = await admin.from('companies').select('id, name').eq('id', companyId).maybeSingle();
+  if (!company) return { ok: false, error: 'Company not found.' };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: snapErr } = await (admin as any)
+    .from('company_custom_billing')
+    .update({ provider_status: 'canceled', reconciled_at: new Date().toISOString() })
+    .eq('company_id', companyId);
+  if (snapErr) return { ok: false, error: `Snapshot update failed: ${snapErr.message}` };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: coErr } = await (admin as any)
+    .from('companies')
+    .update({ billing_model: 'legacy' })
+    .eq('id', companyId);
+  if (coErr) return { ok: false, error: `Company update failed: ${coErr.message}` };
+
+  await writeAudit(admin, adminProfile, 'admin_clear_custom_setup', companyId, null, null, company.name, reason, {});
+
+  return { ok: true, message: 'Custom setup cleared; company reverted to legacy billing.' };
 }
 
 // ---------------------------------------------------------------------------

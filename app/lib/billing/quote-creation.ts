@@ -180,6 +180,30 @@ export async function createQuoteAtomic(
   }
 
   const admin = createAdminClient();
+
+  // Custom-setup (V5) quote cap. The SQL RPC enforces the legacy plan limit,
+  // which under the custom pro_plus basis is effectively unlimited - so the
+  // purchased capacity cap (5/20/100 quotes) is enforced here. The RPC still
+  // increments company_quote_usage atomically either way. Small race window
+  // on concurrent creates is accepted for V1 testing; move into the RPC slot
+  // function before live charging.
+  const capEnt = await loadCompanyEntitlements(companyId).catch(() => null);
+  if (
+    capEnt &&
+    capEnt.billingModel === 'custom_setup' &&
+    capEnt.monthlyQuoteUsed >= capEnt.monthlyQuoteLimit
+  ) {
+    const periodStart = new Date(Date.UTC(
+      new Date().getUTCFullYear(), new Date().getUTCMonth(), 1,
+    )).toISOString().slice(0, 10);
+    throw new QuoteLimitReachedError({
+      used: capEnt.monthlyQuoteUsed,
+      limit: capEnt.monthlyQuoteLimit,
+      periodStart,
+      planCode: 'custom_setup',
+    });
+  }
+
   const { data, error } = await admin.rpc('create_quote_atomic', {
     p_company_id: companyId,
     p_user_id: userId,

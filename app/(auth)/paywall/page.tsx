@@ -9,6 +9,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
 import { loadBillingPlans } from '@/app/lib/billing/paywall-plans';
 import { BillingPanel } from '@/app/(auth)/[workspaceSlug]/account/billing/BillingPanel';
+import { CustomSetupPayCard } from '@/app/components/billing/CustomSetupPayCard';
 
 /**
  * Onboarding paywall (paid-upfront model, 2026-09-16).
@@ -86,6 +87,10 @@ export default async function PaywallPage() {
             success Stripe flips subscription_status to active via webhook and
             the return URL lands the user in the workspace. */}
         <div className="mt-8">
+          {/* Configured-setup pay card (V5 pricing tool). Renders only when the
+              visitor carries a stored calculator setup; one pay CTA, amounts
+              re-verified server-side against the price registry. */}
+          <CustomSetupPayCard />
           <QcJourneySteps steps={["Account", "Workspace", "Subscription"]} current={2} label="Getting started" />
           <BillingPanel context="activation"
             effectivePlanCode={entitlements.effectivePlanCode}

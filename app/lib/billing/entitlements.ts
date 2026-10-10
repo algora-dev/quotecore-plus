@@ -67,6 +67,13 @@ export interface CompanyEntitlements {
   companyId: string;
 
   /**
+   * Billing path discriminator: 'legacy' (plan_code + subscription_plans)
+   * or 'custom_setup' (V5 calculator multi-item subscription, caps read from
+   * the company_custom_billing snapshot).
+   */
+  billingModel: 'legacy' | 'custom_setup';
+
+  /**
    * What Stripe says the company is paying for. NEVER overwritten by payment
    * failures; only changes on explicit plan switch or admin override. The
    * SQL "effective plan" functions compute the actually-allowed plan from
@@ -243,6 +250,23 @@ interface PlanRowRaw {
   feat_message_center: boolean;
 }
 
+/** Custom-setup (V5) snapshot row; presence discriminates the custom path. */
+interface CustomSnapshotRow {
+  purchased_entitlements: {
+    capacity: string;
+    quotes: number;
+    storageBytes: number;
+    digitalTakeoff: boolean;
+    scanTokens: number;
+    offcuts: boolean;
+    assistantTasks: number;
+  };
+  provider_status: string;
+  monthly_cents: number;
+  period_start: string;
+  period_end: string;
+}
+
 /**
  * Load a company's full entitlement snapshot. Single DB round-trip (one
  * companies row + one subscription_plans row + three function calls bundled
@@ -280,6 +304,7 @@ export const loadCompanyEntitlements = cache(
       orderCountResult,
       usageResult,
       aiPointsResult,
+      customResult,
     ] = await Promise.all([
       admin
         .from('companies')
@@ -309,6 +334,13 @@ export const loadCompanyEntitlements = cache(
         .maybeSingle(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (admin as any).rpc('get_ai_assist_points_status', { p_company_id: companyId }),
+      // Custom-setup (V5) snapshot (service-role table, not in generated types).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (admin as any)
+        .from('company_custom_billing')
+        .select('purchased_entitlements, provider_status, monthly_cents, period_start, period_end')
+        .eq('company_id', companyId)
+        .maybeSingle(),
     ]);
 
     if (companyResult.error) {
@@ -319,6 +351,14 @@ export const loadCompanyEntitlements = cache(
     }
 
     const company = companyResult.data as EntitlementRowRaw;
+    const customSnap = (customResult?.data ?? null) as CustomSnapshotRow | null;
+    // Custom caps govern only while the custom subscription is in a state we
+    // honour (mirrors the effective-plan SQL arm). Wind-down states fall back
+    // to the legacy plan basis, which the SQL collapses to 'free'.
+    const customHealthy = !!customSnap
+      && ['active', 'trialing', 'past_due', 'disputed'].includes(customSnap.provider_status)
+      && Date.parse(customSnap.period_end) > Date.now();
+    const customEnt = customHealthy ? customSnap!.purchased_entitlements : null;
     const effectivePlanCode = (effCodeResult.data as string | null) ?? 'starter';
     const isActive = (effActiveResult.data as boolean | null) ?? false;
 
@@ -361,11 +401,12 @@ export const loadCompanyEntitlements = cache(
 
     return {
       companyId,
+      billingModel: customSnap ? 'custom_setup' : 'legacy',
       purchasedPlanCode: company.plan_code,
       effectivePlanCode,
       subscriptionStatus: company.subscription_status as SubscriptionStatus,
       isActive,
-      monthlyQuoteLimit: plan.monthly_quote_limit,
+      monthlyQuoteLimit: customEnt ? customEnt.quotes : plan.monthly_quote_limit,
       monthlyQuoteUsed: (usageResult.data?.quotes_created as number | undefined) ?? 0,
       componentLimit: componentLimit,
       componentCount: componentCount,
@@ -384,14 +425,14 @@ export const loadCompanyEntitlements = cache(
       aiAssistPointsUsed: ((aiPointsResult?.data as { used?: number }[] | null)?.[0]?.used) ?? 0,
       aiAssistPointsRemaining: ((aiPointsResult?.data as { remaining?: number }[] | null)?.[0]?.remaining) ?? 0,
       aiAssistBlocked: ((aiPointsResult?.data as { is_blocked?: boolean }[] | null)?.[0]?.is_blocked) ?? true,
-      storageLimitBytes: plan.storage_limit_bytes + company.storage_topup_bytes,
+      storageLimitBytes: (customEnt ? customEnt.storageBytes : plan.storage_limit_bytes) + company.storage_topup_bytes,
       storageUsedBytes: company.storage_used_bytes,
       storageTopupBytes: company.storage_topup_bytes,
       isOverStorage:
-        company.storage_used_bytes > plan.storage_limit_bytes + company.storage_topup_bytes,
+        company.storage_used_bytes > (customEnt ? customEnt.storageBytes : plan.storage_limit_bytes) + company.storage_topup_bytes,
       includedSeats: Math.max(plan.included_seats, company.seat_count),
       features: {
-        digital_takeoff: plan.feat_digital_takeoff,
+        digital_takeoff: customEnt ? customEnt.digitalTakeoff : plan.feat_digital_takeoff,
         flashings: plan.feat_flashings,
         material_orders: plan.feat_material_orders,
         followups: plan.feat_followups,
@@ -403,7 +444,7 @@ export const loadCompanyEntitlements = cache(
         message_center: plan.feat_message_center,
       },
       trialEndsAt: company.trial_ends_at,
-      currentPeriodEnd: company.current_period_end,
+      currentPeriodEnd: customSnap ? customSnap.period_end : company.current_period_end,
       // grace_ends_at is computed from first_payment_failure_at + 24 days on
       // read (not stored separately on the row). The dunning cron is the
       // source of truth for advancing status; this column lets the UI render

@@ -99,6 +99,11 @@ import {
   stripeStatusToInternal,
   getStripeMode,
 } from '@/app/lib/billing/stripe';
+import {
+  isCustomSubscription,
+  reconcileCustomSubscription,
+  openCustomPeriodGrant,
+} from '@/app/lib/billing/custom/reconcile';
 
 export const runtime = 'nodejs';
 // Stripe needs the raw bytes for signature verification, so this route
@@ -417,6 +422,14 @@ async function handleSubscriptionEvent(
     return `quarantined:stale_subscription:${sub.id}_vs_current_${company.stripe_subscription_id}`;
   }
 
+  // Custom-setup (V5) subscriptions: classify by trusted server metadata,
+  // decode the complete item set against the price registry, and reconcile
+  // the custom snapshot + period grant. plan_code stays untouched (sacred);
+  // billing_model discriminates the path. Legacy logic below is unchanged.
+  if (isCustomSubscription(sub)) {
+    return reconcileCustomSubscription({ sub, event, eventJson, company });
+  }
+
   // Resolve the primary Price ID to our plan code.
   const priceId = sub.items.data[0]?.price?.id;
   if (!priceId) return 'quarantined:no_price_on_subscription';
@@ -539,6 +552,11 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<string> {
     });
     return 'ok:admin_paused';
   }
+
+  // Custom-setup (V5) renewals: open the paid period grant (idempotent,
+  // stored-snapshot limits) before dunning recovery. No-op without a
+  // custom snapshot, so every legacy flow is untouched.
+  await openCustomPeriodGrant({ invoice, company });
 
   // Restore to active if we were in any payment-failure state.
   const wasRecovering = ['past_due', 'grace', 'pending_data_purge'].includes(

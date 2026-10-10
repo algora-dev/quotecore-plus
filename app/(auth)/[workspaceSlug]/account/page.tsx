@@ -306,6 +306,14 @@ export default async function AccountPage() {
             <h2 className="text-lg md:text-xl font-semibold text-slate-900">Billing &amp; Subscription</h2>
             <p className="text-sm text-slate-500 mt-1">Manage your plan and payment details.</p>
           </div>
+          {entitlements.billingModel === 'custom_setup' && (
+            <div className="rounded-xl border border-orange-200 bg-orange-50/40 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <p className="text-sm text-slate-700">Need a different setup? Use the pricing tool to change your subscription.</p>
+              <a href="billing/build-setup" className="qc-flow-link text-sm font-semibold text-[#BD4A1A] hover:text-[#ff5722] whitespace-nowrap">
+                Change your setup &rarr;
+              </a>
+            </div>
+          )}
           <div data-copilot="account-billing">
             <BillingPanel
               effectivePlanCode={entitlements.effectivePlanCode}

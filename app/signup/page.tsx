@@ -11,6 +11,8 @@ import { signupWithCompany } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { PasswordField } from '@/app/components/ui/PasswordField';
+import { PricingIntentCapture } from '@/app/components/pricing/calculator/PricingIntentCapture';
+import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
 
 export default function SignupPage() {
   return (
@@ -74,6 +76,9 @@ function SignupForm() {
   return (
     <QcJourney><main className="qc-flow-auth flex flex-col px-4">
       <FreeToolsWelcomeModal refSlug={refSlug || ''} hasDraft={!!draftId} />
+      {/* Pricing-tool setup capture: persists the qc_setup param from /pricing
+          into sessionStorage so the paywall can offer the configured setup. */}
+      <PricingIntentCapture catalog={PREVIEW_CATALOG} />
       <div className="w-full max-w-md mx-auto my-auto py-10">
         <div className="text-center mb-8">
           <img src="/logo.png" alt="QuoteCore" className="h-12 inline-block" />
