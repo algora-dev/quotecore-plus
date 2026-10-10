@@ -198,7 +198,8 @@ async function withProviderBudgetStep(companyId: string, runId: string, base: St
       tools: chatInput.tools.map((t) => t.name),
       messages: chatInput.messages.map((m) => ({ role: m.role, chars: m.content.length, toolCalls: m.tool_calls?.length ?? 0 })),
     };
-    return withAssistantProviderBudget({
+    try {
+      return await withAssistantProviderBudget({
       companyId, runId, accountId: scope.accountId, mode: scope.mode, callKey, providerRequest,
       inputTokenUpperBound: inputBound, maxOutputTokens: MODEL_LIMITS.maxOutputTokens,
       timeoutMs: TURN_DEADLINE_MS, client,
@@ -212,7 +213,20 @@ async function withProviderBudgetStep(companyId: string, runId: string, base: St
         }
         return { value: result, totalTokens: result.totalTokens };
       },
-    });
+      });
+    } catch (error) {
+      // P2 diagnostics: the model-loop upstream logger only extracts nested
+      // provider fields, hiding adapter errors. Surface the real cause here.
+      try {
+        console.error('[smart-assistant:provider-budget]', JSON.stringify({
+          runId, callKey,
+          name: error instanceof Error ? error.name : typeof error,
+          message: error instanceof Error ? error.message : String(error),
+          code: (error as { code?: unknown })?.code ?? null,
+        }));
+      } catch { /* diagnostics must never mask the original error */ }
+      throw error;
+    }
   };
 }
 
