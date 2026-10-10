@@ -1,3 +1,5 @@
+import { installationPanel, installationStyles, noInstallationDialog } from './installationPlans';
+import { installationInstructions } from '../core/installationPlan';
 import { portfolioChoices, portfolioStyles, noPortfolioDialog } from './portfolioPlans';
 import type { PortfolioReport } from '../core/portfolio';
 import { ViewPerformance } from '../reliability/viewPerformance';
@@ -162,6 +164,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   let reviewEditing=false, geometryTool:'split'|'merge'|null=null, splitPoints:Point[]=[], cleanupChangeId='';
   let showSheets=false, showSources=false, showEnvelope=false, drawPoints: Point[]|null=null, drag:Drag|null=null;
   let layouts:Solution[] = draft.solution ? [draft.solution] : [], layoutIndex=0;
+  let installationDialog=false,installationAttempt=0;
+  let lastInstallationSearch:import('../core/installationSearch').InstallationSearchReport|null=null;
   let portfolio:PortfolioReport|null=null,portfolioAttempt=0,portfolioDialog=false;
   const checkedPlanCache=new Map<string,CheckedPlan>();
   let backgroundFailed=false;
@@ -291,7 +295,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   }
   function cancel(): void { calculation?.dispose(); calculation = null; busy = false; jobId = ''; }
   function cancelByUser():void {calculation?.cancel();cancel();notice='Calculation cancelled. Reviewed faces and any original plan are kept.';render(true);}
-  function invalidate(): void { portfolio=null;portfolioAttempt=0;portfolioDialog=false;checkedPlanCache.clear();options.onPlanInvalidated?.(); salvagePreview=null;salvageBase=null;salvageDialog=false;lastSalvageSearch=null;alternativeDialog=null;alternativeFocus=null;
+  function invalidate(): void { installationDialog=false;installationAttempt=0;lastInstallationSearch=null;portfolio=null;portfolioAttempt=0;portfolioDialog=false;checkedPlanCache.clear();options.onPlanInvalidated?.(); salvagePreview=null;salvageBase=null;salvageDialog=false;lastSalvageSearch=null;alternativeDialog=null;alternativeFocus=null;
     cancel(); draft.solution = null; layouts=[];layoutIndex=0; phase = 'faces'; selectedOffcutId = ''; selectedGroupId = '';
     selectedSectionId='';quotePreviewOpen=false;
     error = ''; pendingSourceAck = false; partitionKey = ''; lastSearchTrace=null;alternativeAttempt=0;
@@ -527,8 +531,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         ${quotePreviewOpen?`<div class="qc-quantity-proposal"><b>${basisValue.toFixed(2)} ${quantityBasis==='lineal-metres'?'lm':'m²'} for the selected material scope</b><p>Keep the measured roof area and labour quantities. This plan already includes cutting stock and configured allowances; do not apply the old waste factor again automatically. Spares are separate.</p><p class="qc-muted">Match this basis to the quote line’s rate. No quote is changed by this preview or export.</p><div class="qc-actions"><button data-action="export-quantity">Export quantity proposal</button>${options.onQuantityProposal?'<button data-action="send-quantity" class="primary">Send to quote review</button>':''}${options.onSaveOnePager?`<button data-action="save-one-pager" class="primary" ${savingOnePager?'disabled':''}>${savingOnePager?'Saving one-pager…':'Save one-pager to job'}</button>`:''}</div></div>`:''}
         <details><summary>Purchase breakdown by section</summary><table class="qc-stock"><thead><tr><th>Section</th><th>Sheets</th><th>New lm</th></tr></thead><tbody>${sections.filter(a=>a.purchasedDemandIds.length).map(a=>`<tr><td>${esc(faceName(a.faceId))}.${sectionNumber(a)}</td><td>${a.purchasedDemandIds.length}</td><td>${displayQuantity(a.purchasedLinealM)}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><td>${q.newSheetCount}</td><td>${displayQuantity(q.purchasedLinealM)}</td></tr></tfoot></table></details></details>`;
       normal = `<h2>Sheet & offcut plan</h2><p class="qc-plan-total"><strong>${q.newSheetCount} new sheets</strong><strong class="qc-lineal-total">${displayQuantity(q.purchasedLinealM)} <small>purchased lineal metres</small></strong><span>${displayQuantity(q.suppliedCoverAreaM2)} m² material required (cover basis)<br/>${displayQuantity(q.netRoofAreaM2)} m² net roof · ${displayQuantity(q.suppliedCoverAreaM2-q.netRoofAreaM2)} m² extra (${q.coverUpliftPercent?.toFixed(1)??'-'}%)<br/>This roof scope only · no spares</span></p>
-        ${salvagePreview?.solution&&!salvageDialog?salvageSummary(salvagePreview.solution,draft.faces,true,salvageViewingBase):portfolioChoices(s,layouts,layoutIndex,busy||stale||s.status==='invalid',portfolio,draft.faces)+(s.salvage?salvageSummary(s,draft.faces,false):salvageOffer(s,layouts,busy||stale||s.status==='invalid'))}
-        <p class="qc-muted qc-material-key">Solid = new bank · crosshatch = offcuts · parallel lines = recut offcuts · grey = filler. Dots mark effective cover at the spouting.</p>${sectionDetail}
+        ${salvagePreview?.solution&&!salvageDialog?salvageSummary(salvagePreview.solution,draft.faces,true,salvageViewingBase):portfolioChoices(s,layouts,layoutIndex,busy||stale||s.status==='invalid',portfolio,draft.faces)+installationPanel({roof:draft.roof,faces:draft.faces,profile:draft.profile,settings:draft.settings},s,layouts,busy||stale||s.status==='invalid')+(s.salvage?salvageSummary(s,draft.faces,false):salvageOffer(s,layouts,busy||stale||s.status==='invalid'))}
+        <p class="qc-muted qc-material-key">Solid = new bank · crosshatch = offcuts · parallel lines = recut offcuts · grey = filler. External ticks mark effective cover at the spouting.</p>${sectionDetail}
         <details class="qc-bank-purchases"><summary>Banks & purchased sheets</summary><p class="qc-muted">One row per stock length in a source block. Shared faces consume the same purchased parents; offcuts add 0 lm.</p><table class="qc-stock"><thead><tr><th>Source</th><th>Sheets × length</th><th>New lm</th></tr></thead><tbody>${purchaseOperations(s).map(b=>`<tr><td>${b.faceIds.map(id=>esc(faceName(id))).join(' + ')}${b.role==='spacer'?'<small>New spacers / starters</small>':''}</td><td>${b.count} × ${(b.lengthMm/1000).toFixed(3)} m</td><td>${displayQuantity(b.linealM)}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><td>${q.newSheetCount} sheets</td><td>${displayQuantity(q.purchasedLinealM)}</td></tr></tfoot></table>${bankLaneAudit(s).map(b=>`<p class="qc-muted" data-bank-audit="${esc(b.operationId)}">${b.faceIds.map(id=>esc(faceName(id))).join(' + ')}: ${(b.spanMm/1000).toFixed(3)} m ÷ ${b.effectiveCoverMm} mm cover → ${b.minimumColumns} minimum columns; ${b.registeredColumns} on the selected setout, ${b.newRoots} purchased parents.${b.duplicateColumns.length?' Separate stock is needed at '+b.duplicateColumns.length+' columns: shared reuse did not physically fit.':''}</p>`).join('')}</details>
         ${s.globalDonorSearch?.status==='improved'&&s.globalDonorSearch.selectedLayoutId===s.layoutId?`<details id="qc-global-donors"><summary>Coordinated donor banks · ${s.globalDonorSearch.savedCoverM2.toFixed(2)} m² less</summary><p>Shared cutting banks supply the larger receiver runs before buying the remaining new sheets. The saving is already included above, compared with the checked sequential layout from this same calculation.</p><p class="qc-muted">${s.globalDonorSearch.baselineSheets} → ${s.globalDonorSearch.selectedSheets} new sheets · ${s.globalDonorSearch.baselineLinealM.toFixed(2)} → ${s.globalDonorSearch.selectedLinealM.toFixed(2)} lm. Exact cuts, laps and valley allowances were checked. This bounded search does not prove the minimum.</p></details>`:''}
         ${stockLengthDetails(s,draft.faces)}
@@ -619,11 +623,11 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       ${errors.length>1?`<small>${errors.length} checks remain. Other valid faces are preserved.</small>`:''}</div>`:'';
     const advisory=visibleIssues.find(i=>i.code==='BACKGROUND_IMAGE'&&i.severity==='warning')??visibleIssues.find(i=>i.severity==='warning'&&!partition().regions.some(r=>r.id===i.objectId)&&!['SNAPPED_ENDPOINTS','NARROW_FACE','FLOW_REVIEW'].includes(i.code));
     const advisoryCard=advisory?`<details class="qc-advisory"><summary>${esc(issueTitle(advisory,draft.faces))}</summary><p>${esc(advisory.message)}</p><button data-action="ignore-warning" data-id="${warningKey(advisory,draft)}">Ignore</button></details>`:'';
-    shadow.innerHTML = `<style>${styles}${geometryStyles}${portfolioStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.23 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    shadow.innerHTML = `<style>${styles}${geometryStyles}${portfolioStyles}${installationStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.24 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
       <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${geometryTool==='split'?'Click two boundary points · Esc cancels':geometryTool==='merge'?'Click a neighbouring face · Esc cancels':drawPoints ? 'Click corners · click first point / Enter to finish · Backspace removes last · Esc cancels · Alt bypasses snap' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span data-run-progress>${esc(progress)}</span><span class="qc-muted">The layout count is only one stage. Cancel keeps your reviewed faces.</span><div class="qc-actions"><button data-action="cancel">Cancel</button><button data-action="export-trace">Export diagnostics</button></div></div>` : ''}</section>
       <aside class="qc-sidebar" aria-label="Offcut review controls">${storageCard}<div id="qc-export-status" role="status" aria-live="polite"></div>${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}<button data-action="export-trace">Export diagnostics</button><button data-action="dismiss-action-error">Dismiss message</button></div>` : ''}${interrupted}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advisoryCard}${advanced}</aside></main>
-      <footer class="qc-footer"><span>Draft only - verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>${cleanupConfirm?`<dialog class="qc-result-dialog" data-cleanup-confirm aria-labelledby="qc-cleanup-title"><h2 id="qc-cleanup-title">Rebuild reviewed shapes?</h2><p>This replaces edited shapes with your original linework. Undo can restore this review. The source takeoff and quote prices are unchanged.</p><button data-action="cancel-cleanup" autofocus>Keep current shapes</button><button data-action="confirm-cleanup" class="primary">Rebuild shapes</button></dialog>`:portfolioDialog?noPortfolioDialog():salvageDialog&&salvagePreview?salvageResultDialog(salvagePreview,draft.faces):alternativeDialog?noAlternativeDialog(alternativeDialog,draft.solution):''}`;
+      <footer class="qc-footer"><span>Draft only - verify profile and site lengths before ordering.</span><span>No spare sheets included.</span></footer></div>${cleanupConfirm?`<dialog class="qc-result-dialog" data-cleanup-confirm aria-labelledby="qc-cleanup-title"><h2 id="qc-cleanup-title">Rebuild reviewed shapes?</h2><p>This replaces edited shapes with your original linework. Undo can restore this review. The source takeoff and quote prices are unchanged.</p><button data-action="cancel-cleanup" autofocus>Keep current shapes</button><button data-action="confirm-cleanup" class="primary">Rebuild shapes</button></dialog>`:installationDialog?noInstallationDialog():portfolioDialog?noPortfolioDialog():salvageDialog&&salvagePreview?salvageResultDialog(salvagePreview,draft.faces):alternativeDialog?noAlternativeDialog(alternativeDialog,draft.solution):''}`;
     renderScene(); restoreView(view, resetScroll);
     if(panelTarget){const target=panelTarget;panelTarget=null;revealPanel(target);}
     if(salvagePreview){
@@ -636,6 +640,8 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     }else if(salvageDialog&&salvagePreview){
       const dialog=shadow.querySelector<HTMLDialogElement>('.qc-result-dialog');
       if(dialog){dialog.addEventListener('cancel',e=>{e.preventDefault();e.stopPropagation();endSalvage(false);});dialog.showModal();}
+    }else if(installationDialog){
+      const dialog=shadow.querySelector<HTMLDialogElement>('[data-installation-dialog]');if(dialog){dialog.showModal();dialog.addEventListener('cancel',e=>{e.preventDefault();installationDialog=false;render();});}
     }else if(portfolioDialog){
       const dialog=shadow.querySelector<HTMLDialogElement>('[data-portfolio-dialog]');if(dialog){dialog.showModal();dialog.addEventListener('cancel',e=>{e.preventDefault();portfolioDialog=false;render();});}
     }else if(alternativeDialog){
@@ -659,7 +665,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       calculation:lastCalculation,initialDetection,selectedPlanIndex:layoutIndex,issues:currentIssues,repairs,drawingAdjustments,stale,
       selectedSectionId,lastSearchTrace,layouts,lastSalvageSearch,
       salvagePreview:salvagePreview?{previewOnly:true,result:salvagePreview,baseLayoutId:salvageBase?.layoutId,viewingBase:salvageViewingBase}:null,
-      uiPerformance:uiPerformance.snapshot(),portfolio};
+      uiPerformance:uiPerformance.snapshot(),portfolio,lastInstallationSearch};
   }
   // Retained for existing host/test integrations. Interactive export uses the
   // asynchronous worker path below; callers needing a file should use getDebugBlob.
@@ -681,7 +687,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       const result=await diagnosticExport(diagnosticInput(),abort.signal,options.createExportWorker);
       if(disposed||abort.signal.aborted)throw new DOMException('Export cancelled.','AbortError');
       uiPerformance.record('debug-export',performance.now()-start);
-      if(downloadFile)downloadBlob('quotecore-offcuts-v2.23-debug.json',result.blob);
+      if(downloadFile)downloadBlob('quotecore-offcuts-v2.24-debug.json',result.blob);
       exportStatus=result.mode==='worker'?'Diagnostic export ready.':'Diagnostic export ready (compatible fallback).';
       return result.blob;
     }catch(e){exportStatus=e instanceof Error&&e.name==='AbortError'?'Export cancelled. Your plan is unchanged.':message(e);throw e;}
@@ -689,7 +695,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   }
   function downloadBlob(name:string,blob:Blob):void {const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   function ensureCurrent():void { if(stale||options.readCurrentSourceRevision&&options.readCurrentSourceRevision()!==capturedRevision)throw new Error('Takeoff changed. Reopen this review from the current canvas.'); }
-  function run(objective?:'simpler'|'less-material'|'salvage'|'portfolio'):void {
+  function run(objective?:'simpler'|'less-material'|'salvage'|'portfolio'|'installation'):void {
     if(busy)return;
     ensureCurrent();validationAttempted=true;
     if(storedReview){error='Choose Resume saved review or Use current takeoff before calculating.';render();return;}
@@ -698,11 +704,11 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
     if(objective&&!draft.solution)throw new Error('Create a first plan before asking for an alternative.');
     if(objective&&layouts.length>=12)throw new Error('This session already has 12 alternatives.');
     if(salvagePreview)throw new Error('Choose or discard the reuse preview first.');
-    const isSalvage=objective==='salvage',isPortfolio=objective==='portfolio';
-    const previous=objective?structuredClone(isSalvage?draft.solution!:alternativeReference(draft.solution!,layouts,objective as AlternativeObjective)):null;
+    const isSalvage=objective==='salvage',isPortfolio=objective==='portfolio',isInstallation=objective==='installation';
+    const previous=objective?structuredClone((isSalvage||isInstallation)?draft.solution!:alternativeReference(draft.solution!,layouts,objective as AlternativeObjective)):null;
     if(isSalvage&&previous?.salvage)throw new Error('Choose the original plan to check more reuse.');
-    if(objective&&!isSalvage&&!isPortfolio&&hasQualifyingAlternative(layouts,previous,objective as AlternativeObjective))return;
-    portfolioDialog=false;alternativeDialog=null;alternativeFocus=null;notice='';checkpoint();cancel();error='';selectedSectionId='';quotePreviewOpen=false;selectedOffcutId='';busy=true;jobId=localId();
+    if(objective&&!isSalvage&&!isPortfolio&&!isInstallation&&hasQualifyingAlternative(layouts,previous,objective as AlternativeObjective))return;
+    installationDialog=false;portfolioDialog=false;alternativeDialog=null;alternativeFocus=null;notice='';checkpoint();cancel();error='';selectedSectionId='';quotePreviewOpen=false;selectedOffcutId='';busy=true;jobId=localId();
     const id=jobId,request=structuredClone({roof:draft.roof,faces:draft.faces,profile:draft.profile,settings:draft.settings});
     const original={solution:structuredClone(draft.solution),layouts:structuredClone(layouts),layoutIndex,phase,portfolio:structuredClone(portfolio)};
     const active=new CalculationController(request,objective??'recommended',{
@@ -726,6 +732,13 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
           for(const receipt of event.portfolio?.plans??[])checkedPlanCache.set(planSignature(receipt.solution),receipt);
           rememberChecked(event.plan);
           lastSearchTrace=null;alternativeAttempt=0;phase='solution';selectedGroupId='';advancedOpen=false;editPieces=false;
+        }else if(event.kind==='installation-result'){
+          ensureCurrent();const activeId=original.solution?planSignature(original.solution):null;
+          const seen=new Set(layouts.map(planSignature));
+          for(const receipt of event.plans){const key=planSignature(receipt.solution);if(!seen.has(key)&&layouts.length<12){layouts.push(structuredClone(receipt.solution));seen.add(key);}checkedPlanCache.set(key,receipt);}
+          layoutIndex=Math.max(0,layouts.findIndex(s=>planSignature(s)===activeId));draft.solution=structuredClone(layouts[layoutIndex]);
+          lastInstallationSearch=event.result.report;installationDialog=event.result.plans.length===0;phase='solution';panelTarget='#qc-installation-plans';
+          notice=installationDialog?'':'Alternative starting plans are ready. Your current plan is unchanged.';
         }else if(event.kind==='portfolio-result'){
           if(!isPortfolio)throw new Error('Unexpected comparison result');
           mergePortfolio(event.portfolio);phase='solution';panelTarget='#qc-plan-choice';portfolioDialog=event.portfolio.report.choices.length<2;
@@ -757,7 +770,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
           new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error('Saving the recovery checkpoint took too long. Retry saving; no calculation has started.')),25_000);})]);
         if(disposed||!busy||calculation!==active||jobId!==id)return;ensureCurrent();
         active.start(()=>options.createWorker?.()??new Worker(new URL('../worker.ts',import.meta.url),{type:'module'}),
-          isPortfolio&&previous?{portfolio:{previous,saved:original.layouts,attempt:portfolioAttempt++,maxMilliseconds:20000}}:isSalvage&&previous?{salvage:{base:previous}}:objective&&previous?{alternative:{objective:objective as AlternativeObjective,previous,attempt:++alternativeAttempt,excludedSignatures:layouts.map(planSignature),maxExtraMaterialPercent:SIMPLER_POLICY.maxExtraPercent}}:{});
+          isInstallation&&previous?{installation:{previous,attempt:installationAttempt++,maxMilliseconds:20000}}:isPortfolio&&previous?{portfolio:{previous,saved:original.layouts,attempt:portfolioAttempt++,maxMilliseconds:20000}}:isSalvage&&previous?{salvage:{base:previous}}:objective&&previous?{alternative:{objective:objective as AlternativeObjective,previous,attempt:++alternativeAttempt,excludedSignatures:layouts.map(planSignature),maxExtraMaterialPercent:SIMPLER_POLICY.maxExtraPercent}}:{});
       }catch(e){if(!disposed&&calculation===active)active.fail('failed',message(e));}
       finally{if(timer)clearTimeout(timer);}
     })();
@@ -814,6 +827,9 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         const section=quantities()?.sections.find(a=>a.demandIds.includes(target.dataset.id??''));if(section)selectSection(section.id);return;
       }
       if(action==='salvage-export'&&draft.solution){download('quotecore-filler-reuse-instructions.txt',salvageReportText(draft.solution,draft.faces),'text/plain');return;}
+      if(action==='installation-search'){run('installation');return;}
+      if(action==='dismiss-installation-result'){installationDialog=false;render();return;}
+      if(action==='export-installation-guide'&&draft.solution){download('quotecore-installation-setout.txt',installationInstructions({roof:draft.roof,faces:draft.faces,profile:draft.profile,settings:draft.settings},draft.solution),'text/plain');return;}
       if(action==='compare-plans'){run('portfolio');return;}
       if(action==='choose-portfolio-plan'){choosePlan(Number(target.dataset.index));return;}
       if(action==='dismiss-portfolio-result'){portfolioDialog=false;alternativeFocus='compare-plans';render();return;}
@@ -823,7 +839,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       if(action==='alternative-simpler'){run('simpler');return;}
             if(action==='export-ledger'||action==='export-stock-csv'){
         ensureCurrent();const ledger=rootSheetLedger(draft.solution!);
-        if(action==='export-ledger')download('quotecore-v2.23-material-ledger.json',JSON.stringify({engineVersion:'2.23',ledger,receiverSafety:draft.solution!.receiverSafety,stockLengthRefinement:draft.solution!.stockLengthRefinement,stockEndRows:stockLengthRows(draft.solution!)},null,2),'application/json');
+        if(action==='export-ledger')download('quotecore-v2.23-material-ledger.json',JSON.stringify({engineVersion:'2.24',ledger,receiverSafety:draft.solution!.receiverSafety,stockLengthRefinement:draft.solution!.stockLengthRefinement,stockEndRows:stockLengthRows(draft.solution!)},null,2),'application/json');
         else download('quotecore-v2.23-new-sheets.csv',purchaseLedgerCsv(ledger),'text/csv');
         notice='Purchased parent-sheet audit exported; offcuts are not additional purchases.';render();return;
       }

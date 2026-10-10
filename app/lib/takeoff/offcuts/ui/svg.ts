@@ -161,7 +161,17 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
     }
     if(options.showCoverMarks!==false&&!options.editPieces&&!options.editGroups)for(const face of faces){
       const ds=s.demands.filter(d=>d.faceId===face.id),col=color(face.id);
-      for(const p of eaveCoverPoints(face,roof,ds,s.profile.coverMm,s.profile.leftLapMm))shapes+=`<circle data-cover-mark="${escapeHtml(face.id)}" cx="${n(p.x)}" cy="${n(p.y)}" r="${n(2*px)}" fill="${col}" stroke="white" stroke-width=".7" vector-effect="non-scaling-stroke" pointer-events="none"><title>${s.profile.coverMm} mm cover station</title></circle>`;
+      // Outward setout marks have constant on-screen length. They do not extend
+      // the purchased metal or change the station coordinates / selected cover.
+      const flow=face.flow,mag=flow?Math.hypot(flow.x,flow.y):0;
+      if(mag)for(const p of eaveCoverPoints(face,roof,ds,s.profile.coverMm,s.profile.leftLapMm)){
+        const x=p.x+flow!.x/mag*10*px,y=p.y+flow!.y/mag*10*px;
+        shapes+=`<g class="qc-cover-ticks" data-cover-mark="${escapeHtml(face.id)}" pointer-events="none"><title>${s.profile.coverMm} mm cover station; marker only, not sheet overhang</title><line x1="${n(p.x)}" y1="${n(p.y)}" x2="${n(x)}" y2="${n(y)}" stroke="white" stroke-width="4" vector-effect="non-scaling-stroke"/><line class="qc-cover-tick" x1="${n(p.x)}" y1="${n(p.y)}" x2="${n(x)}" y2="${n(y)}" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke"/></g>`;
+      }
+    }
+    for(const a of s.bankLayout?.installationSetout?.anchors??[]){
+      const x=a.point.x,y=a.point.y,k=5*px;
+      shapes+=`<g class="qc-installation-anchor" data-anchor="${escapeHtml(a.id)}" pointer-events="none"><title>${escapeHtml(faces.find(f=>f.id===a.faceId)?.name??a.faceId)}: ${a.kind==='barge-end'?'fresh barge setout':'hip/ridge setout; maintain checked lap direction'}</title><path d="M${n(x-k)} ${n(y)}H${n(x+k)}M${n(x)} ${n(y-k)}V${n(y+k)}" stroke="white" stroke-width="5" vector-effect="non-scaling-stroke"/><path d="M${n(x-k)} ${n(y)}H${n(x+k)}M${n(x)} ${n(y-k)}V${n(y+k)}" stroke="#222" stroke-width="2" vector-effect="non-scaling-stroke"/><text x="${n(x+7*px)}" y="${n(y-7*px)}" font-size="${n(10*px)}" fill="#222" stroke="white" stroke-width="${n(2*px)}" paint-order="stroke">SET OUT</text></g>`;
     }
     for (const f of faces) shapes += `<polygon data-plan-face="${escapeHtml(f.id)}" points="${points(f.polygon)}" fill="none" stroke="#334e5a" stroke-width="1.3" vector-effect="non-scaling-stroke" pointer-events="stroke"/>`;
     if(options.showSources||options.selectedOffcutId)for(const o of s.offcuts){

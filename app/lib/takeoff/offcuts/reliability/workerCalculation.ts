@@ -1,3 +1,4 @@
+import { searchInstallationPlans } from '../core/installationSearch';
 import { fingerprint } from '../core/math';
 import { optimisePortfolio } from '../core/portfolioSearch';
 import { PortfolioCandidates, selectPlanPortfolio, type PortfolioResult } from '../core/portfolio';
@@ -26,7 +27,11 @@ export function runWorkerCalculation(input:WorkerRequest,send:(message:WorkerMes
     if(input.protocol!==WORKER_PROTOCOL)throw new Error('Worker/page version mismatch. Reload the updated app and resume the saved review.');
     const hooks={onProgress,onStage,shouldCancel:cancelled};
     const checkedPortfolio=(result:PortfolioResult):CheckedPortfolio=>({report:result.report,reportFingerprint:fingerprint(result.report),plans:result.plans.map(checked)});
-    if(input.portfolio){
+    if(input.installation){
+      const result=searchInstallationPlans(input.request,input.installation,hooks);
+      onStage('final-validation');const plans=result.plans.map(checked);
+      onStage('returning-result');post({kind:'installation-result',result,plans,reportFingerprint:fingerprint(result.report)} as WorkerMessage);
+    }else if(input.portfolio){
       const result=optimisePortfolio(input.request,input.portfolio,hooks);
       onStage('final-validation');const portfolio=checkedPortfolio(result);
       onStage('returning-result');post({kind:'portfolio-result',portfolio} as WorkerMessage);

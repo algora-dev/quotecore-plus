@@ -48,7 +48,7 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
   for (const solution of solutions) {
     hooks.onStage?.('receiver-safety');
     if(request.settings.stockMode==='bank-first')protectValleyReceivers(request,solution,hooks.shouldCancel);
-    solution.engineVersion='2.23';
+    solution.engineVersion='2.24';
     solution.layoutId=planSignature(solution);
     hooks.onStage?.('physical-validation');
     solution.issues.push(...(request.settings.stockMode==='bank-first'?validateGlobalInput(request,solution,validateSolution):validateSolution(solution)));
@@ -81,7 +81,7 @@ export function optimiseLayouts(request: SolveRequest, hooks: SearchHooks = {}):
     const refined=refinePurchasedStock(request,s,validateSolution,hooks),selected=refined.solution;
     selected.stockLengthRefinement=refined.report;selected.search.elapsedMs+=refined.report.elapsedMs;
     if(selected.decisionTrace){
-      selected.decisionTrace.engineVersion='2.23';
+      selected.decisionTrace.engineVersion='2.24';
       selected.decisionTrace.events.push({step:selected.decisionTrace.events.length+1,action:'end-specific-stock-refinement',
         message:refined.report.status==='improved'?'Removed unused square-ended stock; complete offcut families, descendants, lap and receiver certificates unchanged.':'Retained the checked purchase schedule; no unverified shorter blank can replace it.',data:{report:refined.report}});
     }

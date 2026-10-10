@@ -1,3 +1,4 @@
+import { validateInstallationSetout } from './installationAnchors';
 import { STOCK_END_MODEL, proposeStockEnds, originalStockDemand, sameStockData } from './stockEnds';
 import type { BankLayout, Demand, FaceFrame, Issue, Offcut, Point, Profile, Region, RoofEdge, RoofFace, RoofInput, SolveSettings } from './types';
 import { EPS, add, dot, mul, sub, unit, validateRing } from './math';
@@ -122,7 +123,7 @@ export function validateBankLayout(faces: RoofFace[], profile: Profile, settings
 }
 /** Validated once by the caller; used repeatedly by the bounded bank search. */
 export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Profile, settings: SolveSettings,
-  primary = true, extraLengthMm = 0, cutLengthMm?: number, tailExtensionMm = 0, materialBankId?: string, receiverStockLengthMm?: number): Demand[] {
+  primary = true, extraLengthMm = 0, cutLengthMm?: number, tailExtensionMm = 0, materialBankId?: string, receiverStockLengthMm?: number, measuredStraightShelves = false): Demand[] {
   const result: Demand[] = [], w = profile.coverMm, physicalWidth = w + profile.leftLapMm + profile.rightLapMm;
   const boundary = planningBoundary(face);
   const frame = frameFor(face, roof), local = fromRing(face.polygon.map(p => sceneToSurface(p, frame))), box = bounds(local);
@@ -190,7 +191,7 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
     // we never shorten the one long sheet needed to cut through a broken hip.
     const coverWidth=Math.min(x+w,box.maxX)-Math.max(x,box.minX);
     const lowerRidgeShelf=bank && primary && cutEdges.length===0 && spans('ridge',x,x+w)>=coverWidth-EPS &&
-      required.every(b=>Math.abs(b.top0)<EPS&&Math.abs(b.top1)<EPS) &&
+      (measuredStraightShelves || required.every(b=>Math.abs(b.top0)<EPS&&Math.abs(b.top1)<EPS)) &&
       y>box.minY+profile.endAllowanceMm+EPS;
     const blankY0 = envelope && !lowerRidgeShelf ? box.maxY - baseLength - profile.endAllowanceMm - y - extra : 0;
     const tail = envelope && !lowerRidgeShelf ? tailExtensionMm : 0;
@@ -214,12 +215,14 @@ export function generateFaceDemands(roof: RoofInput, face: RoofFace, profile: Pr
 export function generateDemands(roof: RoofInput, faces: RoofFace[], profile: Profile, settings: SolveSettings, layout?: BankLayout): Demand[] {
   const errors = validateInputs(roof, faces, profile, settings).filter(i => i.severity === 'error');
   if (errors.length) throw new Error(errors.map(i => i.message).join('\n'));
-  if (layout) validateBankLayout(faces, profile, settings, layout);
+  if (layout) { validateBankLayout(faces, profile, settings, layout);
+    const e=validateInstallationSetout({roof,faces,profile},layout);if(e.length)throw new Error(e.map(x=>x.message).join("\n"));
+  }
   const result = faces.flatMap(face => generateFaceDemands(roof,
     layout ? { ...face, laneOffsetMm: layout.laneOffsetByFace[face.id] } : face,
     profile, settings, layout ? layout.primaryFaceIds.includes(face.id) : true, layout?.extraLengthByFace[face.id] ?? 0,
     layout?.cutLengthByFace?.[face.id], layout?.tailExtensionByFace?.[face.id] ?? 0,
-    layout?.materialBanks?.find(b => b.faceIds.includes(face.id))?.id, layout?.receiverStockLengthByFace?.[face.id]));
+    layout?.materialBanks?.find(b => b.faceIds.includes(face.id))?.id, layout?.receiverStockLengthByFace?.[face.id],layout?.installationSetout?.measuredFillerFaceIds.includes(face.id)));
   if (result.length > settings.maxSheets) throw new Error(`Sheet limit exceeded (${settings.maxSheets}). Check the calibration/cover or reduce the selected roof scope.`);
   if(layout?.stockEndRefinement){
     const ids=new Set(layout.stockEndRefinement.demandIds);
