@@ -101,10 +101,10 @@
 }
 
 .menuButton {
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-  min-height: 46px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
   padding: 0;
   flex-shrink: 0;
   border-radius: 12px;
@@ -263,7 +263,7 @@
 }
 
 /* Homepage redesign: shared header structure retained; simplified CTA labels. */
-.signIn { padding: 9px 16px; }
+.signIn { min-height: 48px; padding: 12px 20px; }
 .menuPanel { max-height: calc(100dvh - 72px); overflow-y: auto; overscroll-behavior: contain; }
 .menuFooter > div { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .menuFooter > div a { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; min-height: 32px; color: #596273; }
@@ -282,4 +282,79 @@
 }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
   .scrolled, .menuPanel, .menuButton { background: #fff; }
+}
+
+/* Dark translucent header (V2 homepage, owner 2026-10-10): black glass with less
+   blur, light logo, and dark glass controls matching the hero pricing / demo-call
+   buttons. Prop-gated via theme="dark"; interior pages keep the light header. */
+.dark {
+  --qc-glass-ink: #f7f8fa;
+  --qc-glass-fill: #14181e;
+  --qc-glass-hover: #1d222a;
+  --qc-glass-edge: rgba(124, 135, 152, 0.6);
+  --qc-glass-accent: #ffb36b;
+  --qc-glass-highlight: rgba(255, 255, 255, 0.14);
+  --qc-glass-lowlight: rgba(0, 0, 0, 0.4);
+  --qc-glass-shadow: rgba(14, 17, 22, 0.2);
+  --qc-glass-hover-shadow: rgba(255, 100, 31, 0.22);
+  --qc-glass-sheen: rgba(255, 255, 255, 0.06);
+  --qc-glass-toe: rgba(255, 255, 255, 0.02);
+  --qc-glass-rim: rgba(255, 255, 255, 0.24);
+  --qc-glass-glint: rgba(255, 255, 255, 0.3);
+  --qc-glass-solid: #14181e;
+  --qc-glass-pressed: #10141a;
+}
+.dark.header {
+  background: rgba(11, 13, 16, 0.42);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+.dark.scrolled {
+  background: rgba(11, 13, 16, 0.58);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 28px rgba(5, 7, 10, 0.32);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  backdrop-filter: blur(12px) saturate(1.1);
+}
+.dark .backLink { color: #c8cbd2; }
+.dark .signIn { color: #f7f8fa; }
+.dark .menuPanel {
+  background: rgba(13, 16, 20, 0.94);
+  border-top-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.08);
+  backdrop-filter: blur(12px) saturate(1.08);
+}
+.dark .menuLabel { color: #a8b0bc; }
+.dark .navItem { color: #e8eaee; border-bottom-color: rgba(255, 255, 255, 0.08); }
+.dark .navItem svg { color: #6f7783; }
+.dark .countryLink {
+  color: #e8eaee;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+.dark .menuFooter > div a { color: #a8b0bc; }
+
+@media (hover: hover) {
+  .dark .backLink:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .dark .navItem:hover { color: #ffb36b; }
+}
+
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .dark.header,
+  .dark .menuPanel {
+    background: #0b0d10;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .dark.header,
+  .dark.scrolled,
+  .dark .menuPanel { background: #0b0d10; }
 }

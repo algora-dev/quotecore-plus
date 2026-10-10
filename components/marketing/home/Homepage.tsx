@@ -19,7 +19,7 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
   const demo = (label = 'Try the Demo', className = '') => <MarketingButton href={config.demoHref} variant="primary" size="large" className={`${s.button} ${className}`} icon={<Icon name="arrow" />}>{label}</MarketingButton>;
   return <div className={s.root}>
     <a className={s.skipLink} href="#homepage-main">Skip to content</a>
-    <BlogHeader />
+    <BlogHeader theme="dark" />
     <main id="homepage-main" tabIndex={-1}>
       <section id="hero-section" className={s.hero} aria-labelledby="hero-title">
         <picture className={s.heroBackground}>

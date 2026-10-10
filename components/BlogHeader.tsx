@@ -19,7 +19,7 @@ function buildNavItems() {
   ];
 }
 
-export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: string; backHref?: string }) {
+export default function BlogHeader({ backLabel, backHref = "/", theme = "light" }: { backLabel?: string; backHref?: string; theme?: "light" | "dark" }) {
   const menuId = useId();
   const headerRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -74,11 +74,11 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
   const trackDemo = (location: string) => trackEvent("demo_tool_click", { location, mode: "takeoff" });
 
   return (
-    <header ref={headerRef} className={`${styles.header} ${scrolled ? styles.scrolled : ""}`}>
+    <header ref={headerRef} className={`${styles.header} ${theme === "dark" ? styles.dark : ""} ${scrolled ? styles.scrolled : ""}`}>
       <div className={styles.inner}>
         <a href="/" className={styles.logoLink} aria-label="QuoteCore+ home">
           <img
-            src="/marketing/brand/quotecore-logo-transparent.png"
+            src={theme === "dark" ? "/marketing/brand/quotecore-logo-light.png" : "/marketing/brand/quotecore-logo-transparent.png"}
             alt="QuoteCore+"
             width={481}
             height={119}
@@ -99,6 +99,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
             <MarketingButton
               href={appLink || "/login"}
               variant="glass"
+              size="large"
               className={styles.signIn}
               onClick={() => trackEvent("app_click", { location: "nav" })}
             >
