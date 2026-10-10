@@ -10,10 +10,16 @@ import s from './Homepage.module.css';
  * Dark Focus card styled as a sibling of the /pricing V5 calculator.
  * Owner review 2026-10-08: clickable progress bars for completed steps,
  * Back moved under the progress label, equal gaps around the progress bar,
- * fixed body height so steps never resize the card, Q4 heading removed with
- * an orange "Want to speed up your pricing process?", result sub-line removed,
- * CTAs open in new tabs, all-positive tiers, "because" lines from the
- * visitor's own answers, no em dashes in copy.
+ * Q4 heading removed with an orange "Want to speed up your pricing process?",
+ * result sub-line removed, CTAs open in new tabs, all-positive tiers,
+ * "because" lines from the visitor's own answers, no em dashes in copy.
+ * Owner review 2026-10-09 (screenshots): all progress bars share one baseline
+ * (clickable hit area extends below the bar, not around it), question text
+ * pulled up closer to the bars with a clear gap before the options, both Q4
+ * questions orange, "See my result" sits under the right-hand question,
+ * result label optically in line with the bars, result headline aligned with
+ * question titles, fixed min-height replaced by a measured shrink-to-fit
+ * body that smoothly animates between steps so the card never jumps size.
  */
 
 type FitOption = {
@@ -88,13 +94,28 @@ export function FitQuizSection() {
   const [speed, setSpeed] = useState<(typeof SPEED_OPTIONS)[number] | null>(null);
   const [accuracy, setAccuracy] = useState<(typeof ACCURACY_OPTIONS)[number] | null>(null);
   const [locked, setLocked] = useState<string | null>(null);
+  const [bodyHeight, setBodyHeight] = useState<number | null>(null);
   const timer = useRef<number | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const started = useRef(false);
   const reported = useRef(false);
 
   useEffect(() => () => {
     if (timer.current) window.clearTimeout(timer.current);
   }, []);
+
+  // Shrink-to-fit body: measure the natural content height each step and
+  // animate to it so the card hugs its content instead of holding a fixed
+  // tall min-height (owner review 2026-10-09).
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const measure = () => setBodyHeight(el.scrollHeight);
+    measure();
+    document.fonts?.ready.then(measure).catch(() => {});
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [step, speed, accuracy]);
 
   const score = answers.reduce((total, a) => total + a.weight, 0)
     + (speed?.weight ?? 0)
@@ -184,7 +205,7 @@ export function FitQuizSection() {
                 )}
               </div>
             </div>
-            <div className={s.fitBody} key={step}>
+            <div className={s.fitBody} key={step} ref={bodyRef} style={bodyHeight === null ? undefined : { height: bodyHeight }}>
               {step < 3 && (
                 <div className={s.fitAnimate}>
                   <p className={s.fitQuestion}>{QUESTIONS[step].title}</p>
@@ -209,7 +230,7 @@ export function FitQuizSection() {
                 <div className={s.fitAnimate}>
                   <div className={s.fitDuo}>
                     <fieldset className={s.fitFieldset}>
-                      <legend className={s.fitDuoLegendAccent}>Want to speed up your pricing process?</legend>
+                      <legend className={s.fitDuoLegend}>Want to speed up your pricing process?</legend>
                       <div className={s.fitPills}>
                         {SPEED_OPTIONS.map(o => (
                           <button key={o.id} type="button" className={s.fitPill} aria-pressed={speed?.id === o.id} onClick={() => setSpeed(o)}>{o.label}</button>
@@ -223,13 +244,13 @@ export function FitQuizSection() {
                           <button key={o.id} type="button" className={s.fitPill} aria-pressed={accuracy?.id === o.id} onClick={() => setAccuracy(o)}>{o.label}</button>
                         ))}
                       </div>
+                      <div className={s.fitContinue}>
+                        <button type="button" className={s.fitPrimary} disabled={!speed || !accuracy} onClick={() => setStep(4)}>
+                          See my result
+                          <Icon name="arrow" size={16} />
+                        </button>
+                      </div>
                     </fieldset>
-                  </div>
-                  <div className={s.fitContinueRow}>
-                    <button type="button" className={s.fitPrimary} disabled={!speed || !accuracy} onClick={() => setStep(4)}>
-                      See my result
-                      <Icon name="arrow" size={16} />
-                    </button>
                   </div>
                 </div>
               )}
