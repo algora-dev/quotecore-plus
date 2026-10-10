@@ -266,20 +266,15 @@
 .imageSwitcher button { width: 36px; height: 36px; color: var(--focus-muted); background: transparent; border: 1px solid var(--focus-border-strong); border-radius: 8px; font-size: 12px; }
 .imageSwitcher button[aria-pressed="true"] { color: var(--orange-bright); border-color: var(--orange-bright); }
 
-.smartSection { background: #fafbfc; }
-.smartSection .sectionTitle { font-size: clamp(32px,3vw,43px); }
-.smartVisual { padding: 22px 28px 18px; border: 1px solid #e0e4e9; border-radius: 20px; background: linear-gradient(150deg,#fff,#f1f4f7); box-shadow: 0 16px 45px rgba(25,30,39,.06),inset 0 1px 0 #fff; overflow: hidden; }
-.smartVisualHeading { display: flex; align-items: center; justify-content: space-between; padding: 0 0 22px; color: var(--muted); font-size: 11px; }
-.smartVisualHeading > span:first-child { display: flex; align-items: center; gap: 10px; color: var(--ink); font-size: 13px; font-weight: 600; }
-.smartVisualHeading svg { color: var(--orange-ink); }
-.smartVisual img { display: block; width: 100%; height: auto; border-radius: 9px; }
-.smartPillars { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); margin-top: 28px; }
-.smartPillars > div { display: flex; align-items: flex-start; gap: 12px; padding: 9px 32px; }
-.smartPillars > div:first-child { padding-left: 0; }
-.smartPillars > div + div { border-left: 1px solid #dfe3e8; }
-.smartPillars svg { color: var(--orange-ink); margin-top: 2px; }
-.smartPillars strong { display: block; font-size: 13px; }
-.smartPillars small { display: block; color: var(--muted); font-size: 12px; margin-top: 5px; }
+/* Smart Components premium section host. Passes the site font into the
+   shadow-scoped element, matches the previous section canvas, and offsets
+   the sticky header for the section's internal anchors. */
+.smartPremium {
+  --quotecore-font: var(--font-geist-sans, Arial), Helvetica, sans-serif;
+  --qc-section-canvas: #fafbfc;
+  --qc-sticky-header-offset: 96px;
+}
+.smartPremium p { max-width: 680px; margin: 0 auto; padding: 98px 24px; text-align: center; color: var(--muted); }
 
 .setupSection { background: radial-gradient(ellipse at 15% 40%,rgba(255,107,53,.07),transparent 60%),#f6f7f9; padding-block: 64px; }
 .setupGrid { display: grid; grid-template-columns: .62fr 1.38fr; gap: 64px; align-items: center; }
@@ -574,15 +569,6 @@
   .workflowImage { height: auto; aspect-ratio: 16/10; border-radius: 12px; padding: 5px; }
   .workflowImage img { max-height: 100%; }
   .enlargeBadge { bottom: 10px; right: 10px; font-size: 9px; padding: 8px 10px; }
-  .smartSection .sectionTitle { font-size: 32px; }
-  .smartVisual { padding: 14px 10px 10px; border-radius: 14px; }
-  .smartVisualHeading { padding: 0 2px 14px; }
-  .smartVisualHeading > span:first-child { font-size: 11px; }
-  .smartVisualHeading > span:last-child { display: none; }
-  .smartPillars { grid-template-columns: 1fr; gap: 16px; }
-  .smartPillars > div, .smartPillars > div:first-child { padding: 0; }
-  .smartPillars > div + div { border: 0; }
-  .smartPillars small { font-size: 12px; }
   .setupGrid > div:last-child { grid-row: 1; }
   .setupPortrait { height: 300px; width: 100%; max-width: none; }
   .setupPortrait > img { object-position: center 25%; }
@@ -657,7 +643,6 @@
   .eyebrow::before { width: 24px; flex-basis: 24px; }
   .posterDuration { display: none; }
   .workflowTab { padding-inline: 10px; font-size: 11px !important; }
-  .smartSection .sectionTitle { font-size: 28px; }
   .closingActions .button { width: 100%; }
   .heroReview { width: 235px; }
 }

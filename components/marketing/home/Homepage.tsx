@@ -6,6 +6,7 @@ import { DemoCallButton } from './DemoCall';
 import { DemoCarousel } from './DemoCarousel';
 import { OverviewVideo } from './OverviewVideo';
 import { WorkflowExplorer } from './WorkflowExplorer';
+import { SmartComponentsSection } from './SmartComponentsSection';
 import { FitQuizSection } from './FitQuiz';
 import { Icon, type IconName } from './Icon';
 import { homepageConfig, type HomepageConfig } from './homepage-config';
@@ -103,13 +104,7 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
 
       <WorkflowExplorer />
 
-      <section id="smart-components" className={`${s.section} ${s.smartSection}`} aria-labelledby="smart-title">
-        <div className={s.container}>
-          <div className={s.sectionIntro}><div><p className={s.eyebrow}>The thinking behind your quote</p><h2 className={s.sectionTitle} id="smart-title">Most software remembers<br />what you charged.<br /><span className={s.orangeInk}>We remember how you work.</span></h2></div><div className={s.introAside}><p>Labour rates. Waste factors. Pack sizes. Formulas. Save your know-how as Smart Components™ and put it to work on every quote.</p><a href="/features/smart-components" className={s.textLink}>Discover Smart Components<Icon name="arrow" size={17} /></a></div></div>
-          <div className={s.smartVisual}><div className={s.smartVisualHeading}><span><Icon name="spark" size={20} />Your business logic, connected.</span><span>Set it up once. Reuse it.</span></div><img src="/smart-components-mapping.png" width={1916} height={821} alt="Actual Smart Components illustration showing spreadsheet rows mapped into the QuoteCore+ component library" loading="lazy" decoding="async" /></div>
-          <div className={s.smartPillars}>{[['Your materials', 'Products, quantities and pack sizes.'], ['Your labour', 'Rates and time that reflect your work.'], ['Your pricing', 'Waste, margins and rules — remembered.']].map(([title, text]) => <div key={title}><Icon name="check" size={19} /><span><strong>{title}</strong><small>{text}</small></span></div>)}</div>
-        </div>
-      </section>
+      <SmartComponentsSection className={s.smartPremium} />
 
       <section id="reviews" tabIndex={-1} className={`${s.section} ${s.dark} ${s.reviewsSection}`} aria-labelledby="reviews-title">
         <div className={s.container}><div className={s.sectionIntro}><div><p className={s.eyebrow}>From people doing the work</p><h2 id="reviews-title" className={s.sectionTitle}>Different businesses.<br />A familiar story.</h2></div><p className={s.introAside}>Less switching between tools.<br />More working the way that makes sense.</p></div>
