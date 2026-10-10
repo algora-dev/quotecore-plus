@@ -289,23 +289,23 @@
    buttons. Prop-gated via theme="dark"; interior pages keep the light header. */
 .dark {
   --qc-glass-ink: #f7f8fa;
-  --qc-glass-fill: #14181e;
-  --qc-glass-hover: #1d222a;
-  --qc-glass-edge: rgba(124, 135, 152, 0.6);
+  --qc-glass-fill: rgba(255, 255, 255, 0.04);
+  --qc-glass-hover: rgba(255, 255, 255, 0.09);
+  --qc-glass-edge: #7c8798;
   --qc-glass-accent: #ffb36b;
-  --qc-glass-highlight: rgba(255, 255, 255, 0.14);
-  --qc-glass-lowlight: rgba(0, 0, 0, 0.4);
-  --qc-glass-shadow: rgba(14, 17, 22, 0.2);
-  --qc-glass-hover-shadow: rgba(255, 100, 31, 0.22);
-  --qc-glass-sheen: rgba(255, 255, 255, 0.06);
-  --qc-glass-toe: rgba(255, 255, 255, 0.02);
-  --qc-glass-rim: rgba(255, 255, 255, 0.24);
-  --qc-glass-glint: rgba(255, 255, 255, 0.3);
-  --qc-glass-solid: #14181e;
-  --qc-glass-pressed: #10141a;
+  --qc-glass-highlight: rgba(255, 255, 255, 0.12);
+  --qc-glass-lowlight: rgba(0, 0, 0, 0.15);
+  --qc-glass-shadow: rgba(0, 0, 0, 0.045);
+  --qc-glass-hover-shadow: rgba(0, 0, 0, 0.08);
+  --qc-glass-sheen: rgba(255, 255, 255, 0.02);
+  --qc-glass-toe: rgba(255, 255, 255, 0.008);
+  --qc-glass-rim: rgba(255, 255, 255, 0.19);
+  --qc-glass-glint: rgba(255, 255, 255, 0.13);
+  --qc-glass-solid: #272b33;
+  --qc-glass-pressed: #272b33;
 }
 .dark.header {
-  background: rgba(11, 13, 16, 0.42);
+  background: rgba(11, 13, 16, 0.94);
   border-bottom-color: rgba(255, 255, 255, 0.08);
   box-shadow: none;
 }
