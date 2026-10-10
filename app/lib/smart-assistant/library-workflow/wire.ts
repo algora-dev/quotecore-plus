@@ -1,6 +1,6 @@
 import type { DraftChoiceWire } from './contracts';
 const PREFIX='[SA_DRAFT_CHOICE_V1]';
-const uuid=(v:unknown):v is string=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+const uuid=(v:unknown):v is string=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 export function encodeDraftChoice(value:DraftChoiceWire){ return PREFIX+encodeURIComponent(JSON.stringify(value)); }
 export function decodeDraftChoice(value:string):DraftChoiceWire|null{
   if(!value.startsWith(PREFIX)||value.length>30000)return null;

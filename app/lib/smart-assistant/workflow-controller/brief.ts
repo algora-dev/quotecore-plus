@@ -139,6 +139,14 @@ export function validateWorkingBrief(brief: WorkingBrief, concepts: readonly Ass
     count += m.entries.length;
   }
   if (count > 600) throw new ProposalError('Use at most 600 individual measurement entries.');
+  // Blanket pitch rule (owner 2026-10-01): when the job-level pitch is unset but every
+  // area already carries the SAME pitch, that value IS the job pitch. Backfill the default
+  // so plan-basis hips/valleys/barges inherit it in one sweep instead of demanding the user
+  // restate a pitch they already gave or link unassigned measurements to an area.
+  if (brief.defaultPitchDegrees == null && brief.areas.length > 0) {
+    const pitches = brief.areas.map(a => a.pitchDegrees);
+    if (pitches.every(p => p != null) && new Set(pitches).size === 1) brief.defaultPitchDegrees = pitches[0];
+  }
   pitch(brief.defaultPitchDegrees);
   for (const [key,value] of Object.entries(brief.selections)) {
     const validKey = key.startsWith('concept:') ? concepts.some(c => `concept:${c.key}` === key) : brief.measurements.some(m=>`measurement:${m.id}` === key);
