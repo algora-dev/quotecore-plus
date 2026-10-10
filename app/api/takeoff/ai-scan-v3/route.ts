@@ -1,3 +1,4 @@
+import { withPurchasedScan } from '@/app/lib/billing/custom/usage/scan-server';
 /**
  * AI Takeoff V3 - 3-scan pipeline.
  *
@@ -695,7 +696,7 @@ function logScanUsage(params: { companyId: string; quoteId: string; userId: stri
 
 // ── Route handler ───────────────────────────────────────────────────────
 
-export async function POST(req: NextRequest) {
+async function handleScanPost(req: NextRequest, customMetered = false) {
   const requestId = `v3_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   const timer = makeTimer();
   timer.mark('auth_start');
@@ -771,7 +772,7 @@ export async function POST(req: NextRequest) {
     // pointCost.ts and the SQL queue path (see parity checklist).
     const pointsToSpend = getAiScanPointCost(qualityLevel);
 
-    if (stage === 'scan1' || stage === 'scan2') {
+    if (!customMetered && (stage === 'scan1' || stage === 'scan2')) {
       const admin = createServiceClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -1524,4 +1525,9 @@ export async function POST(req: NextRequest) {
       error: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
     }, { status: 500 });
   }
+}
+
+/** P2 custom admission wraps the unchanged geometry/model pipeline. */
+export async function POST(req: NextRequest) {
+  return withPurchasedScan(req, handleScanPost);
 }

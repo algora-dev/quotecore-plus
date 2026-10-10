@@ -3,11 +3,11 @@
 // separate in/out token metering, shared 90s abort signal, 5 model hops +
 // 10 total tool calls, explicit terminal limit errors carrying partial usage.
 
-import { runChatStep, type LlmMessage, type LlmToolSchema } from '@/app/lib/assistant/llmClient';
+import { runChatStep, type ChatTurnInput, type ChatTurnResult, type LlmMessage, type LlmToolSchema } from '@/app/lib/assistant/llmClient';
 import { READONLY_TOOLS } from './tools';
 import { createV2Scope } from './v2/tools.server';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { MODEL_CONFIG } from '@/app/lib/assistant/config';
+import { MODEL_CONFIG, MODEL_LIMITS } from '@/app/lib/assistant/config';
 import { parseFastIntent } from './speed/intent';
 import { TurnTelemetry, type SpeedPath } from './speed/telemetry';
 import { runModelLoop } from './speed/model-loop';
@@ -159,6 +159,63 @@ export interface OrchestratorTurnResult {
 const TURN_DEADLINE_MS = 90_000;
 const HISTORY_PRIOR_LIMIT = 30;
 
+type StepFn = (input: ChatTurnInput) => Promise<ChatTurnResult>;
+
+/**
+ * P2 provider budget binding for the ACTIVE orchestrator loop. Every actual
+ * model hop for a custom setup runs inside withAssistantProviderBudget():
+ * one unique call key per real SDK call, a server-owned input-token ceiling
+ * (history + tool schemas + framing), the adapter's output cap and abort
+ * signal passed straight into the SDK, and actual usage settled on success.
+ * Unknown usage never settles as zero - the reservation keeps its ceiling.
+ * Legacy and demo companies keep the exact previous code path.
+ */
+async function withProviderBudgetStep(companyId: string, runId: string, base: StepFn): Promise<StepFn> {
+  let custom = false;
+  try {
+    const store = await import('@/app/lib/billing/custom/usage/store');
+    custom = await store.isCustomUsageCompany(companyId);
+  } catch {
+    // Billing ownership unreadable: fail closed before any provider spend.
+    throw new OrchestratorExecutionError('billing_unavailable', 0, 0);
+  }
+  if (!custom) return base;
+  const [{ customScope }, { withAssistantProviderBudget }] = await Promise.all([
+    import('@/app/lib/billing/custom/environment'),
+    import('@/app/lib/billing/custom/usage/assistant-provider'),
+  ]);
+  const scope = customScope();
+  const { usageClient } = await import('@/app/lib/billing/custom/usage/store');
+  const client = usageClient();
+  let hops = 0;
+  return async (chatInput) => {
+    const callKey = `${runId}:hop${hops++}`;
+    const chars = chatInput.messages.reduce((n, m) => n + m.content.length
+      + (m.tool_calls?.reduce((k, c) => k + c.arguments.length, 0) ?? 0), 0);
+    const inputBound = Math.min(Math.ceil(chars / 3) + chatInput.tools.length * 900 + 1500, 200_000);
+    const providerRequest = {
+      model: MODEL_CONFIG.chatModel,
+      tools: chatInput.tools.map((t) => t.name),
+      messages: chatInput.messages.map((m) => ({ role: m.role, chars: m.content.length, toolCalls: m.tool_calls?.length ?? 0 })),
+    };
+    return withAssistantProviderBudget({
+      companyId, runId, accountId: scope.accountId, mode: scope.mode, callKey, providerRequest,
+      inputTokenUpperBound: inputBound, maxOutputTokens: MODEL_LIMITS.maxOutputTokens,
+      timeoutMs: TURN_DEADLINE_MS, client,
+      execute: async ({ maxOutputTokens, signal }) => {
+        const combined = chatInput.signal ? AbortSignal.any([chatInput.signal, signal]) : signal;
+        const result = await base({ ...chatInput, maxOutputTokens, signal: combined });
+        if (!result.tokensIn && !result.tokensOut && !result.totalTokens) {
+          const err = new Error('provider usage missing') as Error & { code?: string };
+          err.code = 'usage_missing';
+          throw err;
+        }
+        return { value: result, totalTokens: result.totalTokens };
+      },
+    });
+  };
+}
+
 /** Current user's company role for config-permission enforcement. */
 export async function getCompanyRole(
   supabase: SupabaseClient,
@@ -272,9 +329,11 @@ export async function runOrchestratorTurn(
       ...priorReversed.reverse().filter(m => !context || context.visibleMessageIds.has(m.id)).map(m => ({ role: m.role, content: displayTaskMessage(displayResolutionMessage(displayDraftChoice(m.content))) })),
       { role: 'user', content: executionMessage },
     ];
+    // P2: custom setups route every hop through the provider budget adapter.
+    const budgetedStep = await withProviderBudgetStep(companyId, runId, deps.modelStep);
     result = await runModelLoop({ messages, registry: v2?.tools ?? TOOL_REGISTRY,
       context: { supabase, companyId, runId, signal: controller.signal },
-      guard: v2?.guard ?? (async () => {}), step: deps.modelStep,
+      guard: v2?.guard ?? (async () => {}), step: budgetedStep,
       signal: controller.signal, speed: v2?.speed ?? false, telemetry,
       ...(input.onText ? { onText: input.onText } : {}) });
     // Tool failures inside a completed turn are invisible in the transcript;

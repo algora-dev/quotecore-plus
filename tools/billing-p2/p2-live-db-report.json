@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "engine": "postgres:16",
+  "scope": "synthetic relevant schema, not full live schema",
+  "checks": [
+    "five ordered P2 migrations present",
+    "migration compiled: 20261010160000_custom_usage_p2.sql",
+    "migration compiled: 20261010161000_custom_scans_p2.sql",
+    "migration compiled: 20261010162000_custom_storage_p2.sql",
+    "migration compiled: 20261010163000_custom_usage_wrappers_p2.sql",
+    "migration compiled: 20261010164000_custom_assistant_budget_p2.sql",
+    "concurrent quote admission: exactly five of ten",
+    "quote refusals are quota errors, not deadlocks",
+    "failed concurrent creates leave no quote rows",
+    "concurrent High scan reservations: exactly four within 50 tokens",
+    "scan refusals are quota errors, not deadlocks",
+    "scan usage cannot oversubscribe tokens",
+    "parallel task RPCs complete without SQL/deadlock error",
+    "concurrent tasks: exactly two accepted",
+    "remaining concurrent tasks refused as quota, not partially started",
+    "concurrent finalizations: one 60-byte hold within 100-byte allowance",
+    "storage refusals are quota errors, not deadlocks",
+    "concurrent pending storage bounded"
+  ],
+  "contract_output": "{\"status\": \"passed\", \"sql_contract_assertions\": 73}",
+  "sql_assertions": 73
+}

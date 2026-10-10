@@ -68,6 +68,8 @@ export interface ChatTurnInput {
   tools: LlmToolSchema[];
   /** Called for each streamed text delta. */
   onToken: (text: string) => void;
+  /** Server-owned output cap (P2 provider budget). Defaults to MODEL_LIMITS. */
+  maxOutputTokens?: number;
   signal?: AbortSignal;
 }
 
@@ -147,7 +149,7 @@ export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult>
   const stream = await client().chat.completions.create(
     {
       model: chatModelId,
-      max_completion_tokens: Math.min(MODEL_LIMITS.maxOutputTokens, 64000),
+      max_completion_tokens: Math.min(input.maxOutputTokens ?? MODEL_LIMITS.maxOutputTokens, 64000),
       ...reasoning,
       messages: toOpenAiMessages(input.messages),
       tools: input.tools.map((t) => ({

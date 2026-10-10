@@ -189,6 +189,7 @@ export default async function Page({
       allRoofAreas={allRoofAreas}
       aiTakeoffAvailable={aiTakeoffAvailable}
       aiAssistPoints={aiAssistPoints}
+      customUsageBilling={ent.billingModel === 'custom_setup'}
       aiCalibrationEnabled={aiCalibrationEnabled}
       takeoffTouchEnabled={takeoffTouchEnabled}
       takeoffCompactNotices={takeoffCompactNotices}

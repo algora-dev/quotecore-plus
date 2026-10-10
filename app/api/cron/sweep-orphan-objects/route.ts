@@ -1,3 +1,5 @@
+import { cleanupUnregisteredCustomObject } from '@/app/lib/billing/custom/usage/storage';
+import { isCustomUsageCompany } from '@/app/lib/billing/custom/usage/store';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { BUCKETS } from '@/app/lib/storage/buckets';
@@ -75,6 +77,31 @@ export async function GET(request: Request) {
   let scanned = 0;
   let deleted = 0;
   const pathsToDelete: string[] = [];
+  const models = new Map<string, boolean>();
+  let cleanupPending = 0;
+  const custom = async (companyId: string): Promise<boolean> => {
+    if (!models.has(companyId)) models.set(companyId, await isCustomUsageCompany(companyId));
+    return models.get(companyId)!;
+  };
+
+  // An object already deleted from Storage will no longer appear in list().
+  // Reconcile old holds as well, so a missed inline acknowledgement does not
+  // leave capacity stuck forever. Never sweep logos with this document cron.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: holds, error: holdError } = await (admin as any).from('qcp_storage_holds')
+    .select('company_id,storage_path,bucket_id,file_kind').in('state', ['held', 'delete_pending'])
+    .lt('updated_at', new Date(cutoff).toISOString()).order('updated_at').limit(HARD_CAP);
+  if (holdError) {
+    console.error('[cron/sweep-orphan-objects] custom hold lookup failed:', holdError.code);
+    cleanupPending++;
+  } else {
+    for (const hold of (holds ?? []) as Array<{company_id: string; storage_path: string; bucket_id: string | null; file_kind: string}>) {
+      if (hold.file_kind !== 'document' || (hold.bucket_id !== null && hold.bucket_id !== bucket)) continue;
+      try {
+        await cleanupUnregisteredCustomObject({ companyId: hold.company_id, bucket, path: hold.storage_path });
+      } catch { cleanupPending++; }
+    }
+  }
 
   for (const co of companies ?? []) {
     if (!co.name) continue;
@@ -136,13 +163,26 @@ export async function GET(request: Request) {
     const orphans = pathsToDelete.filter((p) => !trackedSet.has(p));
 
     if (orphans.length > 0) {
-      console.log(`[cron/sweep-orphan-objects] removing ${orphans.length} orphan(s):`, orphans.slice(0, 20));
-      const { error: rmErr } = await admin.storage.from(bucket).remove(orphans);
-      if (rmErr) {
-        console.error('[cron/sweep-orphan-objects] bulk remove failed:', rmErr.message);
-        return NextResponse.json({ error: 'remove_failed', message: rmErr.message }, { status: 500 });
+      const legacyOrphans: string[] = [];
+      for (const path of orphans) {
+        const companyId = path.split('/')[0];
+        if (!/^[a-f0-9-]{36}$/i.test(companyId)) { cleanupPending++; continue; }
+        try {
+          if (await custom(companyId)) {
+            // Claim under the company lock before deleting. A racing finalizer
+            // either finishes first (we refuse removal) or sees the tombstone.
+            if (await cleanupUnregisteredCustomObject({ companyId, bucket, path })) deleted++;
+          } else { legacyOrphans.push(path); }
+        } catch { cleanupPending++; }
       }
-      deleted = orphans.length;
+      if (legacyOrphans.length) {
+        const { error: rmErr } = await admin.storage.from(bucket).remove(legacyOrphans);
+        if (rmErr) {
+          console.error('[cron/sweep-orphan-objects] legacy remove failed:', rmErr.message);
+          return NextResponse.json({ error: 'remove_failed' }, { status: 500 });
+        }
+        deleted += legacyOrphans.length;
+      }
     }
   }
 
@@ -151,6 +191,7 @@ export async function GET(request: Request) {
     scanned,
     candidates: pathsToDelete.length,
     deleted,
+    cleanupPending,
     capped: pathsToDelete.length >= HARD_CAP,
   });
 }

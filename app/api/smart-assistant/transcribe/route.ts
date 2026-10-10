@@ -1,3 +1,4 @@
+import { isCustomUsageCompany } from '@/app/lib/billing/custom/usage/store';
 import { withDemoTranscription } from '@/app/lib/demo/assistant.server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
@@ -21,6 +22,17 @@ async function handlePost(req: NextRequest) {
   }
 
   const profile = await requireCompanyContext();
+  // P2 activation gate. Connect a measured audio budget and retry guard at this
+  // provider boundary before removing this guard. A voice transcript is not
+  // itself a customer Assistant Task. The legacy/demo path is unchanged.
+  try {
+    if (await isCustomUsageCompany(profile.company_id)) {
+      return NextResponse.json({ code: 'custom_voice_binding_required',
+        error: 'Voice input is not enabled for custom setups yet. Type your request instead.' }, { status: 409 });
+    }
+  } catch {
+    return NextResponse.json({ code: 'usage_unavailable', error: 'Billing access could not be verified.' }, { status: 503 });
+  }
   const { data: flagOn } = await supabase.rpc('smart_assistant_enabled', {
     p_company_id: profile.company_id,
   });

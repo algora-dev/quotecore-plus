@@ -1,3 +1,5 @@
+import { isCustomUsageCompany, loadCustomUsage } from '@/app/lib/billing/custom/usage/store';
+import { usageError } from '@/app/lib/billing/custom/usage/contracts';
 import { withDemoAssistantTurn } from '@/app/lib/demo/assistant.server';
 import { NextRequest, NextResponse } from 'next/server';
 import { isUuid } from '@/app/lib/smart-assistant/v2/contracts';
@@ -75,6 +77,18 @@ async function handlePost(req: NextRequest) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
+  // The host must not admit a live customer's task through a test-mode server.
+  // This verifies identity/environment, not remaining quota. The SQL admission
+  // keeps its duplicate-first behavior, including after a period expires.
+  const { data: owner, error: ownerError } = await supabase.from('users').select('company_id').eq('id', session.user.id).maybeSingle();
+  if (ownerError || !owner?.company_id) return NextResponse.json({ error: 'Company access could not be verified.' }, { status: 403 });
+  try {
+    if (await isCustomUsageCompany(owner.company_id)) await loadCustomUsage(owner.company_id);
+  } catch (err) {
+    const error = usageError(err);
+    return NextResponse.json({ error: error.message, error_code: error.code }, { status: error.httpStatus });
+  }
+
   const admissionStarted = performance.now();
   const { data: admitData, error: admitError } = await supabase.rpc('sa_admit_run', {
     p_conversation_id: conversationId,
@@ -83,6 +97,11 @@ async function handlePost(req: NextRequest) {
   });
 
   if (admitError) {
+    if (String(admitError.code ?? '').startsWith('QCP')) {
+      const error = usageError(admitError);
+      return NextResponse.json({ ok: false, status: 'refused', error_code: error.code, error: error.message, ...error.details },
+        { status: error.httpStatus, headers: { 'Cache-Control': 'no-store' } });
+    }
     return NextResponse.json({ error: admitError.message }, { status: 500 });
   }
 

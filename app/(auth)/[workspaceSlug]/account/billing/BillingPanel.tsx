@@ -113,6 +113,21 @@ export interface BillingPanelProps {
   storageLimitBytes: number;
   /** All available plans (including coming-soon). */
   plans: BillingPlanInfo[];
+  /** P2 custom-setup usage in the verified paid period. Absent = legacy. */
+  customUsage?: {
+    available: boolean;
+    periodStart: string | null;
+    periodEnd: string | null;
+    quotesUsed: number;
+    quotesLimit: number;
+    scanTokensUsed: number;
+    scanTokensLimit: number;
+    assistantTasksUsed: number | null;
+    assistantTasksLimit: number | null;
+    storageUsedBytes: number;
+    storageLimitBytes: number;
+    storagePendingBytes: number;
+  };
 }
 
 function formatBytes(bytes: number): string {
@@ -148,6 +163,12 @@ function formatDate(iso: string | null): string {
     month: 'short',
     day: 'numeric',
   });
+}
+
+/** Decimal GB, matching the custom catalogue's 1/3/10 GB allowances. */
+function formatGb(bytes: number): string {
+  const gb = bytes / 1_000_000_000;
+  return `${gb >= 10 ? gb.toFixed(0) : gb.toFixed(1)} GB`;
 }
 
 /**
@@ -300,6 +321,76 @@ export function BillingPanel(props: BillingPanelProps) {
 
   return (
     <QcJourney className={props.context === 'activation' ? 'qc-flow-billing-activation' : undefined}><div className="space-y-6">
+      {/* P2 custom setup: verified paid-period usage. Quotes/tokens/tasks
+          reset at the renewal boundary (never the 1st of a month); storage
+          is active bytes and only frees when deletions finish cleaning up. */}
+      {props.customUsage && (
+        <div className="qc-flow-panel">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">Your setup usage</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Paid period {formatDate(props.customUsage.periodStart)} – {formatDate(props.customUsage.periodEnd)}.
+                Usage resets at your renewal date{props.customUsage.periodEnd ? ` (${formatDate(props.customUsage.periodEnd)})` : ''}, not on a calendar month.
+              </p>
+            </div>
+            {!props.customUsage.available && (
+              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-100 text-amber-800">
+                Setup paused - renew to resume
+              </span>
+            )}
+          </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+            <div className="rounded-lg border border-slate-200 px-3 py-2.5">
+              <p className="text-xs text-slate-500">Quotes created</p>
+              <p className="font-semibold text-slate-900 mt-0.5">
+                {props.customUsage.quotesUsed} of {props.customUsage.quotesLimit}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Drafts and copies count once. Deleting does not refund.</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 px-3 py-2.5">
+              <p className="text-xs text-slate-500">Scan Tokens</p>
+              <p className="font-semibold text-slate-900 mt-0.5">
+                {props.customUsage.scanTokensUsed} of {props.customUsage.scanTokensLimit}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">2/6/12 per outline or component scan. Failed scans refund.</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 px-3 py-2.5">
+              <p className="text-xs text-slate-500">Assistant Tasks</p>
+              <p className="font-semibold text-slate-900 mt-0.5">
+                {props.customUsage.assistantTasksUsed ?? '-'} of {props.customUsage.assistantTasksLimit ?? '-'}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">1 per accepted request, not per reply.</p>
+            </div>
+          </div>
+          <div className="mt-3 text-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-500">Storage (active files)</p>
+              <p className="font-medium text-slate-900">
+                {formatGb(props.customUsage.storageUsedBytes)} of {formatGb(props.customUsage.storageLimitBytes)}
+                {props.customUsage.storagePendingBytes > 0 && (
+                  <span className="text-xs font-normal text-slate-500">
+                    {' '}(+ {formatGb(props.customUsage.storagePendingBytes)} pending cleanup, still counted)
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full ${
+                  props.customUsage.storageUsedBytes / Math.max(props.customUsage.storageLimitBytes, 1) >= 0.9
+                    ? 'bg-amber-500'
+                    : 'bg-orange-500'
+                }`}
+                style={{
+                  width: `${Math.min(100, Math.round((props.customUsage.storageUsedBytes / Math.max(props.customUsage.storageLimitBytes, 1)) * 100))}%`,
+                }}
+              />
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">Storage does not reset at renewal; deleting files frees it once cleanup completes.</p>
+          </div>
+        </div>
+      )}
       {/* Stripe redirect banners */}
       {changeFlag === 'upgraded' && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 md:p-4 flex items-start justify-between">

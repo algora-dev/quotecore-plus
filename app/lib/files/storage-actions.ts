@@ -34,7 +34,9 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 import { verifyQuoteOwnership } from '@/app/lib/auth/ownership';
 import { getSignedUrl } from '@/app/lib/storage/helpers';
 import { BUCKETS } from '@/app/lib/storage/buckets';
-import { assertCanUseStorage } from '@/app/lib/billing/entitlements';
+import { assertCanUseStorage, loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { isCustomUsageCompany } from '@/app/lib/billing/custom/usage/store';
+import { reservePurchasedStorage, cleanupUnregisteredCustomObject } from '@/app/lib/billing/custom/usage/storage';
 
 /**
  * Returns true if a new upload of `fileSize` bytes will fit under the company's
@@ -54,6 +56,11 @@ export async function checkStorageQuota(companyId: string, fileSize: number): Pr
     throw new Error('Invalid file size');
   }
 
+  if (await isCustomUsageCompany(companyId)) {
+    const ent = await loadCompanyEntitlements(companyId);
+    return ent.isActive && ent.customAccessStatus === 'paid_period'
+      && ent.storageUsedBytes + fileSize <= ent.storageLimitBytes;
+  }
   const supabase = await createSupabaseServerClient();
 
   const { data: company } = await supabase
@@ -178,7 +185,17 @@ export async function saveFileMetadata(data: SaveFileMetadataInput): Promise<{ i
   // assert against the live limit and delete the orphan on overage. Logo
   // uploads (PUBLIC company-logos bucket) are exempt for phase 1 - they're
   // tiny, infrequent, and don't share the QUOTE-DOCUMENTS quota pool.
-  if (data.fileType !== 'logo') {
+  const custom = await isCustomUsageCompany(data.companyId);
+  if (custom) {
+    try {
+      await reservePurchasedStorage({ companyId: data.companyId, bucket, path: data.storagePath,
+        size: realSize, kind: data.fileType === 'logo' ? 'logo' : 'document' });
+    } catch (error) {
+      await cleanupUnregisteredCustomObject({ companyId: data.companyId, bucket, path: data.storagePath })
+        .catch(() => { console.error('[saveFileMetadata] custom cleanup pending'); });
+      throw error;
+    }
+  } else if (data.fileType !== 'logo') {
     try {
       await assertCanUseStorage(data.companyId, realSize);
     } catch (quotaErr) {

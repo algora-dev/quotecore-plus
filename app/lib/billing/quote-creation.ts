@@ -1,32 +1,12 @@
 /**
- * Atomic quote creation gateway.
- *
- * This is the ONLY way the app should create rows in the `quotes` table.
- * Wraps the `public.create_quote_atomic(uuid, uuid, jsonb)` RPC, which
- * (under an advisory lock per company-per-month):
- *
- *   1. Verifies the company exists.
- *   2. Verifies the company's effective subscription is active.
- *   3. Verifies the company has quota left this month (monthly_quote_limit
- *      from the effective plan).
- *   4. Inserts the quote with whitelisted columns from the payload.
- *   5. Increments company_quote_usage atomically.
- *
- * All in one transaction. Either the quote exists AND the counter ticked,
- * or neither happened.
- *
- * Why an RPC, not application-layer enforcement: there are four entry points
- * (createQuoteWithDetails, createQuoteFromTemplate, createBlankQuote,
- * cloneQuote). Each previously did its own quotes.insert. A pre-check
- * pattern at the app layer would have been raceable and one missing call
- * site would have become a paid-feature bypass. See subscription-tiers-
- * brief.md \u00a76 for the design rationale (Gerald audit H-02).
- *
- * Clones DO count against the monthly limit per Shaun's call: each clone
- * gets its own quote_number and counts as a new quote operationally.
+ * Atomic quote creation gateway. Custom setups use the paid-period creation
+ * ledger in the same SQL transaction as INSERT, including drafts and clones.
+ * Legacy accounts retain the installed gateway and status-based counter.
+ * Cached UI usage is not an authoritative quota test.
  */
 
 import 'server-only';
+import { isCustomUsageCompany, loadCustomUsage } from './custom/usage/store';
 
 import type { Json } from '@/app/lib/supabase/database.types';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
@@ -181,29 +161,11 @@ export async function createQuoteAtomic(
 
   const admin = createAdminClient();
 
-  // Custom-setup (V5) quote cap. The SQL RPC enforces the legacy plan limit,
-  // which under the custom pro_plus basis is effectively unlimited - so the
-  // purchased capacity cap (5/20/100 quotes) is enforced here. The RPC still
-  // increments company_quote_usage atomically either way. Small race window
-  // on concurrent creates remains a LIVE RELEASE BLOCKER. The actual SQL
-  // function body is required to move this check under its existing lock.
-  const capEnt = await loadCompanyEntitlements(companyId);
-  if (
-    capEnt &&
-    capEnt.billingModel === 'custom_setup' &&
-    capEnt.monthlyQuoteUsed >= capEnt.monthlyQuoteLimit
-  ) {
-    const periodStart = new Date(Date.UTC(
-      new Date().getUTCFullYear(), new Date().getUTCMonth(), 1,
-    )).toISOString().slice(0, 10);
-    throw new QuoteLimitReachedError({
-      used: capEnt.monthlyQuoteUsed,
-      limit: capEnt.monthlyQuoteLimit,
-      periodStart,
-      planCode: 'custom_setup',
-    });
-  }
+  // Verify the host account/mode without using a cached quota precheck.
+  if (await isCustomUsageCompany(companyId)) await loadCustomUsage(companyId);
 
+  // P2: custom quota is enforced in the database transaction. Do not add a
+  // cached precheck here: it can reject valid replays and races at period edges.
   const { data, error } = await admin.rpc('create_quote_atomic', {
     p_company_id: companyId,
     p_user_id: userId,
@@ -220,7 +182,7 @@ export async function createQuoteAtomic(
     //
     // PostgREST surfaces these via error.code, error.message, error.details.
     const code = (error as { code?: string }).code;
-    if (code === 'P0001') {
+    if (code === 'P0001' || code === 'QCP01') {
       // Look up the current status for the error payload. Cheap; runs only
       // on the refusal path.
       const ent = await loadCompanyEntitlements(companyId).catch(() => null);

@@ -328,6 +328,22 @@ export default async function AccountPage() {
               storageUsedBytes={entitlements.storageUsedBytes}
               storageLimitBytes={entitlements.storageLimitBytes}
               plans={plans}
+              {...(entitlements.billingModel === 'custom_setup' ? {
+                customUsage: {
+                  available: entitlements.isActive && entitlements.customAccessStatus === 'paid_period',
+                  periodStart: entitlements.usagePeriodStart,
+                  periodEnd: entitlements.usagePeriodEnd,
+                  quotesUsed: entitlements.monthlyQuoteUsed,
+                  quotesLimit: entitlements.monthlyQuoteLimit,
+                  scanTokensUsed: entitlements.aiAssistPointsUsed,
+                  scanTokensLimit: entitlements.aiAssistPointsLimit ?? 0,
+                  assistantTasksUsed: entitlements.assistantTasksUsed,
+                  assistantTasksLimit: entitlements.assistantTasksLimit,
+                  storageUsedBytes: entitlements.storageUsedBytes,
+                  storageLimitBytes: entitlements.storageLimitBytes,
+                  storagePendingBytes: entitlements.storagePendingBytes,
+                },
+              } : {})}
             />
           </div>
         </section>

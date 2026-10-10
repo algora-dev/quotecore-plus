@@ -90,7 +90,7 @@ export class SubscriptionInactiveError extends BillingError {
 export class QuoteLimitReachedError extends BillingError {
   readonly used: number;
   readonly limit: number;
-  readonly periodStart: string; // ISO date (first of the month UTC)
+  readonly periodStart: string; // ISO date/time: legacy calendar month or custom paid billing period
   readonly planCode: string;
 
   constructor(args: { used: number; limit: number; periodStart: string; planCode: string }) {

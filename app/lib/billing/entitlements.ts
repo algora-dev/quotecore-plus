@@ -27,7 +27,8 @@ import 'server-only';
 import { cache } from 'react';
 
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { customAccess, type AccessSnapshot } from './custom/contracts';
+import { customAccess, ZERO_LIMITS, type AccessSnapshot } from './custom/contracts';
+import { loadCustomUsage } from './custom/usage/store';
 import { customScope } from './custom/environment';
 import {
   FEATURE_MIN_PLAN,
@@ -77,8 +78,12 @@ export interface CompanyEntitlements {
   /** Custom paid-period status. Missing/invalid billing data never falls back to a richer plan. */
   customAccessStatus: string | null;
   assistantTasksLimit: number | null;
-  /** Unknown until the existing Assistant reservation ledger is integrated. Never assume zero. */
+  /** Accepted customer tasks in the current paid period. Legacy stays null. */
   assistantTasksUsed: number | null;
+  /** Custom periods use Stripe anniversaries; legacy retains its existing calendar. */
+  usagePeriodStart: string | null;
+  usagePeriodEnd: string | null;
+  storagePendingBytes: number;
   customTools: { roofScan: boolean; offcuts: boolean; smartAssistant: boolean } | null;
 
   /**
@@ -112,9 +117,8 @@ export interface CompanyEntitlements {
    */
   monthlyQuoteLimit: number;
   /**
-   * Quotes created so far in the current calendar month (UTC). Counts BOTH
-   * drafts and finalised quotes - `create_quote_atomic` doesn't distinguish.
-   * Resets implicitly on the first of the month when the cron rolls the row.
+   * Custom: every created quote, including drafts, in the purchased paid period.
+   * Legacy: the existing calendar-month/status-transition counter is preserved.
    */
   monthlyQuoteUsed: number;
   /**
@@ -356,13 +360,20 @@ export const loadCompanyEntitlements = cache(
       throw new Error(`Custom billing snapshot could not be loaded: ${customResult.error.message}`);
     }
     const access = company.billing_model === 'custom_setup'
-      ? customAccess(company, customSnap, customScope())
+      ? customAccess({ ...company, admin_override_plan_code: null, admin_override_until: null, comp_until: null }, customSnap, customScope())
       : { source: 'legacy' as const, limits: null, available: true, reason: 'legacy' };
-    const customEnt = access.limits;
-    const customRestricted = access.source === 'custom' && !access.available;
-    if (company.billing_model === 'custom_setup' && usageResult.error) {
-      throw new Error(`Quote usage could not be loaded: ${usageResult.error.message}`);
+    // Legacy admin overrides remain unchanged. A legacy override must not
+    // silently turn purchased custom allowances into the pro_plus limits.
+    const paidUsage = company.billing_model === 'custom_setup' ? await loadCustomUsage(companyId) : null;
+    if (paidUsage && customSnap && (Date.parse(paidUsage.periodStart) !== Date.parse(customSnap.period_start)
+      || Date.parse(paidUsage.periodEnd) !== Date.parse(customSnap.period_end)
+      || paidUsage.subscriptionId !== customSnap.stripe_subscription_id)) {
+      throw new Error('Billing period changed during the request. Refresh to load the current usage.');
     }
+    const customRestricted = company.billing_model === 'custom_setup'
+      && (!access.available || !paidUsage?.available || company.admin_paused);
+    const customEnt = company.billing_model === 'custom_setup'
+      ? (customRestricted ? { ...ZERO_LIMITS } : access.limits) : null;
     if (effCodeResult.error || effActiveResult.error) {
       throw new Error('Effective billing access could not be verified.');
     }
@@ -398,7 +409,7 @@ export const loadCompanyEntitlements = cache(
     // Lazy reconciliation: if the company has more active components than
     // their plan allows (e.g. legacy trial expired, or cron hasn't run yet),
     // reconcile immediately so enforcement is consistent.
-    if (componentLimit !== null && componentCount > componentLimit) {
+    if (company.billing_model === 'legacy' && componentLimit !== null && componentCount > componentLimit) {
       try {
         await admin.rpc('reconcile_company_component_limit', { p_company_id: companyId });
       } catch {
@@ -409,16 +420,19 @@ export const loadCompanyEntitlements = cache(
     return {
       companyId,
       billingModel: company.billing_model,
-      customAccessStatus: access.source === 'custom' ? access.reason : null,
+      customAccessStatus: company.billing_model === 'custom_setup' ? (customRestricted ? paidUsage?.reason ?? access.reason : 'paid_period') : null,
       assistantTasksLimit: customEnt ? customEnt.assistantTasks : null,
-      assistantTasksUsed: null,
+      assistantTasksUsed: paidUsage?.assistantTasksUsed ?? null,
+      usagePeriodStart: paidUsage?.periodStart ?? periodStart,
+      usagePeriodEnd: paidUsage?.periodEnd ?? null,
+      storagePendingBytes: paidUsage?.storagePendingBytes ?? 0,
       customTools: customEnt ? { roofScan: customEnt.scanTokens > 0, offcuts: customEnt.offcuts, smartAssistant: customEnt.assistantTasks > 0 } : null,
       purchasedPlanCode: company.plan_code,
       effectivePlanCode,
       subscriptionStatus: company.subscription_status as SubscriptionStatus,
       isActive,
       monthlyQuoteLimit: customEnt ? customEnt.quotes : plan.monthly_quote_limit,
-      monthlyQuoteUsed: (usageResult.data?.quotes_created as number | undefined) ?? 0,
+      monthlyQuoteUsed: paidUsage?.quotesUsed ?? (usageResult.data?.quotes_created as number | undefined) ?? 0,
       componentLimit: componentLimit,
       componentCount: componentCount,
       flashingLimit:  plan.flashing_limit,
@@ -433,16 +447,16 @@ export const loadCompanyEntitlements = cache(
       orderCount: (orderCountResult.data as number | null) ?? 0,
       monthlyAiTokens: plan.monthly_ai_tokens,
       aiAssistPointsLimit: customEnt ? (customEnt.scanTokens || null) : plan.ai_assist_points_limit,
-      aiAssistPointsUsed: ((aiPointsResult?.data as { used?: number }[] | null)?.[0]?.used) ?? 0,
+      aiAssistPointsUsed: paidUsage?.scanTokensUsed ?? ((aiPointsResult?.data as { used?: number }[] | null)?.[0]?.used) ?? 0,
       aiAssistPointsRemaining: customEnt
-        ? (aiPointsResult.error ? 0 : Math.max(0, customEnt.scanTokens - (((aiPointsResult.data as { used?: number }[] | null)?.[0]?.used) ?? 0)))
+        ? Math.max(0, customEnt.scanTokens - (paidUsage?.scanTokensUsed ?? 0))
         : ((aiPointsResult?.data as { remaining?: number }[] | null)?.[0]?.remaining) ?? 0,
-      aiAssistBlocked: customEnt ? (!!aiPointsResult.error || customEnt.scanTokens === 0) : ((aiPointsResult?.data as { is_blocked?: boolean }[] | null)?.[0]?.is_blocked) ?? true,
+      aiAssistBlocked: customEnt ? (customRestricted || customEnt.scanTokens === 0) : ((aiPointsResult?.data as { is_blocked?: boolean }[] | null)?.[0]?.is_blocked) ?? true,
       storageLimitBytes: (customEnt ? customEnt.storageBytes : plan.storage_limit_bytes) + company.storage_topup_bytes,
-      storageUsedBytes: company.storage_used_bytes,
+      storageUsedBytes: paidUsage?.storageUsedBytes ?? company.storage_used_bytes,
       storageTopupBytes: company.storage_topup_bytes,
       isOverStorage:
-        company.storage_used_bytes > (customEnt ? customEnt.storageBytes : plan.storage_limit_bytes) + company.storage_topup_bytes,
+        (paidUsage?.storageUsedBytes ?? company.storage_used_bytes) > (customEnt ? customEnt.storageBytes : plan.storage_limit_bytes) + company.storage_topup_bytes,
       includedSeats: Math.max(plan.included_seats, company.seat_count),
       features: {
         digital_takeoff: customEnt ? customEnt.digitalTakeoff : plan.feat_digital_takeoff,

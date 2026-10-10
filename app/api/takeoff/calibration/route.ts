@@ -1,3 +1,4 @@
+import { isCustomUsageCompany } from '@/app/lib/billing/custom/usage/store';
 import { rejectUnapprovedDemoPaidRoute } from '@/app/lib/demo/paid-route.server';
 // AI-assisted calibration search/refine endpoint (Phase P5 + Phase D hardening
 // audit 2026-09-20, P1-1..P1-5).
@@ -96,6 +97,9 @@ export async function POST(req: NextRequest) {
       profile = await requireCompanyContext();
     } catch {
       return errorResponse(401, 'UNAUTHORISED', 'Unauthorized');
+    }
+    if (await isCustomUsageCompany(profile.company_id)) {
+      return errorResponse(409, 'CUSTOM_ADAPTER_REQUIRED', 'Automatic calibration is not enabled for custom setups yet. Set the plan scale manually.');
     }
     supabaseUser = await createSupabaseServerClient();
 

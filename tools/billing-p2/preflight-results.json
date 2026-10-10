@@ -1,0 +1,374 @@
+[
+ [
+  {
+   "billing_model": "legacy",
+   "stripe_mode": "live",
+   "companies": 1
+  },
+  {
+   "billing_model": "legacy",
+   "stripe_mode": null,
+   "companies": 46
+  }
+ ],
+ [
+  {
+   "custom_snapshots": 0
+  }
+ ],
+ [
+  {
+   "paid_period_grants": 0
+  }
+ ],
+ [
+  {
+   "p2_already_present": null,
+   "scan_queue": "ai_scan_jobs",
+   "calibration_ledger": "calibration_runs"
+  }
+ ],
+ [
+  {
+   "proname": "cal_admit_run",
+   "arguments": "p_quote_id uuid, p_page_id uuid, p_client_request_id text, p_action text, p_round integer, p_strategy text, p_image_revision text, p_payload_hash text, p_round_token text, p_points integer",
+   "prosecdef": true,
+   "provolatile": "v",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.cal_admit_run(p_quote_id uuid, p_page_id uuid, p_client_request_id text, p_action text, p_round integer, p_strategy text, p_image_revision text, p_payload_hash text, p_round_token text DEFAULT NULL::text, p_points integer DEFAULT 1)\n RETURNS TABLE(ok boolean, status text, run_id uuid, error_code text, response_payload jsonb, points_remaining integer)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_user uuid := auth.uid();\n  v_company uuid;\n  v_quote RECORD;\n  v_page RECORD;\n  v_flag boolean;\n  v_existing RECORD;\n  v_quota RECORD;\n  v_run_id uuid;\nBEGIN\n  IF v_user IS NULL THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'unauthenticated', NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n\n  IF p_client_request_id IS NULL OR length(trim(p_client_request_id)) < 8\n     OR length(p_client_request_id) > 128 THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'bad_request', NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n\n  IF p_payload_hash IS NULL OR length(p_payload_hash) < 8\n     OR p_image_revision IS NULL OR length(p_image_revision) = 0 THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'bad_request', NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n\n  -- Round/strategy contract (server is the authority; route pre-validates\n  -- the HMAC signature itself because the secret never reaches SQL).\n  -- Round 0 permits ONLY the initial search; refine requires round 1.\n  IF NOT (\n       (p_round = 0 AND p_action = 'search' AND p_strategy = 'initial')\n    OR (p_round = 1 AND p_action = 'search' AND p_strategy = 'different_references')\n    OR (p_round = 1 AND p_action = 'refine' AND p_strategy = 'refine_reference')\n  ) THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'invalid_round', NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n  IF p_round = 1 AND (p_round_token IS NULL OR length(trim(p_round_token)) = 0) THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'invalid_round', NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n\n  -- Company context from the caller's profile (never client-supplied).\n  SELECT u.company_id INTO v_company FROM public.users u WHERE u.id = v_user;\n  IF v_company IS NULL THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'no_company', NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n\n  -- Ownership chain, then LOCK THE PAGE ROW: admission for one page is\n  -- serialized exactly like sa_admit_run serializes on the conversation row.\n  SELECT * INTO v_quote FROM public.quotes q\n   WHERE q.id = p_quote_id AND q.company_id = v_company;\n  IF NOT FOUND THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'quote_not_found', NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n\n  SELECT * INTO v_page FROM public.takeoff_pages tp\n   WHERE tp.id = p_page_id AND tp.quote_id = p_quote_id\n   FOR UPDATE;\n  IF NOT FOUND THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'page_not_found', NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n\n  -- Dark-launch flag.\n  SELECT public.calibration_ai_enabled(v_company) INTO v_flag;\n  IF NOT COALESCE(v_flag, false) THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'flag_off', NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n\n  -- Dedup BEFORE quota (MEMORY invariant): resolve prior attempts first.\n  SELECT * INTO v_existing FROM public.calibration_runs r\n   WHERE r.company_id = v_company AND r.client_request_id = p_client_request_id;\n\n  IF FOUND THEN\n    IF v_existing.payload_hash <> p_payload_hash THEN\n      RETURN QUERY SELECT false, 'refused', NULL::uuid, 'request_id_conflict', NULL::jsonb, NULL::integer;\n      RETURN;\n    END IF;\n\n    -- Stale-run recovery: an admitted/running row older than 10 minutes\n    -- (route maxDuration is 5) means a crashed worker. Refund + terminalize\n    -- so the client can retry cleanly with a NEW request id.\n    IF v_existing.status IN ('admitted','running')\n       AND v_existing.created_at < now() - interval '10 minutes' THEN\n      UPDATE public.companies c\n         SET ai_assist_points_used = GREATEST(c.ai_assist_points_used - v_existing.points_charged, 0)\n       WHERE c.id = v_existing.company_id;\n      UPDATE public.calibration_runs r\n         SET status = 'failed_refunded', error_code = 'stale_run_recovered', finished_at = now()\n       WHERE r.id = v_existing.id AND r.status IN ('admitted','running');\n      RETURN QUERY SELECT true, 'duplicate_failed', v_existing.id, 'stale_run_recovered', NULL::jsonb, NULL::integer;\n      RETURN;\n    END IF;\n\n    IF v_existing.status = 'succeeded' THEN\n      RETURN QUERY SELECT true, 'replay', v_existing.id, NULL::text, v_existing.response_payload, NULL::integer;\n      RETURN;\n    END IF;\n    IF v_existing.status = 'failed_refunded' THEN\n      RETURN QUERY SELECT true, 'duplicate_failed', v_existing.id, v_existing.error_code, NULL::jsonb, NULL::integer;\n      RETURN;\n    END IF;\n    RETURN QUERY SELECT true, 'in_flight', v_existing.id, NULL::text, NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n\n  -- Stateful single-use round budget: at most ONE round-1 attempt (any\n  -- outcome) per page + image revision. The HMAC token alone can no longer\n  -- authorise a replayed second round.\n  IF p_round = 1 AND EXISTS (\n    SELECT 1 FROM public.calibration_runs r\n     WHERE r.page_id = p_page_id\n       AND r.image_revision = p_image_revision\n       AND r.round = 1\n  ) THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'round_budget_consumed', NULL::jsonb, NULL::integer;\n    RETURN;\n  END IF;\n\n  -- Quota reservation + charge, INSIDE this transaction, AFTER all refusal\n  -- paths above (dedup-before-quota). p_points defaults to the canonical\n  -- CALIBRATION_SEARCH_POINT_COST (1) kept in app/lib/takeoff/pointCost.ts.\n  -- Defensive subtransaction: check_and_deduct_ai_points has a LATENT type\n  -- bug for NULL-limit plans (untyped NULL in its point_limit column makes\n  -- the whole function raise 42804 instead of returning allowed=false).\n  -- That RPC is shared billing infrastructure and is NOT modified here; a\n  -- failure from it must refuse admission cleanly, never crash the ledger.\n  BEGIN\n    SELECT * INTO v_quota FROM public.check_and_deduct_ai_points(v_company, GREATEST(COALESCE(p_points, 1), 1));\n  EXCEPTION WHEN OTHERS THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'insufficient_points', NULL::jsonb, 0;\n    RETURN;\n  END;\n  IF NOT v_quota.allowed THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, 'insufficient_points', NULL::jsonb, COALESCE(v_quota.remaining, 0);\n    RETURN;\n  END IF;\n\n  INSERT INTO public.calibration_runs (\n    company_id, user_id, quote_id, page_id, client_request_id,\n    image_revision, action, round, strategy, payload_hash, round_token,\n    status, points_charged\n  ) VALUES (\n    v_company, v_user, p_quote_id, p_page_id, p_client_request_id,\n    p_image_revision, p_action, p_round, p_strategy, p_payload_hash, p_round_token,\n    'admitted', GREATEST(COALESCE(p_points, 1), 1)\n  )\n  RETURNING id INTO v_run_id;\n\n  RETURN QUERY SELECT true, 'accepted', v_run_id, NULL::text, NULL::jsonb, v_quota.remaining;\nEND;\n$function$\n"
+  },
+  {
+   "proname": "cal_finish_run",
+   "arguments": "p_run_id uuid, p_status text, p_response jsonb, p_error_code text",
+   "prosecdef": true,
+   "provolatile": "v",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.cal_finish_run(p_run_id uuid, p_status text, p_response jsonb DEFAULT NULL::jsonb, p_error_code text DEFAULT NULL::text)\n RETURNS TABLE(ok boolean, refunded boolean, points_remaining integer)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_run RECORD;\n  v_status RECORD;\nBEGIN\n  IF auth.uid() IS NULL THEN\n    RETURN QUERY SELECT false, false, NULL::integer;\n    RETURN;\n  END IF;\n\n  SELECT * INTO v_run FROM public.calibration_runs r\n   WHERE r.id = p_run_id AND r.user_id = auth.uid()\n   FOR UPDATE;\n\n  IF NOT FOUND THEN\n    RETURN QUERY SELECT false, false, NULL::integer;\n    RETURN;\n  END IF;\n\n  -- Idempotency guard: terminal runs are immutable.\n  IF v_run.status IN ('succeeded','failed_refunded') THEN\n    RETURN QUERY SELECT true, false, NULL::integer;\n    RETURN;\n  END IF;\n\n  IF p_status NOT IN ('succeeded','failed_refunded') THEN\n    RAISE EXCEPTION 'invalid terminal status: %', p_status;\n  END IF;\n\n  IF p_status = 'failed_refunded' THEN\n    -- Atomic refund: one statement, concurrency-safe, never negative.\n    UPDATE public.companies c\n       SET ai_assist_points_used = GREATEST(c.ai_assist_points_used - v_run.points_charged, 0)\n     WHERE c.id = v_run.company_id;\n  END IF;\n\n  UPDATE public.calibration_runs r\n     SET status = p_status,\n         response_payload = p_response,\n         error_code = p_error_code,\n         finished_at = now()\n   WHERE r.id = p_run_id;\n\n  SELECT * INTO v_status FROM public.get_ai_assist_points_status(v_run.company_id);\n\n  RETURN QUERY SELECT true, (p_status = 'failed_refunded'), v_status.remaining;\nEND;\n$function$\n"
+  },
+  {
+   "proname": "cal_verify_refine_parent",
+   "arguments": "p_run_id uuid",
+   "prosecdef": true,
+   "provolatile": "v",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.cal_verify_refine_parent(p_run_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_user uuid := auth.uid();\n  v_run RECORD;\n  v_company uuid;\nBEGIN\n  IF v_user IS NULL THEN\n    RETURN false;\n  END IF;\n\n  SELECT * INTO v_run FROM public.calibration_runs r\n   WHERE r.id = p_run_id;\n  IF NOT FOUND THEN\n    RETURN false;\n  END IF;\n\n  -- Company membership from the caller's profile (never client-supplied).\n  SELECT u.company_id INTO v_company FROM public.users u WHERE u.id = v_user;\n  IF v_company IS NULL OR v_run.company_id <> v_company THEN\n    RETURN false;\n  END IF;\n\n  -- Only a SUCCEEDED run can parent a targeted refine: its response payload\n  -- was persisted and its candidates were actually shown to the user.\n  RETURN v_run.status = 'succeeded';\nEND;\n$function$\n"
+  },
+  {
+   "proname": "company_has_feature",
+   "arguments": "p_company_id uuid, p_feature text",
+   "prosecdef": true,
+   "provolatile": "s",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.company_has_feature(p_company_id uuid, p_feature text)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_effective_code text;\n  v_allowed boolean;\nBEGIN\n  v_effective_code := public.company_effective_plan_code(p_company_id);\n\n  SELECT CASE p_feature\n    WHEN 'digital_takeoff'    THEN sp.feat_digital_takeoff\n    WHEN 'flashings'          THEN sp.feat_flashings\n    WHEN 'material_orders'    THEN sp.feat_material_orders\n    WHEN 'followups'          THEN sp.feat_followups\n    WHEN 'email_send'         THEN sp.feat_email_send\n    WHEN 'activity_card'      THEN sp.feat_activity_card\n    WHEN 'catalogs'           THEN sp.feat_catalogs\n    WHEN 'attachment_library' THEN sp.feat_attachment_library\n    WHEN 'invoices'           THEN sp.feat_invoices            -- ? new\n    WHEN 'message_center'     THEN sp.feat_message_center      -- ? new\n    ELSE false\n  END\n  INTO v_allowed\n  FROM public.subscription_plans sp\n  WHERE sp.code = v_effective_code;\n\n  RETURN COALESCE(v_allowed, false);\nEND $function$\n"
+  },
+  {
+   "proname": "create_quote_atomic",
+   "arguments": "p_company_id uuid, p_user_id uuid, p_payload jsonb",
+   "prosecdef": true,
+   "provolatile": "v",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.create_quote_atomic(p_company_id uuid, p_user_id uuid, p_payload jsonb)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_period date := date_trunc('month', (now() AT TIME ZONE 'UTC'))::date;\n  v_used   integer;\n  v_limit  integer;\n  v_active boolean;\n  v_effective_code text;\n  v_quote_id uuid;\n  v_company_exists boolean;\nBEGIN\n  -- Validate the company exists at all (defends against a stale UI passing\n  -- a deleted company id).\n  SELECT EXISTS(SELECT 1 FROM public.companies WHERE id = p_company_id) INTO v_company_exists;\n  IF NOT v_company_exists THEN\n    RAISE EXCEPTION 'unknown_company' USING ERRCODE = 'P0003';\n  END IF;\n\n  -- Advisory lock: serialise quote creation per company. 64-bit lock key\n  -- derived from the company uuid. Released automatically at transaction end.\n  PERFORM pg_advisory_xact_lock(hashtext(p_company_id::text)::bigint);\n\n  -- Active-subscription check.\n  v_active := public.company_effective_plan_active(p_company_id);\n  IF NOT v_active THEN\n    RAISE EXCEPTION 'subscription_inactive' USING ERRCODE = 'P0001';\n  END IF;\n\n  -- Monthly limit check (always; clones included).\n  -- NOTE (2026-07-05): the counter is now incremented by the status-change\n  -- trigger, NOT here. We still check the limit so a user can't stockpile\n  -- unlimited drafts and then mass-confirm them. But the check counts\n  -- non-draft quotes, not total creates.\n  v_effective_code := public.company_effective_plan_code(p_company_id);\n\n  SELECT sp.monthly_quote_limit\n    INTO v_limit\n    FROM public.subscription_plans sp\n    WHERE sp.code = v_effective_code;\n\n  IF v_limit IS NULL THEN\n    RAISE EXCEPTION 'plan_not_found:%', v_effective_code USING ERRCODE = 'P0003';\n  END IF;\n\n  -- Count non-draft quotes this month (trigger-maintained counter).\n  SELECT COALESCE(quotes_created, 0)\n    INTO v_used\n    FROM public.company_quote_usage\n    WHERE company_id = p_company_id AND period_start = v_period;\n\n  IF v_used IS NULL THEN v_used := 0; END IF;\n\n  IF v_used >= v_limit THEN\n    RAISE EXCEPTION 'quote_limit_reached'\n      USING ERRCODE = 'P0002',\n            DETAIL = format('used=%s limit=%s period_start=%s plan=%s',\n                            v_used, v_limit, v_period, v_effective_code);\n  END IF;\n\n  -- Insert the quote. We explicitly project columns from p_payload so callers\n  -- can't sneak in (for example) company_id overrides or quote_number values.\n  -- Any field the caller doesn't supply uses the column default.\n  INSERT INTO public.quotes (\n    company_id,\n    template_id,\n    customer_name,\n    customer_email,\n    customer_phone,\n    job_name,\n    site_address,\n    tax_rate,\n    notes_internal,\n    created_by_user_id,\n    global_pitch_degrees,\n    measurement_system,\n    cq_company_name,\n    cq_company_address,\n    cq_company_phone,\n    cq_company_email,\n    cq_company_logo_url,\n    cq_footer_text,\n    currency,\n    entry_mode,\n    material_margin_percent,\n    labor_margin_percent,\n    material_margin_enabled,\n    labor_margin_enabled,\n    trade,\n    component_collection_id\n  )\n  VALUES (\n    p_company_id,\n    NULLIF(p_payload->>'template_id', '')::uuid,\n    p_payload->>'customer_name',\n    NULLIF(p_payload->>'customer_email', ''),\n    NULLIF(p_payload->>'customer_phone', ''),\n    NULLIF(p_payload->>'job_name', ''),\n    NULLIF(p_payload->>'site_address', ''),\n    COALESCE((p_payload->>'tax_rate')::numeric, 0),\n    NULLIF(p_payload->>'notes_internal', ''),\n    p_user_id,\n    NULLIF(p_payload->>'global_pitch_degrees', '')::numeric,\n    COALESCE((p_payload->>'measurement_system')::measurement_system, 'metric'::measurement_system),\n    NULLIF(p_payload->>'cq_company_name', ''),\n    NULLIF(p_payload->>'cq_company_address', ''),\n    NULLIF(p_payload->>'cq_company_phone', ''),\n    NULLIF(p_payload->>'cq_company_email', ''),\n    NULLIF(p_payload->>'cq_company_logo_url', ''),\n    NULLIF(p_payload->>'cq_footer_text', ''),\n    COALESCE(NULLIF(p_payload->>'currency', ''), 'NZD'),\n    COALESCE(NULLIF(p_payload->>'entry_mode', ''), 'manual'),\n    NULLIF(p_payload->>'material_margin_percent', '')::numeric,\n    NULLIF(p_payload->>'labor_margin_percent', '')::numeric,\n    COALESCE((p_payload->>'material_margin_enabled')::boolean, false),\n    COALESCE((p_payload->>'labor_margin_enabled')::boolean, false),\n    COALESCE((p_payload->>'trade')::trade, 'roofing'::trade),\n    NULLIF(p_payload->>'component_collection_id', '')::uuid\n  )\n  RETURNING id INTO v_quote_id;\n\n  -- NO increment here. The trg_quote_status_change trigger fires when\n  -- status moves from 'draft' to a real status.\n\n  RETURN v_quote_id;\nEND;\n$function$\n"
+  },
+  {
+   "proname": "fn_quote_status_usage_delta",
+   "arguments": "",
+   "prosecdef": true,
+   "provolatile": "v",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.fn_quote_status_usage_delta()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_period date := date_trunc('month', (now() AT TIME ZONE 'UTC'))::date;\n  v_company_exists boolean;\nBEGIN\n  -- Only fire on status changes where OLD was 'draft' and NEW is not 'draft'.\n  -- This is the \"first real save\" - draft becomes confirmed/sent/etc.\n  IF (TG_OP = 'UPDATE') THEN\n    IF OLD.status = 'draft' AND NEW.status <> 'draft' THEN\n      INSERT INTO public.company_quote_usage (company_id, period_start, quotes_created)\n      VALUES (NEW.company_id, v_period, 1)\n      ON CONFLICT (company_id, period_start)\n        DO UPDATE SET quotes_created = company_quote_usage.quotes_created + 1;\n    ELSIF OLD.status <> 'draft' AND NEW.status = 'draft' THEN\n      -- Reverting back to draft: refund the slot.\n      INSERT INTO public.company_quote_usage (company_id, period_start, quotes_created)\n      VALUES (NEW.company_id, v_period, 0)\n      ON CONFLICT (company_id, period_start)\n        DO UPDATE SET quotes_created = GREATEST(company_quote_usage.quotes_created - 1, 0);\n    END IF;\n    RETURN NEW;\n  END IF;\n\n  -- On hard delete of a non-draft quote: refund the slot.\n  -- BUT skip if the company is being deleted (cascade) - the company row\n  -- is already gone, so the FK insert would fail and there's no point\n  -- maintaining a usage counter for a deleted company.\n  IF (TG_OP = 'DELETE') THEN\n    IF OLD.status <> 'draft' THEN\n      SELECT EXISTS(SELECT 1 FROM public.companies WHERE id = OLD.company_id)\n        INTO v_company_exists;\n      IF v_company_exists THEN\n        INSERT INTO public.company_quote_usage (company_id, period_start, quotes_created)\n        VALUES (OLD.company_id, v_period, 0)\n        ON CONFLICT (company_id, period_start)\n          DO UPDATE SET quotes_created = GREATEST(company_quote_usage.quotes_created - 1, 0);\n      END IF;\n    END IF;\n    RETURN OLD;\n  END IF;\n\n  RETURN NULL;\nEND;\n$function$\n"
+  },
+  {
+   "proname": "get_ai_assist_points_status",
+   "arguments": "p_company_id uuid",
+   "prosecdef": true,
+   "provolatile": "v",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.get_ai_assist_points_status(p_company_id uuid)\n RETURNS TABLE(used integer, point_limit integer, remaining integer, is_blocked boolean)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_effective_plan text;\n  v_point_limit integer;\n  v_points_used integer;\nBEGIN\n  SELECT public.company_effective_plan_code(p_company_id) INTO v_effective_plan;\n  IF v_effective_plan IS NULL THEN\n    RETURN QUERY SELECT 0, NULL, 0, true;\n    RETURN;\n  END IF;\n\n  SELECT sp.ai_assist_points_limit INTO v_point_limit\n  FROM subscription_plans sp\n  WHERE sp.code = v_effective_plan;\n\n  SELECT c.ai_assist_points_used INTO v_points_used\n  FROM companies c\n  WHERE c.id = p_company_id;\n\n  IF v_point_limit IS NULL THEN\n    RETURN QUERY SELECT 0, NULL, 0, true;\n  ELSE\n    RETURN QUERY SELECT v_points_used, v_point_limit, GREATEST(v_point_limit - v_points_used, 0), false;\n  END IF;\n  RETURN;\nEND;\n$function$\n"
+  },
+  {
+   "proname": "sa_admit_run",
+   "arguments": "p_conversation_id uuid, p_user_message text, p_client_request_id text",
+   "prosecdef": true,
+   "provolatile": "v",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.sa_admit_run(p_conversation_id uuid, p_user_message text, p_client_request_id text)\n RETURNS TABLE(ok boolean, status text, run_id uuid, message_id uuid, error_code text)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_user uuid := auth.uid();\n  v_conversation RECORD;\n  v_flag boolean;\n  v_existing_run RECORD;\n  v_msg_id uuid;\n  v_run_id uuid;\n  v_quota RECORD;\n  v_payload text;\nBEGIN\n  IF v_user IS NULL THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, NULL::uuid, 'unauthenticated'; RETURN;\n  END IF;\n  IF p_client_request_id IS NULL OR length(trim(p_client_request_id)) < 8\n     OR length(p_client_request_id) > 128 THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, NULL::uuid, 'bad_request_id'; RETURN;\n  END IF;\n  IF p_user_message IS NULL OR length(trim(p_user_message)) = 0\n     OR length(p_user_message) > 16000 THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, NULL::uuid, 'bad_message'; RETURN;\n  END IF;\n\n  SELECT * INTO v_conversation FROM public.smart_assistant_conversations c\n  WHERE c.id = p_conversation_id FOR UPDATE;\n  IF NOT FOUND THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, NULL::uuid, 'conversation_not_found'; RETURN;\n  END IF;\n  IF v_conversation.user_id <> v_user THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, NULL::uuid, 'not_owner'; RETURN;\n  END IF;\n\n  -- DUPLICATE FIRST: a previously admitted request always resolves, even when\n  -- the flag/quota would now refuse. Invariant 6.\n  SELECT * INTO v_existing_run FROM public.smart_assistant_runs r\n  WHERE r.conversation_id = p_conversation_id AND r.client_request_id = p_client_request_id;\n  IF FOUND THEN\n    -- Payload conflict: same id, different content (md5 legacy rows compatible).\n    v_payload := md5(p_user_message);\n    IF v_existing_run.payload_hash IS DISTINCT FROM v_payload THEN\n      RETURN QUERY SELECT false, 'refused', NULL::uuid, NULL::uuid, 'request_id_conflict';\n      RETURN;\n    END IF;\n    RETURN QUERY SELECT true, 'duplicate', v_existing_run.id, NULL::uuid, NULL::text;\n    RETURN;\n  END IF;\n\n  SELECT public.smart_assistant_enabled(v_conversation.company_id) INTO v_flag;\n  IF NOT COALESCE(v_flag, false) THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, NULL::uuid, 'flag_off'; RETURN;\n  END IF;\n\n  -- COMPANY-WIDE QUOTA SERIALIZATION: lock the company's flag row so two\n  -- conversations cannot oversubscribe the last slot. Invariant 5.\n  PERFORM 1 FROM public.assistant_feature_flags f\n  WHERE f.company_id = v_conversation.company_id FOR UPDATE;\n\n  SELECT * INTO v_quota FROM public.sa_check_turn_quota(v_conversation.company_id);\n  IF v_quota.used >= v_quota.cap THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, NULL::uuid, 'quota_exceeded'; RETURN;\n  END IF;\n\n  -- Stale-run recovery with pointer validation (never touch a foreign run).\n  IF v_conversation.active_run_id IS NOT NULL THEN\n    UPDATE public.smart_assistant_runs r\n       SET status = 'interrupted', error_code = 'stale', finished_at = now()\n     WHERE r.id = v_conversation.active_run_id\n       AND r.conversation_id = v_conversation.id\n       AND r.company_id = v_conversation.company_id\n       AND r.user_id = v_user\n       AND r.status IN ('accepted','running')\n       AND r.started_at < now() - interval '5 minutes';\n    IF FOUND THEN\n      UPDATE public.smart_assistant_conversations c\n          SET active_run_id = NULL\n        WHERE c.id = v_conversation.id AND c.active_run_id = v_conversation.active_run_id;\n      v_conversation.active_run_id := NULL;\n    END IF;\n  END IF;\n\n  IF v_conversation.active_run_id IS NOT NULL THEN\n    RETURN QUERY SELECT false, 'refused', NULL::uuid, NULL::uuid, 'run_in_progress'; RETURN;\n  END IF;\n\n  INSERT INTO public.smart_assistant_messages (conversation_id, run_id, role, content)\n  VALUES (p_conversation_id, NULL, 'user', p_user_message)\n  RETURNING id INTO v_msg_id;\n\n  INSERT INTO public.smart_assistant_runs (\n    conversation_id, user_id, company_id, client_request_id, payload_hash, status\n  ) VALUES (\n    p_conversation_id, v_user, v_conversation.company_id, p_client_request_id,\n    md5(p_user_message), 'accepted'\n  )\n  RETURNING id INTO v_run_id;\n\n  -- Stamp the admitted message with its run for history identity.\n  UPDATE public.smart_assistant_messages SET run_id = v_run_id WHERE id = v_msg_id;\n\n  -- Durable reservation: quota survives any later transcript deletion.\n  INSERT INTO public.assistant_turn_reservations (run_id, company_id, user_id)\n  VALUES (v_run_id, v_conversation.company_id, v_user);\n\n  UPDATE public.smart_assistant_conversations c\n     SET active_run_id = v_run_id, last_active_at = now(), updated_at = now()\n   WHERE c.id = p_conversation_id;\n\n  RETURN QUERY SELECT true, 'accepted', v_run_id, v_msg_id, NULL::text;\nEND;\n$function$\n"
+  },
+  {
+   "proname": "sa_check_turn_quota",
+   "arguments": "p_company_id uuid",
+   "prosecdef": true,
+   "provolatile": "s",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.sa_check_turn_quota(p_company_id uuid)\n RETURNS TABLE(allowed boolean, used integer, cap integer)\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT q.used < q.cap AS allowed, q.used, q.cap\n  FROM (\n    SELECT\n      (SELECT COALESCE(\n         (SELECT f.quota_monthly_turns FROM public.assistant_feature_flags f\n           WHERE f.company_id = p_company_id AND f.enabled), 500)) AS cap,\n      (SELECT COUNT(*)::int FROM public.assistant_turn_reservations x\n        WHERE x.company_id = p_company_id\n          AND x.created_at >= date_trunc('month', now())) AS used\n  ) q\n$function$\n"
+  },
+  {
+   "proname": "submit_ai_scan_job",
+   "arguments": "p_company_id uuid, p_user_id uuid, p_quote_id uuid, p_page_id uuid, p_quality text, p_idempotency_key text, p_image_data text, p_canvas_width integer, p_canvas_height integer",
+   "prosecdef": true,
+   "provolatile": "v",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.submit_ai_scan_job(p_company_id uuid, p_user_id uuid, p_quote_id uuid, p_page_id uuid, p_quality text, p_idempotency_key text, p_image_data text, p_canvas_width integer DEFAULT 800, p_canvas_height integer DEFAULT 600)\n RETURNS TABLE(job_id uuid, status text, points_cost integer, points_remaining integer, point_limit integer, is_existing boolean, error text)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_existing_id UUID;\n  v_existing_status TEXT;\n  v_existing_cost INT;\n  v_plan_priority INT;\n  v_points_cost INT;\n  v_deduct_result RECORD;\n  v_remaining INT;\n  v_limit INT;\n  v_effective_plan TEXT;\nBEGIN\n  -- 1. Idempotency check: return existing job without charging again\n  SELECT id, status, points_cost INTO v_existing_id, v_existing_status, v_existing_cost\n  FROM ai_scan_jobs\n  WHERE company_id = p_company_id AND idempotency_key = p_idempotency_key;\n\n  IF FOUND THEN\n    SELECT remaining INTO v_remaining FROM public.get_ai_assist_points_status(p_company_id);\n    SELECT ai_assist_points_limit INTO v_limit\n    FROM subscription_plans sp\n    WHERE sp.code = public.company_effective_plan_code(p_company_id);\n\n    RETURN QUERY SELECT v_existing_id, v_existing_status, v_existing_cost,\n      v_remaining, v_limit, true, NULL::TEXT;\n    RETURN;\n  END IF;\n\n  -- 2. Reject if company already has an active job on this page\n  PERFORM 1 FROM ai_scan_jobs\n  WHERE company_id = p_company_id\n    AND page_id = p_page_id\n    AND status IN ('queued', 'running');\n\n  IF FOUND THEN\n    RETURN QUERY SELECT NULL::UUID, NULL::TEXT, NULL::INT, NULL::INT, NULL::INT, false,\n      'ACTIVE_JOB_EXISTS'::TEXT;\n    RETURN;\n  END IF;\n\n  -- 3. Determine plan priority\n  v_effective_plan := public.company_effective_plan_code(p_company_id);\n  v_plan_priority := CASE\n    WHEN v_effective_plan = 'pro_plus' THEN 30\n    WHEN v_effective_plan = 'pro' THEN 20\n    WHEN v_effective_plan = 'growth' THEN 15\n    WHEN v_effective_plan = 'starter' THEN 10\n    ELSE 0  -- trial/free\n  END;\n\n  -- 4. Derive point cost from quality\n  v_points_cost := CASE p_quality\n    WHEN 'low' THEN 2\n    WHEN 'medium' THEN 4\n    WHEN 'high' THEN 8\n    ELSE 4\n  END;\n\n  -- 5. Atomically check + deduct points\n  SELECT * INTO v_deduct_result FROM public.check_and_deduct_ai_points(p_company_id, v_points_cost);\n\n  IF NOT v_deduct_result.allowed THEN\n    RETURN QUERY SELECT NULL::UUID, NULL::TEXT, NULL::INT,\n      v_deduct_result.remaining, v_deduct_result.point_limit, false,\n      v_deduct_result.error;\n    RETURN;\n  END IF;\n\n  -- 6. Create the queued job\n  INSERT INTO ai_scan_jobs (\n    company_id, user_id, quote_id, page_id,\n    plan_priority, quality, idempotency_key,\n    status, points_cost, points_state,\n    image_data, canvas_width, canvas_height,\n    available_at\n  ) VALUES (\n    p_company_id, p_user_id, p_quote_id, p_page_id,\n    v_plan_priority, p_quality, p_idempotency_key,\n    'queued', v_points_cost, 'reserved',\n    p_image_data, p_canvas_width, p_canvas_height,\n    now()\n  )\n  RETURNING id, points_cost INTO v_existing_id, v_existing_cost;\n\n  v_remaining := v_deduct_result.remaining;\n\n  RETURN QUERY SELECT v_existing_id, 'queued'::TEXT, v_existing_cost,\n    v_remaining, v_deduct_result.point_limit, false, NULL::TEXT;\n  RETURN;\nEND;\n$function$\n"
+  },
+  {
+   "proname": "update_company_storage_usage",
+   "arguments": "",
+   "prosecdef": true,
+   "provolatile": "v",
+   "proconfig": [
+    "search_path=public"
+   ],
+   "definition": "CREATE OR REPLACE FUNCTION public.update_company_storage_usage()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    UPDATE public.companies\n    SET storage_used_bytes = storage_used_bytes + NEW.file_size\n    WHERE id = NEW.company_id;\n  ELSIF TG_OP = 'DELETE' THEN\n    UPDATE public.companies\n    SET storage_used_bytes = storage_used_bytes - OLD.file_size\n    WHERE id = OLD.company_id;\n  ELSIF TG_OP = 'UPDATE' THEN\n    IF NEW.file_size != OLD.file_size THEN\n      UPDATE public.companies\n      SET storage_used_bytes = storage_used_bytes - OLD.file_size + NEW.file_size\n      WHERE id = NEW.company_id;\n    END IF;\n  END IF;\n\n  RETURN COALESCE(NEW, OLD);\nEND $function$\n"
+  }
+ ],
+ [
+  {
+   "relname": "companies",
+   "tgname": "companies_set_trial_defaults",
+   "definition": "CREATE TRIGGER companies_set_trial_defaults BEFORE INSERT ON public.companies FOR EACH ROW EXECUTE FUNCTION set_company_trial_defaults()"
+  },
+  {
+   "relname": "companies",
+   "tgname": "sa_v2_seed_company_workflow",
+   "definition": "CREATE TRIGGER sa_v2_seed_company_workflow AFTER INSERT ON public.companies FOR EACH ROW EXECUTE FUNCTION sa_v2_seed_company_workflow()"
+  },
+  {
+   "relname": "companies",
+   "tgname": "trg_companies_updated_at",
+   "definition": "CREATE TRIGGER trg_companies_updated_at BEFORE UPDATE ON public.companies FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+  },
+  {
+   "relname": "quotes",
+   "tgname": "trg_quote_status_usage",
+   "definition": "CREATE TRIGGER trg_quote_status_usage AFTER DELETE OR UPDATE OF status ON public.quotes FOR EACH ROW EXECUTE FUNCTION fn_quote_status_usage_delta()"
+  },
+  {
+   "relname": "quotes",
+   "tgname": "trg_quotes_set_created_by_email",
+   "definition": "CREATE TRIGGER trg_quotes_set_created_by_email BEFORE INSERT ON public.quotes FOR EACH ROW EXECUTE FUNCTION set_quote_created_by_email()"
+  },
+  {
+   "relname": "quotes",
+   "tgname": "trg_quotes_updated_at",
+   "definition": "CREATE TRIGGER trg_quotes_updated_at BEFORE UPDATE ON public.quotes FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+  },
+  {
+   "relname": "quote_files",
+   "tgname": "trg_update_company_storage",
+   "definition": "CREATE TRIGGER trg_update_company_storage AFTER INSERT OR DELETE OR UPDATE ON public.quote_files FOR EACH ROW EXECUTE FUNCTION update_company_storage_usage()"
+  }
+ ],
+ [
+  {
+   "schemaname": "public",
+   "tablename": "quote_files",
+   "policyname": "quote_files_delete_own_company",
+   "roles": "{public}",
+   "cmd": "DELETE",
+   "qual": "(company_id IN ( SELECT users.company_id\n   FROM users\n  WHERE (users.id = auth.uid())))",
+   "with_check": null
+  },
+  {
+   "schemaname": "public",
+   "tablename": "quote_files",
+   "policyname": "quote_files_insert_authenticated",
+   "roles": "{authenticated}",
+   "cmd": "INSERT",
+   "qual": null,
+   "with_check": "(company_id IN ( SELECT users.company_id\n   FROM users\n  WHERE (users.id = auth.uid())))"
+  },
+  {
+   "schemaname": "public",
+   "tablename": "quote_files",
+   "policyname": "quote_files_select_own_company",
+   "roles": "{public}",
+   "cmd": "SELECT",
+   "qual": "(company_id IN ( SELECT users.company_id\n   FROM users\n  WHERE (users.id = auth.uid())))",
+   "with_check": null
+  },
+  {
+   "schemaname": "public",
+   "tablename": "quotes",
+   "policyname": "quotes_all_same_company",
+   "roles": "{authenticated}",
+   "cmd": "ALL",
+   "qual": "(company_id = current_company_id())",
+   "with_check": "(company_id = current_company_id())"
+  },
+  {
+   "schemaname": "public",
+   "tablename": "ai_scan_jobs",
+   "policyname": "Users can insert own company AI scan jobs",
+   "roles": "{public}",
+   "cmd": "INSERT",
+   "qual": null,
+   "with_check": "(company_id = current_company_id())"
+  },
+  {
+   "schemaname": "public",
+   "tablename": "ai_scan_jobs",
+   "policyname": "Users can read own company AI scan jobs",
+   "roles": "{public}",
+   "cmd": "SELECT",
+   "qual": "(company_id = current_company_id())",
+   "with_check": null
+  },
+  {
+   "schemaname": "public",
+   "tablename": "ai_scan_jobs",
+   "policyname": "Users can update own company AI scan jobs",
+   "roles": "{public}",
+   "cmd": "UPDATE",
+   "qual": "(company_id = current_company_id())",
+   "with_check": "(company_id = current_company_id())"
+  },
+  {
+   "schemaname": "storage",
+   "tablename": "objects",
+   "policyname": "Authenticated users can update logos 1y3lpeg_0",
+   "roles": "{authenticated}",
+   "cmd": "UPDATE",
+   "qual": "((bucket_id = 'company-logos'::text) AND (auth.role() = 'authenticated'::text))",
+   "with_check": null
+  },
+  {
+   "schemaname": "storage",
+   "tablename": "objects",
+   "policyname": "Authenticated users can update logos 1y3lpeg_1",
+   "roles": "{authenticated}",
+   "cmd": "SELECT",
+   "qual": "((bucket_id = 'company-logos'::text) AND (auth.role() = 'authenticated'::text))",
+   "with_check": null
+  },
+  {
+   "schemaname": "storage",
+   "tablename": "objects",
+   "policyname": "Authenticated users can upload logos 1y3lpeg_0",
+   "roles": "{authenticated}",
+   "cmd": "INSERT",
+   "qual": null,
+   "with_check": "((bucket_id = 'company-logos'::text) AND (auth.role() = 'authenticated'::text))"
+  },
+  {
+   "schemaname": "storage",
+   "tablename": "objects",
+   "policyname": "quote_documents_delete_own_company",
+   "roles": "{authenticated}",
+   "cmd": "DELETE",
+   "qual": "((bucket_id = 'QUOTE-DOCUMENTS'::text) AND ((storage.foldername(name))[1] = ( SELECT (users.company_id)::text AS company_id\n   FROM users\n  WHERE (users.id = auth.uid()))))",
+   "with_check": null
+  },
+  {
+   "schemaname": "storage",
+   "tablename": "objects",
+   "policyname": "quote_documents_select_own_company",
+   "roles": "{authenticated}",
+   "cmd": "SELECT",
+   "qual": "((bucket_id = 'QUOTE-DOCUMENTS'::text) AND ((storage.foldername(name))[1] = ( SELECT (users.company_id)::text AS company_id\n   FROM users\n  WHERE (users.id = auth.uid()))))",
+   "with_check": null
+  },
+  {
+   "schemaname": "storage",
+   "tablename": "objects",
+   "policyname": "quote_documents_update_own_company",
+   "roles": "{authenticated}",
+   "cmd": "UPDATE",
+   "qual": "((bucket_id = 'QUOTE-DOCUMENTS'::text) AND ((storage.foldername(name))[1] = ( SELECT (users.company_id)::text AS company_id\n   FROM users\n  WHERE (users.id = auth.uid()))))",
+   "with_check": "((bucket_id = 'QUOTE-DOCUMENTS'::text) AND ((storage.foldername(name))[1] = ( SELECT (users.company_id)::text AS company_id\n   FROM users\n  WHERE (users.id = auth.uid()))))"
+  },
+  {
+   "schemaname": "storage",
+   "tablename": "objects",
+   "policyname": "supplier-assets-delete",
+   "roles": "{authenticated}",
+   "cmd": "DELETE",
+   "qual": "((bucket_id = 'supplier-assets'::text) AND ((storage.foldername(name))[1] IN ( SELECT (users.company_id)::text AS company_id\n   FROM users\n  WHERE (users.id = auth.uid()))))",
+   "with_check": null
+  },
+  {
+   "schemaname": "storage",
+   "tablename": "objects",
+   "policyname": "supplier-assets-public-read",
+   "roles": "{public}",
+   "cmd": "SELECT",
+   "qual": "(bucket_id = 'supplier-assets'::text)",
+   "with_check": null
+  },
+  {
+   "schemaname": "storage",
+   "tablename": "objects",
+   "policyname": "supplier-assets-update",
+   "roles": "{authenticated}",
+   "cmd": "UPDATE",
+   "qual": "((bucket_id = 'supplier-assets'::text) AND ((storage.foldername(name))[1] IN ( SELECT (users.company_id)::text AS company_id\n   FROM users\n  WHERE (users.id = auth.uid()))))",
+   "with_check": null
+  },
+  {
+   "schemaname": "storage",
+   "tablename": "objects",
+   "policyname": "supplier-assets-upload",
+   "roles": "{authenticated}",
+   "cmd": "INSERT",
+   "qual": null,
+   "with_check": "((bucket_id = 'supplier-assets'::text) AND ((storage.foldername(name))[1] IN ( SELECT (users.company_id)::text AS company_id\n   FROM users\n  WHERE (users.id = auth.uid()))))"
+  }
+ ],
+ [
+  {
+   "column_name": "storage_used_bytes",
+   "client_can_update": false
+  },
+  {
+   "column_name": "storage_topup_bytes",
+   "client_can_update": false
+  },
+  {
+   "column_name": "ai_assist_points_used",
+   "client_can_update": false
+  },
+  {
+   "column_name": "stripe_subscription_id",
+   "client_can_update": false
+  },
+  {
+   "column_name": "billing_model",
+   "client_can_update": false
+  },
+  {
+   "column_name": "stripe_mode",
+   "client_can_update": false
+  },
+  {
+   "column_name": "plan_code",
+   "client_can_update": false
+  },
+  {
+   "column_name": "subscription_status",
+   "client_can_update": false
+  }
+ ],
+ [
+  {
+   "mismatched_storage_counters": 2
+  }
+ ]
+]

@@ -71,6 +71,8 @@ interface Props {
   aiTakeoffAvailable?: boolean;
   /** AI Assist points: current usage for UI display. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
+  /** P2 custom billing: scans use the idempotent purchased-scan protocol. */
+  customUsageBilling?: boolean;
   /** P2 AI-assisted calibration per-company flag (live integration via the
    *  authenticated calibration API client). */
   aiCalibrationEnabled?: boolean;
@@ -99,6 +101,7 @@ export function TakeoffPage({
   allRoofAreas,
   aiTakeoffAvailable,
   aiAssistPoints,
+  customUsageBilling = false,
   aiCalibrationEnabled,
   takeoffTouchEnabled = false,
   takeoffCompactNotices = [],
@@ -199,6 +202,7 @@ export function TakeoffPage({
       allRoofAreas={allRoofAreas}
       aiTakeoffAvailable={aiTakeoffAvailable}
       aiAssistPoints={aiAssistPoints}
+      customUsageBilling={customUsageBilling}
       aiCalibrationEnabled={aiCalibrationEnabled}
       onTouchOutlineAdapter={registerAdapter}
       onPage1Resolved={setResolvedPage1Id}

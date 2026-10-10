@@ -31,7 +31,7 @@ export const PREVIEW_CATALOG: CalculatorCatalog = {
     regular: { code: 'assistant_regular', monthlyCents: 4000, tasks: 400 },
     heavy: { code: 'assistant_heavy', monthlyCents: 6000, tasks: 1500 },
   },
-  shareRule: '1 job priced = 1 quote. Email and share links use the same quote allowance, not separate allowances.',
+  shareRule: 'Each new quote counts once, including drafts and copies. Editing, sending or sharing it does not use another quote. Deleting it does not restore the allowance.',
   scanRule: 'Each scan uses 2, 6 or 12 Scan Tokens at Low, Medium or High quality. A full plan uses two scans: roof outline, then components. You can mix quality levels. Extra scans use more tokens.',
   assistantRule: '1 Assistant Task = 1 task or request you send. The Assistant’s reply does not count as another task.',
 };

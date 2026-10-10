@@ -1,70 +1,20 @@
 /**
- * Upload finaliser.
+ * Server-side upload finalization.
  *
- * The Single Path for "an object has just been uploaded to storage; commit
- * its bytes to the company's quota or roll back".
+ * Legacy accounts keep the existing measured-size check and cleanup path.
+ * Custom setups reserve server-verified bytes atomically, then quote_files
+ * triggers transfer the hold into the existing storage counter. Concurrent
+ * finalizers cannot each assume the same unused capacity is still available.
  *
- * ----------------------------------------------------------------------------
- * Why this exists
- * ----------------------------------------------------------------------------
- * Gerald audit H-03: storage uploads bypass the quota gate. There are three
- * code paths that write to the QUOTE-DOCUMENTS bucket without ever calling
- * `checkStorageQuota`:
- *   1. POST /quotes/new/upload-plan/route.ts
- *   2. uploadRoofPlanFile() in /quotes/new/actions.ts
- *   3. SummaryFilesPanel.tsx -> saveFileMetadata (browser-direct uploads)
- * The fourth path (createFlashing in flashings/actions.ts) writes to the
- * PUBLIC company-logos bucket and is deferred to phase 2 (different bucket,
- * different quota concept).
- *
- * Even if each callsite added a pre-upload `checkStorageQuota(claimedSize)`
- * call, the browser controls `claimedSize`. Server-side post-upload re-read
- * is the only honest gate.
- *
- * ----------------------------------------------------------------------------
- * Contract
- * ----------------------------------------------------------------------------
- *   finaliseUpload({
- *     companyId,
- *     bucket: 'QUOTE-DOCUMENTS',          // phase 1 only supports this bucket
- *     storagePath: '<companyId>/<quoteId>/plan-...pdf',
- *     adminClient?: SupabaseClient,
- *   })
- *
- *   1. Look up the object in storage via `list({ search })`. Read the real
- *      `metadata.size` and `metadata.mimetype`.
- *   2. Call `assertCanUseStorage(companyId, realSize)`. This throws
- *      `StorageQuotaExceededError` if the upload pushes the company over
- *      its effective limit (plan + topup).
- *   3. On overage, delete the just-uploaded object from storage, then
- *      re-throw the StorageQuotaExceededError so the caller can return a
- *      typed error to the client.
- *   4. On success, return { size, mime } so the caller can insert the
- *      metadata row using the SERVER-MEASURED values (not browser claims).
- *
- * The `companies.storage_used_bytes` counter is maintained by a DB trigger
- * on `quote_files` (existing infra). The finaliser does NOT increment it
- * directly; the trigger fires when the caller inserts the row using the
- * returned size.
- *
- * ----------------------------------------------------------------------------
- * Why not enforce via RLS alone
- * ----------------------------------------------------------------------------
- * RLS gates on `quote_files` could refuse the metadata insert if the
- * storage trigger had pushed `storage_used_bytes` over the limit. But:
- *   - the object has already landed in storage and been billed against the
- *     Supabase storage SKU,
- *   - it leaves an orphan object behind (no metadata row, but bytes used),
- *   - it surfaces as raw `42501` to the user.
- * Inline check + delete on overage is cleaner: no orphans, typed error,
- * predictable UX.
- *
- * The `/api/cron/sweep-orphan-objects` cron (added with this commit) is the
- * belt-and-braces sweep for any leak that does occur (e.g. process crash
- * between upload and finaliser).
+ * This is a post-upload gate, not a complete pre-upload physical cost limit.
+ * The host must audit bucket policies, immutable object paths, signed upload
+ * admission and all non-document paths before enabling public custom checkout.
+ * Failed cleanup stays accounted for until Storage API deletion is confirmed.
  */
 
 import 'server-only';
+import { reservePurchasedStorage, cleanupUnregisteredCustomObject } from '@/app/lib/billing/custom/usage/storage';
+import { isCustomUsageCompany } from '@/app/lib/billing/custom/usage/store';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/app/lib/supabase/admin';
@@ -174,8 +124,28 @@ export async function finaliseUpload(
   if (typeof realSize !== 'number' || !Number.isFinite(realSize) || realSize < 0) {
     // Storage object exists but has no readable size - refuse to commit.
     // Delete the orphan so it doesn't sit there indefinitely.
-    await admin.storage.from(input.bucket).remove([input.storagePath]).catch(() => {});
+    if (!(await isCustomUsageCompany(input.companyId))) {
+      await admin.storage.from(input.bucket).remove([input.storagePath]).catch(() => {});
+    }
     throw new Error('finaliseUpload: storage object has no readable size');
+  }
+
+  // Custom: reserve under the company lock. The quote_files trigger commits
+  // the hold atomically with its existing storage counter update.
+  const custom = await isCustomUsageCompany(input.companyId);
+  if (custom) {
+    try {
+      await reservePurchasedStorage({ companyId: input.companyId, bucket: input.bucket,
+        path: input.storagePath, size: realSize, kind: 'document' });
+    } catch (error) {
+      // The cleanup claim refuses to remove anything already registered.
+      await cleanupUnregisteredCustomObject({ companyId: input.companyId,
+        bucket: input.bucket, path: input.storagePath }).catch((cleanupError) => {
+          console.error('[upload-finaliser] custom cleanup pending:', cleanupError instanceof Error ? cleanupError.message : 'unavailable');
+        });
+      throw error;
+    }
+    return { size: realSize, mime: realMime };
   }
 
   // ---- 2. Assert quota ----

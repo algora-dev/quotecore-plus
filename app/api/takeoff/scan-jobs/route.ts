@@ -1,3 +1,4 @@
+import { isCustomUsageCompany } from '@/app/lib/billing/custom/usage/store';
 import { rejectUnapprovedDemoPaidRoute } from '@/app/lib/demo/paid-route.server';
 /**
  * Scan Jobs API - submit new scans and poll status.
@@ -26,6 +27,9 @@ export async function POST(req: NextRequest) {
   try {
     const profile = await requireCompanyContext();
     const supabase = await createSupabaseServerClient();
+    if (await isCustomUsageCompany(profile.company_id)) {
+      return NextResponse.json({ success: false, code: 'custom_adapter_required', error: 'Queued scans for custom setups need the P2 worker adapter. Use the interactive Roof Scan Assist workflow.' }, { status: 409 });
+    }
 
     if (process.env.AI_TAKEOFF_ENABLED !== 'true') {
       return NextResponse.json({ success: false, error: 'AI Takeoff is not enabled.' }, { status: 403 });

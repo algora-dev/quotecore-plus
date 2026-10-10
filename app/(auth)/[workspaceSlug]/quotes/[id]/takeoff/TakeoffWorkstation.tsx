@@ -232,6 +232,10 @@ interface Props {
   aiTakeoffAvailable?: boolean;
   /** AI Assist points: current usage for UI display. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
+  /** P2 custom billing: scans use the idempotent purchased-scan protocol
+   *  (stable request IDs, paid outline + component stages, free bound
+   *  classification continuation). Server-verified flag only. */
+  customUsageBilling?: boolean;
   /** Seeded replay mode (demo/preview hosts): when provided, every AI Assist
    *  scan replays this captured AiScanData instead of calling the network
    *  endpoints, and when `autoRun` is set the replay fires once as soon as
@@ -355,6 +359,7 @@ export function TakeoffWorkstation({
   allRoofAreas = [],
   aiTakeoffAvailable = false,
   aiAssistPoints = null,
+  customUsageBilling = false,
   seededScan,
   aiCalibrationEnabled = false,
   onFreeFinish,
@@ -488,6 +493,69 @@ export function TakeoffWorkstation({
   // Free tool (anonymous) runs the same 3-scan pipeline through the gated free
   // endpoint (per-device daily credits + global daily cap).
   const aiScanEndpoint = freeToolMode ? '/api/free-tools/ai-scan' : '/api/takeoff/ai-scan-v3';
+  // ── P2 custom billing: idempotent purchased-scan protocol ──────────────
+  // One immutable attempt per intended paid operation (outline scan, then
+  // component scan - each billed by its own selected quality, 2/6/12 tokens).
+  // The request ID and frozen body survive transport retries and double
+  // clicks; only a refunded failure or a completed operation mints a new ID.
+  // The classification tail reuses the paid component RESULT unchanged via
+  // billingOperationId, so it can never run as a second free continuation.
+  const customScanAttemptsRef = useRef<{
+    [K in 'scan1' | 'scan2' | 'scan3']: { id: string; body: Record<string, unknown>; state: 'unknown' | 'refunded' | 'done' } | null;
+  }>({ scan1: null, scan2: null, scan3: null });
+  const postScan = async (
+    stage: 'scan1' | 'scan2' | 'scan3',
+    buildBody: () => Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<Response> => {
+    if (!customUsageBilling || freeToolMode) {
+      // Legacy/demo/free request shape is byte-for-byte unchanged.
+      return fetch(aiScanEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildBody()),
+        signal,
+      });
+    }
+    const prev = customScanAttemptsRef.current[stage];
+    let id: string;
+    let body: Record<string, unknown>;
+    if (prev && prev.state === 'unknown') {
+      id = prev.id;
+      body = prev.body; // immutable frozen body: retries never re-mint or mutate
+    } else {
+      id = `qcp-${crypto.randomUUID()}`;
+      body = { ...structuredClone(buildBody()), clientRequestId: id };
+      customScanAttemptsRef.current[stage] = { id, body, state: 'unknown' };
+    }
+    const response = await fetch(aiScanEndpoint, {
+      method: 'POST',
+      credentials: 'same-origin',
+      signal,
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': id },
+      body: JSON.stringify(body),
+    });
+    const store = customScanAttemptsRef.current;
+    if (response.status === 200) {
+      store[stage] = { id, body, state: 'done' };
+    } else if (response.status === 409) {
+      // Pending keeps the key (retry re-polls the same operation); a refunded
+      // attempt is over - the next click starts a fresh paid operation.
+      let code: string | null = null;
+      try {
+        const peek = await response.clone().json();
+        code = typeof (peek as { code?: unknown }).code === 'string' ? (peek as { code: string }).code : null;
+      } catch { /* the caller reads the body below */ }
+      if (code === 'scan_refunded') store[stage] = { id, body, state: 'refunded' };
+      else if (code === 'scan_pending') store[stage] = { id, body, state: 'unknown' };
+    } else if (response.status >= 400 && response.status < 500 && response.status !== 408) {
+      // Definitive admission refusal: nothing was charged, nothing is pending.
+      store[stage] = null;
+    }
+    // 5xx/network leave the attempt unknown: a retry with the same key
+    // recovers the stored result instead of running the model twice.
+    return response;
+  };
   // Once the user dismisses the "Calibration complete" popup, never show it again
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
@@ -4082,20 +4150,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           const compressed = await compressImageForAiScan(dataUrl);
           // O10: the touch action requests ONLY the existing authorised scan1
           // (outline) stage - scan2/scan3 never auto-run here.
-          const response = await fetch(aiScanEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              stage: 'scan1',
-              image: compressed.dataUrl,
-              imageMime: compressed.mime,
-              quoteId: quote.id,
-              pageId,
-              canvasDimensions: dims,
-              qualityLevel,
-            }),
-            signal: abortController.signal,
-          });
+          const response = await postScan('scan1', () => ({
+            stage: 'scan1' as const,
+            image: compressed.dataUrl,
+            imageMime: compressed.mime,
+            quoteId: quote.id,
+            pageId,
+            canvasDimensions: dims,
+            qualityLevel,
+          }), abortController.signal);
           const result = await response
             .json()
             .catch(() => ({ success: false, error: `Server returned HTTP ${response.status}` }));
@@ -4545,23 +4608,18 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           })();
           // scan2: line detection on the corrected outline (canvas space).
           onStage?.('lines');
-          const scan2Response = await fetch(aiScanEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              stage: 'scan2',
-              image: compressed.dataUrl,
-              imageMime: 'image/png',
-              canvasDimensions: dims,
-              quoteId: quote.id,
-              pageId,
-              outlinePoints,
-              analysisDimensions: dims,
-              qualityLevel,
-              pxPerMm: scanPxPerMm,
-            }),
-            signal: abortController.signal,
-          });
+          const scan2Response = await postScan('scan2', () => ({
+            stage: 'scan2' as const,
+            image: compressed.dataUrl,
+            imageMime: 'image/png',
+            canvasDimensions: dims,
+            quoteId: quote.id,
+            pageId,
+            outlinePoints,
+            analysisDimensions: dims,
+            qualityLevel,
+            pxPerMm: scanPxPerMm,
+          }), abortController.signal);
           const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
           if (!scan2Response.ok || !scan2Result.success) {
             if (scan2Response.status === 402 && scan2Result.pointsExhausted) {
@@ -4580,28 +4638,43 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           // Review lines (previously dropped candidates) feed Scan 3's corner
           // completeness pass or surface as pink review lines - never lost.
           const scan2ReviewLines = scan2Result.data?.reviewLines ?? [];
+          // P2 custom billing: the component stage is its own paid operation
+          // (its selected quality, 2/6/12 tokens) - mirror the server charge.
+          if (customUsageBilling && !freeToolMode) {
+            const componentCost = getAiScanPointCost(qualityLevel);
+            setAiPoints(prev =>
+              prev ? { ...prev, used: prev.used + componentCost, remaining: Math.max(prev.remaining - componentCost, 0) } : null,
+            );
+          }
           // scan3: classification of the detected lines.
           onStage?.('classify');
-          const scan3Response = await fetch(aiScanEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              stage: 'scan3',
-              image: compressed.dataUrl,
-              imageMime: 'image/png',
-              canvasDimensions: dims,
-              quoteId: quote.id,
-              pageId,
-              outlinePoints,
-              lines: detectedLines,
-              reviewLines: scan2ReviewLines,
-              scan2Summary: scan2Result.summary ?? null,
-              analysisDimensions: dims,
-              qualityLevel,
-              pxPerMm: scanPxPerMm,
-            }),
-            signal: abortController.signal,
-          });
+          // P2 custom: the free classification tail carries the paid component
+          // RESULT unchanged (response geometry + billingOperationId) so it can
+          // never be treated as an unrelated or second free continuation.
+          const scan3Custom = customUsageBilling && !freeToolMode
+            ? {
+                scanOperationId: (scan2Result as { billingOperationId?: string }).billingOperationId,
+                outlinePoints: scan2Result.data?.outlinePoints ?? outlinePoints,
+                analysisDimensions: scan2Result.analysisDimensions ?? dims,
+                canvasDimensions: scan2Result.canvasDimensions ?? dims,
+              }
+            : {};
+          const scan3Response = await postScan('scan3', () => ({
+            stage: 'scan3' as const,
+            image: compressed.dataUrl,
+            imageMime: 'image/png',
+            canvasDimensions: dims,
+            quoteId: quote.id,
+            pageId,
+            outlinePoints,
+            lines: detectedLines,
+            reviewLines: scan2ReviewLines,
+            scan2Summary: scan2Result.summary ?? null,
+            analysisDimensions: dims,
+            qualityLevel,
+            pxPerMm: scanPxPerMm,
+            ...scan3Custom,
+          }), abortController.signal);
           const scan3Result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
           if (!scan3Response.ok || !scan3Result.success) {
             if (scan3Response.status === 429 && scan3Result.code === 'identity_cap') {
@@ -6564,20 +6637,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       const scanImageMime = compressed.mime;
 
       // ── Scan 1: Outline ──
-      const response = await fetch(aiScanEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          stage: 'scan1',
-          image: scanImage,
-          imageMime: scanImageMime,
-          quoteId: quote.id,
-          pageId,
-          canvasDimensions: canvasDims,
-          qualityLevel: aiQualityLevel,
-        }),
-        signal: abortController.signal,
-      });
+      const response = await postScan('scan1', () => ({
+        stage: 'scan1' as const,
+        image: scanImage,
+        imageMime: scanImageMime,
+        quoteId: quote.id,
+        pageId,
+        canvasDimensions: canvasDims,
+        qualityLevel: aiQualityLevel,
+      }), abortController.signal);
 
       const result = await response.json().catch(() => ({ success: false, error: `Server returned HTTP ${response.status}` }));
 
@@ -6721,23 +6789,18 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     })();
     try {
       // ── Scan 2: Internal line detection ──
-      const scan2Response = await fetch(aiScanEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          stage: 'scan2',
-          image: imageDataUrl,
-          imageMime: 'image/png',
-          canvasDimensions: canvasDims,
-          quoteId: quote.id,
-          pageId,
-          outlinePoints: confirmedAreas[0]?.points ?? [],
-          analysisDimensions,
-          qualityLevel,
-          pxPerMm: scanPxPerMm,
-        }),
-        signal: abortController.signal,
-      });
+      const scan2Response = await postScan('scan2', () => ({
+        stage: 'scan2' as const,
+        image: imageDataUrl,
+        imageMime: 'image/png',
+        canvasDimensions: canvasDims,
+        quoteId: quote.id,
+        pageId,
+        outlinePoints: confirmedAreas[0]?.points ?? [],
+        analysisDimensions,
+        qualityLevel,
+        pxPerMm: scanPxPerMm,
+      }), abortController.signal);
       const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
       if (!scan2Response.ok || !scan2Result.success) {
         if (scan2Response.status === 402 && scan2Result.pointsExhausted) {
@@ -6756,6 +6819,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         return { completed: false };
       }
       if (freeToolMode && scan2Result.credits) setFreeScanCredits(scan2Result.credits);
+      // P2 custom billing: the component stage is its own paid operation
+      // (its selected quality, 2/6/12 tokens) - mirror the server charge.
+      if (customUsageBilling && !freeToolMode) {
+        const componentCost = getAiScanPointCost(qualityLevel);
+        setAiPoints(prev =>
+          prev ? { ...prev, used: prev.used + componentCost, remaining: Math.max(prev.remaining - componentCost, 0) } : null,
+        );
+      }
 
       const detectedLines = scan2Result.data?.lines ?? [];
       // Review lines (previously dropped candidates) feed Scan 3's corner
@@ -6766,26 +6837,32 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
       // ── Scan 3: Classification ──
       setAiScanStage('classify');
-      const scan3Response = await fetch(aiScanEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          stage: 'scan3',
-          image: imageDataUrl,
-          imageMime: 'image/png',
-          canvasDimensions: canvasDims,
-          quoteId: quote.id,
-          pageId,
-          outlinePoints: outlinePoints,
-          lines: detectedLines,
-          reviewLines: scan2ReviewLines,
-          scan2Summary: scan2Result.summary ?? null,
-          analysisDimensions,
-          qualityLevel,
-          pxPerMm: scanPxPerMm,
-        }),
-        signal: abortController.signal,
-      });
+      // P2 custom: the free classification tail carries the paid component
+      // RESULT unchanged (response geometry + billingOperationId) so it can
+      // never be treated as an unrelated or second free continuation.
+      const scan3Custom = customUsageBilling && !freeToolMode
+        ? {
+            scanOperationId: (scan2Result as { billingOperationId?: string }).billingOperationId,
+            analysisDimensions: scan2Result.analysisDimensions ?? analysisDimensions,
+            canvasDimensions: scan2Result.canvasDimensions ?? canvasDims,
+          }
+        : {};
+      const scan3Response = await postScan('scan3', () => ({
+        stage: 'scan3' as const,
+        image: imageDataUrl,
+        imageMime: 'image/png',
+        canvasDimensions: canvasDims,
+        quoteId: quote.id,
+        pageId,
+        outlinePoints: outlinePoints,
+        lines: detectedLines,
+        reviewLines: scan2ReviewLines,
+        scan2Summary: scan2Result.summary ?? null,
+        analysisDimensions,
+        qualityLevel,
+        pxPerMm: scanPxPerMm,
+        ...scan3Custom,
+      }), abortController.signal);
       const result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
       if (!scan3Response.ok || !result.success) {
         if (scan3Response.status === 429 && result.code === 'identity_cap') {
