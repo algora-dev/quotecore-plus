@@ -17,7 +17,7 @@ export function registerHostOutlineTools(server: McpServer, getService: () => Ho
             outputSchema: outputShape,
             annotations: descriptor.annotations,
             _meta: { ...descriptor._meta, securitySchemes: [{ type: 'noauth' }] },
-        }, async (args) => {
+        }, async (args: unknown) => {
             try { return { ...await getService().call(name, args) }; }
             catch (error) { return { ...toolError(error) }; }
         });

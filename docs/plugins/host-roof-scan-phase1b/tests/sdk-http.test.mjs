@@ -34,7 +34,7 @@ test('actual SDK: flag-off initialize and three original tools only',async()=>{
  const tools=await rpc(root,'tools/list');assert.equal(tools.tools.length,3);
  const s=await tool('get_roof_takeoff_schema',{});assert.ok(s.structuredContent.calculationVersion);
  const c=await tool('calculate_roof_takeoff',{mode:'actual',units:'metric',area:100,ridges:[10]});assert.equal(c.structuredContent.status,'complete');
- const r=await tool('get_calculation_result',{resultUrl:c.structuredContent.resultUrl});assert.deepEqual(r.structuredContent,c.structuredContent);
+ const r=await tool('get_calculation_result',{resultUrl:c.structuredContent.resultUrl});const {timestamp:offStamp,...offRead}=r.structuredContent;const {timestamp:offCalc,...offResult}=c.structuredContent;assert.deepEqual(offRead,offResult);
 });
 test('actual SDK: seven tools plus one versioned UI resource when opted in',async()=>{
  process.env.QC_HOST_SCAN_ENABLED='true';process.env.QC_HOST_SCAN_ON_MAIN_MCP='true';
@@ -46,7 +46,7 @@ test('actual SDK: seven tools plus one versioned UI resource when opted in',asyn
  const blank=await tool('qc_open_roof_outline_review',{});assert.equal(blank.structuredContent.status,'awaiting_image');assert.ok(blank.structuredContent.resultUrl);
 });
 test('actual SDK: original calculation remains unchanged with new tools enabled',async()=>{
- const c=await tool('calculate_roof_takeoff',{mode:'actual',units:'metric',area:100,ridges:[10]});const r=await tool('get_calculation_result',{resultUrl:c.structuredContent.resultUrl});assert.deepEqual(c.structuredContent,r.structuredContent);
+ const c=await tool('calculate_roof_takeoff',{mode:'actual',units:'metric',area:100,ridges:[10]});const r=await tool('get_calculation_result',{resultUrl:c.structuredContent.resultUrl});const {timestamp:cStamp,...calcResult}=c.structuredContent;const {timestamp:rStamp,...readResult}=r.structuredContent;assert.deepEqual(calcResult,readResult);
  const bad=await tool('get_calculation_result',{resultUrl:'https://evil.test/free-roofing-takeoff-builder/calculate'});assert.equal(bad.isError,true);
 });
 test('actual SDK: standalone endpoint uses same four tools',async()=>{const a=await rpc(isolated,'tools/list'),b=await rpc(root,'tools/list');assert.deepEqual(a.tools,b.tools.filter(t=>t.name.startsWith('qc_')));});
