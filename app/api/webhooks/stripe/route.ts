@@ -99,11 +99,8 @@ import {
   stripeStatusToInternal,
   getStripeMode,
 } from '@/app/lib/billing/stripe';
-import {
-  isCustomSubscription,
-  reconcileCustomSubscription,
-  openCustomPeriodGrant,
-} from '@/app/lib/billing/custom/reconcile';
+import { handleCustomStripeEvent } from '@/app/lib/billing/custom/reconcile';
+import { invoiceSubscriptionId } from '@/app/lib/billing/custom/contracts';
 
 export const runtime = 'nodejs';
 // Stripe needs the raw bytes for signature verification, so this route
@@ -133,6 +130,15 @@ export async function POST(request: Request) {
     const msg = err instanceof Error ? err.message : 'signature_verification_failed';
     console.error('[webhook/stripe] signature verification failed:', msg);
     return NextResponse.json({ error: 'signature_invalid', message: msg }, { status: 400 });
+  }
+
+  // Test and live deployments share a DB. A wrong-mode endpoint MUST NOT
+  // claim the shared (provider,event_id) receipt, or the correct endpoint may
+  // later suppress the real event as already processed. No business/log row
+  // is written here; signature verification has already succeeded.
+  if (event.livemode !== (getStripeMode() === 'live')) {
+    console.warn(`[webhook/stripe] ignored wrong-mode event ${event.id}`);
+    return NextResponse.json({ ok: true, ignored: true, result: 'ignored:event_mode_mismatch' });
   }
 
   const admin = createAdminClient();
@@ -212,7 +218,10 @@ export async function POST(request: Request) {
   let result: string;
   let retryable = false;
   try {
-    switch (event.type) {
+    const customResult = await handleCustomStripeEvent(event, eventJson);
+    if (customResult !== null) {
+      result = customResult;
+    } else switch (event.type) {
       case 'checkout.session.completed':
         result = await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
         break;
@@ -256,10 +265,14 @@ export async function POST(request: Request) {
   }
 
   // Mark processed (idempotent UPDATE).
-  await admin
+  const { error: completionError } = await admin
     .from('webhook_deliveries')
     .update({ processed_at: new Date().toISOString(), processing_result: result })
     .eq('id', deliveryId);
+  if (completionError) {
+    console.error('[webhook/stripe] could not mark delivery complete:', completionError.message);
+    return NextResponse.json({ ok: false, retry: true }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true, result });
 }
@@ -271,15 +284,8 @@ function retryable(msg: string): Error {
   return new Error(`retryable: ${msg}`);
 }
 
-// Stripe's TS types for `Invoice` omit the `subscription` field in some
-// API versions even though it's present on the wire. Read it defensively.
-function extractInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
-  const raw = (invoice as unknown as { subscription?: string | { id?: string } | null }).subscription;
-  if (!raw) return null;
-  if (typeof raw === 'string') return raw;
-  if (typeof raw === 'object' && typeof raw.id === 'string') return raw.id;
-  return null;
-}
+// Handles the old top-level field and the modern parent.subscription_details field.
+const extractInvoiceSubscriptionId = invoiceSubscriptionId;
 
 // ---------------------------------------------------------------------------
 // Handlers
@@ -309,6 +315,17 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
   }
 
   const admin = createAdminClient();
+  const { data: current, error: currentError } = await admin.from('companies')
+    .select('id, stripe_customer_id, stripe_subscription_id, stripe_mode, admin_paused').eq('id', companyId).maybeSingle();
+  if (currentError) throw retryable(`checkout company lookup: ${currentError.message}`);
+  if (!current) return 'quarantined:company_not_found';
+  if (current.admin_paused) return 'ok:admin_paused';
+  if ((current.stripe_mode && current.stripe_mode !== getStripeMode())
+    || (current.stripe_subscription_id && current.stripe_subscription_id !== subscriptionId)
+    || (current.stripe_customer_id && current.stripe_customer_id !== customerId)) return 'quarantined:checkout_identity_mismatch';
+  const linked = await requireStripe().subscriptions.retrieve(subscriptionId);
+  if (linked.items.has_more || linked.items.data.length !== 1
+    || !(await resolvePlanCodeForStripePrice(linked.items.data[0]?.price.id))) return 'quarantined:checkout_unknown_subscription';
   const { error } = await admin
     .from('companies')
     .update({
@@ -373,6 +390,10 @@ async function handleSubscriptionEvent(
         .maybeSingle();
       if (metaErr) throw retryable(`companies metadata lookup: ${metaErr.message}`);
       if (companyByMeta) {
+        if (companyByMeta.admin_paused) return 'ok:admin_paused';
+        if (companyByMeta.stripe_subscription_id && companyByMeta.stripe_subscription_id !== sub.id) return 'quarantined:stale_metadata_subscription';
+        if (sub.items.has_more || sub.items.data.length !== 1
+          || !(await resolvePlanCodeForStripePrice(sub.items.data[0]?.price.id))) return 'quarantined:unknown_metadata_subscription';
         // Backfill customer_id + subscription_id now so subsequent events resolve correctly.
         const { error: backfillErr } = await admin
           .from('companies')
@@ -422,13 +443,7 @@ async function handleSubscriptionEvent(
     return `quarantined:stale_subscription:${sub.id}_vs_current_${company.stripe_subscription_id}`;
   }
 
-  // Custom-setup (V5) subscriptions: classify by trusted server metadata,
-  // decode the complete item set against the price registry, and reconcile
-  // the custom snapshot + period grant. plan_code stays untouched (sacred);
-  // billing_model discriminates the path. Legacy logic below is unchanged.
-  if (isCustomSubscription(sub)) {
-    return reconcileCustomSubscription({ sub, event, eventJson, company });
-  }
+  // Custom subscriptions are intercepted before ANY legacy linkage or writes.
 
   // Resolve the primary Price ID to our plan code.
   const priceId = sub.items.data[0]?.price?.id;
@@ -523,6 +538,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<string> {
   // ignore the event so a stale dunning event from a replaced sub can't
   // bounce the company into past_due/grace.
   const invoiceSubId = extractInvoiceSubscriptionId(invoice);
+  if (!invoiceSubId) return 'ignored:non_subscription_invoice';
 
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin
@@ -553,10 +569,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<string> {
     return 'ok:admin_paused';
   }
 
-  // Custom-setup (V5) renewals: open the paid period grant (idempotent,
-  // stored-snapshot limits) before dunning recovery. No-op without a
-  // custom snapshot, so every legacy flow is untouched.
-  await openCustomPeriodGrant({ invoice, company });
+  // Custom invoices are reconciled transactionally by handleCustomStripeEvent.
 
   // Restore to active if we were in any payment-failure state.
   const wasRecovering = ['past_due', 'grace', 'pending_data_purge'].includes(
@@ -606,6 +619,7 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice): Promise<string> {
   if (!customerId) return 'quarantined:no_customer_on_invoice';
 
   const invoiceSubId = extractInvoiceSubscriptionId(invoice);
+  if (!invoiceSubId) return 'ignored:non_subscription_invoice';
 
   const admin = createAdminClient();
   const { data: company, error: companyErr } = await admin

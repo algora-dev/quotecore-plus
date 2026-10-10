@@ -308,8 +308,8 @@ export default async function AccountPage() {
           </div>
           {entitlements.billingModel === 'custom_setup' && (
             <div className="rounded-xl border border-orange-200 bg-orange-50/40 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <p className="text-sm text-slate-700">Need a different setup? Use the pricing tool to change your subscription.</p>
-              <a href="billing/build-setup" className="qc-flow-link text-sm font-semibold text-[#BD4A1A] hover:text-[#ff5722] whitespace-nowrap">
+              <p className="text-sm text-slate-700">Review another setup without changing your current subscription.</p>
+              <a href={`/${company.slug}/account/billing/build-setup`} className="qc-flow-link text-sm font-semibold text-[#BD4A1A] hover:text-[#ff5722] whitespace-nowrap">
                 Change your setup &rarr;
               </a>
             </div>

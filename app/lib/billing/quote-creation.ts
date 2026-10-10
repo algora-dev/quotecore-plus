@@ -185,9 +185,9 @@ export async function createQuoteAtomic(
   // which under the custom pro_plus basis is effectively unlimited - so the
   // purchased capacity cap (5/20/100 quotes) is enforced here. The RPC still
   // increments company_quote_usage atomically either way. Small race window
-  // on concurrent creates is accepted for V1 testing; move into the RPC slot
-  // function before live charging.
-  const capEnt = await loadCompanyEntitlements(companyId).catch(() => null);
+  // on concurrent creates remains a LIVE RELEASE BLOCKER. The actual SQL
+  // function body is required to move this check under its existing lock.
+  const capEnt = await loadCompanyEntitlements(companyId);
   if (
     capEnt &&
     capEnt.billingModel === 'custom_setup' &&

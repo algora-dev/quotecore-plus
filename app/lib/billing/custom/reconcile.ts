@@ -1,347 +1,151 @@
-/**
- * Custom-setup (V5) webhook reconciliation.
- *
- * Extends — never replaces — the legacy single-price webhook path. A
- * subscription is custom when OUR Checkout stamped
- * subscription_data.metadata.billing_model='custom_setup' (trusted server
- * metadata; the verified Price IDs define the purchased tools). The complete
- * item set is decoded against the DB price registry (fail closed on unknown
- * prices, duplicate products, partial pagination or non-1 quantities), the
- * latest invoice must be PAID before billing_model flips, and the snapshot +
- * period grant are written idempotently so webhook replays are safe.
- *
- * plan_code stays untouched (sacred); billing_model discriminates the path.
- */
-
-import Stripe from 'stripe';
+/** Custom billing adapter. Legacy events fall through to the existing handler. */
+import 'server-only';
+import type Stripe from 'stripe';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import {
-  requireStripe,
-  stripeStatusToInternal,
-} from '@/app/lib/billing/stripe';
+import { requireStripe, resolvePlanCodeForStripePrice } from '@/app/lib/billing/stripe';
 import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
-import {
-  decodeSubscriptionItems,
-} from '@/app/components/pricing/calculator/billingCatalogue';
-import type {
-  StripePriceMap,
-  CompleteSubscriptionItems,
-} from '@/app/components/pricing/calculator/billingCatalogue';
-import { loadCustomPriceMap, customStripeMode } from './checkout';
+import { buildBillingCatalogue, type CompleteSubscriptionItems } from '@/app/components/pricing/calculator/billingCatalogue';
+import { customScope, verifyCustomAccount } from './environment';
+import { loadRecognitionRegistry } from './registry';
+import { BillingContractError, decodeRegisteredItems, insist, invoiceSubscriptionId, object, referenceId, requireMode, verifyPaidPeriod, purchasedFingerprint } from './contracts';
 
-/* Custom billing tables are not in database.types.ts (assistant_v2_*
-   precedent); companies updates carrying billing_model also bypass the
-   stale generated types. Query through an untyped handle. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type UntypedTable = any;
-
-export function isCustomSubscription(sub: Stripe.Subscription): boolean {
-  return sub.metadata?.billing_model === 'custom_setup';
-}
-
-/** Retrieve the COMPLETE subscription item set; fail closed on pagination. */
-export async function fetchAllSubscriptionItems(
-  stripe: Stripe,
-  subscriptionId: string,
-): Promise<CompleteSubscriptionItems> {
-  const items: { id: string; priceId: string; quantity: number }[] = [];
-  let cursor: string | undefined;
+export function isCustomSubscription(sub: Stripe.Subscription): boolean { return sub.metadata?.billing_model === 'custom_setup'; }
+/** A complete provider list, not just the first expanded page on Subscription. */
+export async function collectPages<T extends { id: string }>(read: (cursor?: string) => Promise<{ data: T[]; has_more: boolean }>): Promise<T[]> {
+  const all: T[] = []; const ids = new Set<string>(); let cursor: string | undefined;
   for (let page = 0; page < 50; page++) {
-    const res = await stripe.subscriptionItems.list({
-      subscription: subscriptionId,
-      limit: 100,
-      ...(cursor ? { starting_after: cursor } : {}),
-    });
-    for (const it of res.data) {
-      items.push({ id: it.id, priceId: it.price.id, quantity: it.quantity ?? 0 });
+    const result = await read(cursor);
+    insist(Array.isArray(result.data) && typeof result.has_more === 'boolean', 'provider_pagination_invalid');
+    for (const item of result.data) {
+      insist(typeof item.id === 'string' && !ids.has(item.id), 'provider_pagination_duplicate');
+      ids.add(item.id); all.push(item);
     }
-    if (!res.has_more) return { complete: true, items };
-    const next = res.data[res.data.length - 1]?.id;
-    if (!next || next === cursor) break;
-    cursor = next;
+    if (!result.has_more) return all;
+    const next = result.data[result.data.length - 1]?.id;
+    insist(next && next !== cursor, 'provider_pagination_stalled'); cursor = next;
   }
-  return { complete: false, items };
+  throw new Error('retryable: provider pagination exceeded safety bound');
 }
-
-/**
- * customer.subscription.* for custom-setup subscriptions. Returns the
- * handler result string; THROWS retryable errors for transient failures
- * (Stripe retries the event; all writes below are idempotent).
- */
-export async function reconcileCustomSubscription(opts: {
-  sub: Stripe.Subscription;
-  event: Stripe.Event;
-  eventJson: unknown;
-  company: { id: string; plan_code: string; subscription_status: string };
-}): Promise<string> {
-  const { sub, event, eventJson, company } = opts;
+export async function fetchFullSubscriptionItems(stripe: Stripe, subscriptionId: string) {
+  return collectPages(cursor => stripe.subscriptionItems.list({ subscription: subscriptionId, limit: 100, ...(cursor ? { starting_after: cursor } : {}) }));
+}
+export async function fetchAllSubscriptionItems(stripe: Stripe, subscriptionId: string): Promise<CompleteSubscriptionItems> {
+  const items = await fetchFullSubscriptionItems(stripe, subscriptionId);
+  return { complete: true, items: items.map(item => ({ id: item.id, priceId: item.price.id, quantity: item.quantity ?? 0 })) };
+}
+async function loadCompany(customerId: string, metadataCompanyId?: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = createAdminClient() as any;
+  const columns = 'id, plan_code, billing_model, stripe_mode, stripe_customer_id, stripe_subscription_id, subscription_status, admin_paused';
+  const first = await admin.from('companies').select(columns).eq('stripe_customer_id', customerId).maybeSingle();
+  if (first.error) throw new Error(`retryable: company lookup: ${first.error.message}`);
+  if (first.data) return first.data;
+  if (!metadataCompanyId) return null;
+  const second = await admin.from('companies').select(columns).eq('id', metadataCompanyId).maybeSingle();
+  if (second.error) throw new Error(`retryable: metadata company lookup: ${second.error.message}`);
+  return second.data;
+}
+const SUPPORTED = new Set([
+  'checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.async_payment_failed',
+  'customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted',
+  'customer.subscription.pending_update_applied', 'customer.subscription.pending_update_expired',
+  'invoice.paid', 'invoice.payment_succeeded', 'invoice.payment_failed',
+]);
+/** null means a verified legacy candidate; no custom business mutation occurred. */
+export async function handleCustomStripeEvent(event: Stripe.Event, eventJson: unknown): Promise<string | null> {
+  if (!SUPPORTED.has(event.type)) return null;
   const stripe = requireStripe();
-  const admin = createAdminClient();
-  const mode = customStripeMode();
-  const nowIso = new Date().toISOString();
-  const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
-
-  // --- Deletion: tear the custom state down, keep plan_code history. ---
-  if (event.type === 'customer.subscription.deleted') {
-    await (admin as UntypedTable)
-      .from('company_custom_billing')
-      .update({ provider_status: 'canceled', reconciled_at: nowIso })
-      .eq('company_id', company.id)
-      .eq('stripe_mode', mode);
-    await (admin as UntypedTable)
-      .from('companies')
-      .update({ billing_model: 'legacy', subscription_status: 'canceled', cancel_at: null })
-      .eq('id', company.id);
-    await admin.from('subscription_events').insert({
-      company_id: company.id,
-      event_type: 'downgraded',
-      from_plan_code: company.plan_code,
-      to_plan_code: company.plan_code,
-      from_status: company.subscription_status,
-      to_status: 'canceled',
-      stripe_event_id: event.id,
-      stripe_event_type: event.type,
-      stripe_event_created: new Date(event.created * 1000).toISOString(),
-      notes: 'custom_setup subscription deleted; billing_model reverted to legacy.',
-      stripe_payload: eventJson as never,
-    });
-    return 'ok:custom_setup_deleted';
+  let subscriptionId: string | null = null;
+  let checkoutCompanyId: string | undefined;
+  // Every SUPPORTED event type carries a top-level object id. Narrow the SDK
+  // union once and fail closed on any payload shape without a string id.
+  const eventObjectId = (event.data.object as { id?: string | null }).id;
+  if (typeof eventObjectId !== 'string') return null;
+  if (event.type.startsWith('checkout.session.')) {
+    const session = await stripe.checkout.sessions.retrieve(eventObjectId);
+    subscriptionId = referenceId(session.subscription);
+    checkoutCompanyId = session.client_reference_id ?? undefined;
+    if (!subscriptionId) return session.metadata?.billing_model === 'custom_setup' ? 'deferred:checkout_not_subscribed' : null;
+  } else if (event.type.startsWith('invoice.')) {
+    const invoice = await stripe.invoices.retrieve(eventObjectId);
+    subscriptionId = invoiceSubscriptionId(invoice);
+    // A one-off DFY invoice must never reset subscriptions, quotas or dunning.
+    if (!subscriptionId) return 'ignored:non_subscription_invoice';
+  } else subscriptionId = eventObjectId;
+  let subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  let customerId = referenceId(subscription.customer);
+  insist(customerId, 'subscription_customer_missing');
+  const company = await loadCompany(customerId, subscription.metadata?.company_id ?? checkoutCompanyId);
+  const storedCustom = company?.billing_model === 'custom_setup' && company?.stripe_subscription_id === subscription.id;
+  const markedCustom = isCustomSubscription(subscription);
+  // Recognized old single-price subscriptions do not depend on custom registry configuration.
+  if (!markedCustom && !storedCustom && subscription.items.has_more === false && subscription.items.data.length === 1) {
+    if (await resolvePlanCodeForStripePrice(subscription.items.data[0].price.id)) return null;
   }
-
-  // --- Complete item set (fail closed). ---
-  const snapshot = await fetchAllSubscriptionItems(stripe, sub.id);
-  if (!snapshot.complete) throw new Error('retryable: incomplete subscription item pagination');
-
-  // --- Decode against the server price registry. ---
-  const codeToPrice = await loadCustomPriceMap();
-  const map: StripePriceMap = Object.fromEntries(codeToPrice.entries());
-  let decoded: ReturnType<typeof decodeSubscriptionItems>;
-  try {
-    decoded = decodeSubscriptionItems(snapshot, PREVIEW_CATALOG, map);
-  } catch (err) {
-    const detail = err instanceof Error ? err.message.slice(0, 80) : 'unknown';
-    return `quarantined:custom_setup_unrecognized_items:${detail}`;
+  const scope = customScope();
+  const rows = await loadRecognitionRegistry(scope);
+  const knownCustom = subscription.items.data.some(item => rows.some(row => row.stripe_price_id === item.price.id));
+  if (!markedCustom && !storedCustom && !knownCustom) {
+    if (subscription.items.has_more || subscription.items.data.length !== 1) return 'quarantined:unrecognized_multi_item_subscription';
+    return null;
   }
-
-  // --- Lifecycle: keep last verified access on payment-trouble states. ---
-  if (['past_due', 'unpaid', 'incomplete', 'incomplete_expired', 'paused'].includes(sub.status)) {
-    await (admin as UntypedTable)
-      .from('company_custom_billing')
-      .update({ provider_status: sub.status, reconciled_at: nowIso })
-      .eq('company_id', company.id)
-      .eq('stripe_mode', mode)
-      .eq('stripe_subscription_id', sub.id);
-    return `ok:custom_setup_${sub.status}_no_flip`;
-  }
-  if (sub.status !== 'active' && sub.status !== 'trialing') {
-    return `quarantined:custom_setup_status_${sub.status}`;
-  }
-
-  // --- Prove the latest invoice is paid before flipping anything. ---
-  const latestInvoiceId = typeof sub.latest_invoice === 'string'
-    ? sub.latest_invoice
-    : sub.latest_invoice?.id ?? null;
-  if (!latestInvoiceId) throw new Error('retryable: subscription has no latest_invoice to verify');
-  const invoice = await stripe.invoices.retrieve(latestInvoiceId);
-  if (invoice.status !== 'paid') {
-    throw new Error(`retryable: latest invoice ${invoice.id} status=${invoice.status ?? 'unknown'}; retry after payment`);
-  }
-
-  // --- Period bounds from the capacity item (single source of periods). ---
-  const capacityPriceId = codeToPrice.get(`capacity_${decoded.capacity}`);
-  const capacitySubItem = sub.items.data.find(it => it.price.id === capacityPriceId)
-    ?? sub.items.data[0];
-  const periodStartSec = capacitySubItem?.current_period_start;
-  const periodEndSec = capacitySubItem?.current_period_end;
-  if (!periodStartSec || !periodEndSec) {
-    throw new Error('retryable: missing current_period bounds on capacity item');
-  }
-  const periodStartIso = new Date(periodStartSec * 1000).toISOString();
-  const periodEndIso = new Date(periodEndSec * 1000).toISOString();
-
-  // --- Snapshot payload. ---
-  const entitlements = {
-    capacity: decoded.capacity,
-    quotes: decoded.limits.quotes,
-    storageBytes: decoded.limits.storageBytes,
-    digitalTakeoff: decoded.digitalTakeoff,
-    scanTokens: decoded.limits.scanTokens,
-    offcuts: decoded.offcuts,
-    assistantTasks: decoded.limits.assistantTasks,
+  if (!company) return 'quarantined:custom_company_not_found';
+  if (company.admin_paused) return 'ok:admin_paused';
+  if (company.stripe_mode && company.stripe_mode !== scope.mode) return 'quarantined:company_mode_mismatch';
+  await verifyCustomAccount();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = createAdminClient() as any;
+  const begin = await admin.rpc('qcp_begin_custom_reconcile', { p_company_id: company.id, p_mode: scope.mode });
+  if (begin.error) throw new Error(`retryable: reconciliation ticket: ${begin.error.message}`);
+  insist(typeof begin.data === 'number' && Number.isSafeInteger(begin.data), 'reconciliation_ticket_invalid');
+  // Fetch AFTER the fencing ticket. Never apply stale event object contents.
+  subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  requireMode(subscription, scope.mode); requireMode(event, scope.mode);
+  customerId = referenceId(subscription.customer);
+  insist(customerId && (!company.stripe_customer_id || company.stripe_customer_id === customerId), 'subscription_customer_mismatch');
+  insist(!subscription.metadata?.company_id || subscription.metadata.company_id === company.id, 'subscription_company_mismatch');
+  const payload: Record<string, unknown> = {
+    kind: 'state', stripe_account_id: scope.accountId, stripe_mode: scope.mode,
+    stripe_customer_id: customerId, stripe_subscription_id: subscription.id, provider_status: subscription.status,
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    cancel_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
+    operation_id: subscription.metadata?.operation_id ?? null,
   };
-
-  const { data: currentCompany } = await (admin as UntypedTable)
-    .from('companies')
-    .select('billing_model, plan_code')
-    .eq('id', company.id)
-    .maybeSingle();
-  const cc = currentCompany as { billing_model: string; plan_code: string } | null;
-  const legacySnapshot = cc && cc.billing_model !== 'custom_setup' ? cc.plan_code : null;
-
-  // NOTE: companies.billing_model is new and absent from the generated types.
-  const { data: prior } = await (admin as UntypedTable)
-    .from('company_custom_billing')
-    .select('legacy_plan_code_snapshot')
-    .eq('company_id', company.id)
-    .maybeSingle();
-
-  const { data: mapRow } = await (admin as UntypedTable)
-    .from('custom_billing_price_map')
-    .select('stripe_account_id')
-    .eq('stripe_mode', mode)
-    .limit(1)
-    .maybeSingle();
-  if (!mapRow?.stripe_account_id) throw new Error('retryable: price registry has no account binding');
-  const stripeAccountId = mapRow.stripe_account_id as string;
-  const internalStatus = stripeStatusToInternal(sub.status);
-
-  // --- Writes, ordered; webhook retries are idempotent (upserts + unique keys). ---
-  const { error: snapErr } = await (admin as UntypedTable)
-    .from('company_custom_billing')
-    .upsert({
-      company_id: company.id,
-      stripe_account_id: stripeAccountId,
-      stripe_mode: mode,
-      stripe_customer_id: customerId,
-      stripe_subscription_id: sub.id,
-      catalog_id: PREVIEW_CATALOG.id,
-      catalog_revision: PREVIEW_CATALOG.revision,
-      component_codes: decoded.lines.map(l => l.code),
-      purchased_entitlements: entitlements,
-      provider_status: sub.status,
-      currency: PREVIEW_CATALOG.currency.toLowerCase(),
-      monthly_cents: decoded.monthlyCents,
-      period_start: periodStartIso,
-      period_end: periodEndIso,
-      last_paid_invoice_id: invoice.id,
-      legacy_plan_code_snapshot: prior?.legacy_plan_code_snapshot ?? legacySnapshot,
-      reconciled_at: nowIso,
-    }, { onConflict: 'company_id' });
-  if (snapErr) throw new Error(`retryable: snapshot upsert: ${snapErr.message}`);
-
-  const { error: coErr } = await (admin as UntypedTable)
-    .from('companies')
-    .update({
-      billing_model: 'custom_setup',
-      stripe_customer_id: customerId,
-      stripe_subscription_id: sub.id,
-      subscription_status: internalStatus,
-      current_period_end: periodEndIso,
-      cancel_at_period_end: sub.cancel_at_period_end ?? false,
-      cancel_at: sub.cancel_at ? new Date(sub.cancel_at * 1000).toISOString() : null,
-    })
-    .eq('id', company.id);
-  if (coErr) throw new Error(`retryable: companies update: ${coErr.message}`);
-
-  const { error: grantErr } = await (admin as UntypedTable)
-    .from('custom_billing_period_grants')
-    .upsert({
-      company_id: company.id,
-      stripe_mode: mode,
-      subscription_id: sub.id,
-      period_start: periodStartIso,
-      period_end: periodEndIso,
-      invoice_id: invoice.id,
-      granted_limits: entitlements,
-    }, { onConflict: 'company_id,stripe_mode,subscription_id,period_start' });
-  if (grantErr) throw new Error(`retryable: period grant: ${grantErr.message}`);
-
-  const operationId = sub.metadata?.operation_id;
-  if (operationId) {
-    await (admin as UntypedTable)
-      .from('custom_billing_operations')
-      .update({
-        status: 'applied',
-        subscription_id: sub.id,
-        provider_invoice_id: invoice.id,
-        confirmed_at: nowIso,
-        updated_at: nowIso,
-      })
-      .eq('id', operationId);
+  try {
+    if (subscription.status === 'active' || subscription.status === 'trialing') {
+      const items = await fetchFullSubscriptionItems(stripe, subscription.id);
+      const purchase = decodeRegisteredItems(items, subscription, rows, buildBillingCatalogue(PREVIEW_CATALOG));
+      const invoiceId = referenceId(subscription.latest_invoice);
+      if (!invoiceId) return 'deferred:awaiting_first_invoice';
+      const invoice = await stripe.invoices.retrieve(invoiceId);
+      // Stripe will send the payment event when money settles. A 500 retry loop is not a payment workflow.
+      if (invoice.status !== 'paid') return 'deferred:awaiting_current_invoice_payment';
+      if (subscription.pending_update) return 'deferred:pending_subscription_update';
+      if (!['subscription_create','subscription_cycle'].includes(invoice.billing_reason ?? '')) return 'deferred:nonrenewal_invoice_requires_review';
+      const lines = await collectPages(cursor => stripe.invoices.listLineItems(invoice.id, { limit: 100, ...(cursor ? { starting_after: cursor } : {}) }));
+      verifyPaidPeriod(invoice, lines, subscription, purchase, scope.mode);
+      // A changed subscription during the read is retried, never merged into a hybrid snapshot.
+      const final = await stripe.subscriptions.retrieve(subscription.id);
+      if (final.status !== subscription.status || referenceId(final.latest_invoice) !== invoiceId || final.pending_update
+          || final.cancel_at_period_end !== subscription.cancel_at_period_end || final.cancel_at !== subscription.cancel_at) {
+        throw new Error('retryable: subscription changed during verification');
+      }
+      const finalItems = await fetchFullSubscriptionItems(stripe, subscription.id);
+      const finalPurchase = decodeRegisteredItems(finalItems, final, rows, buildBillingCatalogue(PREVIEW_CATALOG));
+      if (purchasedFingerprint(finalPurchase) !== purchasedFingerprint(purchase)) {
+        throw new Error('retryable: subscription items changed during verification');
+      }
+      Object.assign(payload, { kind: 'paid', catalog_id: scope.catalogId, catalog_revision: purchase.revision,
+        component_codes: purchase.codes, purchased_entitlements: purchase.limits, currency: scope.currency.toLowerCase(),
+        monthly_cents: purchase.monthlyCents, period_start: new Date(purchase.periodStart * 1000).toISOString(),
+        period_end: new Date(purchase.periodEnd * 1000).toISOString(), last_paid_invoice_id: invoice.id });
+    }
+    const applied = await admin.rpc('qcp_apply_custom_reconcile', { p_company_id: company.id, p_fence: begin.data, p_payload: payload, p_event: eventJson });
+    if (applied.error) throw new Error(`retryable: custom reconciliation transaction: ${applied.error.message}`);
+    insist(typeof applied.data === 'string', 'reconciliation_result_invalid');
+    return applied.data;
+  } catch (error) {
+    if (error instanceof BillingContractError) return `quarantined:${error.code}`;
+    throw error;
   }
-
-  const { error: auditErr } = await admin.from('subscription_events').insert({
-    company_id: company.id,
-    event_type: 'updated',
-    from_plan_code: company.plan_code,
-    to_plan_code: company.plan_code,
-    from_status: company.subscription_status,
-    to_status: internalStatus,
-    stripe_event_id: event.id,
-    stripe_event_type: event.type,
-    stripe_event_created: new Date(event.created * 1000).toISOString(),
-    notes: `custom_setup snapshot reconciled (${decoded.lines.length} items, $${(decoded.monthlyCents / 100).toFixed(2)}/mo, capacity ${decoded.capacity})`,
-    stripe_payload: eventJson as never,
-  });
-  if (auditErr) throw new Error(`retryable: subscription_events insert: ${auditErr.message}`);
-
-  return 'ok:custom_setup';
-}
-
-/**
- * invoice.payment_succeeded for custom setups: open the paid period grant
- * (once per period — PK company+mode+subscription+period_start, plus
- * UNIQUE(stripe_mode, invoice_id) replay dedupe) from the STORED snapshot
- * limits, and refresh the snapshot's paid-invoice pointer. No-op (ignored)
- * for companies without a custom snapshot, so the hook is safe to call on
- * every invoice.paid.
- */
-export async function openCustomPeriodGrant(opts: {
-  invoice: Stripe.Invoice;
-  company: { id: string };
-}): Promise<string> {
-  const { invoice, company } = opts;
-  const admin = createAdminClient();
-  const mode = customStripeMode();
-  const nowIso = new Date().toISOString();
-
-  const { data: snap } = await (admin as UntypedTable)
-    .from('company_custom_billing')
-    .select('stripe_subscription_id, purchased_entitlements')
-    .eq('company_id', company.id)
-    .eq('stripe_mode', mode)
-    .maybeSingle();
-  if (!snap) return 'ignored:no_custom_snapshot';
-
-  const invoiceSubRaw = (invoice as unknown as { subscription?: string | { id?: string } | null }).subscription;
-  const invoiceSubId = !invoiceSubRaw ? null
-    : typeof invoiceSubRaw === 'string' ? invoiceSubRaw
-    : typeof invoiceSubRaw === 'object' && typeof invoiceSubRaw.id === 'string' ? invoiceSubRaw.id
-    : null;
-  if (invoiceSubId && invoiceSubId !== snap.stripe_subscription_id) {
-    return 'ignored:stale_invoice_subscription';
-  }
-
-  const periodStart = invoice.period_start
-    ? new Date(invoice.period_start * 1000).toISOString()
-    : new Date(invoice.created * 1000).toISOString();
-  const periodEnd = invoice.period_end
-    ? new Date(invoice.period_end * 1000).toISOString()
-    : new Date((invoice.period_start ?? invoice.created) * 1000 + 31 * 24 * 3600 * 1000).toISOString();
-
-  const { error: grantErr } = await (admin as UntypedTable)
-    .from('custom_billing_period_grants')
-    .upsert({
-      company_id: company.id,
-      stripe_mode: mode,
-      subscription_id: snap.stripe_subscription_id,
-      period_start: periodStart,
-      period_end: periodEnd,
-      invoice_id: invoice.id,
-      granted_limits: snap.purchased_entitlements,
-    }, { onConflict: 'company_id,stripe_mode,subscription_id,period_start' });
-  if (grantErr) throw new Error(`retryable: period grant upsert: ${grantErr.message}`);
-
-  await (admin as UntypedTable)
-    .from('company_custom_billing')
-    .update({
-      last_paid_invoice_id: invoice.id,
-      period_start: periodStart,
-      period_end: periodEnd,
-      reconciled_at: nowIso,
-    })
-    .eq('company_id', company.id)
-    .eq('stripe_mode', mode);
-
-  return 'ok:custom_period_grant';
 }

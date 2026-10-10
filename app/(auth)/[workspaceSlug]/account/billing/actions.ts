@@ -26,19 +26,8 @@ import {
   requireStripe,
   resolveStripeCheckoutForPlan,
 } from '@/app/lib/billing/stripe';
-import {
-  createCustomCheckoutSession as runCustomCheckout,
-  expandValidatedSetup,
-  loadCustomPriceMap,
-  customStripeMode,
-} from '@/app/lib/billing/custom/checkout';
-import { fetchAllSubscriptionItems } from '@/app/lib/billing/custom/reconcile';
-import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
-import {
-  decodeSubscriptionItems,
-  buildSubscriptionItemChanges,
-  expandBillingSelection,
-} from '@/app/components/pricing/calculator/billingCatalogue';
+import { createCustomCheckoutSession as runCustomCheckout } from '@/app/lib/billing/custom/checkout';
+import { isLegacyBillingCompany } from '@/app/lib/billing/custom/legacy-boundary';
 
 /**
  * Compute the absolute base URL for return links.
@@ -79,6 +68,9 @@ export type BillingActionResult =
 export async function createCheckoutSession(
   planCode: string,
 ): Promise<BillingActionResult> {
+  if (process.env.CUSTOM_BILLING_CHECKOUT_ENABLED === 'true') {
+    return { ok: false, code: 'use_custom_setup', message: 'Use the pricing tool to start a new subscription. Existing plans continue unchanged.' };
+  }
   if (!planCode) {
     return { ok: false, code: 'missing_plan', message: 'A plan must be selected.' };
   }
@@ -233,6 +225,10 @@ export async function changePlan(
     return { ok: false, code: 'company_not_found', message: 'Company record missing.' };
   }
 
+  if (!(await isLegacyBillingCompany(profile.company_id))) {
+    return { ok: false, code: 'custom_setup_requires_review', message: 'Use the custom setup flow. The legacy plan picker cannot change this subscription.' };
+  }
+
   // Must have a real, non-winding-down subscription to modify.
   const windingDown =
     company.cancel_at_period_end ||
@@ -286,6 +282,9 @@ export async function changePlan(
   const stripe = requireStripe();
   try {
     const sub = await stripe.subscriptions.retrieve(company.stripe_subscription_id);
+    if (sub.metadata?.billing_model === 'custom_setup' || sub.items.has_more || sub.items.data.length !== 1) {
+      return { ok: false, code: 'custom_setup_requires_review', message: 'This subscription needs the custom setup change flow.' };
+    }
     const item = sub.items.data[0];
     if (!item) {
       return { ok: false, code: 'stripe_error', message: 'Subscription has no billable item.' };
@@ -484,139 +483,17 @@ export async function createCustomCheckoutSession(
 }
 
 /**
- * P7: change an EXISTING custom-setup subscription in place.
- *
- * Validates the serialized calculator setup server-side against the price
- * registry, fetches the complete current item set from Stripe, builds an
- * item-ID diff (never items[0], never parallel allowances), and applies it
- * on the SAME subscription. Pure additions are invoiced for the difference
- * immediately; anything with a removal applies without credit (documented
- * V1 policy — move to period-end schedules before live charging if wanted).
- * The resulting customer.subscription.updated webhook reconciles the stored
- * snapshot via the custom branch — this action never writes companies.*.
+ * Safety stop until the account confirmation UI + provider invoice preview and
+ * period-end schedule workflow are available. The previous action applied
+ * downgrades immediately and marked unpaid changes complete. Never restore it.
  */
-export async function applyCustomSetupChange(
-  rawSetup: string,
-): Promise<{ ok: boolean; message: string }> {
-  if (!rawSetup || typeof rawSetup !== 'string' || rawSetup.length > 4096) {
-    return { ok: false, message: 'Your pricing setup could not be restored. Please re-run the pricing tool.' };
-  }
-
-  let ctx;
+export async function applyCustomSetupChange(rawSetup: string): Promise<{ ok: boolean; message: string }> {
+  void rawSetup;
   try {
-    ctx = await loadCompanyContext();
+    const { profile } = await loadCompanyContext();
+    await assertDemoExternalAllowed(profile.company_id);
   } catch {
     return { ok: false, message: 'Please sign in to manage billing.' };
   }
-  const { profile } = ctx;
-  await assertDemoExternalAllowed(profile.company_id);
-
-  const admin = createAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: snapData } = await (admin as any)
-    .from('company_custom_billing')
-    .select('stripe_subscription_id, provider_status')
-    .eq('company_id', profile.company_id)
-    .maybeSingle();
-  const snapRow = snapData as { stripe_subscription_id: string; provider_status: string } | null;
-  if (!snapRow || !snapRow.stripe_subscription_id
-      || !['active', 'trialing', 'past_due'].includes(snapRow.provider_status)) {
-    return { ok: false, message: 'No active custom setup found. Start a new subscription from the pricing page.' };
-  }
-
-  let expanded;
-  try {
-    expanded = await expandValidatedSetup(rawSetup);
-  } catch (err) {
-    return { ok: false, message: err instanceof Error ? err.message : 'The pricing setup could not be verified.' };
-  }
-
-  const stripe = requireStripe();
-  let currentSnapshot;
-  try {
-    currentSnapshot = await fetchAllSubscriptionItems(stripe, snapRow.stripe_subscription_id);
-  } catch {
-    return { ok: false, message: 'Could not read your current subscription from Stripe. Try again shortly.' };
-  }
-  if (!currentSnapshot.complete) {
-    return { ok: false, message: 'Could not read the complete subscription item list. Try again shortly.' };
-  }
-
-  const codeToPrice = await loadCustomPriceMap();
-  const map = Object.fromEntries(codeToPrice.entries()) as Record<string, string>;
-  let changes: { price?: string; quantity?: 1; id?: string; deleted?: boolean }[];
-  let newMonthlyCents: number;
-  try {
-    decodeSubscriptionItems(currentSnapshot, PREVIEW_CATALOG, map);
-    changes = buildSubscriptionItemChanges(currentSnapshot, expanded.intent, PREVIEW_CATALOG, map);
-    newMonthlyCents = expandBillingSelection(expanded.result, PREVIEW_CATALOG)
-      .reduce((n, r) => n + r.monthlyCents, 0);
-  } catch (err) {
-    return { ok: false, message: err instanceof Error ? err.message : 'Your current setup could not be compared with the new selection.' };
-  }
-  if (changes.length === 0) {
-    return { ok: true, message: 'Your subscription already matches this setup - nothing to change.' };
-  }
-
-  const hasRemoval = changes.some(c => c.deleted === true);
-
-  // Operation lock: one open change at a time (partial unique index).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (admin as any).from('custom_billing_operations')
-    .update({ status: 'canceled', updated_at: new Date().toISOString() })
-    .eq('company_id', profile.company_id)
-    .eq('kind', 'change')
-    .eq('status', 'pending');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const insert = await (admin as any).from('custom_billing_operations')
-    .insert({
-      company_id: profile.company_id,
-      stripe_mode: customStripeMode(),
-      operation_key: expanded.operationKey.replace('checkout:', 'change:'),
-      kind: 'change',
-      status: 'pending',
-      subscription_id: snapRow.stripe_subscription_id,
-      catalog_revision: PREVIEW_CATALOG.revision,
-      proposed_component_codes: expanded.selection.map(s => s.code),
-      requested_by: profile.id,
-    })
-    .select('id')
-    .single();
-  if (insert.error) {
-    return { ok: false, message: 'A change is already being applied. Wait a moment and try again.' };
-  }
-  const operationId = (insert.data as { id: string }).id;
-
-  try {
-    await stripe.subscriptions.update(
-      snapRow.stripe_subscription_id,
-      {
-        items: changes as never,
-        proration_behavior: hasRemoval ? 'none' : 'always_invoice',
-      },
-      { idempotencyKey: `custom-change-${operationId}` },
-    );
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'stripe_update_failed';
-    console.error('[billing] applyCustomSetupChange failed:', msg);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (admin as any).from('custom_billing_operations')
-      .update({ status: 'failed', updated_at: new Date().toISOString() })
-      .eq('id', operationId)
-      .eq('status', 'pending');
-    return { ok: false, message: `Stripe refused the change: ${msg}` };
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (admin as any).from('custom_billing_operations')
-    .update({ status: 'applied', confirmed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq('id', operationId);
-
-  return {
-    ok: true,
-    message: `Setup updated - new monthly total $${(newMonthlyCents / 100).toFixed(2)}. `
-      + (hasRemoval
-        ? 'Removals applied without credit for unused time.'
-        : 'The difference is invoiced now.'),
-  };
+  return { ok: false, message: 'Setup changes are not enabled yet. Your current subscription and allowances are unchanged. Contact our team for help.' };
 }

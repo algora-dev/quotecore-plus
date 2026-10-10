@@ -1,4 +1,5 @@
 'use server';
+import { isLegacyBillingCompany } from '@/app/lib/billing/custom/legacy-boundary';
 
 /**
  * Admin per-user profile actions.
@@ -241,6 +242,9 @@ export async function adminGrantCustomSetup(
 ): Promise<ActionResult> {
   const adminProfile = await requireAdmin();
   const admin = createAdminClient();
+  // A manual grant/clear must never overwrite a Stripe-backed subscription.
+  const existingBilling = await admin.from('companies').select('stripe_subscription_id').eq('id', companyId).maybeSingle();
+  if (existingBilling.error || existingBilling.data?.stripe_subscription_id) return { ok: false, error: 'Stripe-backed accounts need a reviewed custom billing change, not a manual grant or clear.' };
 
   const capacityRow = PREVIEW_CATALOG.core[setup.capacity];
   if (!capacityRow) return { ok: false, error: 'Unknown capacity tier.' };
@@ -313,6 +317,9 @@ export async function adminGrantCustomSetup(
 export async function adminClearCustomSetup(companyId: string, reason: string): Promise<ActionResult> {
   const adminProfile = await requireAdmin();
   const admin = createAdminClient();
+  // A manual grant/clear must never overwrite a Stripe-backed subscription.
+  const existingBilling = await admin.from('companies').select('stripe_subscription_id').eq('id', companyId).maybeSingle();
+  if (existingBilling.error || existingBilling.data?.stripe_subscription_id) return { ok: false, error: 'Stripe-backed accounts need a reviewed custom billing change, not a manual grant or clear.' };
   if (!reason.trim()) return { ok: false, error: 'A reason is required for the audit trail.' };
 
   const { data: company } = await admin.from('companies').select('id, name').eq('id', companyId).maybeSingle();
@@ -357,6 +364,8 @@ export async function changePaidPlan(
   if (!company) return { ok: false, error: 'Company not found.' };
   if (!company.stripe_subscription_id) return { ok: false, error: 'Company has no Stripe subscription.' };
 
+  if (!(await isLegacyBillingCompany(companyId))) return { ok: false, error: 'Use the reviewed custom setup change flow. No subscription was changed.' };
+
   // Resolve the Stripe Price ID for the target plan in the current mode
   const mode = getStripeMode();
   const priceCol = mode === 'live' ? 'stripe_price_id_live' : 'stripe_price_id_test';
@@ -373,6 +382,7 @@ export async function changePaidPlan(
   const stripe = requireStripe();
   try {
     const sub = await stripe.subscriptions.retrieve(company.stripe_subscription_id);
+    if (sub.metadata?.billing_model === 'custom_setup' || sub.items.has_more || sub.items.data.length !== 1) return { ok: false, error: 'Cannot apply a legacy plan change to a multi-item subscription.' };
     const itemId = sub.items.data[0]?.id;
     if (!itemId) return { ok: false, error: 'Subscription has no items.' };
 
@@ -617,6 +627,7 @@ export async function resumeAccess(companyId: string, reason: string): Promise<A
   // Mandatory: full Stripe reconciliation before clearing pause.
   // If Stripe fails, stay paused.
   if (company.stripe_subscription_id) {
+    if (!(await isLegacyBillingCompany(companyId))) return { ok: false, error: 'Custom access must be resumed with a full custom reconciliation. No plan was rewritten.' };
     const stripe = requireStripe();
     try {
       const sub = await stripe.subscriptions.retrieve(company.stripe_subscription_id);

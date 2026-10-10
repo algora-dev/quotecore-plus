@@ -1,14 +1,15 @@
 'use client';
 
 /**
- * In-account mount for the V5 pricing calculator (P7: change your setup).
+ * In-account mount for the V5 pricing calculator (P7: review your setup).
  *
  * Account-aware: renders the billing variant against the company's CURRENT
- * custom-setup subscription, and Continue applies an item-ID diff on the SAME
- * Stripe subscription via the applyCustomSetupChange server action (no second
- * subscription, no re-checkout). The action re-validates the intent against
- * the server catalogue and price registry; this component only forwards the
- * opaque serialized setup.
+ * custom-setup subscription. Setup changes are COMPARISON-ONLY in this pass:
+ * the applyCustomSetupChange server action is a deliberate safety hold that
+ * refuses mutations until the reviewed, payment-confirmed change flow is
+ * integrated. This component only forwards the opaque serialized setup and
+ * surfaces the server's explanatory response (no second subscription, no
+ * re-checkout, no item mutation).
  */
 
 import {
@@ -32,7 +33,7 @@ export function AccountSetupCalculator({
       variant="billing"
       currentSubscription={currentSubscription}
       notice={notice}
-      continueLabel="Apply this setup"
+      continueLabel="Compare this setup"
       onContinue={async (intent) => {
         const res = await applyCustomSetupChange(serializeSetup(intent));
         return { message: res.message };

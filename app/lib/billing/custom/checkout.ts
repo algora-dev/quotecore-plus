@@ -1,244 +1,160 @@
-/**
- * Custom-setup (V5 pricing calculator) checkout — server-side.
- *
- * Builds multi-item Stripe Checkout subscriptions from the calculator's
- * PlanIntent. The server is authoritative: the client sends only the opaque
- * serialized setup string; every code, price and amount is re-resolved here
- * against the DB registry (custom_billing_price_map) and the pinned
- * PREVIEW_CATALOG before Stripe is called.
- *
- * Mirrors the legacy createCheckoutSession guards (auth context, demo
- * egress, duplicate-subscription terminal check) and adds the durable
- * per-company operation lock (custom_billing_operations).
- */
-
+/** Durable, recoverable new-customer Checkout. Existing subscriptions are never changed here. */
+import 'server-only';
+import { randomUUID } from 'node:crypto';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { requireStripe } from '@/app/lib/billing/stripe';
 import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
 import { restoreSetup } from '@/app/components/pricing/calculator/persistence';
 import { resolveIntent } from '@/app/components/pricing/calculator/routing';
 import { expandBillingSelection } from '@/app/components/pricing/calculator/billingCatalogue';
+import { BillingContractError, insist, isTerminalSubscription, referenceId, requireMode } from './contracts';
+import { verifyCustomAccount, requireCustomCheckoutEnabled, customStripeMode } from './environment';
+import { loadSaleRegistry, loadCustomPriceMap } from './registry';
+export { customStripeMode, loadCustomPriceMap };
+export type CustomCheckoutResult = { ok: true; url: string } | { ok: false; code: string; message: string };
 
-export type CustomCheckoutResult =
-  | { ok: true; url: string }
-  | { ok: false; code: string; message: string };
-
-/* The custom billing tables are service-role-only and deliberately not added to
-   database.types.ts (assistant_v2_* precedent). Query them through an untyped
-   handle with local row interfaces for shape safety. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type UntypedTable = any;
-interface PriceMapRow {
-  component_code: string;
-  stripe_price_id: string;
-  monthly_cents: number;
-  currency: string;
-  catalog_revision: string;
-  available_for_new_setups: boolean;
-}
-
-export function customStripeMode(): 'test' | 'live' {
-  return process.env.STRIPE_MODE === 'live' ? 'live' : 'test';
-}
-
-/**
- * Load the server-owned price registry for the pinned calculator catalogue.
- * Fails closed when the DB registry and the code catalogue disagree — the
- * display calculator and the charge amounts must never drift.
- */
-export async function loadCustomPriceMap(): Promise<Map<string, string>> {
-  const admin = createAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: rows, error } = await (admin as UntypedTable)
-    .from('custom_billing_price_map')
-    .select('component_code, stripe_price_id, monthly_cents, currency, catalog_revision, available_for_new_setups')
-    .eq('stripe_mode', customStripeMode())
-    .eq('catalog_id', PREVIEW_CATALOG.id);
-  if (error) throw new Error(`price_map_read_failed: ${error.message}`);
-  const typed = (rows ?? null) as PriceMapRow[] | null;
-  if (!typed || typed.length !== 14) {
-    throw new Error('price_map_incomplete: the custom billing registry does not carry the full 14-price catalogue.');
-  }
-  const revision = typed[0].catalog_revision;
-  if (revision !== PREVIEW_CATALOG.revision) {
-    throw new Error('catalog_changed: the pricing catalogue was updated. Re-run the pricing tool and review the new setup.');
-  }
-  const map = new Map<string, string>();
-  for (const row of typed) {
-    if (!row.available_for_new_setups) throw new Error(`price_unavailable: ${row.component_code}`);
-    if (row.currency !== PREVIEW_CATALOG.currency) throw new Error('price_map_currency_mismatch');
-    map.set(row.component_code, row.stripe_price_id);
-  }
-  return map;
-}
-
-/**
- * Validate the serialized calculator setup (same envelope the calculator
- * writes) and expand it to the purchased component selection, verified
- * against the DB registry. Returns the selection + total cents.
- */
 export async function expandValidatedSetup(rawSetup: string) {
+  insist(typeof rawSetup === 'string' && rawSetup.length <= 4096, 'setup_invalid');
   const restored = restoreSetup(rawSetup, PREVIEW_CATALOG);
-  if (restored.status !== 'restored' && restored.status !== 'updated') {
-    const code = restored.status === 'expired' ? 'setup_expired' : 'setup_invalid';
-    throw Object.assign(new Error('Your pricing setup could not be restored. Please re-run the pricing tool.'), { code });
-  }
-  const result = resolveIntent(restored.intent, PREVIEW_CATALOG);
+  if (restored.status === 'updated') throw new BillingContractError('catalog_changed', 'The catalogue changed. Review your setup again before paying.');
+  insist(restored.status === 'restored', restored.status === 'expired' ? 'setup_expired' : 'setup_invalid');
+  // Test Checkout is explicitly enabled by its server gate. Never mutate the shared UI catalogue.
+  // Live payments still require PREVIEW_CATALOG.stage='approved' plus the separate launch flag.
+  const serverCatalog = customStripeMode() === 'test' ? { ...PREVIEW_CATALOG, stage: 'approved' as const } : PREVIEW_CATALOG;
+  const result = resolveIntent(restored.intent, serverCatalog);
   const selection = expandBillingSelection(result, PREVIEW_CATALOG);
-  const map = await loadCustomPriceMap();
-  const lineItems = selection.map((row) => {
-    const price = map.get(row.code);
-    if (!price) throw Object.assign(new Error(`component_not_registered: ${row.code}`), { code: 'setup_invalid' });
-    return { price, quantity: 1 as const };
-  });
-  return { intent: restored.intent, result, selection, lineItems, monthlyCents: result.monthlyCents, operationKey: `checkout:${PREVIEW_CATALOG.revision}:${selection.map(s => s.code).sort().join('+')}` };
+  const registry = await loadSaleRegistry(selection.map(row => row.code));
+  return { intent: restored.intent, result, selection, lineItems: registry.map(row => ({ price: row.stripe_price_id, quantity: 1 as const })),
+    monthlyCents: result.monthlyCents, operationKey: `${PREVIEW_CATALOG.id}:${PREVIEW_CATALOG.revision}:${selection.map(row => row.code).sort().join('+')}` };
 }
-
-/**
- * Create (or deliberately supersede) the durable checkout operation row.
- * The partial unique index custom_billing_one_open_change guarantees at
- * most one open checkout per company+mode; a lost race surfaces as a
- * friendly retry error rather than two live Stripe sessions.
- */
-async function openCheckoutOperation(companyId: string, userId: string | null, operationKey: string, componentCodes: string[]) {
-  const admin = createAdminClient();
-  // Deliberately supersede any pending checkout with a different target.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (admin as UntypedTable)
-    .from('custom_billing_operations')
-    .update({ status: 'canceled', updated_at: new Date().toISOString() })
-    .eq('company_id', companyId)
-    .eq('stripe_mode', customStripeMode())
-    .eq('kind', 'checkout')
-    .eq('status', 'pending')
-    .neq('operation_key', operationKey);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const insert = await (admin as UntypedTable)
-    .from('custom_billing_operations')
-    .insert({
-      company_id: companyId,
-      stripe_mode: customStripeMode(),
-      operation_key: operationKey,
-      kind: 'checkout',
-      status: 'pending',
-      catalog_revision: PREVIEW_CATALOG.revision,
-      proposed_component_codes: componentCodes,
-      requested_by: userId,
-    })
-    .select('id')
-    .single();
-  if (insert.error) {
-    const msg = insert.error.message.includes('custom_billing_one_open_change')
-      ? 'A checkout is already being prepared for your account. Wait a moment and try again.'
-      : `operation_lock_failed: ${insert.error.message}`;
-    throw Object.assign(new Error(msg), { code: 'checkout_in_progress' });
-  }
-  return (insert.data as { id: string }).id;
+interface CheckoutOperation {
+  id: string; selection_key: string; status: string; checkout_request: Record<string, unknown> | null;
+  provider_checkout_id: string | null; created_at: string; lease_token: string; previous_subscription_id: string | null;
 }
-
-/**
- * Full new-customer custom checkout. All state changes land via the Stripe
- * webhook (P5); this only mints a URL and records the operation.
- */
+function publicFailure(error: unknown): CustomCheckoutResult {
+  const code = error instanceof BillingContractError ? error.code : 'checkout_retry_required';
+  const messages: Record<string, string> = {
+    subscription_exists: 'You already have a subscription. Manage that subscription instead of paying for a second one.',
+    checkout_busy: 'Checkout is already being prepared. Try again in a moment.',
+    checkout_completed: 'Your payment is being confirmed. Return to Billing rather than starting another checkout.',
+    checkout_recovery_required: 'An earlier checkout needs to be checked by our team before another can start. No new checkout was created.',
+    catalog_changed: 'The catalogue changed. Review your setup again before paying.',
+    setup_expired: 'Your saved setup expired. Review your choices again.',
+    setup_invalid: 'Your saved setup could not be verified. Review your choices again.',
+    custom_checkout_disabled: 'Custom setup checkout is not available yet. No payment has been taken.',
+    custom_live_not_approved: 'Custom setup checkout is not approved for live payments yet.',
+    company_mode_mismatch: 'This billing account belongs to a different environment. Contact our team.',
+  };
+  return { ok: false, code, message: messages[code] ?? 'Checkout could not be confirmed. Please retry the same setup. Our team can help if this continues.' };
+}
+/** Updates are fenced by the operation lease. Never silently ignore a DB failure. */
+async function saveOperation(id: string, lease: string, update: Record<string, unknown>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (createAdminClient() as any).from('custom_billing_operations')
+    .update({ ...update, updated_at: new Date().toISOString() }).eq('id', id).eq('lease_token', lease).eq('status', 'pending').select('id');
+  if (error) throw new Error(`retryable: checkout operation update failed: ${error.message}`);
+  insist(data?.length === 1, 'checkout_busy');
+}
 export async function createCustomCheckoutSession(opts: {
-  rawSetup: string;
-  companyId: string;
-  userId: string | null;
-  stripeCustomerEmail?: string | null;
-  existingStripeCustomerId?: string | null;
-  existingStripeSubscriptionId?: string | null;
-  existingSubscriptionStatus?: string | null;
-  baseUrl: string;
+  rawSetup: string; companyId: string; userId: string | null; baseUrl: string;
+  stripeCustomerEmail?: string | null; existingStripeCustomerId?: string | null;
+  existingStripeSubscriptionId?: string | null; existingSubscriptionStatus?: string | null;
 }): Promise<CustomCheckoutResult> {
-  let expanded;
   try {
-    expanded = await expandValidatedSetup(opts.rawSetup);
-  } catch (err) {
-    const code = (err as { code?: string }).code ?? 'setup_invalid';
-    const message = err instanceof Error ? err.message : 'The pricing setup could not be verified.';
-    return { ok: false, code, message };
-  }
-
-  // Duplicate-subscription guard, same policy as legacy checkout: a live
-  // (non-terminal) subscription routes to manage/portal instead of a second
-  // concurrent Checkout. cancel_at_period_end still counts as active.
-  const TERMINAL_STATUSES = new Set(['canceled', 'suspended']);
-  if (opts.existingStripeSubscriptionId && !TERMINAL_STATUSES.has(opts.existingSubscriptionStatus ?? '')) {
-    return {
-      ok: false,
-      code: 'subscription_exists',
-      message: 'You already have an active subscription. Use Manage Subscription to change your setup.',
-    };
-  }
-
-  const admin = createAdminClient();
-  // A stored custom snapshot also blocks a second checkout unless terminal.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: custom } = await (admin as UntypedTable)
-    .from('company_custom_billing')
-    .select('provider_status')
-    .eq('company_id', opts.companyId)
-    .maybeSingle();
-  const customRow = custom as { provider_status: string } | null;
-  if (customRow && !TERMINAL_STATUSES.has(customRow.provider_status)) {
-    return {
-      ok: false,
-      code: 'subscription_exists',
-      message: 'You already have an active custom setup subscription. Use Manage Subscription to change it.',
-    };
-  }
-
-  let operationId: string;
-  try {
-    operationId = await openCheckoutOperation(opts.companyId, opts.userId, expanded.operationKey, expanded.selection.map(s => s.code));
-  } catch (err) {
-    const code = (err as { code?: string }).code ?? 'operation_lock_failed';
-    return { ok: false, code, message: err instanceof Error ? err.message : 'Could not start checkout.' };
-  }
-
-  const stripe = requireStripe();
-  try {
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      line_items: expanded.lineItems,
-      // Anchor: the webhook correlates the session/subscription back to us.
-      client_reference_id: opts.companyId,
-      subscription_data: {
-        metadata: {
-          company_id: opts.companyId,
-          billing_model: 'custom_setup',
-          catalog_id: PREVIEW_CATALOG.id,
-          catalog_revision: PREVIEW_CATALOG.revision,
-          operation_id: operationId,
-        },
-      },
-      ...(opts.existingStripeCustomerId
-        ? { customer: opts.existingStripeCustomerId }
-        : { customer_email: opts.stripeCustomerEmail ?? undefined }),
-      allow_promotion_codes: true,
-      // {CHECKOUT_SESSION_ID} is Stripe's template literal; do NOT interpolate.
-      success_url: `${opts.baseUrl}/paywall?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${opts.baseUrl}/paywall?checkout=canceled`,
-    }, { idempotencyKey: `custom-checkout-${operationId}` });
-
-    await (admin as UntypedTable)
-      .from('custom_billing_operations')
-      .update({ provider_checkout_id: session.id, updated_at: new Date().toISOString() })
-      .eq('id', operationId);
-
-    if (!session.url) {
-      return { ok: false, code: 'no_session_url', message: 'Stripe did not return a Checkout URL.' };
+    requireCustomCheckoutEnabled();
+    const scope = await verifyCustomAccount(); const stripe = requireStripe(); const admin = createAdminClient();
+    // Fresh identity, not caller-supplied subscription status. Mode separation matters on the shared DB.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: company, error } = await (admin as any).from('companies')
+      .select('id, billing_model, stripe_mode, stripe_customer_id, stripe_subscription_id, subscription_status, admin_paused')
+      .eq('id', opts.companyId).maybeSingle();
+    if (error) throw new Error(`retryable: company read: ${error.message}`);
+    insist(company && !company.admin_paused, 'company_unavailable');
+    insist(!company.stripe_mode || company.stripe_mode === scope.mode, 'company_mode_mismatch');
+    if (company.stripe_subscription_id) {
+      const current = await stripe.subscriptions.retrieve(company.stripe_subscription_id);
+      requireMode(current, scope.mode);
+      insist(!company.stripe_customer_id || referenceId(current.customer) === company.stripe_customer_id, 'subscription_ownership_mismatch');
+      insist(isTerminalSubscription(current.status), 'subscription_exists');
     }
-    return { ok: true, url: session.url };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'stripe_checkout_failed';
-    console.error('[billing] createCustomCheckoutSession failed:', message);
-    await (admin as UntypedTable)
-      .from('custom_billing_operations')
-      .update({ status: 'failed', updated_at: new Date().toISOString() })
-      .eq('id', operationId)
-      .eq('status', 'pending');
-    return { ok: false, code: 'stripe_error', message };
+    if (company.stripe_customer_id) {
+      // Also catch a provider subscription that has not reached our webhook yet.
+      for await (const subscription of stripe.subscriptions.list({ customer: company.stripe_customer_id, status: 'all', limit: 100 })) {
+        requireMode(subscription, scope.mode);
+        insist(isTerminalSubscription(subscription.status), 'subscription_exists');
+      }
+    }
+    const expanded = await expandValidatedSetup(opts.rawSetup);
+    const origin = new URL(opts.baseUrl);
+    insist(origin.origin === opts.baseUrl && !origin.username && !origin.password &&
+      (origin.protocol === 'https:' || (scope.mode === 'test' && origin.protocol === 'http:' && ['localhost','127.0.0.1'].includes(origin.hostname))), 'checkout_origin_invalid');
+    const request = {
+      mode: 'subscription', line_items: expanded.lineItems, client_reference_id: company.id,
+      ...(company.stripe_customer_id ? { customer: company.stripe_customer_id } : { customer_email: opts.stripeCustomerEmail ?? undefined }),
+      allow_promotion_codes: true,
+      success_url: `${origin.origin}/paywall?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin.origin}/paywall?checkout=canceled`,
+      subscription_data: { metadata: { company_id: company.id, billing_model: 'custom_setup', catalog_id: scope.catalogId, catalog_revision: scope.revision } },
+    };
+    // At most one old session can be recovered and expired before claiming a fresh operation.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const lease = randomUUID();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error: claimError } = await (admin as any).rpc('qcp_claim_custom_checkout', {
+        p_company_id: company.id, p_mode: scope.mode, p_selection_key: expanded.operationKey,
+        p_request: JSON.parse(JSON.stringify(request)), p_codes: expanded.selection.map(row => row.code),
+        p_revision: scope.revision, p_user_id: opts.userId, p_lease: lease,
+        p_previous_subscription_id: company.stripe_subscription_id ?? null,
+      });
+      if (claimError) throw new Error(`retryable: checkout claim: ${claimError.message}`);
+      if (data?.code) throw new BillingContractError(data.code);
+      const op = data as CheckoutOperation;
+      insist(op?.id && op.checkout_request, 'checkout_recovery_required');
+      let session;
+      if (op.provider_checkout_id) session = await stripe.checkout.sessions.retrieve(op.provider_checkout_id);
+      else {
+        // Never replay an uncertain create after Stripe may have pruned its idempotency key.
+        insist(Date.now() - Date.parse(op.created_at) < 23 * 60 * 60 * 1000, 'checkout_recovery_required');
+        const frozen = op.checkout_request;
+        const subscriptionData = frozen.subscription_data as { metadata: Record<string, string> };
+        session = await stripe.checkout.sessions.create({ ...frozen,
+          subscription_data: { ...subscriptionData, metadata: { ...subscriptionData.metadata, operation_id: op.id } },
+          metadata: { company_id: company.id, billing_model: 'custom_setup', operation_id: op.id },
+        // The frozen request is validated before claim and can only be written by the service role.
+        } as Parameters<typeof stripe.checkout.sessions.create>[0], { idempotencyKey: `custom-checkout-${op.id}` });
+        await saveOperation(op.id, lease, { provider_checkout_id: session.id });
+      }
+      requireMode(session, scope.mode);
+      insist(session.mode === 'subscription' && session.client_reference_id === company.id, 'checkout_identity_mismatch');
+      if (session.status === 'complete') {
+        // An expired initial payment may leave a completed Checkout behind.
+        // Only provider-terminal state permits another attempt. A merely local
+        // suspended/canceled flag or unpaid invoice is not sufficient proof.
+        const priorSubId = referenceId(session.subscription);
+        insist(priorSubId, 'checkout_completed');
+        const priorSub = await stripe.subscriptions.retrieve(priorSubId);
+        requireMode(priorSub, scope.mode);
+        insist(priorSub.metadata?.company_id === company.id, 'checkout_identity_mismatch');
+        insist(isTerminalSubscription(priorSub.status), 'checkout_completed');
+        await saveOperation(op.id, lease, { status: 'canceled', lease_token: null, lease_until: null });
+        continue;
+      }
+      if (session.status === 'open' && op.selection_key === expanded.operationKey) {
+        insist(typeof session.url === 'string' && session.url.startsWith('https://'), 'checkout_url_missing');
+        await saveOperation(op.id, lease, { lease_token: null, lease_until: null });
+        return { ok: true, url: session.url };
+      }
+      if (session.status === 'open') {
+        // Do NOT release the DB lock while the previous session can still accept payment.
+        session = await stripe.checkout.sessions.expire(session.id);
+      }
+      insist(session.status === 'expired', 'checkout_completed');
+      await saveOperation(op.id, lease, { status: 'canceled', lease_token: null, lease_until: null });
+    }
+    throw new BillingContractError('checkout_busy');
+  } catch (error) {
+    console.error('[billing/custom] checkout stopped:', error instanceof Error ? error.message : 'unknown');
+    // Do not mark uncertain Stripe outcomes failed or open a second operation. A retry recovers the SAME request.
+    return publicFailure(error);
   }
 }
