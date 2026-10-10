@@ -78,10 +78,10 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "light" 
       <div className={styles.inner}>
         <a href="/" className={styles.logoLink} aria-label="QuoteCore+ home">
           <img
-            src={theme === "dark" ? "/marketing/brand/quotecore-logo-light.png" : "/marketing/brand/quotecore-logo-transparent.png"}
+            src={theme === "dark" ? "/marketing/brand/quotecore-logo-white.png" : "/marketing/brand/quotecore-logo-transparent.png"}
             alt="QuoteCore+"
-            width={481}
-            height={119}
+            width={theme === "dark" ? 788 : 481}
+            height={theme === "dark" ? 193 : 119}
             loading="eager"
             decoding="async"
             fetchPriority="high"
