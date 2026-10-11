@@ -7,7 +7,7 @@ import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { SERVER_INSTRUCTIONS } from '../lib/free-tools/host-roof-scan/contract';
 import { exposedOnMainMcp } from '../lib/free-tools/host-roof-scan/config';
 import { corsHeaders, readLimited, parseRpc, rpcError, type RpcEnvelope } from '../lib/free-tools/host-roof-scan/request';
-import { ScanError } from '../lib/free-tools/host-roof-scan/types';
+import { LIMITS, ScanError } from '../lib/free-tools/host-roof-scan/types';
 import { runStatelessMcp } from '../lib/free-tools/mcp/transport';
 
 export const dynamic = 'force-dynamic';
@@ -113,7 +113,10 @@ async function handle(request: Request): Promise<Response> {
       return new Response(null, { status: 405, headers: { ...corsHeaders, Allow: 'POST, OPTIONS' } });
     if ((request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase() !== 'application/json')
       throw new ScanError('CONTENT_TYPE', 'MCP requests must use application/json.', 415);
-    const body = await readLimited(request);
+    // 5 MiB cap (vs 128 KiB default JSON): qc_prepare_roof_outline accepts base64 image_data
+    // (3 MiB decoded ≈ 4 MiB encoded). Guarded by content-length precheck, streaming cap,
+    // the 240/hr per-IP route rate limit, and the upload-budget guard on prepare itself.
+    const body = await readLimited(request, LIMITS.mcpJsonBytes);
     rpc = parseRpc(body);
     const withHostOutline = exposedOnMainMcp();
     if (withHostOutline) {

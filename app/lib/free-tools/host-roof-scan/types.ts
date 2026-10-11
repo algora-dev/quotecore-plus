@@ -13,6 +13,7 @@ export const LIMITS = Object.freeze({
     minSide: 200,
     vertices: 160,
     jsonBytes: 128 * 1024,
+    mcpJsonBytes: 5 * 1024 * 1024,
     tokenChars: 32000,
     ttlSeconds: 30 * 60,
 });
