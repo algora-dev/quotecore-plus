@@ -236,6 +236,27 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
                 }
             } };
     };
+    if (access.phases.p3 && access.permissions.components === 'edit') {
+        registerProposal('propose_library_component_change', 'Edit ONE reusable library component (its ID comes from a component search result - a library component, NOT a quote component). Changes the library defaults: name, how it is measured, material/labour rates, waste, pitch factor, sold-as basis, cover width, active flag. Existing quotes keep their own saved values; new quotes pick up the new defaults. Nothing changes until the card is confirmed.', {
+            component_id: { type: 'string', format: 'uuid' },
+            changes: { type: 'object', properties: { name: { type: 'string', minLength: 1, maxLength: 200 }, measurement_type: { type: 'string', enum: ['area', 'linear', 'quantity', 'fixed', 'lineal', 'count', 'hours_days'] }, material_rate: { type: 'number', minimum: 0, maximum: 100000000 }, labour_rate: { type: 'number', minimum: 0, maximum: 100000000 }, waste_type: { type: 'string', enum: ['none', 'percent', 'fixed'] }, waste_percent: { type: 'number', minimum: 0, maximum: 100 }, waste_fixed: { type: 'number', minimum: 0, maximum: 100000000 }, pitch_type: { type: 'string', enum: ['none', 'rafter', 'valley_hip'] }, sold_by: { type: 'string', enum: ['area', 'per_unit'] }, cover_width_mm: { type: 'number', minimum: 1, maximum: 10000 }, is_active: { type: 'boolean' } }, additionalProperties: false },
+        }, ['component_id', 'changes'], async args => (await import('./actions.server')).proposeLibraryComponentChange(input.supabase, access, input.runId, args));
+        registerProposal('propose_library_component_create', 'Create ONE new reusable library component for future quotes. Needs a unique name and how it is measured; rates, waste, pitch factor, sold-as basis and cover width optional. Collection: pass collection_name (the user\'s named library, e.g. "RS Roofing library") or a collection_id; omit both for the workspace default collection. Nothing is created until the card is confirmed.', {
+            name: { type: 'string', minLength: 1, maxLength: 200 },
+            measurement_type: { type: 'string', enum: ['area', 'linear', 'quantity', 'fixed', 'lineal', 'count', 'hours_days'] },
+            component_type: { type: 'string', enum: ['main', 'extra'] },
+            material_rate: { type: 'number', minimum: 0, maximum: 100000000 },
+            labour_rate: { type: 'number', minimum: 0, maximum: 100000000 },
+            waste_type: { type: 'string', enum: ['none', 'percent', 'fixed'] },
+            waste_percent: { type: 'number', minimum: 0, maximum: 100 },
+            waste_fixed: { type: 'number', minimum: 0, maximum: 100000000 },
+            pitch_type: { type: 'string', enum: ['none', 'rafter', 'valley_hip'] },
+            sold_by: { type: 'string', enum: ['area', 'per_unit'] },
+            cover_width_mm: { type: 'number', minimum: 1, maximum: 10000 },
+            collection_id: { type: ['string', 'null'], format: 'uuid' },
+            collection_name: { type: ['string', 'null'], maxLength: 160 },
+        }, ['name', 'measurement_type'], async args => (await import('./actions.server')).proposeLibraryComponentCreate(input.supabase, access, input.runId, args));
+    }
     if (access.phases.p3 && (access.permissions.quotes === 'edit' || access.permissions.draft_quotes === 'edit')) {
         registerProposal('propose_quote_details', 'Prepare a human-confirmed customer/job-name change on an unsent quote. Does not apply yet. Customer name also requires Customers Edit.', { quote_id: { type: 'string', format: 'uuid' }, changes: { type: 'object', properties: { customer_name: { type: 'string', maxLength: 200 }, job_name: { type: 'string', maxLength: 200 } }, additionalProperties: false } }, ['quote_id', 'changes'], async args => (await import('./actions.server')).proposeQuoteDetails(input.supabase, access, input.runId, args));
         if (access.permissions.components === 'edit')
@@ -386,6 +407,8 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
         // While edit phases are off, refusals must explain the gate instead of a vague no.
         ...(access.phases.p3 || access.phases.p4 ? [] : ['Making changes is not available on this workspace yet. If the user asks to change, remove, add or create anything (including on orders), reply in one short line that editing is not switched on for this workspace yet, then offer what you can do now (find, open, read, summarise). Never invent or promise an edit path.']),
         ...(access.phases.p4 ? ['Roof-area requests on a bound quote/draft ("change the roof area to 120 square metres", "make it 130 sqm", "set the pitch to 30", "add a garage area"): use roof_area_list when unsure which area, then propose_roof_area_change or propose_roof_area_add. A typed "square metres" target on a plan-basis area is surface_sqm; the engine derives the plan value - never convert units yourself. Several matching areas means ask which one; never pick silently.'] : []),
+        ...(access.phases.p3 && access.permissions.components === 'edit' ? ['COMPONENT LIBRARY (the reusable catalogue, not quote lines): "change/set <component> in/on my library", "update the material price of <component>" or similar library wording means find the component (kind component) then propose_library_component_change. "Create/add a component" (name + how it is measured, optionally rates/waste/pitch) means propose_library_component_create - resolve the collection from the user\'s wording (collection_name). Never refuse a library edit or creation when the user clearly asks for one; if the component name is ambiguous, ask once, then act.'] : []),
+        'ANSWERS COMPLETE TASKS: When your previous reply asked the user a question, the user\'s next message is the ANSWER to that question, even when it is short or repeats a name you already found. Use it immediately to finish the original task in the same turn; never treat it as a new task and never re-ask what they already told you. Ask at most ONE clarifying question per task; if something is still unknown after that, act on the best reasonable interpretation and say plainly what you assumed or could not verify - two questions is already the absolute limit.',
         ...(workflowEnabled && access.phases.p4 ? ['NEW DRAFTS: use prepare_draft_from_brief as soon as the user gives a job brief. Capture measurements by structural role (roof_area/ridge/hip/valley/barge/spouting/underlay/fixings). Do NOT ask for component IDs or a generic component list first. Server code searches only assistant-approved library products and groups all genuine unresolved product choices. Preserve repeated measurements as separate entries (for example four 5m hips).'] : []),
         'For proposed changes say "not applied yet" and use the concrete confirmation card. Only its Confirm button can approve in this batch; a typed/voice-note yes is not execution authority.',
         'Use offer_options for constrained choices, not for a fake Confirm action. Keep answers short and the next step obvious.',

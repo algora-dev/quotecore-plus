@@ -1,7 +1,9 @@
 // Integrator-run tests. Not executed in the external static handoff environment.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canonical, parseComponentChanges, parseQuoteChanges, editableQuote, ProposalError } from './action-domain';
+import { canonical, parseComponentChanges, parseQuoteChanges, parseLibraryChanges, parseLibraryCreate, editableQuote, ProposalError } from './action-domain';
+import { decideTask } from '../tasks/boundary';
+import type { TaskSnapshot } from '../tasks/contracts';
 import { storageNumber, storedMeasurement } from './storage-number';
 import { canonicalQuantity, canonicalChanges, baseUnit } from './units';
 import { linearInputToMetric, areaInputToMetric } from '@/app/lib/measurements/conversions';
@@ -199,3 +201,55 @@ test('P4 area create refuses duplicates and full area sets', () => {
 });
 for (const change of [{ calc_plan_sqm: 100, surface_sqm: 130 }, { label: '' }, { calc_pitch_degrees: 90 }, { surface_sqm: -1 }, {}])
     test(`P4 reject invalid area change ${JSON.stringify(change)}`, () => assert.throws(() => parseAreaChanges(change), ProposalError));
+// ---- P3.5 library component create/edit (2026-10-11) ----
+const taskSnap = (status: 'open' | 'awaiting_input'): TaskSnapshot => ({
+    task: { id, version: 1, status, label: 'Reviewing: component library', lastRunId: id, startedAt: '2026-10-11T12:00:00Z', updatedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 20 * 60000).toISOString(), closure: null, boundary: false },
+    resolution: null, runIds: [id], pendingMessage: null,
+});
+test('P3.5 library change parses merged fields', () => {
+    const c = parseLibraryChanges({ material_rate: 5.5, pitch_type: 'rafter', waste_type: 'percent', waste_percent: 10 });
+    assert.equal(c.material_rate, 5.5);
+    assert.equal(c.pitch_type, 'rafter');
+    assert.equal(c.waste_percent, 10);
+});
+for (const bad of [{ junk: 1 }, { measurement_type: 'volume_3d' }, { waste_type: 'fixed_per_segment' }, { waste_type: 'fixed', waste_percent: 5 }, { material_rate: -1 }, { name: ' ' }])
+    test(`P3.5 reject invalid library change ${JSON.stringify(bad)}`, () => assert.throws(() => parseLibraryChanges(bad), ProposalError));
+test('P3.5 library create parses full spec', () => {
+    const input = parseLibraryCreate({ name: '5-Rib Longrun 0.40g', measurement_type: 'area', material_rate: 24, labour_rate: 8, waste_type: 'percent', waste_percent: 10, pitch_type: 'rafter', sold_by: 'area', collection_name: 'RS Roofing Standard Library' });
+    assert.equal(input.component_type, 'main');
+    assert.equal(input.sold_by, 'area');
+    assert.equal(input.collection_name, 'RS Roofing Standard Library');
+});
+test('P3.5 library create minimal defaults', () => {
+    const input = parseLibraryCreate({ name: 'Widget', measurement_type: 'count' });
+    assert.equal(input.waste_type, 'none');
+    assert.equal(input.material_rate, 0);
+    assert.equal(input.pitch_type, 'none');
+    assert.equal(input.cover_width_mm, null);
+});
+for (const bad of [{ name: 'X' }, { name: 'X', measurement_type: 'volume_3d' }, { name: 'X', measurement_type: 'area', collection_id: 'not-a-uuid' }, { name: 'X', measurement_type: 'area', collection_id: id, collection_name: 'Both' }, { name: 'X', measurement_type: 'area', sold_by: 'per_unit', cover_width_mm: 762 }])
+    test(`P3.5 reject invalid library create ${JSON.stringify(bad)}`, () => assert.throws(() => parseLibraryCreate(bad), ProposalError));
+test('P3.5 action view accepts the library kinds', () => {
+    const view = parseActionView({ id, status: 'proposed', title: 'Review library component Fixture', changes: [{ label: 'Material rate', before: '4.5', after: '5.5' }], note: 'Not applied yet.', proof_digest: 'a'.repeat(64), version: 1, sections: ['components'], action_kind: 'library_component_change', created_at: '2026-10-11T00:00:00Z', error: null, target: null });
+    assert.equal(view?.actionKind, 'library_component_change');
+    const created = parseActionView({ id, status: 'proposed', title: 'Add library component New', changes: [], note: 'Not applied yet.', proof_digest: 'b'.repeat(64), version: 1, sections: ['components'], action_kind: 'library_create', created_at: '2026-10-11T00:00:00Z', error: null, target: null });
+    assert.equal(created?.actionKind, 'library_create');
+});
+test('P3.5 owner follow-up "change the price for that component" continues the live task', () => {
+    const decision = decideTask('Change the materials price to $5.50 for that component', taskSnap('open'));
+    assert.equal(decision.disposition, 'continue');
+    assert.equal(decision.reason, 'dependent_reference');
+});
+test('P3.5 a short answer to the last question completes the task, not a new one', () => {
+    const decision = decideTask('the component library', taskSnap('awaiting_input'));
+    assert.equal(decision.disposition, 'continue');
+    assert.equal(decision.reason, 'expected_answer');
+});
+test('P3.5 a fresh question while awaiting input still starts a new task', () => {
+    const decision = decideTask('What quotes have been accepted?', taskSnap('awaiting_input'));
+    assert.equal(decision.disposition, 'new');
+});
+test('P3.5 dependent follow-up without a live task is a new task', () => {
+    const decision = decideTask('Change the materials price to $5.50 for that component', { task: null, resolution: null, runIds: [], pendingMessage: null });
+    assert.equal(decision.disposition, 'new');
+});

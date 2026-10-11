@@ -92,7 +92,7 @@ export type ChangeRow = {
 export type ActionStatus = 'proposed' | 'applying' | 'committed' | 'cancelled' | 'conflict' | 'needs_review' | 'failed';
 export type ActionView = {
     sections: AssistantSection[];
-    actionKind: 'quote_details' | 'component_change' | 'draft_create' | 'area_change' | null;
+    actionKind: 'quote_details' | 'component_change' | 'draft_create' | 'area_change' | 'library_component_change' | 'library_create' | null;
     id: string;
     status: ActionStatus;
     title: string;
@@ -308,10 +308,11 @@ export function parseActionView(value: unknown): ActionView | null {
         // Never silently truncate the exact change the user is being asked to approve.
         changes.push({ label: c.label, before: c.before, after: c.after });
     }
-    return { sections: value.sections as AssistantSection[], actionKind: ['quote_details', 'component_change', 'draft_create', 'area_change'].includes(String(value.action_kind)) ? value.action_kind as ActionView['actionKind'] : null, id: value.id, status: value.status as ActionStatus, title: String(value.title), changes,
+    return { sections: value.sections as AssistantSection[], actionKind: KNOWN_ACTION_KINDS.includes(String(value.action_kind)) ? value.action_kind as ActionView['actionKind'] : null, id: value.id, status: value.status as ActionStatus, title: String(value.title), changes,
         note: value.note, proofDigest: value.proof_digest, version: Number(value.version),
         target: parseTarget(value.target), error: typeof value.error === 'string' ? value.error : null, createdAt: value.created_at };
 }
+const KNOWN_ACTION_KINDS = ['quote_details', 'component_change', 'draft_create', 'area_change', 'library_component_change', 'library_create'];
 /** Decode the public camel-case boundary through the same authoritative parser. */
 export function parsePublicAccess(value: unknown): Access | null {
     if (!isRecord(value))

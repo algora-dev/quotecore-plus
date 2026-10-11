@@ -69,7 +69,8 @@ export function decideTask(message: string, snapshot: TaskSnapshot, now = new Da
     // records ("the Smith quote") still fall through to a new task below.
     if (/\b(?:that|this)\s+(?:draft|quote|invoice|order|job|record)\b/i.test(text)
         || /\b(?:that|this|the)\s+(?:(?:main|front|back|rear|left|right|upper|lower|garage|porch|extension)\s+)?(?:roof\s+)?areas?\b/i.test(text)
-        || /\bon\s+(?:that|this|the)\s+(?:draft|quote|invoice|order|job|record|area)\b/i.test(text))
+        || /\bon\s+(?:that|this|the)\s+(?:draft|quote|invoice|order|job|record|area)\b/i.test(text)
+        || /\b(?:that|this)\s+(?:component|item|product|material|library\s+(?:component|item|product))\b/i.test(text))
         return { disposition: 'continue', reason: 'dependent_reference', message: text };
     if (standalone || parseFastIntent(text))
         return next('self_contained_request');
@@ -122,6 +123,16 @@ export function decideTask(message: string, snapshot: TaskSnapshot, now = new Da
             if (refinement && (!('intent' in refinement) || refinement.useful))
                 return { disposition: 'continue', reason: ordinal ? 'candidate_ordinal' : 'expected_slot_answer', message: text, refinement };
         }
+    }
+    // Owner 2026-10-11: an answer to the assistant's last question completes
+    // the LIVE task; it is never spun into a new one. A short non-question
+    // reply while the task awaits input continues as that answer.
+    const answerWords = text.split(/\s+/).filter(Boolean);
+    if (task!.status === 'awaiting_input' && answerWords.length > 0 && answerWords.length <= 12
+        && !text.includes('?')
+        && !/^(?:open|show|find|list|create|new|start|send|email|delete|remove|read|what|how|why|when|where|who|which|can|could|would|should|please)\b/i.test(text)) {
+        const refinement = pending ? refineRequest(pending.state, text, now) : null;
+        return { disposition: 'continue', reason: 'expected_answer', message: text, ...(refinement && 'intent' in refinement && refinement.useful ? { refinement } : {}) };
     }
     // Owner 2026-10-01 (voice): the model asks "plan or actual measurements?"
     // per the prompt contract, but that question leaves no resolver-level
