@@ -58,7 +58,7 @@ export function validateRegistryRows(raw: unknown, scope: RegistryScope): Regist
     insist(typeof row.catalog_revision === 'string' && row.catalog_revision.length > 0, 'price_registry_revision_missing');
     insist(typeof row.component_code === 'string' && row.component_code.length > 0, 'price_registry_code_missing');
     insist(typeof row.stripe_price_id === 'string' && /^price_[A-Za-z0-9]+$/.test(row.stripe_price_id), 'price_registry_id_invalid');
-    insist(typeof row.stripe_product_id === 'string' && /^prod_[A-Za-z0-9]+$/.test(row.stripe_product_id), 'price_registry_product_invalid');
+    insist(typeof row.stripe_product_id === 'string' && /^prod_[A-Za-z0-9_]+$/.test(row.stripe_product_id), 'price_registry_product_invalid');
     insist(typeof row.currency === 'string' && row.currency.toLowerCase() === scope.currency.toLowerCase(), 'price_registry_currency_mismatch');
     insist(nonNegativeInteger(row.monthly_cents), 'price_registry_amount_invalid');
     insist(typeof row.available_for_new_setups === 'boolean', 'price_registry_sale_flag_invalid');
