@@ -224,9 +224,21 @@ export function BillingPanel(props: BillingPanelProps) {
 
   function onManage() {
     setError(null);
+    // Stripe portal in a NEW TAB (owner request 2026-10-11): the synchronous
+    // window.open keeps the user-gesture so popup blockers allow it; the tab
+    // is redirected once the portal session URL returns. Same-tab fallback if
+    // the browser blocked the open.
+    const tab = window.open('about:blank', '_blank');
+    if (tab) tab.opener = null;
     startTransition(async () => {
       const result = await createCustomerPortalSession();
-      handleResult(result);
+      if (result.ok) {
+        if (tab) tab.location.href = result.url;
+        else window.location.href = result.url;
+        return;
+      }
+      if (tab) tab.close();
+      setError(result.message);
     });
   }
 

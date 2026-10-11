@@ -105,7 +105,7 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
           </button>
           <button data-qc-variant="ghost" type="button" onClick={onManage} disabled={manageDisabled}
             title="Cancel, update card, or view invoices"
-            className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]">
+            className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]">
             Manage subscription
           </button>
         </div>
