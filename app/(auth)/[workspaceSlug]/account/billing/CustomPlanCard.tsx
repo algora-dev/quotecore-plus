@@ -32,7 +32,7 @@ function codeLabel(code: string): string {
   return code.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-interface SetupInfo { monthlyCents: number; currency: 'USD' | 'NZD'; componentCodes: string[] }
+interface SetupInfo { monthlyCents: number; currency: 'USD' | 'NZD'; componentCodes: string[]; creditBalanceCents: number }
 type PreviewState = { direction: string; currentMonthlyCents: number; newMonthlyCents: number; proratedTodayCents: number; newRows: { productName: string; monthlyCents: number }[] };
 
 export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
@@ -52,7 +52,7 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
 
   useEffect(() => {
     let live = true;
-    loadCustomSetupInfo().then(result => { if (live && result.ok) setInfo({ monthlyCents: result.monthlyCents ?? 0, currency: (result.currency ?? 'USD').toUpperCase() === 'NZD' ? 'NZD' : 'USD', componentCodes: result.componentCodes ?? [] }); });
+    loadCustomSetupInfo().then(result => { if (live && result.ok) setInfo({ monthlyCents: result.monthlyCents ?? 0, currency: (result.currency ?? 'USD').toUpperCase() === 'NZD' ? 'NZD' : 'USD', componentCodes: result.componentCodes ?? [], creditBalanceCents: result.creditBalanceCents ?? 0 }); });
     return () => { live = false; };
   }, [reload]);
 
@@ -97,8 +97,14 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
             {info ? `${formatMoney(info.monthlyCents)}/mo · ${info.componentCodes.length} components` : 'Loading your setup…'}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-800">active</span>
+            <span className="inline-block text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-100 text-emerald-800">active</span>
             {renewal && <span className="text-xs text-slate-500">Renews {renewal}</span>}
+            {info && info.creditBalanceCents > 0 && (
+              <span title="Automatically applied to your next invoices until it's used up" className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Credit {formatMoney(info.creditBalanceCents)}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -163,7 +169,7 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
               Adjust choices
             </button>
           </div>
-          <p className="mt-2 text-xs text-slate-500">The exact prorated amount is calculated by our payment provider at confirmation. Your billing period and already-used allowances are unchanged.</p>
+          <p className="mt-2 text-xs text-slate-500">The exact prorated amount is calculated by our payment provider at confirmation. Your billing period and already-used allowances are unchanged.{info && info.creditBalanceCents > 0 ? ` Your ${formatMoney(info.creditBalanceCents)} account credit is applied first.` : ''}</p>
         </div>
       )}
 

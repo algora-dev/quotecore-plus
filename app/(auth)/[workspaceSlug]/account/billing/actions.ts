@@ -532,17 +532,24 @@ export async function applyCustomSetupChange(rawSetup: string): Promise<{ ok: bo
   return { ok: true, message: `Your setup is now $${(result.newMonthlyCents / 100).toFixed(0)}/mo. ${today}` };
 }
 
-/** Itemised custom-plan info for the billing card. Reads the reconciled snapshot only. */
-export async function loadCustomSetupInfo(): Promise<{ ok: boolean; monthlyCents?: number; currency?: string; componentCodes?: string[] }> {
+/** Itemised custom-plan info for the billing card. Reads the reconciled snapshot only.
+ * Also surfaces the Stripe customer credit balance (negative balance = credit) so the
+ * card can show money the provider will apply to future invoices. */
+export async function loadCustomSetupInfo(): Promise<{ ok: boolean; monthlyCents?: number; currency?: string; componentCodes?: string[]; creditBalanceCents?: number }> {
   try {
     const { profile } = await loadCompanyContext();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const admin = createAdminClient() as any;
     const { data } = await admin.from('company_custom_billing')
-      .select('monthly_cents, currency, component_codes')
+      .select('monthly_cents, currency, component_codes, stripe_customer_id')
       .eq('company_id', profile.company_id).maybeSingle();
     if (!data) return { ok: false };
-    return { ok: true, monthlyCents: Number(data.monthly_cents ?? 0), currency: String(data.currency ?? 'usd'), componentCodes: Array.isArray(data.component_codes) ? data.component_codes as string[] : [] };
+    let creditBalanceCents = 0;
+    try {
+      const customer = await requireStripe().customers.retrieve(String(data.stripe_customer_id ?? ''));
+      if (customer && !('deleted' in customer)) creditBalanceCents = Math.max(0, -((customer as { balance?: number }).balance ?? 0));
+    } catch { /* credit display is best-effort; never block the card */ }
+    return { ok: true, monthlyCents: Number(data.monthly_cents ?? 0), currency: String(data.currency ?? 'usd'), componentCodes: Array.isArray(data.component_codes) ? data.component_codes as string[] : [], creditBalanceCents };
   } catch {
     return { ok: false };
   }
