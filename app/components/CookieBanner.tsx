@@ -77,7 +77,7 @@ export function CookieBanner() {
     <div
       role="region"
       aria-label="Cookie notice"
-      className="fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50"
+      className="qcp-cookie-notice fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50"
     >
       <div className="rounded-2xl border border-white/[0.08] bg-[rgba(13,16,20,0.94)] backdrop-blur-[12px] p-4 space-y-3 shadow-[0_20px_56px_rgba(0,0,0,0.4)]">
         <div className="flex items-start gap-3">

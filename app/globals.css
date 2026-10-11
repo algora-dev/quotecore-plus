@@ -674,3 +674,11 @@ html[data-takeoff-immersive='touch'] input:not(:disabled):active {
 @media (prefers-reduced-motion: reduce) {
   .qc-glint::after { transition: none; }
 }
+
+/* Cookie UI de-duplication: marketing pages render CookieConsent (the full
+   accept/reject/manage UI) as the active cookie surface, so the global
+   CookieBanner notice is redundant there. The (marketing) layout renders a
+   hidden [data-qcp-consent-scope] sentinel; when present, hide the notice. */
+body:has([data-qcp-consent-scope]) .qcp-cookie-notice {
+  display: none;
+}

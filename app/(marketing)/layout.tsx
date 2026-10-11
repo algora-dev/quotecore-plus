@@ -78,6 +78,9 @@ export default function MarketingLayout({
       <Analytics />
       <AttributionTracker />
       <QuoteCorePlusStyler />
+      {/* Marketing pages run CookieConsent as the cookie UI, so the global
+          notice banner hides itself here (see :has rule in globals.css). */}
+      <div hidden data-qcp-consent-scope />
       <CookieConsent />
       <SiteAssistant />
       {/* Google Analytics 4 */}
