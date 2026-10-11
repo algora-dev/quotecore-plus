@@ -16,6 +16,12 @@ const SPEAK_ENDPOINT = '/api/smart-assistant/v2/speak';
 /** Must match TTS_CONFIG.maxInputChars on the speak route. Longer replies stay
  * on the free browser path (chunked), so no reply is ever silently truncated. */
 const PREMIUM_MAX_CHARS = 4000;
+/** Minimal silent WAV (8kHz 8-bit mono, 2 samples) used to unlock audio playback
+ *  inside a user gesture on iOS/Safari. Programmatic play() is rejected with
+ *  NotAllowedError unless the SAME element first played during a gesture; replies
+ *  arrive asynchronously after the mic tap, so auto-speak always failed on iPhone
+ *  ("Audio could not play...") even though manual Read aloud worked. */
+const SILENCE_WAV = 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
 
 /** Owner feedback 2026-09-29: the raw device list is long and mostly robotic.
  * Offer only a few high-quality natural voices, never novelty/robot voices.
@@ -62,11 +68,38 @@ export function useSpeechPlayback(visible: boolean, storageKey: string, ttsKey: 
   const audioUrl = useRef<string | null>(null);
   const permitted = useRef(visible);
   useEffect(() => { permitted.current = visible; }, [visible]);
+  const audioUnlocked = useRef(false);
+  // iOS autoplay unlock (owner 2026-10-10): play ~silence on the PERSISTENT premium
+  // audio element during the first real gesture, so every later programmatic
+  // auto-speak reusing that element is permitted. Skipped while a reply is
+  // already playing so it never interrupts live audio; retried next gesture if
+  // it fails. Harmless no-op on desktop/Android.
+  useEffect(() => {
+    if (!visible) return;
+    const unlock = () => {
+      if (audioUnlocked.current) return;
+      if (status.current !== 'off' && status.current !== 'error') return;
+      try {
+        const el = audioEl.current ?? (audioEl.current = new Audio());
+        el.src = SILENCE_WAV;
+        const done = () => { try { el.pause(); el.removeAttribute('src'); el.load(); } catch { /* platform audio failure is not a task failure */ } };
+        el.play().then(() => { audioUnlocked.current = true; done(); }).catch(() => { /* not unlocked - retry on the next gesture */ });
+      } catch { /* platform audio failure is not a task failure */ }
+    };
+    document.addEventListener('pointerdown', unlock, true);
+    document.addEventListener('touchend', unlock, true);
+    return () => {
+      document.removeEventListener('pointerdown', unlock, true);
+      document.removeEventListener('touchend', unlock, true);
+    };
+  }, [visible]);
   const considered = useRef(new Set<string>());
   const startTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transition = useCallback((next: SpeechPlaybackState) => { status.current = next; setState(next); }, []);
   const releaseAudio = useCallback(() => {
-    const audio = audioEl.current; audioEl.current = null;
+    // Keep the element: iOS unlock is per-element, so the premium element must
+    // persist for the lifetime of the widget. Only stop and detach the source.
+    const audio = audioEl.current;
     if (audio) { try { audio.pause(); audio.removeAttribute('src'); audio.load(); } catch { /* platform audio failure is not a task failure */ } }
     if (audioUrl.current) { URL.revokeObjectURL(audioUrl.current); audioUrl.current = null; }
   }, []);
@@ -211,8 +244,12 @@ export function useSpeechPlayback(visible: boolean, storageKey: string, ttsKey: 
       const blob = await res.blob();
       if (generation !== ticket.current) return;
       const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audioEl.current = audio; audioUrl.current = url;
+      // Reuse the persistent element (iOS permits play only on elements unlocked
+      // inside a gesture - see the unlock effect above).
+      const audio = audioEl.current ?? (audioEl.current = new Audio());
+      audioEl.current = audio;
+      audio.src = url;
+      audioUrl.current = url;
       audio.onplaying = () => { if (generation === ticket.current) transition('speaking'); };
       audio.onended = () => {
         if (generation !== ticket.current) return;
