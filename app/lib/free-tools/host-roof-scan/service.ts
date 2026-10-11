@@ -63,9 +63,9 @@ export class HostOutlineService {
     }
     async prepare(args: unknown): Promise<ToolResult> {
         const a = object(args, 'Input');
-        keys(a, ['plan', 'planToken']);
-        if (Boolean(a.plan) === Boolean(a.planToken))
-            throw new ScanError('INVALID_INPUT', 'Supply either a plan file or a planToken from the upload panel, but not both.');
+        keys(a, ['plan', 'planToken', 'image_data']);
+        if ([a.plan, a.planToken, a.image_data].filter(v => v !== undefined).length !== 1)
+            throw new ScanError('INVALID_INPUT', 'Supply exactly one of plan, planToken, or image_data.');
         let planToken: string;
         if (a.plan) {
             if (typeof a.plan === 'string') throw new ScanError('FILE_TRANSFER_REQUIRED', 'The connector supplied a string instead of file data. A sandbox path cannot be read by QuoteCore+. Use a supported attachment transfer or upload in the review panel.');
@@ -80,7 +80,16 @@ export class HostOutlineService {
             const up = await this.upload(bytes);
             planToken = up.structuredContent.planToken as string;
         }
-        else
+        else if (a.image_data !== undefined) {
+            const encoded = text(a.image_data, 'image_data', Math.ceil(LIMITS.uploadBytes / 3) * 4 + 64);
+            if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded))
+                throw new ScanError('INVALID_IMAGE_DATA', 'Supply canonical base64 image bytes without a data URL prefix.');
+            const bytes = Buffer.from(encoded, 'base64');
+            if (!bytes.length || bytes.length > LIMITS.uploadBytes)
+                throw new ScanError('FILE_TOO_LARGE', 'Image bytes must be no larger than 3 MiB.', 413);
+            const up = await this.upload(bytes);
+            planToken = up.structuredContent.planToken as string;
+        } else
             planToken = text(a.planToken, 'planToken', LIMITS.tokenChars);
         const plan = this.tickets.read(planToken, 'plan'), bytes = await this.image(plan);
         const outlinePrompt = buildV3OutlinePrompt(plan.frame.width, plan.frame.height)

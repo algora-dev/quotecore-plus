@@ -28,7 +28,8 @@ const measured = z.object({
 export const inputShapes = {
     qc_prepare_roof_outline: {
         plan: file.optional().describe('User-supplied image file. Supply this OR planToken, never both.'),
-        planToken: token.optional().describe('Temporary reference from the upload panel. Supply this OR plan.'),
+        planToken: token.optional().describe('Temporary reference from the upload panel. Supply exactly one input.'),
+        image_data: z.string().max(4 * 1024 * 1024 + 64).optional().describe('Base64-encoded PNG, JPEG or WebP bytes (not a local file path). Alternative to plan or planToken; maximum decoded size 3 MiB.'),
     },
     qc_get_roof_outline_image: { planToken: token.describe('Use the same planToken returned by prepare. Returns that exact image as content only.') },
     qc_submit_roof_outline: {

@@ -55,7 +55,7 @@ export async function guardHostOutlineRpc(request: Request, rpc: RpcEnvelope): P
 export async function guardHostOutlineUpload(request: Request, rpc: RpcEnvelope): Promise<void> {
     if (rpc.method === 'tools/call' && rpc.params?.name === 'qc_prepare_roof_outline') {
         const args = rpc.params.arguments;
-        if (args && typeof args === 'object' && !Array.isArray(args) && (args as Record<string, unknown>).plan)
+        if (args && typeof args === 'object' && !Array.isArray(args) && ((args as Record<string, unknown>).plan || (args as Record<string, unknown>).image_data))
             await guard(request, 'upload');
     }
 }

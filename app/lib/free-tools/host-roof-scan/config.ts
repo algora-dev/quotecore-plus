@@ -41,7 +41,10 @@ export function exactHttpsOrigins(value: string | undefined, field: string): str
 
 export function assertAllowedOrigin(request: Request, env: Environment = process.env): void {
     const source = request.headers.get('origin');
-    const allowed = [canonicalOrigin(env), ...exactHttpsOrigins(env.QC_HOST_SCAN_UI_ORIGINS, 'QC_HOST_SCAN_UI_ORIGINS')];
+    // Browser same-origin requests are valid even when a preview alias differs from
+    // the configured canonical URL. The server's URL is not taken from X-Forwarded-Host.
+    const requestOrigin = new URL(request.url).origin;
+    const allowed = [canonicalOrigin(env), requestOrigin, ...exactHttpsOrigins(env.QC_HOST_SCAN_UI_ORIGINS, 'QC_HOST_SCAN_UI_ORIGINS')];
     // Sandboxed MCP Apps may have an opaque Origin:null. It is not an identity or an authorization claim.
     if (source && source !== 'null' && !allowed.includes(source))
         throw new ScanError('ORIGIN_NOT_ALLOWED', 'This request origin is not allowed.', 403);
