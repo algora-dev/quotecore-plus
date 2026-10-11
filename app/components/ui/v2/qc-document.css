@@ -39,6 +39,14 @@
 .qc-document-paper { background: white; padding: 24px; min-width: 480px; border: 1px solid var(--qc-border-divider); border-radius: 2px; box-shadow: var(--qc-shadow-raised); }
 .qc-document-paper--invoice, .qc-document-paper--visual { padding: 0; border: 0; background: transparent; box-shadow: none; min-width: 560px; }
 .qc-document-paper--visual { max-width: 210mm; margin: 0 auto; }
+/* Owner 2026-10-10 (mobile): the paper must shrink to the available width on
+   narrow screens - a user should never scroll sideways to read a document
+   preview. Below ~640px of workspace the fixed 480/560px minimums would
+   overflow, so they are dropped and the paper reflows to fit. */
+@container qc-document (max-width: 639px) {
+  .qc-document-paper { min-width: 0; }
+  .qc-document-paper--invoice, .qc-document-paper--visual { min-width: 0; }
+}
 .qc-document-preview-scroll:focus-visible { outline-offset: -4px; }
 .qc-document-panel-content { padding: 20px; }
 .qc-document-imports { display: flex; flex-wrap: wrap; gap: 8px; }
