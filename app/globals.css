@@ -76,11 +76,18 @@ a,
   }
 }
 
-.icon-btn:hover:not(:disabled) {
-  color: #FF6B35;
-  background: rgba(255, 107, 53, 0.08);
-  border-color: rgba(255, 107, 53, 0.35);
-  box-shadow: 0 0 12px rgba(255, 107, 53, 0.45);
+/* Owner 2026-10-10 (mobile touch): hand-written :hover rules used to fire and
+   STICK on iOS/touch devices (first tap applies hover, nothing un-applies it),
+   producing the "weird orange overlay / glowing envelope icon" artifacts.
+   Hover treatments are now hover-capable-pointer only; touch keeps :active
+   feedback which iOS clears on release. */
+@media (hover: hover) {
+  .icon-btn:hover:not(:disabled) {
+    color: #FF6B35;
+    background: rgba(255, 107, 53, 0.08);
+    border-color: rgba(255, 107, 53, 0.35);
+    box-shadow: 0 0 12px rgba(255, 107, 53, 0.45);
+  }
 }
 
 .icon-btn:focus-visible {
@@ -93,12 +100,14 @@ a,
   cursor: not-allowed;
 }
 
-.icon-btn--danger:hover:not(:disabled) {
-  color: rgb(220 38 38); /* red-600 */
-  background: rgba(254, 226, 226, 0.85); /* red-100/85 */
-  border-color: rgba(252, 165, 165, 0.8); /* red-300/80 */
-  /* Keep an orange-tinged glow so the family of action buttons feels cohesive */
-  box-shadow: 0 0 12px rgba(255, 107, 53, 0.45);
+@media (hover: hover) {
+  .icon-btn--danger:hover:not(:disabled) {
+    color: rgb(220 38 38); /* red-600 */
+    background: rgba(254, 226, 226, 0.85); /* red-100/85 */
+    border-color: rgba(252, 165, 165, 0.8); /* red-300/80 */
+    /* Keep an orange-tinged glow so the family of action buttons feels cohesive */
+    box-shadow: 0 0 12px rgba(255, 107, 53, 0.45);
+  }
 }
 
 /* Premium pill shimmer effect.
@@ -137,13 +146,15 @@ a,
      so transform is free to transition independently). */
   transition: transform 0.15s ease-out;
 }
-.assistant-launcher:hover {
-  /* Match the app's black-button orange glow on hover (stronger than the
-     resting pulse), lift the float, and enlarge slightly + quickly. */
-  animation-play-state: paused;
-  transform: scale(1.12);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.32),
-              0 0 16px 4px rgba(255, 107, 53, 0.55);
+@media (hover: hover) {
+  .assistant-launcher:hover {
+    /* Match the app's black-button orange glow on hover (stronger than the
+       resting pulse), lift the float, and enlarge slightly + quickly. */
+    animation-play-state: paused;
+    transform: scale(1.12);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.32),
+                0 0 16px 4px rgba(255, 107, 53, 0.55);
+  }
 }
 
 @keyframes shimmer {
@@ -214,9 +225,11 @@ a,
   flex-shrink: 0;
   position: relative;
 }
-.toggle-dot:hover:not(:disabled) {
-  border-color: #f97316;
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+@media (hover: hover) {
+  .toggle-dot:hover:not(:disabled) {
+    border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+  }
 }
 .toggle-dot:checked {
   border-color: #f97316;
