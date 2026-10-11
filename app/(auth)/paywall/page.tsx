@@ -8,6 +8,8 @@ import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
 import { loadBillingPlans } from '@/app/lib/billing/paywall-plans';
+import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
+import { customStripeMode } from '@/app/lib/billing/custom/environment';
 import { BillingPanel } from '@/app/(auth)/[workspaceSlug]/account/billing/BillingPanel';
 import { CustomSetupPayCard } from '@/app/components/billing/CustomSetupPayCard';
 
@@ -89,8 +91,9 @@ export default async function PaywallPage() {
         <div className="mt-8">
           {/* Configured-setup pay card (V5 pricing tool). Renders only when the
               visitor carries a stored calculator setup; one pay CTA, amounts
-              re-verified server-side against the price registry. */}
-          <CustomSetupPayCard />
+              re-verified server-side against the price registry. Test checkout
+              runs on the stage-approved catalogue exactly like the server action. */}
+          <CustomSetupPayCard catalog={customStripeMode() === 'test' ? { ...PREVIEW_CATALOG, stage: 'approved' } : PREVIEW_CATALOG} />
           <QcJourneySteps steps={["Account", "Workspace", "Subscription"]} current={2} label="Getting started" />
           <BillingPanel context="activation"
             effectivePlanCode={entitlements.effectivePlanCode}

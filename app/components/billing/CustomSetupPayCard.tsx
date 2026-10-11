@@ -17,6 +17,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
+import type { CalculatorCatalog } from '@/app/components/pricing/calculator/types';
 import {
   SETUP_QUERY_KEY,
   restoreSetup,
@@ -33,7 +34,7 @@ function formatUsd(cents: number): string {
   return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
-export function CustomSetupPayCard() {
+export function CustomSetupPayCard({ catalog = PREVIEW_CATALOG }: { catalog?: CalculatorCatalog } = {}) {
   const [raw, setRaw] = useState<string | null>(null);
   const [intent, setIntent] = useState<PlanIntent | null>(null);
   const [checkoutState, setCheckoutState] = useState<'idle' | 'success' | 'canceled'>('idle');
@@ -65,8 +66,8 @@ export function CustomSetupPayCard() {
   let rows: { productName: string; priceLabel: string; monthlyCents: number }[] = [];
   let total = 0;
   try {
-    const result = resolveIntent(intent, PREVIEW_CATALOG);
-    rows = expandBillingSelection(result, PREVIEW_CATALOG).map(r => ({
+    const result = resolveIntent(intent, catalog);
+    rows = expandBillingSelection(result, catalog).map(r => ({
       productName: r.productName, priceLabel: r.priceLabel, monthlyCents: r.monthlyCents,
     }));
     total = result.monthlyCents;
