@@ -12,7 +12,7 @@ export type ComponentChanges = {
 export const LIBRARY_MEASUREMENT_TYPES = ['area', 'linear', 'quantity', 'fixed', 'lineal', 'count', 'hours_days'] as const;
 export const LIBRARY_PITCH_TYPES = ['none', 'rafter', 'valley_hip'] as const;
 export const LIBRARY_WASTE_TYPES = ['none', 'percent', 'fixed'] as const;
-export const LIBRARY_SOLD_BY = ['area', 'per_unit'] as const;
+export const LIBRARY_SOLD_BY = ['area', 'lineal'] as const;
 export type LibraryChanges = {
     name?: string;
     measurement_type?: typeof LIBRARY_MEASUREMENT_TYPES[number];
@@ -162,8 +162,8 @@ export function parseLibraryCreate(value: unknown): LibraryCreateInput {
     if (sold_by !== null && !LIBRARY_SOLD_BY.includes(sold_by as never))
         throw new ProposalError(`Sold-as basis must be one of: ${LIBRARY_SOLD_BY.join(', ')}.`);
     const cover = value.cover_width_mm === undefined || value.cover_width_mm === null ? null : finite(value.cover_width_mm, 'cover_width_mm', 1, 10000);
-    if (sold_by === 'per_unit' && cover !== null)
-        throw new ProposalError('Cover width only applies to area-sold components with a lineal display basis.');
+    if (sold_by !== null && sold_by !== 'lineal' && cover !== null)
+        throw new ProposalError('Cover width only applies to components sold as lineal.');
     const collection_id = value.collection_id === undefined || value.collection_id === null ? null : value.collection_id;
     if (collection_id !== null && !isUuid(collection_id))
         throw new ProposalError('The collection must be a valid ID from the workspace library list.');

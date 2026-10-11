@@ -251,7 +251,7 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
             waste_percent: { type: 'number', minimum: 0, maximum: 100 },
             waste_fixed: { type: 'number', minimum: 0, maximum: 100000000 },
             pitch_type: { type: 'string', enum: ['none', 'rafter', 'valley_hip'] },
-            sold_by: { type: 'string', enum: ['area', 'per_unit'] },
+            sold_by: { type: 'string', enum: ['area', 'lineal'] },
             cover_width_mm: { type: 'number', minimum: 1, maximum: 10000 },
             collection_id: { type: ['string', 'null'], format: 'uuid' },
             collection_name: { type: ['string', 'null'], maxLength: 160 },

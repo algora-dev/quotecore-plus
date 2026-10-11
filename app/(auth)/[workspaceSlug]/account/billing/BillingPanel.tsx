@@ -23,6 +23,7 @@ import {
   changePlan,
   type BillingActionResult,
 } from './actions';
+import { CustomPlanCard } from './CustomPlanCard';
 
 export interface BillingPlanInfo {
   code: string;
@@ -446,7 +447,11 @@ export function BillingPanel(props: BillingPanelProps) {
           </button>
         </div>
       )}
-      {/* Current plan card */}
+      {/* Current plan card: custom subscribers see the custom-plan card with the
+          change-setup calculator; legacy subscribers see the tier card. */}
+      {props.customUsage ? (
+        <CustomPlanCard currentPeriodEnd={props.currentPeriodEnd} onManage={onManage} manageDisabled={pending || !props.hasStripeCustomer} />
+      ) : (
       <div className="qc-flow-panel">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -517,6 +522,7 @@ export function BillingPanel(props: BillingPanelProps) {
           </div>
         </dl>
       </div>
+      )}
 
       {/* Plan grid - hidden on V5-pricing-only deployments (testing). */}
       {!props.hideLegacyPlans && (

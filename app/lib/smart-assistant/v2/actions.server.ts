@@ -96,6 +96,7 @@ const measurementLabel = (code: string): string => ({ area: 'Area (m²)', linear
 const pitchLabel = (code: string): string => ({ none: 'No pitch factor', rafter: 'Rafter pitch', valley_hip: 'Valley/hip pitch' } as Record<string, string>)[code] ?? code;
 const wasteLabel = (type: string, percent: unknown, fixed: unknown): string => type === 'percent' ? `${String(Number(String(percent ?? 0)))}%` : type === 'fixed' ? `Fixed ${String(Number(String(fixed ?? 0)))}` : 'None';
 const plainNumber = (value: unknown): number => { const n = typeof value === 'number' ? value : Number(value); return Number.isFinite(n) ? n : 0; };
+const soldLabel = (value: unknown): string => value === 'area' ? 'Area' : value === 'lineal' ? 'Lineal' : 'Per unit';
 export async function proposeLibraryComponentChange(client: SupabaseClient, access: Access, runId: string, args: Record<string, unknown>): Promise<ActionView> {
     const changes = parseLibraryChanges(args.changes);
     if (!isUuid(args.component_id))
@@ -136,7 +137,7 @@ export async function proposeLibraryComponentChange(client: SupabaseClient, acce
     if (changes.pitch_type !== undefined && fields.default_pitch_type !== String(lib.default_pitch_type ?? ''))
         diff.push({ label: 'Pitch factor', before: pitchLabel(String(lib.default_pitch_type ?? '')), after: pitchLabel(String(fields.default_pitch_type)) });
     if (changes.sold_by !== undefined && fields.sold_by !== (lib.sold_by === null || lib.sold_by === undefined ? null : String(lib.sold_by)))
-        diff.push({ label: 'Sold as', before: String(lib.sold_by ?? 'per unit'), after: String(fields.sold_by ?? 'per unit') });
+        diff.push({ label: 'Sold as', before: soldLabel(lib.sold_by), after: soldLabel(fields.sold_by) });
     if (changes.cover_width_mm !== undefined && fields.cover_width_mm !== (lib.cover_width_mm === null || lib.cover_width_mm === undefined ? null : plainNumber(lib.cover_width_mm)))
         diff.push({ label: 'Cover width (mm)', before: String(plainNumber(lib.cover_width_mm)), after: String(fields.cover_width_mm) });
     if (changes.is_active !== undefined && fields.is_active !== (lib.is_active === true))
@@ -203,7 +204,7 @@ export async function proposeLibraryComponentCreate(client: SupabaseClient, acce
         { label: 'Pitch factor', before: '—', after: pitchLabel(input.pitch_type) },
     ];
     if (input.sold_by !== null)
-        changes.push({ label: 'Sold as', before: '—', after: input.sold_by === 'area' ? 'Area' : 'Per unit' });
+        changes.push({ label: 'Sold as', before: '—', after: soldLabel(input.sold_by) });
     if (input.cover_width_mm !== null)
         changes.push({ label: 'Cover width (mm)', before: '—', after: String(input.cover_width_mm) });
     return storeProposal(access, runId, { kind: 'library_create', target: null, targetKind: 'library', targetId: id, sections: ['components'], before: { collection: { id: collection.id, name: collection.name }, duplicate_check: existing.length }, after: { component },

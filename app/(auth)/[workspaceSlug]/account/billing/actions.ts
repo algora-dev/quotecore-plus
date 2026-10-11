@@ -27,6 +27,7 @@ import {
   resolveStripeCheckoutForPlan,
 } from '@/app/lib/billing/stripe';
 import { createCustomCheckoutSession as runCustomCheckout } from '@/app/lib/billing/custom/checkout';
+import { previewCustomSetupChange as previewChange, changeCustomSetup as runChange } from '@/app/lib/billing/custom/update';
 import { isLegacyBillingCompany } from '@/app/lib/billing/custom/legacy-boundary';
 
 /**
@@ -483,17 +484,66 @@ export async function createCustomCheckoutSession(
 }
 
 /**
- * Safety stop until the account confirmation UI + provider invoice preview and
- * period-end schedule workflow are available. The previous action applied
- * downgrades immediately and marked unpaid changes complete. Never restore it.
+ * Existing custom-subscriber setup change (2026-10-11): the Billing calculator
+ * dialog calls preview first, then the explicit confirm below. The server
+ * re-validates the setup against the pinned catalogue and registry, swaps the
+ * Stripe subscription items with proration, and reconciles the new selection
+ * with an unchanged paid period. Access changes only ever land through the
+ * verified provider state - never client payloads.
  */
-export async function applyCustomSetupChange(rawSetup: string): Promise<{ ok: boolean; message: string }> {
-  void rawSetup;
+export async function previewCustomSetupChange(
+  rawSetup: string,
+): Promise<{ ok: boolean; message: string; direction?: string; currentMonthlyCents?: number; newMonthlyCents?: number; proratedTodayCents?: number; newRows?: { productName: string; monthlyCents: number }[] }> {
+  if (!rawSetup || typeof rawSetup !== 'string' || rawSetup.length > 4096)
+    return { ok: false, message: 'Your pricing setup could not be restored. Please re-run the pricing tool.' };
+  let companyId: string;
   try {
     const { profile } = await loadCompanyContext();
     await assertDemoExternalAllowed(profile.company_id);
+    companyId = profile.company_id;
   } catch {
     return { ok: false, message: 'Please sign in to manage billing.' };
   }
-  return { ok: false, message: 'Setup changes are not enabled yet. Your current subscription and allowances are unchanged. Contact our team for help.' };
+  const result = await previewChange({ rawSetup, companyId });
+  return result.ok
+    ? { ok: true, message: 'Preview ready.', direction: result.direction, currentMonthlyCents: result.currentMonthlyCents, newMonthlyCents: result.newMonthlyCents, proratedTodayCents: result.proratedTodayCents, newRows: result.newRows }
+    : { ok: false, message: result.message };
+}
+
+export async function applyCustomSetupChange(rawSetup: string): Promise<{ ok: boolean; message: string }> {
+  if (!rawSetup || typeof rawSetup !== 'string' || rawSetup.length > 4096)
+    return { ok: false, message: 'Your pricing setup could not be restored. Please re-run the pricing tool.' };
+  let profileId: string, companyId: string;
+  try {
+    const ctx = await loadCompanyContext();
+    await assertDemoExternalAllowed(ctx.profile.company_id);
+    profileId = ctx.profile.id;
+    companyId = ctx.profile.company_id;
+  } catch {
+    return { ok: false, message: 'Please sign in to manage billing.' };
+  }
+  const result = await runChange({ rawSetup, companyId, userId: profileId });
+  if (!result.ok) return { ok: false, message: result.message };
+  if (result.result !== 'ok:custom_change')
+    return { ok: true, message: `Subscription updated to $${(result.newMonthlyCents / 100).toFixed(0)}/mo. Your allowances switch as soon as our team confirms the change.` };
+  const today = result.proratedTodayCents === 0 ? 'No immediate charge.' : result.proratedTodayCents > 0
+    ? `Charged today (prorated): $${(result.proratedTodayCents / 100).toFixed(2)}.`
+    : `Credited on your next invoice (prorated): $${(Math.abs(result.proratedTodayCents) / 100).toFixed(2)}.`;
+  return { ok: true, message: `Your setup is now $${(result.newMonthlyCents / 100).toFixed(0)}/mo. ${today}` };
+}
+
+/** Itemised custom-plan info for the billing card. Reads the reconciled snapshot only. */
+export async function loadCustomSetupInfo(): Promise<{ ok: boolean; monthlyCents?: number; currency?: string; componentCodes?: string[] }> {
+  try {
+    const { profile } = await loadCompanyContext();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = createAdminClient() as any;
+    const { data } = await admin.from('company_custom_billing')
+      .select('monthly_cents, currency, component_codes')
+      .eq('company_id', profile.company_id).maybeSingle();
+    if (!data) return { ok: false };
+    return { ok: true, monthlyCents: Number(data.monthly_cents ?? 0), currency: String(data.currency ?? 'usd'), componentCodes: Array.isArray(data.component_codes) ? data.component_codes as string[] : [] };
+  } catch {
+    return { ok: false };
+  }
 }
