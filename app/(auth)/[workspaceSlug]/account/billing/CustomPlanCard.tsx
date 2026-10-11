@@ -8,7 +8,7 @@
  * the existing "Your setup usage" panel above this card.
  */
 
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { FocusDialog } from '@/app/components/pricing/calculator/FocusDialog';
 import { PricingCalculator } from '@/app/components/pricing/calculator/PricingCalculator';
@@ -48,13 +48,13 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
   const [error, setError] = useState('');
   const [done, setDone] = useState('');
   const [confirming, startConfirm] = useTransition();
-  const reloadRef = useRef(0);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let live = true;
     loadCustomSetupInfo().then(result => { if (live && result.ok) setInfo({ monthlyCents: result.monthlyCents ?? 0, currency: (result.currency ?? 'USD').toUpperCase() === 'NZD' ? 'NZD' : 'USD', componentCodes: result.componentCodes ?? [] }); });
     return () => { live = false; };
-  }, [reloadRef]);
+  }, [reload]);
 
   const closeDialog = useCallback(() => { setOpen(false); setPreview(null); setError(''); setRaw(''); }, []);
 
@@ -79,7 +79,7 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
       if (!result.ok) { setError(result.message); return; }
       setDone(result.message);
       setPreview(null);
-      reloadRef.current++;
+      setReload(n => n + 1); // refetch card info: effect keyed on state, not a ref (stale-card bug 2026-10-11)
       router.refresh();
       setTimeout(() => closeDialog(), 2600);
     });
