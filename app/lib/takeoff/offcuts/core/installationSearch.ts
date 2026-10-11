@@ -1,3 +1,4 @@
+import { searchPairedReceiverFamilies, type PairedReceiverSearchReport } from './pairedReceiverSearch';
 /** Optional anchored reversal. Every trial starts from a clean material tree;
  * changing a donor invalidates its old descendants rather than reusing them twice.
  * The existing selected plan is immutable and does not compete in this search. */
@@ -20,7 +21,7 @@ import { fingerprint } from './math';
 
 export const INSTALLATION_SEARCH_POLICY=Object.freeze({model:'anchored-donor-search-v1' as const,defaultMilliseconds:20000,maximumMilliseconds:25000,maximumTrials:24,maximumPlans:3});
 export interface InstallationSearchOptions {previous:Solution;attempt?:number;maxMilliseconds?:number}
-export interface InstallationSearchReport {model:typeof INSTALLATION_SEARCH_POLICY.model;referenceLayoutId:string;inputFingerprint:string;status:'found'|'no-distinct-plan';elapsedMs:number;budgetReached:boolean;trialsPlanned:number;trialsTried:number;validatedCount:number;rejectedCount:number;trials:Array<{id:string;valid:boolean;reason:string;linealM?:number;newSheets?:number}>}
+export interface InstallationSearchReport {pairedReceiverSearches?:PairedReceiverSearchReport[];model:typeof INSTALLATION_SEARCH_POLICY.model;referenceLayoutId:string;inputFingerprint:string;status:'found'|'no-distinct-plan';elapsedMs:number;budgetReached:boolean;trialsPlanned:number;trialsTried:number;validatedCount:number;rejectedCount:number;trials:Array<{id:string;valid:boolean;reason:string;linealM?:number;newSheets?:number}>}
 export interface InstallationSearchResult {plans:Solution[];report:InstallationSearchReport}
 const clone=<T>(x:T):T=>structuredClone(x);
 class InstallationDeadline extends Error{constructor(){super('Offcut search cancelled at installation search deadline.');this.name='InstallationDeadline';}}
@@ -150,9 +151,9 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
   const check=()=>{if(hooks.shouldCancel?.())throw new Error('Offcut search cancelled.');if(elapsed()>=limit)throw new InstallationDeadline();return false;};
   const plans:Solution[]=[],seen=new Set([planSignature(previous)]);
   const accept=(s:Solution,id:string)=>{
-    check();s.engineVersion='2.25';s.objective='installation';s.layoutId=planSignature(s);
+    check();s.engineVersion='2.26';s.objective='installation';s.layoutId=planSignature(s);
     const errors=validateDraft({schemaVersion:1,...r,solution:s}).filter(i=>i.severity==='error');
-    if(!errors.length&&s.installationPlan?.kind==='reversed-donors'){const cert=certifyReversedFamilies(previous,s,s.installationPlan.donorFaceIds,s.installationPlan.receiverFaceIds);if(!cert.valid){report.rejectedCount++;report.trials.push({id,valid:false,reason:cert.reason});return;}}
+    if(!errors.length&&s.installationPlan?.kind==='reversed-donors'&&!s.installationPlan.pairedReceiver){report.rejectedCount++;report.trials.push({id,valid:false,reason:'missing-paired-receiver-certificate'});return;}
     if(errors.length){report.rejectedCount++;report.trials.push({id,valid:false,reason:errors.map(e=>e.code).join(',')});return;}
     report.validatedCount++;const width=r.profile.coverMm+r.profile.leftLapMm+r.profile.rightLapMm;
     report.trials.push({id,valid:true,reason:seen.has(s.layoutId)?'duplicate-physical-plan':'checked',linealM:s.metrics.newMaterialMm2/width/1000,newSheets:s.metrics.newSheetCount});
@@ -167,15 +168,19 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
       check();report.trialsTried++;hooks.onProgress?.(report.trialsTried-1,report.trialsPlanned);
       try{
         const s=optimiseBankLayouts(r,{...hooks,bankVariant:variant,shouldCancel:check,onPortfolioCandidate:undefined,onCheckedCandidate:undefined,onDecisionTrace:undefined,onProgress:undefined,planSearch:{objective:'recommended'}})[0];
-        if(!s)continue;check();s.objective='installation';protectValleyReceivers(r,s,check);
+        if(!s){report.rejectedCount++;report.trials.push({id:variant.id,valid:false,reason:'no-bank-candidate'});continue;}check();s.objective='installation';protectValleyReceivers(r,s,check);
         s.installationPlan={model:INSTALLATION_PLAN_MODEL,kind:'reversed-donors',referenceLayoutId:planSignature(previous),donorFaceIds:variant.installationSetout!.measuredFillerFaceIds,receiverFaceIds:Object.keys(variant.receiverSourceFaceIds??{}),siteSetoutConfirmed:false,reuseEndTrimMm:variant.receiverTrimAllowanceMm??0};
-        s.layoutLabel=variant.receiverTrimAllowanceMm?'Reversed bank · trimming room':'Reversed bank · junction start';
-        accept(s,variant.id);
+        // V2.26: never publish a loose three-piece reversal as a paired plan.
+        // The seed's donors are held fixed while both receiver ends are solved.
+        const paired=searchPairedReceiverFamilies(r,s,()=>{check();});
+        (report.pairedReceiverSearches??=[]).push(paired.report);
+        if(!paired.plans.length){report.rejectedCount++;report.trials.push({id:variant.id,valid:false,reason:Object.keys(paired.report.rejected).join(',')||'no-paired-receiver-plan'});}
+        for(const candidate of paired.plans)accept(candidate,variant.id+'/'+candidate.layoutId);
       }catch(e){if(e instanceof InstallationDeadline||e instanceof Error&&/cancel|time limit/i.test(e.message))throw e;report.rejectedCount++;report.trials.push({id:variant.id,valid:false,reason:e instanceof Error?e.message:String(e)});}
     }
   }catch(e){if(e instanceof InstallationDeadline)report.budgetReached=true;else throw e;}
   if(hooks.shouldCancel?.())throw new Error('Offcut search cancelled.');
-  const starts=plans.filter(s=>s.installationPlan!.kind==='barge-starts'),reversed=plans.filter(s=>s.installationPlan!.kind==='reversed-donors').sort((a,b)=>a.metrics.newMaterialMm2-b.metrics.newMaterialMm2||coherentWorkflow(a).score-coherentWorkflow(b).score);
+  const starts=plans.filter(s=>s.installationPlan!.kind==='barge-starts'),reversed=plans.filter(s=>s.installationPlan!.kind==='reversed-donors').sort((a,b)=>coherentWorkflow(a).score-coherentWorkflow(b).score||a.metrics.newMaterialMm2-b.metrics.newMaterialMm2);
   // No savings floor: an explicitly requested different donor strategy can cost
   // more. Show at most two genuinely different reversals, never fake five roles.
   const selected:Solution[]=[...starts.slice(0,1)];
