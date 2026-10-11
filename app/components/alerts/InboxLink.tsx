@@ -57,11 +57,9 @@ export function InboxLink({ workspaceSlug, unreadCount = 0 }: Props) {
       data-assistant-id="nav-inbox"
       data-copilot="nav-inbox"
       className={`group relative inline-flex items-center justify-center rounded-full p-2 transition-all ${
-        // Owner 2026-10-10: the persistent orange tint + glow on unread read as a
-        // broken "orange overlay" on mobile (it never clears until the inbox is
-        // opened). The badge + its ping already signal unread; the icon itself
-        // now keeps the same quiet hover treatment in both states.
-        'hover:bg-orange-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]'
+        showBadge
+          ? 'bg-orange-50 shadow-[0_0_10px_rgba(255,107,53,0.35)] hover:bg-orange-100'
+          : 'hover:bg-orange-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]'
       }`}
     >
       <svg
