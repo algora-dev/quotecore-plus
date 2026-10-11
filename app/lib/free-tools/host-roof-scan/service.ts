@@ -187,7 +187,7 @@ export class HostOutlineService {
         const reviewed: ReviewTicket = { v: VERSION, kind: 'reviewed', expiresAt: plan.expiresAt, imageId: plan.frame.imageId, imageSha256: plan.frame.sha256, frame: plan.frame, roof_areas: [outline], notes: proposal?.notes ?? [], proposalId: id,
             edited: !proposal || JSON.stringify(proposal.roof_areas[0]) !== JSON.stringify(outline), calibration, reviewedAt: new Date(this.now()).toISOString() };
         const reviewToken = this.tickets.issue(reviewed);
-        return toolResult('reviewed', 'Outline reviewed. This does not certify measurement accuracy or roof pitch.', { reviewToken, plan: plan.frame, outline, measurements: measurements(outline.points, calibration) });
+        return toolResult('reviewed', 'Outline reviewed. This does not certify measurement accuracy or roof pitch.', { reviewToken, plan: plan.frame, outline, measurements: measurements(outline.points, calibration, outline.pitch_degrees) });
     }
     async export(args: unknown): Promise<ToolResult> {
         const a = object(args, 'Input');
@@ -195,7 +195,7 @@ export class HostOutlineService {
         const reviewed = this.tickets.read(a.reviewToken, 'reviewed');
         const scanData = toSceneScanData(reviewed.roof_areas[0], reviewed.frame, reviewed.frame);
         return toolResult('exported', 'Reviewed outline exported in the prepared image coordinate frame. No internal roof components or pitch were inferred.', {
-            plan: reviewed.frame, outline: reviewed.roof_areas[0], measurements: measurements(reviewed.roof_areas[0].points, reviewed.calibration),
+            plan: reviewed.frame, outline: reviewed.roof_areas[0], measurements: measurements(reviewed.roof_areas[0].points, reviewed.calibration, reviewed.roof_areas[0].pitch_degrees),
             export: { schema: VERSION, provenance: 'host-model-or-manual-user-reviewed', reviewedAt: reviewed.reviewedAt, edited: reviewed.edited, frame: reviewed.frame, calibration: reviewed.calibration, scanData },
         });
     }

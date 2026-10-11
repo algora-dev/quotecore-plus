@@ -41,7 +41,8 @@ export interface PlanTicket {
 export interface RoofOutline {
     name: string;
     points: Point[];
-    pitch_degrees: null;
+    /** Null when unknown. Only the human reviewer may supply a pitch; the model-facing schema still forces null. */
+    pitch_degrees: number | null;
 }
 export interface ProposalTicket {
     v: typeof VERSION;

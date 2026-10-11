@@ -20,7 +20,8 @@ const frame = z.object({
 }).strict();
 const measured = z.object({
     basis: z.literal('plan_projection_only'), unit: z.enum(['m', 'ft']), area: z.number(), perimeter: z.number(),
-    areaUnit: z.enum(['m2', 'ft2']), pitchApplied: z.literal(false), warning: z.string(),
+    planArea: z.number().optional(), surfaceArea: z.number().optional(), pitchDegrees: z.number().min(0).max(89).optional(),
+    areaUnit: z.enum(['m2', 'ft2']), pitchApplied: z.boolean(), warning: z.string(),
 }).strict();
 
 // Shapes work with the repository's existing McpServer + Zod registration convention.

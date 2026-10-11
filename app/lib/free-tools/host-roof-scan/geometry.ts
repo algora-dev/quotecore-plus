@@ -63,9 +63,14 @@ export function validatePoints(raw: unknown, frame: Pick<ImageFrame, 'width' | '
 export function parseOutline(value: unknown, frame: Pick<ImageFrame, 'width' | 'height'>): RoofOutline {
     const o = object(value, 'Roof outline');
     keys(o, ['name', 'points', 'pitch_degrees']);
-    if (o.pitch_degrees !== null)
-        throw new ScanError('PITCH_NOT_SUPPORTED', 'Phase 1 traces the footprint only. pitch_degrees must be null; do not infer pitch from the plan.');
-    return { name: text(o.name, 'Roof name', 80), points: validatePoints(o.points, frame), pitch_degrees: null };
+    let pitch: number | null = null;
+    if (o.pitch_degrees !== null && o.pitch_degrees !== undefined) {
+        // The model-facing MCP schema forces null; only the panel reviewer may enter a pitch here.
+        if (typeof o.pitch_degrees !== 'number' || !Number.isFinite(o.pitch_degrees) || o.pitch_degrees < 0 || o.pitch_degrees > 89)
+            throw new ScanError('INVALID_INPUT', 'pitch_degrees must be null or a user-verified number from 0 to 89. Never infer pitch from the plan.');
+        pitch = o.pitch_degrees;
+    }
+    return { name: text(o.name, 'Roof name', 80), points: validatePoints(o.points, frame), pitch_degrees: pitch };
 }
 export function parseCalibration(value: unknown, frame: Pick<ImageFrame, 'width' | 'height'>): Calibration | null {
     if (value === null || value === undefined)
@@ -79,18 +84,26 @@ export function parseCalibration(value: unknown, frame: Pick<ImageFrame, 'width'
         throw new ScanError('INVALID_CALIBRATION', 'Enter a positive known length, up to 10,000, in metres or feet.');
     return { start, end, realLength: c.realLength, unit: c.unit as 'm' | 'ft' };
 }
-export function measurements(points: readonly Point[], calibration: Calibration | null) {
+export function measurements(points: readonly Point[], calibration: Calibration | null, pitch: number | null = null) {
     if (!calibration)
         return null;
     const unitsPerPixel = calibration.realLength / Math.hypot(calibration.end.x - calibration.start.x, calibration.end.y - calibration.start.y);
+    const planArea = polygonArea(asVertices(points)) * unitsPerPixel * unitsPerPixel;
+    const pitchApplied = pitch !== null && pitch > 0;
+    const surfaceArea = pitchApplied ? planArea / Math.cos(pitch * Math.PI / 180) : null;
     return {
         basis: 'plan_projection_only',
         unit: calibration.unit,
-        area: polygonArea(asVertices(points)) * unitsPerPixel * unitsPerPixel,
+        area: surfaceArea ?? planArea,
+        planArea,
+        ...(surfaceArea !== null ? { surfaceArea } : {}),
         perimeter: polygonPerimeter(asVertices(points), true) * unitsPerPixel,
         areaUnit: calibration.unit === 'm' ? 'm2' : 'ft2',
-        pitchApplied: false,
-        warning: 'Reference length and roof outline were supplied or reviewed by the user. This is plan area, not pitched roof surface area or gutter length.',
+        pitchApplied,
+        ...(pitch !== null ? { pitchDegrees: pitch } : {}),
+        warning: pitchApplied
+            ? 'Reference length, roof outline and roof pitch were supplied or reviewed by the user. Surface area is a uniform-pitch estimate from plan area, not per-facet, gutter length or certified accuracy.'
+            : 'Reference length and roof outline were supplied or reviewed by the user. This is plan area, not pitched roof surface area or gutter length.',
     };
 }
 /** Explicit same-orientation affine mapping. Never treat analysis pixels as viewport pixels. */
@@ -103,5 +116,8 @@ export function toSceneScanData(outline: RoofOutline, frame: Pick<ImageFrame, 'w
     const sx = scene.width / frame.width, sy = scene.height / frame.height;
     if (Math.abs(sx - sy) > Math.max(sx, sy) * 0.003)
         throw new ScanError('ASPECT_MISMATCH', 'The target scene is not the same uncropped image. Explicit crop/rotation mapping is required.');
-    return { roof_areas: [{ ...outline, points: outline.points.map(p => applyAffine([sx, 0, 0, sy, 0, 0], p)) }], notes: ['Host-model outline, reviewed by a user. Components and pitch were not inferred.'] };
+    const notes = outline.pitch_degrees === null
+        ? ['Host-model outline, reviewed by a user. Components and pitch were not inferred.']
+        : ['Host-model outline, reviewed by a user. Components were not inferred.', `Roof pitch ${outline.pitch_degrees}\u00B0 was entered by the reviewer, not inferred.`];
+    return { roof_areas: [{ ...outline, points: outline.points.map(p => applyAffine([sx, 0, 0, sy, 0, 0], p)) }], notes };
 }

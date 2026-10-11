@@ -152,7 +152,7 @@ async function acceptToolResult(result) {
   state.points = pts.map(p => ({ x: p.x, y: p.y })); state.selected = -1;
   state.calibration = null; state.calPoints = []; state.undo = []; state.redo = [];
   state.reviewToken = null; state.output = null; state.dirty = false;
-  $('review-check').checked = false; $('output').hidden = true; $('incoming').hidden = true;
+  $('review-check').checked = false; $('output').hidden = true; $('incoming').hidden = true; $('pitch').value = '';
   $('workspace').hidden = false; $('upload-section').hidden = true;
   $('source-image').setAttribute('href', result._meta.imageDataUrl);
   $('source-image').setAttribute('width', frame.width); $('source-image').setAttribute('height', frame.height);
@@ -174,9 +174,10 @@ function invalidate() { state.dirty = true; state.reviewToken = null; state.outp
 function restore(s) { state.points = s.points; state.calibration = s.calibration; state.calPoints = s.calibration ? [s.calibration.start, s.calibration.end] : []; state.selected = -1; invalidate(); render(); }
 function setMode(mode) {
   state.mode = mode;
-  const instructions = { edit: 'Drag a corner to adjust it. Select a corner to add or remove a point.', draw: 'Tap each roof corner in order. Choose Edit when the outline is complete.', pan: 'Drag to pan. Use +, - or your trackpad to zoom.', calibrate: 'Tap two points with a known distance, then enter that distance below.' };
+  const instructions = { edit: 'Drag a corner to adjust it. Select a corner to add or remove a point.', draw: 'Tap each roof corner in order. Choose Edit when the outline is complete.', pan: 'Drag to pan. Use +, - or your trackpad to zoom. Middle-drag or hold Space to pan from any mode.', calibrate: 'Tap two points with a known distance, then enter that distance and press Set scale (or Enter).' };
   $('instruction').textContent = instructions[mode];
   for (const b of document.querySelectorAll('[data-mode]')) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+  updateCursor();
 }
 function fit() {
   if (!state.data) return;
@@ -230,12 +231,37 @@ function render() {
   state.points.forEach((p, i) => select.add(new Option('Corner ' + (i + 1), String(i)))); select.value = String(state.selected);
   $('point-x').value = state.selected >= 0 ? state.points[state.selected].x.toFixed(2) : '';
   $('point-y').value = state.selected >= 0 ? state.points[state.selected].y.toFixed(2) : '';
-  $('cal-status').textContent = state.calibration ? 'Scale set using ' + state.calibration.realLength + ' ' + state.calibration.unit + '. Applies to plan area only.' : 'No scale set. Export will contain pixels, not physical area.';
+  $('cal-status').textContent = state.calibration ? 'Scale set using ' + state.calibration.realLength + ' ' + state.calibration.unit + '. Applies to plan area only.' : (state.calPoints.length === 2 ? 'Two points picked — enter the known distance, then press Set scale (or Enter).' : 'No scale set. Export will contain pixels, not physical area.');
   renderControls();
 }
 let drag = null;
+let spacePan = false;
+function updateCursor() {
+  const c = $('canvas'); if (!c) return;
+  if (drag && drag.mode === 'pan') c.style.cursor = 'grabbing';
+  else if (spacePan || state.mode === 'pan') c.style.cursor = 'grab';
+  else if (state.mode === 'calibrate' || state.mode === 'draw') c.style.cursor = 'crosshair';
+  else c.style.cursor = 'default';
+}
+window.addEventListener('keydown', e => {
+  if (e.code !== 'Space') return;
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.tagName === 'BUTTON' || t.isContentEditable)) return;
+  if (!spacePan) { spacePan = true; updateCursor(); }
+  e.preventDefault();
+});
+window.addEventListener('keyup', e => { if (e.code === 'Space' && spacePan) { spacePan = false; updateCursor(); } });
+window.addEventListener('blur', () => { if (spacePan) { spacePan = false; updateCursor(); } });
+$('canvas').addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
 $('canvas').addEventListener('pointerdown', e => {
-  if (!state.data || state.busy || drag || e.button > 0) return;
+  if (!state.data || state.busy || drag) return;
+  if (e.button === 1 || (spacePan && e.button === 0)) { // middle-mouse or Space+drag pans from any mode
+    e.preventDefault();
+    drag = { mode: 'pan', id: e.pointerId, x: e.clientX, y: e.clientY, view: { ...state.view } };
+    $('canvas').setPointerCapture(e.pointerId); updateCursor();
+    return;
+  }
+  if (e.button > 0) return;
   e.preventDefault(); $('canvas').focus({ preventScroll: true });
   const p = svgPoint(e); if (!p) return;
   const f = state.data.plan;
@@ -244,7 +270,7 @@ $('canvas').addEventListener('pointerdown', e => {
   else if (state.mode === 'calibrate') {
     if (state.calPoints.length >= 2) state.calPoints = [];
     saveUndo(); state.calPoints.push(clampPoint(p)); state.calibration = null; invalidate(); render();
-    if (state.calPoints.length === 2) { $('length').focus({ preventScroll: true }); notice('Enter the known distance between the two blue points.'); } return;
+    if (state.calPoints.length === 2) { $('length').focus({ preventScroll: true }); notice('Enter the known distance between the two blue points, then press Set scale (or Enter).'); } return;
   } else if (state.mode === 'draw') {
     if (state.points.length >= 160) return notice('Maximum 160 corners reached.', true);
     saveUndo(); state.points.push(clampPoint(p)); state.selected = state.points.length - 1; invalidate(); render(); return;
@@ -265,7 +291,7 @@ $('canvas').addEventListener('pointermove', e => {
     state.view = { ...drag.view, x: drag.view.x - (e.clientX-drag.x)*ratio, y: drag.view.y - (e.clientY-drag.y)*ratio }; drawView();
   } else { const p=svgPoint(e); if (p) { state.points[drag.index]=clampPoint(p); invalidate(); drawGeometry(); } }
 });
-function finishDrag(e) { if (!drag || e.pointerId !== drag.id) return; drag=null; render(); }
+function finishDrag(e) { if (!drag || e.pointerId !== drag.id) return; drag=null; render(); updateCursor(); }
 $('canvas').addEventListener('pointerup', finishDrag); $('canvas').addEventListener('pointercancel', finishDrag);
 $('canvas').addEventListener('wheel', e => { if (!state.data) return; e.preventDefault(); zoom(e.deltaY > 0 ? 1.12 : 1/1.12); }, { passive: false });
 $('canvas').addEventListener('keydown', e => {
@@ -287,21 +313,25 @@ $('add-point').onclick=()=>{if(state.selected<0||state.points.length>=160)return
 $('remove-point').onclick=()=>{if(state.selected<0||state.points.length<=3)return;saveUndo();state.points.splice(state.selected,1);state.selected=Math.min(state.selected,state.points.length-1);invalidate();render();};
 $('save-draft').onclick=()=>{if(!state.data)return;const data={status:'unreviewed_local_draft',frame:state.data.plan,outline:{name:'Roof',points:state.points,pitch_degrees:null},calibration:state.calibration};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='quotecore-outline-local-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);};
 $('trace-new').onclick=()=>{if(!window.confirm('Replace the current local outline with a new trace?'))return;saveUndo();state.points=[];state.selected=-1;invalidate();setMode('draw');render();};
-$('save-calibration').onclick=()=>{
+function applyCalibration(){
   const length=Number($('length').value);if(state.calPoints.length!==2||!Number.isFinite(length)||length<=0||length>10000)return notice('Enter a known distance greater than zero and no more than 10,000.',true);
   if(Math.hypot(state.calPoints[1].x-state.calPoints[0].x,state.calPoints[1].y-state.calPoints[0].y)<10)return notice('Use two points at least 10 image pixels apart.',true);
   saveUndo();state.calibration={start:state.calPoints[0],end:state.calPoints[1],realLength:length,unit:$('unit').value};invalidate();setMode('edit');render();notice('Scale set. Verify the source dimension and outline before confirming.');
-};
+}
+$('save-calibration').onclick=applyCalibration;
+$('length').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); applyCalibration(); } });
 $('clear-calibration').onclick=()=>{saveUndo();state.calibration=null;state.calPoints=[];invalidate();render();};
 $('review-check').onchange=renderControls;
 $('confirm').onclick=()=>operation(async()=>{
   if(!$('review-check').checked||!state.data)return;
-  const result=await api('confirm',{planToken:state.data.planToken,...(state.data.proposalToken?{proposalToken:state.data.proposalToken}:{}),reviewGate:state.meta.reviewGate,outline:{name:state.data.outline?.name||'Roof',points:state.points,pitch_degrees:null},calibration:state.calibration,confirmed:true});
+  const rawPitch=String($('pitch').value||'').trim(); let pitch=null;
+  if(rawPitch!==''){ pitch=Number(rawPitch); if(!Number.isFinite(pitch)||pitch<0||pitch>89)return notice('Roof pitch must be empty or a number from 0 to 89 degrees.',true); }
+  const result=await api('confirm',{planToken:state.data.planToken,...(state.data.proposalToken?{proposalToken:state.data.proposalToken}:{}),reviewGate:state.meta.reviewGate,outline:{name:state.data.outline?.name||'Roof',points:state.points,pitch_degrees:pitch},calibration:state.calibration,confirmed:true});
   state.reviewToken=result.structuredContent.reviewToken; state.dirty=false;
   const exported=await api('export',{reviewToken:state.reviewToken});state.output=exported.structuredContent;
   $('output').hidden=false;$('export-data').value=JSON.stringify(state.output.export,null,2);
   const m=state.output.measurements;
-  $('result-summary').textContent=m ? 'Reviewed plan area: '+m.area.toFixed(2)+' '+m.areaUnit+'. Pitch has not been applied.' : 'Reviewed outline exported in image pixels. Add a known scale for physical plan area.';
+  $('result-summary').textContent=m ? 'Reviewed plan area: '+(m.planArea!==undefined?m.planArea:m.area).toFixed(2)+' '+m.areaUnit+(m.pitchApplied?' \u00b7 uniform-pitch roof surface at '+m.pitchDegrees+'\u00b0: '+m.area.toFixed(2)+' '+m.areaUnit+'.':'. Pitch not applied.') : 'Reviewed outline exported in image pixels. Add a known scale for physical plan area.';
   notice('Outline reviewed and export prepared. Review is not a guarantee of measurement accuracy.');render();
 });
 async function copy(value) {
@@ -441,7 +471,7 @@ const BODY = `
 <p id="instruction" class="small"></p><div class="canvas-box"><svg id="canvas" tabindex="0" aria-label="Roof outline editor. Tap to draw, drag a corner to edit, or use the corner coordinate fields below." role="application" xmlns="http://www.w3.org/2000/svg"><image id="source-image" x="0" y="0"/><g id="geometry"></g></svg></div>
 <div class="row between"><p id="corner-count" class="small"></p><div class="row"><button id="save-draft">Save local draft</button><button id="trace-new">Start new trace</button></div></div>
 <div class="row numbers"><div class="number-field"><label for="corner-select">Corner</label><select id="corner-select"><option value="-1">Select a corner</option></select></div><div class="number-field"><label for="point-x">X, pixels</label><input id="point-x" type="number" step="any" min="0"></div><div class="number-field"><label for="point-y">Y, pixels</label><input id="point-y" type="number" step="any" min="0"></div><button id="add-point">Add corner after</button><button id="remove-point">Remove corner</button></div>
-<details id="calibration-details"><summary>Set a known scale (optional)</summary><p class="muted">Use a dimension you trust. Do not use a perspective photograph or assume the drawing's printed scale survived resizing.</p><button data-mode="calibrate" aria-pressed="false">Pick two reference points</button><div class="row numbers"><div class="number-field"><label for="length">Known distance</label><input id="length" type="number" step="any" min="0" max="10000"></div><div class="number-field"><label for="unit">Unit</label><select id="unit"><option value="m">Metres</option><option value="ft">Feet</option></select></div><button id="save-calibration">Set scale</button><button id="clear-calibration">Clear scale</button></div><p id="cal-status" class="small"></p></details>
+<details id="calibration-details"><summary>Scale &amp; roof pitch (optional)</summary><p class="muted">Use a dimension you trust. Do not use a perspective photograph or assume the drawing's printed scale survived resizing.</p><button data-mode="calibrate" aria-pressed="false">Pick two reference points</button><div class="row numbers"><div class="number-field"><label for="length">Known distance</label><input id="length" type="number" step="any" min="0" max="10000"></div><div class="number-field"><label for="unit">Unit</label><select id="unit"><option value="m">Metres</option><option value="ft">Feet</option></select></div><button id="save-calibration" class="primary">Set scale</button><button id="clear-calibration">Clear scale</button></div><p id="cal-status" class="small"></p><div class="row numbers"><div class="number-field"><label for="pitch">Roof pitch (degrees)</label><input id="pitch" type="number" step="any" min="0" max="89" placeholder="Optional"></div><p class="small">Entered by you only \u2014 the AI never sets pitch. Converts plan area to a uniform-pitch roof surface area when confirming.</p></div></details>
 <label class="review-check"><input type="checkbox" id="review-check"><span>I have checked the outline against the image and corrected it as needed. Any scale comes from a known dimension.</span></label><button id="confirm" class="primary" disabled>Confirm reviewed outline</button><p class="small">This step checks the roof's plan boundary only. It does not identify internal components, infer pitch or certify accuracy.</p>
 <details id="prompt-box"><summary>Image not visible to your AI? Share the prepared image</summary><p class="muted">1. Download the exact prepared image. 2. Attach that file to your connected AI conversation. 3. Paste the request below. Do not attach a screenshot of the editor or a different original image.</p><div class="row"><button id="download-image">Download prepared image</button><a id="browser-review" target="_blank" rel="noopener noreferrer">Open browser review</a></div><p id="prepared-name" class="small"></p><p class="small">Use a conversation connected to this QuoteCore+ prototype. The request contains a temporary private access reference. Share it only with your chosen AI provider.</p><textarea id="prompt" readonly aria-label="Request to paste into your AI conversation"></textarea><div class="row"><button id="copy-prompt">Copy request</button><button id="copy-diagnostics">Copy safe diagnostics</button></div><textarea id="diagnostics" readonly hidden aria-label="Safe image delivery diagnostics"></textarea></details></div>
 <section id="output" class="panel result" hidden><h2>Your reviewed outline</h2><p id="result-summary"></p><div class="row"><button id="return-context" class="primary">Share result with assistant</button><button id="copy-export">Copy JSON</button><button id="download">Download JSON</button></div><textarea id="return-prompt" readonly hidden aria-label="Export request to paste into your AI conversation"></textarea><details><summary>View outline data</summary><textarea id="export-data" readonly aria-label="Reviewed outline export"></textarea></details></section>
