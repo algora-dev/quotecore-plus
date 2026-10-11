@@ -8,7 +8,7 @@ import { restoreSetup } from '@/app/components/pricing/calculator/persistence';
 import { resolveIntent } from '@/app/components/pricing/calculator/routing';
 import { expandBillingSelection } from '@/app/components/pricing/calculator/billingCatalogue';
 import { BillingContractError, insist, isTerminalSubscription, referenceId, requireMode } from './contracts';
-import { verifyCustomAccount, requireCustomCheckoutEnabled, customStripeMode } from './environment';
+import { verifyCustomAccount, requireCustomCheckoutEnabled, customStripeMode, paymentCatalog } from './environment';
 import { loadSaleRegistry, loadCustomPriceMap } from './registry';
 export { customStripeMode, loadCustomPriceMap };
 export type CustomCheckoutResult = { ok: true; url: string } | { ok: false; code: string; message: string };
@@ -20,7 +20,7 @@ export async function expandValidatedSetup(rawSetup: string) {
   insist(restored.status === 'restored', restored.status === 'expired' ? 'setup_expired' : 'setup_invalid');
   // Test Checkout is explicitly enabled by its server gate. Never mutate the shared UI catalogue.
   // Live payments still require PREVIEW_CATALOG.stage='approved' plus the separate launch flag.
-  const serverCatalog = customStripeMode() === 'test' ? { ...PREVIEW_CATALOG, stage: 'approved' as const } : PREVIEW_CATALOG;
+  const serverCatalog = paymentCatalog();
   const result = resolveIntent(restored.intent, serverCatalog);
   const selection = expandBillingSelection(result, PREVIEW_CATALOG);
   const registry = await loadSaleRegistry(selection.map(row => row.code));

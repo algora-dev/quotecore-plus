@@ -10,7 +10,7 @@ import { buildBillingCatalogue, buildSubscriptionItemChanges } from '@/app/compo
 import { expandValidatedSetup } from './checkout';
 import { fetchAllSubscriptionItems, fetchFullSubscriptionItems } from './reconcile';
 import { BillingContractError, decodeRegisteredItems, insist, referenceId, requireMode } from './contracts';
-import { customScope, requireCustomCheckoutEnabled, verifyCustomAccount } from './environment';
+import { customScope, requireCustomCheckoutEnabled, verifyCustomAccount, paymentCatalog } from './environment';
 import { loadCustomPriceMap, loadRecognitionRegistry } from './registry';
 
 export { customScope };
@@ -121,7 +121,7 @@ export async function changeCustomSetup(opts: { rawSetup: string; companyId: str
         const complete = await fetchAllSubscriptionItems(stripe, company.stripe_subscription_id);
         insist(complete.complete, 'items_incomplete');
         const priceMap = Object.fromEntries(await loadCustomPriceMap());
-        const changes = buildSubscriptionItemChanges(complete, expanded.intent, PREVIEW_CATALOG, priceMap);
+        const changes = buildSubscriptionItemChanges(complete, expanded.intent, paymentCatalog(), priceMap);
         insist(Array.isArray(changes) && changes.length > 0, 'setup_invalid');
         const currentMonthly = snapshot?.monthly_cents ?? 0;
         const prorated = estimateProration(currentMonthly, expanded.monthlyCents, snapshot?.period_start ?? new Date().toISOString(), snapshot?.period_end ?? new Date(Date.now() + 30 * 86400000).toISOString());

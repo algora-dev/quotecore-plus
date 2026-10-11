@@ -10,8 +10,8 @@ function lockPage(): () => void {
 }
 /** Native modal: top-layer rendering, inert background, Escape and focus containment.
  * No portal needed; scoped QuoteCore tokens stay inherited. Real booking remains host-owned. */
-export function FocusDialog({ title, eyebrow, onClose, children }: {
-  title: string; eyebrow: string; onClose: () => void; children: ReactNode;
+export function FocusDialog({ title, eyebrow, onClose, wide, children }: {
+  title: string; eyebrow: string; onClose: () => void; wide?: boolean; children: ReactNode;
 }) {
   const id = useId();
   const ref = useRef<HTMLDialogElement>(null);
@@ -50,7 +50,8 @@ export function FocusDialog({ title, eyebrow, onClose, children }: {
       event.preventDefault(); first.focus();
     }
   }
-  return <dialog className="qcp-dialog" ref={ref} aria-labelledby={`${id}-title`} aria-modal="true" onKeyDown={containTab}
+  return <div className="qcp">
+    <dialog className={`qcp-dialog${wide ? ' qcp-dialog-wide' : ''}`} ref={ref} aria-labelledby={`${id}-title`} aria-modal="true" onKeyDown={containTab}
     onCancel={e => { e.preventDefault(); onClose(); }}
     onPointerDown={e => { backdropStarted.current = e.target === e.currentTarget && outside(e.clientX, e.clientY); }}
     onClick={e => { if (backdropStarted.current && e.target === e.currentTarget && outside(e.clientX, e.clientY)) onClose(); backdropStarted.current = false; }}>
@@ -59,5 +60,5 @@ export function FocusDialog({ title, eyebrow, onClose, children }: {
       <h2 ref={heading} tabIndex={-1} id={`${id}-title`}>{title}</h2>
     </header>
     <div className="qcp-dialog-content">{children}</div>
-  </dialog>;
+  </dialog></div>;
 }

@@ -61,12 +61,15 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
   const onContinue = useCallback(async (intent: PlanIntent) => {
     let serialized = '';
     try { serialized = serializeSetup(intent); } catch { setError('Your setup could not be saved. Try again.'); return { message: 'Your setup could not be saved. Try again.' }; }
-    setRaw(serialized);
     const result = await previewCustomSetupChange(serialized);
     if (!result.ok) { setError(result.message); return { message: result.message }; }
     setError('');
+    setRaw(serialized);
     setPreview({ direction: result.direction ?? 'upgrade', currentMonthlyCents: result.currentMonthlyCents ?? 0, newMonthlyCents: result.newMonthlyCents ?? 0, proratedTodayCents: result.proratedTodayCents ?? 0, newRows: result.newRows ?? [] });
-    return { message: 'Review the change summary below, then confirm.' };
+    // Clean modal flow (owner 2026-10-11): the wizard only BUILDS the setup.
+    // Review + confirm live in the billing section below the current plan.
+    setOpen(false);
+    return { message: 'Review the change below your current plan, then confirm.' };
   }, []);
 
   function confirmChange() {
@@ -125,11 +128,47 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
         </div>
       )}
 
+      {done && (
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-900" role="status">{done}</div>
+      )}
+
+      {preview && !open && (
+        <div className="mt-4 rounded-xl border-2 border-[#FF6B35] bg-white p-4" data-qc-change-review>
+          <h4 className="text-sm font-bold text-slate-900">Review your change</h4>
+          <div className="mt-2 flex items-baseline justify-between gap-3 text-sm">
+            <span className="text-slate-600">Current</span>
+            <span className="font-medium text-slate-900">{formatMoney(preview.currentMonthlyCents)}/mo</span>
+          </div>
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="text-slate-600">New ({preview.direction})</span>
+            <span className="font-semibold text-slate-900">{formatMoney(preview.newMonthlyCents)}/mo</span>
+          </div>
+          <div className="mt-1 flex items-baseline justify-between gap-3 text-sm">
+            <span className="text-slate-600">Billed today (prorated)</span>
+            <span className={`font-medium ${preview.proratedTodayCents > 0 ? 'text-slate-900' : preview.proratedTodayCents < 0 ? 'text-emerald-700' : 'text-slate-500'}`}>
+              {preview.proratedTodayCents > 0 ? formatMoney(preview.proratedTodayCents) : preview.proratedTodayCents < 0 ? `${formatMoney(Math.abs(preview.proratedTodayCents))} credit` : 'No charge'}
+            </span>
+          </div>
+          <ul className="mt-2 text-xs text-slate-500 list-disc pl-5">
+            {preview.newRows.map((r, i) => <li key={`${r.productName}-${i}`}>{r.productName} · {formatMoney(r.monthlyCents)}/mo</li>)}
+          </ul>
+          {error && <p className="mt-2 text-sm text-red-700" role="alert">{error}</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" onClick={confirmChange} disabled={confirming}
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:shadow-[0_0_12px_rgba(255,107,53,0.35)] disabled:opacity-50 min-h-[44px]">
+              {confirming ? 'Applying…' : 'Confirm change'}
+            </button>
+            <button data-qc-variant="glass" type="button" onClick={() => setOpen(true)} disabled={confirming}
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]">
+              Adjust choices
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">The exact prorated amount is calculated by our payment provider at confirmation. Your billing period and already-used allowances are unchanged.</p>
+        </div>
+      )}
+
       {open && (
-        <FocusDialog title="Change your setup" eyebrow="Billing" onClose={closeDialog}>
-          {done && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-900 mb-4" role="status">{done}</div>
-          )}
+        <FocusDialog title="Change your setup" eyebrow="Billing" onClose={closeDialog} wide>
           <PricingCalculator
             catalog={PREVIEW_CATALOG}
             variant="billing"
@@ -137,40 +176,6 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
             onContinue={onContinue}
             continueLabel="Review this change"
           />
-          {preview && (
-            <div className="mt-4 rounded-xl border-2 border-[#FF6B35] bg-white p-4" data-qc-change-review>
-              <h4 className="text-sm font-bold text-slate-900">Review your change</h4>
-              <div className="mt-2 flex items-baseline justify-between gap-3 text-sm">
-                <span className="text-slate-600">Current</span>
-                <span className="font-medium text-slate-900">{formatMoney(preview.currentMonthlyCents)}/mo</span>
-              </div>
-              <div className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="text-slate-600">New ({preview.direction})</span>
-                <span className="font-semibold text-slate-900">{formatMoney(preview.newMonthlyCents)}/mo</span>
-              </div>
-              <div className="mt-1 flex items-baseline justify-between gap-3 text-sm">
-                <span className="text-slate-600">Billed today (prorated)</span>
-                <span className={`font-medium ${preview.proratedTodayCents > 0 ? 'text-slate-900' : preview.proratedTodayCents < 0 ? 'text-emerald-700' : 'text-slate-500'}`}>
-                  {preview.proratedTodayCents > 0 ? formatMoney(preview.proratedTodayCents) : preview.proratedTodayCents < 0 ? `${formatMoney(Math.abs(preview.proratedTodayCents))} credit` : 'No charge'}
-                </span>
-              </div>
-              <ul className="mt-2 text-xs text-slate-500 list-disc pl-5">
-                {preview.newRows.map((r, i) => <li key={`${r.productName}-${i}`}>{r.productName} · {formatMoney(r.monthlyCents)}/mo</li>)}
-              </ul>
-              {error && <p className="mt-2 text-sm text-red-700" role="alert">{error}</p>}
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button type="button" onClick={confirmChange} disabled={confirming}
-                  className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:shadow-[0_0_12px_rgba(255,107,53,0.35)] disabled:opacity-50 min-h-[44px]">
-                  {confirming ? 'Applying…' : 'Confirm change'}
-                </button>
-                <button data-qc-variant="glass" type="button" onClick={() => setPreview(null)} disabled={confirming}
-                  className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]">
-                  Adjust choices
-                </button>
-              </div>
-              <p className="mt-2 text-xs text-slate-500">The exact prorated amount is calculated by our payment provider at confirmation. Your billing period and already-used allowances are unchanged.</p>
-            </div>
-          )}
           {!preview && error && <p className="mt-3 text-sm text-red-700" role="alert">{error}</p>}
         </FocusDialog>
       )}

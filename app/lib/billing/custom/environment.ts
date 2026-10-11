@@ -17,6 +17,12 @@ export async function verifyCustomAccount(): Promise<RegistryScope> {
   insist(account.id === scope.accountId, 'stripe_account_mismatch');
   return scope;
 }
+/** Catalogue the payment contract resolves against: test mode is explicitly
+ * enabled by its server gate; live mode still requires the catalogue itself
+ * to be approved plus the separate launch flag. */
+export function paymentCatalog() {
+  return customStripeMode() === 'test' ? { ...PREVIEW_CATALOG, stage: 'approved' as const } : PREVIEW_CATALOG;
+}
 /** Kill switch affects new purchases only. Existing renewal processing must continue. */
 export function requireCustomCheckoutEnabled(): void {
   if (process.env.CUSTOM_BILLING_CHECKOUT_ENABLED !== 'true') {
