@@ -10,6 +10,7 @@ import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabr
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
+import { TAKEOFF_CROSSHAIR_CURSOR } from '@/app/lib/takeoff/cursor';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { applyAiResults, computeAreaValue, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
 import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey, AI_COMPONENT_REGISTRY } from '@/app/lib/takeoff/aiComponentRegistry';
@@ -5689,7 +5690,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // Update cursor when calibration/area/line/point/multiLineal mode changes
   useEffect(() => {
     if (fabricRef.current) {
-      const cursor = (calibrationMode || areaMode || lineMode || pointMode || multiLinealMode) ? 'crosshair' : 'default';
+      const cursor = (calibrationMode || areaMode || lineMode || pointMode || multiLinealMode) ? TAKEOFF_CROSSHAIR_CURSOR : 'default';
       fabricRef.current.defaultCursor = cursor;
       fabricRef.current.hoverCursor = cursor;
     }
@@ -6122,8 +6123,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         canvas.defaultCursor = 'alias'; // connecting/link cursor
         canvas.hoverCursor = 'alias';
       } else {
-        canvas.defaultCursor = 'crosshair';
-        canvas.hoverCursor = 'crosshair';
+        canvas.defaultCursor = TAKEOFF_CROSSHAIR_CURSOR;
+        canvas.hoverCursor = TAKEOFF_CROSSHAIR_CURSOR;
       }
     };
     
