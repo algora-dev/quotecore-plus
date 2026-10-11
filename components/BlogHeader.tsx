@@ -8,13 +8,15 @@ import { MarketingButton } from "./marketing/MarketingButton";
 import styles from "./BlogHeader.module.css";
 import controls from "./marketing/MarketingButton.module.css";
 
-function buildNavItems() {
+type NavItem = { label: string; href: string; app?: boolean };
+
+function buildNavItems(appHref: string): NavItem[] {
   return [
+    { label: "Open the App", href: appHref, app: true },
     { label: "Features", href: "/features" },
     { label: "Pricing", href: "/pricing" },
     { label: "Demo", href: "/demo" },
     { label: "Free Tools", href: "/free-tools" },
-    { label: "Blog", href: "/blog" },
     { label: "Contact us", href: "/contact" },
   ];
 }
@@ -26,7 +28,7 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "light" 
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [appLink, setAppLink] = useState("https://app.quote-core.com");
-  const navItems = buildNavItems();
+  const navItems = buildNavItems(appLink || "/login");
 
   useEffect(() => {
     setAppLink(appUrl());
@@ -103,7 +105,7 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "light" 
               className={styles.signIn}
               onClick={() => trackEvent("app_click", { location: "nav" })}
             >
-              Sign in
+              Enter App
             </MarketingButton>
             <MarketingButton
               href="/demo"
@@ -159,7 +161,7 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "light" 
                   setMenuOpen(false);
                 }}
               >
-                Sign in
+                Enter App
               </MarketingButton>
             </div>
 
@@ -170,7 +172,10 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "light" 
                   key={item.label}
                   href={item.href}
                   className={styles.navItem}
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => {
+                    if (item.app) trackEvent("app_click", { location: "menu-open-app" });
+                    setMenuOpen(false);
+                  }}
                 >
                   {item.label}
                   <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

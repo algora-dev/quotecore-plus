@@ -79,7 +79,7 @@ export function CookieBanner() {
       aria-label="Cookie notice"
       className="fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50"
     >
-      <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-4 space-y-3">
+      <div className="border-l-[3px] border-[#1D58B3] bg-[#EEF5FF] rounded-xl shadow-[0_10px_32px_rgba(25,27,32,0.12),0_2px_8px_rgba(25,27,32,0.06)] p-4 space-y-3">
         <div className="flex items-start gap-3">
           {/*
             Inline shield/lock SVG instead of an emoji. Stroke 1.6 keeps it
@@ -92,13 +92,13 @@ export function CookieBanner() {
             fill="none"
             stroke="currentColor"
             strokeWidth={1.6}
-            className="w-5 h-5 mt-0.5 flex-shrink-0 text-slate-500"
+            className="w-5 h-5 mt-0.5 flex-shrink-0 text-[#1D58B3]"
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l8 4v5c0 5-3.4 8.5-8 9-4.6-.5-8-4-8-9V7l8-4z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.5 12.5l1.8 1.8 3.7-3.7" />
           </svg>
-          <div className="text-sm text-slate-700 leading-relaxed">
-            QuoteCore<span className="text-orange-500">+</span> uses{' '}
+          <div className="text-sm text-[#191B20] leading-relaxed">
+            QuoteCore<span className="text-[#FF6B35]">+</span> uses{' '}
             <strong>strictly-necessary cookies</strong> for sign-in and
             security. We don&apos;t use tracking or advertising cookies.
           </div>
@@ -106,14 +106,14 @@ export function CookieBanner() {
         <div className="flex items-center justify-between gap-3">
           <Link
             href="/cookies"
-            className="text-xs text-slate-500 hover:text-orange-600 underline transition-colors"
+            className="text-xs text-[#B63D0A] hover:text-[#8A2F08] underline transition-colors duration-150"
           >
             Read our cookie policy
           </Link>
           <button
             type="button"
             onClick={dismiss}
-            className="px-4 py-1.5 text-xs font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition-all"
+            className="inline-flex items-center justify-center min-h-8 px-4 py-1.5 text-xs font-semibold rounded-full bg-[#191B20] text-white hover:bg-black hover:shadow-[0_4px_14px_rgba(255,107,53,0.2)] transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B63D0A]"
           >
             Got it
           </button>
