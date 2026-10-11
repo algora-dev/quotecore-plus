@@ -202,7 +202,11 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
       if(options.phase==='faces'&&!options.print)shapes+=`<circle data-flow="${escapeHtml(f.id)}" cx="${n(end.x)}" cy="${n(end.y)}" r="${n(6*px)}" fill="#fff" stroke="#191B20" stroke-width="2"><title>Drag to change water direction</title></circle>`;
       if(options.phase==='solution'){
         const lap=s?.lapByFace[f.id]??f.lap,u={x:flow.y*lap,y:-flow.x*lap};
-        const lapLength=Math.min(arrowLength*.75,28*px),base=containedArrow(f.polygon,c,{x:0,y:1},7*px);
+        const lapLength=Math.min(arrowLength*.75,28*px);
+        // Separate the lap marker from the water arrow's centroid path.
+        // The position is a drawing annotation only; it cannot affect cutting.
+        const away={x:-flow.x,y:-flow.y};
+        const base=containedArrow(f.polygon,c,away,Math.max(20*px,arrowLength*.85));
         const a=u.y<-.05?containedArrow(f.polygon,base,{x:0,y:1},-u.y*lapLength):base;
         const allowed=u.y<-.05?Math.min(lapLength,(a.y-base.y)/-u.y):lapLength;
         const b=containedArrow(f.polygon,a,u,allowed);

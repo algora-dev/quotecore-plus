@@ -78,6 +78,49 @@ export function reversedDonorVariants(r:SolveRequest,previous:Solution,attempt=0
   const start=result.length?(attempt*7)%result.length:0;
   return [...result.slice(start),...result.slice(0,start)].slice(0,INSTALLATION_SEARCH_POLICY.maximumTrials);
 }
+/** A reversing proposal is only a reversal when useful coherent sheet families
+ * actually move back into the previous donor territory. A source/receiver face
+ * appearing once in a valid placement is NOT evidence of a reversed bank. */
+export function certifyReversedFamilies(previous:Solution,next:Solution,donorFaceIds:string[],receiverFaceIds:string[]):{valid:boolean;reason:string;families:number;reusedSheets:number}{
+  const roots=new Map(next.demands.map(d=>[d.id,d.faceId]));
+  const offcuts=new Map(next.offcuts.map(o=>[o.id,o]));
+  const originalDemands=new Map(previous.demands.map(d=>[d.id,d.faceId]));
+  const originalOffcuts=new Map(previous.offcuts.map(o=>[o.id,o]));
+  const formerRoutes=new Set(previous.placements.filter(p=>p.kind==='reuse').map(p=>{
+    const cut=originalOffcuts.get(p.offcutId??'');return cut?`${originalDemands.get(cut.rootDemandId??cut.sourceDemandId)}>${originalDemands.get(p.demandId)}`:'';
+  }));
+  const from=new Set(donorFaceIds),to=new Set(receiverFaceIds);
+  const runs=new Map<string,Array<{sourceLane:number;receiverLane:number}>>();let reusedSheets=0;
+  for(const place of next.placements){
+    if(place.kind!=='reuse')continue;
+    const demand=next.demands.find(d=>d.id===place.demandId),piece=offcuts.get(place.offcutId??'');
+    if(!demand||!piece||!to.has(demand.faceId))continue;
+    const root=roots.get(piece.rootDemandId??piece.sourceDemandId);
+    if(!root||!from.has(root))continue;
+    if(!formerRoutes.has(`${demand.faceId}>${root}`))continue;
+    const source=next.demands.find(d=>d.id===piece.sourceDemandId);
+    // Offcuts cut again on other faces are not a first-generation complete
+    // triangle from the claimed reversed donor, even when the root matches.
+    if(!source||source.faceId!==root||!piece.cutSetId)continue;
+    const key=`${root}|${piece.cutSetId}>${demand.faceId}`;
+    runs.set(key,[...(runs.get(key)??[]),{sourceLane:source.laneIndex,receiverLane:demand.laneIndex}]);reusedSheets++;
+  }
+  let families=0;const familyDonors=new Set<string>();
+  for(const [key,rows] of runs){
+    const ordered=rows.sort((a,b)=>a.receiverLane-b.receiverLane);
+    let consecutive=1;
+    for(let i=1;i<ordered.length;i++){
+      // A triangular family must preserve consecutive stock lanes and receiver
+      // lanes, allowing mirrored cutting order. Isolated valid pieces alone do
+      // not constitute a reverse-bank cutting sequence.
+      const delta=ordered[i].sourceLane-ordered[i-1].sourceLane;
+      consecutive=ordered[i].receiverLane===ordered[i-1].receiverLane+1&&Math.abs(delta)===1?consecutive+1:1;
+      if(consecutive===3){families++;familyDonors.add(key.split("|")[0]);}
+    }
+  }
+  if(!families||donorFaceIds.some(id=>!familyDonors.has(id)))return{valid:false,reason:'incomplete-coherent-reversed-donor-banks',families,reusedSheets};
+  return{valid:true,reason:'coherent-reversed-family',families,reusedSheets};
+}
 function bargeStartCandidate(r:SolveRequest,previous:Solution,cancel:()=>boolean):Solution|null{
   if(!previous.bankLayout)return null;
   const receivers=new Set([...adjacentValleyParents(r.faces,r.roof).keys()]);
@@ -107,8 +150,9 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
   const check=()=>{if(hooks.shouldCancel?.())throw new Error('Offcut search cancelled.');if(elapsed()>=limit)throw new InstallationDeadline();return false;};
   const plans:Solution[]=[],seen=new Set([planSignature(previous)]);
   const accept=(s:Solution,id:string)=>{
-    check();s.engineVersion='2.24';s.objective='installation';s.layoutId=planSignature(s);
+    check();s.engineVersion='2.25';s.objective='installation';s.layoutId=planSignature(s);
     const errors=validateDraft({schemaVersion:1,...r,solution:s}).filter(i=>i.severity==='error');
+    if(!errors.length&&s.installationPlan?.kind==='reversed-donors'){const cert=certifyReversedFamilies(previous,s,s.installationPlan.donorFaceIds,s.installationPlan.receiverFaceIds);if(!cert.valid){report.rejectedCount++;report.trials.push({id,valid:false,reason:cert.reason});return;}}
     if(errors.length){report.rejectedCount++;report.trials.push({id,valid:false,reason:errors.map(e=>e.code).join(',')});return;}
     report.validatedCount++;const width=r.profile.coverMm+r.profile.leftLapMm+r.profile.rightLapMm;
     report.trials.push({id,valid:true,reason:seen.has(s.layoutId)?'duplicate-physical-plan':'checked',linealM:s.metrics.newMaterialMm2/width/1000,newSheets:s.metrics.newSheetCount});
@@ -125,7 +169,7 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
         const s=optimiseBankLayouts(r,{...hooks,bankVariant:variant,shouldCancel:check,onPortfolioCandidate:undefined,onCheckedCandidate:undefined,onDecisionTrace:undefined,onProgress:undefined,planSearch:{objective:'recommended'}})[0];
         if(!s)continue;check();s.objective='installation';protectValleyReceivers(r,s,check);
         s.installationPlan={model:INSTALLATION_PLAN_MODEL,kind:'reversed-donors',referenceLayoutId:planSignature(previous),donorFaceIds:variant.installationSetout!.measuredFillerFaceIds,receiverFaceIds:Object.keys(variant.receiverSourceFaceIds??{}),siteSetoutConfirmed:false,reuseEndTrimMm:variant.receiverTrimAllowanceMm??0};
-        s.layoutLabel=variant.receiverTrimAllowanceMm?'Reversed donors · trimming room':'Reversed donors · junction start';
+        s.layoutLabel=variant.receiverTrimAllowanceMm?'Reversed bank · trimming room':'Reversed bank · junction start';
         accept(s,variant.id);
       }catch(e){if(e instanceof InstallationDeadline||e instanceof Error&&/cancel|time limit/i.test(e.message))throw e;report.rejectedCount++;report.trials.push({id:variant.id,valid:false,reason:e instanceof Error?e.message:String(e)});}
     }

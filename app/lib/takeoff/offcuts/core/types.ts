@@ -182,7 +182,7 @@ export interface BankLayout {
 export interface Solution {
   installationPlan?: import('./installationPlan').InstallationPlan;
   schemaVersion: 1; sourceRevision: string; facesRevision: string;
-  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19' | '2.20' | '2.21' | '2.22' | '2.23' | '2.24';
+  engineVersion?: '2.4' | '2.5' | '2.6' | '2.7' | '2.8' | '2.9' | '2.10' | '2.11' | '2.12' | '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19' | '2.20' | '2.21' | '2.22' | '2.23' | '2.24' | '2.25';
   layoutId?: string;
   layoutLabel?: string;
   objective?: PlanObjective;
@@ -301,7 +301,7 @@ export interface TraceCandidate {
   materialSaving?: MaterialSavingAssessment;
 }
 export interface DecisionTrace {
-  schemaVersion: 1; engineVersion: '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19' | '2.20' | '2.21' | '2.22' | '2.23' | '2.24'; requestFingerprint: string;
+  schemaVersion: 1; engineVersion: '2.13' | '2.14' | '2.15' | '2.16' | '2.17' | '2.18' | '2.19' | '2.20' | '2.21' | '2.22' | '2.23' | '2.24' | '2.25'; requestFingerprint: string;
   objective: PlanObjective; selectedTrial: number | null;
   events: TraceEvent[]; candidates: TraceCandidate[];
   truncated: boolean; droppedEvents: number;

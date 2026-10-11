@@ -38,17 +38,18 @@ function tradeOff(c:PortfolioChoice,faceNames:Map<string,string>):string {
     ${c.warnings.map(w=>`<p>${esc(w)}</p>`).join('')}<small>Workflow counts are guides, not labour-hour estimates. All offered options pass the same physical checks.</small></details>
   </div>`;
 }
-export function portfolioChoices(current:Solution,saved:Solution[],selectedIndex:number,disabled:boolean,report:PortfolioReport|null,faces:Array<{id:string;name:string}>=[]):string {
+export function portfolioChoices(current:Solution,saved:Solution[],selectedIndex:number,disabled:boolean,report:PortfolioReport|null,faces:Array<{id:string;name:string}>=[],reversePanel=""):string {
   const reference=recommendedFor(current,saved),id=planSignature(current),indices=new Map(saved.map((s,i)=>[planSignature(s),i]));
   const choices=report?.choices.filter(c=>indices.has(c.layoutId))??[];
   const currentChoice=choices.find(c=>c.layoutId===id);
   const visible=choices.slice(0,3),more=choices.slice(3);
   const menu=saved.length>1?`<label class="qc-field">Saved cut plan<select data-plan-index aria-label="Choose saved cut plan" ${disabled?'disabled':''}>${saved.map((s,i)=>{
-    const choice=choices.find(c=>c.layoutId===planSignature(s));return `<option value="${i}" ${i===selectedIndex?'selected':''}>${esc(choice?choiceTitle(choice):s.layoutLabel??'Saved plan')}${s.engineVersion!=='2.24'?` · V${esc(s.engineVersion??'older')}`:''}</option>`;
+    const choice=choices.find(c=>c.layoutId===planSignature(s));return `<option value="${i}" ${i===selectedIndex?'selected':''}>${esc(choice?choiceTitle(choice):s.layoutLabel??'Saved plan')}${s.engineVersion!=='2.25'?` · V${esc(s.engineVersion??'older')}`:''}</option>`;
   }).join('')}</select></label>`:'';
   return `<section class="qc-plan-variants qc-portfolio" id="qc-plan-choice" aria-label="Compare cutting plans">
     <div class="qc-portfolio-title"><strong>${choices.length>1?'Choose your cutting plan':esc(current.layoutLabel??'Recommended')}</strong>${choices.length>1?`<small>${choices.length} checked options</small>`:''}</div>
     ${choices.length>1?`<div class="qc-portfolio-cards">${visible.map(c=>card(c,indices.get(c.layoutId)!,id===c.layoutId,disabled)).join('')}</div>`:'<p class="qc-muted">Best balance found so far. Other physically checked options can be compared without changing this plan.</p>'}
+    ${reversePanel}
     ${more.length?`<details class="qc-more-plans" ${more.some(c=>c.layoutId===id)?'open':''}><summary>${more.length} more checked option${more.length===1?'':'s'}</summary><div class="qc-portfolio-cards">${more.map(c=>card(c,indices.get(c.layoutId)!,id===c.layoutId,disabled)).join('')}</div></details>`:''}
     ${menu}
     ${currentChoice?tradeOff(currentChoice,new Map(faces.map(f=>[f.id,f.name]))):reference&&id!==planSignature(reference)&&!current.salvage?comparisonCard(reference,current):''}
