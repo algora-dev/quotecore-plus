@@ -1,4 +1,5 @@
 'use client';
+import { OFFCUT_MEASUREMENT_OPTION, materialFigureToken, materialOptionLabel, materialUnitForComponent } from '../offcuts/core/reusableQuantity';
 // M10 F1/F2/F3/F4 + M11 (2026-09-23): touch components step lifecycle. The
 // plan is the source of truth: ComponentsCanvas (plan raster + saved
 // outline + every entry) stays mounted for the WHOLE step - scan,
@@ -246,6 +247,12 @@ export function useTouchComponents(
   const onAttachRoofArea = useCallback((geometryId: string) => {
     const current = adapterRef.current();
     if (!detail) return;
+    if (geometryId.startsWith(OFFCUT_MEASUREMENT_OPTION + ':')) {
+      const entry = current?.addOffcutMaterialEntry?.(detail, geometryId.slice(OFFCUT_MEASUREMENT_OPTION.length + 1));
+      if (entry) { setError(null); refreshFromAdapter(); }
+      else setError('The selected cut plan or roof changed. Open Find offcuts and choose its current quantity again.');
+      return;
+    }
     if (geometryId === '__offcut_plan__') {
       const figure = current?.getOffcutAreaFigure?.();
       if (!current?.addOffcutAreaEntry || !figure) return;
@@ -432,11 +439,16 @@ export function useTouchComponents(
     const areas = adapter?.getAreas() ?? [];
     // Phase 2 (2026-10-07): the offcut cover-m2 figure rides at the top of the
     // attach list as a pseudo-option (final material - no pitch/waste at save).
-    const offcutFigure = adapter?.getOffcutAreaFigure?.() ?? null;
-    const offcutOption: TouchRoofAreaOption[] = offcutFigure
-      ? [{ geometryId: '__offcut_plan__', name: 'Offcut plan', label: `${offcutFigure.m2.toFixed(1)} m² (exact material)`, points: [] }]
+    const figure = adapter?.getOffcutMaterialFigure?.() ?? null;
+    const type = detail?.measurementType ?? '';
+    const offcutOption: TouchRoofAreaOption[] = figure && materialUnitForComponent(type)
+      ? [{ geometryId: `${OFFCUT_MEASUREMENT_OPTION}:${materialFigureToken(figure)}`, name: 'Selected cut plan', label: materialOptionLabel(figure,type,unitSystem), points: [] }]
       : [];
-    return [...offcutOption, ...areas
+    // Older external adapters remain area-only. Never offer an area to a
+    // line/height/volume tool just because that tool happens to draw a line.
+    const legacy = !adapter?.getOffcutMaterialFigure && materialUnitForComponent(type) === 'm2' ? adapter?.getOffcutAreaFigure?.() : null;
+    if (legacy && legacy.m2 > 0) offcutOption.push({geometryId: OFFCUT_MEASUREMENT_OPTION, name: 'Selected cut plan', label: `${legacy.m2.toFixed(2)} m² (purchased material)`, points: []});
+    return [...offcutOption, ...(drawModeForMeasurementType(type) === 'line' ? [] : areas)
       .filter(a => a.points.length >= 3 && !!a.geometryId && !!a.quoteRoofAreaId)
       .map(a => {
         const plan = scale ? polygonAreaCanvas(a.points.map(p => ({ x: p.x, y: p.y }))) * scale.scale * scale.scale : 0;

@@ -2,7 +2,7 @@
  * objectives never call this module. Both complete source families, the fresh
  * bridge and downstream recuts are changed together, or nothing is accepted. */
 import type { Demand, Lap, Offcut, Placement, Solution, SolveRequest } from './types';
-import { area, fitY, rotate180 } from './regions';
+import { area, bounds, fitY, rotate180 } from './regions';
 import { generateDemands } from './material';
 import { rebuildInventory } from './inventory';
 import { coverPhase } from './installationAnchors';
@@ -14,12 +14,12 @@ import { planSignature } from './diagnostics';
 import { coherentWorkflow } from './globalBanks';
 import {
   derivePairedReceiverCertificate, facesReceiverHip, pairedReceiverOpportunities,
-  physicalCutFamilies, PAIRED_RECEIVER_POLICY, PairedReceiverRejection,
+  physicalCutFamilies, receiverEndValleyId, factoryEdgeY, PAIRED_RECEIVER_POLICY, PairedReceiverRejection,
   type PairedReceiverOpportunity, type PairedReceiverProposal, type PhysicalCutFamily, type ReceiverEnd,
 } from './pairedReceiverFamilies';
 
 export interface PairedReceiverSearchReport {
-  model: 'paired-receiver-search-v1'; donorLayoutId: string;
+  model: 'paired-receiver-search-v1'|'chained-receiver-search-v1'; donorLayoutId: string;
   opportunities: number; familyAssignmentsTried: number; completeProposals: number;
   transactionsTried: number; validatedCount: number; bounded: boolean;
   rejected: Record<string, number>; selectedLayoutIds: string[];
@@ -28,17 +28,20 @@ export interface PairedReceiverSearchResult { plans: Solution[]; report: PairedR
 interface Candidate {
   proposal: PairedReceiverProposal; opportunity: PairedReceiverOpportunity;
   families: [PhysicalCutFamily, PhysicalCutFamily]; placements: Placement[];
-  lap: Lap; freshCost: number;
+  chainMode?:boolean; lap: Lap; freshCost: number;
 }
 const fresh = (demandId: string): Placement => ({ demandId, kind: 'new', rotation: 0, translateY: 0 });
 
 function endPlacement(ds: Demand[], family: PhysicalCutFamily, end: ReceiverEnd, lap: Lap,
-  r: SolveRequest, clearance: number): Placement[] | null {
+  r: SolveRequest, clearance: number, chainMode=false): Placement[] | null {
   if (ds.length < family.pieces.length) return null;
   const targets = end.side === 'negative-u' ? ds.slice(0, family.pieces.length) : ds.slice(-family.pieces.length);
-  if (targets.some(d => (d.eaveOverlapMm ?? 0) > 1e-7 || !d.cutEdges?.some(e => e.id === end.hipEdgeId))) return null;
+  const valleyId=chainMode?receiverEndValleyId(r,ds[0].faceId,end):null;
+  if (targets.some(d => chainMode ? (d.eaveOverlapMm??0)>=r.profile.coverMm-1e-6 || !d.cutEdges?.some(e=>e.id===end.hipEdgeId||e.id===valleyId) :
+    (d.eaveOverlapMm ?? 0) > 1e-7 || !d.cutEdges?.some(e => e.id === end.hipEdgeId))) return null;
   for (const rotation of (r.profile.allowEndForEnd ? [0, 180] : [0]) as (0 | 180)[]) {
     const ordered = rotation === 180 ? [...targets].reverse() : targets, result: Placement[] = [];
+    const intervals:Array<{lo:number;hi:number;base:number}>=[];
     for (let i = 0; i < family.pieces.length; i++) {
       const o = family.pieces[i], d = ordered[i];
       if ((rotation === 180 ? -o.lap : o.lap) !== lap || Math.abs(o.widthMm - d.widthMm) > 1e-6 || !facesReceiverHip(o, rotation, end)) break;
@@ -47,9 +50,19 @@ function endPlacement(ds: Demand[], family: PhysicalCutFamily, end: ReceiverEnd,
       const stock = rotation === 180 ? rotate180(o.region, o.widthMm) : o.region;
       const y = fitY(stock, need, 'lower');
       if (y === null) break;
+      if(chainMode){
+        const lo=fitY(stock,need,'upper');if(lo===null)break;
+        const factory=factoryEdgeY(stock,rotation,o.widthMm);if(factory===null)break;
+        const base=factory+d.origin.y;intervals.push({lo:lo+base,hi:y+base,base});
+      }
       result.push({ demandId: d.id, kind: 'reuse', offcutId: o.id, rotation, translateY: y });
     }
-    if (result.length === family.pieces.length) return result;
+    if (result.length === family.pieces.length) {
+      if(!chainMode)return result;
+      const lo=Math.max(...intervals.map(i=>i.lo)),hi=Math.min(...intervals.map(i=>i.hi));
+      if(lo>hi+1e-7)continue;
+      return result.map((p,i)=>({...p,translateY:hi-intervals[i].base}));
+    }
   }
   return null;
 }
@@ -101,11 +114,17 @@ function transact(r: SolveRequest, seed: Solution, c: Candidate, check: () => vo
       const laps: Lap[] = r.settings.optimiseLapDirections && !face.lapLocked ? [face.lap, face.lap === 1 ? -1 : 1] : [face.lap];
       const used = new Set(s.placements.filter(p => p.kind === 'reuse').map(p => p.offcutId));
       const secondary = s.offcuts.filter(o => !used.has(o.id) && o.sourceFaceId === c.opportunity.faceId && parentIds.has(o.parentOffcutId ?? ''));
-      const original = s.offcuts.filter(o => !used.has(o.id) && !o.parentOffcutId &&
-        seed.installationPlan!.donorFaceIds.includes(o.sourceFaceId));
-      let best: { ps: Placement[]; lap: Lap; cost: number; secondaryCount: number } | undefined;
-      for (const lap of laps) {
-        check(); const ds = s.demands.filter(d => d.faceId === faceId).map(d => ({ ...d, lap }));
+      const valleyId=receiverEndValleyId(r,c.opportunity.faceId,end);
+      const original = s.offcuts.filter(o => !used.has(o.id) && !o.parentOffcutId && (c.chainMode ?
+        o.sourceFaceId===c.families[endIndex].donorFaceId || o.sourceFaceId===c.opportunity.faceId&&s.demands.find(d=>d.id===o.sourceDemandId)?.cutEdges?.some(e=>e.id===valleyId) :
+        seed.installationPlan!.donorFaceIds.includes(o.sourceFaceId)));
+      let best: { ps: Placement[]; ds:Demand[]; phase:number; lap: Lap; cost: number; secondaryCount: number; secondaryArea:number } | undefined;
+      const currentPhase=layout.laneOffsetByFace[faceId]??face.laneOffsetMm;
+      const phases=c.chainMode&&!face.laneOffsetLocked?[currentPhase,...Array.from({length:16},(_,i)=>i*r.profile.coverMm/16)]:[currentPhase];
+      for (const phase of phases) for (const lap of laps) {
+        check();
+        const variant={...layout,laneOffsetByFace:{...layout.laneOffsetByFace,[faceId]:phase}};
+        const ds = (c.chainMode?generateDemands(r.roof,r.faces,r.profile,r.settings,variant):s.demands).filter(d => d.faceId === faceId).map(d => ({ ...d, lap }));
         const second = matchCoherentSets(ds, secondary, s.profile, check, false, 2);
         const provided = new Set(second.placements.filter(p => p.kind === 'reuse').map(p => p.demandId));
         const top = matchCoherentSets(ds.filter(d => !provided.has(d.id)), original, s.profile, check, false, 2);
@@ -113,24 +132,30 @@ function transact(r: SolveRequest, seed: Solution, c: Candidate, check: () => vo
         const ps = ds.map(d => pm.get(d.id) ?? fresh(d.id));
         const freshIds = new Set(ps.filter(p => p.kind === 'new').map(p => p.demandId));
         const cost = ds.filter(d => freshIds.has(d.id)).reduce((n, d) => n + area(d.blank), 0);
-        const secondaryCount = provided.size;
-        // Prefer useful intended descendants, then less purchased material. Do
-        // not describe an unrelated first-generation shuffle as secondary reuse.
-        if (!best || secondaryCount > best.secondaryCount || secondaryCount === best.secondaryCount && cost < best.cost)
-          best = { ps, lap, cost, secondaryCount };
+        const secondaryCount = provided.size, secondaryArea=ds.filter(d=>provided.has(d.id)).reduce((n,d)=>n+area(d.required),0);
+        const score=c.chainMode?secondaryArea:secondaryCount, previous=best?(c.chainMode?best.secondaryArea:best.secondaryCount):-1;
+        if (!best || score > previous+1e-6 || Math.abs(score-previous)<1e-6 && cost < best.cost)
+          best = { ps, ds, phase, lap, cost, secondaryCount, secondaryArea };
       }
       if (best) {
         s.lapByFace[faceId] = best.lap;
+        if(c.chainMode){
+        layout.laneOffsetByFace[faceId]=best.phase;
+        const oldIds=new Set(s.demands.filter(d=>d.faceId===faceId).map(d=>d.id));
+        s.demands=[...s.demands.filter(d=>d.faceId!==faceId),...best.ds];
+        s.placements=[...s.placements.filter(p=>!oldIds.has(p.demandId)),...best.ps];inventory(s);
+        }else{
         s.demands = s.demands.map(d => d.faceId === faceId ? { ...d, lap: best!.lap } : d);
         const changes = new Map(best.ps.map(p => [p.demandId, p]));
         s.placements = s.placements.map(p => changes.get(p.demandId) ?? p); inventory(s);
+        }
       }
     }
   }
   check(); protectValleyReceivers(r, s, () => { check(); return false; });
   recalculateMetrics(s); inventory(s);
   // Parent/child rules and the existing coupled-valley safety remain hard gates.
-  s.engineVersion = '2.26';
+  s.engineVersion = c.chainMode ? '2.27' : '2.26';
   s.installationPlan!.reuseEndTrimMm = 0;
   s.installationPlan!.pairedReceiver = derivePairedReceiverCertificate(r, s, c.proposal,
     s.installationPlan!.referenceLayoutId, planSignature(seed));
@@ -141,7 +166,7 @@ function transact(r: SolveRequest, seed: Solution, c: Candidate, check: () => vo
     (fingerprint(p) !== fingerprint(s.placements.find(q => q.demandId === p.demandId)) ||
       fingerprint(originalDemands.get(p.demandId)) !== fingerprint(nowDemands.get(p.demandId)))))
     throw new PairedReceiverRejection('unrelated-bank-changed');
-  s.layoutLabel = 'Reversed banks — paired hip families'; s.objective = 'installation';
+  s.layoutLabel = c.chainMode ? 'Reversed banks — linked valley cuts' : 'Reversed banks — paired hip families'; s.objective = 'installation';
   s.layoutId = planSignature(s); s.orderReady = false; s.status = 'prototype-review';
   s.issues = s.issues.filter(i => i.severity !== 'error');
   return s;
@@ -151,10 +176,11 @@ function transact(r: SolveRequest, seed: Solution, c: Candidate, check: () => vo
  * A cover-based setout offset is measured from a real junction, not an invented
  * roof vertex. Offsets are explicit; neither end is claimed to be exactly on a
  * sheet boundary unless its recorded offset is zero. Locked phases stay locked. */
-export function searchPairedReceiverFamilies(r: SolveRequest, seed: Solution, check: () => void = () => {}): PairedReceiverSearchResult {
-  const report: PairedReceiverSearchReport = { model: 'paired-receiver-search-v1', donorLayoutId: planSignature(seed),
+export function searchPairedReceiverFamilies(r: SolveRequest, seed: Solution, check: () => void = () => {}, chainMode=false, onCandidate?:(s:Solution)=>void, onReport?:(report:PairedReceiverSearchReport)=>void): PairedReceiverSearchResult {
+  const report: PairedReceiverSearchReport = { model: chainMode?'chained-receiver-search-v1':'paired-receiver-search-v1', donorLayoutId: planSignature(seed),
     opportunities: 0, familyAssignmentsTried: 0, completeProposals: 0, transactionsTried: 0,
     validatedCount: 0, bounded: false, rejected: {}, selectedLayoutIds: [] };
+  onReport?.(report);
   const reject = (code: string) => { report.rejected[code] = (report.rejected[code] ?? 0) + 1; };
   if (!seed.bankLayout || seed.installationPlan?.kind !== 'reversed-donors' || seed.installationPlan.donorFaceIds.length !== 2)
     return { plans: [], report: { ...report, rejected: { 'requires-two-reversed-donors': 1 } } };
@@ -172,8 +198,8 @@ export function searchPairedReceiverFamilies(r: SolveRequest, seed: Solution, ch
   for (const opportunity of opportunities) {
     const face = r.faces.find(f => f.id === opportunity.faceId)!;
     const laps: Lap[] = r.settings.optimiseLapDirections && !face.lapLocked ? [face.lap, face.lap === 1 ? -1 : 1] : [face.lap];
-    const phases = opportunity.ends.flatMap(end => Array.from({ length: face.laneOffsetLocked ? 1 : PAIRED_RECEIVER_POLICY.phaseDivisions }, (_, i) => {
-      const phase = face.laneOffsetLocked ? face.laneOffsetMm : coverPhase(end.anchor.phaseMm + i * r.profile.coverMm / PAIRED_RECEIVER_POLICY.phaseDivisions, r.profile.coverMm);
+    const phases = opportunity.ends.flatMap(end => Array.from({ length: face.laneOffsetLocked ? 1 : chainMode?16:PAIRED_RECEIVER_POLICY.phaseDivisions }, (_, i) => {
+      const phase = face.laneOffsetLocked ? face.laneOffsetMm : coverPhase(end.anchor.phaseMm + i * r.profile.coverMm / (chainMode?16:PAIRED_RECEIVER_POLICY.phaseDivisions), r.profile.coverMm);
       return { phase, anchor: end.anchor, offset: coverPhase(phase - end.anchor.phaseMm, r.profile.coverMm) };
     }));
     for (const registration of phases) {
@@ -187,22 +213,22 @@ export function searchPairedReceiverFamilies(r: SolveRequest, seed: Solution, ch
       for (const lap of laps) for (const first of families) for (const second of families) {
         if (first.donorFaceId === second.donorFaceId) continue;
         check(); report.familyAssignmentsTried++;
-        const a = endPlacement(ds, first, opportunity.ends[0], lap, r, clearance);
-        const b = a && endPlacement(ds, second, opportunity.ends[1], lap, r, clearance);
+        const a = endPlacement(ds, first, opportunity.ends[0], lap, r, clearance,chainMode);
+        const b = a && endPlacement(ds, second, opportunity.ends[1], lap, r, clearance,chainMode);
         if (!a || !b) { reject('whole-family-end-or-lap-no-fit'); continue; }
         const ps = [...a, ...b], ids = new Set(ps.map(p => p.demandId));
         if (ids.size !== ps.length) { reject('overlapping-receiver-families'); continue; }
         const key = fingerprint([registration.phase, lap, ps]); if (signatures.has(key)) continue; signatures.add(key);
-        const proposal: PairedReceiverProposal = { receiverFaceId: face.id, phaseMm: registration.phase,
+        const proposal: PairedReceiverProposal = { ...(chainMode?{chainMode:'whole-valley-chain-v1' as const}:{}), receiverFaceId: face.id, phaseMm: registration.phase,
           registrationAnchorId: registration.anchor.id, phaseOffsetMm: registration.offset, fittingClearanceMm: clearance,
           families: [{ familyId: first.id, endId: opportunity.ends[0].id }, { familyId: second.id, endId: opportunity.ends[1].id }] };
-        proposals.push({ proposal, opportunity, families: [first, second], placements: ps, lap,
+        proposals.push({ chainMode, proposal, opportunity, families: [first, second], placements: ps, lap,
           freshCost: ds.filter(d => !ids.has(d.id)).reduce((n, d) => n + area(d.blank), 0) });
       }
     }
   }
   report.completeProposals = proposals.length;
-  proposals.sort((a, b) => a.freshCost - b.freshCost || a.proposal.phaseOffsetMm - b.proposal.phaseOffsetMm || fingerprint(a.proposal).localeCompare(fingerprint(b.proposal)));
+  proposals.sort((a, b) => (chainMode?b.families.reduce((n,f)=>n+f.pieces.length,0)-a.families.reduce((n,f)=>n+f.pieces.length,0):0) || a.freshCost - b.freshCost || a.proposal.phaseOffsetMm - b.proposal.phaseOffsetMm || fingerprint(a.proposal).localeCompare(fingerprint(b.proposal)));
   const bounded = proposals.slice(0, PAIRED_RECEIVER_POLICY.maximumProposals);
   report.bounded = bounded.length < proposals.length;
   const plans: Solution[] = [], seen = new Set<string>();
@@ -211,14 +237,20 @@ export function searchPairedReceiverFamilies(r: SolveRequest, seed: Solution, ch
     check(); report.transactionsTried++;
     try {
       const plan = transact(r, seed, c, check); report.validatedCount++;
-      if (!seen.has(plan.layoutId!)) { seen.add(plan.layoutId!); plans.push(plan); }
+      if (!seen.has(plan.layoutId!)) { seen.add(plan.layoutId!); plans.push(plan);report.selectedLayoutIds=[...plans].sort((a,b)=>(chainMode?chainCoverageScore(b)-chainCoverageScore(a):0)||coherentWorkflow(a).score-coherentWorkflow(b).score||a.metrics.newMaterialMm2-b.metrics.newMaterialMm2).slice(0,PAIRED_RECEIVER_POLICY.maximumReturned).map(p=>p.layoutId!);onCandidate?.(plan); }
     } catch (error) {
       if (error instanceof PairedReceiverRejection) reject(error.code); else throw error;
     }
   }
   if (!proposals.length) reject('no-complete-paired-placement');
-  plans.sort((a, b) => coherentWorkflow(a).score - coherentWorkflow(b).score || a.metrics.newMaterialMm2 - b.metrics.newMaterialMm2 || a.layoutId!.localeCompare(b.layoutId!));
+  plans.sort((a, b) => (chainMode?chainCoverageScore(b)-chainCoverageScore(a):0) || coherentWorkflow(a).score - coherentWorkflow(b).score || a.metrics.newMaterialMm2 - b.metrics.newMaterialMm2 || a.layoutId!.localeCompare(b.layoutId!));
   const selected = plans.slice(0, PAIRED_RECEIVER_POLICY.maximumReturned);
   report.selectedLayoutIds = selected.map(s => s.layoutId!);
   return { plans: selected, report };
+}
+
+/** Fractional downstream coverage, independently reported for each chain.
+ * A two-piece successful subset cannot win merely because it uses less stock. */
+export function chainCoverageScore(s:Solution):number {
+  return s.installationPlan?.pairedReceiver?.receiverChains?.reduce((n,c)=>n+c.viaReceiverAreaM2/Math.max(1e-9,c.destinationAreaM2),0)??0;
 }

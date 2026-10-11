@@ -81,4 +81,10 @@ svg [data-section]:focus-visible{outline:none}svg [data-section]:focus-visible>p
 .qc-salvage-sequence{background:#fff5ed;padding:10px;border-radius:8px}
 .qc-salvage-table{overflow-x:auto}.qc-salvage-summary .qc-actions{flex-wrap:wrap;gap:8px}
 .qc-salvage-summary button[aria-pressed="true"]{border-color:#c2410c;background:#fff5ed}
+
+.qc-completion{display:grid;gap:8px;padding:12px 0 16px;margin-bottom:8px;border-bottom:1px solid var(--of-border-control)}
+.qc-completion small{font-size:12px;line-height:1.5;color:var(--of-text-secondary)}
+.qc-continue{margin:0 0 14px}
+.qc-quick-actions{display:grid;grid-template-columns:minmax(68px,1fr) 42px 42px minmax(72px,1fr)}
+.qc-quick-actions .qc-icon-button{padding:8px;justify-content:center;min-width:40px}
 `;

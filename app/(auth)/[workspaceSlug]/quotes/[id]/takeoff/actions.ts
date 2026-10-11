@@ -1,4 +1,6 @@
 'use server';
+
+import { finalOffcutMetric, materialUnitForComponent, type OffcutEntryProvenance } from '@/app/lib/takeoff/offcuts/core/reusableQuantity';
 import { assertDemoTakeoffQuote } from '@/app/lib/demo/takeoff.server';
 import { DemoError } from '@/app/lib/demo/errors';
 import { demoTakeoffSaved } from '@/app/lib/demo/product-events';
@@ -33,7 +35,7 @@ interface TakeoffMeasurement {
    *  participate in calibration recomputation (no longer display-only).
    *  Corner-derived point entries (2026-09-30) carry value_basis
    *  'corner_all' | 'corner_external' | 'corner_internal' + corner_count. */
-  entryInputs?: {
+  entryInputs?: OffcutEntryProvenance & {
     height_m?: number | null;
     depth_m?: number | null;
     value_basis?: 'pitched' | 'plan' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal';
@@ -275,7 +277,7 @@ export async function saveTakeoffMeasurements(
           // reads entry_inputs for calculation).
           //  - preset height/depth: from component_library at save time
           //  - user height/depth: carried on the measurement (freestyle/volume_3d)
-          let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user'; value_basis?: string; corner_count?: number; source_geometry_id?: string } | null = null;
+          let entryInputs: OffcutEntryProvenance & { height_m?: number | null; depth_m?: number | null; source?: 'preset' | 'user'; value_basis?: string; corner_count?: number; source_geometry_id?: string } | null = null;
           if (m.type === 'multi_lineal_lxh' && heightMm && heightM > 0) {
             entryInputs = { height_m: heightM, source: 'preset' };
           } else if (m.type === 'area' && libComp.measurement_type === 'volume' && depthM) {
@@ -353,15 +355,21 @@ export async function saveTakeoffMeasurements(
           // pitch set/changed AFTER attaching always corrects the numbers:
           //   basis 'pitched' -> plan x live pitch factor (roof sheets etc.)
           //   basis 'plan'    -> plan, no pitch
-          const ei = (m as { entryInputs?: { value_basis?: 'pitched' | 'plan' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal'; plan_value?: number; pitch_applied?: boolean; source_geometry_id?: string; corner_count?: number } | null }).entryInputs;
+          const ei = (m as { entryInputs?: OffcutEntryProvenance & { value_basis?: 'pitched' | 'plan' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal'; plan_value?: number; pitch_applied?: boolean; source_geometry_id?: string; corner_count?: number } | null }).entryInputs;
           const hasLiveBasis = m.type === 'area' && ei && (ei.value_basis === 'pitched' || ei.value_basis === 'plan') && typeof ei.plan_value === 'number' && ei.plan_value > 0;
           // Phase 2 (2026-10-07): basis 'offcuts' = the FINAL material figure
           // from the offcut cutting plan (already includes cutting stock and
           // configured allowances). No pitch AND no waste factor re-applied.
-          const basisOffcuts = m.type === 'area' && ei?.value_basis === 'offcuts' && typeof ei.plan_value === 'number' && ei.plan_value > 0;
-          if (hasLiveBasis || basisOffcuts) {
-            metricValue = toMetricArea(ei!.plan_value!);
-          }
+          const offcutMetric = finalOffcutMetric(ei, m.type, unit);
+          const basisOffcuts = offcutMetric !== null;
+          if (basisOffcuts) {
+            const componentUnit = materialUnitForComponent(String(libComp.measurement_type ?? (libComp as unknown as {default_measurement_type?:string}).default_measurement_type ?? ''));
+            if (componentUnit !== materialUnitForComponent(m.type)) throw new Error('The cut-plan quantity does not match this component’s measurement unit.');
+            if (ei?.offcut_page_id && currentPageId && ei.offcut_page_id !== currentPageId) throw new Error('The cut-plan quantity belongs to another page.');
+            if (ei?.offcut_area_scope_id !== undefined && ei.offcut_area_scope_id !== (m.quoteRoofAreaId ?? null)) throw new Error('The cut-plan quantity belongs to another roof area.');
+            metricValue = offcutMetric;
+            entryInputs = { ...m.entryInputs, value_basis: 'offcuts' };
+          } else if (hasLiveBasis) metricValue = toMetricArea(ei!.plan_value!);
 
           // Legacy (pre-2026-09-03) pitch_applied entries already carry the
           // PITCHED value baked in - never pitch twice.
@@ -721,7 +729,7 @@ export interface TakeoffHydrationMeasurement {
    *  and the durable source_geometry_id provenance link (preferred by
    *  calibration recompute over heuristic matching). Corner-derived point
    *  entries (2026-09-30) hydrate their corner basis + count snapshot. */
-  entryInputs: {
+  entryInputs: OffcutEntryProvenance & {
     height_m?: number | null;
     depth_m?: number | null;
     value_basis?: 'pitched' | 'plan' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal';
@@ -880,10 +888,10 @@ export async function loadTakeoffHydrationData(
       pitch,
       // v8: display-only passthrough so re-save doesn't wipe user H/D values.
       // P4: value_basis/plan_value/source_geometry_id ride the same jsonb.
-      entryInputs: (m as { entry_inputs?: {
+      entryInputs: (m as { entry_inputs?: OffcutEntryProvenance & {
         height_m?: number | null;
         depth_m?: number | null;
-        value_basis?: 'pitched' | 'plan' | 'corner_all' | 'corner_external' | 'corner_internal';
+        value_basis?: 'pitched' | 'plan' | 'offcuts' | 'corner_all' | 'corner_external' | 'corner_internal';
         plan_value?: number;
         pitch_applied?: boolean;
         source_geometry_id?: string;

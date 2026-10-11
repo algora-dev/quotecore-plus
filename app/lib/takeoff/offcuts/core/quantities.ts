@@ -55,6 +55,7 @@ export type QuoteQuantityBasis = 'lineal-metres' | 'cover-square-metres' | 'prof
 export interface QuoteQuantityProposal {
   schemaVersion: 1; kind:'quotecore-offcut-quantity-proposal'; engineVersion: string;
   quoteId:string; pageId:string; areaScopeId:string|null; sourceRevision:string; facesRevision:string; layoutId:string;
+  originalSourceRevision?:string; planName?:string;
   basis:QuoteQuantityBasis; unit:'lm'|'m2'; quantity:number;
   netApprovedRoofAreaM2:number; purchasedLinealM:number; suppliedCoverAreaM2:number; suppliedProfileAreaM2:number;
   newSheets:number; effectiveCoverMm:number; profileWidthMm:number;
@@ -78,6 +79,7 @@ export function quoteQuantityProposal(draft: Draft, basis:QuoteQuantityBasis):Qu
   const quantity=basis==='lineal-metres'?q.purchasedLinealM:basis==='cover-square-metres'?q.suppliedCoverAreaM2:q.suppliedProfileAreaM2;
   return {schemaVersion:1,kind:'quotecore-offcut-quantity-proposal',engineVersion:s.engineVersion??'unknown',
     quoteId:draft.roof.quoteId,pageId:draft.roof.pageId,areaScopeId:draft.roof.areaScopeId,sourceRevision:draft.roof.sourceRevision,
+    planName:s.layoutLabel || 'Selected plan',
     facesRevision:s.facesRevision,layoutId:s.layoutId??fingerprint(s.placements),basis,unit:basis==='lineal-metres'?'lm':'m2',quantity,
     netApprovedRoofAreaM2:q.netRoofAreaM2,purchasedLinealM:q.purchasedLinealM,suppliedCoverAreaM2:q.suppliedCoverAreaM2,suppliedProfileAreaM2:q.suppliedProfileAreaM2,
     newSheets:q.newSheetCount,effectiveCoverMm:s.profile.coverMm,profileWidthMm:s.profile.coverMm+s.profile.leftLapMm+s.profile.rightLapMm,

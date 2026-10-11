@@ -28,11 +28,19 @@ export interface ReceiverEnd {
 }
 export interface PairedReceiverOpportunity { faceId: string; ends: [ReceiverEnd, ReceiverEnd] }
 export interface PairedReceiverProposal {
+  /** Absent preserves V2.26 certificate semantics exactly. */
+  chainMode?: 'whole-valley-chain-v1';
   receiverFaceId: string; phaseMm: number; registrationAnchorId: string;
   phaseOffsetMm: number; fittingClearanceMm: number;
   families: Array<{ familyId: string; endId: string }>;
 }
 export interface PairedReceiverCertificate {
+  /** V2.27 records every downstream position, not just successful children. */
+  receiverChains?: Array<{ donorFaceId: string; receiverFaceId: string; destinationFaceId: string;
+    viaReceiverDemandIds: string[]; directDonorDemandIds: string[]; freshDemandIds: string[];
+    viaReceiverAreaM2: number; destinationAreaM2: number; completeFromReceiver: boolean;
+    freshStarterChildDemandIds: string[]; factoryDatumMm: number;
+    remainingReason: 'complete-chain' | 'remaining-positions-explicitly-supplied' }>;
   model: typeof PAIRED_RECEIVER_MODEL; inputFingerprint: string;
   referenceLayoutId: string; donorLayoutId: string; proposal: PairedReceiverProposal;
   families: Array<{
@@ -154,6 +162,29 @@ export function facesReceiverHip(o: Offcut, rotation: 0 | 180, end: ReceiverEnd)
   return useful > .001 && contrary < .001;
 }
 
+/** Valley meeting this end's hip, derived from shared reviewed endpoints. */
+export function receiverEndValleyId(r:SolveRequest, faceId:string, end:ReceiverEnd):string|null {
+  const face=r.faces.find(f=>f.id===faceId); if(!face)return null;
+  const edges=planningBoundary(face), hip=edges.find(e=>e.id===end.hipEdgeId);
+  return hip ? edges.find(e=>e.kind==='valley' && [e.a,e.b].some(p=>[hip.a,hip.b].some(q=>near(p,q))))?.id ?? null : null;
+}
+/** Uniform uncut factory edge, in receiver surface coordinates. All members
+ * of a transferred physical triangle share this datum rather than being slid
+ * separately up/down the roof until they happen to fit. */
+export function factoryEdgeY(region:Offcut['region'],rotation:0|180,width:number):number|null {
+  const box=bounds(region), y=rotation===180?box.maxY:box.minY;
+  const intervals=region.filter(b=>rotation===180?Math.abs(b.bottom0-y)<.001&&Math.abs(b.bottom1-y)<.001:
+    Math.abs(b.top0-y)<.001&&Math.abs(b.top1-y)<.001).map(b=>[b.x0,b.x1]).sort((a,b)=>a[0]-b[0]);
+  // Interior return strips in an apex-spanning physical piece are not its
+  // outside factory edge. Verify the OUTSIDE edge across the whole width.
+  let covered=0;for(const [a,b] of intervals){if(a>covered+1e-5)return null;covered=Math.max(covered,b);}
+  return covered>=width-1e-5?y:null;
+}
+export function receiverFactoryDatum(o:Offcut,p:Placement,d:Demand):number {
+  const y=factoryEdgeY(materialAtDestination(o,p),p.rotation,o.widthMm);
+  if(y===null)reject('non-straight-family-factory-edge');
+  return y!+d.origin.y;
+}
 export function pairedPhysicalFingerprint(s: Solution): string {
   return fingerprint([s.demands, s.placements, s.offcuts, s.lapByFace, s.bankLayout, s.profile, s.settings, s.receiverSafety]);
 }
@@ -163,6 +194,8 @@ export function pairedPhysicalFingerprint(s: Solution): string {
 export function derivePairedReceiverCertificate(r: SolveRequest, s: Solution, proposal: PairedReceiverProposal,
   referenceLayoutId: string, donorLayoutId: string): PairedReceiverCertificate {
   const plan = s.installationPlan;
+  const chainMode=proposal?.chainMode==='whole-valley-chain-v1';
+  if(proposal?.chainMode!==undefined&&!chainMode)reject('unknown-chain-model');
   if (!plan || plan.kind !== 'reversed-donors' || plan.referenceLayoutId !== referenceLayoutId) reject('wrong-reference-plan');
   if (!proposal || !Number.isFinite(proposal.phaseMm) || proposal.phaseMm < 0 || proposal.phaseMm >= r.profile.coverMm ||
     !Number.isFinite(proposal.phaseOffsetMm) || proposal.phaseOffsetMm < 0 || proposal.phaseOffsetMm >= r.profile.coverMm ||
@@ -200,12 +233,18 @@ export function derivePairedReceiverCertificate(r: SolveRequest, s: Solution, pr
     for (let i = 0; i < ps.length; i++) {
       const p = ps[i], o = family!.pieces[i], d = dm.get(p.demandId)!;
       if (assigned.has(d.id)) reject('double-spend'); assigned.add(d.id);
-      if ((d.eaveOverlapMm ?? 0) > 1e-7 || !d.cutEdges?.some(e => e.id === end!.hipEdgeId)) reject('starter-insufficient');
+      const valleyId=chainMode?receiverEndValleyId(r,face.id,end!):null;
+      if (chainMode ? !d.cutEdges?.some(e=>e.id===end!.hipEdgeId||e.id===valleyId) || (d.eaveOverlapMm??0)>=r.profile.coverMm-1e-6 :
+        (d.eaveOverlapMm ?? 0) > 1e-7 || !d.cutEdges?.some(e => e.id === end!.hipEdgeId)) reject('starter-insufficient');
       if (!facesReceiverHip(o, rotation, end!) || (rotation === 180 && !r.profile.allowEndForEnd) ||
         (rotation === 180 ? -o.lap : o.lap) !== d.lap || !close(o.widthMm, d.widthMm)) reject('lap-or-hip-orientation-incompatible');
       const margin = proposal.fittingClearanceMm;
       const need = d.required.map(b => ({ ...b, top0: b.top0 - margin, top1: b.top1 - margin, bottom0: b.bottom0 + margin, bottom1: b.bottom1 + margin }));
       if (area(subtract(need, materialAtDestination(o, p))) > Math.max(.001, area(need) * 1e-9)) reject('insufficient-fitting-clearance');
+    }
+    if(chainMode){
+      const datums=ps.map((p,i)=>receiverFactoryDatum(family!.pieces[i],p,dm.get(p.demandId)!));
+      if(Math.max(...datums)-Math.min(...datums)>.001)reject('fragmented-family-setout');
     }
     const children = s.offcuts.filter(o => o.sourceFaceId === face.id && !!o.parentOffcutId && family!.pieces.some(p => p.id === o.parentOffcutId));
     const secondary: PairedReceiverCertificate['families'][number]['secondary'] = [];
@@ -234,7 +273,7 @@ export function derivePairedReceiverCertificate(r: SolveRequest, s: Solution, pr
     return { demandId: d.id, lengthMm: b.maxY - b.minY,
       role: (d.cutEdges?.length ? 'transition-starter' : 'straight-filler') as 'transition-starter' | 'straight-filler' };
   });
-  if (!freshPurchases.length || ds.some(d => (d.eaveOverlapMm ?? 0) > 1e-7 && pm.get(d.id)?.kind !== 'new')) reject('starter-insufficient');
+  if (!freshPurchases.length || ds.some(d => (d.eaveOverlapMm ?? 0) > (chainMode?r.profile.coverMm-1e-6:1e-7) && pm.get(d.id)?.kind !== 'new')) reject('starter-insufficient');
   const order: string[] = [], complete = new Set<string>(), pending = [...s.placements];
   for (let pass = 0; pending.length && pass <= s.placements.length; pass++) {
     let progress = false;
@@ -245,8 +284,34 @@ export function derivePairedReceiverCertificate(r: SolveRequest, s: Solution, pr
     }
     if (!progress) reject('installation-dependency-cycle');
   }
+  const receiverChains:NonNullable<PairedReceiverCertificate['receiverChains']>=[];
+  if(chainMode)for(const row of rows){
+    const parents=new Set(row.offcutIds), end=opportunity!.ends.find(e=>e.id===row.endId)!;
+    const valleyId=receiverEndValleyId(r,face.id,end);
+    for(const destinationFaceId of row.downstreamFaceIds){
+      const target=s.demands.filter(d=>d.faceId===destinationFaceId), viaReceiverDemandIds:string[]=[], directDonorDemandIds:string[]=[], freshDemandIds:string[]=[], freshStarterChildDemandIds:string[]=[];
+      let viaReceiverAreaM2=0;
+      for(const d of target){const p=pm.get(d.id);if(!p)reject('secondary-coverage-deficit');
+        if(p!.kind==='new'){freshDemandIds.push(d.id);continue;}
+        const o=inventory.get(p!.offcutId??'');if(!o)reject('missing-secondary-stock');
+        if(o!.sourceFaceId===face.id&&parents.has(o!.parentOffcutId??'')){
+          viaReceiverDemandIds.push(d.id);viaReceiverAreaM2+=area(d.required)/1e6;
+        }else if(o!.sourceFaceId===face.id&&!o!.parentOffcutId&&dm.get(o!.sourceDemandId)?.cutEdges?.some(e=>e.id===valleyId)){
+          freshStarterChildDemandIds.push(d.id);
+        }else if(o!.sourceFaceId===row.donorFaceId&&!o!.parentOffcutId)directDonorDemandIds.push(d.id);
+        else reject('secondary-chain-crosses-unrelated-source');
+      }
+      if(viaReceiverDemandIds.length<Math.min(2,row.offcutIds.length))reject('incomplete-secondary-chain');
+      receiverChains.push({donorFaceId:row.donorFaceId,receiverFaceId:face.id,destinationFaceId,
+        viaReceiverDemandIds,directDonorDemandIds,freshDemandIds,freshStarterChildDemandIds,viaReceiverAreaM2,
+        destinationAreaM2:target.reduce((n,d)=>n+area(d.required)/1e6,0),
+        completeFromReceiver:viaReceiverDemandIds.length===target.length,
+        factoryDatumMm:receiverFactoryDatum(inventory.get(row.offcutIds[0])!,pm.get(row.receiverDemandIds[0])!,dm.get(row.receiverDemandIds[0])!),
+        remainingReason:viaReceiverDemandIds.length===target.length?'complete-chain':'remaining-positions-explicitly-supplied'});
+    }
+  }
   return { model: PAIRED_RECEIVER_MODEL, inputFingerprint: fingerprint([r.roof, r.faces, r.profile, r.settings]),
-    referenceLayoutId, donorLayoutId, proposal: structuredClone(proposal), families: rows.sort((a, b) => a.side.localeCompare(b.side)),
+    ...(chainMode?{receiverChains}:{}), referenceLayoutId, donorLayoutId, proposal: structuredClone(proposal), families: rows.sort((a, b) => a.side.localeCompare(b.side)),
     freshPurchases, coveredDemandIds: ds.map(d => d.id), dependencyOrder: order,
     physicalFingerprint: pairedPhysicalFingerprint(s), purchasedSheets: ledger.totals.newSheets,
     purchasedLinealM: ledger.totals.purchasedLinealM, siteSetoutConfirmed: false };

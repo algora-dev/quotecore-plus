@@ -1,3 +1,4 @@
+import type { OffcutEntryProvenance } from '../offcuts/core/reusableQuantity';
 // M10 P2/P3/F4: AI component scan (touch) - shared types + helpers.
 //
 // The touch component scan runs the EXISTING authorised scan2 (line
@@ -55,6 +56,7 @@ export interface TouchComponentEntry {
   /** Phase 2 (2026-10-07): attached offcut figure - final material m2,
    *  persisted as entryInputs.value_basis 'offcuts' (no pitch/waste recompute). */
   fromOffcuts?: boolean;
+  offcutProvenance?: OffcutEntryProvenance;
   /** Corner-derived entry (kind 'point'): which corner set was counted
    * (2026-09-30). Persisted via entryInputs.value_basis 'corner_*'. */
   cornerBasis?: 'all' | 'external' | 'internal';

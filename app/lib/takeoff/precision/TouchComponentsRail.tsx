@@ -148,11 +148,11 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
           </optgroup>)}
         </select>
       </>}
-      {p.drawMode === 'polygon' && p.roofAreas.length > 0 && <>
-        <RailNotice>Area component - reuse a saved {noun} area instead of drawing it again.</RailNotice>
-        <select value="" aria-label={`Use an existing ${noun} area`} className={SELECT_CLASS}
+      {(p.drawMode === 'polygon' || p.drawMode === 'line') && p.roofAreas.length > 0 && <>
+        <RailNotice>Reuse a saved measurement. Cut-plan material already includes pitch and cutting allowances.</RailNotice>
+        <select value="" aria-label="Reuse a measurement" className={SELECT_CLASS}
           onChange={e => { if (e.target.value) p.onAttachRoofArea(e.target.value); }}>
-          <option value="">Use an existing {noun} area...</option>
+          <option value="">Reuse a measurement...</option>
           {p.roofAreas.map(ra => <option key={ra.geometryId} value={ra.geometryId}>{ra.name} - {ra.label}</option>)}
         </select>
       </>}

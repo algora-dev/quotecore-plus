@@ -38,7 +38,8 @@ import type { TakeoffHydrationData } from './actions';
 import { useTakeoffActions } from '@/app/lib/takeoff/actionsContext';
 import type { TakeoffFinishPayload } from '@/app/lib/takeoff/finishPayload';
 // Offcuts V1: isolated review module; no quote/persistence changes.
-import type { QuoteCoreSnapshot } from '@/app/lib/takeoff/offcuts/adapters/quotecore';
+import { fromQuoteCore, type QuoteCoreSnapshot } from '@/app/lib/takeoff/offcuts/adapters/quotecore';
+import { OFFCUT_MEASUREMENT_OPTION, materialFigureToken, materialMeasurement, materialOptionLabel, materialUnitForComponent, upsertMaterialMeasurement, type OffcutEntryProvenance } from '@/app/lib/takeoff/offcuts/core/reusableQuantity';
 import { reconcileCanvasSnapshot, type SceneMeasurementObject } from '@/app/lib/takeoff/offcuts/adapters/canvasSnapshot';
 import type { WorkbenchHandle, OffcutOnePagerPayload } from '@/app/lib/takeoff/offcuts/ui/workbench';
 import type { QuoteQuantityProposal } from '@/app/lib/takeoff/offcuts/core/quantities';
@@ -174,7 +175,7 @@ interface ComponentMeasurement {
    *  time (freestyle L×-H height, volume_3d custom depth). READ-ONLY display
    *  reference - `value` is already the final product. Persisted via
    *  entry_inputs so re-entry doesn't wipe it. */
-  entryInputs?: {
+  entryInputs?: OffcutEntryProvenance & {
     height_m?: number | null;
     depth_m?: number | null;
     /** P3 (spec 10.3): attached-entry provenance. value_basis + plan_value
@@ -2494,6 +2495,39 @@ export function TakeoffWorkstation({
  *  2026-08-30 (ported from free roof takeoff): lets users measure an area
  *  once and reuse it for every area-based component (e.g. underlay, wrap,
  *  battens) without re-drawing the same area each time. */
+const handleApplyOffcutMaterial = (componentId: string, expectedToken: string) => {
+    const figure = offcutAreaFigureRef.current;
+    const component = components.find(c => c.id === componentId);
+    if (!figure || !component || figure.scope.pageId !== currentPageIdRef.current || figure.scope.areaScopeId !== (activeAreaIdRef.current ?? null)) return;
+    try {
+      const snapshot = offcutsLiveSnapshotRef.current;
+      if (figure.originalSourceRevision && snapshot && fromQuoteCore(snapshot).roof.sourceRevision !== figure.originalSourceRevision) {
+        invalidateOffcutFigure(); throw new Error('The roof or calibration changed. Recalculate the cut plan before reusing its quantity.');
+      }
+      const mt = (component.measurement_type ?? component.default_measurement_type ?? '').toLowerCase();
+      const selected = materialMeasurement(figure, mt, calibrations[0]?.unit ?? 'meters', expectedToken);
+      pushHistorySnapshot();
+      for (const row of touchComponentEntriesRef.current) {
+        if (row.fromOffcuts && row.componentId === componentId && (!row.offcutProvenance?.offcut_page_id || row.offcutProvenance.offcut_page_id === selected.fromPageId) && (row.quoteRoofAreaId ?? null) === selected.quoteRoofAreaId &&
+            (row.kind === 'area' ? 'm2' : 'lm') === selected.entryInputs.offcut_unit) {
+          row.value = selected.value; row.planValue = selected.value; row.offcutProvenance = selected.entryInputs; row.hidden = false;
+        }
+      }
+      touchBridgeListeners.current.forEach(listener => listener());
+      setComponentMeasurements(groups => {
+        const group = groups.find(g => g.componentId === componentId);
+        const matches = (m: ComponentMeasurement) => m.entryInputs?.value_basis === 'offcuts' &&
+          m.fromPageId === selected.fromPageId && (m.quoteRoofAreaId ?? null) === selected.quoteRoofAreaId &&
+          materialUnitForComponent(m.type) === materialUnitForComponent(selected.type);
+        const prior = group?.measurements.find(matches);
+        const entry: ComponentMeasurement = { ...selected, id: prior?.id ?? crypto.randomUUID(), points: [], canvasObjects: [], visible: true };
+        const updated = { componentId, expanded: true, measurements: upsertMaterialMeasurement(group?.measurements ?? [], entry) };
+        return group ? groups.map(g => g.componentId === componentId ? updated : g) : [...groups, updated];
+      });
+      setIsDirty(true);
+    } catch (error) { showAlert('Cut-plan quantity needs checking', error instanceof Error ? error.message : 'Choose the current cut plan again.', 'info'); }
+  };
+
 const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string) => {
     // Match by UNIQUE row id (sibling areas under one parent can share a
     // quoteRoofAreaId stamp - never resolve by the shared stamp).
@@ -2510,7 +2544,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       plan: ra.area,
       pitched,
       pitch: ra.pitch || 0,
-      ...(offcutAreaFigure ? { offcuts: offcutAreaFigure.m2 } : {}),
       basis: 'pitched',
     });
   };
@@ -2520,13 +2553,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (!choice) return;
     const ra = roofAreas.find(a => a.id === choice.roofAreaId);
     if (!ra || !(ra.area > 0)) { setAreaAttachChoice(null); return; }
-    if (choice.basis === 'offcuts' && (!offcutAreaFigureRef.current || offcutAreaFigureRef.current.m2 !== choice.offcuts)) {
-      setAreaAttachChoice(null);
-      showAlert('Offcut quantity needs checking', 'The offcut material figure changed. Reopen the quantity chooser after reviewing the current plan.', 'info');
-      return;
-    }
+    if (choice.basis === 'offcuts') { handleApplyOffcutMaterial(choice.componentId, offcutAreaFigureRef.current ? materialFigureToken(offcutAreaFigureRef.current) : ''); setAreaAttachChoice(null); return; }
     pushHistorySnapshot();
-    const value = choice.basis === 'pitched' ? choice.pitched : choice.basis === 'offcuts' ? (choice.offcuts ?? choice.plan) : choice.plan;
+    const value = choice.basis === 'pitched' ? choice.pitched : choice.plan;
     const newMeasurement: ComponentMeasurement = {
       id: `apply-${Date.now()}`,
       type: 'area' as ComponentMeasurement['type'],
@@ -2544,21 +2573,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       //   basis 'plan'    -> plan, no pitch        (flat/plan takeoff)
       // P3 (spec 10.3): durable source-polygon link so recalibration can
       // refresh this entry when its source area rescales.
-      entryInputs: choice.basis === 'offcuts'
-        ? {
-            // Phase 2 (2026-10-07): final material figure from the offcut
-            // cutting plan - no pitch and no waste factor at save time.
-            value_basis: 'offcuts',
-            plan_value: choice.offcuts ?? choice.plan,
-            offcut_layout_id: offcutAreaFigureRef.current?.layoutId,
-            offcut_source_revision: offcutAreaFigureRef.current?.sourceRevision,
-            offcut_faces_revision: offcutAreaFigureRef.current?.facesRevision,
-          }
-        : {
-            value_basis: choice.basis,
-            plan_value: choice.plan,
-            source_geometry_id: ra.id,
-          },
+      entryInputs: { value_basis: choice.basis, plan_value: choice.plan, source_geometry_id: ra.id },
     };
     const compData = componentMeasurements.find(c => c.componentId === choice.componentId);
     if (compData) {
@@ -3069,7 +3084,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             visible: m.visible,
             // Area-ownership fix (2026-07-05): use the DRAW-time stamp; only
             // fall back to the save-time active area for legacy/unstamped rows.
-            quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId,
+            quoteRoofAreaId: m.entryInputs?.value_basis === 'offcuts' && m.entryInputs.offcut_area_scope_id !== undefined ? m.entryInputs.offcut_area_scope_id : m.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId,
             // v8: user-entered H/D reference (display only).
             entryInputs: m.entryInputs ?? null,
           });
@@ -3081,13 +3096,21 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // iPhone testing: setComponentMeasurements + immediate persist read
       // the PREVIOUS render's state).
       for (const m of opts.extraMeasurements ?? []) {
+        if (m.entryInputs?.value_basis === 'offcuts') {
+          const scope = m.entryInputs.offcut_area_scope_id !== undefined ? m.entryInputs.offcut_area_scope_id : m.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId;
+          for (let i = allMeasurements.length - 1; i >= 0; i--) {
+            const row = allMeasurements[i];
+            if (row.componentId === m.componentId && row.entryInputs?.value_basis === 'offcuts' &&
+                (row.quoteRoofAreaId ?? null) === (scope ?? null) && materialUnitForComponent(row.type) === materialUnitForComponent(m.type)) allMeasurements.splice(i, 1);
+          }
+        }
         allMeasurements.push({
           componentId: m.componentId,
           type: m.type,
           value: m.value,
           points: m.points,
           visible: m.visible,
-          quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId,
+          quoteRoofAreaId: m.entryInputs?.value_basis === 'offcuts' && m.entryInputs.offcut_area_scope_id !== undefined ? m.entryInputs.offcut_area_scope_id : m.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId,
           entryInputs: m.entryInputs ?? null,
         });
       }
@@ -4343,27 +4366,44 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       },
       // Phase 2 (2026-10-07): attach the offcut figure - final material m2,
       // no canvas geometry, basis 'offcuts' (no pitch/waste at save time).
+      getOffcutMaterialFigure: () => offcutAreaFigureRef.current,
+      addOffcutMaterialEntry: (target: TouchComponentTarget, token: string): TouchComponentEntry | null => {
+        const figure = offcutAreaFigureRef.current;
+        if (!figure || figure.scope.pageId !== currentPageIdRef.current || figure.scope.areaScopeId !== (activeAreaIdRef.current ?? null)) return null;
+        try {
+          const snapshot = offcutsLiveSnapshotRef.current;
+          if (figure.originalSourceRevision && snapshot && fromQuoteCore(snapshot).roof.sourceRevision !== figure.originalSourceRevision) return null;
+          const selected = materialMeasurement(figure, target.measurementType ?? '', touchOutlineLiveRef.current?.calibrations[0]?.unit ?? 'meters', token);
+          const matches = (e: TouchComponentEntry) => e.fromOffcuts && e.componentId === target.componentId &&
+            (!e.offcutProvenance?.offcut_page_id || e.offcutProvenance.offcut_page_id === selected.fromPageId) && (e.quoteRoofAreaId ?? null) === selected.quoteRoofAreaId && (e.kind === 'area' ? 'm2' : 'lm') === selected.entryInputs.offcut_unit;
+          const desktop = touchOutlineLiveRef.current?.componentMeasurements.find(g => g.componentId === target.componentId)?.measurements.find(m =>
+            m.entryInputs?.value_basis === 'offcuts' && m.fromPageId === selected.fromPageId &&
+            (m.quoteRoofAreaId ?? null) === selected.quoteRoofAreaId && materialUnitForComponent(m.type) === selected.entryInputs.offcut_unit);
+          const prior = touchComponentEntriesRef.current.find(matches);
+          const entry: TouchComponentEntry = { id: desktop?.id ?? prior?.id ?? crypto.randomUUID(), key: target.componentId,
+            componentId: target.componentId, displayName: target.displayName, colour: target.colour,
+            value: selected.value, kind: selected.type === 'area' ? 'area' : 'line', hidden: false, points: [],
+            fromOffcuts: true, planValue: selected.value, quoteRoofAreaId: selected.quoteRoofAreaId,
+            offcutProvenance: selected.entryInputs };
+          pushHistorySnapshotRef.current();
+          touchComponentEntriesRef.current = [...touchComponentEntriesRef.current.filter(e => !matches(e)), entry];
+          // A hydrated row is normally skipped by the touch save bridge. Update
+          // that same row in desktop state instead of appending a duplicate.
+          if (desktop || prior && touchHydratedEntryIdsRef.current.has(prior.id)) {
+            touchHydratedEntryIdsRef.current.add(entry.id);
+            setComponentMeasurements(groups => groups.map(g => g.componentId !== target.componentId ? g : {
+              ...g, measurements: g.measurements.map(m => m.id === entry.id ? { ...m, ...selected, visible: true, points: [], canvasObjects: [] } : m)
+            }));
+          }
+          setIsDirty(true);touchBridgeListeners.current.forEach(listener => listener());return { ...entry };
+        } catch { return null; }
+      },
       getOffcutAreaFigure: (): { m2: number } | null => (offcutAreaFigureRef.current && offcutAreaFigureRef.current.m2 > 0 ? { m2: offcutAreaFigureRef.current.m2 } : null),
+      // Compatibility adapter delegates to the dimension-safe, idempotent path.
       addOffcutAreaEntry: (target: TouchComponentTarget, figure: { m2: number }): TouchComponentEntry | null => {
-        if (!(figure.m2 > 0) || offcutAreaFigureRef.current?.m2 !== figure.m2) return null;
-        const round2 = (n: number) => Math.round(n * 100) / 100;
-        const entry: TouchComponentEntry = {
-          id: crypto.randomUUID(),
-          key: target.componentId,
-          componentId: target.componentId,
-          displayName: target.displayName,
-          colour: target.colour,
-          value: round2(figure.m2),
-          kind: 'area',
-          hidden: false,
-          points: [],
-          fromOffcuts: true,
-          planValue: round2(figure.m2),
-          quoteRoofAreaId: null,
-        };
-        touchComponentEntriesRef.current.push(entry);
-        touchBridgeListeners.current.forEach(listener => listener());
-        return { ...entry };
+        const selected = offcutAreaFigureRef.current;
+        if (!selected || selected.m2 !== figure.m2 || materialUnitForComponent(target.measurementType ?? '') !== 'm2') return null;
+        return touchOutlineAdapterRef.current?.addOffcutMaterialEntry?.(target, materialFigureToken(selected)) ?? null;
       },
       // Corner counting (2026-09-30): apply detected corner counts to a
       // count-based component. The entry carries every counted vertex so
@@ -4417,22 +4457,24 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             // Hydrated (saved) rows are display/review-only: the standard
             // save path re-sends them from componentMeasurements state -
             // pushing them here too would duplicate quote_component_entries.
-            if (touchHydratedEntryIdsRef.current.has(e.id)) continue;
+            if (touchHydratedEntryIdsRef.current.has(e.id) && !e.fromOffcuts) continue;
+            if (e.offcutProvenance?.offcut_page_id && e.offcutProvenance.offcut_page_id !== pageId) continue;
             // M11: rows follow the entry kind. Attached roof-area entries
             // persist exactly like the desktop area-attach flow (no canvas
             // geometry, entryInputs basis + plan snapshot + source link) so
             // the save path recomputes from the LIVE pitch.
-            if (e.kind === 'area' && e.fromOffcuts) {
+            if ((e.kind === 'area' || e.kind === 'line') && e.fromOffcuts) {
               extraMeasurements.push({
                 componentId: e.componentId,
                 id: e.id,
-                type: 'area' as const,
+                type: (e.kind === 'area' ? 'area' : 'line') as 'area' | 'line',
                 value: e.value,
                 points: [],
                 visible: !e.hidden,
                 fromPageId: pageId,
-                quoteRoofAreaId: e.quoteRoofAreaId ?? areaId,
+                quoteRoofAreaId: e.offcutProvenance ? e.offcutProvenance.offcut_area_scope_id ?? null : e.quoteRoofAreaId ?? areaId,
                 entryInputs: {
+                  ...e.offcutProvenance,
                   value_basis: 'offcuts',
                   plan_value: e.planValue ?? e.value,
                 },
@@ -4790,11 +4832,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (touchComponentEntriesRef.current.some((e) => e.id === m.id)) continue;
       const target = adapter?.getComponentTarget?.(m.componentId);
       if (!target) continue;
-      const kind: TouchComponentEntry['kind'] = m.type === 'line' ? 'line' : m.type === 'area' ? 'area' : 'point';
+      const kind: TouchComponentEntry['kind'] = (m.type === 'line' || m.type === 'multi_lineal') ? 'line' : m.type === 'area' ? 'area' : 'point';
       const inputs = m.entryInputs ?? null;
       const basis = inputs?.value_basis ?? null;
       const attached = kind === 'area' && basis === 'pitched';
-      const offcutAttached = kind === 'area' && basis === 'offcuts';
+      const offcutAttached = (kind === 'area' || kind === 'line') && basis === 'offcuts';
       const corner = kind === 'point' && !!basis && basis.startsWith('corner_');
       touchComponentEntriesRef.current.push({
         id: m.id,
@@ -4815,7 +4857,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           : {}),
         ...(offcutAttached
           ? {
-              fromOffcuts: true,
+              fromOffcuts: true, offcutProvenance: inputs ?? undefined,
               ...(typeof inputs?.plan_value === 'number' ? { planValue: inputs.plan_value } : {}),
             }
           : {}),
@@ -7631,7 +7673,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const provenanceById = new Map(result.provenance.map((p) => [p.measurementId, p]));
     setComponentMeasurements(componentMeasurements.map((c) => ({
       ...c,
-      measurements: c.measurements.map((m) => {
+      measurements: c.measurements.map((m): ComponentMeasurement => {
         const u = updateById.get(m.id);
         if (!u) return m;
         // Attached entries: refresh the plan_value snapshot too (spec 10.3).
@@ -7840,6 +7882,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const applyOffcutFigure = useCallback((figure: OffcutAreaFigure | null) => {
     offcutAreaFigureRef.current = figure && Number.isFinite(figure.m2) && figure.m2 > 0 ? figure : null;
     setOffcutAreaFigure(offcutAreaFigureRef.current);
+    touchBridgeListeners.current.forEach(listener => listener());
   }, []);
   const invalidateOffcutFigure = useCallback(() => {
     figureRequestRef.current++; // invalidate in-flight reads as well as the offered value
@@ -7874,7 +7917,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const receiveOffcutQuantity = useCallback((proposal: QuoteQuantityProposal) => {
     const scope = { quoteId: quote.id, pageId: currentPageIdRef.current ?? '', areaScopeId: activeAreaIdRef.current ?? null };
     const figure = proposalCoverFigure(proposal, scope);
-    if (figure) { figureRequestRef.current++; applyOffcutFigure(figure); }
+    if (!figure) throw new Error('Cut-plan quantities do not match the active page and roof area.');
+    figureRequestRef.current++; applyOffcutFigure(figure);
   }, [quote.id, applyOffcutFigure]);
   const saveOffcutOnePager = useCallback(async (payload: OffcutOnePagerPayload) => {
     const { saveOffcutOnePagerToJob } = await import('@/app/lib/takeoff/offcutOnePager');
@@ -7914,6 +7958,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         return [[component.id, singular[key]]];
       })),
     };
+  });
+  useEffect(() => {
+    const figure = offcutAreaFigureRef.current, snapshot = offcutsLiveSnapshotRef.current;
+    if (!figure?.originalSourceRevision || !snapshot || offcutsModalRef.current) return;
+    try { if (fromQuoteCore(snapshot).roof.sourceRevision !== figure.originalSourceRevision) invalidateOffcutFigure(); }
+    catch { invalidateOffcutFigure(); }
   });
   // V2.20: editable recovery data is distinct from the solver's geometry-only
   // capture. Keep values, ownership stamps, final-quantity basis and touch ids.
@@ -8646,21 +8696,23 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                       as a normal entry stamped with that area - the
                                       report pitches/prices it like a hand-drawn one.
                                       Ported from free roof takeoff 2026-08-30. */}
-                                  {mt === 'area' && roofAreas.length > 0 && (
+                                  {((mt === 'area' && roofAreas.length > 0) || (offcutAreaFigure && materialUnitForComponent(mt))) && (
                                     <div className="mt-2">
                                       <select
                                         onChange={(e) => {
                                           if (e.target.value) {
-                                            handleApplyRoofAreaToComponent(comp.id, e.target.value);
+                                            if (e.target.value.startsWith(OFFCUT_MEASUREMENT_OPTION + ':')) handleApplyOffcutMaterial(comp.id, e.target.value.slice(OFFCUT_MEASUREMENT_OPTION.length + 1));
+                                            else handleApplyRoofAreaToComponent(comp.id, e.target.value);
                                             e.target.value = '';
                                           }
                                         }}
                                         defaultValue=""
-                                        aria-label={`Use an existing area for ${comp.name}`}
+                                        aria-label={`Reuse a measurement for ${comp.name}`}
                                         className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
                                       >
-                                        <option value="">Use an existing area…</option>
-                                        {roofAreas.map(ra => (
+                                        <option value="">Reuse a measurement…</option>
+                                        {offcutAreaFigure && materialUnitForComponent(mt) && <option value={`${OFFCUT_MEASUREMENT_OPTION}:${materialFigureToken(offcutAreaFigure)}`}>{materialOptionLabel(offcutAreaFigure, mt, calibrations[0]?.unit ?? 'meters')}</option>}
+                                        {(mt === 'area' ? roofAreas : []).map(ra => (
                                           <option key={ra.id} value={ra.id}>
                                             {ra.name} · {(ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1)).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}{ra.pitch ? ` (pitch ${Math.round(ra.pitch)}°)` : ''}
                                           </option>
@@ -9060,7 +9112,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                               onQuantityProposal: receiveOffcutQuantity,
                               onSaveOnePager: saveOffcutOnePager,
                               onPlanInvalidated: invalidateOffcutFigure,
-                              onClosed: () => { void refreshOffcutAreaFigure(); },
+                              onClosed: () => { offcutsModalRef.current = null; void refreshOffcutAreaFigure(); },
                               readContext: () => {
                                 const live = offcutsLiveSnapshotRef.current;
                                 if (!live) throw new Error('The takeoff workspace is not ready.');
@@ -9141,7 +9193,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                               onQuantityProposal: receiveOffcutQuantity,
                               onSaveOnePager: saveOffcutOnePager,
                               onPlanInvalidated: invalidateOffcutFigure,
-                              onClosed: () => { void refreshOffcutAreaFigure(); },
+                              onClosed: () => { offcutsModalRef.current = null; void refreshOffcutAreaFigure(); },
                               initialSavedReview:stored,
                               initialCalculation:recovered?.calculation,
                               imageUrl: /^https?:/i.test(image) ? image : undefined,

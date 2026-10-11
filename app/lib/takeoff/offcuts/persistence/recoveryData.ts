@@ -1,3 +1,4 @@
+import type { OffcutEntryProvenance } from '../core/reusableQuantity';
 import {recoveryId} from '../reliability/id';
 import { captureLiveTakeoff, exportLiveCapture, legacyLiveInputFingerprint, type LiveInputCapture } from '../adapters/liveSnapshot';
 import { canonicalFingerprint, fingerprint } from '../core/math';
@@ -5,12 +6,12 @@ import type { Point } from '../core/types';
 import { sameReviewScope, type ReviewDocument, type ReviewScope } from './reviews';
 import {validCalculationJournal,type CalculationJournal} from '../reliability/protocol';
 export type MeasurementKind='line'|'area'|'point'|'multi_lineal'|'multi_lineal_lxh'|'volume_3d'|'length_x_height_freestyle'|'multi_lineal_lxh_freestyle';
-export interface RecoveryEntryInputs {height_m?:number|null;depth_m?:number|null;value_basis?:'plan'|'pitched'|'offcuts'|'corner_all'|'corner_external'|'corner_internal';plan_value?:number;pitch_applied?:boolean;source_geometry_id?:string;offcut_layout_id?:string;offcut_source_revision?:string;offcut_faces_revision?:string;corner_count?:number;}
+export interface RecoveryEntryInputs extends OffcutEntryProvenance {height_m?:number|null;depth_m?:number|null;value_basis?:'plan'|'pitched'|'offcuts'|'corner_all'|'corner_external'|'corner_internal';plan_value?:number;pitch_applied?:boolean;source_geometry_id?:string;offcut_layout_id?:string;offcut_source_revision?:string;offcut_faces_revision?:string;corner_count?:number;}
 export interface RecoveryMeasurement {id:string;type:MeasurementKind;value:number;points?:Point[];visible:boolean;fromPageId?:string|null;quoteRoofAreaId?:string|null;entryInputs?:RecoveryEntryInputs|null;aiOrigin?:boolean;}
 export interface RecoveryGroup {componentId:string;expanded:boolean;measurements:RecoveryMeasurement[];}
 export interface RecoveryArea {id:string;name:string;points:Point[];area:number;pitch:number;visible:boolean;fromPageId?:string|null;quoteRoofAreaId?:string|null;}
 export interface RecoveryCalibration {id:string;point1:Point;point2:Point;pixelDistance:number;actualDistance:number;unit:'feet'|'meters';scale:number;}
-export interface RecoveryTouchEntry {id:string;key:string;componentId:string|null;displayName:string;colour:string;value:number;kind:'line'|'area'|'point';hidden:boolean;points:Point[];fromRoofAreaId?:string;quoteRoofAreaId?:string|null;planValue?:number;fromOffcuts?:boolean;cornerBasis?:'all'|'external'|'internal';cornerCount?:number;sourceGeometryId?:string|null;}
+export interface RecoveryTouchEntry {id:string;key:string;componentId:string|null;displayName:string;colour:string;value:number;kind:'line'|'area'|'point';hidden:boolean;points:Point[];fromRoofAreaId?:string;quoteRoofAreaId?:string|null;planValue?:number;fromOffcuts?:boolean;offcutProvenance?:OffcutEntryProvenance;cornerBasis?:'all'|'external'|'internal';cornerCount?:number;sourceGeometryId?:string|null;}
 export interface WorkstationRecoveryState {
   componentMeasurements:RecoveryGroup[];roofAreas:RecoveryArea[];calibrations:RecoveryCalibration[];calibrationConfirmed:boolean;
   activeComponentIds:string[];selectedComponentId:string|null;activeSaveRoofAreaId:string|null;
@@ -18,7 +19,7 @@ export interface WorkstationRecoveryState {
   calibrationMetadataText:string|null;measurementSystem:string;sessionVersion:number|null;
 }
 export interface RecoveryDocument {
-  schemaVersion:1;kind:'quotecore-takeoff-recovery';engineVersion:'2.20'|'2.21'|'2.22'|'2.23'|'2.24'|'2.25'|'2.26';id:string;scope:ReviewScope;
+  schemaVersion:1;kind:'quotecore-takeoff-recovery';engineVersion:'2.20'|'2.21'|'2.22'|'2.23'|'2.24'|'2.25'|'2.26'|'2.27';id:string;scope:ReviewScope;
   imageKey:string;savedAt:string;status:'active'|'completed'|'discarded';capture:LiveInputCapture;
   workstation:WorkstationRecoveryState;review:ReviewDocument|null;calculation:CalculationJournal|null;
 }
@@ -40,7 +41,8 @@ export function checkedWorkstationState(value:unknown):WorkstationRecoveryState 
     for(const m of g.measurements){if(++count>2500||!record(m)||typeof m.id!=='string'||ids.has(m.id)||!kinds.includes(m.type as MeasurementKind)||!finite(m.value)||m.value<0||typeof m.visible!=='boolean'||m.points!==undefined&&!points(m.points))throw new Error('Invalid or duplicate recovered measurement.');ids.add(m.id);
       if(m.entryInputs!==undefined&&m.entryInputs!==null){if(!record(m.entryInputs))throw new Error('Invalid recovered entry inputs.');
         for(const [k,v] of Object.entries(m.entryInputs)){
-          if(['height_m','depth_m','plan_value','corner_count'].includes(k)&&v!==null&&!finite(v))throw new Error('Invalid recovered numeric input.');
+          if(['height_m','depth_m','plan_value','corner_count','offcut_quantity'].includes(k)&&v!==null&&!finite(v))throw new Error('Invalid recovered numeric input.');
+          if(k==='offcut_unit'&&!['lm','m2'].includes(String(v)))throw new Error('Unknown recovered offcut unit.');
           if(k==='value_basis'&&!['plan','pitched','offcuts','corner_all','corner_external','corner_internal'].includes(String(v)))throw new Error('Unknown recovered quantity basis.');
         }
       }
@@ -52,6 +54,13 @@ export function checkedWorkstationState(value:unknown):WorkstationRecoveryState 
   if(![value.selectedComponentId,value.activeSaveRoofAreaId].every(v=>v===null||typeof v==='string')||!(value.sessionVersion===null||Number.isSafeInteger(value.sessionVersion)))throw new Error('Invalid recovered selection/version.');
   for(const c of value.componentColors)if(!record(c)||typeof c.componentId!=='string'||typeof c.color!=='string')throw new Error('Invalid recovered component colours.');
   for(const e of value.touchEntries)if(!record(e)||typeof e.id!=='string'||typeof e.key!=='string'||!(e.componentId===null||typeof e.componentId==='string')||typeof e.displayName!=='string'||typeof e.colour!=='string'||!finite(e.value)||e.value<0||!['line','area','point'].includes(String(e.kind))||!points(e.points)||typeof e.hidden!=='boolean')throw new Error('Invalid recovered touch measurement.');
+  for(const e of value.touchEntries){
+    if(e.offcutProvenance!==undefined){const p=e.offcutProvenance;
+      if(!record(p)||p.offcut_quantity!==undefined&&(!finite(p.offcut_quantity)||p.offcut_quantity<=0)||p.offcut_unit!==undefined&&!['m2','lm'].includes(String(p.offcut_unit)))throw new Error('Invalid recovered offcut provenance.');
+      for(const [k,v] of Object.entries(p))if(k.startsWith('offcut_')&&!['offcut_quantity','offcut_area_scope_id'].includes(k)&&typeof v!=='string')throw new Error('Invalid recovered offcut identity.');
+      if(p.offcut_area_scope_id!==undefined&&p.offcut_area_scope_id!==null&&typeof p.offcut_area_scope_id!=='string')throw new Error('Invalid recovered offcut roof scope.');
+    }
+  }
   if(value.calibrationMetadataText!==null&&typeof value.calibrationMetadataText!=='string')throw new Error('Invalid calibration metadata.');
   return structuredClone(value) as unknown as WorkstationRecoveryState;
 }
@@ -61,13 +70,13 @@ export function createRecoveryDocument(capture:LiveInputCapture,workstation:Work
   const sourceRows=new Map(c.snapshot.componentMeasurements.flatMap(g=>g.measurements.map(m=>[m.id,m] as const)));
   for(const group of workstation.componentMeasurements)for(const m of group.measurements){const drawn=sourceRows.get(m.id);if(drawn?.points)m.points=structuredClone(drawn.points);}
   for(const area of workstation.roofAreas){const drawn=c.snapshot.roofAreas.find(a=>a.id===area.id);if(drawn)area.points=structuredClone(drawn.points);}
-  return parseRecoveryDocument({schemaVersion:1,kind:'quotecore-takeoff-recovery',engineVersion:'2.26',id:recoveryId(),
+  return parseRecoveryDocument({schemaVersion:1,kind:'quotecore-takeoff-recovery',engineVersion:'2.27',id:recoveryId(),
     scope:{quoteId:c.snapshot.quoteId,pageId:c.snapshot.pageId,areaScopeId:c.snapshot.areaScopeId??null},imageKey,savedAt:new Date().toISOString(),status:'active',capture:c,workstation,review:null,calculation:null});
 }
 export function parseRecoveryDocument(value:unknown,scope?:ReviewScope):RecoveryDocument {
   const text=JSON.stringify(value);if(!text||new TextEncoder().encode(text).length>RECOVERY_MAX_BYTES)throw new Error('The recovery checkpoint exceeds its 12 MB limit.');
   const d=JSON.parse(text) as RecoveryDocument;
-  if(d?.schemaVersion!==1||d.kind!=='quotecore-takeoff-recovery'||!['2.20','2.21','2.22','2.23','2.24','2.25','2.26'].includes(d.engineVersion)||typeof d.id!=='string'||!d.scope||typeof d.scope.quoteId!=='string'||typeof d.scope.pageId!=='string'||typeof d.imageKey!=='string'||!['active','completed','discarded'].includes(d.status)||!Number.isFinite(Date.parse(d.savedAt)))throw new Error('Invalid takeoff recovery document.');
+  if(d?.schemaVersion!==1||d.kind!=='quotecore-takeoff-recovery'||!['2.20','2.21','2.22','2.23','2.24','2.25','2.26','2.27'].includes(d.engineVersion)||typeof d.id!=='string'||!d.scope||typeof d.scope.quoteId!=='string'||typeof d.scope.pageId!=='string'||typeof d.imageKey!=='string'||!['active','completed','discarded'].includes(d.status)||!Number.isFinite(Date.parse(d.savedAt)))throw new Error('Invalid takeoff recovery document.');
   if(scope&&!sameReviewScope(d.scope,scope))throw new Error('Recovery belongs to a different quote, page or roof area.');
   const capture=captureLiveTakeoff(d.capture?.snapshot);
   // Canonical hashing is immune to jsonb/clone key reordering; the legacy hash

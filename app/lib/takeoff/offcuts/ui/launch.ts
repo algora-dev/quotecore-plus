@@ -8,7 +8,7 @@ import type { Draft } from '../core/types';
 import { tokenFallbacks } from './theme';
 export interface LaunchOptions extends Pick<WorkbenchOptions,'beforeCalculation'|'onReviewCheckpoint'|'onCalculationChange'|'initialCalculation'|'calculationLimitMs'|'getRecoveryState'|'createExportWorker'> {
   /** Durable host checkpoint gate, separate from review/source measurement saving. */
-  persistCapture?: (capture:LiveInputCapture) => Promise<void>; onPlanInvalidated?:()=>void; onClosed?:()=>void; createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void; onSaveOnePager?: (payload:OffcutOnePagerPayload)=>void|Promise<void>;
+  persistCapture?: (capture:LiveInputCapture) => Promise<void>; onPlanInvalidated?:()=>void; onClosed?:()=>void; createWorker?: () => Worker; onExport?: (draft: Draft) => void; onQuantityProposal?: (proposal:QuoteQuantityProposal)=>void|Promise<void>; onSaveOnePager?: (payload:OffcutOnePagerPayload)=>void|Promise<void>;
   reviewRepository?:ReviewRepository;
   /** Explicit restore; normally use launchStoredQuoteCoreOffcuts. */
   initialSavedReview?:StoredReview; savedInputMode?:boolean;
@@ -82,11 +82,21 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
     if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
     options.onClosed?.();
   }
-  function requestClose(): void {
+  let closing=false;
+  function requestClose():void {
+    if(closed||closeDialog||closing||handle?.isCompleting?.())return;
+    if(!options.reviewRepository){showCloseProblem();return;}
+    closing=true;
+    void handle?.flushReview?.().then(()=>destroy()).catch((error:unknown)=>{
+      closing=false;showCloseProblem(error instanceof Error?error.message:'Saving failed. Export a copy before leaving.');
+    });
+  }
+  function showCloseProblem(problem?:string): void {
     if (closed || closeDialog) return;
     const confirm = document.createElement('dialog'); closeDialog = confirm;
-    confirm.className = 'qc-offcuts-close'; confirm.setAttribute('aria-label', 'Close this draft?');
-    confirm.innerHTML = `<h2>Close this draft?</h2><p>${options.reviewRepository?'Save this structured review before closing. This does not change takeoff measurements or quote prices.':'Account saving is not connected. Export the draft before closing to keep it.'}</p><div class="qc-offcuts-close-actions"><button data-keep autofocus>Keep reviewing</button><button data-discard>${options.reviewRepository?'Save & close':'Close draft'}</button></div>`;
+    confirm.className = 'qc-offcuts-close'; confirm.setAttribute('aria-label', 'Draft not saved');
+    confirm.innerHTML = `<h2>Draft not saved</h2><p>${options.reviewRepository?'Save this structured review before closing. This does not change takeoff measurements or quote prices.':'Account saving is not connected. Export the draft before closing to keep it.'}</p><div class="qc-offcuts-close-actions"><button data-keep autofocus>Keep reviewing</button><button data-discard>${options.reviewRepository?'Save & close':'Close draft'}</button></div>`;
+    if(problem)confirm.querySelector('p')!.textContent=problem;
     const keep = (): void => { confirm.close(); confirm.remove(); closeDialog = null; host.shadowRoot?.querySelector<HTMLElement>('[data-action="close"]')?.focus(); };
     confirm.querySelector('[data-keep]')!.addEventListener('click', keep);
     confirm.querySelector('[data-discard]')!.addEventListener('click',async()=>{
@@ -107,13 +117,13 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
     modal.showModal();
     handle = mountWorkbench(host, captured.roof, {
       beforeCalculation:options.beforeCalculation,onReviewCheckpoint:options.onReviewCheckpoint,onCalculationChange:options.onCalculationChange,initialCalculation:options.initialCalculation,calculationLimitMs:options.calculationLimitMs,getRecoveryState:options.getRecoveryState,createExportWorker:options.createExportWorker,
-      inputCapture: capture, initialIssues: captured.issues, reviewRepository:options.reviewRepository, initialSavedReview:options.initialSavedReview, onClose: requestClose, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal, onSaveOnePager:options.onSaveOnePager, onPlanInvalidated:options.onPlanInvalidated,
+      inputCapture: capture, initialIssues: captured.issues, reviewRepository:options.reviewRepository, initialSavedReview:options.initialSavedReview, onClose: requestClose, onCompleted: destroy, onExport: options.onExport, onQuantityProposal:options.onQuantityProposal, onSaveOnePager:options.onSaveOnePager, onPlanInvalidated:options.onPlanInvalidated,
       readCurrentSourceRevision: options.savedInputMode?undefined:() => fromQuoteCore(readSnapshot()).roof.sourceRevision,
       createWorker: options.createWorker ?? (() => new Worker(new URL('../worker.ts', import.meta.url), { type: 'module' })),
     });
     host.shadowRoot?.querySelector<HTMLElement>('[data-action="close"]')?.focus();
   } catch (error) { destroy(); throw error; }
-  return { destroy, getDraft: () => handle!.getDraft(), getDebugBundle:()=>handle!.getDebugBundle!(), getDebugBlob:()=>handle!.getDebugBlob!(), getPerformance:()=>handle!.getPerformance!(), flushReview:()=>handle!.flushReview!(), getSaveState:()=>handle!.getSaveState!() };
+  return { destroy, getDraft: () => handle!.getDraft(), getDebugBundle:()=>handle!.getDebugBundle!(), getDebugBlob:()=>handle!.getDebugBlob!(), getPerformance:()=>handle!.getPerformance!(), flushReview:()=>handle!.flushReview!(), getSaveState:()=>handle!.getSaveState!(), isCompleting:()=>handle!.isCompleting?.()??false };
 }
 
 /** Explicit recovery entry for a fresh browser visit with no in-memory calibration.

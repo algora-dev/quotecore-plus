@@ -1,4 +1,5 @@
 'use client';
+import type { ReusableMaterialFigure } from '../offcuts/core/reusableQuantity';
 // Touch-only orchestration. Geometry commands, scale, authorisation and
 // persistence remain owned by the existing shared domain and workstation.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -66,6 +67,8 @@ export interface TouchOutlineAdapter {
   addRoofAreaEntry?(target: TouchComponentTarget, area: SavedOutlineRecord): TouchComponentEntry | null;
   /** Phase 2 (2026-10-07): the page's offcut cover-m2 figure - from the live
    *  workbench proposal or the saved offcut review. Null when none exists. */
+  getOffcutMaterialFigure?(): ReusableMaterialFigure | null;
+  addOffcutMaterialEntry?(target: TouchComponentTarget, expectedToken: string): TouchComponentEntry | null;
   getOffcutAreaFigure?(): { m2: number } | null;
   /** Phase 2: attach the offcut figure as a FINAL material area entry - the
    *  save path applies no pitch and no waste factor to it. */

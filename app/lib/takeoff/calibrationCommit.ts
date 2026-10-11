@@ -131,15 +131,19 @@ export type EntryInputsLike = Record<string, unknown> | null | undefined;
  *  entryInputs so it rides the entry_inputs jsonb into the atomic save (and
  *  the RPC copies it to the native column). Only stamps unambiguous
  *  resolutions that produced a source polygon; never mutates the input. */
-export function stampSourceProvenance<T extends { entryInputs?: EntryInputsLike }>(
+export function stampSourceProvenance<T extends { entryInputs?: object | null }>(
   measurement: T,
   link: SourceProvenanceLink | undefined,
 ): T {
   if (!link || link.sourceGeometryId == null) return measurement;
-  const current = measurement.entryInputs ?? undefined;
+  // Localized record view: entry inputs are plain JSON objects at runtime, but
+  // typed interface shapes without index signatures (e.g. the offcut
+  // provenance intersection on ComponentMeasurement.entryInputs) must remain
+  // valid inputs without forcing a cast at every call site.
+  const current = (measurement.entryInputs ?? undefined) as Record<string, unknown> | undefined;
   if (current && current.source_geometry_id === link.sourceGeometryId) return measurement;
   return {
     ...measurement,
-    entryInputs: { ...(current ?? {}), source_geometry_id: link.sourceGeometryId },
+    entryInputs: { ...(current ?? {}), source_geometry_id: link.sourceGeometryId } as T['entryInputs'],
   };
 }

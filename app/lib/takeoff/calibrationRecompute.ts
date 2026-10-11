@@ -225,8 +225,8 @@ export function computeCalibrationRecompute(input: RecomputeInput): RecomputeRes
 
     // Phase 2 (2026-10-07): offcut figures are FINAL material quantities from
     // the cutting plan - calibration-independent, no geometry to rescale.
-    if (m.type === 'area' && m.entryInputs?.value_basis === 'offcuts') {
-      skipped.push({ id: m.id, type: m.type, reason: 'offcut material figure is scale-independent' });
+    if (['area','line','multi_lineal'].includes(m.type) && m.entryInputs?.value_basis === 'offcuts') {
+      skipped.push({ id: m.id, type: m.type, reason: 'historical cut-plan snapshot; recalculate the plan to update material quantities' });
       continue;
     }
 

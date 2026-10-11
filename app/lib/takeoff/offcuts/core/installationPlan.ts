@@ -33,7 +33,7 @@ export function validateInstallationPlan(r:SolveRequest,s:Solution):Issue[]{
   if(p.model!==INSTALLATION_PLAN_MODEL||!['reversed-donors','barge-starts'].includes(p.kind)||typeof p.referenceLayoutId!=='string'||!p.referenceLayoutId||p.siteSetoutConfirmed!==false||!s.bankLayout?.installationSetout){bad('Invalid installation-plan metadata.');return errors;}
   if(!Array.isArray(p.donorFaceIds)||!Array.isArray(p.receiverFaceIds)||p.donorFaceIds.some(id=>!ids.has(id))||p.receiverFaceIds.some(id=>!ids.has(id))||new Set(p.donorFaceIds).size!==p.donorFaceIds.length||new Set(p.receiverFaceIds).size!==p.receiverFaceIds.length){bad('Installation-plan faces do not match the reviewed roof.');return errors;}
   if(p.kind==='reversed-donors'){
-    if(s.engineVersion==='2.26'&&!p.pairedReceiver)bad('V2.26 reversed plans require a verified paired receiver-family certificate.');
+    if((s.engineVersion==='2.26'||s.engineVersion==='2.27')&&!p.pairedReceiver)bad('V2.26 reversed plans require a verified paired receiver-family certificate.');
     if(!p.donorFaceIds.length||!p.receiverFaceIds.length||p.donorFaceIds.some(id=>!s.bankLayout!.primaryFaceIds.includes(id)||!s.bankLayout!.installationSetout!.anchors.some(a=>a.faceId===id&&a.kind==='hip-ridge-junction')))bad('Reversed donor plans need actual anchored primary stock.');
     const roots=new Map(s.demands.map(d=>[d.id,d.faceId])),cuts=new Map(s.offcuts.map(o=>[o.id,o]));
     for(const donor of p.donorFaceIds)if(!s.placements.some(q=>{const o=cuts.get(q.offcutId??'');return q.kind==='reuse'&&p.receiverFaceIds.includes(roots.get(q.demandId)??'')&&o&&roots.get(o.rootDemandId??o.sourceDemandId)===donor;}))bad('A proposed donor supplies no actual material to the reversed receivers.');
@@ -57,6 +57,7 @@ export function validateInstallationPlan(r:SolveRequest,s:Solution):Issue[]{
     if(d&&s.placements.find(p=>p.demandId===d.id)?.kind!=='new')bad('A fresh barge-start proposal does not start with purchased material.');
   }
   errors.push(...validatePairedReceiverCertificate(r,s));
+  if(s.engineVersion==='2.27'&&s.installationPlan?.kind==='reversed-donors'&&s.installationPlan.pairedReceiver?.proposal.chainMode!=='whole-valley-chain-v1')errors.push({severity:'error',code:'PAIRED_RECEIVER_FAMILY',message:'missing-whole-valley-chain-certificate'});
   return errors;
 }
 /** Quantities come from the actual purchase rectangles. A clipped drawing at a
@@ -97,6 +98,7 @@ export function installationInstructions(r:SolveRequest,s:Solution):string{
     'Marks show effective-cover boundaries, not measured physical overhang.',
     s.installationPlan?.reuseEndTrimMm?`Reversed receivers have ${s.installationPlan.reuseEndTrimMm} mm checked length-end trimming room in each assigned source piece. This is not a guarantee for arbitrary site grid shifts.`:'No extra length-end trimming margin is certified beyond the physical plan.',
     ...(s.installationPlan?.pairedReceiver?.families.map(f=>`${names.get(f.donorFaceId)??f.donorFaceId}: complete ${f.offcutIds.length}-piece hip family to ${names.get(s.installationPlan!.pairedReceiver!.proposal.receiverFaceId)??s.installationPlan!.pairedReceiver!.proposal.receiverFaceId}, toward ${f.downstreamFaceIds.map(id=>names.get(id)??id).join(' / ')||f.side}. Source lanes ${f.sourceLanes.map(n=>n+1).join(', ')}; receiver lanes ${f.receiverLanes.map(n=>n+1).join(', ')}. Grid offset at this datum: ${f.anchorGridOffsetMm.toFixed(1)} mm. Recut descendants installed: ${f.secondary.filter(c=>c.destinationDemandId).length}.`)??[]),
+    ...(s.installationPlan?.pairedReceiver?.receiverChains?.map(c=>`${names.get(c.destinationFaceId)??c.destinationFaceId}: ${c.viaReceiverDemandIds.length} positions use recuts made on ${names.get(c.receiverFaceId)??c.receiverFaceId}; ${c.directDonorDemandIds.length} use separate original donor cuts; ${c.freshStarterChildDemandIds.length} use fresh-starter cuts; ${c.freshDemandIds.length} are purchased fresh. ${c.completeFromReceiver?'Entire face supplied by this secondary chain.':'This is not a claim that the entire face comes from the secondary chain.'}`)??[]),
     'Never start at the upper termination of a valley. Keep one straight cut line. Allow trimming; do not stretch a short piece.',
     'A junction anchor establishes the sheet grid. It does not change the profile lap or guarantee that every profile can be laid in both directions.',
     ...installationGuides(r,s).map(g=>`${g.name}: ${g.start}. ${g.setout}\nNew stock: ${g.freshLengths.map(x=>`${x.count} x ${(x.lengthMm/1000).toFixed(3)} m`).join('; ')||'none'}. Reuse: ${g.sources.map(x=>`${x.count} from ${names.get(x.faceId)??x.faceId}`).join('; ')||'none'}.`),
