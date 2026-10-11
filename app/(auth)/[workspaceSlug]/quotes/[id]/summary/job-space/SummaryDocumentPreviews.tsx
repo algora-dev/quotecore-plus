@@ -44,7 +44,7 @@ export function CustomerQuotePreview({
 
   return (
     <div data-pdf-customer>
-      <div className="bg-white rounded-xl border border-black p-12 space-y-8">
+      <div className="bg-white rounded-xl border border-black p-12 space-y-8 max-md:p-4">
         {/* Header */}
         <div className="border-b-2 border-black pb-6 mb-6">
           <div className="flex justify-end mb-6">
@@ -80,10 +80,10 @@ export function CustomerQuotePreview({
         {/* Lines */}
         <div className="space-y-3">
           {visibleLines.map(line => (
-            <div key={line.id} className="flex items-start justify-between py-3 border-b border-black">
-              <p className="text-black">{line.custom_text}</p>
+            <div key={line.id} className="flex items-start justify-between gap-3 py-3 border-b border-black">
+              <p className="text-black flex-1 min-w-0 break-words">{line.custom_text}</p>
               {line.show_price && (
-                <p className="text-black font-medium whitespace-nowrap ml-4">
+                <p className="text-black font-medium whitespace-nowrap ml-4 shrink-0">
                   {formatCurrency(line.custom_amount || 0, effectiveCurrency)}
                 </p>
               )}
@@ -158,7 +158,7 @@ export function LaborSheetPreview({
 
   return (
     <div data-pdf-labor>
-      <div className="bg-white rounded-xl border border-black p-12 space-y-8">
+      <div className="bg-white rounded-xl border border-black p-12 space-y-8 max-md:p-4">
         <div className="border-b-2 border-black pb-6">
           <h1 className="text-xl font-bold text-black mb-4">LABOR SHEET - Quote #{quote.quote_number || 'DRAFT'}</h1>
           <p className="text-base text-black"><span className="font-semibold">Client:</span> {quote.customer_name}</p>
@@ -167,10 +167,10 @@ export function LaborSheetPreview({
 
         <div className="space-y-3">
           {visibleLines.map(line => (
-            <div key={line.id} className="flex items-start justify-between py-3 border-b border-black">
-              <p className="text-black">{line.custom_text}</p>
+            <div key={line.id} className="flex items-start justify-between gap-3 py-3 border-b border-black">
+              <p className="text-black flex-1 min-w-0 break-words">{line.custom_text}</p>
               {line.show_price && (
-                <p className="text-black font-medium whitespace-nowrap ml-4">
+                <p className="text-black font-medium whitespace-nowrap ml-4 shrink-0">
                   {formatCurrency(line.custom_amount || 0, effectiveCurrency)}
                 </p>
               )}
