@@ -53,6 +53,8 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
         </div>
       </section>
 
+{/* "How it works" section - hidden for now (owner request 2026-10-11). Re-enable by removing this wrapper. */}
+      {false && (
       <section id="how-it-works" className={`${s.section} ${s.dark} ${s.waysSection}`} aria-labelledby="ways-title">
         <div className={s.container}>
           <div className={s.sectionIntro}><div><p className={s.eyebrow}>How it works</p><h2 id="ways-title" className={s.sectionTitle}>Two steps to your first quote.<br /><span className={s.mutedHeading}>One step for every job after.</span></h2></div><p className={s.introAside}>Most of the work happens once.</p></div>
@@ -78,6 +80,7 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
           <div className={s.waysOutcome}><Icon name="arrow" size={18} /><p>Quote, materials order, invoice — <strong>ready to send in a click or two.</strong></p></div>
         </div>
       </section>
+      )}
 
       <FitQuizSection />
 
@@ -121,6 +124,8 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
       </section>
       )}
 
+{/* "Start with something useful" free tools section - hidden for now (owner request 2026-10-11). Re-enable by removing this wrapper. */}
+      {false && (
       <section id="free-tools" className={`${s.section} ${s.toolsSection}`} aria-labelledby="tools-title"><div className={s.container}>
         <div className={s.sectionIntro}><div><p className={s.eyebrow}>Start with something useful</p><h2 id="tools-title" className={s.sectionTitle}>Your plan. Our free tools.</h2></div><a href="/free-tools" className={s.textLink}>Explore all free tools<Icon name="arrow" size={18} /></a></div>
         <div className={s.toolsGrid}>{([
@@ -129,12 +134,13 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
           ['document', 'Find your next tool', 'Something useful for the job in front of you.', '/free-tools'],
         ] as [IconName, string, string, string][]).map(([icon, title, text, href]) => <a href={href} className={s.toolCard} key={title}><Icon name={icon} size={28} /><h3>{title}</h3><p>{text}</p><span>Open tool<Icon name="arrow" size={18} /></span></a>)}</div>
       </div></section>
+      )}
 
       <section id="questions" className={`${s.section} ${s.dark} ${s.faqSection}`} aria-labelledby="faq-title"><div className={s.container}>
         <div className={s.faqGrid}><div><p className={s.eyebrow}>A few things worth knowing</p><h2 id="faq-title" className={s.sectionTitle}>Good questions.<br />Straight answers.</h2><p className={s.bodyCopy}>Have a question about your business?<br />Let’s talk through it.</p><DemoCallButton bookingHref={config.bookingHref} label="Book a Free Demo Call" location="faq" /></div>
           <div className={s.faqList}>{homepageFaqs.map((faq, i) => <details className={s.faqItem} key={faq.question}><summary><span><small>0{i + 1}</small>{faq.question}</span><Icon name="chevron" size={19} /></summary><p>{faq.answer}</p></details>)}</div>
         </div>
-        <div className={s.closing}><p className={s.eyebrow}>Less back and forth. More getting it done.</p><h2>Make your next quote<br /><span className={s.mutedHeading}>a better experience.</span></h2><div className={s.closingActions}>{demo()}<MarketingButton href="/pricing" variant="glass" size="large" className={`${s.button} ${s.glass}`}>Explore pricing<Icon name="arrow" size={18} /></MarketingButton></div><p className={s.smallNote}>No signup for the demo. A real job, ready to explore.</p></div>
+        {false && (<div className={s.closing}><p className={s.eyebrow}>Less back and forth. More getting it done.</p><h2>Make your next quote<br /><span className={s.mutedHeading}>a better experience.</span></h2><div className={s.closingActions}>{demo()}<MarketingButton href="/pricing" variant="glass" size="large" className={`${s.button} ${s.glass}`}>Explore pricing<Icon name="arrow" size={18} /></MarketingButton></div><p className={s.smallNote}>No signup for the demo. A real job, ready to explore.</p></div>)}
       </div></section>
     </main>
     <div className={s.footerWrap}><SiteFooter /></div>
