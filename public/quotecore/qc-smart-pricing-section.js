@@ -1,4 +1,4 @@
-/* QuoteCore+ / Smart Components™ / premium website section 1.0.0. No external dependencies. */
+/* QuoteCore+ / Smart Componentsâ„¢ / premium website section 1.0.0. No external dependencies. */
 (()=>{
 "use strict";
 /**
