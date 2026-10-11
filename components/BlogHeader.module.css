@@ -143,8 +143,6 @@
   text-transform: uppercase;
 }
 
-.mobileMenuActions { display: none; }
-
 .navList { display: grid; }
 
 .navItem {
@@ -217,12 +215,6 @@
   .menuButton { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
   .actions { gap: 8px; }
   .menuInner { padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); }
-  .mobileMenuActions {
-    display: grid;
-    grid-template-columns: 1fr 1.15fr;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
   .navItem { min-height: 50px; font-size: 15px; }
   .menuFooter { align-items: flex-start; flex-direction: column; }
 }
@@ -270,7 +262,6 @@
 .menuFooter > div svg { width: 19px; height: 19px; }
 .navItem:focus-visible, .countryLink:focus-visible, .menuFooter a:focus-visible { outline: 2px solid var(--qc-header-orange-ink); outline-offset: 3px; }
 @media (max-width:767px) {
-  .mobileMenuActions { display: flex; }
   .menuPanel { max-height: calc(100dvh - 64px); }
   .logo { height: 33px; }
 }

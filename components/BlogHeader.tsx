@@ -152,19 +152,6 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "light" 
       {menuOpen ? (
         <div id={menuId} className={styles.menuPanel}>
           <div className={styles.menuInner}>
-            <div className={styles.mobileMenuActions}>
-              <MarketingButton
-                href={appLink || "/login"}
-                variant="glass"
-                onClick={() => {
-                  trackEvent("app_click", { location: "nav-menu" });
-                  setMenuOpen(false);
-                }}
-              >
-                Enter App
-              </MarketingButton>
-            </div>
-
             <p className={styles.menuLabel}>Explore QuoteCore+</p>
             <nav className={styles.navList} aria-label="Marketing navigation">
               {navItems.map((item) => (
