@@ -26,3 +26,11 @@ export function requireCustomCheckoutEnabled(): void {
     throw new BillingContractError('custom_live_not_approved', 'Custom setup checkout is not approved for live payments yet.');
   }
 }
+
+/** True when the V5 calculator pricing model replaces legacy plan pricing on
+ *  this deployment (testing cutover, owner decision 2026-10-11: no legacy
+ *  pricing anywhere on testing, regardless of entry path). Main keeps the
+ *  legacy plan surfaces until the cutover decision. */
+export function customPricingOnly(): boolean {
+  return process.env.CUSTOM_BILLING_CHECKOUT_ENABLED === 'true';
+}

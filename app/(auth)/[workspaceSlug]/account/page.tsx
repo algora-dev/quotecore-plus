@@ -21,6 +21,7 @@ import { listSecurityQuestions } from '@/app/(auth)/[workspaceSlug]/settings/sec
 import { BackButton } from '@/app/components/BackButton';
 import { listMySupportTickets } from './support/actions';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { customPricingOnly } from '@/app/lib/billing/custom/environment';
 import { getStripeMode } from '@/app/lib/billing/stripe';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { BillingPanel, type BillingPlanInfo } from './billing/BillingPanel';
@@ -314,8 +315,17 @@ export default async function AccountPage() {
               </a>
             </div>
           )}
+          {customPricingOnly() && entitlements.billingModel !== 'custom_setup' && (
+            <div className="rounded-xl border border-orange-200 bg-orange-50/40 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <p className="text-sm text-slate-700">New pricing is here. Compare a setup that fits your work - your current plan is unchanged.</p>
+              <a href={`/${company.slug}/account/billing/build-setup`} className="qc-flow-link text-sm font-semibold text-[#BD4A1A] hover:text-[#ff5722] whitespace-nowrap">
+                Review your setup &rarr;
+              </a>
+            </div>
+          )}
           <div data-copilot="account-billing">
             <BillingPanel
+              hideLegacyPlans={customPricingOnly()}
               effectivePlanCode={entitlements.effectivePlanCode}
               purchasedPlanCode={entitlements.purchasedPlanCode}
               subscriptionStatus={entitlements.subscriptionStatus}

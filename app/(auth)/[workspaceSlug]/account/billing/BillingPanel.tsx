@@ -113,6 +113,10 @@ export interface BillingPanelProps {
   storageLimitBytes: number;
   /** All available plans (including coming-soon). */
   plans: BillingPlanInfo[];
+  /** V5 pricing cutover (CUSTOM_BILLING_CHECKOUT_ENABLED deployments): hide
+   *  the legacy plan grid while keeping the current-plan status card, storage
+   *  and manage-subscription flow. */
+  hideLegacyPlans?: boolean;
   /** P2 custom-setup usage in the verified paid period. Absent = legacy. */
   customUsage?: {
     available: boolean;
@@ -514,7 +518,8 @@ export function BillingPanel(props: BillingPanelProps) {
         </dl>
       </div>
 
-      {/* Plan grid */}
+      {/* Plan grid - hidden on V5-pricing-only deployments (testing). */}
+      {!props.hideLegacyPlans && (
       <div className="qc-flow-panel">
         <h3 className="text-base font-semibold text-slate-900">{props.context === 'activation' ? 'Choose your plan' : 'Available plans'}</h3>
         <p className="text-sm text-slate-500 mt-1">
@@ -665,6 +670,7 @@ export function BillingPanel(props: BillingPanelProps) {
           })}
         </ul>
       </div>
+      )}
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-2 md:p-4 text-sm text-red-800">

@@ -9,9 +9,10 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
 import { loadBillingPlans } from '@/app/lib/billing/paywall-plans';
 import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
-import { customStripeMode } from '@/app/lib/billing/custom/environment';
+import { customStripeMode, customPricingOnly } from '@/app/lib/billing/custom/environment';
 import { BillingPanel } from '@/app/(auth)/[workspaceSlug]/account/billing/BillingPanel';
 import { CustomSetupPayCard } from '@/app/components/billing/CustomSetupPayCard';
+import { PaywallSetupFlow } from '@/app/components/billing/PaywallSetupFlow';
 
 /**
  * Onboarding paywall (paid-upfront model, 2026-09-16).
@@ -46,9 +47,12 @@ export default async function PaywallPage() {
     .eq('id', company.id)
     .maybeSingle();
 
+  // V5 pricing cutover (testing, owner 2026-10-11): calculator-only paywall,
+  // no legacy plan cards regardless of entry path. Main keeps legacy surfaces.
+  const newPricing = customPricingOnly();
   // Purchasable tiers only. The `free` tier is backend-only (dunning
   // fallback), and coming-soon tiers have no checkout path.
-  const plans = await loadBillingPlans(new Set(['starter', 'pro', 'pro_plus']));
+  const plans = newPricing ? [] : await loadBillingPlans(new Set(['starter', 'pro', 'pro_plus']));
   // Value display only. Setup package amounts and all checkout flows are unchanged.
   const proPlan = plans.find(plan => plan.code === 'pro');
   const includedProValue = proPlan && Number.isFinite(proPlan.priceCentsMonthly) && proPlan.priceCentsMonthly > 0 ? formatPlanPrice(proPlan.priceCentsMonthly * 6) : null;
@@ -70,9 +74,11 @@ export default async function PaywallPage() {
             Activate your workspace
           </h1>
           <p className="mt-2 text-sm md:text-base text-slate-600">
-            Choose the subscription that fits your work. Features and limits depend on the plan; access begins after payment is confirmed.
+            {newPricing
+              ? 'Build the setup that fits your work. Pay only for what your workflow needs; access begins after payment is confirmed.'
+              : 'Choose the subscription that fits your work. Features and limits depend on the plan; access begins after payment is confirmed.'}
           </p>
-          <PlanPriceSummary plans={plans} />
+          {!newPricing && <PlanPriceSummary plans={plans} />}
           {/* Guarantee terms are existing owner-approved copy, not plan data. */}
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2">
             <svg className="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -89,12 +95,17 @@ export default async function PaywallPage() {
             success Stripe flips subscription_status to active via webhook and
             the return URL lands the user in the workspace. */}
         <div className="mt-8">
-          {/* Configured-setup pay card (V5 pricing tool). Renders only when the
-              visitor carries a stored calculator setup; one pay CTA, amounts
-              re-verified server-side against the price registry. Test checkout
-              runs on the stage-approved catalogue exactly like the server action. */}
-          <CustomSetupPayCard catalog={customStripeMode() === 'test' ? { ...PREVIEW_CATALOG, stage: 'approved' } : PREVIEW_CATALOG} />
+          {/* V5 pricing cutover (testing): every visitor builds their setup on
+              the paywall - no legacy plan cards, no matter where they came
+              from. Main (flag off) keeps the V1 layout: stored-setup pay card
+              + legacy plan panel. */}
+          {!newPricing && (
+            <CustomSetupPayCard catalog={customStripeMode() === 'test' ? { ...PREVIEW_CATALOG, stage: 'approved' } : PREVIEW_CATALOG} />
+          )}
           <QcJourneySteps steps={["Account", "Workspace", "Subscription"]} current={2} label="Getting started" />
+          {newPricing ? (
+            <PaywallSetupFlow catalog={customStripeMode() === 'test' ? { ...PREVIEW_CATALOG, stage: 'approved' } : PREVIEW_CATALOG} />
+          ) : (
           <BillingPanel context="activation"
             effectivePlanCode={entitlements.effectivePlanCode}
             purchasedPlanCode={entitlements.purchasedPlanCode}
@@ -109,6 +120,7 @@ export default async function PaywallPage() {
             storageLimitBytes={entitlements.storageLimitBytes}
             plans={plans}
           />
+          )}
         </div>
 
         {/* Larger-plan strip + Done-For-You row (links only - no checkout logic) */}
