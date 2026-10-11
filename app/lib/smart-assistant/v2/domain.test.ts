@@ -202,7 +202,7 @@ test('P4 area create refuses duplicates and full area sets', () => {
 for (const change of [{ calc_plan_sqm: 100, surface_sqm: 130 }, { label: '' }, { calc_pitch_degrees: 90 }, { surface_sqm: -1 }, {}])
     test(`P4 reject invalid area change ${JSON.stringify(change)}`, () => assert.throws(() => parseAreaChanges(change), ProposalError));
 // ---- P3.5 library component create/edit (2026-10-11) ----
-const taskSnap = (status: 'open' | 'awaiting_input'): TaskSnapshot => ({
+const taskSnap = (status: 'open' | 'awaiting_input' | 'answered'): TaskSnapshot => ({
     task: { id, version: 1, status, label: 'Reviewing: component library', lastRunId: id, startedAt: '2026-10-11T12:00:00Z', updatedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 20 * 60000).toISOString(), closure: null, boundary: false },
     resolution: null, runIds: [id], pendingMessage: null,
 });
@@ -251,5 +251,18 @@ test('P3.5 a fresh question while awaiting input still starts a new task', () =>
 });
 test('P3.5 dependent follow-up without a live task is a new task', () => {
     const decision = decideTask('Change the materials price to $5.50 for that component', { task: null, resolution: null, runIds: [], pendingMessage: null });
+    assert.equal(decision.disposition, 'new');
+});
+test('P3.6 an ambiguous fragment continues the live task instead of asking whose task it is', () => {
+    const decision = decideTask('the component library', taskSnap('open'));
+    assert.equal(decision.disposition, 'continue');
+    assert.equal(decision.reason, 'assumed_continuation');
+});
+test('P3.6 a complete new request while a task is still open asks instead of dropping context', () => {
+    const decision = decideTask('open quote 1025', taskSnap('open'));
+    assert.equal(decision.disposition, 'ask_boundary');
+});
+test('P3.6 a complete new request after the task was answered starts fresh', () => {
+    const decision = decideTask('open quote 1025', taskSnap('answered'));
     assert.equal(decision.disposition, 'new');
 });

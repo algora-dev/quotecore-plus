@@ -72,8 +72,15 @@ export function decideTask(message: string, snapshot: TaskSnapshot, now = new Da
         || /\bon\s+(?:that|this|the)\s+(?:draft|quote|invoice|order|job|record|area)\b/i.test(text)
         || /\b(?:that|this)\s+(?:component|item|product|material|library\s+(?:component|item|product))\b/i.test(text))
         return { disposition: 'continue', reason: 'dependent_reference', message: text };
-    if (standalone || parseFastIntent(text))
+    // Owner 2026-10-11: a COMPLETE new request mid-task only supersedes the
+    // live task with the user's say-so (or once it has already been answered).
+    // Unresolved tasks surface the Continue/New choice card instead of
+    // silently dropping context; the Done/Move-on footer closes tasks.
+    if (standalone || parseFastIntent(text)) {
+        if (task!.status === 'open' || task!.status === 'awaiting_input')
+            return { disposition: 'ask_boundary', reason: 'self_contained_request_live_task', message: text, ...(standalone ? { parsed: standalone } : {}) };
         return next('self_contained_request');
+    }
     // A variant-only follow-up repairs the prior component term, not the task's
     // identity, period, requested operation or customer constraints.
     const variant = clean(text);
@@ -145,7 +152,9 @@ export function decideTask(message: string, snapshot: TaskSnapshot, now = new Da
     // They do not inherit an old unresolved search or consume its retry budget.
     if (text.length > 140 || text.split(/\s+/).length > 8 || /^(?:I\s+(?:just\s+)?(?:want|need)|what|whats|what's|how|why|when|where|who|please|can|could|would|show|list|open|find|set|change|send|delete|compare|tell|give|pull)\b/i.test(text))
         return next('unparsed_self_contained_request');
-    return { disposition: 'ask_boundary', reason: 'ambiguous_fragment', message: text };
+    // Owner 2026-10-11: replies and fragments ALWAYS continue the live task;
+    // boundary questions are reserved for complete new requests (above).
+    return { disposition: 'continue', reason: 'assumed_continuation', message: text };
 }
 export function intentLabel(intent: ResolverIntent): string {
     const name = (value: string | undefined) => value?.replace(/[\u0000-\u001f]/g, ' ').trim();
