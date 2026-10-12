@@ -7,6 +7,7 @@ import { getTradeLabels } from '@/app/lib/trades/labels';
 import { entryLabel, addMoreLabel, measurementTypeLabel } from '@/app/lib/types';
 import { linearInputToMetric, areaInputToMetric } from '@/app/lib/measurements/conversions';
 import { formatArea, formatLinear, formatVolume, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
+import { formatComponentQuantity } from '@/app/lib/measurements/componentDisplay';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, QuoteComponentEntryRow, InputMode } from '@/app/lib/types';
 import type { MeasurementSystem } from '@/app/lib/types';
@@ -130,7 +131,16 @@ export function ExpandableComponent({
   // Helper to display values with correct units
   function displayValue(value: number): string {
     const m = comp.measurement_type as string;
-    if (m === 'area' || m === 'length_x_height' || m === 'multi_lineal_lxh' || m === 'irregular_area' ||
+    if (m === 'area') {
+      // Lineal display preference (owner spec 2026-10-12): area components with
+      // a cover width can show lm / both. Stored value stays m²; pricing unchanged.
+      return formatComponentQuantity(value, {
+        quantityDisplay: comp.quantity_display ?? null,
+        coverWidthMm: comp.cover_width_mm ?? null,
+        unitSystem: quote.measurement_system,
+      });
+    }
+    if (m === 'length_x_height' || m === 'multi_lineal_lxh' || m === 'irregular_area' ||
         m === 'length_x_height_freestyle' || m === 'multi_lineal_lxh_freestyle') {
       return formatArea(value, quote.measurement_system);
     }

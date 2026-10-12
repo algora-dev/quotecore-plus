@@ -202,6 +202,7 @@ const UPDATABLE_COMPONENT_FIELDS = [
   'depth_value_mm',
   'sold_by',
   'cover_width_mm',
+  'quantity_display',
   'waste_unit',
   'pricing_strategy',
   'pack_price',

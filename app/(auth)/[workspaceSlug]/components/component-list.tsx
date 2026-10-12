@@ -191,6 +191,7 @@ export function ComponentList({
   // sold-by=lineal and a cover width are set (enforced again at save).
   const [formSoldBy, setFormSoldBy] = useState<'area' | 'lineal'>('area');
   const [formCoverWidthMm, setFormCoverWidthMm] = useState('');
+  const [formQuantityDisplay, setFormQuantityDisplay] = useState<'area' | 'lineal' | 'both'>('area');
 
   // Calculator draft restore (H-04): pre-fill form from a saved draft
   const [restoredName, setRestoredName] = useState<string>('');
@@ -356,6 +357,7 @@ export function ComponentList({
     setFormDepthMm(c.depth_value_mm != null ? String(c.depth_value_mm) : '');
     setFormSoldBy(c.sold_by === 'lineal' ? 'lineal' : 'area');
     setFormCoverWidthMm(c.cover_width_mm != null ? String(c.cover_width_mm) : '');
+    setFormQuantityDisplay(c.quantity_display === 'lineal' || c.quantity_display === 'both' ? c.quantity_display : 'area');
     setFormWasteUnit((c.waste_unit as WasteUnit) ?? 'percent');
     setFormPricingStrategy((c.pricing_strategy as PricingStrategy) ?? 'per_unit');
     setFormPackPrice(c.pack_price != null ? String(c.pack_price) : '');
@@ -401,7 +403,7 @@ export function ComponentList({
       // Keep demo rates illustrative; do not alter product calculation logic.
       setRestoredName(''); setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false);
       setFormPricingStrategy('per_unit'); setRestoredMaterialRate('10'); setRestoredLabourRate('5'); setRestoredWasteAmount('');
-      setFormSoldBy('area'); setFormCoverWidthMm('');
+      setFormSoldBy('area'); setFormCoverWidthMm(''); setFormQuantityDisplay('area');
       setSelectedCollectionId(demoDefaultLibraryId || activeLibraryId || collections.find(c => c.is_bootstrap)?.id || collections[0]?.id || '');
       setEditorVersion(value => value + 1);
       setShowForm(true);
@@ -436,6 +438,7 @@ export function ComponentList({
     setFormPitchEnabled(false);
     setFormSoldBy('area');
     setFormCoverWidthMm('');
+    setFormQuantityDisplay('area');
     setAssignedFlashings([]);
     setSelectedFlashingId('');
     setFormNotes('');
@@ -599,6 +602,9 @@ export function ComponentList({
           cover_width_mm: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm
             ? Number(formCoverWidthMm)
             : null,
+          quantity_display: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm && formQuantityDisplay !== 'area'
+            ? formQuantityDisplay
+            : null,
         } as unknown as ComponentLibraryInsert)
       : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null } as unknown as ComponentLibraryInsert;
 
@@ -730,6 +736,9 @@ export function ComponentList({
           cover_width_mm: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm
             ? Number(formCoverWidthMm)
             : null,
+          quantity_display: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm && formQuantityDisplay !== 'area'
+            ? formQuantityDisplay
+            : null,
         } as unknown as Partial<ComponentLibraryInsert>)
       : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null };
 
@@ -822,7 +831,7 @@ export function ComponentList({
   const editorSettings: ComponentEditorSettings = { measurementType: formMeasurementType, wasteType: formWasteType,
     pitchEnabled: formPitchEnabled, pricingStrategy: formPricingStrategy, packPrice: formPackPrice, packSize: formPackSize,
     packCoverage: formPackCoverageM2, heightMm: formHeightMm, depthMm: formDepthMm, hoursUnit: formHoursUnit,
-    wasteUnit: formWasteUnit, notes: formNotes, soldBy: formSoldBy, coverWidthMm: formCoverWidthMm };
+    wasteUnit: formWasteUnit, notes: formNotes, soldBy: formSoldBy, coverWidthMm: formCoverWidthMm, quantityDisplay: formQuantityDisplay };
   function updateEditorSettings(patch: Partial<ComponentEditorSettings>) {
     setEditorDirty(true); setDraftTested(false);
     if (patch.measurementType !== undefined) setFormMeasurementType(patch.measurementType);
@@ -836,6 +845,7 @@ export function ComponentList({
     if (patch.depthMm !== undefined) setFormDepthMm(patch.depthMm);
     if (patch.soldBy !== undefined) setFormSoldBy(patch.soldBy);
     if (patch.coverWidthMm !== undefined) setFormCoverWidthMm(patch.coverWidthMm);
+    if (patch.quantityDisplay !== undefined) setFormQuantityDisplay(patch.quantityDisplay);
     if (patch.hoursUnit !== undefined) setFormHoursUnit(patch.hoursUnit);
     if (patch.wasteUnit !== undefined) setFormWasteUnit(patch.wasteUnit);
     if (patch.notes !== undefined) setFormNotes(patch.notes);
@@ -961,6 +971,9 @@ export function ComponentList({
           cover_width_mm: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm
             ? Number(formCoverWidthMm)
             : null,
+          quantity_display: formMeasurementType === 'area' && formPricingStrategy === 'per_unit' && formSoldBy === 'lineal' && formCoverWidthMm && formQuantityDisplay !== 'area'
+            ? formQuantityDisplay
+            : null,
         } as unknown as ComponentLibraryInsert)
       : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null } as unknown as ComponentLibraryInsert;
     setGuidedSaving(true); setGuidedSaveError(null);
@@ -986,7 +999,7 @@ export function ComponentList({
       setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false); setFormPricingStrategy('per_unit');
       setFormPackPrice(''); setFormPackSize(''); setFormPackCoverageM2('');
       setFormHeightMm(''); setFormDepthMm(''); setFormHoursUnit('hr'); setFormWasteUnit('percent'); setFormNotes('');
-      setFormSoldBy('area'); setFormCoverWidthMm('');
+      setFormSoldBy('area'); setFormCoverWidthMm(''); setFormQuantityDisplay('area');
       setAssignedFlashings([]); setSelectedFlashingId('');
       setRestoredName(''); setRestoredMaterialRate(''); setRestoredLabourRate(''); setRestoredWasteAmount('');
     } catch (err) {

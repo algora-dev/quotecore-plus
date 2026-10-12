@@ -198,6 +198,8 @@ export async function createQuoteFromTemplate(
         pitch_type: (tc.override_pitch_type ?? lib.default_pitch_type ?? 'none') as PitchType,
         material_rate: tc.override_material_rate ?? lib.default_material_rate ?? 0,
         labour_rate: tc.override_labour_rate ?? lib.default_labour_rate ?? 0, sort_order: tc.sort_order,
+        quantity_display: lib.quantity_display ?? null,
+        cover_width_mm: lib.cover_width_mm ?? null,
       };
     });
     if (quoteComponents.length > 0) {
@@ -668,6 +670,23 @@ export async function loadQuoteComponents(quoteId: string) {
   await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
   const { data, error } = await supabase.from('quote_components').select('*').eq('quote_id', quoteId).order('sort_order');
   if (error) throw new Error(error.message);
+  // Legacy rows predate the quantity_display/cover snapshot columns; fall back
+  // to the linked library row so their display preference still applies.
+  const legacyIds = (data ?? [])
+    .filter(c => c.component_library_id && (c.quantity_display == null || c.cover_width_mm == null))
+    .map(c => c.component_library_id as string);
+  if (legacyIds.length > 0) {
+    const { data: libRows } = await supabase.from('component_library')
+      .select('id, quantity_display, cover_width_mm')
+      .in('id', legacyIds);
+    const libById = new Map((libRows ?? []).map(r => [r.id, r]));
+    for (const c of data ?? []) {
+      const lib = c.component_library_id ? libById.get(c.component_library_id) : null;
+      if (!lib) continue;
+      if (c.quantity_display == null) c.quantity_display = lib.quantity_display;
+      if (c.cover_width_mm == null) c.cover_width_mm = lib.cover_width_mm;
+    }
+  }
   return data;
 }
 
@@ -831,6 +850,19 @@ export async function addQuoteComponent(quoteId: string, input: any) {
     }
   }
 
+  // Snapshot the library's display preference + cover width (pattern:
+  // pack_size_snapshot) so the quote renders with what it was built with.
+  let libQuantityDisplay: string | null = null;
+  let libCoverWidthMm: number | null = null;
+  if (input.component_library_id) {
+    const { data: libRow } = await supabase.from('component_library')
+      .select('quantity_display, cover_width_mm')
+      .eq('id', input.component_library_id)
+      .maybeSingle();
+    libQuantityDisplay = libRow?.quantity_display ?? null;
+    libCoverWidthMm = libRow?.cover_width_mm ?? null;
+  }
+
   const { data, error } = await supabase.from('quote_components').insert({
     quote_id: quoteId, quote_roof_area_id: input.quote_roof_area_id ?? null,
     component_library_id: input.component_library_id ?? null, name: input.name,
@@ -838,6 +870,8 @@ export async function addQuoteComponent(quoteId: string, input: any) {
     material_rate: input.material_rate ?? 0, labour_rate: input.labour_rate ?? 0,
     waste_type: input.waste_type ?? 'none', waste_percent: input.waste_percent ?? 0, waste_fixed: input.waste_fixed ?? 0,
     pitch_type: input.pitch_type ?? 'none',
+    quantity_display: libQuantityDisplay,
+    cover_width_mm: libCoverWidthMm,
   }).select().single();
   if (error) throw new Error(error.message);
   return data;

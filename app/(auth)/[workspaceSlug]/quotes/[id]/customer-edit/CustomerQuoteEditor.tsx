@@ -340,16 +340,33 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     const system = normalizeMeasurementSystem(quote.measurement_system);
 
     let displayQty = rawQty;
-    let unit: string;
+    let unit = '';
+    let lmPart = '';
     if (component.measurement_type === 'area') {
-      if (system === 'imperial_ft') {
-        displayQty = convertAreaFt2(rawQty);
-        unit = 'ft2';
-      } else if (system === 'imperial_rs') {
-        displayQty = Number(convertArea(rawQty));
-        unit = 'RS';
-      } else {
-        unit = 'm2';
+      // Lineal display preference (owner spec 2026-10-12): show lm (or both)
+      // derived from the cover width. Stored quantity stays m2; pricing unchanged.
+      const dispRef = component as { quantity_display?: string | null; cover_width_mm?: number | string | null };
+      const dispPref = dispRef.quantity_display === 'lineal' || dispRef.quantity_display === 'both' ? dispRef.quantity_display : null;
+      const coverMm = dispRef.cover_width_mm != null ? Number(dispRef.cover_width_mm) : null;
+      if (dispPref && coverMm && coverMm > 0 && system === 'metric') {
+        const lm = rawQty / (coverMm / 1000);
+        if (dispPref === 'lineal') {
+          displayQty = lm;
+          unit = 'lm';
+        } else {
+          lmPart = ` / ${lm.toFixed(2)} lm`;
+        }
+      }
+      if (unit !== 'lm') {
+        if (system === 'imperial_ft') {
+          displayQty = convertAreaFt2(rawQty);
+          unit = 'ft2';
+        } else if (system === 'imperial_rs') {
+          displayQty = Number(convertArea(rawQty));
+          unit = 'RS';
+        } else {
+          unit = 'm2';
+        }
       }
     } else if (component.measurement_type === 'lineal') {
       if (system === 'imperial_ft' || system === 'imperial_rs') {
@@ -376,10 +393,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     const packSnap = packRaw != null ? Number(packRaw) : null;
     if (priced != null && !isNaN(priced) && packSnap != null && !isNaN(packSnap) && packSnap > 0) {
       const fractional = displayQty / packSnap;
-      return `${component.name} - ${priced.toFixed(0)} (${fractional.toFixed(2)}) - ${displayQty.toFixed(2)} ${unit}`;
+      return `${component.name} - ${priced.toFixed(0)} (${fractional.toFixed(2)}) - ${displayQty.toFixed(2)} ${unit}${lmPart}`;
     }
 
-    return `${component.name} - ${displayQty.toFixed(1)} ${unit}`;
+    return `${component.name} - ${displayQty.toFixed(1)} ${unit}${lmPart}`;
   }
 
   // Editor list always shows the COMPLETE line (description + quantity); the
