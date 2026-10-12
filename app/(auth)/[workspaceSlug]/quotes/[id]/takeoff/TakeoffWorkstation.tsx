@@ -39,7 +39,7 @@ import { useTakeoffActions } from '@/app/lib/takeoff/actionsContext';
 import type { TakeoffFinishPayload } from '@/app/lib/takeoff/finishPayload';
 // Offcuts V1: isolated review module; no quote/persistence changes.
 import { fromQuoteCore, type QuoteCoreSnapshot } from '@/app/lib/takeoff/offcuts/adapters/quotecore';
-import { OFFCUT_MEASUREMENT_OPTION, materialFigureToken, materialMeasurement, materialOptionLabel, materialUnitForComponent, upsertMaterialMeasurement, type OffcutEntryProvenance } from '@/app/lib/takeoff/offcuts/core/reusableQuantity';
+import { OFFCUT_MEASUREMENT_OPTION, materialFigureToken, materialMeasurement, materialOptionLabel, materialUnitForComponent, materialDisplayValue, upsertMaterialMeasurement, type OffcutEntryProvenance } from '@/app/lib/takeoff/offcuts/core/reusableQuantity';
 import { reconcileCanvasSnapshot, type SceneMeasurementObject } from '@/app/lib/takeoff/offcuts/adapters/canvasSnapshot';
 import type { WorkbenchHandle, OffcutOnePagerPayload } from '@/app/lib/takeoff/offcuts/ui/workbench';
 import type { QuoteQuantityProposal } from '@/app/lib/takeoff/offcuts/core/quantities';
@@ -121,6 +121,10 @@ interface Component {
   default_measurement_type?: string;
   /** System placeholder components (AI Takeoff) - hidden from manual add selector. */
   is_system?: boolean;
+  /** Lineal display preference + cover width (component_library snapshot).
+   * Display only - stored measurements stay m²; pricing unchanged. */
+  quantity_display?: string | null;
+  cover_width_mm?: number | string | null;
 }
 
 interface ComponentCollection {
@@ -149,6 +153,10 @@ interface RoofArea {
    *  for newly drawn areas (they belong to the current page). Used to filter
    *  cross-page areas out of saves, mirroring ComponentMeasurement.fromPageId. */
   fromPageId?: string | null;
+  /** Offcuts pseudo-area (owner spec 2026-10-12): persistent cut-plan figure
+   * offered to area components in the reuse dropdown. Attaches as final
+   * purchased material - no pitch/waste recompute (value_basis 'offcuts'). */
+  offcutProvenance?: OffcutEntryProvenance & { value_basis?: 'offcuts'; plan_value?: number } | null;
   /** Area-ownership fix (2026-07-05): DB quote_roof_areas.id this polygon
    *  belongs to, stamped at DRAW time (not save time). Prevents polygons
    *  being re-stamped to whatever area is active when the save fires. */
@@ -1243,6 +1251,15 @@ export function TakeoffWorkstation({
       if (m.pageId) ad.pageIds.add(m.pageId);
       
       if (m.componentId === null && m.type === 'area') {
+        const offcutLabel = allRoofAreas.find(a => a.id === areaKey)?.label ?? '';
+        if (offcutLabel.startsWith('Offcuts')) {
+          // Offcuts pseudo-area (owner spec 2026-10-12): restore the flag + minimal
+          // provenance from the persisted area label/value so attaching stays final
+          // purchased material (no pitch/waste recompute).
+          ad.areas.push({ id: m.id, name: offcutLabel, points: m.points ?? [], area: m.value, pitch: 0, visible: m.visible, fromPageId: m.pageId ?? null, quoteRoofAreaId: areaKey === '__no_area__' ? null : areaKey,
+            offcutProvenance: { value_basis: 'offcuts' as const, plan_value: m.value, offcut_quantity: m.value, offcut_unit: 'm2' as const, offcut_plan_name: offcutLabel.replace(/^Offcuts · /, ''), offcut_page_id: m.pageId ?? undefined } });
+          return;
+        }
         const idx = ad.areas.length;
         const label = allRoofAreas.find(a => a.id === areaKey)?.label ?? existingRoofAreas[idx]?.label ?? `Area ${idx + 1}`;
         // Per-entry pitch fix (2026-07-06): use the pitch this polygon was
@@ -2533,6 +2550,25 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     // quoteRoofAreaId stamp - never resolve by the shared stamp).
     const ra = roofAreas.find(a => a.id === roofAreaId);
     if (!ra || !(ra.area > 0)) return;
+    if (ra.offcutProvenance) {
+      // Offcuts pseudo-area: attach as FINAL PURCHASED MATERIAL (owner spec
+      // 2026-10-12). value_basis 'offcuts' skips pitch/waste at save time.
+      pushHistorySnapshot();
+      const unit = calibrations[0]?.unit ?? 'meters';
+      const display = materialDisplayValue(ra.area, 'm2', unit);
+      const entry: ComponentMeasurement = {
+        id: `apply-${Date.now()}`, type: 'area', value: display, points: [], visible: true, canvasObjects: [],
+        fromPageId: ra.fromPageId ?? currentPageIdRef.current, quoteRoofAreaId: null,
+        entryInputs: { ...ra.offcutProvenance, plan_value: display },
+      };
+      setComponentMeasurements(groups => {
+        const group = groups.find(g => g.componentId === componentId);
+        const updated = { componentId, expanded: true, measurements: upsertMaterialMeasurement(group?.measurements ?? [], entry) };
+        return group ? groups.map(g => g.componentId === componentId ? updated : g) : [...groups, updated];
+      });
+      setIsDirty(true);
+      return;
+    }
     // 2026-09-03: ask the user WHICH value to attach (plan vs pitched) instead
     // of silently snapshotting the pitched value. The choice + plan value are
     // stored on the entry so the save path recomputes from the LIVE pitch -
@@ -6395,9 +6431,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           // The hydration effect + reconstruct effect will fire again.
           // We need to reset the refs and re-apply hydration data.
           const grouped = new Map<string, { componentId: string; measurements: any[]; expanded: boolean }>();
-          const hydratedRoofAreas: { id: string; name: string; points: { x: number; y: number }[]; area: number; pitch: number; visible: boolean; fromPageId?: string | null }[] = [];
+          const hydratedRoofAreas: RoofArea[] = [];
           hydrationData.measurements.forEach(m => {
             if (m.componentId === null && m.type === 'area') {
+              const offcutLabel2 = allRoofAreas.find(a => a.id === (m.quoteRoofAreaId ?? undefined))?.label ?? '';
+              if (offcutLabel2.startsWith('Offcuts')) {
+                // Offcuts pseudo-area: see hydration notes above (final material).
+                hydratedRoofAreas.push({ id: m.id, name: offcutLabel2, points: m.points || [], area: m.value, pitch: 0, visible: m.visible, fromPageId: m.pageId || null,
+                  offcutProvenance: { value_basis: 'offcuts' as const, plan_value: m.value, offcut_quantity: m.value, offcut_unit: 'm2' as const, offcut_plan_name: offcutLabel2.replace(/^Offcuts · /, ''), offcut_page_id: m.pageId ?? undefined } });
+                return;
+              }
               hydratedRoofAreas.push({
                 id: m.id,
                 name: 'Area ' + (hydratedRoofAreas.length + 1),
@@ -7919,6 +7962,26 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const figure = proposalCoverFigure(proposal, scope);
     if (!figure) throw new Error('Cut-plan quantities do not match the active page and roof area.');
     figureRequestRef.current++; applyOffcutFigure(figure);
+    // Owner spec 2026-10-12: ALSO materialize the plan as a persistent pseudo-area
+    // so ANY area component can attach it from the reuse dropdown - no page/area
+    // scoping, survives refresh via the normal area-measurement persistence
+    // (label 'Offcuts · <plan>' + value round-trip; provenance restored on hydrate).
+    setRoofAreas(prev => [
+      ...prev.filter(ra => !(ra.offcutProvenance && ra.offcutProvenance.offcut_layout_id === figure.layoutId)),
+      {
+        id: `offcut-${figure.layoutId.slice(0, 8)}-${Date.now().toString(36)}`,
+        name: `Offcuts · ${figure.planName || 'Selected plan'}`,
+        points: [], area: figure.m2, pitch: 0, visible: true,
+        fromPageId: figure.scope.pageId, quoteRoofAreaId: null,
+        offcutProvenance: {
+          value_basis: 'offcuts' as const, plan_value: figure.m2, offcut_quantity: figure.m2, offcut_unit: 'm2' as const,
+          offcut_layout_id: figure.layoutId, offcut_source_revision: figure.sourceRevision,
+          offcut_faces_revision: figure.facesRevision, offcut_page_id: figure.scope.pageId,
+          offcut_area_scope_id: figure.scope.areaScopeId, offcut_plan_name: figure.planName || 'Selected plan',
+        },
+      },
+    ]);
+    setIsDirty(true);
   }, [quote.id, applyOffcutFigure]);
   const saveOffcutOnePager = useCallback(async (payload: OffcutOnePagerPayload) => {
     const { saveOffcutOnePagerToJob } = await import('@/app/lib/takeoff/offcutOnePager');
@@ -8714,7 +8777,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                         {offcutAreaFigure && materialUnitForComponent(mt) && <option value={`${OFFCUT_MEASUREMENT_OPTION}:${materialFigureToken(offcutAreaFigure)}`}>{materialOptionLabel(offcutAreaFigure, mt, calibrations[0]?.unit ?? 'meters')}</option>}
                                         {(mt === 'area' ? roofAreas : []).map(ra => (
                                           <option key={ra.id} value={ra.id}>
-                                            {ra.name} · {(ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1)).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}{ra.pitch ? ` (pitch ${Math.round(ra.pitch)}°)` : ''}
+                                            {ra.name}{ra.offcutProvenance ? ' · purchased material' : ''} · {(ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1)).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}{!ra.offcutProvenance && ra.pitch ? ` (pitch ${Math.round(ra.pitch)}°)` : ''}
                                           </option>
                                         ))}
                                       </select>
@@ -8827,7 +8890,21 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                             <span className="flex-1">
                                               {(m.type === 'line' || m.type === 'multi_lineal') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
                                               {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×-h`}
-                                              {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
+                                              {m.type === 'area' && (() => {
+                                                // Lineal display preference (owner spec 2026-10-12): lm derived
+                                                // from the cover width; stored value stays area; pricing unchanged.
+                                                const libComp = components.find(c => c.id === id);
+                                                const disp = libComp?.quantity_display;
+                                                const cover = libComp?.cover_width_mm != null ? Number(libComp.cover_width_mm) : null;
+                                                if ((disp === 'lineal' || disp === 'both') && cover && cover > 0 && m.value > 0) {
+                                                  const areaM2 = calibrations[0]?.unit === 'feet' ? m.value * 0.09290304 : m.value;
+                                                  const lm = areaM2 / (cover / 1000);
+                                                  const lmTxt = calibrations[0]?.unit === 'feet' ? `${(lm / 0.3048).toFixed(2)} ft` : `${lm.toFixed(2)} lm`;
+                                                  const areaTxt = `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`;
+                                                  return disp === 'lineal' ? lmTxt : `${lmTxt} / ${areaTxt}`;
+                                                }
+                                                return `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`;
+                                              })()}
                                               {m.type === 'point' && `${m.value.toFixed(0)} item${Math.abs(m.value - 1) > 0.001 ? 's' : ''}${isCornerValueBasis(m.entryInputs?.value_basis) ? ' - corners' : ''}`}
                                               {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×-h`}
                                               {m.type === 'volume_3d' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}

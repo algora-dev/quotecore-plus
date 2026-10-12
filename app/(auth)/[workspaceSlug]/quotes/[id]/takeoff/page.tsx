@@ -140,7 +140,7 @@ export default async function Page({
   // System rows are always included (AI takeoff placeholders, not customer-facing).
   const { data: components } = await supabase
     .from('component_library')
-    .select('id, name, measurement_type, collection_id, is_system, is_active')
+    .select('id, name, measurement_type, collection_id, is_system, is_active, quantity_display, cover_width_mm')
     .eq('company_id', profile.company_id)
     .or('is_active.eq.true,is_system.eq.true')
     .order('name');
