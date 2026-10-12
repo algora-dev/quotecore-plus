@@ -83,6 +83,14 @@ main:has(> [data-qc-ui='v2'][data-qc-page='quote-builder']) {
 /* Read-only review: retain every quantity, rounding and override indicator. */
 :where([data-qc-ui='v2']) .qb-review-scroll { margin-top: 16px; max-width: 100%; }
 :where([data-qc-ui='v2']) .qb-review-table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; }
+/* Mobile (owner 2026-10-11): the 680px desktop minimum forced horizontal scroll on
+   phones - demo tester's "preview bleeds off screen" report. Narrow viewports drop
+   the minimums so the table reflows to the screen instead. */
+@media (max-width: 639px) {
+  :where([data-qc-ui='v2']) .qb-review-table { min-width: 0; font-size: 12px; }
+  :where([data-qc-ui='v2']) .qb-review-table :where(th,td) { padding: 10px 6px; }
+  :where([data-qc-ui='v2']) .qb-review-table :where(th,td):first-child { min-width: 0; max-width: none; }
+}
 :where([data-qc-ui='v2']) .qb-review-table :where(th,td) { padding: 12px 10px; border-bottom: 1px solid var(--qc-border-divider); vertical-align: top; }
 :where([data-qc-ui='v2']) .qb-review-table th { color: var(--qc-text-secondary); font-size: 12px; font-weight: 600; }
 :where([data-qc-ui='v2']) .qb-review-table :where(th,td):first-child { padding-left: 0; min-width: 170px; max-width: 340px; white-space: normal; overflow-wrap: anywhere; }
