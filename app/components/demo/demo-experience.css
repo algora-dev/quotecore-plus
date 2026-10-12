@@ -1,11 +1,11 @@
 /* Demo-owned chrome. Shared product editors and calculation engines are not themed here.
    Dark glass theme: Homepage V2 orange gradient system + T3 Labs glass effects. */
 .qc-demo-guide,.qc-demo-reopen,.qc-demo-banner,.qc-demo-overlays .qc-dialog {
-  --qc-demo-solid: #0d1014;
-  --qc-demo-bg: rgba(13,16,20,.68);
+  --qc-demo-solid: #0a0b10;
+  --qc-demo-bg: rgba(10,11,16,.65);
   --qc-demo-text: #fbfcff;
   --qc-demo-text-2: #b9c0cc;
-  --qc-demo-line: rgba(231,233,239,.14);
+  --qc-demo-line: rgba(231,233,239,.15);
   --qc-demo-surface: rgba(255,255,255,.05);
   --qc-demo-orange: #ff6b35;
   --qc-demo-orange-soft: #ff9a5c;
@@ -20,8 +20,8 @@
 .qc-demo-banner-context { flex: 1; min-width: 120px; }
 .qc-demo-banner button,.qc-demo-banner a { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 5px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--qc-demo-text); font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; }
 .qc-demo-banner button:disabled { cursor: not-allowed; opacity: .6; }
-.qc-demo-guide { position: fixed; right: 20px; bottom: 20px; z-index: var(--qc-z-popover, 40); width: min(376px, calc(100vw - 24px)); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; border: 1px solid var(--qc-demo-line); border-radius: 14px; background: var(--qc-demo-solid); color: var(--qc-demo-text); box-shadow: 0 26px 70px rgba(6,7,10,.55), 0 4px 16px rgba(6,7,10,.30); overflow: hidden; }
-@supports (backdrop-filter: blur(16px)) { .qc-demo-guide { background: var(--qc-demo-bg); backdrop-filter: blur(26px) saturate(135%); -webkit-backdrop-filter: blur(26px) saturate(135%); } }
+.qc-demo-guide { position: fixed; right: 20px; bottom: 20px; z-index: var(--qc-z-popover, 40); width: min(376px, calc(100vw - 24px)); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; border: 1px solid var(--qc-demo-line); border-radius: 14px; background: var(--qc-demo-solid); color: var(--qc-demo-text); box-shadow: 0 26px 80px rgba(10,11,16,.25), 0 4px 16px rgba(10,11,16,.12), inset 0 1px rgba(255,255,255,.035); overflow: hidden; }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .qc-demo-guide { background: var(--qc-demo-bg); -webkit-backdrop-filter: blur(20px) saturate(120%); backdrop-filter: blur(20px) saturate(120%); } }
 .qc-demo-guide-head { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--qc-demo-line); touch-action: none; user-select: none; }
 .qc-demo-guide-head>div { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .qc-demo-guide-head>div>span { font-size: 10px; font-weight: 700; letter-spacing: .09em; color: var(--qc-demo-orange-soft); }
@@ -39,7 +39,7 @@
 .qc-demo-guide p,.qc-demo-copy { margin: 0; color: var(--qc-demo-text-2); font-size: 13px; line-height: 1.6; }
 .qc-demo-guide .qc-demo-eyebrow { margin: 0; font-size: 10px; font-weight: 750; letter-spacing: .09em; color: var(--qc-demo-orange-soft); }
 .qc-demo-guide .qc-demo-act { color: #ff8a3d; font-weight: 750; }
-.qc-demo-progress { height: 3px; background: rgba(255,255,255,.05); flex: 0 0 3px; overflow: hidden; }
+.qc-demo-progress { height: 2px; background: transparent; flex: 0 0 2px; overflow: hidden; }
 .qc-demo-progress i { display: block; height: 100%; background: var(--qc-demo-grad); transition: width 180ms; }
 .qc-demo-note { margin-top: 12px!important; padding: 11px 12px; border: 1px solid var(--qc-demo-line); border-radius: var(--qc-radius-control, 12px); background: rgba(255,107,53,.09); color: #c6cdd8!important; font-size: 13px; line-height: 1.6; }
 .qc-demo-note strong { display: block; color: var(--qc-demo-text); }
@@ -89,7 +89,7 @@
 .qc-demo-overlays .qc-button[data-qc-variant="ghost"]:hover { background: var(--qc-demo-wash); color: #ffb36b; }
 /* Demo dialogs share the dark glass surface. */
 .qc-demo-overlays .qc-dialog { background: rgba(13,16,20,.94); border: 1px solid var(--qc-demo-line); color: var(--qc-demo-text); box-shadow: 0 30px 80px rgba(6,7,10,.6); }
-@supports (backdrop-filter: blur(16px)) { .qc-demo-overlays .qc-dialog { background: var(--qc-demo-bg); backdrop-filter: blur(26px) saturate(135%); -webkit-backdrop-filter: blur(26px) saturate(135%); } }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .qc-demo-overlays .qc-dialog { background: var(--qc-demo-bg); -webkit-backdrop-filter: blur(20px) saturate(120%); backdrop-filter: blur(20px) saturate(120%); } }
 .qc-demo-overlays .qc-dialog::backdrop { background: rgba(6,7,10,.55); }
 .qc-demo-overlays .qc-dialog h2,.qc-demo-overlays .qc-dialog h3 { color: var(--qc-demo-text); }
 .qc-demo-overlays .qc-dialog p { color: var(--qc-demo-text-2); }

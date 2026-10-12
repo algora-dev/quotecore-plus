@@ -193,7 +193,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     }
   }
   function startDrag(event: ReactPointerEvent<HTMLElement>) {
-    if (event.button !== 0 || window.innerWidth < 768 || (event.target as HTMLElement).closest('.qc-demo-icon') || !widget.current) return;
+    if (event.button !== 0 || window.innerWidth < 768 || (event.target as HTMLElement).closest('.qc-demo-icon,.qc-demo-menu') || !widget.current) return;
     const rect = widget.current.getBoundingClientRect();
     drag.current = { pointerId: event.pointerId, dx: event.clientX - rect.left, dy: event.clientY - rect.top };
     event.currentTarget.setPointerCapture(event.pointerId); setPosition({ x: rect.left, y: rect.top });
