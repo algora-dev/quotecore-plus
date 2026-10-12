@@ -32,6 +32,8 @@ export interface SendDocumentProps {
   canFollowups: boolean;
   canEmail: boolean;
   sendTestTipSeen: boolean;
+  /** Demo workspaces never show the first-send tip; the send modal opens directly (owner 2026-10-12). */
+  skipTestTip?: boolean;
   libraryFiles: PickerFile[];
   entityFiles: PickerFile[];
   libraryLocked: boolean;

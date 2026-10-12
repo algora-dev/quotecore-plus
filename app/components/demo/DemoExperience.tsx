@@ -39,6 +39,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [triedAdding, setTriedAdding] = useState(false);
+  const [guidedTakeoffDone, setGuidedTakeoffDone] = useState(false);
   const [awaitingPath, setAwaitingPath] = useState<string | null>(null);
   const [navigationSlow, setNavigationSlow] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
@@ -110,7 +111,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     const timer = setTimeout(() => setNavigationSlow(true), 10_000);
     return () => clearTimeout(timer);
   }, [pathname, awaitingPath]);
-  useEffect(() => { setCopyStatus(''); setError(''); }, [step?.event, units]);
+  useEffect(() => { setCopyStatus(''); setError(''); setGuidedTakeoffDone(false); }, [step?.event, units]);
   useEffect(() => {
     const target = window as Window & { __qcDemoGuidedComponentId?: string };
     const active = state.chapter === 'takeoff' && !state.acknowledgements['takeoff.saved'];
@@ -119,6 +120,25 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     if (active) window.addEventListener('qc-demo-skylight', added);
     return () => { delete target.__qcDemoGuidedComponentId; window.removeEventListener('qc-demo-skylight', added); };
   }, [state.chapter, state.guided_created_component_id, state.acknowledgements]);
+
+  // Guided takeoff choreography (owner 2026-10-12): the touch shell announces
+  // the first canvas entry (landscape reached, or the flip prompt dismissed);
+  // the rail announces the first real interaction (auto-collapse); the
+  // components step announces the moment the visitor's chapter-1 component
+  // gets an entry on the plan (completion card: explore or save & continue).
+  useEffect(() => {
+    const canvasEntered = () => { if (state.chapter === 'takeoff') setOpen(true); };
+    const interacted = () => { if (state.chapter === 'takeoff') setOpen(false); };
+    const entryAdded = () => { if (state.chapter === 'takeoff') { setGuidedTakeoffDone(true); setOpen(true); } };
+    window.addEventListener('qc-demo-takeoff-canvas-entered', canvasEntered);
+    window.addEventListener('qc-demo-takeoff-interaction', interacted);
+    window.addEventListener('qc-demo-guided-entry-added', entryAdded);
+    return () => {
+      window.removeEventListener('qc-demo-takeoff-canvas-entered', canvasEntered);
+      window.removeEventListener('qc-demo-takeoff-interaction', interacted);
+      window.removeEventListener('qc-demo-guided-entry-added', entryAdded);
+    };
+  }, [state.chapter]);
 
   const constrain = useCallback(() => {
     if (!widget.current) return;
@@ -227,6 +247,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     : step?.copy;
   const testExample = units === 'metric' ? 'Try 2 m².' : units === 'imperial_ft' ? 'Try 20 ft².' : units === 'imperial_rs' ? 'Try 0.2 roofing squares.' : '';
   const showGuide = open && !expired && !resetting;
+  const touchTakeoff = mounted && !!window.matchMedia?.('(pointer: coarse)').matches;
 
   const overlays = <div data-qc-ui="v2" className="qc-demo-overlays" data-assistant-open={assistantOpen} data-assistant-chapter={assistantStep}>
     <p className="qc-demo-announcement" role="status" aria-live="polite" aria-atomic="true">{state.welcomed && state.mode === 'guided' && !expired ? `${chapter.title}: ${step?.title ?? 'chapter finished'}. ${progress.done} lessons completed${progress.skipped ? `, ${progress.skipped} skipped` : ''}.` : ''}</p>
@@ -262,7 +283,11 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
             <p>{guideCopy(stepCopy)}</p>
             {step.event === 'component.created' && <p className="qc-demo-note qc-demo-note-soft">Example rates are already filled in. Give it any name. These are demo values, not pricing recommendations.</p>}
             {step.event === 'component.tested' && <p className="qc-demo-note qc-demo-note-soft">{testExample} Choose <strong className="qc-demo-act">Test Component</strong>, then <strong className="qc-demo-act">Calculate</strong>.</p>}
-            {step.target === 'takeoff' && <p className="qc-demo-note">{triedAdding || session.skylightAdded ? <><strong>Nice, you added your component.</strong> Keep experimenting if you like, then click <strong className="qc-demo-act">Finish &amp; Save</strong> to progress. Whatever is on the final canvas is what you save.</> : <><strong>Add your component{state.guided_created_component_name ? `: “${state.guided_created_component_name}”` : ''}.</strong> Click the <strong className="qc-demo-act">+ Add component</strong> button in the Components panel, find the component you named, then click it. In the toolbar under “Area”, select <strong className="qc-demo-act">Polygon</strong> or <strong className="qc-demo-act">Rectangle</strong> and draw the area on the plan. The prepared scan is precomputed; your measurements and edits are real.</>}</p>}
+            {step.target === 'takeoff' && (guidedTakeoffDone ? <div className="qc-demo-note" role="status">
+              <strong>Nice — your component is on the plan.</strong>
+              <p>Keep exploring the canvas, or save and move to the next step.</p>
+              <div className="qc-demo-actions"><QcButton variant="primary" onClick={() => window.dispatchEvent(new Event('qc-demo-takeoff-save-continue'))}>Save &amp; continue</QcButton><QcButton variant="ghost" onClick={collapse}>Keep exploring</QcButton></div>
+            </div> : <p className="qc-demo-note">{triedAdding || session.skylightAdded ? <><strong>Nice, you added your component.</strong> Keep experimenting if you like, then {touchTakeoff ? <>press <strong className="qc-demo-act">Save &amp; continue</strong></> : <>click <strong className="qc-demo-act">Finish &amp; Save</strong></>} to progress. Whatever is on the final canvas is what you save.</> : <><strong>Add your component{state.guided_created_component_name ? `: “${state.guided_created_component_name}”` : ''}.</strong> {touchTakeoff ? <>Open the <strong className="qc-demo-act">Components</strong> rail on the right. Your component is preselected — tap it, then <strong className="qc-demo-act">Start new entry</strong> and draw the area on the plan. The prepared roof is already measured; your additions are real.</> : <>Click the <strong className="qc-demo-act">+ Add component</strong> button in the Components panel, find the component you named, then click it. In the toolbar under “Area”, select <strong className="qc-demo-act">Polygon</strong> or <strong className="qc-demo-act">Rectangle</strong> and draw the area on the plan. The prepared scan is precomputed; your measurements and edits are real.</>}</>}</p>)}
             {step.hint && <details className="qc-demo-why"><summary>Why this matters</summary><p>{guideCopy(step.hint)}</p></details>}
           </>}
           {assistantStep && location.onPage && <>

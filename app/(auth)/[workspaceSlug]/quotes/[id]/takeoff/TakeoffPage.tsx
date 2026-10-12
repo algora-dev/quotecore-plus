@@ -238,6 +238,7 @@ export function TakeoffPage({
     <TakeoffDesktopHost active={!touchActive}>
     <TouchWorkspaceShell
       active={touchActive}
+      orientationMode={demoFinishHref ? 'landscape-preferred' : 'portrait-only'}
       planLabel={initialPageName ?? 'Plan'}
       railTitle={touchTool === 'calibrate' ? 'Calibration' : touchTool === 'components' ? 'Components' : 'Outline'}
       viewPreference={preference}

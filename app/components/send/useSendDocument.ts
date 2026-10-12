@@ -225,7 +225,10 @@ export function useSendDocument(props: SendDocumentProps) {
       setShowNoCustomerQuote(true);
       return;
     }
-    if (testTip.shouldShow) {
+    // Demo workspaces suppress the first-open tip entirely (owner 2026-10-12):
+    // the tip rendered nowhere in a demo, so the first tap dead-ended with no
+    // modal at all. Skipping it opens the send modal directly.
+    if (testTip.shouldShow && !props.skipTestTip) {
       setShowTestTip(true);
       return;
     }

@@ -18,9 +18,9 @@ import { SendDocumentModal } from './SendDocumentModal';
 import type { SendDocumentProps } from './types';
 
 export function SendDocumentButton(props: SendDocumentProps) {
-  const hook = useSendDocument(props);
   // Owner 2026-10-08: one-time "test it on yourself first" tip is main-app guidance; never show it inside a demo workspace.
   const demoWorkspace = (usePathname() ?? '').startsWith('/demo-');
+  const hook = useSendDocument({ ...props, skipTestTip: demoWorkspace });
 
   if (props.hidden) return null;
 
