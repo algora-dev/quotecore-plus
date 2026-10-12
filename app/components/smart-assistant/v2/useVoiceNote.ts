@@ -139,7 +139,13 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
           const response = await fetch('/api/smart-assistant/transcribe', { method: 'POST', body: form, signal: controller.signal });
           const result: unknown = await response.json().catch(() => null);
           if (ticket !== generation.current || !allowed.current) return;
-          if (!response.ok || !isRecord(result) || typeof result.text !== 'string') throw new Error('Transcription failed. Try again or use Type.');
+          // Surface the server's actual refusal (demo calibration, budget window,
+          // custom-setup gate) instead of a generic banner that hides the reason.
+          if (!response.ok) {
+            const serverReason = isRecord(result) && typeof result.error === 'string' && result.error ? result.error : '';
+            throw new Error(serverReason || 'Transcription failed. Try again or use Type.');
+          }
+          if (!isRecord(result) || typeof result.text !== 'string') throw new Error('Transcription failed. Try again or use Type.');
           const text = result.text.trim();
           if (!text) throw new Error('I could not hear any words. Try again or use Type.');
           if (text.length > 16000) throw new Error('The transcript is too long. Please record a shorter message.');
