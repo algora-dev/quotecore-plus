@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * Smart Components(TM) premium section, website edition 1.0.0 (approved package).
+ * Smart Components™ premium section, website edition 1.0.0 (approved package).
  * Loads the native bundle once, then mounts <qc-smart-pricing-section autoplay
  * loop> client-side. All rendering, styling, animation and the demonstration
  * calculator stay inside the shadow-scoped custom element; nothing here touches
@@ -41,7 +41,7 @@ function loadSectionScript(): Promise<void> {
     script.onerror = () => {
       script.remove();
       sectionScript = null;
-      reject(new Error('Unable to load the Smart Components\u2122 demonstration.'));
+      reject(new Error('Unable to load the Smart Components™ demonstration.'));
     };
     document.head.appendChild(script);
   });

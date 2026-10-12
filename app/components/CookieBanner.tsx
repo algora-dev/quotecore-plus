@@ -103,7 +103,7 @@ export function CookieBanner() {
         </div>
         <div className="flex items-center justify-between gap-3">
           <Link
-            href="/cookies"
+            href="/cookie-policy"
             className="text-xs text-[#FFB36B] hover:text-[#FFD9B8] underline transition-colors duration-150"
           >
             Read our cookie policy

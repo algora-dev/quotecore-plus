@@ -1,25 +1,30 @@
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { MarketingButton } from '@/components/marketing/MarketingButton';
+import { DeviceBadge } from './DeviceBadge';
 import { HeroVisual } from './HeroVisual';
 import { DemoCallButton } from './DemoCall';
-import { DemoCarousel } from './DemoCarousel';
-import { OverviewVideo } from './OverviewVideo';
+import { DemoSection } from './DemoSection';
+import { DoneForYouSection } from './DoneForYouSection';
+import { PricingSection } from './PricingSection';
+import { TestimonialsSection } from './TestimonialsSection';
+import { FaqSection } from './FaqSection';
+import { FinalCtaSection } from './FinalCtaSection';
+import { doneForYouConfig } from './done-for-you-config';
+import { ExploreNextSteps } from './ExploreNextSteps';
 import { WorkflowExplorer } from './WorkflowExplorer';
-import { SmartComponentsSection } from './SmartComponentsSection';
-import { FitQuizSection } from './FitQuiz';
 import { Icon, type IconName } from './Icon';
 import { homepageConfig, type HomepageConfig } from './homepage-config';
-import { homepageFaqs, testimonials, comparisonRows, placeholderReview, publishedHeroReview } from './homepage-content';
+import { comparisonRows, placeholderReview, publishedHeroReview } from './homepage-content';
 import s from './Homepage.module.css';
 
 /** Server-rendered page composition with isolated interactive client components.
  * Header, footer and domain/auth helpers remain the site's existing components. */
-export default function MarketingHomepage({ config = homepageConfig }: { config?: HomepageConfig }) {
+export default function MarketingHomepage({ config = homepageConfig, preview = false }: { config?: HomepageConfig; preview?: boolean }) {
   const demo = (label = 'Try the Demo', className = '') => <MarketingButton href={config.demoHref} variant="primary" size="large" className={`${s.button} ${className}`} icon={<Icon name="arrow" />}>{label}</MarketingButton>;
   return <div className={s.root}>
     <a className={s.skipLink} href="#homepage-main">Skip to content</a>
-    <BlogHeader theme="dark" />
+    <BlogHeader theme="dark" homepage />
     <main id="homepage-main" tabIndex={-1}>
       <section id="hero-section" className={s.hero} aria-labelledby="hero-title">
         <picture className={s.heroBackground}>
@@ -30,10 +35,11 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
         <div className={`${s.container} ${s.heroGrid}`}>
           <div className={s.heroCopy}>
             <p className={s.eyebrow}>Built for roofing first</p>
-            <h1 id="hero-title"><span className={s.heroOrange}>Measure</span> the job.<br />Calculate the <span className={s.heroOrange}>price</span>.<br /><span className={s.heroOrange}>Send</span> the quote.</h1>
+            <h1 id="hero-title"><span className={s.heroOrange}>Measure</span> the job.<br />Gain your <span className={s.heroOrange}>price</span>.<br /><span className={s.heroOrange}>Send</span> the quote.</h1>
             <p className={s.heroLead}>Faster estimating and quoting for roofing and construction businesses.</p>
             <p className={s.heroBody}>Built from industry experience and contractor feedback. Powerful tools, made simple.</p>
-            <div className={s.heroActions}>{demo()}<DemoCallButton bookingHref={config.bookingHref} /><MarketingButton href="#pricing" variant="glass" size="large" className={`${s.button} ${s.heroPricing}`} icon={<Icon name="arrow" />}>Check Pricing</MarketingButton></div>
+            <div className={s.heroDevice}><DeviceBadge /></div>
+            <div className={s.heroActions}>{demo()}<DemoCallButton bookingHref={config.bookingHref} /><MarketingButton href="/pricing" variant="glass" size="large" className={`${s.button} ${s.heroPricing}`} icon={<Icon name="arrow" />}>Check Pricing</MarketingButton></div>
             <div className={s.reassurance}><span><Icon name="check" size={16} />No signup for the demo</span><span><Icon name="check" size={16} />Real project data</span></div>
           </div>
           <HeroVisual review={config.showPlaceholderReview ? placeholderReview : publishedHeroReview} />
@@ -41,17 +47,11 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
         <div className={s.heroBottomLine} aria-hidden="true" />
       </section>
 
-      <OverviewVideo config={config} />
+      <WorkflowExplorer demoHref={config.demoHref} config={config} />
 
-      <section id="try-it" className={`${s.section} ${s.demoSection}`} aria-labelledby="demo-title">
-        <div className={`${s.container} ${s.demoGrid}`}>
-          <div><p className={s.eyebrow}>Try it yourself</p><h2 id="demo-title" className={s.sectionTitle}>Step inside a real<br />roofing business.</h2><p className={s.bodyCopy}>One click drops you into a live QuoteCore+ account, already loaded with real jobs, pricing and materials. No signup. No card. A built-in helper walks you through three quick tasks so you see exactly how it works, then the rest is yours to explore.</p>
-            <div className={s.demoCtas}>{demo()}<DemoCallButton bookingHref={config.bookingHref} location="try-it" /></div>
-            <div className={s.reassurance}><span><Icon name="check" size={16} />No signup</span><span><Icon name="check" size={16} />Free to explore</span><span><Icon name="check" size={16} />Takes 2 minutes</span></div>
-          </div>
-          <DemoCarousel />
-        </div>
-      </section>
+      <ExploreNextSteps config={config} />
+
+      <DemoSection config={config} />
 
 {/* "How it works" section - hidden for now (owner request 2026-10-11). Re-enable by removing this wrapper. */}
       {false && (
@@ -62,60 +62,33 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
             <div className={s.stepCard}>
               <span className={s.stepBadge}>Step 1 · Once</span>
               <h3>Create your pricing</h3>
-              <p>Your materials, labour, waste and margins — saved as Smart Components™. Set it up once, or let us do it with you.</p>
-              <a href="/features/smart-components" className={s.textLink}>See Smart Components<Icon name="arrow" size={16} /></a>
+              <p>Your materials, labour, waste and margins, saved as Smart Components™. Set it up once, or let us do it with you.</p>
+              <a href="/features/smart-components" className={s.textLink}>See Smart Components™<Icon name="arrow" size={16} /></a>
             </div>
             <div className={s.stepCard}>
               <span className={s.stepBadge}>Step 2 · Every job</span>
-              <h3>Add your measurements — any way you like</h3>
+              <h3>Add your measurements, any way you like</h3>
               <div className={s.wayChips}>{([
                 ['document', 'Enter the numbers'],
                 ['ruler', 'Measure in the app'],
                 ['spark', 'Tell the assistant'],
               ] as [IconName, string][]).map(([icon, label]) => <span className={s.wayChip} key={label}><Icon name={icon} size={15} />{label}</span>)}
               </div>
-              <p className={s.chipNote}>Any of the three — the price builds itself.</p>
+              <p className={s.chipNote}>Any of the three, the price builds itself.</p>
             </div>
           </div>
-          <div className={s.waysOutcome}><Icon name="arrow" size={18} /><p>Quote, materials order, invoice — <strong>ready to send in a click or two.</strong></p></div>
+          <div className={s.waysOutcome}><Icon name="arrow" size={18} /><p>Quote, materials order, invoice, <strong>ready to send in a click or two.</strong></p></div>
         </div>
       </section>
       )}
 
-      <FitQuizSection />
+      <DoneForYouSection config={doneForYouConfig} preview={preview} />
 
-      <section id="setup" className={`${s.section} ${s.setupSection}`} aria-labelledby="setup-title">
-        <div className={`${s.container} ${s.setupGrid}`}>
-          <div className={s.setupPortrait}><img src="/shaun-smiling.jpg" width={795} height={1066} alt="Shaun, the founder of QuoteCore+" loading="lazy" decoding="async" /><div className={s.founderCaption}><strong>Real people. Practical help.</strong><span>Shaun · Founder, QuoteCore+</span></div></div>
-          <div className={`${s.dark} ${s.setupCard}`}><p className={s.eyebrow}>Done For You Setup</p><h2 id="setup-title" className={s.sectionTitle}>Another app to set up?<br /><span className={s.mutedHeading}>Not another thing<br />on your list.</span></h2><p className={s.bodyCopy}>Let’s build it around the way you already work. We’ll help load your pricing and services, shape your setup around your business, and teach you using your own jobs.</p>
-            <div className={s.setupPoints}><span><Icon name="check" size={18} />Your products and pricing</span><span><Icon name="check" size={18} />Your workflow, configured</span><span><Icon name="check" size={18} />Personal, practical training</span></div>
-            <MarketingButton href="/done-for-you-setup" variant="primary" size="large" className={s.button} icon={<Icon name="arrow" />}>Explore Done For You Setup</MarketingButton><p className={s.smallNote}>Start with a conversation. Scope and pricing agreed with you.</p>
-          </div>
-        </div>
-      </section>
+      <PricingSection />
 
-      <section id="pricing" className={`${s.section} ${s.pricingBand}`} aria-labelledby="pricing-title">
-        <div className={s.container}>
-          <div className={s.pricingInner}>
-            <p className={s.eyebrow}>Pricing that fits</p>
-            <h2 id="pricing-title" className={s.pricingTitle}>Most businesses don’t need every feature.</h2>
-            <p className={s.pricingSub}>Tell us how you work and what you need, and our tool helps you build a subscription that fits your business.</p>
-            <MarketingButton href="/pricing" variant="primary" size="large" className={s.button} icon={<Icon name="arrow" />}>Check your pricing</MarketingButton>
-          </div>
-        </div>
-      </section>
+      <TestimonialsSection />
 
-      <WorkflowExplorer />
-
-      <SmartComponentsSection className={s.smartPremium} />
-
-      <section id="reviews" tabIndex={-1} className={`${s.section} ${s.dark} ${s.reviewsSection}`} aria-labelledby="reviews-title">
-        <div className={s.container}><div className={s.sectionIntro}><div><p className={s.eyebrow}>From people doing the work</p><h2 id="reviews-title" className={s.sectionTitle}>Different businesses.<br />A familiar story.</h2></div><p className={s.introAside}>Less switching between tools.<br />More working the way that makes sense.</p></div>
-          <div className={s.reviewsGrid}>{testimonials.map(review => <figure key={review.name} className={s.testimonial}><Icon name="quote" className={s.quoteMark} size={29} /><blockquote>“{review.quote}”</blockquote><figcaption><span className={s.avatar} aria-hidden="true">{review.initials}</span><span><strong>{review.name}</strong><small>{review.business}</small></span></figcaption></figure>)}</div>
-        </div>
-      </section>
-
-      {/* "The difference" comparison table — hidden for now (owner request 2026-10-05). Re-enable by removing this wrapper. */}
+      {/* "The difference" comparison table, hidden for now (owner request 2026-10-05). Re-enable by removing this wrapper. */}
       {false && (
       <section className={`${s.section} ${s.dark} ${s.differenceSection}`} aria-labelledby="difference-title">
         <div className={s.container}><div className={s.sectionIntro}><div><p className={s.eyebrow}>The difference</p><h2 id="difference-title" className={s.sectionTitle}>Keep the job moving.<br />Not the same data.</h2></div><p className={s.introAside}>Replace the hand-offs between spreadsheets, documents and email with one connected workflow.</p></div>
@@ -136,12 +109,10 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
       </div></section>
       )}
 
-      <section id="questions" className={`${s.section} ${s.dark} ${s.faqSection}`} aria-labelledby="faq-title"><div className={s.container}>
-        <div className={s.faqGrid}><div><p className={s.eyebrow}>A few things worth knowing</p><h2 id="faq-title" className={s.sectionTitle}>Good questions.<br />Straight answers.</h2><p className={s.bodyCopy}>Have a question about your business?<br />Let’s talk through it.</p><DemoCallButton bookingHref={config.bookingHref} label="Book a Free Demo Call" location="faq" /></div>
-          <div className={s.faqList}>{homepageFaqs.map((faq, i) => <details className={s.faqItem} key={faq.question}><summary><span><small>0{i + 1}</small>{faq.question}</span><Icon name="chevron" size={19} /></summary><p>{faq.answer}</p></details>)}</div>
-        </div>
-        {false && (<div className={s.closing}><p className={s.eyebrow}>Less back and forth. More getting it done.</p><h2>Make your next quote<br /><span className={s.mutedHeading}>a better experience.</span></h2><div className={s.closingActions}>{demo()}<MarketingButton href="/pricing" variant="glass" size="large" className={`${s.button} ${s.glass}`}>Explore pricing<Icon name="arrow" size={18} /></MarketingButton></div><p className={s.smallNote}>No signup for the demo. A real job, ready to explore.</p></div>)}
-      </div></section>
+      <FinalCtaSection config={config} />
+
+      <FaqSection config={config} />
+
     </main>
     <div className={s.footerWrap}><SiteFooter /></div>
   </div>;

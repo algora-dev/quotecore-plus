@@ -1,0 +1,63 @@
+.section { position: relative; isolation: isolate; overflow: clip; overflow-anchor: none; padding-block: 56px; background: #f5f5f2; border-top: 1px solid #e4e7e9; }
+.blueprint { position: absolute; left: -65px; bottom: -98px; width: 380px; height: 240px; stroke: #8f9dac; stroke-width: 1; opacity: .16; pointer-events: none; z-index: -1; }
+.blueprint .orangeLine { stroke: #ff641f; opacity: .8; }
+.blueprint .guideLine { stroke-dasharray: 3 7; opacity: .65; }
+.layout { display: grid; grid-template-columns: minmax(0,.82fr) minmax(0,1.4fr); gap: 64px; align-items: start; }
+.intro { max-width: 355px; padding-top: 7px; }
+.intro .eyebrow { margin-bottom: 16px !important; font-size: 10px; }
+.title { font-size: clamp(32px,3.1vw,40px); font-weight: 600; line-height: 1.12; letter-spacing: -.035em; color: #191e25; }
+.intro .description { margin-top: 19px; font-size: 15px; line-height: 1.75; color: #596273; max-width: 330px; }
+.intro .contact { margin-top: 28px; }
+.contact p { margin-bottom: 13px; font-size: 12px; line-height: 1.6; color: #596273; }
+.section .panel { min-width: 0; overflow: hidden; background: #121820; border: 1px solid #2b333e; border-radius: 18px; box-shadow: 0 12px 35px #1d293614,inset 0 1px 0 #ffffff08; }
+.item { position: relative; overflow: hidden; transition: background-color 160ms ease; }
+.item + .item { border-top: 1px solid #ffffff13; }
+.item::before { content: ''; position: absolute; top: 20px; bottom: 20px; left: 0; width: 3px; border-radius: 0 3px 3px 0; background: #ff8a3d; opacity: 0; }
+.item[open]:not([data-expanded="false"]) { background: #1a222d; }
+.item[open]:not([data-expanded="false"])::before { opacity: 1; }
+.question { display: block; list-style: none; cursor: pointer; padding: 19px 24px; }
+.question::-webkit-details-marker { display: none; }
+.question h3 { display: flex; align-items: center; justify-content: space-between; gap: 22px; min-height: 28px; font-size: 15px; font-weight: 500; line-height: 1.55; color: #edf0f4; }
+.toggleMark { position: relative; display: block; width: 28px; height: 28px; flex: 0 0 28px; border: 1px solid #ffffff26; border-radius: 50%; background: #ffffff04; color: #cbd3de; }
+.toggleMark::before, .toggleMark::after { content: ''; position: absolute; top: 12px; left: 8px; width: 10px; height: 1.5px; background: currentColor; }
+.toggleMark::after { transform: rotate(90deg); transition: transform 140ms ease; }
+.item[open]:not([data-expanded="false"]) .toggleMark { color: #ffb36b; border-color: #ff8a3d66; background: #ff8a3d0b; }
+.item[open]:not([data-expanded="false"]) .toggleMark::after { transform: rotate(0); }
+.answer { padding: 0 72px 22px 24px; }
+.answer p { font-size: 15px; line-height: 1.75; color: #c3ccd8; }
+.answer .answerLink { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; margin-top: 6px; color: #ffb36b; font-size: 13px; font-weight: 500; text-decoration: underline; text-decoration-color: #ffb36b60; text-underline-offset: 4px; }
+.section .question:focus-visible { position: relative; outline: 2px solid #ffb36b; outline-offset: -5px; border-radius: 9px; }
+.section .answerLink:focus-visible { outline-color: #ffb36b; outline-offset: 3px; }
+@media (hover:hover) {
+  .question:hover { background: #ffffff04; }
+  .question:hover .toggleMark { color: #ffb36b; border-color: #ff8a3d66; }
+  .answerLink:hover { color: #ffd2a8; text-decoration-color: currentColor; }
+}
+@media (max-width:1023px) {
+  .layout { grid-template-columns: minmax(0,.8fr) minmax(0,1.4fr); gap: 35px; }
+  .question { padding-inline: 21px; }
+  .answer { padding-inline: 21px; }
+  .question h3 { gap: 14px; }
+}
+@media (max-width:767px) {
+  .section { padding-block: 36px; }
+  .layout { grid-template-columns: minmax(0,1fr); gap: 27px; }
+  .intro { max-width: 540px; padding-top: 0; }
+  .intro .eyebrow { margin-bottom: 13px !important; }
+  .title { font-size: clamp(30px,7.6vw,36px); }
+  .headingBreak { display: none; }
+  .intro .description { margin-top: 14px; max-width: 440px; }
+  .intro .contact { margin-top: 20px; }
+  .contact p { margin-bottom: 10px; }
+  .section .panel { border-radius: 15px; }
+  .question { padding: 17px 18px; }
+  .question h3 { gap: 16px; }
+  .answer { padding: 0 18px 19px; }
+  .blueprint { opacity: .1; width: 280px; bottom: -155px; }
+}
+@media (prefers-reduced-motion:reduce) { .item, .toggleMark::after { transition: none; } }
+@media (forced-colors:active) {
+  .blueprint { display: none; }
+  .section .panel, .item + .item, .toggleMark { border-color: CanvasText; }
+  .item[open]::before, .toggleMark::before, .toggleMark::after { background: CanvasText; }
+}

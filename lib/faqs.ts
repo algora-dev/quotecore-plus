@@ -27,7 +27,7 @@ export const homepageFaqs: FaqItem[] = [
   {
     question: "How do I get started?",
     answer:
-      "Use the free tools instantly with no signup, or choose a paid plan from $19/month - every paid plan is backed by a 30-day money-back guarantee.",
+      "Explore the free tools, or use the pricing tool to choose the features your business needs and see your tailored QuoteCore+ subscription price.",
   },
   {
     question: "Why do contractors switch to QuoteCore+?",

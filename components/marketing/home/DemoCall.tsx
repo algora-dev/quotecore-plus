@@ -31,8 +31,8 @@ export function DemoCallButton({ bookingHref, label = 'Book a Free Demo Call', l
       <div className={s.dialogAction}>
         {href ? <a href={href} className={`${s.button} ${s.primary}`} target="_blank" rel="noopener noreferrer"
           onClick={() => trackEvent('homepage_booking_calendar_open', { location })}>Choose a time<Icon name="arrow" /></a>
-          : <><button type="button" className={`${s.button} ${s.primary}`} disabled>Choose a time<Icon name="arrow" /></button>
-            <p className={s.connectionNote}>The booking calendar is not connected yet. No appointment can be booked from this preview.</p></>}
+          : <><a href="/contact" className={`${s.button} ${s.primary}`} target="_blank" rel="noopener noreferrer">Ask about a demo call<Icon name="arrow" /></a>
+            <p className={s.connectionNote}>Send us a message through our contact page to arrange a free demo call.</p></>}
         <p className={s.smallNote}>{href ? 'Opens the booking calendar in a new tab. ' : ''}Opening this window does not book an appointment.</p>
       </div>
     </FocusDialog>}

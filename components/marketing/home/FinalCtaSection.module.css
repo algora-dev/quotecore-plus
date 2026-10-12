@@ -1,0 +1,31 @@
+.section { position: relative; isolation: isolate; overflow: clip; padding-block: 56px 34px; background: #fffaf5; color: #1b2028; }
+.section::before { content: ''; position: absolute; pointer-events: none; width: 300px; height: 300px; right: -150px; top: -178px; border: 1px solid #e9d6c5; box-shadow: 0 0 0 23px #fffaf5,0 0 0 24px #efe2d7,0 0 0 49px #fffaf5,0 0 0 50px #f3e9df; transform: rotate(38deg); z-index: -1; }
+.heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; margin-bottom: 32px; }
+.heading .eyebrow { margin-bottom: 13px !important; }
+.heading h2 { font-size: clamp(30px,3.15vw,42px); font-weight: 650; letter-spacing: -.045em; line-height: 1.13; }
+.section .heading > p { max-width: 265px; color: #606775; font-size: 14px; line-height: 1.65; }
+.paths { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.path { min-width: 0; padding: 4px 28px 4px 0; }
+.path + .path { border-left: 1px solid #e5dbd2; padding-left: 28px; }
+.path:last-child { padding-right: 0; }
+.icon { display: flex; align-items: center; justify-content: center; height: 43px; width: 43px; border-radius: 12px; border: 1px solid #ddd4cb; color: #5b6068; background: #fffdfb; margin-bottom: 17px; }
+.demoIcon { color: #ad420f; border-color: #f4cdb1; background: #fff0e5; }
+.path h3 { font-size: 21px; font-weight: 600; letter-spacing: -.03em; line-height: 1.2; }
+.section .path > p { margin-top: 11px; max-width: 32ch; color: #606775; font-size: 14px; line-height: 1.65; min-height: 47px; }
+.actions { margin-top: 22px; }
+.section .actions > a, .section .actions > button { min-height: 48px; padding: 11px 17px; font-size: 13px; white-space: normal; }
+.path .setupLink { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding-block: 10px 0; color: #775341; font-size: 11px; line-height: 1.55; text-decoration: underline; text-underline-offset: 3px; }
+.footer { display: flex; align-items: center; justify-content: space-between; gap: 15px 28px; flex-wrap: wrap; margin-top: 27px; padding-top: 20px; border-top: 1px solid #e5dbd2; font-size: 12px; line-height: 1.6; }
+.footer > span, .footer > a { display: flex; align-items: center; gap: 9px; }
+.footer > span { color: #69707b; }
+.footer > span svg { color: #b64a18; }
+.footer > a { min-height: 44px; color: #242b35; font-weight: 500; }
+@media(max-width:1050px) { .path { padding-right: 20px; }.path + .path { padding-left: 20px; }.path h3 { font-size: 19px; }.section .path > p { min-height: 69px; }.section .actions > a, .section .actions > button { padding-inline: 13px; font-size: 12px; } }
+@media(max-width:760px) {
+  .section { padding-block: 37px 22px; }.heading { display: block; margin-bottom: 26px; }.heading h2 { font-size: clamp(30px,7.8vw,37px); }.section .heading > p { margin-top: 13px; max-width: 38ch; font-size: 14px; }
+  .paths { grid-template-columns: minmax(0,1fr); }.path, .path + .path { position: relative; padding: 22px 0 22px 62px; border-left: 0; }.path:first-child { padding-top: 0; }.path + .path { border-top: 1px solid #e5dbd2; }
+  .icon { position: absolute; left: 0; top: 22px; width: 42px; height: 42px; }.path:first-child .icon { top: 0; }.path h3 { font-size: 21px; }.section .path > p { min-height: 0; max-width: 40ch; margin-top: 9px; }.actions { margin-top: 15px; }.section .actions > a, .section .actions > button { font-size: 13px; }
+  .footer { margin-top: 0; gap: 5px; padding-top: 18px; }.footer > a { font-size: 11px; }
+}
+@media(max-width:380px) { .path, .path + .path { padding-left: 0; }.icon { display: none; }.section .actions > a, .section .actions > button { width: 100%; }.footer { font-size: 11px; } }
+@media(forced-colors:active) { .section::before { display: none; }.path + .path, .footer, .icon { border-color: CanvasText; } }

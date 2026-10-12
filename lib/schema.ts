@@ -93,7 +93,7 @@ export function buildSoftwareApplicationSchema() {
     ],
     featureList: [
       "Digital takeoff from plans",
-      "Reusable Smart Components",
+      "Reusable Smart Components™",
       "Quote builder",
       "Customer quote preview",
       "Quote approval tracking",
@@ -103,8 +103,7 @@ export function buildSoftwareApplicationSchema() {
       "Job and quote information tracking",
     ],
     keywords:
-      "contractor quoting software, roofing quoting software, construction quoting software, digital takeoff, quote builder, material orders, Smart Components",
-    offers: buildPricingOffers("USD"),
+      "contractor quoting software, roofing quoting software, construction quoting software, digital takeoff, quote builder, material orders, Smart Components™",
   };
 }
 

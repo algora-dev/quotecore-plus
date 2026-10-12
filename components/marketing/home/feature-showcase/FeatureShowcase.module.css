@@ -1,0 +1,724 @@
+/* QuoteCore+ v2.15 Dark Focus, paired with light product surfaces.
+   Scoped to this section. No global resets, font files, app-theme overrides or
+   decorative animation loops. The host MarketingButton supplies primary CTAs. */
+.root {
+  --fs-canvas: #0b0d10;
+  --fs-surface: #12151a;
+  --fs-raised: #181c22;
+  --fs-text: #f7f8fa;
+  --fs-muted: #a8b0bc;
+  --fs-border: rgba(255,255,255,.12);
+  --fs-border-strong: rgba(255,255,255,.22);
+  --fs-orange: var(--qc-color-orange-vivid, #ff641f);
+  --fs-orange-bright: var(--qc-color-orange-bright, #ff8a3d);
+  --fs-orange-ink: var(--qc-color-orange-ink, #b63d0a);
+  --fs-ink: #191b20;
+  --fs-light-muted: #5c6778;
+  --fs-ease: cubic-bezier(.2,0,0,1);
+  color: var(--fs-ink);
+  background: #f7f8fa;
+  padding: 48px 24px 38px;
+  font-family: inherit;
+  line-height: 1.5;
+  isolation: isolate;
+  scroll-margin-top: 96px;
+}
+.root *, .root *::before, .root *::after { box-sizing: border-box; }
+.root button, .root a { -webkit-tap-highlight-color: transparent; }
+.root button { font: inherit; cursor: pointer; }
+.root button:disabled { cursor: default; }
+.root [hidden] { display: none !important; }
+.root svg { flex-shrink: 0; }
+.root .container { max-width: 1280px; margin: 0 auto; min-width: 0; }
+.root .intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; margin: 0 0 30px; }
+.root .eyebrow { display: flex; align-items: center; gap: 12px; color: var(--fs-orange-ink); text-transform: uppercase; letter-spacing: .2em; font-size: 10px; font-weight: 700; margin: 0 0 16px; }
+.root .eyebrow::before { content: ''; width: 28px; height: 1px; background: var(--fs-orange); }
+.root .intro h2 { margin: 0; font-size: clamp(32px, 3.4vw, 44px); font-weight: 650; letter-spacing: -.045em; line-height: 1.09; text-wrap: balance; }
+.root .intro h2 span { color: #545d6a; }
+.root .introAside { margin: 0 0 3px; max-width: 285px; color: var(--fs-light-muted); font-size: 15px; line-height: 1.65; }
+.root .showcase { background: var(--fs-canvas); color: var(--fs-text); border: 1px solid #252a32; border-radius: 22px; box-shadow: 0 18px 48px -30px rgba(17,23,32,.38); }
+.root .featureTabs { display: flex; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #5c6778 transparent; border-bottom: 1px solid var(--fs-border); padding: 0 14px; border-radius: 21px 21px 0 0; }
+.root .featureTab { min-height: 66px; flex: 1 0 auto; position: relative; display: flex; align-items: center; justify-content: center; gap: 9px; border: 0; border-radius: 8px 8px 0 0; background: transparent; color: var(--fs-muted); padding: 12px 14px; font-size: 13px !important; font-weight: 550 !important; white-space: nowrap; transition: color 120ms var(--fs-ease), background-color 120ms var(--fs-ease); }
+.root .featureTab::after { content: ''; height: 2px; background: transparent; position: absolute; left: 15px; right: 15px; bottom: -1px; }
+.root .featureTab[aria-selected="true"] { color: var(--fs-text); background: linear-gradient(0deg, rgba(255,107,53,.10), transparent 85%); }
+.root .featureTab[aria-selected="true"] > svg { color: var(--fs-orange-bright); }
+.root .featureTab[aria-selected="true"]::after { background: linear-gradient(90deg, var(--fs-orange), #ffb36b); }
+.root .selectedMark { display: inline-flex; opacity: 0; color: var(--fs-orange-bright); }
+.root .featureTab[aria-selected="true"] .selectedMark { opacity: 1; }
+.root .outcomeTab { margin-left: 12px; }
+.root .outcomeTab::before { content: ''; width: 1px; height: 24px; background: var(--fs-border-strong); position: absolute; left: -7px; }
+.root .mobileTabHint { display: none; }
+.root .featurePanel { border-radius: 0 0 22px 22px; }
+.root .featurePanel:focus-visible { outline: 2px solid var(--fs-orange-bright); outline-offset: 4px; }
+.root .carousel { display: flex; flex-direction: column; }
+.root .scene { order: 1; display: grid; grid-template-columns: minmax(0,.86fr) minmax(0,1.3fr); min-height: 455px; background: radial-gradient(ellipse at 47% 100%,rgba(255,100,31,.075),transparent 50%); }
+.root .editorial { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; padding: 32px 28px 28px 34px; }
+.root .storyCopy { animation: copyIn 220ms var(--fs-ease); }
+.root .featureEyebrow { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-bottom: 17px; font-size: 10px; color: #bdc5d0; letter-spacing: .095em; text-transform: uppercase; }
+.root .beta { padding: 2px 7px; border: 1px solid #62452e; border-radius: 5px; font-size: 9px; text-transform: none; letter-spacing: .015em; color: #ffc89f; background: #241c17; }
+.root .editorial h3 { font-size: clamp(27px,2.6vw,38px); line-height: 1.13; letter-spacing: -.038em; font-weight: 620; white-space: pre-line; margin: 0 0 16px; text-wrap: balance; }
+.root .body { font-size: 15px; line-height: 1.65; color: #c1c8d1; margin: 0; max-width: 385px; }
+.root .benefit { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; line-height: 1.5; color: #e4e7eb; margin: 20px 0 11px; }
+.root .benefit svg { margin-top: 1px; color: var(--fs-orange-bright); }
+.root .context { color: var(--fs-muted); font-size: 11px; line-height: 1.5; margin: 0; }
+.root .actions { padding-top: 26px; }
+.root .demo { min-height: 48px !important; padding: 11px 19px !important; border-radius: 12px !important; color: #171a20 !important; transform: none !important; font-size: 14px !important; text-decoration: none !important; }
+.root .demo > span { display: inline-flex; align-items: center; gap: 26px; }
+.root .actions p { font-size: 10px; letter-spacing: .015em; color: var(--fs-muted); margin: 9px 0 0; }
+.root .visual { min-width: 0; margin: 17px 17px 17px 0; padding: 17px 17px 10px; color: var(--fs-ink); background: radial-gradient(ellipse at 45% 0%,#fff7f0,transparent 60%),linear-gradient(145deg,#f7f8fa,#eceff3); border: 1px solid rgba(255,255,255,.78); box-shadow: inset 0 1px 0 #fff, 0 12px 30px rgba(0,0,0,.16); border-radius: 16px; display: flex; flex-direction: column; }
+.root .visualTopline { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 9px; line-height: 1.4; padding: 0 0 13px; color: var(--fs-light-muted); }
+.root .visualTopline > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.root .storyboardBadge { border: 1px solid #cbd1d9; border-radius: 5px; padding: 3px 6px; font-size: 8px; white-space: nowrap; background: rgba(255,255,255,.65); color: #626b79; }
+.root .captures { position: relative; display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.2fr); gap: 15px; align-items: stretch; flex: 1; min-height: 368px; touch-action: pan-y pinch-zoom; animation: captureIn 220ms var(--fs-ease); }
+.root .capture { margin: 0; display: flex; flex-direction: column; min-width: 0; background: #fff; border: 1px solid #c9ced6; border-radius: 11px; box-shadow: 0 3px 5px rgba(25,27,32,.015), 0 10px 24px -15px rgba(25,27,32,.15); }
+.root .requestCapture { margin-top: 12px; }
+.root .resultCapture { margin-bottom: 12px; }
+.root .captureHeading { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 10px; font-weight: 600; min-height: 37px; padding: 7px 11px; border-bottom: 1px solid #e9ebef; }
+.root .captureNumber { font-size: 9px; letter-spacing: .02em; font-weight: 500; color: #687281; }
+.root .realLabel { margin-left: auto; color: #617064; font-size: 8px; font-weight: 400; }
+.root .placeholder { padding: 18px 15px 12px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.root .requestPlaceholder { background: linear-gradient(180deg,#fff,#fafbfc); }
+.root .resultPlaceholder { padding: 20px 19px 12px; }
+.root .inputEmblem { display: inline-flex; align-items: center; justify-content: center; width: 43px; height: 43px; color: var(--fs-orange-ink); border: 1px solid #ffcfae; border-radius: 13px; background: linear-gradient(150deg,#fff7f0,#ffe6d2); box-shadow: inset 0 1px 0 #fff; margin-bottom: 13px; }
+.root .placeholderEyebrow { font-size: 9px; color: #6b7482; margin: 0 0 8px; }
+.root .sampleRequest { margin: 0; font-size: 13px; line-height: 1.6; font-weight: 500; color: #303641; }
+.root .waveform { display: flex; align-items: center; gap: 3px; height: 39px; max-width: 145px; margin: 13px 0 3px; }
+.root .waveform span { width: 3px; max-height: 28px; border-radius: 2px; background: #de7443; opacity: .65; }
+.root .resultEmblem { width: 37px; height: 37px; border: 1px solid #d8dfe7; border-radius: 12px; background: linear-gradient(145deg,#fff,#eef1f5); display: flex; align-items: center; justify-content: center; color: #525e6e; position: relative; margin: 0 0 10px; }
+.root .resultEmblem > span { position: absolute; bottom: -3px; right: -5px; border: 2px solid white; display: flex; align-items: center; justify-content: center; height: 19px; width: 19px; border-radius: 50%; color: #482918; background: #ffb36b; }
+.root .outputTitle { white-space: pre-line; color: #272e37; font-size: 21px; line-height: 1.17; font-weight: 600; letter-spacing: -.035em; margin: 0 0 7px; }
+.root .outputSubtitle { color: #697282; font-size: 8px; line-height: 1.5; margin: 0 0 10px; }
+.root .outputRows { margin: 0; }
+.root .outputRows > div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; border-top: 1px solid #eceef2; padding: 7px 0; font-size: 10px; line-height: 1.5; }
+.root .outputRows dt { color: #616c7a; }
+.root .outputRows dd { margin: 0; text-align: right; color: #303641; font-weight: 550; }
+.root .capturePlaceholderLabel { margin: auto 0 0; padding: 16px 0 0; display: flex; align-items: flex-start; gap: 5px; color: #626c7a; font-size: 8px; line-height: 1.5; }
+.root .capturePlaceholderLabel svg { margin-top: -1px; }
+.root .capture figcaption { font-size: 8px; color: #667180; line-height: 1.4; padding: 8px 11px; border-top: 1px solid #eceef2; min-height: 31px; }
+.root .captureConnector { position: absolute; top: 49%; left: calc(41.46% - 9px); z-index: 1; width: 29px; height: 29px; background: #fff2e7; color: #b63d0a; border: 1px solid #f5bd95; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 7px rgba(57,35,17,.08); }
+.root .visualNote { font-size: 8px; line-height: 1.5; color: #626c7a; margin: 8px 0 0; text-align: center; }
+.root .mobileCaptureToggle { display: none; }
+.root .captureImageButton { padding: 0; border: 0; border-radius: 0; background: #f6f7f9; position: relative; flex: 1; min-height: 280px; width: 100%; overflow: hidden; display: block; }
+.root .captureImageButton img { position: absolute; width: 100%; height: 100%; inset: 0; object-fit: contain; }
+.root .expandBadge { position: absolute; bottom: 8px; right: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: #f7f8fa; background: #181c22; border: 1px solid rgba(255,255,255,.4); border-radius: 7px; padding: 7px 9px; box-shadow: 0 2px 6px #0002; }
+.root .sceneNav { order: 2; padding: 10px 19px 10px 22px; border-top: 1px solid var(--fs-border); background: var(--fs-surface); display: flex; align-items: center; gap: 18px; min-width: 0; }
+.root .navCaption { display: none; }
+.root .scenePicker { flex: 1; display: flex; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #5c6778 transparent; gap: 6px; padding: 3px; }
+.root .sceneButton { flex: 1 0 0; display: flex; align-items: center; gap: 9px; text-align: left; background: transparent; color: var(--fs-muted); border: 1px solid transparent; border-radius: 8px; padding: 9px 10px; min-height: 46px; font-size: 11px !important; line-height: 1.4 !important; white-space: nowrap; transition: background-color 120ms var(--fs-ease),color 120ms var(--fs-ease),border-color 120ms var(--fs-ease); }
+.root .sceneNumber { font-size: 10px; color: #8e99a8; letter-spacing: .02em; }
+.root .sceneButton[aria-pressed="true"] { background: #22252b; border-color: #5f574e; color: var(--fs-text); box-shadow: inset 0 1px 0 #ffffff12; }
+.root .sceneButton[aria-pressed="true"] .sceneNumber { color: #ffb36b; }
+.root .sceneButton[aria-pressed="true"]::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--fs-orange-bright); flex-shrink: 0; margin-left: auto; }
+.root .sceneArrows { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.root .sceneCount { color: #e3e6eb; font-size: 11px; white-space: nowrap; min-width: 51px; font-variant-numeric: tabular-nums; }
+.root .sceneCount span { color: #8e99a8; }
+/* G-C clear glass, matched to the supplied pricing-selector control surface. */
+.root .clear { position: relative; overflow: hidden; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 11px; color: var(--fs-text); border: 1px solid var(--fs-border-strong); background: linear-gradient(145deg,rgba(255,255,255,.09),transparent 46%,rgba(255,255,255,.03)),rgba(255,255,255,.045); box-shadow: inset 0 1px 0 rgba(255,255,255,.24), inset 0 -1px 0 rgba(255,255,255,.025); backdrop-filter: blur(14px) saturate(1.08); -webkit-backdrop-filter: blur(14px) saturate(1.08); transition: background-color 120ms var(--fs-ease),border-color 120ms var(--fs-ease); }
+.root .clear::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg,transparent 18%,rgba(255,255,255,.24) 48%,transparent 78%); transform: translateX(-120%); pointer-events: none; }
+.root .clear:disabled { opacity: .35; }
+.root .clear:active:not(:disabled) { background-color: #ffffff05; box-shadow: inset 0 2px 4px #0003; }
+.root .sectionFoot { display: flex; align-items: center; justify-content: space-between; gap: 18px; border-top: 1px solid #ffffff09; padding: 12px 28px; background: #0f1115; border-radius: 0 0 21px 21px; font-size: 10px; color: #a8b0bc; line-height: 1.5; }
+.root .sectionFoot > span:first-child { display: flex; align-items: center; gap: 8px; color: #d0d6de; }
+.root .sectionFoot > span:first-child svg { color: #aaafb7; }
+.root .sectionFoot > span:last-child { text-align: right; }
+.root .betaNote { color: #677180; margin: 13px 3px 0; font-size: 10px; line-height: 1.5; }
+.root .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.root button:focus-visible, .root a:focus-visible { outline: 2px solid #ffb36b; outline-offset: 3px; }
+.root .featureTab:focus-visible { outline-offset: -5px !important; }
+.root .visual button:focus-visible { outline-color: #b63d0a; outline-offset: -3px; }
+.root .dialog { max-width: min(1140px,94vw); width: 1140px; max-height: 92dvh; margin: auto; padding: 0; border: 1px solid #59616e; border-radius: 18px; background: #12151a; color: #f7f8fa; overscroll-behavior: contain; box-shadow: 0 32px 100px #0008; }
+.root .dialog::backdrop { background: #07090dd4; backdrop-filter: blur(5px); }
+.root .dialogHeader { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 20px; position: sticky; top: 0; z-index: 2; background: #12151af7; border-bottom: 1px solid #ffffff25; }
+.root .dialogHeader p { color: #a8b0bc; font-size: 10px; margin: 0 0 2px; }
+.root .dialogHeader h4 { font-size: 17px; margin: 0; font-weight: 550; }
+.root .enlargedImage { display: block; width: 100%; height: auto; max-height: 72dvh; object-fit: contain; background: #e9ecf1; }
+.root .dialogCaption { margin: 0; padding: 14px 20px; color: #c1c8d1; font-size: 12px; }
+.root .imageError { padding: 40px 20px; }
+
+@keyframes copyIn { from { opacity: .25; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes captureIn { from { opacity: .35; } to { opacity: 1; } }
+@media (hover:hover) {
+  .root .featureTab:hover { color: var(--fs-text); background-color: #ffffff07; }
+  .root .sceneButton:hover { background-color: #ffffff09; color: #f7f8fa; }
+  .root .clear:hover:not(:disabled) { background-color: rgba(255,255,255,.10); border-color: #ffb36b; }
+  .root .clear:hover:not(:disabled)::after { transform: translateX(120%); transition: transform 220ms var(--fs-ease); }
+  .root .captureImageButton:hover .expandBadge { border-color: var(--fs-orange-bright); }
+}
+@media (min-width:1600px) { .root { padding-top: 72px; padding-bottom: 60px; } }
+@media (max-width:1180px) {
+  .root .featureTab { padding-left: 8px; padding-right: 8px; font-size: 12px !important; gap: 7px; }
+  .root .featureTabs { padding: 0 7px; }
+  .root .outcomeTab { margin-left: 8px; }
+  .root .scene { grid-template-columns: minmax(0,.82fr) minmax(0,1.2fr); }
+  .root .editorial { padding-left: 26px; padding-right: 22px; }
+  .root .visual { padding: 14px 12px 10px; }
+  .root .storyboardBadge { font-size: 7px; }
+  .root .captures { gap: 11px; }
+  .root .placeholder { padding: 16px 12px 10px; }
+  .root .sampleRequest { font-size: 12px; }
+  .root .resultPlaceholder { padding: 18px 14px 10px; }
+  .root .outputTitle { font-size: 19px; }
+  .root .sceneButton { gap: 7px; padding: 8px; font-size: 10px !important; }
+  .root .sceneNav { gap: 10px; padding-left: 14px; padding-right: 14px; }
+}
+@media (max-width:980px) {
+  .root { padding: 42px 20px 34px; }
+  .root .intro { gap: 24px; margin-bottom: 24px; }
+  .root .introAside { font-size: 13px; max-width: 247px; }
+  .root .featureTabs { justify-content: flex-start; }
+  .root .featureTab { min-width: 185px; min-height: 59px; flex: 1 0 auto; font-size: 13px !important; padding: 11px; }
+  .root .scene { display: flex; flex-direction: column; }
+  .root .editorial { padding: 28px; display: grid; grid-template-columns: 1fr auto; gap: 26px; }
+  .root .editorial h3 { font-size: 32px; }
+  .root .body { max-width: 470px; font-size: 14px; }
+  .root .benefit { margin-top: 16px; font-size: 12px; }
+  .root .context { display: none; }
+  .root .actions { align-self: end; padding-top: 0; padding-bottom: 3px; }
+  .root .visual { margin: 0 24px 24px; padding: 17px 20px 12px; }
+  .root .visualTopline { font-size: 10px; }
+  .root .storyboardBadge { font-size: 8px; }
+  .root .captures { grid-template-columns: .9fr 1.2fr; gap: 20px; }
+  .root .requestCapture { margin-top: 12px; }
+  .root .resultCapture { margin-bottom: 12px; }
+  .root .placeholder { padding: 20px; }
+  .root .sampleRequest { font-size: 15px; }
+  .root .outputTitle { font-size: 24px; }
+  .root .outputRows > div { font-size: 11px; padding: 10px 0; }
+  .root .outputSubtitle, .root .capturePlaceholderLabel, .root .capture figcaption { font-size: 9px; }
+  .root .captureHeading { font-size: 12px; padding: 10px 16px; }
+  .root .captureConnector { left: calc(42.86% - 9px); }
+  .root .captureImageButton { min-height: 330px; }
+  .root .sceneButton { flex-basis: auto; min-width: 123px; }
+  .root .sectionFoot { font-size: 9px; padding: 12px 23px; }
+}
+@media (max-width:640px) {
+  .root { padding: 32px 14px 28px; }
+  .root .intro { display: block; margin-bottom: 23px; }
+  .root .intro h2 { font-size: 32px; }
+  .root .eyebrow { font-size: 9px; margin-bottom: 13px; }
+  .root .introAside { font-size: 12px; line-height: 1.6; max-width: 330px; margin: 14px 0 0; }
+  .root .introAside br { display: none; }
+  .root .showcase { border-radius: 16px; }
+  .root .mobileTabHint { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 13px 17px 0; font-size: 9px; color: #c1c8d1; }
+  .root .mobileTabHint > span:last-child { display: inline-flex; align-items: center; gap: 4px; color: #a8b0bc; font-size: 8px; }
+  .root .featureTabs { padding: 0 7px; border-radius: 0; scrollbar-width: none; }
+  .root .featureTabs::-webkit-scrollbar { display: none; }
+  .root .featureTab { min-width: 174px; justify-content: flex-start; min-height: 57px; font-size: 12px !important; }
+  .root .featureTab svg { width: 18px; }
+  .root .selectedMark { margin-left: auto; }
+  .root .editorial { display: flex; gap: 0; padding: 22px 19px 20px; }
+  .root .featureEyebrow { font-size: 9px; margin-bottom: 12px; gap: 7px; }
+  .root .beta { font-size: 8px; }
+  .root .editorial h3 { font-size: 29px; line-height: 1.12; margin-bottom: 12px; }
+  .root .body { font-size: 13px; line-height: 1.65; }
+  .root .benefit { font-size: 11px; margin: 13px 0 0; }
+  .root .actions { display: flex; align-items: center; justify-content: flex-start; gap: 13px; padding: 0; margin-top: 20px; align-self: auto; }
+  .root .demo { min-height: 46px !important; font-size: 12px !important; padding: 10px 13px !important; flex-shrink: 0; }
+  .root .demo > span { gap: 12px; }
+  .root .actions p { font-size: 9px; max-width: 113px; line-height: 1.6; margin: 0; }
+  .root .visual { margin: 0 11px 16px; padding: 13px 12px 10px; border-radius: 12px; }
+  .root .visualTopline { font-size: 9px; padding-bottom: 10px; align-items: flex-start; }
+  .root .visualTopline > span:first-child { max-width: 145px; align-items: flex-start; }
+  .root .storyboardBadge { font-size: 7px; padding: 3px 4px; }
+  .root .mobileCaptureToggle { display: flex; background: #e4e8ee; border: 1px solid #c6cdd7; border-radius: 9px; padding: 3px; margin-bottom: 11px; }
+  .root .mobileCaptureToggle button { min-width: 0; min-height: 41px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 4px; font-size: 11px; background: transparent; border: 1px solid transparent; border-radius: 6px; color: #576376; }
+  .root .mobileCaptureToggle button > span { font-size: 9px; }
+  .root .mobileCaptureToggle button[aria-pressed="true"] { color: #8f2e08; border-color: #bd6d43; background: #fff; box-shadow: 0 1px 3px #202c3b10; }
+  .root .captures { display: block; min-height: 320px; }
+  .root .captures[data-view="request"] [data-capture="result"], .root .captures[data-view="result"] [data-capture="request"] { display: none; }
+  .root .capture { margin: 0; min-height: 320px; }
+  .root .captureHeading { min-height: 39px; font-size: 11px; padding: 9px 13px; }
+  .root .placeholder { padding: 17px 18px 12px; min-height: 251px; }
+  .root .requestPlaceholder { padding-right: 24px; }
+  .root .inputEmblem { width: 35px; height: 35px; border-radius: 10px; margin-bottom: 9px; }
+  .root .inputEmblem svg { width: 19px; height: 19px; }
+  .root .placeholderEyebrow { font-size: 10px; margin-bottom: 6px; }
+  .root .sampleRequest { font-size: 14px; line-height: 1.6; }
+  .root .waveform { height: 28px; margin-top: 11px; margin-bottom: 0; }
+  .root .waveform span { max-height: 21px; }
+  .root .resultEmblem { width: 35px; height: 35px; border-radius: 8px; margin: 0 0 11px; }
+  .root .resultEmblem > svg { width: 22px; height: 22px; }
+  .root .outputTitle { font-size: 23px; }
+  .root .outputSubtitle { font-size: 8px; margin-bottom: 9px; }
+  .root .outputRows > div { font-size: 10px; padding: 7px 0; }
+  .root .capturePlaceholderLabel { font-size: 8px; padding-top: 13px; }
+  .root .capture figcaption { font-size: 8px; min-height: 29px; padding: 7px 13px; }
+  .root .captureConnector { display: none; }
+  .root .visualNote { font-size: 7px; margin-top: 7px; }
+  .root .captureImageButton { min-height: 251px; }
+  .root .sceneNav { order: 0; display: grid; grid-template-columns: 1fr auto; gap: 6px; padding: 12px 11px 9px; }
+  .root .navCaption { display: block; font-size: 10px; margin-left: 5px; color: #c1c8d1; }
+  .root .scenePicker { grid-column: 1 / -1; grid-row: 2; scrollbar-width: none; padding: 4px 3px 2px; gap: 6px; }
+  .root .scenePicker::-webkit-scrollbar { display: none; }
+  .root .sceneButton { min-height: 45px; min-width: 134px; flex: 1 0 auto; padding: 8px; font-size: 10px !important; }
+  .root .sceneArrows { grid-column: 2; grid-row: 1; }
+  .root .sceneCount { font-size: 10px; min-width: 42px; }
+  .root .clear { height: 42px; width: 42px; border-radius: 10px; }
+  .root .sectionFoot { display: block; padding: 13px 17px; border-radius: 0 0 15px 15px; }
+  .root .sectionFoot > span { font-size: 9px; }
+  .root .sectionFoot > span:last-child { display: block; text-align: left; margin-top: 8px; color: #a8b0bc; font-size: 8px; }
+  .root .betaNote { font-size: 9px; margin: 11px 3px 0; }
+  .root .dialog { max-width: 96vw; border-radius: 12px; }
+  .root .dialogHeader { padding: 12px; }
+  .root .dialogHeader h4 { font-size: 15px; }
+}
+@media (max-width:359px) {
+  .root { padding-left: 10px; padding-right: 10px; }
+  .root .intro h2 { font-size: 29px; }
+  .root .editorial { padding-left: 15px; padding-right: 15px; }
+  .root .editorial h3 { font-size: 26px; }
+  .root .visual { margin-left: 8px; margin-right: 8px; padding-left: 9px; padding-right: 9px; }
+  .root .visualTopline { font-size: 8px; }
+  .root .storyboardBadge { font-size: 6px; }
+  .root .actions { gap: 10px; }
+  .root .demo { padding-left: 10px !important; padding-right: 10px !important; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .root *, .root *::before, .root *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .root .clear::after { display: none; }
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) { .root .clear { background: #181c22; } }
+@media (prefers-reduced-transparency:reduce) { .root .clear { background: #181c22; backdrop-filter: none; -webkit-backdrop-filter: none; } .root .clear::after { display: none; } .root .dialog::backdrop { backdrop-filter: none; } }
+@media (forced-colors:active) {
+  .root, .root .showcase, .root .visual, .root .capture, .root .placeholder, .root .sceneNav, .root .sectionFoot, .root .dialog, .root .dialogHeader { background: Canvas; color: CanvasText; box-shadow: none; }
+  .root .featureTab, .root .sceneButton, .root .clear, .root .mobileCaptureToggle button { background: ButtonFace; color: ButtonText; border: 1px solid ButtonText; }
+  .root .featureTab[aria-selected="true"], .root .sceneButton[aria-pressed="true"], .root .mobileCaptureToggle button[aria-pressed="true"] { outline: 2px solid Highlight; outline-offset: -4px; }
+  .root .featureTab::after, .root .clear::after, .root .sceneButton::after { display: none; }
+  .root button:focus-visible, .root a:focus-visible { outline-color: Highlight; }
+  .root .selectedMark { color: Highlight; }
+}
+@media print {
+  .root { padding: 12px 0; background: white; color: black; }
+  .root .showcase { border: 1px solid #777; box-shadow: none; }
+  .root .featureTabs, .root .sceneNav, .root .actions, .root .mobileTabHint, .root .mobileCaptureToggle, .root .dialog { display: none !important; }
+  .root .scene { display: block; }
+  .root .editorial, .root .visual { background: white; color: black; margin: 0; }
+  .root .editorial h3, .root .body, .root .context, .root .benefit, .root .featureEyebrow { color: black; }
+  .root .captures { display: grid; }
+  .root .capture { display: flex !important; }
+  .root .sectionFoot { color: black; background: white; }
+}
+
+/* V2: two quiet navigation rails, without redundant pictograms or footer. */
+.root .featureTab { gap: 0; }
+.root .sceneNav { display: flex; align-items: center; gap: 10px; padding: 12px 18px; }
+.root .scenePicker { order: 1; justify-content: center; gap: 4px; }
+.root .sceneButton { flex: 0 1 auto; min-width: 0; justify-content: center; text-align: center; padding: 8px 11px; min-height: 40px; font-size: 11px !important; }
+.root .sceneButton[aria-pressed="true"]::after { display: none; }
+.root .sceneCount { order: 2; min-width: 35px; text-align: center; }
+.root .railArrow { width: 48px; height: 48px; flex-shrink: 0; }
+.root .sceneNav > .railArrow:first-child { order: 0; }
+.root .sceneNav > .railArrow:last-child { order: 3; }
+@media (max-width: 640px) {
+ .root .sceneNav { display: flex; gap: 6px; padding: 10px; }
+ .root .scenePicker { min-width: 0; flex: 1; padding: 3px 0; }
+ .root .sceneButton { min-width: 105px; flex: 0 0 auto; padding: 7px 9px; }
+ .root .railArrow { width: 44px; height: 44px; }
+ .root .sceneCount { min-width: 28px; font-size: 10px; }
+}
+
+/* V2.1 polish: compact top rail, deliberately visible previous/next navigation */
+.root .featureTabs { scrollbar-width: none; }
+.root .featureTabs::-webkit-scrollbar { display: none; }
+.root .featureTab { min-height: 46px; padding-top: 7px; padding-bottom: 7px; }
+.root .sceneNav { justify-content: center; gap: 6px; }
+.root .scenePicker { flex: 0 1 auto; max-width: min(100%, 790px); }
+.root .railArrow { width: 76px; min-width: 76px; height: 44px; border-radius: 12px; border-color: rgba(255,255,255,.36); background: linear-gradient(140deg,rgba(255,255,255,.18),rgba(255,255,255,.035)); }
+.root .railArrow:not(:disabled):hover { border-color: var(--fs-orange-bright); background: rgba(255,115,55,.13); }
+.root .railArrow:disabled { opacity: .42; }
+@media (max-width: 900px) {
+  .root .featureTab { min-height: 43px; }
+  .root .railArrow { width: 62px; min-width: 62px; }
+}
+@media (max-width: 640px) {
+  .root .featureTab { min-height: 40px; padding-top: 6px; padding-bottom: 6px; }
+  .root .sceneNav { gap: 4px; }
+  .root .scenePicker { flex: 1 1 0; overflow-x: auto; justify-content: flex-start; }
+  .root .railArrow { width: 53px; min-width: 53px; height: 43px; }
+}
+
+/* V2.2 - quiet orange outline, glass glint, no orange-tinted fill. */
+.root .railArrow, .root .railArrow:disabled {
+ border: 1px solid rgba(255,136,64,.84);
+ background: linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.025));
+ box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+ position: relative; overflow: hidden; isolation: isolate;
+ transition: border-color .22s, box-shadow .22s, transform .22s;
+}
+.root .railArrow:not(:disabled):hover {
+ background: linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.025));
+ border-color: #ff9c59;
+ box-shadow: 0 0 0 1px rgba(255,138,65,.2),0 0 19px rgba(255,121,48,.27),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.root .railArrow::after {
+ content:""; position:absolute; inset:-45%; pointer-events:none;
+ background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.38) 48%,transparent 61%);
+ transform:translateX(-135%) rotate(10deg); transition:transform .55s ease;
+}
+.root .railArrow:not(:disabled):hover::after {transform:translateX(135%) rotate(10deg);}
+.root .railArrow:disabled {opacity:.47;}
+.root .benefits {padding:0;margin:17px 0 0;list-style:none;display:grid;gap:9px;}
+.root .benefits li {display:flex;align-items:flex-start;gap:9px;color:#dbe2eb;font-size:12px;line-height:1.45;}
+.root .benefits svg {flex:none;color:#ff914d;margin-top:1px;}
+@media(max-width:640px){.root .benefits {gap:7px;margin-top:13px;}.root .benefits li {font-size:11px;}}
+@media(prefers-reduced-motion:reduce){.root .railArrow::after{transition:none;}}
+
+/* V2.3: single orange benefit check, no inherited legacy benefit tick. */
+.root .benefits li > svg { color:#ff914d !important; stroke:#ff914d !important; }
+.root .benefits li::before, .root .benefits::before { content:none !important; display:none !important; }
+.root .benefits { list-style:none !important; }
+.root .benefits li { list-style:none !important; }
+.root .benefits li::marker { content:"" !important; }
+
+/* V2.4: genuine device pixels, composited as independent alpha layers. */
+.root .deviceStage {position:relative;isolation:isolate;overflow:hidden;min-height:410px;height:100%;border-radius:20px;background:radial-gradient(ellipse 80% 48% at 51% 92%,rgba(227,93,30,.23),transparent 78%),radial-gradient(ellipse 60% 48% at 80% 25%,rgba(70,77,87,.2),transparent 75%),#0b0e13;}
+.root .deviceGlow {position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(239,103,36,.11),transparent 33%);z-index:0;}
+.root .deviceLaptop {position:absolute;display:block;object-fit:contain;width:96%;height:auto;right:-2%;bottom:3%;z-index:1;filter:drop-shadow(0 18px 22px rgba(0,0,0,.5));animation:qcDeviceLaptopFloat 8s ease-in-out infinite;}
+.root .devicePhone {position:absolute;display:block;object-fit:contain;height:92%;width:auto;max-width:48%;left:0%;bottom:3%;z-index:2;filter:drop-shadow(0 16px 17px rgba(0,0,0,.62));animation:qcDevicePhoneFloat 7.4s ease-in-out infinite;}
+@keyframes qcDeviceLaptopFloat {0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes qcDevicePhoneFloat {0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media(max-width:960px){.root .deviceStage{min-height:360px}.root .deviceLaptop{width:105%;right:-10%}.root .devicePhone{height:91%;left:-1%}}
+@media(max-width:640px){.root .deviceStage{min-height:300px;aspect-ratio:1.28}.root .deviceLaptop{width:112%;right:-15%;bottom:7%}.root .devicePhone{height:88%;max-width:50%;left:0;bottom:5%}}
+@media(prefers-reduced-motion:reduce){.root .deviceLaptop,.root .devicePhone{animation:none}}
+
+/* V2.5: user-provided alpha PNGs, no AI masks or white framing. */
+.root .visual:has(.deviceStage) {background:transparent !important;border:0 !important;box-shadow:none !important;padding:0 !important;overflow:visible;}
+.root .deviceStage {position:relative;isolation:isolate;overflow:hidden;border-radius:16px;min-height:410px;height:100%;background:radial-gradient(ellipse 70% 43% at 46% 95%,rgba(255,111,36,.21),transparent 78%),linear-gradient(145deg,#0c1016 0%,#0a0c10 58%,#17100e 100%);}
+.root .deviceStage:before {content:'';position:absolute;left:3%;right:3%;bottom:11%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,121,42,.28),transparent);filter:blur(1px);}
+.root .deviceGlow {display:none;}
+.root .deviceLaptop {position:absolute;display:block;width:99%;height:auto;right:-1%;bottom:7%;z-index:1;object-fit:contain;filter:drop-shadow(0 15px 16px rgba(0,0,0,.42));animation:none;}
+.root .devicePhone {position:absolute;display:block;height:89%;width:auto;max-width:46%;left:1%;bottom:6%;z-index:2;object-fit:contain;filter:drop-shadow(0 15px 13px rgba(0,0,0,.58));animation:none;}
+@media(max-width:960px){.root .deviceStage{min-height:345px}.root .deviceLaptop{width:104%;right:-8%;bottom:10%}.root .devicePhone{height:86%;left:1%;bottom:7%;}}
+@media(max-width:640px){.root .deviceStage{min-height:300px;aspect-ratio:1.3}.root .deviceLaptop{width:110%;right:-15%;bottom:13%}.root .devicePhone{height:88%;left:0;bottom:6%;max-width:48%;}}
+
+/* V2.6: approved combined device image. No generated HTML, no masking of the device itself. */
+.root .visual:has(.deviceStage) {background:#0b0c10!important;border:0!important;padding:0!important;box-shadow:none!important;overflow:hidden!important;}
+.root .deviceStage {position:relative;isolation:isolate;width:100%;height:100%;min-height:410px;overflow:hidden;border-radius:16px;background:#0b0c10;display:flex;align-items:center;justify-content:center;}
+.root .deviceStage::after {content:"";position:absolute;inset:0;pointer-events:none;z-index:2;background:linear-gradient(90deg,#0b0c10 0%,rgba(11,12,16,0) 12%,rgba(11,12,16,0) 88%,#0b0c10 100%),linear-gradient(0deg,#0b0c10 0%,transparent 13%,transparent 87%,#0b0c10 100%);}
+.root .deviceComposition {display:block;width:100%;height:100%;min-height:410px;object-fit:cover;object-position:center;filter:none;transform:none;animation:none;}
+@media(max-width:960px){.root .deviceStage,.root .deviceComposition{min-height:350px;}}
+@media(max-width:640px){.root .deviceStage,.root .deviceComposition{min-height:270px;aspect-ratio:1.28;}.root .deviceComposition{object-position:43% center;}}
+
+/* V2.8: approved device-only visual. No screenshot of the showcase page is embedded. */
+.root .visual:has(.voiceCompositeStage) {
+  background: #0b0c10 !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+.root .voiceCompositeStage {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  min-height: 410px;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #0b0c10;
+}
+.root .voiceCompositeButton {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  padding: 0;
+  cursor: zoom-in;
+}
+.root .voiceCompositeButton:focus-visible {
+  outline: 2px solid var(--fs-orange-bright);
+  outline-offset: -4px;
+  border-radius: 16px;
+}
+.root .voiceCompositeImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  /* Subtle edge blend affects only the image, never the adjoining HTML. */
+  -webkit-mask-image: linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%);
+  mask-image: linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%);
+}
+@media(max-width:960px){
+  .root .voiceCompositeStage { min-height: 350px; }
+}
+@media(max-width:640px){
+  .root .voiceCompositeStage { min-height: 270px; aspect-ratio: 1.28; }
+  .root .voiceCompositeImage { object-position: 50% center; }
+}
+@media (forced-colors: active) {
+  .root .voiceCompositeImage { -webkit-mask-image: none; mask-image: none; }
+}
+
+/* V2.9: One stable carousel canvas for every slide.
+   The intro slide establishes the intended scene proportions. The same
+   responsive block size is used for every scene so the CTA and rails do not
+   shift when the visitor switches examples. */
+.root .scene {
+  height: 485px;
+  min-height: 485px;
+}
+@media (min-width: 641px) and (max-width: 980px) {
+  .root .scene {
+    height: max(760px, calc(307px + 59vw));
+    min-height: max(760px, calc(307px + 59vw));
+  }
+}
+@media (max-width: 640px) {
+  .root .scene {
+    height: max(690px, calc(452px + 59vw));
+    min-height: max(690px, calc(452px + 59vw));
+  }
+}
+/* Outer frame alone owns the corner radius. Clip all inner fills to
+   the same boundary: prevents protruding square strips at bottom corners. */
+.root .showcase {
+  overflow: hidden;
+  border-radius: 22px;
+}
+.root .featurePanel, .root .sceneNav { border-radius: 0; }
+@media (max-width: 640px) {
+  .root .showcase { border-radius: 16px; }
+}
+
+/* A compact placeholder viewer at narrow widths: do not let future screenshot
+   storyboards make the locked carousel taller. Both captures remain usable via
+   the existing Request/Result selector and enlarged image action. */
+@media (min-width:641px) and (max-width:880px) {
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) {
+    height: 390px;
+    min-height: 0;
+    flex: 0 0 390px;
+    overflow: hidden;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .captures {
+    min-height: 0;
+    height: 302px;
+    overflow: hidden;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .capture {
+    min-height: 0;
+    height: 302px;
+    overflow-y: auto;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .captureImageButton {
+    min-height: 0;
+    height: 244px;
+  }
+}
+@media (max-width:640px) {
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) {
+    min-height: 0;
+    height: 255px;
+    flex: 0 0 255px;
+    overflow: hidden;
+    padding: 8px 10px 6px;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .visualTopline,
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .visualNote { display: none; }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .mobileCaptureToggle {
+    flex: 0 0 auto;
+    margin-bottom: 6px;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .captures {
+    height: 186px;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .capture {
+    height: 186px;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .captureImageButton {
+    min-height: 0;
+    height: 155px;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .placeholder { min-height: 0; }
+}
+
+/* Keep unfinished example storyboards legible in the fixed mobile canvas.
+   This does not affect genuine screenshots or the approved two-phone artwork. */
+@media (max-width: 640px) {
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .captureHeading {
+    min-height: 27px;
+    padding: 5px 9px;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .placeholder {
+    padding: 9px 12px 8px;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .inputEmblem,
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .resultEmblem,
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .waveform,
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .capturePlaceholderLabel,
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .capture figcaption { display: none; }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .placeholderEyebrow { font-size: 9px; margin: 0 0 4px; }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .sampleRequest {
+    font-size: 11px;
+    line-height: 1.4;
+    max-height: 96px;
+    overflow-y: auto;
+  }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .outputTitle { font-size: 16px; }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .outputSubtitle { margin-bottom: 4px; }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .outputRows > div { padding: 3px 0; font-size: 9px; }
+  .root .visual:not(:has(.deviceStage, .voiceCompositeStage)) .outputRows > div:nth-child(n+3) { display: none; }
+}
+
+/* V2.11: all slides share the first slide's fixed scene canvas.
+   Content may shrink to fit, but must never change the carousel height. */
+.root .scene { block-size:485px; min-block-size:485px; max-block-size:485px; grid-template-rows:minmax(0,1fr); overflow:hidden; }
+.root .scene > .editorial, .root .scene > .visual { min-height:0; max-height:100%; overflow:hidden; }
+.root .visual:has(.voiceCompositeStage) { display:flex; min-height:0; }
+.root .voiceCompositeStage { flex:1 1 auto; min-height:0!important; max-height:100%; height:100%; aspect-ratio:auto!important; overflow:hidden; }
+.root .voiceCompositeButton { height:100%; min-height:0; width:100%; display:flex; align-items:center; justify-content:center; }
+.root .voiceCompositeImage { width:100%; height:100%; min-height:0; max-height:100%; object-fit:contain; }
+.root .deviceStage { min-height:0!important; max-height:100%; aspect-ratio:auto!important; }
+.root .deviceComposition { min-height:0!important; max-height:100%; }
+@media (min-width:641px) and (max-width:980px) {
+ .root .scene { block-size:max(760px,calc(307px + 59vw)); min-block-size:max(760px,calc(307px + 59vw)); max-block-size:max(760px,calc(307px + 59vw)); }
+}
+@media (max-width:640px) {
+ .root .scene { block-size:max(690px,calc(452px + 59vw)); min-block-size:max(690px,calc(452px + 59vw)); max-block-size:max(690px,calc(452px + 59vw)); }
+ .root .scene > .editorial { flex:0 0 auto; }
+ .root .scene > .visual { flex:1 1 0; min-height:0; }
+ .root .voiceCompositeStage { min-height:0!important; }
+}
+
+/* V2.14 Pricing only: widen the animation without touching the shared scene
+   block-size/min/max rules or any Smart Assistant imagery. */
+@media (min-width:981px) {
+  .root .pricingScene { grid-template-columns:minmax(0,.64fr) minmax(0,1.52fr); }
+  .root .pricingScene > .editorial { padding-right:20px; }
+  .root .pricingScene h3 { font-size:clamp(27px,2.4vw,34px); }
+  .root .pricingScene .body { font-size:14px;line-height:1.65; }
+  .root .pricingScene .benefits { font-size:12px; }
+}
+.root .pricingVisual { position:relative;isolation:isolate;min-width:0;min-height:0;overflow:hidden;margin:17px 17px 17px 0;background:transparent;color:var(--fs-text); }
+.root .animationHost { position:absolute;inset:0;min-width:0;min-height:0; }
+.root .animationHost > qc-pricing-showcase-animation { width:100%;height:100%;min-height:0; }
+.root .animationFallback { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;background:var(--fs-canvas);color:var(--fs-muted);padding:24px;font-size:13px; }
+.root .animationFallback svg { color:var(--fs-orange-bright); }
+.root .animationFallback .clear { width:auto;min-width:144px;font-size:12px; }
+.root .pricingNav .scenePicker { flex:0 1 auto;max-width:390px; }
+.root .pricingNav .sceneButton { min-width:130px; }
+@media (max-width:980px) {
+  .root .pricingVisual { flex:1 1 0;margin:0 24px 24px; }
+  .root .pricingScene > .editorial { flex:0 0 auto; }
+}
+@media (max-width:640px) {
+  .root .pricingVisual { margin:0 11px 16px; }
+  .root .pricingScene > .editorial { padding-top:19px;padding-bottom:15px; }
+  .root .pricingScene .featureEyebrow { margin-bottom:10px; }
+  .root .pricingScene h3 { font-size:27px;margin-bottom:10px; }
+  .root .pricingScene .body { font-size:12px;line-height:1.55; }
+  .root .pricingScene .benefits { margin-top:12px;font-size:11px;gap:4px; }
+  .root .pricingScene .actions { margin-top:16px; }
+  .root .pricingNav .scenePicker { justify-content:flex-start;flex:1; }
+  .root .pricingNav .sceneButton { min-width:110px; }
+}
+@media (max-width:640px) {
+  .root .pricingNav .sceneCount { display:none; }
+  .root .pricingNav .scenePicker { padding:0; }
+  .root .pricingNav .sceneButton { flex:1 1 auto;min-width:0;padding:7px 6px;font-size:10px!important; }
+  .root .pricingNav .railArrow { width:44px; }
+}
+@media (min-width:981px) and (max-width:1100px) {
+  .root .pricingScene .body { line-height:1.55; }
+  .root .pricingScene .benefits { gap:6px; }
+  .root .pricingScene .actions { padding-top:20px; }
+}
+@media (max-width:640px) {
+  /* Match the existing first slide's 67px mobile rail, including its border. */
+  .root .pricingNav { block-size:67px;min-block-size:67px;max-block-size:67px; }
+  .root .pricingScene .actions { margin-top:12px; }
+}
+
+
+/* Documents use their own canvas instead of the generic capture pair. */
+.root .scene > .visual.documentsVisual {
+  padding: 0;
+  border: 0;
+  background: #0b0d11;
+  box-shadow: none;
+  height: auto;
+  min-height: 0;
+  flex: 1 1 0;
+}
+.root .documentsStage { width: 100%; height: 100%; min-height: 0; flex: 1 1 0; touch-action: pan-y pinch-zoom; }
+
+/* Follow-up artwork fits the same reserved canvas without changing slide height. */
+.root .scene > .visual.followUpVisual {
+  padding: 0;
+  border: 0;
+  background: #0b0d11;
+  box-shadow: none;
+  height: auto;
+  min-height: 0;
+  flex: 1 1 0;
+}
+.root .followUpStage { width: 100%; height: 100%; min-height: 0; flex: 1 1 0; touch-action: pan-y pinch-zoom; }
+
+/* V2.15: manual measurement artwork only. The shared fixed scene, navigation,
+   Pricing animation and Smart Assistant dimensions remain unchanged. */
+.root .visual:has(.measurementsCompositeStage) {
+  background: transparent !important;
+  /* Fill the existing stacked/tablet scene instead of letting an absolutely
+     positioned image collapse its otherwise-empty flex parent. */
+  flex: 1 1 0;
+  min-height: 0;
+}
+.root .measurementsCompositeStage {
+  background: transparent;
+}
+.root .measurementsCompositeStage .measurementsCompositeImage {
+  /* Keep the image box at its intrinsic ratio so fades follow the actual
+     artwork edge, not the empty letterbox space. Never crop either device. */
+  flex: 0 1 auto;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent 0%, #000 3%, #000 97%, transparent 100%),
+    linear-gradient(180deg, transparent 0%, #000 5%, #000 94%, transparent 100%);
+  mask-image:
+    linear-gradient(90deg, transparent 0%, #000 3%, #000 97%, transparent 100%),
+    linear-gradient(180deg, transparent 0%, #000 5%, #000 94%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+@media (forced-colors: active) {
+  .root .measurementsCompositeStage .measurementsCompositeImage {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+.root .intro > div:first-child { max-width: 760px; }
+.root .intro h2 { font-size: clamp(29px,3vw,40px); line-height:1.15; }
+.root .introGuide { flex:0 1 310px; }
+.root .introAside { max-width:310px; }
+.root .overviewLink { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:8px 0; margin-top:8px; border:0; background:none; color:#aa3b08; font:inherit; font-size:13px; font-weight:650; text-align:left; cursor:pointer; }
+.root .overviewLink:focus-visible { outline:2px solid #ef721d; outline-offset:4px; border-radius:3px; }
+@media(max-width:640px) { .root .introGuide { margin-top:14px; } .root .introAside { margin-top:0; } }
+
+/* Keep the takeoff benefits and CTA visible when copy wraps or text is enlarged. */
+.root .takeoffScene { block-size:auto; max-block-size:none; }
+.root .takeoffScene > .editorial { max-height:none; overflow:visible; padding-top:24px; padding-bottom:24px; }
+.root .takeoffScene .featureEyebrow { margin-bottom:12px; }
+.root .takeoffScene .body { font-size:14px; line-height:1.5; }
+.root .takeoffScene .benefits { margin-top:14px; gap:7px; }
+.root .takeoffScene .actions { flex-shrink:0; margin-top:16px; padding-top:0; }
+@media(min-width:981px) { .root .takeoffScene { grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); } }
+@media(max-width:980px) { .root .takeoffScene { min-block-size:0; } .root .takeoffScene > .visual { flex:none; height:clamp(230px,53vw,560px); } }
+@media(max-width:640px) { .root .takeoffScene .body { font-size:13px; } .root .takeoffScene .benefits { margin-top:12px; gap:7px; } .root .takeoffScene > .editorial { padding-block:20px; } }
