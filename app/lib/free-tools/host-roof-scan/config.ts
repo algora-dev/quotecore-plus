@@ -49,3 +49,11 @@ export function assertAllowedOrigin(request: Request, env: Environment = process
     if (source && source !== 'null' && !allowed.includes(source))
         throw new ScanError('ORIGIN_NOT_ALLOWED', 'This request origin is not allowed.', 403);
 }
+
+/** Roll out new code in signed mode first. Opaque issuance is an explicit staging opt-in. */
+export function referenceMode(env: Environment = process.env): 'signed' | 'opaque' {
+    const mode = env.QC_HOST_SCAN_REFERENCE_MODE ?? 'signed';
+    if (mode !== 'signed' && mode !== 'opaque')
+        throw new ScanError('CONFIGURATION_REQUIRED', 'QC_HOST_SCAN_REFERENCE_MODE must be signed or opaque.', 503);
+    return mode;
+}

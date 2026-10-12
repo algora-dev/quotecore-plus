@@ -2,8 +2,10 @@ import { createHash } from 'node:crypto';
 import { checkRateLimit, getClientIP } from '../../security/rateLimit';
 import { HostOutlineService } from './service';
 import { MemoryImageStore, SupabaseImageStore } from './store';
+import { MemoryReferenceStore, SupabaseReferenceStore } from './reference-store';
+import type { ReferenceStore } from './references';
 import { ScanError } from './types';
-import { enabled, canonicalOrigin, exactHttpsOrigins, assertAllowedOrigin } from './config';
+import { enabled, canonicalOrigin, exactHttpsOrigins, assertAllowedOrigin, referenceMode } from './config';
 import { HOST_OUTLINE_TOOLS } from './contract';
 import { RESOURCE_URI } from './types';
 import type { RpcEnvelope } from './request';
@@ -24,8 +26,23 @@ export function runtimeService(): HostOutlineService {
     else if (mode === 'supabase')
         store = new SupabaseImageStore((process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, ''), process.env.SUPABASE_SERVICE_ROLE_KEY ?? '', process.env.QC_HOST_SCAN_BUCKET ?? '');
     else throw new ScanError('CONFIGURATION_REQUIRED', 'Use private Supabase storage in staging. Memory mode is local-only.', 503);
+    const modeOfReferences = referenceMode();
+    const referenceBucket = process.env.QC_HOST_SCAN_REFERENCE_BUCKET;
+    let referenceStore: ReferenceStore | undefined;
+    if (mode === 'memory' && (modeOfReferences === 'opaque' || referenceBucket)) {
+        // The image-store branch above already rejects memory mode on Vercel/production.
+        referenceStore = new MemoryReferenceStore();
+    } else if (mode === 'supabase' && referenceBucket) {
+        if (referenceBucket === process.env.QC_HOST_SCAN_BUCKET)
+            throw new ScanError('CONFIGURATION_REQUIRED', 'Use a separate private JSON bucket for references; do not change the image bucket.', 503);
+        referenceStore = new SupabaseReferenceStore((process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, ''), process.env.SUPABASE_SERVICE_ROLE_KEY ?? '', referenceBucket);
+    }
+    if (modeOfReferences === 'opaque' && !referenceStore)
+        throw new ScanError('REFERENCE_STORE_REQUIRED', 'Set QC_HOST_SCAN_REFERENCE_BUCKET before enabling opaque references.', 503);
+    // Keep the reference bucket configured during rollback to signed issuance so already
+    // issued short references remain readable until their original expiry.
     const allowedFileOrigins = exactHttpsOrigins(process.env.QC_HOST_SCAN_FILE_ORIGINS, 'QC_HOST_SCAN_FILE_ORIGINS');
-    singleton = new HostOutlineService({ origin: canonicalOrigin(), secret, store, allowedFileOrigins });
+    singleton = new HostOutlineService({ origin: canonicalOrigin(), secret, store, allowedFileOrigins, referenceStore, referenceMode: modeOfReferences });
     return singleton;
 }
 

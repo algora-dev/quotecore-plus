@@ -5,14 +5,15 @@ import fs from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { stagingOrigin, checkedFetch } from './ops.mjs';
 const flags=new Set(process.argv.slice(2));
-for (const f of flags) if (!['--expect-enabled','--expect-disabled','--exercise','--confirm-staging','--isolated'].includes(f)) throw new Error('Unknown option '+f);
+for (const f of flags) if (!['--expect-enabled','--expect-disabled','--exercise','--confirm-staging','--isolated','--expect-opaque'].includes(f)) throw new Error('Unknown option '+f);
 if (flags.has('--expect-enabled')===flags.has('--expect-disabled')) throw new Error('Specify exactly one of --expect-enabled or --expect-disabled.');
 if (flags.has('--exercise')&&(!flags.has('--expect-enabled')||!flags.has('--confirm-staging'))) throw new Error('Synthetic upload requires --expect-enabled --exercise --confirm-staging.');
+if(flags.has('--expect-opaque')&&!flags.has('--exercise'))throw new Error('--expect-opaque requires --exercise so reference resolution is actually tested.');
 const origin=stagingOrigin(process.env.QC_STAGE_ORIGIN,true);
 const isolated=flags.has('--isolated'),enabled=flags.has('--expect-enabled');
 if (isolated&&!enabled) throw new Error('For flag-off tests use the existing main endpoint.');
 const endpoint=origin+(isolated?'/mcp/host-scan':'/mcp');
-const resource='ui://quotecore/host-roof-outline-v2-image-delivery.html';
+const resource='ui://quotecore/host-roof-outline-v3-session-reliability.html';
 const extra=process.env.QC_STAGE_PROTECTION_BYPASS?{'x-vercel-protection-bypass':process.env.QC_STAGE_PROTECTION_BYPASS}:{};
 let id=0,protocol='2025-03-26';
 async function call(method,params={},notification=false) {
@@ -54,17 +55,29 @@ if(flags.has('--exercise')){
  const fixture=await fs.readFile(new URL('./fixtures/synthetic-roof.png',import.meta.url));
  const shape=JSON.parse(await fs.readFile(new URL('./fixtures/outline.json',import.meta.url),'utf8'));
  const upload=await checkedFetch(origin+'/api/public/host-roof-scan',{method:'POST',headers:{...extra,'Content-Type':'image/png'},body:fixture});
- assert.equal(upload.status,200);const u=await upload.json(),planToken=u.structuredContent.planToken;assert.ok(planToken);
+ assert.equal(upload.status,200);const u=await upload.json(),planToken=u.structuredContent.planToken;assert.ok(planToken);if(flags.has('--expect-opaque'))assert.match(planToken,/^qcr1p_/);
  try{
   const prepared=await tool(host[0],{planToken});const image=prepared.content.find(x=>x.type==='image');assert.ok(image);assert.equal(createHash('sha256').update(Buffer.from(image.data,'base64')).digest('hex'),prepared.structuredContent.plan.sha256);
   const contentOnly=await tool('qc_get_roof_outline_image',{planToken});assert.equal(contentOnly.structuredContent,undefined);assert.equal(contentOnly.content.find(c=>c.type==='image').data,image.data);
   const submitted=await tool(host[1],{planToken,observedImageId:prepared.structuredContent.plan.imageId,outcome:'proposed',roof_areas:[shape],notes:['Synthetic software test. No model analysis.']});
-  const proposalToken=submitted.structuredContent.proposalToken;
+  const proposalToken=submitted.structuredContent.proposalToken;if(flags.has('--expect-opaque'))assert.match(proposalToken,/^qcr1o_/);
   const opened=await tool(host[2],{planToken,proposalToken});assert.ok(opened._meta.reviewGate);assert.equal(opened.structuredContent.reviewGate,undefined);
   const denied=await call('tools/call',{name:host[3],arguments:{reviewToken:proposalToken}});assert.equal(denied.isError,true);
   const confirmation=await api('confirm',{planToken,proposalToken,reviewGate:opened._meta.reviewGate,outline:shape,calibration:null,confirmed:true});
   const exported=await tool(host[3],{reviewToken:confirmation.structuredContent.reviewToken});assert.deepEqual(exported.structuredContent.export.scanData.roof_areas[0].points,shape.points);assert.equal(exported.structuredContent.measurements,null);
   console.log('PASS full synthetic prepare/submit/review/export, serialized image hash (host visibility untested), unreviewed-export rejection');
+  if(flags.has('--expect-opaque')){
+   assert.match(confirmation.structuredContent.reviewToken,/^qcr1r_/);
+   const calibration={start:shape.points[0],end:shape.points[1],realLength:30,unit:'m'};
+   const revised=await api('confirm',{planToken,proposalToken,reviewGate:opened._meta.reviewGate,outline:{...shape,pitch_degrees:25},calibration,confirmed:true});
+   const reviewToken=revised.structuredContent.reviewToken;assert.notEqual(reviewToken,confirmation.structuredContent.reviewToken);
+   assert.equal(new URLSearchParams(new URL(revised.structuredContent.resultUrl).hash.slice(1)).get('review'),reviewToken);
+   const reopened=await tool(host[2],{planToken,proposalToken,reviewToken});assert.equal(reopened.structuredContent.outline.pitch_degrees,25);assert.deepEqual(reopened.structuredContent.calibration,calibration);
+   const measured=await tool(host[3],{reviewToken});assert.equal(measured.structuredContent.measurements.planArea,500);assert.equal(measured.structuredContent.measurements.pitchApplied,true);
+   const old=await tool(host[3],{reviewToken:confirmation.structuredContent.reviewToken});assert.equal(old.structuredContent.measurements,null);
+   console.log('PASS short references, direct reviewed link, immutable recalibration and numeric-pitch MCP outputs');
+  }
+
  } finally {await api('delete',{planToken});console.log('PASS synthetic image deleted');}
 }
 console.log('Software smoke completed. Live host vision, real human review and measurement accuracy are NOT proven by this test.');

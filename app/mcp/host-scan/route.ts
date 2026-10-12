@@ -1,7 +1,7 @@
 import { createHostOutlineServer } from '../../lib/free-tools/host-roof-scan/server';
 import { guardHostOutlineUpload, runtimeService, guard } from '../../lib/free-tools/host-roof-scan/runtime';
 import { corsHeaders, readLimited, parseRpc, rpcError, type RpcEnvelope } from '../../lib/free-tools/host-roof-scan/request';
-import { ScanError } from '../../lib/free-tools/host-roof-scan/types';
+import { LIMITS, ScanError } from '../../lib/free-tools/host-roof-scan/types';
 import { runStatelessMcp } from '../../lib/free-tools/mcp/transport';
 
 export const runtime = 'nodejs';
@@ -17,7 +17,7 @@ async function handle(request: Request): Promise<Response> {
         }
         if ((request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase() !== 'application/json')
             throw new ScanError('CONTENT_TYPE', 'MCP requests must use application/json.', 415);
-        const body = await readLimited(request);
+        const body = await readLimited(request, LIMITS.mcpJsonBytes);
         rpc = parseRpc(body);
         await guardHostOutlineUpload(request, rpc);
         return await runStatelessMcp(request, body, createHostOutlineServer(runtimeService()));

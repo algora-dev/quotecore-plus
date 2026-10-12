@@ -24,7 +24,7 @@ const init=await rpc('initialize',{protocolVersion:protocol,capabilities:{},clie
 console.log('PASS initialize',init.serverInfo.name,protocol);
 await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream','MCP-Protocol-Version':protocol},body:JSON.stringify({jsonrpc:'2.0',method:'notifications/initialized'})});
 const listed=await rpc('tools/list',{});assert.equal(listed.tools.length,4);console.log('PASS tools/list',listed.tools.length);
-const resource=await rpc('resources/read',{uri:'ui://quotecore/host-roof-outline-v1.html'});assert.equal(resource.contents[0].mimeType,'text/html;profile=mcp-app');assert.match(resource.contents[0].text,/Review your roof outline/);console.log('PASS resources/read');
+const resource=await rpc('resources/read',{uri:'ui://quotecore/host-roof-outline-v3-session-reliability.html'});assert.equal(resource.contents[0].mimeType,'text/html;profile=mcp-app');assert.match(resource.contents[0].text,/Review your roof outline/);console.log('PASS resources/read');
 const blank=await tool('qc_open_roof_outline_review',{});assert.equal(blank.structuredContent.status,'awaiting_image');
 const up=await fetch(origin+'/api/public/host-roof-scan',{method:'POST',headers:{'Content-Type':'image/png'},body:new Uint8Array(await fixture())});assert.ok(up.ok,'upload');const u=await up.json();const {planToken}=u.structuredContent;
 try{

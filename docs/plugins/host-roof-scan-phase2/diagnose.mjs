@@ -18,7 +18,7 @@ try{
  const notified=await checkedFetch(url,{method:'POST',headers:{...extra,'Content-Type':'application/json',Accept:'application/json, text/event-stream','MCP-Protocol-Version':protocol},body:JSON.stringify({jsonrpc:'2.0',method:'notifications/initialized'})});if(!notified.ok)throw Error('MCP initialize notification failed');
  const list=await rpc('tools/list');const reader=list.tools?.find(t=>t.name==='qc_get_roof_outline_image');
  if(!reader||reader.outputSchema)throw Error('Content-only image reader missing or has an outputSchema. Deploy Phase 2 and refresh connector.');
- const resources=await rpc('resources/list');if(!resources.resources?.some(r=>r.uri==='ui://quotecore/host-roof-outline-v2-image-delivery.html'))throw Error('Stale review resource');
+ const resources=await rpc('resources/list');if(!resources.resources?.some(r=>r.uri==='ui://quotecore/host-roof-outline-v3-session-reliability.html'))throw Error('Stale review resource');
  const blank=await tool('qc_open_roof_outline_review',{});if(!blank.content?.some(c=>c.type==='text'&&c.text.includes(origin+'/mcp/host-scan/review')))throw Error('Blank review fallback link missing');
  report.checks.push({check:'discovery',pass:true,toolCount:list.tools.length,toolNames:list.tools.map(t=>t.name),versionedUi:true,blankReviewLinkInText:true});
  let planToken=args['--plan-token-file']?(await fs.readFile(args['--plan-token-file'],'utf8')).trim():null;

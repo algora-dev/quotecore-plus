@@ -5,6 +5,7 @@ import { keys, measurements, object, parseCalibration, parseOutline, text, toSce
 import { prepareRaster, encodeOverlay } from './image';
 import { downloadPlan } from './fetch-file';
 import { Tickets } from './tokens';
+import { References, type ReferenceMode, type ReferenceStore } from './references';
 import { canonicalFilename, imageBlock, imageRecoveryInstructions } from './image-delivery';
 import { LIMITS, VERSION, ScanError, type ImageStore, type PlanTicket, type ProposalTicket, type ReviewTicket, type ToolResult } from './types';
 interface Options {
@@ -12,6 +13,8 @@ interface Options {
     secret: string;
     store: ImageStore;
     allowedFileOrigins: string[];
+    referenceStore?: ReferenceStore;
+    referenceMode?: ReferenceMode;
     now?: () => number;
     fetchFile?: (url: string, origins: readonly string[]) => Promise<Buffer>;
 }
@@ -29,17 +32,20 @@ export function toolError(error: unknown, recoveryUrl?: string): ToolResult {
 export class HostOutlineService {
     readonly tickets: Tickets;
     readonly origin: string;
+    private readonly references: References;
     private readonly now: () => number;
     constructor(private readonly options: Options) {
         this.now = options.now ?? Date.now;
         this.tickets = new Tickets(options.secret, this.now);
+        this.references = new References(options.secret, options.referenceStore, options.referenceMode, this.now);
         this.origin = new URL(options.origin).origin;
     }
-    private url(planToken: string, proposalToken?: string) {
+    private url(planToken: string, proposalToken?: string, reviewToken?: string) {
         // Fragment values do not enter HTTP access logs or Referrer headers.
         const p = new URLSearchParams({ plan: planToken });
         if (proposalToken)
             p.set('proposal', proposalToken);
+        if (reviewToken) p.set('review', reviewToken);
         return `${this.origin}/mcp/host-scan/review#${p}`;
     }
     private async image(plan: PlanTicket) {
@@ -54,7 +60,14 @@ export class HostOutlineService {
         const date = new Date(this.now()).toISOString().slice(0, 10);
         const ticket: PlanTicket = { v: VERSION, kind: 'plan', expiresAt, frame, objectKey: `host-outline-v1/${date}/${this.now()}-${frame.imageId}` };
         await this.options.store.put(ticket.objectKey, bytes, frame.mimeType);
-        const planToken = this.tickets.issue(ticket);
+        let planToken: string;
+        try { planToken = await this.references.issue(ticket); }
+        catch (error) {
+            // Avoid an orphaned raster when reference allocation fails. Cleanup failure is
+            // bounded by the existing retention job; do not conceal the allocation error.
+            try { await this.options.store.remove(ticket.objectKey); } catch { /* retention fallback */ }
+            throw error;
+        }
         const out = toolResult('image_ready', 'Plan prepared. Ask the host assistant to trace this image, then review its outline.', {
             planToken, plan: frame, expiresAt: new Date(expiresAt).toISOString(), resultUrl: this.url(planToken),
         });
@@ -91,7 +104,7 @@ export class HostOutlineService {
             planToken = up.structuredContent.planToken as string;
         } else
             planToken = text(a.planToken, 'planToken', LIMITS.tokenChars);
-        const plan = this.tickets.read(planToken, 'plan'), bytes = await this.image(plan);
+        const plan = await this.references.read(planToken, 'plan'), bytes = await this.image(plan);
         const outlinePrompt = buildV3OutlinePrompt(plan.frame.width, plan.frame.height)
             .replace('Return only the structured JSON required by the schema.', 'Submit the polygon with qc_submit_roof_outline. Do not respond only with prose or JSON.');
         const instruction = [
@@ -104,7 +117,7 @@ export class HostOutlineService {
             'Trace ONE roof exterior. If there are multiple independent buildings, ask the user to select/crop one. Do not substitute the rectangular image border for the roof.',
             'Do not infer scale, pitch or internal components. pitch_degrees MUST be null. Use one roof_areas item with name and points. Notes must describe visible uncertainty, not unsupported accuracy.',
             'Call qc_submit_roof_outline with this planToken, observedImageId, the roof_areas array and notes. If you cannot actually inspect the image or identify a usable boundary, submit outcome="unable_to_identify" and an empty roof_areas array. Do not fabricate coordinates.',
-            'Then call qc_open_roof_outline_review with the returned planToken and proposalToken. Human review must occur in the editor. A model tool call is not human confirmation.',
+            'After submission, show resultUrl exactly as returned, including its fragment. Do not construct a URL or re-copy long references into another call. qc_open_roof_outline_review is optional for embedded review. Only the human review editor can confirm.',
             'At most two corrected submissions after validation errors before asking for human tracing. Never claim the result is accurate, calibrated, accepted or ready for ordering solely because the polygon is valid.',
         ].join('\n\n');
         const out = toolResult('image_ready', instruction, { planToken, plan: plan.frame, expiresAt: new Date(plan.expiresAt).toISOString(), resultUrl: this.url(planToken) });
@@ -122,7 +135,7 @@ export class HostOutlineService {
     async submit(args: unknown): Promise<ToolResult> {
         const a = object(args, 'Input');
         keys(a, ['planToken', 'observedImageId', 'outcome', 'roof_areas', 'notes']);
-        const planToken = text(a.planToken, 'planToken', LIMITS.tokenChars), plan = this.tickets.read(planToken, 'plan');
+        const planToken = text(a.planToken, 'planToken', LIMITS.tokenChars), plan = await this.references.read(planToken, 'plan');
         if (a.observedImageId !== plan.frame.imageId)
             throw new ScanError('STALE_IMAGE', 'The proposal refers to a different image. Prepare the current plan again.', 409);
         if (!Array.isArray(a.notes) || a.notes.length > 6)
@@ -135,38 +148,43 @@ export class HostOutlineService {
         }
         if (a.outcome !== 'proposed' || !Array.isArray(a.roof_areas) || a.roof_areas.length !== 1)
             throw new ScanError('INVALID_INPUT', 'Phase 1 accepts one proposed roof outline.');
+        if (object(a.roof_areas[0], 'Roof outline').pitch_degrees !== null)
+            throw new ScanError('PITCH_NOT_SUPPORTED', 'Host-model proposals must set pitch_degrees to null. Only the reviewer may enter pitch.');
         const outline = parseOutline(a.roof_areas[0], plan.frame);
         const proposalId = createHash('sha256').update(JSON.stringify({ imageId: plan.frame.imageId, outline, notes })).digest('hex');
         const proposal: ProposalTicket = { v: VERSION, kind: 'proposal', expiresAt: plan.expiresAt, imageId: plan.frame.imageId, imageSha256: plan.frame.sha256, roof_areas: [outline], notes, proposalId };
-        const proposalToken = this.tickets.issue(proposal);
         const overlay = await encodeOverlay(await renderOutlineOverlay(await this.image(plan), outline.points, plan.frame.width, plan.frame.height));
-        const out = toolResult('awaiting_review', `An outline proposal is ready, not a verified measurement. Open qc_open_roof_outline_review; the user must check and correct it. If no editor appears, open: ${this.url(planToken, proposalToken)}`, { planToken, proposalToken, proposalId, plan: plan.frame, outline, notes, resultUrl: this.url(planToken, proposalToken) });
+        const proposalToken = await this.references.issue(proposal);
+        const out = toolResult('awaiting_review', `An outline proposal is ready, not a verified measurement. Show this exact resultUrl to the user, including everything after #. Do not reconstruct the URL or call another tool merely to obtain it. Human review is required: ${this.url(planToken, proposalToken)}`, { planToken, proposalToken, proposalId, plan: plan.frame, outline, notes, resultUrl: this.url(planToken, proposalToken) });
         out.content.push({ type: 'image', mimeType: overlay.mimeType, data: overlay.bytes.toString('base64') });
         return out;
     }
     async open(args: unknown): Promise<ToolResult> {
         const a = object(args, 'Input');
-        keys(a, ['planToken', 'proposalToken']);
+        keys(a, ['planToken', 'proposalToken', 'reviewToken']);
         if (!a.planToken) {
-            if (a.proposalToken)
+            if (a.proposalToken || a.reviewToken)
                 throw new ScanError('INVALID_INPUT', 'A proposal must be opened with its plan.');
             const out = toolResult('awaiting_image', `Upload one roof plan image. Open the upload/review panel: ${this.origin}/mcp/host-scan/review. Show this link to the user if no embedded editor appears. This prototype requires human review.`, { resultUrl: `${this.origin}/mcp/host-scan/review` });
             out._meta = { apiOrigin: this.origin };
             return out;
         }
-        const planToken = text(a.planToken, 'planToken', LIMITS.tokenChars), plan = this.tickets.read(planToken, 'plan');
+        const planToken = text(a.planToken, 'planToken', LIMITS.tokenChars), plan = await this.references.read(planToken, 'plan');
         const bytes = await this.image(plan);
         let proposal: ProposalTicket | null = null;
         if (a.proposalToken) {
-            proposal = this.tickets.read(a.proposalToken, 'proposal');
+            proposal = await this.references.read(a.proposalToken, 'proposal');
             if (proposal.imageId !== plan.frame.imageId || proposal.imageSha256 !== plan.frame.sha256)
                 throw new ScanError('STALE_IMAGE', 'That outline belongs to a different plan.', 409);
         }
         const proposalId = proposal?.proposalId ?? `manual-${plan.frame.imageId}`;
+        const reviewed = a.reviewToken ? await this.references.read(a.reviewToken, 'reviewed') : null;
+        if (reviewed && (reviewed.imageId !== plan.frame.imageId || reviewed.imageSha256 !== plan.frame.sha256 || reviewed.proposalId !== proposalId))
+            throw new ScanError('STALE_REVIEW', 'That reviewed snapshot belongs to a different image or proposal. Open its complete original link.', 409);
         const reviewGate = this.tickets.issue({ v: VERSION, kind: 'review-gate', expiresAt: plan.expiresAt, imageId: plan.frame.imageId, proposalId });
-        const out = toolResult('review_open', `Review the boundary, edit any points and explicitly confirm. Calibration is optional and must use a known dimension. Open this review link if no editor appears: ${this.url(planToken, a.proposalToken as string | undefined)}`, {
-            planToken, plan: plan.frame, proposalId, outline: proposal?.roof_areas[0] ?? null, notes: proposal?.notes ?? [], expiresAt: new Date(plan.expiresAt).toISOString(),
-            ...(a.proposalToken ? { proposalToken: a.proposalToken } : {}), resultUrl: this.url(planToken, a.proposalToken as string | undefined),
+        const out = toolResult('review_open', `Review the boundary, edit any points and explicitly confirm. Calibration is optional and must use a known dimension. Open this review link if no editor appears: ${this.url(planToken, a.proposalToken as string | undefined, a.reviewToken as string | undefined)}`, {
+            planToken, plan: plan.frame, proposalId, outline: reviewed?.roof_areas[0] ?? proposal?.roof_areas[0] ?? null, notes: reviewed?.notes ?? proposal?.notes ?? [], calibration: reviewed?.calibration ?? null, ...(reviewed ? { reviewToken: a.reviewToken, reviewedAt: reviewed.reviewedAt } : {}), expiresAt: new Date(plan.expiresAt).toISOString(),
+            ...(a.proposalToken ? { proposalToken: a.proposalToken } : {}), resultUrl: this.url(planToken, a.proposalToken as string | undefined, a.reviewToken as string | undefined),
         });
         // The review key is deliberately not part of model-visible structuredContent.
         out._meta = { apiOrigin: this.origin, imageDataUrl: `data:${plan.frame.mimeType};base64,${bytes.toString('base64')}`, reviewGate };
@@ -177,8 +195,9 @@ export class HostOutlineService {
         keys(a, ['planToken', 'proposalToken', 'reviewGate', 'outline', 'calibration', 'confirmed']);
         if (a.confirmed !== true)
             throw new ScanError('REVIEW_REQUIRED', 'Use the explicit Confirm reviewed outline action.');
-        const plan = this.tickets.read(a.planToken, 'plan'), gate = this.tickets.read(a.reviewGate, 'review-gate');
-        const proposal = a.proposalToken ? this.tickets.read(a.proposalToken, 'proposal') : null;
+        const planToken = text(a.planToken, 'planToken', LIMITS.tokenChars);
+        const plan = await this.references.read(planToken, 'plan'), gate = this.tickets.read(a.reviewGate, 'review-gate');
+        const proposal = a.proposalToken ? await this.references.read(a.proposalToken, 'proposal') : null;
         const id = proposal?.proposalId ?? `manual-${plan.frame.imageId}`;
         if (gate.imageId !== plan.frame.imageId || gate.proposalId !== id || (proposal && (proposal.imageId !== plan.frame.imageId || proposal.imageSha256 !== plan.frame.sha256)))
             throw new ScanError('STALE_REVIEW', 'The review is not for this image and proposal. Reopen the review panel.', 409);
@@ -186,13 +205,13 @@ export class HostOutlineService {
         const outline = parseOutline(a.outline, plan.frame), calibration = parseCalibration(a.calibration, plan.frame);
         const reviewed: ReviewTicket = { v: VERSION, kind: 'reviewed', expiresAt: plan.expiresAt, imageId: plan.frame.imageId, imageSha256: plan.frame.sha256, frame: plan.frame, roof_areas: [outline], notes: proposal?.notes ?? [], proposalId: id,
             edited: !proposal || JSON.stringify(proposal.roof_areas[0]) !== JSON.stringify(outline), calibration, reviewedAt: new Date(this.now()).toISOString() };
-        const reviewToken = this.tickets.issue(reviewed);
-        return toolResult('reviewed', 'Outline reviewed. This does not certify measurement accuracy or roof pitch.', { reviewToken, plan: plan.frame, outline, measurements: measurements(outline.points, calibration, outline.pitch_degrees) });
+        const reviewToken = await this.references.issue(reviewed);
+        return toolResult('reviewed', 'Outline reviewed. This does not certify measurement accuracy or roof pitch.', { reviewToken, planToken, ...(a.proposalToken ? { proposalToken: a.proposalToken } : {}), proposalId: id, plan: plan.frame, outline, calibration, reviewedAt: reviewed.reviewedAt, expiresAt: new Date(plan.expiresAt).toISOString(), resultUrl: this.url(planToken, a.proposalToken as string | undefined, reviewToken), measurements: measurements(outline.points, calibration, outline.pitch_degrees) });
     }
     async export(args: unknown): Promise<ToolResult> {
         const a = object(args, 'Input');
         keys(a, ['reviewToken']);
-        const reviewed = this.tickets.read(a.reviewToken, 'reviewed');
+        const reviewed = await this.references.read(a.reviewToken, 'reviewed');
         const scanData = toSceneScanData(reviewed.roof_areas[0], reviewed.frame, reviewed.frame);
         return toolResult('exported', 'Reviewed outline exported in the prepared image coordinate frame. No internal roof components or pitch were inferred.', {
             plan: reviewed.frame, outline: reviewed.roof_areas[0], measurements: measurements(reviewed.roof_areas[0].points, reviewed.calibration, reviewed.roof_areas[0].pitch_degrees),
@@ -202,7 +221,7 @@ export class HostOutlineService {
     async remove(args: unknown): Promise<ToolResult> {
         const a = object(args, 'Input');
         keys(a, ['planToken']);
-        const plan = this.tickets.read(a.planToken, 'plan');
+        const plan = await this.references.read(a.planToken, 'plan');
         await this.options.store.remove(plan.objectKey);
         return toolResult('deleted', 'The temporary image was removed from QuoteCore+ storage. Copies in the AI conversation or downloaded files are not removed.');
     }
