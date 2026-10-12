@@ -37,6 +37,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const [position, setPosition] = useState<Position | null>(null);
   const [surface, setSurface] = useState<DemoComponentSurface | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [triedAdding, setTriedAdding] = useState(false);
   const [awaitingPath, setAwaitingPath] = useState<string | null>(null);
   const [navigationSlow, setNavigationSlow] = useState(false);
@@ -131,6 +132,14 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     window.addEventListener('resize', constrain);
     return () => { observer?.disconnect(); window.removeEventListener('resize', constrain); };
   }, [mounted, open, constrain]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: MouseEvent) => { const node = event.target as HTMLElement | null; if (!node?.closest?.('.qc-demo-menu')) setMenuOpen(false); };
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', escape); };
+  }, [menuOpen]);
 
   function navigate(href: string) {
     if (!safeDemoHref(href, workspaceSlug)) { setError('This guide destination could not be verified. Open the chapter overview to continue.'); return; }
@@ -230,7 +239,8 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
           const delta: Record<string, Position> = { ArrowLeft: { x: -20, y: 0 }, ArrowRight: { x: 20, y: 0 }, ArrowUp: { x: 0, y: -20 }, ArrowDown: { x: 0, y: 20 } };
           if (delta[event.key] && widget.current) { event.preventDefault(); const rect = widget.current.getBoundingClientRect(); setPosition(clampGuidePosition({ x: rect.left + delta[event.key].x, y: rect.top + delta[event.key].y }, rect.width, rect.height, window.innerWidth, window.innerHeight)); }
         }}><span aria-hidden="true">⠿</span></button>
-        <div><span>CHAPTER {chapterIndex + 1} OF 4</span><strong>{chapter.title}</strong></div><QcLinkButton variant="ghost" size="sm" className="qc-demo-chapters-head" href={`/${workspaceSlug}/demo-guide`}>All chapters</QcLinkButton>
+        <div><span>CHAPTER {chapterIndex + 1} OF 4</span><strong>{chapter.title}</strong></div><div className="qc-demo-menu"><button type="button" className="qc-demo-menu-btn" aria-haspopup="menu" aria-expanded={menuOpen} aria-label="Guide menu" onClick={() => setMenuOpen(v => !v)}><span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" /></button>
+        {menuOpen && <div className="qc-demo-menu-pop" role="menu"><QcLinkButton variant="ghost" size="sm" className="qc-demo-menu-item" role="menuitem" href={`/${workspaceSlug}/demo-guide`}>All chapters</QcLinkButton><button type="button" role="menuitem" className="qc-demo-menu-item" onClick={() => { setPosition(null); setMenuOpen(false); }}>Reset position</button></div>}</div>
       </header>
       <div className="qc-demo-progress" role="progressbar" aria-label="Guide lessons handled" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.handled} aria-valuetext={`${progress.done} completed, ${progress.skipped} skipped, ${progress.total} total`}><i style={{ width: `${100 * progress.handled / progress.total}%` }} /></div>
       <button type="button" className="qc-demo-hide" onClick={collapse} aria-label="Hide the demo guide"><span>Hide guide</span><span aria-hidden="true">▾</span></button>
@@ -276,8 +286,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
         {syncError && <div className="qc-demo-sync" role="status"><p>{syncError}</p><QcButton size="sm" variant="ghost" onClick={() => void refresh()}>Refresh guide progress</QcButton></div>}
       </div>
       {state.welcomed && !awaitingPath && assistantStep && location.onPage && !assistantUnavailable && !assistantExhausted && <div className="qc-demo-task-action"><div className="qc-demo-actions"><QcButton variant="primary" disabled={copying || !units} onClick={() => void copyPrompt(true)}>{copying ? 'Copying…' : assistantOpen ? 'Copy example & return to Assistant' : 'Copy example & open Assistant'}</QcButton>{copyStatus.startsWith('Clipboard') && <QcButton variant="secondary" onClick={() => window.dispatchEvent(new Event('qc-open-assistant'))}>Open Assistant without copying</QcButton>}</div></div>}
-      <footer className="qc-demo-guide-links"><QcLinkButton variant="ghost" size="sm" className="qc-demo-chapters-foot" href={`/${workspaceSlug}/demo-guide`}>All chapters</QcLinkButton><button type="button" className="qc-demo-reset-position" onClick={() => setPosition(null)}>Reset position</button></footer>
-    </aside>}
+          </aside>}
     <QcDialog open={resetOpen && (!expired || resetting)} pending={resetting} onRequestClose={() => setResetOpen(false)} title={resetting ? 'Preparing your fresh demo' : 'Start this demo again?'} description={resetting ? 'Keep this tab open while we prepare your fictional workspace.' : 'This removes your demo edits and guide progress. Choose the units for the fresh workspace. AI and email allowances do not renew.'}
       footer={!resetting && <div className="qc-demo-actions"><QcButton variant="primary" disabled={!resetUnits} onClick={() => void reset()}>Replace my demo &amp; start fresh</QcButton><QcButton variant="ghost" onClick={() => setResetOpen(false)}>Keep my current demo</QcButton></div>}>
       {!resetting && <DemoUnitChoice value={resetUnits} onChange={setResetUnits} />}{error && <p role="alert" className="qc-demo-error">{error}</p>}
