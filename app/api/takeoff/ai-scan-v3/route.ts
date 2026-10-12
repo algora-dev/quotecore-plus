@@ -743,20 +743,18 @@ async function handleScanPost(req: NextRequest, customMetered = false) {
     // Quality level from client (low / medium / high). Default: medium.
     const qualityLevel = typeof body.qualityLevel === 'string' ? body.qualityLevel : 'medium';
 
-    // Model per quality level (updated 2026-10-11, Shaun: GPT-6 Luna cheaper/
-    // faster than Astra, just as capable - moved off Astra):
-    // low = GPT-5.6 Luna (fastest), medium = GPT-6 Luna on low reasoning,
-    // high = GPT-6 Luna on medium reasoning (complex plans).
-    // NOTE: medium tier = 6 Luna LOW effort, high tier = 6 Luna MEDIUM effort -
+    // Model per quality level (owner spec 2026-10-11):
+    // low = GPT-6 Luna on low effort, medium = GPT-6 Luna on medium effort,
+    // high = GPT-6 Astra on medium effort (complex plans).
     const MODEL_BY_QUALITY: Record<string, string> = {
-      low: 'gpt-5.6-luna',
+      low: 'gpt-6-luna',
       medium: 'gpt-6-luna',
-      high: 'gpt-6-luna',
+      high: 'gpt-6-astra',
     };
     const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
 
     // Quality level from client (low / medium / high). Default: medium.
-    const effortMap = { low: 'low', medium: 'low', high: 'medium' } as const;
+    const effortMap = { low: 'low', medium: 'medium', high: 'medium' } as const;
     const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'medium';
     // Token limits: complex (high) tier gets bumped limits regardless of
     // reasoning effort - complex plans produce more lines and longer output.
