@@ -151,13 +151,14 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Model per quality level - identical to the paid route:
-    // low = GPT-5.6 Luna (fastest), medium = GPT-6 Astra on low reasoning,
-    // high = GPT-6 Astra on medium reasoning (complex plans).
+    // Model per quality level - identical to the paid route
+    // (updated 2026-10-11: medium/high moved to GPT-6 Luna off Astra):
+    // low = GPT-5.6 Luna (fastest), medium = GPT-6 Luna on low reasoning,
+    // high = GPT-6 Luna on medium reasoning (complex plans).
     const MODEL_BY_QUALITY: Record<string, string> = {
       low: 'gpt-5.6-luna',
-      medium: 'gpt-6-astra',
-      high: 'gpt-6-astra',
+      medium: 'gpt-6-luna',
+      high: 'gpt-6-luna',
     };
     const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
     const effortMap = { low: 'low', medium: 'low', high: 'medium' } as const;

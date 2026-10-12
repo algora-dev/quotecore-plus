@@ -743,14 +743,15 @@ async function handleScanPost(req: NextRequest, customMetered = false) {
     // Quality level from client (low / medium / high). Default: medium.
     const qualityLevel = typeof body.qualityLevel === 'string' ? body.qualityLevel : 'medium';
 
-    // Model per quality level (updated 2026-09-11, Shaun's A/B test):
-    // low = GPT-5.6 Luna (fastest), medium = GPT-6 Astra on low reasoning,
-    // high = GPT-6 Astra on medium reasoning (complex plans).
-    // NOTE: medium tier = Astra LOW effort, high tier = Astra MEDIUM effort -
+    // Model per quality level (updated 2026-10-11, Shaun: GPT-6 Luna cheaper/
+    // faster than Astra, just as capable - moved off Astra):
+    // low = GPT-5.6 Luna (fastest), medium = GPT-6 Luna on low reasoning,
+    // high = GPT-6 Luna on medium reasoning (complex plans).
+    // NOTE: medium tier = 6 Luna LOW effort, high tier = 6 Luna MEDIUM effort -
     const MODEL_BY_QUALITY: Record<string, string> = {
       low: 'gpt-5.6-luna',
-      medium: 'gpt-6-astra',
-      high: 'gpt-6-astra',
+      medium: 'gpt-6-luna',
+      high: 'gpt-6-luna',
     };
     const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
 

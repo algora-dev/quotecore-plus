@@ -331,8 +331,8 @@ function classificationsToComponents(lines: V3Line[], outlinePoints: V3Point[], 
 export function getScanModel(quality: 'low' | 'medium' | 'high'): string {
   const MODEL_BY_QUALITY: Record<string, string> = {
     low: 'gpt-5.6-luna',
-    medium: 'gpt-6-astra',
-    high: 'gpt-6-astra',
+    medium: 'gpt-6-luna',
+    high: 'gpt-6-luna',
   };
   return MODEL_BY_QUALITY[quality] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
 }
