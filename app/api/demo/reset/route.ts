@@ -3,6 +3,7 @@ import { provisionDemo } from '@/app/lib/demo/provision';
 import { assertSameOrigin, requireDemoRequest, demoJson, demoErrorResponse, readSmallJson } from '@/app/lib/demo/http';
 import { requestIp } from '@/app/lib/demo/identity';
 import { DemoError } from '@/app/lib/demo/errors';
+import { demoCurrencyFromAcceptLanguage } from '@/app/lib/demo/seed-data';
 import { isRecord } from '@/app/lib/demo/model';
 import { createDemoRouteClient } from '@/app/lib/demo/route-client';
 import { seedDemoAssistantPermissionsBestEffort } from '@/app/lib/demo/assistant.server';
@@ -21,7 +22,11 @@ export async function POST(request: NextRequest) {
     // measurement system; without one the previous demo's units carry over.
     const system = ['metric', 'imperial_ft', 'imperial_rs'].includes(String(body.system))
       ? String(body.system) as 'metric' | 'imperial_ft' | 'imperial_rs' : undefined;
-    const result = await provisionDemo(user.id, requestIp(request.headers), true, system);
+    // Owner 2026-10-12: reset re-resolves the display currency from the
+    // visitor's CURRENT browser locale (same rule as first provision), so an
+    // existing device picks up its locale currency instead of carrying a
+    // pre-fix GBP seed forever.
+    const result = await provisionDemo(user.id, requestIp(request.headers), true, system, demoCurrencyFromAcceptLanguage(request.headers.get('accept-language')));
     await seedDemoAssistantPermissionsBestEffort(await createDemoRouteClient(request.nextUrl.hostname));
     return demoJson(result);
   } catch (error) { return demoErrorResponse(error); }
