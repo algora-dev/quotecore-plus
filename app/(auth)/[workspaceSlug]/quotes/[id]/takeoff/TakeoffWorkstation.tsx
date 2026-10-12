@@ -3964,6 +3964,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // state only restores on mount/reload.
   const touchHydrationRef = useRef<typeof hydrationData>(hydrationData);
   touchHydrationRef.current = hydrationData;
+  // Live mirror of the AI quality selection for the once-assigned touch
+  // adapter (its closures are created on first render and never rebuilt,
+  // so they must read the CURRENT choice through this ref, not the state).
+  const aiQualityLevelRef = useRef(aiQualityLevel);
+  aiQualityLevelRef.current = aiQualityLevel;
   if (touchOutlineAdapterRef.current == null) {
     touchOutlineAdapterRef.current = {
       subscribe: (listener) => { touchBridgeListeners.current.add(listener); return () => { touchBridgeListeners.current.delete(listener); }; },
@@ -4173,8 +4178,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           available: true,
           blocked: ai.blocked,
           // Free tool: credits replace points (display shows free scans, not point costs).
-          cost: freeToolMode ? 0 : getAiScanPointCost('low'),
-          qualityLevel: 'low',
+          cost: freeToolMode ? 0 : getAiScanPointCost(aiQualityLevelRef.current),
+          qualityLevel: aiQualityLevelRef.current,
         };
       },
       startOutlineOnlyScan: async (): Promise<AiOutlineScanResult> => {
@@ -4187,7 +4192,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         }
         const imageUrl = live?.currentImageUrl ?? null;
         if (!imageUrl) return { ok: false, error: 'No plan image URL available.' };
-        const qualityLevel = 'low' as const; // Touch outline-only default; desktop choice is unchanged.
+        const qualityLevel = aiQualityLevelRef.current; // Owner 10-04: each scan charges the tier chosen for it (was hardcoded 'low').
         const dims = live?.canvasDims ?? { width: 2000, height: 1700 };
 
         const abortController = new AbortController();
@@ -4604,7 +4609,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         const outlinePoints = saved.points.map(p => ({ x: p.x, y: p.y }));
         const imageUrl = live?.currentImageUrl ?? null;
         if (!imageUrl) return { ok: false, error: 'No plan image URL available.' };
-        const qualityLevel = 'low' as const; // Touch default; desktop choice unchanged.
+        const qualityLevel = aiQualityLevelRef.current; // Owner 10-04: per-scan tier choice (was hardcoded 'low').
         const dims = live?.canvasDims ?? { width: 2000, height: 1700 };
         const abortController = new AbortController();
         touchComponentScanAbortRef.current = abortController;
@@ -9560,9 +9565,10 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       AI Assist is not available on your current plan. Upgrade to Growth or Pro to unlock AI roof scanning.
                     </div>
                   )}
-                  {/* AGENT-TODO(P4-AI-COST-01): the existing 2/6/12 cost hints differ
-                      from the 2/4/8 affordability thresholds below. Gavin must reconcile
-                      the guard with the owned point-cost contract. Values preserved here. */}
+                  {/* P4-AI-COST-01 resolved 2026-10-12: the affordability guard now
+                      uses the canonical pointCost.ts contract (low=2/medium=6/high=12)
+                      via getAiScanPointCost — matches the cost hints above and the
+                      server-side deduction exactly. */}
                   {/* Quality selector + scan button: hidden when blocked */}
                   {!aiPoints?.isBlocked && (
                     <>
@@ -9572,7 +9578,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                           { value: 'medium', label: 'Medium', hint: freeToolMode ? 'Medium size & complexity' : 'Medium size & complexity · 6 points' },
                           { value: 'high', label: 'High', hint: freeToolMode ? 'Larger, complex roofs' : 'Larger, complex roofs · 12 points' },
                         ] as const).map(opt => {
-                          const cost = opt.value === 'low' ? 2 : opt.value === 'medium' ? 4 : 8;
+                          const cost = getAiScanPointCost(opt.value);
                           const freeHighLock = freeToolMode && opt.value === 'high';
                           const canAfford = freeToolMode ? !freeHighLock : (!aiPoints || aiPoints.remaining >= cost);
                           return (
