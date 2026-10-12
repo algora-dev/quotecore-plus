@@ -4,7 +4,7 @@ import { MarketingButton } from '../../MarketingButton';
 import { CapturePanel } from './CapturePanel';
 import { DocumentsShowcase } from './DocumentsShowcase';
 import { FollowUpShowcase } from './FollowUpShowcase';
-import { PricingShowcase } from './PricingShowcase';
+import { PricingShowcase, chapters } from './PricingShowcase';
 import { ShowcaseIcon } from './ShowcaseIcon';
 import { showcaseFeatures } from './showcase-content';
 import { boundedIndex, safeDemoHref, swipeDirection, tabDestination, validFeatures } from './showcase-model';
@@ -194,15 +194,20 @@ export function FeatureShowcase({ id = 'workflow', config = homepageConfig, init
       <div className={s.showcase}>
         <div className={s.mobileTabHint}><span>Choose a feature</span><span>Swipe to explore <ShowcaseIcon name="arrow" size={13} /></span></div>
         <div ref={tabs} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusId(chosen.id); }} role="tablist" aria-label="Explore QuoteCore+ features" className={s.featureTabs}>
-          {features.map((feature, index) => <button key={feature.id} type="button" ref={el => { tabRefs.current[index] = el; }} id={`${uid}-tab-${feature.id}`} role="tab" aria-selected={chosen.id === feature.id} aria-controls={`${uid}-panel-${feature.id}`} tabIndex={focusable === feature.id ? 0 : -1} className={`${s.featureTab} ${feature.outcome ? s.outcomeTab : ''}`} onKeyDown={event => tabKey(event, index)} onClick={() => chooseFeature(feature, index)} data-feature={feature.id}>
-            <span>{feature.label}</span>
-          </button>)}
+          {features.map((feature, index) => {
+            const slideTotal = feature.id === 'components' ? chapters.length : feature.scenes.length;
+            const slideIndex = boundedIndex(sceneIndices[feature.id] ?? 0, slideTotal);
+            return <button key={feature.id} type="button" ref={el => { tabRefs.current[index] = el; }} id={`${uid}-tab-${feature.id}`} role="tab" aria-selected={chosen.id === feature.id} aria-controls={`${uid}-panel-${feature.id}`} tabIndex={focusable === feature.id ? 0 : -1} className={`${s.featureTab} ${feature.outcome ? s.outcomeTab : ''}`} onKeyDown={event => tabKey(event, index)} onClick={() => chooseFeature(feature, index)} data-feature={feature.id}>
+              <span>{feature.label}</span>
+              {slideTotal > 1 && <span className={s.tabCount} aria-hidden="true">{slideIndex + 1}/{slideTotal}</span>}
+            </button>;
+          })}
         </div>
 
         {features.map((feature, featureIndex) => {
           if (feature.id === 'components') return (
             <div key={feature.id} id={`${uid}-panel-${feature.id}`} role="tabpanel" aria-labelledby={`${uid}-tab-${feature.id}`} hidden={chosen.id !== feature.id} tabIndex={0} className={s.featurePanel}>
-              <PricingShowcase active={chosen.id === feature.id} feature={feature} demoHref={href} onEvent={emit} />
+              <PricingShowcase active={chosen.id === feature.id} feature={feature} demoHref={href} onChapterChange={index => setSceneIndices(values => ({ ...values, components: index }))} onEvent={emit} />
             </div>
           );
           const index = boundedIndex(sceneIndices[feature.id] ?? 0, feature.scenes.length);

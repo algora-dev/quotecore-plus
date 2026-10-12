@@ -8,7 +8,7 @@ import s from './FeatureShowcase.module.css';
 
 const TAG = 'qc-pricing-showcase-animation';
 const SCRIPT = '/marketing/feature-showcase/qc-pricing-animation-v214.js';
-const chapters = [
+export const chapters = [
   { id: 'create-test', label: 'Create & test' },
   { id: 'spreadsheet', label: 'Spreadsheet' },
 ] as const;
@@ -54,11 +54,13 @@ function loadAnimation(): Promise<void> {
   return pendingScript;
 }
 
-export function PricingShowcase({ active, feature, demoHref, onEvent }: {
+export function PricingShowcase({ active, feature, demoHref, onEvent, onChapterChange }: {
   active: boolean;
   feature: ShowcaseFeature;
   demoHref: string;
   onEvent: (event: ShowcaseEvent) => void;
+  /** Notifies the host tab counter when the chapter changes (user or autoplay). */
+  onChapterChange?: (chapter: number) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const element = useRef<PricingElement | null>(null);
@@ -70,6 +72,10 @@ export function PricingShowcase({ active, feature, demoHref, onEvent }: {
   const [exploring, setExploring] = useState(false);
   const story = feature.scenes[0];
   activeRef.current = active;
+  const onChapterChangeRef = useRef(onChapterChange);
+  onChapterChangeRef.current = onChapterChange;
+
+  useEffect(() => { onChapterChangeRef.current?.(chapter); }, [chapter]);
 
   useEffect(() => {
     if (active) setStarted(true);
