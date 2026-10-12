@@ -152,16 +152,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Model per quality level - identical to the paid route
-    // (owner spec 2026-10-11):
+    // (owner spec 2026-10-12):
     // low = GPT-6 Luna on low effort, medium = GPT-6 Luna on medium effort,
-    // high = GPT-6 Astra (main app only).
+    // high = GPT-6.1 Sol on low effort (complex plans).
     const MODEL_BY_QUALITY: Record<string, string> = {
       low: 'gpt-6-luna',
       medium: 'gpt-6-luna',
-      high: 'gpt-6-astra',
+      high: 'gpt-6.1-sol',
     };
     const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
-    const effortMap = { low: 'low', medium: 'medium', high: 'medium' } as const;
+    const effortMap = { low: 'low', medium: 'medium', high: 'low' } as const;
     const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'medium';
     const tokenLimits = qualityLevel === 'high'
       ? { scan1: 8000, scan2: 12000, scan3: 12000 }

@@ -332,14 +332,14 @@ export function getScanModel(quality: 'low' | 'medium' | 'high'): string {
   const MODEL_BY_QUALITY: Record<string, string> = {
     low: 'gpt-6-luna',
     medium: 'gpt-6-luna',
-    high: 'gpt-6-astra',
+    high: 'gpt-6.1-sol',
   };
   return MODEL_BY_QUALITY[quality] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
 }
 
-/** Reasoning effort per quality tier: low=low, medium=medium, high=medium (owner spec 2026-10-11). */
+/** Reasoning effort per quality tier: low=low, medium=medium, high=low (owner spec 2026-10-12). */
 export function getReasoningEffort(quality: 'low' | 'medium' | 'high'): 'low' | 'medium' {
-  const effortMap = { low: 'low', medium: 'medium', high: 'medium' } as const;
+  const effortMap = { low: 'low', medium: 'medium', high: 'low' } as const;
   return effortMap[quality] ?? 'medium';
 }
 

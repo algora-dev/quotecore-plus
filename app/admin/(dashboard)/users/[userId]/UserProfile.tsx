@@ -27,6 +27,7 @@ import {
 import { StorageTab } from './StorageTab';
 import { QuotesTab } from './quotes-tab/QuotesTab';
 import { FreeToolUsageSection } from './FreeToolUsageSection';
+import { CustomBillingSection } from './custom-billing/CustomBillingSection';
 
 const PLAN_OPTIONS = [
   { code: 'free', label: 'Free' },
@@ -109,6 +110,9 @@ export function UserProfile({ data }: { data: UserProfileData }) {
 
       {/* B. Subscription Tier */}
       <SubscriptionSection data={data} onAction={runAction} pending={pending} overrideActive={!!overrideActive} />
+
+      {/* B.5 Custom Setup (billing): grant/comp + Stripe-linked change */}
+      <CustomBillingSection companyId={data.company.id} />
 
       {/* C. Discount / Coupon */}
       <CouponSection data={data} onAction={runAction} pending={pending} />

@@ -16,7 +16,6 @@ import { requireStripe, getStripeMode, resolvePlanCodeForStripePrice } from '@/a
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { checkRateLimit } from '@/app/lib/security/rateLimit';
 import type Stripe from 'stripe';
-import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -219,100 +218,12 @@ export async function adminOverridePlan(
 }
 
 // ---------------------------------------------------------------------------
-// P8: Custom-setup (V5) admin powers — Done-for-You bespoke grants.
-// Payment is collected manually (bespoke Stripe charge); this grants the
-// purchased snapshot with a prepaid end date. The entitlements loader laps
-// grants whose period_end has passed.
+// P8: Custom-setup (V5) admin powers — the grant moved to
+// custom-billing/actions.ts (2026-10-12): it now re-validates the calculator
+// setup server-side against the pinned catalogue instead of a coarse tier
+// form, so admin grants match checkout/change entitlements exactly.
+// adminClearCustomSetup stays here.
 // ---------------------------------------------------------------------------
-
-export interface AdminCustomSetupInput {
-  capacity: 'low' | 'medium' | 'high';
-  digitalTakeoff: boolean;
-  scanTokens: number;
-  offcuts: boolean;
-  assistantTasks: number;
-  monthlyCents: number;
-}
-
-export async function adminGrantCustomSetup(
-  companyId: string,
-  setup: AdminCustomSetupInput,
-  reason: string,
-  endsAt: string,
-): Promise<ActionResult> {
-  const adminProfile = await requireAdmin();
-  const admin = createAdminClient();
-  // A manual grant/clear must never overwrite a Stripe-backed subscription.
-  const existingBilling = await admin.from('companies').select('stripe_subscription_id').eq('id', companyId).maybeSingle();
-  if (existingBilling.error || existingBilling.data?.stripe_subscription_id) return { ok: false, error: 'Stripe-backed accounts need a reviewed custom billing change, not a manual grant or clear.' };
-
-  const capacityRow = PREVIEW_CATALOG.core[setup.capacity];
-  if (!capacityRow) return { ok: false, error: 'Unknown capacity tier.' };
-  if (!reason.trim()) return { ok: false, error: 'A reason is required for the audit trail.' };
-  const ends = Date.parse(endsAt);
-  if (Number.isNaN(ends) || ends <= Date.now()) return { ok: false, error: 'A valid future end date is required.' };
-
-  const { data: company } = await admin.from('companies').select('id, name').eq('id', companyId).maybeSingle();
-  if (!company) return { ok: false, error: 'Company not found.' };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: mapRow } = await (admin as any)
-    .from('custom_billing_price_map')
-    .select('stripe_account_id')
-    .eq('stripe_mode', getStripeMode())
-    .limit(1)
-    .maybeSingle();
-  if (!mapRow?.stripe_account_id) return { ok: false, error: 'Price registry has no account binding; provision the catalogue first.' };
-
-  const nowIso = new Date().toISOString();
-  const entitlements = {
-    capacity: setup.capacity,
-    quotes: capacityRow.quotes,
-    storageBytes: capacityRow.storageBytes,
-    digitalTakeoff: setup.digitalTakeoff,
-    scanTokens: setup.scanTokens,
-    offcuts: setup.offcuts,
-    assistantTasks: setup.assistantTasks,
-  };
-  const componentCodes = ['core_access', `capacity_${setup.capacity}`];
-  if (setup.digitalTakeoff) componentCodes.push('digital_takeoff');
-  if (setup.scanTokens > 0) componentCodes.push('scan_medium');
-  if (setup.offcuts) componentCodes.push('offcuts_medium');
-  if (setup.assistantTasks > 0) componentCodes.push('assistant_regular');
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: snapErr } = await (admin as any)
-    .from('company_custom_billing')
-    .upsert({
-      company_id: companyId,
-      stripe_account_id: mapRow.stripe_account_id,
-      stripe_mode: getStripeMode(),
-      stripe_customer_id: 'admin-granted',
-      stripe_subscription_id: `admin-${companyId}`,
-      catalog_id: PREVIEW_CATALOG.id,
-      catalog_revision: PREVIEW_CATALOG.revision,
-      component_codes: componentCodes,
-      purchased_entitlements: entitlements,
-      provider_status: 'active',
-      currency: PREVIEW_CATALOG.currency.toLowerCase(),
-      monthly_cents: setup.monthlyCents,
-      period_start: nowIso,
-      period_end: new Date(ends).toISOString(),
-      reconciled_at: nowIso,
-    }, { onConflict: 'company_id' });
-  if (snapErr) return { ok: false, error: `Snapshot write failed: ${snapErr.message}` };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: coErr } = await (admin as any)
-    .from('companies')
-    .update({ billing_model: 'custom_setup', subscription_status: 'active' })
-    .eq('id', companyId);
-  if (coErr) return { ok: false, error: `Company update failed: ${coErr.message}` };
-
-  await writeAudit(admin, adminProfile, 'admin_grant_custom_setup', companyId, null, null, company.name, reason, { setup, endsAt });
-
-  return { ok: true, message: `Custom setup granted until ${new Date(ends).toISOString().slice(0, 10)}.` };
-}
 
 export async function adminClearCustomSetup(companyId: string, reason: string): Promise<ActionResult> {
   const adminProfile = await requireAdmin();
