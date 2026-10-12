@@ -40,9 +40,28 @@ export const DEMO_JOBS: { key: string; job: string; customer: string; status: Da
   { key: 'invoiced_job', job: 'Completed - fictional garage roof', customer: 'Cameron Sample', status: 'accepted', area: 30, days: 8 },
 ];
 export type DemoMeasurementSystem = 'metric' | 'imperial_ft' | 'imperial_rs';
-export function fictionalCompany(id: string, slug: string, now: string, system: DemoMeasurementSystem = 'metric'): Database['public']['Tables']['companies']['Insert'] {
+export type DemoCurrency = 'GBP' | 'EUR' | 'USD';
+/** Owner 2026-10-12: the demo displays prices in the visitor's own currency,
+ * derived from the browser's Accept-Language region. Three-currency world per
+ * owner directive: UK -> £, EU member states -> €, US/CA/AU/NZ and every
+ * unmatched/absent locale -> $ (dollar fallback). Region of the first
+ * language tag that carries one wins; no region anywhere -> $.
+ * Numbers/prices stay fictional; only the symbol changes. */
+const EUR_REGIONS = new Set(['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','MC','NL','PL','PT','RO','SK','SI','ES','SE','AX','AD','SM','VA','EU']);
+export function demoCurrencyFromAcceptLanguage(header: string | null): DemoCurrency {
+  const tags = (header ?? '').split(',').map(part => part.trim().split(';')[0].trim());
+  for (const tag of tags.slice(0, 5)) {
+    const region = /[a-zA-Z]{2,3}[-_]([A-Za-z]{2}|\d{3})/.exec(tag)?.[1]?.toUpperCase();
+    if (!region) continue;
+    if (region === 'GB' || region === 'UK') return 'GBP';
+    if (EUR_REGIONS.has(region)) return 'EUR';
+    return 'USD';
+  }
+  return 'USD';
+}
+export function fictionalCompany(id: string, slug: string, now: string, system: DemoMeasurementSystem = 'metric', currency: DemoCurrency = 'GBP'): Database['public']['Tables']['companies']['Insert'] {
   return { id, slug, name: QCP_DEMO_NAME, plan_code: 'demo', subscription_status: 'active',
-    default_currency: 'GBP', default_language: 'en', default_measurement_system: system, default_trade: 'roofing',
+    default_currency: currency, default_language: 'en', default_measurement_system: system, default_trade: 'roofing',
     default_tax_rate: 20, default_material_margin_percent: 0, default_labor_margin_percent: 0,
     onboarding_completed_at: now, plan_started_at: now, notify_on_recipient_view: false,
     notification_prefs: {}, payment_details: { instructions: 'Demo only. No payment is due.' },

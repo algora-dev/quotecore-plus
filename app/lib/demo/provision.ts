@@ -4,7 +4,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 import { checkRateLimit } from '@/app/lib/security/rateLimit';
 import { getDemoControl } from './control';
 import { DemoError } from './errors';
-import { fictionalCompany, type DemoMeasurementSystem } from './seed-data';
+import { fictionalCompany, type DemoMeasurementSystem, type DemoCurrency } from './seed-data';
 import { seedDemoCompany } from './seed';
 import { DEMO_SEED_VERSION, DEMO_SESSION_MS, initialDemoGuide } from './model';
 import { ipHmacFor } from './identity';
@@ -35,7 +35,7 @@ export async function probeDemo(anonUserId: string): Promise<{ slug: string; ses
   const system: DemoMeasurementSystem = company.data.default_measurement_system === 'imperial_ft' || company.data.default_measurement_system === 'imperial_rs' ? company.data.default_measurement_system : 'metric';
   return { slug: company.data.slug, sessionId: old.id, expiresAt: old.expires_at, system };
 }
-export async function provisionDemo(anonUserId: string, ip: string | null, reset = false, system?: DemoMeasurementSystem): Promise<{ slug: string; sessionId: string; resumed: boolean; expiresAt: string | null; system: DemoMeasurementSystem }> {
+export async function provisionDemo(anonUserId: string, ip: string | null, reset = false, system?: DemoMeasurementSystem, currency?: DemoCurrency): Promise<{ slug: string; sessionId: string; resumed: boolean; expiresAt: string | null; system: DemoMeasurementSystem }> {
   if (!(await getDemoControl()).demoEnabled) throw new DemoError('The demo is currently switched off.', 503, 'demo_off');
   const admin = createAdminClient();
   const verified = await admin.auth.admin.getUserById(anonUserId);
@@ -89,6 +89,17 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
       if (previous === 'imperial_ft' || previous === 'imperial_rs' || previous === 'metric') chosenSystem = previous;
     }
   }
+  // Owner 2026-10-12: the demo currency follows the visitor's browser locale
+  // ($ fallback). Reset without an explicit currency keeps the previous demo
+  // company's currency, mirroring the measurement-system carry-over above.
+  let chosenCurrency: DemoCurrency = currency ?? 'USD';
+  if (!currency && old?.company_id) {
+    const previousCompany = await admin.from('companies').select('default_currency').eq('id', old.company_id).eq('plan_code', 'demo').maybeSingle();
+    if (!previousCompany.error && previousCompany.data
+      && ['GBP', 'EUR', 'USD'].includes(String(previousCompany.data.default_currency))) {
+      chosenCurrency = previousCompany.data.default_currency as DemoCurrency;
+    }
+  }
   const created = await admin.from('demo_sessions').insert({ id: sessionId, anon_user_id: anonUserId,
     template_version: DEMO_SEED_VERSION, ip_hmac: ipHmac, status: 'provisioning', reset_count: (old?.reset_count ?? 0) + (reset ? 1 : 0) });
   if (created.error) {
@@ -97,7 +108,7 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
   }
   let profileMoved = false; let companyCreated = false;
   try {
-    const co = await admin.from('companies').insert(fictionalCompany(companyId, slug, now, chosenSystem));
+    const co = await admin.from('companies').insert(fictionalCompany(companyId, slug, now, chosenSystem, chosenCurrency));
     if (co.error) throw new Error(`company: ${co.error.message}`);
     companyCreated = true;
     const linked = await admin.from('demo_sessions').update({ company_id: companyId }).eq('id', sessionId);
@@ -109,7 +120,7 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
       : await admin.from('users').insert({ id: anonUserId, ...userFields });
     if (user.error) throw new Error(`profile: ${user.error.message}`);
     profileMoved = true;
-    const seed = await seedDemoCompany(companyId, anonUserId, chosenSystem);
+    const seed = await seedDemoCompany(companyId, anonUserId, chosenSystem, chosenCurrency);
     const activeAt = new Date().toISOString();
     const expiresAt = new Date(Date.parse(activeAt) + DEMO_SESSION_MS).toISOString();
     const activated = await admin.from('demo_sessions').update({ status: 'active', activated_at: activeAt, last_seen_at: activeAt,

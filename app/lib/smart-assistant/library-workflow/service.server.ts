@@ -176,7 +176,14 @@ export async function pendingDraftWorkflowContext(client:SupabaseClient,access:A
     .not('workflow_state','in','(cancelled,closed)').order('updated_at',{ascending:false}).limit(1).maybeSingle();
   if(error)throw workflowRpcError(error);
   const state=data as StoredBrief|null;
-  if(!state||visibleRun&&!visibleRun(state.last_run_id)&&!visibleRun(state.start_run_id)||access.historyAfter&&Date.parse(state.created_at)<Date.parse(access.historyAfter))return null;
+  // Owner 2026-10-12: a CONFIRMED draft (committed, quote-bound) stays in the
+  // model's ACTIVE_WORKING_BRIEF context across task boundaries, so a follow-up
+  // "change the draft" reaches revise_draft_workflow with the CURRENT
+  // stateId/revision instead of improvising stale card ids. The visibleRun
+  // filter still applies to every unconfirmed state; the data-level guard
+  // (committed-snapshot equality on revise/confirm) is the real protection.
+  const committedBound=!!state&&state.workflow_state==='committed'&&!!state.produced_quote_id;
+  if(!state||(!committedBound&&visibleRun&&!visibleRun(state.last_run_id)&&!visibleRun(state.start_run_id))||access.historyAfter&&Date.parse(state.created_at)<Date.parse(access.historyAfter))return null;
   assertCurrent(state,access);
   const env=await environment(client,access),decision=resolveWorkingBrief(state.brief,env.catalog,env.concepts);
   return {stateId:state.id,revision:state.revision,workflowState:state.workflow_state,boundQuoteId:state.produced_quote_id,actionId:state.action_id,

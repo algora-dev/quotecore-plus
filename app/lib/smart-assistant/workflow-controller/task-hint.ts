@@ -24,8 +24,15 @@ export function applyWorkflowTaskHint(message: string, snapshot: TaskSnapshot, d
     return { disposition: 'continue', reason: 'active_working_brief_delta', message };
   }
   const task = snapshot.task;
-  if (!task || task.status === 'closed' || Date.parse(task.expiresAt) <= now.getTime()
-    || !snapshot.runIds.some(id => id === hint.startRunId || id === hint.lastRunId)) return decision;
+  // Owner 2026-10-12: a CONFIRMED draft (state 'committed', quote-bound) stays
+  // revisable across task boundaries. A follow-up correction ("change/make
+  // the draft...") continues the draft's working brief even when the chat task
+  // that created it has closed; the data guards (committed-snapshot equality)
+  // remain the real protection. Task-run membership is still required for
+  // every other workflow state.
+  const committedDraft = hint.state === 'committed';
+  if (!committedDraft && (!task || task.status === 'closed' || Date.parse(task.expiresAt) <= now.getTime()
+    || !snapshot.runIds.some(id => id === hint.startRunId || id === hint.lastRunId))) return decision;
   const correction = /^(?:actually[, ]+|instead[, ]+|change\b|add\b|remove\b|rename\b|make (?:the|that|this)\b|set (?:the|that|this)\b|use\b)/i.test(text);
   const areaCorrection = hint.areaLabels.some(label => text.toLowerCase().startsWith(label.toLowerCase() + ' ') && /\b(?:should be|is|make|change|pitch|degrees|square|area)\b/i.test(text));
   const choiceFragment = hint.state === 'needs_choices' && text.split(/\s+/).length <= 12 && !/[?]/.test(text)
