@@ -6,7 +6,7 @@ import { frameFor, sceneToSurface } from './material';
 import { fingerprint } from './math';
 export const INSTALLATION_SETOUT_MODEL='installation-setout-v1' as const;
 export interface InstallationAnchor {
-  id:string;faceId:string;kind:'hip-ridge-junction'|'barge-end';point:Point;edgeIds:string[];phaseMm:number;
+  id:string;faceId:string;kind:'hip-ridge-junction'|'hip-apex'|'barge-end';point:Point;edgeIds:string[];phaseMm:number;
   setout:'both-sides'|'positive-u'|'negative-u';
 }
 export interface InstallationSetout {
@@ -18,20 +18,32 @@ export function anchorPhase(face:RoofFace,roof:RoofInput,p:Point,coverMm:number)
   const f=frameFor(face,roof),xs=face.polygon.map(v=>sceneToSurface(v,f).x);
   return coverPhase(Math.min(...xs)-sceneToSurface(p,f).x,coverMm);
 }
-export function installationAnchors(face:RoofFace,roof:RoofInput,profile:Profile):InstallationAnchor[] {
+export function installationAnchors(face:RoofFace,roof:RoofInput,profile:Profile, includeHipApex=false):InstallationAnchor[] {
   if(!face.flow||face.pitchDeg===null)return [];
   const edges=planningBoundary(face),f=frameFor(face,roof),xs=face.polygon.map(p=>sceneToSurface(p,f).x),lo=Math.min(...xs),hi=Math.max(...xs);
   const out:InstallationAnchor[]=[];
   function add(kind:InstallationAnchor['kind'],p:Point,edgeIds:string[],setout:InstallationAnchor['setout']){
     const phaseMm=anchorPhase(face,roof,p,profile.coverMm),d=Math.abs(phaseMm-face.laneOffsetMm);
     if(face.laneOffsetLocked&&Math.min(d,profile.coverMm-d)>.01)return;
-    if(kind==='hip-ridge-junction'&&edges.some(e=>e.kind==='valley'&&(dist(e.a,p)<1e-5||dist(e.b,p)<1e-5)))return;
+    if(kind!=='barge-end'&&edges.some(e=>e.kind==='valley'&&(dist(e.a,p)<1e-5||dist(e.b,p)<1e-5)))return;
     const row={faceId:face.id,kind,point:{...p},edgeIds:[...edgeIds].sort(),phaseMm,setout};
     const id='anchor:'+fingerprint(row);if(!out.some(a=>a.id===id))out.push({id,...row});
   }
   for(const hip of edges.filter(e=>e.kind==='hip'||e.kind==='broken_hip'))for(const ridge of edges.filter(e=>e.kind==='ridge'))for(const p of [hip.a,hip.b]){
     const x=sceneToSurface(p,f).x;
     if((dist(p,ridge.a)<1e-5||dist(p,ridge.b)<1e-5)&&x>lo+profile.coverMm*.1&&x<hi-profile.coverMm*.1)add('hip-ridge-junction',p,[hip.id,ridge.id],'both-sides');
+  }
+  // Optional reversal discovery also supports an ordinary hipped donor with
+  // no ridge of its own. The meeting of two opposite hip slopes is a valid
+  // transverse registration point; a valley termination is never a start.
+  if(includeHipApex){
+    const hips=edges.filter(e=>e.kind==='hip'||e.kind==='broken_hip');
+    for(let i=0;i<hips.length;i++)for(let j=i+1;j<hips.length;j++)for(const p of [hips[i].a,hips[i].b]){
+      if(dist(p,hips[j].a)>=1e-5&&dist(p,hips[j].b)>=1e-5)continue;
+      const q=sceneToSurface(p,f),a=sceneToSurface(dist(p,hips[i].a)<1e-5?hips[i].b:hips[i].a,f),b=sceneToSurface(dist(p,hips[j].a)<1e-5?hips[j].b:hips[j].a,f);
+      if((a.x-q.x)*(b.x-q.x)>=0||a.y<=q.y+1e-5||b.y<=q.y+1e-5)continue;
+      if(q.x>lo+profile.coverMm*.1&&q.x<hi-profile.coverMm*.1)add('hip-apex',p,[hips[i].id,hips[j].id],'both-sides');
+    }
   }
   for(const e of edges.filter(e=>e.kind==='barge')){
     const a=sceneToSurface(e.a,f),b=sceneToSurface(e.b,f),mid=(a.x+b.x)/2;
@@ -48,9 +60,9 @@ export function validateInstallationSetout(r:Pick<SolveRequest,'roof'|'faces'|'p
   const ids=new Set<string>();
   for(const a of q.anchors){
     const f=r.faces.find(f=>f.id===a.faceId);if(!f||ids.has(a.faceId)){bad('An anchor must refer once to a reviewed face.');continue;}ids.add(a.faceId);
-    const actual=installationAnchors(f,r.roof,r.profile).find(x=>x.id===a.id);
+    const actual=installationAnchors(f,r.roof,r.profile,true).find(x=>x.id===a.id);
     if(!actual||fingerprint(a)!==fingerprint(actual)||Math.abs(layout.laneOffsetByFace[f.id]-a.phaseMm)>.01)bad('Anchor no longer matches its geometry or sheet registration.',f.id);
   }
-  if(new Set(q.measuredFillerFaceIds).size!==q.measuredFillerFaceIds.length||q.measuredFillerFaceIds.some(id=>!layout.primaryFaceIds.includes(id)||!q.anchors.some(a=>a.faceId===id&&a.kind==='hip-ridge-junction')))bad('Measured straight shelves require an anchored primary donor.');
+  if(new Set(q.measuredFillerFaceIds).size!==q.measuredFillerFaceIds.length||q.measuredFillerFaceIds.some(id=>!layout.primaryFaceIds.includes(id)||!q.anchors.some(a=>a.faceId===id&&a.kind!=='barge-end')))bad('Measured straight shelves require an anchored primary donor.');
   return errors;
 }

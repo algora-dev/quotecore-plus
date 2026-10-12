@@ -15,11 +15,13 @@ export interface SupplyView {
   continuationDemandIds: Set<string>;
 }
 
-/** A direction family is not a material colour. Independent self-fill operations
+/** displayTerminals is opt-in for the drawing/schedule only. Search scoring
+ * deliberately retains the legacy classification.
+ * A direction family is not a material colour. Independent self-fill operations
  * F, K and D keep separate block IDs even when their directions are parallel.
  * Only an actual registered same-family continuation joins new purchasing faces
  * (A/J). Child cuts keep the ORIGINAL stock's block, not the last cutting face. */
-export function supplyView(s: Pick<Solution,'demands'|'placements'|'offcuts'|'bankLayout'>): SupplyView {
+export function supplyView(s: Pick<Solution,'demands'|'placements'|'offcuts'|'bankLayout'>, displayTerminals=false): SupplyView {
   const demands=new Map(s.demands.map(d=>[d.id,d]));
   const offcuts=new Map(s.offcuts.map(o=>[o.id,o]));
   const fresh=s.placements.filter(p=>p.kind==='new').map(p=>demands.get(p.demandId)!).filter(Boolean);
@@ -62,6 +64,7 @@ export function supplyView(s: Pick<Solution,'demands'|'placements'|'offcuts'|'ba
   // operation stays one colour and its own hatch throughout.
   const fillerDemandIds=new Set<string>();
   const byPlacement=new Map(s.placements.map(p=>[p.demandId,p]));
+  const usedRoots=new Set((displayTerminals?s.placements:[]).filter(p=>p.kind==='reuse').map(p=>{const o=offcuts.get(p.offcutId??'');return o?.rootDemandId??o?.sourceDemandId;}));
   for(const faceId of new Set(s.demands.map(d=>d.faceId))){
     if(self.has(faceId))continue;
     const rows=s.demands.filter(d=>d.faceId===faceId).sort((a,b)=>a.laneIndex-b.laneIndex);
@@ -73,13 +76,20 @@ export function supplyView(s: Pick<Solution,'demands'|'placements'|'offcuts'|'ba
     });
     const length=(d:Demand)=>{const b=bounds(d.stockEndProof?.originalBlank??d.blank);return b.maxY-b.minY;};
     const longest=Math.max(0,...own.map(length));
+    const nominalCover=displayTerminals?Math.max(0,...rows.flatMap(d=>[d.eaveOverlapMm??0,d.ridgeOverlapMm??0])):0;
     for(const d of own){
       const ridge=d.zoneRole==='ridge-fill'||d.stockRole==='filler';
       // A lower ridge shelf in a stepped primary remains an explicit new filler
       // between different cuts. Minor clearance/rounding differences do not
       // split one stock-size block into a grey stripe.
       const shorterShelf=ridge&&length(d)<longest-Math.max(150,longest*.03);
-      if(shorterShelf||hasExternalReuse&&(ridge||!s.bankLayout?.primaryFaceIds.includes(faceId)))fillerDemandIds.add(d.id);
+      // V2.28 drawing-only: a partial-width square terminal sheet with no
+      // installed children is fresh filler, even when bought at bank length.
+      // Keep its real clipped width and full purchase; never recolour a donor.
+      const edge=rows[0]===d||rows.at(-1)===d;
+      const unusedTerminal=displayTerminals&&edge&&d.reusableCut===false&&!d.cutEdges?.length&&!usedRoots.has(d.id)&&
+        (d.ridgeOverlapMm??0)>0&&bounds(d.cover).maxX-bounds(d.cover).minX<nominalCover-1;
+      if(unusedTerminal||shorterShelf||hasExternalReuse&&(ridge||!s.bankLayout?.primaryFaceIds.includes(faceId)))fillerDemandIds.add(d.id);
     }
   }
   const continuationDemandIds=new Set<string>();

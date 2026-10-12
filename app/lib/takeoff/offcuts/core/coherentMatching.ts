@@ -1,3 +1,4 @@
+import { alignTransferredRuns, type TransferInterval } from './familyAlignment';
 import type { Demand, Offcut, Placement, Profile } from './types';
 import type { FaceMatch } from './matching';
 import { area, fitY, rotate180 } from './regions';
@@ -23,7 +24,8 @@ export interface CoherentMatch extends FaceMatch {
  * This matcher does not decide source policy. The bank search provides one or
  * two coherent pools; it does not offer every scrap from the whole roof. */
 export function matchCoherentSets(demands: Demand[], inventory: Offcut[], profile: Profile,
-  check:()=>void=()=>{}, preserveBankRegistration=false, maxRuns=4, placementPreference: 'centre'|'lower'|'upper' = 'centre'): CoherentMatch {
+  check:()=>void=()=>{}, preserveBankRegistration=false, maxRuns=4, placementPreference: 'centre'|'lower'|'upper' = 'centre', alignFirstGenerationHip=false): CoherentMatch {
+  const alignmentCache=new Map<string,TransferInterval|null>();
   const cuts=demands.filter(d=>!isStraightFiller(d.required));
   const cutArea=cuts.reduce((n,d)=>n+area(d.required),0);
   const byLane=new Map(demands.map(d=>[d.laneIndex,d]));
@@ -56,6 +58,7 @@ export function matchCoherentSets(demands: Demand[], inventory: Offcut[], profil
     const sourceById=new Map(group.map(o=>[o.id,o]));
     function addPattern(ps:Placement[]):void {
       if(!ps.length)return;
+      if(alignFirstGenerationHip){const aligned=alignTransferredRuns(ps,byDemand,stockById,placementPreference,alignmentCache);if(!aligned)return;ps=aligned;}
       const ordered=[...ps].sort((a,b)=>byDemand.get(a.demandId)!.laneIndex-byDemand.get(b.demandId)!.laneIndex);
       const key=ordered.map(p=>`${p.demandId}/${p.offcutId}/${p.rotation}`).join('|');
       if(seen.has(key))return;seen.add(key);
@@ -112,7 +115,8 @@ export function matchCoherentSets(demands: Demand[], inventory: Offcut[], profil
     const options=patterns.filter(p=>{const k=[...p.offcuts].sort().join('|')+'/'+[...p.ids].sort().join('|');if(subsets.has(k))return false;subsets.add(k);return true;}).slice(0,24);
     const combine=(state:Pattern,p:Pattern):Pattern|null=>{
       if([...p.ids].some(id=>state.ids.has(id))||[...p.offcuts].some(id=>state.offcuts.has(id)))return null;
-      const placements=[...state.placements,...p.placements];
+      let placements=[...state.placements,...p.placements];
+      if(alignFirstGenerationHip){const aligned=alignTransferredRuns(placements,byDemand,stockById,placementPreference,alignmentCache);if(!aligned)return null;placements=aligned;}
       // Maximum four contiguous source-set runs on a destination is enough for
       // hip halves and a ridge gap, without quietly reintroducing a mosaic.
       const ordered=[...placements].sort((a,b)=>byDemand.get(a.demandId)!.laneIndex-byDemand.get(b.demandId)!.laneIndex);

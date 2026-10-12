@@ -10,7 +10,7 @@ export const MATERIAL_PALETTE = [
 ];
 export const FILLER_COLOR='#B5BAC2';
 export function materialColors(s:Solution) {
-  const view=supplyView(s);
+  const view=supplyView(s,true);
   const consumed=new Set(s.placements.filter(p=>p.kind==='reuse').map(p=>p.offcutId));
   const donorRoots=new Set(s.offcuts.filter(o=>consumed.has(o.id)).map(o=>o.rootDemandId??o.sourceDemandId));
   const cuttingBlocks=view.blocks.filter(b=>b.rootDemandIds.some(id=>!view.fillerDemandIds.has(id)||donorRoots.has(id)));

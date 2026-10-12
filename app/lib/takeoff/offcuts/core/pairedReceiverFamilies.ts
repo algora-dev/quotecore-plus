@@ -1,3 +1,4 @@
+import { CERTIFICATE_INPUT_MODEL, certificateInputFingerprint } from './certificateInput';
 /** V2.26: physical family identity and a replayable paired-receiver certificate.
  * This module never changes a plan. Historical (uncertified) V2.25 plans retain
  * their original meaning. In the inventory, generation 0 is the first offcut;
@@ -42,6 +43,7 @@ export interface PairedReceiverCertificate {
     freshStarterChildDemandIds: string[]; factoryDatumMm: number;
     remainingReason: 'complete-chain' | 'remaining-positions-explicitly-supplied' }>;
   model: typeof PAIRED_RECEIVER_MODEL; inputFingerprint: string;
+  inputModel?: typeof CERTIFICATE_INPUT_MODEL;
   referenceLayoutId: string; donorLayoutId: string; proposal: PairedReceiverProposal;
   families: Array<{
     familyId: string; donorFaceId: string; donorBankIds: string[]; cutSetId: string;
@@ -310,7 +312,9 @@ export function derivePairedReceiverCertificate(r: SolveRequest, s: Solution, pr
         remainingReason:viaReceiverDemandIds.length===target.length?'complete-chain':'remaining-positions-explicitly-supplied'});
     }
   }
-  return { model: PAIRED_RECEIVER_MODEL, inputFingerprint: fingerprint([r.roof, r.faces, r.profile, r.settings]),
+  const stableInput = s.engineVersion === '2.28' || s.installationPlan?.pairedReceiver?.inputModel === CERTIFICATE_INPUT_MODEL;
+  return { model: PAIRED_RECEIVER_MODEL, inputFingerprint: stableInput ? certificateInputFingerprint(r) : fingerprint([r.roof, r.faces, r.profile, r.settings]),
+    ...(stableInput ? { inputModel: CERTIFICATE_INPUT_MODEL } : {}),
     ...(chainMode?{receiverChains}:{}), referenceLayoutId, donorLayoutId, proposal: structuredClone(proposal), families: rows.sort((a, b) => a.side.localeCompare(b.side)),
     freshPurchases, coveredDemandIds: ds.map(d => d.id), dependencyOrder: order,
     physicalFingerprint: pairedPhysicalFingerprint(s), purchasedSheets: ledger.totals.newSheets,
@@ -321,6 +325,7 @@ export function validatePairedReceiverCertificate(r: SolveRequest, s: Solution):
   const certificate = s.installationPlan?.pairedReceiver;
   if (!certificate) return [];
   try {
+    if (certificate.inputModel !== undefined && certificate.inputModel !== CERTIFICATE_INPUT_MODEL) reject('invalid-paired-input-model');
     if (certificate.model !== PAIRED_RECEIVER_MODEL || certificate.referenceLayoutId !== s.installationPlan!.referenceLayoutId ||
       typeof certificate.donorLayoutId !== 'string' || !certificate.donorLayoutId) reject('invalid-paired-certificate');
     const actual = derivePairedReceiverCertificate(r, s, certificate.proposal, certificate.referenceLayoutId, certificate.donorLayoutId);
@@ -329,4 +334,21 @@ export function validatePairedReceiverCertificate(r: SolveRequest, s: Solution):
   } catch (error) {
     return [{ severity: 'error', code: 'PAIRED_RECEIVER_FAMILY', message: error instanceof PairedReceiverRejection ? error.code : 'malformed-paired-certificate' }];
   }
+}
+
+/** Older reviews stripped signed image URLs but their input token included it.
+ * Upgrade only after reproducing every other certificate field exactly. The
+ * caller must also run normal draft validation and verify review ownership.
+ * No cut, stock, source ID, set-out or original engine label is changed. */
+export function recheckLegacyPairedInput(r: SolveRequest, s: Solution): Solution | null {
+  const c = s.installationPlan?.pairedReceiver;
+  if (!c || !['2.26', '2.27'].includes(s.engineVersion ?? '') || c.inputModel !== undefined) return null;
+  try {
+    const replay = derivePairedReceiverCertificate(r, s, c.proposal, c.referenceLayoutId, c.donorLayoutId);
+    if (fingerprint({ ...replay, inputFingerprint: c.inputFingerprint }) !== fingerprint(c)) return null;
+    const next = structuredClone(s);
+    next.installationPlan!.pairedReceiver = { ...c, inputModel: CERTIFICATE_INPUT_MODEL };
+    next.installationPlan!.pairedReceiver = derivePairedReceiverCertificate(r, next, c.proposal, c.referenceLayoutId, c.donorLayoutId);
+    return next;
+  } catch { return null; }
 }

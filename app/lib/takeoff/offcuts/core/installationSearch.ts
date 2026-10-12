@@ -1,3 +1,6 @@
+import { connectedDonorVariants, type ConnectedDiscoveryReport } from './connectedDonorSearch';
+import { deriveConnectedDonorCertificate, connectedReversalReferenceMatches } from './connectedDonorFamilies';
+import { pairedReceiverOpportunities } from './pairedReceiverFamilies';
 import { searchPairedReceiverFamilies, chainCoverageScore, type PairedReceiverSearchReport } from './pairedReceiverSearch';
 /** Optional anchored reversal. Every trial starts from a clean material tree;
  * changing a donor invalidates its old descendants rather than reusing them twice.
@@ -19,9 +22,9 @@ import { planSignature } from './diagnostics';
 import { coherentWorkflow } from './globalBanks';
 import { fingerprint } from './math';
 
-export const INSTALLATION_SEARCH_POLICY=Object.freeze({model:'anchored-donor-search-v2' as const,defaultMilliseconds:20000,maximumMilliseconds:25000,maximumTrials:24,maximumPlans:3});
+export const INSTALLATION_SEARCH_POLICY=Object.freeze({model:'anchored-donor-search-v3' as const,defaultMilliseconds:20000,maximumMilliseconds:25000,maximumTrials:24,maximumPlans:3});
 export interface InstallationSearchOptions {previous:Solution;attempt?:number;maxMilliseconds?:number}
-export interface InstallationSearchReport {pairedReceiverSearches?:PairedReceiverSearchReport[];model:typeof INSTALLATION_SEARCH_POLICY.model;referenceLayoutId:string;inputFingerprint:string;status:'found'|'no-distinct-plan';elapsedMs:number;budgetReached:boolean;trialsPlanned:number;trialsTried:number;validatedCount:number;rejectedCount:number;trials:Array<{id:string;valid:boolean;reason:string;linealM?:number;newSheets?:number}>}
+export interface InstallationSearchReport {connectedDiscovery?:ConnectedDiscoveryReport;connectedTrialsTried?:number;connectedPhase?:'not-needed'|'attempted'|'not-reached';discoverySkipped?:Array<{id:string;reason:string}>;noResultReason?:'no-supported-donor-group'|'no-verified-reversal'|'search-budget-reached';pairedReceiverSearches?:PairedReceiverSearchReport[];model:typeof INSTALLATION_SEARCH_POLICY.model;referenceLayoutId:string;inputFingerprint:string;status:'found'|'no-distinct-plan';elapsedMs:number;budgetReached:boolean;trialsPlanned:number;trialsTried:number;validatedCount:number;rejectedCount:number;trials:Array<{id:string;valid:boolean;reason:string;linealM?:number;newSheets?:number;donorFaceIds?:string[];receiverFaceIds?:string[]}>}
 export interface InstallationSearchResult {plans:Solution[];report:InstallationSearchReport}
 const clone=<T>(x:T):T=>structuredClone(x);
 class InstallationDeadline extends Error{constructor(){super('Offcut search cancelled at installation search deadline.');this.name='InstallationDeadline';}}
@@ -147,43 +150,78 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
   if(!Number.isFinite(limit)||limit<0||limit>INSTALLATION_SEARCH_POLICY.maximumMilliseconds||!Number.isInteger(attempt)||attempt<0||attempt>10000)throw new Error('Invalid installation search budget or attempt.');
   if(previous.salvage||previous.placements.some(p=>p.manual)||!previous.bankLayout||r.settings.stockMode!=='bank-first'||validateDraft({schemaVersion:1,...r,solution:previous}).some(i=>i.severity==='error'))throw new Error('Choose a valid unchanged bank plan before searching alternative donors.');
   const started=performance.now(),clock=hooks.now??(()=>performance.now()),at=clock(),elapsed=()=>Math.max(performance.now()-started,clock()-at);
-  const report:InstallationSearchReport={model:INSTALLATION_SEARCH_POLICY.model,referenceLayoutId:planSignature(previous),inputFingerprint:fingerprint([r.roof,r.faces,r.profile,r.settings]),status:'no-distinct-plan',elapsedMs:0,budgetReached:false,trialsPlanned:0,trialsTried:0,validatedCount:0,rejectedCount:0,trials:[]};
+  const report:InstallationSearchReport={model:INSTALLATION_SEARCH_POLICY.model,referenceLayoutId:planSignature(previous),inputFingerprint:fingerprint([r.roof,r.faces,r.profile,r.settings]),status:'no-distinct-plan',connectedPhase:'not-reached',elapsedMs:0,budgetReached:false,trialsPlanned:0,trialsTried:0,validatedCount:0,rejectedCount:0,trials:[]};
   const check=()=>{if(hooks.shouldCancel?.())throw new Error('Offcut search cancelled.');if(elapsed()>=limit)throw new InstallationDeadline();return false;};
+  let activeTrialId:string|undefined;
   const plans:Solution[]=[],seen=new Set([planSignature(previous)]);
   const accept=(s:Solution,id:string)=>{
-    check();s.engineVersion='2.27';s.objective='installation';s.layoutId=planSignature(s);
+    check();s.engineVersion='2.28';s.objective='installation';s.layoutId=planSignature(s);
     const errors=validateDraft({schemaVersion:1,...r,solution:s}).filter(i=>i.severity==='error');
-    if(!errors.length&&s.installationPlan?.kind==='reversed-donors'&&!s.installationPlan.pairedReceiver){report.rejectedCount++;report.trials.push({id,valid:false,reason:'missing-paired-receiver-certificate'});return;}
+    if(!errors.length&&s.installationPlan?.kind==='reversed-donors'&&!s.installationPlan.pairedReceiver&&!s.installationPlan.connectedReversal){report.rejectedCount++;report.trials.push({id,valid:false,reason:'missing-reversal-family-certificate'});return;}
     if(errors.length){report.rejectedCount++;report.trials.push({id,valid:false,reason:errors.map(e=>e.code).join(',')});return;}
     report.validatedCount++;const width=r.profile.coverMm+r.profile.leftLapMm+r.profile.rightLapMm;
     report.trials.push({id,valid:true,reason:seen.has(s.layoutId)?'duplicate-physical-plan':'checked',linealM:s.metrics.newMaterialMm2/width/1000,newSheets:s.metrics.newSheetCount});
     if(seen.has(s.layoutId))return;seen.add(s.layoutId);s.issues=s.issues.filter(i=>i.severity==='warning');s.status='prototype-review';s.orderReady=false;
     plans.push(s);
   };
-  const variants=reversedDonorVariants(r,previous,attempt);report.trialsPlanned=variants.length+1;
+  const discovered=connectedDonorVariants(r,previous,attempt);
+  report.connectedDiscovery=discovered.report;
+  // Do not spend the runtime solving a single-donor seed for a validator that
+  // explicitly requires a two-donor paired valley. The connected route has its
+  // own independently replayable whole-family certificate.
+  const variants=reversedDonorVariants(r,previous,attempt).filter(v=>{
+    const donors=v.installationSetout?.measuredFillerFaceIds??[];
+    const reason=donors.length!==2?'paired-path-requires-two-donors':
+      !pairedReceiverOpportunities(r,donors,Object.keys(v.receiverSourceFaceIds??{})).length?'no-paired-receiver-ends':null;
+    if(reason)(report.discoverySkipped??=[]).push({id:v.id,reason});
+    return !reason;
+  });
+  report.trialsPlanned=variants.length+1;
   try{
     check();hooks.onStage?.('installation-search');
-    const barge=bargeStartCandidate(r,previous,check);report.trialsTried++;if(barge)accept(barge,'fresh-barge-starts');
+    activeTrialId='fresh-barge-starts';const barge=bargeStartCandidate(r,previous,check);report.trialsTried++;if(barge)accept(barge,'fresh-barge-starts');else report.trials.push({id:activeTrialId,valid:false,reason:'no-changed-barge-start'});activeTrialId=undefined;
     for(const variant of variants){
-      check();report.trialsTried++;hooks.onProgress?.(report.trialsTried-1,report.trialsPlanned);
+      // A failed narrow paired search must leave time for connected discovery.
+      // Once any pair is verified, retain the existing paired-search budget.
+      if(discovered.variants.length&&!plans.some(s=>s.installationPlan?.pairedReceiver)&&elapsed()>=limit*.55)break;
+      check();activeTrialId=variant.id;report.trialsTried++;hooks.onProgress?.(report.trialsTried-1,report.trialsPlanned);
       try{
         const s=optimiseBankLayouts(r,{...hooks,bankVariant:variant,shouldCancel:check,onPortfolioCandidate:undefined,onCheckedCandidate:undefined,onDecisionTrace:undefined,onProgress:undefined,planSearch:{objective:'recommended'}})[0];
         if(!s){report.rejectedCount++;report.trials.push({id:variant.id,valid:false,reason:'no-bank-candidate'});continue;}check();s.objective='installation';protectValleyReceivers(r,s,check);
         s.installationPlan={model:INSTALLATION_PLAN_MODEL,kind:'reversed-donors',referenceLayoutId:planSignature(previous),donorFaceIds:variant.installationSetout!.measuredFillerFaceIds,receiverFaceIds:Object.keys(variant.receiverSourceFaceIds??{}),siteSetoutConfirmed:false,reuseEndTrimMm:variant.receiverTrimAllowanceMm??0};
-        // V2.26: never publish a loose three-piece reversal as a paired plan.
-        // The seed's donors are held fixed while both receiver ends are solved.
-        // Stream each checked transaction immediately: a later deadline cannot
-        // erase already validated alternatives from this worker run.
         const paired=searchPairedReceiverFamilies(r,s,()=>{check();},true,
           candidate=>accept(candidate,variant.id+'/'+candidate.layoutId),
           diagnostic=>(report.pairedReceiverSearches??=[]).push(diagnostic));
         if(!paired.plans.length){report.rejectedCount++;report.trials.push({id:variant.id,valid:false,reason:Object.keys(paired.report.rejected).join(',')||'no-paired-receiver-plan'});}
-
       }catch(e){if(e instanceof InstallationDeadline||e instanceof Error&&/cancel|time limit/i.test(e.message))throw e;report.rejectedCount++;report.trials.push({id:variant.id,valid:false,reason:e instanceof Error?e.message:String(e)});}
     }
-  }catch(e){if(e instanceof InstallationDeadline){report.budgetReached=true;const active=report.pairedReceiverSearches?.at(-1);if(active)active.bounded=true;}else throw e;}
+    if(plans.some(s=>s.installationPlan?.pairedReceiver))report.connectedPhase='not-needed';
+    else{
+      report.connectedPhase='attempted';report.connectedTrialsTried=0;
+      report.trialsPlanned+=discovered.variants.length;
+      for(const {bank:variant,scope} of discovered.variants){
+        check();activeTrialId=variant.id;report.trialsTried++;report.connectedTrialsTried++;hooks.onProgress?.(report.trialsTried-1,report.trialsPlanned);
+        try{
+          const s=optimiseBankLayouts(r,{...hooks,bankVariant:variant,shouldCancel:check,onPortfolioCandidate:undefined,onCheckedCandidate:undefined,onDecisionTrace:undefined,onProgress:undefined,planSearch:{objective:'recommended'}})[0];
+          if(!s)throw new Error('no-connected-bank-candidate');
+          check();s.objective='installation';protectValleyReceivers(r,s,check);recalculateMetrics(s);
+          s.engineVersion='2.28';
+          s.installationPlan={model:INSTALLATION_PLAN_MODEL,kind:'reversed-donors',referenceLayoutId:planSignature(previous),
+            donorFaceIds:scope.donorFaceIds,receiverFaceIds:scope.receiverFaceIds,siteSetoutConfirmed:false,reuseEndTrimMm:0};
+          s.installationPlan.connectedReversal=deriveConnectedDonorCertificate(r,s,scope,planSignature(previous));
+          if(!connectedReversalReferenceMatches(previous,s))throw new Error('connected-reference-mismatch');
+          s.layoutLabel='Reversed banks — connected cuts';
+          accept(s,variant.id);
+        }catch(e){
+          if(e instanceof InstallationDeadline||e instanceof Error&&/cancel|time limit/i.test(e.message))throw e;
+          report.rejectedCount++;report.trials.push({id:variant.id,valid:false,reason:e instanceof Error?e.message:String(e),
+            donorFaceIds:scope.donorFaceIds,receiverFaceIds:scope.receiverFaceIds});
+        }
+      }
+    }
+  }catch(e){if(e instanceof InstallationDeadline){report.budgetReached=true;if(report.connectedPhase!=='attempted'){const active=report.pairedReceiverSearches?.at(-1);if(active)active.bounded=true;}if(activeTrialId)report.trials.push({id:activeTrialId,valid:false,reason:'search-budget-reached-during-trial'});}else throw e;}
   if(hooks.shouldCancel?.())throw new Error('Offcut search cancelled.');
-  const starts=plans.filter(s=>s.installationPlan!.kind==='barge-starts'),reversed=plans.filter(s=>s.installationPlan!.kind==='reversed-donors').sort((a,b)=>chainCoverageScore(b)-chainCoverageScore(a)||coherentWorkflow(a).score-coherentWorkflow(b).score||a.metrics.newMaterialMm2-b.metrics.newMaterialMm2);
+  const starts=plans.filter(s=>s.installationPlan!.kind==='barge-starts'),reversed=plans.filter(s=>s.installationPlan!.kind==='reversed-donors'&&!!s.installationPlan!.pairedReceiver).sort((a,b)=>chainCoverageScore(b)-chainCoverageScore(a)||coherentWorkflow(a).score-coherentWorkflow(b).score||a.metrics.newMaterialMm2-b.metrics.newMaterialMm2);
   // No savings floor: an explicitly requested different donor strategy can cost
   // more. Show at most two genuinely different reversals, never fake five roles.
   const selected:Solution[]=[...starts.slice(0,1)];
@@ -192,6 +230,21 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
   if(reversed[0])selected.push(reversed[0]);
   const second=reversed.find(s=>s!==reversed[0]&&((reversed[0].installationPlan!.reuseEndTrimMm??0)>(s.installationPlan!.reuseEndTrimMm??0)&&s.metrics.newMaterialMm2<reversed[0].metrics.newMaterialMm2-1e6||s.bankLayout!.installationSetout!.anchors.some(a=>!reversed[0].bankLayout!.installationSetout!.anchors.some(b=>b.id===a.id))&&s.metrics.newMaterialMm2<=reversed[0].metrics.newMaterialMm2*1.05&&coherentWorkflow(s).score<coherentWorkflow(reversed[0]).score));
   if(second)selected.push(second);
-  report.status=selected.length?'found':'no-distinct-plan';report.elapsedMs=elapsed();
+  if(!reversed.length){
+    const connected=plans.filter(s=>!!s.installationPlan?.connectedReversal).sort((a,b)=>
+      b.installationPlan!.donorFaceIds.length-a.installationPlan!.donorFaceIds.length||
+      a.metrics.newMaterialMm2-b.metrics.newMaterialMm2||coherentWorkflow(a).score-coherentWorkflow(b).score||planSignature(a).localeCompare(planSignature(b)));
+    const first=connected[0];
+    if(first){
+      selected.push(first);
+      const other=connected.filter(s=>s!==first&&s.installationPlan!.donorFaceIds.length===first.installationPlan!.donorFaceIds.length&&
+        s.metrics.newMaterialMm2<=first.metrics.newMaterialMm2*1.05&&coherentWorkflow(s).score<coherentWorkflow(first).score)
+        .sort((a,b)=>coherentWorkflow(a).score-coherentWorkflow(b).score||a.metrics.newMaterialMm2-b.metrics.newMaterialMm2)[0];
+      if(other)selected.push(other);
+    }
+  }
+  report.status=selected.length?'found':'no-distinct-plan';
+  if(!selected.length)report.noResultReason=report.budgetReached?'search-budget-reached':
+    !variants.length&&!discovered.variants.length?'no-supported-donor-group':'no-verified-reversal';report.elapsedMs=elapsed();
   return{plans:selected.slice(0,INSTALLATION_SEARCH_POLICY.maximumPlans),report};
 }

@@ -1,8 +1,8 @@
 /** Optional, transactional V2.26 receiver allocation. The main solver and its
  * objectives never call this module. Both complete source families, the fresh
  * bridge and downstream recuts are changed together, or nothing is accepted. */
-import type { Demand, Lap, Offcut, Placement, Solution, SolveRequest } from './types';
-import { area, bounds, fitY, rotate180 } from './regions';
+import type { Demand, Lap, Placement, Solution, SolveRequest } from './types';
+import { area, fitY, rotate180 } from './regions';
 import { generateDemands } from './material';
 import { rebuildInventory } from './inventory';
 import { coverPhase } from './installationAnchors';
@@ -155,7 +155,7 @@ function transact(r: SolveRequest, seed: Solution, c: Candidate, check: () => vo
   check(); protectValleyReceivers(r, s, () => { check(); return false; });
   recalculateMetrics(s); inventory(s);
   // Parent/child rules and the existing coupled-valley safety remain hard gates.
-  s.engineVersion = c.chainMode ? '2.27' : '2.26';
+  s.engineVersion = c.chainMode ? '2.28' : '2.26';
   s.installationPlan!.reuseEndTrimMm = 0;
   s.installationPlan!.pairedReceiver = derivePairedReceiverCertificate(r, s, c.proposal,
     s.installationPlan!.referenceLayoutId, planSignature(seed));
@@ -183,9 +183,9 @@ export function searchPairedReceiverFamilies(r: SolveRequest, seed: Solution, ch
   onReport?.(report);
   const reject = (code: string) => { report.rejected[code] = (report.rejected[code] ?? 0) + 1; };
   if (!seed.bankLayout || seed.installationPlan?.kind !== 'reversed-donors' || seed.installationPlan.donorFaceIds.length !== 2)
-    return { plans: [], report: { ...report, rejected: { 'requires-two-reversed-donors': 1 } } };
+    { reject('requires-two-reversed-donors'); return { plans: [], report }; }
   const rebuilt = rebuildInventory(seed.demands, seed.placements, seed.profile);
-  if (rebuilt.unresolved.length) return { plans: [], report: { ...report, rejected: { 'unresolved-seed-inventory': 1 } } };
+  if (rebuilt.unresolved.length) { reject('unresolved-seed-inventory'); return { plans: [], report }; }
   const canonical = { ...seed, offcuts: rebuilt.offcuts };
   const opportunities = pairedReceiverOpportunities(r, seed.installationPlan.donorFaceIds, seed.installationPlan.receiverFaceIds);
   report.opportunities = opportunities.length;

@@ -65,7 +65,7 @@ interface Member {
 export function materialSections(s: Solution): MaterialSection[] {
   const ds = new Map(s.demands.map(d => [d.id,d])), os = new Map(s.offcuts.map(o => [o.id,o]));
   const depths=reuseDepth(s);
-  const supply = supplyView(s), buckets = new Map<string, Member[]>();
+  const supply = supplyView(s,true), buckets = new Map<string, Member[]>();
   const seen = new Set<string>();
   for (const p of s.placements) {
     const d = ds.get(p.demandId); if (!d || seen.has(d.id)) continue; seen.add(d.id);
