@@ -904,35 +904,35 @@ export function QuoteBuilder({
                 </h3>
                {areaComps.length > 0 ? (
                   <ScrollIndicator className="qb-review-scroll" ariaLabel="Quote quantities and costs">
-                  <table className="qb-review-table">
-                    <thead>
-                      <tr className="text-left text-xs text-slate-500 border-b">
-                        <th className="py-1 whitespace-nowrap">Component</th>
-                        <th className="py-1 text-right whitespace-nowrap">Entries</th>
-                        <th className="py-1 text-right whitespace-nowrap">Total Qty</th>
-                        <th className="py-1 text-right whitespace-nowrap">Item Cost</th>
-                        <th className="py-1 text-right whitespace-nowrap">Labour</th>
-                        <th className="py-1 text-right whitespace-nowrap">Total</th>
+                  <table className="qb-review-table" role="table">
+                    <thead role="rowgroup">
+                      <tr role="row" className="text-left text-xs text-slate-500 border-b">
+                        <th role="columnheader" scope="col" className="py-1 whitespace-nowrap">Component</th>
+                        <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Entries</th>
+                        <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Total Qty</th>
+                        <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Item Cost</th>
+                        <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Labour</th>
+                        <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Total</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody role="rowgroup">
                       {areaComps.map(c => (
-                        <tr key={c.id} className="border-b border-slate-100">
-                          <td className="py-1.5 whitespace-nowrap">
+                        <tr role="row" key={c.id} className="border-b border-slate-100">
+                          <td role="cell" className="py-1.5 whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Component</span><span className="qb-review-cell-value">
                             {c.name}
                             {(c.is_rate_overridden || c.is_waste_overridden) && (
                               <span className="qb-override" title="Overridden from template default" aria-label="Overridden from template default"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4" /></svg></span>
                             )}
-                          </td>
-                          <td className="py-1.5 text-right whitespace-nowrap">{(entries[c.id] ?? []).length}</td>
-                          <td className="py-1.5 text-right whitespace-nowrap">
+                          </span></td>
+                          <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Entries</span><span className="qb-review-cell-value">{(entries[c.id] ?? []).length}</span></td>
+                          <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Total Qty</span><span className="qb-review-cell-value">
                             {formatPricedQuantity(c)}
-                          </td>
-                          <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
-                          <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
-                          <td className="py-1.5 text-right font-medium whitespace-nowrap">
+                          </span></td>
+                          <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Item Cost</span><span className="qb-review-cell-value">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</span></td>
+                          <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Labour</span><span className="qb-review-cell-value">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</span></td>
+                          <td role="cell" className="py-1.5 text-right font-medium whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Total</span><span className="qb-review-cell-value">
                             {formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}
-                          </td>
+                          </span></td>
                         </tr>
                       ))}
                     </tbody>
@@ -956,26 +956,26 @@ export function QuoteBuilder({
              <div className="qc-surface qb-review-card">
                <h3 className="qb-group-title">Quote items</h3>
                 <ScrollIndicator className="qb-review-scroll" ariaLabel="Quote quantities and costs">
-                <table className="qb-review-table">
-                 <thead>
-                   <tr className="text-left text-xs text-slate-500 border-b">
-                     <th className="py-1 whitespace-nowrap">Component</th>
-                     <th className="py-1 text-right whitespace-nowrap">Entries</th>
-                     <th className="py-1 text-right whitespace-nowrap">Total Qty</th>
-                     <th className="py-1 text-right whitespace-nowrap">Item Cost</th>
-                     <th className="py-1 text-right whitespace-nowrap">Labour</th>
-                     <th className="py-1 text-right whitespace-nowrap">Total</th>
+                <table className="qb-review-table" role="table">
+                 <thead role="rowgroup">
+                   <tr role="row" className="text-left text-xs text-slate-500 border-b">
+                     <th role="columnheader" scope="col" className="py-1 whitespace-nowrap">Component</th>
+                     <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Entries</th>
+                     <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Total Qty</th>
+                     <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Item Cost</th>
+                     <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Labour</th>
+                     <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Total</th>
                    </tr>
                  </thead>
-                 <tbody>
+                 <tbody role="rowgroup">
                    {noAreaComps.map(c => (
-                     <tr key={c.id} className="border-b border-slate-100">
-                       <td className="py-1.5 whitespace-nowrap">{c.name}</td>
-                       <td className="py-1.5 text-right whitespace-nowrap">{(entries[c.id] ?? []).length}</td>
-                       <td className="py-1.5 text-right whitespace-nowrap">{formatPricedQuantity(c)}</td>
-                       <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
-                       <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
-                       <td className="py-1.5 text-right font-medium whitespace-nowrap">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
+                     <tr role="row" key={c.id} className="border-b border-slate-100">
+                       <td role="cell" className="py-1.5 whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Component</span><span className="qb-review-cell-value">{c.name}</span></td>
+                       <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Entries</span><span className="qb-review-cell-value">{(entries[c.id] ?? []).length}</span></td>
+                       <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Total Qty</span><span className="qb-review-cell-value">{formatPricedQuantity(c)}</span></td>
+                       <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Item Cost</span><span className="qb-review-cell-value">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</span></td>
+                       <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Labour</span><span className="qb-review-cell-value">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</span></td>
+                       <td role="cell" className="py-1.5 text-right font-medium whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Total</span><span className="qb-review-cell-value">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</span></td>
                      </tr>
                    ))}
                  </tbody>
@@ -989,28 +989,28 @@ export function QuoteBuilder({
            <div className="qc-surface qb-review-card">
              <h3 className="qb-group-title">Extras</h3>
               <ScrollIndicator className="qb-review-scroll" ariaLabel="Quote quantities and costs">
-              <table className="qb-review-table">
-               <thead>
-                 <tr className="text-left text-xs text-slate-500 border-b">
-                   <th className="py-1 whitespace-nowrap">Extra</th>
-                   <th className="py-1 text-right whitespace-nowrap">Entries</th>
-                   <th className="py-1 text-right whitespace-nowrap">Total Qty</th>
-                   <th className="py-1 text-right whitespace-nowrap">Item Cost</th>
-                   <th className="py-1 text-right whitespace-nowrap">Labour</th>
-                   <th className="py-1 text-right whitespace-nowrap">Total</th>
+              <table className="qb-review-table" role="table">
+               <thead role="rowgroup">
+                 <tr role="row" className="text-left text-xs text-slate-500 border-b">
+                   <th role="columnheader" scope="col" className="py-1 whitespace-nowrap">Extra</th>
+                   <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Entries</th>
+                   <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Total Qty</th>
+                   <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Item Cost</th>
+                   <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Labour</th>
+                   <th role="columnheader" scope="col" className="py-1 text-right whitespace-nowrap">Total</th>
                  </tr>
                </thead>
-               <tbody>
+               <tbody role="rowgroup">
                  {extraComps.map(c => (
-                   <tr key={c.id} className="border-b border-amber-100">
-                     <td className="py-1.5 whitespace-nowrap">{c.name}</td>
-                     <td className="py-1.5 text-right whitespace-nowrap">{(entries[c.id] ?? []).length}</td>
-                     <td className="py-1.5 text-right whitespace-nowrap">{formatPricedQuantity(c)}</td>
-                     <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
-                     <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
-                     <td className="py-1.5 text-right font-medium whitespace-nowrap">
+                   <tr role="row" key={c.id} className="border-b border-amber-100">
+                     <td role="cell" className="py-1.5 whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Extra</span><span className="qb-review-cell-value">{c.name}</span></td>
+                     <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Entries</span><span className="qb-review-cell-value">{(entries[c.id] ?? []).length}</span></td>
+                     <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Total Qty</span><span className="qb-review-cell-value">{formatPricedQuantity(c)}</span></td>
+                     <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Item Cost</span><span className="qb-review-cell-value">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</span></td>
+                     <td role="cell" className="py-1.5 text-right whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Labour</span><span className="qb-review-cell-value">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</span></td>
+                     <td role="cell" className="py-1.5 text-right font-medium whitespace-nowrap"><span className="qb-review-cell-label" aria-hidden="true">Total</span><span className="qb-review-cell-value">
                        {formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}
-                     </td>
+                     </span></td>
                    </tr>
                  ))}
                </tbody>

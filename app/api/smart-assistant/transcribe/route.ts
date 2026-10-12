@@ -1,11 +1,12 @@
 import { isCustomUsageCompany } from '@/app/lib/billing/custom/usage/store';
 import { withDemoTranscription } from '@/app/lib/demo/assistant.server';
 import { NextRequest, NextResponse } from 'next/server';
+import { VOICE_UPLOAD_MAX_BYTES, voiceAudioMaxBytes } from '@/app/lib/smart-assistant/voice-policy';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
-const MAX_BYTES = 15 * 1024 * 1024; // 15MB upload cap (~2min compressed audio)
+const MAX_BYTES = voiceAudioMaxBytes(); // Leaves multipart headroom below the deployment's request ceiling.
 
 /**
  * POST /api/smart-assistant/transcribe
@@ -43,7 +44,7 @@ async function handlePost(req: NextRequest) {
   // Reject oversized uploads before parsing multipart: formData() throws
   // on huge bodies, which would hide the 413 behind a 400.
   const contentLength = Number(req.headers.get('content-length') ?? '0');
-  if (contentLength > MAX_BYTES + 64 * 1024) {
+  if (contentLength > VOICE_UPLOAD_MAX_BYTES) {
     return NextResponse.json({ error: 'Recording too long' }, { status: 413 });
   }
 

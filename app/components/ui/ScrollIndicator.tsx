@@ -15,12 +15,12 @@ interface ScrollIndicatorProps {
  * Native -webkit-scrollbar styling doesn't reliably show on iOS Safari,
  * so we render a custom indicator bar below the scrollable content.
  *
- * The bar is always visible: faint orange at idle, brighter when scrolling.
+ * When content overflows, the bar is faint orange at idle and brighter while scrolling.
  */
 export function ScrollIndicator({ children, className = '', ariaLabel }: ScrollIndicatorProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [ratio, setRatio] = useState(0);
-  const [thumbWidth, setThumbWidth] = useState(30);
+  const [thumbWidth, setThumbWidth] = useState(100);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -33,6 +33,7 @@ export function ScrollIndicator({ children, className = '', ariaLabel }: ScrollI
       const maxScroll = scrollWidth - clientWidth;
       if (maxScroll <= 0) {
         setRatio(0);
+        setThumbWidth(100);
         return;
       }
       setRatio(scrollLeft / maxScroll);
@@ -53,13 +54,21 @@ export function ScrollIndicator({ children, className = '', ariaLabel }: ScrollI
     update();
     el.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Re-measure on resize
+    // Content can grow without resizing the scroll viewport (loaded rows,
+    // responsive cards, images). Observe the content boxes as well as the port.
     const ro = new ResizeObserver(update);
-    ro.observe(el);
+    const observeContents = () => {
+      ro.disconnect(); ro.observe(el);
+      Array.from(el.children).forEach(child => ro.observe(child));
+      update();
+    };
+    const changes = new MutationObserver(observeContents);
+    changes.observe(el, { childList: true });
+    observeContents();
 
     return () => {
       el.removeEventListener('scroll', handleScroll);
-      ro.disconnect();
+      ro.disconnect(); changes.disconnect();
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
   }, []);

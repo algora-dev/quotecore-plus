@@ -81,21 +81,44 @@ main:has(> [data-qc-ui='v2'][data-qc-page='quote-builder']) {
 :where([data-qc-ui='v2']) .qb-file-name { font-size: 13px; font-weight: 600; color: var(--qc-text-primary); overflow-wrap: anywhere; }
 :where([data-qc-ui='v2']) .qb-file-link { display: inline-flex; align-items: center; min-height: 40px; padding: 8px; color: var(--qc-text-link); text-decoration: underline; text-underline-offset: 3px; font-size: 13px; }
 /* Read-only review: retain every quantity, rounding and override indicator. */
-:where([data-qc-ui='v2']) .qb-review-scroll { margin-top: 16px; max-width: 100%; }
+:where([data-qc-ui='v2']) .qb-review-scroll { margin-top: 16px; max-width: 100%; min-width:0; container:qb-review / inline-size; }
 :where([data-qc-ui='v2']) .qb-review-table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; }
-/* Mobile (owner 2026-10-11): the 680px desktop minimum forced horizontal scroll on
-   phones - demo tester's "preview bleeds off screen" report. Narrow viewports drop
-   the minimums so the table reflows to the screen instead. */
-@media (max-width: 639px) {
-  :where([data-qc-ui='v2']) .qb-review-table { min-width: 0; font-size: 12px; }
-  :where([data-qc-ui='v2']) .qb-review-table :where(th,td) { padding: 10px 6px; }
-  :where([data-qc-ui='v2']) .qb-review-table :where(th,td):first-child { min-width: 0; max-width: none; }
-}
 :where([data-qc-ui='v2']) .qb-review-table :where(th,td) { padding: 12px 10px; border-bottom: 1px solid var(--qc-border-divider); vertical-align: top; }
 :where([data-qc-ui='v2']) .qb-review-table th { color: var(--qc-text-secondary); font-size: 12px; font-weight: 600; }
 :where([data-qc-ui='v2']) .qb-review-table :where(th,td):first-child { padding-left: 0; min-width: 170px; max-width: 340px; white-space: normal; overflow-wrap: anywhere; }
 :where([data-qc-ui='v2']) .qb-review-table :where(th,td):last-child { padding-right: 0; }
 :where([data-qc-ui='v2']) .qb-review-table tbody tr:last-child td { border-bottom: 0; }
+/* Label/value rows retain all six fields, including overrides. Explicit JSX
+   table roles preserve semantics when the screen layout changes display types.
+   Place AFTER desktop rules; size to the actual review pane, not the device. */
+:where([data-qc-ui='v2']) .qb-review-cell-label { display:none; }
+@media screen {
+ @container qb-review (max-width:679px) {
+  :where([data-qc-ui='v2']) .qb-review-table { display:block;min-width:0;font-size:12px; }
+  :where([data-qc-ui='v2']) .qb-review-table thead { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap; }
+  :where([data-qc-ui='v2']) .qb-review-table tbody { display:block; }
+  :where([data-qc-ui='v2']) .qb-review-table tbody tr { display:block;padding:12px 0;border-bottom:1px solid var(--qc-border-divider,#dde1e7); }
+  :where([data-qc-ui='v2']) .qb-review-table tbody td { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:12px;padding:5px 0;border:0;min-width:0;max-width:none;white-space:normal;overflow-wrap:anywhere;text-align:right; }
+  :where([data-qc-ui='v2']) .qb-review-table tbody td:first-child { display:block;min-width:0;max-width:none;padding:0 0 7px;text-align:left;font-weight:600; }
+  :where([data-qc-ui='v2']) .qb-review-table .qb-review-cell-label { display:block;text-align:left;color:var(--qc-text-secondary,#596273);font-weight:400; }
+  :where([data-qc-ui='v2']) .qb-review-table td:first-child .qb-review-cell-label { display:none; }
+  :where([data-qc-ui='v2']) .qb-review-cell-value { min-width:0;overflow-wrap:anywhere; }
+ }
+}
+/* Older browsers without container queries still get a phone layout. */
+@supports not (container-type:inline-size) {
+ @media screen and (max-width:767px) {
+  :where([data-qc-ui='v2']) .qb-review-table { display:block;min-width:0;font-size:12px; }
+  :where([data-qc-ui='v2']) .qb-review-table thead { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap; }
+  :where([data-qc-ui='v2']) .qb-review-table tbody { display:block; }
+  :where([data-qc-ui='v2']) .qb-review-table tbody tr { display:block;padding:12px 0;border-bottom:1px solid var(--qc-border-divider,#dde1e7); }
+  :where([data-qc-ui='v2']) .qb-review-table tbody td { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:12px;padding:5px 0;border:0;min-width:0;max-width:none;white-space:normal;overflow-wrap:anywhere;text-align:right; }
+  :where([data-qc-ui='v2']) .qb-review-table tbody td:first-child { display:block;min-width:0;max-width:none;padding:0 0 7px;text-align:left;font-weight:600; }
+  :where([data-qc-ui='v2']) .qb-review-table .qb-review-cell-label { display:block;text-align:left;color:var(--qc-text-secondary,#596273);font-weight:400; }
+  :where([data-qc-ui='v2']) .qb-review-table td:first-child .qb-review-cell-label { display:none; }
+  :where([data-qc-ui='v2']) .qb-review-cell-value { min-width:0;overflow-wrap:anywhere; }
+ }
+}
 :where([data-qc-ui='v2']) .qb-review-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 24px; align-items: start; }
 :where([data-qc-ui='v2']) .qb-margins { display: flex; flex-direction: column; gap: 20px; }
 :where([data-qc-ui='v2']) .qb-margin-field { min-width: 0; }

@@ -1,6 +1,6 @@
 'use client';
 import { DocumentHeader } from '@/app/components/documents/DocumentHeader';
-import { DocumentEditTarget, DocumentRegion, documentRegion, type DocumentSelection } from '@/app/components/documents/DocumentSelection';
+import { DocumentCellContent, DocumentEditTarget, DocumentRegion, documentRegion, type DocumentSelection } from '@/app/components/documents/DocumentSelection';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import type { ReactNode } from 'react';
 import type { InvoiceRow, EditableLine } from './InvoiceEditor';
@@ -89,9 +89,9 @@ export function InvoicePreview({
         </tr></thead>
         <tbody>{visibleLines.length === 0 ? <tr><td colSpan={hideLinePrices ? 2 : 4}>No line items added yet</td></tr> : visibleLines.map(line => (
           <tr key={line.localId} data-pdf-block {...documentRegion(selection, `line:${line.localId}`)}>
-            <td><p className="font-medium">{line.title || 'Untitled'}</p>{line.description && line.show_description !== false && <p className="text-xs text-slate-500">{line.description}</p>}
-              <DocumentEditTarget selection={selection} id={`line:${line.localId}`} label={line.title || 'line item'} />
-            </td>
+            <td><DocumentCellContent selection={selection} id={`line:${line.localId}`} label={line.title || 'line item'}>
+              <p className="font-medium">{line.title || 'Untitled'}</p>{line.description && line.show_description !== false && <p className="text-xs text-slate-500">{line.description}</p>}
+            </DocumentCellContent></td>
             <td className="qc-output-numeric">{line.show_quantity !== false ? `${line.quantity} ${line.unit}` : '-'}</td>
             {!hideLinePrices && <><td className="qc-output-numeric qc-output-unit-price">{line.show_price ? formatCurrency(line.unit_price, currency) : '-'}</td>
               <td className="qc-output-numeric">{line.show_price ? formatCurrency(line.line_total, currency) : '-'}</td></>}

@@ -213,7 +213,7 @@
    three-row grid (header / scrollable conversation / bottom controls) so the
    bottom controls own the final row and cannot stop short because of flex or
    percentage-height arithmetic. Standalone remains in normal document flow. */
-.standalone { position: static; height: 100dvh; min-height: 100dvh; background: #111216; }
+.standalone { position: static; height: var(--sa-viewport-height,100dvh); min-height: 0; background: #111216; }
 
 @media (hover:hover) and (pointer:fine) {
   .root button[data-qc-component]:hover:not(:disabled) { background: #343740; border-color: #8f8a86; }

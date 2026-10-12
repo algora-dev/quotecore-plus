@@ -7,6 +7,7 @@ import { readSectionPermissions, writeSectionPermissions } from '@/app/lib/smart
 import { DEFAULT_SECTION_PERMISSIONS, permissionsEqual } from '@/app/lib/smart-assistant/section-permissions';
 import { loadAccess } from '@/app/lib/smart-assistant/v2/runtime.server';
 import { isDemoCompany, readActiveDemoContext } from './context';
+import { DEMO_VOICE_UPLOAD_MAX_BYTES, voiceAudioMaxBytes } from '@/app/lib/smart-assistant/voice-policy';
 import { assertSameOrigin, readSmallJson, demoJson, demoErrorResponse } from './http';
 import { reserveDemoAi, settleDemoAi, demoBudgetConfig } from './budget';
 import { ensureDemoAssistantRollout } from './integration.server';
@@ -133,11 +134,12 @@ export async function withDemoTranscription(request: NextRequest, original: (req
     if (demoBudgetConfig().audio <= 0) throw new DemoError('Voice is not calibrated for this demo yet. Type your request instead.',503,'demo_voice_setup');
     // Bound the actual streamed body, not the client Content-Length claim.
     const reader=request.body?.getReader(); if(!reader) throw new DemoError('Audio required.'); const chunks:Uint8Array[]=[];let size=0;
-    while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>1024*1024){await reader.cancel();throw new DemoError('Keep demo recordings under 1 MB, or type instead.',413);}chunks.push(value);}
+    while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>DEMO_VOICE_UPLOAD_MAX_BYTES){await reader.cancel();throw new DemoError('Keep demo recordings under 1 MB, or type instead.',413);}chunks.push(value);}
     const bytes=Buffer.concat(chunks);const headers=new Headers(request.headers);headers.delete('content-length');
     const cloned=new NextRequest(request.url,{method:'POST',headers,body:new Uint8Array(bytes).buffer});
     const data=await cloned.clone().formData(); const file=data.get('audio');
     if(!(file instanceof File)||file.size===0)throw new DemoError('Audio required.');
+    if(file.size>voiceAudioMaxBytes(true))throw new DemoError('Keep demo recordings under 960 KiB, or type instead.',413);
     const digest=createHash('sha256').update(bytes).digest('hex');
     const reservation=await reserveDemoAi(actor.context,'transcribe',digest,digest);
     if (reservation.duplicate) throw new DemoError('This recording was already processed. Record again rather than resending the same request.', 409, 'demo_audio_duplicate');

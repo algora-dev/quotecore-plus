@@ -3,7 +3,7 @@
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
 import { useRef } from 'react';
 import { DocumentHeader } from '@/app/components/documents/DocumentHeader';
-import { DocumentEditTarget, DocumentRegion, documentRegion, type DocumentSelection } from '@/app/components/documents/DocumentSelection';
+import { DocumentCellContent, DocumentEditTarget, DocumentRegion, documentRegion, type DocumentSelection } from '@/app/components/documents/DocumentSelection';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import {
   parseLineByLineData,
@@ -164,7 +164,7 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP', selection
                 ) : (
                   lblLines.map((line) => (
                     <tr key={line.id} data-pdf-block {...documentRegion(selection, `line:${line.id}`)}>
-                      <td>{lineDisplayText(line)}<DocumentEditTarget selection={selection} id={`line:${line.id}`} label={line.text || 'order item'} /></td>
+                      <td><DocumentCellContent selection={selection} id={`line:${line.id}`} label={line.text || 'order item'}>{lineDisplayText(line)}</DocumentCellContent></td>
                       {lblShowQuantityColumn && <td className="qc-output-numeric">{line.quantity}</td>}
                       <td className="qc-output-numeric">
                         {!lblHideLinePrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}
@@ -196,7 +196,7 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP', selection
                     </>
                   ) : null}
                   <tr data-pdf-block className="qc-output-total-row">
-                    <td colSpan={lblShowQuantityColumn ? 2 : 1} className="text-right">Total<DocumentEditTarget selection={selection} id="taxes" label="order taxes and total" /></td>
+                    <td colSpan={lblShowQuantityColumn ? 2 : 1} className="text-right"><DocumentCellContent selection={selection} id="taxes" label="order taxes and total">Total</DocumentCellContent></td>
                     <td className="py-2 pl-3 text-right font-bold text-slate-900 whitespace-nowrap tabular-nums">
                       {formatCurrency(lblTotal, currency)}
                     </td>

@@ -1,6 +1,8 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isRecord } from '@/app/lib/smart-assistant/section-permissions';
+import { isDemoLocation } from '@/app/lib/demo/routing';
+import { voiceAudioMaxBytes, VOICE_AUDIO_BITS_PER_SECOND, VOICE_MAX_DURATION_MS } from '@/app/lib/smart-assistant/voice-policy';
 
 export type VoiceNoteState = 'off' | 'requesting' | 'recording' | 'transcribing';
 
@@ -29,18 +31,23 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
   // Screen Wake Lock (owner feedback 2026-09-29): long voice notes were lost when
   // the phone screen slept mid-recording. Best-effort: unsupported browsers record on.
   const wakeLock = useRef<ScreenWakeSentinel | null>(null);
-  const keepScreenAwake = useCallback(async () => {
+  const keepScreenAwake = useCallback(async (ticket: number) => {
     try {
       const nav = navigator as Navigator & { wakeLock?: { request(type: 'screen'): Promise<ScreenWakeSentinel> } };
       if (!nav.wakeLock || wakeLock.current) return;
       const sentinel = await nav.wakeLock.request('screen');
+      // Permission/wake-lock promises may settle after Stop, Cancel or a new note.
+      if (ticket !== generation.current || stateRef.current !== 'recording' || document.hidden) {
+        await sentinel.release().catch(() => undefined); return;
+      }
+      if (sentinel.released) return;
       wakeLock.current = sentinel;
-      sentinel.addEventListener?.('release', () => { wakeLock.current = null; });
+      sentinel.addEventListener?.('release', () => { if (wakeLock.current === sentinel) wakeLock.current = null; });
     } catch { /* recording continues without the lock */ }
   }, []);
   const dropWakeLock = useCallback(() => {
     const sentinel = wakeLock.current; wakeLock.current = null;
-    try { void sentinel?.release(); } catch { /* already released */ }
+    try { void sentinel?.release().catch(() => undefined); } catch { /* already released */ }
   }, []);
   const callbacks = useRef({ onText, onError, onAutoSend });
   callbacks.current = { onText, onError, onAutoSend };
@@ -75,18 +82,31 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
   }, [release, transition]);
 
   useEffect(() => { if (!visible) cancel(); return cancel; }, [visible, cancel]);
-  useEffect(() => {
-    const hidden = () => { if (document.hidden) cancel(); };
-    document.addEventListener('visibilitychange', hidden);
-    return () => document.removeEventListener('visibilitychange', hidden);
-  }, [cancel]);
-
   const finish = useCallback((thenSend = false) => {
     if (stateRef.current === 'requesting') { finishAfterPermission.current = true; if (thenSend) { autoSendAfter.current = true; setArmedSend(true); } return; }
     if (thenSend) { autoSendAfter.current = true; setArmedSend(true); }
     const rec = recorder.current;
     if (rec?.state === 'recording') { transition('transcribing'); rec.stop(); }
   }, [transition]);
+
+  useEffect(() => {
+    const hidden = () => {
+      if (!document.hidden) return;
+      // Never keep recording or automatically send from a backgrounded page.
+      // Finalize existing audio for review rather than silently deleting it;
+      // an in-flight transcription can finish without losing its result.
+      clearArmedSend();
+      if (stateRef.current === 'recording') {
+        finish(); release();
+        callbacks.current.onError('Recording stopped when the app left the screen. Review the transcript before sending.');
+      } else if (stateRef.current === 'requesting') {
+        cancel();
+        callbacks.current.onError('Recording was cancelled before the microphone opened. Return to the app and try again.');
+      }
+    };
+    document.addEventListener('visibilitychange', hidden);
+    return () => document.removeEventListener('visibilitychange', hidden);
+  }, [cancel, clearArmedSend, finish, release]);
 
   const start = useCallback(async () => {
     if (!allowed.current || stateRef.current !== 'off') return;
@@ -102,7 +122,9 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
       if (ticket !== generation.current || !allowed.current) { stream.getTracks().forEach(t => t.stop()); return; }
       source.current = stream;
       const mime = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].find(v => MediaRecorder.isTypeSupported(v));
-      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      const maxBytes = voiceAudioMaxBytes(isDemoLocation(window.location.hostname, window.location.pathname));
+      // The bitrate is a hint, not a guarantee: enforce real emitted bytes too.
+      const rec = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), audioBitsPerSecond: VOICE_AUDIO_BITS_PER_SECOND });
       recorder.current = rec;
       const chunks: Blob[] = []; let bytes = 0; let tooLarge = false;
       // Metering is optional. Failure to initialise AudioContext must not disable recording.
@@ -117,12 +139,24 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
         }
       } catch { analyser.current = null; setMeterAvailable(false); }
       rec.ondataavailable = event => {
+        if (ticket !== generation.current) return;
         bytes += event.data.size;
-        if (bytes > 14 * 1024 * 1024) { tooLarge = true; if (rec.state === 'recording') rec.stop(); }
-        else if (event.data.size) chunks.push(event.data);
+        if (bytes > maxBytes) { tooLarge = true; if (rec.state === 'recording') rec.stop(); }
+        else if (event.data.size) {
+          chunks.push(event.data);
+          // Leave room for the final encoded chunk. Never slice a media container.
+          if (bytes >= maxBytes * 0.85 && rec.state === 'recording') {
+            callbacks.current.onError('The recording reached the upload limit. Review this transcript, then record the rest separately.');
+            finish();
+          }
+        }
       };
       rec.onerror = () => { if (ticket === generation.current) { cancel(); callbacks.current.onError('Recording stopped unexpectedly. Please try again or use Type.'); } };
-      stream.getAudioTracks().forEach(track => { track.onended = () => { if (ticket === generation.current && stateRef.current === 'recording') { cancel(); callbacks.current.onError('The microphone disconnected. Please try again or use Type.'); } }; });
+      stream.getAudioTracks().forEach(track => { track.onended = () => {
+        if (ticket !== generation.current || stateRef.current !== 'recording') return;
+        clearArmedSend(); finish(); release();
+        callbacks.current.onError('The microphone disconnected. Review the captured transcript, then record the rest separately.');
+      }; });
       rec.onstop = async () => {
         // An old cancelled recorder must not stop a new recorder or its meter.
         if (ticket !== generation.current) return;
@@ -143,7 +177,9 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
           // custom-setup gate) instead of a generic banner that hides the reason.
           if (!response.ok) {
             const serverReason = isRecord(result) && typeof result.error === 'string' && result.error ? result.error : '';
-            throw new Error(serverReason || 'Transcription failed. Try again or use Type.');
+            throw new Error(serverReason || (response.status === 413
+              ? 'That recording exceeds the upload limit. Try a shorter voice note.'
+              : 'Transcription failed. Try again or use Type.'));
           }
           if (!isRecord(result) || typeof result.text !== 'string') throw new Error('Transcription failed. Try again or use Type.');
           const text = result.text.trim();
@@ -157,8 +193,10 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
             callbacks.current.onAutoSend?.(text);
           }
         } catch (error) {
-          clearArmedSend();
-          if (ticket === generation.current) callbacks.current.onError(controller.signal.aborted ? 'Transcription took too long. Please try again or use Type.' : error instanceof Error ? error.message : 'Transcription failed. Use Type instead.');
+          if (ticket === generation.current) {
+            clearArmedSend();
+            callbacks.current.onError(controller.signal.aborted ? 'Transcription took too long. Please try again or use Type.' : error instanceof Error ? error.message : 'Transcription failed. Use Type instead.');
+          }
         } finally {
           if (ticket === generation.current) {
             if (uploadTimeout.current) clearTimeout(uploadTimeout.current);
@@ -169,9 +207,9 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
       rec.start(250);
       const began = Date.now();
       clock.current = setInterval(() => { if (ticket === generation.current) setElapsedSeconds(Math.floor((Date.now() - began) / 1000)); }, 1000);
-      cap.current = setTimeout(() => { if (rec.state === 'recording') finish(); }, 120000);
+      cap.current = setTimeout(() => { if (rec.state === 'recording') finish(); }, VOICE_MAX_DURATION_MS);
       transition('recording');
-      void keepScreenAwake();
+      void keepScreenAwake(ticket);
       if (finishAfterPermission.current) finish();
     } catch (error) {
       if (ticket !== generation.current) return;

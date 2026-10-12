@@ -1,5 +1,5 @@
 import { DocumentHeader } from '@/app/components/documents/DocumentHeader';
-import { DocumentEditTarget, documentRegion, type DocumentSelection } from '@/app/components/documents/DocumentSelection';
+import { DocumentCellContent, DocumentEditTarget, documentRegion, type DocumentSelection } from '@/app/components/documents/DocumentSelection';
 import type { QuoteRow } from '@/app/lib/types';
 import type { TaxLine } from '@/app/lib/taxes/types';
 import { formatCurrency } from '@/app/lib/currency/currencies';
@@ -196,8 +196,9 @@ export function QuotePreview({
                 ) : (
                   <tr key={line.id} data-pdf-block {...documentRegion(selection, `line:${line.id}`)} className="border-b border-slate-100 align-top">
                     <td className="py-2 pr-3 text-slate-900">
-                      {displayLineText(line.text, line.quantityText, line.showUnits)}
-                      <DocumentEditTarget selection={selection} id={`line:${line.id}`} label={line.text || 'line item'} />
+                      <DocumentCellContent selection={selection} id={`line:${line.id}`} label={line.text || 'line item'}>
+                        {displayLineText(line.text, line.quantityText, line.showUnits)}
+                      </DocumentCellContent>
                     </td>
                     {showQuantityColumn && (
                       <td className="qc-output-numeric">
