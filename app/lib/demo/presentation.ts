@@ -56,7 +56,7 @@ export function clampGuidePosition(position: { x: number; y: number }, width: nu
 export function assistantExample(event: string | undefined, units: DemoSystem) {
   if (event === 'assistant.edited') return units === 'metric' ? 'Change the ridge to 6 m and add 12 m of gutter.' : 'Change the ridge to 20 ft and add 40 ft of gutter.';
   if (event === 'assistant.found') return 'Do I have any accepted quotes without a material order?';
-  if (units === 'metric') return 'Create a roof quote for Jim Smith — 180 m² roof on the plan, 25° pitch, 5 hips at 4 m and 1 ridge at 2 m, using the roofing library.';
-  if (units === 'imperial_rs') return 'Create a roof quote for Jim Smith — 19.4 roofing squares on the plan, 25° pitch, 5 hips at 13 ft and 1 ridge at 6.5 ft, using the roofing library.';
-  return 'Create a roof quote for Jim Smith — 1,940 ft² roof on the plan, 25° pitch, 5 hips at 13 ft and 1 ridge at 6.5 ft, using the roofing library.';
+  if (units === 'metric') return 'Create a roof quote for Jim Smith: 180 m² roof on the plan, 25° pitch, 5 hips at 4 m and 1 ridge at 2 m, using the roofing library.';
+  if (units === 'imperial_rs') return 'Create a roof quote for Jim Smith: 19.4 roofing squares on the plan, 25° pitch, 5 hips at 13 ft and 1 ridge at 6.5 ft, using the roofing library.';
+  return 'Create a roof quote for Jim Smith: 1,940 ft² roof on the plan, 25° pitch, 5 hips at 13 ft and 1 ridge at 6.5 ft, using the roofing library.';
 }

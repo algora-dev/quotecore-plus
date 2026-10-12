@@ -15,8 +15,8 @@ export const SKIP_REQUIRED_EVENTS: DemoEvent[] = ['component.created', 'componen
  * copy; the visitor should spend time using QuoteCore+, not operating a tour. */
 export const DEMO_GUIDE_CHAPTERS: { id: DemoGuideChapter; title: string; summary: string; steps: DemoStep[] }[] = [
   { id: 'pricing', title: 'Build your pricing', summary: 'Create one reusable pricing rule, test it, then update an existing price.', steps: [
-    { event: 'component.created', title: 'Create one pricing component', target: 'components', copy: 'Create an Area component, give it any name and add simple material + labour pricing. Save it when you’re done.', hint: 'We’ll use this exact component on the roof in the next chapter.' },
-    { event: 'component.tested', title: 'Test the calculation', target: 'components', copy: 'Open the component you just created and choose Test Component. Run the suggested example to see the real cost breakdown.', hint: 'Testing proves the pricing rule works before you reuse it on a job.' },
+    { event: 'component.created', title: 'Create one pricing component', target: 'components', copy: 'Create an Area component, give it any name and add simple material + labour pricing. *Save* it when you’re done.', hint: 'We’ll use this exact component on the roof in the next chapter.' },
+    { event: 'component.tested', title: 'Test the calculation', target: 'components', copy: 'Open the component you just created and choose *Test Component*. Run the suggested example to see the real cost breakdown.', hint: 'Testing proves the pricing rule works before you reuse it on a job.' },
     { event: 'component.edited', title: 'Update an existing price', target: 'components', copy: 'Open the seeded Roof covering component, change one material price and save.', hint: 'One library change can be reused on future quotes.' },
   ] },
   { id: 'takeoff', title: 'Measure the job', summary: 'Use the prepared roof plan, then save your real final canvas.', steps: [
@@ -24,8 +24,8 @@ export const DEMO_GUIDE_CHAPTERS: { id: DemoGuideChapter; title: string; summary
   ] },
   { id: 'customer-quote', title: 'Prepare the customer quote', summary: 'Turn the measured job into a clean customer-facing quote.', steps: [
     { event: 'quote.template', title: 'Apply the QCP branding', target: 'customer', copy: 'Apply the QCP header/template from the editor. A real account would use your own logo and company details.' },
-    { event: 'quote.presentation', title: 'Make one presentation change', target: 'customer', copy: 'Select a quote line and make one customer-facing change — edit its description, price visibility or wording — then press Save Quote.', hint: 'The quote still comes from the measurements and pricing you saved.' },
-    { event: 'email.sent', title: 'Send the demo quote to yourself', target: 'job', copy: 'If you’re still editing, press Save Quote to return to Job Space. Then choose Send Quote and enter your own email address.', hint: 'Optional: the demo email is clearly marked. Sending does not subscribe you to marketing.' },
+    { event: 'quote.presentation', title: 'Make one presentation change', target: 'customer', copy: 'Select a quote line and make one customer-facing change. Edit its description, price visibility or wording, then press *Save Quote*.', hint: 'The quote still comes from the measurements and pricing you saved.' },
+    { event: 'email.sent', title: 'Send the demo quote to yourself', target: 'job', copy: 'If you’re still editing, press *Save Quote* to return to Job Space. Then choose *Send Quote* and enter your own email address.', hint: 'Optional: the demo email is clearly marked. Sending does not subscribe you to marketing.' },
   ] },
   { id: 'smart-assistant', title: 'Use Smart Assistant', summary: 'Create, change and find work using plain English.', steps: [
     { event: 'assistant.created', title: 'Create work by asking', target: 'assistant', copy: 'Open Smart Assistant and send the example request below. Review its draft, then confirm it.' },
