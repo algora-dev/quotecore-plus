@@ -20,7 +20,10 @@
 .qc-demo-banner-context { flex: 1; min-width: 120px; }
 .qc-demo-banner button,.qc-demo-banner a { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 5px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--qc-demo-text); font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; }
 .qc-demo-banner button:disabled { cursor: not-allowed; opacity: .6; }
-.qc-demo-guide { position: fixed; right: 20px; bottom: 20px; z-index: var(--qc-z-popover, 40); width: min(376px, calc(100vw - 24px)); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; border: 1px solid var(--qc-demo-line); border-radius: 14px; background: var(--qc-demo-solid); color: var(--qc-demo-text); box-shadow: 0 26px 80px rgba(10,11,16,.25), 0 4px 16px rgba(10,11,16,.12), inset 0 1px rgba(255,255,255,.035); overflow: hidden; }
+.qc-demo-guide { position: fixed; right: 20px; bottom: 20px; /* Owner 2026-10-12: the mobile takeoff shell is fixed z-50; the guide at
+--qc-z-popover(40) was INVISIBLE during the whole touch takeoff (coaching +
+completion card never seen). 55 keeps it above the shell while native dialogs
+still own the top layer. */ z-index: 55; width: min(376px, calc(100vw - 24px)); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; border: 1px solid var(--qc-demo-line); border-radius: 14px; background: var(--qc-demo-solid); color: var(--qc-demo-text); box-shadow: 0 26px 80px rgba(10,11,16,.25), 0 4px 16px rgba(10,11,16,.12), inset 0 1px rgba(255,255,255,.035); overflow: hidden; }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .qc-demo-guide { background: var(--qc-demo-bg); -webkit-backdrop-filter: blur(20px) saturate(120%); backdrop-filter: blur(20px) saturate(120%); } }
 .qc-demo-guide-head { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--qc-demo-line); touch-action: none; user-select: none; }
 .qc-demo-guide-head>div { flex: 1; min-width: 0; display: grid; gap: 2px; }
@@ -61,7 +64,7 @@
 .qc-demo-menu-pop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 6; min-width: 172px; padding: 6px; border: 1px solid var(--qc-demo-line); border-radius: 12px; background: #14181e; box-shadow: 0 18px 44px rgba(6,7,10,.55); display: grid; gap: 2px; }
 .qc-demo-menu-item { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 40px; padding: 8px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--qc-demo-text); font: inherit; font-size: 13px; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; }
 .qc-demo-menu-item:hover { background: var(--qc-demo-wash); color: #ffb36b; }
-.qc-demo-reopen { position: fixed; left: 18px; right: auto; max-width: calc(100vw - 190px); bottom: max(18px, env(safe-area-inset-bottom)); z-index: var(--qc-z-popover, 40); min-height: 52px; padding: 10px 14px; border: 1px solid #ff641f; border-radius: 12px; background: var(--qc-demo-grad); box-shadow: inset 0 1px 0 rgba(255,255,255,.8), inset 0 -2px 0 rgba(56,20,0,.28), 0 12px 30px rgba(255,100,31,.38); color: var(--qc-demo-ink); font: inherit; text-align: left; cursor: pointer; transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease; }
+.qc-demo-reopen { position: fixed; left: 18px; right: auto; max-width: calc(100vw - 190px); bottom: max(18px, env(safe-area-inset-bottom)); z-index: 55; min-height: 52px; padding: 10px 14px; border: 1px solid #ff641f; border-radius: 12px; background: var(--qc-demo-grad); box-shadow: inset 0 1px 0 rgba(255,255,255,.8), inset 0 -2px 0 rgba(56,20,0,.28), 0 12px 30px rgba(255,100,31,.38); color: var(--qc-demo-ink); font: inherit; text-align: left; cursor: pointer; transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease; }
 .qc-demo-reopen span { display: block; font-size: 13px; font-weight: 750; color: var(--qc-demo-ink); }
 .qc-demo-reopen small { font-size: 11px; color: rgba(28,18,6,.78); }
 .qc-demo-error { margin-top: 12px!important; padding: 11px 12px; border: 1px solid rgba(255,138,128,.4); border-radius: var(--qc-radius-control, 12px); background: rgba(255,99,88,.12); color: #ffb3ab!important; font-size: 13px!important; line-height: 1.55; }
@@ -102,7 +105,7 @@
 .qc-demo-assistant-return { display: none; }
 @media (max-width: 1099px) and (min-width: 768px) {
   .qc-demo-overlays[data-assistant-open="true"] .qc-demo-guide { display: none; }
-  .qc-demo-assistant-return { display: block; position: fixed; left: 16px; bottom: 18px; z-index: var(--qc-z-popover); max-width: 230px; }
+  .qc-demo-assistant-return { display: block; position: fixed; left: 16px; bottom: 18px; z-index: 55; max-width: 230px; }
 }
 @media (max-width: 767px) {
   .qc-demo-banner { padding: 5px 10px; gap: 2px 5px; }

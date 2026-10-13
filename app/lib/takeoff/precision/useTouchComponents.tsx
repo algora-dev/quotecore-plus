@@ -217,18 +217,13 @@ export function useTouchComponents(
     return current.subscribe(() => refreshFromAdapter());
   }, [active, getAdapter, refreshFromAdapter]);
 
-  // Guided demo (owner 2026-10-12): preselect the chapter-1 component in the
-  // picker so it is one tap away. The visitor still performs the open/draw
-  // themselves - the preselect never auto-opens the detail page.
-  useEffect(() => {
-    if (!active || modeRef.current !== 'manual') return;
-    const guided = (window as Window & { __qcDemoGuidedComponentId?: string }).__qcDemoGuidedComponentId;
-    if (!guided) return;
-    const comp = componentsRef.current.find(c => c.id === guided);
-    if (!comp) return;
-    setLibraryId(comp.collection_id ?? '');
-    setComponentId(guided);
-  }, [active]);
+  // Guided demo (owner 2026-10-12 evening): NO picker preselect. A preselected
+  // component with no open detail looked like it was "already added" - the
+  // + New entry affordance only exists on the detail page, so the rail was a
+  // dead end. The guide coaches the dropdown pick instead: choosing a
+  // component OPENS its detail (onComponentChange), where + New entry is the
+  // primary action. __qcDemoGuidedComponentId stays set for the completion
+  // card bridge (notifyGuidedEntry).
 
   // Detail view: isolation is a canvas RENDER state (the overlay hides other
   // groups); nothing touches the adapter.
@@ -320,10 +315,11 @@ export function useTouchComponents(
     if (!current?.addCornerCountEntry || !detail) return;
     const entry = current.addCornerCountEntry(detail, basis);
     if (entry) {
+      notifyGuidedEntry(detail.componentId);
       refreshFromAdapter();
       logTakeoffEvent('components.entry.corners.attached', { component: detail.displayName, basis, count: entry.value });
     }
-  }, [detail, refreshFromAdapter]);
+  }, [detail, notifyGuidedEntry, refreshFromAdapter]);
 
   // Drawing - the interaction follows the component's measurement type.
   const onStartNewEntry = useCallback(() => {

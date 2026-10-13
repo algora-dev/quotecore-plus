@@ -55,6 +55,12 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const stateMode = useRef(initialState.mode);
   const alive = useRef(false);
   const copyTimer = useRef<ReturnType<typeof setTimeout>>();
+  const prefillAcked = useRef(false);
+  // Owner 2026-10-12: the touch takeoff requests element fullscreen (Android).
+  // Anything portaled to document.body is NOT rendered while an element owns
+  // the screen - re-portal the guide into the fullscreen element so the helper
+  // stays visible during the whole takeoff.
+  const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
 
   const step = nextGuideStep(state);
   const progress = guideProgress(state);
@@ -84,14 +90,17 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     alive.current = true; setMounted(true);
     const component = (event: Event) => setSurface(readComponentSurface((event as CustomEvent).detail));
     const assistant = (event: Event) => setAssistantOpen((event as CustomEvent).detail?.open === true);
+    const prefilled = () => { prefillAcked.current = true; clearTimeout(copyTimer.current); setCopyStatus('Ready in Smart Assistant - just tap Send.'); copyTimer.current = setTimeout(() => { if (alive.current) setCopyStatus(''); }, 7000); };
     window.addEventListener('qc-demo-component-surface', component);
     window.addEventListener('qc-assistant-visibility', assistant);
+    window.addEventListener('qc-demo-assistant-prefilled', prefilled);
     window.dispatchEvent(new Event('qc-demo-component-surface-request'));
     window.dispatchEvent(new Event('qc-assistant-visibility-request'));
     return () => {
       alive.current = false; clearTimeout(copyTimer.current);
       window.removeEventListener('qc-demo-component-surface', component);
       window.removeEventListener('qc-assistant-visibility', assistant);
+      window.removeEventListener('qc-demo-assistant-prefilled', prefilled);
     };
   }, []);
   useEffect(() => {
@@ -109,6 +118,12 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     // Request the actual editor state even if the page mounted before the guide.
     window.dispatchEvent(new Event('qc-demo-component-surface-request'));
   }, [pathname, refresh]);
+  useEffect(() => {
+    const syncHost = () => setPortalHost(document.fullscreenElement instanceof HTMLElement ? document.fullscreenElement : null);
+    syncHost();
+    document.addEventListener('fullscreenchange', syncHost);
+    return () => document.removeEventListener('fullscreenchange', syncHost);
+  }, []);
   useEffect(() => {
     if (stateMode.current !== state.mode) setOpen(state.mode === 'guided');
     stateMode.current = state.mode;
@@ -238,9 +253,22 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(assistantScript);
       if (!alive.current) return;
-      setCopyStatus(openAfter ? 'Copied. Paste the request into Smart Assistant and send it.' : 'Prompt copied.');
-      if (openAfter) window.dispatchEvent(new Event('qc-open-assistant'));
-      copyTimer.current = setTimeout(() => { if (alive.current) setCopyStatus(''); }, 7000);
+      if (openAfter) {
+        // Owner 2026-10-12: "copy & open" must actually PLACE the example in the
+        // composer so the visitor only taps Send. The window slot covers the
+        // race where the Assistant mounts after this event (fresh page); the
+        // ack swaps the status line; a 3s fallback restores the manual paste
+        // instruction if nothing consumed it.
+        (window as Window & { __qcDemoAssistantPrefill?: { text: string; at: number } }).__qcDemoAssistantPrefill = { text: assistantScript, at: Date.now() };
+        prefillAcked.current = false;
+        window.dispatchEvent(new Event('qc-open-assistant'));
+        window.dispatchEvent(new CustomEvent('qc-demo-assistant-prefill', { detail: { text: assistantScript } }));
+        setCopyStatus('Opening Smart Assistant with your request ready…');
+        copyTimer.current = setTimeout(() => { if (alive.current && !prefillAcked.current) setCopyStatus('Paste the request into Smart Assistant and send it.'); }, 3000);
+      } else {
+        setCopyStatus('Prompt copied.');
+        copyTimer.current = setTimeout(() => { if (alive.current) setCopyStatus(''); }, 7000);
+      }
     } catch {
       if (!alive.current) return;
       setCopyStatus('Clipboard access is unavailable. Select and copy the example below, then open Smart Assistant.');
@@ -299,7 +327,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
               <strong>Nice — your component is on the plan.</strong>
               <p>Keep exploring the canvas, or save and move to the next step.</p>
               <div className="qc-demo-actions"><QcButton variant="primary" onClick={() => window.dispatchEvent(new Event('qc-demo-takeoff-save-continue'))}>Save &amp; continue</QcButton><QcButton variant="ghost" onClick={collapse}>Keep exploring</QcButton></div>
-            </div> : <p className="qc-demo-note">{triedAdding || session.skylightAdded ? <><strong>Nice, you added your component.</strong> Keep experimenting if you like, then {touchTakeoff ? <>press <strong className="qc-demo-act">Save &amp; continue</strong></> : <>click <strong className="qc-demo-act">Finish &amp; Save</strong></>} to progress. Whatever is on the final canvas is what you save.</> : <><strong>Add your component{state.guided_created_component_name ? `: “${state.guided_created_component_name}”` : ''}.</strong> {touchTakeoff ? <>Open the <strong className="qc-demo-act">Components</strong> rail on the right. Your component is preselected — tap it, then <strong className="qc-demo-act">Start new entry</strong> and draw the area on the plan. The prepared roof is already measured; your additions are real.</> : <>Click the <strong className="qc-demo-act">+ Add component</strong> button in the Components panel, find the component you named, then click it. In the toolbar under “Area”, select <strong className="qc-demo-act">Polygon</strong> or <strong className="qc-demo-act">Rectangle</strong> and draw the area on the plan. The prepared scan is precomputed; your measurements and edits are real.</>}</>}</p>)}
+            </div> : <p className="qc-demo-note">{triedAdding || session.skylightAdded ? <><strong>Nice, you added your component.</strong> Keep experimenting if you like, then {touchTakeoff ? <>press <strong className="qc-demo-act">Save &amp; continue</strong></> : <>click <strong className="qc-demo-act">Finish &amp; Save</strong></>} to progress. Whatever is on the final canvas is what you save.</> : <><strong>Add your component{state.guided_created_component_name ? `: “${state.guided_created_component_name}”` : ''}.</strong> {touchTakeoff ? <>Open the <strong className="qc-demo-act">Components</strong> rail on the right. In <strong className="qc-demo-act">Component</strong>, the second dropdown, choose the component you just created. Tap <strong className="qc-demo-act">+ New entry</strong>, then draw the area on the plan. The prepared roof is already measured; your additions are real.</> : <>Click the <strong className="qc-demo-act">+ Add component</strong> button in the Components panel, find the component you named, then click it. In the toolbar under “Area”, select <strong className="qc-demo-act">Polygon</strong> or <strong className="qc-demo-act">Rectangle</strong> and draw the area on the plan. The prepared scan is precomputed; your measurements and edits are real.</>}</>}</p>)}
             {step.hint && <details className="qc-demo-why"><summary>Why this matters</summary><p>{guideCopy(step.hint)}</p></details>}
           </>}
           {assistantStep && location.onPage && <>
@@ -339,5 +367,5 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     </QcDialog>
   </div>;
 
-  return <><div className="qc-demo-banner"><strong>DEMO</strong><span className="qc-demo-banner-context">{demoSystemLabel(units ?? undefined)}<span> · Until {expiryLabel}</span></span><button type="button" onClick={showGuidance} aria-expanded={showGuide} aria-controls="qc-demo-guide">Guide</button><button type="button" onClick={beginReset} disabled={expired || resetting}>Start fresh</button><a href={accountHref}>Get your own account</a></div>{mounted && createPortal(overlays, document.body)}</>;
+  return <><div className="qc-demo-banner"><strong>DEMO</strong><span className="qc-demo-banner-context">{demoSystemLabel(units ?? undefined)}<span> · Until {expiryLabel}</span></span><button type="button" onClick={showGuidance} aria-expanded={showGuide} aria-controls="qc-demo-guide">Guide</button><button type="button" onClick={beginReset} disabled={expired || resetting}>Start fresh</button><a href={accountHref}>Get your own account</a></div>{mounted && createPortal(overlays, portalHost ?? document.body)}</>;
 }
