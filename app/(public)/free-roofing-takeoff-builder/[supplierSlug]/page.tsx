@@ -239,14 +239,14 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
         <script
           key={i}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}
         />
       ))}
       {/* Machine-readable agent payload */}
       <script
         type="application/json"
         id="agent-payload"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(agentPayload) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(agentPayload).replace(/</g, "\\u003c") }}
       />
 
       {/* Screen-reader and crawler overview with supplier context */}
