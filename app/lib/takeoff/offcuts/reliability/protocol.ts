@@ -6,7 +6,7 @@ import { planSignature } from '../core/diagnostics';
 import type { AlternativePlanOptions, AlternativePlanResult, Issue, Solution, SolveRequest } from '../core/types';
 import type { SalvageResult } from '../core/salvageModel';
 import { fingerprint } from '../core/math';
-export const WORKER_PROTOCOL = 'qc-offcuts-worker-v228' as const;
+export const WORKER_PROTOCOL = 'qc-offcuts-worker-v229' as const;
 export const CALCULATION_LIMIT_MS = 60_000;
 export type CalculationKind = 'recommended'|'simpler'|'less-material'|'salvage'|'portfolio'|'installation';
 export type CalculationStage = 'saving-input'|'starting-worker'|'layout-search'|'receiver-safety'|'physical-validation'|'reassigning'|'stock-lengths'|'final-validation'|'returning-result'|'global-bank-search'|'comparing-plans'|'installation-search';
@@ -21,7 +21,7 @@ export const STAGE_LABELS:Record<CalculationStage,string> = {
   'returning-result':'Preparing the checked result…',
 };
 export interface CalculationJournal {
-  schemaVersion:1; runId:string; engineVersion:'2.20'|'2.21'|'2.22'|'2.25'|'2.26'|'2.27'|'2.28'; kind:CalculationKind;
+  schemaVersion:1; runId:string; engineVersion:'2.20'|'2.21'|'2.22'|'2.25'|'2.26'|'2.27'|'2.28'|'2.29'; kind:CalculationKind;
   status:'saving'|'running'|'complete'|'cancelled'|'timed-out'|'failed'; stage:CalculationStage;
   startedAt:string; updatedAt:string; elapsedMs:number; limitMs:number; requestFingerprint:string;
   completed:number; total:number; checkedFallbackAvailable:boolean; message:string;
@@ -44,7 +44,7 @@ export type WorkerMessage = {protocol:typeof WORKER_PROTOCOL; id:string} & (
 export const requestFingerprint=(r:SolveRequest):string=>fingerprint([r.roof,r.faces,r.profile,r.settings]);
 export const solutionFingerprint=(s:Solution):string=>fingerprint(s);
 export function checkedPlanMatches(plan:CheckedPlan,request:SolveRequest):boolean {
-  return !!plan?.solution&&plan.solution.engineVersion==='2.28'&&plan.solution.status!=='invalid'&&
+  return !!plan?.solution&&plan.solution.engineVersion==='2.29'&&plan.solution.status!=='invalid'&&
     Array.isArray(plan.checks)&&!plan.checks.some(i=>i.severity==='error')&&
     plan.requestFingerprint===requestFingerprint(request)&&plan.solutionFingerprint===solutionFingerprint(plan.solution);
 }
@@ -54,7 +54,7 @@ export function isStage(value:unknown):value is CalculationStage {return typeof 
 export function validCalculationJournal(value:unknown):value is CalculationJournal {
   if(!value||typeof value!=='object')return false;
   const j=value as CalculationJournal;
-  return j.schemaVersion===1&&['2.20','2.21','2.22','2.23','2.24','2.25','2.26','2.27','2.28'].includes(j.engineVersion??'')&&typeof j.runId==='string'&&j.runId.length<200&&
+  return j.schemaVersion===1&&['2.20','2.21','2.22','2.23','2.24','2.25','2.26','2.27','2.28','2.29'].includes(j.engineVersion??'')&&typeof j.runId==='string'&&j.runId.length<200&&
     ['recommended','simpler','less-material','salvage','portfolio','installation'].includes(j.kind)&&['saving','running','complete','cancelled','timed-out','failed'].includes(j.status)&&
     isStage(j.stage)&&typeof j.requestFingerprint==='string'&&typeof j.message==='string'&&j.message.length<=1000&&typeof j.checkedFallbackAvailable==='boolean'&&
     Number.isFinite(Date.parse(j.startedAt))&&Number.isFinite(Date.parse(j.updatedAt))&&

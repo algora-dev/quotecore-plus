@@ -34,10 +34,10 @@ export function validateInstallationPlan(r:SolveRequest,s:Solution):Issue[]{
   const bad=(message:string)=>errors.push({severity:'error',code:'INSTALLATION_PLAN',message});
   if(p.model!==INSTALLATION_PLAN_MODEL||!['reversed-donors','barge-starts'].includes(p.kind)||typeof p.referenceLayoutId!=='string'||!p.referenceLayoutId||p.siteSetoutConfirmed!==false||!s.bankLayout?.installationSetout){bad('Invalid installation-plan metadata.');return errors;}
   if(!Array.isArray(p.donorFaceIds)||!Array.isArray(p.receiverFaceIds)||p.donorFaceIds.some(id=>!ids.has(id))||p.receiverFaceIds.some(id=>!ids.has(id))||new Set(p.donorFaceIds).size!==p.donorFaceIds.length||new Set(p.receiverFaceIds).size!==p.receiverFaceIds.length){bad('Installation-plan faces do not match the reviewed roof.');return errors;}
-  if(p.connectedReversal&&(p.kind!=='reversed-donors'||s.engineVersion!=='2.28'))bad('Connected donor certificates require a V2.28 reversed plan.');
+  if(p.connectedReversal&&(p.kind!=='reversed-donors'||!['2.28','2.29'].includes(s.engineVersion??'')))bad('Connected donor certificates require a V2.28+ reversed plan.');
   if(p.kind==='reversed-donors'){
     if((s.engineVersion==='2.26'||s.engineVersion==='2.27')&&!p.pairedReceiver)bad('V2.26 reversed plans require a verified paired receiver-family certificate.');
-    if(s.engineVersion==='2.28'&&Number(!!p.pairedReceiver)+Number(!!p.connectedReversal)!==1)bad('V2.28 reversed plans require exactly one verified family certificate.');
+    if((s.engineVersion==='2.28'||s.engineVersion==='2.29')&&Number(!!p.pairedReceiver)+Number(!!p.connectedReversal)!==1)bad('V2.28+ reversed plans require exactly one verified family certificate.');
     if(!p.donorFaceIds.length||!p.receiverFaceIds.length||p.donorFaceIds.some(id=>!s.bankLayout!.primaryFaceIds.includes(id)||!s.bankLayout!.installationSetout!.anchors.some(a=>a.faceId===id&&(a.kind==='hip-ridge-junction'||!!p.connectedReversal&&a.kind==='hip-apex'))))bad('Reversed donor plans need actual anchored primary stock.');
     const roots=new Map(s.demands.map(d=>[d.id,d.faceId])),cuts=new Map(s.offcuts.map(o=>[o.id,o]));
     for(const donor of p.donorFaceIds)if(!s.placements.some(q=>{const o=cuts.get(q.offcutId??'');return q.kind==='reuse'&&p.receiverFaceIds.includes(roots.get(q.demandId)??'')&&o&&roots.get(o.rootDemandId??o.sourceDemandId)===donor;}))bad('A proposed donor supplies no actual material to the reversed receivers.');
@@ -61,7 +61,7 @@ export function validateInstallationPlan(r:SolveRequest,s:Solution):Issue[]{
     if(d&&s.placements.find(p=>p.demandId===d.id)?.kind!=='new')bad('A fresh barge-start proposal does not start with purchased material.');
   }
   errors.push(...validatePairedReceiverCertificate(r,s),...validateConnectedDonorCertificate(r,s));
-  if((s.engineVersion==='2.27'||s.engineVersion==='2.28'&&!p.connectedReversal)&&s.installationPlan?.kind==='reversed-donors'&&s.installationPlan.pairedReceiver?.proposal.chainMode!=='whole-valley-chain-v1')errors.push({severity:'error',code:'PAIRED_RECEIVER_FAMILY',message:'missing-whole-valley-chain-certificate'});
+  if((s.engineVersion==='2.27'||(s.engineVersion==='2.28'||s.engineVersion==='2.29')&&!p.connectedReversal)&&s.installationPlan?.kind==='reversed-donors'&&s.installationPlan.pairedReceiver?.proposal.chainMode!=='whole-valley-chain-v1')errors.push({severity:'error',code:'PAIRED_RECEIVER_FAMILY',message:'missing-whole-valley-chain-certificate'});
   return errors;
 }
 /** Quantities come from the actual purchase rectangles. A clipped drawing at a

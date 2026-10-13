@@ -312,7 +312,7 @@ export function derivePairedReceiverCertificate(r: SolveRequest, s: Solution, pr
         remainingReason:viaReceiverDemandIds.length===target.length?'complete-chain':'remaining-positions-explicitly-supplied'});
     }
   }
-  const stableInput = s.engineVersion === '2.28' || s.installationPlan?.pairedReceiver?.inputModel === CERTIFICATE_INPUT_MODEL;
+  const stableInput = (s.engineVersion === '2.28' || s.engineVersion === '2.29') || s.installationPlan?.pairedReceiver?.inputModel === CERTIFICATE_INPUT_MODEL;
   return { model: PAIRED_RECEIVER_MODEL, inputFingerprint: stableInput ? certificateInputFingerprint(r) : fingerprint([r.roof, r.faces, r.profile, r.settings]),
     ...(stableInput ? { inputModel: CERTIFICATE_INPUT_MODEL } : {}),
     ...(chainMode?{receiverChains}:{}), referenceLayoutId, donorLayoutId, proposal: structuredClone(proposal), families: rows.sort((a, b) => a.side.localeCompare(b.side)),

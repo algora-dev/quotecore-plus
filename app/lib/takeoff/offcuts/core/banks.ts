@@ -7,7 +7,7 @@ import { auditFaceBehaviour, FACE_GEOMETRY_MODEL } from './faceGeometry';
 import { planningBoundary } from './directions';
 import type { BankLayout, Demand, Issue, Lap, MaterialBank, Offcut, Placement, RoofFace, Solution, SolveRequest } from './types';
 import type { SearchHooks } from './solver';
-import { fingerprint, dot } from './math';
+import { fingerprint, dot, distance } from './math';
 import { area } from './regions';
 import { frameFor, sceneToSurface, generateDemands, generateFaceDemands, isStraightFiller, offcutsFrom, validateInputs } from './material';
 import { buildMaterialBanks, bankOffsets } from './materialBanks';
@@ -77,8 +77,39 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
   const valleyParents=adjacentValleyParents(faces,roof);
   const valleyChildren=new Map<string,Set<string>>();
   for(const [child,parent] of valleyParents){const ids=valleyChildren.get(parent)??new Set<string>();ids.add(child);valleyChildren.set(parent,ids);}
-  const reservedForAnotherReceiver=(o:Offcut,target:string):boolean=>!!hooks.bankVariant?.reserveValleyReceivers&&
-    o.cutKind==='valley'&&o.sourceFaceId!==target&&!!valleyChildren.get(o.sourceFaceId)?.size&&!valleyChildren.get(o.sourceFaceId)!.has(target);
+  // A three-edge hip triangle is the strongest possible receiver for a matching
+  // two-arm valley family. Preserve that obvious physical complement until the
+  // source face has actually been cut. This is geometry-only: no face names,
+  // screen direction or relaxed fit tolerance are involved. Near matches are
+  // deliberately excluded so existing general matching remains the fallback.
+  const enableDirectComplements=objective==='recommended'&&!hooks.bankVariant;
+  const directValleyParents=new Map<string,string>(),directValleyChildren=new Map<string,Set<string>>();
+  for(const target of enableDirectComplements?faces:[]){
+    const edges=planningBoundary(target),hips=edges.filter(e=>e.kind==='hip'||e.kind==='broken_hip');
+    if(edges.length!==3||hips.length!==2||edges.filter(e=>e.kind==='spouting').length!==1||edges.some(e=>e.kind==='valley'||e.kind==='ridge'||e.kind==='barge'))continue;
+    const targetLengths=hips.map(e=>distance(e.a,e.b)).sort((a,b)=>a-b),candidates:{id:string;error:number}[]=[];
+    for(const source of faces){
+      if(source.id===target.id)continue;const valleys=planningBoundary(source).filter(e=>e.kind==='valley');if(valleys.length!==2)continue;
+      const sourceLengths=valleys.map(e=>distance(e.a,e.b)).sort((a,b)=>a-b);
+      const error=Math.max(...targetLengths.map((n,i)=>Math.abs(n-sourceLengths[i])/Math.max(1,n,sourceLengths[i])));
+      if(error<=.025)candidates.push({id:source.id,error});
+    }
+    candidates.sort((a,b)=>a.error-b.error||a.id.localeCompare(b.id));
+    // Ambiguous almost-identical sources are left to the ordinary matcher.
+    if(candidates.length&&(!candidates[1]||candidates[0].error+.01<candidates[1].error)){
+      directValleyParents.set(target.id,candidates[0].id);
+      const children=directValleyChildren.get(candidates[0].id)??new Set<string>();children.add(target.id);directValleyChildren.set(candidates[0].id,children);
+    }
+  }
+  const reservedForAnotherReceiver=(o:Offcut,target:string,done:Set<string>):boolean=>{
+    if(o.cutKind!=='valley'||o.sourceFaceId===target)return false;
+    const adjacent=valleyChildren.get(o.sourceFaceId)??new Set<string>(),direct=directValleyChildren.get(o.sourceFaceId)??new Set<string>();
+    // Installation-search variants retain their previous strict reservation.
+    if(hooks.bankVariant?.reserveValleyReceivers&&adjacent.size&&!adjacent.has(target))return true;
+    if(!enableDirectComplements)return false;
+    const protectedReceivers=new Set([...adjacent,...direct]),pending=[...protectedReceivers].filter(id=>!done.has(id));
+    return pending.length>0&&!protectedReceivers.has(target);
+  };
   const baseLayout:BankLayout={primaryFaceIds:[],laneOffsetByFace:Object.fromEntries(faces.map(f=>[f.id,f.laneOffsetMm])),
     extraLengthByFace:Object.fromEntries(faces.map(f=>[f.id,0])),tailExtensionByFace:Object.fromEntries(faces.map(f=>[f.id,0])),
     cutLengthByFace:Object.fromEntries(faces.map(f=>[f.id,Math.min(profile.maxLengthMm,banks.find(b=>b.faceIds.includes(f.id))!.cutLengthMm)])),
@@ -245,6 +276,8 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
       for(const info of infos)if(!state.done.has(info.face.id)){
         const localParent=valleyParents.get(info.face.id);
         if(localParent&&!state.done.has(localParent)){reject(info.face.id,'waiting-for-adjacent-valley-cuts');continue;}
+        const directParent=directValleyParents.get(info.face.id);
+        if(enableDirectComplements&&directParent&&!state.done.has(directParent)){reject(info.face.id,'waiting-for-direct-valley-complement');continue;}
         const anchor=infos.find(i=>i.face.id===state.layout.primarySequence?.[0]);
         const keepMain=objective!=='less-material'||!anchor||mainBanks.has(anchor.bank.id);
         if(keepMain&&mainMembers.has(info.face.id)){reject(info.face.id,'reserved-longest-bank');continue;}
@@ -256,7 +289,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
           check();const ds=dsFor(info,phase,lap,primary,extend,primary);
           for(const originalPool of pools){
             const allowed=hooks.bankVariant?.receiverSourceFaceIds?.[info.face.id];
-            const pool=originalPool.filter(o=>!reservedForAnotherReceiver(o,info.face.id)&&(!allowed||allowed.some(id=>(o.rootDemandId??o.sourceDemandId).startsWith(id+':sheet:'))));
+            const pool=originalPool.filter(o=>!reservedForAnotherReceiver(o,info.face.id,state.done)&&(!allowed||allowed.some(id=>(o.rootDemandId??o.sourceDemandId).startsWith(id+':sheet:'))));
             if(!pool.length){reject(info.face.id,'reserved-valley-family-for-own-receivers');continue;}
             if(localParent&&!pool.every(o=>o.sourceFaceId===localParent&&o.cutKind==='valley')){reject(info.face.id,'reserved-adjacent-valley-set');continue;}
             const sharedRegistration=primary && pool.every(o=>infos.find(i=>i.face.id===o.sourceFaceId)?.bank.id===rootFamily);
@@ -425,7 +458,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
         const existing=new Set(onFace.filter(p=>p.kind==='reuse').map(p=>view.blockByPlacement.get(p.demandId)).filter(Boolean));
         const pools=new Map<string,Offcut[]>();
         for(const o of state.inventory){
-          if(used.has(o.id)||o.sourceFaceId===info.face.id||targetIds.has(o.rootDemandId??o.sourceDemandId)||reservedForAnotherReceiver(o,info.face.id))continue;
+          if(used.has(o.id)||o.sourceFaceId===info.face.id||targetIds.has(o.rootDemandId??o.sourceDemandId)||reservedForAnotherReceiver(o,info.face.id,state.done))continue;
           const allowed=hooks.bankVariant?.receiverSourceFaceIds?.[info.face.id];
           if(allowed&&!allowed.some(id=>(o.rootDemandId??o.sourceDemandId).startsWith(id+':sheet:')))continue;
           const localParent=valleyParents.get(info.face.id);if(localParent&&(o.sourceFaceId!==localParent||o.cutKind!=='valley'))continue;
@@ -615,7 +648,8 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     state.record.add('trial-start','Started an independently searched strategy.',undefined,{
       objective,trial:state.trial,seedFaceId:trial.seed.face.id,registrationVariant:trial.shift,
       ...(hooks.bankVariant?{globalVariant:hooks.bankVariant}:{}),
-      protectedMainFaces:[...mainMembers],selfFillCandidates:[...reservedSelf],valleyReceivingParents:Object.fromEntries(valleyParents),attempt
+      protectedMainFaces:[...mainMembers],selfFillCandidates:[...reservedSelf],valleyReceivingParents:Object.fromEntries(valleyParents),
+      directValleyComplements:Object.fromEntries(directValleyParents),attempt
     });
     try{
       check();let next=trial.seed;
@@ -684,7 +718,7 @@ export function optimiseBankLayouts(request:SolveRequest,hooks:SearchHooks={}):S
     evaluationStage:'bank-search' as const,...(assessments.has(state)?{simplification:assessments.get(state)}:{}),
     ...(materialAssessments.has(state)?{materialSaving:materialAssessments.get(state)}:{}),
     reason:excluded.has(signatures.get(state)!)?'already-shown-physical-layout':!eligible.includes(state)?'does-not-improve-requested-objective-within-material-cap':'eligible-candidate'}));
-  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.28' as const,
+  const traceFor=(state:State|null)=>({schemaVersion:1 as const,engineVersion:'2.29' as const,
     requestFingerprint:fingerprint({faces,profile,settings}),objective,selectedTrial:state?.trial??null,
     events:state?.record.events??[{step:1,action:'no-selection',message:'No unseen candidate improved the requested objective within its material cap. The previous plan is retained.',data:{objective,referenceQuality:reference,excludedSignatures:[...excluded],maxExtraMaterialPercent:maxExtra}}],candidates:summaries.map(c=>({...c,selected:c.trial===state?.trial,
       reason:c.trial===state?.trial?'selected-by-'+objective:c.reason})),
@@ -717,7 +751,7 @@ function toSolution(request:SolveRequest,state:State,inputIssues:Issue[],complet
   }
   if(budgetReached)issues.push({severity:'warning',code:'SEARCH_BUDGET',message:'Time budget reached. Unsolved positions have been supplied new; this complete draft is not proof that no better reuse exists.'});
   issues.push({severity:'warning',code:'PROTOTYPE_ONLY',message:'Draft material-bank plan. Verify profile, sheet registration and site lengths. No guaranteed minimum, manufacturer approval or spare sheets are implied.'});
-  return{schemaVersion:1,engineVersion:'2.28',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
+  return{schemaVersion:1,engineVersion:'2.29',sourceRevision:roof.sourceRevision,facesRevision:fingerprint({faces,profile,settings}),
     profile:structuredClone(profile),settings:structuredClone(settings),demands:state.demands,placements:state.placements.sort((a,b)=>a.demandId.localeCompare(b.demandId)),
     offcuts:state.inventory,lapByFace:state.laps,bankLayout:state.layout,
     metrics:{newMaterialMm2:cost,baselineNewMaterialMm2:baseline,netRoofMm2:state.demands.reduce((n,d)=>n+area(d.cover),0),installedPhysicalMm2:installed,
