@@ -136,7 +136,7 @@ export function SharedTakeoffBuilder({ initialSupplierSlug, initialInput }: Shar
   const prefill = buildPrefillFromInput(initialInput);
   return (
     <>
-      <BlogHeader />
+      <BlogHeader theme="dark" />
       <TakeoffFlow
         theme={QUOTECORE_THEME}
         components={DEFAULT_COMPONENTS}

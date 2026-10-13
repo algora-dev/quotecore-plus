@@ -115,7 +115,7 @@ export default function FreeCladdingTakeoffPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      <BlogHeader />
+      <BlogHeader theme="dark" />
 
       {/* H1 + hero + trust strip (above the tool) */}
       <section className="mx-auto max-w-3xl px-4 pt-10 pb-6 text-center md:pt-14">

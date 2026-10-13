@@ -1425,6 +1425,19 @@ export function TakeoffWorkstation({
   // Keep this alias for any existing code that still references it; prefer
   // tradeConfig properties in new code.
   const quoteIsGeneric = !tradeConfig.pitchRequired;
+
+  // Owner directive 2026-10-13: non-pitch trades (the free cladding/flooring
+  // tools; generic main-app trades) never see the pitch-only prompt. The
+  // drawn area confirms immediately at 0 degrees, exactly as if the user had
+  // accepted "Save (0)" in the old prompt. Roofing keeps the prompt; the
+  // modal render below is additionally gated on tradeConfig.pitchRequired so
+  // it can never flash for a non-pitch trade.
+  useEffect(() => {
+    if (!showPitchOnlyPrompt || tradeConfig.pitchRequired) return;
+    setShowPitchOnlyPrompt(false);
+    handleSaveArea(isExistingAreaMode ? existingAreaLabel : (initialPageName || 'New Area'), 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fires once per prompt-open; handleSaveArea is re-created each render.
+  }, [showPitchOnlyPrompt, tradeConfig, isExistingAreaMode, existingAreaLabel, initialPageName]);
   useEffect(() => {
     // P1-1b: suppress in mode=add - user is continuing on an existing area, not creating a new one.
     if (takeoffMode === 'add') return;
@@ -9864,7 +9877,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
       )}
 
       {/* P1-1b pitch-only prompt for new-page mode (first area boundary drawn) */}
-      {showPitchOnlyPrompt && (
+      {showPitchOnlyPrompt && tradeConfig.pitchRequired && (
         <QcHostedDialog label="Area pitch" size="md" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-4 md:p-6 w-80 border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">

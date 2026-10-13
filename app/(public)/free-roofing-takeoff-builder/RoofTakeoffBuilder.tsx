@@ -616,7 +616,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   return (
     <FreeToolsAuthProvider>
       <main className={embed ? "min-h-screen bg-white" : "min-h-screen bg-white"}>
-        {!embed && <BlogHeader />}
+        {!embed && <BlogHeader theme="dark" />}
         {!embed && (
           <section className="relative overflow-hidden border-b border-slate-100">
             <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
