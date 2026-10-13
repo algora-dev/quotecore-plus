@@ -1,16 +1,17 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import DfyPageViewTracker from '@/components/DfyPageViewTracker';
-import DfyCtaButton from '@/components/DfyCtaButton';
+import { MarketingButton } from '@/components/marketing/MarketingButton';
+import { DfyBookButton } from '@/components/marketing/DfyBookButton';
 import { siteUrl, buildBreadcrumbSchema } from '@/lib/schema';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
+import styles from './DoneForYouSetup.module.css';
 
 export const metadata: Metadata = {
-  title: 'Done-For-You Setup - We Build Your Estimating System | QuoteCore+',
+  title: 'Done-For-You QuoteCore+ Setup | Free 20-Minute Discovery Call',
   description:
-    'We rebuild your current pricing and workflow inside QuoteCore+ for you - components, labour rates, waste rules, training and 6 months of support included.',
+    'Done-For-You QuoteCore+ setup starts from $499. Begin with a free 20-minute discovery call, then get your pricing, workflow, personalised training, three months of QuoteCore+ and ongoing support.',
   alternates: {
     canonical: 'https://quote-core.com/done-for-you-setup',
     languages: hreflangLanguages('/done-for-you-setup'),
@@ -24,548 +25,311 @@ const breadcrumbSchema = buildBreadcrumbSchema([
 
 const faqs = [
   {
+    q: 'Is the first call free?',
+    a: 'Yes. It is a free 20-minute discovery call with no obligation to proceed. Show us how you work, tell us what you want to improve and ask questions. If useful, we can also show you the parts of QuoteCore+ most relevant to your business.',
+  },
+  {
+    q: 'How much does Done-For-You Setup cost?',
+    a: 'Done-For-You Setup starts from $499 USD. If you decide you want to continue after the discovery call, we scope the setup around your business and give you the final price before any work begins.',
+  },
+  {
+    q: 'What is included in the setup price?',
+    a: 'Your agreed setup work, your first three months of the QuoteCore+ plan selected for your business, at least one one-hour personalised training session using your own pricing and a real or previous job, plus ongoing setup and product support throughout those three months.',
+  },
+  {
+    q: 'Why does the final price vary?',
+    a: 'Every business is different. Some have a small pricing list and simple workflow. Others have hundreds of items, multiple labour rules, larger storage needs or want more training. We scope the work so you pay for the setup and plan you actually need.',
+  },
+  {
     q: 'What do I need to send you?',
-    a: 'Your existing pricing, spreadsheets, supplier lists, labour rates, waste rules, past quotes and anything else relevant to how you currently estimate. It does not need to be tidy - we are rebuilding the agreed workflow, so your source information does not need to be presented perfectly.',
+    a: 'Send what you already use, including spreadsheets, supplier pricing, labour rates, waste rules, old quotes, product lists and notes about how you currently estimate. It does not need to be tidy.',
   },
   {
-    q: 'Does my current setup need to be tidy?',
-    a: 'No. Send us what you already use. We agree which parts to rebuild, then do the work of structuring it inside QuoteCore+.',
+    q: 'What happens in the training session?',
+    a: 'We use your configured account, your own pricing and one of your own jobs where practical. The goal is to show you how QuoteCore+ fits the way you already work, not teach you from a blank demo account.',
   },
   {
-    q: 'Will you tell me what I should charge?',
-    a: 'No. We configure the pricing and rules you supply - pricing decisions remain yours. We do not decide what your products should cost or what labour you should charge.',
+    q: 'Can I add more training sessions?',
+    a: 'Yes. Every setup includes at least one one-hour session. If you want more sessions for yourself or your team, we can include them in the agreed scope.',
   },
   {
-    q: 'What happens after the setup is finished?',
-    a: 'We walk you through your configured account - using one of your real jobs where practical - and provide the included support period (6 months) while you get comfortable using it on live work.',
+    q: 'What happens after the three included months?',
+    a: 'You continue on the QuoteCore+ subscription plan agreed during setup at its normal monthly price. We make that ongoing plan and price clear before you commit to the Done-For-You setup.',
   },
   {
-    q: 'What if I need more than 60 components?',
-    a: 'We can scope a tailored package after understanding the size and complexity of your setup. Book a fit call and we will talk it through.',
+    q: 'Will you decide what I should charge customers?',
+    a: 'No. You remain in control of your pricing. We structure and configure the information and rules you provide, then help you understand how to use them inside QuoteCore+.',
   },
 ];
 
 const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: faqs.map((f) => ({
+  mainEntity: faqs.map((faq) => ({
     '@type': 'Question',
-    name: f.q,
-    acceptedAnswer: { '@type': 'Answer', text: f.a },
+    name: faq.q,
+    acceptedAnswer: { '@type': 'Answer', text: faq.a },
   })),
 };
 
-const talkUsClass =
-  'inline-block rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:border-slate-400 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]';
-
-const stages = [
-  {
-    title: 'You send us',
-    intro: 'It does not need to be tidy. Send us what you already use:',
-    items: [
-      'Your current estimating spreadsheet',
-      'Supplier price lists',
-      'Labour rates',
-      'Waste rules',
-      'Old quotes',
-      'Products / services you regularly use',
-      'Notes on how you currently price work',
-    ],
-  },
-  {
-    title: 'We build',
-    intro: 'We rebuild the agreed parts of your existing estimating workflow inside QuoteCore+:',
-    items: [
-      'Your reusable Smart Components',
-      'Material pricing',
-      'Labour rules',
-      'Waste rules',
-      'Common products / services',
-      'Agreed workflow structure',
-      'QuoteCore+ account setup',
-    ],
-  },
-  {
-    title: 'You get',
-    intro: 'A QuoteCore+ system built around the way you already work:',
-    items: [
-      'Ready-to-use estimating setup',
-      'Reusable pricing logic',
-      'Personalised walkthrough',
-      'Training using your own workflow and jobs',
-      'Ongoing setup support',
-      '6 months QuoteCore+ Pro included',
-    ],
-  },
+const valueItems = [
+  { num: '01', title: 'Your account, configured', body: 'We set up the agreed QuoteCore+ structure around the way your business prices and quotes work.' },
+  { num: '02', title: 'Your pricing, built in', body: 'Materials, labour, waste rules and reusable Smart Components are configured from the information you provide.' },
+  { num: '03', title: 'Training on your own job', body: 'At least one one-hour session using your pricing and one of your real or previous jobs.' },
+  { num: '04', title: '3 months of QuoteCore+', body: 'Your first three months of the subscription plan agreed for your business are included in your setup price.' },
+  { num: '05', title: '3 months of support', body: 'Get ongoing setup and product support while you start using QuoteCore+ on real work.' },
+  { num: '06', title: 'Extra training if you want it', body: 'Add more one-hour sessions for yourself or your team when we agree the scope.' },
 ];
 
-const qualification = [
-  'Your spreadsheet works, but starting every new estimate still means copying and rebuilding things',
-  'Your material prices, labour rates and waste rules live in different places',
-  'Only one person really understands how your current estimating sheet works',
-  'You know better software could help, but you do not want to spend evenings setting it up',
-  'You have tried estimating software before and stopped because the setup was too much work',
-  'You want to keep the way you price jobs, but make the process faster and easier to repeat',
+const priceFactors = [
+  { title: 'How much we need to build', body: 'The volume of components, pricing information and workflow configuration required.' },
+  { title: 'How complex your setup is', body: 'Simple pricing takes less work than larger catalogues, multiple rules or more involved workflows.' },
+  { title: 'The QuoteCore+ plan you need', body: 'Your features, expected usage and storage determine the subscription plan included for the first three months.' },
+  { title: 'How much training you want', body: 'One one-hour personalised session is included. Additional sessions can be added to your setup.' },
 ];
 
-const steps = [
-  {
-    num: '1',
-    title: 'We learn how you work',
-    body: 'A 15-minute fit call to understand how you measure, price and quote jobs - and whether QuoteCore+ is actually suitable.',
-  },
-  {
-    num: '2',
-    title: 'You send us what you use',
-    body: 'Pricing, spreadsheets, supplier lists, labour rates, waste rules, past quotes and anything else relevant.',
-  },
-  {
-    num: '3',
-    title: 'We build it for you',
-    body: 'We configure the agreed components, pricing and workflow inside QuoteCore+.',
-  },
-  {
-    num: '4',
-    title: 'We show you using your own setup',
-    body: 'A personalised walkthrough using your own account and, where practical, one of your real jobs.',
-  },
-  {
-    num: '5',
-    title: 'You start using it',
-    body: 'Use QuoteCore+ on live work, with ongoing setup and product support available for six months.',
-  },
+const process = [
+  { step: '01', title: 'Book a free 20-minute discovery call', body: 'Show us how you work, tell us what you want to improve and ask anything you need. If useful, we can show you the parts of QuoteCore+ most relevant to your business.' },
+  { step: '02', title: 'We recommend the easiest way across', body: 'We map the simplest transition from your current workflow into QuoteCore+, including the plan, setup and training that make sense for you.' },
+  { step: '03', title: 'You decide what happens next', body: 'The discovery call carries no obligation. If Done For You feels right, we agree the scope and price before any setup work begins.' },
+  { step: '04', title: 'Send us what you already use', body: 'Spreadsheets, price lists, labour rates, waste rules, old quotes and notes are all useful. They do not need to be cleaned up first.' },
+  { step: '05', title: 'We build your system', body: 'We configure the agreed pricing, Smart Components and workflow inside your QuoteCore+ account, then test the setup with your information.' },
+  { step: '06', title: 'Train on your own job, then go live', body: 'Your included one-hour session uses your configured account and your own work. Then you have three months of support behind you while you start using QuoteCore+ on real jobs.' },
 ];
 
-const packages = [
-  {
-    name: 'Done-For-You Estimating Setup',
-    price: '$499',
-    tagline: 'Best for smaller estimating setups or contractors with a focused range of products and services.',
-    ctaEvent: 'dfy_package_499_cta_click',
-    items: [
-      'Up to 20 custom components built for you',
-      'Your material pricing configured',
-      'Labour and waste rules configured',
-      'QuoteCore+ account setup',
-      'Personalised training',
-      'Ongoing setup and product support for 6 months',
-      '6 months QuoteCore+ Pro included',
-    ],
-  },
-  {
-    name: 'Complete Done-For-You Setup',
-    price: '$999',
-    tagline: 'Best for larger or more detailed estimating systems.',
-    highlight: true,
-    ctaEvent: 'dfy_package_999_cta_click',
-    items: [
-      'Up to 60 custom components built for you',
-      'Larger material and pricing setup',
-      'More complex labour and waste configurations',
-      'Help organising larger pricing lists or catalogues',
-      'More detailed workflow configuration',
-    ],
-  },
+const bestFor = [
+  'You already know how you price work, but do not want to spend evenings rebuilding it in new software.',
+  'Your estimating information lives across spreadsheets, supplier lists, old quotes or one person\'s head.',
+  'You want QuoteCore+ configured around your business before you start relying on it.',
+  'You would rather learn with your own pricing and real jobs than generic tutorial examples.',
+  'You have tried software before and the setup work is what stopped you using it properly.',
+  'You want help during the first few months instead of being left alone after onboarding.',
 ];
 
-const doList = [
-  'Build the agreed components',
-  'Add the pricing information you provide',
-  'Configure agreed labour and waste rules',
-  'Rebuild the agreed parts of your current workflow',
-  'Show you how to use your configured setup',
-  'Support you during the included support period',
-];
+function ArrowIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h13m-5-5 5 5-5 5" /></svg>;
+}
 
-const dontList = [
-  'Decide what you should charge customers',
-  'Guarantee the accuracy of information you supply',
-  'Replace your responsibility to check final measurements and quotes',
-  'Include unlimited custom software development',
-  'Maintain changing supplier catalogues indefinitely unless separately agreed',
-];
+function CheckIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m5 12.5 4.2 4.2L19 7" /></svg>;
+}
+
+
+
+
 
 export default function DoneForYouSetupPage() {
   return (
     <>
-      <BlogHeader />
+      <BlogHeader theme="dark" />
       <DfyPageViewTracker />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
-      <main>
-        {/* ── Hero ── */}
-        <section className="mx-auto max-w-6xl px-6 pb-16 pt-14 md:pb-20 md:pt-20">
-          <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-slate-900 md:text-5xl">
-            We build your estimating system inside QuoteCore+ for you
-          </h1>
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg">
-            Tell us how you currently measure, price and quote jobs.{' '}
-            <strong className="font-semibold text-slate-900">
-              We&rsquo;ll rebuild the agreed parts inside QuoteCore+
-            </strong>{' '}
-            - configure your pricing, labour, waste and reusable components,
-            then show you how to use it on real jobs.
-          </p>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-500 md:text-base">
-            You don&rsquo;t have to figure it all out yourself.
-          </p>
-          <div className="mt-8">
-            <DfyCtaButton event="dfy_fit_call_click" label="See if QuoteCore+ fits your workflow" />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+
+      <main className={styles.page}>
+        <section className={styles.hero} aria-labelledby="dfy-title">
+          <div className={styles.heroGrid} aria-hidden="true" />
+          <div className={styles.container}>
+            <div className={styles.heroLayout}>
+              <div className={styles.heroCopy}>
+                <p className={styles.eyebrow}>Done-For-You QuoteCore+ setup</p>
+                <h1 id="dfy-title"><span className={styles.heroPrimary}>Show us how you currently work.</span><br /><span className={styles.heroSecondary}>We’ll tailor your account around it.</span><br /><span className={styles.heroTertiary}>So you can work faster, with less effort.</span></h1>
+                <p className={styles.heroLead}>Tell us how you currently price, quote and run your jobs. We’ll configure your QuoteCore+ account around that workflow, train you using your own jobs, and stay available while you get comfortable using it.</p>
+                <div className={styles.heroActions}>
+                  <DfyBookButton cta="hero" size="large" label="Book a free 20-minute call" />
+                  <MarketingButton href="#whats-included" variant="glass" size="large">See what is included</MarketingButton>
+                </div>
+                <p className={styles.heroNote}>Free discovery call. No obligation. Talk to a real person with roofing and construction industry experience.</p>
+              </div>
+
+              <aside className={styles.offerCard} aria-label="Done-For-You setup starting price and inclusions">
+                <p className={styles.offerKicker}>Done-For-You setup</p>
+                <div className={styles.startPrice}><span>From</span><strong>$499</strong><small>USD</small></div>
+                <div className={styles.offerRule} />
+                <ul>
+                  <li><CheckIcon /><span><strong>3 months of QuoteCore+</strong><br />Your agreed subscription plan included</span></li>
+                  <li><CheckIcon /><span><strong>At least 1 hour of personalised training</strong><br />Using your pricing and your own job</span></li>
+                  <li><CheckIcon /><span><strong>3 months of ongoing support</strong><br />Help while you start using the system</span></li>
+                  <li><CheckIcon /><span><strong>Your setup built for you</strong><br />Pricing, components and agreed workflow</span></li>
+                </ul>
+              </aside>
+            </div>
+
+            <div className={styles.heroProof} aria-label="What makes the setup different">
+              <div><img src="/marketing/done-for-you/dfy-build.webp" alt="" aria-hidden="true" /><span><strong>We build</strong>Your system</span></div>
+              <div><img src="/marketing/done-for-you/dfy-train.webp" alt="" aria-hidden="true" /><span><strong>We train</strong>On your job</span></div>
+              <div><img src="/marketing/done-for-you/dfy-support.webp" alt="" aria-hidden="true" /><span><strong>We support</strong>For 3 months</span></div>
+              <div><img src="/marketing/done-for-you/dfy-experience.webp" alt="" aria-hidden="true" /><span><strong>20+ years</strong>Roofing & construction experience</span></div>
+            </div>
           </div>
-          <p className="mt-3 text-xs italic text-slate-400">
-            15-minute fit call · no hard sell
-          </p>
         </section>
 
-        {/* ── You send us → We build → You get ── */}
-        <section className="border-t border-slate-100 bg-slate-50/60">
-          <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
-              What actually happens?
-            </h2>
-            <div className="mt-10 grid gap-6 lg:grid-cols-3">
-              {stages.map((stage, i) => (
-                <div
-                  key={stage.title}
-                  className="relative rounded-xl border border-slate-200 bg-white p-8"
-                >
-                  <h3 className="text-lg font-bold text-slate-900">
-                    {stage.title}
-                  </h3>
-                  <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    {stage.intro}
-                  </p>
-                  <ul className="mt-4 space-y-2">
-                    {stage.items.map((item) => (
-                      <li
-                        key={item}
-                        className="flex gap-2.5 text-sm leading-relaxed text-slate-700"
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="mt-0.5 h-4 w-4 shrink-0 text-[#FF6B35]"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <path d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {i < stages.length - 1 && (
-                    <span
-                      className="absolute -right-4 top-1/2 hidden -translate-y-1/2 text-slate-300 lg:block"
-                      aria-hidden="true"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-6 w-6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M5 12h14M13 6l6 6-6 6" />
-                      </svg>
-                    </span>
-                  )}
-                </div>
+        <section id="whats-included" className={styles.valueSection} aria-labelledby="value-title">
+          <div className={styles.container}>
+            <div className={styles.sectionIntro}>
+              <div>
+                <p className={styles.lightEyebrow}>More than onboarding</p>
+                <h2 id="value-title">Start with a system that already feels like yours.</h2>
+              </div>
+              <p>Instead of handing you an empty account and a tutorial library, we do the setup work with your information and teach you in the context of the jobs you actually price.</p>
+            </div>
+            <div className={styles.valueGrid}>
+              {valueItems.map((item) => (
+                <article key={item.num} className={styles.valueCard}>
+                  <span>{item.num}</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                </article>
               ))}
             </div>
-            <p className="mx-auto mt-10 max-w-3xl text-center text-lg font-bold leading-snug tracking-tight text-slate-900 md:text-2xl">
-              A QuoteCore+ system built around the way you already work - {' '}
-              <span className="text-[#FF6B35]">ready to use on real jobs.</span>
-            </p>
           </div>
         </section>
 
-        {/* ── Qualification ── */}
-        <section className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
-            This setup is probably worth considering if…
-          </h2>
-          <ul className="mt-10 max-w-3xl space-y-4">
-            {qualification.map((item) => (
-              <li
-                key={item}
-                className="flex gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 text-sm leading-relaxed text-slate-700 transition hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] md:text-base"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="mt-0.5 h-5 w-5 shrink-0 text-[#FF6B35]"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-8 max-w-2xl text-sm leading-relaxed text-slate-500">
-            If your current estimating system is already fast, reliable and easy
-            to maintain, you may not need this. The fit call exists to work
-            that out before you spend anything.
-          </p>
+        <section className={styles.subscriptionSection} aria-labelledby="subscription-title">
+          <div className={`${styles.container} ${styles.subscriptionGrid}`}>
+            <div className={styles.subscriptionCopy}>
+              <p className={styles.eyebrow}>Three months included</p>
+              <h2 id="subscription-title">Your first three months are already part of the setup.</h2>
+              <p>Once we agree the QuoteCore+ plan that fits your features, usage and storage, its first three months are included in your setup price.</p>
+              <p>So this is not just onboarding. It includes the software period, the setup work, personalised training and support while you start using it.</p>
+            </div>
+            <div className={styles.equation} aria-label="Done-For-You value breakdown">
+              <div className={styles.equationItem}><span>01</span><strong>Setup</strong><small>Built with your information</small></div>
+              <span className={styles.plus}>+</span>
+              <div className={styles.equationItem}><span>02</span><strong>Training</strong><small>At least one 1-hour session</small></div>
+              <span className={styles.plus}>+</span>
+              <div className={styles.equationItem}><span>03</span><strong>3 months</strong><small>Your agreed QuoteCore+ plan</small></div>
+              <span className={styles.plus}>+</span>
+              <div className={styles.equationItem}><span>04</span><strong>Support</strong><small>Throughout those 3 months</small></div>
+            </div>
+          </div>
         </section>
 
-        {/* ── How it works ── */}
-        <section className="border-t border-slate-100 bg-slate-50/60">
-          <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
-              How it works
-            </h2>
-            <ol className="mt-10 space-y-8">
-              {steps.map((step) => (
-                <li key={step.num} className="flex gap-5">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
-                    {step.num}
-                  </span>
-                  <div className="max-w-2xl">
-                    <h3 className="text-lg font-bold text-slate-900 md:text-xl">
-                      {step.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600 md:text-base">
-                      {step.body}
-                    </p>
-                  </div>
+        <section className={styles.pricingSection} aria-labelledby="pricing-title">
+          <div className={styles.container}>
+            <div className={styles.pricingHeader}>
+              <div>
+                <p className={styles.lightEyebrow}>A setup scoped to your business</p>
+                <h2 id="pricing-title">Starting from $499. Scoped around what you actually need.</h2>
+              </div>
+              <div className={styles.priceCallout}><span>Starting price</span><strong>$499</strong><small>USD</small></div>
+            </div>
+            <p className={styles.pricingLead}>The discovery call is free and does not commit you to anything. If Done For You looks useful, we scope the setup and give you the price before you decide. These are the main things that determine it:</p>
+            <div className={styles.factorGrid}>
+              {priceFactors.map((factor, index) => (
+                <article className={styles.factorCard} key={factor.title}>
+                  <span>0{index + 1}</span>
+                  <h3>{factor.title}</h3>
+                  <p>{factor.body}</p>
+                </article>
+              ))}
+            </div>
+            <div className={styles.pricingFooter}>
+              <div><strong>Always included:</strong> three months of your agreed subscription plan, at least one one-hour training session, and support throughout the included three-month period.</div>
+              <DfyBookButton cta="pricing" label="Book free 20-minute call" />
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.trainingSection} aria-labelledby="training-title">
+          <div className={`${styles.container} ${styles.trainingGrid}`}>
+            <div className={styles.trainingPanel}>
+              <p className={styles.eyebrow}>Training that makes sense</p>
+              <h2 id="training-title">No blank demo account. No generic practice job.</h2>
+              <p>We train you inside the QuoteCore+ account we configured for you, with your own pricing and one of your real or previous jobs wherever practical.</p>
+              <ul>
+                <li><CheckIcon /><span>See your existing workflow mapped into QuoteCore+.</span></li>
+                <li><CheckIcon /><span>Learn using your own pricing and components.</span></li>
+                <li><CheckIcon /><span>Work through one of your real or previous jobs.</span></li>
+                <li><CheckIcon /><span>Ask questions while everything is fresh and relevant.</span></li>
+              </ul>
+            </div>
+            <aside className={styles.sessionCard}>
+              <span className={styles.sessionTag}>Included minimum</span>
+              <strong>1 hour</strong>
+              <h3>Personalised training session</h3>
+              <p>Want more time, multiple sessions or team training? Add it when we agree your scope.</p>
+            </aside>
+          </div>
+        </section>
+
+        <section className={styles.processSection} aria-labelledby="process-title">
+          <div className={styles.container}>
+            <div className={styles.sectionIntroCompact}>
+              <p className={styles.lightEyebrow}>A simple, no-pressure first step</p>
+              <h2 id="process-title">From a free call to a system that feels familiar</h2>
+            </div>
+            <ol className={styles.processList}>
+              {process.map((item) => (
+                <li key={item.step}>
+                  <span className={styles.processNum}>{item.step}</span>
+                  <div><h3>{item.title}</h3><p>{item.body}</p></div>
                 </li>
               ))}
             </ol>
-            <p className="mt-12 max-w-3xl text-lg font-bold leading-snug tracking-tight text-slate-900 md:text-2xl">
-              Our goal is simple: get you confidently pricing and quoting real
-              jobs in QuoteCore+ with{' '}
-              <span className="text-[#FF6B35]">
-                less repetitive admin than the way you were working before.
-              </span>
-            </p>
           </div>
         </section>
 
-        {/* ── Packages ── */}
-        <section className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
-            Choose your setup
-          </h2>
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
-            You tell us how you work. We turn it into a ready-to-use QuoteCore+
-            system.
-          </p>
-          <div className="mt-10 grid gap-6 lg:grid-cols-2">
-            {packages.map((pkg) => (
-              <div
-                key={pkg.name}
-                className={`rounded-xl border bg-white p-8 transition ${
-                  pkg.highlight
-                    ? 'border-orange-200 shadow-[0_0_12px_rgba(255,107,53,0.08)]'
-                    : 'border-slate-200'
-                }`}
-              >
-                <h3 className="text-lg font-bold text-slate-900">{pkg.name}</h3>
-                <p className="mt-1 text-4xl font-bold tracking-tight text-slate-900">
-                  {pkg.price}
-                  <span className="ml-2 align-middle text-sm font-medium text-slate-500">
-                    one-time · USD
-                  </span>
-                </p>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  {pkg.tagline}
-                </p>
-                <h4 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  {pkg.highlight
-                    ? 'Everything in the $499 setup, plus:'
-                    : 'Includes'}
-                </h4>
-                <ul className="mt-3 space-y-2.5">
-                  {pkg.items.map((item, i) => (
-                    <li
-                      key={item}
-                      className={`flex gap-2.5 text-sm leading-relaxed text-slate-700 ${
-                        i === 0 && pkg.highlight
-                          ? 'font-semibold text-slate-900'
-                          : ''
-                      }`}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="mt-0.5 h-4 w-4 shrink-0 text-[#FF6B35]"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-8">
-                  <DfyCtaButton
-                    event={pkg.ctaEvent}
-                    label={
-                      pkg.highlight
-                        ? 'Book a fit call - Complete setup'
-                        : 'Book a fit call - Estimating setup'
-                    }
-                  />
-                </div>
-              </div>
-            ))}
+        <section className={styles.fitSection} aria-labelledby="fit-title">
+          <div className={styles.container}>
+            <div className={styles.fitIntro}>
+              <p className={styles.eyebrow}>Who gets the most value</p>
+              <h2 id="fit-title">A good option when the software is not the hard part. The setup is.</h2>
+              <p>If you already know your trade and how you price work, Done-For-You setup removes the part most people keep putting off: rebuilding that knowledge inside new software. You will speak with real people who understand roofing and construction workflows, and know there is more than one right way to run a job.</p>
+            </div>
+            <ul className={styles.fitGrid}>
+              {bestFor.map((item) => <li key={item}><CheckIcon /><span>{item}</span></li>)}
+            </ul>
           </div>
+        </section>
 
-          {/* Custom tier */}
-          <div className="mt-6 rounded-xl border-dashed border-slate-200 bg-white px-6 py-10 text-center md:px-8">
-            <h3 className="text-lg font-bold text-slate-900">
-              Need more than 60 components or a very large catalogue?
-            </h3>
-            <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
-              Some businesses have much larger catalogues, several pricing
-              systems or more complicated workflows. We can put together a
-              tailored package based on what you actually need.
-            </p>
-            <div className="mt-6">
-              <Link href="/contact" className={talkUsClass}>
-                Talk to us about a tailored setup
-              </Link>
+        <section className={styles.boundariesSection} aria-labelledby="boundaries-title">
+          <div className={`${styles.container} ${styles.boundariesGrid}`}>
+            <div>
+              <p className={styles.lightEyebrow}>You stay in control</p>
+              <h2 id="boundaries-title">We build the system. You own the decisions.</h2>
+              <p>We configure QuoteCore+ around the information and rules you provide. You still control what you charge, verify your measurements and approve your final quotes.</p>
+            </div>
+            <div className={styles.boundaryCards}>
+              <article><strong>We do</strong><p>Build the agreed components, pricing structure, labour and waste rules, account setup and workflow configuration.</p></article>
+              <article><strong>We do not</strong><p>Choose your selling prices, guarantee source information you provide, or replace your responsibility to review final measurements and quotes.</p></article>
             </div>
           </div>
         </section>
 
-        {/* ── Does / doesn't include ── */}
-        <section className="border-t border-slate-100 bg-slate-50/60">
-          <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
-              What we do - and don&rsquo;t - do
-            </h2>
-            <div className="mt-10 grid gap-6 md:grid-cols-2">
-              <div className="rounded-xl border border-slate-200 bg-white p-8">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-900">
-                  We do
-                </h3>
-                <ul className="mt-4 space-y-2.5">
-                  {doList.map((item) => (
-                    <li
-                      key={item}
-                      className="flex gap-2.5 text-sm leading-relaxed text-slate-700"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="mt-0.5 h-4 w-4 shrink-0 text-[#FF6B35]"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-8">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-900">
-                  We don&rsquo;t
-                </h3>
-                <ul className="mt-4 space-y-2.5">
-                  {dontList.map((item) => (
-                    <li
-                      key={item}
-                      className="flex gap-2.5 text-sm leading-relaxed text-slate-700"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+        <section className={styles.finalSection} aria-labelledby="final-title">
+          <div className={styles.finalGlow} aria-hidden="true" />
+          <div className={`${styles.container} ${styles.finalInner}`}>
+            <p className={styles.eyebrow}>Free 20-minute discovery call</p>
+            <h2 id="final-title">Curious, but not sure you need Done For You? That is exactly what the call is for.</h2>
+            <p>Show us how you work, tell us what you want to improve and ask questions. There is no charge, no obligation and no pressure to buy. We will simply help you work out the easiest way to move into QuoteCore+.</p>
+            <div className={styles.finalActions}>
+              <DfyBookButton cta="final" size="large" label="Book free 20-minute call" />
+              <MarketingButton href="/demo" variant="glass" size="large">Try the demo first</MarketingButton>
             </div>
-            <p className="mt-8 max-w-2xl text-sm leading-relaxed text-slate-600">
-              You remain in control of your pricing and your final quotes. We
-              do the work of getting the system configured around the
-              information you give us.
-            </p>
+            <small>Talk to a real person with roofing and construction experience. Done-For-You setup starts from $499 USD.</small>
           </div>
         </section>
 
-        {/* ── FAQ ── */}
-        <section className="mx-auto max-w-4xl px-6 py-16 md:py-24">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
-            Common questions
-          </h2>
-          <div className="mt-10 space-y-4">
-            {faqs.map((faq) => (
-              <details
-                key={faq.q}
-                className="group rounded-xl border border-slate-200 bg-white px-6 py-4 open:border-orange-200 open:shadow-[0_0_8px_rgba(255,107,53,0.08)]"
-              >
-                <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900 marker:hidden md:text-base [&::-webkit-details-marker]:hidden">
-                  {faq.q}
-                </summary>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  {faq.a}
-                </p>
-              </details>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Final CTA ── */}
-        <section className="border-t border-slate-100 bg-slate-50/60">
-          <div className="mx-auto max-w-6xl px-6 py-16 text-center md:py-24">
-            <h2 className="mx-auto max-w-2xl text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
-              First, let&rsquo;s see if QuoteCore+ actually fits your workflow
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-slate-600 md:text-base">
-              Tell us how you currently estimate and quote work. We&rsquo;ll
-              look at what you&rsquo;re doing now, what would need to be
-              rebuilt, and whether QuoteCore+ is genuinely a good fit. If it
-              is, we&rsquo;ll explain which setup option makes sense. If it
-              isn&rsquo;t, there&rsquo;s no point forcing it.
-            </p>
-            <p className="mt-4 text-sm font-semibold text-slate-900">
-              No hard sell. The first step is simply checking the fit.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <DfyCtaButton event="dfy_fit_call_click_final" />
-              <Link href="/features" className={talkUsClass}>
-                Explore QuoteCore+
-              </Link>
+        <section className={styles.faqSection} aria-labelledby="faq-title">
+          <div className={`${styles.container} ${styles.faqGrid}`}>
+            <div className={styles.faqIntro}>
+              <p className={styles.lightEyebrow}>Common questions</p>
+              <h2 id="faq-title">Before you book the call.</h2>
+              <p>The discovery call is free, 20 minutes and no obligation. It is simply a chance to see whether Done For You would make your move into QuoteCore+ easier.</p>
+              <MarketingButton href="/pricing" variant="glass">View QuoteCore+ plans</MarketingButton>
+            </div>
+            <div className={styles.faqList}>
+              {faqs.map((faq) => (
+                <details key={faq.q} className={styles.faqItem}>
+                  <summary>{faq.q}<span><ArrowIcon /></span></summary>
+                  <p>{faq.a}</p>
+                </details>
+              ))}
             </div>
           </div>
         </section>
+
       </main>
       <SiteFooter />
     </>
