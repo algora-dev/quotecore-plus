@@ -656,7 +656,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             </div>
           </div>}
           {task && <div className={s.taskFooter} data-sa-task={task.id}>
-            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task closed. Ask something new whenever you’re ready.</p> : <>
+            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task solved. You can still refer back to it in this recent conversation.</p> : <>
               <QcButton className={s.doneButton} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void finishTask(task.status === 'answered' ? 'done' : 'move_on')}><AssistantIcon name={task.status === 'answered' ? 'check' : 'chevron'}/>{task.status === 'answered' ? 'Done' : 'Move on'}</QcButton>
               {task.status === 'answered' && <QcButton className={s.quietButton} disabled={controlsBusy || voice.state !== 'off'} onClick={refineAnswer}>Not quite</QcButton>}
             </>}

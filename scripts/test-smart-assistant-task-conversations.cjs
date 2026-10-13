@@ -42,8 +42,11 @@ test('Done closes task without deleting history or doing a business read',async(
 test('Move on closes an unsuccessful question and does not require successful resolution',async()=>{
  const s=conversation({quotes:[q(1)]});await s.ask('show quotes with ridges');assert.equal(s.snapshot().task.status,'awaiting_input');s.close('abandoned');await s.ask('quote 1014');assert.equal(s.trace.at(-1).state,'resolved');
 });
-test('typed thanks also closes without a model and next request is independent',async()=>{
- const s=conversation(ownerData());await s.ask('show quotes with Ridge');const r=await s.ask('thanks');assert.equal(r.state,'task_control');assert.equal(s.reads.length,0);assert.equal(s.snapshot().task.status,'closed');await s.ask('quote 1014');assert.equal(s.trace.at(-1).state,'resolved');
+test('typed thanks is conversational acknowledgement, not task closure',async()=>{
+ const s=conversation(ownerData());await s.ask('show quotes with Ridge');const old=s.snapshot().task;const r=await s.ask('thanks',{model:async()=>({state:'model_reply',answer:'You’re welcome.'})});assert.equal(r.state,'model_reply');assert.equal(s.snapshot().task.id,old.id);assert.notEqual(s.snapshot().task.status,'closed');
+});
+test('dependent follow-up remains live after a two-hour on-site pause',async()=>{
+ const s=conversation(ownerData());await s.ask('show quotes with Ridge');s.clock=new Date(s.clock.getTime()+2*60*60*1000);const r=await s.ask('what about its labour?',{model:async(_service,prepared)=>({state:'model_reply',answer:prepared.prompt()})});assert.equal(s.trace.at(-1).disposition,'continue');assert.equal(s.snapshot().task.status,'answered');assert.ok(r.answer.includes('CURRENT_TASK_CLUES'));
 });
 test('forgotten Done does not make unrelated short explicit numbers inherit filters',async()=>{
  const s=conversation(ownerData());await s.ask('show quotes with Ridge');await s.ask('quote 1014');assert.equal(s.trace.at(-1).disposition,'new');assert.equal(s.reads[0].plan.related.length,0);
@@ -57,9 +60,9 @@ test('boundary Continue reuses the saved message without asking user to repeat i
  await s.ask(encodeTaskChoice({taskId:pending.task.id,version:pending.task.version,choice:'continue'}));
  assert.equal(s.prepared.message,'Smith');assert.equal(s.trace.at(-1).disposition,'continue');assert.equal(s.saved.at(-1).state.intent.customer,'Smith');assert.equal(s.saved.at(-1).state.intent.contains,'Ridge');
 });
-test('boundary New excludes previous task history and constraints',async()=>{
+test('boundary New excludes prior task authority but keeps transcript continuity',async()=>{
  const s=conversation({quotes:[q(1)]});await s.ask('show quotes with Ridge');const priorRun=s.trace[0].runId;s.clock=new Date(s.clock.getTime()+301000);await s.ask('Smith');const pending=s.snapshot();
- await s.ask(encodeTaskChoice({taskId:pending.task.id,version:pending.task.version,choice:'new'}));assert.equal(s.prepared.message,'Smith');assert.equal(s.prepared.previous,null);assert.equal(s.prepared.visibleRun(priorRun),false);assert.equal(s.trace.at(-1).state,'model_required');
+ await s.ask(encodeTaskChoice({taskId:pending.task.id,version:pending.task.version,choice:'new'}));assert.equal(s.prepared.message,'Smith');assert.equal(s.prepared.previous,null);assert.equal(s.prepared.visibleRun(priorRun),false);assert.equal(s.prepared.transcriptRun(priorRun),true);assert.match(s.prepared.prompt(),/EXPLICIT backward reference/);assert.equal(s.trace.at(-1).state,'model_required');
 });
 test('stale boundary buttons cannot reopen a closed task',async()=>{
  const s=conversation({quotes:[q(1)]});await s.ask('show quotes with Ridge');s.clock=new Date(s.clock.getTime()+301000);await s.ask('Smith');const pending=s.snapshot();s.close('abandoned');

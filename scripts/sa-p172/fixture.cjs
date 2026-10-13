@@ -32,7 +32,7 @@ function conversation(db={},extra={}) {
      if(task && (before.task?.id!==task.id||before.task.version!==task.version))throw new Error('task_changed');
      const fresh=decision.disposition==='new'||!task;
      task={id:fresh?uuid(s.nextId++):task.id,version:(task?.version??0)+1,status:decision.disposition==='close'?'closed':decision.disposition==='ask_boundary'?'awaiting_input':'open',label,lastRunId:runId,
-       startedAt:fresh?s.clock.toISOString():task.startedAt,updatedAt:s.clock.toISOString(),expiresAt:new Date(s.clock.getTime()+900000).toISOString(),closure:decision.closure??null,boundary:decision.disposition==='ask_boundary'};
+       startedAt:fresh?s.clock.toISOString():task.startedAt,updatedAt:s.clock.toISOString(),expiresAt:new Date(s.clock.getTime()+3*60*60*1000).toISOString(),closure:decision.closure??null,boundary:decision.disposition==='ask_boundary'};
      pendingMessage=task.boundary?decision.message:null;bindings.set(runId,{taskId:task.id,version:task.version});return structuredClone(task);
    },finish:async(status,label)=>{
      if(failFinish)throw new Error('fixture metadata failure');
@@ -44,7 +44,7 @@ function conversation(db={},extra={}) {
      return saved&&(!id||id===saved.id)?structuredClone(saved):null;
    },save:async(state,sections)=>{
      if(!parseResolutionState(JSON.parse(JSON.stringify(state))))throw new Error('invalid actual resolver output');
-     const saved={id:uuid(s.nextId++),expiresAt:new Date(s.clock.getTime()+900000).toISOString(),state:JSON.parse(JSON.stringify(state))};
+     const saved={id:uuid(s.nextId++),expiresAt:new Date(s.clock.getTime()+3*60*60*1000).toISOString(),state:JSON.parse(JSON.stringify(state))};
      states.set(runId,{taskId:task.id,runId,saved});s.saved.push(saved);return structuredClone(saved);
    }};
    try{
