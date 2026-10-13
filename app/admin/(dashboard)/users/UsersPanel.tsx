@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { searchUsers, type SearchUserRow } from './actions';
+
+// Owner 2026-10-12: the list loads every user on open (newest first) - no
+// "Show all" click needed. Search filters; the footer pages through results.
+const PAGE_SIZE = 50;
 
 const PLAN_BADGE: Record<string, string> = {
   pro_plus:  'bg-purple-100 text-purple-700',
@@ -94,14 +98,17 @@ export function UsersPanel() {
   const [loading, startSearch] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
 
-  function onSearch(e: React.FormEvent) {
-    e.preventDefault();
+  function runPage(targetPage: number, query: string) {
     setError(null);
     startSearch(async () => {
-      const res = await searchUsers(search, 50, 0);
+      const res = await searchUsers(query, PAGE_SIZE, targetPage * PAGE_SIZE);
       if (res.ok) {
         setUsers(res.users);
+        setTotal(res.total);
+        setPage(targetPage);
         setHasSearched(true);
       } else {
         setError(res.error);
@@ -109,17 +116,16 @@ export function UsersPanel() {
     });
   }
 
-  function loadAll() {
-    setError(null);
-    startSearch(async () => {
-      const res = await searchUsers('', 50, 0);
-      if (res.ok) {
-        setUsers(res.users);
-        setHasSearched(true);
-      } else {
-        setError(res.error);
-      }
-    });
+  // Load page 1 immediately - the admin sees every user (newest first) the
+  // moment the Users page opens (owner 2026-10-12).
+  useEffect(() => {
+    runPage(0, '');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function onSearch(e: React.FormEvent) {
+    e.preventDefault();
+    runPage(0, search);
   }
 
   return (
@@ -145,14 +151,6 @@ export function UsersPanel() {
         >
           {loading ? 'Searching…' : 'Search'}
         </button>
-        <button
-          type="button"
-          onClick={loadAll}
-          disabled={loading}
-          className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition"
-        >
-          Show all
-        </button>
       </form>
 
       {error && (
@@ -168,7 +166,7 @@ export function UsersPanel() {
         ) : users.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
             <p className="text-sm text-slate-500">
-              {hasSearched ? `No users matching "${search}"` : 'Search for a user by email or company name, or click "Show all".'}
+              {hasSearched ? `No users matching "${search}"` : 'Loading users…'}
             </p>
           </div>
         ) : (
@@ -229,9 +227,35 @@ export function UsersPanel() {
           </table>
         )}
         {users.length > 0 && (
-          <div className="px-4 py-2 border-t border-slate-100 text-xs text-slate-400">
-            {users.length} user{users.length !== 1 ? 's' : ''}
-            {search ? ` matching "${search}"` : ''}
+          <div className="flex items-center justify-between gap-3 px-4 py-2 border-t border-slate-100 text-xs text-slate-500">
+            <span>
+              Showing {page * PAGE_SIZE + 1}–{page * PAGE_SIZE + users.length} of {total} user{total !== 1 ? 's' : ''}
+              {search ? ` matching "${search}"` : ''}
+            </span>
+            {(page > 0 || page * PAGE_SIZE + users.length < total) && (
+              <span className="flex items-center gap-2">
+                {page > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => runPage(page - 1, search)}
+                    disabled={loading}
+                    className="px-3 py-1 rounded-full border border-slate-300 text-xs font-medium hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                )}
+                {page * PAGE_SIZE + users.length < total && (
+                  <button
+                    type="button"
+                    onClick={() => runPage(page + 1, search)}
+                    disabled={loading}
+                    className="px-3 py-1 rounded-full border border-slate-300 text-xs font-medium hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                )}
+              </span>
+            )}
           </div>
         )}
       </div>
