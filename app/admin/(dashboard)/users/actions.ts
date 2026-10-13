@@ -102,47 +102,55 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
   const q = (query ?? '').trim();
 
   if (!q) {
-    // No query: return most recent accounts
-    const { data: companies, error: coErr } = await admin
-      .from('companies')
-      .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-    if (coErr) return { ok: false, error: coErr.message };
+    // Owner 2026-10-12: paginate at the USER level with an exact total. The
+    // old company-level window (50 most recent companies) flooded with
+    // per-session demo companies and hid older real accounts - the admin saw
+    // "38 users" while the dashboard counted 44.
+    const { count: total, error: countErr } = await admin
+      .from('users')
+      .select('id', { count: 'exact', head: true });
+    if (countErr) return { ok: false, error: countErr.message };
 
-    const companyIds = (companies ?? []).map((c) => c.id);
-    if (companyIds.length === 0) return { ok: true, users: [], total: 0 };
-
-    const { data: allUsers } = await admin
+    const { data: pageUsers, error: uErr } = await admin
       .from('users')
       .select('id, email, full_name, is_admin, company_id')
-      .in('company_id', companyIds);
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (uErr) return { ok: false, error: uErr.message };
+
+    const companyIds = Array.from(new Set((pageUsers ?? []).map((u) => u.company_id).filter(Boolean))) as string[];
+    let companiesById: Record<string, { id: string; name: string; plan_code: string | null; subscription_status: string | null; admin_paused: boolean; stripe_subscription_id: string | null; comp_until: string | null }> = {};
+    if (companyIds.length > 0) {
+      const { data: cos, error: cErr } = await admin
+        .from('companies')
+        .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
+        .in('id', companyIds);
+      if (cErr) return { ok: false, error: cErr.message };
+      for (const c of cos ?? []) companiesById[c.id] = c;
+    }
 
     const activeMap = await fetchLastActiveMap(
       admin,
-      (allUsers ?? []).map((u) => u.id),
+      (pageUsers ?? []).map((u) => u.id),
     );
 
-    const users: SearchUserRow[] = [];
-    for (const co of companies ?? []) {
-      const coUsers = (allUsers ?? []).filter((u) => u.company_id === co.id);
-      for (const u of coUsers) {
-        users.push({
-          id: u.id,
-          email: u.email,
-          fullName: u.full_name,
-          companyId: co.id,
-          companyName: co.name,
-          planCode: co.plan_code,
-          subscriptionStatus: co.subscription_status,
-          stripeSubscriptionId: co.stripe_subscription_id ?? null,
-          compUntil: (co as { comp_until?: string | null }).comp_until ?? null,
-          adminPaused: co.admin_paused,
-          lastActiveAt: activeMap.get(u.id) ?? null,
-        });
-      }
-    }
-    return { ok: true, users, total: users.length };
+    const users: SearchUserRow[] = (pageUsers ?? []).map((u) => {
+      const co = companiesById[u.company_id ?? ''];
+      return {
+        id: u.id,
+        email: u.email,
+        fullName: u.full_name,
+        companyId: u.company_id ?? '',
+        companyName: co?.name ?? 'Unknown',
+        planCode: co?.plan_code ?? null,
+        subscriptionStatus: co?.subscription_status ?? null,
+        stripeSubscriptionId: co?.stripe_subscription_id ?? null,
+        compUntil: co?.comp_until ?? null,
+        adminPaused: co?.admin_paused ?? false,
+        lastActiveAt: activeMap.get(u.id) ?? null,
+      };
+    });
+    return { ok: true, users, total: total ?? users.length };
   }
 
   // Search by email first
