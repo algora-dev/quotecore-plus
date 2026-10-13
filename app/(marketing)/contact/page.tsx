@@ -3,6 +3,7 @@
 import { useState } from "react";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { homepageConfig } from "@/components/marketing/home/homepage-config";
 import styles from "./ContactPage.module.css";
 
 function MailIcon() {
@@ -23,6 +24,7 @@ function CheckIcon() {
 
 export default function ContactPage() {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const bookingHref = homepageConfig.bookingHref || "https://calendly.com/quote-core-info/meeting";
 
   return (
     <>
@@ -37,7 +39,7 @@ export default function ContactPage() {
 
               <div className={styles.quickLinks}>
                 <a className={styles.quickLink} href="mailto:info@quote-core.com"><MailIcon />Email us directly</a>
-                <a className={styles.quickLink} href="https://calendly.com/quote-core-info/15-minute-meeting" target="_blank" rel="noopener noreferrer"><CalendarIcon />Book a free 15-minute call <ArrowIcon /></a>
+                <a className={styles.quickLink} href={bookingHref} target="_blank" rel="noopener noreferrer"><CalendarIcon />Book a free 15-minute call <ArrowIcon /></a>
               </div>
 
               <div className={styles.reassurance} aria-label="Contact promises">
