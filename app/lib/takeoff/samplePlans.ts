@@ -7,8 +7,8 @@
  * overrides it when generic trades are enabled). Trades without a dedicated
  * plan fall back to the roof plan (owner decision 2026-10-13).
  *
- * The wall + floor assets are placeholders pending the owner's real plans;
- * swapping them in is a file replacement only - hrefs stay stable.
+ * Wall + floor assets are the owner's real plans (landed 2026-10-13, JPG);
+ * replacing them later is a file swap at the same href.
  */
 export interface SamplePlan {
   /** Public asset path under /public. */
@@ -26,14 +26,14 @@ export const ROOF_SAMPLE_PLAN: SamplePlan = {
 };
 
 export const WALL_SAMPLE_PLAN: SamplePlan = {
-  href: '/takeoff-demo/wallplan-baseline.png',
-  download: 'QuoteCore-test-wall-plan.png',
+  href: '/takeoff-demo/wallplan-baseline.jpg',
+  download: 'QuoteCore-test-wall-plan.jpg',
   label: 'wall',
 };
 
 export const FLOOR_SAMPLE_PLAN: SamplePlan = {
-  href: '/takeoff-demo/floorplan-baseline.png',
-  download: 'QuoteCore-test-floor-plan.png',
+  href: '/takeoff-demo/floorplan-baseline.jpg',
+  download: 'QuoteCore-test-floor-plan.jpg',
   label: 'floor',
 };
 
