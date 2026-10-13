@@ -237,10 +237,20 @@ export function TouchWorkspaceShell({
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);
   }, [active, orientationMode]);
+  // Guided demo landing (owner 2026-10-12 evening): land straight in the
+  // coached flow. The canvas entry is announced on MOUNT (any orientation) so
+  // the demo helper opens immediately instead of behind a blocking "click to
+  // continue" flip gate. Browser fullscreen is still requested only on the
+  // first real LANDSCAPE entry (mount has no user gesture to satisfy it).
   useEffect(() => {
-    if (!demoLandscape || landscapeAnnouncedRef.current) return;
-    landscapeAnnouncedRef.current = true;
-    window.dispatchEvent(new Event('qc-demo-takeoff-canvas-entered'));
+    if (!active || orientationMode !== 'landscape-preferred') return;
+    if (!landscapeAnnouncedRef.current) {
+      landscapeAnnouncedRef.current = true;
+      window.dispatchEvent(new Event('qc-demo-takeoff-canvas-entered'));
+    }
+  }, [active, orientationMode]);
+  useEffect(() => {
+    if (!demoLandscape) return;
     const root = shellRef.current;
     if (root?.requestFullscreen && typeof document !== 'undefined' && !document.fullscreenElement) {
       root.requestFullscreen().catch(() => { /* iOS Safari / denied: pinned viewport stays */ });
@@ -330,35 +340,30 @@ export function TouchWorkspaceShell({
           {children}
         </div>
         {active && overlay}
-        {/* Guided demo (owner 2026-10-12): landscape-first canvas. Portrait
-            shows a dismissible flip prompt (PWA parity); dismissing it in
-            portrait still announces the canvas entry so the helper opens. */}
+        {/* Guided demo (owner 2026-10-12 evening): the flip nudge is a compact,
+            DISMISSIBLE chip instead of a full-cover gate - visitors land in the
+            coached flow immediately and the canvas + rail stay usable in
+            portrait. It clears itself when the phone reaches landscape. */}
         {active && orientationMode === 'landscape-preferred' && !demoLandscape && portraitPromptOpen && (
-          <div className="absolute inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-slate-950 px-10 text-center" role="dialog" aria-label="Turn your phone sideways">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-14 w-14 text-[#FF6B35]" aria-hidden="true">
-              <rect x="3.5" y="8.5" width="17" height="7" rx="2" />
-              <path d="M8.5 5.5A7.5 7.5 0 0 1 5 8" strokeLinecap="round" />
-              <path d="M8.5 5.5V6M8.5 5.5H7" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M15.5 18.5A7.5 7.5 0 0 1 19 16" strokeLinecap="round" />
-              <path d="M15.5 18.5V18M15.5 18.5H17" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <div className="text-base font-semibold text-white">Turn your phone sideways</div>
-            <div className="max-w-xs text-sm text-slate-400">
-              The takeoff canvas is built for landscape. Flip your phone to see the measured plan full width and draw comfortably.
+          <div className="pointer-events-none absolute inset-x-3 top-3 z-[70] flex justify-center" role="status">
+            <div className="pointer-events-auto flex max-w-md items-center gap-2 rounded-full border border-white/15 bg-slate-900/90 py-1.5 pl-3 pr-1.5 text-xs font-semibold text-slate-200 shadow-lg backdrop-blur">
+              <svg viewBox="0 0 24 24" fill='none' stroke='currentColor' strokeWidth={1.8} className='h-4 w-4 shrink-0 text-[#FF6B35]' aria-hidden='true'>
+                <rect x='3.5' y='8.5' width='17' height='7' rx='2' />
+                <path d='M8.5 5.5A7.5 7.5 0 0 1 5 8' strokeLinecap='round' />
+                <path d='M8.5 5.5V6M8.5 5.5H7' strokeLinecap='round' strokeLinejoin='round' />
+              </svg>
+              <span className='min-w-0 flex-1 truncate'>Turn your phone sideways for the full-width plan, or keep going in portrait.</span>
+              <button
+                type='button'
+                aria-label='Dismiss the rotate hint'
+                className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/10 hover:text-white'
+                onClick={() => setPortraitPromptOpen(false)}
+              >
+                <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={2} className='h-4 w-4' aria-hidden='true'>
+                  <path d='M6 6l12 12M18 6L6 18' strokeLinecap='round' />
+                </svg>
+              </button>
             </div>
-            <button
-              type="button"
-              className="mt-1 h-12 rounded-full border border-white/20 bg-white/10 px-4 text-xs font-semibold text-white"
-              onClick={() => {
-                setPortraitPromptOpen(false);
-                if (!landscapeAnnouncedRef.current) {
-                  landscapeAnnouncedRef.current = true;
-                  window.dispatchEvent(new Event('qc-demo-takeoff-canvas-entered'));
-                }
-              }}
-            >
-              Continue in portrait
-            </button>
           </div>
         )}
         {/* Landscape lock (owner 2026-10-07): full-cover rotate prompt above

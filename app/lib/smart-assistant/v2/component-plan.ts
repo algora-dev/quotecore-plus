@@ -3,6 +3,7 @@ import { applyPitchAndWaste, type PitchType, type WasteType, type PricingStrateg
 import { traceComponentCalc, type CalcAuditOverride } from '@/app/lib/pricing/calcTracer';
 import { isRecord } from '../section-permissions';
 import { fieldNumber, ProposalError, row, rows, type ComponentChanges } from './action-domain';
+import { assistantMoney } from './money';
 import { storageNumber, storedMeasurement } from './storage-number';
 import type { ChangeRow } from './contracts';
 const pitchTypes = ['none', 'rafter', 'valley_hip'];
@@ -73,6 +74,7 @@ export function componentResult(snapshot: Record<string, unknown>, change: Compo
         calc_audit: JSON.parse(JSON.stringify(audit)) as unknown, is_rate_overridden: change.material_rate !== undefined || change.labour_rate !== undefined || c.is_rate_overridden === true,
         is_quantity_overridden: change.raw_quantity !== undefined || c.is_quantity_overridden === true, is_waste_overridden: change.waste_percent !== undefined || c.is_waste_overridden === true, is_pitch_overridden: change.pitch_degrees !== undefined || c.is_pitch_overridden === true,
         use_custom_pitch: change.pitch_degrees !== undefined ? true : c.use_custom_pitch === true, custom_pitch_degrees: change.pitch_degrees ?? c.custom_pitch_degrees ?? null, calc_pitch_degrees: change.pitch_degrees ?? c.calc_pitch_degrees ?? null };
-    changes.push({ label: `${q.currency ?? ''} material cost (engine)`, before: String(c.material_cost ?? 0), after: String(storageNumber(audit.materialCost)) }, { label: `${q.currency ?? ''} labour cost (engine)`, before: String(c.labour_cost ?? 0), after: String(storageNumber(audit.labourCost)) });
+    const quoteCurrency = typeof q.currency === 'string' ? q.currency : null;
+    changes.push({ label: 'Material cost (engine)', before: assistantMoney(quoteCurrency, Number(c.material_cost ?? 0)), after: assistantMoney(quoteCurrency, audit.materialCost) }, { label: 'Labour cost (engine)', before: assistantMoney(quoteCurrency, Number(c.labour_cost ?? 0)), after: assistantMoney(quoteCurrency, audit.labourCost) });
     return { fields, entries: geometryChange ? adjusted.map(e => ({ id: e.id, raw_value: e.raw_value, value_after_waste: e.value_after_waste, pitch_degrees: e.pitch_degrees })) : [], changes };
 }

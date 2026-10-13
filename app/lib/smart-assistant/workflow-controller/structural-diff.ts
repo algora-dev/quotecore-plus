@@ -1,4 +1,5 @@
 import { canonical, ProposalError } from '../v2/action-domain';
+import { assistantMoney } from '../v2/money';
 import type { ChangeRow } from '../v2/contracts';
 import { convertAreaFt2, convertAreaRs, convertLinear } from '@/app/lib/measurements/conversions';
 import { normalizeMeasurementSystem, type MeasurementSystem } from '@/app/lib/types';
@@ -44,11 +45,11 @@ function areaText(a: Row, system: string): string {
   const plan = a.input_mode === 'calculated' ? a.calc_plan_sqm : a.final_value_sqm;
   return `${measurementValue(plan, 'area', system)} ${a.input_mode === 'calculated' ? 'plan' : 'surface'}; pitch ${a.calc_pitch_degrees}°; engine surface ${measurementValue(a.computed_sqm, 'area', system)}`;
 }
-function componentText(c: Row, system: string): string {
+function componentText(c: Row, system: string, currency: string): string {
   const entries = (Array.isArray(c.entries) ? c.entries : [c.entry]).filter(Boolean) as Row[];
   const type = String(c.measurement_type ?? 'lineal');
   const values = entries.slice(0,12).map(e => measurementValue(e.raw_value, type, system)).join(' + ');
-  return `${c.name}: ${values}${entries.length>12?` + ${entries.length-12} more entries`:''} (${entries.length} entries, ${c.input_mode === 'calculated'?'plan':'actual'}); pitch ${c.calc_pitch_degrees}°; engine quantity ${measurementValue(c.final_quantity, type, system)}; material ${c.material_cost}; labour ${c.labour_cost}`;
+  return `${c.name}: ${values}${entries.length>12?` + ${entries.length-12} more entries`:''} (${entries.length} entries, ${c.input_mode === 'calculated'?'plan':'actual'}); pitch ${c.calc_pitch_degrees}°; engine quantity ${measurementValue(c.final_quantity, type, system)}; material ${assistantMoney(currency, Number(c.material_cost ?? 0))}; labour ${assistantMoney(currency, Number(c.labour_cost ?? 0))}`;
 }
 export function draftReviewDiff(before: PlannedDraft, after: PlannedDraft, collectionNames: Record<string,string> = {}): ChangeRow[] {
   const changes: ChangeRow[] = [];
@@ -72,7 +73,7 @@ export function draftReviewDiff(before: PlannedDraft, after: PlannedDraft, colle
     for (const r of after.children[kind]) if (!old.has(r.id) || canonical(old.get(r.id)) !== canonical(r)) changes.push({label:`${kind==='areas'?'Area':'Component'}: ${r.label ?? r.name}`,before:old.has(r.id)?render(old.get(r.id)!):blank('Not present'),after:render(r)});
     for (const r of before.children[kind]) if (!next.has(r.id)) changes.push({label:`Remove ${kind==='areas'?'area':'component'}: ${r.label??r.name}`,before:render(r),after:'Removed'});
   };
-  compare('areas',r=>areaText(r,system)); compare('components',r=>componentText(r,system));
+  compare('areas',r=>areaText(r,system)); compare('components',r=>componentText(r,system,after.currency));
   // Every added/changed/removed raw entry is visible, including entry 200.
   // Engine-only per-entry changes from pitch/waste are represented by the
   // explicit area/component setting and recalculated totals above.
