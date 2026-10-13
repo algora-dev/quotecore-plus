@@ -11,6 +11,8 @@
  * whose AI scan (roof-trained) is offered.
  */
 
+import { WALL_SAMPLE_PLAN, FLOOR_SAMPLE_PLAN } from '@/app/lib/takeoff/samplePlans';
+
 export type TakeoffUnitSystem = 'metric' | 'imperial' | 'squares';
 
 export interface TakeoffUnitOption {
@@ -128,6 +130,7 @@ export const CLADDING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   ],
   maxCustomComponents: 7,
   reportNote: 'Wall areas are measured as drawn - no pitch adjustment applies in this tool.',
+  samplePlan: WALL_SAMPLE_PLAN,
 };
 
 export const FLOORING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
@@ -150,6 +153,7 @@ export const FLOORING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   ],
   maxCustomComponents: 7,
   reportNote: 'Floor areas are measured as drawn - no pitch adjustment applies in this tool.',
+  samplePlan: FLOOR_SAMPLE_PLAN,
 };
 /** Resolve the unit option object for a chosen system (falls back to metric). */
 export function resolveUnitOption(system: TakeoffUnitSystem, config: TakeoffTradeConfig): TakeoffUnitOption {
