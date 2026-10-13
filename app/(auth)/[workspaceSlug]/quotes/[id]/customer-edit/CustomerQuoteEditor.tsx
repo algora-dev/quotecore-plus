@@ -825,9 +825,11 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       // Demo guide: server acks guide steps on this save - refresh the helper now
       // so it reacts instantly instead of waiting for the next poll.
       refreshDemoGuide();
+      return true;
     } catch (err) {
       console.error('Failed to save:', err);
       alert('Failed to save changes. Please try again.');
+      return false;
     } finally {
       setSaving(false);
     }
@@ -941,8 +943,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     setShowMarginSaveWarning(true);
                     return;
                   }
-                  await handleSave();
-                  router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
+                  if (await handleSave()) {
+                    router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
+                  }
                 }}
                 disabled={saving || studioLineDirty}
                 title={studioLineDirty ? 'Apply or cancel the selected line changes first' : undefined}
@@ -1696,8 +1699,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         onCancel={() => setShowMarginSaveWarning(false)}
         onConfirm={async () => {
           setShowMarginSaveWarning(false);
-          await handleSave();
-          router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
+          if (await handleSave()) {
+            router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
+          }
         }}
       />
 

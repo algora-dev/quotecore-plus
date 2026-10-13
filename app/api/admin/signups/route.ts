@@ -39,11 +39,9 @@ export async function GET(req: NextRequest) {
   // 1. Static key check. Key lives in app_runtime_config (DB) with env fallback,
   // so it can be fixed/rotated with SQL without a Vercel re-paste.
   const expected = await getAdminSignupsApiKey();
-  const headerKey = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
-  // Query-param fallback (browser-testable; also rules out proxies that
-  // strip the Authorization header).
-  const queryKey = req.nextUrl.searchParams.get('key') ?? '';
-  const provided = headerKey || queryKey;
+  // Authorization header only (pre-live audit M-02): bearer keys must never
+  // appear in URLs where history/proxy logs capture them.
+  const provided = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
   // Distinct failures so misconfiguration is diagnosable from outside:
   // 503 = key not configured server-side; 401 = key present but wrong.
   if (!expected) {
