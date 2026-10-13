@@ -44,6 +44,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const [navigationSlow, setNavigationSlow] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   const [copying, setCopying] = useState(false);
+  const [mobileNotice, setMobileNotice] = useState(false);
   const widget = useRef<HTMLElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const promptBox = useRef<HTMLTextAreaElement>(null);
@@ -72,6 +73,13 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const expiryLabel = mounted && Number.isFinite(Date.parse(expiresAt))
     ? new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' }).format(new Date(expiresAt)) : 'up to 24 hours';
 
+  useEffect(() => {
+    // Phone-sized screens get a one-time heads-up before the guide starts:
+    // takeoff and the assistant are built for the app, not the browser.
+    if (window.innerWidth >= 768) return;
+    try { if (localStorage.getItem('qc-demo-mobile-notice') === '1') return; } catch { return; }
+    setMobileNotice(true);
+  }, []);
   useEffect(() => {
     alive.current = true; setMounted(true);
     const component = (event: Event) => setSurface(readComponentSurface((event as CustomEvent).detail));
@@ -246,12 +254,16 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     : assistantNeedsDraft ? 'This lesson edits a draft created by the Assistant. First use the create request below, or skip this lesson to try finding work instead.'
     : step?.copy;
   const testExample = units === 'metric' ? 'Try 2 m².' : units === 'imperial_ft' ? 'Try 20 ft².' : units === 'imperial_rs' ? 'Try 0.2 roofing squares.' : '';
-  const showGuide = open && !expired && !resetting;
+  const showGuide = open && !expired && !resetting && !mobileNotice;
+  const closeMobileNotice = useCallback(() => {
+    setMobileNotice(false);
+    try { localStorage.setItem('qc-demo-mobile-notice', '1'); } catch { /* Optional storage. */ }
+  }, []);
   const touchTakeoff = mounted && !!window.matchMedia?.('(pointer: coarse)').matches;
 
   const overlays = <div data-qc-ui="v2" className="qc-demo-overlays" data-assistant-open={assistantOpen} data-assistant-chapter={assistantStep}>
     <p className="qc-demo-announcement" role="status" aria-live="polite" aria-atomic="true">{state.welcomed && state.mode === 'guided' && !expired ? `${chapter.title}: ${step?.title ?? 'chapter finished'}. ${progress.done} lessons completed${progress.skipped ? `, ${progress.skipped} skipped` : ''}.` : ''}</p>
-    {!open && !expired && <button ref={trigger} className="qc-demo-reopen" type="button" onClick={showGuidance} aria-expanded={false} aria-controls="qc-demo-guide"><span>Demo guide</span><small>{progress.handled}/{progress.total} lessons · Resume</small></button>}
+    {!open && !expired && !mobileNotice && <button ref={trigger} className="qc-demo-reopen" type="button" onClick={showGuidance} aria-expanded={false} aria-controls="qc-demo-guide"><span>Demo guide</span><small>{progress.handled}/{progress.total} lessons · Resume</small></button>}
     {assistantOpen && open && !expired && <QcButton className="qc-demo-assistant-return" variant="secondary" onClick={() => window.dispatchEvent(new Event('qc-hide-assistant'))}>Hide Assistant to see the guide</QcButton>}
     {showGuide && <aside id="qc-demo-guide" ref={widget} tabIndex={-1} className="qc-demo-guide" aria-label="QuoteCore+ demo guide" style={position ? { left: position.x, top: position.y, right: 'auto', bottom: 'auto' } : undefined}>
       <header className="qc-demo-guide-head" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
@@ -316,6 +328,8 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
       footer={!resetting && <div className="qc-demo-actions"><QcButton variant="primary" disabled={!resetUnits} onClick={() => void reset()}>Replace my demo &amp; start fresh</QcButton><QcButton variant="ghost" onClick={() => setResetOpen(false)}>Keep my current demo</QcButton></div>}>
       {!resetting && <DemoUnitChoice value={resetUnits} onChange={setResetUnits} />}{error && <p role="alert" className="qc-demo-error">{error}</p>}
     </QcDialog>
+    <QcDialog open={mobileNotice && !expired && !resetting} onRequestClose={closeMobileNotice} title="Mobile user heads up" description="Digital takeoff and the smart assistant work in your browser, well enough to test. They just don't fit the screen optimally there. In the main mobile app they get the full experience, designed for that screen. Everything else works great right here."
+      footer={<div className="qc-demo-actions"><QcButton variant="primary" onClick={closeMobileNotice}>Start the demo</QcButton></div>} />
     <QcDialog open={expired && !resetting} onRequestClose={() => window.location.assign('/demo')} title="This demo has ended" description="It expired or was reset in another tab. Start fresh to try again. AI and email allowances carry over.">
       <div className="qc-demo-actions"><QcLinkButton variant="primary" href="/demo">Open a fresh demo</QcLinkButton><QcLinkButton variant="ghost" href={accountHref}>Get your own account</QcLinkButton></div>
     </QcDialog>
