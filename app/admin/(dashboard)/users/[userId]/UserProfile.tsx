@@ -114,6 +114,9 @@ export function UserProfile({ data }: { data: UserProfileData }) {
       {/* B.5 Custom Setup (billing): grant/comp + Stripe-linked change */}
       <CustomBillingSection companyId={data.company.id} />
 
+      {/* P3. Stripe refund observations (manual refunds remain a Stripe action) */}
+      <RefundHistorySection data={data} />
+
       {/* C. Discount / Coupon */}
       <CouponSection data={data} onAction={runAction} pending={pending} />
 
@@ -444,6 +447,37 @@ function SubscriptionSection({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// P3: observed Stripe refunds. This is read-only; refunds are issued manually
+// in Stripe and never restore QuoteCore usage or cancel a subscription.
+// ---------------------------------------------------------------------------
+
+function RefundHistorySection({ data }: { data: UserProfileData }) {
+  if (!data.refunds.length) return null;
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Refund history</h2>
+          <p className="text-xs text-slate-500 mt-1">Observed from Stripe. Money refunds do not restore consumed allowances and do not automatically cancel the subscription.</p>
+        </div>
+      </div>
+      <div className="mt-4 divide-y divide-slate-100 border border-slate-200 rounded-lg overflow-hidden">
+        {data.refunds.map(refund => (
+          <div key={refund.refundId} className="p-3 grid gap-1 sm:grid-cols-[1fr_auto_auto] sm:items-center text-sm">
+            <div>
+              <div className="font-medium text-slate-800">{refund.refundId}</div>
+              <div className="text-xs text-slate-500">{new Date(refund.providerCreatedAt).toLocaleString()}{refund.reason ? ` · ${refund.reason}` : ''}</div>
+            </div>
+            <div className="text-slate-700">{(refund.amountCents / 100).toFixed(2)} {refund.currency.toUpperCase()}</div>
+            <span className="justify-self-start sm:justify-self-end rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{refund.status}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -34,7 +34,9 @@ export interface UserProfileData {
     name: string;
     slug: string | null;
     planCode: string | null;
+    billingModel: string;
     subscriptionStatus: string | null;
+    firstPaymentFailureAt: string | null;
     stripeCustomerId: string | null;
     stripeSubscriptionId: string | null;
     stripePriceId: string | null;
@@ -49,6 +51,7 @@ export interface UserProfileData {
     adminOverrideUntil: string | null;
     adminOverrideNotes: string | null;
   };
+  refunds: { refundId: string; amountCents: number; currency: string; status: string; reason: string | null; providerCreatedAt: string; observedAt: string }[];
 }
 
 export type UserProfileResult =
@@ -91,7 +94,7 @@ export async function getUserProfile(userId: string): Promise<UserProfileResult>
   const { data: company, error: coErr } = await admin
     .from('companies')
     .select(`
-      id, name, slug, plan_code, subscription_status,
+      id, name, slug, plan_code, billing_model, subscription_status, first_payment_failure_at,
       stripe_customer_id, stripe_subscription_id, stripe_price_id,
       current_period_end, storage_used_bytes, created_at,
       admin_paused, admin_paused_at, admin_pause_reason,
@@ -108,6 +111,16 @@ export async function getUserProfile(userId: string): Promise<UserProfileResult>
     .eq('code', company.plan_code ?? 'free')
     .maybeSingle();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const refundsResult = await (admin as any).from('qcp_refund_observations')
+    .select('refund_id, amount_cents, currency, status, reason, provider_created_at, observed_at')
+    .eq('company_id', company.id).order('provider_created_at', { ascending: false }).limit(20);
+  const refunds = refundsResult.error ? [] : (refundsResult.data ?? []).map((r: Record<string, unknown>) => ({
+    refundId: String(r.refund_id), amountCents: Number(r.amount_cents ?? 0), currency: String(r.currency ?? ''),
+    status: String(r.status ?? 'unknown'), reason: r.reason == null ? null : String(r.reason),
+    providerCreatedAt: String(r.provider_created_at), observedAt: String(r.observed_at),
+  }));
+
   return {
     ok: true,
     data: {
@@ -123,7 +136,9 @@ export async function getUserProfile(userId: string): Promise<UserProfileResult>
         name: company.name,
         slug: company.slug,
         planCode: company.plan_code,
+        billingModel: company.billing_model,
         subscriptionStatus: company.subscription_status,
+        firstPaymentFailureAt: company.first_payment_failure_at,
         stripeCustomerId: company.stripe_customer_id,
         stripeSubscriptionId: company.stripe_subscription_id,
         stripePriceId: company.stripe_price_id,
@@ -138,6 +153,7 @@ export async function getUserProfile(userId: string): Promise<UserProfileResult>
         adminOverrideUntil: company.admin_override_until,
         adminOverrideNotes: company.admin_override_notes,
       },
+      refunds,
     },
   };
 }

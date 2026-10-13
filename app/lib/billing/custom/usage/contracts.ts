@@ -22,6 +22,7 @@ export function safeCount(value: unknown, name: string): number {
 export type UsageSnapshot = {
   kind: 'custom'; available: boolean; reason: string; accountId: string;
   mode: 'test' | 'live'; subscriptionId: string; periodStart: string; periodEnd: string;
+  paymentGrace?: boolean;
   quotesUsed: number; scanTokensUsed: number; assistantTasksUsed: number;
   storageUsedBytes: number; storagePendingBytes: number;
 };
@@ -33,15 +34,18 @@ export function parseUsageSnapshot(value: unknown): UsageSnapshot {
     || !/^sub_[A-Za-z0-9]+$/.test(r.subscriptionId)
     || typeof r.periodStart !== 'string' || typeof r.periodEnd !== 'string'
     || !Number.isFinite(Date.parse(r.periodStart)) || !Number.isFinite(Date.parse(r.periodEnd))
-    || Date.parse(r.periodStart) >= Date.parse(r.periodEnd)) {
+    || Date.parse(r.periodStart) >= Date.parse(r.periodEnd)
+    || (r.paymentGrace !== undefined && typeof r.paymentGrace !== 'boolean')) {
     throw new UsageError('usage_data_invalid', 'Your purchased usage could not be verified.');
   }
-  return { kind: 'custom', available: r.available, reason: r.reason, accountId: r.accountId,
+  const snapshot: UsageSnapshot = { kind: 'custom', available: r.available, reason: r.reason, accountId: r.accountId,
     mode: r.mode, subscriptionId: r.subscriptionId, periodStart: r.periodStart, periodEnd: r.periodEnd,
     quotesUsed: safeCount(r.quotesUsed, 'Quote usage'), scanTokensUsed: safeCount(r.scanTokensUsed, 'Scan usage'),
     assistantTasksUsed: safeCount(r.assistantTasksUsed, 'Assistant usage'),
     storageUsedBytes: safeCount(r.storageUsedBytes, 'Storage usage'),
     storagePendingBytes: safeCount(r.storagePendingBytes, 'Pending storage') };
+  if (typeof r.paymentGrace === 'boolean') snapshot.paymentGrace = r.paymentGrace;
+  return snapshot;
 }
 export function usageError(error: unknown): UsageError {
   if (error instanceof UsageError) return error;

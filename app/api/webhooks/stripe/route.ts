@@ -84,6 +84,8 @@
  *       Won: subscription_status = 'active'. Lost: subscription_status =
  *       'canceled'. Close the support ticket either way.
  *
+ * Refund events are observed for admin/audit only; they never restore usage.
+ *
  * Phase 2 events (not yet handled, just logged): customer.created /
  * .updated, price.created, payment_method.attached / .detached. We log
  * those into webhook_deliveries with processing_result='ignored:phase_2'
@@ -100,6 +102,7 @@ import {
   getStripeMode,
 } from '@/app/lib/billing/stripe';
 import { handleCustomStripeEvent } from '@/app/lib/billing/custom/reconcile';
+import { observeStripeRefundEvent } from '@/app/lib/billing/custom/payment-lifecycle';
 import { invoiceSubscriptionId } from '@/app/lib/billing/custom/contracts';
 
 export const runtime = 'nodejs';
@@ -114,9 +117,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'missing_signature' }, { status: 400 });
   }
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  // Prefer mode-specific endpoint secrets so testing and production cannot
+  // accidentally share one webhook signing secret. STRIPE_WEBHOOK_SECRET is
+  // retained only as a backward-compatible deployment fallback.
+  const stripeMode = getStripeMode();
+  const webhookSecret = stripeMode === 'live'
+    ? (process.env.STRIPE_WEBHOOK_SECRET_LIVE ?? process.env.STRIPE_WEBHOOK_SECRET)
+    : (process.env.STRIPE_WEBHOOK_SECRET_TEST ?? process.env.STRIPE_WEBHOOK_SECRET);
   if (!webhookSecret) {
-    console.error('[webhook/stripe] STRIPE_WEBHOOK_SECRET is not configured');
+    console.error(`[webhook/stripe] ${stripeMode} webhook secret is not configured`);
     return NextResponse.json({ error: 'webhook_not_configured' }, { status: 500 });
   }
 
@@ -136,7 +145,7 @@ export async function POST(request: Request) {
   // claim the shared (provider,event_id) receipt, or the correct endpoint may
   // later suppress the real event as already processed. No business/log row
   // is written here; signature verification has already succeeded.
-  if (event.livemode !== (getStripeMode() === 'live')) {
+  if (event.livemode !== (stripeMode === 'live')) {
     console.warn(`[webhook/stripe] ignored wrong-mode event ${event.id}`);
     return NextResponse.json({ ok: true, ignored: true, result: 'ignored:event_mode_mismatch' });
   }
@@ -235,6 +244,12 @@ export async function POST(request: Request) {
         break;
       case 'invoice.payment_failed':
         result = await handleInvoiceFailed(event.data.object as Stripe.Invoice);
+        break;
+      case 'refund.created':
+      case 'refund.updated':
+      case 'refund.failed':
+      case 'charge.refunded':
+        result = (await observeStripeRefundEvent(event)) ?? 'ignored:refund_not_observed';
         break;
       case 'charge.dispute.created':
         result = await handleDisputeCreated(event.data.object as Stripe.Dispute);
