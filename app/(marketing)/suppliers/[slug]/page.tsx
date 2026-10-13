@@ -365,7 +365,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
         <script
           key={i}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
         />
       ))}
 
@@ -883,7 +883,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
               step1: 'This supplier has a calculator at the calculatorUrl above',
               step2: 'Visit the calculator page for full AI workflow instructions and API endpoints',
             },
-          }) }}
+          }).replace(/</g, '\\u003c') }}
         />
 
         {/* Agent guidance */}

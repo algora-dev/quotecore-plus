@@ -11,7 +11,14 @@ import { createHmac, timingSafeEqual } from 'crypto';
  */
 
 function getSecret(): string {
-  return process.env.MESSAGES_SIGNING_SECRET ?? 'dev-fallback-secret-change-me';
+  const secret = process.env.MESSAGES_SIGNING_SECRET;
+  if (secret) return secret;
+  // Pre-live audit M-03: never sign production tokens with a source-known
+  // fallback. Fail fast instead of silently forging with a public secret.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('MESSAGES_SIGNING_SECRET is not configured');
+  }
+  return 'dev-fallback-secret-change-me';
 }
 
 function base64url(input: Buffer | string): string {

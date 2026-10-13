@@ -165,11 +165,9 @@ export async function checkUserNewness(
     .select('id', { count: 'exact', head: true })
     .eq('company_id', companyId);
 
-  // TEMP TESTING: widened to 365 days / 50 quotes so Shaun can test with his existing account.
-  // Also bypass newness check for admin users during testing.
-  // Revert to 14 / 3 after testing.
-  const isAdmin = !!(userRow as { is_admin?: boolean } | null)?.is_admin;
-  const isNew = isAdmin || (daysSinceSignup <= 365 && (quoteCount ?? 0) < 50);
+  // New-user cohort (owner spec): account created within 14 days AND fewer
+  // than 3 quotes. (TEMP 365/50 widening reverted pre-live audit H-08.)
+  const isNew = daysSinceSignup <= 14 && (quoteCount ?? 0) < 3;
 
   return { isNew, daysSinceSignup, quoteCount: quoteCount ?? 0 };
 }

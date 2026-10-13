@@ -253,7 +253,7 @@ export type CatalogRowsResult = {
 
 export async function fetchCatalogRowsForConversion(catalogId: string, limit = 30000): Promise<CatalogRowsResult> {
   try {
-    await requireCompanyContext();
+    const profile = await requireCompanyContext();
     const admin = createAdminClient() as AdminAny;
 
     const { data: catalog } = await admin
@@ -264,6 +264,35 @@ export async function fetchCatalogRowsForConversion(catalogId: string, limit = 3
 
     if (!catalog) {
       return { ok: false, error: 'Catalogue not found.' };
+    }
+
+    // Pre-live audit H-02: the requested catalogue must belong to the caller.
+    // Without this, any authenticated user could read another tenant's raw
+    // catalogue rows by passing its UUID (admin client bypasses RLS).
+    if (catalog.company_id !== profile.company_id) {
+      return { ok: false, error: 'Catalogue not found.' };
+    }
+
+    // When following source_catalog_id into another company's catalogue
+    // (supplier import flow), only continue when that company is a supplier
+    // with a public profile. Blocks pointing source_catalog_id at an
+    // arbitrary tenant's private catalogue.
+    if (catalog.source_catalog_id && catalog.source_catalog_id !== catalogId) {
+      const { data: src } = await admin
+        .from('catalogs')
+        .select('id, company_id')
+        .eq('id', catalog.source_catalog_id)
+        .maybeSingle();
+      if (src && src.company_id !== catalog.company_id) {
+        const { data: supplierProfile } = await admin
+          .from('supplier_profiles')
+          .select('id')
+          .eq('company_id', src.company_id)
+          .maybeSingle();
+        if (!supplierProfile) {
+          return { ok: false, error: 'Catalogue not found.' };
+        }
+      }
     }
 
     // Determine which catalogue to read rows from

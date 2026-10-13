@@ -39,7 +39,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Valid email query param required' }, { status: 400 });
   }
 
-  const token = buildUnsubscribeToken(email, await getUnsubscribeHmacSecret() ?? '');
+  const hmacSecret = await getUnsubscribeHmacSecret();
+  if (!hmacSecret) {
+    return NextResponse.json({ error: 'Unsubscribe signing secret is not configured.' }, { status: 500 });
+  }
+  const token = buildUnsubscribeToken(email, hmacSecret);
 
   const base = process.env.NEXT_PUBLIC_SITE_URL
     ?? (req.nextUrl.hostname.includes('localhost') ? 'http://localhost:3000' : 'https://app.quote-core.com');
