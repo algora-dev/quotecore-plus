@@ -170,7 +170,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
       const response = await fetch(activeSamplePlan.href);
       if (!response.ok) throw new Error('The sample plan could not be loaded. Please upload your own plan or try again.');
       const blob = await response.blob();
-      await handlePlanUpload(new File([blob], activeSamplePlan.download, { type: 'image/png' }));
+      await handlePlanUpload(new File([blob], activeSamplePlan.download, { type: blob.type || 'image/png' }));
     } catch (err) {
       setSampleError(err instanceof Error ? err.message : 'Could not open the sample plan.');
     } finally {
