@@ -15,6 +15,7 @@ import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { createClient } from '@/app/lib/supabase/client';
 import { saveFileMetadata } from '@/app/lib/files/storage-actions';
 import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
+import { resolveSamplePlan } from '@/app/lib/takeoff/samplePlans';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import '@/app/components/quote-entry/quote-entry.css';
 
@@ -84,6 +85,8 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
   const [pendingPlan, setPendingPlan] = useState<PendingPlan | null>(null);
   const [replacingPlan, setReplacingPlan] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [sampleLoading, setSampleLoading] = useState(false);
+  const [sampleError, setSampleError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [progress, setProgress] = useState('');
   const [createError, setCreateError] = useState<{ message: string; showUpgrade: boolean } | null>(null);
@@ -102,6 +105,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
   // second quote. This guard is local only; server atomic quota checks remain.
   const createdRef = useRef<{ id: string; entryMode: QuoteEntryMode } | null>(null);
   const busy = creating || uploading;
+  const activeSamplePlan = resolveSamplePlan(genericTradesEnabled ? selectedTrade : defaultTrade);
   const locked = busy || !!createdRecord || creationUncertain;
   useEffect(() => {
     // Native child cancel can bubble through a parent dialog. Keep the host
@@ -151,6 +155,26 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
     } finally {
       uploadLock.current = false;
       setUploading(false);
+    }
+  }
+
+  /** Sample-plan shortcut for users without a plan handy: fetches the static
+   *  asset and runs it through the exact same upload pipeline as a user file
+   *  (mint -> signed upload -> pendingPlan), so calibration and the canvas
+   *  flow are unchanged. Resolves by trade (owner decision 2026-10-13). */
+  async function handleSamplePlan() {
+    if (uploadLock.current || submitLock.current || createdRef.current || creationUncertain || sampleLoading) return;
+    setSampleError(null);
+    setSampleLoading(true);
+    try {
+      const response = await fetch(activeSamplePlan.href);
+      if (!response.ok) throw new Error('The sample plan could not be loaded. Please upload your own plan or try again.');
+      const blob = await response.blob();
+      await handlePlanUpload(new File([blob], activeSamplePlan.download, { type: 'image/png' }));
+    } catch (err) {
+      setSampleError(err instanceof Error ? err.message : 'Could not open the sample plan.');
+    } finally {
+      setSampleLoading(false);
     }
   }
 
@@ -333,6 +357,14 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
             maxSize={10485760} pdfMaxSize={52428800} onUpload={handlePlanUpload} currentFileUrl={null}
             label={pendingPlan ? 'Choose a different plan' : 'Choose a plan or image'}
             description="PDF up to 50 MB · image up to 10 MB" isOverStorage={isOverStorage} />}
+          {(!pendingPlan || replacingPlan) && !isOverStorage && <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span className="qce-help">No plan handy?</span>
+            <QcButton onClick={handleSamplePlan} disabled={busy || sampleLoading} data-copilot="quote-sample-plan">
+              {sampleLoading ? 'Loading sample…' : `Use a sample ${activeSamplePlan.label} plan`}
+            </QcButton>
+            <span className="qce-help">Loads straight into the canvas — calibrate it with the marked dimension.</span>
+          </div>}
+          {sampleError && <p className="qce-error" role="alert">{sampleError}</p>}
           <p className="qce-help" style={{ marginTop: 12 }}>PDFs open the existing page picker. There is no satellite lookup on this screen.</p>
         </section>}
         {(genericTradesEnabled || !measureFirst) && <details className="qce-options">
