@@ -125,7 +125,7 @@ export default function ContactPage() {
               </details>
               <details className={styles.question}>
                 <summary>I have a product or account question. Where should I start?<span><ArrowIcon /></span></summary>
-                <p>Check the FAQ first for common questions. If it is specific to your account or you still need help, use the form or email us directly.</p>
+                <p>If it is specific to your account or the answer here does not cover it, use the form or email us directly.</p>
               </details>
               <details className={styles.question}>
                 <summary>Can I send feedback or suggest a feature?<span><ArrowIcon /></span></summary>
@@ -153,7 +153,7 @@ export default function ContactPage() {
               <div className={styles.formIntro}>
                 <p className={styles.formKicker}>Send a message</p>
                 <h2 id="form-title">Tell us what you need.</h2>
-                <p>Prefer your own email app? Write to <a href="mailto:info@quote-core.com">info@quote-core.com</a>. Otherwise, use the form below.</p>
+                <p>Fill in what you can. Only your name, email and message are required.</p>
               </div>
 
               <form

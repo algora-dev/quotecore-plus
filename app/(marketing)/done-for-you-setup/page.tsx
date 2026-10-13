@@ -42,7 +42,7 @@ const faqs = [
   },
   {
     q: 'What do I need to send you?',
-    a: 'Send what you already use, including spreadsheets, supplier pricing, labour rates, waste rules, old quotes, product lists and notes about how you currently estimate. It does not need to be tidy.',
+    a: 'Spreadsheets, price lists, labour rates, old quotes and notes about how you estimate are all useful. It does not need to be tidy.',
   },
   {
     q: 'What happens in the training session?',
@@ -91,7 +91,7 @@ const priceFactors = [
 const process = [
   { step: '01', title: 'Book a free 20-minute discovery call', body: 'Show us how you work, tell us what you want to improve and ask anything you need. If useful, we can show you the parts of QuoteCore+ most relevant to your business.' },
   { step: '02', title: 'We recommend the easiest way across', body: 'We map the simplest transition from your current workflow into QuoteCore+, including the plan, setup and training that make sense for you.' },
-  { step: '03', title: 'You decide what happens next', body: 'The discovery call carries no obligation. If Done For You feels right, we agree the scope and price before any setup work begins.' },
+  { step: '03', title: 'You decide what happens next', body: 'If Done For You feels right after the call, we agree the scope and price before any setup work begins.' },
   { step: '04', title: 'Send us what you already use', body: 'Spreadsheets, price lists, labour rates, waste rules, old quotes and notes are all useful. They do not need to be cleaned up first.' },
   { step: '05', title: 'We build your system', body: 'We configure the agreed pricing, Smart Components and workflow inside your QuoteCore+ account, then test the setup with your information.' },
   { step: '06', title: 'Train on your own job, then go live', body: 'Your included one-hour session uses your configured account and your own work. Then you have three months of support behind you while you start using QuoteCore+ on real jobs.' },
@@ -214,7 +214,7 @@ export default function DoneForYouSetupPage() {
               </div>
               <div className={styles.priceCallout}><span>Starting price</span><strong>$499</strong><small>USD</small></div>
             </div>
-            <p className={styles.pricingLead}>The discovery call is free and does not commit you to anything. If Done For You looks useful, we scope the setup and give you the price before you decide. These are the main things that determine it:</p>
+            <p className={styles.pricingLead}>If Done For You looks useful, we scope the setup and give you the price before you decide. These are the main things that determine it:</p>
             <div className={styles.factorGrid}>
               {priceFactors.map((factor, index) => (
                 <article className={styles.factorCard} key={factor.title}>
@@ -302,12 +302,12 @@ export default function DoneForYouSetupPage() {
           <div className={`${styles.container} ${styles.finalInner}`}>
             <p className={styles.eyebrow}>Free 20-minute discovery call</p>
             <h2 id="final-title">Curious, but not sure you need Done For You? That is exactly what the call is for.</h2>
-            <p>Show us how you work, tell us what you want to improve and ask questions. There is no charge, no obligation and no pressure to buy. We will simply help you work out the easiest way to move into QuoteCore+.</p>
+            <p>Show us how you work, tell us what you want to improve and ask questions. We will help you work out the easiest way to move into QuoteCore+.</p>
             <div className={styles.finalActions}>
               <DfyBookButton cta="final" size="large" label="Book free 20-minute call" />
               <MarketingButton href="/demo" variant="glass" size="large">Try the demo first</MarketingButton>
             </div>
-            <small>Talk to a real person with roofing and construction experience. Done-For-You setup starts from $499 USD.</small>
+            <small>Done-For-You setup starts from $499 USD.</small>
           </div>
         </section>
 
@@ -316,7 +316,7 @@ export default function DoneForYouSetupPage() {
             <div className={styles.faqIntro}>
               <p className={styles.lightEyebrow}>Common questions</p>
               <h2 id="faq-title">Before you book the call.</h2>
-              <p>The discovery call is free, 20 minutes and no obligation. It is simply a chance to see whether Done For You would make your move into QuoteCore+ easier.</p>
+              <p>A chance to see whether Done For You would make your move into QuoteCore+ easier.</p>
               <MarketingButton href="/pricing" variant="glass">View QuoteCore+ plans</MarketingButton>
             </div>
             <div className={styles.faqList}>
