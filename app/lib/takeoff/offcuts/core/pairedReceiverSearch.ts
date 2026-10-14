@@ -155,7 +155,7 @@ function transact(r: SolveRequest, seed: Solution, c: Candidate, check: () => vo
   check(); protectValleyReceivers(r, s, () => { check(); return false; });
   recalculateMetrics(s); inventory(s);
   // Parent/child rules and the existing coupled-valley safety remain hard gates.
-  s.engineVersion = c.chainMode ? '2.29' : '2.26';
+  s.engineVersion = c.chainMode ? '2.30' : '2.26';
   s.installationPlan!.reuseEndTrimMm = 0;
   s.installationPlan!.pairedReceiver = derivePairedReceiverCertificate(r, s, c.proposal,
     s.installationPlan!.referenceLayoutId, planSignature(seed));

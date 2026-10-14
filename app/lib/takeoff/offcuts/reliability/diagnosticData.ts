@@ -32,7 +32,7 @@ export function buildDiagnosticData(input: DiagnosticInput) {
   const d = input.draft, s = d.solution;
   const cache = new Map<Solution, QuantitySummary>();
   const q = (plan: Solution) => { let value=cache.get(plan); if(!value){value=quantitySummary(plan);cache.set(plan,value);}return value; };
-  return { schemaVersion: 1, kind: 'quotecore-offcut-debug', engineVersion: '2.29', workerProtocol: 'qc-offcuts-worker-v229', selectedPlanEngineVersion: input.draft.solution?.engineVersion ?? null, phase: input.phase, planningModel: FACE_GEOMETRY_MODEL,
+  return { schemaVersion: 1, kind: 'quotecore-offcut-debug', engineVersion: '2.30', workerProtocol: 'qc-offcuts-worker-v230', selectedPlanEngineVersion: input.draft.solution?.engineVersion ?? null, phase: input.phase, planningModel: FACE_GEOMETRY_MODEL,
     boundaryBehaviour: auditFaceBehaviour(d.faces), liveInputSnapshot: input.capture ? JSON.parse(exportLiveCapture(input.capture)) : null,
     persistence: input.persistence, calculation: input.calculation, uiPerformance: input.uiPerformance,
     sourceRoofAtOpen: source, initialDetection: input.initialDetection,

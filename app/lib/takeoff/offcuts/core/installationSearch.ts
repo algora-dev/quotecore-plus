@@ -27,6 +27,15 @@ export interface InstallationSearchOptions {previous:Solution;attempt?:number;ma
 export interface InstallationSearchReport {connectedDiscovery?:ConnectedDiscoveryReport;connectedTrialsTried?:number;connectedPhase?:'not-needed'|'attempted'|'not-reached';discoverySkipped?:Array<{id:string;reason:string}>;noResultReason?:'no-supported-donor-group'|'no-verified-reversal'|'search-budget-reached';pairedReceiverSearches?:PairedReceiverSearchReport[];model:typeof INSTALLATION_SEARCH_POLICY.model;referenceLayoutId:string;inputFingerprint:string;status:'found'|'no-distinct-plan';elapsedMs:number;budgetReached:boolean;trialsPlanned:number;trialsTried:number;validatedCount:number;rejectedCount:number;trials:Array<{id:string;valid:boolean;reason:string;linealM?:number;newSheets?:number;donorFaceIds?:string[];receiverFaceIds?:string[]}>}
 export interface InstallationSearchResult {plans:Solution[];report:InstallationSearchReport}
 const clone=<T>(x:T):T=>structuredClone(x);
+/** A user-requested alternative is not useful when the current checked plan is
+ * at least as good on both purchase count and ordered length. Keep trade-offs
+ * (fewer sheets/more length or vice versa); suppress only strict domination. */
+export function isStrictlyDominatedInstallationAlternative(previous:Solution,next:Solution):boolean {
+  const width=previous.profile.coverMm+previous.profile.leftLapMm+previous.profile.rightLapMm;
+  const before=previous.metrics.newMaterialMm2/width/1000,after=next.metrics.newMaterialMm2/width/1000;
+  return next.metrics.newSheetCount>=previous.metrics.newSheetCount&&after>=before-1e-9&&
+    (next.metrics.newSheetCount>previous.metrics.newSheetCount||after>before+1e-9);
+}
 class InstallationDeadline extends Error{constructor(){super('Offcut search cancelled at installation search deadline.');this.name='InstallationDeadline';}}
 function rankAnchors(r:SolveRequest,id:string):InstallationAnchor[]{
   const face=r.faces.find(f=>f.id===id)!;
@@ -155,13 +164,14 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
   let activeTrialId:string|undefined;
   const plans:Solution[]=[],seen=new Set([planSignature(previous)]);
   const accept=(s:Solution,id:string)=>{
-    check();s.engineVersion='2.29';s.objective='installation';s.layoutId=planSignature(s);
+    check();s.engineVersion='2.30';s.objective='installation';s.layoutId=planSignature(s);
     const errors=validateDraft({schemaVersion:1,...r,solution:s}).filter(i=>i.severity==='error');
     if(!errors.length&&s.installationPlan?.kind==='reversed-donors'&&!s.installationPlan.pairedReceiver&&!s.installationPlan.connectedReversal){report.rejectedCount++;report.trials.push({id,valid:false,reason:'missing-reversal-family-certificate'});return;}
     if(errors.length){report.rejectedCount++;report.trials.push({id,valid:false,reason:errors.map(e=>e.code).join(',')});return;}
     report.validatedCount++;const width=r.profile.coverMm+r.profile.leftLapMm+r.profile.rightLapMm;
-    report.trials.push({id,valid:true,reason:seen.has(s.layoutId)?'duplicate-physical-plan':'checked',linealM:s.metrics.newMaterialMm2/width/1000,newSheets:s.metrics.newSheetCount});
-    if(seen.has(s.layoutId))return;seen.add(s.layoutId);s.issues=s.issues.filter(i=>i.severity==='warning');s.status='prototype-review';s.orderReady=false;
+    const linealM=s.metrics.newMaterialMm2/width/1000,dominated=isStrictlyDominatedInstallationAlternative(previous,s);
+    report.trials.push({id,valid:true,reason:seen.has(s.layoutId)?'duplicate-physical-plan':dominated?'checked-but-dominated-by-reference':'checked',linealM,newSheets:s.metrics.newSheetCount});
+    if(seen.has(s.layoutId)||dominated)return;seen.add(s.layoutId);s.issues=s.issues.filter(i=>i.severity==='warning');s.status='prototype-review';s.orderReady=false;
     plans.push(s);
   };
   const discovered=connectedDonorVariants(r,previous,attempt);
@@ -205,7 +215,7 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
           const s=optimiseBankLayouts(r,{...hooks,bankVariant:variant,shouldCancel:check,onPortfolioCandidate:undefined,onCheckedCandidate:undefined,onDecisionTrace:undefined,onProgress:undefined,planSearch:{objective:'recommended'}})[0];
           if(!s)throw new Error('no-connected-bank-candidate');
           check();s.objective='installation';protectValleyReceivers(r,s,check);recalculateMetrics(s);
-          s.engineVersion='2.29';
+          s.engineVersion='2.30';
           s.installationPlan={model:INSTALLATION_PLAN_MODEL,kind:'reversed-donors',referenceLayoutId:planSignature(previous),
             donorFaceIds:scope.donorFaceIds,receiverFaceIds:scope.receiverFaceIds,siteSetoutConfirmed:false,reuseEndTrimMm:0};
           s.installationPlan.connectedReversal=deriveConnectedDonorCertificate(r,s,scope,planSignature(previous));

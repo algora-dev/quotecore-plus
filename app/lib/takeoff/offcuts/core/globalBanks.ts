@@ -19,7 +19,7 @@ import { rootSheetLedger } from './purchaseLedger';
 import { planSignature, workflowQuality, planQuality } from './diagnostics';
 import { evaluateMaterialTradeOff } from './lessMaterialPolicy';
 import { bounds, area, fromRing } from './regions';
-import { fingerprint } from './math';
+import { fingerprint, distance } from './math';
 import { supplyView } from './supply';
 import { reuseDepth } from './reuseDepth';
 import { planningBoundary } from './directions';
@@ -106,6 +106,29 @@ export function acceptsGlobalBank(previous:Solution,proposed:Solution,materialMo
   return{accepted:true,reason:'less-purchased-stock-with-bounded-coherent-work',assessment};
 }
 interface BankOpportunity {id:string;faces:RoofFace[];leader:RoofFace;length:number;area:number}
+/** A narrow geometry-only trigger for the bounded coordinated search. V2.30's
+ * direct-complement rule can already protect these families inside a candidate;
+ * this helper only ensures the complete-portfolio comparison is actually tried.
+ * It does not create placements, relax fit tolerances or change scoring. */
+export function hasDirectComplementOpportunity(r:SolveRequest):boolean {
+  for(const target of r.faces){
+    const edges=planningBoundary(target),hips=edges.filter(e=>e.kind==='hip'||e.kind==='broken_hip');
+    if(edges.length!==3||hips.length!==2||edges.filter(e=>e.kind==='spouting').length!==1||edges.some(e=>e.kind==='valley'||e.kind==='ridge'||e.kind==='barge'))continue;
+    const targetLengths=hips.map(e=>distance(e.a,e.b)).sort((a,b)=>a-b),matches:{id:string;error:number}[]=[];
+    for(const source of r.faces){
+      if(source.id===target.id)continue;
+      const valleys=planningBoundary(source).filter(e=>e.kind==='valley');if(valleys.length!==2)continue;
+      const sourceLengths=valleys.map(e=>distance(e.a,e.b)).sort((a,b)=>a-b);
+      const error=Math.max(...targetLengths.map((n,i)=>Math.abs(n-sourceLengths[i])/Math.max(1,n,sourceLengths[i])));
+      if(error<=.025)matches.push({id:source.id,error});
+    }
+    matches.sort((a,b)=>a.error-b.error||a.id.localeCompare(b.id));
+    // Match the existing V2.30 protection gate: ambiguous almost-identical
+    // sources remain ordinary matching opportunities rather than search triggers.
+    if(matches.length&&(!matches[1]||matches[0].error+.01<matches[1].error))return true;
+  }
+  return false;
+}
 /** Geometry-generated portfolios: common-direction anchors, single directions
  * and opposite/adjacent direction pairs. Explicit user locks remain effective.
  * No fixture face IDs, component names, cardinal labels or desired waste target.
@@ -205,7 +228,8 @@ export function searchGlobalBanks(r:SolveRequest,incumbent:Solution,validate:(s:
   });
   const stranded=ledger.terminalReusableAreaM2>=GLOBAL_BANK_POLICY.reusableOpportunityM2&&
     incumbent.metrics.wasteMm2>incumbent.metrics.netRoofMm2*GLOBAL_BANK_POLICY.excessOpportunityFraction;
-  if(!fragmented&&!stranded&&goal!=='less-material'&&!hooks.portfolioSearch)return finish();
+  const directComplement=goal==='recommended'&&hasDirectComplementOpportunity(r);
+  if(!fragmented&&!stranded&&!directComplement&&goal!=='less-material'&&!hooks.portfolioSearch)return finish();
   const variants=donorVariants(r,incumbent,!!hooks.portfolioSearch,hooks.portfolioSearch?.maximumVariants??GLOBAL_BANK_POLICY.maximumVariants,hooks.portfolioSearch?.attempt??0);report.variantsPlanned=variants.length;
   report.status='kept-incumbent';report.reason='no-valid-worthwhile-portfolio';
   const limit=hooks.portfolioSearch?Math.max(0,Math.min(20_000,hooks.portfolioSearch.milliseconds)):Math.min(GLOBAL_BANK_POLICY.maximumMilliseconds,r.settings.globalBankMaxMilliseconds??GLOBAL_BANK_POLICY.defaultMilliseconds);

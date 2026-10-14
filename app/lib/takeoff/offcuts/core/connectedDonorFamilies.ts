@@ -1,5 +1,5 @@
 import { CERTIFICATE_INPUT_MODEL, certificateInputFingerprint } from './certificateInput';
-/** V2.29: a replayable certificate for reversal across CONNECTED operations.
+/** V2.30: a replayable certificate for reversal across CONNECTED operations.
  * Unlike the paired-valley certificate, this does not require two ridge ends on
  * one receiver. Whole physical donor families may feed more than one face.
  * Every split, direct cut, descendant and fresh position remains explicit. */
