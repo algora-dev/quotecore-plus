@@ -1,0 +1,8 @@
+/* Login landing: hero action shadow — replicates `.heroActions > a` from
+   components/marketing/home/Homepage.module.css for the dark + orange buttons;
+   the white glass keeps its own .glass shadow stack (like the hero's <button>).
+   Specificity a.heroShadow (0,1,1) beats .glass/.primary (0,1,0) and yields
+   to their :hover states — same behaviour as the homepage hero. */
+a.heroShadow {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 8px 23px rgba(255, 100, 31, .13);
+}
