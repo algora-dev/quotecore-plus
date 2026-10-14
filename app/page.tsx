@@ -142,7 +142,7 @@ export default async function Home() {
             href={marketingLink}
             className={`${controls.button} ${controls.glass} ${controls.large}`}
           >
-            <Icon name="calendar" />
+            <Icon name="globe" />
             <span>Website</span>
           </Link>
         </div>

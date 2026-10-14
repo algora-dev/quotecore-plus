@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-export type IconName = 'arrow' | 'play' | 'calendar' | 'check' | 'roof' | 'document' | 'calculator' | 'ruler' | 'close' | 'expand' | 'chevron' | 'quote' | 'people' | 'spark' | 'clock';
+export type IconName = 'arrow' | 'play' | 'calendar' | 'check' | 'roof' | 'document' | 'calculator' | 'ruler' | 'close' | 'expand' | 'chevron' | 'quote' | 'people' | 'spark' | 'clock' | 'globe';
 const paths: Record<IconName, string> = {
   arrow: 'M4 12h16m-6-6 6 6-6 6',
   play: 'm9 5 11 7-11 7V5Z',
@@ -16,6 +16,7 @@ const paths: Record<IconName, string> = {
   people: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
   spark: 'm12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z',
   clock: 'M12 7v5l3 2m7-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z',
+  globe: 'M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10',
 };
 export function Icon({ name, size = 20, className, style }: { name: IconName; size?: number; className?: string; style?: CSSProperties }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className} style={style}><path d={paths[name]} /></svg>;
