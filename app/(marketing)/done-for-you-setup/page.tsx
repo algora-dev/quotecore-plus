@@ -106,7 +106,7 @@ function CheckIcon() {
 export default function DoneForYouSetupPage() {
   return (
     <>
-      <BlogHeader theme="dark" />
+      <BlogHeader />
       <DfyPageViewTracker />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />

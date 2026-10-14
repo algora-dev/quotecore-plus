@@ -21,7 +21,7 @@ function buildNavItems(appHref: string, homepage: boolean): NavItem[] {
   ];
 }
 
-export default function BlogHeader({ backLabel, backHref = "/", theme = "light", homepage = false }: { backLabel?: string; backHref?: string; theme?: "light" | "dark"; homepage?: boolean }) {
+export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", homepage = false }: { backLabel?: string; backHref?: string; theme?: "light" | "dark"; homepage?: boolean }) {
   const menuId = useId();
   const headerRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);

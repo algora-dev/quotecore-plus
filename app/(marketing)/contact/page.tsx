@@ -46,7 +46,7 @@ export default function ContactPage() {
 
   return (
     <>
-      <BlogHeader theme="dark" />
+      <BlogHeader />
       <main className={styles.page}>
         <section className={styles.hero} aria-labelledby="contact-title">
           <div className={styles.container}>

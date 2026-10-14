@@ -20,7 +20,7 @@ export default function FreeRoofTakeoffMeasurePage() {
   const tool = <FreeTakeoffApp />;
   return (
     <div className="bg-slate-50">
-      <BlogHeader theme="dark" />
+      <BlogHeader />
 
       <section className="mx-auto max-w-3xl px-4 pt-8 pb-2 text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">

@@ -152,7 +152,7 @@ export default async function FreeRoofTakeoffPage({
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      <BlogHeader theme="dark" />
+      <BlogHeader />
 
       {/* Compact entry: the setup task is visible without a second full-screen hero. */}
       <section className="qc-free-page-intro">
