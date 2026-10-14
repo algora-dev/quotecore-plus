@@ -3,14 +3,14 @@ import { canonicalJson, record, UsageError } from './contracts';
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 export function digest(value: unknown): string { return createHash('sha256').update(canonicalJson(value)).digest('hex'); }
 export type ScanRequest = {
-  stage: 'scan1' | 'scan2' | 'scan3'; quality: 'low' | 'medium' | 'high'; quoteId: string;
+  stage: 'scan1' | 'scan2' | 'scan3'; quality: 'low' | 'high'; quoteId: string;
   pageId: string | null; requestKey: string; payloadHash: string; parentId: string | null;
   imageHash: string; body: Record<string, unknown>;
 };
 export function parseScanRequest(value: unknown, headerKey: string | null): ScanRequest {
-  const b = record(value); const stage = b.stage; const quality = b.qualityLevel ?? 'medium';
+  const b = record(value); const stage = b.stage; const quality = b.qualityLevel ?? 'low';
   const key = headerKey ?? b.clientRequestId;
-  if (!['scan1','scan2','scan3'].includes(String(stage)) || !['low','medium','high'].includes(String(quality))
+  if (!['scan1','scan2','scan3'].includes(String(stage)) || !['low','high'].includes(String(quality))
     || typeof b.quoteId !== 'string' || !UUID.test(b.quoteId)
     || (b.pageId != null && (typeof b.pageId !== 'string' || !UUID.test(b.pageId)))
     || typeof key !== 'string' || !/^[A-Za-z0-9_.:-]{8,128}$/.test(key)

@@ -328,19 +328,17 @@ function classificationsToComponents(lines: V3Line[], outlinePoints: V3Point[], 
 // ── Token limits ────────────────────────────────────────────────────────
 
 /** Model routing - MUST match ai-scan-v3 route (single source of truth: MEMORY.md 2026-09-11). */
-export function getScanModel(quality: 'low' | 'medium' | 'high'): string {
+export function getScanModel(quality: 'low' | 'high'): string {
   const MODEL_BY_QUALITY: Record<string, string> = {
     low: 'gpt-6-luna',
-    medium: 'gpt-6-luna',
     high: 'gpt-6.1-sol',
   };
   return MODEL_BY_QUALITY[quality] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
 }
 
-/** Reasoning effort per quality tier: low=low, medium=medium, high=low (owner spec 2026-10-12). */
-export function getReasoningEffort(quality: 'low' | 'medium' | 'high'): 'low' | 'medium' {
-  const effortMap = { low: 'low', medium: 'medium', high: 'low' } as const;
-  return effortMap[quality] ?? 'medium';
+/** Both user-facing scan choices use low API reasoning effort. */
+export function getReasoningEffort(_quality: 'low' | 'high'): 'low' {
+  return 'low';
 }
 
 export function getTokenLimits(reasoningEffort: 'low' | 'medium' | 'high') {
@@ -373,7 +371,7 @@ export function logScanUsage(params: { companyId: string; quoteId: string; userI
 /** Scan 1: Outline detection. Returns roof area polygon(s) in canvas coords. */
 export async function runScan1(params: {
   imageDataUrl: string; canvasWidth: number; canvasHeight: number;
-  quality: 'low' | 'medium' | 'high'; quoteId: string; pageId?: string | null;
+  quality: 'low' | 'high'; quoteId: string; pageId?: string | null;
   companyId: string; userId: string;
 }): Promise<{
   success: boolean; error?: string;
@@ -446,7 +444,7 @@ export async function runScan1(params: {
 export async function runScan2(params: {
   processedBuffer: Buffer; canvasWidth: number; canvasHeight: number;
   outlinePointsCanvas: V3Point[]; analysisDimensions: { width: number; height: number };
-  quality: 'low' | 'medium' | 'high'; quoteId: string; pageId?: string | null;
+  quality: 'low' | 'high'; quoteId: string; pageId?: string | null;
   companyId: string; userId: string;
 }): Promise<{
   success: boolean; error?: string;
@@ -537,7 +535,7 @@ export async function runScan3(params: {
   processedBuffer: Buffer; canvasWidth: number; canvasHeight: number;
   outlinePointsCanvas: V3Point[]; linesCanvas: V3Line[];
   analysisDimensions: { width: number; height: number };
-  quality: 'low' | 'medium' | 'high'; quoteId: string; pageId?: string | null;
+  quality: 'low' | 'high'; quoteId: string; pageId?: string | null;
   companyId: string; userId: string;
 }): Promise<{
   success: boolean; error?: string;

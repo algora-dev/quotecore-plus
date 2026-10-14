@@ -103,7 +103,7 @@ export function ToolsQuestion({ answers, result, catalog, dispatch, id }: { answ
             <AllowanceControl id={`${id}-scan-allowance`} label="Scan Token allowance" selected={result.selectedScan} recommended={result.recommendedScan}
               details={{ low: `${catalog.scan.low.tokens} tokens`, medium: `${catalog.scan.medium.tokens} tokens`, high: `${catalog.scan.high.tokens} tokens` }}
               onChange={value => dispatch({ type: 'scanAllowance', value })} />
-            <p>At High quality for both scans: up to <strong>{fullPlanExamples(result.limits.scanTokens).high} full plans</strong>. Lower quality uses fewer tokens. Extra scans use more.</p>
+            <p>At Medium+ roof for both scans: up to <strong>{fullPlanExamples(result.limits.scanTokens).high} full plans</strong>. Simple roof uses fewer tokens. Extra scans use more.</p>
             <p className="qcp-muted">Subscription allowance and per-scan quality are separate choices.</p>
             {answers.scanAllowance !== 'recommended' && <button type="button" className="qcp-text-button" onClick={() => dispatch({ type: 'scanAllowance', value: 'recommended' })}>Use workload recommendation</button>}
           </Disclosure>

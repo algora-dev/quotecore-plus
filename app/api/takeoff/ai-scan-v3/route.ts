@@ -740,22 +740,20 @@ async function handleScanPost(req: NextRequest, customMetered = false) {
 
     timer.mark('auth_done');
 
-    // Quality level from client (low / medium / high). Default: medium.
-    const qualityLevel = typeof body.qualityLevel === 'string' ? body.qualityLevel : 'medium';
+    // Quality level from client (low / high). Default: low.
+    const qualityLevel = typeof body.qualityLevel === 'string' && ['low', 'high'].includes(body.qualityLevel)
+      ? body.qualityLevel
+      : 'low';
 
-    // Model per quality level (owner spec 2026-10-12):
-    // low = GPT-6 Luna on low effort, medium = GPT-6 Luna on medium effort,
-    // high = GPT-6.1 Sol on low effort (complex plans).
+    // Simple roof uses GPT-6 Luna; Medium+ roof uses GPT-6.1 Sol.
     const MODEL_BY_QUALITY: Record<string, string> = {
       low: 'gpt-6-luna',
-      medium: 'gpt-6-luna',
       high: 'gpt-6.1-sol',
     };
     const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
 
-    // Quality level from client (low / medium / high). Default: medium.
-    const effortMap = { low: 'low', medium: 'medium', high: 'low' } as const;
-    const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'medium';
+    const effortMap = { low: 'low', high: 'low' } as const;
+    const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'low';
     // Token limits: complex (high) tier gets bumped limits regardless of
     // reasoning effort - complex plans produce more lines and longer output.
     const tokenLimits = qualityLevel === 'high'
@@ -763,11 +761,11 @@ async function handleScanPost(req: NextRequest, customMetered = false) {
       : { scan1: 5000, scan2: 8000, scan3: 8000 };
 
     // ── AI Assist points quota ──────────────────────────────────────
-    // Point cost per quality level: low=2, medium=6, high=12 (pointCost.ts).
+    // Point cost per quality level: simple=2, medium+=12 (pointCost.ts).
     // Per-scan billing (owner 2026-10-04): the AREA scan (scan1) charges its
     // tier; the COMPONENT scan charges the tier chosen for it when it starts
     // (scan2). Scan3 is the tail of the component pass - no deduction.
-    // Canonical point costs (2/6/12) - shared constant, keep in sync with
+    // Canonical point costs (2/12) - shared constant, keep in sync with
     // pointCost.ts and the SQL queue path (see parity checklist).
     const pointsToSpend = getAiScanPointCost(qualityLevel);
 

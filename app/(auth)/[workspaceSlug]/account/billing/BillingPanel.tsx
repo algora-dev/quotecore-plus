@@ -370,7 +370,7 @@ export function BillingPanel(props: BillingPanelProps) {
               <p className="font-semibold text-slate-900 mt-0.5">
                 {props.customUsage.scanTokensUsed} of {props.customUsage.scanTokensLimit}
               </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">2/6/12 per outline or component scan. Failed scans refund.</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">2/12 per outline or component scan. Failed scans refund.</p>
             </div>
             <div className="rounded-lg border border-slate-200 px-3 py-2.5">
               <p className="text-xs text-slate-500">Assistant Tasks</p>

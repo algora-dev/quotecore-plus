@@ -57,7 +57,7 @@ export function PlanSummary({ answers, result, catalog, current, actions, primar
       </Disclosure>
       <Disclosure title="How the allowances work">
         <p>{catalog.shareRule}</p><p>Storage is what you hold at one time, not a fresh upload allowance each month.</p>
-        {result.scanEnabled && <><p>{catalog.scanRule}</p><p>With your {result.limits.scanTokens} tokens, two scans per plan allow up to <strong>{examples.low} Low + Low</strong>, <strong>{examples.medium} Medium + Medium</strong>, or <strong>{examples.high} High + High</strong> plans. These are alternatives, not added together, and exclude rescans.</p></>}
+        {result.scanEnabled && <><p>{catalog.scanRule}</p><p>With your {result.limits.scanTokens} tokens, two scans per plan allow up to <strong>{examples.low} Simple roof + Simple roof</strong> or <strong>{examples.high} Medium+ roof + Medium+ roof</strong> plans. These are alternatives, not added together, and exclude rescans.</p></>}
         {result.selectedAssistant !== 'none' && <p>{catalog.assistantRule}</p>}
         <p>At a limit, the affected action pauses. Upgrade or wait for a monthly allowance to renew; for storage, free space or upgrade. No automatic overage charges.</p>
       </Disclosure>

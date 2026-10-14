@@ -38,7 +38,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as Record<string, unknown>;
     const quoteId = typeof body.quoteId === 'string' ? body.quoteId : null;
     const pageId = typeof body.pageId === 'string' ? body.pageId : null;
-    const qualityLevel = typeof body.qualityLevel === 'string' ? body.qualityLevel : 'medium';
+    const qualityLevel = typeof body.qualityLevel === 'string' && ['low', 'high'].includes(body.qualityLevel)
+      ? body.qualityLevel
+      : 'low';
     const imageDataUrl = typeof body.image === 'string' ? body.image : null;
     const canvasDims = body.canvasDimensions as { width?: number; height?: number } | undefined;
     const canvasW = typeof canvasDims?.width === 'number' ? canvasDims.width : 800;

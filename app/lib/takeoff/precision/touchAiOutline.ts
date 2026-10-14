@@ -211,7 +211,7 @@ export interface AiOutlineScanInfo {
   blocked: boolean;
   /** The charge the UI must display = the backend scan1 charge (O10). */
   cost: number;
-  qualityLevel: 'low' | 'medium' | 'high';
+  qualityLevel: 'low' | 'high';
 }
 
 export type AiOutlineScanResult =

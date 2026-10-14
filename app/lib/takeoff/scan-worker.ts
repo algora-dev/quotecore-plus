@@ -139,7 +139,7 @@ function backoffMs(attempt: number): number {
  * Persists progress after each stage. Returns true on success, false on failure.
  */
 async function runPipelineForJob(job: ClaimedJob, supabase: ReturnType<typeof getServiceClient>): Promise<boolean> {
-  const quality = job.quality as 'low' | 'medium' | 'high';
+  const quality = job.quality as 'low' | 'high';
   const canvasW = job.canvas_width || 800;
   const canvasH = job.canvas_height || 600;
   const imageDataUrl = job.image_data;

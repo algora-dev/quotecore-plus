@@ -56,7 +56,7 @@ import {
  *   - global daily cap across ALL anonymous users - when hit, the tool
  *     degrades to manual-only with a generic message until UTC midnight
  *   - failures after admission are refunded so errors never burn credits
- *   - High quality is rejected server-side (main app only - cost control)
+ *   - Medium+ quality is rejected server-side (main app only - cost control)
  *   - kill switch: FREE_AI_SCAN_ENABLED=false disables AI for the free tool
  */
 
@@ -136,33 +136,31 @@ export async function POST(req: NextRequest) {
 
     identity = freeAiScanIdentityKey(req);
 
-    // Quality level from client (low / medium / high). Default: medium.
-    const qualityLevel = typeof body.qualityLevel === 'string' && ['low', 'medium', 'high'].includes(body.qualityLevel)
+    // Quality level from client (low / high). Default: low.
+    const qualityLevel = typeof body.qualityLevel === 'string' && ['low', 'high'].includes(body.qualityLevel)
       ? body.qualityLevel
-      : 'medium';
+      : 'low';
 
-    // High quality is main-app only on the free tool (cost control + upsell).
+    // Medium+ quality is main-app only on the free tool (cost control + upsell).
     // The UI greys the button out; this is the server-side backstop.
     if (qualityLevel === 'high') {
       return NextResponse.json({
         success: false,
         code: 'quality_restricted',
-        error: 'High quality is only available in the main QuoteCore+ app.',
+        error: 'Medium+ roof scanning is only available in the main QuoteCore+ app.',
       }, { status: 400 });
     }
 
     // Model per quality level - identical to the paid route
     // (owner spec 2026-10-12):
-    // low = GPT-6 Luna on low effort, medium = GPT-6 Luna on medium effort,
-    // high = GPT-6.1 Sol on low effort (complex plans).
+    // low = GPT-6 Luna on low effort; high = GPT-6.1 Sol on low effort.
     const MODEL_BY_QUALITY: Record<string, string> = {
       low: 'gpt-6-luna',
-      medium: 'gpt-6-luna',
       high: 'gpt-6.1-sol',
     };
     const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
-    const effortMap = { low: 'low', medium: 'medium', high: 'low' } as const;
-    const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'medium';
+    const effortMap = { low: 'low', high: 'low' } as const;
+    const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'low';
     const tokenLimits = qualityLevel === 'high'
       ? { scan1: 8000, scan2: 12000, scan3: 12000 }
       : { scan1: 5000, scan2: 8000, scan3: 8000 };
