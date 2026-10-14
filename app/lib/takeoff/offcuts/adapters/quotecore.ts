@@ -125,7 +125,7 @@ export function fromQuoteCore(s: QuoteCoreSnapshot): AdaptedTakeoff {
       row.reason = excludeScope(m) ?? (m.visible===false?'hidden':!isPlanLineMeasurement(m)?'not-plan-line':resolved.semanticType==='ignore'?'explicitly-not-roof-boundary':!m.points||m.points.length<2?'incomplete-points':'included');
       if(row.reason!=='included') {
         audit.counts.excludedRows++;
-        if(row.reason==='incomplete-points')issues.push({severity:'error',code:'INCOMPLETE_LIVE_LINE',objectId:m.id,message:`Finish or remove the incomplete line in “${name}”, then reopen Find offcuts.`});
+        if(row.reason==='incomplete-points')issues.push({severity:'error',code:'INCOMPLETE_LIVE_LINE',objectId:m.id,message:`Finish or remove the incomplete line in “${name}”, then reopen Generate Offcuts.`});
         continue;
       }
       if(!m.id||ids.has(m.id))throw new Error(`Duplicate or missing measurement ID ${m.id}. Finish the current edit and try again.`);

@@ -16,8 +16,8 @@ const point = (p: Point): Point => ({x:p?.x,y:p?.y});
  * unrelated pricing data. Neither belongs in a snapshot or its debug export. */
 export function cloneTakeoffSnapshot(s: QuoteCoreSnapshot): QuoteCoreSnapshot {
   if(!s||!Array.isArray(s.roofAreas)||!Array.isArray(s.componentMeasurements)||!Array.isArray(s.components)||!Array.isArray(s.calibrations))
-    throw new Error('The live takeoff is not ready. Wait for it to load, then open Find offcuts again.');
-  for(const a of s.roofAreas)if(!Array.isArray(a.points))throw new Error(`Finish the roof outline ${a.id??''} before opening Find offcuts.`);
+    throw new Error('The live takeoff is not ready. Wait for it to load, then open Generate Offcuts again.');
+  for(const a of s.roofAreas)if(!Array.isArray(a.points))throw new Error(`Finish the roof outline ${a.id??''} before opening Generate Offcuts.`);
   if(s.roofAreas.length>100||s.componentMeasurements.reduce((n,g)=>n+g.measurements.length,0)>2500)
     throw new Error('This live takeoff exceeds the snapshot size limit. Select a smaller roof scope.');
   const copy:QuoteCoreSnapshot={quoteId:s.quoteId,pageId:s.pageId,areaScopeId:s.areaScopeId??null,imageRevision:s.imageRevision,
@@ -55,7 +55,7 @@ export function freezeSnapshot<T>(value:T):T {
 }
 export function captureLiveTakeoff(input: QuoteCoreSnapshot): LiveInputCapture {
   const snapshot=cloneTakeoffSnapshot(input), adapted=fromQuoteCore(snapshot);
-  if(!snapshot.calibrationConfirmed||!(adapted.roof.mmPerSceneUnit>0))throw new Error('Confirm the current plan calibration before opening Find offcuts. No saved calibration will be substituted.');
+  if(!snapshot.calibrationConfirmed||!(adapted.roof.mmPerSceneUnit>0))throw new Error('Confirm the current plan calibration before opening Generate Offcuts. No saved calibration will be substituted.');
   if(!adapted.roof.outlines.length)throw new Error('Draw or select a roof outline in the current page and area first. No old scan outline will be substituted.');
   const incomplete=adapted.issues.find(i=>i.severity==='error');
   if(incomplete)throw new Error(incomplete.message);
@@ -85,7 +85,7 @@ function browserSettle():Promise<void> {
   });
 }
 function checkAbort(signal?:AbortSignal):void {
-  if(signal?.aborted)throw new Error('Opening Find offcuts was cancelled. No takeoff was captured.');
+  if(signal?.aborted)throw new Error('Opening Generate Offcuts was cancelled. No takeoff was captured.');
 }
 /** Capture only after the host has committed edits, and only while context and
  * model remain stable. Re-reading means dynamic imports/React commits cannot
@@ -99,12 +99,12 @@ export async function prepareLiveCapture(read:()=>QuoteCoreSnapshot,hooks:Captur
   for(let attempt=0;attempt<4;attempt++) {
     await settle();checkAbort(hooks.signal);
     const first=cloneTakeoffSnapshot(read());
-    if(fingerprint([first.quoteId,first.pageId,first.areaScopeId,first.imageRevision])!==context)throw new Error('The page, roof area or plan changed while opening Find offcuts. Open it again from the current takeoff.');
+    if(fingerprint([first.quoteId,first.pageId,first.areaScopeId,first.imageRevision])!==context)throw new Error('The page, roof area or plan changed while opening Generate Offcuts. Open it again from the current takeoff.');
     const revision=liveInputFingerprint(first);
     await settle();checkAbort(hooks.signal);
     const second=cloneTakeoffSnapshot(read());
-    if(fingerprint([second.quoteId,second.pageId,second.areaScopeId,second.imageRevision])!==context)throw new Error('The page, roof area or plan changed while opening Find offcuts. Open it again from the current takeoff.');
+    if(fingerprint([second.quoteId,second.pageId,second.areaScopeId,second.imageRevision])!==context)throw new Error('The page, roof area or plan changed while opening Generate Offcuts. Open it again from the current takeoff.');
     if(liveInputFingerprint(second)===revision)return captureLiveTakeoff(second);
   }
-  throw new Error('The takeoff is still changing. Finish the current drawing or scan, then open Find offcuts again.');
+  throw new Error('The takeoff is still changing. Finish the current drawing or scan, then open Generate Offcuts again.');
 }

@@ -30,6 +30,9 @@ import { LineMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/t
 import { CalibrationModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal';
 import { DEMO_CALIBRATION, DEMO_SCAN } from './demo-data/baseline';
 import { DemoGuideMeModal, DemoLimitModal } from './DemoGuideMeModal';
+import { FeatureUpsellModal, LockedFeatureButton } from '@/app/components/featureShowcase/FeatureUpsellModal';
+import { OFFCUTS, type ShowcaseCopy } from '@/app/components/featureShowcase/showcaseCopy';
+import { trackFreeToolEvent } from '@/app/(public)/lib/trackFreeToolEvent';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -340,6 +343,8 @@ export function DemoWorkstation({
   const [showScanStartModal, setShowScanStartModal] = useState(false);
   // DEMO limit modal - one slot, text set by whichever action was blocked.
   const [limitModal, setLimitModal] = useState<{ title: string; body: string } | null>(null);
+  // Feature showcase (owner 2026-10-14): locked offcuts teaser state.
+  const [showcase, setShowcase] = useState<ShowcaseCopy | null>(null);
 
   // Phase 7: multi-page takeoff state.
   // P1-1b: when initialPageId is provided (new-area mode), seed pages with that page
@@ -5670,6 +5675,7 @@ export function DemoWorkstation({
             body={limitModal?.body ?? ''}
             onClose={() => setLimitModal(null)}
           />
+          {showcase && <FeatureUpsellModal feature={showcase} onClose={() => setShowcase(null)} />}
 
           {/* Top Toolbar */}
           <div className="flex-shrink-0 mx-4 mt-1 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-2 shadow-sm" data-copilot="takeoff-toolbar">
@@ -5776,6 +5782,15 @@ export function DemoWorkstation({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v1.5M12 18h.01" /><circle cx="12" cy="12" r="10" /></svg>
                 Guide me
               </button>
+              {/* Feature showcase (owner 2026-10-14): locked offcuts teaser.
+                  The demo never runs the offcut engine; hover explains, click
+                  opens the modal and routes to the homepage. */}
+              <LockedFeatureButton
+                dataCopilot="takeoff-tool-offcuts-teaser"
+                label={OFFCUTS.label}
+                tooltip={OFFCUTS.tooltip}
+                onClick={() => { setShowcase(OFFCUTS); trackFreeToolEvent('teaser', { feature: OFFCUTS.label }); }}
+              />
                         </div>
 
             {/* Phase 7: Multi-lineal in-progress readout floats below the toolbar

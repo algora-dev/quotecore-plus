@@ -608,3 +608,12 @@
 - Reverse search: dominated 81-sheet / ~439 lm variants NOT shown as selectable cards; equal-total Fresh barge starts remains; genuine trade-offs still appear.
 - 14-face regression 63 / 289.305 unchanged; older 12-face fixture 67 / 405.776 (fixture-only, not the live staging input).
 - Reverse auto-preview + Showing on drawing selector still work; save/restore, quantity reuse, Export Cut Plan, PDF/one-pager unchanged.
+
+## Feature showcase: locked teasers + Generate Offcuts rename (testing 2026-10-14)
+- [ ] Free roof takeoff (anon): after calibration, the calibration-complete dialog shows the locked AI Scan Assist panel (lock icon, In the main app chip, orange teaser button); click opens the explainer modal with homepage CTA; NO scan request fires (network tab: zero /api/free-tools/ai-scan calls)
+- [ ] Free cladding + flooring takeoffs: same locked panel with "live for roofing, more trades coming" copy; no offcuts teaser (roofing only)
+- [ ] Free roof takeoff toolbar: dark locked "Generate Offcuts" button with lock icon + hover tooltip; click opens explainer + homepage CTA; no Resume button ever appears
+- [ ] Guided demo (/takeoff-demo): locked offcuts teaser next to Guide me; Scan Assist replay in calibration flow unchanged
+- [ ] Main app takeoff: button reads "Generate Offcuts" (dark primary); Resume offcuts hidden until a generate completes this session or a saved plan exists for the current page/area; offcut workbench header, one-pager footer and error strings renamed consistently
+- [ ] Measurement-to-pricing (/measurement-to-quote-tool): report step opens the Smart Assistant upsell modal once per tab; single homepage CTA; revisiting report in same tab does not re-show
+- [ ] Conversion tracking: teaser clicks write action "teaser" rows to free_tool_usage (tool_code per surface); rows visible in admin free-tool usage
