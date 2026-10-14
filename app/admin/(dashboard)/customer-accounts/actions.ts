@@ -30,7 +30,7 @@ export async function createCustomerAccount(formData: FormData): Promise<CreateC
   if (authError || !authData.user) return { ok: false, error: authError?.message ?? 'Could not create the login.' };
   const authUserId = authData.user.id;
   try {
-    const { data: company, error: companyError } = await admin.from('companies').insert({ name: companyName, slug: makeSlug(companyName, authUserId), default_currency: currency, default_language: 'en', default_measurement_system: measurement as 'metric', default_trade: defaultTrade as 'roofing', default_tax_rate: taxRate, plan_code: planCode, subscription_status: 'canceled', onboarding_completed_at: new Date().toISOString() }).select('id, slug').single();
+    const { data: company, error: companyError } = await admin.from('companies').insert({ name: companyName, slug: makeSlug(companyName, authUserId), default_currency: currency, default_language: 'en', default_measurement_system: measurement as 'metric', default_trade: defaultTrade as 'roofing', default_tax_rate: taxRate, plan_code: planCode, billing_model: 'legacy', subscription_status: 'canceled', onboarding_completed_at: new Date().toISOString() }).select('id, slug').single();
     if (companyError || !company) throw new Error(companyError?.message ?? 'Could not create the company.');
     const { error: profileError } = await admin.from('users').insert({ id: authUserId, company_id: company.id, email, full_name: fullName, role: 'owner', is_admin: false });
     if (profileError) throw new Error(profileError.message);
