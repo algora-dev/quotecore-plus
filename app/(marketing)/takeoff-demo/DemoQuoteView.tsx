@@ -37,8 +37,8 @@ const SEMANTIC_RATES: Record<string, DemoRate> = {
   hips: { label: 'Hip Flashing (Soft Edge Standard)', unit: 'm', materialRate: 19.5, labourRate: 14.0, pitchType: 'valley_hip', wasteType: 'fixed', wastePercent: 0, wasteFixed: 0.3 },
   broken_hips: { label: 'Hip Flashing (Soft Edge Standard)', unit: 'm', materialRate: 19.5, labourRate: 14.0, pitchType: 'valley_hip', wasteType: 'fixed', wastePercent: 0, wasteFixed: 0.3 },
   valleys: { label: 'Valley Flashing (Standard)', unit: 'm', materialRate: 11.0, labourRate: 5.0, pitchType: 'valley_hip', wasteType: 'fixed', wastePercent: 0, wasteFixed: 0.4 },
-  barges: { label: 'Barge Flashing (Standard)', unit: 'm', materialRate: 18.5, labourRate: 11.0, pitchType: 'rafter', wasteType: 'fixed', wastePercent: 0, wasteFixed: 0.25 },
-  spouting: { label: 'Spouting (Standard)', unit: 'm', materialRate: 18.0, labourRate: 11.0, pitchType: 'none', wasteType: 'fixed', wastePercent: 0, wasteFixed: 0.15 },
+  barges: { label: 'Barge (rake) Flashing (Standard)', unit: 'm', materialRate: 18.5, labourRate: 11.0, pitchType: 'rafter', wasteType: 'fixed', wastePercent: 0, wasteFixed: 0.25 },
+  spouting: { label: 'Spouting (gutter) (Standard)', unit: 'm', materialRate: 18.0, labourRate: 11.0, pitchType: 'none', wasteType: 'fixed', wastePercent: 0, wasteFixed: 0.15 },
 };
 
 const ROOF_AREA_RATE: DemoRate = {

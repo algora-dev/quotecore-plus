@@ -300,6 +300,22 @@ export function DemoWorkstation({
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
 
+  // Calibration is a draft interaction, not a normal measurement. Keep all
+  // transient Fabric objects and state on one cleanup path.
+  const clearCalibrationDraftVisuals = useCallback(() => {
+    setCalibrationPoints([]);
+    setShowCalibrationModal(false);
+    setTempCalibrationLine(null);
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    canvas.getObjects().slice().forEach((obj: any) => {
+      if (obj === tempCalibrationLine || obj.isInProgressMarker || obj.stroke === '#facc15' || (obj.fill === '#facc15' && obj.get('type') === 'circle')) {
+        canvas.remove(obj);
+      }
+    });
+    canvas.requestRenderAll();
+  }, [tempCalibrationLine]);
+
   // DEMO: calibration is baked from the captured session (baseline.ts) - the
   // same 9.15 m scale the account holder drew in the real app. Recalibrate
   // stays available exactly like the product.
@@ -863,6 +879,11 @@ export function DemoWorkstation({
   }, [redrawNonce]);
 
   const handleUndo = useCallback(() => {
+    if (calibrationMode || calibrationPoints.length > 0 || showCalibrationModal) {
+      clearCalibrationDraftVisuals();
+      setCalibrationMode(true);
+      return;
+    }
     // Fix #5b: use the live ref (synchronously updated) - rapid clicks fire
     // before React re-renders and captureSnapshot() would read stale state.
     const snapshot = history.undo(liveStateRef.current ?? captureSnapshot());
@@ -894,7 +915,7 @@ export function DemoWorkstation({
     // Trigger canvas redraw after state commits.
     setRedrawNonce(n => n + 1);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history, captureSnapshot]);
+  }, [history, captureSnapshot, calibrationMode, calibrationPoints, showCalibrationModal, clearCalibrationDraftVisuals]);
 
   const handleRedo = useCallback(() => {
     // Fix #5b: same live-ref pattern as handleUndo.
@@ -4581,6 +4602,7 @@ export function DemoWorkstation({
       return;
     }
     cleanupBoxDrag();
+    clearCalibrationDraftVisuals();
     // If recalibrating, clear confirmation
     if (calibrationConfirmed) {
       setCalibrationConfirmed(false);
@@ -4620,24 +4642,8 @@ export function DemoWorkstation({
   };
 
   const handleCancelCalibration = () => {
+    clearCalibrationDraftVisuals();
     setCalibrationMode(false);
-    setCalibrationPoints([]);
-    setShowCalibrationModal(false);
-    
-    // Remove temp line + calibration markers (yellow objects without measurementId)
-    if (fabricRef.current) {
-      if (tempCalibrationLine) {
-        fabricRef.current.remove(tempCalibrationLine);
-        setTempCalibrationLine(null);
-      }
-      // Remove calibration markers (yellow circles without measurementId)
-      fabricRef.current.getObjects().slice().forEach((obj: any) => {
-        if (!obj.measurementId && obj.fill === '#facc15') {
-          fabricRef.current!.remove(obj);
-        }
-      });
-      fabricRef.current.requestRenderAll();
-    }
   };
 
   const handleSaveCalibration = (actualDistance: number, unit: 'feet' | 'meters', addAnother: boolean) => {
@@ -4667,8 +4673,7 @@ export function DemoWorkstation({
     const _avgScale = updatedCalibrations.reduce((sum, cal) => sum + cal.scale, 0) / updatedCalibrations.length;
     setActiveCalibrationId(newCalibration.id);
     
-    setCalibrationPoints([]);
-    setShowCalibrationModal(false);
+    clearCalibrationDraftVisuals();
     
     // Prompt for another calibration if < 3 and user wants
     if (addAnother && updatedCalibrations.length < 3) {
@@ -5677,6 +5682,14 @@ export function DemoWorkstation({
           />
           {showcase && <FeatureUpsellModal feature={showcase} onClose={() => setShowcase(null)} />}
 
+          {calibrationMode && (
+            <div className="mx-4 mt-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-950" role="status" aria-live="polite">
+              <strong>Calibration mode.</strong>{' '}
+              {calibrationPoints.length === 0
+                ? 'Click the first point on a known measurement.'
+                : 'Click the second point on the same known measurement, then enter its real distance.'}
+            </div>
+          )}
           {/* Top Toolbar */}
           <div className="flex-shrink-0 mx-4 mt-1 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-2 shadow-sm" data-copilot="takeoff-toolbar">
             {/* Tools - Fix 7: Calibrate, Area, Line, Point. Sub-tools conditional. */}

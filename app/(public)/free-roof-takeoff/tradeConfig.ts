@@ -89,7 +89,7 @@ export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   slug: 'free-roof-takeoff',
   tradeName: 'roofing',
   planNoun: 'roof',
-  standardComponentsSummary: 'Roof area, ridge, hip, valley, barge and spouting.',
+  standardComponentsSummary: 'Roof area, ridge, hip, valley, barge (rake) and spouting (gutter).',
   requiresPitch: true,
   // Owner directive 2026-10-05: scan assist disabled for the free roofing
   // tool (and the future MCP plugin version). The marketing demo overrides

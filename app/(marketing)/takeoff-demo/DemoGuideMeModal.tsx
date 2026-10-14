@@ -63,7 +63,7 @@ const MANUAL_STEPS: GuideStep[] = [
   },
   {
     title: 'Keep going',
-    body: 'The same process works for every other component - Hip, Valley, Barge, Spouting all use the Line tool. Add each one from the list and measure it.',
+    body: 'The same process works for every other component - Hip, Valley, Barge (rake), Spouting (gutter) all use the Line tool. Add each one from the list and measure it.',
   },
   {
     title: 'Finish and see your quote',

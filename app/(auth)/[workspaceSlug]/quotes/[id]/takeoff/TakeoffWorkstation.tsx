@@ -9,6 +9,7 @@ import { QcStatusBadge } from '@/app/components/ui/v2/QcSurface';
 import { FeatureUpsellCard, LockedFeatureButton } from '@/app/components/featureShowcase/FeatureUpsellModal';
 import { OFFCUTS, SCAN_ASSIST_ROOFING, SCAN_ASSIST_TRADE, type ShowcaseCopy } from '@/app/components/featureShowcase/showcaseCopy';
 import { trackFreeToolEvent } from '@/app/(public)/lib/trackFreeToolEvent';
+import { takeoffDisplayName } from '@/app/lib/takeoff/displayLabels';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
@@ -418,6 +419,23 @@ export function TakeoffWorkstation({
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
 
+  // Calibration is a draft interaction, not a normal measurement. Keep all
+  // transient Fabric objects and state on one cleanup path so Cancel and Undo
+  // cannot leave yellow dots or a line behind.
+  const clearCalibrationDraftVisuals = useCallback(() => {
+    setCalibrationPoints([]);
+    setShowCalibrationModal(false);
+    setTempCalibrationLine(null);
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    canvas.getObjects().slice().forEach((obj: any) => {
+      if (obj === tempCalibrationLine || obj.isInProgressMarker || obj.stroke === '#facc15' || (obj.fill === '#facc15' && obj.get('type') === 'circle')) {
+        canvas.remove(obj);
+      }
+    });
+    canvas.requestRenderAll();
+  }, [tempCalibrationLine]);
+
   // === P2/P6 AI-assisted calibration (flag-gated, live search via the calibration API) ===
   // Owner decision 2026-09-25: the AI-vs-manual CHOOSER is removed from the
   // flow entirely - calibration is always manual (both desktop and touch).
@@ -803,7 +821,7 @@ export function TakeoffWorkstation({
       console.warn('[Components] No components found in component library for this company');
     }
     
-    setDisplayComponents(components);
+    setDisplayComponents(components.map(component => ({ ...component, name: takeoffDisplayName(component.name) })));
   }, [components, calibrationConfirmed]);
   
   // Assign colors to active components (when activeComponentIds changes)
@@ -1072,6 +1090,13 @@ export function TakeoffWorkstation({
   }, [redrawNonce]);
 
   const handleUndo = useCallback(() => {
+    // Calibration has its own draft undo semantics. Never consume a normal
+    // takeoff snapshot while a point or distance prompt is unfinished.
+    if (calibrationMode || calibrationPoints.length > 0 || showCalibrationModal) {
+      clearCalibrationDraftVisuals();
+      setCalibrationMode(true);
+      return;
+    }
     // Owner 2026-09-25 (12:30 pass): main undo/redo is BLOCKED while the
     // outline review card is open - it restores a pre-AI snapshot, wipes the
     // staged outline off the canvas and leaves the area row live (state
@@ -1108,7 +1133,7 @@ export function TakeoffWorkstation({
     // Trigger canvas redraw after state commits.
     setRedrawNonce(n => n + 1);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history, captureSnapshot]);
+  }, [history, captureSnapshot, calibrationMode, calibrationPoints, showCalibrationModal, clearCalibrationDraftVisuals]);
 
   const handleRedo = useCallback(() => {
     // Owner 2026-09-25 (12:30 pass): blocked during outline review (see undo).
@@ -7816,6 +7841,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
   const handleStartCalibration = () => {
     cleanupBoxDrag();
+    clearCalibrationDraftVisuals();
     // 6.2 draft-until-commit: recalibrating no longer destroys the committed
     // calibration, its confirmation or its metadata envelope up front. The
     // committed set stays authoritative for display and measurements until a
@@ -7873,30 +7899,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   };
 
   const handleCancelCalibration = () => {
-    // 6.2: cancel discards the DRAFT only; the committed calibration (never
-    // cleared when recalibration started) remains authoritative.
+    // 6.2: cancel discards the DRAFT only; the committed calibration remains
+    // authoritative. The same cleanup also removes every transient visual.
     if (draftCalibrationRef.current) {
       setCalibrations(cancelDraftRecalibration(draftCalibrationRef.current) as Calibration[]);
       draftCalibrationRef.current = null;
     }
+    clearCalibrationDraftVisuals();
     setCalibrationMode(false);
-    setCalibrationPoints([]);
-    setShowCalibrationModal(false);
-    
-    // Remove temp line + calibration markers (yellow objects without measurementId)
-    if (fabricRef.current) {
-      if (tempCalibrationLine) {
-        fabricRef.current.remove(tempCalibrationLine);
-        setTempCalibrationLine(null);
-      }
-      // Remove calibration markers (yellow circles without measurementId)
-      fabricRef.current.getObjects().slice().forEach((obj: any) => {
-        if (!obj.measurementId && obj.fill === '#facc15') {
-          fabricRef.current!.remove(obj);
-        }
-      });
-      fabricRef.current.requestRenderAll();
-    }
   };
 
   const handleSaveCalibration = (actualDistance: number, unit: 'feet' | 'meters', addAnother: boolean) => {
@@ -7933,8 +7943,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     
     setActiveCalibrationId(newCalibration.id);
     
-    setCalibrationPoints([]);
-    setShowCalibrationModal(false);
+    clearCalibrationDraftVisuals();
     
     // Prompt for another calibration if < 3 and user wants
     if (addAnother && updatedCalibrations.length < 3) {
@@ -9156,6 +9165,16 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
           {/* Hidden marker: copilot only starts after first roof area created */}
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
+          {/* Calibration guidance stays directly above the tools so a first-time
+              user always knows which point is expected next. */}
+          {calibrationMode && (
+            <div className="mx-2 mt-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-950" role="status" aria-live="polite">
+              <strong>Calibration mode.</strong>{' '}
+              {calibrationPoints.length === 0
+                ? 'Click the first point on a known measurement.'
+                : 'Click the second point on the same known measurement, then enter its real distance.'}
+            </div>
+          )}
           {/* Top Toolbar */}
               <QcCanvasToolbar className="qc-takeoff-toolbar" data-copilot="takeoff-toolbar">
                 <div className="qc-takeoff-toolbar-main">

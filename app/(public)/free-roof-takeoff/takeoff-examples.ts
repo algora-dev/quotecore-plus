@@ -31,7 +31,7 @@ const RATES: Record<string, readonly [number,number,number]> = {
 export function exampleSpecs(config: TakeoffTradeConfig, system: TakeoffUnitSystem): TakeoffComponentSpec[] {
   const base:TakeoffComponentSpec[] = config.placeholderComponents.map(c => {
     const [materialRate,labourRate,waste] = RATES[c.name] ?? [12.5,8.5,5];
-    const pitched = config.requiresPitch && (c.measurement_type === 'area' || ['Hip','Valley','Barge'].includes(c.name));
+    const pitched = config.requiresPitch && (c.measurement_type === 'area' || /^(Hip|Valley|Barge)( \(rake\))?$/.test(c.name));
     return { ...EMPTY_SPEC, id:c.id, name:c.name, measurementType:c.measurement_type, materialRate, labourRate,
       wasteType:waste ? 'percent' : 'none', wasteValue:waste, pitchEnabled:pitched,
       pitchType:['Hip','Valley'].includes(c.name) ? 'valley_hip' : 'rafter', pricingOrigin:'example' };

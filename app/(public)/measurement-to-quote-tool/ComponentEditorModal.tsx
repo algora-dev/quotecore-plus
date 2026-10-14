@@ -9,7 +9,7 @@ import { lenLabel, areaLabel } from './types';
  * manual and CSV-imported (partial) components. */
 
 const MEASUREMENT_TYPES: { value: MeasurementType; label: string; hint: string }[] = [
-  { value: 'lineal', label: 'Linear', hint: 'Ridges, hips, valleys, barges, spouting, flashings' },
+  { value: 'lineal', label: 'Linear', hint: 'Ridges, hips, valleys, barges (rakes), spouting (gutters), flashings' },
   { value: 'area', label: 'Area', hint: 'Roof planes, underlay, cladding sheets' },
   { value: 'quantity', label: 'Quantity', hint: 'Screws, brackets, fixings - counted per piece' },
 ];

@@ -17,7 +17,7 @@ const TIPS: Record<HelperTopic, { title: string; body: string }> = {
   },
   name: {
     title: 'Component name',
-    body: 'What you and your team will see in lists and reports. Use something you recognise instantly. Examples: "Longrun roofing", "Ridge flashing", "Spouting 125mm".',
+    body: 'What you and your team will see in lists and reports. Use something you recognise instantly. Examples: "Longrun roofing", "Ridge flashing", "Spouting (gutter) 125mm".',
   },
   sku: {
     title: 'Product code / SKU',
@@ -25,7 +25,7 @@ const TIPS: Record<HelperTopic, { title: string; body: string }> = {
   },
   type: {
     title: 'Measurement type',
-    body: 'How you measure it on a job: Linear for lengths - ridges, hips, valleys, barges, spouting (per m). Area for surfaces - roof planes, underlay, cladding sheets (per m²). Quantity for counted items - screws, brackets (each).',
+    body: 'How you measure it on a job: Linear for lengths - ridges, hips, valleys, barges (rakes), spouting (gutters) (per m). Area for surfaces - roof planes, underlay, cladding sheets (per m²). Quantity for counted items - screws, brackets (each).',
   },
   pricing: {
     title: 'Material cost',
@@ -41,7 +41,7 @@ const TIPS: Record<HelperTopic, { title: string; body: string }> = {
   },
   pitch: {
     title: 'Pitch calculation',
-    body: 'Does the quantity change with roof pitch? Use Rafter pitch for roof planes and barges (plan measurement × 1/cos of the pitch). Hip/valley pitch for hips and valleys. Ridge and spouting run level - leave this off.',
+    body: 'Does the quantity change with roof pitch? Use Rafter pitch for roof planes and barges (rakes) (plan measurement × 1/cos of the pitch). Hip/valley pitch for hips and valleys. Ridge and spouting (gutters) run level - leave this off.',
   },
 };
 

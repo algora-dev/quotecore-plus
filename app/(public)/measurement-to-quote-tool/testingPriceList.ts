@@ -84,7 +84,7 @@ export const TESTING_PRICE_LIST: TestingPriceItem[] = [
   },
   {
     id: 'tpl-barge',
-    name: 'Barge / verge flashing',
+    name: 'Barge (rake) / verge flashing',
     measurementType: 'lineal',
     materialRate: 16,
     labourRate: 12,

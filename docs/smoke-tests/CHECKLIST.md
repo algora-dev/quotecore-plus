@@ -618,3 +618,10 @@
 - [ ] Measurement-to-pricing (/measurement-to-quote-tool): report step opens the Smart Assistant upsell modal once per tab; single homepage CTA; revisiting report in same tab does not re-show
 - [ ] Conversion tracking: teaser clicks write action "teaser" rows to free_tool_usage (tool_code per surface); rows visible in admin free-tool usage
 - [ ] v2 dark restyle (same day): showcase modals now dark qcs theme (ink card, orange glow, orange-gradient CTA with dark text, glass secondary); teaser buttons dark glass rounded-rect; Generate Offcuts = qcs-primary near-black, Resume = qcs-quiet; SA copy now voice-or-text angle; measurement-tool modal portals to body (CTA readable)
+
+## Calibration draft cleanup + terminology aliases (testing)
+- [ ] Main/free takeoff: calibration helper clearly says first point, then second point and real distance.
+- [ ] Undo after first calibration click removes the dot and returns to first point.
+- [ ] Undo/cancel after second click removes both dots, line and distance prompt; no calibration evidence remains until saved.
+- [ ] Roofing, cladding, flooring and demo show Barge (rake) and Spouting (gutter) in visible platform-owned labels while canonical keys remain unchanged.
+- [ ] Offcuts modal copy clearly prioritises long-run metal roofs, trustworthy quoting quantities and installer cut lists.
