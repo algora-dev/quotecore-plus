@@ -63,6 +63,9 @@ export function pathnameToDocSlug(pathname: string | null | undefined): string {
     // string isn't part of pathname).
     { match: /^account(\/|$)/,                             slug: 'account/account-and-security' },
     { match: /^settings(\/|$)/,                            slug: 'account/company-settings' },
+
+    // Smart Assistant (paid-app AI workspace assistant) - distinct from Q.
+    { match: /^assistant(\/|$)/,                           slug: 'smart-assistant/overview' },
   ];
 
   for (const r of rules) {

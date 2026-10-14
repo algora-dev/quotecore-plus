@@ -1,53 +1,36 @@
 ---
-title: Upgrading and cancelling
-description: Step-by-step for picking a plan, switching plans, and cancelling.
+title: Changing or cancelling your plan
+description: Step-by-step for adjusting your plan, updating payment details, and cancelling.
 order: 7
 status: published
-updated: 2026-06-29
+updated: 2026-10-14
 ---
 
-# Upgrading and cancelling
+# Changing or cancelling your plan
 
-All plan changes happen on **Account > Billing**. Stripe handles payment, card storage, and invoicing. You never enter card details into QuoteCore+ itself.
+Plan changes happen in two places: the [pricing calculator](https://quote-core.com/pricing) for your configuration, and **Account > Billing → Manage subscription** (Stripe's portal) for payment matters. Stripe handles payment, card storage and invoicing - you never enter card details into QuoteCore+ itself.
 
-## First-time subscribe (new account, no card on file)
-
-<Steps>
-
-1. Open **Account > Billing**.
-2. In the **Plans** grid, find the tier you want and click **Choose &lt;plan&gt;** - or click **View** first to see the full feature list, then **Purchase** from inside the modal.
-3. You're sent to a Stripe-hosted checkout page on `checkout.stripe.com`.
-4. The page shows the price (e.g. $19.00/month for Starter). The strikethrough "was" price you see in the app is display-only — Stripe charges the listed price directly.
-5. Enter card details and confirm. Stripe charges you immediately.
-6. You're redirected back to **Account > Billing** with a green "Subscription started" banner.
-7. Within a few seconds the current-plan card updates to your new tier and your status changes to **active**.
-
-</Steps>
-
-<Callout type="tip">
-The launch price is locked in for the lifetime of your subscription. As long as you stay subscribed, renewals continue at the same price.
-</Callout>
-
-## Switching between paid plans
-
-If you already have an active subscription and want to move to a different paid tier:
+## Subscribing (new account)
 
 <Steps>
 
-1. Open **Account > Billing**.
-2. Click **Manage subscription** on the current-plan card. You're sent to the Stripe customer portal.
-3. Click **Update plan** in the portal.
-4. Pick the new plan.
-5. The portal shows the proration - either a partial charge (if upgrading) or a credit applied to your next invoice (if downgrading).
-6. Confirm. You're back in QuoteCore+ within seconds with the new plan active.
+1. Build the plan you want on the [pricing page](https://quote-core.com/pricing) - choose your features, expected usage and storage. The calculator shows the monthly price as you go.
+2. Checkout opens on `checkout.stripe.com` with your configured price.
+3. Enter card details and confirm. Stripe charges you immediately.
+4. You're redirected back to **Account > Billing** with your plan active and your usage counters ready.
 
 </Steps>
 
-<Callout type="note">
-The "Choose &lt;plan&gt;" buttons on the plan grid are disabled for active paying customers (they'd create a second subscription, doubling your bill). The buttons say "Manage to switch" to point you at the portal.
-</Callout>
+## Adjusting your plan
 
-## Cancelling a paid subscription
+To change your configuration (features, usage allowance, storage):
+
+1. Reconfigure on the [pricing page](https://quote-core.com/pricing) and checkout with the new setup, or
+2. Open **Account > Billing → Manage subscription** to update your plan in Stripe's customer portal - it shows any proration (a partial charge or a credit on your next invoice) before you confirm.
+
+Either way you end up with one subscription at your new configuration - no double billing.
+
+## Cancelling
 
 <Steps>
 
@@ -60,31 +43,24 @@ The "Choose &lt;plan&gt;" buttons on the plan grid are disabled for active payin
 
 After you cancel:
 
-- The status badge on your current-plan card may change to reflect the wind-down.
 - You **keep paid features** until the end of the current billing period - you've paid for it, you get to use it.
-- At the period end, Stripe deletes the subscription and our webhook collapses your effective plan to **Free**.
+- At period end, the subscription closes and your workspace loses its paid features.
 - Your data is **never deleted** on cancellation.
 
 ## Reactivating a cancelled subscription
 
-You can resubscribe any time:
-
-- **Before the period end** (sub is winding down): use **Manage subscription** in the portal to "renew" or "resume". Stripe will remove the cancellation flag.
-- **After the period end** (sub is fully gone): from **Account > Billing**, pick any paid plan and click **Choose / Purchase**. Stripe checkout opens. New subscription at current pricing.
+- **Before period end** (winding down): use **Manage subscription** in the portal to resume.
+- **After period end**: subscribe again from the [pricing page](https://quote-core.com/pricing).
 
 ## Updating your card
 
-In the portal:
-
 1. Click **Manage subscription** on the billing page.
 2. Click **Update payment method**.
-3. Add a new card. The old card stays on file until you delete it.
+3. Add the new card. The old card stays on file until you delete it.
 
 Cards are never stored in QuoteCore+. They live on Stripe's PCI-compliant infrastructure.
 
 ## Downloading invoices
-
-In the portal:
 
 1. Click **Manage subscription** on the billing page.
 2. Scroll to **Billing history**.
@@ -101,9 +77,7 @@ Stripe automatically retries failed cards on a schedule (typically day 0, 3, 5, 
 - New mutations (creating quotes, sending orders) are blocked in `grace`.
 - A banner on the billing page tells you what to do.
 
-Update your card in the portal as soon as you can. The moment a payment succeeds, your status returns to `active`.
-
-If 24 days pass with no successful payment, the subscription moves to `suspended`. After 75 days, `pending_data_purge`. See [Billing](/docs/account/billing#payment-failures-and-dunning) for the full dunning timeline.
+Update your card in the portal as soon as you can. The moment a payment succeeds, your status returns to `active`. See [Billing](/docs/account/billing) for the full timeline.
 
 ## Disputes (chargebacks)
 
@@ -113,15 +87,10 @@ If you dispute a charge with your bank:
 - Your subscription status becomes `disputed` while the bank reviews.
 - When the dispute closes, the ticket auto-resolves and your status returns to normal (or, if the chargeback succeeded, your subscription is cancelled).
 
-For non-dispute refund requests, [contact support](/docs/help/support-and-contact) first.
-
-## Where to find it
-
-**Account > Billing** for everything. **Manage subscription** opens Stripe's hosted portal.
+For anything else, [contact support](/docs/help/support-and-contact) first - we'd rather fix it than fight it.
 
 ## Related
 
-- [Billing](/docs/account/billing) - overview of the billing page.
-- [Plans & billing](/docs/account/trial) - the paid plans and the 30-day money-back guarantee.
-- [Tier limits](/docs/account/tier-limits) - what each cap means.
-- [Contact support](/docs/help/support-and-contact) - for refund or dispute questions.
+- [Billing](/docs/account/billing) - plans from $29/month, configured by you.
+- [Usage & storage caps](/docs/account/tier-limits) - what each cap means.
+- [Contact support](/docs/help/support-and-contact) - for payment questions.

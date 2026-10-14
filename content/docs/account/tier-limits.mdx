@@ -1,14 +1,14 @@
 ---
-title: Tier limits
-description: What each cap on your plan means, how counters work, and what happens when you hit one.
+title: Usage & storage caps
+description: What each cap on your plan means, how counters work, and what happens when you reach one.
 order: 6
 status: published
-updated: 2026-06-29
+updated: 2026-10-14
 ---
 
-# Tier limits
+# Usage & storage caps
 
-Every plan has caps. This page explains what each one means in practice. QuoteCore+ has no free trial - paid plans start at $19/mo and every plan is covered by a [30-day money-back guarantee](/docs/account/trial).
+Every plan has caps. With QuoteCore+ you choose your own: the usage allowance and storage on your workspace come from what you configured in the [pricing calculator](https://quote-core.com/pricing) when you subscribed. This page explains what each cap means in practice and what happens when you reach one.
 
 ## The five caps
 
@@ -20,18 +20,7 @@ Every plan has caps. This page explains what each one means in practice. QuoteCo
 | **Material orders / month** | Outgoing orders sent to suppliers | 1st of each month, UTC |
 | **Storage** | Total bytes uploaded across the company | Never - manual delete only |
 
-## Per-tier breakdown
-
-| Cap | Starter | Pro | Pro Plus |
-|---|---|---|---|---|
-| Quotes / month | 25 | 100 | 200 |
-| Components | 20 | 30 | 50 |
-| Drawings & Images | 0 (locked) | 20 | 20 |
-| Material orders / month | 5 | 20 | 20 |
-| Storage | 500 MB | 3 GB | 5 GB |
-| Included seats | 1 | 1 | 3 |
-
-"Locked" means the feature itself is not available on that tier - not zero, but no access at all (the navigation hides the page).
+Your specific numbers are shown in **Account → Billing**. Features you didn't include in your plan are locked rather than capped - the page shows an upgrade prompt instead of the feature.
 
 ## Quotes per month
 
@@ -44,7 +33,7 @@ Sending or finalising a draft does **not** free up its slot. The counter is "quo
 When you hit the monthly cap:
 
 - The **+ New Quote** button on the quotes list page greys out.
-- Clicking it opens an upgrade modal: *"Monthly quote limit reached (X/Y). To create more quotes this month you need to upgrade your account tier, or wait until your quote limit resets."*
+- Clicking it opens an upgrade prompt: *"Monthly quote limit reached (X/Y). To create more quotes this month you need to adjust your plan, or wait until your quote limit resets."*
 - The cap resets at midnight UTC on the 1st of next month.
 
 ## Components (lifetime)
@@ -53,7 +42,7 @@ Components are the building blocks of every quote (ridge cap, valley flashing, f
 
 - Soft-deleted components (set inactive) **do not count**. Hard-deleting is the only way to make room if you've toggled instead of deleted.
 - New accounts are seeded with 8 starter components, so you start at 8 of your limit.
-- When at the cap, the **+ Add Component** button on the components page opens an upgrade modal.
+- When at the cap, the **+ Add Component** button on the components page opens an upgrade prompt.
 
 ## Drawings & Images (lifetime)
 
@@ -61,15 +50,12 @@ Same model as components, but for the drawings & images library. These are image
 
 - Every drawing or uploaded image counts as 1.
 - Editing an existing drawing or image does not consume a new slot.
-- When at the cap, both **Create** and **Upload** buttons on the drawings & images page open an upgrade modal.
-
-On **Starter**, drawings & images is a **locked feature** - the whole page shows an upgrade splash and the "Drawings & Images" entry button on the components page opens an upgrade modal instead of navigating.
+- When at the cap, both **Create** and **Upload** buttons on the drawings & images page open an upgrade prompt.
+- If drawings & images isn't part of your plan, the whole page shows an upgrade splash and the "Drawings & Images" entry button on the components page opens the prompt instead of navigating.
 
 ## Material orders per month
 
-Outgoing purchase orders sent to suppliers. Resets monthly like quotes.
-
-On **Starter**, material orders is a **locked feature** - the nav entry opens an upgrade modal and doesn't route through. Starter includes 5 material orders per month; Pro and above include 20.
+Outgoing purchase orders sent to suppliers. Resets monthly like quotes. If material orders isn't part of your plan, the nav entry opens an upgrade prompt instead of routing through.
 
 ## Storage
 
@@ -91,36 +77,35 @@ When you're near the limit:
 - At 90% it turns amber.
 - At 100% the next upload fails with a "Storage quota exceeded" error.
 
-To free up space, delete old quote attachments or roof plans you no longer need.
+To free up space, delete old quote attachments or roof plans you no longer need. Need more headroom permanently? Adjust your storage in the [pricing calculator](https://quote-core.com/pricing) and re-subscribe.
 
-## How the upgrade modal works
+## How the upgrade prompt works
 
-Every cap opens the same modal pattern:
+Every cap opens the same pattern:
 
 - Title naming the specific cap you hit
 - Description explaining what's blocked
 - **Not now** button to dismiss
-- **View plans** button that takes you to **Account > Billing** with the recommended plan highlighted
+- **View plans** button that takes you to **Account → Billing**
 
-## What about grandfathered data?
+## What if I reduce my plan?
 
-If you signed up on a higher tier then downgraded, you may end up with **more existing data than your new tier allows**. That's fine:
+If you adjust your plan down and end up with **more existing data than the new caps allow**, that's fine:
 
-- We never delete data when you downgrade.
+- We never delete data when a plan changes.
 - Caps only block *new* additions.
-- Example: a customer with 30 components who downgrades from Pro (25-component cap) to Growth (15-component cap) keeps all 30 components. They just can't add a new one until they delete enough to get back under 15.
+- Example: a customer with 30 components who reduces to a 15-component allowance keeps all 30 components. They just can't add a new one until there's room.
 
 ## Where to see your current usage
 
-- **Billing page** - storage bar.
+- **Billing page** - storage bar and usage counters.
 - **Quotes page** - quotes-this-month counter (top right of the list).
 - **Components page** - `X/Y` counter inside the + Add Component button.
 - **Drawings & Images page** - `X/Y used` next to the Create/Upload buttons.
 
 ## Related
 
-- [Billing](/docs/account/billing) - full overview of the billing page.
-- [Plans & billing](/docs/account/trial) - the paid plans and the 30-day money-back guarantee.
+- [Billing](/docs/account/billing) - plans from $29/month, configured by you.
 - [Components overview](/docs/components/overview) - what components are.
 - [Drawings & Images](/docs/flashings/flashings) - drawings & images library usage.
 - [Material orders: creating](/docs/material-orders/creating-orders) - sending orders to suppliers.

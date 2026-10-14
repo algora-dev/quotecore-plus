@@ -71,12 +71,14 @@ const SECTION_ORDER: string[] = [
   'files-and-quotes',
   'invoices',
   'account',
+  'smart-assistant',
   'help',
   'concepts',
 ];
 
 const SECTION_TITLES: Record<string, string> = {
   'getting-started': 'Getting started',
+  'smart-assistant': 'Smart Assistant',
   'concepts': 'Concepts',
   'components': 'Components',
   'catalog': 'Catalog Library',
