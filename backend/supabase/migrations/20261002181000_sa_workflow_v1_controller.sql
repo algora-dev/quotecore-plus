@@ -338,7 +338,7 @@ BEGIN
  END LOOP;
  -- Delete only explicitly removed entry identities, scoped through this quote.
  DELETE FROM public.quote_component_entries ent USING public.quote_components c
- WHERE e.quote_component_id=c.id AND c.quote_id=p_quote_id
+ WHERE ent.quote_component_id=c.id AND c.quote_id=p_quote_id
    AND EXISTS(SELECT 1 FROM jsonb_array_elements(before_entries) j WHERE (j->>'id')::uuid=ent.id)
    AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(after_entries) j WHERE (j->>'id')::uuid=ent.id);
 
