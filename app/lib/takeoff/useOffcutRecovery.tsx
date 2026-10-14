@@ -39,7 +39,7 @@ export function useOffcutRecovery(options:Options){
           const other=[...hints.values()].filter(h=>h.status==='active'&&h.imageKey===latest.current.imageKey&&reviewScopeKey(h.scope)!==scopeKey).sort((a,b)=>b.savedAt.localeCompare(a.savedAt))[0];
           if(other)setOtherScope(other);
         }
-        if(cloud.status==='rejected')setNotice('Account recovery could not be checked. A migration or connection may need attention; Find offcuts will require a confirmed save.');
+        if(cloud.status==='rejected')setNotice('Account recovery could not be checked. A migration or connection may need attention; Generate Offcuts will require a confirmed save.');
       }catch(e){if(generation===epoch.current)setNotice(e instanceof Error?e.message:'Recovery check failed.');}
     })();
     return()=>{epoch.current++;session.current?.dispose();session.current=null;};
@@ -70,10 +70,10 @@ export function useOffcutRecovery(options:Options){
   const beforeCalculation=useCallback(async(document:ReviewDocument,journal:CalculationJournal)=>{
     if(latest.current.disabled)return;
     if(!session.current){
-      // Resume may have been opened without a fresh Find offcuts click.
+      // Resume may have been opened without a fresh Generate Offcuts click.
       const s=services.current??await getOffcutRecoveryServices();services.current=s;
       const existing=await s.repository.load(latest.current.scope);
-      if(!existing?.document||existing.document.capture.inputFingerprint!==document.sourceFingerprint)throw new Error('Restore the saved measurements, then open Find offcuts to create a recovery checkpoint before calculating.');
+      if(!existing?.document||existing.document.capture.inputFingerprint!==document.sourceFingerprint)throw new Error('Restore the saved measurements, then open Generate Offcuts to create a recovery checkpoint before calculating.');
       session.current=new RecoverySession(s.repository,s.backup,{revision:existing.revision,document:existing.document},setNotice);
     }
     await session.current.beforeCalculation(document,journal);
@@ -100,7 +100,7 @@ export function useOffcutRecovery(options:Options){
       const d=parseRecoveryDocument(candidate,opts.scope);
       if(generation!==epoch.current)return;
       opts.restoreState(d.workstation);dismissed.current=d.id;setCandidate(null);
-      setNotice('Measurements restored. Resume offcuts reopens the saved review; Find offcuts starts from this restored drawing.');
+      setNotice('Measurements restored. Resume offcuts reopens the saved review; Generate Offcuts starts from this restored drawing.');
     }catch(e){if(generation===epoch.current)setNotice(e instanceof Error?e.message:'Recovery failed. The current drawing was kept.');}
     finally{restoreInFlight.current=false;setRestoring(false);setRestorePrompt(null);}
   },[candidate,restorePrompt,restoring]);
@@ -116,7 +116,7 @@ export function useOffcutRecovery(options:Options){
     return d?.imageKey===latest.current.imageKey?d:null;
   },[]);
   const bannerContent=otherScope&&options.openScope?<section role="status" className="mx-3 my-2 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm"><strong>Unfinished takeoff saved for another roof area</strong><p>This plan has a recovery checkpoint in another area. Open that area to restore it without mixing measurements.</p><button type="button" className="mt-2 rounded-lg border bg-white px-3 py-2" onClick={()=>void options.openScope?.(otherScope.scope).catch(e=>setNotice(e instanceof Error?e.message:'Could not open the saved area.'))}>Open saved roof area</button><button type="button" className="ml-2 px-3 py-2" onClick={()=>setOtherScope(null)}>Keep current area</button></section>:candidate?<section role="status" className="mx-3 my-2 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-slate-800" data-takeoff-recovery>
-    <strong>Resume your unfinished takeoff</strong><p>Measurements saved before Find offcuts ({new Date(candidate.savedAt).toLocaleString()}). {candidate.calculation?.status==='running'?'The previous calculation was interrupted; it will not restart automatically.':''}</p>
+    <strong>Resume your unfinished takeoff</strong><p>Measurements saved before Generate Offcuts ({new Date(candidate.savedAt).toLocaleString()}). {candidate.calculation?.status==='running'?'The previous calculation was interrupted; it will not restart automatically.':''}</p>
     <div className="mt-2 flex flex-wrap gap-2"><button type="button" className="rounded-lg border bg-white px-3 py-2" disabled={restoring} onClick={()=>setRestorePrompt({id:candidate.id,generation:epoch.current})}>Restore measurements</button><button type="button" className="rounded-lg border bg-white px-3 py-2" disabled={exporting} onClick={()=>void exportCheckpoint()}>Export recovery</button><button type="button" className="rounded-lg border bg-white px-3 py-2" onClick={()=>{dismissed.current=candidate.id;setCandidate(null);setNotice('Current drawing kept. The saved checkpoint has not been deleted.');}}>Keep current</button></div></section>:notice?<div className="mx-3 my-2 text-xs text-slate-600" role="status">{notice}{saveError?<button type="button" className="ml-3 rounded-lg border bg-white px-3 py-2" disabled={exporting} onClick={()=>void exportCheckpoint()}>Export recovery copy</button>:null}</div>:null;
   const banner=<>{bannerContent}<ConfirmModal appearance="v2" open={!!restorePrompt} title="Restore saved measurements?"
     description="Replace the current drawing for this roof area with the recovery checkpoint. Other roof areas and quote prices will not change."

@@ -44,7 +44,7 @@ export function portfolioChoices(current:Solution,saved:Solution[],selectedIndex
   const currentChoice=choices.find(c=>c.layoutId===id);
   const visible=choices.slice(0,3),more=choices.slice(3);
   const menu=saved.length>1?`<label class="qc-field qc-plan-switcher"><span>Showing on drawing</span><select data-plan-index aria-label="Choose the cut plan shown on the drawing" ${disabled?'disabled':''}>${saved.map((s,i)=>{
-    const choice=choices.find(c=>c.layoutId===planSignature(s));return `<option value="${i}" ${i===selectedIndex?'selected':''}>${esc(choice?choiceTitle(choice):s.layoutLabel??'Saved plan')}${s.engineVersion!=='2.29'?` · V${esc(s.engineVersion??'older')}`:''}</option>`;
+    const choice=choices.find(c=>c.layoutId===planSignature(s));return `<option value="${i}" ${i===selectedIndex?'selected':''}>${esc(choice?choiceTitle(choice):s.layoutLabel??'Saved plan')}${s.engineVersion!=='2.30'?` · V${esc(s.engineVersion??'older')}`:''}</option>`;
   }).join('')}</select><small>Switch here to compare every checked cut-plan variation.</small></label>`:'';
   return `<section class="qc-plan-variants qc-portfolio" id="qc-plan-choice" aria-label="Compare cutting plans">
     <div class="qc-portfolio-title"><strong>${choices.length>1?'Choose your cutting plan':esc(current.layoutLabel??'Recommended')}</strong>${choices.length>1?`<small>${choices.length} checked options</small>`:''}</div>

@@ -286,7 +286,7 @@ export function useTouchComponents(
     if (geometryId.startsWith(OFFCUT_MEASUREMENT_OPTION + ':')) {
       const entry = current?.addOffcutMaterialEntry?.(detail, geometryId.slice(OFFCUT_MEASUREMENT_OPTION.length + 1));
       if (entry) { setError(null); refreshFromAdapter(); }
-      else setError('The selected cut plan or roof changed. Open Find offcuts and choose its current quantity again.');
+      else setError('The selected cut plan or roof changed. Open Generate Offcuts and choose its current quantity again.');
       return;
     }
     if (geometryId === '__offcut_plan__') {

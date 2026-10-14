@@ -6,6 +6,9 @@ import { QcHostedButton, QcHostedDialog, QcHostedDialogScope } from '@/app/compo
 import { QcCanvasToolbar, QcCanvasToolGroup, QcToolButton } from '@/app/components/ui/v2/QcCanvasChrome';
 import { QcIcon } from '@/app/components/ui/v2/QcIcon';
 import { QcStatusBadge } from '@/app/components/ui/v2/QcSurface';
+import { FeatureUpsellCard, LockedFeatureButton } from '@/app/components/featureShowcase/FeatureUpsellModal';
+import { OFFCUTS, SCAN_ASSIST_ROOFING, SCAN_ASSIST_TRADE, type ShowcaseCopy } from '@/app/components/featureShowcase/showcaseCopy';
+import { trackFreeToolEvent } from '@/app/(public)/lib/trackFreeToolEvent';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
@@ -1425,6 +1428,9 @@ export function TakeoffWorkstation({
   // Keep this alias for any existing code that still references it; prefer
   // tradeConfig properties in new code.
   const quoteIsGeneric = !tradeConfig.pitchRequired;
+  // Offcuts teaser is roofing-focused only (owner 2026-10-14): the engine
+  // is roof-trained, so cladding/flooring free tools do not show it.
+  const freeToolIsRoofing = freeToolMode && (quote as { trade?: string }).trade === 'roofing';
 
   // Owner directive 2026-10-13: non-pitch trades (the free cladding/flooring
   // tools; generic main-app trades) never see the pitch-only prompt. The
@@ -7946,6 +7952,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const offcutsLiveSnapshotRef = useRef<QuoteCoreSnapshot | null>(null);
   const offcutsModalRef = useRef<WorkbenchHandle | null>(null);
   const [openingOffcuts, setOpeningOffcuts] = useState(false);
+  // Feature showcase (owner 2026-10-14): locked-feature teasers for the free
+  // tools + the Resume-offcuts visibility gate (Resume only after the user
+  // has actually generated an offcut plan for this session/scope).
+  const [showcase, setShowcase] = useState<ShowcaseCopy | null>(null);
+  const [hasOffcutReview, setHasOffcutReview] = useState(false);
+  const openShowcase = useCallback((feature: ShowcaseCopy) => {
+    setShowcase(feature);
+    if (freeToolMode) trackFreeToolEvent('teaser', { feature: feature.label });
+  }, [freeToolMode]);
   // Phase 2 (owner 2026-10-07): the offcut cover-m2 figure for the current
   // page - from the workbench's live quantity proposal or the saved offcut
   // review. Offered in the area-component attach dropdowns (desktop + touch).
@@ -8120,7 +8135,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (!canvas) throw new Error('Wait for the drawing canvas to finish loading.');
     const captured = reconcileCanvasSnapshot(live, canvas.getObjects() as unknown as SceneMeasurementObject[]);
     if (captured.unmatchedSceneMeasurementIds.length) {
-      throw new Error('The drawing and takeoff are still synchronising. Finish the current edit, then try Find offcuts again.');
+      throw new Error('The drawing and takeoff are still synchronising. Finish the current edit, then try Generate Offcuts again.');
     }
     return captured.snapshot;
   }, []);
@@ -9191,7 +9206,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       <>
                       <button
                         data-copilot="takeoff-tool-offcuts"
-                        className="px-3 py-2 rounded-full text-sm bg-slate-900 text-white disabled:opacity-40"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold text-white bg-black transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40"
                         disabled={openingOffcuts || !calibrationConfirmed || !pages[currentPageIndex]?.id || roofAreas.length === 0 || isSaving || aiScanning}
                         aria-busy={openingOffcuts}
                         title="Save a recovery checkpoint of these measurements, then review faces. Quote prices are not changed."
@@ -9239,18 +9254,19 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                                 const active = document.activeElement;
                                 if (active instanceof HTMLElement) active.blur();
                                 flushSync(() => forceOffcutsCommit(value => value + 1));
-                                if (aiScanning) throw new Error('Wait for the AI scan to finish before opening Find offcuts.');
-                                if (isSaving) throw new Error('Wait for the current save to finish before opening Find offcuts.');
-                                if (calibrationMode) throw new Error('Finish or cancel calibration first, then open Find offcuts.');
+                                if (aiScanning) throw new Error('Wait for the AI scan to finish before opening Generate Offcuts.');
+                                if (isSaving) throw new Error('Wait for the current save to finish before opening Generate Offcuts.');
+                                if (calibrationMode) throw new Error('Finish or cancel calibration first, then open Generate Offcuts.');
                                 if (areaPoints.length || linePoints.length || multiLinealPoints.length || showAreaNamePrompt || showFreestyleHeightPrompt || showVolumeDepthPrompt) {
-                                  throw new Error('Finish the current drawing or measurement entry before opening Find offcuts.');
+                                  throw new Error('Finish the current drawing or measurement entry before opening Generate Offcuts.');
                                 }
                                 fabricRef.current?.requestRenderAll();
                               },
                             });
                             offcutsModalRef.current = offcutsHandle;
+                            setHasOffcutReview(true);
                           } catch (error) {
-                            if (!abort.signal.aborted) showAlert('Find offcuts could not open', error instanceof Error ? error.message : String(error), 'error');
+                            if (!abort.signal.aborted) showAlert('Generate Offcuts could not open', error instanceof Error ? error.message : String(error), 'error');
                           } finally {
                             if (offcutsCaptureAbortRef.current === abort) {
                               offcutsCaptureAbortRef.current = null;
@@ -9258,7 +9274,11 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                             }
                           }
                         }}
-                      >{openingOffcuts ? 'Saving measurements & opening…' : 'Find offcuts'}</button>
+                      >{openingOffcuts ? 'Saving measurements & opening…' : 'Generate Offcuts'}</button>
+                      {/* Owner 2026-10-14: Resume only renders once the user
+                          has actually generated offcuts this session, or a
+                          saved offcut plan exists for the current scope. */}
+                      {(hasOffcutReview || offcutAreaFigure != null) && (
                       <button
                         data-copilot="takeoff-tool-offcuts-resume"
                         className="px-3 py-2 rounded-full text-sm border border-slate-300 bg-white text-slate-700 hover:border-orange-200 hover:bg-orange-50/40 disabled:opacity-40"
@@ -9287,7 +9307,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                             if(recovered?.review&&(!stored||recovered.review.savedAt>stored.document.savedAt)){
                               stored={revision:stored?.revision??0,document:recovered.review};
                             }
-                            if (!stored) { showAlert('No saved offcut plan', 'No saved offcut review exists for this roof area yet. Use Find offcuts to create one.', 'info'); return; }
+                            if (!stored) { showAlert('No saved offcut plan', 'No saved offcut review exists for this roof area yet. Use Generate Offcuts to create one.', 'info'); return; }
                             const previous = offcutsModalRef.current;
                             if (previous) { void previous.flushReview?.().catch(() => {}); previous.destroy(); offcutsModalRef.current = null; }
                             const image = pages[currentPageIndex]?.url ?? planUrl;
@@ -9313,7 +9333,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                               throw new Error('The selected roof changed while opening the saved review.');
                             }
                           } catch (error) {
-                            if (!abort.signal.aborted) showAlert('Find offcuts could not open', error instanceof Error ? error.message : String(error), 'error');
+                            if (!abort.signal.aborted) showAlert('Generate Offcuts could not open', error instanceof Error ? error.message : String(error), 'error');
                           } finally {
                             if (offcutsCaptureAbortRef.current === abort) {
                               offcutsCaptureAbortRef.current = null;
@@ -9322,7 +9342,18 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                           }
                         }}
                       >{openingOffcuts ? 'Opening…' : 'Resume offcuts'}</button>
+                      )}
                       </>
+                    )}
+                    {/* Feature showcase (owner 2026-10-14): free roofing tool
+                        only. Locked teaser, never opens the real engine. */}
+                    {freeToolIsRoofing && (
+                      <LockedFeatureButton
+                        dataCopilot="takeoff-tool-offcuts-teaser"
+                        label={OFFCUTS.label}
+                        tooltip={OFFCUTS.tooltip}
+                        onClick={() => openShowcase(OFFCUTS)}
+                      />
                     )}</QcCanvasToolGroup>
                 </div>
                 <div className="qc-takeoff-toolbar-context">
@@ -9641,6 +9672,40 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                   )}
                 </div>
               )}
+              {/* Feature showcase (owner 2026-10-14): free tools see the AI
+                  Scan Assist option after calibration, locked as a teaser. No
+                  scan is ever fired and no AI credits are consumed. */}
+              {freeToolMode && (
+                <div className="space-y-2 rounded-xl border-2 border-[#FF6B35]/30 p-3 bg-[#FF6B35]/5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+                      <svg className="w-4 h-4 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      AI Scan Assist
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                      In the main app
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    {freeToolIsRoofing
+                      ? 'Finds the roof outline and the roof components for you, then lets you review and adjust. Saves time and helps if you are not roof-technical.'
+                      : 'Finds outlines and components for you, then lets you review and adjust. Currently live for roofing, with more trades coming.'}
+                  </p>
+                  <QcHostedButton variant="primary"
+                    onClick={() => openShowcase(freeToolIsRoofing ? SCAN_ASSIST_ROOFING : SCAN_ASSIST_TRADE)}
+                    className="w-full py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-full hover:bg-[#E55A2B] transition-colors flex items-center justify-center gap-1.5"
+                    title="See what AI Scan Assist does"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    AI Scan Assist
+                  </QcHostedButton>
+                </div>
+              )}
               <QcHostedButton variant="ghost"
                 onClick={() => {
                   setShowRoofAreaInstructions(false);
@@ -9652,6 +9717,12 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
               </QcHostedButton>
             </div>
           </div>
+        </QcHostedDialog>
+      )}
+
+      {showcase && (
+        <QcHostedDialog label="Included in the main app" size="md" className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <FeatureUpsellCard feature={showcase} onClose={() => setShowcase(null)} />
         </QcHostedDialog>
       )}
 

@@ -34,7 +34,7 @@ const TOOL_ALLOWLIST: Record<string, string> = {
   'demo-takeoff-manual': 'Demo Takeoff (manual)',
 };
 
-const ACTIONS = new Set(['start', 'output', 'generate', 'result', 'print', 'upload', 'finish']);
+const ACTIONS = new Set(['start', 'output', 'generate', 'result', 'print', 'upload', 'finish', 'teaser']);
 
 let usageClient: ReturnType<typeof createServiceClient<Database>> | null = null;
 function getUsageClient() {

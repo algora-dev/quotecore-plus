@@ -19,14 +19,14 @@ const openingReaders=new WeakSet<()=>QuoteCoreSnapshot>();
 /** Preferred integration entry: commit live edits -> settle -> capture ->
  * checkpoint -> derive. Never loads ai_scan_result or saved measurements. */
 export async function launchLiveQuoteCoreOffcuts(readSnapshot:()=>QuoteCoreSnapshot,options:LiveLaunchOptions={}):Promise<WorkbenchHandle> {
-  if(openingReaders.has(readSnapshot))throw new Error('Find offcuts is already opening.');
+  if(openingReaders.has(readSnapshot))throw new Error('Generate Offcuts is already opening.');
   openingReaders.add(readSnapshot);
   try {
     const capture=checkpointLiveCapture(await prepareLiveCapture(readSnapshot,options),options.snapshotStorage);
     await options.persistCapture?.(capture);
-    if(options.signal?.aborted)throw new Error('Opening Find offcuts cancelled. The checkpoint is retained.');
+    if(options.signal?.aborted)throw new Error('Opening Generate Offcuts cancelled. The checkpoint is retained.');
     const current=captureLiveTakeoff(readSnapshot());
-    if(current.inputFingerprint!==capture.inputFingerprint)throw new Error('The takeoff changed while its checkpoint was saving. Open Find offcuts again.');
+    if(current.inputFingerprint!==capture.inputFingerprint)throw new Error('The takeoff changed while its checkpoint was saving. Open Generate Offcuts again.');
     options.onCapture?.(capture);
     return mountCapturedLive(readSnapshot,capture,options);
   } finally {openingReaders.delete(readSnapshot);}
@@ -47,7 +47,7 @@ function mountCapturedLive(readSnapshot:()=>QuoteCoreSnapshot,capture:LiveInputC
   let previousFocus = document.activeElement as HTMLElement | null;
   while (previousFocus?.shadowRoot?.activeElement instanceof HTMLElement) previousFocus = previousFocus.shadowRoot.activeElement;
   const modal = document.createElement('dialog'), host = document.createElement('div'), css = document.createElement('style');
-  modal.className = 'qc-offcuts-dialog'; modal.setAttribute('aria-label', 'Find offcuts review');
+  modal.className = 'qc-offcuts-dialog'; modal.setAttribute('aria-label', 'Generate Offcuts review');
   Object.assign(host.style, { width: '100%', height: '100%', minHeight: '0' });
   modal.append(host);
   css.textContent = `

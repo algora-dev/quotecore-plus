@@ -1,6 +1,6 @@
 'use client';
 // Offcuts Phase 1 (owner green-light 2026-10-07 19:25): A4-landscape one-pager
-// PDF generated in the browser from the Find offcuts workbench payload and
+// PDF generated in the browser from the Generate Offcuts workbench payload and
 // saved to the job's Files & Documents (quote_files type 'offcuts').
 import type { OffcutOnePagerPayload } from '@/app/lib/takeoff/offcuts/ui/workbench';
 
@@ -73,7 +73,7 @@ export async function buildOffcutOnePagerPdf(
   pdf.setFontSize(9);
   pdf.setTextColor(100, 116, 139);
   pdf.text(
-    `Saved ${new Date(payload.meta.savedAt).toLocaleString()} · Find offcuts V${payload.meta.engineVersion} · draft planning document`,
+    `Saved ${new Date(payload.meta.savedAt).toLocaleString()} · Generate Offcuts V${payload.meta.engineVersion} · draft planning document`,
     M + 63,
     M + 10.5,
   );

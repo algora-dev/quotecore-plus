@@ -1,9 +1,9 @@
-# Smoke Test Checklist
+﻿# Smoke Test Checklist
 
 ### Pending verification (PAID-ONLY CHANGEOVER, pushed 2026-09-16, main `91eed806`)
 
 **TRIAL REMOVAL - APP + DOCS (test on app.quote-core.com once deployed)**
-- [ ] /signup: copy says "Plans from $19/mo · 30-day money-back guarantee · Cancel anytime" - zero mention of a free trial
+- [ ] /signup: copy says "Plans from $19/mo Â· 30-day money-back guarantee Â· Cancel anytime" - zero mention of a free trial
 - [ ] Email signup + Google signup both still work end to end (account created, onboarding completes)
 - [ ] In-app: no trial countdown banner anywhere; billing panel shows plan cards + Stripe checkout only
 - [ ] Comped users (10 companies, incl. test/Fig Tree/ProTech/Mitch cook/GCR): log in -> full Pro access, no upgrade nagging
@@ -23,15 +23,15 @@
 - [ ] Save-to-app handoff from a free tool with a fresh account -> signup -> paywall -> after payment the pending save lands in the workspace
 - [ ] Known behaviour: right after Stripe checkout, a very fast redirect can land on the paywall for a second before the webhook flips the account active (self-heals on refresh)
 
-### Pending verification (test on quote-core.com main, 2026-09-04 — commits be60aea7, ed2ce178, 5152185d, 3781ddbc)
+### Pending verification (test on quote-core.com main, 2026-09-04 â€” commits be60aea7, ed2ce178, 5152185d, 3781ddbc)
 
 **FLOORING TAKEOFF + GUIDE FLOWS + SUPPLIER IMAGES (2026-09-04)**
-- [ ] /free-flooring-takeoff loads, wizard works: unit → our 8 defaults (Timber Plank/Carpet/Tile/Underlay/Skirting/Scotia/Transition/Adhesive) or build own 7 → PDF/image upload → calibrate → measure → report says FLOORING TAKEOFF REPORT
+- [ ] /free-flooring-takeoff loads, wizard works: unit â†’ our 8 defaults (Timber Plank/Carpet/Tile/Underlay/Skirting/Scotia/Transition/Adhesive) or build own 7 â†’ PDF/image upload â†’ calibrate â†’ measure â†’ report says FLOORING TAKEOFF REPORT
 - [ ] Free cladding + flooring Guide Me: auto-opens ~300ms after entering tool; trade-specific steps (area-first, no roofing wording); "Measurements land where you are clicked" step present
 - [ ] Roof takeoff guide unchanged except selected-area one-liner in Edit step
-- [ ] Polygon hint: select Area → Polygon, place ≥1 point → blue chip shows point count + "click back on your first point to close" (free tools + supplier tools)
+- [ ] Polygon hint: select Area â†’ Polygon, place â‰¥1 point â†’ blue chip shows point count + "click back on your first point to close" (free tools + supplier tools)
 - [ ] Supplier tools (apex/vertex/oakline on quote-core.com): Guide Me shows system-first steps for cladding/flooring; roofing unchanged
-- [ ] Send-to-supplier: measure on 1-2 plan pages → Finish and Save → Request supplier quote → modal has "<plan> - with drawings.png" + "<plan> - original.png" pre-attached (up to 10 files)
+- [ ] Send-to-supplier: measure on 1-2 plan pages â†’ Finish and Save â†’ Request supplier quote â†’ modal has "<plan> - with drawings.png" + "<plan> - original.png" pre-attached (up to 10 files)
 - [ ] Free tools hub /free-tools: cladding + flooring accordions sit directly under the roof takeoff accordion; brick wall + tiled floor icons; flooring findable via Smart Tool Finder ("measure floors from plan")
 - [ ] quote-core.com/sitemap.xml contains /free-flooring-takeoff and /free-cladding-takeoff
 
@@ -39,15 +39,15 @@
 
 ### Pending verification (test on feature/ai-takeoff preview URL)
 
-**AI-TAKEOFF. Phase A — DB foundation (feature/ai-takeoff `4406af4`, 2026-07-17)**
+**AI-TAKEOFF. Phase A â€” DB foundation (feature/ai-takeoff `4406af4`, 2026-07-17)**
 - [ ] Build passes on Vercel preview (additive migration, no behavioural change on dev/main)
-- [ ] T3 Play takeoff page loads — system components present in fetch but invisible in manual add-selector (Phase B)
+- [ ] T3 Play takeoff page loads â€” system components present in fetch but invisible in manual add-selector (Phase B)
 - [ ] Component count for T3 Play unchanged (system rows excluded from quota)
 
-**AI-TAKEOFF. Phase E — Workstation integration (feature/ai-takeoff `93fa883`, 2026-07-17)**
+**AI-TAKEOFF. Phase E â€” Workstation integration (feature/ai-takeoff `93fa883`, 2026-07-17)**
 - [ ] Post-calibration popup shows orange 'Use AI Assist' button (roofing companies only)
 - [ ] Clicking it opens scanning overlay (spinner)
-- [ ] Scan completes → AiResultsModal shows detection summary + per-type breakdown
+- [ ] Scan completes â†’ AiResultsModal shows detection summary + per-type breakdown
 - [ ] Pitch override input works
 - [ ] Acknowledgment checkbox required before Apply
 - [ ] Apply creates Fabric objects on canvas (roof area polygons + component lines with locked colours)
@@ -58,18 +58,18 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
-**AI-QUEUE. AI Scan Queue System — durable jobs, atomic points, refunds (development `5428e58`, 2026-07-24)**
+**AI-QUEUE. AI Scan Queue System â€” durable jobs, atomic points, refunds (development `5428e58`, 2026-07-24)**
 - [ ] AI Assist button still appears after calibration (roofing companies only)
-- [ ] Clicking AI Assist shows "Your scan is queued…" overlay (not the old "Tracing roof outline…")
-- [ ] Scan progresses through stages: queued → scan1 → scan2 → scan3 → done
+- [ ] Clicking AI Assist shows "Your scan is queuedâ€¦" overlay (not the old "Tracing roof outlineâ€¦")
+- [ ] Scan progresses through stages: queued â†’ scan1 â†’ scan2 â†’ scan3 â†’ done
 - [ ] Scan completes and AiResultsModal shows with detected areas + components
 - [ ] Apply results to canvas works (roof area polygons + component lines)
 - [ ] Points deducted correctly: low=2, medium=4, high=8
 - [ ] Points display updates after scan submission
-- [ ] Insufficient points → 402 error + upgrade message (no OpenAI call made)
-- [ ] Scan failure → error toast with "points refunded" message
-- [ ] Page refresh mid-scan → no duplicate job, no double charge (idempotency)
-- [ ] Two scans on same page → second one rejected with "already running" (409)
+- [ ] Insufficient points â†’ 402 error + upgrade message (no OpenAI call made)
+- [ ] Scan failure â†’ error toast with "points refunded" message
+- [ ] Page refresh mid-scan â†’ no duplicate job, no double charge (idempotency)
+- [ ] Two scans on same page â†’ second one rejected with "already running" (409)
 - [ ] Manual takeoff flow unchanged (calibration, draw, save all work without AI)
 - [ ] Vercel cron endpoint /api/cron/process-ai-scan-queue returns 200
 
@@ -78,24 +78,24 @@
 - [ ] Email signup: welcome email arrives only AFTER onboarding completes (not at confirm-link click)
 - [ ] Re-running onboarding does not send a second welcome email
 - [ ] Google signup welcome email unchanged (still after onboarding)
-- [ ] T3 signed-in on free calculator: Save as Smart Component → lands on Components page, component EXISTS + highlighted (no form)
+- [ ] T3 signed-in on free calculator: Save as Smart Component â†’ lands on Components page, component EXISTS + highlighted (no form)
 - [ ] T3: conversion popup after Calculate shows "Save this component to your workspace"; CTA creates directly
-- [ ] T1 anon: Calculate → popup "Start free trial to save this component" → signup → confirm → onboarding → dashboard blue banner "Add to my components" → click CREATES the component (no pre-filled form)
-- [ ] T2 signed-in-no-workspace: save → onboarding → dashboard banner → click creates component
+- [ ] T1 anon: Calculate â†’ popup "Start free trial to save this component" â†’ signup â†’ confirm â†’ onboarding â†’ dashboard blue banner "Add to my components" â†’ click CREATES the component (no pre-filled form)
+- [ ] T2 signed-in-no-workspace: save â†’ onboarding â†’ dashboard banner â†’ click creates component
 - [ ] Component field mapping correct: name, measurement type, waste (% and fixed), price (per-unit vs pack), labour, pitch type
 - [ ] Component limit reached: save falls back to pre-filled Add Component form (upgrade modal on submit)
 - [ ] Save to App modals: no fused words (e.g. "gmail.comdoesn't"), quota modal punctuation correct
 
-**AC. Save to App flow — watermark + draft persistence + import fixes (dev `13776b8` → main, 2026-07-14)**
+**AC. Save to App flow â€” watermark + draft persistence + import fixes (dev `13776b8` â†’ main, 2026-07-14)**
 - [ ] Free quote generator: T2/T3 logged-in users see NO watermark (anonymous T1 still sees it)
 - [ ] Free invoice generator: same watermark behaviour
 - [ ] Free PO generator: same watermark behaviour
-- [ ] Save quote to App: T2 user (no app account) → draft saved → redirected to login → onboarding → dashboard → quote restored
+- [ ] Save quote to App: T2 user (no app account) â†’ draft saved â†’ redirected to login â†’ onboarding â†’ dashboard â†’ quote restored
 - [ ] Save invoice to App: invoice created with correct columns + line items + taxes
-- [ ] Save order to App: order created with line_by_line_data in correct format → redirects to /material-orders/[orderId]/preview → line items visible
-- [ ] Save quote to App: T3 user (has app account) → draft saved → redirects to app → quote created in editor
+- [ ] Save order to App: order created with line_by_line_data in correct format â†’ redirects to /material-orders/[orderId]/preview â†’ line items visible
+- [ ] Save quote to App: T3 user (has app account) â†’ draft saved â†’ redirects to app â†’ quote created in editor
 
-**AB. Unified auth — free tools + app share one login (dev `991f9a3`, 2026-07-14)**
+**AB. Unified auth â€” free tools + app share one login (dev `991f9a3`, 2026-07-14)**
 - [ ] Free tools: Google sign-in works and returns to the free tool page (now via MAIN Supabase project)
 - [ ] Free tools: email + password signup sends confirmation; link returns to tool page logged in
 - [ ] Free tools: email with BLANK password sends magic link; link logs in (passwordless)
@@ -116,7 +116,7 @@
 
 **Y. Customer quote template system fixes (new on main+dev, 2026-07-13, `aa2e629`)**
 - [ ] Create Template page shows TemplateCreator with name input (not a redirect)
-- [ ] Template name is required — Continue button disabled until filled
+- [ ] Template name is required â€” Continue button disabled until filled
 - [ ] Duplicate name shows error and blocks Continue
 - [ ] Saved template appears in templates list with correct name
 - [ ] View button opens preview page (not 404)
@@ -127,12 +127,12 @@
 
 **Z. AI image upload + text prompt in invoice + order editors (new on main+dev, 2026-07-13, `db07bfe`)**
 - [ ] Invoice editor: Upload Image and Text Prompt buttons visible above Add Line Item
-- [ ] Invoice editor: Upload image → AI extracts lines → populate invoice with qty/unit/rate
-- [ ] Invoice editor: Text prompt → paste text → AI structures into lines
+- [ ] Invoice editor: Upload image â†’ AI extracts lines â†’ populate invoice with qty/unit/rate
+- [ ] Invoice editor: Text prompt â†’ paste text â†’ AI structures into lines
 - [ ] Invoice editor: AI auto-fills company name + footer if empty
 - [ ] Order editor (line-by-line): Upload Image and Text Prompt buttons visible above Add New Line
-- [ ] Order editor: Upload image → AI extracts lines → populate order
-- [ ] Order editor: Text prompt → paste text → AI structures into lines
+- [ ] Order editor: Upload image â†’ AI extracts lines â†’ populate order
+- [ ] Order editor: Text prompt â†’ paste text â†’ AI structures into lines
 - [ ] Order editor: AI auto-fills footer if empty
 - [ ] Modal text says "Invoice" / "Order" (not "Quote")
 
@@ -191,29 +191,29 @@
 - [ ] Invoice number shows above Bill to: in generated invoice
 
 **O. No-parent-area takeoff flow (new on main+dev, 2026-07-12, `9bbb402`)**
-- [ ] New quote → takeoff → calibrate → Skip popup → add components → save → components appear in quote builder Components tab
+- [ ] New quote â†’ takeoff â†’ calibrate â†’ Skip popup â†’ add components â†’ save â†’ components appear in quote builder Components tab
 - [ ] Popup does NOT re-appear after clicking Skip (even after adding/finishing multiple components)
 - [ ] Components show in Review tab with correct prices
 - [ ] Calibration applies to all components for the session
 
-**P. Admin quota reset — all monthly quotas (new on main+dev, 2026-07-12, `84ad7ec`)**
-- [ ] Admin → user profile → Reset button visible on Quotes, Invoices, AND Material Orders (not just Quotes)
-- [ ] Reset invoices → count goes to 0
-- [ ] Reset orders → count goes to 0
+**P. Admin quota reset â€” all monthly quotas (new on main+dev, 2026-07-12, `84ad7ec`)**
+- [ ] Admin â†’ user profile â†’ Reset button visible on Quotes, Invoices, AND Material Orders (not just Quotes)
+- [ ] Reset invoices â†’ count goes to 0
+- [ ] Reset orders â†’ count goes to 0
 - [ ] Reset reason recorded in audit log
 
 **Q. Free tools enhancements (new on main+dev, 2026-07-12, `5ee8782`)**
 - [ ] Quote/Invoice/PO generators: FAQ section excluded from PDF print
-- [ ] Diagonal QuoteCore+ watermark on generated docs (7% opacity, 45°)
-- [ ] Save email → watermark + "Generated with" footer disappear
+- [ ] Diagonal QuoteCore+ watermark on generated docs (7% opacity, 45Â°)
+- [ ] Save email â†’ watermark + "Generated with" footer disappear
 - [ ] "From" section shows sender name/company/phone/email in document header
 - [ ] Hide all prices checkbox + per-line eye toggle work
 - [ ] PO generator: delivery address field shows on generated PO
 - [ ] Email quota tiers display correctly (3/5/unlimited vs 10/20/unlimited)
 
 **R. Gradient pitch input (new on dev, 2026-07-12, `4ee99bc`)**
-- [ ] Non-roofing trades: pitch input shows °/1:X/% toggle
-- [ ] Trade labels updated (Slope→Gradient, Fall/Slope→Fall/Gradient)
+- [ ] Non-roofing trades: pitch input shows Â°/1:X/% toggle
+- [ ] Trade labels updated (Slopeâ†’Gradient, Fall/Slopeâ†’Fall/Gradient)
 
 **S. Free invoice + PO generator upgrade (new on dev, 2026-07-12, `0eb502f`)**
 - [ ] Invoice generator: image upload, prompt box, settings bar, logo upload all present
@@ -223,96 +223,96 @@
 - [ ] quote-core.com serves public routes (pending Vercel domain setup by Shaun)
 - [ ] Non-public paths on quote-core.com redirect to app.quote-core.com
 
-**M. Bird's mouth diagram — notch detail-view recompose (new on dev, 2026-07-11, `d8cd593`)**
+**M. Bird's mouth diagram â€” notch detail-view recompose (new on dev, 2026-07-11, `d8cd593`)**
 - [ ] Bird's Mouth diagram is now a zoomed DETAIL VIEW of the notch (not full timber): dotted L-shape large and central, orange rafter edges run off-frame
-- [ ] Labels: Seat width above the horizontal dotted line · Heel left of the vertical dotted line · Notch inside the void right of the corner · A right of the top-right cut · B below the lower-left cut — nothing overlapping any line
-- [ ] Blue arcs at BOTH cut corners; check 22.5°, 40°, and 60° pitches — text stays legible (white halo) even where an orange line passes near
+- [ ] Labels: Seat width above the horizontal dotted line Â· Heel left of the vertical dotted line Â· Notch inside the void right of the corner Â· A right of the top-right cut Â· B below the lower-left cut â€” nothing overlapping any line
+- [ ] Blue arcs at BOTH cut corners; check 22.5Â°, 40Â°, and 60Â° pitches â€” text stays legible (white halo) even where an orange line passes near
 
-**N. AI image upload — free quote generator (new on dev, 2026-07-11, `7427d0c`)**
+**N. AI image upload â€” free quote generator (new on dev, 2026-07-11, `7427d0c`)**
 - [ ] Upload zone visible on /free-quote-generator above the form (drag-drop or click, accepts PNG/JPEG/WebP/PDF, max 10MB)
-- [ ] Upload a photo/screenshot of a quote → AI populates company name, client details, date, line items, notes — form is editable after population
+- [ ] Upload a photo/screenshot of a quote â†’ AI populates company name, client details, date, line items, notes â€” form is editable after population
 - [ ] Mobile: camera capture works (capture=environment attribute)
 - [ ] Rate limit: after 5 uploads from same IP, shows 429 error message
 - [ ] Confidence banner: shows blue info banner with AI confidence level + any warnings
 - [ ] Large image auto-compresses (2000px max, JPEG 0.8) before upload
 
-**L. Trade calculators — round 3 improvements (new on dev, 2026-07-11, `dc7631e`)**
-- [ ] Area tab Volume mode: W × H × D sub-toggle shows 3 inputs (Width, Height, Depth) → calculates volume automatically; Direct sub-mode still available for direct m³ entry
-- [ ] Bird's Mouth diagram at 50°: entire rafter visible, no clipping — labels for seat width, heel, notch, A/B angles, rafter depth all visible
-- [ ] Bird's Mouth results: 6 cards — Seat cut angle (to rafter edge), Plumb cut angle (to rafter edge), Heel height (vertical), Notch depth (into rafter), Maximum notch allowed (⅓ of depth), Notch check (✓ PASS green / ✗ FAIL red)
+**L. Trade calculators â€” round 3 improvements (new on dev, 2026-07-11, `dc7631e`)**
+- [ ] Area tab Volume mode: W Ã— H Ã— D sub-toggle shows 3 inputs (Width, Height, Depth) â†’ calculates volume automatically; Direct sub-mode still available for direct mÂ³ entry
+- [ ] Bird's Mouth diagram at 50Â°: entire rafter visible, no clipping â€” labels for seat width, heel, notch, A/B angles, rafter depth all visible
+- [ ] Bird's Mouth results: 6 cards â€” Seat cut angle (to rafter edge), Plumb cut angle (to rafter edge), Heel height (vertical), Notch depth (into rafter), Maximum notch allowed (â…“ of depth), Notch check (âœ“ PASS green / âœ— FAIL red)
 - [ ] Bird's Mouth: "Angle measured from horizontal." helper text appears under angle input when birdsmouth sub-tab active
 - [ ] Bird's Mouth: "Seat and plumb cut angles are shown relative to the rafter edge." note appears below diagram
 - [ ] Dedicated /free-birds-mouth-calculator page loads with SEO content, tips, FAQs, 3 tabs (Bird's Mouth + Smart Component + Angle Finder)
 - [ ] Hub page (/free-calculators) shows bird's mouth card
 
-**K. Trade calculators — round 2 upgrades (new on dev, 2026-07-11, `b48b62a`)**
-- [ ] Currency dropdown next to Metric/Imperial on all 4 calculators; changing it updates £/$/€ symbols in Draft Smart Component™ prices
-- [ ] Area tab now has W×L | Area | Volume input modes; Volume mode: enter m³ → result card → "Use this volume for pricing" prefills Smart Component
-- [ ] Construction + landscaping: 0° quick-select chip present and is the default (ratio shows 0:0); factor = 1 at 0°
-- [ ] Bird's Mouth sub-tab (roofing + construction Members tab): 35° pitch + 100mm seat → seat cut 35°, plumb cut 55°, heel ≈70mm; warning appears when notch > ⅓ timber depth; diagram shows orange rafter + black dashed A/B cut lines
-- [ ] Angle Finder: construction/landscaping labels read "Angle 1" (not "Roof Pitch 1"); roofing metric unchanged; switching to Imperial renames Pitch→Angle on roofing
-- [ ] Every Angle Finder result now shows the two-ray vertex diagram (90° points up, 180° flat)
+**K. Trade calculators â€” round 2 upgrades (new on dev, 2026-07-11, `b48b62a`)**
+- [ ] Currency dropdown next to Metric/Imperial on all 4 calculators; changing it updates Â£/$/â‚¬ symbols in Draft Smart Componentâ„¢ prices
+- [ ] Area tab now has WÃ—L | Area | Volume input modes; Volume mode: enter mÂ³ â†’ result card â†’ "Use this volume for pricing" prefills Smart Component
+- [ ] Construction + landscaping: 0Â° quick-select chip present and is the default (ratio shows 0:0); factor = 1 at 0Â°
+- [ ] Bird's Mouth sub-tab (roofing + construction Members tab): 35Â° pitch + 100mm seat â†’ seat cut 35Â°, plumb cut 55Â°, heel â‰ˆ70mm; warning appears when notch > â…“ timber depth; diagram shows orange rafter + black dashed A/B cut lines
+- [ ] Angle Finder: construction/landscaping labels read "Angle 1" (not "Roof Pitch 1"); roofing metric unchanged; switching to Imperial renames Pitchâ†’Angle on roofing
+- [ ] Every Angle Finder result now shows the two-ray vertex diagram (90Â° points up, 180Â° flat)
 
-**J. Trade calculators — engine refactor + 4 pages + hub (new on dev, 2026-07-11, `720d55b`)**
-- [ ] `/free-roofing-calculator` — looks/behaves identical to before (all 4 tabs, Use-this-area flow, save popup); related cards now show Construction + Concrete
-- [ ] `/free-construction-calculator` — new 4-tab format (Area & Materials, Timber & Stud Lengths, Draft Smart Component™, Angle Finder); stud/member wording, no hip/valley sub-tab
-- [ ] `/free-landscaping-calculator` — Garden & Lawn Area + Slope & Gradient tabs; 1-in-X ⇄ % ⇄ degrees conversion syncs; fall over run shows mm when small
-- [ ] `/free-concrete-calculator` — volume-first: L×W×depth with 100/150/225/300mm presets, weight card (~2.4t/m³), Use-this-volume prefills Smart Component as Volume m³
-- [ ] `/free-calculators` — hub lists all 4 calculators + quote/invoice generator cards; header/footer links work
+**J. Trade calculators â€” engine refactor + 4 pages + hub (new on dev, 2026-07-11, `720d55b`)**
+- [ ] `/free-roofing-calculator` â€” looks/behaves identical to before (all 4 tabs, Use-this-area flow, save popup); related cards now show Construction + Concrete
+- [ ] `/free-construction-calculator` â€” new 4-tab format (Area & Materials, Timber & Stud Lengths, Draft Smart Componentâ„¢, Angle Finder); stud/member wording, no hip/valley sub-tab
+- [ ] `/free-landscaping-calculator` â€” Garden & Lawn Area + Slope & Gradient tabs; 1-in-X â‡„ % â‡„ degrees conversion syncs; fall over run shows mm when small
+- [ ] `/free-concrete-calculator` â€” volume-first: LÃ—WÃ—depth with 100/150/225/300mm presets, weight card (~2.4t/mÂ³), Use-this-volume prefills Smart Component as Volume mÂ³
+- [ ] `/free-calculators` â€” hub lists all 4 calculators + quote/invoice generator cards; header/footer links work
 
 **H. Per-entry input reference display + RPC v8 (new on dev, 2026-07-08 pm)**
-- [ ] Entry rows in component phase now read `→ X - Incl waste (…)` — "(+waste)" wording is gone
-- [ ] Freestyle L×H entry (takeoff or builder): entry row shows `(H: <height>)` with the height you typed
+- [ ] Entry rows in component phase now read `â†’ X - Incl waste (â€¦)` â€” "(+waste)" wording is gone
+- [ ] Freestyle LÃ—H entry (takeoff or builder): entry row shows `(H: <height>)` with the height you typed
 - [ ] Volume custom-depth entry (takeoff depth prompt / builder area+depth): row shows `(D: <depth>)`
-- [ ] Preset L×H / Volume(preset depth) component: row shows the preset H/D from the library
-- [ ] Pitched component (takeoff): row shows `… °` pitch next to H/D; no-waste component shows `- (H: … · 45°)` without "Incl waste"
+- [ ] Preset LÃ—H / Volume(preset depth) component: row shows the preset H/D from the library
+- [ ] Pitched component (takeoff): row shows `â€¦ Â°` pitch next to H/D; no-waste component shows `- (H: â€¦ Â· 45Â°)` without "Incl waste"
 - [ ] Takeoff re-entry + re-save: H/D values still shown after re-save (hydration passthrough)
-- [ ] Two-area takeoff: draw freestyle/volume entries on area 1, create/switch to area 2, save → area 1 entries KEEP their H/D display (redraw no longer strips entryInputs, fix `4b8c323`)
-- [ ] Old entries (pre-v8): show nothing extra — no fake values; quantities/costs unchanged everywhere
+- [ ] Two-area takeoff: draw freestyle/volume entries on area 1, create/switch to area 2, save â†’ area 1 entries KEEP their H/D display (redraw no longer strips entryInputs, fix `4b8c323`)
+- [ ] Old entries (pre-v8): show nothing extra â€” no fake values; quantities/costs unchanged everywhere
 - [ ] Imperial quote: H/D display in ft
 
 **I. In-progress canvas points discard (new on main, 2026-07-08)**
-- [ ] Start drawing a line (click 1 point), switch to a different component/tool → unfinished point disappears from canvas
-- [ ] Start drawing an area polygon (click 2-3 points), switch tool → dots gone, no orphaned shape
-- [ ] Mid-draw, switch roof area → dots cleared on old area
-- [ ] Mid-draw, switch plan page → dots cleared
-- [ ] Mid-draw, remove the active component → dots cleared
+- [ ] Start drawing a line (click 1 point), switch to a different component/tool â†’ unfinished point disappears from canvas
+- [ ] Start drawing an area polygon (click 2-3 points), switch tool â†’ dots gone, no orphaned shape
+- [ ] Mid-draw, switch roof area â†’ dots cleared on old area
+- [ ] Mid-draw, switch plan page â†’ dots cleared
+- [ ] Mid-draw, remove the active component â†’ dots cleared
 - [ ] Committed measurements are NOT affected by any of the above
 
 **G. Per-area component pitch + RPC v7 (new on dev, 2026-07-08)**
-- [ ] Parent area with 2 plans at different pitches (e.g. 25° + 45°): components on each plan calculate at THEIR area/plan's pitch, not the first area's
-- [ ] Summary page shows "@ X° pitch" next to pitched components
+- [ ] Parent area with 2 plans at different pitches (e.g. 25Â° + 45Â°): components on each plan calculate at THEIR area/plan's pitch, not the first area's
+- [ ] Summary page shows "@ XÂ° pitch" next to pitched components
 - [ ] Calc audit trace shows real pitchDegrees/pitchFactor per entry (no more pitch hidden inside the waste step)
-- [ ] Upload another plan → prior plan's sub-areas/measurements do NOT appear on the new plan's canvas
+- [ ] Upload another plan â†’ prior plan's sub-areas/measurements do NOT appear on the new plan's canvas
 - [ ] Multi-lineal popup drags from anywhere on the bar (not just the grip icon); buttons still click
 
 **A. Calc audit system (new on dev)**
-- [ ] Create a quote with digital takeoff → save → Summary page → expand "Calculation Audit Trace" panel
+- [ ] Create a quote with digital takeoff â†’ save â†’ Summary page â†’ expand "Calculation Audit Trace" panel
 - [ ] Verify per-component breakdown: raw values, pitch factors, waste, pack details, costs
 - [ ] Copy + download .txt buttons work
 - [ ] Override history appears when pitch is manually changed
 
 **B. Freestyle tool mapping (new on dev)**
-- [ ] Component with `multi_lineal_lxh_freestyle` → multi-point tool activates (not area tool)
-- [ ] Draw polyline → finish → height prompt modal appears → value stored correctly
-- [ ] Component with `length_x_height_freestyle` → line tool activates → height prompt
+- [ ] Component with `multi_lineal_lxh_freestyle` â†’ multi-point tool activates (not area tool)
+- [ ] Draw polyline â†’ finish â†’ height prompt modal appears â†’ value stored correctly
+- [ ] Component with `length_x_height_freestyle` â†’ line tool activates â†’ height prompt
 
 **C. STALE_VERSION auto-recovery (new on dev)**
-- [ ] Edit/re-entry takeoff → save → no "edited in another tab" error
+- [ ] Edit/re-entry takeoff â†’ save â†’ no "edited in another tab" error
 - [ ] If error fires, auto-retry succeeds silently
 
 **D. Digital takeoff regression check**
-- [ ] Open a quote → Takeoff → measure, save, re-enter → everything persists
+- [ ] Open a quote â†’ Takeoff â†’ measure, save, re-enter â†’ everything persists
 - [ ] Multi-page: switch pages, verify measurements/calibrations survive
-- [ ] Pitch values preserved on re-entry (35° stays 35°)
+- [ ] Pitch values preserved on re-entry (35Â° stays 35Â°)
 
-**E. Follow-ups (leftover from last round — not yet confirmed)**
-- [ ] After sending a quote, schedule a follow-up → appears in Activity → Scheduled Messages
+**E. Follow-ups (leftover from last round â€” not yet confirmed)**
+- [ ] After sending a quote, schedule a follow-up â†’ appears in Activity â†’ Scheduled Messages
 - [ ] Follow-up dispatches after its fire time (check recipient inbox)
 
 **F. Template create flow (changed 2026-07-07)**
-- [ ] Resources → tab now reads "Customer quote templates" (renamed)
-- [ ] Create Template → goes STRAIGHT to the builder (selector page removed)
+- [ ] Resources â†’ tab now reads "Customer quote templates" (renamed)
+- [ ] Create Template â†’ goes STRAIGHT to the builder (selector page removed)
 - [ ] Builder "Back" and "Cancel" return to the templates list (no redirect loop)
 
 ### Pending verification (Takeoff tools batch - 2026-08-30 session, commits `25a2dc86`..`6419e08d` on main + LOCAL-ONLY taller change)
@@ -323,14 +323,14 @@
 - [ ] "Save my takeoff" app handoff still works alongside it
 
 **B. Use-an-existing-area dropdown (main app + supplier tool, `4afe0100`)**
-- [ ] Main app: draw 2+ areas, add an area-type component -> "Use an existing area…" dropdown lists each with value + pitch
+- [ ] Main app: draw 2+ areas, add an area-type component -> "Use an existing areaâ€¦" dropdown lists each with value + pitch
 - [ ] Applying adds an entry instantly (no re-draw); dropdown resets to placeholder; can apply same area to multiple components
 - [ ] Main app: Finish and Save SUCCEEDS (no "invalid input syntax for type uuid" error - `fc36a8f4` fix)
 - [ ] Supplier tool: same dropdown works in its takeoff stage
 
 **C. Corrugate pitch display fix (main app, `6419e08d`)**
-- [ ] Apply area (e.g. 68.16 m² @ 30°) to an area component -> builder entry reads `68.16 -> ~70.20 incl waste (30°)` (NOT 59.03)
-- [ ] Dropdown option label shows the pitched value (68.2 m², pitch 30°)
+- [ ] Apply area (e.g. 68.16 mÂ² @ 30Â°) to an area component -> builder entry reads `68.16 -> ~70.20 incl waste (30Â°)` (NOT 59.03)
+- [ ] Dropdown option label shows the pitched value (68.2 mÂ², pitch 30Â°)
 - [ ] Final quantities/costs unchanged vs before the fix (same totals, only display differs)
 
 **D. Canvas sizing (wide = `6419e08d`, taller = `c8103e87`, both live)**
@@ -357,7 +357,7 @@
 **H. Free roof takeoff output fixes (last session, `b227eac8`+`1a652d1c`+`fe3ea1ce`)**
 - [ ] Two sibling areas with same name: components render under the CORRECT area only (no cross-duplication)
 - [ ] Area dropdown applies the selected sibling's value (not always the first)
-- [ ] Area-type entries show m² (not m); no literal "&amp;" in headings
+- [ ] Area-type entries show mÂ² (not m); no literal "&amp;" in headings
 - [ ] Pulsing New Area button present
 
 ### Pending verification (Supplier Component System - Phases 1-10, main `a64a2b0`, 2026-07-27)
@@ -488,13 +488,13 @@
 **Single Source of Truth (no row copies):**
 - [ ] After adding a supplier catalogue, user's Catalogs page shows it with "Supplier" blue badge
 - [ ] Catalogue search returns results from the supplier's rows (not local copies)
-- [ ] Supplier uploads new version → user automatically sees updated data (no action needed)
+- [ ] Supplier uploads new version â†’ user automatically sees updated data (no action needed)
 - [ ] Alert fires to users who added the catalogue: "Supplier catalogue [name] has been updated"
 
 **Upload New Version:**
 - [ ] Upload New Version button (cloud icon) visible on own + supplier catalogue rows
 - [ ] NOT visible on supplier-reference catalogues (read-only)
-- [ ] Opens modal: select CSV → preview first 5 rows → Replace button
+- [ ] Opens modal: select CSV â†’ preview first 5 rows â†’ Replace button
 - [ ] Replaces all existing rows, preserves column mapping and catalogue name
 - [ ] If published supplier catalogue: bumps version + alerts all users who added it
 
@@ -506,25 +506,25 @@
 **Catalogue Converter (3-step row selection):**
 - [ ] Supplier dashboard: Catalogue Converter section visible (approved suppliers only)
 - [ ] Step 1: Select catalogue from dropdown (own + supplier catalogues listed)
-- [ ] Step 1: Click Load Catalogue → fetches rows
+- [ ] Step 1: Click Load Catalogue â†’ fetches rows
 - [ ] Step 2: Column mapping table shows headers + dropdowns + sample values
-- [ ] Step 2: Auto-detects common headers (Code→SKU, Rate→Price, etc.)
+- [ ] Step 2: Auto-detects common headers (Codeâ†’SKU, Rateâ†’Price, etc.)
 - [ ] Step 2: Name and Price are required (error if not mapped)
 - [ ] Step 3: Row table with checkboxes, filter box, select all/deselect all
 - [ ] Step 3: Select target library from dropdown
-- [ ] Step 3: Click "Create N Components" → success message with count
+- [ ] Step 3: Click "Create N Components" â†’ success message with count
 - [ ] Created components have correct: name, price, SKU, takeoff_slot, measurement_type
-- [ ] Product Type "ridge" → takeoff_slot=ridge, measurement_type=linear
-- [ ] Product Type "underlay" → takeoff_slot=underlay, measurement_type=area
-- [ ] Product Type "nail" → takeoff_slot=fixings, measurement_type=quantity
+- [ ] Product Type "ridge" â†’ takeoff_slot=ridge, measurement_type=linear
+- [ ] Product Type "underlay" â†’ takeoff_slot=underlay, measurement_type=area
+- [ ] Product Type "nail" â†’ takeoff_slot=fixings, measurement_type=quantity
 - [ ] Tier limit: if batch would exceed limit, shows error message
 
 ### Passed (recent)
-- 2026-08-16 smoke test by Shaun on quote-core.com ✅ — SHARED TAKEOFF RESTORE (main `8a0886c9`): URL prefill lands directly in builder with all 5 entries; garbage params (`mode=banana`, both quoted and appended after an existing query) start the wizard fresh, no blank builder (re-verified by Gavin live); Fast-mode Fixed custom components quantity-only in pcs; Fast-mode Known Price toggle + correct report pricing (no $0.00); Print/PDF works. Guided-mode flow covered by 46/46 shared-engine tests.
-- 2026-07-07 baseline test by Shaun ✅ — quote email send, quote notes add/edit/delete, summary file upload, no Server-Components 500s (root cause: 'use server' on adapter files, fixed in `ea0cf06`)
-- Round 10: Re-entry pitch preservation ✅
-- Round 9: Page-switch auto-save + per-entry pitch ✅
-- Round 5: RPC saves work ✅
+- 2026-08-16 smoke test by Shaun on quote-core.com âœ… â€” SHARED TAKEOFF RESTORE (main `8a0886c9`): URL prefill lands directly in builder with all 5 entries; garbage params (`mode=banana`, both quoted and appended after an existing query) start the wizard fresh, no blank builder (re-verified by Gavin live); Fast-mode Fixed custom components quantity-only in pcs; Fast-mode Known Price toggle + correct report pricing (no $0.00); Print/PDF works. Guided-mode flow covered by 46/46 shared-engine tests.
+- 2026-07-07 baseline test by Shaun âœ… â€” quote email send, quote notes add/edit/delete, summary file upload, no Server-Components 500s (root cause: 'use server' on adapter files, fixed in `ea0cf06`)
+- Round 10: Re-entry pitch preservation âœ…
+- Round 9: Page-switch auto-save + per-entry pitch âœ…
+- Round 5: RPC saves work âœ…
 
 ### Takeoff demo v2 (fork of real workstation)
 - [ ] `/takeoff-demo` is public without authentication and shows Scan plan with AI / Measure manually entry points
@@ -601,3 +601,19 @@
 - [ ] Done on a committed quote-bound workflow leaves the brief committed (not closed); later correction starts a NEW task reusing the committed brief; manual quote edits elsewhere still trip the committed-snapshot guard
 - [ ] Unrelated new question does not mention or use the old committed draft
 - [ ] Old Confirm buttons from before the update remain unusable; action/proposal expiry unchanged
+
+## Offcuts V2.30 (deployed testing dtqvs9kt3 2026-10-14)
+- Engine 2.30 / worker qc-offcuts-worker-v230 both shown (debug + UI); reject mixed old-worker/new-UI.
+- Latest 12-face staging roof: Recommended 71 sheets / 411.152 lm; globalDonorSearch RUNS (no 'no-strong-donor-opportunity' skip), may keep incumbent - do not expect lower.
+- Reverse search: dominated 81-sheet / ~439 lm variants NOT shown as selectable cards; equal-total Fresh barge starts remains; genuine trade-offs still appear.
+- 14-face regression 63 / 289.305 unchanged; older 12-face fixture 67 / 405.776 (fixture-only, not the live staging input).
+- Reverse auto-preview + Showing on drawing selector still work; save/restore, quantity reuse, Export Cut Plan, PDF/one-pager unchanged.
+
+## Feature showcase: locked teasers + Generate Offcuts rename (testing 2026-10-14)
+- [ ] Free roof takeoff (anon): after calibration, the calibration-complete dialog shows the locked AI Scan Assist panel (lock icon, In the main app chip, orange teaser button); click opens the explainer modal with homepage CTA; NO scan request fires (network tab: zero /api/free-tools/ai-scan calls)
+- [ ] Free cladding + flooring takeoffs: same locked panel with "live for roofing, more trades coming" copy; no offcuts teaser (roofing only)
+- [ ] Free roof takeoff toolbar: dark locked "Generate Offcuts" button with lock icon + hover tooltip; click opens explainer + homepage CTA; no Resume button ever appears
+- [ ] Guided demo (/takeoff-demo): locked offcuts teaser next to Guide me; Scan Assist replay in calibration flow unchanged
+- [ ] Main app takeoff: button reads "Generate Offcuts" (dark primary); Resume offcuts hidden until a generate completes this session or a saved plan exists for the current page/area; offcut workbench header, one-pager footer and error strings renamed consistently
+- [ ] Measurement-to-pricing (/measurement-to-quote-tool): report step opens the Smart Assistant upsell modal once per tab; single homepage CTA; revisiting report in same tab does not re-show
+- [ ] Conversion tracking: teaser clicks write action "teaser" rows to free_tool_usage (tool_code per surface); rows visible in admin free-tool usage

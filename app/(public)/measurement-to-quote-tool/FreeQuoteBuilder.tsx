@@ -10,6 +10,8 @@ import {MeasurementComponentEditor} from './MeasurementComponentEditor';
 import {MeasurementCsvImport} from './MeasurementCsvImport';
 import {Button,Icon,StepBar,Notice,darkClass} from './MeasurementUI';
 import {trackFreeToolEvent} from '../lib/trackFreeToolEvent';
+import {FeatureUpsellModal} from '@/app/components/featureShowcase/FeatureUpsellModal';
+import {SMART_ASSISTANT} from '@/app/components/featureShowcase/showcaseCopy';
 import s from '../free-roof-takeoff/TakeoffExperience.module.css';
 import m from './MeasurementPricing.module.css';
 /** Existing public route owner. Shared component library lives with digital
@@ -17,7 +19,7 @@ import m from './MeasurementPricing.module.css';
 export default function FreeQuoteBuilder({initialMode,initialTrade}:{initialMode?:MeasureMode;initialTrade?:Trade}){
  const [job,setJob]=useState<Job|null>(()=>initialTrade?newJob(initialTrade,'metric',initialMode??'actual'):null),[phase,setPhase]=useState<'setup'|'measure'|'report'>('setup');
  const [resume,setResume]=useState<Job|null>(null),[ready,setReady]=useState(false),[storageError,setStorageError]=useState(false);
- const [notice,setNotice]=useState(''),[undo,setUndo]=useState<{job:Job;label:string}|null>(null),[editing,setEditing]=useState<Spec|null|undefined>(undefined),[csv,setCsv]=useState(false);
+ const [notice,setNotice]=useState(''),[undo,setUndo]=useState<{job:Job;label:string}|null>(null),[editing,setEditing]=useState<Spec|null|undefined>(undefined),[csv,setCsv]=useState(false),[assistantUpsell,setAssistantUpsell]=useState(false);
  const result=useMemo(()=>job?calculateJob(job):null,[job]);const focusRef=useRef<HTMLDivElement>(null),hasMoved=useRef(false);
  // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-only restore of the sessionStorage tab draft (external system); not derivable during render
  useEffect(()=>{try{const raw=sessionStorage.getItem(DRAFT_KEY);if(raw){const restored=restoreJob(raw);if(restored)setResume(restored);else setNotice('A previous tab draft could not be restored safely. Start a new estimate; no account data was changed.');}}catch{setStorageError(true);}setReady(true);},[]);
@@ -32,7 +34,7 @@ export default function FreeQuoteBuilder({initialMode,initialTrade}:{initialMode
  function removeSpec(c:Spec){if(!job)return;if(job.areas.some(a=>a.components.some(ac=>ac.componentId===c.id))){notify(`${c.name} is used in an area. Remove it from those areas before removing it from the library.`);return;}change({...job,components:job.components.filter(x=>x.id!==c.id)},`Removed ${c.name} from the library`);}
  function saveSpec(c:Spec){if(!job)return;const exists=job.components.some(x=>x.id===c.id);if(!exists&&job.components.length>=componentLimit(CONFIGS[job.trade])){notify('Remove an unused component before adding another.');return;}change({...job,choice:'custom',components:exists?job.components.map(x=>x.id===c.id?c:x):[...job.components,c]});setEditing(undefined);}
  function goMeasure(){setPhase('measure');setNotice('');}
- function goReport(){if(!result?.valid){notify('Add a valid measurement and correct any errors first.');return;}setPhase('report');setNotice('');trackFreeToolEvent('result',{trade:job!.trade,areas:job!.areas.length});}
+ function goReport(){if(!result?.valid){notify('Add a valid measurement and correct any errors first.');return;}setPhase('report');setNotice('');trackFreeToolEvent('result',{trade:job!.trade,areas:job!.areas.length});let seen=false;try{seen=sessionStorage.getItem('mq-assistant-upsell')==='1';if(!seen)sessionStorage.setItem('mq-assistant-upsell','1');}catch{/* storage may be blocked */}if(!seen){setAssistantUpsell(true);trackFreeToolEvent('teaser',{feature:'Smart Assistant'});}}
  return <main className={`${s.root} ${m.root}`}><div className={m.page} ref={focusRef} tabIndex={-1}>
  <nav className={m.breadcrumb} aria-label="Breadcrumb"><Link href="/free-tools">Free tools</Link><Icon name="chevron"/><span>Measurements to pricing</span>{job&&<><Icon name="chevron"/><span>{TRADE_COPY[job.trade].name}</span></>}</nav>
  {job&&<><header className={`${m.toolHeader} ${darkClass}`}><div><p className={m.eyebrow}>FREE MEASUREMENTS TO PRICING <span>{TRADE_COPY[job.trade].name}</span></p><h1>{phase==='setup'?'A familiar start. Your own measurements.':phase==='measure'?'You measure. Components do the maths.':'From measured work to your next quote.'}</h1><p>{phase==='measure'?TRADE_COPY[job.trade].hint:'The same Smart Components as digital takeoff, without needing a plan.'}</p></div><Button onClick={changeTrade}><Icon name="back"/> Start a new job</Button></header><div className={m.progressBar}><StepBar step={phase} onSetup={()=>setPhase('setup')} onMeasure={goMeasure} canMeasure={!!job.components.length}/><div className={m.progressMeta}><span>{job.units==='metric'?'Metric':job.units==='imperial'?'Imperial':'Roofing squares'} · {job.currency}</span>{phase!=='setup'&&<Button quiet onClick={()=>setPhase('setup')}><Icon name="edit"/> Setup &amp; rates</Button>}</div></div></>}
@@ -47,5 +49,6 @@ export default function FreeQuoteBuilder({initialMode,initialTrade}:{initialMode
  {job&&<footer className={m.toolFooter}><span><Icon name="info"/> This tab keeps your draft. The paid app saves your library and jobs.</span><a href={TRADE_COPY[job.trade].digital}>Need to measure a plan instead? <Icon name="arrow"/></a></footer>}
  {job&&editing!==undefined&&<MeasurementComponentEditor initial={editing} job={job} onSave={saveSpec} onClose={()=>setEditing(undefined)}/>}
  {job&&csv&&<MeasurementCsvImport job={job} onClose={()=>setCsv(false)} onSave={specs=>{change({...job,choice:'custom',components:[...job.components,...specs]});setCsv(false);notify(`Added ${specs.length} CSV components. Review their waste and pack rules before measuring.`);}}/>}
+ {assistantUpsell&&<FeatureUpsellModal feature={SMART_ASSISTANT} onClose={()=>setAssistantUpsell(false)}/>}
  </div></main>;
 }
