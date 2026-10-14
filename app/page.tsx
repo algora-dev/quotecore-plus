@@ -122,19 +122,19 @@ export default async function Home() {
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Log in
           </Link>
           <Link
             href="/signup"
-            className="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:border-slate-400 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="rounded-full bg-[#FF6B35] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Sign up
           </Link>
           <Link
             href={marketingLink}
-            className="rounded-full bg-[#FF6B35] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#E55A28] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:border-slate-400 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Website
           </Link>
