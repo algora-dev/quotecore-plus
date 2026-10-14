@@ -20,7 +20,10 @@ export type TaskDecision = {
 const clean = (s: string) => s.trim().replace(/[,.!?]+$/, '').trim();
 export function taskControl(message: string): 'solved' | 'abandoned' | null {
     const text = clean(message).replace(/[’]/g, "'");
-    if (/^(?:thanks(?: very much| a lot)?|thank you(?: very much)?|done|task (?:complete|completed|solved)|that(?:'s| is) (?:what I (?:wanted|needed)|right))$/i.test(text))
+    // Casual acknowledgements are conversational replies, not lifecycle commands.
+    // Closing a task should require explicit completion language or the UI control;
+    // otherwise a later follow-up loses useful continuity for no user benefit.
+    if (/^(?:done|task (?:complete|completed|solved)|that(?:'s| is) what I (?:wanted|needed))$/i.test(text))
         return 'solved';
     if (/^(?:move on|new (?:question|request|task)|start (?:over|fresh)|never ?mind|cancel(?: (?:this|that|the))?(?: (?:search|task))?|stop(?: (?:this|that|the) (?:search|task))?)$/i.test(text))
         return 'abandoned';

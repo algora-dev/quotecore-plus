@@ -11,7 +11,7 @@
   --qcr-glass-sheen:#ffffff6b;--qcr-glass-fill:#ffffff2e;--qcr-glass-toe:#ffffff2b;
   --qcr-glass-highlight:#fffffff0;--qcr-glass-rim:#fffffff2;--qcr-glass-glint:#ffffffc2;
   --qcr-glass-hover:#ffffff57;--qcr-glass-accent:var(--qcr-accent);--qcr-glass-solid:#eef0f4;
-  color:var(--qcr-ink);background:var(--qcr-canvas);font-family:var(--qc-font-sans,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);font-size:14px;line-height:1.55;color-scheme:light;min-height:100vh;
+  color:var(--qcr-ink);background:var(--qcr-canvas);font-family:var(--qc-font-sans,var(--font-geist-sans,Arial),Helvetica,sans-serif);font-size:14px;line-height:1.55;color-scheme:light;min-height:100vh;
 }
 .qcr *,.qcr *::before,.qcr *::after{box-sizing:border-box;}
 .qcr h1,.qcr h2,.qcr h3,.qcr p{margin:0;}
@@ -148,7 +148,7 @@
 .qcr .qcr-live{display:flex;align-items:center;gap:7px;color:#bec7d3;font-size:10px;}
 .qcr .qcr-live>span{width:5px;height:5px;border-radius:50%;background:#ffa874;}
 .qcr .qcr-diagram{display:block;width:100%;max-height:265px;margin:10px 0 -6px;}
-.qcr .qcr-diagram text{font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#b5bfcd;}
+.qcr .qcr-diagram text{font:12px var(--font-geist-sans,Arial),Helvetica,sans-serif;fill:#b5bfcd;}
 .qcr .qcr-diagram .qcr-diagram-accent{fill:#ffb37b;font-weight:550;font-size:13px;}
 .qcr .qcr-result-content{padding:0 26px 22px;}
 .qcr .qcr-result-label{font-size:13px;color:#bdc5cf;}

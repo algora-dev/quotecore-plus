@@ -3,6 +3,7 @@ import { computeRoofArea, applyPitchAndWaste, type PitchType, type WasteType, ty
 import { traceComponentCalc } from '@/app/lib/pricing/calcTracer';
 import { TRADE_ALLOWED_MEASUREMENT_TYPES, type Trade, type MeasurementType } from '@/app/lib/trades/measurement-type-whitelist';
 import { boundedText, isUuid, type ChangeRow } from './contracts';
+import { assistantMoney } from './money';
 import { finite, fieldNumber, ProposalError, rows } from './action-domain';
 import { storageNumber, storedMeasurement } from './storage-number';
 import { canonicalQuantity, baseUnit } from './units';
@@ -130,7 +131,7 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
       wasteType, wastePercent: waste, wasteFixed: fixed, pitchType, pitchDegrees: deg, source: 'manual' });
     if (audit.packDataMissing || ![audit.materialCost, audit.labourCost, totalQuantity].every(Number.isFinite)) throw new ProposalError('A library pack is missing its pricing data. Fix it before creating this draft.');
     const id = identities?.components[index].id ?? randomUUID(), unit = baseUnit(lib.measurement_type);
-    changes.push({ label: `Component: ${String(lib.name)}`, before: 'New', after: `${measurementSummary(measurements)} (${input.basis}, ${measurements.length} ${measurements.length === 1 ? 'entry' : 'entries'}, before waste); ${deg} degrees; waste ${wasteType === 'percent' ? waste + '%' : wasteType === 'none' ? 'none' : fixed + ' ' + unit}; engine quantity ${totalQuantity} ${unit}; ${currency} material ${audit.materialCost.toFixed(2)}, labour ${audit.labourCost.toFixed(2)}` });
+    changes.push({ label: `Component: ${String(lib.name)}`, before: 'New', after: `${measurementSummary(measurements)} (${input.basis}, ${measurements.length} ${measurements.length === 1 ? 'entry' : 'entries'}, before waste); ${deg} degrees; waste ${wasteType === 'percent' ? waste + '%' : wasteType === 'none' ? 'none' : fixed + ' ' + unit}; engine quantity ${totalQuantity} ${unit}; material ${assistantMoney(currency, audit.materialCost)}, labour ${assistantMoney(currency, audit.labourCost)}` });
     if (identities && identities.components[index].entries.length !== calculated.length) throw new ProposalError('The measurement identity map changed.');
     const entries = calculated.map((e, entryIndex) => ({ id: identities?.components[index].entries[entryIndex] ?? randomUUID(), raw_value: e.rawValue, value_after_waste: e.afterWaste, pitch_degrees: deg > 0 ? deg : null, sort_order: e.sortOrder }));
     return { id, library_id: lib.id, area_id: areaIndex === null ? null : areas[areaIndex].id, name: lib.name, component_type: lib.component_type, measurement_type: lib.measurement_type === 'linear' ? 'lineal' : lib.measurement_type === 'quantity' ? 'count' : lib.measurement_type, input_mode: basis ? 'calculated' : 'final',
@@ -139,7 +140,7 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
       calc_audit: JSON.parse(JSON.stringify({ ...audit, ...(input.source ? { assistant_measurement_source: input.source } : {}) })) as unknown, sort_order: index, entry: entries[0], ...(input.entries === undefined ? {} : { entries }) };
   });
   const material = components.reduce((sum, c) => sum + c.material_cost, 0), labour = components.reduce((sum, c) => sum + c.labour_cost, 0);
-  changes.push({ label: `Engine costs before quote margins/taxes (${currency})`, before: '', after: `Materials ${material.toFixed(2)}; labour ${labour.toFixed(2)}. Review the full total in the builder.` });
+  changes.push({ label: `Engine costs before quote margins/taxes (${currency})`, before: '', after: `Materials ${assistantMoney(currency, material)}; labour ${assistantMoney(currency, labour)}. Review the full total in the builder.` });
   return { params: { customerName: spec.customerName, jobName: spec.jobName, ...(spec.siteAddress !== undefined ? { siteAddress: spec.siteAddress } : {}), templateId: null, entryMode: 'manual', measurementSystem: spec.measurementSystem, trade: spec.trade, componentCollectionId: spec.collectionId },
     currency, pitch: spec.pitch, children: { areas, components }, changes };
 }

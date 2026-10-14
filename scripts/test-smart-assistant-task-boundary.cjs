@@ -6,7 +6,7 @@ const {componentWords}=load('resolver/vocabulary.ts');
 const {encodeTaskChoice,decodeTaskChoice,displayTaskMessage,isTaskMessage}=load('tasks/wire.ts');
 const now=new Date('2026-09-28T12:00:00Z');
 const intent={version:1,task:'find',domain:'quotes',contains:'ridges',list:true};
-function snapshot(overrides={},state={}){return {task:{id:uuid(1),version:4,status:'awaiting_input',label:'Finding: quotes containing ridges',lastRunId:uuid(2),startedAt:now.toISOString(),updatedAt:now.toISOString(),expiresAt:new Date(+now+900000).toISOString(),closure:null,boundary:false,...overrides},resolution:{id:uuid(3),expiresAt:new Date(+now+900000).toISOString(),state:{version:1,status:'pending',intent,candidates:[],rejected:[],clarifications:0,question:{key:'customer',text:'Which customer or job?'},candidateSetComplete:false,...state}},runIds:[uuid(2)],pendingMessage:null};}
+function snapshot(overrides={},state={}){return {task:{id:uuid(1),version:4,status:'awaiting_input',label:'Finding: quotes containing ridges',lastRunId:uuid(2),startedAt:now.toISOString(),updatedAt:now.toISOString(),expiresAt:new Date(+now+3*60*60*1000).toISOString(),closure:null,boundary:false,...overrides},resolution:{id:uuid(3),expiresAt:new Date(+now+3*60*60*1000).toISOString(),state:{version:1,status:'pending',intent,candidates:[],rejected:[],clarifications:0,question:{key:'customer',text:'Which customer or job?'},candidateSetComplete:false,...state}},runIds:[uuid(2)],pendingMessage:null};}
 const fresh=[
  'show me my quotes with ridges','I just want to see the quotes that contain ridge components','quote 1014',
  'show invoices',"whats the most recent john smith quote","show me all of John's quotes",'Open order 184',
@@ -16,8 +16,11 @@ const fresh=[
 for(const message of fresh)test('fresh message escapes unresolved filters: '+message,()=>{
  const d=decideTask(message,snapshot(),now);assert.equal(d.disposition,'new');assert.equal(d.refinement,undefined);
 });
-for(const message of ['done','Task complete','thanks','thank you','move on','new question','cancel this search','never mind'])test('typed explicit closure: '+message,()=>{
+for(const message of ['done','Task complete','move on','new question','cancel this search','never mind'])test('typed explicit closure: '+message,()=>{
  const d=decideTask(message,snapshot(),now);assert.equal(d.disposition,'close');assert.ok(['solved','abandoned'].includes(d.closure));
+});
+for(const message of ['thanks','thank you',"that's right"])test('casual acknowledgement does not close the task: '+message,()=>{
+ const d=decideTask(message,snapshot(),now);assert.notEqual(d.disposition,'close');assert.equal(taskControl(message),null);
 });
 for(const message of ['yes','confirmed','approve','confirm'])test('acknowledgement is not confirmation or record name: '+message,()=>{
  assert.equal(taskControl(message),null);const d=decideTask(message,snapshot(),now);assert.equal(d.disposition,'continue');assert.equal(d.refinement,undefined);

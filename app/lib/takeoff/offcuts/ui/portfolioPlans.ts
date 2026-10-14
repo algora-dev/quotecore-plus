@@ -43,15 +43,15 @@ export function portfolioChoices(current:Solution,saved:Solution[],selectedIndex
   const choices=report?.choices.filter(c=>indices.has(c.layoutId))??[];
   const currentChoice=choices.find(c=>c.layoutId===id);
   const visible=choices.slice(0,3),more=choices.slice(3);
-  const menu=saved.length>1?`<label class="qc-field">Saved cut plan<select data-plan-index aria-label="Choose saved cut plan" ${disabled?'disabled':''}>${saved.map((s,i)=>{
-    const choice=choices.find(c=>c.layoutId===planSignature(s));return `<option value="${i}" ${i===selectedIndex?'selected':''}>${esc(choice?choiceTitle(choice):s.layoutLabel??'Saved plan')}${s.engineVersion!=='2.28'?` · V${esc(s.engineVersion??'older')}`:''}</option>`;
-  }).join('')}</select></label>`:'';
+  const menu=saved.length>1?`<label class="qc-field qc-plan-switcher"><span>Showing on drawing</span><select data-plan-index aria-label="Choose the cut plan shown on the drawing" ${disabled?'disabled':''}>${saved.map((s,i)=>{
+    const choice=choices.find(c=>c.layoutId===planSignature(s));return `<option value="${i}" ${i===selectedIndex?'selected':''}>${esc(choice?choiceTitle(choice):s.layoutLabel??'Saved plan')}${s.engineVersion!=='2.29'?` · V${esc(s.engineVersion??'older')}`:''}</option>`;
+  }).join('')}</select><small>Switch here to compare every checked cut-plan variation.</small></label>`:'';
   return `<section class="qc-plan-variants qc-portfolio" id="qc-plan-choice" aria-label="Compare cutting plans">
     <div class="qc-portfolio-title"><strong>${choices.length>1?'Choose your cutting plan':esc(current.layoutLabel??'Recommended')}</strong>${choices.length>1?`<small>${choices.length} checked options</small>`:''}</div>
+    ${menu}
     ${choices.length>1?`<div class="qc-portfolio-cards">${visible.map(c=>card(c,indices.get(c.layoutId)!,id===c.layoutId,disabled)).join('')}</div>`:'<p class="qc-muted">Best balance found so far. Other physically checked options can be compared without changing this plan.</p>'}
     ${reversePanel}
     ${more.length?`<details class="qc-more-plans" ${more.some(c=>c.layoutId===id)?'open':''}><summary>${more.length} more checked option${more.length===1?'':'s'}</summary><div class="qc-portfolio-cards">${more.map(c=>card(c,indices.get(c.layoutId)!,id===c.layoutId,disabled)).join('')}</div></details>`:''}
-    ${menu}
     ${currentChoice?tradeOff(currentChoice,new Map(faces.map(f=>[f.id,f.name]))):reference&&id!==planSignature(reference)&&!current.salvage?comparisonCard(reference,current):''}
     <button class="qc-compare-plans" data-action="compare-plans" ${disabled||!reference||saved.length>=12?'disabled':''}>${report?.status==='complete'||report?.status==='bounded'?'Search again for options':'Compare more cutting plans'} ${icon('arrow')}</button>
     <p class="qc-muted">Optional search, usually up to 20–25 seconds plus final checks. Keeps your current plan selected. Physical fit rules are unchanged.</p>
@@ -73,6 +73,6 @@ export const portfolioStyles=`
 .qc-portfolio-heading{display:flex;justify-content:space-between;gap:8px}.qc-portfolio-option>span:nth-child(2){font-size:12px;font-weight:400}.qc-portfolio-option small{font-size:11px;font-weight:400;color:var(--of-text-secondary)}
 .qc-portfolio-option[aria-pressed=true]{border:2px solid var(--of-border-active,#e85b18);background:var(--of-surface-accent,#fff5ed);padding:9px 11px}
 .qc-portfolio-option:focus-visible{outline:2px solid var(--of-border-active,#e85b18);outline-offset:2px}.qc-compare-plans{width:100%;margin:10px 0 2px;display:flex;align-items:center;justify-content:space-between}
-.qc-more-plans{margin:8px 0}.qc-more-plans summary{cursor:pointer;font-size:12px;padding:5px 0}.qc-portfolio .qc-field{margin:10px 0}.qc-portfolio-limit{font-size:11px}
+.qc-more-plans{margin:8px 0}.qc-more-plans summary{cursor:pointer;font-size:12px;padding:5px 0}.qc-portfolio .qc-field{margin:10px 0}.qc-plan-switcher{border:1px solid var(--of-border-active,#e85b18);border-radius:10px;padding:10px;background:var(--of-surface-accent,#fff5ed);font-weight:650}.qc-plan-switcher select{font-weight:650}.qc-plan-switcher small{font-weight:400;color:var(--of-text-secondary)}.qc-portfolio-limit{font-size:11px}
 @media(forced-colors:active){.qc-portfolio-option[aria-pressed=true]{border:2px solid Highlight;outline:1px solid Highlight}}
 `;

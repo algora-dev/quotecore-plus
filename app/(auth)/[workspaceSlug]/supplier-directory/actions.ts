@@ -769,7 +769,9 @@ export async function publishLibraryUpdate(libraryId: string): Promise<{
   const snapshot = buildSnapshotArray(currentComponents ?? []);
 
   // 4. Call the atomic RPC
-  const { data: rpcResult, error: rpcError } = await supabase
+  // Privileged RPC (service-role only after the 20261013110000 hardening).
+  const { createAdminClient: createAdminForPublish } = await import('@/app/lib/supabase/admin');
+  const { data: rpcResult, error: rpcError } = await createAdminForPublish()
     .rpc('supplier_publish_update', {
       p_library_id: libraryId,
       p_snapshot: snapshot as unknown as import('@/app/lib/supabase/database.types').Json,

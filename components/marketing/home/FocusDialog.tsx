@@ -5,14 +5,26 @@ import s from './Homepage.module.css';
 import controls from '../MarketingButton.module.css';
 let scrollLocks = 0;
 let previousOverflow = '';
+let previousPaddingRight = '';
 function lockPage() {
-  if (scrollLocks++ === 0) { previousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; }
-  return () => { if (--scrollLocks === 0) document.body.style.overflow = previousOverflow; };
+  if (scrollLocks++ === 0) {
+    previousOverflow = document.body.style.overflow;
+    previousPaddingRight = document.body.style.paddingRight;
+    const gutter = window.innerWidth - document.documentElement.clientWidth;
+    if (gutter > 0 && !getComputedStyle(document.documentElement).scrollbarGutter?.includes('stable')) {
+      document.body.style.paddingRight = `${(parseFloat(getComputedStyle(document.body).paddingRight) || 0) + gutter}px`;
+    }
+    document.body.style.overflow = 'hidden';
+  }
+  return () => { if (--scrollLocks === 0) {
+    document.body.style.overflow = previousOverflow;
+    document.body.style.paddingRight = previousPaddingRight;
+  } };
 }
 /** Adapted from pricing-selector v5 FocusDialog: native top layer, inert page,
  * explicit tab containment, Escape, backdrop dismissal, focus restoration. */
-export function FocusDialog({ title, eyebrow, onClose, children, wide = false }: {
-  title: string; eyebrow: string; onClose: () => void; children: ReactNode; wide?: boolean;
+export function FocusDialog({ title, eyebrow, onClose, children, wide = false, className = '' }: {
+  title: string; eyebrow: string; onClose: () => void; children: ReactNode; wide?: boolean; className?: string;
 }) {
   const id = useId();
   const ref = useRef<HTMLDialogElement>(null);
@@ -44,7 +56,7 @@ export function FocusDialog({ title, eyebrow, onClose, children, wide = false }:
     if (event.shiftKey && (document.activeElement === first || !targets.includes(document.activeElement as HTMLElement))) { event.preventDefault(); last.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   }
-  return <dialog ref={ref} className={`${s.dialog} ${wide ? s.dialogWide : ''}`} aria-labelledby={`${id}-title`} aria-modal="true"
+  return <dialog ref={ref} className={`${s.dialog} ${wide ? s.dialogWide : ''} ${className}`} aria-labelledby={`${id}-title`} aria-modal="true"
     onKeyDown={containTab} onCancel={e => { e.preventDefault(); onClose(); }}
     onPointerDown={e => { backdropStarted.current = e.target === e.currentTarget && outside(e.clientX, e.clientY); }}
     onClick={e => { if (backdropStarted.current && e.target === e.currentTarget && outside(e.clientX, e.clientY)) onClose(); backdropStarted.current = false; }}>

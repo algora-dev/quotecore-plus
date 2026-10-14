@@ -46,6 +46,9 @@ export interface TouchComponentsOptions {
   /** P4 trade wording: noun for saved outlines in area/count copy
    *  ("roof", "wall", "floor"). Default keeps the historical roof copy. */
   planNoun?: string;
+  /** Owner directive 2026-10-13: false = non-pitch trade reuse copy.
+   *  Default keeps the historical roofing copy. */
+  pitchRequired?: boolean;
 }
 
 /** Active drawing draft. Line = two confirm-locked endpoints; polygon =
@@ -144,6 +147,18 @@ export function useTouchComponents(
     setDraw(null);
   }, []);
 
+  // Guided-demo bridges (owner 2026-10-12): the demo guide listens for the
+  // first real rail interaction (auto-collapse) and for the moment the
+  // visitor's chapter-1 component gets an entry on the plan (completion card).
+  const notifyInteraction = useCallback(() => {
+    window.dispatchEvent(new Event('qc-demo-takeoff-interaction'));
+  }, []);
+  const notifyGuidedEntry = useCallback((componentId: string | null | undefined) => {
+    if (!componentId) return;
+    const guided = (window as Window & { __qcDemoGuidedComponentId?: string }).__qcDemoGuidedComponentId;
+    if (guided && componentId === guided) window.dispatchEvent(new Event('qc-demo-guided-entry-added'));
+  }, []);
+
   const runScan = useCallback(async () => {
     const current = adapterRef.current();
     if (!current?.startComponentScan) {
@@ -193,10 +208,31 @@ export function useTouchComponents(
     cancelDraw();
   }, [active, cancelDraw, refreshFromAdapter]);
 
+  // Demo/mobile parity (owner 2026-10-12): the workstation hydrates SAVED
+  // component rows into the adapter after this step activates (one-shot per
+  // mount, behind pages resolving). The refresh above raced that seeding, so
+  // the pre-measured demo rail stayed empty until a mutation. Re-sync on
+  // every adapter bridge notification.
+  useEffect(() => {
+    if (!active) return;
+    const current = getAdapter();
+    if (!current?.subscribe) return;
+    return current.subscribe(() => refreshFromAdapter());
+  }, [active, getAdapter, refreshFromAdapter]);
+
+  // Guided demo (owner 2026-10-12 evening): NO picker preselect. A preselected
+  // component with no open detail looked like it was "already added" - the
+  // + New entry affordance only exists on the detail page, so the rail was a
+  // dead end. The guide coaches the dropdown pick instead: choosing a
+  // component OPENS its detail (onComponentChange), where + New entry is the
+  // primary action. __qcDemoGuidedComponentId stays set for the completion
+  // card bridge (notifyGuidedEntry).
+
   // Detail view: isolation is a canvas RENDER state (the overlay hides other
   // groups); nothing touches the adapter.
   const onOpenDetail = useCallback((key: string) => {
     cancelDraw();
+    notifyInteraction();
     setDetail(prev => {
       if (prev && prev.componentId === key) return prev;
       const current = adapterRef.current();
@@ -208,7 +244,7 @@ export function useTouchComponents(
       return { componentId: key, key: null, displayName: 'Uncertain', colour: '#EC4899' };
     });
     setHighlighted(null);
-  }, [cancelDraw]);
+  }, [cancelDraw, notifyInteraction]);
   const onBackFromDetail = useCallback(() => {
     cancelDraw();
     setDetail(null);
@@ -267,10 +303,11 @@ export function useTouchComponents(
     if (!current?.addRoofAreaEntry || !area) return;
     const entry = current.addRoofAreaEntry(detail, area);
     if (entry) {
+      notifyGuidedEntry(detail.componentId);
       refreshFromAdapter();
       logTakeoffEvent('components.entry.roofarea.attached', { component: detail.displayName });
     }
-  }, [detail, refreshFromAdapter]);
+  }, [detail, notifyGuidedEntry, refreshFromAdapter]);
 
   // Corner counting (2026-09-30): count-based components reuse the corners
   // detected on saved outlines instead of tapping each point. The adapter
@@ -281,30 +318,33 @@ export function useTouchComponents(
     if (!current?.addCornerCountEntry || !detail) return;
     const entry = current.addCornerCountEntry(detail, basis);
     if (entry) {
+      notifyGuidedEntry(detail.componentId);
       refreshFromAdapter();
       logTakeoffEvent('components.entry.corners.attached', { component: detail.displayName, basis, count: entry.value });
     }
-  }, [detail, refreshFromAdapter]);
+  }, [detail, notifyGuidedEntry, refreshFromAdapter]);
 
   // Drawing - the interaction follows the component's measurement type.
   const onStartNewEntry = useCallback(() => {
     if (!detail) return;
+    notifyInteraction();
     const mode = drawModeForMeasurementType(detail.measurementType);
     setDraw(mode === 'line' ? { mode, slot: 0, p1: null, p2: null }
       : mode === 'polygon' ? { mode, pts: [] }
         : { mode, p: null });
     logTakeoffEvent('components.entry.draw.started', { component: detail.displayName, mode });
-  }, [detail]);
+  }, [detail, notifyInteraction]);
 
   const saveEntry = useCallback((target: TouchComponentTarget, points: EntryDraftPoint[]) => {
     const entry = adapterRef.current()?.addComponentEntry?.(target, points);
     if (entry) {
       logTakeoffEvent('components.entry.draw.saved', { component: entry.displayName, mode: entry.kind, value: entry.value });
+      notifyGuidedEntry(entry.componentId);
       cancelDraw();
       refreshFromAdapter();
     }
     return entry;
-  }, [cancelDraw, refreshFromAdapter]);
+  }, [cancelDraw, notifyGuidedEntry, refreshFromAdapter]);
 
   const onTapPlace = useCallback((point: EntryDraftPoint) => {
     setDraw(d => {
@@ -367,13 +407,14 @@ export function useTouchComponents(
 
   // F4: picking ANY component opens its page (empty manual groups included).
   const onComponentChange = useCallback((id: string) => {
+    notifyInteraction();
     setComponentId(id);
     const target = adapterRef.current()?.getComponentTarget?.(id);
     if (!target) return;
     cancelDraw();
     setDetail(target);
     setHighlighted(null);
-  }, [cancelDraw]);
+  }, [cancelDraw, notifyInteraction]);
 
   const onAcceptDisclaimer = useCallback(() => {
     setPhase('review');
@@ -426,6 +467,15 @@ export function useTouchComponents(
       setSaving(false);
     }
   }, [router]);
+
+  // Guided-demo helper bridge (owner 2026-10-12): the guide's completion card
+  // can trigger this rail's Save & continue remotely.
+  useEffect(() => {
+    if (!active) return;
+    const request = () => { void onSaveContinue(); };
+    window.addEventListener('qc-demo-takeoff-save-continue', request);
+    return () => window.removeEventListener('qc-demo-takeoff-save-continue', request);
+  }, [active, onSaveContinue]);
 
   const filteredComponents = libraryId
     ? options.components.filter(c => (c.collection_id ?? null) === libraryId)
@@ -498,7 +548,7 @@ export function useTouchComponents(
     onUndoPolygonPoint={onUndoPolygonPoint} onClosePolygon={onClosePolygon} onCancelDraw={cancelDraw}
     onRetry={onRetry} onCancelScan={onCancelScan}
     onSaveContinue={onSaveContinue}
-    planNoun={options.planNoun} /> : null;
+    planNoun={options.planNoun} pitchRequired={options.pitchRequired} /> : null;
 
   // F1: the canvas is mounted for the ENTIRE step - the plan (raster +
   // outline + entries) is the source of truth and never goes blank. The

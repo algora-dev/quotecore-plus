@@ -1,0 +1,120 @@
+/* Three compact auto follow-up examples within the existing slide canvas. */
+.stage {
+  position: relative;
+  container-type: size;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  color: #eff2f6;
+  background:
+    radial-gradient(ellipse at 82% 16%, #ff762213, transparent 55%),
+    radial-gradient(ellipse at 15% 85%, #677d9814, transparent 60%),
+    #0b0d11;
+}
+.stage::before { content: ''; position: absolute; inset: 10% 6%; border: 1px solid #ffffff06; border-radius: 50%; transform: rotate(-22deg); box-shadow: 0 0 0 28px #ffffff02; pointer-events: none; z-index: -1; }
+.composition { width: min(88%, 450px); margin: 0; }
+.activity { overflow: hidden; background: #f9fafc; color: #242b36; border: 1px solid #ffffffc2; border-radius: 12px; box-shadow: 0 12px 30px #0004; }
+.documentHeader { display: flex; align-items: center; gap: 11px; padding: 12px 18px; }
+.documentIcon { display: grid; place-items: center; width: 32px; height: 37px; flex: none; border: 1px solid #f2d1bf; background: #fff2e9; color: #bc480d; border-radius: 6px; }
+.documentIcon svg { width: 20px; height: 20px; }
+.documentName { display: grid; gap: 4px; }
+.documentName > strong { font-size: 16px; line-height: 1.2; letter-spacing: -.035em; font-weight: 650; }
+.documentName > span { display: flex; align-items: center; gap: 5px; font-size: 10px; line-height: 1.3; color: #647080; }
+.documentName > span svg { width: 11px; height: 11px; }
+.alert { position: relative; display: grid; place-items: center; width: 29px; height: 29px; margin-left: auto; color: #657080; background: #edf0f4; border: 1px solid #e0e5ec; border-radius: 50%; }
+.alert svg { width: 15px; height: 15px; }
+.alert i { position: absolute; top: 1px; right: 1px; width: 6px; height: 6px; background: #ff641f; border-radius: 50%; box-shadow: 0 0 0 2px #f9fafc; }
+.activityStates { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 18px; background: #f0f3f7; border-top: 1px solid #e4e7ec; }
+.read { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; line-height: 1.2; font-weight: 550; color: #a74311; white-space: nowrap; }
+.read svg { width: 14px; height: 14px; }
+.stateArrow { display: flex; color: #a0a8b4; }
+.stateArrow svg { width: 15px; height: 15px; }
+.outcomes { display: flex; align-items: center; gap: 7px; }
+.outcomes > span:not(.or) { display: inline-flex; align-items: center; gap: 4px; padding: 5px 7px; border-radius: 5px; font-size: 10px; font-weight: 550; line-height: 1.2; white-space: nowrap; }
+.outcomes svg { width: 12px; height: 12px; }
+.accepted { background: #e1eee7; color: #276549; }
+.declined { background: #f0e7e7; color: #8d5052; }
+.or { font-size: 9px; color: #757e89; }
+.rules { position: relative; margin-top: 23px; }
+.rules::before { content: ''; position: absolute; right: 28px; bottom: calc(100% + 4px); height: 15px; border-left: 1px dashed #645c59; }
+.ruleHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; padding: 0 2px; }
+.ruleHeader > span:first-child { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; line-height: 1.3; font-weight: 550; color: #f1eee9; }
+.ruleHeader svg { width: 16px; height: 16px; color: #ff914d; }
+.example { font-size: 9px; color: #a9b1bf; }
+.ruleTable { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0 6px; }
+.triggerColumn { width: 48%; }
+.arrowColumn { width: 24px; }
+.ruleTable thead th { padding: 0 12px 1px; text-align: left; color: #aab2bf; font-size: 9px; font-weight: 450; line-height: 1.2; letter-spacing: .08em; text-transform: uppercase; }
+.ruleTable thead th:last-child { padding-left: 9px; }
+.ruleTable tbody { --rule-accent: #ff984f; --rule-icon-bg: #ff8a3810; }
+.ruleTable tbody th, .ruleTable tbody td { border-top: 1px solid #30353e; border-bottom: 1px solid #30353e; background: #191d24; }
+.ruleTable tbody th { padding: 10px 6px 10px 12px; border-left: 2px solid var(--rule-accent); border-radius: 9px 0 0 9px; text-align: left; }
+.ruleTable tbody td:last-child { padding: 10px 12px 10px 9px; border-right: 1px solid #30353e; border-radius: 0 9px 9px 0; }
+.ruleTable .acceptedRule { --rule-accent: #8ccbaa; --rule-icon-bg: #80bb9913; }
+.ruleTable .readRule { --rule-accent: #ff984f; --rule-icon-bg: #ff8a3813; }
+.ruleTable .declinedRule { --rule-accent: #d0a0a4; --rule-icon-bg: #c48f9812; }
+.trigger { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 1.35; font-weight: 500; color: #e4e8ef; }
+.triggerIcon { display: grid; place-items: center; width: 25px; height: 25px; flex: none; border-radius: 50%; color: var(--rule-accent); background: var(--rule-icon-bg); }
+.triggerIcon svg { width: 13px; height: 13px; }
+.trigger small { display: block; margin-top: 2px; font-size: 11px; line-height: 1.3; font-weight: 400; color: #b1bbc9; }
+.ruleArrow { padding: 0; text-align: center; color: #798593; }
+.ruleArrow svg { display: block; margin: auto; width: 15px; height: 15px; }
+.action { font-size: 12px; line-height: 1.4; font-weight: 450; color: #f2f4f8; }
+.caption { text-align: center; font-size: 10px; line-height: 1.4; color: #a8b0bc; margin-top: 7px; }
+
+/* Tighten spacing, not the story, on the existing stacked mobile canvas. */
+@container (max-width: 430px) or (max-height: 400px) {
+  .composition { width: min(93%, 420px); }
+  .documentHeader { padding: 10px 12px; gap: 9px; }
+  .documentName > strong { font-size: 15px; }
+  .documentIcon { width: 29px; height: 33px; }
+  .activityStates { padding: 8px 12px; gap: 5px; }
+  .read { font-size: 10px; gap: 4px; }
+  .outcomes { gap: 4px; }
+  .outcomes > span:not(.or) { font-size: 9px; padding: 4px 5px; gap: 3px; }
+  .outcomes svg { width: 11px; height: 11px; }
+  .stateArrow svg { width: 12px; height: 12px; }
+  .rules { margin-top: 17px; }
+  .rules::before { height: 10px; }
+  .ruleHeader { margin-bottom: 5px; }
+  .ruleHeader > span:first-child { font-size: 12px; }
+  .ruleTable { border-spacing: 0 5px; }
+  .ruleTable tbody th { padding: 8px 3px 8px 9px; }
+  .ruleTable tbody td:last-child { padding: 8px 9px 8px 5px; }
+  .ruleTable thead th { padding-left: 10px; }
+  .ruleTable thead th:last-child { padding-left: 5px; }
+  .triggerColumn { width: 47%; }
+  .arrowColumn { width: 18px; }
+  .trigger { font-size: 11px; gap: 6px; }
+  .triggerIcon { width: 21px; height: 21px; }
+  .triggerIcon svg { width: 12px; height: 12px; }
+  .trigger small { font-size: 10px; }
+  .action { font-size: 11px; }
+  .caption { margin-top: 5px; }
+}
+@container (max-width: 310px) {
+  .composition { width: 96%; }
+  .activityStates { padding-right: 9px; padding-left: 9px; }
+  .outcomes > span:not(.or) { padding: 4px; }
+  .outcomes svg, .stateArrow, .triggerIcon { display: none; }
+  .triggerColumn { width: 44%; }
+}
+@container (max-height: 330px) {
+  .documentHeader { padding-top: 7px; padding-bottom: 7px; }
+  .activityStates { padding-top: 6px; padding-bottom: 6px; }
+  .rules { margin-top: 12px; }
+  .rules::before { height: 6px; }
+  .ruleTable tbody th, .ruleTable tbody td:last-child { padding-top: 6px; padding-bottom: 6px; }
+  .caption { margin-top: 2px; font-size: 9px; }
+}
+@media (forced-colors: active) {
+  .stage, .activity, .activityStates, .documentIcon, .alert, .accepted, .declined, .ruleTable tbody th, .ruleTable tbody td, .triggerIcon { background: Canvas; color: CanvasText; box-shadow: none; }
+  .activity, .documentIcon, .ruleTable tbody th, .ruleTable tbody td { border-color: CanvasText; }
+  .stage::before, .alert i { display: none; }
+  .documentName > span, .read, .or, .ruleHeader > span, .example, .ruleTable thead th, .trigger, .trigger small, .ruleArrow, .caption { color: CanvasText; }
+}

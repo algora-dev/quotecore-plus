@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { applyPitchAndWaste, applyWaste, computeMaterialCostByStrategy, rafterPitchFactor, hipValleyPitchFactor } from '@/app/lib/pricing/engine';
-import { DEMO_COMPONENTS, DEMO_JOBS, DEMO_PRICE_NOTICE, DEMO_FOOTER, QCP_DEMO_NAME, type DemoMeasurementSystem } from './seed-data';
+import { DEMO_COMPONENTS, DEMO_JOBS, DEMO_PRICE_NOTICE, DEMO_FOOTER, QCP_DEMO_NAME, type DemoMeasurementSystem, type DemoCurrency } from './seed-data';
 import { DEMO_CALIBRATION, DEMO_ROOF_AREA, DEMO_LINES, DEMO_PITCH_DEGREES, demoLineLengthM, demoRoofPlanAreaM2 } from './seed-plan';
 import type { DemoSeedManifest } from './model';
 import { DemoError } from './errors';
@@ -13,16 +13,16 @@ function checked(result: { error: { message: string } | null }, step: string) {
 }
 /** Static authored inserts only. All identities belong to the new demo company.
  * The session is not made active until ALL mandatory seed writes succeed. */
-export async function seedDemoCompany(companyId: string, userId: string, system: DemoMeasurementSystem = 'metric'): Promise<DemoSeedManifest> {
+export async function seedDemoCompany(companyId: string, userId: string, system: DemoMeasurementSystem = 'metric', currency: DemoCurrency = 'GBP'): Promise<DemoSeedManifest> {
   const db = createAdminClient(); const now = Date.now();
   const libraries = { roofing: randomUUID(), construction: randomUUID(), flooring: randomUUID() };
   const ids: Record<string, string> = Object.fromEntries(DEMO_COMPONENTS.map(c => [c.key, randomUUID()]));
   const jobs = Object.fromEntries(DEMO_JOBS.map(j => [j.key, randomUUID()]));
   const templateId = randomUUID(), emailId = randomUUID(), pageId = randomUUID(), takeoffId = randomUUID();
   checked(await db.from('component_collections').insert([
-    { id: libraries.roofing, company_id: companyId, name: 'Roofing', currency: 'GBP', unit_system: system, takeoff_enabled: true, is_default_takeoff_library: true },
-    { id: libraries.construction, company_id: companyId, name: 'General Construction', currency: 'GBP', unit_system: system, takeoff_enabled: false, is_default_takeoff_library: false },
-    { id: libraries.flooring, company_id: companyId, name: 'Flooring / Interiors', currency: 'GBP', unit_system: system, takeoff_enabled: false, is_default_takeoff_library: false },
+    { id: libraries.roofing, company_id: companyId, name: 'Roofing', currency, unit_system: system, takeoff_enabled: true, is_default_takeoff_library: true },
+    { id: libraries.construction, company_id: companyId, name: 'General Construction', currency, unit_system: system, takeoff_enabled: false, is_default_takeoff_library: false },
+    { id: libraries.flooring, company_id: companyId, name: 'Flooring / Interiors', currency, unit_system: system, takeoff_enabled: false, is_default_takeoff_library: false },
   ]), 'libraries');
   checked(await db.from('component_library').insert(DEMO_COMPONENTS.map((c, index) => ({
     id: ids[c.key], company_id: companyId, collection_id: libraries[c.library], name: c.name,
@@ -39,7 +39,7 @@ export async function seedDemoCompany(companyId: string, userId: string, system:
   checked(await db.from('quotes').insert(DEMO_JOBS.map((j, index) => ({
     id: jobs[j.key], company_id: companyId, customer_name: j.customer, customer_email: `customer-${index + 1}@example.invalid`,
     job_name: j.job, site_address: `${index + 1} Example Lane, Fictional Demo Town`, quote_number: 1001 + index,
-    status: j.status, currency: 'GBP', measurement_system: system, trade: 'roofing' as const,
+    status: j.status, currency, measurement_system: system, trade: 'roofing' as const,
     tax_rate: 20, created_by_user_id: userId, created_by_email: `demo-${userId.slice(0, 8)}@example.invalid`,
     component_collection_id: libraries.roofing, entry_mode: j.key === 'guided_roof_job' ? 'digital' : 'manual',
     notes_internal: `${DEMO_PRICE_NOTICE} Fictional demonstration record.`,
@@ -79,7 +79,7 @@ export async function seedDemoCompany(companyId: string, userId: string, system:
   const invoiceId = randomUUID();
   checked(await db.from('invoices').insert({ id: invoiceId, company_id: companyId, user_id: userId, source_id: jobs.invoiced_job, source_type: 'quote',
     invoice_number: 'DEMO-INV-1', payment_reference: 'DEMO-NO-PAYMENT', status: 'draft', customer_name: 'Cameron Sample', customer_email: 'customer-8@example.invalid',
-    currency: 'GBP', subtotal: 1500, tax_total: 300, total: 1800, notes: DEMO_FOOTER, cq_company_name: QCP_DEMO_NAME,
+    currency, subtotal: 1500, tax_total: 300, total: 1800, notes: DEMO_FOOTER, cq_company_name: QCP_DEMO_NAME,
     cq_footer_text: DEMO_FOOTER, payment_details: { instructions: 'No payment is due for this fictional invoice.' },
     business_snapshot: { name: QCP_DEMO_NAME }, customer_snapshot: { name: 'Cameron Sample' },
   }), 'invoice');

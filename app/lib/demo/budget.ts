@@ -40,8 +40,12 @@ function counterStore(scope: 'session' | 'ip', key: string): CounterStore {
   };
 }
 function keys(context: ActiveDemoContext, kind: string) {
-  if (!context.ipHmac) throw new DemoError('Demo allowance identity is missing. Reset the old demo.', 503);
-  return [{ scope: 'session' as const, key: `visitor:${context.anonUserId}:${kind}` }, { scope: 'ip' as const, key: `network:${context.ipHmac}:${kind}` }];
+  // Owner 2026-10-12: the allowance is DEVICE-scoped only. The old second
+  // bucket (IP HMAC) accumulated every demo visitor behind a shared carrier
+  // NAT into one allowance and blocked fresh devices after a few turns;
+  // per-device enforcement is the owner-directed behaviour. ip_hmac stays
+  // recorded in demo_usage for telemetry only.
+  return [{ scope: 'session' as const, key: `visitor:${context.anonUserId}:${kind}` }];
 }
 /** Uses EXISTING tables. Each bucket debit is atomic CAS; admission across
  * buckets is conservative. On a partial failure prior debits are retained.
@@ -81,7 +85,7 @@ export async function reserveDemoAi(context: ActiveDemoContext, action: 'assista
   const config = demoBudgetConfig(); const charge = action === 'assistant-turn' ? config.reserve : action === 'speech' ? config.speech : config.audio;
   if (!config.configured || charge <= 0 || charge > config.maximum) throw new DemoError('Smart Assistant demo cost controls are not configured for this deployment yet.', 503, 'demo_ai_setup');
   const db = createAdminClient(); const id = requestUuid(`${context.anonUserId}:${action}:${requestId}`);
-  const inserted = await db.from('demo_usage').insert({ id, demo_session_id: context.sessionId, ip_hmac: context.ipHmac,
+  const inserted = await db.from('demo_usage').insert({ id, demo_session_id: context.sessionId, ip_hmac: context.ipHmac || null,
     action_type: action, action_variant: payloadDigest, reservation_credits: charge, status: 'reserved', provider: 'openai' });
   if (inserted.error?.code === '23505') {
     const previous = await db.from('demo_usage').select('status,action_variant,demo_session_id,request_ref').eq('id', id).single();

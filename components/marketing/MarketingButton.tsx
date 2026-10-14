@@ -32,8 +32,8 @@ export function MarketingButton({
   return (
     <a
       href={href}
-      target={target}
-      rel={rel}
+      target={target ?? (href.startsWith("#") ? undefined : "_blank")}
+      rel={rel ?? (href.startsWith("#") ? undefined : "noopener noreferrer")}
       aria-label={ariaLabel}
       onClick={onClick}
       className={[styles.button, styles[variant], size === 'large' ? styles.large : '', className].filter(Boolean).join(' ')}

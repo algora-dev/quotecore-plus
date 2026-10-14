@@ -27,7 +27,7 @@ import 'server-only';
 import { cache } from 'react';
 
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { customAccess, ZERO_LIMITS, type AccessSnapshot } from './custom/contracts';
+import { customAccess, parsePurchasedLimits, ZERO_LIMITS, type AccessSnapshot } from './custom/contracts';
 import { loadCustomUsage } from './custom/usage/store';
 import { customScope } from './custom/environment';
 import {
@@ -370,10 +370,17 @@ export const loadCompanyEntitlements = cache(
       || paidUsage.subscriptionId !== customSnap.stripe_subscription_id)) {
       throw new Error('Billing period changed during the request. Refresh to load the current usage.');
     }
+    // During the bounded failed-renewal window, qcp_usage_context confirms that
+    // the previous paid grant is still the authoritative grant. customAccess()
+    // intentionally treats an expired timestamp as unavailable on its own, so
+    // use the verified snapshot limits only when the DB read explicitly marks
+    // paymentGrace. This does not create a new period or reset any counters.
+    const paymentGraceLimits = company.billing_model === 'custom_setup' && paidUsage?.available && paidUsage.paymentGrace && customSnap
+      ? parsePurchasedLimits(customSnap.purchased_entitlements) : null;
     const customRestricted = company.billing_model === 'custom_setup'
-      && (!access.available || !paidUsage?.available || company.admin_paused);
+      && ((!access.available && !paymentGraceLimits) || !paidUsage?.available || company.admin_paused);
     const customEnt = company.billing_model === 'custom_setup'
-      ? (customRestricted ? { ...ZERO_LIMITS } : access.limits) : null;
+      ? (customRestricted ? { ...ZERO_LIMITS } : (paymentGraceLimits ?? access.limits)) : null;
     if (effCodeResult.error || effActiveResult.error) {
       throw new Error('Effective billing access could not be verified.');
     }

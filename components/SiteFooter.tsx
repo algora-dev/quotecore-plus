@@ -20,7 +20,7 @@ export default function SiteFooter() {
             <div className="mt-4 flex flex-col gap-3">
               <Link href="/features" className={linkClass}>All features</Link>
               <Link href="/features/digital-roof-takeoff" className={linkClass}>Digital roof takeoff</Link>
-              <Link href="/features/smart-components" className={linkClass}>Smart Components</Link>
+              <Link href="/features/smart-components" className={linkClass}>Smart Components™</Link>
               <Link href="/features/material-ordering" className={linkClass}>Material ordering</Link>
               <Link href="/features/invoicing" className={linkClass}>Invoicing</Link>
               <Link href="/features/supplier-resources" className={linkClass}>Supplier resources</Link>

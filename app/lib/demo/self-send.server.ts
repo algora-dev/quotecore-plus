@@ -47,7 +47,7 @@ export async function sendDemoQuote(context: ActiveDemoContext, value: unknown):
   const href = `${origin}/demo/quote/${token}`;
   await deliver(email, 'QuoteCore+ Demo (NOT A REAL QUOTE)',
     renderEmailLayout({
-      heading: 'DEMO — Not a real quote',
+      heading: 'DEMO - Not a real quote',
       preheader: 'Open your fictional QuoteCore+ demo customer quote.',
       innerHtml: para('You requested this fictional QuoteCore+ demonstration. No contract, order or payment is involved.')
         + ctaBlock('Open your demo customer quote', href, 'If the button does not work, copy and paste this link into your browser:')

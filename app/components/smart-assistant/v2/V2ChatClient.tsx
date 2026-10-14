@@ -174,6 +174,26 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     } catch { /* storage can be unavailable */ }
   }, [prefKey, lastConversationKey, streamOffKey]);
   useEffect(() => {
+    // Guided demo (owner 2026-10-12): the guide's "copy & open" must actually
+    // PLACE the example in the composer so the visitor only taps Send. Never
+    // overwrite text the user already typed. The window slot covers the race
+    // where this panel mounts AFTER the guide dispatched its event; the ack
+    // swaps the guide's status line to "just tap Send".
+    const onPrefill = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { text?: unknown } | null;
+      const slot = (window as Window & { __qcDemoAssistantPrefill?: { text: string; at: number } }).__qcDemoAssistantPrefill;
+      const text = typeof detail?.text === 'string' && detail.text.trim() ? detail.text : slot?.text;
+      if (!text || input.trim()) return;
+      delete (window as Window & { __qcDemoAssistantPrefill?: { text: string; at: number } }).__qcDemoAssistantPrefill;
+      setInput(text);
+      window.dispatchEvent(new Event('qc-demo-assistant-prefilled'));
+      requestAnimationFrame(() => composer.current?.focus());
+    };
+    window.addEventListener('qc-demo-assistant-prefill', onPrefill);
+    onPrefill({ type: 'qc-demo-assistant-prefill' } as Event);
+    return () => window.removeEventListener('qc-demo-assistant-prefill', onPrefill);
+  }, [input]);
+  useEffect(() => {
     // Late transcription/playback cannot leak into a different conversation.
     voice.cancel(); speech.stop(); clearAttachments(); setSheet(null); setVoiceSendQueue(null);
   }, [active, voice.cancel, speech.stop, clearAttachments]);
@@ -636,7 +656,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             </div>
           </div>}
           {task && <div className={s.taskFooter} data-sa-task={task.id}>
-            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task closed. Ask something new whenever you’re ready.</p> : <>
+            {task.status === 'closed' ? <p className={s.detail}><AssistantIcon name="check"/>Task solved. You can still refer back to it in this recent conversation.</p> : <>
               <QcButton className={s.doneButton} disabled={controlsBusy || voice.state !== 'off'} onClick={() => void finishTask(task.status === 'answered' ? 'done' : 'move_on')}><AssistantIcon name={task.status === 'answered' ? 'check' : 'chevron'}/>{task.status === 'answered' ? 'Done' : 'Move on'}</QcButton>
               {task.status === 'answered' && <QcButton className={s.quietButton} disabled={controlsBusy || voice.state !== 'off'} onClick={refineAnswer}>Not quite</QcButton>}
             </>}

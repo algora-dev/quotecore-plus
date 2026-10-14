@@ -6,6 +6,7 @@ import { requireStripe, resolvePlanCodeForStripePrice } from '@/app/lib/billing/
 import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
 import { buildBillingCatalogue, type CompleteSubscriptionItems } from '@/app/components/pricing/calculator/billingCatalogue';
 import { customScope, verifyCustomAccount } from './environment';
+import { recordCustomPaymentLifecycle } from './payment-lifecycle';
 import { loadRecognitionRegistry } from './registry';
 import { BillingContractError, decodeRegisteredItems, insist, invoiceSubscriptionId, object, referenceId, requireMode, verifyPaidPeriod, purchasedFingerprint } from './contracts';
 
@@ -98,6 +99,13 @@ export async function handleCustomStripeEvent(event: Stripe.Event, eventJson: un
   const begin = await admin.rpc('qcp_begin_custom_reconcile', { p_company_id: company.id, p_mode: scope.mode });
   if (begin.error) throw new Error(`retryable: reconciliation ticket: ${begin.error.message}`);
   insist(typeof begin.data === 'number' && Number.isSafeInteger(begin.data), 'reconciliation_ticket_invalid');
+  // A failed invoice is an operational fact even when Stripe still reports the
+  // subscription as active and paid-period reconciliation defers. Record it
+  // before any later early-return so the admin queue and bounded grace window
+  // cannot silently miss the failure.
+  if (event.type === 'invoice.payment_failed') {
+    await recordCustomPaymentLifecycle({ event, companyId: company.id, subscriptionId, invoiceId: eventObjectId });
+  }
   // Fetch AFTER the fencing ticket. Never apply stale event object contents.
   subscription = await stripe.subscriptions.retrieve(subscriptionId);
   requireMode(subscription, scope.mode); requireMode(event, scope.mode);
@@ -143,6 +151,15 @@ export async function handleCustomStripeEvent(event: Stripe.Event, eventJson: un
     const applied = await admin.rpc('qcp_apply_custom_reconcile', { p_company_id: company.id, p_fence: begin.data, p_payload: payload, p_event: eventJson });
     if (applied.error) throw new Error(`retryable: custom reconciliation transaction: ${applied.error.message}`);
     insist(typeof applied.data === 'string', 'reconciliation_result_invalid');
+    if (event.type === 'invoice.payment_succeeded' || event.type === 'invoice.paid'
+        || event.type === 'customer.subscription.deleted') {
+      await recordCustomPaymentLifecycle({
+        event,
+        companyId: company.id,
+        subscriptionId: subscription.id,
+        invoiceId: event.type.startsWith('invoice.') ? eventObjectId : null,
+      });
+    }
     return applied.data;
   } catch (error) {
     if (error instanceof BillingContractError) return `quarantined:${error.code}`;

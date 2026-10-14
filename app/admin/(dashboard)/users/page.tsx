@@ -1,5 +1,7 @@
 import { requireAdmin } from '@/app/lib/supabase/server';
 import { UsersPanel } from './UsersPanel';
+import { getPaymentAttention } from './actions';
+import { PaymentAttentionPanel } from './PaymentAttentionPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +14,7 @@ export const dynamic = 'force-dynamic';
  */
 export default async function AdminUsersPage() {
   await requireAdmin();
+  const attention = await getPaymentAttention();
 
   return (
     <section className="space-y-5">
@@ -22,6 +25,8 @@ export default async function AdminUsersPage() {
           pause access, or delete their account.
         </p>
       </div>
+
+      <PaymentAttentionPanel rows={attention.ok ? attention.rows : []} error={attention.ok ? null : attention.error} />
 
       <UsersPanel />
     </section>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { sendEmail } from '@/app/lib/email/send';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,7 +14,8 @@ export const dynamic = 'force-dynamic';
  *     - Day 21 from first_payment_failure_at -> 'grace'
  *     - Day 45 from first_payment_failure_at -> 'pending_data_purge'
  *     - Day 75 from first_payment_failure_at -> 'suspended'
- *     Phase 2 will add the corresponding notification emails. This cron
+ *     Existing later-stage lifecycle transitions remain unchanged. P3 adds a
+ *     separate one-time custom payment-attention reminder at day 7; this pass
  *     ONLY advances the status; payment recovery (via invoice.payment_
  *     succeeded webhook) clears the timer and restores active.
  *
@@ -53,6 +55,10 @@ function daysAgoIso(days: number): string {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch] ?? ch));
+}
+
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
@@ -71,7 +77,58 @@ export async function GET(request: Request) {
     advanced_to_suspended: 0,
     canceled: 0,
     disputes_closed: 0,
+    payment_notices_sent: 0,
+    payment_notices_failed: 0,
   };
+
+  // ----- P3: custom payment-attention reminder -----
+  // Stripe handles the actual retry ladder. QuoteCore sends one operational
+  // reminder after seven days and keeps the admin attention row visible.
+  // No allowance is renewed by this pass.
+  {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = admin as any;
+    const nowIso = new Date().toISOString();
+    const attention = await db.from('qcp_payment_attention')
+      .select('id, company_id, invoice_id, first_failed_at')
+      .eq('status', 'open').is('notice_sent_at', null).lte('notice_due_at', nowIso).limit(200);
+    if (attention.error) {
+      console.error('[cron/process-billing-lifecycle] payment attention read failed:', attention.error.message);
+    } else {
+      for (const row of attention.data ?? []) {
+        const companyResult = await db.from('companies').select('id, name, slug, billing_model, subscription_status')
+          .eq('id', row.company_id).maybeSingle();
+        if (companyResult.error || companyResult.data?.billing_model !== 'custom_setup') continue;
+        const userResult = await db.from('users').select('email, is_admin').eq('company_id', row.company_id).order('is_admin', { ascending: false }).limit(1).maybeSingle();
+        const to = userResult.data?.email;
+        if (!to) { summary.payment_notices_failed += 1; continue; }
+        const appBase = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '');
+        const billingLink = appBase && companyResult.data.slug ? `${appBase}/${encodeURIComponent(companyResult.data.slug)}/account/billing` : null;
+        const text = [
+          `We could not collect your latest QuoteCore+ subscription payment for ${companyResult.data.name}.`,
+          '',
+          'Your new monthly allowances have not been granted. Please update the card or payment method on your account.',
+          'During the short payment-recovery window you can only use allowance remaining from your last paid period.',
+          billingLink ? `Billing: ${billingLink}` : 'Open QuoteCore+ and go to Account > Billing to update your payment method.',
+          '',
+          'If you have already updated your payment details, Stripe may retry automatically and no further action may be needed.',
+        ].join('\n');
+        try {
+          await sendEmail({
+            to, subject: 'QuoteCore+ payment needs attention', text, html: text.split('\n').map((line: string) => line ? `<p>${escapeHtml(line)}</p>` : '<p>&nbsp;</p>').join(''),
+            tags: [{ name: 'kind', value: 'billing-payment-attention' }],
+          });
+          const marked = await db.from('qcp_payment_attention').update({ notice_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+            .eq('id', row.id).eq('status', 'open').is('notice_sent_at', null);
+          if (marked.error) throw new Error(marked.error.message);
+          summary.payment_notices_sent += 1;
+        } catch (error) {
+          summary.payment_notices_failed += 1;
+          console.error('[cron/process-billing-lifecycle] payment reminder failed:', error instanceof Error ? error.message : String(error));
+        }
+      }
+    }
+  }
 
   // ----- PASS 1: dunning curve -----
   // We advance in three SEPARATE queries (newest stage first) so a company

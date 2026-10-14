@@ -153,8 +153,23 @@ export async function fetchCatalogRows(catalogId: string, limit = 30000): Promis
       return { ok: false, error: 'You do not have access to this catalog.' };
     }
 
-    // Follow source_catalog_id if present (imported copy points to original)
-    const rowsCatalogId = catalog.source_catalog_id || catalogId;
+    // Follow source_catalog_id if present (imported copy points to original).
+    // Re-validate server-side that the source is a published supplier catalog:
+    // the source_catalog_id column is client-writable under RLS (own rows), so a
+    // forged pointer must not pivot this service-role read into an arbitrary
+    // private catalog. Falls back to the caller's own rows otherwise.
+    let rowsCatalogId = catalogId;
+    if (catalog.source_catalog_id) {
+      const { data: src } = await admin
+        .from('catalogs')
+        .select('id')
+        .eq('id', catalog.source_catalog_id)
+        .eq('visibility', 'published')
+        .eq('publication_status', 'published')
+        .not('supplier_profile_id', 'is', null)
+        .maybeSingle();
+      if (src) rowsCatalogId = catalog.source_catalog_id;
+    }
 
     const { data: rows, error } = await admin
       .from('catalog_rows')

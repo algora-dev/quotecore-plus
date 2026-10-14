@@ -21,6 +21,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
+  // Renders <meta name="color-scheme" content="only light"> on every page:
+  // Google's documented opt-out for Chrome Auto Dark Mode for Web Contents,
+  // which force-darkens light-designed sites for dark-mode users (invisible
+  // buttons). Note: metadata.colorScheme is ignored by Next 14+; it must live
+  // here. Intentional dark surfaces keep their own local color-scheme.
+  // Revert: remove this one line.
+  colorScheme: "only light",
 };
 
 const geistSans = Geist({
@@ -78,13 +85,6 @@ export const metadata: Metadata = {
       { url: '/icon.png', type: 'image/png' },
     ],
   },
-  // Pin the app to a light colour scheme. Tells Chromium-based browsers
-  // (and any browser respecting CSS color-scheme) not to force-dark our
-  // form inputs and surfaces. Users on Google's "force dark mode for web
-  // contents" flag were seeing unreadable input text. If/when we ship a
-  // real dark mode, unpin this. Paired with a CSS fallback in globals.css
-  // for browsers that ignore the meta hint.
-  colorScheme: 'light',
 };
 
 export default async function RootLayout({

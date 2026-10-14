@@ -7,4 +7,4 @@ export const metadata:Metadata={
  description:'Choose your trade, customise example components and measure a plan. Create a free quote from your quantities. Desktop and mobile. No signup needed to start.',
  alternates:{canonical:'/free-digital-takeoff'},
 };
-export default function FreeDigitalTakeoffPage(){return <><BlogHeader/><TakeoffLauncher/><SiteFooter/></>;}
+export default function FreeDigitalTakeoffPage(){return <><BlogHeader /><TakeoffLauncher/><SiteFooter/></>;}

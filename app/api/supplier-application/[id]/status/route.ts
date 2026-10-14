@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/app/lib/supabase/server";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -7,6 +8,10 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Admin-only mutation (pre-live audit H-01): service-role PATCH below must
+  // never be reachable by an unauthenticated caller.
+  await requireAdmin();
+
   const { id } = await params;
   const formData = await req.formData();
   const status = formData.get("status") as string;

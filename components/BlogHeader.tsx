@@ -10,25 +10,25 @@ import controls from "./marketing/MarketingButton.module.css";
 
 type NavItem = { label: string; href: string; app?: boolean };
 
-function buildNavItems(appHref: string): NavItem[] {
+function buildNavItems(appHref: string, homepage: boolean): NavItem[] {
   return [
     { label: "Open the App", href: appHref, app: true },
-    { label: "Features", href: "/features" },
-    { label: "Pricing", href: "/pricing" },
+    { label: "Features", href: homepage ? "#workflow" : "/features" },
+    { label: "Pricing", href: homepage ? "#pricing" : "/pricing" },
     { label: "Demo", href: "/demo" },
     { label: "Free Tools", href: "/free-tools" },
     { label: "Contact us", href: "/contact" },
   ];
 }
 
-export default function BlogHeader({ backLabel, backHref = "/", theme = "light" }: { backLabel?: string; backHref?: string; theme?: "light" | "dark" }) {
+export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", homepage = false }: { backLabel?: string; backHref?: string; theme?: "light" | "dark"; homepage?: boolean }) {
   const menuId = useId();
   const headerRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [appLink, setAppLink] = useState("https://app.quote-core.com");
-  const navItems = buildNavItems(appLink || "/login");
+  const navItems = buildNavItems(appLink || "/login", homepage);
 
   useEffect(() => {
     setAppLink(appUrl());

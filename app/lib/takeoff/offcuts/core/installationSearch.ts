@@ -155,7 +155,7 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
   let activeTrialId:string|undefined;
   const plans:Solution[]=[],seen=new Set([planSignature(previous)]);
   const accept=(s:Solution,id:string)=>{
-    check();s.engineVersion='2.28';s.objective='installation';s.layoutId=planSignature(s);
+    check();s.engineVersion='2.29';s.objective='installation';s.layoutId=planSignature(s);
     const errors=validateDraft({schemaVersion:1,...r,solution:s}).filter(i=>i.severity==='error');
     if(!errors.length&&s.installationPlan?.kind==='reversed-donors'&&!s.installationPlan.pairedReceiver&&!s.installationPlan.connectedReversal){report.rejectedCount++;report.trials.push({id,valid:false,reason:'missing-reversal-family-certificate'});return;}
     if(errors.length){report.rejectedCount++;report.trials.push({id,valid:false,reason:errors.map(e=>e.code).join(',')});return;}
@@ -205,7 +205,7 @@ export function searchInstallationPlans(r:SolveRequest,options:InstallationSearc
           const s=optimiseBankLayouts(r,{...hooks,bankVariant:variant,shouldCancel:check,onPortfolioCandidate:undefined,onCheckedCandidate:undefined,onDecisionTrace:undefined,onProgress:undefined,planSearch:{objective:'recommended'}})[0];
           if(!s)throw new Error('no-connected-bank-candidate');
           check();s.objective='installation';protectValleyReceivers(r,s,check);recalculateMetrics(s);
-          s.engineVersion='2.28';
+          s.engineVersion='2.29';
           s.installationPlan={model:INSTALLATION_PLAN_MODEL,kind:'reversed-donors',referenceLayoutId:planSignature(previous),
             donorFaceIds:scope.donorFaceIds,receiverFaceIds:scope.receiverFaceIds,siteSetoutConfirmed:false,reuseEndTrimMm:0};
           s.installationPlan.connectedReversal=deriveConnectedDonorCertificate(r,s,scope,planSignature(previous));

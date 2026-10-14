@@ -13,7 +13,7 @@ export interface ComponentEditorSettings {
   measurementType: MeasurementType; wasteType: WasteType; pitchEnabled: boolean;
   pricingStrategy: PricingStrategy; packPrice: string; packSize: string; packCoverage: string;
   heightMm: string; depthMm: string; hoursUnit: 'hr' | 'day'; wasteUnit: WasteUnit; notes: string;
-  soldBy: 'area' | 'lineal'; coverWidthMm: string;
+  soldBy: 'area' | 'lineal'; coverWidthMm: string; quantityDisplay: 'area' | 'lineal' | 'both';
 }
 export interface ComponentEditorInitial {
   name: string; sku: string; componentType: ComponentType; materialRate: string; labourRate: string;
@@ -140,6 +140,10 @@ export function SmartComponentEditor(props: Props) {
                   <option value="area">Square metres (m²)</option><option value="lineal">Lineal metres</option>
                 </QcSelect></QcField></div>}
               {genericTradesEnabled && s.measurementType === 'area' && strategy === 'per_unit' && s.soldBy === 'lineal' && numberField('cover', 'Cover width (mm)', s.coverWidthMm, value => set({ coverWidthMm: value }), { step: '1', help: 'Lineal metres = area ÷ cover. Example: 100 m² at 760 = 131.6 lm. An attached offcut plan supplies its exact purchased figure.' })}
+              {genericTradesEnabled && s.measurementType === 'area' && strategy === 'per_unit' && s.soldBy === 'lineal' && <div data-copilot="component-quantity-display"><QcField htmlFor={`${id}-quantity-display`} label="Show the quantity as" help="Display only - the stored measurement stays m² and rates never change. Lineal metres = m² ÷ cover width.">
+                <QcSelect id={`${id}-quantity-display`} value={s.quantityDisplay} onChange={e => set({ quantityDisplay: e.target.value as 'area' | 'lineal' | 'both' })}>
+                  <option value="area">m² only</option><option value="lineal">Lineal metres only</option><option value="both">Both (lm / m²)</option>
+                </QcSelect></QcField></div>}
             </div>
           </section>
           <section className="qc-pricing-section" aria-labelledby={`${id}-costs`}>

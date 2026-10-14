@@ -50,7 +50,7 @@
   --qc-selected-text: var(--qc-color-orange-ink);
   --qc-focus-ring: var(--qc-color-orange-ink);
   --qc-focus-gap: var(--qc-color-surface);
-  --qc-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --qc-font-sans: var(--font-geist-sans, Arial), Helvetica, sans-serif;
   --qc-font-size-body: 0.875rem;
   --qc-line-body: 1.5;
   --qc-radius-control: 12px;

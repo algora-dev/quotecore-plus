@@ -140,7 +140,9 @@ const nextConfig: NextConfig = {
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
       { key: 'X-DNS-Prefetch-Control', value: 'on' },
-      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+      // Microphone allowed same-origin (user-initiated): Smart Assistant voice
+      // notes in the app + free-tools dictation. Camera/geolocation stay denied.
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
     ];
 
     // X-Robots-Tag: noindex on non-production deployments only.
@@ -166,12 +168,6 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: globalHeaders,
-      },
-      // The Free Tools hub offers user-initiated voice dictation only.
-      // Keep microphone denied everywhere else; never request it on load.
-      {
-        source: '/free-tools',
-        headers: [{ key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' }],
       },
       // Strict CSP for the public docs surface (HTML).
       {

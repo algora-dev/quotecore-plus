@@ -3,221 +3,226 @@
 import { useState } from "react";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { MarketingButton } from "@/components/marketing/MarketingButton";
+import { homepageConfig } from "@/components/marketing/home/homepage-config";
+import { trackEvent } from "@/lib/analytics";
+import styles from "./ContactPage.module.css";
+
+function MailIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M3 6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v10.5a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 17.25V6.75z" /><path strokeLinecap="round" strokeLinejoin="round" d="m3.75 6 7.02 5.07a2.1 2.1 0 002.46 0L20.25 6" /></svg>;
+}
+
+function CalendarIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M7 3v3m10-3v3M4.75 9.25h14.5M6.25 4.5h11.5A2.25 2.25 0 0120 6.75v11A2.25 2.25 0 0117.75 20H6.25A2.25 2.25 0 014 17.75v-11A2.25 2.25 0 016.25 4.5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M8 13h.01M12 13h.01M16 13h.01M8 16.5h.01M12 16.5h.01" /></svg>;
+}
+
+function ArrowIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h13m-5-5 5 5-5 5" /></svg>;
+}
+
+function CheckIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m5 12.5 4.2 4.2L19 7" /></svg>;
+}
+
+function SparkIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3.5c.55 3.28 2.72 5.45 6 6-3.28.55-5.45 2.72-6 6-.55-3.28-2.72-5.45-6-6 3.28-.55 5.45-2.72 6-6Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M18.5 15.5c.28 1.66 1.34 2.72 3 3-1.66.28-2.72 1.34-3 3-.28-1.66-1.34-2.72-3-3 1.66-.28 2.72-1.34 3-3Z" /></svg>;
+}
+
+function HelpIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" strokeLinejoin="round" d="M9.8 9.25a2.45 2.45 0 014.66 1.07c0 1.78-1.9 2.15-2.46 3.38M12 17.2h.01" /></svg>;
+}
+
+function MessageIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5.5 4.5h13A2.5 2.5 0 0121 7v8a2.5 2.5 0 01-2.5 2.5H11L6.25 21v-3.5H5.5A2.5 2.5 0 013 15V7a2.5 2.5 0 012.5-2.5Z" /><path strokeLinecap="round" d="M7.5 9h9M7.5 13h6" /></svg>;
+}
+
+function ClockIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5V12l3 1.8" /></svg>;
+}
 
 export default function ContactPage() {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const bookingHref = homepageConfig.bookingHref || "#contact-form";
+
   return (
     <>
-      <BlogHeader backLabel="Back to homepage" backHref="/" />
-
-      <main className="relative overflow-hidden bg-[linear-gradient(180deg,#fff_0%,#fff7f2_48%,#fff_100%)]">
-        <div className="pointer-events-none absolute right-0 top-20 h-72 w-72 rounded-full bg-[#FF6B35]/8 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute left-0 bottom-24 h-64 w-80 rounded-full bg-[#FF6B35]/6 blur-3xl" aria-hidden="true" />
-        <div className="relative mx-auto max-w-7xl px-6 py-16 lg:px-8">
-        {/* Hero */}
-        <div className="mx-auto mb-14 max-w-4xl text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Get in touch</p>
-          <h1 className="mb-4 text-5xl font-semibold tracking-tight text-zinc-900 sm:text-6xl md:whitespace-nowrap">
-            We&apos;d love to hear from you
-          </h1>
-          <p className="text-lg leading-8 text-zinc-500">
-            Not ready to book a call? No problem. Send us a message and we&apos;ll get back to you within 24 hours - no jargon, no pressure.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-20 items-start">
-          {/* Left - info */}
-          <div>
-            <div className="space-y-8">
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-50">
-                  <svg className="h-5 w-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="mb-1 text-base font-semibold text-zinc-900">Email us directly</h3>
-                  <p className="mb-1 text-base leading-7 text-zinc-500">For general questions, support, or feedback.</p>
-                  <a href="mailto:info@quote-core.com" className="text-base font-semibold text-[#FF6B35] hover:underline">info@quote-core.com</a>
+      <BlogHeader />
+      <main className={styles.page}>
+        <section className={styles.hero} aria-labelledby="contact-title">
+          <div className={styles.container}>
+            <div className={styles.heroTop}>
+              <div className={styles.heroCopy}>
+                <p className={styles.eyebrow}>Contact QuoteCore+</p>
+                <h1 id="contact-title" className={styles.title}>How can we <span>help?</span></h1>
+                <p className={styles.lead}>Get an answer, book time with our team, or send us a message. Start with the option that gets you where you need to go fastest.</p>
+                <div className={styles.heroActions}>
+                  <MarketingButton href={bookingHref} variant="primary" size="large" icon={<CalendarIcon />} onClick={() => trackEvent("book_call_click", { source: "contact_hero" })}>Book a demo with our team</MarketingButton>
+                  <MarketingButton href="#contact-form" variant="glass" size="large" icon={<MessageIcon />}>Send a message</MarketingButton>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-50">
-                  <svg className="h-5 w-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="mb-1 text-base font-semibold text-zinc-900">Book a free call</h3>
-                  <p className="mb-1 text-base leading-7 text-zinc-500">15 minutes. No pitch. Just a straight conversation.</p>
-                  <a
-                    href="https://calendly.com/quote-core-info/15-minute-meeting"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-base font-semibold text-[#FF6B35] hover:underline"
-                  >
-                    Book on Calendly &rarr;
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-50">
-                  <svg className="h-5 w-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="mb-1 text-base font-semibold text-zinc-900">Response time</h3>
-                  <p className="text-base leading-7 text-zinc-500">We reply to all messages within 24 hours, usually much faster.</p>
-                </div>
-              </div>
+              <aside className={styles.heroAside} aria-label="Direct contact option">
+                <span className={styles.asideIcon}><MailIcon /></span>
+                <p className={styles.asideLabel}>Prefer email?</p>
+                <a className={styles.directEmail} href="mailto:info@quote-core.com" onClick={() => trackEvent("contact_email_click", { source: "contact_hero" })}>info@quote-core.com</a>
+                <p>Copy the address or open it in your email app. No form required.</p>
+              </aside>
             </div>
 
-            {/* Reassurance box */}
-            <div className="mt-10 rounded-2xl border border-zinc-100 bg-zinc-50 p-6">
-              <p className="mb-2 text-base font-semibold text-zinc-800">What happens when you reach out?</p>
-              <ul className="space-y-2 text-base leading-7 text-zinc-500">
-                <li className="flex items-start gap-2"><span className="mt-0.5 text-[#FF6B35] font-bold">&#10003;</span> A real person reads your message</li>
-                <li className="flex items-start gap-2"><span className="mt-0.5 text-[#FF6B35] font-bold">&#10003;</span> No automated sales sequences</li>
-                <li className="flex items-start gap-2"><span className="mt-0.5 text-[#FF6B35] font-bold">&#10003;</span> Straight, useful answer - no fluff</li>
-                <li className="flex items-start gap-2"><span className="mt-0.5 text-[#FF6B35] font-bold">&#10003;</span> Reply within 24 hours, often same day</li>
-              </ul>
+            <nav className={styles.routeGrid} aria-label="Contact options">
+              <article className={styles.routeCard}>
+                <span className={styles.routeIcon}><CalendarIcon /></span>
+                <span className={styles.routeNumber}>01</span>
+                <h2>Book a demo</h2>
+                <p>See QuoteCore+ in action and ask questions about how it fits your business.</p>
+                <span className={styles.routeLinks}>
+                  <a className={styles.routeLink} href={bookingHref} target={bookingHref.startsWith("#") ? undefined : "_blank"} rel={bookingHref.startsWith("#") ? undefined : "noopener noreferrer"} onClick={() => trackEvent("book_call_click", { source: "contact_route_demo" })}>Choose a time <ArrowIcon /></a>
+                  <a className={styles.routeLink} href="/demo" target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("contact_demo_click", { source: "contact_route_demo" })}>Try the demo yourself <ArrowIcon /></a>
+                </span>
+              </article>
+              <a className={styles.routeCard} href="/done-for-you-setup" target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("contact_setup_click", { source: "contact_route_setup" })}>
+                <span className={styles.routeIcon}><SparkIcon /></span>
+                <span className={styles.routeNumber}>02</span>
+                <h2>Done-for-you setup</h2>
+                <p>Want help setting up pricing, components or your workflow? Book time with the team.</p>
+                <span className={styles.routeLink}>Get setup help <ArrowIcon /></span>
+              </a>
+              <a className={styles.routeCard} href="/#questions" target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("contact_faq_click", { source: "contact_route_faq" })}>
+                <span className={styles.routeIcon}><HelpIcon /></span>
+                <span className={styles.routeNumber}>03</span>
+                <h2>Find a quick answer</h2>
+                <p>For common questions about the app, pricing and how QuoteCore+ works, start with the FAQs.</p>
+                <span className={styles.routeLink}>Browse FAQs <ArrowIcon /></span>
+              </a>
+              <a className={styles.routeCard} href="#contact-form">
+                <span className={styles.routeIcon}><MessageIcon /></span>
+                <span className={styles.routeNumber}>04</span>
+                <h2>Talk to our team</h2>
+                <p>Questions, account help, partnerships, feedback or something else. Send us the details.</p>
+                <span className={styles.routeLink}>Contact us <ArrowIcon /></span>
+              </a>
+            </nav>
+          </div>
+        </section>
+
+        <section className={styles.answers} aria-labelledby="answers-title">
+          <div className={`${styles.container} ${styles.answersGrid}`}>
+            <div className={styles.answersIntro}>
+              <p className={styles.lightEyebrow}>Before you contact us</p>
+              <h2 id="answers-title">You might already be one click from the answer.</h2>
+              <p>Some questions are quicker to solve without waiting for a reply. Here are the most common places to start.</p>
+              <MarketingButton href="/#questions" variant="glass" icon={<HelpIcon />} target="_blank" onClick={() => trackEvent("contact_faq_click", { source: "contact_answers" })}>View all FAQs</MarketingButton>
+            </div>
+
+            <div className={styles.questionList}>
+              <details className={styles.question}>
+                <summary>Can I see QuoteCore+ before I speak to anyone?<span><ArrowIcon /></span></summary>
+                <p>Yes. You can explore the demo first, then book a call if you want help applying it to your own workflow.</p>
+              </details>
+              <details className={styles.question}>
+                <summary>Can you help set up my pricing and components?<span><ArrowIcon /></span></summary>
+                <p>Yes. The done-for-you route is for businesses that want help getting their pricing, components and workflow into a usable starting point.</p>
+              </details>
+              <details className={styles.question}>
+                <summary>I have a product or account question. Where should I start?<span><ArrowIcon /></span></summary>
+                <p>If it is specific to your account or the answer here does not cover it, use the form or email us directly.</p>
+              </details>
+              <details className={styles.question}>
+                <summary>Can I send feedback or suggest a feature?<span><ArrowIcon /></span></summary>
+                <p>Absolutely. We want to hear what would make the app more useful. Send your idea through the form or email it to info@quote-core.com.</p>
+              </details>
             </div>
           </div>
+        </section>
 
-          {/* Right - form */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-            <h2 className="mb-1 text-2xl font-semibold text-zinc-900">Send us a message</h2>
-            <p className="mb-6 text-base leading-7 text-zinc-500">Fill in what you can - we only need your name, email, and message.</p>
+        <section className={styles.contactSection} aria-labelledby="form-title">
+          <div className={`${styles.container} ${styles.contactGrid}`}>
+            <div className={styles.contactCopy}>
+              <p className={styles.eyebrow}>Still need a hand?</p>
+              <h2>Talk to a real person.</h2>
+              <p>Send us what you need and give us as much context as you like. We will point you in the right direction, answer the question, or tell you the best next step.</p>
 
-            <form
-              className="space-y-5"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const form = e.currentTarget;
-                const data = Object.fromEntries(new FormData(form));
-                setStatus("sending");
-                try {
-                  const res = await fetch("/api/contact", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data),
-                  });
-                  if (res.ok) {
-                    setStatus("success");
-                  } else {
+              <div className={styles.contactFacts}>
+                <div><span><MailIcon /></span><div><strong>Email works too</strong><a href="mailto:info@quote-core.com">info@quote-core.com</a></div></div>
+                <div><span><ClockIcon /></span><div><strong>We reply within 24 hours</strong><p>Usually sooner during the working day.</p></div></div>
+                <div><span><CheckIcon /></span><div><strong>A person reads your message</strong><p>No automated support loop. Your enquiry goes to the team.</p></div></div>
+              </div>
+            </div>
+
+            <div id="contact-form" className={styles.formCard}>
+              <div className={styles.formIntro}>
+                <p className={styles.formKicker}>Send a message</p>
+                <h2 id="form-title">Tell us what you need.</h2>
+                <p>Fill in what you can. Only your name, email and message are required.</p>
+              </div>
+
+              <form
+                className={styles.form}
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  const form = event.currentTarget;
+                  const data = Object.fromEntries(new FormData(form));
+                  setStatus("sending");
+                  trackEvent("contact_form_submit", { source: "contact_page" });
+                  try {
+                    const response = await fetch("/api/contact", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(data),
+                    });
+                    setStatus(response.ok ? "success" : "error");
+                  } catch {
                     setStatus("error");
                   }
-                } catch {
-                  setStatus("error");
-                }
-              }}
-            >
-              <div>
-                <label htmlFor="name" className="block text-sm font-semibold text-zinc-700 mb-1.5">
-                  Your name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  placeholder="First name or full name"
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-base text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-100"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-zinc-700 mb-1.5">
-                  Email address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="you@company.com"
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-base text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-100"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="company" className="block text-sm font-semibold text-zinc-700 mb-1.5">
-                  Company name <span className="text-xs font-normal text-zinc-400">(optional)</span>
-                </label>
-                <input
-                  id="company"
-                  name="company"
-                  type="text"
-                  placeholder="Your business name"
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-base text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-100"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="subject" className="block text-sm font-semibold text-zinc-700 mb-1.5">
-                  Subject <span className="text-xs font-normal text-zinc-400">(optional)</span>
-                </label>
-                <input
-                  id="subject"
-                  name="subject"
-                  type="text"
-                  placeholder="e.g. Question about pricing, Feature request..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-base text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-100"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="message" className="block text-sm font-semibold text-zinc-700 mb-1.5">
-                  Your message <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows={5}
-                  required
-                  placeholder="Tell us what you need help with or what you'd like to know..."
-                  className="w-full resize-y rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-base text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-100"
-                />
-              </div>
-
-              {status !== "success" && (
-                <>
-                  <button
-                    type="submit"
-                    disabled={status === "sending"}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FF6B35] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28] disabled:opacity-60"
-                  >
-                    {status === "sending" ? "Sending..." : "Send message"}
-                    {status !== "sending" && (
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                    )}
-                  </button>
-                  <p className="text-center text-xs text-zinc-400">We reply within 24 hours. No spam, ever.</p>
-                </>
-              )}
-
-              {status === "success" && (
-                <div className="flex flex-col items-center gap-3 rounded-2xl border border-green-200 bg-green-50 px-6 py-8 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500 text-white text-xl font-bold">&#10003;</div>
-                  <p className="font-bold text-zinc-900 text-lg">Message sent!</p>
-                  <p className="text-sm text-zinc-500">We&apos;ll be in touch within 24 hours. Check your inbox - we&apos;ve sent you a copy too.</p>
-                </div>
-              )}
-
-              {status === "error" && (
-                <p className="text-center text-sm text-red-500">Something went wrong. Please email us directly at <a href="mailto:info@quote-core.com" className="underline">info@quote-core.com</a></p>
-              )}
-            </form>
+                }}
+              >
+                {status === "success" ? (
+                  <div className={styles.success} role="status" aria-live="polite">
+                    <span className={styles.successIcon} aria-hidden="true"><CheckIcon /></span>
+                    <strong>Message sent.</strong>
+                    <p>Thanks. We have your message and will get back to you within 24 hours.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className={styles.fieldRow}>
+                      <div className={styles.field}>
+                        <label htmlFor="name">Your name <span aria-hidden="true">*</span></label>
+                        <input className={styles.input} id="name" name="name" type="text" required placeholder="First name or full name" />
+                      </div>
+                      <div className={styles.field}>
+                        <label htmlFor="email">Email address <span aria-hidden="true">*</span></label>
+                        <input className={styles.input} id="email" name="email" type="email" required placeholder="you@company.com" />
+                      </div>
+                    </div>
+                    <div className={styles.fieldRow}>
+                      <div className={styles.field}>
+                        <label htmlFor="company">Company name <span className={styles.optional}>(optional)</span></label>
+                        <input className={styles.input} id="company" name="company" type="text" placeholder="Your business name" />
+                      </div>
+                      <div className={styles.field}>
+                        <label htmlFor="subject">Subject <span className={styles.optional}>(optional)</span></label>
+                        <input className={styles.input} id="subject" name="subject" type="text" placeholder="What can we help with?" />
+                      </div>
+                    </div>
+                    <div className={styles.field}>
+                      <label htmlFor="message">Your message <span aria-hidden="true">*</span></label>
+                      <textarea className={styles.textarea} id="message" name="message" rows={6} required placeholder="Tell us what you need help with, what you are trying to do, or what you would like us to know." />
+                    </div>
+                    <div>
+                      <button className={styles.submit} type="submit" disabled={status === "sending"}>
+                        {status === "sending" ? "Sending..." : "Send message"}
+                        {status !== "sending" && <ArrowIcon />}
+                      </button>
+                      <p className={styles.note}>We only use these details to respond to your enquiry.</p>
+                    </div>
+                    {status === "error" && <p className={styles.error} role="alert">Something went wrong. Please email us directly at <a href="mailto:info@quote-core.com">info@quote-core.com</a>.</p>}
+                  </>
+                )}
+              </form>
+            </div>
           </div>
-        </div>
-        </div>
+        </section>
       </main>
-
       <SiteFooter />
     </>
   );

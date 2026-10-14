@@ -70,7 +70,12 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
                 emit:content=>emit(Object.entries(access.permissions).filter(([,v])=>v!=='hidden').map(([k])=>k as AssistantSection),content),
                 report:event=>console.info('[smart-assistant:task]',JSON.stringify(event))});
             input = {...input,userMessage:task.message};
-            if (workflowHint && ['new','close'].includes(task.decision.disposition)) await closeDraftWorkflow(input.supabase,access,input.conversationId,input.runId);
+            // Unconfirmed working briefs remain task-bound. A committed, quote-bound
+            // brief is different: keep it available as recent revisable context across
+            // solved/unrelated tasks. Starting a genuinely new draft will supersede it
+            // inside sa_v2_workflow_save; merely changing conversational task does not.
+            if (workflowHint && workflowHint.state !== 'committed' && ['new','close'].includes(task.decision.disposition))
+                await closeDraftWorkflow(input.supabase,access,input.conversationId,input.runId);
         } else if (capabilities.state === 'setup_required' || capabilities.state === 'ready') {
             // A workspace that is enabled for retrieval but lacks the resolver
             // capability is an incompatible deployment. By contrast, a normal
@@ -82,8 +87,10 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
         }
     }
     // Do not let a legacy low-level proposal silently diverge from a live,
-    // server-owned brief. A genuinely new task closes that brief above.
-    const continuingWorkflow = !!workflowHint && !['new', 'close'].includes(task?.decision.disposition ?? '');
+    // server-owned brief. Unconfirmed briefs stay task-bound; a committed
+    // brief is treated as active only for an actual continuation/follow-up.
+    const continuingWorkflow = !!workflowHint && (!['new', 'close'].includes(task?.decision.disposition ?? '')
+        || task?.decision.reason === 'committed_workflow_followup');
     const workflowCorrectionNotice = 'This task has a server-owned working brief. Use revise_draft_workflow for corrections so the same draft and all other measurements are retained. Start a new task for unrelated edits.';
     let resolver: ReturnType<typeof createEntityResolver> | undefined;
     const prepareComponent = async (args: Record<string, unknown>, expectedParentId: string) => {
@@ -441,7 +448,7 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
                 getSession(), getCapabilities(signal),
             ]);
             const enabled = retrievalEnabled() && capabilities.enabled;
-            const pendingDraft = workflowEnabled ? await pendingDraftWorkflowContext(input.supabase, access, input.conversationId,task?.visibleRun) : null;
+            const pendingDraft = workflowEnabled && continuingWorkflow ? await pendingDraftWorkflowContext(input.supabase, access, input.conversationId,task?.visibleRun) : null;
             let pendingResolution: unknown = null;
             if (enabled || capabilities.knowledge) {
                 retrieval ??= createRetrievalService({ client: input.supabase, access, runId: input.runId,

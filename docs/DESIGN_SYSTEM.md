@@ -478,3 +478,26 @@ Desktop rows become stacked cards on mobile:
 | Filter tabs `text-sm` | `text-xs` |
 | Large icon in empty state | Simple `text-sm text-slate-500` text |
 | Invent new shadow values | Use existing: `shadow-[0_0_8px_rgba(255,107,53,0.08)]` / `shadow-[0_0_16px_rgba(255,107,53,0.5)]` |
+
+## Marketing Pages Type Standard (CSS Modules)
+
+> Source of truth: the homepage (components/marketing/home/Homepage.module.css). Governs all marketing pages built with CSS Modules (contact, done-for-you-setup, future external handoffs). Font family is always Geist from the root layout. Never declare font-family in page CSS.
+
+| Element | Standard |
+|---|---|
+| Container | width: 100%; max-width: 1280px; padding-inline: 24px; margin-inline: auto |
+| Section rhythm | ~98px blocks: clamp(64px, 8vw, 98px) 0 |
+| Hero H1 | clamp(43px, 4.16vw, 60px), weight 700, line-height 1.045, letter-spacing -.053em, text-wrap: balance |
+| Section H2 | clamp(32px, 3.45vw, 48px), weight 650, line-height 1.085, letter-spacing -.045em, text-wrap: balance |
+| Eyebrow | 10px, weight 700, line-height 1.6, letter-spacing .24em, uppercase, margin-bottom 24px, gap 18px, 42px gradient dash: linear-gradient(90deg, var(--orange), #ffb36b) |
+| Eyebrow colour | --orange-ink (#BD4A1A) on light backgrounds, #ff9a68 on dark backgrounds |
+| Body copy | 15-17px, line-height 1.7-1.75, muted token |
+| Card body | 13px, line-height 1.6-1.68 |
+| Small notes | 12px, line-height 1.65. Never below 10px |
+| Weight scale | 550 / 600 / 650 / 700 only. Never 680, 720, 750 |
+| Buttons | MarketingButton component only: 14px, weight 650, min-height 52px, 12px radius |
+| Heading limits | H1/H2 line-height never below 1.045 (descender clipping). Letter-spacing never tighter than -.053em |
+
+Exceptions require owner approval and get noted here (current: DFY hero headline is an approved 3-line message headline at clamp(34px, 2.85vw, 42px), weight 700, line-height 1.30, approved V9 2026-10-13).
+
+External handoff rule: include this table in every outbound README. Returns that deviate get normalized before integration.

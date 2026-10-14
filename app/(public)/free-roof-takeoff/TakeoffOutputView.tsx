@@ -16,7 +16,7 @@ function Benefits(){return <div className={s.upsell}><p className={s.eyebrow}>Ke
   <ActionLink href="/demo" target="_blank" rel="noopener noreferrer"><Icon name="play"/>Try the app demo</ActionLink>
   <div className={s.upsellLinks}><a href="/" target="_blank" rel="noopener noreferrer">Explore QuoteCore+</a><span>·</span><a href="/done-for-you-setup" target="_blank" rel="noopener noreferrer">Done For You Setup</a></div>
  </div>;}
-function TransferDialog({report,onClose,onOpenQuote}:{report:ReportModel;onClose:()=>void;onOpenQuote?:(url:string)=>void}){
+function TransferDialog({report,onClose,onOpenQuote,trade}:{report:ReportModel;onClose:()=>void;onOpenQuote?:(url:string)=>void;trade:TakeoffTrade}){
  const [priced,setPriced]=useState(!report.hasExamples&&report.hasPrices),[ack,setAck]=useState(false);
  const lines=quoteLines(report,priced);
  const needsAck=priced&&report.hasExamples;
@@ -29,7 +29,7 @@ function TransferDialog({report,onClose,onOpenQuote}:{report:ReportModel;onClose
    </fieldset>
    {needsAck&&<div className={s.notice}><Icon name="info"/><div><p><strong>This includes fictitious example prices.</strong> They are marked in the imported item names so they cannot be mistaken for reviewed selling prices.</p><label className={s.check} style={{marginTop:10}}><input type="checkbox" checked={ack} onChange={e=>setAck(e.target.checked)}/>I understand these are example prices and will replace them before sending a customer quote.</label></div></div>}
    <table className={s.transferTable}><thead><tr><th>Item</th><th>Quantity</th><th>Unit price</th></tr></thead><tbody>{lines.map((l,i)=><tr key={i}><td>{l.description}</td><td>{number(l.qty)} {l.unit}</td><td>{money(l.rate,report.currency)}</td></tr>)}</tbody></table>
-   <div className={`${s.notice} ${s.info}`}><Icon name="info"/><p>Quantities already include the applicable pitch and waste. Don’t add them again. Check selling prices and tax in the Quote Generator before generating your document.</p></div>
+   {trade==='roofing'&&<div className={`${s.notice} ${s.info}`}><Icon name="info"/><p>Quantities already include the applicable pitch and waste. Don’t add them again. Check selling prices and tax in the Quote Generator before generating your document.</p></div>}
    <p className={s.help}>Opens in a new tab so your takeoff stays here. The free document generators have their own shared daily allowance; opening the editor does not use a generation credit.</p>
  </Dialog>;
 }
@@ -64,7 +64,7 @@ export function TakeoffOutputView({payload,extras,unitSystem='metric',specs=[],t
       {report.components.map(c=><div className={s.reportGroup} key={c.id} data-print-group>
        <div className={s.reportGroupHead} data-print-keep><div><strong>{c.name}</strong><small>{number(c.raw)} {c.unit} measured{c.pitchApplied?` → ${number(c.pitched)} ${c.unit} pitched`:''}</small><small>{c.wasteLabel}{c.packs!=null?` · ${c.packs} whole packs`:''}</small></div>
         <div className={s.reportGroupValue}><strong>{number(c.quantity)} {c.unit}</strong><small>{c.cost!=null?money(c.cost,currency):'Not priced'}</small>{c.example&&<span className={`${s.chip} ${s.exampleChip}`}>Example rate</span>}</div></div>
-       <details><summary>{c.entries.length} {c.entries.length===1?'measurement':'measurements'} · view working</summary><table className={s.entryTable}><thead><tr><th>Area / entry</th><th>Measured</th><th>After pitch</th><th>Incl. waste</th></tr></thead><tbody>{c.entries.map((e,i)=><tr key={i}><td>{report.areas.find(a=>a.id===e.areaId)?.name??(e.areaId===null&&report.areas.length===1?report.areas[0].name:'Unassigned')} · {i+1}</td><td>{number(e.raw)} {c.unit}</td><td>{number(e.pitched)} {c.unit}</td><td>{number(e.quantity)} {c.unit}</td></tr>)}</tbody></table>
+       <details><summary>{c.entries.length} {c.entries.length===1?'measurement':'measurements'} · view working</summary><table className={s.entryTable}><thead><tr><th>Area / entry</th><th>Measured</th>{trade==='roofing'&&<th>After pitch</th>}<th>Incl. waste</th></tr></thead><tbody>{c.entries.map((e,i)=><tr key={i}><td>{report.areas.find(a=>a.id===e.areaId)?.name??(e.areaId===null&&report.areas.length===1?report.areas[0].name:'Unassigned')} · {i+1}</td><td>{number(e.raw)} {c.unit}</td>{trade==='roofing'&&<td>{number(e.pitched)} {c.unit}</td>}<td>{number(e.quantity)} {c.unit}</td></tr>)}</tbody></table>
        {c.cost!=null&&<p>Material {money(c.material??0,currency)} + labour {money(c.labour??0,currency)}. {c.packs!=null?'Packs round up once for this component across all areas.':'Rates apply to the quantity including waste.'}</p>}</details>
       </div>)}
       {report.hasPrices&&<div className={s.totals} data-print-keep><p><span>Materials</span><span>{money(report.materials,currency)}</span></p><p><span>Labour</span><span>{money(report.labour,currency)}</span></p><p><span>{report.hasExamples?'Example estimate':'Estimated total'}</span><span>{money(report.total,currency)}</span></p></div>}
@@ -79,7 +79,7 @@ export function TakeoffOutputView({payload,extras,unitSystem='metric',specs=[],t
    <div className={s.mobileUpsell} style={{marginTop:24}}><Benefits/></div>
    <div className={s.outputFoot}><Button quiet onClick={()=>setConfirmNew(true)}><Icon name="plus"/>Start a new takeoff</Button><span>Session only. Download your results before closing this page.</span></div>
   </div>
-  {transfer&&<TransferDialog report={report} onClose={()=>setTransfer(false)} onOpenQuote={onOpenQuote}/>}
+  {transfer&&<TransferDialog report={report} trade={trade} onClose={()=>setTransfer(false)} onOpenQuote={onOpenQuote}/>}
   {showPlan&&<Dialog title="Your source plan" description="Reference image only. Open the measurement workspace to view or edit drawings." onClose={()=>setShowPlan(false)}><img src={extras.planDataUrl} alt="The plan uploaded for this takeoff" style={{width:'100%',display:'block'}}/></Dialog>}
   {confirmNew&&<Dialog title="Start a new takeoff?" description="This clears the current measurement session. Download the report first if you need to keep it." onClose={()=>setConfirmNew(false)} footer={<><Button onClick={()=>setConfirmNew(false)}>Keep this takeoff</Button><Button primary onClick={onRestart}>Start new takeoff</Button></>}><p>Your current components stay available until you choose a different trade or close the page.</p></Dialog>}
  </div>;

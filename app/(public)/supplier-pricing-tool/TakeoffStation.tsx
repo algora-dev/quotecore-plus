@@ -86,15 +86,6 @@ function mapTakeoffPayload(p: DemoFinishPayload): MeasurementSet {
       label: e.label || `${def.singular} ${i + 1}`,
     }));
   }
-  // TEMPORARY DEBUG (Shaun's troubleshooting round): log everything captured
-  // at the takeoff boundary so we can verify persistence + downstream maths.
-  if (typeof console !== 'undefined') {
-    console.log('[supplier-tool] takeoff payload:', JSON.stringify(p, null, 2));
-    console.log('[supplier-tool] mapped measurement set:', GROUP_DEFS.map(d => ({
-      group: d.key,
-      entries: set.groups[d.key].entries.map(e => ({ label: e.label, value: e.value, pitch: e.pitchDegrees ?? null })),
-    })).filter(g => g.entries.length > 0));
-  }
   return set;
 }
 

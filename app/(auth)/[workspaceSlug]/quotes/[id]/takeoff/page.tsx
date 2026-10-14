@@ -1,5 +1,6 @@
 import { canEnterChapter } from '@/app/lib/demo/guide';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { getSignedUrl } from '@/app/lib/storage/helpers';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { TakeoffPage } from './TakeoffPage';
@@ -71,9 +72,11 @@ export default async function Page({
   const aiTakeoffAvailable = !demoContext && aiTakeoffEnabled && isRoofingCompany;
 
   // AI Assist points: fetch current usage for UI display.
+  // Privileged RPCs (service-role only after the 20261013110000 hardening).
+  const admin = createAdminClient();
   let aiAssistPoints: { used: number; limit: number; remaining: number; isBlocked: boolean } | null = null;
   if (aiTakeoffAvailable && !demoContext) {
-    const { data: pointsData } = await supabase
+    const { data: pointsData } = await admin
       .rpc('get_ai_assist_points_status', { p_company_id: profile.company_id });
     if (pointsData) {
       const rows = pointsData as { used: number; point_limit: number | null; remaining: number; is_blocked: boolean }[];
@@ -93,7 +96,7 @@ export default async function Page({
   // Ridge, Barge, Spouting, Roof Area) before the component fetch. Idempotent -
   // early-returns if already seeded. Awaited so the rows are guaranteed present.
   if (aiTakeoffAvailable) {
-    await supabase.rpc('ensure_ai_system_components', { p_company_id: profile.company_id });
+    await admin.rpc('ensure_ai_system_components', { p_company_id: profile.company_id });
   }
 
   // Load roof plan file (FIRST uploaded plan). planUrl is only the fallback
@@ -140,7 +143,7 @@ export default async function Page({
   // System rows are always included (AI takeoff placeholders, not customer-facing).
   const { data: components } = await supabase
     .from('component_library')
-    .select('id, name, measurement_type, collection_id, is_system, is_active')
+    .select('id, name, measurement_type, collection_id, is_system, is_active, quantity_display, cover_width_mm')
     .eq('company_id', profile.company_id)
     .or('is_active.eq.true,is_system.eq.true')
     .order('name');

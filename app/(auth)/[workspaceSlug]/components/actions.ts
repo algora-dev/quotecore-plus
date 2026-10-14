@@ -202,6 +202,7 @@ const UPDATABLE_COMPONENT_FIELDS = [
   'depth_value_mm',
   'sold_by',
   'cover_width_mm',
+  'quantity_display',
   'waste_unit',
   'pricing_strategy',
   'pack_price',
@@ -550,7 +551,9 @@ export async function updateLibraryVisibility(
 
       const snapshot = buildSnapshotArray(currentComponents ?? []);
 
-      const { error: rpcError } = await supabase
+      // Privileged RPC (service-role only after the 20261013110000 hardening).
+      const { createAdminClient: createAdminForPublish } = await import('@/app/lib/supabase/admin');
+      const { error: rpcError } = await createAdminForPublish()
         .rpc('supplier_publish_update', {
           p_library_id: id,
           p_snapshot: snapshot as unknown as import('@/app/lib/supabase/database.types').Json,

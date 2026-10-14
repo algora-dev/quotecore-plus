@@ -39,7 +39,7 @@ import { useTakeoffActions } from '@/app/lib/takeoff/actionsContext';
 import type { TakeoffFinishPayload } from '@/app/lib/takeoff/finishPayload';
 // Offcuts V1: isolated review module; no quote/persistence changes.
 import { fromQuoteCore, type QuoteCoreSnapshot } from '@/app/lib/takeoff/offcuts/adapters/quotecore';
-import { OFFCUT_MEASUREMENT_OPTION, materialFigureToken, materialMeasurement, materialOptionLabel, materialUnitForComponent, upsertMaterialMeasurement, type OffcutEntryProvenance } from '@/app/lib/takeoff/offcuts/core/reusableQuantity';
+import { OFFCUT_MEASUREMENT_OPTION, materialFigureToken, materialMeasurement, materialOptionLabel, materialUnitForComponent, materialDisplayValue, upsertMaterialMeasurement, type OffcutEntryProvenance } from '@/app/lib/takeoff/offcuts/core/reusableQuantity';
 import { reconcileCanvasSnapshot, type SceneMeasurementObject } from '@/app/lib/takeoff/offcuts/adapters/canvasSnapshot';
 import type { WorkbenchHandle, OffcutOnePagerPayload } from '@/app/lib/takeoff/offcuts/ui/workbench';
 import type { QuoteQuantityProposal } from '@/app/lib/takeoff/offcuts/core/quantities';
@@ -121,6 +121,10 @@ interface Component {
   default_measurement_type?: string;
   /** System placeholder components (AI Takeoff) - hidden from manual add selector. */
   is_system?: boolean;
+  /** Lineal display preference + cover width (component_library snapshot).
+   * Display only - stored measurements stay m²; pricing unchanged. */
+  quantity_display?: string | null;
+  cover_width_mm?: number | string | null;
 }
 
 interface ComponentCollection {
@@ -149,6 +153,10 @@ interface RoofArea {
    *  for newly drawn areas (they belong to the current page). Used to filter
    *  cross-page areas out of saves, mirroring ComponentMeasurement.fromPageId. */
   fromPageId?: string | null;
+  /** Offcuts pseudo-area (owner spec 2026-10-12): persistent cut-plan figure
+   * offered to area components in the reuse dropdown. Attaches as final
+   * purchased material - no pitch/waste recompute (value_basis 'offcuts'). */
+  offcutProvenance?: OffcutEntryProvenance & { value_basis?: 'offcuts'; plan_value?: number } | null;
   /** Area-ownership fix (2026-07-05): DB quote_roof_areas.id this polygon
    *  belongs to, stamped at DRAW time (not save time). Prevents polygons
    *  being re-stamped to whatever area is active when the save fires. */
@@ -1243,6 +1251,15 @@ export function TakeoffWorkstation({
       if (m.pageId) ad.pageIds.add(m.pageId);
       
       if (m.componentId === null && m.type === 'area') {
+        const offcutLabel = allRoofAreas.find(a => a.id === areaKey)?.label ?? '';
+        if (offcutLabel.startsWith('Offcuts')) {
+          // Offcuts pseudo-area (owner spec 2026-10-12): restore the flag + minimal
+          // provenance from the persisted area label/value so attaching stays final
+          // purchased material (no pitch/waste recompute).
+          ad.areas.push({ id: m.id, name: offcutLabel, points: m.points ?? [], area: m.value, pitch: 0, visible: m.visible, fromPageId: m.pageId ?? null, quoteRoofAreaId: areaKey === '__no_area__' ? null : areaKey,
+            offcutProvenance: { value_basis: 'offcuts' as const, plan_value: m.value, offcut_quantity: m.value, offcut_unit: 'm2' as const, offcut_plan_name: offcutLabel.replace(/^Offcuts · /, ''), offcut_page_id: m.pageId ?? undefined } });
+          return;
+        }
         const idx = ad.areas.length;
         const label = allRoofAreas.find(a => a.id === areaKey)?.label ?? existingRoofAreas[idx]?.label ?? `Area ${idx + 1}`;
         // Per-entry pitch fix (2026-07-06): use the pitch this polygon was
@@ -1408,6 +1425,28 @@ export function TakeoffWorkstation({
   // Keep this alias for any existing code that still references it; prefer
   // tradeConfig properties in new code.
   const quoteIsGeneric = !tradeConfig.pitchRequired;
+
+  // Owner directive 2026-10-13: non-pitch trades (the free cladding/flooring
+  // tools; generic main-app trades) never see the pitch-only prompt. The
+  // drawn area confirms immediately at 0 degrees, exactly as if the user had
+  // accepted "Save (0)" in the old prompt. Roofing keeps the prompt; the
+  // modal render below is additionally gated on tradeConfig.pitchRequired so
+  // it can never flash for a non-pitch trade.
+  useEffect(() => {
+    if (!showPitchOnlyPrompt || tradeConfig.pitchRequired) return;
+    setShowPitchOnlyPrompt(false);
+    handleSaveArea(isExistingAreaMode ? existingAreaLabel : (initialPageName || 'New Area'), 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fires once per prompt-open; handleSaveArea is re-created each render.
+  }, [showPitchOnlyPrompt, tradeConfig, isExistingAreaMode, existingAreaLabel, initialPageName]);
+
+  // Owner directive 2026-10-13 (reuse-measurement flow): non-pitch trades
+  // attach a saved area's as-drawn value directly - the plan/pitched chooser
+  // never opens. Roofing keeps the chooser (pitched vs plan vs offcuts).
+  useEffect(() => {
+    if (!areaAttachChoice || tradeConfig.pitchRequired) return;
+    handleConfirmAreaAttach();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fires once per chooser-open; handler is re-created each render.
+  }, [areaAttachChoice, tradeConfig]);
   useEffect(() => {
     // P1-1b: suppress in mode=add - user is continuing on an existing area, not creating a new one.
     if (takeoffMode === 'add') return;
@@ -2533,18 +2572,40 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     // quoteRoofAreaId stamp - never resolve by the shared stamp).
     const ra = roofAreas.find(a => a.id === roofAreaId);
     if (!ra || !(ra.area > 0)) return;
+    if (ra.offcutProvenance) {
+      // Offcuts pseudo-area: attach as FINAL PURCHASED MATERIAL (owner spec
+      // 2026-10-12). value_basis 'offcuts' skips pitch/waste at save time.
+      pushHistorySnapshot();
+      const unit = calibrations[0]?.unit ?? 'meters';
+      const display = materialDisplayValue(ra.area, 'm2', unit);
+      const entry: ComponentMeasurement = {
+        id: `apply-${Date.now()}`, type: 'area', value: display, points: [], visible: true, canvasObjects: [],
+        fromPageId: ra.fromPageId ?? currentPageIdRef.current, quoteRoofAreaId: null,
+        entryInputs: { ...ra.offcutProvenance, plan_value: display },
+      };
+      setComponentMeasurements(groups => {
+        const group = groups.find(g => g.componentId === componentId);
+        const updated = { componentId, expanded: true, measurements: upsertMaterialMeasurement(group?.measurements ?? [], entry) };
+        return group ? groups.map(g => g.componentId === componentId ? updated : g) : [...groups, updated];
+      });
+      setIsDirty(true);
+      return;
+    }
     // 2026-09-03: ask the user WHICH value to attach (plan vs pitched) instead
     // of silently snapshotting the pitched value. The choice + plan value are
     // stored on the entry so the save path recomputes from the LIVE pitch -
     // fixing the stale-snapshot bug where pitch was set after attaching.
     const pitched = ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1);
+    // Owner directive 2026-10-13 (reuse-measurement flow): non-pitch trades
+    // never see the plan/pitched chooser - the as-drawn (plan) value attaches
+    // directly via the auto-confirm effect. Roofing keeps the chooser.
     setAreaAttachChoice({
       componentId,
       roofAreaId,
       plan: ra.area,
       pitched,
       pitch: ra.pitch || 0,
-      basis: 'pitched',
+      basis: tradeConfig.pitchRequired ? 'pitched' : 'plan',
     });
   };
 
@@ -3928,6 +3989,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // state only restores on mount/reload.
   const touchHydrationRef = useRef<typeof hydrationData>(hydrationData);
   touchHydrationRef.current = hydrationData;
+  // Live mirror of the AI quality selection for the once-assigned touch
+  // adapter (its closures are created on first render and never rebuilt,
+  // so they must read the CURRENT choice through this ref, not the state).
+  const aiQualityLevelRef = useRef(aiQualityLevel);
+  aiQualityLevelRef.current = aiQualityLevel;
   if (touchOutlineAdapterRef.current == null) {
     touchOutlineAdapterRef.current = {
       subscribe: (listener) => { touchBridgeListeners.current.add(listener); return () => { touchBridgeListeners.current.delete(listener); }; },
@@ -4137,8 +4203,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           available: true,
           blocked: ai.blocked,
           // Free tool: credits replace points (display shows free scans, not point costs).
-          cost: freeToolMode ? 0 : getAiScanPointCost('low'),
-          qualityLevel: 'low',
+          cost: freeToolMode ? 0 : getAiScanPointCost(aiQualityLevelRef.current),
+          qualityLevel: aiQualityLevelRef.current,
         };
       },
       startOutlineOnlyScan: async (): Promise<AiOutlineScanResult> => {
@@ -4151,7 +4217,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         }
         const imageUrl = live?.currentImageUrl ?? null;
         if (!imageUrl) return { ok: false, error: 'No plan image URL available.' };
-        const qualityLevel = 'low' as const; // Touch outline-only default; desktop choice is unchanged.
+        const qualityLevel = aiQualityLevelRef.current; // Owner 10-04: each scan charges the tier chosen for it (was hardcoded 'low').
         const dims = live?.canvasDims ?? { width: 2000, height: 1700 };
 
         const abortController = new AbortController();
@@ -4568,7 +4634,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         const outlinePoints = saved.points.map(p => ({ x: p.x, y: p.y }));
         const imageUrl = live?.currentImageUrl ?? null;
         if (!imageUrl) return { ok: false, error: 'No plan image URL available.' };
-        const qualityLevel = 'low' as const; // Touch default; desktop choice unchanged.
+        const qualityLevel = aiQualityLevelRef.current; // Owner 10-04: per-scan tier choice (was hardcoded 'low').
         const dims = live?.canvasDims ?? { width: 2000, height: 1700 };
         const abortController = new AbortController();
         touchComponentScanAbortRef.current = abortController;
@@ -6395,9 +6461,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           // The hydration effect + reconstruct effect will fire again.
           // We need to reset the refs and re-apply hydration data.
           const grouped = new Map<string, { componentId: string; measurements: any[]; expanded: boolean }>();
-          const hydratedRoofAreas: { id: string; name: string; points: { x: number; y: number }[]; area: number; pitch: number; visible: boolean; fromPageId?: string | null }[] = [];
+          const hydratedRoofAreas: RoofArea[] = [];
           hydrationData.measurements.forEach(m => {
             if (m.componentId === null && m.type === 'area') {
+              const offcutLabel2 = allRoofAreas.find(a => a.id === (m.quoteRoofAreaId ?? undefined))?.label ?? '';
+              if (offcutLabel2.startsWith('Offcuts')) {
+                // Offcuts pseudo-area: see hydration notes above (final material).
+                hydratedRoofAreas.push({ id: m.id, name: offcutLabel2, points: m.points || [], area: m.value, pitch: 0, visible: m.visible, fromPageId: m.pageId || null,
+                  offcutProvenance: { value_basis: 'offcuts' as const, plan_value: m.value, offcut_quantity: m.value, offcut_unit: 'm2' as const, offcut_plan_name: offcutLabel2.replace(/^Offcuts · /, ''), offcut_page_id: m.pageId ?? undefined } });
+                return;
+              }
               hydratedRoofAreas.push({
                 id: m.id,
                 name: 'Area ' + (hydratedRoofAreas.length + 1),
@@ -7919,6 +7992,26 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const figure = proposalCoverFigure(proposal, scope);
     if (!figure) throw new Error('Cut-plan quantities do not match the active page and roof area.');
     figureRequestRef.current++; applyOffcutFigure(figure);
+    // Owner spec 2026-10-12: ALSO materialize the plan as a persistent pseudo-area
+    // so ANY area component can attach it from the reuse dropdown - no page/area
+    // scoping, survives refresh via the normal area-measurement persistence
+    // (label 'Offcuts · <plan>' + value round-trip; provenance restored on hydrate).
+    setRoofAreas(prev => [
+      ...prev.filter(ra => !(ra.offcutProvenance && ra.offcutProvenance.offcut_layout_id === figure.layoutId)),
+      {
+        id: `offcut-${figure.layoutId.slice(0, 8)}-${Date.now().toString(36)}`,
+        name: `Offcuts · ${figure.planName || 'Selected plan'}`,
+        points: [], area: figure.m2, pitch: 0, visible: true,
+        fromPageId: figure.scope.pageId, quoteRoofAreaId: null,
+        offcutProvenance: {
+          value_basis: 'offcuts' as const, plan_value: figure.m2, offcut_quantity: figure.m2, offcut_unit: 'm2' as const,
+          offcut_layout_id: figure.layoutId, offcut_source_revision: figure.sourceRevision,
+          offcut_faces_revision: figure.facesRevision, offcut_page_id: figure.scope.pageId,
+          offcut_area_scope_id: figure.scope.areaScopeId, offcut_plan_name: figure.planName || 'Selected plan',
+        },
+      },
+    ]);
+    setIsDirty(true);
   }, [quote.id, applyOffcutFigure]);
   const saveOffcutOnePager = useCallback(async (payload: OffcutOnePagerPayload) => {
     const { saveOffcutOnePagerToJob } = await import('@/app/lib/takeoff/offcutOnePager');
@@ -8714,7 +8807,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                         {offcutAreaFigure && materialUnitForComponent(mt) && <option value={`${OFFCUT_MEASUREMENT_OPTION}:${materialFigureToken(offcutAreaFigure)}`}>{materialOptionLabel(offcutAreaFigure, mt, calibrations[0]?.unit ?? 'meters')}</option>}
                                         {(mt === 'area' ? roofAreas : []).map(ra => (
                                           <option key={ra.id} value={ra.id}>
-                                            {ra.name} · {(ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1)).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}{ra.pitch ? ` (pitch ${Math.round(ra.pitch)}°)` : ''}
+                                            {ra.name}{ra.offcutProvenance ? ' · purchased material' : ''} · {(ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1)).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}{!ra.offcutProvenance && ra.pitch ? ` (pitch ${Math.round(ra.pitch)}°)` : ''}
                                           </option>
                                         ))}
                                       </select>
@@ -8827,7 +8920,21 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                             <span className="flex-1">
                                               {(m.type === 'line' || m.type === 'multi_lineal') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
                                               {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×-h`}
-                                              {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
+                                              {m.type === 'area' && (() => {
+                                                // Lineal display preference (owner spec 2026-10-12): lm derived
+                                                // from the cover width; stored value stays area; pricing unchanged.
+                                                const libComp = components.find(c => c.id === id);
+                                                const disp = libComp?.quantity_display;
+                                                const cover = libComp?.cover_width_mm != null ? Number(libComp.cover_width_mm) : null;
+                                                if ((disp === 'lineal' || disp === 'both') && cover && cover > 0 && m.value > 0) {
+                                                  const areaM2 = calibrations[0]?.unit === 'feet' ? m.value * 0.09290304 : m.value;
+                                                  const lm = areaM2 / (cover / 1000);
+                                                  const lmTxt = calibrations[0]?.unit === 'feet' ? `${(lm / 0.3048).toFixed(2)} ft` : `${lm.toFixed(2)} lm`;
+                                                  const areaTxt = `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`;
+                                                  return disp === 'lineal' ? lmTxt : `${lmTxt} / ${areaTxt}`;
+                                                }
+                                                return `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`;
+                                              })()}
                                               {m.type === 'point' && `${m.value.toFixed(0)} item${Math.abs(m.value - 1) > 0.001 ? 's' : ''}${isCornerValueBasis(m.entryInputs?.value_basis) ? ' - corners' : ''}`}
                                               {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×-h`}
                                               {m.type === 'volume_3d' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
@@ -9483,9 +9590,10 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       AI Assist is not available on your current plan. Upgrade to Growth or Pro to unlock AI roof scanning.
                     </div>
                   )}
-                  {/* AGENT-TODO(P4-AI-COST-01): the existing 2/6/12 cost hints differ
-                      from the 2/4/8 affordability thresholds below. Gavin must reconcile
-                      the guard with the owned point-cost contract. Values preserved here. */}
+                  {/* P4-AI-COST-01 resolved 2026-10-12: the affordability guard now
+                      uses the canonical pointCost.ts contract (low=2/medium=6/high=12)
+                      via getAiScanPointCost — matches the cost hints above and the
+                      server-side deduction exactly. */}
                   {/* Quality selector + scan button: hidden when blocked */}
                   {!aiPoints?.isBlocked && (
                     <>
@@ -9495,7 +9603,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                           { value: 'medium', label: 'Medium', hint: freeToolMode ? 'Medium size & complexity' : 'Medium size & complexity · 6 points' },
                           { value: 'high', label: 'High', hint: freeToolMode ? 'Larger, complex roofs' : 'Larger, complex roofs · 12 points' },
                         ] as const).map(opt => {
-                          const cost = opt.value === 'low' ? 2 : opt.value === 'medium' ? 4 : 8;
+                          const cost = getAiScanPointCost(opt.value);
                           const freeHighLock = freeToolMode && opt.value === 'high';
                           const canAfford = freeToolMode ? !freeHighLock : (!aiPoints || aiPoints.remaining >= cost);
                           return (
@@ -9681,7 +9789,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
       {/* Area-to-component attach chooser (2026-09-03): plan vs pitched.
           Default Pitched. Stores the basis + plan value so the save path
           recomputes from live pitch - never a stale snapshot again. */}
-      {areaAttachChoice && (
+      {areaAttachChoice && tradeConfig.pitchRequired && (
         <QcHostedDialog label="Attach area to component" size="md" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-5 w-96 border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">Attach area to component</h2>
@@ -9781,7 +9889,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
       )}
 
       {/* P1-1b pitch-only prompt for new-page mode (first area boundary drawn) */}
-      {showPitchOnlyPrompt && (
+      {showPitchOnlyPrompt && tradeConfig.pitchRequired && (
         <QcHostedDialog label="Area pitch" size="md" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-4 md:p-6 w-80 border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">

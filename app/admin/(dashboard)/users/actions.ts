@@ -102,47 +102,55 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
   const q = (query ?? '').trim();
 
   if (!q) {
-    // No query: return most recent accounts
-    const { data: companies, error: coErr } = await admin
-      .from('companies')
-      .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-    if (coErr) return { ok: false, error: coErr.message };
+    // Owner 2026-10-12: paginate at the USER level with an exact total. The
+    // old company-level window (50 most recent companies) flooded with
+    // per-session demo companies and hid older real accounts - the admin saw
+    // "38 users" while the dashboard counted 44.
+    const { count: total, error: countErr } = await admin
+      .from('users')
+      .select('id', { count: 'exact', head: true });
+    if (countErr) return { ok: false, error: countErr.message };
 
-    const companyIds = (companies ?? []).map((c) => c.id);
-    if (companyIds.length === 0) return { ok: true, users: [], total: 0 };
-
-    const { data: allUsers } = await admin
+    const { data: pageUsers, error: uErr } = await admin
       .from('users')
       .select('id, email, full_name, is_admin, company_id')
-      .in('company_id', companyIds);
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (uErr) return { ok: false, error: uErr.message };
+
+    const companyIds = Array.from(new Set((pageUsers ?? []).map((u) => u.company_id).filter(Boolean))) as string[];
+    let companiesById: Record<string, { id: string; name: string; plan_code: string | null; subscription_status: string | null; admin_paused: boolean; stripe_subscription_id: string | null; comp_until: string | null }> = {};
+    if (companyIds.length > 0) {
+      const { data: cos, error: cErr } = await admin
+        .from('companies')
+        .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
+        .in('id', companyIds);
+      if (cErr) return { ok: false, error: cErr.message };
+      for (const c of cos ?? []) companiesById[c.id] = c;
+    }
 
     const activeMap = await fetchLastActiveMap(
       admin,
-      (allUsers ?? []).map((u) => u.id),
+      (pageUsers ?? []).map((u) => u.id),
     );
 
-    const users: SearchUserRow[] = [];
-    for (const co of companies ?? []) {
-      const coUsers = (allUsers ?? []).filter((u) => u.company_id === co.id);
-      for (const u of coUsers) {
-        users.push({
-          id: u.id,
-          email: u.email,
-          fullName: u.full_name,
-          companyId: co.id,
-          companyName: co.name,
-          planCode: co.plan_code,
-          subscriptionStatus: co.subscription_status,
-          stripeSubscriptionId: co.stripe_subscription_id ?? null,
-          compUntil: (co as { comp_until?: string | null }).comp_until ?? null,
-          adminPaused: co.admin_paused,
-          lastActiveAt: activeMap.get(u.id) ?? null,
-        });
-      }
-    }
-    return { ok: true, users, total: users.length };
+    const users: SearchUserRow[] = (pageUsers ?? []).map((u) => {
+      const co = companiesById[u.company_id ?? ''];
+      return {
+        id: u.id,
+        email: u.email,
+        fullName: u.full_name,
+        companyId: u.company_id ?? '',
+        companyName: co?.name ?? 'Unknown',
+        planCode: co?.plan_code ?? null,
+        subscriptionStatus: co?.subscription_status ?? null,
+        stripeSubscriptionId: co?.stripe_subscription_id ?? null,
+        compUntil: co?.comp_until ?? null,
+        adminPaused: co?.admin_paused ?? false,
+        lastActiveAt: activeMap.get(u.id) ?? null,
+      };
+    });
+    return { ok: true, users, total: total ?? users.length };
   }
 
   // Search by email first
@@ -555,4 +563,103 @@ export async function deleteAccount(
     (errors.length ? ` Note: ${errors.length} non-fatal cleanup warning(s) logged.` : '');
 
   return { ok: true, summary };
+}
+
+// ---------------------------------------------------------------------------
+// P3: payment attention queue for custom subscription failures.
+// ---------------------------------------------------------------------------
+
+export interface PaymentAttentionRow {
+  attentionId: string;
+  companyId: string;
+  companyName: string;
+  billingModel: string;
+  subscriptionStatus: string | null;
+  userId: string | null;
+  email: string | null;
+  stripeCustomerId: string | null;
+  stripeMode: 'test' | 'live';
+  stripeSubscriptionId: string;
+  invoiceId: string;
+  firstFailedAt: string;
+  lastFailedAt: string;
+  failureCount: number;
+  noticeDueAt: string;
+  noticeSentAt: string | null;
+  lastSignInAt: string | null;
+  lastMeteredActivityAt: string | null;
+  storageTouchedAfterFailure: boolean;
+  usageAfterFailure: { quotes: number; scanTokens: number; assistantTasks: number };
+}
+
+export type PaymentAttentionResult =
+  | { ok: true; rows: PaymentAttentionRow[] }
+  | { ok: false; error: string };
+
+export async function getPaymentAttention(limit: number = 50): Promise<PaymentAttentionResult> {
+  await requireAdmin();
+  const admin = createAdminClient();
+  // New P3 tables intentionally use a narrow cast until generated DB types are refreshed.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = admin as any;
+  const attention = await db.from('qcp_payment_attention')
+    .select('id, company_id, stripe_mode, subscription_id, invoice_id, first_failed_at, last_failed_at, failure_count, notice_due_at, notice_sent_at')
+    .eq('status', 'open').order('first_failed_at', { ascending: true }).limit(Math.max(1, Math.min(limit, 100)));
+  if (attention.error) return { ok: false, error: attention.error.message };
+  const source = (attention.data ?? []) as Array<Record<string, unknown>>;
+  if (!source.length) return { ok: true, rows: [] };
+
+  const companyIds = [...new Set(source.map(r => String(r.company_id)))];
+  const [companiesResult, usersResult] = await Promise.all([
+    db.from('companies').select('id, name, billing_model, subscription_status, stripe_customer_id').in('id', companyIds),
+    db.from('users').select('id, email, is_admin, company_id').in('company_id', companyIds),
+  ]);
+  if (companiesResult.error) return { ok: false, error: companiesResult.error.message };
+  if (usersResult.error) return { ok: false, error: usersResult.error.message };
+
+  const companies = new Map((companiesResult.data ?? []).map((c: Record<string, unknown>) => [String(c.id), c]));
+  const users = (usersResult.data ?? []) as Array<{ id: string; email: string; is_admin: boolean; company_id: string }>;
+  const activeMap = await fetchLastActiveMap(admin, users.map(u => u.id));
+  const minFailure = source.reduce((min, r) => Math.min(min, Date.parse(String(r.first_failed_at))), Number.POSITIVE_INFINITY);
+  const since = Number.isFinite(minFailure) ? new Date(minFailure).toISOString() : new Date().toISOString();
+  const [ledgerResult, storageResult] = await Promise.all([
+    db.from('qcp_usage_ledger').select('company_id, resource, units, state, created_at').in('company_id', companyIds).gte('created_at', since),
+    db.from('qcp_storage_holds').select('company_id, updated_at').in('company_id', companyIds).gte('updated_at', since),
+  ]);
+  if (ledgerResult.error) return { ok: false, error: ledgerResult.error.message };
+  if (storageResult.error) return { ok: false, error: storageResult.error.message };
+
+  const ledger = (ledgerResult.data ?? []) as Array<{ company_id: string; resource: string; units: number; state: string; created_at: string }>;
+  const storage = (storageResult.data ?? []) as Array<{ company_id: string; updated_at: string }>;
+  const rows: PaymentAttentionRow[] = source.map(raw => {
+    const companyId = String(raw.company_id);
+    const failureMs = Date.parse(String(raw.first_failed_at));
+    const co = (companies.get(companyId) ?? {}) as Record<string, unknown>;
+    const companyUsers = users.filter(u => u.company_id === companyId);
+    const primary = companyUsers.find(u => u.is_admin) ?? companyUsers[0] ?? null;
+    const relevant = ledger.filter(e => e.company_id === companyId && Date.parse(e.created_at) >= failureMs);
+    const billable = relevant.filter(e => e.state === 'consumed');
+    const latestLedgerMs = relevant.reduce((v, e) => Math.max(v, Date.parse(e.created_at)), Number.NEGATIVE_INFINITY);
+    const latestSignIn = companyUsers.map(u => activeMap.get(u.id)).filter((v): v is string => !!v)
+      .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null;
+    return {
+      attentionId: String(raw.id), companyId, companyName: String(co.name ?? 'Unknown company'),
+      billingModel: String(co.billing_model ?? 'unknown'), subscriptionStatus: co.subscription_status == null ? null : String(co.subscription_status),
+      userId: primary?.id ?? null, email: primary?.email ?? null,
+      stripeCustomerId: co.stripe_customer_id == null ? null : String(co.stripe_customer_id),
+      stripeMode: raw.stripe_mode === 'live' ? 'live' : 'test',
+      stripeSubscriptionId: String(raw.subscription_id), invoiceId: String(raw.invoice_id),
+      firstFailedAt: String(raw.first_failed_at), lastFailedAt: String(raw.last_failed_at), failureCount: Number(raw.failure_count ?? 1),
+      noticeDueAt: String(raw.notice_due_at), noticeSentAt: raw.notice_sent_at == null ? null : String(raw.notice_sent_at),
+      lastSignInAt: latestSignIn,
+      lastMeteredActivityAt: Number.isFinite(latestLedgerMs) ? new Date(latestLedgerMs).toISOString() : null,
+      storageTouchedAfterFailure: storage.some(e => e.company_id === companyId && Date.parse(e.updated_at) >= failureMs),
+      usageAfterFailure: {
+        quotes: billable.filter(e => e.resource === 'quote').reduce((n, e) => n + Number(e.units ?? 0), 0),
+        scanTokens: billable.filter(e => e.resource === 'scan').reduce((n, e) => n + Number(e.units ?? 0), 0),
+        assistantTasks: billable.filter(e => e.resource === 'assistant').reduce((n, e) => n + Number(e.units ?? 0), 0),
+      },
+    };
+  });
+  return { ok: true, rows };
 }

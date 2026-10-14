@@ -582,3 +582,22 @@
 - [x] Usage ledger: finished run writes exactly one assistant_usage_events row with token counts (PASS)
 - [x] Poisoned doc: chunk with script-tag content is invisible cross-tenant; SafeMessage renders escaped (PASS)
 - [ ] Live UI pass on RS Roofing: enable toggle at /account/smart-assistant, send a real turn in /[workspaceSlug]/assistant (Shaun)
+
+## Offcuts V2.29 (deploy 14dchfjri, commit 98371ed5)
+- [ ] Header/debug shows engine 2.29 AND qc-offcuts-worker-v229 together (no mixed old-worker)
+- [ ] Rerun latest two user roofs + two earlier known-good roofs (expect 12-face: 67 sheets / 405.776 lm; 14-face: 63 sheets / 289.305 lm)
+- [ ] Recommended improves; Least Material / Simplest Cuts baselines unchanged
+- [ ] Reverse search: first checked result auto-previews on drawing + card selected; nothing applied to quote until Use this plan in quote
+- [ ] Switch original vs reversal via Showing on drawing dropdown; no duplicate quantity application, no implicit price changes
+- [ ] Review persistence: authenticated save + reopen/restore
+- [ ] Export Cut Plan / diagnostic / one-pager flows in authenticated host
+
+## Smart Assistant V1.1 context continuity (external handoff, migration 20261013173000)
+- [ ] Solved task + backward reference: confirm a quote edit via Confirm card, tap Done, ask an unrelated question, then "change that quote we did earlier to X" resolves the right quote and still demands a new Confirm
+- [ ] Thanks no longer closes: mid-task "Thanks." then "and what about the labour on it?" continues the same task (no boundary card)
+- [ ] Two-hour pause: live task awaiting input survives a 2h gap and continues without re-asking from scratch (TTL now 3h)
+- [ ] Beyond 3h TTL: explicit backward reference still understood from recent text but record is reread; expired resolver state not resurrected
+- [ ] Two plausible recent quotes + "change that quote to X" produces one compact disambiguation, not a guess
+- [ ] Done on a committed quote-bound workflow leaves the brief committed (not closed); later correction starts a NEW task reusing the committed brief; manual quote edits elsewhere still trip the committed-snapshot guard
+- [ ] Unrelated new question does not mention or use the old committed draft
+- [ ] Old Confirm buttons from before the update remain unusable; action/proposal expiry unchanged

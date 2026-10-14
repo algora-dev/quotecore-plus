@@ -25,7 +25,7 @@
 // presentation every wrapper is `display: contents` / `hidden` and the root
 // carries the exact original `w-[125%] -ml-[12.5%]` widening classes - the
 // desktop layout is bit-for-bit (extra contents-divs only, no layout effect).
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useImmersiveTakeoffAttribute } from './immersiveWorkspace';
@@ -70,6 +70,12 @@ interface TouchWorkspaceShellProps {
     onDiscard: () => void;
     saveLabel?: string;
   };
+  /** Guided demo (owner 2026-10-12): 'landscape-preferred' inverts the
+   *  phone-class orientation behaviour - landscape is ALLOWED (visual-viewport
+   *  pinning handles browser chrome; fullscreen requested where supported)
+   *  and portrait shows a dismissible flip prompt instead. Default
+   *  'portrait-only' keeps the owner 2026-10-07 landscape block untouched. */
+  orientationMode?: 'portrait-only' | 'landscape-preferred';
 }
 
 const VIEW_OPTIONS: readonly { value: WorkspaceViewPreference; label: string }[] = [
@@ -128,6 +134,7 @@ export function TouchWorkspaceShell({
   overlay,
   backHref,
   exitGuard,
+  orientationMode = 'portrait-only',
 }: TouchWorkspaceShellProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -145,6 +152,14 @@ export function TouchWorkspaceShell({
   // viewport must not push the return-to-touch button off a phone screen.
   const viewportBounds = useVisualViewportBounds(active || mounted);
   const [backGuardOpen, setBackGuardOpen] = useState(false);
+  // Guided demo (owner 2026-10-12): landscape-first canvas. Portrait shows a
+  // dismissible flip prompt; the first canvas entry (landscape reached, or the
+  // prompt dismissed in portrait) announces itself so the demo helper opens,
+  // and browser fullscreen is requested where supported (Android/Chrome).
+  const [portraitPromptOpen, setPortraitPromptOpen] = useState(true);
+  const [demoLandscape, setDemoLandscape] = useState(false);
+  const landscapeAnnouncedRef = useRef(false);
+  const shellRef = useRef<HTMLDivElement>(null);
   // Landscape lock (owner 2026-10-07): phone-class landscape hands a third of
   // the canvas to browser chrome (address/bookmark bars) - blocked with a
   // rotate prompt. Supersedes the old "turn sideways" hint (§3.2).
@@ -199,7 +214,7 @@ export function TouchWorkspaceShell({
     const pointerMq = window.matchMedia('(pointer: coarse)');
     const update = () => {
       const shortEdge = Math.min(window.innerWidth, window.innerHeight);
-      setLandscapeBlocked(orientationMq.matches && pointerMq.matches && shortEdge <= 820);
+      setLandscapeBlocked(orientationMode === 'portrait-only' && orientationMq.matches && pointerMq.matches && shortEdge <= 820);
     };
     update();
     orientationMq.addEventListener('change', update);
@@ -208,7 +223,39 @@ export function TouchWorkspaceShell({
       orientationMq.removeEventListener('change', update);
       window.removeEventListener('resize', update);
     };
-  }, [active]);
+  }, [active, orientationMode]);
+
+  // Guided demo orientation (owner 2026-10-12): track landscape without
+  // blocking it; the first landscape entry announces the canvas and requests
+  // element fullscreen where the browser supports it (iOS Safari keeps the
+  // pinned visual viewport instead).
+  useEffect(() => {
+    if (!active || orientationMode !== 'landscape-preferred') { setDemoLandscape(false); return; }
+    const mq = window.matchMedia('(orientation: landscape)');
+    const update = () => setDemoLandscape(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, [active, orientationMode]);
+  // Guided demo landing (owner 2026-10-12 evening): land straight in the
+  // coached flow. The canvas entry is announced on MOUNT (any orientation) so
+  // the demo helper opens immediately instead of behind a blocking "click to
+  // continue" flip gate. Browser fullscreen is still requested only on the
+  // first real LANDSCAPE entry (mount has no user gesture to satisfy it).
+  useEffect(() => {
+    if (!active || orientationMode !== 'landscape-preferred') return;
+    if (!landscapeAnnouncedRef.current) {
+      landscapeAnnouncedRef.current = true;
+      window.dispatchEvent(new Event('qc-demo-takeoff-canvas-entered'));
+    }
+  }, [active, orientationMode]);
+  useEffect(() => {
+    if (!demoLandscape) return;
+    const root = shellRef.current;
+    if (root?.requestFullscreen && typeof document !== 'undefined' && !document.fullscreenElement) {
+      root.requestFullscreen().catch(() => { /* iOS Safari / denied: pinned viewport stays */ });
+    }
+  }, [demoLandscape]);
 
   // U1 (plan section 3.2): lock underlying page scrolling while the immersive
   // touch presentation is active. Pre-existing styles and scroll position are
@@ -245,6 +292,7 @@ export function TouchWorkspaceShell({
   // every intermediate wrapper is display:contents - layout bit-for-bit.
   return (
     <div
+      ref={shellRef}
       className={
         active
           ? 'fixed inset-0 z-50 flex flex-row bg-slate-900 text-white'
@@ -292,6 +340,32 @@ export function TouchWorkspaceShell({
           {children}
         </div>
         {active && overlay}
+        {/* Guided demo (owner 2026-10-12 evening): the flip nudge is a compact,
+            DISMISSIBLE chip instead of a full-cover gate - visitors land in the
+            coached flow immediately and the canvas + rail stay usable in
+            portrait. It clears itself when the phone reaches landscape. */}
+        {active && orientationMode === 'landscape-preferred' && !demoLandscape && portraitPromptOpen && (
+          <div className="pointer-events-none absolute inset-x-3 top-3 z-[90] flex justify-center" role="status">
+            <div className="pointer-events-auto flex max-w-md items-center gap-2 rounded-2xl border border-white/15 bg-slate-900/90 py-1.5 pl-3 pr-1.5 text-xs font-semibold leading-snug text-slate-200 shadow-lg backdrop-blur">
+              <svg viewBox="0 0 24 24" fill='none' stroke='currentColor' strokeWidth={1.8} className='h-4 w-4 shrink-0 text-[#FF6B35]' aria-hidden='true'>
+                <rect x='3.5' y='8.5' width='17' height='7' rx='2' />
+                <path d='M8.5 5.5A7.5 7.5 0 0 1 5 8' strokeLinecap='round' />
+                <path d='M8.5 5.5V6M8.5 5.5H7' strokeLinecap='round' strokeLinejoin='round' />
+              </svg>
+              <span className='min-w-0 flex-1 text-left'>Turn your phone sideways for the full-width plan, or keep going in portrait.</span>
+              <button
+                type='button'
+                aria-label='Dismiss the rotate hint'
+                className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/10 hover:text-white'
+                onClick={() => setPortraitPromptOpen(false)}
+              >
+                <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth={2} className='h-4 w-4' aria-hidden='true'>
+                  <path d='M6 6l12 12M18 6L6 18' strokeLinecap='round' />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
         {/* Landscape lock (owner 2026-10-07): full-cover rotate prompt above
             every sheet/rail layer while a phone-class device is sideways. */}
         {active && landscapeBlocked && (

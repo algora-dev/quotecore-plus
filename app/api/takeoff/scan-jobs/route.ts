@@ -163,7 +163,6 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const profile = await requireCompanyContext();
-    const supabase = await createSupabaseServerClient();
 
     const { searchParams } = new URL(req.url);
     const jobId = searchParams.get('jobId');
@@ -172,7 +171,13 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing jobId.' }, { status: 400 });
     }
 
-    const { data: cancelResult, error: cancelError } = await supabase.rpc('cancel_ai_scan_job', {
+    // Privileged RPC (service-role only after the 20261013110000 hardening).
+    const admin = createServiceClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    );
+    const { data: cancelResult, error: cancelError } = await admin.rpc('cancel_ai_scan_job', {
       p_job_id: jobId,
       p_company_id: profile.company_id,
     });

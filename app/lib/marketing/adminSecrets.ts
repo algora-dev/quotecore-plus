@@ -23,6 +23,13 @@ interface CacheEntry {
 let cache: Record<string, CacheEntry> = {};
 const CACHE_TTL_MS = 60_000;
 
+// Per-key env fallbacks (pre-live audit M-01): the unsubscribe HMAC must never
+// silently fall back to the admin signups key - the two secrets are independent.
+const ENV_FALLBACKS: Record<string, string | undefined> = {
+  admin_signups_api_key: process.env.ADMIN_SIGNUPS_API_KEY,
+  unsubscribe_hmac_secret: process.env.UNSUBSCRIBE_HMAC_SECRET,
+};
+
 async function getConfigValue(key: string): Promise<string | null> {
   const hit = cache[key];
   if (hit && Date.now() - hit.fetchedAt < CACHE_TTL_MS) return hit.value;
@@ -34,10 +41,10 @@ async function getConfigValue(key: string): Promise<string | null> {
       .eq('key', key)
       .maybeSingle();
     const value = error ? null : data?.value ?? null;
-    cache[key] = { value: value ?? process.env.ADMIN_SIGNUPS_API_KEY ?? null, fetchedAt: Date.now() };
+    cache[key] = { value: value ?? ENV_FALLBACKS[key] ?? null, fetchedAt: Date.now() };
     return cache[key].value;
   } catch {
-    cache[key] = { value: process.env.ADMIN_SIGNUPS_API_KEY ?? null, fetchedAt: Date.now() };
+    cache[key] = { value: ENV_FALLBACKS[key] ?? null, fetchedAt: Date.now() };
     return cache[key].value;
   }
 }

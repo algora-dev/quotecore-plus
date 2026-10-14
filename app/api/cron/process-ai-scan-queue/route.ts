@@ -16,10 +16,15 @@ export const runtime = 'nodejs';
 export const maxDuration = 60; // Vercel hobby max
 
 export async function POST(req: NextRequest) {
-  // Auth: check CRON_SECRET (set in Vercel env)
+  // Auth: check CRON_SECRET (set in Vercel env). Fail CLOSED: a missing
+  // secret is a server misconfiguration (500), never an open endpoint.
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    console.error('[cron:scan-queue] CRON_SECRET is not configured');
+    return NextResponse.json({ error: 'Cron auth not configured' }, { status: 500 });
+  }
   const authHeader = req.headers.get('authorization');
-  const expectedAuth = `Bearer ${process.env.CRON_SECRET || ''}`;
-  if (process.env.CRON_SECRET && authHeader !== expectedAuth) {
+  if (authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

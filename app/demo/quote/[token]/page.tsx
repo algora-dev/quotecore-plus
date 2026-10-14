@@ -14,5 +14,11 @@ export default async function DemoCustomerPage({params}:{params:Promise<{token:s
  <div className="relative overflow-hidden border bg-white shadow-sm"><div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"><span className="rotate-[-25deg] select-none text-5xl font-black text-orange-700/15 sm:text-7xl">DEMO ONLY</span></div>
  <QuotePreview quote={quote as QuoteRow} lines={lines.filter(line=>line.is_visible).map(line=>({id:line.id,text:line.custom_text??'',quantityText:line.quantity_text,amount:line.custom_amount??0,showPrice:line.show_price,showUnits:line.show_units??true}))} subtotal={subtotal} taxLines={tax.lines} taxTotal={tax.total} total={total}
  companyName={quote.cq_company_name??'QCP Roofing & Construction'} companyAddress={quote.cq_company_address??''} companyPhone="" companyEmail="" companyLogoUrl="/MainQCP.png" footerText={`DEMO - NOT A REAL QUOTE. No payment is due. ${quote.cq_footer_text??''}`} currency={quote.currency??'GBP'} showEditButtons={false} showQuantityColumn={!!quote.show_quantity_column} hideLinePrices={!!quote.hide_line_prices} hideTotals={!!quote.hide_totals}/></div>
- <DemoCustomerResponse token={token} initialStatus={quote.status}/><p className="mt-5 text-center text-xs text-slate-500">Example prices only. This is not pricing advice. No customer notification or supplier message is sent when you respond.</p></div></main>;
+ <DemoCustomerResponse token={token} initialStatus={quote.status}/>
+ <section aria-label="What happens when you respond" className="mt-5 rounded-2xl border border-[var(--qc-border-divider)] bg-[var(--qc-bg-surface)] p-5 shadow-sm">
+ <p className="text-xs font-bold uppercase tracking-wider text-[var(--qc-color-orange-ink)]">What happens when you respond</p>
+ <p className="mt-2 text-sm leading-6 text-[var(--qc-text-primary)]">Accept or decline below and the quote status updates in the sender&apos;s QuoteCore+ account straight away. They also receive an alert and a message they can view - just like a real customer response.</p>
+ <p className="mt-2 text-sm leading-6 text-[var(--qc-text-primary)]">Businesses can also see when a quote has been opened or read by the customer. In fact, opening this page just did that - the quote now shows a Viewed status in their account.</p>
+ <p className="mt-3 text-xs leading-5 text-[var(--qc-text-secondary)]">Example prices only. This is not pricing advice. Nothing is ordered, paid or emailed.</p>
+ </section></div></main>;
 }

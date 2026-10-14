@@ -1,0 +1,3 @@
+.badge { display:inline-flex; align-items:center; gap:12px; max-width:100%; padding:10px 14px; border:1px solid #ff7a2433; border-radius:12px; background:#fff; color:#27303a; font-size:13px; font-weight:650; line-height:1.4; box-shadow:0 3px 12px #17212b08; }
+.icons { display:flex; align-items:center; gap:8px; flex:none; color:#f56816; }
+@media(max-width:380px) { .badge { padding:9px 11px; gap:10px; font-size:12px; } }
