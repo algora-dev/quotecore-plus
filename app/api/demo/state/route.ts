@@ -26,9 +26,18 @@ export async function GET(request: NextRequest) {
         .eq('quote_id', guidedJob).eq('component_library_id', guidedComponent);
       skylightAdded = !found.error && (found.count ?? 0) > 0;
     }
+    // Customer-response tracking (owner 2026-10-13): the visitor's app side
+    // polls this snapshot, so the guided quote's status + first-open timestamp
+    // ride the existing 5s refresh. Accept/decline writes come from the scoped
+    // customer-quote endpoint; viewed_at from readDemoCustomer on first open.
+    let guidedQuote: { status: string; viewedAt: string | null } | null = null;
+    if (guidedJob) {
+      const q = await admin.from('quotes').select('status, viewed_at').eq('id', guidedJob).eq('company_id', context.companyId).maybeSingle();
+      if (!q.error && q.data) guidedQuote = { status: q.data.status, viewedAt: q.data.viewed_at ?? null };
+    }
     return demoJson({ sessionId: context.sessionId, expiresAt: context.expiresAt, slug: co.data.slug, tutorialState: context.tutorialState,
       progress: guideProgress(context.tutorialState), aiEnabled: control.aiEnabled && allowance.configured,
-      selfSendEnabled: process.env.DEMO_SELF_SEND_ENABLED === 'true', skylightAdded, allowance,
+      selfSendEnabled: process.env.DEMO_SELF_SEND_ENABLED === 'true', skylightAdded, guidedQuote, allowance,
       units: co.data.default_measurement_system === 'imperial_ft' || co.data.default_measurement_system === 'imperial_rs' ? co.data.default_measurement_system : 'metric' });
   } catch (error) { return demoErrorResponse(error); }
 }

@@ -46,6 +46,14 @@ export async function readDemoCustomer(token:string){
  ]);
  if(company.error||quote.error||lines.error||taxes.error)throw new DemoError('This demo document is temporarily unavailable.',503);
  if(company.data?.plan_code!=='demo'||!quote.data)throw new DemoError('Demo document not found.',404);
+ // Read tracking (owner 2026-10-13): the first open of the customer view marks
+ // viewed_at on the scoped demo row so the visitor's own account can surface a
+ // "Viewed" status + alert, exactly like the product's read tracking. Awaited
+ // (fire-and-forget never runs on Vercel); idempotent and best-effort.
+ if(!quote.data.viewed_at&&['draft','confirmed','sent'].includes(quote.data.status)){
+  const viewed=await db.from('quotes').update({viewed_at:new Date().toISOString()}).eq('id',claims.quoteId).eq('company_id',companyId).is('viewed_at',null).in('status',['draft','confirmed','sent']).select('viewed_at').maybeSingle();
+  if(!viewed.error&&viewed.data?.viewed_at)quote.data.viewed_at=viewed.data.viewed_at;
+ }
  const subtotal=(lines.data??[]).filter(line=>line.include_in_total).reduce((total,line)=>total+(line.custom_amount??0),0);
  const taxRows = taxes.data?.length ? taxes.data : (quote.data.tax_rate > 0 ? [{ id:'legacy', name:'Tax', rate_percent:quote.data.tax_rate, include_in_quote:true, include_in_labor:true }] : []);
  const tax=computeTaxLines(taxRows,subtotal,'quote');

@@ -26,7 +26,7 @@ function guideCopy(text?: string) {
 export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialState }: Props) {
   const router = useRouter(); const pathname = usePathname();
   const session = useDemoSession(sessionId, expiresAt, initialState);
-  const { state, units, allowance, features, expired, pending, syncError, refresh } = session;
+  const { state, units, allowance, features, guidedQuote, expired, pending, syncError, refresh } = session;
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(initialState.mode === 'guided' || !initialState.welcomed);
   const [error, setError] = useState('');
@@ -45,6 +45,8 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const [copyStatus, setCopyStatus] = useState('');
   const [copying, setCopying] = useState(false);
   const [mobileNotice, setMobileNotice] = useState(false);
+  const [quoteNotice, setQuoteNotice] = useState('');
+  const quoteSeen = useRef<string | undefined>(undefined);
   const widget = useRef<HTMLElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const promptBox = useRef<HTMLTextAreaElement>(null);
@@ -143,6 +145,25 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     if (active) window.addEventListener('qc-demo-skylight', added);
     return () => { delete target.__qcDemoGuidedComponentId; window.removeEventListener('qc-demo-skylight', added); };
   }, [state.chapter, state.guided_created_component_id, state.acknowledgements]);
+
+  // Customer-response notification (owner 2026-10-13): the guided quote's
+  // status + first-open timestamp ride the existing 5s demo-state poll. A live
+  // transition (sent→viewed, viewed→accepted/declined) announces once in the
+  // guide and refreshes server-rendered badges. Transitions already present at
+  // load are not announced - only changes observed while this tab is open.
+  useEffect(() => {
+    if (!guidedQuote) return;
+    const responded = guidedQuote.status === 'accepted' || guidedQuote.status === 'declined';
+    const key = responded ? guidedQuote.status : guidedQuote.viewedAt ? 'viewed' : 'sent';
+    const previous = quoteSeen.current;
+    quoteSeen.current = key;
+    if (previous === undefined || previous === key || key === 'sent') return;
+    setQuoteNotice(responded
+      ? `Your demo customer ${guidedQuote.status} the quote. Its status in your account has updated.`
+      : 'Your demo customer opened the quote. It now shows a Viewed status in your account.');
+    setOpen(true);
+    router.refresh();
+  }, [guidedQuote, router]);
 
   // Guided takeoff choreography (owner 2026-10-12): the touch shell announces
   // the first canvas entry (landscape reached, or the flip prompt dismissed);
@@ -306,6 +327,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
       <div className="qc-demo-progress" role="progressbar" aria-label="Guide lessons handled" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.handled} aria-valuetext={`${progress.done} completed, ${progress.skipped} skipped, ${progress.total} total`}><i style={{ width: `${100 * progress.handled / progress.total}%` }} /></div>
       <button type="button" className="qc-demo-hide" onClick={collapse} aria-label="Hide the demo guide"><span>Hide guide</span><span aria-hidden="true">▾</span></button>
       <div className="qc-demo-guide-body">
+        {quoteNotice && <div className="qc-demo-note" role="status"><strong>Customer response</strong><p>{quoteNotice}</p><QcButton variant="ghost" size="sm" onClick={() => setQuoteNotice('')}>Dismiss</QcButton></div>}
         {!state.welcomed ? <>
           <p className="qc-demo-eyebrow">WELCOME TO QCP ROOFING &amp; CONSTRUCTION</p><h2>Try a real workflow, step by step</h2>
           <p>Build a pricing rule, use it on a roof, prepare a quote, then try Smart Assistant. All records and prices are fictional.</p>
@@ -327,7 +349,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
               <strong>Nice — your component is on the plan.</strong>
               <p>Keep exploring the canvas, or save and move to the next step.</p>
               <div className="qc-demo-actions"><QcButton variant="primary" onClick={() => window.dispatchEvent(new Event('qc-demo-takeoff-save-continue'))}>Save &amp; continue</QcButton><QcButton variant="ghost" onClick={collapse}>Keep exploring</QcButton></div>
-            </div> : <p className="qc-demo-note">{triedAdding || session.skylightAdded ? <><strong>Nice, you added your component.</strong> Keep experimenting if you like, then {touchTakeoff ? <>press <strong className="qc-demo-act">Save &amp; continue</strong></> : <>click <strong className="qc-demo-act">Finish &amp; Save</strong></>} to progress. Whatever is on the final canvas is what you save.</> : <><strong>Add your component{state.guided_created_component_name ? `: “${state.guided_created_component_name}”` : ''}.</strong> {touchTakeoff ? <>Open the <strong className="qc-demo-act">Components</strong> rail on the right. In <strong className="qc-demo-act">Component</strong>, the second dropdown, choose the component you just created. Tap <strong className="qc-demo-act">+ New entry</strong>, then draw the area on the plan. The prepared roof is already measured; your additions are real.</> : <>Click the <strong className="qc-demo-act">+ Add component</strong> button in the Components panel, find the component you named, then click it. In the toolbar under “Area”, select <strong className="qc-demo-act">Polygon</strong> or <strong className="qc-demo-act">Rectangle</strong> and draw the area on the plan. The prepared scan is precomputed; your measurements and edits are real.</>}</>}</p>)}
+            </div> : <p className="qc-demo-note">{triedAdding || session.skylightAdded ? <><strong>Nice, you added your component.</strong> Keep experimenting if you like, then {touchTakeoff ? <>press <strong className="qc-demo-act">Save &amp; continue</strong></> : <>click <strong className="qc-demo-act">Finish &amp; Save</strong></>} to progress. Whatever is on the final canvas is what you save.</> : <><strong>Add your component{state.guided_created_component_name ? `: “${state.guided_created_component_name}”` : ''}.</strong> {touchTakeoff ? <><strong>For the best experience, turn your phone sideways and turn off the tab bar in horizontal view in your phone settings.</strong> Open the <strong className="qc-demo-act">Components</strong> rail on the right. In <strong className="qc-demo-act">Component</strong>, the second dropdown, choose the component you just created. Tap <strong className="qc-demo-act">+ New entry</strong>, then draw the area on the plan. The prepared roof is already measured; your additions are real.</> : <>Click the <strong className="qc-demo-act">+ Add component</strong> button in the Components panel, find the component you named, then click it. In the toolbar under “Area”, select <strong className="qc-demo-act">Polygon</strong> or <strong className="qc-demo-act">Rectangle</strong> and draw the area on the plan. The prepared scan is precomputed; your measurements and edits are real.</>}</>}</p>)}
             {step.hint && <details className="qc-demo-why"><summary>Why this matters</summary><p>{guideCopy(step.hint)}</p></details>}
           </>}
           {assistantStep && location.onPage && <>

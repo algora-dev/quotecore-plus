@@ -345,14 +345,14 @@ export function TouchWorkspaceShell({
             coached flow immediately and the canvas + rail stay usable in
             portrait. It clears itself when the phone reaches landscape. */}
         {active && orientationMode === 'landscape-preferred' && !demoLandscape && portraitPromptOpen && (
-          <div className="pointer-events-none absolute inset-x-3 top-3 z-[70] flex justify-center" role="status">
-            <div className="pointer-events-auto flex max-w-md items-center gap-2 rounded-full border border-white/15 bg-slate-900/90 py-1.5 pl-3 pr-1.5 text-xs font-semibold text-slate-200 shadow-lg backdrop-blur">
+          <div className="pointer-events-none absolute inset-x-3 top-3 z-[90] flex justify-center" role="status">
+            <div className="pointer-events-auto flex max-w-md items-center gap-2 rounded-2xl border border-white/15 bg-slate-900/90 py-1.5 pl-3 pr-1.5 text-xs font-semibold leading-snug text-slate-200 shadow-lg backdrop-blur">
               <svg viewBox="0 0 24 24" fill='none' stroke='currentColor' strokeWidth={1.8} className='h-4 w-4 shrink-0 text-[#FF6B35]' aria-hidden='true'>
                 <rect x='3.5' y='8.5' width='17' height='7' rx='2' />
                 <path d='M8.5 5.5A7.5 7.5 0 0 1 5 8' strokeLinecap='round' />
                 <path d='M8.5 5.5V6M8.5 5.5H7' strokeLinecap='round' strokeLinejoin='round' />
               </svg>
-              <span className='min-w-0 flex-1 truncate'>Turn your phone sideways for the full-width plan, or keep going in portrait.</span>
+              <span className='min-w-0 flex-1 text-left'>Turn your phone sideways for the full-width plan, or keep going in portrait.</span>
               <button
                 type='button'
                 aria-label='Dismiss the rotate hint'

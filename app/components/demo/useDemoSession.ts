@@ -7,7 +7,8 @@ import { acceptGuideRevision, isDemoSystem, type DemoSystem } from '@/app/lib/de
 import { DemoRequestError, demoJsonRequest, demoRequest } from '@/app/lib/demo/client-request';
 
 export type DemoAllowance = { turnsRemaining: number; turnsLimit: number; sendsRemaining: number; sendsLimit: number; configured: boolean };
-type Snapshot = { sessionId: string; expiresAt: string; tutorialState: DemoGuideState; units?: DemoSystem; allowance?: DemoAllowance; aiEnabled?: boolean; selfSendEnabled?: boolean; skylightAdded?: boolean };
+export type DemoGuidedQuote = { status: string; viewedAt: string | null };
+type Snapshot = { sessionId: string; expiresAt: string; tutorialState: DemoGuideState; units?: DemoSystem; allowance?: DemoAllowance; aiEnabled?: boolean; selfSendEnabled?: boolean; skylightAdded?: boolean; guidedQuote?: DemoGuidedQuote | null };
 export type GuideReply = { tutorialState: DemoGuideState; href: string };
 
 /** One in-flight poll, monotonic revisions, abort on unmount. A late GET must
@@ -18,6 +19,7 @@ export function useDemoSession(sessionId: string, expiresAt: string, initialStat
   const [allowance, setAllowance] = useState<DemoAllowance | null>(null);
   const [features, setFeatures] = useState<{ ai: boolean; selfSend: boolean } | null>(null);
   const [skylightAdded, setSkylightAdded] = useState(false);
+  const [guidedQuote, setGuidedQuote] = useState<DemoGuidedQuote | null>(null);
   const [expired, setExpired] = useState(false);
   const [pending, setPending] = useState(false);
   const [syncError, setSyncError] = useState('');
@@ -49,6 +51,7 @@ export function useDemoSession(sessionId: string, expiresAt: string, initialStat
       setFeatures({ ai: result.aiEnabled === true, selfSend: result.selfSendEnabled === true });
       // This is only an instructional hint, not a completion acknowledgement.
       setSkylightAdded(result.skylightAdded === true);
+      if (result.guidedQuote) setGuidedQuote(result.guidedQuote);
       setSyncError('');
     } catch (error) {
       if (!alive.current || controller.signal.aborted) return;
@@ -104,5 +107,5 @@ export function useDemoSession(sessionId: string, expiresAt: string, initialStat
       }
     }
   }, [apply, end, refresh]);
-  return { state, units, allowance, features, skylightAdded, expired, pending, syncError, refresh, command };
+  return { state, units, allowance, features, skylightAdded, guidedQuote, expired, pending, syncError, refresh, command };
 }
