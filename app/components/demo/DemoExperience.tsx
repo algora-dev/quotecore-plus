@@ -361,9 +361,31 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     <QcDialog open={expired && !resetting} onRequestClose={() => window.location.assign('/demo')} title="This demo has ended" description="It expired or was reset in another tab. Start fresh to try again. AI and email allowances carry over.">
       <div className="qc-demo-actions"><QcLinkButton variant="primary" href="/demo">Open a fresh demo</QcLinkButton><QcLinkButton variant="ghost" href={accountHref}>Get your own account</QcLinkButton></div>
     </QcDialog>
-    <QcDialog open={completeOpen && !expired} onRequestClose={() => setCompleteOpen(false)} title="You finished the QuoteCore+ demo" description={`${progress.done} lessons completed${progress.skipped ? ` · ${progress.skipped} skipped` : ''}. Your saved work remains available until this demo expires.`}
-      footer={<div className="qc-demo-actions"><QcLinkButton variant="primary" href={accountHref}>Get your own account</QcLinkButton><QcLinkButton variant="secondary" href="https://calendly.com/quote-core-info/meeting" target="_blank" rel="noopener noreferrer">Book a live demo with our team</QcLinkButton><QcLinkButton variant="secondary" href="https://quote-core.com/done-for-you-setup" target="_blank" rel="noopener noreferrer">Done For You setup call</QcLinkButton><div className="qc-demo-actions-row"><QcLinkButton variant="ghost" href="/pricing">See pricing and full features</QcLinkButton><QcButton variant="ghost" onClick={() => setCompleteOpen(false)}>Continue exploring</QcButton></div></div>}>
-      <div className="qc-demo-complete"><p className="qc-demo-congrats">Nice work. Everything you just did is the real QuoteCore+ workflow, start to finish.</p><p>This demo is a small taste. The full app unlocks your own component library and branding, purchase orders and invoices, automatic quote follow-ups, integrations and much more.</p>{DEMO_GUIDE_CHAPTERS.map(item => { const result = chapterOutcome(state, item); return <div key={item.id}><strong>{item.title}</strong><span>{result.done}/{result.total} completed{result.skipped ? ` · ${result.skipped} skipped` : ''}</span></div>; })}</div>
+    <QcDialog open={completeOpen && !expired} onRequestClose={() => setCompleteOpen(false)} size="lg" labelledBy="qc-demo-complete-title" className="qc-demo-complete-dialog"
+      footer={<div className="qc-demo-complete-actions">
+        <QcLinkButton variant="primary" href="https://quote-core.com/pricing" target="_blank" rel="noopener noreferrer">Explore pricing</QcLinkButton>
+        <div className="qc-demo-complete-row">
+          <QcLinkButton variant="secondary" href="https://quote-core.com/done-for-you-setup" target="_blank" rel="noopener noreferrer">See Done-For-You packages</QcLinkButton>
+          <QcLinkButton variant="secondary" href="https://calendly.com/quote-core-info/meeting" target="_blank" rel="noopener noreferrer">Book a free 20-minute call</QcLinkButton>
+        </div>
+        <QcButton variant="ghost" onClick={() => setCompleteOpen(false)}>Continue exploring the demo</QcButton>
+      </div>}>
+      <div className="qc-demo-complete">
+        <div className="qc-demo-complete-hero">
+          <span className="qc-demo-complete-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12.5 4.2 4.2L19 7" /></svg></span>
+          <div>
+            <p className="qc-demo-complete-eyebrow">Demo complete</p>
+            <h2 id="qc-demo-complete-title">Nice work. You just ran the real QuoteCore+ workflow.</h2>
+            <p className="qc-demo-complete-sub">Everything you did is how QuoteCore+ runs day to day. The full app adds your own component library and branding, purchase orders and invoices, automatic quote follow-ups and integrations.</p>
+          </div>
+        </div>
+        <div className="qc-demo-complete-recap">
+          {DEMO_GUIDE_CHAPTERS.map(item => { const result = chapterOutcome(state, item); return (
+            <div key={item.id} className="qc-demo-complete-chapter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" /></svg><div><strong>{item.title}</strong><span>{result.done}/{result.total} completed{result.skipped ? ` · ${result.skipped} skipped` : ''}</span></div></div>
+          ); })}
+        </div>
+        <p className="qc-demo-complete-note">Your saved work stays in this demo until it expires. Come back any time.</p>
+      </div>
     </QcDialog>
   </div>;
 

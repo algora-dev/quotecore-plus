@@ -76,12 +76,27 @@ still own the top layer. */ z-index: 55; width: min(376px, calc(100vw - 24px)); 
 .qc-demo-script>.qc-button { display: block; margin: 6px 0 -4px auto; }
 .qc-demo-guide .qc-demo-copy-status { font-size: 12px; margin-top: 9px; }
 .qc-demo-guide .qc-demo-allowance { font-size: 11px; line-height: 1.5; margin-top: 12px; }
-.qc-demo-complete { display: grid; gap: 10px; }
-.qc-demo-complete>p { margin: 0; color: var(--qc-demo-text-2); font-size: 13px; line-height: 1.6; }
-.qc-demo-complete>p:first-child { color: var(--qc-demo-text); font-weight: 600; }
-.qc-demo-complete>div { display: grid; gap: 3px; padding: 10px 12px; border: 1px solid var(--qc-demo-line); border-radius: var(--qc-radius-control, 12px); background: var(--qc-demo-surface); }
-.qc-demo-complete strong { font-size: 13px; color: var(--qc-demo-text); }
-.qc-demo-complete span,.qc-demo-complete p { font-size: 12px; line-height: 1.6; color: var(--qc-demo-text-2); }
+/* Completion dialog redesign (owner 2026-10-13): the demo conversion moment,
+   dark glass + orange gradient, replacing the old stacked-card list. */
+.qc-demo-overlays .qc-dialog.qc-demo-complete-dialog { padding: 26px; }
+.qc-demo-complete { display: grid; gap: 18px; }
+.qc-demo-complete-hero { display: grid; grid-template-columns: 56px minmax(0,1fr); gap: 16px; align-items: start; }
+.qc-demo-complete-badge { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: var(--qc-demo-grad); box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 10px 26px rgba(255,100,31,.35); color: var(--qc-demo-ink); }
+.qc-demo-complete-badge svg { width: 28px; height: 28px; }
+.qc-demo-complete-eyebrow { margin: 0 0 6px; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--qc-demo-orange-soft); }
+.qc-demo-complete h2 { margin: 0; color: var(--qc-demo-text); font-size: 24px; line-height: 1.2; font-weight: 700; letter-spacing: -.02em; }
+.qc-demo-complete-sub { margin: 10px 0 0; max-width: 58ch; color: var(--qc-demo-text-2); font-size: 13px; line-height: 1.65; }
+.qc-demo-complete-recap { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.qc-demo-complete-chapter { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--qc-demo-line); border-radius: 12px; background: var(--qc-demo-surface); }
+.qc-demo-complete-chapter svg { flex: 0 0 auto; width: 16px; height: 16px; color: #ffb36b; }
+.qc-demo-complete-chapter strong { display: block; font-size: 12px; line-height: 1.35; color: var(--qc-demo-text); font-weight: 650; }
+.qc-demo-complete-chapter span { font-size: 11px; line-height: 1.4; color: var(--qc-demo-text-2); }
+.qc-demo-complete-note { margin: 0; font-size: 11px; line-height: 1.5; color: var(--qc-demo-text-2); }
+.qc-demo-complete-actions { display: grid; gap: 8px; width: 100%; }
+.qc-demo-complete-actions>* { width: 100%; white-space: normal; }
+.qc-demo-complete-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.qc-demo-complete-actions .qc-button[data-qc-variant="primary"] { min-height: 52px; font-size: 14px; }
+@media (max-width: 560px) { .qc-demo-complete-recap { grid-template-columns: 1fr; } .qc-demo-complete-row { grid-template-columns: 1fr; } }
 /* Existing demo routes may still use these native-link recipes. */
 .qc-demo-continue { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 14px; border: 1px solid #ff641f; border-radius: 12px; background: var(--qc-demo-grad, linear-gradient(135deg, #ff641f 0%, #ff8a3d 55%, #ffb36b 100%)); color: #1c1206; font-size: 13px; font-weight: 700; text-decoration: none; }
 .qc-demo-secondary-link { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; border: 0; background: transparent; color: var(--qc-demo-orange-soft, #ff9a5c); font: inherit; font-size: 12px; cursor: pointer; text-decoration: none; }
@@ -92,9 +107,27 @@ still own the top layer. */ z-index: 55; width: min(376px, calc(100vw - 24px)); 
 .qc-demo-overlays .qc-button[data-qc-variant="secondary"]:hover { background: rgba(255,107,53,.10); border-color: rgba(255,107,53,.45); color: #fff; }
 .qc-demo-overlays .qc-button[data-qc-variant="ghost"] { background: transparent; color: var(--qc-demo-text-2); }
 .qc-demo-overlays .qc-button[data-qc-variant="ghost"]:hover { background: var(--qc-demo-wash); color: #ffb36b; }
-/* Demo dialogs share the dark glass surface. */
-.qc-demo-overlays .qc-dialog { background: rgba(13,16,20,.94); border: 1px solid var(--qc-demo-line); color: var(--qc-demo-text); box-shadow: 0 30px 80px rgba(6,7,10,.6); }
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .qc-demo-overlays .qc-dialog { background: var(--qc-demo-bg); -webkit-backdrop-filter: blur(20px) saturate(120%); backdrop-filter: blur(20px) saturate(120%); } }
+/* Token-level dark theming for app dialogs inside the demo overlay scope.
+   qc-tokens defines its vars under :where([data-qc-ui="v2"]) (zero specificity),
+   so this class-scoped override always wins: every qc.css rule consuming the
+   vars re-themes deterministically, immune to bundle order. */
+.qc-demo-overlays {
+  --qc-bg-surface: #0d1014;
+  --qc-text-primary: #fbfcff;
+  --qc-text-body: #e7eaf1;
+  --qc-text-secondary: #b9c0cc;
+  --qc-border-control: rgba(231,233,239,.16);
+  --qc-focus-ring: #ff9a5c;
+}
+/* Demo dialogs share the dark glass surface. Element selector lifts this above
+   [data-qc-ui='v2'].qc-dialog (0,2,0) so the light app card can never win again. */
+.qc-demo-overlays dialog.qc-dialog { background: rgba(13,16,20,.94); border: 1px solid var(--qc-demo-line); color: var(--qc-demo-text); box-shadow: 0 30px 80px rgba(6,7,10,.6); scrollbar-width: thin; scrollbar-color: #ff6b35 rgba(255,255,255,.09); }
+.qc-demo-overlays dialog.qc-dialog::-webkit-scrollbar { width: 10px; }
+.qc-demo-overlays dialog.qc-dialog::-webkit-scrollbar-track { background: rgba(255,255,255,.09); border-radius: 999px; }
+.qc-demo-overlays dialog.qc-dialog::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#ff8a3d,#ff641f); border-radius: 999px; border: 2px solid rgba(13,16,20,.92); }
+.qc-demo-overlays dialog.qc-dialog::-webkit-scrollbar-thumb:hover { background: #ff923d; }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .qc-demo-overlays dialog.qc-dialog { background: var(--qc-demo-bg); -webkit-backdrop-filter: blur(20px) saturate(120%); backdrop-filter: blur(20px) saturate(120%); } }
+@media (prefers-reduced-transparency: reduce) { .qc-demo-overlays dialog.qc-dialog { background: var(--qc-demo-solid); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 .qc-demo-overlays .qc-dialog::backdrop { background: rgba(6,7,10,.55); }
 .qc-demo-overlays .qc-dialog h2,.qc-demo-overlays .qc-dialog h3 { color: var(--qc-demo-text); }
 .qc-demo-overlays .qc-dialog p { color: var(--qc-demo-text-2); }
