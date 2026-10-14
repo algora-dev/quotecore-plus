@@ -357,7 +357,7 @@ export function FreeRoofTakeoff() {
               <span>
                 <span className="block text-sm font-semibold text-slate-900">Use our roofing components</span>
                 <span className="block text-xs text-slate-500 mt-0.5">
-                  Ridge, Hip, Valley, Barge (rake), Spouting (gutter), Roof Area (no pricing) - standard placeholders
+                  Ridge, Hip, Valley, Barge (Rake), Spouting (Gutter), Roof Area (no pricing) - standard placeholders
                 </span>
               </span>
             </label>

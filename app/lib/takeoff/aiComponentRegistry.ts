@@ -106,7 +106,7 @@ export const SPOUTING_DASH_ARRAY = [8, 4];
  * Returns null if the component name doesn't match any registry entry.
  */
 export function resolveSemanticKey(componentName: string): SemanticKey | null {
-  const normalized = componentName.toLowerCase().replace(/[\s_-]+/g, '');
+  const normalized = componentName.toLowerCase().replace(/\([^)]*\)/g, '').replace(/[\s_-]+/g, '');
   for (const key of ALL_SEMANTIC_KEYS) {
     const regNormalized = AI_COMPONENT_REGISTRY[key].systemName.toLowerCase().replace(/[\s_-]+/g, '');
     if (regNormalized === normalized) return key;

@@ -4,6 +4,6 @@
  */
 export function takeoffDisplayName(name: string): string {
   return name
-    .replace(/\bBarge\b(?!\s*\(rake\))/gi, match => `${match} (rake)`)
-    .replace(/\bSpouting\b(?!\s*\(gutter\))/gi, match => `${match} (gutter)`);
+    .replace(/\bBarge\b(?!\s*\(rake\))/gi, 'Barge (Rake)')
+    .replace(/\bSpouting\b(?!\s*\(gutter\))/gi, 'Spouting (Gutter)');
 }

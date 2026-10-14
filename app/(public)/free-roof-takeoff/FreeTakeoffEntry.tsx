@@ -4,6 +4,7 @@ import Link from 'next/link';
 import {Button,ActionLink,Icon,Steps} from './TakeoffUI';
 import {componentLimit,specUnit,TAKEOFF_CURRENCIES,type TakeoffCurrency} from './takeoff-examples';
 import type {TakeoffTradeConfig,TakeoffUnitSystem,TakeoffUnitOption,TakeoffComponentChoice,TakeoffComponentSpec} from './tradeConfig';
+import {takeoffDisplayName} from '@/app/lib/takeoff/displayLabels';
 import s from './TakeoffExperience.module.css';
 export function FreeTakeoffEntry({config,step,unitSystem,unitOption,componentChoice,specs,componentCount,error,currency='NZD',
  onUnitChange,onCurrencyChange,onChoiceChange,onBack,onContinue,onStepChange,onCreateComponent,onEditComponent,onRemoveComponent,
@@ -52,8 +53,8 @@ export function FreeTakeoffEntry({config,step,unitSystem,unitOption,componentCho
         {specs.some(x=>x.pricingOrigin==='example')&&<div className={s.notice}><Icon name="info"/><p><strong>Example pricing, not market rates.</strong> Replace or review these fictitious rates before making a customer quote.</p></div>}
         <div className={s.library}><div className={s.libraryHead}><strong>{custom?'Your component library':'Included in your example'}</strong><span className={s.chip}>{specs.length} components · {currency}</span></div>
           {specs.map(spec=><div key={spec.id} className={s.libraryRow}><span className={s.typeIcon}><Icon name={spec.measurementType==='area'?'layers':spec.measurementType==='quantity'?'plus':'ruler'}/></span>
-            <div className={s.libraryContent}><strong>{spec.name}</strong><small>{spec.measurementType==='area'?'Area':spec.measurementType==='lineal'?'Length':'Count'} · {spec.pricingStrategy==='per_unit'?`${(spec.materialRate+spec.labourRate).toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:2})} / ${specUnit(spec.measurementType,unitSystem)}`:'Pack pricing'} · {spec.pricingOrigin==='example'?'Example rates':'Your rates'}</small></div>
-            {custom&&<div className={s.rowActions}><Button quiet aria-label={`Edit ${spec.name}`} onClick={()=>onEditComponent(spec.id)}><Icon name="edit"/><span>Edit</span></Button><Button quiet aria-label={`Remove ${spec.name}`} onClick={()=>onRemoveComponent(spec.id)}><Icon name="trash"/></Button></div>}
+            <div className={s.libraryContent}><strong>{takeoffDisplayName(spec.name)}</strong><small>{spec.measurementType==='area'?'Area':spec.measurementType==='lineal'?'Length':'Count'} · {spec.pricingStrategy==='per_unit'?`${(spec.materialRate+spec.labourRate).toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:2})} / ${specUnit(spec.measurementType,unitSystem)}`:'Pack pricing'} · {spec.pricingOrigin==='example'?'Example rates':'Your rates'}</small></div>
+            {custom&&<div className={s.rowActions}><Button quiet aria-label={`Edit ${takeoffDisplayName(spec.name)}`} onClick={()=>onEditComponent(spec.id)}><Icon name="edit"/><span>Edit</span></Button><Button quiet aria-label={`Remove ${takeoffDisplayName(spec.name)}`} onClick={()=>onRemoveComponent(spec.id)}><Icon name="trash"/></Button></div>}
           </div>)}
         </div>
         {removedName&&onUndoRemove&&<div className={s.removed} role="status"><span>{removedName} removed.</span><Button quiet onClick={onUndoRemove}>Undo</Button></div>}

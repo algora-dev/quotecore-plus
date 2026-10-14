@@ -5,6 +5,7 @@ import type { TakeoffFinishPayload } from '@/app/lib/takeoff/finishPayload';
 import type { TakeoffComponentSpec, TakeoffUnitSystem } from './tradeConfig';
 import { FEET_PER_METRE, quantityFactor, specUnit, validateSpec, type TakeoffCurrency } from './takeoff-examples';
 import { buildConvertUrl, type ConvertibleLine } from '../shared/convertLines';
+import { takeoffDisplayName } from '@/app/lib/takeoff/displayLabels';
 export type TakeoffTrade = 'roofing'|'cladding'|'flooring';
 export interface ReportEntry { raw:number; pitched:number; quantity:number; areaId:string|null; }
 export interface ReportComponent {
@@ -91,7 +92,7 @@ export function buildReport(payload:TakeoffFinishPayload,specs:TakeoffComponentS
     }
     const cost=material==null||labour==null?null:material+labour;
     if(!valid(quantity)||cost!=null&&!valid(cost)) issues.push(`The quantity or cost of ${g.name} is too large. Check the measurements and rates.`);
-    return {id:g.componentId,name:g.name,type,unit:specUnit(type,system),entries,raw,pitched,quantity,material,labour,cost,packs,
+    return {id:g.componentId,name:takeoffDisplayName(g.name),type,unit:specUnit(type,system),entries,raw,pitched,quantity,material,labour,cost,packs,
       example:spec?.pricingOrigin==='example',wasteLabel,pitchApplied};
   });
   const materials=sum(components.map(c=>c.material??0)),labour=sum(components.map(c=>c.labour??0));

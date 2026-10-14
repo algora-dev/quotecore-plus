@@ -7906,7 +7906,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       draftCalibrationRef.current = null;
     }
     clearCalibrationDraftVisuals();
-    setCalibrationMode(false);
+    setCalibrationMode(true);
+    setShowCalibrationHelp(true);
   };
 
   const handleSaveCalibration = (actualDistance: number, unit: 'feet' | 'meters', addAnother: boolean) => {

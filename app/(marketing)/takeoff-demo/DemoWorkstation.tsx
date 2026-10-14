@@ -33,6 +33,7 @@ import { DemoGuideMeModal, DemoLimitModal } from './DemoGuideMeModal';
 import { FeatureUpsellModal, LockedFeatureButton } from '@/app/components/featureShowcase/FeatureUpsellModal';
 import { OFFCUTS, type ShowcaseCopy } from '@/app/components/featureShowcase/showcaseCopy';
 import { trackFreeToolEvent } from '@/app/(public)/lib/trackFreeToolEvent';
+import { takeoffDisplayName } from '@/app/lib/takeoff/displayLabels';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -612,11 +613,13 @@ export function DemoWorkstation({
       console.warn('[Components] No components found in component library for this company');
     }
     
-    setDisplayComponents(
-      demoMode === 'upload'
-        ? [...components, ...customComponentsRef.current]
-        : components,
-    );
+    const visibleComponents = demoMode === 'upload'
+      ? [...components, ...customComponentsRef.current]
+      : components;
+    setDisplayComponents(visibleComponents.map(component => ({
+      ...component,
+      name: takeoffDisplayName(component.name),
+    })));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [components, calibrationConfirmed, customVersion, demoMode]);
   
@@ -4643,7 +4646,8 @@ export function DemoWorkstation({
 
   const handleCancelCalibration = () => {
     clearCalibrationDraftVisuals();
-    setCalibrationMode(false);
+    setCalibrationMode(true);
+    setShowCalibrationHelp(true);
   };
 
   const handleSaveCalibration = (actualDistance: number, unit: 'feet' | 'meters', addAnother: boolean) => {
