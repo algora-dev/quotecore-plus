@@ -27,7 +27,7 @@ export function ExploreNextSteps({ config, pricingHref = '/pricing', setupHref =
         onClick={() => setExpanded(value => !value)}>
         <span className={n.summaryGroup}>
           <span className={n.summaryIcon}><Icon name="play" size={18} /></span>
-          <span><strong>Prefer to watch?</strong><span className={n.summaryDetail}>45-second explainer</span></span>
+          <span><strong>Prefer to watch?</strong><span className={n.summaryDetail}>53-second explainer</span></span>
         </span>
         <span className={n.summaryGroup}>
           <span className={n.summaryIcon}><Icon name="check" size={18} /></span>
@@ -40,12 +40,12 @@ export function ExploreNextSteps({ config, pricingHref = '/pricing', setupHref =
         <div className={n.panelClip}>
           <div className={n.cards}>
             <button type="button" className={`${n.card} ${n.videoCard}`} onClick={openVideo} aria-haspopup="dialog"
-              tabIndex={expanded ? 0 : -1} aria-label={hasVideo ? 'Watch the 45-second explainer' : '45-second explainer, coming soon. View details'}>
+              tabIndex={expanded ? 0 : -1} aria-label={hasVideo ? 'Watch the 53-second explainer' : '53-second explainer, coming soon. View details'}>
               <span className={n.poster} aria-hidden="true">
                 <img src="/marketing/feature-showcase/assistant-intro.webp" alt="" loading="lazy" width="960" height="600" />
                 <span className={n.posterShade} />
                 <span className={n.play}><Icon name={hasVideo ? 'play' : 'clock'} size={23} /></span>
-                <span className={n.duration}>{hasVideo ? '0:45' : 'Coming soon'}</span>
+                <span className={n.duration}>{hasVideo ? '0:53' : 'Coming soon'}</span>
               </span>
               <span className={n.cardCopy}>
                 <span className={n.kicker}>THE QUICK OVERVIEW</span>

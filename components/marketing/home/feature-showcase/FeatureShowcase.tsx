@@ -188,7 +188,7 @@ export function FeatureShowcase({ id = 'workflow', config = homepageConfig, init
     <div className={s.container}>
       <header className={s.intro}>
         <div><p className={s.eyebrow}>QuoteCore+ features</p><h2 id={`${uid}-heading`}>Explore the features that save you time and make estimating easier.</h2></div>
-        <div className={s.introGuide}><p className={s.introAside}>Explore each feature tab and use the slider arrows to see the main features and how they work.</p><button type="button" className={s.overviewLink} onClick={() => setOverviewOpen(true)}><Icon name="play" size={17} />Watch the 45-second overview</button></div>
+        <div className={s.introGuide}><p className={s.introAside}>Explore each feature tab and use the slider arrows to see the main features and how they work.</p><button type="button" className={s.overviewLink} onClick={() => setOverviewOpen(true)}><Icon name="play" size={17} />Watch the 53-second overview</button></div>
       </header>
 
       <div className={s.showcase}>
