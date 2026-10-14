@@ -435,6 +435,11 @@ export async function saveTakeoffMeasurements(
           // component_library so the RPC doesn't hardcode 'lineal' for every
           // component regardless of type.
           measurement_type: (linealCoverM > 0 ? 'lineal' : libComp.measurement_type) as typeof libComp.measurement_type,
+          // Cover-width display snapshot (owner directive 2026-10-13): the
+          // RPC's insert list predates the column, so this rides the payload
+          // for the post-save persist below - builder entry rows then format
+          // as m² and a later library edit can never shift a saved quote's display.
+          cover_width_mm: linealCoverM > 0 ? coverWidthMm : null,
           material_rate: lineMaterialRate,
           labour_rate: lineLabourRate,
           waste_type: wasteType,
@@ -583,6 +588,31 @@ export async function saveTakeoffMeasurements(
       return { success: false, error: 'STALE_TAKEOFF_VERSION: Your takeoff was edited in another tab. Please reload the page to continue.' };
     }
     return { success: false, error: `Failed to save takeoff: ${rpcError.message}` };
+  }
+
+  // Lineal-cover display snapshot (owner directive 2026-10-13): the atomic
+  // RPC predates the cover_width_mm snapshot column, so persist it on the
+  // saved component lines here. NULL-only fill - never overwrites rows the
+  // manual-add path already snapshotted. Non-fatal: the builder's load-time
+  // library fallback covers display when this fails.
+  try {
+    const coverByLibId = new Map<string, number>();
+    for (const c of componentsPayload) {
+      const mm = Number(c?.cover_width_mm ?? 0);
+      const libIdKey = c?.component_library_id ? String(c.component_library_id) : null;
+      if (libIdKey && mm > 0) coverByLibId.set(libIdKey, mm);
+    }
+    for (const [libId, mm] of coverByLibId) {
+      const { error: coverError } = await supabase
+        .from('quote_components')
+        .update({ cover_width_mm: mm } as never)
+        .eq('quote_id', quoteId)
+        .eq('component_library_id', libId)
+        .is('cover_width_mm', null);
+      if (coverError) console.warn('[SaveTakeoff] cover snapshot skipped for', libId, coverError.message);
+    }
+  } catch (err) {
+    console.warn('[SaveTakeoff] cover snapshot failed (non-fatal):', err instanceof Error ? err.message : err);
   }
 
   // Canvas-rework: persist calibration data to the takeoff_pages row so
