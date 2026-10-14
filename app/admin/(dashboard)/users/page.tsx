@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { requireAdmin } from '@/app/lib/supabase/server';
 import { UsersPanel } from './UsersPanel';
 import { getPaymentAttention } from './actions';
@@ -24,6 +25,7 @@ export default async function AdminUsersPage() {
           Search for a user by email or company name to manage their subscription,
           pause access, or delete their account.
         </p>
+        <Link href="/admin/customer-accounts" className="mt-4 inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]">Create customer account</Link>
       </div>
 
       <PaymentAttentionPanel rows={attention.ok ? attention.rows : []} error={attention.ok ? null : attention.error} />

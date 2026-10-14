@@ -379,6 +379,15 @@ export async function middleware(request: NextRequest) {
     return finishAuth(expireLegacyAuthCookies(request, NextResponse.redirect(url)), 'login_required', url.pathname, authCategory);
   }
 
+  // Admin-created customer accounts start with a temporary password. Keep the
+  // session inside the password-change screen until it is cleared.
+  if (user.user_metadata?.must_change_password === true && !pathname.startsWith('/force-password')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/force-password';
+    url.search = '';
+    return finishAuth(NextResponse.redirect(url), 'password_change_required', '/force-password');
+  }
+
   // 2FA gate. getAuthenticatorAssuranceLevel() is a local JWT decode, not a
   // network round-trip, so it's safe to run on every request.
   //   - currentLevel: where the session is now (aal1 or aal2)
