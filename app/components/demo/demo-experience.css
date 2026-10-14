@@ -92,11 +92,23 @@ still own the top layer. */ z-index: 55; width: min(376px, calc(100vw - 24px)); 
 .qc-demo-complete-chapter strong { display: block; font-size: 12px; line-height: 1.35; color: var(--qc-demo-text); font-weight: 650; }
 .qc-demo-complete-chapter span { font-size: 11px; line-height: 1.4; color: var(--qc-demo-text-2); }
 .qc-demo-complete-note { margin: 0; font-size: 11px; line-height: 1.5; color: var(--qc-demo-text-2); }
-.qc-demo-complete-actions { display: grid; gap: 8px; width: 100%; }
+.qc-demo-complete-actions { display: grid; gap: 12px; width: 100%; }
 .qc-demo-complete-actions>* { width: 100%; white-space: normal; }
-.qc-demo-complete-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.qc-demo-complete-actions .qc-button[data-qc-variant="primary"] { min-height: 52px; font-size: 14px; }
-@media (max-width: 560px) { .qc-demo-complete-recap { grid-template-columns: 1fr; } .qc-demo-complete-row { grid-template-columns: 1fr; } }
+.qc-demo-complete-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.qc-demo-complete-actions .qc-button { min-height: 48px; }
+.qc-demo-complete-actions .qc-button[data-qc-variant="primary"] { min-height: 54px; font-size: 14px; }
+@media (max-width: 560px) {
+  .qc-demo-overlays .qc-dialog.qc-demo-complete-dialog { padding: 18px; box-sizing: border-box; width: calc(100vw - 24px); max-width: calc(100vw - 24px); }
+  .qc-demo-complete { gap: 14px; }
+  .qc-demo-complete-hero { grid-template-columns: 44px minmax(0,1fr); gap: 12px; }
+  .qc-demo-complete-badge { width: 44px; height: 44px; border-radius: 13px; }
+  .qc-demo-complete-badge svg { width: 22px; height: 22px; }
+  .qc-demo-complete h2 { font-size: 20px; }
+  .qc-demo-complete-sub { font-size: 12.5px; }
+  .qc-demo-complete-recap { grid-template-columns: 1fr; gap: 8px; }
+  .qc-demo-complete-actions { gap: 10px; }
+  .qc-demo-complete-row { grid-template-columns: 1fr; gap: 10px; }
+}
 /* Existing demo routes may still use these native-link recipes. */
 .qc-demo-continue { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 14px; border: 1px solid #ff641f; border-radius: 12px; background: var(--qc-demo-grad, linear-gradient(135deg, #ff641f 0%, #ff8a3d 55%, #ffb36b 100%)); color: #1c1206; font-size: 13px; font-weight: 700; text-decoration: none; }
 .qc-demo-secondary-link { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; border: 0; background: transparent; color: var(--qc-demo-orange-soft, #ff9a5c); font: inherit; font-size: 12px; cursor: pointer; text-decoration: none; }
