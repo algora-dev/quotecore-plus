@@ -4,6 +4,7 @@ import SiteFooter from '@/components/SiteFooter';
 import DfyPageViewTracker from '@/components/DfyPageViewTracker';
 import { MarketingButton } from '@/components/marketing/MarketingButton';
 import { DfyBookButton } from '@/components/marketing/DfyBookButton';
+import YouTubeLite from '@/components/YouTubeLite';
 import { siteUrl, buildBreadcrumbSchema } from '@/lib/schema';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 import styles from './DoneForYouSetup.module.css';
@@ -146,6 +147,19 @@ export default function DoneForYouSetupPage() {
               <div><img src="/marketing/done-for-you/dfy-support.webp" alt="" aria-hidden="true" /><span><strong>We support</strong>For 3 months</span></div>
               <div><img src="/marketing/done-for-you/dfy-experience.webp" alt="" aria-hidden="true" /><span><strong>20+ years</strong>Roofing & construction experience</span></div>
             </div>
+          </div>
+        </section>
+
+        <section className={styles.videoSection} aria-labelledby="video-title">
+          <div className={styles.container}>
+            <div className={styles.videoIntro}>
+              <div>
+                <p className={styles.lightEyebrow}>See how it works</p>
+                <h2 id="video-title">A closer look at Done For You.</h2>
+              </div>
+              <p>See how we configure QuoteCore+ around the way your business already works, then guide you through using it.</p>
+            </div>
+            <YouTubeLite videoId="AHXhlOuRAvw" title="How QuoteCore+ Done For You Setup works" uploadDate="2026-10-14" className={styles.videoPlayer} />
           </div>
         </section>
 
