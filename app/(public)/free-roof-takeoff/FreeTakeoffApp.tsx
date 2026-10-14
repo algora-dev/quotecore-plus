@@ -379,6 +379,7 @@ function TakeoffPhaseInner({
       finishHref: backHref,
       onFinish: emitFinish,
       planNoun: config.planNoun,
+      pitchRequired: config.requiresPitch,
     },
   );
 

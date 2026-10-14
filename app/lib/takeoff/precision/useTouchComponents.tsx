@@ -46,6 +46,9 @@ export interface TouchComponentsOptions {
   /** P4 trade wording: noun for saved outlines in area/count copy
    *  ("roof", "wall", "floor"). Default keeps the historical roof copy. */
   planNoun?: string;
+  /** Owner directive 2026-10-13: false = non-pitch trade reuse copy.
+   *  Default keeps the historical roofing copy. */
+  pitchRequired?: boolean;
 }
 
 /** Active drawing draft. Line = two confirm-locked endpoints; polygon =
@@ -545,7 +548,7 @@ export function useTouchComponents(
     onUndoPolygonPoint={onUndoPolygonPoint} onClosePolygon={onClosePolygon} onCancelDraw={cancelDraw}
     onRetry={onRetry} onCancelScan={onCancelScan}
     onSaveContinue={onSaveContinue}
-    planNoun={options.planNoun} /> : null;
+    planNoun={options.planNoun} pitchRequired={options.pitchRequired} /> : null;
 
   // F1: the canvas is mounted for the ENTIRE step - the plan (raster +
   // outline + entries) is the source of truth and never goes blank. The

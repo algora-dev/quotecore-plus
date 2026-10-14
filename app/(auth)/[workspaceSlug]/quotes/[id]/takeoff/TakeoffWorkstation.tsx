@@ -1438,6 +1438,15 @@ export function TakeoffWorkstation({
     handleSaveArea(isExistingAreaMode ? existingAreaLabel : (initialPageName || 'New Area'), 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- fires once per prompt-open; handleSaveArea is re-created each render.
   }, [showPitchOnlyPrompt, tradeConfig, isExistingAreaMode, existingAreaLabel, initialPageName]);
+
+  // Owner directive 2026-10-13 (reuse-measurement flow): non-pitch trades
+  // attach a saved area's as-drawn value directly - the plan/pitched chooser
+  // never opens. Roofing keeps the chooser (pitched vs plan vs offcuts).
+  useEffect(() => {
+    if (!areaAttachChoice || tradeConfig.pitchRequired) return;
+    handleConfirmAreaAttach();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fires once per chooser-open; handler is re-created each render.
+  }, [areaAttachChoice, tradeConfig]);
   useEffect(() => {
     // P1-1b: suppress in mode=add - user is continuing on an existing area, not creating a new one.
     if (takeoffMode === 'add') return;
@@ -2587,13 +2596,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     // stored on the entry so the save path recomputes from the LIVE pitch -
     // fixing the stale-snapshot bug where pitch was set after attaching.
     const pitched = ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1);
+    // Owner directive 2026-10-13 (reuse-measurement flow): non-pitch trades
+    // never see the plan/pitched chooser - the as-drawn (plan) value attaches
+    // directly via the auto-confirm effect. Roofing keeps the chooser.
     setAreaAttachChoice({
       componentId,
       roofAreaId,
       plan: ra.area,
       pitched,
       pitch: ra.pitch || 0,
-      basis: 'pitched',
+      basis: tradeConfig.pitchRequired ? 'pitched' : 'plan',
     });
   };
 
@@ -9777,7 +9789,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
       {/* Area-to-component attach chooser (2026-09-03): plan vs pitched.
           Default Pitched. Stores the basis + plan value so the save path
           recomputes from live pitch - never a stale snapshot again. */}
-      {areaAttachChoice && (
+      {areaAttachChoice && tradeConfig.pitchRequired && (
         <QcHostedDialog label="Attach area to component" size="md" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-5 w-96 border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">Attach area to component</h2>

@@ -48,6 +48,9 @@ export interface TouchComponentsRailProps {
   roofAreas: TouchRoofAreaOption[];
   onAttachRoofArea: (geometryId: string) => void;
   onAttachCorners: (basis: CornerBasis) => void;
+  /** Owner directive 2026-10-13: false = non-pitch trade reuse copy (no
+   *  cut-plan/pitch wording). Default keeps the historical roofing copy. */
+  pitchRequired?: boolean;
   detailEntries: TouchComponentEntry[];
   highlightedEntryId: string | null;
   unitSystem: 'meters' | 'feet';
@@ -149,7 +152,7 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
         </select>
       </>}
       {(p.drawMode === 'polygon' || p.drawMode === 'line') && p.roofAreas.length > 0 && <>
-        <RailNotice>Reuse a saved measurement. Cut-plan material already includes pitch and cutting allowances.</RailNotice>
+        <RailNotice>{p.pitchRequired === false ? 'Reuse a saved measurement.' : 'Reuse a saved measurement. Cut-plan material already includes pitch and cutting allowances.'}</RailNotice>
         <select value="" aria-label="Reuse a measurement" className={SELECT_CLASS}
           onChange={e => { if (e.target.value) p.onAttachRoofArea(e.target.value); }}>
           <option value="">Reuse a measurement...</option>
