@@ -7,6 +7,7 @@ import { getTradeLabels } from '@/app/lib/trades/labels';
 import { entryLabel, addMoreLabel, measurementTypeLabel } from '@/app/lib/types';
 import { linearInputToMetric, areaInputToMetric } from '@/app/lib/measurements/conversions';
 import { formatArea, formatLinear, formatVolume, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
+import { formatLinealMetres } from '@/app/lib/measurements/componentDisplay';
 import { formatComponentQuantity } from '@/app/lib/measurements/componentDisplay';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, QuoteComponentEntryRow, InputMode } from '@/app/lib/types';
@@ -65,6 +66,13 @@ export function ExpandableComponent({
     'rafter', 'valley_hip',
   ]);
   const isLinearLike = LINEAR_LIKE_TYPES.has(comp.measurement_type as string);
+  // Lineal-cover components (owner directive 2026-10-13): entries stay stored
+  // in m² - the line converts to lineal metres at the LINE level. Cover width
+  // present means measurement rows are area figures and the quantity is lm.
+  // (The library UI only sets cover_width_mm on area comps sold as lineal, so
+  // its presence on a lineal-typed line means the lineal-cover save created it.)
+  const linealCoverMm = Number(comp.cover_width_mm ?? 0);
+  const hasLinealCover = isLinearLike && linealCoverMm > 0;
   const hasCombinedEntry = compEntries.some(
     (e) => (e as unknown as { is_combined?: boolean }).is_combined === true,
   );
@@ -145,6 +153,8 @@ export function ExpandableComponent({
       return formatArea(value, quote.measurement_system);
     }
     if (m === 'lineal' || m === 'linear' || m === 'multi_lineal' || m === 'curved_line') {
+      // Lineal-cover: entries are stored in m² - display via the area formatter.
+      if (hasLinealCover) return formatArea(value, quote.measurement_system);
       return formatLinear(value, quote.measurement_system);
     }
     if (m === 'volume' || m === 'volume_3d') {
@@ -286,7 +296,9 @@ export function ExpandableComponent({
           <svg aria-hidden="true" className="qb-disclosure-icon" data-expanded={expanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="m9 5 7 7-7 7" /></svg>
           <span className="qb-component-name">
             <span>{comp.name}</span>
-            <span className="qb-component-meta">{measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)} · {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}</span>
+            <span className="qb-component-meta">{hasLinealCover
+              ? `Area (${getUnitLabel('area' as any, quote.measurement_system)}) → sold ${quote.measurement_system === 'imperial' ? 'ft' : 'lm'}`
+              : measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)} · {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}</span>
           </span>
           <span className="qb-component-quantity">
             <span className="qb-mini-label">Quantity</span>
@@ -296,7 +308,9 @@ export function ExpandableComponent({
             const actual = Number(comp.final_quantity ?? 0);
             const fractional = packSnap && !isNaN(packSnap) && packSnap > 0 ? actual / packSnap : actual;
             return <>{priced.toFixed(0)} <span className="italic text-slate-400">({fractional.toFixed(2)})</span></>;
-          })() : displayValue(comp.final_quantity ?? 0)}
+          })() : hasLinealCover
+            ? formatLinealMetres(Number(comp.final_quantity ?? 0), quote.measurement_system)
+            : displayValue(comp.final_quantity ?? 0)}
           </span>
           <span className="qb-component-cost"><span className="qb-mini-label">Item + labour</span>{formatCurrency(totalCost, currency)}</span>
         </button>

@@ -7,6 +7,10 @@ import { homepageFaqs } from '@/components/marketing/home/homepage-content';
 import { homepageConfig, homepageVideoSchema } from '@/components/marketing/home/homepage-config';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 import { shouldRenderMarketing, marketingUrl } from '@/lib/app-url';
+import controls from '@/components/marketing/MarketingButton.module.css';
+import hero from '@/components/marketing/home/Homepage.module.css';
+import { Icon } from '@/components/marketing/home/Icon';
+import loginActions from './login-buttons.module.css';
 import {
   buildBreadcrumbSchema,
   buildFaqSchema,
@@ -119,24 +123,27 @@ export default async function Home() {
         <p className="text-lg text-slate-600 max-w-xl">
           Measure, quote, order, track, invoice, store, all in 1 place
         </p>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/login"
-            className="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className={`${controls.button} ${controls.glass} ${controls.large} ${hero.heroPricing} ${loginActions.heroShadow}`}
           >
-            Log in
+            <span className={controls.icon} aria-hidden="true"><Icon name="arrow" /></span>
+            <span>Log in</span>
           </Link>
           <Link
             href="/signup"
-            className="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:border-slate-400 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className={`${controls.button} ${controls.primary} ${controls.large} ${loginActions.heroShadow}`}
           >
-            Sign up
+            <span className={controls.icon} aria-hidden="true"><Icon name="arrow" /></span>
+            <span>Sign up</span>
           </Link>
           <Link
             href={marketingLink}
-            className="rounded-full bg-[#FF6B35] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#E55A28] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className={`${controls.button} ${controls.glass} ${controls.large}`}
           >
-            Website
+            <Icon name="globe" />
+            <span>Website</span>
           </Link>
         </div>
         <Link
