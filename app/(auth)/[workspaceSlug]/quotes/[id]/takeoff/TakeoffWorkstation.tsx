@@ -9206,7 +9206,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       <>
                       <button
                         data-copilot="takeoff-tool-offcuts"
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold text-white bg-black transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40"
+                        className="qcs-primary"
                         disabled={openingOffcuts || !calibrationConfirmed || !pages[currentPageIndex]?.id || roofAreas.length === 0 || isSaving || aiScanning}
                         aria-busy={openingOffcuts}
                         title="Save a recovery checkpoint of these measurements, then review faces. Quote prices are not changed."
@@ -9281,7 +9281,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       {(hasOffcutReview || offcutAreaFigure != null) && (
                       <button
                         data-copilot="takeoff-tool-offcuts-resume"
-                        className="px-3 py-2 rounded-full text-sm border border-slate-300 bg-white text-slate-700 hover:border-orange-200 hover:bg-orange-50/40 disabled:opacity-40"
+                        className="qcs-quiet"
                         disabled={openingOffcuts || !pages[currentPageIndex]?.id || isSaving || aiScanning}
                         title="Open the saved offcut review for this roof area, even after closing the tab or losing the current takeoff. Does not read or change the current takeoff."
                         onClick={async () => {
@@ -9673,37 +9673,36 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 </div>
               )}
               {/* Feature showcase (owner 2026-10-14): free tools see the AI
-                  Scan Assist option after calibration, locked as a teaser. No
-                  scan is ever fired and no AI credits are consumed. */}
+                  Scan Assist option after calibration, locked as a teaser
+                  (v2 dark restyle same day). No scan is ever fired and no AI
+                  credits are consumed. */}
               {freeToolMode && (
-                <div className="space-y-2 rounded-xl border-2 border-[#FF6B35]/30 p-3 bg-[#FF6B35]/5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-                      <svg className="w-4 h-4 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <div className="qcs-panel">
+                  <div className="qcs-panel-head">
+                    <span className="qcs-panel-title">
+                      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                       AI Scan Assist
-                    </div>
-                    <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                      In the main app
                     </span>
+                    <span className="qcs-badge">In the main app</span>
                   </div>
-                  <p className="text-xs text-slate-600">
+                  <p className="qcs-panel-copy">
                     {freeToolIsRoofing
                       ? 'Finds the roof outline and the roof components for you, then lets you review and adjust. Saves time and helps if you are not roof-technical.'
                       : 'Finds outlines and components for you, then lets you review and adjust. Currently live for roofing, with more trades coming.'}
                   </p>
-                  <QcHostedButton variant="primary"
+                  <button
+                    type="button"
+                    className="qcs-mini-cta"
                     onClick={() => openShowcase(freeToolIsRoofing ? SCAN_ASSIST_ROOFING : SCAN_ASSIST_TRADE)}
-                    className="w-full py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-full hover:bg-[#E55A2B] transition-colors flex items-center justify-center gap-1.5"
                     title="See what AI Scan Assist does"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                     AI Scan Assist
-                  </QcHostedButton>
+                  </button>
                 </div>
               )}
               <QcHostedButton variant="ghost"

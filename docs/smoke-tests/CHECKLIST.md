@@ -617,3 +617,4 @@
 - [ ] Main app takeoff: button reads "Generate Offcuts" (dark primary); Resume offcuts hidden until a generate completes this session or a saved plan exists for the current page/area; offcut workbench header, one-pager footer and error strings renamed consistently
 - [ ] Measurement-to-pricing (/measurement-to-quote-tool): report step opens the Smart Assistant upsell modal once per tab; single homepage CTA; revisiting report in same tab does not re-show
 - [ ] Conversion tracking: teaser clicks write action "teaser" rows to free_tool_usage (tool_code per surface); rows visible in admin free-tool usage
+- [ ] v2 dark restyle (same day): showcase modals now dark qcs theme (ink card, orange glow, orange-gradient CTA with dark text, glass secondary); teaser buttons dark glass rounded-rect; Generate Offcuts = qcs-primary near-black, Resume = qcs-quiet; SA copy now voice-or-text angle; measurement-tool modal portals to body (CTA readable)

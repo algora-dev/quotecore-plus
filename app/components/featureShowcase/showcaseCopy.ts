@@ -76,13 +76,15 @@ export const OFFCUTS: ShowcaseCopy = {
 
 export const SMART_ASSISTANT: ShowcaseCopy = {
   label: 'Smart Assistant',
-  tooltip: 'Tell your assistant to enter all of this for you.',
-  title: 'Prefer to just tell your assistant?',
-  lead: 'Smart Assistant can enter all the details you just entered for you. It is available in the main app, and you can try it right now with no sign-up in our guided demo.',
+  tooltip: 'Speak or type, and your assistant builds it for you.',
+  title: 'Tell your assistant instead',
+  lead: 'Prefer to just speak to your Smart Assistant? Voice or text, right on your phone, and it creates this exact same output or a full quote from your own pricing.',
   benefits: [
-    'Type requests in plain English and it fills in the quote',
+    'Voice or text, on your phone or desktop',
+    'Builds quotes from your own pricing and components',
+    'Knows your account: finds things, edits details, creates quotes and more',
     'You stay in control and can adjust anything it enters',
   ],
-  availability: 'Try it now with no sign-up in our guided demo',
+  availability: 'In the main app. Try it now with no sign-up in our guided demo',
   ctaLabel: 'Check it out here',
 };

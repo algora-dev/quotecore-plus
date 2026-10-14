@@ -1,0 +1,377 @@
+/* Feature showcase dark theme (owner 2026-10-14, "Build it" go).
+   Ported from the pricing calculator's approved Dark Focus composition
+   (app/components/pricing/calculator/pricing-theme.css) so the showcase
+   modals, teaser buttons and panels speak the same visual language.
+   Fully scoped under .qcs-* with explicit properties: safe to mount inside
+   foreign CSS-module contexts (measurement tool, demo, workstation).
+   Font family is always inherited (Geist from the root layout). */
+
+.qcs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(10, 12, 16, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.qcs-card {
+  --qcs-bg: #191B20;
+  --qcs-deep: #141820;
+  --qcs-text: #F8FAFC;
+  --qcs-muted: #B8BEC9;
+  --qcs-body-text: #D9DEE6;
+  --qcs-line: #3E4550;
+  --qcs-accent: #FFB36B;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  width: min(440px, 100%);
+  border: 1px solid var(--qcs-line);
+  border-radius: 20px;
+  background: var(--qcs-bg);
+  color: var(--qcs-text);
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.28);
+  color-scheme: dark;
+  animation: qcs-arrive 0.22s ease-out;
+}
+
+@keyframes qcs-arrive {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+}
+
+.qcs-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 14% 3%, rgba(255, 107, 53, 0.13), transparent 58%);
+}
+
+.qcs-body {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  padding: 26px;
+}
+
+.qcs-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--qcs-muted);
+}
+
+.qcs-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FF6B35;
+  flex: 0 0 6px;
+}
+
+.qcs-title {
+  margin: 0;
+  font-size: clamp(22px, 5vw, 26px);
+  font-weight: 650;
+  line-height: 1.14;
+  letter-spacing: -0.035em;
+  color: var(--qcs-text);
+  text-wrap: balance;
+}
+
+.qcs-lead {
+  margin: 0;
+  color: var(--qcs-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.qcs-benefits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+
+.qcs-benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--qcs-body-text);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.qcs-check {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  flex: 0 0 20px;
+  border: 1px solid rgba(255, 179, 107, 0.36);
+  border-radius: 50%;
+  background: rgba(255, 138, 61, 0.065);
+  color: var(--qcs-accent);
+}
+
+.qcs-check svg { width: 12px; height: 12px; }
+
+.qcs-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  font-size: 11px;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  font-weight: 650;
+  color: var(--qcs-accent);
+  border: 1px solid rgba(255, 179, 107, 0.36);
+  border-radius: 5px;
+  background: rgba(255, 138, 61, 0.065);
+  white-space: nowrap;
+}
+
+.qcs-actions {
+  display: grid;
+  gap: 9px;
+  margin-top: 6px;
+}
+
+.qcs-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 20px;
+  border-radius: 12px;
+  border: 0;
+  background: linear-gradient(120deg, #FFB36B 0%, #FF8A3D 48%, #FF6B35 100%);
+  color: #141820;
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+}
+
+.qcs-cta:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 12px 32px rgba(255, 138, 61, 0.28);
+}
+
+.qcs-cta:active { transform: translateY(1px); }
+
+.qcs-cta:focus-visible,
+.qcs-secondary:focus-visible,
+.qcs-teaser:focus-visible,
+.qcs-primary:focus-visible,
+.qcs-mini-cta:focus-visible {
+  outline: 2px solid var(--qcs-accent, #FFB36B);
+  outline-offset: 3px;
+}
+
+.qcs-cta svg { width: 16px; height: 16px; }
+
+.qcs-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--qcs-text, #F8FAFC);
+  font-size: 13.5px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.qcs-secondary:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+/* Locked teaser button (toolbars). Dark glass so it reads as the premium
+   locked feature on any host surface. */
+.qcs-teaser {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #272B33;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #F8FAFC;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qcs-teaser svg { color: #FFB36B; width: 15px; height: 15px; }
+
+.qcs-teaser:hover {
+  background: #2E333C;
+  border-color: rgba(255, 179, 107, 0.45);
+  box-shadow: 0 0 0 3px rgba(255, 138, 61, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.qcs-teaser:active { transform: translateY(1px); }
+
+/* Real primary action (main-app Generate Offcuts). Near-black v2 solid. */
+.qcs-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 15px;
+  border-radius: 12px;
+  border: 1px solid #3E4550;
+  background: #1A1D23;
+  color: #F8FAFC;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qcs-primary:hover {
+  background: #20242B;
+  border-color: rgba(255, 179, 107, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 138, 61, 0.1), 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.qcs-primary:active { transform: translateY(1px); }
+
+.qcs-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Quiet secondary for real actions on light toolbar surfaces (Resume). */
+.qcs-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 15px;
+  border-radius: 12px;
+  border: 1px solid #C9CFDA;
+  background: #FFFFFF;
+  color: #3B4252;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.qcs-quiet:hover {
+  border-color: rgba(255, 138, 61, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 138, 61, 0.08);
+  background: #FBFCFE;
+}
+
+.qcs-quiet:active { transform: translateY(1px); }
+
+.qcs-quiet:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Dark teaser panel inside the light calibration-complete dialog. */
+.qcs-panel {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid #3E4550;
+  border-radius: 14px;
+  background: #191B20;
+  color: #F8FAFC;
+  color-scheme: dark;
+}
+
+.qcs-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 14% 3%, rgba(255, 107, 53, 0.14), transparent 58%);
+}
+
+.qcs-panel-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.qcs-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #F8FAFC;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.qcs-panel-title svg { color: #FFB36B; width: 15px; height: 15px; }
+
+.qcs-panel-copy {
+  position: relative;
+  margin: 0;
+  color: #B8BEC9;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.qcs-mini-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 0;
+  background: linear-gradient(120deg, #FFB36B 0%, #FF8A3D 48%, #FF6B35 100%);
+  color: #141820;
+  font-size: 13.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qcs-mini-cta svg { width: 15px; height: 15px; }
+
+.qcs-mini-cta:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 10px 26px rgba(255, 138, 61, 0.26);
+}
+
+@media (max-width: 640px) {
+  .qcs-body { padding: 22px; gap: 12px; }
+  .qcs-actions { gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qcs-card { animation: none; }
+  .qcs-teaser, .qcs-primary, .qcs-cta, .qcs-secondary, .qcs-mini-cta { transition: none; }
+}
