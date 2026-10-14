@@ -76,14 +76,13 @@ export const OFFCUTS: ShowcaseCopy = {
 
 export const SMART_ASSISTANT: ShowcaseCopy = {
   label: 'Smart Assistant',
-  tooltip: 'Speak or type, and your assistant builds it for you.',
-  title: 'Tell your assistant instead',
-  lead: 'Prefer to just speak to your Smart Assistant? Voice or text, right on your phone, and it creates this exact same output or a full quote from your own pricing.',
+  tooltip: 'Talk to your phone and get tasks done faster.',
+  title: 'Prefer to talk to your phone?',
+  lead: 'Smart Assistant lets you create and edit quotes, pricing and quote lines by voice or text. Save this work in the main app, set up your pricing once, and quote faster without repeating the setup.',
   benefits: [
-    'Voice or text, on your phone or desktop',
-    'Builds quotes from your own pricing and components',
-    'Knows your account: finds things, edits details, creates quotes and more',
-    'You stay in control and can adjust anything it enters',
+    'Create quotes like the one you just made',
+    'Edit pricing and quote lines in seconds',
+    'Save your work and access more tools in the main app',
   ],
   availability: 'In the main app. Try it now with no sign-up in our guided demo',
   ctaLabel: 'Check it out here',
