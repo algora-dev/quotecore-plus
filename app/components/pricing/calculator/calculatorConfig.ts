@@ -7,7 +7,7 @@ import type { CalculatorCatalog } from './types';
  */
 export const PREVIEW_CATALOG: CalculatorCatalog = {
   id: 'quotecore-us-monthly', revision: 'owner-first-pass-2026-10-05.4',
-  stage: 'preview', currency: 'USD', locale: 'en-US',
+  stage: 'approved', currency: 'USD', locale: 'en-US',
   baseMonthlyCents: 1900,
   thresholds: { lowMax: 5, mediumMax: 20, maxInput: 10000 },
   core: {
