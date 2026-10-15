@@ -388,7 +388,7 @@ export function LineEditForm({
       <div className="flex gap-2 pt-1">
         <button
           type="submit"
-          className="flex-1 px-3 py-1 text-xs font-medium bg-black text-white rounded hover:bg-slate-800"
+          className="flex-1 px-3 py-1 text-xs font-medium bg-black text-white rounded transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           {saveLabel}
         </button>

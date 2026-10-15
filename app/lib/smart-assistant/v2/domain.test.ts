@@ -13,6 +13,7 @@ import { componentResult } from './component-plan';
 import { areaResult, areaCreateResult, parseAreaChanges, parseAreaCreate, selectArea } from './area-plan';
 import { computeRoofArea, rafterPitchFactor } from '@/app/lib/pricing/engine';
 import { parseDraft, buildDraft } from './draft-plan';
+import { draftReviewDiff } from '../workflow-controller/structural-diff';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 const id = '11111111-1111-4111-8111-111111111111', other = '22222222-2222-4222-8222-222222222222';
 const permissions = { quotes: 'read_only', draft_quotes: 'read_only', orders: 'read_only', invoices: 'read_only', components: 'read_only', customers: 'read_only', emails: 'hidden', billing: 'hidden', settings: 'hidden' } as const;
@@ -64,7 +65,18 @@ test('P3 compound source provenance survives rate-only edits', () => { const bas
         }[];
     }[];
 }; assert.equal(audit.entries[0].combinedFrom[1].raw, 60); });
-test('P4 creates a concrete, engine-priced proposal, not a quote row', () => { const args = draftArgs(); const spec = parseDraft(args, creationContext, false); const result = buildDraft(spec, creationContext, [library]); assert.equal(result.params.entryMode, 'manual'); assert.equal(result.params.measurementSystem, 'metric'); assert.equal(result.currency, 'GBP'); assert.equal(result.children.components.length, 1); assert.equal(result.children.components[0].final_quantity, storageNumber(applyPitchAndWaste(100, true, 'rafter', 25, 'percent', 10, 0).afterWaste)); assert.ok(result.changes.some(c => c.label.startsWith('Engine costs'))); });
+test('P4 creates a concrete, engine-priced proposal with a concise component summary', () => {
+  const args = draftArgs(); const spec = parseDraft(args, creationContext, false); const result = buildDraft(spec, creationContext, [library]);
+  assert.equal(result.params.entryMode, 'manual'); assert.equal(result.params.measurementSystem, 'metric'); assert.equal(result.currency, 'GBP'); assert.equal(result.children.components.length, 1);
+  assert.equal(result.children.components[0].final_quantity, storageNumber(applyPitchAndWaste(100, true, 'rafter', 25, 'percent', 10, 0).afterWaste));
+  const summary = result.changes.find(change => change.label === 'Component: Test covering')?.after ?? '';
+  assert.match(summary, /Incl Pitch\/Waste/); assert.match(summary, /cost /); assert.doesNotMatch(summary, /engine quantity|material |labour /i);
+  const revised = draftReviewDiff({ params: {}, currency: '', pitch: -1, children: { areas: [], components: [] } }, {
+    params: result.params, currency: result.currency, pitch: spec.pitch, children: result.children,
+  });
+  const revisedSummary = revised.find(change => change.label === 'Component: Test covering')?.after ?? '';
+  assert.match(revisedSummary, /Incl Pitch\/Waste/); assert.match(revisedSummary, /cost /); assert.doesNotMatch(revisedSummary, /engine quantity|material |labour /i);
+});
 test('P4 blanket pitch: explicit role pitch_type overrides library default', () => {
   // Library row misconfigured with pitch_type 'none' (the owner smoke symptom):
   // the workflow's explicit role-based override must still apply pitch.
@@ -100,7 +112,8 @@ test('P4 owner-shaped creation flow (corrugate + cheapest underlay) proposes wit
     // Pitchless, wasteless library row prices exactly as stored.
     assert.equal(felt.final_quantity, 100); assert.equal(felt.material_cost, 400); assert.equal(felt.labour_cost, 200);
     assert.ok(result.changes.some(c => c.label === 'Customer' && c.after === 'James Smith'));
-    assert.ok(result.changes.some(c => c.label.startsWith('Engine costs')));
+    assert.ok(result.changes.some(c => c.label === 'Component: Test covering' && c.after.includes('Incl Pitch/Waste')));
+    assert.ok(result.changes.some(c => c.label === `Component: ${underlay.name}` && c.after.includes('Value:')));
 });
 test('P4 supports header-only drafts without inventing dimensions', () => { const args = { ...draftArgs(), areas: [], components: [] }; const out = buildDraft(parseDraft(args, creationContext, false), creationContext, []); assert.deepEqual(out.children, { areas: [], components: [] }); });
 test('P4 known surface is not pitched twice', () => { const args = { ...draftArgs(), areas: [{ label: 'Main Roof', quantity: 100, unit: 'm2', basis: 'surface' }], components: [] }; const out = buildDraft(parseDraft(args, creationContext, false), creationContext, []); assert.equal(out.children.areas[0].computed_sqm, 100); });

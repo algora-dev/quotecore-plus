@@ -61,8 +61,7 @@ export async function proposeDraft(client: SupabaseClient, access: Access, runId
         draft.currency = quote.currency;
     }
     const empty: PlannedDraft = {params:{},currency:'',pitch:-1,children:{areas:[],components:[]}};
-    const names=Object.fromEntries(rows(context.collections,'collections',200).map(c=>[String(c.id),String(c.name)]));
-    const changes=meta ? draftReviewDiff(meta.previousPlan ?? empty,draft,names) : built.changes;
+    const changes=meta ? draftReviewDiff(meta.previousPlan ?? empty,draft) : built.changes;
     if (!changes.length) throw new ProposalError('Those details already match the saved draft. There is nothing to confirm or save.');
     const payload = { ...draft, genericTradesEnabled, briefStateId: meta?.briefStateId ?? null, editQuoteId: editing,
         ...(meta ? {controllerVersion:1,briefRevision:meta.briefRevision,workflowEpoch:meta.workflowEpoch} : {}) };

@@ -302,6 +302,11 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     : step?.event === 'email.sent' ? 'Choose *Send Quote* in this Job Space. Enter your email address and send the demo quote.'
     : assistantNeedsDraft ? 'This lesson edits a draft created by the Assistant. First use the create request below, or skip this lesson to try finding work instead.'
     : step?.copy;
+  const assistantInstruction = step?.event === 'assistant.created'
+    ? 'Send the example in Smart Assistant, review the draft quote, then choose Confirm to create it.'
+    : step?.event === 'assistant.edited'
+      ? 'Send the example in Smart Assistant, review the proposed changes, then choose Confirm to apply them.'
+      : 'Send the example in Smart Assistant, then click the matching suggested quote to complete this task. No confirmation is needed.';
   const testExample = units === 'metric' ? 'Try 2 m².' : units === 'imperial_ft' ? 'Try 20 ft².' : units === 'imperial_rs' ? 'Try 0.2 roofing squares.' : '';
   const showGuide = open && !expired && !resetting && !mobileNotice;
   const closeMobileNotice = useCallback(() => {
@@ -357,10 +362,10 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
               : <>
                 <div className="qc-demo-script"><label htmlFor="qc-demo-prompt">EXAMPLE REQUEST</label><textarea id="qc-demo-prompt" ref={promptBox} readOnly value={assistantScript} aria-label="Smart Assistant example to copy" rows={step.event === 'assistant.created' ? 4 : 2} />
                   <QcButton variant="ghost" size="sm" disabled={copying || !units} onClick={() => void copyPrompt()}>{copyStatus === 'Prompt copied.' ? 'Copied' : 'Copy example'}</QcButton></div>
-                <p className="qc-demo-copy-status" role="status">{copyStatus || (units ? 'Paste the example into the Assistant and send it. Review the change card it shows you, then choose Confirm to apply the changes.' : 'Loading your measurement system…')}</p>
+                <p className="qc-demo-copy-status" role="status">{copyStatus || (units ? assistantInstruction : 'Loading your measurement system…')}</p>
 
               </>}
-            {allowance?.configured && <p className="qc-demo-allowance">{allowance.turnsRemaining} of {allowance.turnsLimit} demo requests remain. Review and confirm in the Assistant; you do not need to type “confirm”.</p>}
+            {allowance?.configured && <p className="qc-demo-allowance">{allowance.turnsRemaining} of {allowance.turnsLimit} demo requests remain.</p>}
           </>}
           {step.event === 'email.sent' && location.onPage && features && !features.selfSend && <p className="qc-demo-note" role="status">Email delivery is switched off on this deployment. Skip this optional lesson to continue to Smart Assistant.</p>}
           {!required && <QcButton className="qc-demo-skip" variant="ghost" size="sm" disabled={pending} onClick={() => void runCommand({ action: 'skip' })}>Skip this optional lesson</QcButton>}

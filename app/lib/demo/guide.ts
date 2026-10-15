@@ -28,9 +28,9 @@ export const DEMO_GUIDE_CHAPTERS: { id: DemoGuideChapter; title: string; summary
     { event: 'email.sent', title: 'Send the demo quote to yourself', target: 'job', copy: 'If you’re still editing, press *Save Quote* to return to Job Space. Then choose *Send Quote* and enter your own email address.', hint: 'Optional: the demo email is clearly marked. Sending does not subscribe you to marketing.' },
   ] },
   { id: 'smart-assistant', title: 'Use Smart Assistant', summary: 'Create, change and find work using plain English.', steps: [
-    { event: 'assistant.created', title: 'Create work by asking', target: 'assistant', copy: 'Open Smart Assistant and send the example request below. Review its draft, then confirm it.' },
-    { event: 'assistant.edited', title: 'Change it in one line', target: 'assistant', copy: 'Send the short change request below, then confirm the update.' },
-    { event: 'assistant.found', title: 'Find what needs attention', target: 'assistant', copy: 'Ask the final example below, then open the matching job from the Assistant’s results.' },
+    { event: 'assistant.created', title: 'Create work by asking', target: 'assistant', copy: 'Open Smart Assistant and send the example request below. Review the draft quote, then choose *Confirm* to create it.' },
+    { event: 'assistant.edited', title: 'Change it in one line', target: 'assistant', copy: 'Send the short change request below, review the proposed changes, then choose *Confirm* to apply them.' },
+    { event: 'assistant.found', title: 'Find what needs attention', target: 'assistant', copy: 'Ask the final example below, then click the matching suggested quote in Smart Assistant to complete this task. No confirmation is needed.' },
   ] },
 ];
 

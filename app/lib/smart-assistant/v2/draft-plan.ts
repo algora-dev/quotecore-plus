@@ -4,6 +4,7 @@ import { traceComponentCalc } from '@/app/lib/pricing/calcTracer';
 import { TRADE_ALLOWED_MEASUREMENT_TYPES, type Trade, type MeasurementType } from '@/app/lib/trades/measurement-type-whitelist';
 import { boundedText, isUuid, type ChangeRow } from './contracts';
 import { assistantMoney } from './money';
+import { convertAreaFt2, convertAreaRs, convertLinear, convertVolumeFt3 } from '@/app/lib/measurements/conversions';
 import { finite, fieldNumber, ProposalError, rows } from './action-domain';
 import { storageNumber, storedMeasurement } from './storage-number';
 import { canonicalQuantity, baseUnit } from './units';
@@ -70,6 +71,19 @@ export function parseDraft(value: Record<string, unknown>, context: Record<strin
 }
 
 export type DraftIdentities = { areas: string[]; components: Array<{id: string; entries: string[]}> };
+
+function displayDraftQuantity(value: number, type: string, system: string): string {
+  const format = (amount: number) => String(Number(amount.toFixed(2)));
+  if (type === 'area') {
+    if (system === 'imperial_ft') return `${format(convertAreaFt2(value))} ft²`;
+    if (system === 'imperial_rs') return `${format(convertAreaRs(value))} RS`;
+    return `${format(value)} m²`;
+  }
+  if (['lineal', 'linear'].includes(type)) return system === 'metric' ? `${format(value)} m` : `${format(convertLinear(value))} ft`;
+  if (type === 'volume_3d') return system === 'metric' ? `${format(value)} m³` : `${format(convertVolumeFt3(value))} ft³`;
+  return `${format(value)} ${baseUnit(type)}`;
+}
+
 export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, libraries: Record<string, unknown>[], identities?: DraftIdentities, retainedComponents?: Record<string, unknown>[]) {
   if (identities && (identities.areas.length !== spec.areas.length || identities.components.length !== spec.components.length)) throw new ProposalError('The working draft identity map changed.');
   if (identities) {
@@ -82,11 +96,6 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
     { label: 'Customer', before: 'New draft', after: spec.customerName },
     { label: 'Job', before: '', after: spec.jobName },
     ...(spec.siteAddress ? [{ label: 'Site address', before: '', after: spec.siteAddress }] : []),
-    { label: 'Measurement system (locked on creation)', before: '', after: spec.measurementSystem },
-    { label: 'Currency', before: '', after: currency },
-    { label: 'Trade', before: '', after: spec.trade },
-    { label: 'Component collection', before: '', after: String(rows(context.collections, 'collections', 200).find(c => c.id === spec.collectionId)?.name ?? spec.collectionId) },
-    { label: 'Default pitch (degrees)', before: '', after: String(spec.pitch) },
   ];
   const areas = spec.areas.map((a, index) => {
     const id = identities?.areas[index] ?? randomUUID();
@@ -95,7 +104,7 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
     const areaPitch = a.pitch_degrees == null ? spec.pitch : storageNumber(finite(a.pitch_degrees, 'area pitch', 0, 89));
     const computed = computeRoofArea({ id, label: String(a.label), inputMode: surface ? 'final' : 'calculated', finalValueSqm: surface ? quantity : undefined, calcPlanSqm: surface ? undefined : quantity, calcPitchDegrees: areaPitch });
     if (!Number.isFinite(computed)) throw new ProposalError('This area calculation is invalid.');
-    changes.push({ label: `Area: ${String(a.label)}`, before: 'New', after: `${a.quantity} ${a.unit} (${a.basis}); ${surface ? 'measured surface' : `pitch ${areaPitch}°`}; engine surface ${storageNumber(computed)} m2` });
+    changes.push({ label: `Area: ${String(a.label)}`, before: 'New', after: `${a.quantity} ${a.unit} (${a.basis}); ${surface ? 'measured surface' : `pitch ${areaPitch}°`}` });
     return { id, label: String(a.label), input_mode: surface ? 'final' : 'calculated', final_value_sqm: surface ? quantity : null, calc_plan_sqm: surface ? null : quantity, calc_pitch_degrees: surface ? 0 : areaPitch, computed_sqm: storageNumber(computed), sort_order: index };
   });
 
@@ -130,8 +139,15 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
       totalQuantity, materialRate: rate, labourRate: labour, pricingStrategy: strategy as PricingStrategy, packPrice: lib.pack_price == null ? null : fieldNumber(lib.pack_price, 'pack price'), packSize: lib.pack_size == null ? null : fieldNumber(lib.pack_size, 'pack size'), packCoverageM2: lib.pack_coverage_m2 == null ? null : fieldNumber(lib.pack_coverage_m2, 'pack coverage'),
       wasteType, wastePercent: waste, wasteFixed: fixed, pitchType, pitchDegrees: deg, source: 'manual' });
     if (audit.packDataMissing || ![audit.materialCost, audit.labourCost, totalQuantity].every(Number.isFinite)) throw new ProposalError('A library pack is missing its pricing data. Fix it before creating this draft.');
-    const id = identities?.components[index].id ?? randomUUID(), unit = baseUnit(lib.measurement_type);
-    changes.push({ label: `Component: ${String(lib.name)}`, before: 'New', after: `${measurementSummary(measurements)} (${input.basis}, ${measurements.length} ${measurements.length === 1 ? 'entry' : 'entries'}, before waste); ${deg} degrees; waste ${wasteType === 'percent' ? waste + '%' : wasteType === 'none' ? 'none' : fixed + ' ' + unit}; engine quantity ${totalQuantity} ${unit}; material ${assistantMoney(currency, audit.materialCost)}, labour ${assistantMoney(currency, audit.labourCost)}` });
+    const id = identities?.components[index].id ?? randomUUID();
+    const wasteQuantity = displayDraftQuantity(fixed, String(lib.measurement_type), spec.measurementSystem);
+    const wasteSummary = wasteType === 'percent' ? `${waste}% waste`
+      : wasteType === 'none' ? 'no waste'
+        : wasteType === 'fixed_per_segment' ? `${wasteQuantity} waste per segment`
+          : `${wasteQuantity} waste`;
+    const quantityLabel = deg > 0 ? 'Incl Pitch/Waste' : wasteType !== 'none' ? 'Incl waste' : 'Value';
+    const pitchSummary = deg > 0 ? `${deg}° pitch` : 'no pitch adjustment';
+    changes.push({ label: `Component: ${String(lib.name)}`, before: 'New', after: `${measurementSummary(measurements)} (${basis ? 'plan' : 'actual'}); ${pitchSummary}; ${wasteSummary}; ${quantityLabel}: ${displayDraftQuantity(totalQuantity, String(lib.measurement_type), spec.measurementSystem)}; cost ${assistantMoney(currency, audit.materialCost + audit.labourCost)}` });
     if (identities && identities.components[index].entries.length !== calculated.length) throw new ProposalError('The measurement identity map changed.');
     const entries = calculated.map((e, entryIndex) => ({ id: identities?.components[index].entries[entryIndex] ?? randomUUID(), raw_value: e.rawValue, value_after_waste: e.afterWaste, pitch_degrees: deg > 0 ? deg : null, sort_order: e.sortOrder }));
     return { id, library_id: lib.id, area_id: areaIndex === null ? null : areas[areaIndex].id, name: lib.name, component_type: lib.component_type, measurement_type: lib.measurement_type === 'linear' ? 'lineal' : lib.measurement_type === 'quantity' ? 'count' : lib.measurement_type, input_mode: basis ? 'calculated' : 'final',
@@ -139,8 +155,6 @@ export function buildDraft(spec: DraftSpec, context: Record<string, unknown>, li
       final_quantity: totalQuantity, material_cost: storageNumber(audit.materialCost), labour_cost: storageNumber(audit.labourCost), priced_quantity: audit.pricedQuantity, pack_size_snapshot: strategy !== 'per_unit' && fieldNumber(lib.pack_size, 'pack size', 0) > 0 ? lib.pack_size : null,
       calc_audit: JSON.parse(JSON.stringify({ ...audit, ...(input.source ? { assistant_measurement_source: input.source } : {}) })) as unknown, sort_order: index, entry: entries[0], ...(input.entries === undefined ? {} : { entries }) };
   });
-  const material = components.reduce((sum, c) => sum + c.material_cost, 0), labour = components.reduce((sum, c) => sum + c.labour_cost, 0);
-  changes.push({ label: `Engine costs before quote margins/taxes (${currency})`, before: '', after: `Materials ${assistantMoney(currency, material)}; labour ${assistantMoney(currency, labour)}. Review the full total in the builder.` });
   return { params: { customerName: spec.customerName, jobName: spec.jobName, ...(spec.siteAddress !== undefined ? { siteAddress: spec.siteAddress } : {}), templateId: null, entryMode: 'manual', measurementSystem: spec.measurementSystem, trade: spec.trade, componentCollectionId: spec.collectionId },
     currency, pitch: spec.pitch, children: { areas, components }, changes };
 }

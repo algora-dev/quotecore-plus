@@ -119,6 +119,7 @@ still own the top layer. */ z-index: 55; width: min(376px, calc(100vw - 24px)); 
 .qc-demo-overlays .qc-button[data-qc-variant="secondary"]:hover { background: rgba(255,107,53,.10); border-color: rgba(255,107,53,.45); color: #fff; }
 .qc-demo-overlays .qc-button[data-qc-variant="ghost"] { background: transparent; color: var(--qc-demo-text-2); }
 .qc-demo-overlays .qc-button[data-qc-variant="ghost"]:hover { background: var(--qc-demo-wash); color: #ffb36b; }
+.qc-demo-overlays .qc-demo-complete-actions .qc-button[data-qc-variant="ghost"]:hover { background: transparent; color: var(--qc-demo-text-2); box-shadow: 0 0 12px rgba(255,107,53,.4); }
 /* Token-level dark theming for app dialogs inside the demo overlay scope.
    qc-tokens defines its vars under :where([data-qc-ui="v2"]) (zero specificity),
    so this class-scoped override always wins: every qc.css rule consuming the

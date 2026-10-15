@@ -343,6 +343,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     try {
       const result = await request('/api/smart-assistant/v2/navigation', { conversationId, cardId: card.id, target, companyId: access.companyId });
       if (!isSafeDestination(result.destination, access.workspaceSlug)) throw new Error('This destination could not be verified.');
+      window.dispatchEvent(new Event('qc-demo-refresh'));
       autoOpened.current.add(card.id);
       const destination = result.destination;
       if (window.location.pathname + window.location.search === destination) {
@@ -530,6 +531,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     setNotice(null);
     try {
       await request('/api/smart-assistant/v2/actions', { actionId: action.id, command, proofDigest: action.proofDigest, version: action.version, companyId: access.companyId });
+      window.dispatchEvent(new Event('qc-demo-refresh'));
       const next = await refresh(active);
       router.refresh();
       const saved = next?.actions.find(a => a.id === action.id);
