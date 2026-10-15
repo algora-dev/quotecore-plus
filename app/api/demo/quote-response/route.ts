@@ -16,5 +16,10 @@ export async function POST(request:NextRequest){try{assertSameOrigin(request);co
  const update=await document.db.from('quotes').update({status:choice,...(choice==='accepted'?{accepted_at:new Date().toISOString()}:{declined_at:new Date().toISOString()})})
  .eq('id',document.claims.quoteId).eq('company_id',document.companyId).in('status',['draft','confirmed','sent']).select('status').maybeSingle();
  if(update.error)throw new DemoError('The demo response could not be saved.',503);if(!update.data)throw new DemoError('This demo document changed. Refresh before responding.',409);
+ const responseAt=new Date().toISOString();
+ const outbound=await document.db.from('outbound_messages').select('id').eq('company_id',document.companyId).eq('related_quote_id',document.claims.quoteId).order('created_at',{ascending:false}).limit(1).maybeSingle();
+ await document.db.from('outbound_messages').update({status:choice,replied_at:responseAt}).eq('company_id',document.companyId).eq('related_quote_id',document.claims.quoteId).is('replied_at',null);
+ if(outbound.data?.id) await document.db.from('outbound_message_replies').insert({company_id:document.companyId,message_id:outbound.data.id,action:choice==='accepted'?'accept':'decline',body:`Fictional demo customer ${choice} the quote.`,created_at:responseAt} as never);
+ await document.db.from('alerts').insert({company_id:document.companyId,quote_id:document.claims.quoteId,alert_type:choice==='accepted'?'quote_accepted':'quote_declined',title:choice==='accepted'?'Demo customer accepted your quote':'Demo customer declined your quote',message:`Your fictional demo customer ${choice} the quote. The quote status has updated.`});
  return demoJson({status:update.data.status});
  }catch(error){return demoErrorResponse(error);}}

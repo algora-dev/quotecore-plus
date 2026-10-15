@@ -63,6 +63,7 @@ type MeasurementTypeArg =
   | 'multi_lineal' | 'curved_line'                    // linear generics
   | 'volume'                                           // volume
   | 'point'                                            // count
+  | 'quantity_by_spacing'                              // calculated count from linear input
   | string;                                            // forward-compat escape hatch
 
 /** Get just the unit label (no value) for a given measurement type + system. */
@@ -99,7 +100,7 @@ export function getUnitLabel(
   }
 
   // Count / fixed / point
-  if (measurementType === 'quantity' || measurementType === 'point') return 'each';
+  if (measurementType === 'quantity' || measurementType === 'point' || measurementType === 'quantity_by_spacing') return 'each';
 
   return '';
 }

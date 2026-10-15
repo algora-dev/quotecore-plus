@@ -52,7 +52,11 @@ export async function readDemoCustomer(token:string){
  // (fire-and-forget never runs on Vercel); idempotent and best-effort.
  if(!quote.data.viewed_at&&['draft','confirmed','sent'].includes(quote.data.status)){
   const viewed=await db.from('quotes').update({viewed_at:new Date().toISOString()}).eq('id',claims.quoteId).eq('company_id',companyId).is('viewed_at',null).in('status',['draft','confirmed','sent']).select('viewed_at').maybeSingle();
-  if(!viewed.error&&viewed.data?.viewed_at)quote.data.viewed_at=viewed.data.viewed_at;
+  if(!viewed.error&&viewed.data?.viewed_at){
+   quote.data.viewed_at=viewed.data.viewed_at;
+   await db.from('outbound_messages').update({opened_at:viewed.data.viewed_at,status:'opened'}).eq('company_id',companyId).eq('related_quote_id',claims.quoteId).is('opened_at',null);
+   await db.from('alerts').insert({company_id:companyId,quote_id:claims.quoteId,alert_type:'quote_viewed',title:'Demo customer opened your quote',message:'Your fictional demo customer opened the quote. The quote now shows Viewed.'});
+  }
  }
  const subtotal=(lines.data??[]).filter(line=>line.include_in_total).reduce((total,line)=>total+(line.custom_amount??0),0);
  const taxRows = taxes.data?.length ? taxes.data : (quote.data.tax_rate > 0 ? [{ id:'legacy', name:'Tax', rate_percent:quote.data.tax_rate, include_in_quote:true, include_in_labor:true }] : []);

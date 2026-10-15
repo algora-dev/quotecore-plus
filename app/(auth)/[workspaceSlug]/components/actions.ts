@@ -212,6 +212,11 @@ const UPDATABLE_COMPONENT_FIELDS = [
   // Phase: Supplier components - SKU and takeoff slot
   'sku',
   'takeoff_slot',
+  'quantity_spacing_m',
+  'quantity_spacing_allowance_percent',
+  'quantity_spacing_round_up',
+  'units_per_area_enabled',
+  'units_per_area',
 ] as const;
 
 export async function updateComponent(id: string, input: Partial<ComponentLibraryInsert>) {

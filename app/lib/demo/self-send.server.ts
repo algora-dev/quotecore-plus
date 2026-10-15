@@ -56,6 +56,27 @@ export async function sendDemoQuote(context: ActiveDemoContext, value: unknown):
     `DEMO - NOT A REAL QUOTE. You requested this fictional QuoteCore+ demonstration. No contract or payment is involved. Open: ${href}\nThe link expires with the demo. No marketing subscription was created.`,
     `qcp-demo-quote-${id}`);
   await db.from('demo_usage').update({ status: 'settled', settled_at: new Date().toISOString() }).eq('id', id).eq('status', 'reserved');
+  const sentAt = new Date().toISOString();
+  await db.from('outbound_messages').insert({
+    company_id: context.companyId,
+    sender_user_id: context.anonUserId,
+    kind: 'quote_send',
+    related_quote_id: context.tutorialState.seed.guided_roof_job,
+    subject: 'QuoteCore+ Demo (NOT A REAL QUOTE)',
+    body: 'You sent the fictional guided demo quote to yourself. No contract, order or payment is involved.',
+    recipient_email: email,
+    recipient_name: null,
+    reply_token: randomUUID(),
+    status: 'sent',
+    sent_at: sentAt,
+  } as never);
+  await db.from('alerts').insert({
+    company_id: context.companyId,
+    quote_id: context.tutorialState.seed.guided_roof_job,
+    alert_type: 'quote_sent',
+    title: 'Demo quote sent',
+    message: `Your fictional demo quote was sent to ${email}.`,
+  });
   await recordDemoEventBestEffort(context.companyId, 'email.sent', context.tutorialState.seed.guided_roof_job);
   return { acceptedByProvider: true };
 }

@@ -5,6 +5,7 @@ import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { QcField, QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
 import { QcIcon } from '@/app/components/ui/v2/QcIcon';
 import { canonicalUnit, type ComponentTestDraft } from './componentTest';
+import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import { ComponentTestPanel } from './ComponentTestPanel';
 import { buildMeasurementLabels, allowedStrategiesFor, ROOFING_DEFAULT_TYPES } from '@/app/(auth)/[workspaceSlug]/components/parts/helpers';
 import './pricing-activation.css';
@@ -14,6 +15,8 @@ export interface ComponentEditorSettings {
   pricingStrategy: PricingStrategy; packPrice: string; packSize: string; packCoverage: string;
   heightMm: string; depthMm: string; hoursUnit: 'hr' | 'day'; wasteUnit: WasteUnit; notes: string;
   soldBy: 'area' | 'lineal'; coverWidthMm: string; quantityDisplay: 'area' | 'lineal' | 'both';
+  quantitySpacing: string; quantitySpacingAllowance: string; quantitySpacingRoundUp: 1 | 5 | 10;
+  unitsPerAreaEnabled: boolean; unitsPerArea: string;
 }
 export interface ComponentEditorInitial {
   name: string; sku: string; componentType: ComponentType; materialRate: string; labourRate: string;
@@ -78,6 +81,8 @@ export function SmartComponentEditor(props: Props) {
   const packPricing = strategy !== 'per_unit';
   const gatedPack = !genericTradesEnabled && packPricing;
   const purchaseUnit = strategy === 'per_pack_length' ? 'm' : strategy === 'per_pack_volume' ? 'm³' : 'm²';
+  const linearUnit = getUnitLabel('lineal', props.measurementSystem);
+  const areaUnit = getUnitLabel('area', props.measurementSystem);
   const draft: ComponentTestDraft = { name, measurementType: s.measurementType, materialRate, labourRate,
     wasteType: s.wasteType, wasteAmount, pitchType: s.pitchEnabled ? pitchType : 'none', strategy,
     packPrice: genericTradesEnabled ? s.packPrice : initial.storedPackPrice ?? '',
@@ -135,6 +140,15 @@ export function SmartComponentEditor(props: Props) {
               {genericTradesEnabled && ['length_x_height', 'multi_lineal_lxh'].includes(s.measurementType) && numberField('height', 'Preset height (mm)', s.heightMm, value => set({ heightMm: value }), { step: '1', help: 'Measured length × this height gives the priced area.' })}
               {genericTradesEnabled && s.measurementType === 'volume' && numberField('depth', 'Preset depth (mm)', s.depthMm, value => set({ depthMm: value }), { step: '1', help: 'Measured area × this depth gives the priced volume.' })}
               {genericTradesEnabled && s.measurementType === 'hours_days' && <QcField htmlFor={`${id}-time`} label="Time unit for this test" help="Keep your quoted time and rate on the same basis. This display choice does not convert rates."><QcSelect id={`${id}-time`} value={s.hoursUnit} onChange={e => set({ hoursUnit: e.target.value as 'hr' | 'day' })}><option value="hr">Hours</option><option value="day">Days</option></QcSelect></QcField>}
+              {s.measurementType === 'quantity_by_spacing' && <>
+                {numberField('quantity-spacing', `Spacing distance (${linearUnit})`, s.quantitySpacing, value => set({ quantitySpacing: value }), { step: '0.001', help: `The lineal distance between each item, in ${linearUnit}.` })}
+                {numberField('quantity-spacing-allowance', 'Allowance (%)', s.quantitySpacingAllowance, value => set({ quantitySpacingAllowance: value }), { step: '0.1', help: 'Extra material or waste added after spacing is applied.' })}
+                <QcField htmlFor={`${id}-quantity-spacing-round`} label="Round up to" help="The next increment is always used. For example, 220 rounded to the next 5 becomes 225.">
+                  <QcSelect id={`${id}-quantity-spacing-round`} value={String(s.quantitySpacingRoundUp)} onChange={e => set({ quantitySpacingRoundUp: Number(e.target.value) as 1 | 5 | 10 })}>
+                    <option value="1">Next whole number</option><option value="5">Next 5</option><option value="10">Next 10</option>
+                  </QcSelect>
+                </QcField>
+              </>}
               {genericTradesEnabled && s.measurementType === 'area' && strategy === 'per_unit' && <div data-copilot="component-sold-by"><QcField htmlFor={`${id}-sold-by`} label="Sold as" help="Measure in m2 on the plan, then show the quote line in lineal metres using the cover width. Rates stay per m2.">
                 <QcSelect id={`${id}-sold-by`} value={s.soldBy} onChange={e => set({ soldBy: e.target.value as 'area' | 'lineal' })}>
                   <option value="area">Square metres (m²)</option><option value="lineal">Lineal metres</option>
@@ -144,6 +158,10 @@ export function SmartComponentEditor(props: Props) {
                 <QcSelect id={`${id}-quantity-display`} value={s.quantityDisplay} onChange={e => set({ quantityDisplay: e.target.value as 'area' | 'lineal' | 'both' })}>
                   <option value="area">m² only</option><option value="lineal">Lineal metres only</option><option value="both">Both (lm / m²)</option>
                 </QcSelect></QcField></div>}
+              {s.measurementType === 'area' && <div className="qc-pricing-fields-grid qc-pricing-fields-grid-full" data-copilot="component-units-per-area">
+                <label className="qc-pricing-check"><input type="checkbox" checked={s.unitsPerAreaEnabled} onChange={e => set({ unitsPerAreaEnabled: e.target.checked })} /> Calculate supplementary units per {areaUnit}</label>
+                {s.unitsPerAreaEnabled && numberField('units-per-area', `Units per ${areaUnit}`, s.unitsPerArea, value => set({ unitsPerArea: value }), { step: '0.001', help: `Displayed as the calculated number of units required for each ${areaUnit}.` })}
+              </div>}
             </div>
           </section>
           <section className="qc-pricing-section" aria-labelledby={`${id}-costs`}>

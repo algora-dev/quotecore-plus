@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { batchClient } from './database';
 import { parseAccess, type Access, type Phase } from './contracts';
+import { isDemoCompany } from '@/app/lib/demo/context';
 export class AssistantV2Error extends Error {
     constructor(public readonly code: string, message: string, public readonly status = 400) { super(message); }
 }
@@ -32,7 +33,7 @@ export async function loadAccess(client: SupabaseClient): Promise<Access> {
     const access = parseAccess(data);
     if (!access)
         throw rpcError(null);
-    if (!v2SwitchOn())
+    if (!v2SwitchOn() && !await isDemoCompany(access.companyId))
         access.phases = { p1: false, p2: false, p3: false, p4: false };
     return access;
 }
@@ -40,8 +41,6 @@ export async function requestAccess(phase: Phase = 'p1'): Promise<{
     client: Awaited<ReturnType<typeof createSupabaseServerClient>>;
     access: Access;
 }> {
-    if (!v2SwitchOn())
-        throw new AssistantV2Error('phase_off', 'This assistant phase is not enabled.', 404);
     const client = await createSupabaseServerClient();
     const { data: { user }, error } = await client.auth.getUser();
     if (error || !user)

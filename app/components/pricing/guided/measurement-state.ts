@@ -60,6 +60,11 @@ const COPY: Record<NewMeasurementType, { title: string; short: string; explanati
     explanation: 'Measure the connected run, then enter its height on the job to work out the area.',
     example: 'A run of walls measured together',
   },
+  quantity_by_spacing: {
+    title: 'By spacing', short: 'Posts, fixings or supports at regular intervals.', picture: 'length',
+    explanation: 'Enter a lineal length. The component divides it by the saved spacing, adds allowance and rounds up.',
+    example: 'Fixings along a wall',
+  },
   volume: {
     title: 'Volume with a set depth', short: 'Measure an area using one fixed depth.', picture: 'volume',
     explanation: 'Save the depth here. The measured area and that depth give the volume you need.',

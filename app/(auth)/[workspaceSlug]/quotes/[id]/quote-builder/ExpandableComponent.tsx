@@ -133,6 +133,7 @@ export function ExpandableComponent({
   const totalCost = (comp.material_cost ?? 0) + (comp.labour_cost ?? 0);
   const hasPitch = comp.pitch_type !== 'none';
   const isAreaBased = comp.measurement_type === 'area';
+  const requiredUnits = Number((comp as unknown as { required_units?: number | null }).required_units ?? 0);
   const assignedArea = roofAreas.find(a => a.id === comp.quote_roof_area_id);
   const areaPitch = assignedArea?.calc_pitch_degrees ?? 0;
 
@@ -311,6 +312,7 @@ export function ExpandableComponent({
           })() : hasLinealCover
             ? formatLinealMetres(Number(comp.final_quantity ?? 0), quote.measurement_system)
             : displayValue(comp.final_quantity ?? 0)}
+            {isAreaBased && requiredUnits > 0 && <span className="italic text-slate-400"> ({requiredUnits.toFixed(0)} units)</span>}
           </span>
           <span className="qb-component-cost"><span className="qb-mini-label">Item + labour</span>{formatCurrency(totalCost, currency)}</span>
         </button>

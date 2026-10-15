@@ -8,6 +8,7 @@ import { demoTakeoffSaved } from '@/app/lib/demo/product-events';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { applyPitchAndWaste, rafterPitchFactor } from '@/app/lib/pricing/engine';
+import { calculateQuantityBySpacing, calculateRequiredAreaUnits } from '@/app/lib/pricing/quantityCalculations';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
 import { isCornerValueBasis } from '@/app/lib/takeoff/cornerCount';
 import { recalcAllQuoteComponents } from '../../actions';
@@ -270,6 +271,10 @@ export async function saveTakeoffMeasurements(
         // Preset depth for Volume (Preset Depth) components.
         const depthMm = (libComp as unknown as Record<string, unknown>).depth_value_mm as number | null;
         const depthM = depthMm ? depthMm / 1000 : null;
+        const libConfig = libComp as unknown as Record<string, unknown>;
+        const spacingM = Number(libConfig.quantity_spacing_m ?? 0) || 0;
+        const spacingAllowance = Number(libConfig.quantity_spacing_allowance_percent ?? 0) || 0;
+        const spacingRoundUp = libConfig.quantity_spacing_round_up === 5 || libConfig.quantity_spacing_round_up === 10 ? libConfig.quantity_spacing_round_up : 1;
 
         const entries = componentMeasurements.map((m, index) => {
           // v8 (2026-07-08): snapshot the input reference values used for this
@@ -388,7 +393,9 @@ export async function saveTakeoffMeasurements(
           );
           return {
             raw_value: metricValue,
-            value_after_waste: result.afterWaste,
+            value_after_waste: String(libComp.measurement_type) === 'quantity_by_spacing' && spacingM > 0
+              ? calculateQuantityBySpacing({ linealMetres: metricValue, spacingMetres: spacingM, allowancePercent: spacingAllowance, roundUp: spacingRoundUp })
+              : result.afterWaste,
             sort_order: index,
             // Per-entry pitch (2026-07-08): actual pitch used for this entry so
             // the calc audit + UI can report it faithfully per page/area.
@@ -424,6 +431,10 @@ export async function saveTakeoffMeasurements(
         const lineLabourRate = linealCoverM > 0 ? labourRate * linealCoverM : labourRate;
         const materialCost = totalQuantity * lineMaterialRate;
         const labourCost = totalQuantity * lineLabourRate;
+        const unitsPerM2 = libConfig.units_per_area_enabled === true && libConfig.units_per_area != null
+          ? Number(libConfig.units_per_area) : null;
+        const requiredUnits = String(libComp.measurement_type) === 'area'
+          ? calculateRequiredAreaUnits(totalQuantityM2, unitsPerM2) : null;
 
         return {
           component_library_id: componentId,
@@ -450,6 +461,12 @@ export async function saveTakeoffMeasurements(
           // group was calculated at (RPC v7 writes it to calc_pitch_degrees).
           calc_pitch_degrees: groupPitch,
           final_quantity: totalQuantity,
+          required_units: requiredUnits,
+          quantity_spacing_m: spacingM > 0 ? spacingM : null,
+          quantity_spacing_allowance_percent: spacingAllowance,
+          quantity_spacing_round_up: spacingRoundUp,
+          units_per_area_enabled: unitsPerM2 != null,
+          units_per_area: unitsPerM2,
           material_cost: materialCost,
           labour_cost: labourCost,
           entries,

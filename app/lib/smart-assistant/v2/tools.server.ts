@@ -2,7 +2,8 @@ import 'server-only';
 import type { RegisteredTool, OrchestratorTurnInput } from '../orchestrator';
 import { boundedText, ENTITY_KINDS, ENTITY_SECTIONS, isUuid, parseTarget, type RecordOption, type SearchKind } from './contracts';
 import { isRecord, type AssistantSection } from '../section-permissions';
-import { AssistantV2Error, freshAccess, loadAccess, v2SwitchOn } from './runtime.server';
+import { AssistantV2Error, freshAccess, loadAccess } from './runtime.server';
+import { isDemoCompany } from '@/app/lib/demo/context';
 import { readRecord, searchRecords } from './entities.server';
 import { addCard, readSession, bindRunScope } from './session.server';
 import { attention } from './attention.server';
@@ -31,8 +32,6 @@ import { applyDraftChoice, pendingDraftWorkflowContext, prepareDraftWorkflow, re
 import { decodeDraftChoice, isDraftChoice } from '../library-workflow/wire';
 import { PREPARE_WORKING_BRIEF_PARAMETERS, REVISE_WORKING_BRIEF_PARAMETERS, WORKFLOW_PROMPT } from '../workflow-controller/tool-schemas';
 export async function createV2Scope(input: OrchestratorTurnInput) {
-    if (!v2SwitchOn())
-        return null;
     const access = await loadAccess(input.supabase);
     if (access.companyId !== input.companyId)
         throw new AssistantV2Error('forbidden', 'Workspace changed.', 403);
@@ -40,7 +39,7 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
         return null;
     await bindRunScope(input.runId, access);
     const draftChoice = decodeDraftChoice(input.userMessage);
-    const workflowEnabled = libraryWorkflowEnabled();
+    const workflowEnabled = libraryWorkflowEnabled() || await isDemoCompany(access.companyId);
     const speed = speedEnabled();
     let capabilityPromise: ReturnType<typeof loadRetrievalCapabilities> | undefined;
     const getCapabilities = (signal?: AbortSignal) => capabilityPromise ??= loadRetrievalCapabilities(input.supabase, access, input.runId, signal);

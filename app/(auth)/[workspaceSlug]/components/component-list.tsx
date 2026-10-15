@@ -13,6 +13,8 @@ import { validateRules } from '@/app/components/pricing/guided/rules-state';
 import { PricingIntroduction } from '@/app/components/pricing/PricingIntroduction';
 import { canonicalUnit } from '@/app/components/pricing/componentTest';
 import { formatCurrency } from '@/app/lib/currency/currencies';
+import { linearInputToMetric } from '@/app/lib/measurements/conversions';
+import { unitsPerDisplayedAreaToMetric } from '@/app/lib/pricing/quantityCalculations';
 
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
@@ -192,7 +194,11 @@ export function ComponentList({
   const [formSoldBy, setFormSoldBy] = useState<'area' | 'lineal'>('area');
   const [formCoverWidthMm, setFormCoverWidthMm] = useState('');
   const [formQuantityDisplay, setFormQuantityDisplay] = useState<'area' | 'lineal' | 'both'>('area');
-
+  const [formQuantitySpacing, setFormQuantitySpacing] = useState('');
+  const [formQuantitySpacingAllowance, setFormQuantitySpacingAllowance] = useState('0');
+  const [formQuantitySpacingRoundUp, setFormQuantitySpacingRoundUp] = useState<1 | 5 | 10>(1);
+  const [formUnitsPerAreaEnabled, setFormUnitsPerAreaEnabled] = useState(false);
+  const [formUnitsPerArea, setFormUnitsPerArea] = useState('');
   // Calculator draft restore (H-04): pre-fill form from a saved draft
   const [restoredName, setRestoredName] = useState<string>('');
   const [restoredMaterialRate, setRestoredMaterialRate] = useState<string>('');
@@ -358,7 +364,11 @@ export function ComponentList({
     setFormSoldBy(c.sold_by === 'lineal' ? 'lineal' : 'area');
     setFormCoverWidthMm(c.cover_width_mm != null ? String(c.cover_width_mm) : '');
     setFormQuantityDisplay(c.quantity_display === 'lineal' || c.quantity_display === 'both' ? c.quantity_display : 'area');
-    setFormWasteUnit((c.waste_unit as WasteUnit) ?? 'percent');
+    setFormQuantitySpacing(c.quantity_spacing_m != null ? String(Number(c.quantity_spacing_m)) : '');
+    setFormQuantitySpacingAllowance(c.quantity_spacing_allowance_percent != null ? String(c.quantity_spacing_allowance_percent) : '0');
+    setFormQuantitySpacingRoundUp(c.quantity_spacing_round_up === 5 || c.quantity_spacing_round_up === 10 ? c.quantity_spacing_round_up : 1);
+    setFormUnitsPerAreaEnabled(c.units_per_area_enabled === true);
+    setFormUnitsPerArea(c.units_per_area != null ? String(c.units_per_area) : '');    setFormWasteUnit((c.waste_unit as WasteUnit) ?? 'percent');
     setFormPricingStrategy((c.pricing_strategy as PricingStrategy) ?? 'per_unit');
     setFormPackPrice(c.pack_price != null ? String(c.pack_price) : '');
     setFormPackSize(c.pack_size != null ? String(c.pack_size) : '');
@@ -580,6 +590,7 @@ export function ComponentList({
     const inputWithGenericTrades = genericTradesEnabled
       ? ({
           ...input,
+          ...quantityFieldsForPayload(),
           height_value_mm: (formMeasurementType === 'length_x_height' || formMeasurementType === 'multi_lineal_lxh') && formHeightMm
             ? Number(formHeightMm)
             : null,
@@ -606,7 +617,7 @@ export function ComponentList({
             ? formQuantityDisplay
             : null,
         } as unknown as ComponentLibraryInsert)
-      : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null } as unknown as ComponentLibraryInsert;
+      : { ...input, ...quantityFieldsForPayload(), collection_id: selectedCollectionId || null, notes: formNotes.trim() || null } as unknown as ComponentLibraryInsert;
 
     try {
       const result = await createComponent(inputWithGenericTrades);
@@ -714,6 +725,7 @@ export function ComponentList({
     const inputWithGenericTrades = genericTradesEnabled
       ? ({
           ...input,
+          ...quantityFieldsForPayload(),
           height_value_mm: (formMeasurementType === 'length_x_height' || formMeasurementType === 'multi_lineal_lxh') && formHeightMm
             ? Number(formHeightMm)
             : null,
@@ -740,7 +752,7 @@ export function ComponentList({
             ? formQuantityDisplay
             : null,
         } as unknown as Partial<ComponentLibraryInsert>)
-      : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null };
+      : { ...input, ...quantityFieldsForPayload(), collection_id: selectedCollectionId || null, notes: formNotes.trim() || null };
 
     // If the user hasn't permanently dismissed the warning, show the modal
     // and stash the data for confirmation.
@@ -831,7 +843,25 @@ export function ComponentList({
   const editorSettings: ComponentEditorSettings = { measurementType: formMeasurementType, wasteType: formWasteType,
     pitchEnabled: formPitchEnabled, pricingStrategy: formPricingStrategy, packPrice: formPackPrice, packSize: formPackSize,
     packCoverage: formPackCoverageM2, heightMm: formHeightMm, depthMm: formDepthMm, hoursUnit: formHoursUnit,
-    wasteUnit: formWasteUnit, notes: formNotes, soldBy: formSoldBy, coverWidthMm: formCoverWidthMm, quantityDisplay: formQuantityDisplay };
+    wasteUnit: formWasteUnit, notes: formNotes, soldBy: formSoldBy, coverWidthMm: formCoverWidthMm, quantityDisplay: formQuantityDisplay,
+    quantitySpacing: formQuantitySpacing, quantitySpacingAllowance: formQuantitySpacingAllowance, quantitySpacingRoundUp: formQuantitySpacingRoundUp,
+    unitsPerAreaEnabled: formUnitsPerAreaEnabled, unitsPerArea: formUnitsPerArea };
+  function quantityFieldsForPayload() {
+    const isSpacing = formMeasurementType === 'quantity_by_spacing';
+    const spacingDisplay = Number(formQuantitySpacing);
+    const unitsDisplay = Number(formUnitsPerArea);
+    return {
+      quantity_spacing_m: isSpacing && Number.isFinite(spacingDisplay) && spacingDisplay > 0
+        ? linearInputToMetric(spacingDisplay, companyMeasurementSystem)
+        : null,
+      quantity_spacing_allowance_percent: isSpacing ? Math.max(0, Number(formQuantitySpacingAllowance) || 0) : 0,
+      quantity_spacing_round_up: isSpacing ? formQuantitySpacingRoundUp : 1,
+      units_per_area_enabled: formMeasurementType === 'area' && formUnitsPerAreaEnabled,
+      units_per_area: formMeasurementType === 'area' && formUnitsPerAreaEnabled && Number.isFinite(unitsDisplay) && unitsDisplay >= 0
+        ? unitsPerDisplayedAreaToMetric(unitsDisplay, companyMeasurementSystem)
+        : null,
+    };
+  }
   function updateEditorSettings(patch: Partial<ComponentEditorSettings>) {
     setEditorDirty(true); setDraftTested(false);
     if (patch.measurementType !== undefined) setFormMeasurementType(patch.measurementType);
@@ -846,6 +876,11 @@ export function ComponentList({
     if (patch.soldBy !== undefined) setFormSoldBy(patch.soldBy);
     if (patch.coverWidthMm !== undefined) setFormCoverWidthMm(patch.coverWidthMm);
     if (patch.quantityDisplay !== undefined) setFormQuantityDisplay(patch.quantityDisplay);
+    if (patch.quantitySpacing !== undefined) setFormQuantitySpacing(patch.quantitySpacing);
+    if (patch.quantitySpacingAllowance !== undefined) setFormQuantitySpacingAllowance(patch.quantitySpacingAllowance);
+    if (patch.quantitySpacingRoundUp !== undefined) setFormQuantitySpacingRoundUp(patch.quantitySpacingRoundUp);
+    if (patch.unitsPerAreaEnabled !== undefined) setFormUnitsPerAreaEnabled(patch.unitsPerAreaEnabled);
+    if (patch.unitsPerArea !== undefined) setFormUnitsPerArea(patch.unitsPerArea);
     if (patch.hoursUnit !== undefined) setFormHoursUnit(patch.hoursUnit);
     if (patch.wasteUnit !== undefined) setFormWasteUnit(patch.wasteUnit);
     if (patch.notes !== undefined) setFormNotes(patch.notes);
@@ -862,6 +897,7 @@ export function ComponentList({
       setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false);
       setFormPricingStrategy('per_unit'); setFormPackPrice(''); setFormPackSize(''); setFormPackCoverageM2('');
       setFormHeightMm(''); setFormDepthMm(''); setFormHoursUnit('hr'); setFormWasteUnit('percent'); setFormNotes('');
+      setFormQuantitySpacing(''); setFormQuantitySpacingAllowance('0'); setFormQuantitySpacingRoundUp(1); setFormUnitsPerAreaEnabled(false); setFormUnitsPerArea('');
       setAssignedFlashings([]); setSelectedFlashingId('');
       setRestoredName(''); setRestoredMaterialRate(''); setRestoredLabourRate(''); setRestoredWasteAmount('');
       setSelectedCollectionId(activeLibraryId || collections.find(c => c.is_bootstrap)?.id || collections[0]?.id || '');
@@ -949,6 +985,7 @@ export function ComponentList({
     const inputWithGenericTrades = genericTradesEnabled
       ? ({
           ...input,
+          ...quantityFieldsForPayload(),
           height_value_mm: (formMeasurementType === 'length_x_height' || formMeasurementType === 'multi_lineal_lxh') && formHeightMm
             ? Number(formHeightMm)
             : null,
@@ -975,7 +1012,7 @@ export function ComponentList({
             ? formQuantityDisplay
             : null,
         } as unknown as ComponentLibraryInsert)
-      : { ...input, collection_id: selectedCollectionId || null, notes: formNotes.trim() || null } as unknown as ComponentLibraryInsert;
+      : { ...input, ...quantityFieldsForPayload(), collection_id: selectedCollectionId || null, notes: formNotes.trim() || null } as unknown as ComponentLibraryInsert;
     setGuidedSaving(true); setGuidedSaveError(null);
     try {
       const result = await createComponent(inputWithGenericTrades);

@@ -29,6 +29,7 @@ export function buildMeasurementLabels(system: MeasurementSystem): Record<Measur
     multi_lineal_lxh: `Length x Height: Multi-Length (${areaUnit})`,
     length_x_height_freestyle: `Length x Height: Custom (${areaUnit})`,
     multi_lineal_lxh_freestyle: `Length x Height: Multi-Length Custom (${areaUnit})`,
+    quantity_by_spacing: 'Quantity by Spacing',
   };
 }
 
@@ -38,6 +39,7 @@ export const ROOFING_DEFAULT_TYPES = new Set<MeasurementType>([
   'lineal',
   'quantity',
   'fixed',
+  'quantity_by_spacing',
 ]);
 
 export const PRICING_STRATEGY_LABELS: Record<PricingStrategy, string> = {

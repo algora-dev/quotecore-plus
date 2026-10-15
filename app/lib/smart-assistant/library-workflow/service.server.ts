@@ -16,6 +16,7 @@ import { createWorkingBrief, applyWorkingDeltas, validateWorkingBrief } from '..
 import { resolveWorkingBrief, workingBriefSummary, workingProposalArgs } from '../workflow-controller/decisions';
 import { readWorkflowCatalog, readWorkflowEpoch, readWorkflowVocabulary } from '../workflow-controller/configuration.server';
 import { libraryWorkflowEnabled } from './config';
+import { isDemoCompany } from '@/app/lib/demo/context';
 
 const admin=()=>createAdminClient() as any;
 type StoredBrief={id:string;revision:number;company_id:string;user_id:string;conversation_id:string;permission_revision:number;
@@ -24,7 +25,7 @@ type StoredBrief={id:string;revision:number;company_id:string;user_id:string;con
 const FIELDS='id,revision,company_id,user_id,conversation_id,permission_revision,brief,workflow_state,catalog_epoch,produced_quote_id,action_id,committed_plan,committed_snapshot,start_run_id,last_run_id,created_at,updated_at,conflict_reason';
 
 async function workflowAccess(client:SupabaseClient,access:Access){
-  if(!libraryWorkflowEnabled())throw new ProposalError('The draft workflow is disabled on this deployment. Nothing was changed.');
+  if(!libraryWorkflowEnabled() && !await isDemoCompany(access.companyId))throw new ProposalError('The draft workflow is disabled on this deployment. Nothing was changed.');
   await freshAccess(client,access,'p4'); requireEdits(access,WORKFLOW_SECTIONS);
 }
 async function environment(client:SupabaseClient,access:Access){

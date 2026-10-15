@@ -2,15 +2,13 @@ import type { NextRequest } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { body, exactKeys, failure, reply } from '@/app/lib/smart-assistant/v2/http.server';
 import { isUuid } from '@/app/lib/smart-assistant/v2/contracts';
-import { AssistantV2Error, loadAccess, requestAccess, v2SwitchOn } from '@/app/lib/smart-assistant/v2/runtime.server';
+import { AssistantV2Error, loadAccess, requestAccess } from '@/app/lib/smart-assistant/v2/runtime.server';
 import { readSession, storePage } from '@/app/lib/smart-assistant/v2/session.server';
 import { taskContextEnabled } from '@/app/lib/smart-assistant/tasks/config';
 import { taskSnapshot } from '@/app/lib/smart-assistant/tasks/store.server';
 export const runtime = 'nodejs';
 export async function GET(req: NextRequest) {
     try {
-        if (!v2SwitchOn())
-            return reply({ enabled: false });
         const client = await createSupabaseServerClient();
         const { data: { user } } = await client.auth.getUser();
         if (!user)

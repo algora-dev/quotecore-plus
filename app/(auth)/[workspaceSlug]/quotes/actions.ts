@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
+import { calculateQuantityBySpacing, calculateRequiredAreaUnits } from '@/app/lib/pricing/quantityCalculations';
 import type { InputMode, WasteType, PitchType } from '@/app/lib/types';
 import { verifyQuoteOwnership, verifyRoofAreaOwnership, verifyComponentOwnership } from '@/app/lib/auth/ownership';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
@@ -854,13 +855,25 @@ export async function addQuoteComponent(quoteId: string, input: any) {
   // pack_size_snapshot) so the quote renders with what it was built with.
   let libQuantityDisplay: string | null = null;
   let libCoverWidthMm: number | null = null;
+  let libQuantitySpacingM: number | null = null;
+  let libQuantitySpacingAllowance = 0;
+  let libQuantitySpacingRoundUp: number = 1;
+  let libUnitsPerAreaEnabled = false;
+  let libUnitsPerArea: number | null = null;
   if (input.component_library_id) {
-    const { data: libRow } = await supabase.from('component_library')
-      .select('quantity_display, cover_width_mm')
+    const { data: libRowRaw } = await supabase.from('component_library')
+      .select('quantity_display, cover_width_mm, quantity_spacing_m, quantity_spacing_allowance_percent, quantity_spacing_round_up, units_per_area_enabled, units_per_area')
       .eq('id', input.component_library_id)
       .maybeSingle();
+    const libRow = libRowRaw as unknown as { quantity_display?: string | null; cover_width_mm?: number | null } | null;
     libQuantityDisplay = libRow?.quantity_display ?? null;
     libCoverWidthMm = libRow?.cover_width_mm ?? null;
+    const libExtra = libRowRaw as unknown as Record<string, unknown> | null;
+    libQuantitySpacingM = libExtra?.quantity_spacing_m == null ? null : Number(libExtra.quantity_spacing_m);
+    libQuantitySpacingAllowance = Number(libExtra?.quantity_spacing_allowance_percent ?? 0);
+    libQuantitySpacingRoundUp = Number(libExtra?.quantity_spacing_round_up ?? 1);
+    libUnitsPerAreaEnabled = libExtra?.units_per_area_enabled === true;
+    libUnitsPerArea = libExtra?.units_per_area == null ? null : Number(libExtra.units_per_area);
   }
 
   const { data, error } = await supabase.from('quote_components').insert({
@@ -872,7 +885,12 @@ export async function addQuoteComponent(quoteId: string, input: any) {
     pitch_type: input.pitch_type ?? 'none',
     quantity_display: libQuantityDisplay,
     cover_width_mm: libCoverWidthMm,
-  }).select().single();
+    quantity_spacing_m: libQuantitySpacingM,
+    quantity_spacing_allowance_percent: libQuantitySpacingAllowance,
+    quantity_spacing_round_up: libQuantitySpacingRoundUp,
+    units_per_area_enabled: libUnitsPerAreaEnabled,
+    units_per_area: libUnitsPerArea,
+  } as never).select().single();
   if (error) throw new Error(error.message);
   return data;
 }
@@ -999,9 +1017,23 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
     }
   }
 
+  let spacingM: number | null = null;
+  let spacingAllowance = 0;
+  let spacingRoundUp: 1 | 5 | 10 = 1;
+  if (comp.component_library_id) {
+    const { data: libCalc } = await supabase.from('component_library')
+      .select('quantity_spacing_m, quantity_spacing_allowance_percent, quantity_spacing_round_up')
+      .eq('id', comp.component_library_id).maybeSingle();
+    const lc = libCalc as unknown as Record<string, unknown> | null;
+    spacingM = lc?.quantity_spacing_m == null ? null : Number(lc.quantity_spacing_m);
+    spacingAllowance = Number(lc?.quantity_spacing_allowance_percent ?? 0);
+    spacingRoundUp = lc?.quantity_spacing_round_up === 5 || lc?.quantity_spacing_round_up === 10 ? lc.quantity_spacing_round_up : 1;
+  }
   const isPlan = comp.input_mode === 'calculated';
   const pitchDegrees = comp.use_custom_pitch ? (comp.custom_pitch_degrees ?? 0) : (areaPitch ?? 0);
-  const { afterWaste } = applyPitchAndWaste(adjustedValue, isPlan, comp.pitch_type, pitchDegrees, comp.waste_type, comp.waste_percent, comp.waste_fixed);
+  const { afterWaste } = String(comp.measurement_type) === 'quantity_by_spacing' && spacingM
+    ? { afterWaste: calculateQuantityBySpacing({ linealMetres: adjustedValue, spacingMetres: spacingM, allowancePercent: spacingAllowance, roundUp: spacingRoundUp }) }
+    : applyPitchAndWaste(adjustedValue, isPlan, comp.pitch_type, pitchDegrees, comp.waste_type, comp.waste_percent, comp.waste_fixed);
   // v8: store the pitch actually applied (display + audit only - pricing
   // already baked it into value_after_waste above). applyPitchAndWaste only
   // applies pitch for calculated-mode components with a pitch type.
@@ -1397,7 +1429,16 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
   // level: qty_lm = qty_m2 / cover_m. Line rates already hold the per-lm
   // figure (rate_m2 x cover from the takeoff save path), so only the
   // quantity converts here.
-  const totalQty = libSoldBy === 'lineal' && libCoverWidthMm > 0 ? totalQtyRaw / (libCoverWidthMm / 1000) : totalQtyRaw;
+  const compConfig = comp as unknown as Record<string, unknown> | null;
+  const spacingM = Number(compConfig?.quantity_spacing_m ?? 0) || 0;
+  const spacingAllowance = Number(compConfig?.quantity_spacing_allowance_percent ?? 0) || 0;
+  const spacingRoundUp = compConfig?.quantity_spacing_round_up === 5 || compConfig?.quantity_spacing_round_up === 10 ? compConfig.quantity_spacing_round_up : 1;
+  const totalQtyBase = String(comp?.measurement_type) === 'quantity_by_spacing' && spacingM > 0
+    ? calculateQuantityBySpacing({ linealMetres: totalQtyRaw, spacingMetres: spacingM, allowancePercent: spacingAllowance, roundUp: spacingRoundUp })
+    : totalQtyRaw;
+  const totalQty = libSoldBy === 'lineal' && libCoverWidthMm > 0 ? totalQtyBase / (libCoverWidthMm / 1000) : totalQtyBase;
+  const requiredUnits = String(comp?.measurement_type) === 'area' && compConfig?.units_per_area_enabled === true
+    ? calculateRequiredAreaUnits(totalQtyRaw, Number(compConfig.units_per_area ?? 0)) : null;
 
   const { computeMaterialCostByStrategy, computePackCount, rafterPitchFactor, hipValleyPitchFactor } = await import('@/app/lib/pricing/engine');
   const costResult = computeMaterialCostByStrategy({
@@ -1480,6 +1521,7 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
       pack_size_snapshot: packSizeForDisplay,
       material_cost: materialCost,
       labour_cost: labourCost,
+      required_units: requiredUnits,
       calc_audit: audit as unknown as never,
     })
     .eq('id', quoteComponentId);

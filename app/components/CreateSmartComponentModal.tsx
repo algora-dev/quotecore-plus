@@ -60,6 +60,7 @@ function buildMeasurementLabels(system: MeasurementSystem): Record<MeasurementTy
     multi_lineal_lxh: `Length x Height: Multi-Length (${areaUnit})`,
     length_x_height_freestyle: `Length x Height: Custom (${areaUnit})`,
     multi_lineal_lxh_freestyle: `Length x Height: Multi-Length Custom (${areaUnit})`,
+    quantity_by_spacing: 'Quantity by Spacing',
   };
 }
 
