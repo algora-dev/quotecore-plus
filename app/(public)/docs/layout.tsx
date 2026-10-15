@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { getDocTree, getSearchIndex } from '@/app/lib/docs/tree';
 import { DocsSidebar, DocsSidebarMobile } from '@/app/components/docs/DocsSidebar';
 import { DocsSearch } from '@/app/components/docs/DocsSearch';
+import controls from '@/components/marketing/MarketingButton.module.css';
 
 export default function DocsLayout({ children }: { children: ReactNode }) {
   const tree = getDocTree();
@@ -26,9 +27,11 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
             <DocsSearch index={index} />
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-semibold text-slate-700 hover:text-slate-900">Log in</Link>
-            <Link href="/signup" className="rounded-full bg-orange-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-orange-700">
-              Sign up
+            <Link href="/login" className={`${controls.button} ${controls.glass}`}>
+              <span>Log in</span>
+            </Link>
+            <Link href="/signup" className={`${controls.button} ${controls.primary}`}>
+              <span>Sign up</span>
             </Link>
           </div>
         </div>
