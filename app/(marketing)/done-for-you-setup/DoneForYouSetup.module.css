@@ -50,6 +50,11 @@
 .heroProof img { display: block; width: 76px; height: 76px; flex: 0 0 76px; object-fit: contain; border-radius: 50%; }
 .heroProof span { min-width: 0; color: #8e99a8; font-size: 11px; line-height: 1.45; }
 .heroProof strong { display: block; margin-bottom: 2px; color: #f0f2f5; font-size: 13px; font-weight: 650; }
+.videoSection { padding: clamp(56px, 7vw, 88px) 0; color: var(--ink); background: #f7f8fa; border-top: 1px solid #eaedf1; }
+.videoIntro { display: grid; grid-template-columns: minmax(0,1.08fr) minmax(300px,.68fr); gap: clamp(44px, 7vw, 88px); align-items: end; }
+.videoIntro h2 { margin: 0; font-size: clamp(32px, 3.45vw, 48px); font-weight: 650; line-height: 1.085; letter-spacing: -.045em; text-wrap: balance; }
+.videoIntro > p { margin: 0 0 4px; color: var(--muted); font-size: 15px; line-height: 1.75; }
+.videoPlayer { margin-top: 42px; max-width: 960px; margin-inline: auto; }
 
 .processSection { padding: clamp(64px, 8vw, 98px) 0; color: var(--ink); background: var(--light); }
 .sectionIntro { display: grid; grid-template-columns: minmax(0,1.08fr) minmax(300px,.68fr); gap: clamp(44px, 7vw, 88px); align-items: end; }
@@ -121,6 +126,8 @@
   .heroCopy h1 { max-width: 700px; }
   .offerCard { max-width: 600px; }
   .heroProof { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .videoIntro { grid-template-columns: 1fr; gap: 24px; }
+  .videoPlayer { margin-top: 30px; }
   .heroProof > div:nth-child(2) { border-right: 0; }
   .heroProof > div:nth-child(-n+2) { border-bottom: 1px solid var(--line-dark); }
   .sectionIntro { gap: 24px; }
