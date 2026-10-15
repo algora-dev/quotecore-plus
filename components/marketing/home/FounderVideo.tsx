@@ -18,6 +18,8 @@ export function FounderVideo({ videoSrc = '', youtubeId = '', captionsSrc = '', 
   const connected = Boolean(src || id);
   const canOpen = connected || preview;
   const watchUrl = src || (id ? `https://www.youtube.com/watch?v=${id}` : '');
+  const posterImage = id ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg` : '/shaun-smiling.jpg';
+  const posterAlt = id ? 'Done For You Setup video thumbnail' : 'Shaun, founder of QuoteCore+ and former roofer';
   function play() {
     setFailed(false);
     setOpen(true);
@@ -25,7 +27,7 @@ export function FounderVideo({ videoSrc = '', youtubeId = '', captionsSrc = '', 
     if (connected) window.dispatchEvent(new CustomEvent('qc:video-play'));
   }
   const poster = <>
-    <img src="/shaun-smiling.jpg" width={795} height={1066} alt="Shaun, founder of QuoteCore+ and former roofer" loading="lazy" decoding="async" />
+    <img src={posterImage} width={id ? 1280 : 795} height={id ? 720 : 1066} alt={posterAlt} loading="lazy" decoding="async" />
     {canOpen && <span className={d.play}><Icon name={connected ? "play" : "clock"} size={25} /></span>}
     <span className={d.videoLabel}>{connected ? 'Why we created Done For You' : 'Founder video coming soon'}</span>
   </>;
