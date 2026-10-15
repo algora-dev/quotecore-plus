@@ -14,6 +14,7 @@ function buildNavItems(appHref: string, homepage: boolean): NavItem[] {
   return [
     { label: "Open the App", href: appHref, app: true },
     { label: "Features", href: homepage ? "#workflow" : "/features" },
+    { label: "Done For You", href: "/done-for-you-setup" },
     { label: "Pricing", href: homepage ? "#pricing" : "/pricing" },
     { label: "Demo", href: "/demo" },
     { label: "Free Tools", href: "/free-tools" },
