@@ -159,7 +159,7 @@ export default function DoneForYouSetupPage() {
               </div>
               <p>See how we configure QuoteCore+ around the way your business already works, then guide you through using it.</p>
             </div>
-            <YouTubeLite videoId="AHXhlOuRAvw" title="How QuoteCore+ Done For You Setup works" uploadDate="2026-10-14" className={styles.videoPlayer} />
+            <YouTubeLite videoId="fJYVEnVTcOA" title="How QuoteCore+ Done For You Setup works" uploadDate="2026-10-15" className={styles.videoPlayer} />
           </div>
         </section>
 
