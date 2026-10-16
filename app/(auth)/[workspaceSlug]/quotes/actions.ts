@@ -1375,7 +1375,7 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
   const totalQtyRaw = (entries ?? []).reduce((sum, e) => sum + Number(e.value_after_waste), 0);
   const { data: comp } = await supabase
     .from('quote_components')
-    .select('material_rate, labour_rate, component_library_id, name, measurement_type, waste_type, waste_percent, waste_fixed, pitch_type, calc_pitch_degrees, calc_audit')
+    .select('*')
     .eq('id', quoteComponentId)
     .single();
 

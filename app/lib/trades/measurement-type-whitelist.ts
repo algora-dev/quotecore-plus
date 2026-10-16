@@ -47,7 +47,8 @@ export type MeasurementType =
   | 'linear'
   | 'quantity'
   | 'length_x_height_freestyle'
-  | 'multi_lineal_lxh_freestyle';
+  | 'multi_lineal_lxh_freestyle'
+  | 'quantity_by_spacing';
 
 export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet<MeasurementType>>> = {
   // Roofing: original v1 types + multi-segment lineals + wall-area types +
@@ -71,6 +72,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',                  // legacy alias of count
     'fixed',
     'hours_days',                // labor
+    'quantity_by_spacing',        // regular-spaced fixings, brackets and supports
   ]),
   // Cladding: area-producing types (direct area + lineal×height) plus lineal
   // for trim/flashings and fixed/quantity for fittings.
@@ -87,6 +89,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',
     'count',
     'fixed',
+    'quantity_by_spacing',
   ]),
   // Generic v1: every type the UI offers, including the Phase 2 extensions.
   generic: new Set<MeasurementType>([
@@ -106,6 +109,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'count',
     'quantity',
     'fixed',
+    'quantity_by_spacing',
   ]),
   // Plumbing: lineal pipe runs are primary; curved paths for bends and
   // concealed routes; count for fixtures, valves, and fittings; volume for
