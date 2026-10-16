@@ -15,7 +15,7 @@ export default function FreeTrialClient() {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Two ways to start</h2>
           <p className="mt-3 text-base leading-7 text-zinc-600">
-            Use the free tools instantly with no signup, or choose a paid plan from $19/month - backed by a 30-day money-back guarantee.
+            Use the free tools instantly with no signup, or choose a paid plan from $19/month - with access to the full app.
           </p>
         </div>
       </div>

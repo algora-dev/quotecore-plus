@@ -13,7 +13,7 @@ import { pricingPlans } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "Get Started with QuoteCore+ - Free Tools + Paid Plans",
-  description: "Start with free roofing tools, no signup. Then choose a paid QuoteCore+ plan from $19/month with a 30-day money-back guarantee. Free trial no longer needed - free tools are forever.",
+  description: "Start with free roofing tools, no signup. Then choose a paid QuoteCore+ plan from $19/month with access to the full app. Free trial no longer needed - free tools are forever.",
   alternates: {
     canonical: "https://quote-core.com/free-trial",
     languages: hreflangLanguages("/free-trial"),
@@ -23,15 +23,11 @@ export const metadata: Metadata = {
 const faqs = [
   {
     question: "Do you offer a free trial?",
-    answer: "We replaced the free trial with something better: permanent free tools and a money-back guarantee. Our free tools (takeoff builder, roofing calculator, quote generator and more) are free forever with no signup. For the full app, choose a paid plan - every plan is backed by a 30-day money-back guarantee, so you can try the full workflow with confidence.",
+    answer: "We offer permanent free tools with no signup. For the full app workflow, choose a paid plan and activate your workspace.",
   },
   {
     question: "Do I need a credit card to use the free tools?",
     answer: "No. The free tools work instantly in your browser with no signup and no card. You only pay if you choose a paid app plan.",
-  },
-  {
-    question: "How does the 30-day money-back guarantee work?",
-    answer: "You pay up front for your chosen plan and get full access to every QuoteCore+ feature for 30 days. If it is not right for you, request a refund after day 30 via a short request and questionnaire and we will refund your payment.",
   },
   {
     question: "Can I send real quotes to real customers?",
@@ -196,7 +192,7 @@ export default function FreeTrialPage() {
               </p>
 
               <p className="mt-4 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg">
-                Try the free tools right now, then start in the app with a 30-day money-back guarantee.
+                Try the free tools right now, then choose a plan to activate the app.
               </p>
 
               <div className="mt-10 max-w-xl space-y-6 text-zinc-600 hidden" aria-hidden="true">
@@ -209,7 +205,6 @@ export default function FreeTrialPage() {
                 {[
                   { title: "Free tools", text: "No signup, forever", icon: "lock" as const },
                   { title: "From $19/mo", text: "Choose your plan", icon: "calendar" as const },
-                  { title: "30-day guarantee", text: "Money-back promise", icon: "pause" as const },
                 ].map(({ title, text, icon }, index) => (
                   <div
                     key={title}
@@ -247,7 +242,7 @@ export default function FreeTrialPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">Paid plans</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Pick the plan that fits.</h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
-              From $19/month, every paid plan backed by the 30-day money-back guarantee.
+              From $19/month, choose the plan that fits your workflow.
             </p>
             <div className="mt-10 grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {pricingPlans.map((plan) => (

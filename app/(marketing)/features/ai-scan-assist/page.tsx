@@ -36,7 +36,7 @@ const softwareSchema = {
   description: "AI Scan Assist identifies multiple roof areas, ridges, hips, valleys, barges and spouting from uploaded roof plans. Users verify, adjust, swap Smart Components and carry everything into a priced quote.",
   url: `${SITE_URL}/features/ai-scan-assist`,
   publisher: { "@id": `${SITE_URL}/#organization` },
-  offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free tools with no signup; paid plans from $19/month include AI scan points and a 30-day money-back guarantee" },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free tools with no signup; paid plans from $19/month include AI scan points and access to the full app" },
 };
 
 const breadcrumbSchema = {
@@ -259,7 +259,7 @@ export default function AIScanAssistPage() {
         <section className="relative overflow-hidden bg-white py-16 sm:py-20">
           <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold sm:text-4xl">Try AI Scan Assist in the paid app</h2>
-            <p className="mt-4 text-base text-zinc-600">Paid plans include 50 (Pro) or 100 (Pro Plus) AI scan points. 30-day money-back guarantee.</p>
+            <p className="mt-4 text-base text-zinc-600">Paid plans include 50 (Pro) or 100 (Pro Plus) AI scan points. Access to the full app.</p>
             <a href="https://app.quote-core.com/signup?utm_source=feature-ai-scan-assist" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
               Get started
             </a>

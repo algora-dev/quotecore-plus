@@ -26,7 +26,7 @@ const rows = [
     model: "Subscription (free tier available)",
     cost: "Cents per AI scan, worst case ~$0.50 per measurement; Pro at $39/mo with 50+ quotes/mo works out to well under $1 per quote",
     detail:
-      "Measure your own plans (manual takeoff is unlimited and free of per-measurement fees) or use AI Scan Assist at cents per scan. Paid plans from $19/month with a 30-day money-back guarantee.",
+      "Measure your own plans (manual takeoff is unlimited and free of per-measurement fees) or use AI Scan Assist at cents per scan. Paid plans from $19/month with access to the full app.",
     highlight: true,
   },
   {
@@ -131,7 +131,7 @@ export default function RoofMeasurementCostComparison() {
               On the Pro plan ($39/mo), a roofer sending 50+ quotes a month works out to well under
               $1 per quote - including measurement, pricing, the quote document itself, sending,
               tracking, material orders and invoicing. Paid plans start at $19/month with a 30-day
-              money-back guarantee.
+              Access to the full app.
             </p>
             <p>
               We&rsquo;ve demonstrated a complete complex roofing quote created in under 3 minutes
@@ -184,7 +184,7 @@ export default function RoofMeasurementCostComparison() {
           <div className="mt-14 rounded-2xl border border-zinc-200 bg-zinc-50 px-8 py-10 text-center">
             <h2 className="text-xl font-semibold">Try the measure-to-quote workflow yourself</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-600">
-              Free tools, no signup. Paid plans from $19/month with a 30-day money-back guarantee.
+              Free tools, no signup. Paid plans from $19/month with access to the full app.
             </p>
             <Link
               href="/free-trial"

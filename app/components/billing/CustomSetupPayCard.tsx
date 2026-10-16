@@ -135,7 +135,7 @@ export function CustomSetupPayCard({ catalog = PREVIEW_CATALOG }: { catalog?: Ca
           >
             {isPending ? 'Preparing checkout…' : `Pay ${formatUsd(total)}/mo & activate`}
           </button>
-          <p className="mt-2 text-center text-xs text-slate-400">Secure checkout via Stripe · cancel anytime</p>
+          <p className="mt-2 text-center text-xs text-slate-400">Secure checkout via Stripe</p>
         </>
       )}
 

@@ -13,14 +13,14 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
   description:
-    "Compare QuoteCore+ paid plans from $19 to $59/month, each backed by a 30-day money-back guarantee. Takeoff, Smart Components, invoicing, and material ordering included.",
+    "Compare QuoteCore+ paid plans from $19 to $59/month, each with access to the full app. Takeoff, Smart Components, invoicing, and material ordering included.",
   alternates: {
     canonical: "https://quote-core.com/pricing",
     languages: hreflangLanguages("/pricing"),
   },
   openGraph: {
     title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
-    description: "Compare QuoteCore+ paid plans from $19 to $59/month with a 30-day money-back guarantee.",
+    description: "Compare QuoteCore+ paid plans from $19 to $59/month with access to the full app.",
     url: "https://quote-core.com/pricing",
     siteName: "QuoteCore+",
     type: "website",
@@ -46,11 +46,7 @@ const breadcrumbSchema = buildBreadcrumbSchema([
 const faqs = [
   {
     question: "Do you offer a free trial?",
-    answer: "We replaced the free trial with something better: permanent free tools with no signup, and a 30-day money-back guarantee on every paid plan. Try the free tools, then start in the app knowing you can get your money back if it is not right for you.",
-  },
-  {
-    question: "How does the 30-day money-back guarantee work?",
-    answer: "You pay up front for your chosen plan and get full access for 30 days. If it is not right for you, request a refund after day 30 via a short request and questionnaire and we will refund your payment.",
+    answer: "We offer permanent free tools with no signup. For the full app workflow, choose a paid plan and activate your workspace.",
   },
   {
     question: "Can I use anything for free without paying?",
@@ -128,7 +124,7 @@ export default function PricingPage() {
             QuoteCore+ pricing for every stage of a roofing business.
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-zinc-600">
-            Try the free tools with no signup, then choose a plan from $19/month - every paid plan is backed by a 30-day money-back guarantee. Compare each plan by its real quote, storage and AI Scan Assist limits before you choose.
+            Try the free tools with no signup, then choose a plan from $19/month to activate the full app workflow. Compare each plan by its real quote, storage and AI Scan Assist limits before you choose.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">

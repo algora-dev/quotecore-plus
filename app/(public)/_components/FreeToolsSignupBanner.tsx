@@ -46,7 +46,7 @@ export function FreeToolsSignupBanner() {
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <p className="text-sm text-zinc-200">
           <span className="font-semibold text-white">Save your work into QuoteCore+</span>
-          <span className="mt-1 block text-xs text-zinc-400">Plans from $19/mo with a 30-day money-back guarantee</span>
+          <span className="mt-1 block text-xs text-zinc-400">Plans from $19/mo with access to the full app</span>
         </p>
         <div className="flex shrink-0 items-center gap-2">
           <button

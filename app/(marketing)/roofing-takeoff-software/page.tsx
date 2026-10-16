@@ -170,7 +170,7 @@ export default function RoofingTakeoffSoftwarePage() {
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. 30-day money-back guarantee.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Access to the full app.</p>
 
             {/* Free product bridge */}
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-[#FF6B35]/30 bg-orange-50/50 px-5 py-4 text-left">
@@ -612,7 +612,7 @@ export default function RoofingTakeoffSoftwarePage() {
           </a>
 
           <p className="mt-4 text-sm text-zinc-500">
-            Free tools, no signup. 30-day money-back guarantee on paid plans.{" "}
+            Free tools, no signup. access to the full app on paid plans.{" "}
             <a href="/pricing" className="underline hover:text-zinc-900">
               See pricing
             </a>

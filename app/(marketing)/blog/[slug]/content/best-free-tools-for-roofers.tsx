@@ -328,7 +328,7 @@ export default function Post() {
       </p>
       <p>
         From complex plan to quote in under 3 minutes for less than a dollar. Full access on your
-        chosen plan, backed by a 30-day money-back guarantee.
+        chosen plan, with access to the full app.
       </p>
       <p>
         <a href="/free-trial">Get started with QuoteCore+</a>
@@ -380,7 +380,7 @@ export default function Post() {
 
       <p>
         Ready to quote faster? <a href="/free-trial">Get started with QuoteCore+ today</a>.
-        Plans from $19/month with a 30-day money-back guarantee. From complex plan to quote in under 3 minutes for less than a dollar.
+        Plans from $19/month with access to the full app. From complex plan to quote in under 3 minutes for less than a dollar.
       </p>
     </div>
   );

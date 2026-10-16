@@ -136,7 +136,7 @@ const faqs = [
   },
   {
     q: "How do plans and free tools work?",
-    a: "The free tools are unlimited and need no signup. Paid plans start at $19/month with a 30-day money-back guarantee.",
+    a: "The free tools are unlimited and need no signup. Paid plans start at $19/month with access to the full app.",
   },
   {
     q: "Can I create and manage quotes from my phone?",
@@ -257,7 +257,7 @@ export default function RoofingQuotingSoftwarePage() {
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. 30-day money-back guarantee.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Access to the full app.</p>
           </div>
         </section>
 
@@ -640,7 +640,7 @@ export default function RoofingQuotingSoftwarePage() {
             Get started with QuoteCore+
           </a>
 
-          <p className="mt-4 text-sm text-zinc-500">Free tools, no signup. 30-day money-back guarantee on paid plans. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
+          <p className="mt-4 text-sm text-zinc-500">Free tools, no signup. access to the full app on paid plans. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
         </section>
 
         <SiteFooter />

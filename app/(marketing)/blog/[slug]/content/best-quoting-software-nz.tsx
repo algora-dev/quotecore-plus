@@ -92,7 +92,7 @@ export default function Post() {
               ["Workflow from quote to job", "Keep the accepted quote connected to the job - not buried in email"],
               ["Mobile-friendly", "Works on site, in a ute, not just at a desk"],
               ["GST-ready", "Handles NZ tax requirements natively"],
-              ["Free trial or money-back guarantee", "Low-risk way to test before committing"],
+              ["Free trial or access to the full app", "Low-risk way to test before committing"],
             ].map(([feature, why]) => (
               <tr key={feature}>
                 <td className="px-4 py-3 font-medium text-zinc-800">{feature}</td>
@@ -119,7 +119,7 @@ export default function Post() {
       <p>Once the quote is sent, acceptance tracking runs automatically. You get a notification when a customer views or accepts the quote. No more chasing phone calls asking whether they received it.</p>
       <p>From an accepted quote, you generate a materials order directly - including custom details for specific job requirements. The job then moves into workflow management: tracked from first measurement to job completion in one place.</p>
 
-      <p><strong>Pricing:</strong> QuoteCore+ publishes transparent pricing on its <Link href="/pricing">pricing page</Link>: a free Lite plan, paid plans from $19/month (Starter) and $39/month (Pro) up to $59/month (Pro Plus). The free tools need no signup, and every paid plan is backed by a 30-day money-back guarantee. See how the plans compare side by side on the <Link href="/construction-quoting-software">construction quoting software hub</Link>.</p>
+      <p><strong>Pricing:</strong> QuoteCore+ publishes transparent pricing on its <Link href="/pricing">pricing page</Link>: a free Lite plan, paid plans from $19/month (Starter) and $39/month (Pro) up to $59/month (Pro Plus). The free tools need no signup, and every paid plan includes access to the full app. See how the plans compare side by side on the <Link href="/construction-quoting-software">construction quoting software hub</Link>.</p>
 
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe
@@ -139,7 +139,7 @@ export default function Post() {
         <li>Professional quote output</li>
         <li>Quote acceptance notifications</li>
         <li>Works across construction trades - roofers, general builders, electricians, plumbers, and more</li>
-        <li>Free tools with no signup; 30-day money-back guarantee on paid plans</li>
+        <li>Free tools with no signup; access to the full app on paid plans</li>
       </ul>
 
       <p><strong>Cons:</strong></p>
@@ -251,7 +251,7 @@ export default function Post() {
       <p>The right option depends on your trade and workflow. QuoteCore+ is the strongest choice for tradies who quote from plans and need a complete workflow from measurement to job completion. Tradify and Fergus are strong for team management and job tracking. ServiceM8 works well for high-volume service trades.</p>
 
       <h3>Is there free quoting software for NZ tradies?</h3>
-      <p>QuoteCore+ has free tools with no signup, and paid plans from $19/month backed by a 30-day money-back guarantee. Tradify has a trial period. Most platforms on this list require a paid subscription - the cost is typically recovered in the first month through time saved on admin and faster quote turnaround.</p>
+      <p>QuoteCore+ has free tools with no signup, and paid plans from $19/month with access to the full app. Tradify has a trial period. Most platforms on this list require a paid subscription - the cost is typically recovered in the first month through time saved on admin and faster quote turnaround.</p>
 
       <h3>How much does quoting software cost for NZ tradespeople?</h3>
       <p>Most quoting platforms for NZ tradies range from approximately $39 to $79 per month for a sole trader or small team. Buildxact starts higher at around $149/month due to its more complex feature set.</p>

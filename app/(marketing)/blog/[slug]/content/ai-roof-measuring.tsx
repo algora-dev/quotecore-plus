@@ -228,7 +228,7 @@ export default function Post() {
         the full AI pipeline with unlimited scans, the full component library, and the ability to
         generate quotes directly from takeoffs,{' '}
         <a href="/free-trial">get started with QuoteCore+</a>. You get every feature,
-        including the AI takeoff assistant, on paid plans backed by a 30-day money-back guarantee.
+        including the AI takeoff assistant, on paid plans with access to the full app.
       </p>
 
       <hr />

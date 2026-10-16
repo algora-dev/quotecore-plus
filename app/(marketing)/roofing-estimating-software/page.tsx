@@ -190,7 +190,7 @@ export default function RoofingEstimatingSoftwarePage() {
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. 30-day money-back guarantee.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Access to the full app.</p>
 
             {/* Two entry paths */}
             <div className="mx-auto mt-6 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
@@ -598,7 +598,7 @@ export default function RoofingEstimatingSoftwarePage() {
           </a>
 
           <p className="mt-4 text-sm text-zinc-500">
-            Free tools, no signup. 30-day money-back guarantee on paid plans.{" "}
+            Free tools, no signup. access to the full app on paid plans.{" "}
             <a href="/pricing" className="underline hover:text-zinc-900">
               See pricing
             </a>

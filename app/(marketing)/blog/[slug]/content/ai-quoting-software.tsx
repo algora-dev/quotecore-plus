@@ -171,7 +171,7 @@ export default function Post() {
         </li>
         <li>
           <strong>What does it cost?</strong> Per-quote pricing adds up. Subscription pricing with
-          unlimited use is more predictable. And a 30-day money-back guarantee lets you test it on real jobs
+          unlimited use is more predictable. And access to the full app lets you test it on real jobs
           before committing.
         </li>
       </ol>
@@ -209,7 +209,7 @@ export default function Post() {
         with unlimited scans, the component library with real product coverage rates, and integrated
         quote building from takeoff data -{' '}
         <a href="/free-trial">get started with QuoteCore+</a>. Every feature is
-        included, including the AI takeoff assistant, on paid plans backed by a 30-day money-back guarantee.
+        included, including the AI takeoff assistant, on paid plans with access to the full app.
       </p>
 
       <hr />

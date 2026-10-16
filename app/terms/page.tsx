@@ -107,7 +107,7 @@ export default function TermsOfServicePage() {
 
       <h2 id="trials-and-free-access">4. Free access and paid Plans</h2>
       <p>We do not offer a free trial of the app. Instead, we provide unlimited free access to our free tools, which run in your browser and do not require an account, signup or payment details.</p>
-      <p>The free tools let you use individual tools (such as the takeoff builder, roofing calculator, quote generator and others) at no cost. The app itself is the paid version: it combines all the tools in one place and adds extra features and capabilities, available on the paid Plans described in section 5. Every paid Plan is backed by the 30-day money-back guarantee described in those Terms or on the pricing page.</p>
+      <p>The free tools let you use individual tools (such as the takeoff builder, roofing calculator, quote generator and others) at no cost. The app itself is the paid version: it combines all the tools in one place and adds extra features and capabilities, available on the paid Plans described in section 5. Paid Plans are subject to the pricing and subscription terms shown at checkout.</p>
       <p>We believe this offers more value and less friction than a free trial: there is nothing to sign up for, no card required, and you only pay for the app if and when you choose a Plan.</p>
       <p>We may change, add or withdraw free tools for future users. Free tools may have different support, usage and feature limits from paid Plans.</p>
 
@@ -174,7 +174,7 @@ export default function TermsOfServicePage() {
 
       <h2 id="cancellation-and-refunds">7. Cancellation and refunds</h2>
       <h3>7.1 Cancellation by you</h3>
-      <p>You may cancel at any time through your Account settings or by contacting us.</p>
+      <p>Subscription changes and cancellation are handled through your Account settings or by contacting us.</p>
       <p>Unless applicable law or your Order states otherwise:</p>
       <ul>
         <li>cancellation stops future renewals;</li>

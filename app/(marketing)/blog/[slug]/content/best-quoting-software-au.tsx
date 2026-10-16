@@ -38,7 +38,7 @@ export default function Post() {
               ["GST handling", "Handles Australian GST (10%) correctly on quotes and invoices"],
               ["Mobile-friendly", "Works on site, in a ute, not just at a desk"],
               ["AU pricing in AUD", "Pricing and support for Australian suppliers and pricing"],
-              ["Free trial or money-back guarantee", "Low-risk way to test before committing"],
+              ["Free trial or access to the full app", "Low-risk way to test before committing"],
             ].map(([feature, why]) => (
               <tr key={feature}>
                 <td className="px-4 py-3 font-medium text-zinc-800">{feature}</td>
@@ -54,7 +54,7 @@ export default function Post() {
       <h2>The best quoting software for Australian tradies in 2026</h2>
 
       <h3>1. QuoteCore+ - Best for roofers and measured-trade quoting</h3>
-      <p><strong>Pricing:</strong> Free tools with no signup; paid plans from $19/month. All plans include digital takeoff and quoting, and every plan is backed by a 30-day money-back guarantee.</p>
+      <p><strong>Pricing:</strong> Free tools with no signup; paid plans from $19/month. All plans include digital takeoff and quoting, and every plan includes access to the full app.</p>
       <p>QuoteCore+ is <a href="/roofing-quoting-software">roofing quoting software</a> built specifically for roofing and construction trades that measure from plans or site - and the wider <a href="/construction-quoting-software">construction quoting workflow</a> (carpentry, plastering, subcontractors) is covered in the same platform. The core workflow is: measure the roof (digitally or manually), apply pitch and waste factors, generate material quantities from a component library, and produce a branded quote.</p>
       <p>The standout feature is <strong>Smart Components</strong> - reusable material assemblies that automatically calculate quantities from measurements. A metal roof component might include Colorbond sheets, screws, ridge flashing, barge flashings, underlay, and insulation - all calculated from one roof area entry with pitch applied. You build the component once, use it on every quote, and the maths is always consistent.</p>
       <p>QuoteCore+ includes <a href="/features/ai-scan-assist">AI Scan Assist</a>, which identifies roof areas and flashings from an uploaded plan - useful for Australian roofers who want to speed up takeoffs without sacrificing accuracy.</p>

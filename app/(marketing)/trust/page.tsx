@@ -9,7 +9,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 export const metadata: Metadata = {
   title: "Trust and Security",
   description:
-    "How QuoteCore+ protects your data: encrypted storage, row-level security, free tools with no signup, 30-day money-back guarantee on paid plans, cancel anytime, and export your data anytime.",
+    "How QuoteCore+ protects your data: encrypted storage, row-level security, free tools with no signup, access to the full app on paid plans, manage your subscription, and export your data anytime.",
   alternates: {
     canonical: "https://quote-core.com/trust",
     languages: hreflangLanguages("/trust"),
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Trust and Security",
     description:
-      "How QuoteCore+ protects your data: encrypted storage, row-level security, free tools with no signup, 30-day money-back guarantee, cancel anytime, and export your data.",
+      "How QuoteCore+ protects your data: encrypted storage, row-level security, free tools with no signup, access to the full app, manage your subscription, and export your data.",
     url: "https://quote-core.com/trust",
     siteName: "QuoteCore+",
     type: "website",
@@ -58,12 +58,8 @@ const securityFacts = [
 
 const planFacts = [
   {
-    title: "30-day money-back guarantee",
-    body: "Pay up front and get full access on your chosen plan for 30 days. If it is not right for you, a refund is available after day 30 via a short request and questionnaire.",
-  },
-  {
-    title: "Cancel anytime",
-    body: "Cancel through your account settings or by contacting us. Cancellation stops future renewals. No lock-in contract.",
+    title: "Manage your subscription",
+    body: "Subscription changes are handled through your account settings or by contacting us.",
   },
   {
     title: "Auto-renewal is clear",
@@ -220,7 +216,7 @@ export default function TrustPage() {
         <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Get started</h2>
-            <p className="mt-2 text-zinc-600">Free tools with no signup. Paid plans from $19/month with a 30-day money-back guarantee. Cancel anytime.</p>
+            <p className="mt-2 text-zinc-600">Free tools with no signup. Paid plans from $19/month. Manage your subscription from your account.</p>
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
               Get started
             </a>

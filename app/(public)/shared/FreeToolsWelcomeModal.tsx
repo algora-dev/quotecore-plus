@@ -9,7 +9,7 @@ import Link from 'next/link';
  *
  * Reassures the user that:
  * - Their output is saved in their account once they sign up and pick a plan
- * - Paid plans from $19/mo with a 30-day money-back guarantee
+ * - Paid plans from $19/mo with access to the full app
  * - Their document is saved and waiting for them
  * - It only takes 1 minute
  */
@@ -53,11 +53,10 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
 
   const features = [
     'Sign up in 1 minute, then pick your plan',
-    'Plans from $19/mo - 30-day money-back guarantee',
+    'Plans from $19/mo',
     'Save, edit, and send your documents',
     'Use all AI features inside the app',
     'Create unlimited quotes, orders, and invoices',
-    'Cancel anytime from your account',
   ];
 
   return (
@@ -113,7 +112,7 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
         </button>
 
         <p className="mt-3 text-center text-xs text-slate-400">
-          Takes 1 minute · Plans from $19/mo · 30-day money-back guarantee
+          Takes 1 minute · Plans from $19/mo
         </p>
       </div>
 

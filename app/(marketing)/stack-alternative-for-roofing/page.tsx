@@ -447,7 +447,7 @@ const pageData: CompetitorPageData = {
     },
     {
       "question": "Is there a free QuoteCore+ app plan?",
-      "answer": "No. The app is paid, with plans from $19/month and a 30-day money-back guarantee. Separate free tools can be used without signing up, but they are not a free account with the full app's saved workspace and capabilities."
+      "answer": "No. The app is paid, with plans from $19/month and access to the full app. Separate free tools can be used without signing up, but they are not a free account with the full app's saved workspace and capabilities."
     },
     {
       "question": "Is switching from STACK automatic?",
