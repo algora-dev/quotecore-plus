@@ -8,6 +8,7 @@ import type { MeasurementSystem, MeasurementType, PitchType, PricingStrategy, Wa
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { applyPitchAndWaste, computeMaterialCostByStrategy, computePackCount } from '@/app/lib/pricing/engine';
 import { areaInputToMetric, linearInputToMetric, volumeInputToMetric, convertLinear, convertAreaFt2, convertAreaRs, convertVolumeFt3 } from '@/app/lib/measurements/conversions';
+import { calculateQuantityBySpacing, calculateRequiredAreaUnits, type QuantitySpacingRoundUp } from '@/app/lib/pricing/quantityCalculations';
 
 export interface ComponentTestDraft {
   name: string;
@@ -29,6 +30,13 @@ export interface ComponentTestDraft {
    *  coverWidthMm, the test panel shows the converted lineal figure. */
   soldBy?: 'area' | 'lineal';
   coverWidthMm?: string;
+  /** Quantity-by-spacing settings are canonical metric in the tester draft. */
+  quantitySpacingM?: string;
+  quantitySpacingAllowance?: string;
+  quantitySpacingRoundUp?: QuantitySpacingRoundUp;
+  /** Area supplementary-unit rate is canonical units per m². */
+  unitsPerAreaEnabled?: boolean;
+  unitsPerAreaM2?: string;
 }
 export interface ComponentTestInput {
   values: string[];
@@ -49,6 +57,7 @@ export function pricedDimension(type: MeasurementType): Dimension {
   return 'quantity';
 }
 export function inputDimension(type: MeasurementType): Dimension {
+  if (type === 'quantity_by_spacing') return 'length';
   if (PRESET_HEIGHT.has(type)) return 'length';
   if (type === 'volume') return 'area';
   return pricedDimension(type);
@@ -61,6 +70,7 @@ export function unitForDimension(dimension: Dimension, system: MeasurementSystem
   return dimension === 'time' ? timeUnit : dimension === 'fixed' ? 'charge' : 'each';
 }
 export function canonicalUnit(type: MeasurementType, timeUnit: 'hr' | 'day' = 'hr'): string {
+  if (type === 'quantity_by_spacing') return 'unit';
   return unitForDimension(pricedDimension(type), 'metric', timeUnit);
 }
 export function displayQuantity(value: number, dimension: Dimension, system: MeasurementSystem): number {
@@ -93,6 +103,10 @@ export interface ComponentTestResult {
   entryCount: number;
   pitchApplied: boolean;
   entries: { input: number; measured: number; afterPitch: number; afterWaste: number }[];
+  /** Read-only procurement count for area components; never changes area pricing. */
+  supplementaryUnits?: number | null;
+  /** Quantity-by-spacing explanation. Pricing uses finalUnits, not measuredLengthM. */
+  spacing?: { measuredLengthM: number; spacingMetres: number; baseUnits: number; afterAllowanceUnits: number; finalUnits: number; allowancePercent: number; roundUp: QuantitySpacingRoundUp };
 }
 export type ComponentTestOutcome = { ok: true; result: ComponentTestResult } | { ok: false; errors: Record<string, string> };
 
@@ -111,7 +125,8 @@ export function calculateComponentTest(draft: ComponentTestDraft, input: Compone
   const packStrategy = draft.strategy !== 'per_unit';
   const materialRate = packStrategy ? 0 : number(draft.materialRate, 'materialRate', 'Material cost');
   const labourRate = number(draft.labourRate, 'labourRate', 'Labour cost');
-  const wasteAmount = draft.wasteType === 'none' ? 0 : number(draft.wasteAmount, 'wasteAmount', 'Waste allowance');
+  const isSpacing = draft.measurementType === 'quantity_by_spacing';
+  const wasteAmount = isSpacing || draft.wasteType === 'none' ? 0 : number(draft.wasteAmount, 'wasteAmount', 'Waste allowance');
   const packPrice = packStrategy ? number(draft.packPrice, 'packPrice', 'Pack price', true) : null;
   const packSize = packStrategy ? number(draft.packSize, 'packSize', 'Pack size', true) : null;
   const packCoverage = draft.strategy === 'per_pack_coverage' ? number(draft.packCoverage, 'packCoverage', 'Coverage per pack', true) : null;
@@ -119,16 +134,48 @@ export function calculateComponentTest(draft: ComponentTestDraft, input: Compone
   const depth = draft.measurementType === 'volume' ? number(draft.depthMm, 'depthMm', 'Component depth in mm', true) / 1000 : 1;
   // Do not silently ignore a persisted unusual pitch rule. Match the selected
   // component's rule, but make plan/surface basis explicit in the UI.
-  const pitchApplied = draft.pitchType !== 'none' && input.basis === 'plan';
+  const pitchApplied = !isSpacing && draft.pitchType !== 'none' && input.basis === 'plan';
   const pitch = pitchApplied ? number(input.pitch, 'pitch', 'Pitch in degrees') : 0;
   if (pitchApplied && pitch >= 90) errors.pitch = 'Pitch must be below 90 degrees.';
   const values = dimension === 'fixed' ? [1] : input.values.map((raw, i) => number(raw, `value-${i}`, `Measurement ${i + 1}`, true));
   if (values.length === 0) errors.values = 'Add a measurement to test.';
-  const compatible = draft.strategy === 'per_unit'
+  const compatible = isSpacing ? draft.strategy === 'per_unit' : draft.strategy === 'per_unit'
     || (draft.strategy === 'per_pack_length' && dimension === 'length')
     || ((draft.strategy === 'per_pack_area' || draft.strategy === 'per_pack_coverage') && dimension === 'area')
     || (draft.strategy === 'per_pack_volume' && dimension === 'volume');
-  if (!compatible) errors.strategy = 'Choose a purchasing method that matches this measurement type.';
+  if (!compatible) errors.strategy = isSpacing
+    ? 'Quantity by Spacing is priced per generated unit.'
+    : 'Choose a purchasing method that matches this measurement type.';
+
+  if (isSpacing) {
+    const spacingM = number(draft.quantitySpacingM ?? '', 'quantitySpacingM', 'Spacing distance', true);
+    const allowancePercent = number(draft.quantitySpacingAllowance ?? '0', 'quantitySpacingAllowance', 'Spacing allowance');
+    const roundUp: QuantitySpacingRoundUp = draft.quantitySpacingRoundUp === 5 || draft.quantitySpacingRoundUp === 10 ? draft.quantitySpacingRoundUp : 1;
+    if (Object.keys(errors).length) return { ok: false, errors };
+    const spacingEntries = values.map(value => {
+      const measuredLengthM = toMetric(value, 'length', input.system);
+      const baseUnits = measuredLengthM / spacingM;
+      const afterAllowanceUnits = baseUnits * (1 + allowancePercent / 100);
+      const finalUnits = calculateQuantityBySpacing({ linealMetres: measuredLengthM, spacingMetres: spacingM, allowancePercent, roundUp });
+      return { input: value, measuredLengthM, baseUnits, afterAllowanceUnits, finalUnits };
+    });
+    const entered = values.reduce((a, b) => a + b, 0);
+    const measuredLengthM = spacingEntries.reduce((sum, entry) => sum + entry.measuredLengthM, 0);
+    const baseUnits = spacingEntries.reduce((sum, entry) => sum + entry.baseUnits, 0);
+    const afterAllowanceUnits = spacingEntries.reduce((sum, entry) => sum + entry.afterAllowanceUnits, 0);
+    const required = spacingEntries.reduce((sum, entry) => sum + entry.finalUnits, 0);
+    const materialCost = required * materialRate;
+    const labourCost = required * labourRate;
+    const total = materialCost + labourCost;
+    if (![measuredLengthM, baseUnits, afterAllowanceUnits, required, materialCost, labourCost, total].every(Number.isFinite)) {
+      return { ok: false, errors: { values: 'These values are too large to calculate safely. Reduce the measurement or rates.' } };
+    }
+    return { ok: true, result: { entered, measured: measuredLengthM, afterPitch: baseUnits, required, wasteAdded: afterAllowanceUnits - baseUnits,
+      packs: 0, purchased: null, spare: null, materialCost, labourCost, total, effectiveCost: entered > 0 ? total / entered : null,
+      entryCount: values.length, pitchApplied: false, entries: spacingEntries.map(entry => ({ input: entry.input, measured: entry.measuredLengthM, afterPitch: entry.baseUnits, afterWaste: entry.finalUnits })),
+      spacing: { measuredLengthM, spacingMetres: spacingM, baseUnits, afterAllowanceUnits, finalUnits: required, allowancePercent, roundUp } } };
+  }
+
   if (Object.keys(errors).length) return { ok: false, errors };
 
   const entries = values.map(value => {
@@ -154,8 +201,12 @@ export function calculateComponentTest(draft: ComponentTestDraft, input: Compone
   if (![measured, afterPitch, required, material.cost, labourCost, total, purchased ?? 0].every(Number.isFinite)) {
     return { ok: false, errors: { values: 'These values are too large to calculate safely. Reduce the measurement or rates.' } };
   }
+  const supplementaryUnits = draft.measurementType === 'area' && draft.unitsPerAreaEnabled
+    ? calculateRequiredAreaUnits(required, number(draft.unitsPerAreaM2 ?? '', 'unitsPerAreaM2', 'Units per area'))
+    : null;
+  if (Object.keys(errors).length) return { ok: false, errors };
   return { ok: true, result: { entered, measured, afterPitch, required, wasteAdded: required - afterPitch,
     packs, purchased, spare: purchased === null ? null : Math.max(0, purchased - required),
     materialCost: material.cost, labourCost, total, effectiveCost: entered > 0 ? total / entered : null,
-    entryCount: values.length, pitchApplied, entries } };
+    entryCount: values.length, pitchApplied, entries, supplementaryUnits } };
 }

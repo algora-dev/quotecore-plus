@@ -67,14 +67,20 @@ export function useDemoSession(sessionId: string, expiresAt: string, initialStat
     alive.current = true; stopped.current = false;
     void refresh();
     const visibleRefresh = () => { if (document.visibilityState === 'visible') void refresh(); };
+    const pushedState = (event: Event) => {
+      const detail = (event as CustomEvent<DemoGuideState>).detail;
+      if (detail) apply(detail);
+    };
     const timer = window.setInterval(visibleRefresh, 5000);
     document.addEventListener('visibilitychange', visibleRefresh);
     window.addEventListener('online', visibleRefresh);
     window.addEventListener('qc-demo-refresh', visibleRefresh);
+    window.addEventListener('qc-demo-state', pushedState);
     return () => {
       alive.current = false; refreshQueued.current = false; poll.current?.abort(); poll.current = null; write.current?.abort();
       clearInterval(timer); document.removeEventListener('visibilitychange', visibleRefresh);
       window.removeEventListener('online', visibleRefresh); window.removeEventListener('qc-demo-refresh', visibleRefresh);
+      window.removeEventListener('qc-demo-state', pushedState);
     };
   }, [refresh]);
   useEffect(() => {

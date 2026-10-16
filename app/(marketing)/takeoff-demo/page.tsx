@@ -44,7 +44,7 @@ const FAQS = [
   {
     question: 'How do I get the full app?',
     answer:
-      'Our free tools work instantly with no signup. For the full workflow on your own plans, choose a paid plan from $19/month - every plan is backed by a 30-day money-back guarantee.',
+      'Our free tools work instantly with no signup. For the full workflow on your own plans, choose a paid plan from $19/month.',
   },
 ];
 
@@ -161,7 +161,7 @@ export default function TakeoffDemoPage() {
       <section className="mx-auto max-w-3xl px-4 py-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Take it into the full app</h2>
         <p className="mt-4 text-sm leading-relaxed text-slate-600">
-          This is the real workstation. Try the free tools with no signup, or start in the app from $19/month with a 30-day money-back guarantee.
+          This is the real workstation. Try the free tools with no signup, or start in the app from $19/month.
         </p>
         <TrialCTA />
       </section>

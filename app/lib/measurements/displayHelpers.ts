@@ -100,7 +100,8 @@ export function getUnitLabel(
   }
 
   // Count / fixed / point
-  if (measurementType === 'quantity' || measurementType === 'point' || measurementType === 'quantity_by_spacing') return 'each';
+  if (measurementType === 'quantity_by_spacing') return 'units';
+  if (measurementType === 'quantity' || measurementType === 'point') return 'each';
 
   return '';
 }

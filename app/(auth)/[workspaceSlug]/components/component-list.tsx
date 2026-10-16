@@ -13,8 +13,8 @@ import { validateRules } from '@/app/components/pricing/guided/rules-state';
 import { PricingIntroduction } from '@/app/components/pricing/PricingIntroduction';
 import { canonicalUnit } from '@/app/components/pricing/componentTest';
 import { formatCurrency } from '@/app/lib/currency/currencies';
-import { linearInputToMetric } from '@/app/lib/measurements/conversions';
-import { unitsPerDisplayedAreaToMetric } from '@/app/lib/pricing/quantityCalculations';
+import { convertLinear, linearInputToMetric } from '@/app/lib/measurements/conversions';
+import { unitsPerDisplayedAreaToMetric, unitsPerMetricAreaToDisplayed } from '@/app/lib/pricing/quantityCalculations';
 
 import { QcLibrary } from '@/app/components/ui/v2/QcLibrary';
 import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
@@ -33,7 +33,7 @@ import type {
   FlashingLibraryRow,
 } from '@/app/lib/types';
 import { getTradeLabels } from '@/app/lib/trades/labels';
-import type { MeasurementSystem } from '@/app/lib/types';
+import { normalizeMeasurementSystem, type MeasurementSystem } from '@/app/lib/types';
 import { loadFlashingLibrary } from '../drawings/actions';
 import { loadCalcDraftAsync, clearCalcDraft } from '@/app/(public)/free-calculators/_shared/types';
 
@@ -364,11 +364,18 @@ export function ComponentList({
     setFormSoldBy(c.sold_by === 'lineal' ? 'lineal' : 'area');
     setFormCoverWidthMm(c.cover_width_mm != null ? String(c.cover_width_mm) : '');
     setFormQuantityDisplay(c.quantity_display === 'lineal' || c.quantity_display === 'both' ? c.quantity_display : 'area');
-    setFormQuantitySpacing(c.quantity_spacing_m != null ? String(Number(c.quantity_spacing_m)) : '');
+    const spacingMetres = c.quantity_spacing_m == null ? null : Number(c.quantity_spacing_m);
+    setFormQuantitySpacing(spacingMetres != null && Number.isFinite(spacingMetres)
+      ? String(normalizeMeasurementSystem(companyMeasurementSystem) === 'metric' ? spacingMetres : convertLinear(spacingMetres))
+      : '');
     setFormQuantitySpacingAllowance(c.quantity_spacing_allowance_percent != null ? String(c.quantity_spacing_allowance_percent) : '0');
     setFormQuantitySpacingRoundUp(c.quantity_spacing_round_up === 5 || c.quantity_spacing_round_up === 10 ? c.quantity_spacing_round_up : 1);
     setFormUnitsPerAreaEnabled(c.units_per_area_enabled === true);
-    setFormUnitsPerArea(c.units_per_area != null ? String(c.units_per_area) : '');    setFormWasteUnit((c.waste_unit as WasteUnit) ?? 'percent');
+    const unitsPerM2 = c.units_per_area == null ? null : Number(c.units_per_area);
+    setFormUnitsPerArea(unitsPerM2 != null && Number.isFinite(unitsPerM2)
+      ? String(unitsPerMetricAreaToDisplayed(unitsPerM2, companyMeasurementSystem))
+      : '');
+    setFormWasteUnit((c.waste_unit as WasteUnit) ?? 'percent');
     setFormPricingStrategy((c.pricing_strategy as PricingStrategy) ?? 'per_unit');
     setFormPackPrice(c.pack_price != null ? String(c.pack_price) : '');
     setFormPackSize(c.pack_size != null ? String(c.pack_size) : '');

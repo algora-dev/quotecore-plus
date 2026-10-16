@@ -22,7 +22,7 @@ Baseline archive: `quotecore-plus-phase6-ux-handoff-2026-09-27.zip`. Hash: `3dd0
 
 C53 scope is enabled **inside** C63 so nested storage/upgrade helpers using C53 join the native top layer. It does not opt the page or another workspace into hosted-dialog behavior. Check nested helpers, body lock release, trigger focus restoration, explicit cancel and pending close rules on desktop and phone.
 
-Two legacy overlays with meaningful backdrop callbacks—catalogue replacement and signup guarantee information—retain those callbacks and overlay ownership, receiving styling only. Browser `alert`/`confirm` calls embedded in existing action handlers also remain; silently rewriting those into asynchronous custom dialogs would change control flow. These are deliberate preservation exceptions, not a claim that every dialog in the application has been rewritten.
+Two legacy overlays with meaningful backdrop callbacks—catalogue replacement and signup commercial information—retain those callbacks and overlay ownership, receiving styling only. Browser `alert`/`confirm` calls embedded in existing action handlers also remain; silently rewriting those into asynchronous custom dialogs would change control flow. These are deliberate preservation exceptions, not a claim that every dialog in the application has been rewritten.
 
 ## Keep protected areas intact
 

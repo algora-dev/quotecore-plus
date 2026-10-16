@@ -260,7 +260,7 @@ export const stackPage: CompetitorPageData = {
       {
         label: "Trying it out",
         competitor: "Free version (limited) or demo",
-        qc: "Free tools (no signup) + paid plans from $19/month, 30-day money-back guarantee",
+        qc: "Free tools (no signup) + paid plans from $19/month",
       },
     ],
     scenarioNote:

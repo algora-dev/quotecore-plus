@@ -7,7 +7,6 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { MeasureJobButton } from './MeasureJobModal';
 import { WelcomeModal } from './tutorials/WelcomeModal';
-import { V2WelcomeModal } from './V2WelcomeModal';
 import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { DocDraftRestorer } from './DocDraftRestorer';
 import { TakeoffDraftNoteBanner } from './TakeoffDraftNoteBanner';
@@ -66,11 +65,10 @@ export default async function WorkspaceHome({
     .eq('company_id', company.id)
     .is('bell_cleared_at', null);
 
-  // Load user name + first-login Tutorials flag (gates the Welcome modal)
-  // and the one-time V2 rollout welcome (gates V2WelcomeModal).
+  // Load user name + first-login Tutorials flag (gates the Welcome modal).
   const { data: user } = await supabase
     .from('users')
-    .select('full_name, tutorials_seen_at, v2_welcome_seen_at')
+    .select('full_name, tutorials_seen_at')
     .eq('id', profile.id)
     .single();
 
@@ -80,10 +78,6 @@ export default async function WorkspaceHome({
   const demoContext = await getActiveDemoContext(company.id);
   // A personal help preference, not workspace pricing-readiness. No blocking tour.
   const showWelcome = !demoContext && !user?.tutorials_seen_at;
-  // One-time V2 welcome for every account (new and existing) on first sign-in
-  // after the V2 rollout. Dismissal stamps v2_welcome_seen_at.
-  const showV2Welcome = !demoContext && !user?.v2_welcome_seen_at;
-
   // Check for calculator draft from signup flow (H-03: signup context preservation)
   const cookieStore = await cookies();
   const signupDraft = cookieStore.get('qcp_signup_draft')?.value;
@@ -130,7 +124,6 @@ export default async function WorkspaceHome({
 
   return (
     <section data-qc-ui="v2" className="space-y-5">
-      {showV2Welcome && <V2WelcomeModal />}
       {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} pricingFirst={!hasCalcDraft && recentWork !== undefined && recentWork.length === 0 && !(company as { is_supplier?: boolean }).is_supplier} /> : null}
       {hasCalcDraft && <CalcDraftImportBanner draftId={signupDraft!} sourceRef={signupRef ?? null} />}
       <Suspense fallback={null}><DocDraftRestorer workspaceSlug={workspaceSlug} /></Suspense>

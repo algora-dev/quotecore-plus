@@ -6,6 +6,8 @@ import { QcField, QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
 import { QcIcon } from '@/app/components/ui/v2/QcIcon';
 import { canonicalUnit, type ComponentTestDraft } from './componentTest';
 import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
+import { linearInputToMetric } from '@/app/lib/measurements/conversions';
+import { unitsPerDisplayedAreaToMetric } from '@/app/lib/pricing/quantityCalculations';
 import { ComponentTestPanel } from './ComponentTestPanel';
 import { buildMeasurementLabels, allowedStrategiesFor, ROOFING_DEFAULT_TYPES } from '@/app/(auth)/[workspaceSlug]/components/parts/helpers';
 import './pricing-activation.css';
@@ -90,7 +92,12 @@ export function SmartComponentEditor(props: Props) {
     packCoverage: genericTradesEnabled ? s.packCoverage : initial.storedPackCoverage ?? '',
     heightMm: genericTradesEnabled ? s.heightMm : initial.storedHeightMm ?? '',
     depthMm: genericTradesEnabled ? s.depthMm : initial.storedDepthMm ?? '', timeUnit: s.hoursUnit,
-    soldBy: s.soldBy, coverWidthMm: s.coverWidthMm };
+    soldBy: s.soldBy, coverWidthMm: s.coverWidthMm,
+    quantitySpacingM: Number(s.quantitySpacing) > 0 ? String(linearInputToMetric(Number(s.quantitySpacing), props.measurementSystem)) : '',
+    quantitySpacingAllowance: s.quantitySpacingAllowance, quantitySpacingRoundUp: s.quantitySpacingRoundUp,
+    unitsPerAreaEnabled: s.measurementType === 'area' && s.unitsPerAreaEnabled,
+    unitsPerAreaM2: s.measurementType === 'area' && s.unitsPerAreaEnabled && Number(s.unitsPerArea) >= 0
+      ? String(unitsPerDisplayedAreaToMetric(Number(s.unitsPerArea), props.measurementSystem)) : '' };
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, []);
   useEffect(() => { if (props.error) headingRef.current?.scrollIntoView({ block: 'nearest' }); }, [props.error]);
   const numberField = (key: string, label: string, value: string, update: (value: string) => void, options?: { name?: string; help?: string; step?: string }) => (
@@ -186,19 +193,26 @@ export function SmartComponentEditor(props: Props) {
             {gatedPack && <p className="qc-pricing-callout">Saved pack settings are used in the test: {initial.storedPackSize} {purchaseUnit} per pack, {initial.storedPackPrice} {props.currency}. Pack editing is disabled by this workspace configuration.</p>}
           </section>
           <section className="qc-pricing-section" aria-labelledby={`${id}-rules`}>
-            <header><span>3</span><div><h3 id={`${id}-rules`}>What allowances apply?</h3><p>Leave these off when they do not apply.</p></div></header>
-            <div className="qc-pricing-fields-grid">
-              <div data-copilot="component-waste"><QcField htmlFor={`${id}-waste`} label="Waste allowance"><QcSelect id={`${id}-waste`} name="default_waste_type" value={s.wasteType} onChange={e => set({ wasteType: e.target.value as WasteType })}>
-                <option value="none">No waste</option><option value="percent">Percentage of measurement</option><option value="fixed">Fixed amount per entry</option><option value="fixed_per_segment">Fixed amount per segment</option>
-              </QcSelect></QcField></div>
-              {s.wasteType !== 'none' && <div data-copilot="component-waste-amount">{numberField('waste-amount', `Allowance (${s.wasteType === 'percent' ? '%' : unit})`, wasteAmount, setWasteAmount, { name: 'waste_amount', help: s.wasteType === 'percent' ? 'For example, 10 adds 10% to the measurement.' : 'The test shows the allowance added to each manual entry.' })}</div>}
-            </div>
-            {(props.pitchVisible || s.pitchEnabled) && <div className="qc-pricing-pitch" data-copilot="component-pitch">
-              <label className="qc-pricing-check"><input id={`${id}-pitch-enabled`} type="checkbox" checked={s.pitchEnabled} onChange={e => set({ pitchEnabled: e.target.checked })} />{props.pitchCheckboxLabel}</label>
-              {s.pitchEnabled && <div data-copilot="component-pitch-type"><QcField htmlFor={`${id}-pitch-type`} label="Pitch rule" help="In the test, choose a plan measurement to apply this rule, or an already-measured surface to skip it."><QcSelect id={`${id}-pitch-type`} name="default_pitch_type" value={pitchType} onChange={e => setPitchType(e.target.value as PitchType)}>
-                <option value="rafter">{props.pitchRafterLabel}</option>{(!props.pitchHidesValleyHip || pitchType === 'valley_hip') && <option value="valley_hip">Valley / hip pitch</option>}
-              </QcSelect></QcField></div>}
-            </div>}
+            <header><span>3</span><div><h3 id={`${id}-rules`}>What allowances apply?</h3><p>{s.measurementType === 'quantity_by_spacing' ? 'Spacing allowance and rounding are configured with the spacing rule above.' : 'Leave these off when they do not apply.'}</p></div></header>
+            {s.measurementType === 'quantity_by_spacing' ? <>
+              <input type="hidden" name="default_waste_type" value="none" />
+              <input type="hidden" name="waste_amount" value="0" />
+              <input type="hidden" name="default_pitch_type" value="none" />
+              <p className="qc-pricing-callout">Quantity by Spacing converts the measured length into units first. The spacing allowance and round-up rule determine the priced unit count; standard waste and pitch are not applied a second time.</p>
+            </> : <>
+              <div className="qc-pricing-fields-grid">
+                <div data-copilot="component-waste"><QcField htmlFor={`${id}-waste`} label="Waste allowance"><QcSelect id={`${id}-waste`} name="default_waste_type" value={s.wasteType} onChange={e => set({ wasteType: e.target.value as WasteType })}>
+                  <option value="none">No waste</option><option value="percent">Percentage of measurement</option><option value="fixed">Fixed amount per entry</option><option value="fixed_per_segment">Fixed amount per segment</option>
+                </QcSelect></QcField></div>
+                {s.wasteType !== 'none' && <div data-copilot="component-waste-amount">{numberField('waste-amount', `Allowance (${s.wasteType === 'percent' ? '%' : unit})`, wasteAmount, setWasteAmount, { name: 'waste_amount', help: s.wasteType === 'percent' ? 'For example, 10 adds 10% to the measurement.' : 'The test shows the allowance added to each manual entry.' })}</div>}
+              </div>
+              {(props.pitchVisible || s.pitchEnabled) && <div className="qc-pricing-pitch" data-copilot="component-pitch">
+                <label className="qc-pricing-check"><input id={`${id}-pitch-enabled`} type="checkbox" checked={s.pitchEnabled} onChange={e => set({ pitchEnabled: e.target.checked })} />{props.pitchCheckboxLabel}</label>
+                {s.pitchEnabled && <div data-copilot="component-pitch-type"><QcField htmlFor={`${id}-pitch-type`} label="Pitch rule" help="In the test, choose a plan measurement to apply this rule, or an already-measured surface to skip it."><QcSelect id={`${id}-pitch-type`} name="default_pitch_type" value={pitchType} onChange={e => setPitchType(e.target.value as PitchType)}>
+                  <option value="rafter">{props.pitchRafterLabel}</option>{(!props.pitchHidesValleyHip || pitchType === 'valley_hip') && <option value="valley_hip">Valley / hip pitch</option>}
+                </QcSelect></QcField></div>}
+              </div>}
+            </>}
           </section>
           <details className="qc-pricing-details"><summary>Notes, images & material orders <span>{props.assignedFlashings.length ? `${props.assignedFlashings.length} image(s)` : 'Optional'}</span></summary><div>
             <div data-copilot="component-flashings"><label className="qc-pricing-check"><input name="eligible_for_orders" type="checkbox" checked={eligible} onChange={e => setEligible(e.target.checked)} /> Include in material orders</label>

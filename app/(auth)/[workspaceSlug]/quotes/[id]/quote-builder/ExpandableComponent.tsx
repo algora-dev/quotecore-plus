@@ -85,6 +85,7 @@ export function ExpandableComponent({
   const isLxhFreestyle = mt === 'length_x_height_freestyle' || mt === 'multi_lineal_lxh_freestyle';
   const isLxhPreset = mt === 'length_x_height' || mt === 'multi_lineal_lxh';
   const isAreaType = mt === 'area' || mt === 'irregular_area';
+  const isSpacing = mt === 'quantity_by_spacing';
   // Types that support a toggle between single-value and dimension-based entry
   const hasEntryModeToggle = isAreaType || isVolumePreset || isVolume3d || isLxhPreset;
   const [expanded, setExpanded] = useState(false);
@@ -121,7 +122,7 @@ export function ExpandableComponent({
   const [lxhFsL, setLxhFsL] = useState('');
   const [lxhFsH, setLxhFsH] = useState('');
   const lxhFsRef = useRef<HTMLInputElement>(null);
-  const unit = getUnitLabel(comp.measurement_type as any, quote.measurement_system);
+  const unit = isSpacing ? getUnitLabel('lineal', quote.measurement_system) : getUnitLabel(comp.measurement_type as any, quote.measurement_system);
   // When Volume (Preset Depth) is in Area direct mode, the user enters area² not volume.
   // Show the area unit (m²/ft²) instead of the volume unit (m³/ft³).
   const displayUnit = (isVolumePreset && entryMode === 'direct')
@@ -134,6 +135,7 @@ export function ExpandableComponent({
   const hasPitch = comp.pitch_type !== 'none';
   const isAreaBased = comp.measurement_type === 'area';
   const requiredUnits = Number((comp as unknown as { required_units?: number | null }).required_units ?? 0);
+  const spacingMeasuredLength = isSpacing ? compEntries.reduce((sum, entry) => sum + Number(entry.raw_value ?? 0), 0) : 0;
   const assignedArea = roofAreas.find(a => a.id === comp.quote_roof_area_id);
   const areaPitch = assignedArea?.calc_pitch_degrees ?? 0;
 
@@ -161,8 +163,12 @@ export function ExpandableComponent({
     if (m === 'volume' || m === 'volume_3d') {
       return formatVolume(value, quote.measurement_system);
     }
+    if (m === 'quantity_by_spacing') return `${Number(value.toFixed(2))} units`;
     // quantity/fixed types - no unit conversion
     return `${value.toFixed(1)} ${getUnitLabel(comp.measurement_type as any, quote.measurement_system)}`;
+  }
+  function displayEntryRaw(value: number): string {
+    return isSpacing ? formatLinear(value, quote.measurement_system) : displayValue(value);
   }
 
   async function handleSubmitEntry() {
@@ -303,16 +309,17 @@ export function ExpandableComponent({
           </span>
           <span className="qb-component-quantity">
             <span className="qb-mini-label">Quantity</span>
-          {comp.priced_quantity != null ? (() => {
-            const priced = Number(comp.priced_quantity);
-            const packSnap = comp.pack_size_snapshot != null ? Number(comp.pack_size_snapshot) : null;
-            const actual = Number(comp.final_quantity ?? 0);
-            const fractional = packSnap && !isNaN(packSnap) && packSnap > 0 ? actual / packSnap : actual;
-            return <>{priced.toFixed(0)} <span className="italic text-slate-400">({fractional.toFixed(2)})</span></>;
-          })() : hasLinealCover
-            ? formatLinealMetres(Number(comp.final_quantity ?? 0), quote.measurement_system)
-            : displayValue(comp.final_quantity ?? 0)}
-            {isAreaBased && requiredUnits > 0 && <span className="italic text-slate-400"> ({requiredUnits.toFixed(0)} units)</span>}
+          {isSpacing ? <>{formatLinear(spacingMeasuredLength, quote.measurement_system)} <span className="italic text-slate-400">({Number(Number(comp.final_quantity ?? 0).toFixed(2))} units)</span></>
+            : comp.priced_quantity != null ? (() => {
+              const priced = Number(comp.priced_quantity);
+              const packSnap = comp.pack_size_snapshot != null ? Number(comp.pack_size_snapshot) : null;
+              const actual = Number(comp.final_quantity ?? 0);
+              const fractional = packSnap && !isNaN(packSnap) && packSnap > 0 ? actual / packSnap : actual;
+              return <>{priced.toFixed(0)} <span className="italic text-slate-400">({fractional.toFixed(2)})</span></>;
+            })() : hasLinealCover
+              ? formatLinealMetres(Number(comp.final_quantity ?? 0), quote.measurement_system)
+              : displayValue(comp.final_quantity ?? 0)}
+            {isAreaBased && requiredUnits > 0 && <span className="italic text-slate-400"> ({Number(requiredUnits.toFixed(2))} units)</span>}
           </span>
           <span className="qb-component-cost"><span className="qb-mini-label">Item + labour</span>{formatCurrency(totalCost, currency)}</span>
         </button>
@@ -406,7 +413,7 @@ export function ExpandableComponent({
               <div key={entry.id} className="qb-entry-row">
                 <span className="qb-entry-number">#{idx + 1}</span>
                 <span className="qb-entry-value">
-                  {displayValue(entry.raw_value)}
+                  {displayEntryRaw(entry.raw_value)}
                 </span>
                 {isCombined && (
                   <span className="qb-combined-label">
@@ -427,6 +434,7 @@ export function ExpandableComponent({
                     const deg = Number(ep);
                     refParts.push(`${Number.isInteger(deg) ? deg.toFixed(0) : deg.toFixed(1)}°`);
                   }
+                  if (isSpacing) return <span className="qb-entry-detail">→ {displayValue(entry.value_after_waste)} - spacing, allowance &amp; round-up</span>;
                   const hasWaste = comp.waste_type !== 'none';
                   const valuesDiffer = Math.abs(entry.value_after_waste - entry.raw_value) > 1e-6;
                   if (!hasWaste && refParts.length === 0) return null;

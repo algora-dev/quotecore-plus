@@ -52,6 +52,8 @@
 .qc-test-breakdown { margin:0; display:grid; gap:0; font-size:13px; }
 .qc-test-breakdown > div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; padding:10px 0; border-bottom:1px solid var(--qc-border-control); align-items:baseline; }
 .qc-test-breakdown dt { color:var(--qc-text-secondary); }.qc-test-breakdown dd { margin:0; font-weight:600; text-align:right; font-variant-numeric:tabular-nums; }.qc-test-breakdown .qc-test-emphasis { font-weight:600; }.qc-test-emphasis dt { color:var(--qc-text-primary); }
+.qc-test-breakdown .qc-test-supplementary { margin-top:4px; padding:12px; border:1px solid #f0c49e; border-radius:10px; background:#fff7ed; }.qc-test-supplementary dt,.qc-test-supplementary dd { color:#78350f; }
+.qc-test-unit-note { margin:0; padding:12px 14px; border-radius:10px; background:var(--qc-bg-subtle,#f4f6f8); color:var(--qc-text-secondary); font-size:12px; line-height:1.6; }.qc-test-unit-note strong { color:var(--qc-text-primary); }
 .qc-test-live { display:flex; gap:8px; align-items:center; color:var(--qc-text-secondary); font-size:12px; line-height:1.5; margin:0; }.qc-test-live svg { flex-shrink:0; }
 .qc-pricing-error { padding:14px 16px; border:1px solid var(--qc-color-danger,#b42318); background:#fff5f4; border-radius:12px; color:#8c2018; font-size:13px; line-height:1.65; }
 .qc-pricing-error ul { padding-left:18px; margin:8px 0; }.qc-pricing-error p { margin:8px 0 0; }

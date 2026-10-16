@@ -607,29 +607,32 @@ export async function saveTakeoffMeasurements(
     return { success: false, error: `Failed to save takeoff: ${rpcError.message}` };
   }
 
-  // Lineal-cover display snapshot (owner directive 2026-10-13): the atomic
-  // RPC predates the cover_width_mm snapshot column, so persist it on the
-  // saved component lines here. NULL-only fill - never overwrites rows the
-  // manual-add path already snapshotted. Non-fatal: the builder's load-time
-  // library fallback covers display when this fails.
+  // New component calculation/display fields were added after the atomic RPC's
+  // quote_components insert list. Persist the exact settings used above onto
+  // each saved area/component row BEFORE the shared recalc runs. Target by
+  // library + roof area so the same library can safely exist on several areas.
+  // Non-fatal during rolling deploys: legacy rows still keep their measurements.
   try {
-    const coverByLibId = new Map<string, number>();
     for (const c of componentsPayload) {
-      const mm = Number(c?.cover_width_mm ?? 0);
-      const libIdKey = c?.component_library_id ? String(c.component_library_id) : null;
-      if (libIdKey && mm > 0) coverByLibId.set(libIdKey, mm);
-    }
-    for (const [libId, mm] of coverByLibId) {
-      const { error: coverError } = await supabase
-        .from('quote_components')
-        .update({ cover_width_mm: mm } as never)
-        .eq('quote_id', quoteId)
-        .eq('component_library_id', libId)
-        .is('cover_width_mm', null);
-      if (coverError) console.warn('[SaveTakeoff] cover snapshot skipped for', libId, coverError.message);
+      const libId = c?.component_library_id ? String(c.component_library_id) : null;
+      if (!libId) continue;
+      const areaId = c?.quote_roof_area_id ? String(c.quote_roof_area_id) : null;
+      const snapshot = {
+        cover_width_mm: Number(c?.cover_width_mm ?? 0) > 0 ? Number(c.cover_width_mm) : null,
+        quantity_spacing_m: c?.quantity_spacing_m == null ? null : Number(c.quantity_spacing_m),
+        quantity_spacing_allowance_percent: Number(c?.quantity_spacing_allowance_percent ?? 0),
+        quantity_spacing_round_up: c?.quantity_spacing_round_up === 5 || c?.quantity_spacing_round_up === 10 ? c.quantity_spacing_round_up : 1,
+        units_per_area_enabled: c?.units_per_area_enabled === true,
+        units_per_area: c?.units_per_area == null ? null : Number(c.units_per_area),
+      };
+      let update = supabase.from('quote_components').update(snapshot as never)
+        .eq('quote_id', quoteId).eq('component_library_id', libId);
+      update = areaId ? update.eq('quote_roof_area_id', areaId) : update.is('quote_roof_area_id', null);
+      const { error: snapshotError } = await update;
+      if (snapshotError) console.warn('[SaveTakeoff] component snapshot skipped for', libId, snapshotError.message);
     }
   } catch (err) {
-    console.warn('[SaveTakeoff] cover snapshot failed (non-fatal):', err instanceof Error ? err.message : err);
+    console.warn('[SaveTakeoff] component snapshot failed (non-fatal):', err instanceof Error ? err.message : err);
   }
 
   // Canvas-rework: persist calibration data to the takeoff_pages row so

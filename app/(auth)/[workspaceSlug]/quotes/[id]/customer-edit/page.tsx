@@ -1,6 +1,6 @@
 import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
-import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadCustomerQuoteLines, loadCustomerQuoteTemplates } from '../../actions';
+import { loadQuote, loadQuoteRoofAreas, loadQuoteComponents, loadAllEntriesForQuote, loadCustomerQuoteLines, loadCustomerQuoteTemplates } from '../../actions';
 import { loadQuoteTaxes, loadCompanyTaxes } from '@/app/lib/taxes/actions';
 import { loadComponentCollections, loadComponentLibrary } from '../../../components/actions';
 import { CustomerQuoteEditor } from './CustomerQuoteEditor';
@@ -17,10 +17,11 @@ export default async function CustomerQuoteEditPage({
 
   const supabase = await createSupabaseServerClient();
   const { data: profileForCatalogs } = await supabase.from('users').select('company_id').single();
-  const [quote, roofAreas, components, savedLines, templates, quoteTaxes, companyTaxes, collections, companyComponents, catalogList] = await Promise.all([
+  const [quote, roofAreas, components, componentEntries, savedLines, templates, quoteTaxes, companyTaxes, collections, companyComponents, catalogList] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
     loadQuoteComponents(id),
+    loadAllEntriesForQuote(id),
     loadCustomerQuoteLines(id),
     loadCustomerQuoteTemplates(),
     loadQuoteTaxes(id),
@@ -64,6 +65,7 @@ export default async function CustomerQuoteEditPage({
       quote={quote}
       roofAreas={roofAreas}
       components={components}
+      componentEntries={componentEntries}
       savedLines={savedLines}
       templates={templates}
       workspaceSlug={workspaceSlug}

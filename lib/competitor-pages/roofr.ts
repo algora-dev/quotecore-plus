@@ -265,7 +265,7 @@ export const roofrPage: CompetitorPageData = {
       {
         label: "Just starting out",
         competitor: "Starter $0 - $19/report measurements, 10 trial proposals",
-        qc: "Free tools (no signup) + paid plans from $19/month, 30-day money-back guarantee",
+        qc: "Free tools (no signup) + paid plans from $19/month",
       },
     ],
     scenarioNote:

@@ -212,7 +212,7 @@ export const planSwiftPage: CompetitorPageData = {
       {
         label: "Trying it out",
         competitor: "14-day free trial (full version, download)",
-        qc: "Free tools (no signup) + paid plans from $19/month, 30-day money-back guarantee",
+        qc: "Free tools (no signup) + paid plans from $19/month",
       },
     ],
     scenarioNote:
@@ -311,7 +311,7 @@ export const planSwiftPage: CompetitorPageData = {
   ],
   finalCta: {
     heading: "Roofing-native, not general-purpose.",
-    body: "Measure the roof, price the roof, quote the job - one browser workflow built for roofing. Free tools, no signup; paid plans from $19/month with a 30-day money-back guarantee.",
+    body: "Measure the roof, price the roof, quote the job - one browser workflow built for roofing. Free tools, no signup; paid plans from $19/month.",
     ctaLabel: "Try QuoteCore+ on your next roof plan",
   },
 };

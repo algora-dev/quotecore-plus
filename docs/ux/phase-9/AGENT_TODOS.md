@@ -12,7 +12,7 @@
 | P9-MOBILE-01 | Source-derived fit checks cannot prove soft-keyboard, browser download/print, pointer or PWA behaviour | Owner's real phone acceptance remains required |
 | P9-CACHE-03 | Historical literal `/components` revalidation still exists in unrelated portions of supplier/resources actions | Preserved outside new cache target changes; Gavin may separately review that old path if consumers prove stale |
 | P6-DATA-02 | Existing Orders recent-record loading limit | Separate product/data decision; unchanged |
-| P6-BILLING-02 | Checkout/entitlement timing and guarantees need authoritative runtime/product verification | Billing owner; no auth/Stripe/plan guarantees invented |
+| P6-BILLING-02 | Checkout/entitlement timing and commercial policy need authoritative runtime/product verification | Billing owner; no auth/Stripe/plan policy invented |
 
 P7-API-01, P7-INBOX-01 and P7-CACHE-01 are implemented candidates, not marked runtime-accepted. Existing P6 tutorial-link/plan-input presentation fixes are retained from the accepted baseline and were not reimplemented. Marketing and Smart Assistant are concurrent protected lanes.
 

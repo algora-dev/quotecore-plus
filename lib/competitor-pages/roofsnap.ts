@@ -220,7 +220,7 @@ export const roofSnapPage: CompetitorPageData = {
       {
         label: "Getting started",
         competitor: "7-day free trial, then from $13/report",
-        qc: "Free tools (no signup) + paid plans from $19/month, 30-day money-back guarantee",
+        qc: "Free tools (no signup) + paid plans from $19/month",
       },
     ],
     scenarioNote:
@@ -320,7 +320,7 @@ export const roofSnapPage: CompetitorPageData = {
   ],
   finalCta: {
     heading: "Own your quoting workflow.",
-    body: "Measure your own plans, apply your own pricing rules, and turn any roof into a priced quote in minutes. Free tools, no signup; paid plans from $19/month with a 30-day money-back guarantee.",
+    body: "Measure your own plans, apply your own pricing rules, and turn any roof into a priced quote in minutes. Free tools, no signup; paid plans from $19/month.",
     ctaLabel: "Measure your next roof without a report",
   },
 };

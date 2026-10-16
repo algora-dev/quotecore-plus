@@ -8,7 +8,7 @@
 | P6-CATALOG-01 | AddFromCatalogModal triggers `loadMyCatalogs()` through useMemo during render. | Review moving to an effect with correct dependencies/cancellation. Existing timing is retained here. The static fixture skips this side effect and does not test it. |
 | P6-ONBOARD-01 | Completed onboarding has literal `href="/${companySlug}/tutorials"`. | Resolve the intended current tutorial route. This pre-existing link was not silently rewired. |
 | P6-STATUS-01 | Brief lists ready/ordered; UI and action allowlists include delivered/paid/pickup/waiting. | Reconcile documentation and test actual DB acceptance. All six source choices remain. |
-| P6-BILLING-01 | Signup prices/guarantee copy is hardcoded; plan cards use current plan inputs. | Verify commercial copy against the actual catalogue/terms. No amount, guarantee term or checkout contract has been changed. The misleading all-plans/all-features claim was replaced with selected-plan wording. |
+| P6-BILLING-01 | Signup prices/commercial-policy copy is hardcoded; plan cards use current plan inputs. | Owner update 2026-10-16: remove obsolete refund-promise acquisition copy. Verify remaining commercial copy against the actual catalogue/terms; no checkout contract is changed by that copy cleanup. |
 | P6-BILLING-02 | Paywall passes its existing `hasActiveSubscription={false}` snapshot. | Verify return-from-checkout/dunning/portal timing under real entitlements. Phase 6 only adds presentation context. |
 
 ## Integration gates, not backend tasks

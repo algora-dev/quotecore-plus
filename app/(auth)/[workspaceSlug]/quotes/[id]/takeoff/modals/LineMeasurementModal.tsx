@@ -39,7 +39,7 @@ export function LineMeasurementModal({
     // plan/canvas behind stays fully interactive (pan/zoom) so the user can
     // check the line while the card is open. The touch scope keeps the
     // original overlay presentation.
-    <QcHostedDialog label="Line measurement" modeless
+    <QcHostedDialog label="Line measurement" modeless modelessPlacement="takeoff-entry"
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div
         tabIndex={-1}

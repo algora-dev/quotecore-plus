@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useId, useRef, forwardRef, useCallback, type HTMLAttributes, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
+import { createContext, useContext, useId, useRef, useLayoutEffect, forwardRef, useCallback, type HTMLAttributes, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { QcDialog } from './QcDialog';
 import { QcButton, type QcButtonProps } from './QcButton';
 import './qc-hosted-dialog.css';
@@ -30,9 +30,10 @@ export function QcHostedDialogScope({ enabled, children }: { enabled: boolean; c
  * the user can reveal the measurement they need while the card is open.
  * Freeform drag via the header strip. Legacy (touch) scope is untouched.
  */
-export function QcHostedDialog({ label, size = 'sm', onRequestClose, pending = false, floating = false, modeless = false,
+export function QcHostedDialog({ label, size = 'sm', onRequestClose, pending = false, floating = false, modeless = false, modelessPlacement = 'default',
   className = '', children, ...legacyProps }: HTMLAttributes<HTMLDivElement> & {
   label: string; size?: 'sm' | 'md' | 'lg'; onRequestClose?: () => void; pending?: boolean; floating?: boolean; modeless?: boolean;
+  modelessPlacement?: 'default' | 'takeoff-entry';
 }) {
   const enabled = useContext(HostedDialogPresentation);
   const nameId = useId();
@@ -81,6 +82,7 @@ export function QcHostedDialog({ label, size = 'sm', onRequestClose, pending = f
     const header = event.currentTarget;
     if (!card) return;
     event.preventDefault();
+    card.dataset.qcDragged = 'true';
     header.setPointerCapture(event.pointerId);
     const rect = card.getBoundingClientRect();
     const grabX = event.clientX - rect.left;
@@ -101,6 +103,37 @@ export function QcHostedDialog({ label, size = 'sm', onRequestClose, pending = f
     header.addEventListener('pointerup', onUp);
     header.addEventListener('pointercancel', onUp);
   }, []);
+
+  // Measurement-entry cards default beside the left rail, immediately below
+  // the takeoff toolbar. Other modeless cards (AI review/calibration) retain
+  // their existing top-right default. Once the user drags a card, a resize only
+  // clamps it into the viewport instead of snapping it back to the default.
+  useLayoutEffect(() => {
+    if (!enabled || !modeless || modelessPlacement !== 'takeoff-entry') return;
+    const card = modelessRef.current;
+    const workstation = document.querySelector<HTMLElement>('[data-qc-takeoff="desktop"]');
+    const canvas = workstation?.querySelector<HTMLElement>('.qc-takeoff-canvas-column');
+    const toolbar = workstation?.querySelector<HTMLElement>('.qc-takeoff-toolbar');
+    if (!card || !canvas || !toolbar) return;
+    const margin = 10;
+    const place = () => {
+      const cardRect = card.getBoundingClientRect();
+      if (card.dataset.qcDragged === 'true') {
+        const left = Math.min(Math.max(cardRect.left, 8), Math.max(8, window.innerWidth - cardRect.width - 8));
+        const top = Math.min(Math.max(cardRect.top, 8), Math.max(8, window.innerHeight - Math.min(cardRect.height, window.innerHeight - 16) - 8));
+        card.style.left = `${left}px`; card.style.top = `${top}px`; card.style.right = 'auto';
+        return;
+      }
+      const canvasRect = canvas.getBoundingClientRect();
+      const toolbarRect = toolbar.getBoundingClientRect();
+      const left = Math.min(Math.max(canvasRect.left + margin, 8), Math.max(8, window.innerWidth - cardRect.width - 8));
+      const top = Math.min(Math.max(toolbarRect.bottom + margin, 8), Math.max(8, window.innerHeight - Math.min(cardRect.height, window.innerHeight - 16) - 8));
+      card.style.left = `${left}px`; card.style.top = `${top}px`; card.style.right = 'auto';
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [enabled, modeless, modelessPlacement]);
 
   // Modeless presentation (desktop scope only): a floating card, not a modal.
   if (enabled && modeless) {

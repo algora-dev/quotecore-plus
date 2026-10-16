@@ -541,7 +541,7 @@ export function BillingPanel(props: BillingPanelProps) {
       <div className="qc-flow-panel">
         <h3 className="text-base font-semibold text-slate-900">{props.context === 'activation' ? 'Choose your plan' : 'Available plans'}</h3>
         <p className="text-sm text-slate-500 mt-1">
-          Compare features and limits, then choose a plan. Every plan is backed by a 30-day money-back guarantee.
+          Compare features and limits, then choose a plan.
         </p>
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {props.plans.map((plan) => {

@@ -37,6 +37,6 @@ At 390px, 320px and landscape; also 1440px desktop. Use real soft keyboard and s
 
 - Force Quotes loader failure; distinguish retry from empty. Force quote/template-picker HTTP and JSON errors; verify selection not accidentally created; template failure requires explicit continue without template.
 - Onboarding completed Tutorials link resolves correct workspace path.
-- Paywall labels follow supplied plan cents; checkout keys/prices/entitlements unchanged. Signup uses existing pricing destination. Existing refund/guarantee copy awaits owner confirmation, not guessed metadata.
+- Paywall labels follow supplied plan cents; checkout keys/prices/entitlements unchanged. Signup uses existing pricing destination. Owner confirmed on 2026-10-16 that obsolete commercial refund-promise copy must be removed; do not derive policy terms from plan metadata.
 
 Owner acceptance: clear two-template-destination model; named selections match; mobile back works; no older inaccessible component/supplier/inbox control remains on tested paths; no regression in protected workspaces. Capture actual deployed screenshots only after these gates.

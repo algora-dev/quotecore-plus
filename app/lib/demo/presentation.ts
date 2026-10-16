@@ -1,5 +1,5 @@
 /** Pure demo presentation contracts. No auth, permissions or pricing changes. */
-import { DEMO_GUIDE_CHAPTERS, guideHref, nextGuideStep } from './guide';
+import { activeGuideStep, DEMO_GUIDE_CHAPTERS, guideHref } from './guide';
 import type { DemoGuideState } from './model';
 export type DemoSystem = 'metric' | 'imperial_ft' | 'imperial_rs';
 export const DEMO_SYSTEMS: { id: DemoSystem; title: string; symbol: string; detail: string }[] = [
@@ -19,7 +19,7 @@ export function readComponentSurface(value: unknown): DemoComponentSurface | nul
   return { kind: data.kind as DemoComponentSurface['kind'], ...(typeof data.componentId === 'string' ? { componentId: data.componentId } : {}) };
 }
 export function guideLocation(slug: string, state: DemoGuideState, pathname: string, surface: DemoComponentSurface | null) {
-  const step = nextGuideStep(state);
+  const step = activeGuideStep(state);
   const href = guideHref(slug, state);
   const path = href.split('?')[0];
   const root = `/${encodeURIComponent(slug)}`;
@@ -38,7 +38,7 @@ export function guideLocation(slug: string, state: DemoGuideState, pathname: str
 /** Complete Takeoff naturally lands in the editor. Resume that transition even
  * after a refresh; it must not depend on a transient celebration-card flag. */
 export function shouldAdvanceToCustomer(slug: string, state: DemoGuideState, pathname: string): boolean {
-  return state.mode === 'guided' && state.chapter === 'takeoff' && !!state.acknowledgements['takeoff.saved']
+  return state.mode === 'guided' && !state.review_event && state.chapter === 'takeoff' && !!state.acknowledgements['takeoff.saved']
     && pathname === `/${encodeURIComponent(slug)}/quotes/${state.seed.guided_roof_job}/customer-edit`;
 }
 export function acceptGuideRevision(current: DemoGuideState, incoming: DemoGuideState): DemoGuideState {
@@ -55,7 +55,7 @@ export function clampGuidePosition(position: { x: number; y: number }, width: nu
 }
 export function assistantExample(event: string | undefined, units: DemoSystem) {
   if (event === 'assistant.edited') return units === 'metric' ? 'Change the ridge to 6 m and add 12 m of gutter.' : 'Change the ridge to 20 ft and add 40 ft of gutter.';
-  if (event === 'assistant.found') return 'Do I have any accepted quotes without a material order?';
+  if (event === 'assistant.found') return 'Do I have any quotes that need an order created?';
   if (units === 'metric') return 'Create a roof quote for Jim Smith: 180 m² roof on the plan, 25° pitch, 5 hips at 4 m and 1 ridge at 2 m, using the roofing library.';
   if (units === 'imperial_rs') return 'Create a roof quote for Jim Smith: 19.4 roofing squares on the plan, 25° pitch, 5 hips at 13 ft and 1 ridge at 6.5 ft, using the roofing library.';
   return 'Create a roof quote for Jim Smith: 1,940 ft² roof on the plan, 25° pitch, 5 hips at 13 ft and 1 ridge at 6.5 ft, using the roofing library.';

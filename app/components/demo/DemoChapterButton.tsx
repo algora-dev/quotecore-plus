@@ -16,6 +16,9 @@ export function DemoChapterButton({ chapter, disabled = false, completed = false
       const result = await demoRequest<GuideReply>('/api/demo/state', { ...demoJsonRequest({ action: 'chapter', chapter }), method: 'PATCH' }, 30_000);
       if (!mounted.current) return;
       if (!safeDemoHref(result.href, workspaceSlug)) throw new Error('Could not verify the guide destination.');
+      // Keep the always-mounted helper in lock-step with the explicit chapter
+      // selection before route navigation/polling has a chance to race it.
+      window.dispatchEvent(new CustomEvent('qc-demo-state', { detail: result.tutorialState }));
       router.push(result.href); router.refresh(); window.dispatchEvent(new Event('qc-demo-refresh'));
     } catch (cause) { if (mounted.current) setError(cause instanceof Error ? cause.message : 'Could not open chapter. Please retry.'); }
     finally { busy.current = false; if (mounted.current) setPending(false); }

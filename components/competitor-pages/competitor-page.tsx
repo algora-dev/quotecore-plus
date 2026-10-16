@@ -447,7 +447,7 @@ export default function CompetitorPage({
 
             <div className="rounded-[1.5rem] border border-orange-200 bg-white px-7 py-7 shadow-[0_0_8px_rgba(255,107,53,0.08)]">
               <h3 className="text-lg font-semibold">QuoteCore+ paid app</h3>
-              <p className="mt-3 text-sm text-zinc-600">30-day money-back guarantee. Check plan-specific features before choosing.</p>
+              <p className="mt-3 text-sm text-zinc-600">Check plan-specific features and limits before choosing.</p>
               <ul className="mt-5 space-y-4">
                 <li className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                   <span>
@@ -750,7 +750,7 @@ export default function CompetitorPage({
           </div>
           <p className="mt-3 text-sm text-zinc-500">
             The paid app works on phone, tablet and desktop. Standalone free tools
-            have their own device support and limits. Paid plans include a 30-day money-back guarantee.
+            have their own device support and limits.
           </p>
         </div>
       </section>

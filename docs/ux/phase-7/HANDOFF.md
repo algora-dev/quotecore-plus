@@ -33,7 +33,7 @@ From your `docs/ux/phase-6/AGENT_TODOS.md`:
 - **P6-DATA-03:** quote/template creation pickers — distinguishable empty vs error states in the owned loading code.
 - **P6-CATALOG-01:** move `AddFromCatalogModal`'s render-time `loadMyCatalogs()` (useMemo) to an effect with correct dependencies/cancellation.
 - **P6-ONBOARD-01:** completed-onboarding literal `href="/${companySlug}/tutorials"` — resolve to the correct current tutorials route.
-- **P6-BILLING-01:** signup/paywall hardcoded prices/guarantee copy — align with the actual plan data already passed in (prices themselves are owner-locked values; use existing plan inputs, no new numbers).
+- **P6-BILLING-01:** signup/paywall hardcoded prices/commercial-policy copy — align with the actual plan data already passed in (prices themselves are owner-locked values; use existing plan inputs, no new numbers).
 
 (Remaining P6 items — real-dialog focus/Escape checks, mobile shell safe-area checks, entitlement timing — are runtime verification and stay with Gavin.)
 

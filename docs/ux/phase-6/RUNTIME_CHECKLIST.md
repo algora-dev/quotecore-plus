@@ -48,7 +48,7 @@ Use approved records/accounts/recipients. Preview and production may share data:
 - [ ] Active subscription never opens a duplicate fresh checkout; portal/manage, upgrade/downgrade and returned query banners use existing rules.
 - [ ] Signup paid-language, Google/email, draft/ref restore, errors; login/reset/recovery remain correct.
 - [ ] Onboarding preference/recovery/completion stages; paid-only paywall after setup; actual entitlement refresh after checkout; logout and return link.
-- [ ] Hardcoded prices/guarantee, literal tutorial URL and existing picker/load issues reviewed per AGENT_TODOS.
+- [ ] Hardcoded prices/commercial-policy copy, literal tutorial URL and existing picker/load issues reviewed per AGENT_TODOS.
 
 ## Regression and owner acceptance
 

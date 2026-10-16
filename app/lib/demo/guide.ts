@@ -28,9 +28,9 @@ export const DEMO_GUIDE_CHAPTERS: { id: DemoGuideChapter; title: string; summary
     { event: 'email.sent', title: 'Send the demo quote to yourself', target: 'job', copy: 'If you’re still editing, press *Save Quote* to return to Job Space. Then choose *Send Quote* and enter your own email address.', hint: 'Optional: the demo email is clearly marked. Sending does not subscribe you to marketing.' },
   ] },
   { id: 'smart-assistant', title: 'Use Smart Assistant', summary: 'Create, change and find work using plain English.', steps: [
-    { event: 'assistant.created', title: 'Create work by asking', target: 'assistant', copy: 'Open Smart Assistant and send the example request below. Review the draft quote, then choose *Confirm* to create it.' },
-    { event: 'assistant.edited', title: 'Change it in one line', target: 'assistant', copy: 'Send the short change request below, review the proposed changes, then choose *Confirm* to apply them.' },
-    { event: 'assistant.found', title: 'Find what needs attention', target: 'assistant', copy: 'Ask the final example below, then click the matching suggested quote in Smart Assistant to complete this task. No confirmation is needed.' },
+    { event: 'assistant.created', title: 'Create work by asking', target: 'assistant', copy: 'Open Smart Assistant and send the example request below. Review the draft quote, then choose *Confirm*. The guide advances after the confirmed quote is created.' },
+    { event: 'assistant.edited', title: 'Change it in one line', target: 'assistant', copy: 'Send the short change request below, review the proposed changes, then choose *Confirm*. The guide advances after the confirmed change is saved.' },
+    { event: 'assistant.found', title: 'Find what needs attention', target: 'assistant', copy: 'Ask the final example below. When Smart Assistant finds a quote that needs attention, open the suggested *quote* if you want to inspect its Job Space. Once the result is verified, this guide also unlocks a *Finish* button so you can complete the lesson without opening it.' },
   ] },
 ];
 
@@ -38,6 +38,26 @@ export function currentChapter(state: DemoGuideState): DemoGuideChapter { return
 export function chapterIndex(chapter: DemoGuideChapter): number { return DEMO_GUIDE_CHAPTERS.findIndex(c => c.id === chapter); }
 export function nextGuideStep(state: DemoGuideState): DemoStep | undefined {
   return DEMO_GUIDE_CHAPTERS.find(c => c.id === state.chapter)?.steps.find(s => !state.acknowledgements[s.event] && !state.skipped?.[s.event]);
+}
+/** The first incomplete lesson normally drives the helper. A completed chapter
+ * deliberately reopened from All chapters instead exposes its review lesson. */
+export function activeGuideStep(state: DemoGuideState): DemoStep | undefined {
+  const chapter = DEMO_GUIDE_CHAPTERS.find(c => c.id === state.chapter);
+  if (state.review_event) {
+    const review = chapter?.steps.find(step => step.event === state.review_event);
+    if (review) return review;
+  }
+  return nextGuideStep(state);
+}
+/** Keep completed-chapter revisit destinations useful. Pricing reopens the
+ * visitor's saved component at the Test lesson rather than a blank creator. */
+export function reviewStepForChapter(state: DemoGuideState, chapterId: DemoGuideChapter): DemoStep | undefined {
+  const chapter = DEMO_GUIDE_CHAPTERS.find(item => item.id === chapterId);
+  if (!chapter) return undefined;
+  if (chapterId === 'pricing' && state.guided_created_component_id) {
+    return chapter.steps.find(step => step.event === 'component.tested') ?? chapter.steps[0];
+  }
+  return chapter.steps[0];
 }
 export function guideProgress(state: DemoGuideState): { done: number; skipped: number; handled: number; total: number } {
   const steps = DEMO_GUIDE_CHAPTERS.flatMap(c => c.steps);
@@ -52,7 +72,7 @@ export function canEnterChapter(state: DemoGuideState, chapter: DemoGuideChapter
   if (chapter === 'smart-assistant') return !!state.acknowledgements['takeoff.saved'] && !!(state.acknowledgements['quote.presentation'] || state.skipped?.['quote.presentation']);
   return DEMO_GUIDE_CHAPTERS.every(item => item.steps.every(step => !!state.acknowledgements[step.event] || !!state.skipped?.[step.event]));
 }
-export function guideHref(slug: string, state: DemoGuideState, step = nextGuideStep(state)): string {
+export function guideHref(slug: string, state: DemoGuideState, step = activeGuideStep(state)): string {
   const root = `/${encodeURIComponent(slug)}`;
   const target = step?.target ?? (state.chapter === 'takeoff' ? 'takeoff' : state.chapter === 'customer-quote' ? 'customer' : state.chapter === 'smart-assistant' ? 'assistant' : 'components');
   if (target === 'assistant') return root;

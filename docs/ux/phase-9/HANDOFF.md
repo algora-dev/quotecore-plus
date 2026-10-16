@@ -19,7 +19,7 @@ This zip = git archive of `ux/phase-4` @ the tip commit recorded on the zip labe
 4. **Browser-alert elimination sweep** — find any remaining `window.alert` / `confirm` / `prompt` in app surfaces; convert to QcActionNotice / QcHostedDialog patterns.
 5. **Back-affordance sweep** — full-page routes without a mobile back control (owner flagged the class on /resources/new: "no way back other than clicking somewhere else"). QcMobileReturn/BackButton pattern exists — apply consistently across leaf pages/settings/template editors.
 6. **manifest.webmanifest** — console "Syntax error" on every page load (pre-existing PWA bug). Diagnose + fix.
-7. **P6 acceptance flags still open** — hardcoded paywall price/guarantee copy vs single source of truth, literal tutorial URL, picker/load issues (see AGENT_TODOS P6 carry-overs).
+7. **P6 acceptance flags still open** — hardcoded paywall price/commercial-policy copy vs single source of truth, literal tutorial URL, picker/load issues (see AGENT_TODOS P6 carry-overs).
 8. **Loading/empty/error state consistency** — remaining un-migrated surfaces; propose a shortlist with screenshots-in-words; only build what fits the phase.
 9. Your own AGENT_TODOS entries you judge still valid.
 

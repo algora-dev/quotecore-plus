@@ -309,6 +309,6 @@ export const eagleViewPage: CompetitorPageData = {
   ],
   finalCta: {
     heading: "Own the measurements. Own the margin.",
-    body: "Stop paying per roof. Measure your own plans, let Smart Components price them, and send the quote - all in one workflow. Free tools, no signup; paid plans from $19/month with a 30-day money-back guarantee.",
+    body: "Stop paying per roof. Measure your own plans, let Smart Components price them, and send the quote - all in one workflow. Free tools, no signup; paid plans from $19/month.",
   },
 };

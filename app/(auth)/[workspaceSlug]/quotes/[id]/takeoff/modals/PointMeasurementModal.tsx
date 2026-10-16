@@ -34,7 +34,7 @@ export function PointMeasurementModal({
     // Modeless (desktop, owner 2026-09-26): a floating draggable card - the
     // plan/canvas behind stays fully interactive. The touch scope keeps the
     // original overlay presentation.
-    <QcHostedDialog label="Point measurement" modeless
+    <QcHostedDialog label="Point measurement" modeless modelessPlacement="takeoff-entry"
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div
         tabIndex={-1}

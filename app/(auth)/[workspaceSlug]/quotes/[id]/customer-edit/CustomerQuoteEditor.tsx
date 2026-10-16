@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
+import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, QuoteComponentEntryRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
 import { LineEditForm } from './LineEditForm';
 import { refreshDemoGuide } from '@/app/lib/demo/client-events';
@@ -23,6 +23,7 @@ import {
   convertAreaFt2,
 } from '@/app/lib/measurements/conversions';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
+import { formatLinear } from '@/app/lib/measurements/displayHelpers';
 import { createCustomerQuoteTemplate } from '../../../customer-quote-templates/create/build/actions';
 import { saveQuoteTaxes, seedQuoteTaxesFromCompanyDefaults } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
@@ -36,6 +37,8 @@ interface Props {
   quote: QuoteRow;
   roofAreas: QuoteRoofAreaRow[];
   components: QuoteComponentRow[];
+  /** Raw measurement entries let spacing components retain their source length in customer-facing text. */
+  componentEntries?: Record<string, QuoteComponentEntryRow[]>;
   savedLines: any[];
   templates: CustomerQuoteTemplateRow[];
   workspaceSlug: string;
@@ -90,7 +93,7 @@ interface QuoteLine {
   baseLabourCost?: number;
 }
 
-export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote', collections = [], componentLibrary = [], catalogs = [] }: Props) {
+export function CustomerQuoteEditor({ quote, roofAreas, components, componentEntries = {}, savedLines, templates, workspaceSlug, currency, defaultLogoUrl, disableAutoSave: _disableAutoSave = false, editorTitle = "Customer Quote Editor", previewTitle = "Customer Quote Preview", includeMargins = true, customSaveAction, initialTaxes, companyTaxes, taxAudience = 'quote', collections = [], componentLibrary = [], catalogs = [] }: Props) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [taxes, setTaxes] = useState<EditableTax[]>(
@@ -338,6 +341,16 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     // the auto-generated customer line matches what the user sees on screen.
     const rawQty = Number(component.final_quantity ?? 0);
     const system = normalizeMeasurementSystem(quote.measurement_system);
+    const formatUnits = (value: number) => Number(value.toFixed(2)).toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+    // Quantity by Spacing keeps the lineal takeoff as useful context, but the
+    // generated unit count is the quantity that drives material/labour pricing.
+    // quote_component_entries.raw_value remains canonical metres.
+    if (String(component.measurement_type) === 'quantity_by_spacing') {
+      const measuredLengthM = (componentEntries[component.id] ?? []).reduce((sum, entry) => sum + Number(entry.raw_value ?? 0), 0);
+      const measured = formatLinear(measuredLengthM, quote.measurement_system);
+      return `${component.name} - ${measured} (${formatUnits(rawQty)} units)`;
+    }
 
     let displayQty = rawQty;
     let unit = '';
@@ -380,6 +393,11 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       unit = 'units';
     }
 
+    const requiredUnits = component.measurement_type === 'area'
+      ? Number((component as unknown as { required_units?: number | string | null }).required_units ?? 0)
+      : 0;
+    const supplementary = Number.isFinite(requiredUnits) && requiredUnits > 0 ? ` (${formatUnits(requiredUnits)} units)` : '';
+
     // Fixed Quantity strategies: format as "Name - 4 (3.42) - 171.07 m2"
     // where 4 = rounded-up purchasable units (priced_quantity),
     // (3.42) = actual fractional units = displayQty / pack_size_snapshot,
@@ -393,10 +411,10 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     const packSnap = packRaw != null ? Number(packRaw) : null;
     if (priced != null && !isNaN(priced) && packSnap != null && !isNaN(packSnap) && packSnap > 0) {
       const fractional = displayQty / packSnap;
-      return `${component.name} - ${priced.toFixed(0)} (${fractional.toFixed(2)}) - ${displayQty.toFixed(2)} ${unit}${lmPart}`;
+      return `${component.name} - ${priced.toFixed(0)} (${fractional.toFixed(2)}) - ${displayQty.toFixed(2)} ${unit}${lmPart}${supplementary}`;
     }
 
-    return `${component.name} - ${displayQty.toFixed(1)} ${unit}${lmPart}`;
+    return `${component.name} - ${displayQty.toFixed(1)} ${unit}${lmPart}${supplementary}`;
   }
 
   // Editor list always shows the COMPLETE line (description + quantity); the

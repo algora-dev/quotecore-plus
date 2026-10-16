@@ -18,6 +18,8 @@ export type DemoGuideState = {
   welcomed: boolean;
   mode: 'guided' | 'explore';
   chapter: DemoGuideChapter;
+  /** A completed lesson deliberately reopened from All chapters. Progress is preserved. */
+  review_event?: DemoEvent;
   seed: DemoSeedManifest;
   acknowledgements: Partial<Record<DemoEvent, DemoAcknowledgement>>;
   /** Optional lessons deferred by the visitor; never evidence of a product save. */
@@ -29,6 +31,10 @@ export type DemoGuideState = {
   guided_quote_id?: string;
   assistant_quote_id?: string;
   assistant_quote_updated_at?: string;
+  /** Server-verified final Assistant result. This unlocks an explicit Finish action without pretending a response alone completed navigation. */
+  assistant_found_ready_at?: string;
+  /** Quote targets from the verified Assistant run that legitimately satisfy the final demo lesson. */
+  assistant_found_record_ids?: string[];
   completed_at?: string;
 };
 export type ActiveDemoContext = {
@@ -58,6 +64,7 @@ export function readGuide(value: unknown): DemoGuideState {
   const chapters: DemoGuideChapter[] = ['pricing','takeoff','customer-quote','smart-assistant','complete'];
   if (chapters.includes(value.chapter as DemoGuideChapter)) result.chapter = value.chapter as DemoGuideChapter;
   const events: DemoEvent[] = ['component.viewed','component.created','component.tested','component.edited','scan.loaded','takeoff.saved','quote.template','quote.presentation','quote.edited','quote.previewed','email.sent','assistant.created','assistant.edited','assistant.found'];
+  if (events.includes(value.review_event as DemoEvent)) result.review_event = value.review_event as DemoEvent;
   for (const event of events) {
     const entry = value.acknowledgements[event];
     if (!isRecord(entry) || typeof entry.at !== 'string' || !Number.isFinite(Date.parse(entry.at))) continue;
@@ -71,9 +78,12 @@ export function readGuide(value: unknown): DemoGuideState {
       }
     }
   }
-  for (const name of ['assistant_quote_updated_at', 'completed_at'] as const) {
+  for (const name of ['assistant_quote_updated_at', 'assistant_found_ready_at', 'completed_at'] as const) {
     const at = value[name];
     if (typeof at === 'string' && Number.isFinite(Date.parse(at))) result[name] = at;
+  }
+  if (Array.isArray(value.assistant_found_record_ids)) {
+    result.assistant_found_record_ids = [...new Set(value.assistant_found_record_ids.filter((id): id is string => typeof id === 'string' && UUID.test(id)))].slice(0, 10);
   }
   for (const name of ['guided_created_component_id','guided_takeoff_job_id','guided_takeoff_plan_id','guided_quote_id','assistant_quote_id'] as const) {
     const id = value[name]; if (typeof id === 'string' && UUID.test(id)) result[name] = id;
@@ -86,5 +96,9 @@ export function isSessionActive(status: string, expiresAt: string | null, now = 
 }
 export function acknowledge(state: DemoGuideState, event: DemoEvent, recordId?: string, now = new Date().toISOString()): DemoGuideState {
   const skipped = { ...state.skipped }; delete skipped[event];
-  return { ...state, skipped, acknowledgements: { ...state.acknowledgements, [event]: { at: now, ...(recordId ? { recordId } : {}) } } };
+  // Repeating a completed lesson from All chapters must never erase later
+  // progress. Completing that reviewed action simply exits review mode.
+  const { review_event: reviewEvent, ...withoutReview } = state;
+  const base = reviewEvent === event ? withoutReview : state;
+  return { ...base, skipped, acknowledgements: { ...state.acknowledgements, [event]: { at: now, ...(recordId ? { recordId } : {}) } } };
 }

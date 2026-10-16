@@ -48,13 +48,19 @@ still own the top layer. */ z-index: 55; width: min(376px, calc(100vw - 24px)); 
 .qc-demo-note strong { display: block; color: var(--qc-demo-text); }
 .qc-demo-note p { margin-top: 5px; }
 .qc-demo-note-soft { background: var(--qc-demo-surface); }
+.qc-demo-review-note { margin: 0!important; padding: 9px 11px; border-left: 3px solid var(--qc-demo-orange); border-radius: 0 9px 9px 0; background: rgba(255,107,53,.08); color: #d7dce5!important; font-size: 12px!important; line-height: 1.5!important; }
+.qc-demo-test-tip { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: baseline; margin-top: 12px; padding: 12px; border: 1px solid var(--qc-demo-line); border-radius: var(--qc-radius-control, 12px); background: var(--qc-demo-surface); }
+.qc-demo-test-tip>span { color: var(--qc-demo-orange-soft); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.qc-demo-test-tip>strong { justify-self: end; color: var(--qc-demo-text); font-size: 13px; font-weight: 700; }
+.qc-demo-test-tip>p { grid-column: 1 / -1; margin: 3px 0 0; color: var(--qc-demo-text-2); font-size: 12px; line-height: 1.55; }
 .qc-demo-why { margin-top: 12px; color: var(--qc-demo-text-2); font-size: 12px; }
 .qc-demo-why summary { cursor: pointer; min-height: 32px; padding: 7px 0; font-weight: 650; }
 .qc-demo-why p { padding: 4px 0 4px 12px; border-left: 2px solid var(--qc-demo-orange); }
 .qc-demo-actions { display: grid; gap: 8px; margin-top: 16px; width: 100%; }
 .qc-demo-actions>* { width: 100%; white-space: normal; }
 .qc-demo-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.qc-demo-guide .qc-demo-skip { display: block; margin: 10px auto 0; white-space: normal; }
+.qc-demo-guide .qc-demo-skip { display: block; margin: 12px auto 0; white-space: normal; background: rgba(13,16,20,.78); border-color: rgba(255,154,92,.62); color: #ffd1b8; }
+.qc-demo-guide .qc-demo-skip:hover:not(:disabled) { background: rgba(255,107,53,.18); border-color: #ff9a5c; color: #fff4ee; box-shadow: 0 0 0 1px rgba(255,107,53,.10), 0 6px 18px rgba(6,7,10,.28); }
 .qc-demo-menu { position: relative; }
 /* Higher specificity than .qc-demo-guide-head>div (flex:1) so the menu docks right, not stretches after the title. */
 .qc-demo-guide-head .qc-demo-menu { flex: 0 0 auto; margin-left: auto; }
@@ -132,8 +138,43 @@ still own the top layer. */ z-index: 55; width: min(376px, calc(100vw - 24px)); 
   --qc-border-control: rgba(231,233,239,.16);
   --qc-focus-ring: #ff9a5c;
 }
-/* Demo dialogs share the dark glass surface. Element selector lifts this above
-   [data-qc-ui='v2'].qc-dialog (0,2,0) so the light app card can never win again. */
+/* QcDialog is itself a [data-qc-ui=v2] root, so the shared light tokens are
+   specified directly on the <dialog> and otherwise beat inherited demo vars.
+   Re-declare the complete surface/text/control subset on that same element. */
+.qc-demo-overlays [data-qc-ui='v2'].qc-dialog {
+  color-scheme: dark;
+  --qc-color-surface: #0d1014;
+  --qc-color-surface-subtle: #171c23;
+  --qc-color-border: rgba(231,233,239,.16);
+  --qc-color-control-border: rgba(231,233,239,.28);
+  --qc-color-orange-wash: rgba(255,107,53,.13);
+  --qc-color-orange-tint: rgba(255,138,61,.24);
+  --qc-color-orange-ink: #ff9a5c;
+  --qc-color-ink: #fbfcff;
+  --qc-color-text: #e7eaf1;
+  --qc-color-muted: #b9c0cc;
+  --qc-color-disabled-bg: #252b34;
+  --qc-color-disabled-ink: #9aa3b1;
+  --qc-bg-surface: #0d1014;
+  --qc-bg-subtle: #171c23;
+  --qc-text-primary: #fbfcff;
+  --qc-text-body: #e7eaf1;
+  --qc-text-secondary: #b9c0cc;
+  --qc-text-link: #ff9a5c;
+  --qc-border-divider: rgba(231,233,239,.16);
+  --qc-border-control: rgba(231,233,239,.28);
+  --qc-selected-bg: rgba(255,107,53,.13);
+  --qc-selected-text: #ffb36b;
+  --qc-focus-ring: #ff9a5c;
+  --qc-focus-gap: #0d1014;
+  --qc-action-secondary-bg: #191f27;
+  --qc-action-secondary-text: #fbfcff;
+  --qc-glass-dialog-bg: rgba(13,16,20,.96);
+  --qc-glass-b-border: rgba(231,233,239,.16);
+  --qc-glass-a-fallback: rgba(6,7,10,.72);
+  --qc-glass-a-tint: rgba(6,7,10,.58);
+}
+/* Demo dialogs share the dark glass surface. */
 .qc-demo-overlays dialog.qc-dialog { background: rgba(13,16,20,.94); border: 1px solid var(--qc-demo-line); color: var(--qc-demo-text); box-shadow: 0 30px 80px rgba(6,7,10,.6); scrollbar-width: thin; scrollbar-color: #ff6b35 rgba(255,255,255,.09); }
 .qc-demo-overlays dialog.qc-dialog::-webkit-scrollbar { width: 10px; }
 .qc-demo-overlays dialog.qc-dialog::-webkit-scrollbar-track { background: rgba(255,255,255,.09); border-radius: 999px; }
@@ -191,3 +232,14 @@ still own the top layer. */ z-index: 55; width: min(376px, calc(100vw - 24px)); 
 .qc-demo-task-action .qc-demo-actions { margin:0; }
 
 .qc-demo-guide:focus-visible { outline:2px solid #ff9a5c; outline-offset:3px; }
+
+/* The optional lesson control lives on a dark guide. Keep its complete hover
+   state local and explicit so shared v2 ghost-button CSS can never turn it into
+   a light-theme island when stylesheet order changes. */
+.qc-demo-overlays .qc-demo-guide .qc-button.qc-demo-skip[data-qc-variant="ghost"]:hover:not(:disabled) {
+  background: rgba(255,107,53,.18);
+  border-color: #ff9a5c;
+  color: #fff4ee;
+  box-shadow: 0 0 0 1px rgba(255,107,53,.10), 0 6px 18px rgba(6,7,10,.28);
+}
+.qc-demo-assistant-found .qc-demo-actions { margin-top: 10px; }

@@ -1017,10 +1017,15 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
     }
   }
 
-  let spacingM: number | null = null;
-  let spacingAllowance = 0;
-  let spacingRoundUp: 1 | 5 | 10 = 1;
-  if (comp.component_library_id) {
+  // Prefer the quote snapshot so an existing quote keeps the spacing rule it
+  // was built with even if the reusable library component changes later.
+  const compCalc = comp as unknown as Record<string, unknown>;
+  let spacingM: number | null = compCalc.quantity_spacing_m == null ? null : Number(compCalc.quantity_spacing_m);
+  let spacingAllowance = Number(compCalc.quantity_spacing_allowance_percent ?? 0);
+  let spacingRoundUp: 1 | 5 | 10 = compCalc.quantity_spacing_round_up === 5 || compCalc.quantity_spacing_round_up === 10 ? compCalc.quantity_spacing_round_up : 1;
+  if ((!spacingM || spacingM <= 0) && comp.component_library_id) {
+    // Legacy quote lines created before spacing snapshots were added can still
+    // fall back to the current library value once. New lines are snapshotted.
     const { data: libCalc } = await supabase.from('component_library')
       .select('quantity_spacing_m, quantity_spacing_allowance_percent, quantity_spacing_round_up')
       .eq('id', comp.component_library_id).maybeSingle();
@@ -1358,7 +1363,7 @@ export async function recalcAllQuoteComponents(quoteId: string): Promise<void> {
   await Promise.all(components.map((c) => recalcComponentFromEntries(c.id)));
 }
 
-async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number }> {
+async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number; required_units: number | null }> {
   const supabase = await createSupabaseServerClient();
   // Fetch entries with full detail for calc audit tracing.
   const { data: entries } = await supabase
@@ -1430,12 +1435,10 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
   // figure (rate_m2 x cover from the takeoff save path), so only the
   // quantity converts here.
   const compConfig = comp as unknown as Record<string, unknown> | null;
-  const spacingM = Number(compConfig?.quantity_spacing_m ?? 0) || 0;
-  const spacingAllowance = Number(compConfig?.quantity_spacing_allowance_percent ?? 0) || 0;
-  const spacingRoundUp = compConfig?.quantity_spacing_round_up === 5 || compConfig?.quantity_spacing_round_up === 10 ? compConfig.quantity_spacing_round_up : 1;
-  const totalQtyBase = String(comp?.measurement_type) === 'quantity_by_spacing' && spacingM > 0
-    ? calculateQuantityBySpacing({ linealMetres: totalQtyRaw, spacingMetres: spacingM, allowancePercent: spacingAllowance, roundUp: spacingRoundUp })
-    : totalQtyRaw;
+  // value_after_waste already contains the generated unit count for
+  // quantity-by-spacing entries. Re-applying spacing here would divide units
+  // by the spacing distance a second time and inflate pricing.
+  const totalQtyBase = totalQtyRaw;
   const totalQty = libSoldBy === 'lineal' && libCoverWidthMm > 0 ? totalQtyBase / (libCoverWidthMm / 1000) : totalQtyBase;
   const requiredUnits = String(comp?.measurement_type) === 'area' && compConfig?.units_per_area_enabled === true
     ? calculateRequiredAreaUnits(totalQtyRaw, Number(compConfig.units_per_area ?? 0)) : null;
@@ -1525,7 +1528,7 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
       calc_audit: audit as unknown as never,
     })
     .eq('id', quoteComponentId);
-  return { final_quantity: totalQty, priced_quantity: pricedQuantity, material_cost: materialCost, labour_cost: labourCost };
+  return { final_quantity: totalQty, priced_quantity: pricedQuantity, material_cost: materialCost, labour_cost: labourCost, required_units: requiredUnits };
 }
 
 export async function updateQuoteSettings(quoteId: string, input: Record<string, unknown>) {

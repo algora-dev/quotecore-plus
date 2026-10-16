@@ -34,20 +34,10 @@ export function CalibrationModal({
     <QcHostedDialog label="Set the calibration distance" modeless
       className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xl">
-      {/* Owner 2026-09-25: Cancel lives in the card's top-right corner. The
-          old bottom row overflowed the 360px modeless card, pushing Cancel
-          out past the left edge as a stray floating button. */}
       <div className="flex items-start justify-between gap-2">
         <h2 className="text-base font-semibold text-slate-900">
           Calibration {calibrationNumber} of 3
         </h2>
-        <QcHostedButton variant="ghost"
-          type="button"
-          onClick={onCancel}
-          className="shrink-0 -mt-1 -mr-2 px-2 py-1 text-xs text-slate-500 hover:text-slate-900"
-        >
-          Cancel
-        </QcHostedButton>
       </div>
       <p className="text-xs text-slate-500 mb-3">
         {calibrationNumber === 1
@@ -82,12 +72,20 @@ export function CalibrationModal({
         <p className="text-[11px] text-slate-400">
           Drag this card aside or pan the plan behind it if the measurement is hidden.
         </p>
-        <div className="flex gap-2 justify-end">
+        <div className="space-y-2">
+          <QcHostedButton variant="primary"
+            type="button"
+            onClick={() => handleSubmit(false)}
+            className="w-full justify-center rounded-full bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] px-4 py-2 text-sm font-semibold text-white transition-all hover:from-[#E55A2B] hover:to-[#BD4A1A] hover:shadow-[0_0_12px_rgba(255,107,53,0.3)] disabled:opacity-40"
+            disabled={!valid}
+          >
+            Use this calibration
+          </QcHostedButton>
           {canAddAnother && (
             <QcHostedButton variant="ghost"
               type="button"
               onClick={() => handleSubmit(true)}
-              className="px-4 py-2 text-sm text-slate-600 border border-slate-300 rounded-full hover:bg-slate-50"
+              className="w-full justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40"
               disabled={!valid}
             >
               Save &amp; add another
@@ -95,11 +93,10 @@ export function CalibrationModal({
           )}
           <QcHostedButton variant="secondary"
             type="button"
-            onClick={() => handleSubmit(false)}
-            className="px-4 py-2 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-40"
-            disabled={!valid}
+            onClick={onCancel}
+            className="w-full justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-700 hover:shadow-[0_0_12px_rgba(255,107,53,0.25)]"
           >
-            Use this calibration
+            Cancel calibration
           </QcHostedButton>
         </div>
       </div>

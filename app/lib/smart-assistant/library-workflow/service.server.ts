@@ -194,7 +194,11 @@ export async function pendingDraftWorkflowContext(client:SupabaseClient,access:A
 }
 
 export async function readDraftTaskHint(client:SupabaseClient,access:Access,conversationId:string){
-  if(!libraryWorkflowEnabled()||!access.phases.p4||WORKFLOW_SECTIONS.some(s=>access.permissions[s]!=='edit'))return null;
+  // Demo companies deliberately run the workflow even when the deployment-wide
+  // feature flag is off. Keep this hint gate aligned with workflowAccess(); if
+  // it returns null here, a confirmed demo draft loses its working identity on
+  // the very next turn and follow-up edits fail before proposal generation.
+  if((!libraryWorkflowEnabled()&&!await isDemoCompany(access.companyId))||!access.phases.p4||WORKFLOW_SECTIONS.some(s=>access.permissions[s]!=='edit'))return null;
   await workflowAccess(client,access);
   const {data,error}=await admin().from('assistant_v2_draft_briefs').select(FIELDS).eq('company_id',access.companyId).eq('user_id',access.userId).eq('conversation_id',conversationId)
     .not('workflow_state','in','(cancelled,closed)').order('updated_at',{ascending:false}).limit(1).maybeSingle();

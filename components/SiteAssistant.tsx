@@ -64,7 +64,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(trial|free trial|14 day|14-day|sign up|signup|register|try it|test it|demo|get started|start)/.test(message)) {
     return {
       sender: "assistant",
-      text: "Getting started is simple. Our free tools - takeoff builder, roofing calculator, quote generator and more - work instantly in your browser with no signup. For the full connected workflow (AI plan takeoff, Smart Components, material orders and invoicing), choose a paid plan and start in the app today. Every paid plan is backed by a 30-day money-back guarantee.",
+      text: "Getting started is simple. Our free tools - takeoff builder, roofing calculator, quote generator and more - work instantly in your browser with no signup. For the full connected workflow (AI plan takeoff, Smart Components, material orders and invoicing), choose a paid plan and start in the app today.",
       links: [
         startCTA,
         { label: "See how it works", href: "/#how-it-works" },
@@ -76,7 +76,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(price|pricing|cost|how much|plan|plans|tier|limit|upgrade|cancel|subscription|per month|per month|starter|lite|pro|premium)/.test(message)) {
     return {
       sender: "assistant",
-      text: "Plans start at $19/month for Starter (solo traders), Pro at $39/month for growing businesses, and Pro Plus at $59/month for high-volume teams. You pay up front and get full access on your chosen plan, backed by a 30-day money-back guarantee. Our free tools stay free forever - no signup needed.",
+      text: "Plans start at $19/month for Starter (solo traders), Pro at $39/month for growing businesses, and Pro Plus at $59/month for high-volume teams. You pay up front and get full access on your chosen plan. Our free tools stay free forever - no signup needed.",
       link: { label: "See full pricing details", href: "/#pricing" },
     };
   }
@@ -199,7 +199,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(how do i|how to|can i|can you|do you have|does.*have|does.*support)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ handles the full workflow from measurement to payment - AI plan takeoff, Smart Components, quoting, material orders, invoicing, and customer acceptance tracking. The best way to see if it does what you need: try our free tools right now - no signup. If you like them, start in the paid app with a 30-day money-back guarantee.",
+      text: "QuoteCore+ handles the full workflow from measurement to payment - AI plan takeoff, Smart Components, quoting, material orders, invoicing, and customer acceptance tracking. The best way to see if it does what you need: try our free tools right now - no signup. If you like them, choose the paid plan that fits your workflow.",
       links: [
         startCTA,
         freeToolsCTA,
@@ -333,7 +333,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/\bfree\b/.test(message)) {
     return {
       sender: "assistant",
-      text: "Our free tools work instantly in your browser with no signup: takeoff builder, roofing calculator, smart component creator, quote generator, invoice generator, and PO generator. For the full connected app, choose a paid plan - every plan is backed by a 30-day money-back guarantee.",
+      text: "Our free tools work instantly in your browser with no signup: takeoff builder, roofing calculator, smart component creator, quote generator, invoice generator, and PO generator. For the full connected app, choose the paid plan that fits your workflow.",
       links: [
         startCTA,
         freeToolsCTA,

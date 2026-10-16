@@ -322,7 +322,7 @@ export function DemoWorkstation({
   const [aiScanRaw, setAiScanRaw] = useState<AiScanData | null>(null);
   const [aiScanStage, setAiScanStage] = useState<'outline' | 'lines' | 'classify'>('outline');
   const aiAbortRef = useRef<AbortController | null>(null);
-  const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
+  const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'high'>('low');
   // AI Assist points: track locally so we can update after a scan without a page reload.
   const [aiPoints, setAiPoints] = useState(aiAssistPoints);
   // V3: 3-scan pipeline (outline → line detection → classification)
@@ -6055,11 +6055,10 @@ export function DemoWorkstation({
                     <>
                       <div className="flex gap-1.5">
                         {([
-                          { value: 'low', label: 'Low', hint: 'Small, simple roofs · 2 points' },
-                          { value: 'medium', label: 'Medium', hint: 'Medium size & complexity · 4 points' },
-                          { value: 'high', label: 'High', hint: 'Larger, complex roofs · 8 points' },
+                          { value: 'low', label: 'Simple roof', hint: 'Small, simple roofs · 2 points' },
+                          { value: 'high', label: 'Medium+ roof', hint: 'Medium complexity and beyond · 12 points' },
                         ] as const).map(opt => {
-                          const cost = opt.value === 'low' ? 2 : opt.value === 'medium' ? 4 : 8;
+                          const cost = opt.value === 'low' ? 2 : 12;
                           const canAfford = !aiPoints || aiPoints.remaining >= cost;
                           return (
                             <button

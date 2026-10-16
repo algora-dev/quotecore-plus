@@ -252,7 +252,7 @@ export const hoverPage: CompetitorPageData = {
       {
         label: "Occasional measuring (Starter)",
         competitor: "First 3 projects free, then $49 per average roof-only project",
-        qc: "Free tools (no signup) + paid plans from $19/month, 30-day money-back guarantee",
+        qc: "Free tools (no signup) + paid plans from $19/month",
       },
       {
         label: "New-build blueprints (Pro)",

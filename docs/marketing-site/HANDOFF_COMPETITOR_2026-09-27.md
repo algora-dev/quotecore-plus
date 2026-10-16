@@ -28,7 +28,7 @@ Positioning priorities per page (adapt to what honestly differentiates vs that c
 - **Three ways to work** — measure in QuoteCore+ / enter existing measurements / ask Smart Assistant (`components/ThreeWaysToWork.tsx` is available and takes page-specific copy).
 - **Measurement → pricing → quote connected** — no re-entry between tools.
 - **Smart Assistant = interface, not the product** — retrieval + propose-then-confirm actions only. Never "AI does everything".
-- **Paid-only honesty** — paid plans from $19/month, 30-day money-back guarantee, free tools separate. No free-trial claims.
+- **Paid-only honesty** — paid plans from $19/month, free tools separate. No free-trial or obsolete refund-promise claims.
 
 ## Honest comparison rules (critical)
 

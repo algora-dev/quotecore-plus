@@ -51,14 +51,18 @@ export async function PATCH(request: NextRequest) {
     if (!applyGuideCommand(context.tutorialState, command)) {
       throw new DemoError(command.action === 'skip'
         ? 'Complete this required lesson first; the next chapter uses what you save.'
+        : command.action === 'finish-assistant'
+        ? 'Ask Smart Assistant to find the matching accepted quote first. Finish unlocks after the verified result appears.'
         : 'Complete the preceding guided lesson first. Open All chapters to resume.', 409,
-        command.action === 'skip' ? 'demo_skip_required' : 'demo_prerequisite');
+        command.action === 'skip' ? 'demo_skip_required' : command.action === 'finish-assistant' ? 'demo_assistant_result_required' : 'demo_prerequisite');
     }
     if (command.action === 'chapter' && command.chapter === 'smart-assistant') await prepareDemoAssistant(context,client);
     const state = await mutateDemoGuide(context.sessionId, previous => {
       const next = applyGuideCommand(previous, command);
       if (!next) throw new DemoError(command.action === 'skip'
         ? 'This task creates something the next step needs, so it can’t be skipped - but it only takes a moment. Open the task and follow the guide.'
+        : command.action === 'finish-assistant'
+        ? 'Smart Assistant has not surfaced the verified quote yet. Send the final example and wait for the matching quote result.'
         : command.action === 'chapter' && command.chapter === 'takeoff'
         ? 'Create and test your component first. Continue with Build your pricing.'
         : command.action === 'chapter' && command.chapter === 'smart-assistant'

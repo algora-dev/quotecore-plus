@@ -23,14 +23,16 @@ export function ComponentTestPanel({ draft, measurementSystem, currency, onClose
   const [attempted, setAttempted] = useState(false);
   const inputDim = inputDimension(draft.measurementType);
   const pricedDim = pricedDimension(draft.measurementType);
+  const isSpacing = draft.measurementType === 'quantity_by_spacing';
   const inputUnit = unitForDimension(inputDim, system, draft.timeUnit);
-  const outputUnit = unitForDimension(pricedDim, system, draft.timeUnit);
+  const outputUnit = isSpacing ? 'units' : unitForDimension(pricedDim, system, draft.timeUnit);
   const costUnit = canonicalUnit(draft.measurementType, draft.timeUnit);
   const result = attempted ? calculateComponentTest(draft, { values, system, basis, pitch }) : null;
   const errors = result && !result.ok ? result.errors : {};
   const total = result?.ok ? result.result : null;
   const money = (value: number) => formatCurrency(value, currency);
-  const qty = (value: number) => `${number(displayQuantity(value, pricedDim, system))} ${outputUnit}`;
+  const qty = (value: number) => `${number(isSpacing ? value : displayQuantity(value, pricedDim, system))} ${outputUnit}`;
+  const length = (metres: number) => `${number(displayQuantity(metres, 'length', system))} ${unitForDimension('length', system)}`;
   // Lineal-with-cover display (owner 2026-10-09): when this area component is
   // sold as lineal metres with a cover width, show what the required quantity
   // becomes in lineal metres - the same conversion the takeoff save applies
@@ -82,7 +84,7 @@ export function ComponentTestPanel({ draft, measurementSystem, currency, onClose
         {draft.measurementType === 'volume_3d' && <p className="qc-pricing-muted">Enter the volume you have already worked out from length, width and depth.</p>}
       </>}
       {inputDim === 'fixed' && <p className="qc-pricing-callout">This test uses one fixed charge. No measurement is needed.</p>}
-      {draft.pitchType !== 'none' && <>
+      {!isSpacing && draft.pitchType !== 'none' && <>
         <QcField htmlFor={`${id}-basis`} label="Measurement basis" help="Already measured on the slope? Do not apply pitch a second time.">
           <QcSelect form={`${id}-test-only`} id={`${id}-basis`} value={basis} onChange={e => setBasis(e.target.value as 'surface' | 'plan')}>
             <option value="surface">Already measured / on the slope</option><option value="plan">Plan measurement - apply pitch</option>
@@ -104,10 +106,19 @@ export function ComponentTestPanel({ draft, measurementSystem, currency, onClose
       <div className="qc-test-total" aria-live="polite" aria-atomic="true"><span>Component cost</span><strong>{money(total.total)}</strong><small>{currency} · before quote margins and tax</small></div>
       <dl className="qc-test-breakdown">
         <div><dt>{total.entryCount > 1 ? `${total.entryCount} measurements entered` : 'Measurement entered'}</dt><dd>{number(total.entered)} {inputUnit}</dd></div>
-        {inputDim !== pricedDim && <div><dt>After preset {inputDim === 'length' ? 'height' : 'depth'}</dt><dd>{qty(total.measured)}</dd></div>}
-        {total.pitchApplied && <div><dt>After {draft.pitchType === 'valley_hip' ? 'hip/valley' : 'rafter'} pitch ({pitch}°)</dt><dd>{qty(total.afterPitch)}</dd></div>}
-        {draft.wasteType !== 'none' && <div><dt>Waste added{draft.wasteType === 'percent' ? ` (${draft.wasteAmount}%)` : ''}</dt><dd>{qty(total.wasteAdded)}</dd></div>}
-        <div className="qc-test-emphasis"><dt>Required quantity</dt><dd>{qty(total.required)}</dd></div>
+        {total.spacing ? <>
+          <div><dt>Measured length</dt><dd>{length(total.spacing.measuredLengthM)}</dd></div>
+          <div><dt>At {length(total.spacing.spacingMetres)} spacing</dt><dd>{number(total.spacing.baseUnits)} units</dd></div>
+          {total.spacing.allowancePercent > 0 && <div><dt>After allowance ({number(total.spacing.allowancePercent)}%)</dt><dd>{number(total.spacing.afterAllowanceUnits)} units</dd></div>}
+          <div><dt>Rounded to next {total.spacing.roundUp}</dt><dd>{number(total.spacing.finalUnits)} units</dd></div>
+          <div className="qc-test-emphasis"><dt>Pricing quantity</dt><dd>{number(total.required)} units</dd></div>
+        </> : <>
+          {inputDim !== pricedDim && <div><dt>After preset {inputDim === 'length' ? 'height' : 'depth'}</dt><dd>{qty(total.measured)}</dd></div>}
+          {total.pitchApplied && <div><dt>After {draft.pitchType === 'valley_hip' ? 'hip/valley' : 'rafter'} pitch ({pitch}°)</dt><dd>{qty(total.afterPitch)}</dd></div>}
+          {draft.wasteType !== 'none' && <div><dt>Waste added{draft.wasteType === 'percent' ? ` (${draft.wasteAmount}%)` : ''}</dt><dd>{qty(total.wasteAdded)}</dd></div>}
+          <div className="qc-test-emphasis"><dt>Required quantity</dt><dd>{qty(total.required)}</dd></div>
+          {total.supplementaryUnits != null && <div className="qc-test-supplementary"><dt>Supplementary units required</dt><dd>{number(total.supplementaryUnits)} units</dd></div>}
+        </>}
         {linealM !== null && <div><dt>Lineal metres at {number(soldCoverMm)} mm cover</dt><dd>{number(linealM)} lm</dd></div>}
         {total.purchased !== null && <>
           <div><dt>Whole packs to buy</dt><dd>{number(total.packs)}</dd></div>
@@ -117,15 +128,23 @@ export function ComponentTestPanel({ draft, measurementSystem, currency, onClose
         <div className="qc-test-emphasis"><dt>Materials</dt><dd>{money(total.materialCost)}</dd></div>
         <div><dt>Labour</dt><dd>{money(total.labourCost)}</dd></div>
       </dl>
+      {total.supplementaryUnits != null && <p className="qc-test-unit-note"><strong>{number(total.supplementaryUnits)} units</strong> is a read-only procurement count. Pricing still uses the measured area above.</p>}
       <p className="qc-pricing-muted">{total.effectiveCost !== null && `Effective cost: ${money(total.effectiveCost)} per entered ${inputUnit}. `}{total.purchased !== null && 'Whole-pack rounding can make a small job cost more per unit.'}</p>
       <details className="qc-pricing-details"><summary>How this was calculated</summary><div>
-        <p>{draft.strategy === 'per_unit'
-          ? `Materials: ${number(total.required)} ${costUnit} × ${money(Number(draft.materialRate))}.`
-          : `Materials: ${number(total.packs)} whole packs × ${money(Number(draft.packPrice))}.`}</p>
-        {linealM !== null && <p>Sold as lineal metres: {number(total.required)} m² ÷ {number(soldCoverMm / 1000)} m cover = {number(linealM)} lm. Costs are unchanged - the per-metre rate on a job is the m² rate × cover.</p>}
-        <p>Labour: {number(total.required)} {costUnit} × {money(Number(draft.labourRate))}. Labour uses the quantity after pitch and waste, not rounded-up pack coverage.</p>
-        {(draft.wasteType === 'fixed' || draft.wasteType === 'fixed_per_segment') && <p>The fixed allowance is applied to each entered measurement in this manual-entry test. Takeoff keeps its existing segment rules.</p>}
-        {total.pitchApplied && <p>Pitch method: {draft.pitchType === 'valley_hip' ? 'hip/valley' : 'rafter'} multiplier at {pitch}° - plan measurements are multiplied ({qty(total.measured ?? total.entered)} → {qty(total.afterPitch)} {costUnit}). Surface measurements already include pitch and are never multiplied again.</p>}
+        {total.spacing ? <>
+          <p>Units: {length(total.spacing.measuredLengthM)} ÷ {length(total.spacing.spacingMetres)} = {number(total.spacing.baseUnits)} before allowance and round-up.</p>
+          <p>The configured {number(total.spacing.allowancePercent)}% allowance and strict next-{total.spacing.roundUp} rounding produce {number(total.spacing.finalUnits)} priced units.</p>
+          <p>Materials: {number(total.required)} units × {money(Number(draft.materialRate))}. Labour: {number(total.required)} units × {money(Number(draft.labourRate))}.</p>
+        </> : <>
+          <p>{draft.strategy === 'per_unit'
+            ? `Materials: ${number(total.required)} ${costUnit} × ${money(Number(draft.materialRate))}.`
+            : `Materials: ${number(total.packs)} whole packs × ${money(Number(draft.packPrice))}.`}</p>
+          {linealM !== null && <p>Sold as lineal metres: {number(total.required)} m² ÷ {number(soldCoverMm / 1000)} m cover = {number(linealM)} lm. Costs are unchanged - the per-metre rate on a job is the m² rate × cover.</p>}
+          <p>Labour: {number(total.required)} {costUnit} × {money(Number(draft.labourRate))}. Labour uses the quantity after pitch and waste, not rounded-up pack coverage.</p>
+          {(draft.wasteType === 'fixed' || draft.wasteType === 'fixed_per_segment') && <p>The fixed allowance is applied to each entered measurement in this manual-entry test. Takeoff keeps its existing segment rules.</p>}
+          {total.pitchApplied && <p>Pitch method: {draft.pitchType === 'valley_hip' ? 'hip/valley' : 'rafter'} multiplier at {pitch}° - plan measurements are multiplied ({qty(total.measured ?? total.entered)} → {qty(total.afterPitch)} {costUnit}). Surface measurements already include pitch and are never multiplied again.</p>}
+          {total.supplementaryUnits != null && <p>Supplementary units: the saved units-per-area rate applied to {qty(total.required)} = {number(total.supplementaryUnits)} units. This does not change material or labour pricing.</p>}
+        </>}
         <p>Uses the quote calculation helpers with no job overrides, margins or tax. This explains the rules; it does not verify that your prices are right for your business.</p>
       </div></details>
       <p className="qc-test-live"><QcIcon name="check" /> Valid changes update this result immediately.</p>

@@ -7,7 +7,7 @@
 - **No free signup path.** The only ways into the app: (1) sign up + pay for a tier, (2) we manually assign free access (comp) to an email address.
 - Free/light tier is a BACKEND-ONLY state (not shown/selectable in any plan UI). It exists for: failed-payment dunning (auto drop-down), and any account we manually restrict. User keeps app access to view/download/delete their own work; everything else restricted. We get notified; we alert them and ask if there's a problem.
 - Existing ~6 trial users (mostly inactive): comp to Pro 1 month free, email them. Don't worry about the rest.
-- 30-day money-back guarantee: 3-day request window after day 30, case-by-case, most refunds granted straight away, optional exit survey.
+- Commercial refund-promise messaging was removed by owner decision on 2026-10-16. Do not present a refund promise as a trial substitute.
 - Paywall shows: Starter / Pro / Pro Plus + larger-plan "get in touch" option + Done-For-You options ($499/$999).
 - Dunning: existing paid-plan dunning infra already exists - modify/adapt it for the 3 paid tiers (week-1 grace warning, then restricted backend free state).
 
@@ -42,13 +42,13 @@
 - Implement via existing dunning hooks + a cron check + scheduled warning emails.
 
 ### Phase 2 - Onboarding paywall
-- New final step after company creation: plan selection showing Starter / Pro / Pro Plus + "larger plan? get in touch" option + DFY options ($499/$999, manual Stripe Payment Links initially) + 30-day money-back guarantee messaging + "No thanks, I'll try the free tools first" button.
+- New final step after company creation: plan selection showing Starter / Pro / Pro Plus + "larger plan? get in touch" option + DFY options ($499/$999, manual Stripe Payment Links initially) + current checkout terms + "No thanks, I'll try the free tools first" button.
 - "No thanks" = CLEAN EXIT (confirmed 2026-09-16): no account is created, link goes to the free tools page. If they come back through signup later, that's fine.
 - Auth layout gate: users who haven't paid see the paywall on every visit until they pay (or we manually comp them).
 - Once paid: straight into the app with the features of their tier.
 
-### Phase 3 - Guarantee plumbing
-- Paywall + pricing copy: 30-day money-back guarantee with clear guidelines (terms page).
+### Phase 3 - Commercial terms copy
+- Paywall + pricing copy: use current plan and checkout terms only; do not advertise a refund promise.
 - 30-day count starts the moment a user pays. 3-day refund request window after day 30 (confirmed). No advance "day 30 is coming" email - communication happens only when THEY request the refund.
 - Refund request = step-by-step questionnaire (click-through, one question per step, very easy). Working spec (2026-09-16, refine at build):
   1. Did you actually use the app? (yes / barely / no)
@@ -72,7 +72,7 @@
 
 ## Open questions for build session (REV 4)
 - Free-tools bridge (SaveToAppButton) copy: free-tools users must now pay to save into the app - update CTA copy accordingly.
-- Guarantee terms page wording (3-day window after day 30, abuse clause).
+- Any historic refund-promise acquisition copy is obsolete and must not be reintroduced.
 - Dunning email cadence exact copy (week 1 warning, week 2 drop notice, "any problems?" outreach).
 - Comped-trial-user email copy - Shaun approves before send.
 - Refund questionnaire exact wording + which system hosts it (in-app flow vs form) - fast-follow, not launch-blocking.

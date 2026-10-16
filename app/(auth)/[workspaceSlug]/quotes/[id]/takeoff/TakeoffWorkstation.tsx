@@ -485,10 +485,10 @@ export function TakeoffWorkstation({
   useEffect(() => { outlineReviewActiveRef.current = (aiStagedPageId != null || outlineEditingAreaId != null) && !aiResults; }, [aiStagedPageId, outlineEditingAreaId, aiResults]);
   useEffect(() => { if (aiStagedPageId == null && outlineEditingAreaId == null) { setOutlineTool(null); setOutlineSelectedVertex(null); setOutlineHistory(null); } }, [aiStagedPageId, outlineEditingAreaId]);
   const aiAbortRef = useRef<AbortController | null>(null);
-  const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
-  // Free tool: High quality is main-app only (cost control + gentle upsell).
+  const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'high'>('low');
+  // Free tool: Medium+ quality is main-app only (cost control + gentle upsell).
   useEffect(() => {
-    if (freeToolMode && aiQualityLevel === 'high') setAiQualityLevel('medium');
+    if (freeToolMode && aiQualityLevel === 'high') setAiQualityLevel('low');
   }, [freeToolMode, aiQualityLevel]);
   // AI Assist points: track locally so we can update after a scan without a page reload.
   const [aiPoints, setAiPoints] = useState(aiAssistPoints);
@@ -3873,7 +3873,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     canvasDims: { width: number; height: number };
     pageImageRevision: string | null;
     currentImageUrl: string | null;
-    ai: { available: boolean; blocked: boolean; qualityLevel: 'low' | 'medium' | 'high' } | null;
+    ai: { available: boolean; blocked: boolean; qualityLevel: 'low' | 'high' } | null;
     handleSaveArea: (
       name: string,
       pitch?: number,
@@ -6879,7 +6879,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     imageDataUrl: string;
     analysisDimensions: { width: number; height: number };
     pageId: string;
-    qualityLevel: 'low' | 'medium' | 'high';
+    qualityLevel: 'low' | 'high';
     abortController: AbortController;
     /** P5 staged continuation: skip the results modal, return the scan3 data. */
     silent?: boolean;
@@ -9591,7 +9591,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                     </div>
                   )}
                   {/* P4-AI-COST-01 resolved 2026-10-12: the affordability guard now
-                      uses the canonical pointCost.ts contract (low=2/medium=6/high=12)
+                      uses the canonical pointCost.ts contract (simple=2/medium+=12)
                       via getAiScanPointCost — matches the cost hints above and the
                       server-side deduction exactly. */}
                   {/* Quality selector + scan button: hidden when blocked */}
@@ -9599,9 +9599,8 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                     <>
                       <div className="flex gap-1.5">
                         {([
-                          { value: 'low', label: 'Low', hint: freeToolMode ? 'Small, simple roofs' : 'Small, simple roofs · 2 points' },
-                          { value: 'medium', label: 'Medium', hint: freeToolMode ? 'Medium size & complexity' : 'Medium size & complexity · 6 points' },
-                          { value: 'high', label: 'High', hint: freeToolMode ? 'Larger, complex roofs' : 'Larger, complex roofs · 12 points' },
+                          { value: 'low', label: 'Simple roof', hint: freeToolMode ? 'Small, simple roofs' : 'Small, simple roofs · 2 points' },
+                          { value: 'high', label: 'Medium+ roof', hint: freeToolMode ? 'Medium complexity and beyond' : 'Medium complexity and beyond · 12 points' },
                         ] as const).map(opt => {
                           const cost = getAiScanPointCost(opt.value);
                           const freeHighLock = freeToolMode && opt.value === 'high';
@@ -10431,9 +10430,8 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                   <div className="text-[11px] font-medium text-slate-500 mb-1">Component scan quality</div>
                   <div className="flex gap-1.5">
                     {([
-                      { value: 'low', label: 'Low' },
-                      { value: 'medium', label: 'Medium' },
-                      { value: 'high', label: 'High' },
+                      { value: 'low', label: 'Simple roof' },
+                      { value: 'high', label: 'Medium+ roof' },
                     ] as const).map(opt => (
                       <QcHostedButton aria-pressed={aiQualityLevel === opt.value} variant={aiQualityLevel === opt.value ? 'secondary' : 'ghost'}
                         key={opt.value}

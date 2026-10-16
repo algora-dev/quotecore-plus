@@ -177,7 +177,7 @@ export function unitForMeasurement(mt: MeasurementType): string {
     case 'hours_days': return 'hr';               // unit refined by component config
     case 'curved_line': return 'm';
     case 'irregular_area': return 'm²';
-    case 'quantity_by_spacing': return 'each';
+    case 'quantity_by_spacing': return 'units';
     default: return '';
   }
 }

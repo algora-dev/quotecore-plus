@@ -29,6 +29,12 @@ export function unitsPerDisplayedAreaToMetric(rate: number, system: MeasurementS
   return oneDisplayUnitInM2 > 0 ? rate / oneDisplayUnitInM2 : rate;
 }
 
+/** Convert canonical units per m² back to units per the user's displayed area unit. */
+export function unitsPerMetricAreaToDisplayed(ratePerM2: number, system: MeasurementSystem): number {
+  const oneDisplayUnitInM2 = areaInputToMetric(1, system);
+  return Number.isFinite(ratePerM2) && oneDisplayUnitInM2 > 0 ? ratePerM2 * oneDisplayUnitInM2 : ratePerM2;
+}
+
 export function calculateRequiredAreaUnits(areaM2: number, unitsPerM2: number | null | undefined): number | null {
   if (unitsPerM2 == null || !Number.isFinite(Number(unitsPerM2)) || Number(unitsPerM2) < 0) return null;
   return Math.max(0, areaM2) * Number(unitsPerM2);

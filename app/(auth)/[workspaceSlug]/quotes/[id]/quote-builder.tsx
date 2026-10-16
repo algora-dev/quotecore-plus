@@ -374,7 +374,7 @@ export function QuoteBuilder({
       ? (mt === 'area' || mt === 'irregular_area' ? 'area'
         : mt === 'length_x_height' || mt === 'multi_lineal_lxh' ? 'linear'
         : mt === 'volume' || mt === 'volume_3d' ? 'volume'
-        : mt === 'lineal' || mt === 'linear' || mt === 'multi_lineal' || mt === 'curved_line' ? 'linear'
+        : mt === 'lineal' || mt === 'linear' || mt === 'multi_lineal' || mt === 'curved_line' || mt === 'quantity_by_spacing' ? 'linear'
         : null)
       : (options?.convertAs === 'none' ? null : options?.convertAs);
     if (convertAs === 'area') {
@@ -388,7 +388,7 @@ export function QuoteBuilder({
       ? roofAreas.find(a => a.id === comp.quote_roof_area_id)?.calc_pitch_degrees ?? null
       : null;
     const entry = await addComponentEntry(compId, rawValue, areaPitch, options);
-    const totals = (entry as { componentTotals?: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number } }).componentTotals;
+    const totals = (entry as { componentTotals?: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number; required_units: number | null } }).componentTotals;
     setEntries(prev => ({ ...prev, [compId]: [...(prev[compId] ?? []), entry] }));
     setComponents(prev => prev.map(c => c.id === compId ? {
       ...c,
@@ -396,6 +396,7 @@ export function QuoteBuilder({
       priced_quantity: totals ? totals.priced_quantity : c.priced_quantity,
       material_cost: totals?.material_cost ?? c.material_cost,
       labour_cost: totals?.labour_cost ?? c.labour_cost,
+      required_units: totals ? totals.required_units : (c as typeof c & { required_units?: number | null }).required_units,
     } : c));
   }
 
@@ -407,7 +408,7 @@ export function QuoteBuilder({
     // action is a larger change; suppress here is the lower-risk path.
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const entry = await useRoofAreaTotal(compId, roofAreaSqm, null);
-    const totals = (entry as { componentTotals?: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number } }).componentTotals;
+    const totals = (entry as { componentTotals?: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number; required_units: number | null } }).componentTotals;
     setEntries(prev => ({ ...prev, [compId]: [...(prev[compId] ?? []), entry] }));
     setComponents(prev => prev.map(c => c.id === compId ? {
       ...c,
@@ -415,6 +416,7 @@ export function QuoteBuilder({
       priced_quantity: totals ? totals.priced_quantity : c.priced_quantity,
       material_cost: totals?.material_cost ?? c.material_cost,
       labour_cost: totals?.labour_cost ?? c.labour_cost,
+      required_units: totals ? totals.required_units : (c as typeof c & { required_units?: number | null }).required_units,
     } : c));
   }
 
@@ -428,6 +430,7 @@ export function QuoteBuilder({
       priced_quantity: totals ? totals.priced_quantity : c.priced_quantity,
       material_cost: totals?.material_cost ?? c.material_cost,
       labour_cost: totals?.labour_cost ?? c.labour_cost,
+      required_units: totals ? totals.required_units : (c as typeof c & { required_units?: number | null }).required_units,
     } : c));
   }
 

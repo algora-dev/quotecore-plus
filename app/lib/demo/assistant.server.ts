@@ -14,6 +14,7 @@ import { ensureDemoAssistantRollout } from './integration.server';
 import { getDemoControl } from './control';
 import { DemoError } from './errors';
 import { UUID, isRecord, type ActiveDemoContext } from './model';
+import { demoAssistantFoundResult } from './assistant-events';
 export async function demoAssistantActor() {
   const client = await createSupabaseServerClient(); const auth = await client.auth.getUser();
   if (auth.error || !auth.data.user) return null; // Original endpoint owns ordinary auth failures.
@@ -116,7 +117,10 @@ export async function withDemoAssistantTurn(request: NextRequest, original: (req
     if (conversation.error || !conversation.data) throw new DemoError('This conversation is not in your demo.',404);
     const digest = createHash('sha256').update(JSON.stringify({conversation:payload.conversationId,message:payload.message,pageContext:payload.pageContext ?? null})).digest('hex');
     const reservation = await reserveDemoAi(actor.context,'assistant-turn',payload.clientRequestId,digest);
-    if (reservation.duplicate) return demoJson({ok:true,status:'duplicate',run_id:reservation.runId});
+    if (reservation.duplicate) {
+      if (reservation.runId) await demoAssistantFoundResult(actor.context.companyId,actor.client,payload.conversationId,reservation.runId);
+      return demoJson({ok:true,status:'duplicate',run_id:reservation.runId});
+    }
     let response: Response;
     try {
       const headers = new Headers(request.headers); headers.delete('content-length'); headers.set('content-type','application/json');
@@ -125,6 +129,7 @@ export async function withDemoAssistantTurn(request: NextRequest, original: (req
     const result: unknown = await response.clone().json().catch(()=>null);
     const runId = isRecord(result) && typeof result.run_id === 'string' && UUID.test(result.run_id) ? result.run_id : undefined;
     await settleDemoAi(actor.context,reservation.id,runId);
+    if(response.ok&&runId)await demoAssistantFoundResult(actor.context.companyId,actor.client,payload.conversationId,runId);
     response.headers.set('Cache-Control','private, no-store'); return response;
   } catch(error) { return demoErrorResponse(error); }
 }

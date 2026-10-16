@@ -6,7 +6,7 @@ You are receiving the complete QuoteCore+ repository at commit `6dc0eea7` (branc
 
 **Key facts:**
 1. One app, one build — marketing (`quote-core.com`) and product (`app.quote-core.com`) split by hostname. You got the full repo so your build runs; your WRITABLE SURFACE is marketing-only (defined in the brief).
-2. The mission: bring every marketing page up to date with the product's new capability — mobile-first takeoff, Smart Assistant, Document Studio — and fix stale claims (the app is PAID-ONLY: no free trial, no free plan; 30-day money-back guarantee replaces the trial).
+2. The mission: bring every marketing page up to date with the product's new capability — mobile-first takeoff, Smart Assistant, Document Studio — and fix stale claims (the app is PAID-ONLY: no free trial and no free plan; use current paid-plan terms only).
 3. Prices are owner-locked: presentation may change, numbers may not.
 4. `/free-trial` page and "plans from free" copy are known-stale — fix or flag per the brief.
 
