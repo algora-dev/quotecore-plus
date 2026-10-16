@@ -759,7 +759,6 @@ button.optionalNextAction:hover { border-color: #ffb36b; background: #ffffff12; 
 .fitRetake:hover { color: #f8fafc; }
 @keyframes fitArrive { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .fitAnimate { animation: fitArrive 240ms cubic-bezier(.2, 0, 0, 1); }
-:global(#setup) { scroll-margin-top: 104px; }
 @media (max-width: 960px) {
   .fitSection { padding-block: 72px; }
   .fitGrid { grid-template-columns: 1fr; gap: 28px; }
