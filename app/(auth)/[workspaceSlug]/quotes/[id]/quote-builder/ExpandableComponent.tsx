@@ -32,7 +32,8 @@ export function ExpandableComponent({
   onCombineEntries,
   onSplitEntries,
   copilotId,
-  assistantFocusRequest = 0
+  assistantFocusRequest = 0,
+  appearance = 'default',
 }: {
   comp: QuoteComponentRow;
   entries: QuoteComponentEntryRow[];
@@ -57,6 +58,7 @@ export function ExpandableComponent({
   onSplitEntries?: (compId: string) => Promise<void>;
   copilotId?: string;
   assistantFocusRequest?: number;
+  appearance?: 'default' | 'guided';
 }) {
   const controlId = useId();
   // Phase 6.5: combine/split UX. Linear-shaped measurement types only.
@@ -295,7 +297,7 @@ export function ExpandableComponent({
   }
 
   return (
-    <div ref={focusRoot} data-sa-component-id={comp.id} data-qc-component="C20" className="qb-component" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
+    <div ref={focusRoot} data-sa-component-id={comp.id} data-qc-component="C20" className={`qb-component ${appearance === 'guided' ? 'qb-component--guided' : ''}`} {...(copilotId ? { 'data-copilot': copilotId } : {})}>
       <div className="qb-component-heading">
         <button type="button" id={`${controlId}-toggle`} className="qb-component-toggle"
           aria-expanded={expanded} aria-controls={`${controlId}-panel`}
@@ -334,26 +336,30 @@ export function ExpandableComponent({
 
       {expanded && (
         <div id={`${controlId}-panel`} aria-labelledby={`${controlId}-toggle`} className="qb-component-body">
-          <div className="qb-setting-row">
-            <span className="qc-label">Measurements:</span>
-            {(['calculated', 'final'] as InputMode[]).map(mode => (
-              <QcButton
-                key={mode}
-                onClick={() => onUpdateSettings(comp.id, { input_mode: mode })}
-                size="sm" aria-pressed={comp.input_mode === mode} className="qc-choice"
-              >
-                {mode === 'calculated' ? 'Plan measurement' : 'Actual measurement'}
-              </QcButton>
-            ))}
-          </div>
+          {(appearance !== 'guided' || hasPitch) && (
+            <>
+              <div className="qb-setting-row">
+                <span className="qc-label">{appearance === 'guided' ? 'Measurement basis:' : 'Measurements:'}</span>
+                {(['calculated', 'final'] as InputMode[]).map(mode => (
+                  <QcButton
+                    key={mode}
+                    onClick={() => onUpdateSettings(comp.id, { input_mode: mode })}
+                    size="sm" aria-pressed={comp.input_mode === mode} className="qc-choice"
+                  >
+                    {mode === 'calculated' ? 'Plan measurement' : 'Actual measurement'}
+                  </QcButton>
+                ))}
+              </div>
 
-          <MeasurementBasisHelp isPlan={comp.input_mode === 'calculated'} hasPitch={hasPitch} />
+              <MeasurementBasisHelp isPlan={comp.input_mode === 'calculated'} hasPitch={hasPitch} />
+            </>
+          )}
 
-          {roofAreas.length > 1 && (
+          {(roofAreas.length > 1 || (appearance === 'guided' && roofAreas.length > 0)) && (
             <div className="qb-setting-row">
-              <span className="qc-label">Area:</span>
+              <span className="qc-label">{appearance === 'guided' ? 'Work area:' : 'Area:'}</span>
               <QcSelect
-                aria-label={`Area for ${comp.name}`}
+                aria-label={`${appearance === 'guided' ? 'Work area' : 'Area'} for ${comp.name}`}
                 value={comp.quote_roof_area_id ?? ''}
                 onChange={e => onUpdateSettings(comp.id, { quote_roof_area_id: e.target.value || null })}
                 className="qb-assigned-area"
@@ -361,7 +367,7 @@ export function ExpandableComponent({
                 <option value="">None</option>
                 {roofAreas.map(a => (
                   <option key={a.id} value={a.id}>
-                    {a.label} ({(a.calc_pitch_degrees ?? 0).toFixed(1)}°)
+                    {a.label}{hasPitch ? ` (${(a.calc_pitch_degrees ?? 0).toFixed(1)}°)` : ''}
                   </option>
                 ))}
               </QcSelect>

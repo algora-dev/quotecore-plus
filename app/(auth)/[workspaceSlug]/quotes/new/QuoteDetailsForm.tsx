@@ -264,7 +264,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
     : entryMode === 'digital' && !pendingPlan ? 'Upload a plan or image to start measuring.'
     : entryMode === 'digital' ? 'Next: calibrate and measure in Digital Takeoff.'
     : entryMode === 'blank' ? 'Next: write your line-by-line quote.'
-    : 'Next: enter measurements in the Advanced workspace.';
+    : 'Next: organise the job into work areas, then add the measurements you already have.';
   const recoveryUrl = createdRecord ? quoteJourneyDestination({ workspaceSlug, quoteId: createdRecord.id,
     entryMode: createdRecord.entryMode, stage: 'pricing' }) : `/${workspaceSlug}/quotes`;
 
@@ -312,7 +312,7 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
           {entryMode && <div className="qce-next"><span aria-hidden="true">→</span><div>
             <strong>{entryMode === 'manual' ? 'Enter measurements → Price → Customer quote'
               : entryMode === 'digital' ? 'Measure → Price → Customer quote' : 'Write → Review → Send'}</strong>
-            <p>{entryMode === 'manual' ? 'Use measurements from any source with your Smart Components in the Advanced workspace.'
+            <p>{entryMode === 'manual' ? 'Start in Guided setup: create one or more work areas, then add the components and measurements that belong to each. You can switch to Advanced workspace at any time.'
               : entryMode === 'digital' ? 'Calibrate your plan, measure, then price the job.'
               : 'Create a Standard Quote without components or measurements. This opens the existing line editor.'}</p>
             {entryMode === 'manual' && <details><summary>Are your measurements plan or actual?</summary>

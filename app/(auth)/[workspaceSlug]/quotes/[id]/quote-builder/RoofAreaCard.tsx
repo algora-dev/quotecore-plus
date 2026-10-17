@@ -5,7 +5,8 @@ import { QcInput } from '@/app/components/ui/v2/QcField';
 import { QcStatusBadge } from '@/app/components/ui/v2/QcSurface';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { formatArea, formatLinear } from '@/app/lib/measurements/displayHelpers';
+import { formatArea, formatLinear, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
+import { areaInputToMetric } from '@/app/lib/measurements/conversions';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow } from '@/app/lib/types';
 import type { MeasurementSystem } from '@/app/lib/types';
 import { updateQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry } from '../../actions';
@@ -19,7 +20,10 @@ export function RoofAreaCard({
   onToggleLock,
   onAddEntry,
   onRemoveEntry,
-  onRemove
+  onRemove,
+  appearance = 'default',
+  showHeading = true,
+  showCompletionAction = true,
 }: {
   area: QuoteRoofAreaRow;
   entries: QuoteRoofAreaEntryRow[];
@@ -29,6 +33,9 @@ export function RoofAreaCard({
   onAddEntry: (areaId: string, widthM: number, lengthM: number) => Promise<void>;
   onRemoveEntry: (entryId: string, areaId: string) => Promise<void>;
   onRemove: (id: string) => void;
+  appearance?: 'default' | 'guided';
+  showHeading?: boolean;
+  showCompletionAction?: boolean;
 }) {
   const fieldId = useId();
   const [adding, setAdding] = useState(false);
@@ -39,7 +46,7 @@ export function RoofAreaCard({
   const [directOpen, setDirectOpen] = useState(false);
   const [directInput, setDirectInput] = useState('');
   const directRef = useRef<HTMLInputElement>(null);
-  const isMetric = normalizeMeasurementSystem(quote.measurement_system) === 'metric';
+  const areaUnit = getUnitLabel('area', quote.measurement_system);
   // Track in-flight submission so two near-simultaneous onBlur events
   // (e.g. width blur firing while length is autofilled) don't double-fire.
   const submittingRef = useRef(false);
@@ -84,13 +91,13 @@ export function RoofAreaCard({
 
   /**
    * Direct entry: set the area total as the final figure. Storage is metric
-   * m²; imperial users type ft² (converted here).
+   * m²; the typed unit follows the quote measurement system (m², ft² or RS).
    */
   async function handleDirectSubmit() {
     if (submittingRef.current) return;
     const raw = Number(directInput);
     if (!raw || raw <= 0) return;
-    const sqm = isMetric ? raw : raw * 0.09290304;
+    const sqm = areaInputToMetric(raw, quote.measurement_system);
     submittingRef.current = true;
     try {
       await onUpdate(area.id, { input_mode: 'final', final_value_sqm: sqm });
@@ -107,17 +114,17 @@ export function RoofAreaCard({
   }
 
   return (
-    <div className="qc-surface qb-area-card qb-stack">
+    <div className={`qc-surface qb-area-card qb-stack ${appearance === 'guided' ? 'qb-area-card--guided' : ''}`}>
       {area.is_locked ? (
         <>
-          <div className="qb-area-heading">
+          {showHeading && <div className="qb-area-heading">
             <h3 className="qb-group-title">{area.label}</h3>
             <div className="qb-area-tools">
               <span className="qb-area-quantity">
                 {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''}
               </span>
-              <QcStatusBadge tone="success">Confirmed</QcStatusBadge>
+              <QcStatusBadge tone="success">{appearance === 'guided' ? 'Area ready' : 'Confirmed'}</QcStatusBadge>
               <QcButton
                 aria-label={`Edit ${area.label}`}
                 onClick={() => onToggleLock(area.id, false)}
@@ -129,11 +136,11 @@ export function RoofAreaCard({
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
               </QcButton>
             </div>
-          </div>
+          </div>}
         </>
       ) : (
         <>
-          <div className="qb-area-heading">
+          {showHeading && <div className="qb-area-heading">
             <h3 className="qb-group-title">{area.label}</h3>
             <div className="qb-area-tools">
               <span className="qb-area-quantity">
@@ -143,11 +150,12 @@ export function RoofAreaCard({
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
               </QcButton>
             </div>
-          </div>
+          </div>}
           <div>
-              {areaPitchVisible && <p className="qce-basis-help" style={{ marginTop: 8 }}>
-                Width × length is plan area; the pitch below adjusts it to the surface.
-                Already have the total? Use \"+ Enter area total\" - it sets the finished surface figure directly.
+              {areaPitchVisible && <p className="qce-basis-help" style={{ marginTop: appearance === 'guided' ? 0 : 8 }}>
+                {appearance === 'guided'
+                  ? 'The area measurement is optional. If you add one, pitch can adjust a plan measurement to the finished surface. You can also leave this blank and measure each component separately.'
+                  : 'Width × length is plan area; the pitch below adjusts it to the surface. Already have the total? Use "+ Enter area total" - it sets the finished surface figure directly.'}
               </p>}
               {areaPitchVisible && <div className="mb-2" data-copilot="quote-pitch">
                 <PitchInput
@@ -205,7 +213,7 @@ export function RoofAreaCard({
               {directOpen ? (
                 <div className="qb-measurement-row" data-copilot="quote-area-direct-input">
                   <div className="qb-dimension-field">
-                    <label htmlFor={`${fieldId}-direct`} className="qc-label">Area ({isMetric ? 'm²' : 'ft²'})</label>
+                    <label htmlFor={`${fieldId}-direct`} className="qc-label">Area ({areaUnit})</label>
                     <QcInput
                       ref={directRef}
                       id={`${fieldId}-direct`}
@@ -213,7 +221,7 @@ export function RoofAreaCard({
                       step="0.01"
                       value={directInput}
                       onChange={e => setDirectInput(e.target.value)}
-                      placeholder={isMetric ? 'Total area (m²)' : 'Total area (ft²)'}
+                      placeholder={`Total area (${areaUnit})`}
                       inputMode="decimal"
                       onKeyDown={e => {
                         if (e.key === 'Enter') handleDirectSubmit();
@@ -300,26 +308,26 @@ export function RoofAreaCard({
                     data-copilot="quote-add-measurement"
                     variant="primary"
                   >
-                    + Enter area total
+                    {appearance === 'guided' ? '+ Enter total area' : '+ Enter area total'}
                   </QcButton>
                   <QcButton
                     onClick={startAdding}
                     variant="ghost"
                   >
-                    + Width × Length
+                    {appearance === 'guided' ? '+ Calculate from dimensions' : '+ Width × Length'}
                   </QcButton>
                 </div>
               )}
             </div>
-          <div className="qb-area-footer">
+          {showCompletionAction && <div className="qb-area-footer">
             <QcButton
               onClick={() => onToggleLock(area.id, true)}
               data-copilot="quote-confirm-area"
               className="qc-success-action"
             >
-              Confirm area
+              {appearance === 'guided' ? 'Done with area details' : 'Confirm area'}
             </QcButton>
-          </div>
+          </div>}
         </>
       )}
     </div>
