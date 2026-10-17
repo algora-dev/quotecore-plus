@@ -69,9 +69,12 @@ export async function GET(req: NextRequest) {
   const admin = createAdminClient();
 
   // Companies (a signup = a company; users cascade in via company_id).
+  // Demo companies (plan_code='demo') are excluded: they are fictional
+  // /demo workspaces, not real signups. NULL plan_code stays included.
   let query = admin
     .from('companies')
     .select('id, name, created_at, admin_paused, plan_code, subscription_status, trial_started_at, trial_ends_at')
+    .or('plan_code.neq.demo,plan_code.is.null')
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

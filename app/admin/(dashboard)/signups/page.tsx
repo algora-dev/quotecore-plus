@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 export default async function AdminSignupsPage() {
   const result = await loadRecentSignups(50);
   const signups = result.ok ? result.signups : [];
+  const demoVisitors = result.ok ? result.demoVisitors : [];
   const error = result.ok ? null : result.error;
-  return <SignupsPanel initialSignups={signups} initialError={error} />;
+  return <SignupsPanel initialSignups={signups} initialDemoVisitors={demoVisitors} initialError={error} />;
 }
