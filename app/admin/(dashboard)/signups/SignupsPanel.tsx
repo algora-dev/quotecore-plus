@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { DemoVisitorRow, SignupRow } from './actions';
+import type { DemoVisitorRow } from '@/app/lib/admin/demo-visitors';
+import type { SignupRow } from './actions';
 
 type Tab = 'real' | 'demo';
 

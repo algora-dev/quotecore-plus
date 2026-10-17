@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { requireAdmin } from '@/app/lib/supabase/server';
 import { setDemoSwitch } from './actions';
+import { loadDemoVisitors, type DemoVisitorRow } from '@/app/lib/admin/demo-visitors';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,13 @@ export default async function AdminDemoPage() {
   const aiOn = controlRes.data?.ai_enabled === true;
   const updatedAt = (controlRes.data?.updated_at as string | null) ?? null;
   const usage = usageRes.data ?? [];
+  // Demo visitors list degrades to empty; switches and stats stay usable.
+  let demoVisitors: DemoVisitorRow[] = [];
+  try {
+    demoVisitors = await loadDemoVisitors(20);
+  } catch {
+    demoVisitors = [];
+  }
   const credits24h = usage.filter((u) => u.status === 'settled').reduce((s, u) => s + (u.actual_credits ?? 0), 0);
   const denied24h = usage.filter((u) => u.status === 'denied').length;
   const byAction = new Map<string, number>();
@@ -44,7 +52,7 @@ export default async function AdminDemoPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Live Demo</h1>
+        <h1 className="text-xl font-semibold text-slate-900">Demo</h1>
         <p className="mt-1 text-sm text-slate-600">
           Public sandbox on Architecture V2. Switches apply instantly on the next request - no deploy needed.
           {updatedAt && <span className="text-slate-400"> Last changed {new Date(updatedAt).toLocaleString('en-GB')}.</span>}
@@ -107,6 +115,42 @@ export default async function AdminDemoPage() {
                 <span className="font-medium text-slate-900">{count}</span>
               </li>
             ))}
+          </ul>
+        )}
+      </div>
+      <div className={card}>
+        <h2 className="font-semibold text-slate-900">Demo users (newest {demoVisitors.length})</h2>
+        <p className="mt-1 text-sm text-slate-500">One row per anonymous visitor session. Placeholder @demo.invalid emails never receive mail.</p>
+        {demoVisitors.length === 0 ? (
+          <p className="mt-2 text-sm text-slate-500">No demo visitors yet.</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-slate-100">
+            {demoVisitors.map((d) => {
+              const expired = d.expiresAt ? new Date(d.expiresAt).getTime() < Date.now() : false;
+              const pill = d.sessionStatus === 'active' && !expired
+                ? 'bg-blue-100 text-blue-700 border-blue-200'
+                : d.sessionStatus === 'provisioning'
+                  ? 'bg-orange-100 text-orange-700 border-orange-200'
+                  : 'bg-slate-100 text-slate-500 border-slate-200';
+              return (
+                <li key={d.companyId} className="flex items-center justify-between gap-4 py-2 text-sm">
+                  <span className="min-w-0 truncate text-slate-700">{d.ownerEmail || 'No visitor profile'}</span>
+                  <span className="flex flex-shrink-0 items-center gap-1.5">
+                    {typeof d.resetCount === 'number' && d.resetCount > 0 && (
+                      <span className="rounded-full px-2.5 py-1 text-xs font-medium bg-slate-50 text-slate-600 border border-slate-200">
+                        {d.resetCount} reset{d.resetCount === 1 ? '' : 's'}
+                      </span>
+                    )}
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${pill}`}>
+                      {d.sessionStatus === 'active' && !expired ? 'Active' : (d.sessionStatus ?? 'ended')}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      {new Date(d.signedUpAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
