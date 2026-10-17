@@ -195,7 +195,7 @@ export function FaqAccordion({ faqs, title = 'Frequently asked questions', eyebr
   return (
     <div className={s.faqGrid}>
       <div className={s.faqIntro}><p className={s.eyebrow}>{eyebrow}</p><h2>{title}</h2><p>Practical answers about how QuoteCore+ fits into real estimating, takeoff and quoting workflows.</p></div>
-      <div className={s.faqList}>{faqs.map((faq) => <details key={faq.question}><summary>{faq.question}<span aria-hidden="true">+</span></summary><p>{faq.answer}</p></details>)}</div>
+      <div className={s.faqList}>{faqs.map((faq) => <details key={faq.question}><summary><span className={s.faqQuestion}>{faq.question}</span><span className={s.faqIcon} aria-hidden="true">+</span></summary><p>{faq.answer}</p></details>)}</div>
     </div>
   );
 }

@@ -35,7 +35,7 @@ export default function MarketingHomepage({ config = homepageConfig, preview = f
         <div className={`${s.container} ${s.heroGrid}`}>
           <div className={s.heroCopy}>
             <p className={s.eyebrow}>Built for roofing first</p>
-            <h1 id="hero-title"><span className={s.heroOrange}>Measure</span> the job.<br />Gain your <span className={s.heroOrange}>price</span>.<br /><span className={s.heroOrange}>Send</span> the quote.</h1>
+            <h1 id="hero-title">Measure the job.<br /><span className={s.heroGradient}>Gain your price.<br />Send the quote.</span></h1>
             <p className={s.heroLead}>Faster estimating and quoting for roofing and construction businesses.</p>
             <p className={s.heroBody}>Built from industry experience and contractor feedback. Powerful tools, made simple.</p>
             <div className={s.heroDevice}><DeviceBadge /></div>

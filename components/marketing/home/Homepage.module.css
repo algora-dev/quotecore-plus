@@ -92,7 +92,7 @@
 .heroCopy { position: relative; z-index: 2; padding-block: 64px 76px; max-width: 563px; }
 .heroCopy .eyebrow { margin-bottom: 25px !important; }
 .heroCopy h1 { font-size: clamp(43px,4.16vw,60px); line-height: 1.045; letter-spacing: -.053em; font-weight: 700; }
-.heroOrange { color: var(--orange); }
+.heroGradient { color: var(--orange, #ff641f); background: var(--qc-gradient-primary, linear-gradient(135deg, #ff641f 0%, #ff8a3d 55%, #ffb36b 100%)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 /* Check Pricing: dark glass surface matching the overview Watch button (owner 2026-10-08). */
 .heroPricing {
   --qc-glass-ink: #f7f8fa;

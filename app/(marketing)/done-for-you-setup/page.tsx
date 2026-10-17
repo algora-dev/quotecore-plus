@@ -119,7 +119,7 @@ export default function DoneForYouSetupPage() {
             <div className={styles.heroLayout}>
               <div className={styles.heroCopy}>
                 <p className={styles.eyebrow}>Done-For-You QuoteCore+ setup</p>
-                <h1 id="dfy-title"><span className={styles.heroPrimary}>Show us how you currently work.</span><br /><span className={styles.heroSecondary}>We’ll tailor your account around it.</span><br /><span className={styles.heroTertiary}>So you can work faster, with less effort.</span></h1>
+                <h1 id="dfy-title"><span className={styles.heroPrimary}>Show us how you currently work.</span><br /><span className={styles.heroGradient}>We’ll tailor your account around it.<br />So you can work faster, with less effort.</span></h1>
                 <p className={styles.heroLead}>Tell us how you currently price, quote and run your jobs. We’ll configure your QuoteCore+ account around that workflow, guide you through using it on your own jobs, and stay available while you get comfortable with it.</p>
                 <div className={styles.heroActions}>
                   <DfyBookButton cta="hero" size="large" label="Book a free 20-minute call" />

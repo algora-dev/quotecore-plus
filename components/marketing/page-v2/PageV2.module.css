@@ -105,8 +105,9 @@
 .faqList details { border-bottom: 1px solid #dfe3e8; }
 .faqList summary { display: flex; justify-content: space-between; gap: 24px; padding: 22px 2px; cursor: pointer; list-style: none; color: var(--ink); font-size: 16px; font-weight: 650; line-height: 1.4; }
 .faqList summary::-webkit-details-marker { display: none; }
-.faqList summary span { color: var(--orange-deep); font-size: 23px; font-weight: 400; transition: transform .18s ease; }
-.faqList details[open] summary span { transform: rotate(45deg); }
+.faqList summary .faqQuestion { min-width: 0; }
+.faqList summary .faqIcon { color: var(--orange-deep); font-size: 23px; font-weight: 400; transition: transform .18s ease; flex-shrink: 0; }
+.faqList details[open] summary .faqIcon { transform: rotate(45deg); }
 .faqList details p { margin: -4px 46px 22px 2px; color: var(--muted); font-size: 14px; line-height: 1.75; }
 .relatedGrid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
 .relatedGrid > a { display: flex; flex-direction: column; min-height: 190px; padding: 24px; border: 1px solid var(--line); border-radius: 17px; color: inherit; background: #fff; text-decoration: none; transition: transform .16s ease,border-color .16s ease,box-shadow .16s ease; }
