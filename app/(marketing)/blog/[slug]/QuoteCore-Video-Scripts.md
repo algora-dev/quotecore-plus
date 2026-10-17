@@ -1,4 +1,4 @@
-﻿# QuoteCore+ Video Scripts (with timestamps)
+# QuoteCore+ Video Scripts (with timestamps)
 
 Master file of all QuoteCore+ YouTube video scripts, timestamps, and blog cross-references.
 
@@ -76,16 +76,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - How to Use the Free Purchase Order Generator: https://youtu.be/pXBJguUw_-I
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #RoofingSoftware #QuoteGenerator #FreeQuote #ConstructionSoftware #RoofingContractor #QuotingSoftware #QuoteCore
@@ -160,16 +160,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - How to Use the Free Quote Generator: https://youtu.be/5ifiryxMBDQ
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #RoofingTakeoff #TakeoffBuilder #RoofingSoftware #FreeTool #QuantitySurveying #RoofingContractor #QuoteCore #ConstructionSoftware
@@ -254,16 +254,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - How to Use the Free Quote Generator: https://youtu.be/5ifiryxMBDQ
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #RoofingCalculator #RoofCalculations #RafterAngle #HipValley #RoofingSoftware #FreeTool #RoofingContractor #QuoteCore
@@ -332,16 +332,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - How to Use the Free Quote Generator: https://youtu.be/5ifiryxMBDQ
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #RoofingSoftware #PurchaseOrder #FreeTool #ConstructionSoftware #RoofingContractor #QuotingSoftware #QuoteCore #MaterialsOrdering
@@ -419,16 +419,16 @@ QuoteCore+ turns a Friday-night quoting panic into a job done in minutes - so yo
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 - Create a Complex Roofing Quote in Under 3 Min for Less Than $1: https://youtu.be/X379HDoDE_o
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #RoofingLife #KnockOffTime #QuoteSoftware #ConstructionSoftware #RoofingBusiness #QuoteCore #FridayVibes
@@ -484,16 +484,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #QuotingSoftware #RoofingSoftware #RoofingContractor #DigitalMeasure #Invoice #QuoteCore
@@ -551,16 +551,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
 - Create a Complex Roofing Quote in Under 3 Min for Less Than $1: https://youtu.be/X379HDoDE_o
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #RoofingSoftware #QuotingSoftware #RoofingContractor #FreeQuote #ConstructionSoftware #QuoteCore
@@ -650,16 +650,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - How to Set Up Roofing Smart Components in QuoteCore+: https://youtu.be/XZSTIfGUHAU
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #SmartComponents #QuotingSoftware #RoofingSoftware #ConstructionSoftware #RoofingContractor #QuoteCore
@@ -813,16 +813,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - What are Smart Components?: https://youtu.be/aFXJwOiliPI
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #SmartComponents #QuotingSoftware #RoofingSoftware #RafterPitch #RoofCalculations #RoofingContractor #QuoteCore
@@ -900,16 +900,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #RoofingSoftware #AIBusiness #SmartComponents #QuotingSoftware #RoofingContractor #DigitalMeasure #QuoteCore
@@ -974,16 +974,16 @@ The goal is simple: your customers and AI find you more easily, they get what th
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 - Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #RoofingSupplier #SupplierPartnership #AI #RoofingSoftware #QuotingSoftware #RoofingContractor #QuoteCore
@@ -1130,16 +1130,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #PurchaseOrder #MaterialsOrdering #RoofingSoftware #QuotingSoftware #RoofingContractor #QuoteCore
@@ -1305,16 +1305,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - How to Set Up Roofing Smart Components in QuoteCore+: https://youtu.be/XZSTIfGUHAU
 - Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #ComponentQuote #QuotingSoftware #RoofingSoftware #SmartComponents #RafterPitch #RoofingContractor #QuoteCore
@@ -1466,16 +1466,16 @@ QuoteCore+ is the all-in-one quoting and job management software built by a roof
 - Create a Complex Roofing Quote in Under 3 Min for Less Than $1: https://youtu.be/X379HDoDE_o
 - How to Order Materials from an Accepted Quote: https://youtu.be/kOkQuUy8MWQ
 
-Ã°Å¸Å’Â Visit the website: https://quote-core.com
-Ã°Å¸â€ºÂ  Done-for-you estimating: https://quote-core.com/services
-Ã°Å¸â€œÅ¡ The QuoteCore+ blog: https://quote-core.com/blog
+ðŸŒ Visit the website: https://quote-core.com
+ðŸ›  Done-for-you estimating: https://quote-core.com/services
+ðŸ“š The QuoteCore+ blog: https://quote-core.com/blog
 
 Follow us:
-Ã°Å¸â€œÂ¸ Instagram: https://www.instagram.com/quotecore_plus/
-Ã°Å¸Å½Âµ TikTok: https://www.tiktok.com/@quotecoreplus
-Ã°Å¸â€™Â¼ LinkedIn: https://www.linkedin.com/company/quotecore/
-Ã°Å¸â€œËœ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
-Ã°Å¸ÂÂ¦ X: https://x.com/quotecoreplus
+ðŸ“¸ Instagram: https://www.instagram.com/quotecore_plus/
+ðŸŽµ TikTok: https://www.tiktok.com/@quotecoreplus
+ðŸ’¼ LinkedIn: https://www.linkedin.com/company/quotecore/
+ðŸ“˜ Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+ðŸ¦ X: https://x.com/quotecoreplus
 
 **HASHTAGS**
 #Roofing #QuotingSoftware #RoofingSoftware #SmartComponents #DigitalMeasure #RoofingContractor #Invoice #QuoteCore
@@ -1574,7 +1574,7 @@ Uh, but from there, we'd transfer all those measurements and items into a basic 
 Sometimes they would never respond, as everyone knows with quoting. Um, I know this might be a similar process for a lot of you watching now, and if it is, then keep watching. Uh, what I've built solves all these issues I had, and it actually makes quoting roofs an enjoyable task. Definitely much faster and more accurate. Uh, it used to take me on average around 20 to 30 minutes to manually quote, um, and get to a customer quote for a medium complex roof.
 
 **[01:22-01:47]**
-Uh, we're gonna do that in less than ten minutes today, uh, or I'm gonna try to anyway. All right, so I'm now on the main dashboard page of the app. If you sign up and choose a plan, from 19 dollars a month with access to the full app, you'll get access to all of these features. Um, before we start, I'll just explain that I've already created, um, my smart component library.
+Uh, we're gonna do that in less than ten minutes today, uh, or I'm gonna try to anyway. All right, so I'm now on the main dashboard page of the app. If you build a paid configuration, current global pricing starts at 29 US dollars a month, and you can explore the interactive demo before subscribing. Once subscribed, you'll get access to the features in your configuration. Um, before we start, I'll just explain that I've already created, um, my smart component library.
 
 **[01:47-02:16]**
 So this is where you would add everything that you would do on a roof or in your business, whether it's a service or it's a product that you sell or you supply and i-install. So for example, here you've got a barge flashing. You can open these up, edit them, um, but basically, you got the, the cost, the labor that you, that you add, that you install for, your waste. If it's got a rafter pitch, um, got down here, you got hip and valley pitch, it may have no pitch.
@@ -1697,7 +1697,7 @@ So that's basically it. I've shown you a few extra steps, probably taken a bit l
 But you get the, the idea, and this is a repeatable process, and once you get the hang of it, honestly, you could do ten quotes in an hour quite easily, depending on the, the complexity. Um, and maybe that's your whole week of quotes done, and you know it's accurate. You know that you've, you've got it stored everywhere in one place, and you can come back, you can edit things, you can track things.
 
 **[17:58-18:28]**
-And the cool thing is, is that literally you wanna, um, turn this into an in- an order. So you wanna order all this gear. Maybe the quote got accepted. It's 2 or 3 clicks, and now you've got an order form. Maybe you wanna send an invoice for this job. There's 2 or 3 clicks. You got a professional invoice you can send, and, and it's all done the same way. So, um, a lot of cool features, and yeah, if you, you wanna try this out, the free tools work with no signup, and the paid app has all of these features I've just showed you and more, with access to the full app.
+And the cool thing is, is that literally you wanna, um, turn this into an in- an order. So you wanna order all this gear. Maybe the quote got accepted. It's 2 or 3 clicks, and now you've got an order form. Maybe you wanna send an invoice for this job. There's 2 or 3 clicks. You got a professional invoice you can send, and, and it's all done the same way. So, um, a lot of cool features, and yeah, if you, you wanna try this out, the free tools work with no signup, and the paid app has all of these features I've just showed you and more. You can explore the interactive demo before subscribing.
 
 **[18:28-18:46]**
 And, um, yeah, this is a, a process that I, I've built in a way to replace what I used to do when I was measuring and quoting jobs, and yeah, I, I, I love it, and I hope, uh, a lot of you do too. But if you, if you try this and you've got some suggestions, I'd love to hear from you.

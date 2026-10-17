@@ -17,7 +17,7 @@ export function DemoCallButton({ bookingHref, label = 'Book a Free Demo Call', l
       onClick={() => { setOpen(true); trackEvent('homepage_demo_call_open', { location }); }}>
       <Icon name="calendar" />{label}
     </button>
-    {open && <FocusDialog eyebrow="15 minutes · Free · No pressure" title="See how it could fit the way you work" onClose={() => setOpen(false)}>
+    {open && <FocusDialog eyebrow="20 minutes · Free · No pressure" title="See how it could fit the way you work" onClose={() => setOpen(false)}>
       {/* Approved explanatory copy from pricing-selector v5 ActionModals.tsx. */}
       <p className={s.dialogIntro}>Tell us how you measure and price today. We’ll share our screen, show the tools that fit and answer your questions.</p>
       <ol className={s.dialogSteps}>

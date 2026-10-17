@@ -6,6 +6,8 @@ import ThreeWaysToWork, { type ThreeWaysToWorkProps } from "@/components/ThreeWa
 import CompetitorVideo from "./competitor-video";
 import PricingViewTracker from "./pricing-tracker";
 import { VIDEOS } from "@/lib/videos";
+import { publicPricing } from "@/lib/public-pricing";
+import { homepageConfig } from "@/components/marketing/home/homepage-config";
 
 /**
  * Shared server layout for competitor alternative pages.
@@ -446,49 +448,18 @@ export default function CompetitorPage({
             </div>
 
             <div className="rounded-[1.5rem] border border-orange-200 bg-white px-7 py-7 shadow-[0_0_8px_rgba(255,107,53,0.08)]">
-              <h3 className="text-lg font-semibold">QuoteCore+ paid app</h3>
-              <p className="mt-3 text-sm text-zinc-600">Check plan-specific features and limits before choosing.</p>
-              <ul className="mt-5 space-y-4">
-                <li className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-                  <span>
-                    <span className="font-medium text-zinc-900">Starter</span>
-                    <span className="mt-0.5 block text-xs leading-5 text-zinc-500">
-                      25 quotes/month
-                    </span>
-                  </span>
-                  <span className="shrink-0 font-semibold text-zinc-950">$19/mo</span>
-                </li>
-                <li className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-                  <span>
-                    <span className="font-medium text-zinc-900">Pro</span>
-                    <span className="mt-0.5 block text-xs leading-5 text-zinc-500">
-                      100 quotes/month, 50 AI Assist points
-                    </span>
-                  </span>
-                  <span className="shrink-0 font-semibold text-zinc-950">$39/mo</span>
-                </li>
-                <li className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-                  <span>
-                    <span className="font-medium text-zinc-900">Pro Plus</span>
-                    <span className="mt-0.5 block text-xs leading-5 text-zinc-500">
-                      200 quotes/month, 100 AI Assist points
-                    </span>
-                  </span>
-                  <span className="shrink-0 font-semibold text-zinc-950">$59/mo</span>
-                </li>
+              <h3 className="text-lg font-semibold">Build the configuration you need</h3>
+              <p className="mt-3 text-sm leading-6 text-zinc-600">
+                Build a monthly setup around the features and usage you need. Current global configurations range from US${publicPricing.monthlyMin} to US${publicPricing.monthlyMax} per month.
+              </p>
+              <ul className="mt-5 space-y-3 text-sm leading-6 text-zinc-600">
+                <li><span className="font-medium text-zinc-900">One public pricing path.</span> The pricing builder creates your configuration around the features and usage you need.</li>
+                <li><span className="font-medium text-zinc-900">No full-app trial.</span> Explore the interactive app demo or standalone free tools before subscribing.</li>
+                <li><span className="font-medium text-zinc-900">Free tools are separate.</span> They do not create a saved paid-app workspace.</li>
               </ul>
-              <p className="mt-5 text-xs leading-6 text-zinc-600">
-                AI Assist point allowances are not a promise of unlimited Smart Assistant usage.
-                Check current feature access and permissions on the pricing page.
-              </p>
-              <p className="mt-3 text-sm text-zinc-600">
-                Separate free tools cost $0 and do not provide a free paid-app account.
-              </p>
-              <p className="mt-6 text-sm text-zinc-600">
-                <a href="/pricing" className="font-medium text-[#FF6B35] hover:underline">
-                  See full pricing →
-                </a>
-              </p>
+              <div className="mt-6">
+                <TrackedCta slug={slug} location="pricing_quote_core" href="/pricing" label="Build your QuoteCore+ plan" />
+              </div>
             </div>
           </div>
 
@@ -749,8 +720,7 @@ export default function CompetitorPage({
             )}
           </div>
           <p className="mt-3 text-sm text-zinc-500">
-            The paid app works on phone, tablet and desktop. Standalone free tools
-            have their own device support and limits.
+            The paid app works on phone, tablet and desktop. Standalone free tools have their own device support and limits. QuoteCore+ does not offer a full-app trial.
           </p>
         </div>
       </section>
@@ -770,27 +740,34 @@ export default function CompetitorPage({
           <TrackedCta
             slug={slug}
             location="final_cta"
-            href="/pricing"
-            label={data.finalCta.ctaLabel ?? "Get started with QuoteCore+"}
+            href="/demo"
+            label="Explore the interactive demo"
           />
           <TrackedCta
             slug={slug}
             location="final_cta"
-            href="/free-tools"
-            label="Browse free tools"
+            href="/free-roofing-takeoff-builder"
+            label="Try free roof takeoff"
+            variant="ghost"
+          />
+          <TrackedCta
+            slug={slug}
+            location="final_cta"
+            href={homepageConfig.bookingHref || "/contact"}
+            label="Book a tailored demo"
             variant="ghost"
           />
         </div>
-        <p className="mt-4 text-sm text-zinc-500">Paid plans for the connected app. Free tools are available without signup.</p>
+        <p className="mt-4 text-sm text-zinc-500">Current paid configurations are built in the pricing tool. Free tools are separate and available without signup.</p>
         <div className="mx-auto mt-12 max-w-2xl rounded-2xl border border-zinc-200 bg-zinc-50 p-6 text-left">
-          <h3 className="text-lg font-semibold">Roofing Takeoff Demo</h3>
+          <h3 className="text-lg font-semibold">Want to test takeoff specifically?</h3>
           <p className="mt-3 text-sm leading-7 text-zinc-600">
             Explore the existing sample-plan takeoff flow. This demonstrates takeoff
             only, not the complete paid app or Smart Assistant. Its device support
             is separate from the mobile paid app.
           </p>
           <div className="mt-5">
-            <TrackedCta slug={slug} location="roofing_takeoff_demo" href="/demo" label="View Roofing Takeoff Demo" variant="ghost" />
+            <TrackedCta slug={slug} location="roofing_takeoff_demo" href="/takeoff-demo" label="Try focused takeoff demo" variant="ghost" />
           </div>
         </div>
       </section>

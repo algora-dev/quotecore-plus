@@ -7,6 +7,7 @@ import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
+import { publicPricing } from "@/lib/public-pricing";
 
 export const metadata: Metadata = {
   title: "Sending, Tracking & Automated Follow-ups",
@@ -36,7 +37,7 @@ const softwareSchema = {
   description: "Send quotes, orders and invoices directly from QuoteCore+. Track opens and reads. Configure time-based and event-based automated follow-ups with cancellation conditions.",
   url: `${SITE_URL}/features/sending-and-tracking`,
   publisher: { "@id": `${SITE_URL}/#organization` },
-  offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free tools with no signup; paid plans from $19/month with access to the full app" },
+  offers: { "@type": "AggregateOffer", priceCurrency: "USD", lowPrice: publicPricing.monthlyMin, highPrice: publicPricing.monthlyMax, offerCount: 1, url: `${SITE_URL}/pricing` },
 };
 
 const breadcrumbSchema = {
@@ -126,14 +127,14 @@ export default function SendingAndTrackingPage() {
               Send quotes, orders and invoices directly from QuoteCore+ with attachments. Track when recipients open and read them. Set up automatic follow-ups with configurable delays and cancellation conditions - so chasing happens on its own. Check status from your phone, tablet or desktop, or ask Smart Assistant for a quote&rsquo;s status instead of opening the app.
             </p>
             <div className="mt-6 flex gap-3">
-              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
+              <a href="/demo" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
                 Get started
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
                 All features
               </Link>
             </div>
-            <p className="mt-3 text-sm text-zinc-500">Free tools, no signup. access to the full app on paid plans.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
           </div>
         </section>
 
@@ -304,8 +305,8 @@ export default function SendingAndTrackingPage() {
         <section className="relative overflow-hidden bg-white py-16 sm:py-20">
           <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold sm:text-4xl">Stop chasing. Start tracking.</h2>
-            <p className="mt-4 text-base text-zinc-600">Send, track and follow up automatically. access to the full app on paid plans.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+            <p className="mt-4 text-base text-zinc-600">Send, track and follow up automatically. Explore the interactive demo or build your configuration in the pricing tool.</p>
+            <a href="/demo" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
               Get started
             </a>
           </div>

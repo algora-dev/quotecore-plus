@@ -240,7 +240,7 @@ export default function Post() {
         All three are free, no account needed. For the full AI takeoff pipeline with unlimited
         scans, the complete component library, and integrated quote building,{' '}
         <a href="/free-trial">get started with QuoteCore+</a>. Every feature is included - the AI
-        takeoff, the component library, the quote builder - all available on paid plans with access to the full app.
+        takeoff, the component library, the quote builder - all available on paid configurations, with an interactive demo and free tools available before subscribing.
       </p>
 
       <hr />

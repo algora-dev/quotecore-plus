@@ -251,7 +251,7 @@ export default function TutorialsPage() {
             </a>
             <a href="/free-trial" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-slate-900">Get started</p>
-              <p className="mt-1 text-sm text-slate-500">Free tools, no signup. access to the full app on paid plans.</p>
+              <p className="mt-1 text-sm text-slate-500">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
             </a>
             <a href="/free-tools" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-slate-900">Free tools</p>

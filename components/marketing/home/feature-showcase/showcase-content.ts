@@ -10,12 +10,12 @@ function capture(label: string, alt: string, caption: string, portrait = false):
 }
 
 const finishedQuote: Capture = {
-  src: '/marketing/feature-showcase/finished-customer-quote.png',
+  src: '/marketing/current-ux/customer-quote-document.webp',
   label: 'Finished customer quotation',
-  alt: 'QCP Roofing quotation 1022, showing the customer details, itemised roofing work and total of $7,938.74.',
+  alt: 'Customer-facing QuoteCore+ quote document with options to accept, request changes, decline or download a PDF.',
   caption: 'A finished QuoteCore+ quotation, including the customer’s options to accept, request changes, decline or download a PDF.',
-  width: 1035,
-  height: 1332,
+  width: 1021,
+  height: 1311,
 };
 
 export const showcaseFeatures: readonly ShowcaseFeature[] = [
@@ -129,7 +129,7 @@ export const showcaseFeatures: readonly ShowcaseFeature[] = [
         id: 'measure-a-plan', label: 'Measure your plan', icon: 'takeoff',
         heading: 'Draw it.\nGet your price.',
         body: 'Draw on your plan and QuoteCore+ calculates the measurements and price using your saved component rates. Roofs, walls, floors and more.',
-        benefit: 'Digital takeoff: draw from roof plans, architectural drawings or satellite images. Use elevations for cladding and floor plans for flooring.|Scan Assist: let QuoteCore+ find the roof outline and internal roof components from your drawings, then edit anything you need. (Only in roofing.)|Offcuts + cut list (long run): generate a cut plan while quoting to calculate how much material the roof really needs. If you win the job, installers can use the same plan.', context: 'For jobs that begin with a plan.',
+        benefit: 'Digital takeoff: draw from roof plans, architectural drawings or satellite images. Use elevations for cladding and floor plans for flooring.|AI Scan Assist: on a clear, correctly calibrated roof plan, QuoteCore+ can complete the roof geometry quickly. If plan quality or roof complexity makes the result less consistent, edit the takeoff directly in the same workspace. (Roofing only.)|Offcuts + cut list (long run): generate a cut plan while quoting to calculate how much material the roof really needs. If you win the job, installers can use the same plan.', context: 'For jobs that begin with a plan.',
         inputLabel: 'Start with a plan', input: 'Calibrate a known dimension, then trace the areas and lengths you need.',
         outputTitle: 'A measured plan.\nA clearer job.', outputSubtitle: 'Digital measurement · Illustrative example',
         outputRows: [{ label: 'Calibrate', value: 'Known dimension' }, { label: 'Measure', value: 'Areas and lengths' }, { label: 'Review', value: 'Plan and quantities' }],

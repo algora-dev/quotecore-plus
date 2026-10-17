@@ -70,7 +70,7 @@ export function PricingSelectorPreview({ variant = 'page', currentSubscription, 
   return <div>
     <PricingCalculator key={`${variant}:${epoch}`} catalog={catalog} variant={variant} initialAnswers={initial}
       startAtReview={!!initial} currentSubscription={currentSubscription} onContinue={preview} notice={notice}
-      resultActions={{ onAction: previewAction, trade: 'roofing', setupRange: { currency: 'USD', minCents: 49900, maxCents: 149900 } }} />
+      resultActions={{ onAction: previewAction, trade: 'roofing' }} />
     {showControls && <section data-qc-ui="v2" className="qcp qcp-test-controls" aria-label="Preview test controls">
       <details className="qcp-disclosure"><summary>Testing controls  -  not shown to customers</summary>
         <div className="qcp-stack" style={{ paddingBlock: 'var(--qc-space-4)' }}>

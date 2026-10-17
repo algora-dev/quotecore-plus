@@ -51,7 +51,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(how.*work|system work|workflow|process|walkthrough|what does quotecore|what is quotecore|what.*quotecore.*do|tell me about)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ is roofing quoting, takeoff and job workflow software. Upload a roof plan, AI Scan Assist identifies multiple roof areas plus ridges, hips, valleys, barges and spouting, you verify and adjust, then Smart Components calculate materials, labour and pricing. From a saved quote you can create, send and track quotes, orders and invoices - all from the same connected job. With preconfigured Smart Components, go from complex plan to quote in under 3 minutes for less than a dollar.",
+      text: "QuoteCore+ is roofing quoting, takeoff and job workflow software. Upload a roof plan and AI Scan Assist can complete suitable, correctly calibrated roof geometry. Review the result and edit it if needed, then Smart Components calculate materials, labour and pricing. From a saved quote you can create, send and track quotes, orders and invoices - all from the same connected job. With preconfigured Smart Components, go from complex plan to quote in under 3 minutes for less than a dollar.",
       sectionLink: { label: "See How it works", href: "/#how-it-works" },
       links: [
         startCTA,
@@ -64,7 +64,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(trial|free trial|14 day|14-day|sign up|signup|register|try it|test it|demo|get started|start)/.test(message)) {
     return {
       sender: "assistant",
-      text: "Getting started is simple. Our free tools - takeoff builder, roofing calculator, quote generator and more - work instantly in your browser with no signup. For the full connected workflow (AI plan takeoff, Smart Components, material orders and invoicing), choose a paid plan and start in the app today.",
+      text: "Getting started is simple. Our free tools - takeoff builder, roofing calculator, quote generator and more - work instantly in your browser with no signup. For the full connected workflow (AI plan takeoff, Smart Components, material orders and invoicing), choose a paid plan and start in the app today. Explore the interactive demo or free tools before subscribing.",
       links: [
         startCTA,
         { label: "See how it works", href: "/#how-it-works" },
@@ -76,7 +76,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(price|pricing|cost|how much|plan|plans|tier|limit|upgrade|cancel|subscription|per month|per month|starter|lite|pro|premium)/.test(message)) {
     return {
       sender: "assistant",
-      text: "Plans start at $19/month for Starter (solo traders), Pro at $39/month for growing businesses, and Pro Plus at $59/month for high-volume teams. You pay up front and get full access on your chosen plan. Our free tools stay free forever - no signup needed.",
+      text: "QuoteCore+ uses a configurable pricing builder rather than public fixed tiers. Current global configurations range from US$29 to US$259 per month, depending on the features and usage you choose. There is no full-app trial. Explore the interactive demo or free tools before subscribing.",
       link: { label: "See full pricing details", href: "/#pricing" },
     };
   }
@@ -187,7 +187,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(ai|ai takeoff|plan takeoff|upload.*plan|trace.*plan|ai.*scan|ai assist|ai scan)/.test(message)) {
     return {
       sender: "assistant",
-      text: "AI Scan Assist is an optional accelerator inside digital takeoff. Upload a roof plan and AI identifies multiple roof outlines/areas - you can name each area and assign different pitch, material and component systems. AI detects ridges/ridge capping, hips, valleys, barges and spouting within each area. Each detected element is a placeholder you can swap to any saved Smart Component via dropdown - quantities, labour, waste and pricing recalculate automatically. You review, correct and confirm everything, then add any components AI doesn't detect (flashings, downpipes, etc). Available in the app on all paid plans.",
+      text: "AI Scan Assist is an optional accelerator inside digital takeoff. Upload a clear roof plan, calibrate it correctly, and AI Scan Assist can complete suitable roof geometry including supported areas and roof lines. Plan quality and complexity affect when edits are needed, and every result remains editable in the same takeoff workspace. From there, Smart Components apply your saved materials, labour, waste and pricing logic.",
       links: [
         startCTA,
         { label: "See how it works", href: "/#how-it-works" },
@@ -199,7 +199,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(how do i|how to|can i|can you|do you have|does.*have|does.*support)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ handles the full workflow from measurement to payment - AI plan takeoff, Smart Components, quoting, material orders, invoicing, and customer acceptance tracking. The best way to see if it does what you need: try our free tools right now - no signup. If you like them, choose the paid plan that fits your workflow.",
+      text: "QuoteCore+ handles the full workflow from measurement to payment - AI plan takeoff, Smart Components, quoting, material orders, invoicing, and customer acceptance tracking. The best way to see if it does what you need: try our free tools right now - no signup. If you like them, start in the paid app after exploring the demo or free tools.",
       links: [
         startCTA,
         freeToolsCTA,
@@ -333,7 +333,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/\bfree\b/.test(message)) {
     return {
       sender: "assistant",
-      text: "Our free tools work instantly in your browser with no signup: takeoff builder, roofing calculator, smart component creator, quote generator, invoice generator, and PO generator. For the full connected app, choose the paid plan that fits your workflow.",
+      text: "Our free tools work instantly in your browser with no signup: takeoff builder, roofing calculator, smart component creator, quote generator, invoice generator, and PO generator. For the full connected app, build your configuration in the pricing tool. Current global configurations start at US$29/month, and you can explore the interactive demo before subscribing.",
       links: [
         startCTA,
         freeToolsCTA,

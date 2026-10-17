@@ -32,14 +32,13 @@ export function MarketingCalculator({ notice }: { notice?: string } = {}) {
       continueHref={(intent) => buildSignupHref('/signup?utm_source=pricing', intent)}
       resultActions={{
         trade: 'roofing',
-        setupRange: { currency: 'USD', minCents: 49900, maxCents: 149900 },
         links: {
           demo: '/demo',
           'free-tools': '/free-tools',
           'takeoff-roofing': '/free-roofing-takeoff-builder',
           'takeoff-cladding': '/free-cladding-takeoff',
           'takeoff-flooring': '/free-flooring-takeoff',
-          'book-demo': `${CALENDLY}?utm_source=quotecore&utm_medium=pricing_page&utm_content=book_demo_15min`,
+          'book-demo': `${CALENDLY}?utm_source=quotecore&utm_medium=pricing_page&utm_content=book_demo_20min`,
           'done-for-you': `${CALENDLY}?utm_source=quotecore&utm_medium=pricing_page&utm_content=done_for_you_consultation`,
         },
       }}

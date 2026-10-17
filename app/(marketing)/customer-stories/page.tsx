@@ -109,7 +109,7 @@ export default function CustomerStoriesPage() {
             </a>
             <a href="/free-trial" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Get started</h3>
-              <p className="mt-1 text-sm text-zinc-600">Free tools, no signup. access to the full app on paid plans.</p>
+              <p className="mt-1 text-sm text-zinc-600">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
             </a>
           </div>
         </section>
@@ -118,7 +118,7 @@ export default function CustomerStoriesPage() {
         <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try it yourself</h2>
-            <p className="mt-2 text-zinc-600">Free tools, no signup. access to the full app on paid plans.</p>
+            <p className="mt-2 text-zinc-600">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
               Get started
             </a>

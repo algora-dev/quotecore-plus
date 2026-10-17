@@ -328,7 +328,7 @@ export default function Post() {
       </p>
       <p>
         From complex plan to quote in under 3 minutes for less than a dollar. Full access on your
-        chosen plan, with access to the full app.
+        chosen configuration after exploring the interactive demo or free tools.
       </p>
       <p>
         <a href="/free-trial">Get started with QuoteCore+</a>
@@ -380,7 +380,7 @@ export default function Post() {
 
       <p>
         Ready to quote faster? <a href="/free-trial">Get started with QuoteCore+ today</a>.
-        Plans from $19/month with access to the full app. From complex plan to quote in under 3 minutes for less than a dollar.
+        Current paid configurations start at US$29/month. Explore the interactive demo or free tools before subscribing. From complex plan to quote in under 3 minutes for less than a dollar.
       </p>
     </div>
   );

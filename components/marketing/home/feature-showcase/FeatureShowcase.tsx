@@ -28,22 +28,21 @@ export interface FeatureShowcaseProps {
 
 /** Approved product artwork, not a screenshot of the surrounding feature section. */
 const measurementsCapture: Capture = {
-  src: '/marketing/feature-showcase/measurements-entry-composite.webp',
+  src: '/marketing/current-ux/quote-builder-components-measurements.webp',
   label: 'Enter Your Measurements',
-  alt: 'QuoteCore+ measurement entry on a phone beside the desktop quote builder, with a dark navigation sidebar, component quantities and a current quote summary.',
-  caption: 'Enter your own areas, lengths and quantities, then review your component pricing.',
-  width: 1672,
-  height: 941,
+  alt: 'QuoteCore+ Quote Builder showing Smart Components with entered measurements and pricing.',
+  caption: 'Enter areas, lengths and quantities, then review the component measurements and pricing in the quote builder.',
+  width: 2048,
+  height: 1112,
 };
 
-/** Approved laptop-and-landscape-phone artwork for Measure in App. */
 const takeoffCapture: Capture = {
-  src: '/marketing/feature-showcase/measure-in-app-composite.webp',
+  src: '/marketing/current-ux/digital-takeoff-manual.webp',
   label: 'Measure in App',
-  alt: 'Digital roof measurements on a laptop beside a landscape phone showing a roof outline and scan assist controls.',
-  caption: 'Measure your roof plan on desktop or mobile, keeping the drawing and measurement tools together.',
-  width: 1648,
-  height: 928,
+  alt: 'QuoteCore+ Digital Takeoff workspace with a roof plan open and a manual line measurement in progress.',
+  caption: 'Measure directly on the plan with the same editable takeoff workspace used by AI Scan Assist.',
+  width: 2048,
+  height: 1114,
 };
 
 /** Isolated marketing section. No assistant API, microphone, account writes,

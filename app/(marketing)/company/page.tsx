@@ -67,9 +67,9 @@ const facts = [
   { label: "Founder", value: "Shaun - 20 years of trade experience" },
   { label: "Regions served", value: "United Kingdom, New Zealand, Australia, United States" },
   { label: "Supported trades", value: "Roofing, cladding, flooring, fencing, landscaping, general construction" },
-  { label: "Pricing model", value: "Monthly subscription from $19/month" },
+  { label: "Pricing model", value: "Configurable monthly subscription from US$29/month" },
   { label: "Support", value: "Email and in-app support" },
-  { label: "Guarantee", value: "access to the full app on paid plans" },
+  { label: "Evaluation", value: "Interactive app demo and standalone free tools before subscribing" },
 ];
 
 export default function CompanyPage() {
@@ -200,7 +200,7 @@ export default function CompanyPage() {
         <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Get started with QuoteCore+</h2>
-            <p className="mt-2 text-zinc-600">Free tools with no signup. Paid plans from $19/month with access to the full app.</p>
+            <p className="mt-2 text-zinc-600">Free tools with no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing.</p>
             <a
               href="/free-trial"
               className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"

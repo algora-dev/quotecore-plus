@@ -34,7 +34,7 @@ export function ResultActions({ intent, result, options, catalog, disabled = fal
   const trade = options.trade ?? 'roofing';
   const tradeTitle = trade[0].toUpperCase() + trade.slice(1);
   const cards: { key: ResultAction; title: string; subtitle: string; icon: IconName; dialog?: Modal }[] = [
-    { key: 'book-demo', title: 'Book a 15-minute demo', subtitle: 'Free · Your workflow, on screen', icon: 'people', dialog: 'book-demo' },
+    { key: 'book-demo', title: 'Book a 20-minute tailored demo', subtitle: 'Free · Your workflow, on screen', icon: 'people', dialog: 'book-demo' },
     { key: 'done-for-you', title: 'We can set everything up for you', subtitle: 'Setup + personal training', icon: 'sliders', dialog: 'done-for-you' },
     { key: 'demo', title: 'Try the App Demo', subtitle: 'Free · No signup', icon: 'play' },
     { key: 'free-tools', title: result.digitalEnabled ? `Try ${tradeTitle} Digital Takeoff` : 'Try Digital Takeoff', subtitle: 'Free · Use your own plan', icon: 'ruler' },

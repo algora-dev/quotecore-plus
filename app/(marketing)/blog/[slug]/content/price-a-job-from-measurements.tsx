@@ -189,7 +189,7 @@ export default function Post() {
       <h3>Option 3 - Save to QuoteCore+</h3>
       <p>
         Save components, measurements and pricing logic, then continue in the app across quotes,
-        material orders and invoices. Paid plans start at $19/month with access to the full app.
+        material orders and invoices. Current paid configurations start at US$29/month. Explore the interactive demo or free tools before subscribing.
       </p>
 
       <h2>Frequently asked questions</h2>

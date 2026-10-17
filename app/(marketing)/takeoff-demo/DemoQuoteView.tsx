@@ -272,7 +272,7 @@ export function DemoQuoteView({
               <>
                 <h2 className="text-xl font-semibold text-slate-900">This quote took you {timeLabel}.</h2>
                 <p className="mt-2 text-sm text-slate-500">
-                  Including the guided tour. Try the free tools on your own plans with no signup, or start in the app when you’re ready.
+                  Including the guided tour. Try the free tools on your own plans with no signup, explore the interactive app demo, or build your paid configuration in the pricing tool.
                 </p>
               </>
             );

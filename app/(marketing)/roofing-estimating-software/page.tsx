@@ -14,11 +14,11 @@ import {
 export const metadata: Metadata = {
   title: "Roofing Estimating Software | QuoteCore+",
   description:
-    "Roofing estimating software with digital takeoff on phone, tablet or desktop, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Paid plans from $19 to $59/month.",
+    "Roofing estimating software with digital takeoff on phone, tablet or desktop, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Configurations from US$29/month through the pricing builder.",
   openGraph: {
     title: "Roofing Estimating Software | QuoteCore+",
     description:
-      "Roofing estimating software with digital takeoff on phone, tablet or desktop, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Paid plans from $19 to $59/month.",
+      "Roofing estimating software with digital takeoff on phone, tablet or desktop, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Configurations from US$29/month through the pricing builder.",
     url: "/roofing-estimating-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -178,7 +178,7 @@ export default function RoofingEstimatingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure roofs on site or in the office - phone, tablet or desktop - with AI Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Paid plans from $19 to $59/month.
+              Measure roofs on site or in the office - phone, tablet or desktop - with AI Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Configurations from US$29/month through the pricing builder.
             </p>
 
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -190,7 +190,7 @@ export default function RoofingEstimatingSoftwarePage() {
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Access to the full app.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Explore the interactive demo before subscribing.</p>
 
             {/* Two entry paths */}
             <div className="mx-auto mt-6 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
@@ -598,7 +598,7 @@ export default function RoofingEstimatingSoftwarePage() {
           </a>
 
           <p className="mt-4 text-sm text-zinc-500">
-            Free tools, no signup. access to the full app on paid plans.{" "}
+            Free tools, no signup. Explore the interactive demo before subscribing to the paid app.{" "}
             <a href="/pricing" className="underline hover:text-zinc-900">
               See pricing
             </a>

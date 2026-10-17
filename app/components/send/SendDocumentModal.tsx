@@ -386,7 +386,7 @@ export function SendDocumentModal(props: SendDocumentProps & { hook: Hook }) {
                       </svg>
                     </div>
                     <h4 className="text-sm font-semibold text-slate-900">Add Follow-ups</h4>
-                    <p className="text-xs text-slate-500">{props.canFollowups ? 'Then send' : 'Pro plan feature'}</p>
+                    <p className="text-xs text-slate-500">{props.canFollowups ? 'Then send' : 'Available on eligible configurations'}</p>
                   </button>
                 </div>
                 <button

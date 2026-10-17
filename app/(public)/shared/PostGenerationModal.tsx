@@ -189,7 +189,7 @@ export function PostGenerationModal({
           <div>
             <TooltipButton
               label="Save to App"
-              tooltip="Save to QuoteCore+ (plans from $19/mo). Save, edit, send quotes and use all features of the app"
+              tooltip="Save to QuoteCore+ (current configurations from US$29/month; interactive demo available). Save, edit, send quotes and use all features of the app"
               onClick={onSaveToApp}
               variant="accent"
               icon={saveIcon}

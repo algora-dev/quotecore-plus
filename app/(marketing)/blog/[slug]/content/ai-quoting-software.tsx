@@ -171,7 +171,7 @@ export default function Post() {
         </li>
         <li>
           <strong>What does it cost?</strong> Per-quote pricing adds up. Subscription pricing with
-          unlimited use is more predictable. And access to the full app lets you test it on real jobs
+          unlimited use is more predictable. An interactive demo and free tools let you evaluate the workflow before subscribing
           before committing.
         </li>
       </ol>
@@ -209,7 +209,7 @@ export default function Post() {
         with unlimited scans, the component library with real product coverage rates, and integrated
         quote building from takeoff data -{' '}
         <a href="/free-trial">get started with QuoteCore+</a>. Every feature is
-        included, including the AI takeoff assistant, on paid plans with access to the full app.
+        included, including the AI takeoff assistant, on paid configurations, with an interactive demo and free tools available before subscribing.
       </p>
 
       <hr />

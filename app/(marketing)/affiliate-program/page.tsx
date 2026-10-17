@@ -385,8 +385,7 @@ export default function DistributorsPage() {
               </table>
             </div>
             <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
-              Examples use an illustrative $29 average monthly customer spend. QuoteCore paid plans start at $19/month,
-              with higher tiers available, so actual customer spend and commissions will vary.
+              Examples use an illustrative US$29 monthly customer spend, equal to the current starting configuration. Current global configurations can range up to US$259/month, so actual customer spend and commissions will vary.
             </p>
             <p className="mt-2 text-center text-xs leading-5 text-zinc-500">
               Illustrative example only. Actual earnings depend on customer plan, spend, retention, refunds, eligibility

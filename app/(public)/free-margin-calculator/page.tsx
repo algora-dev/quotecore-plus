@@ -575,7 +575,7 @@ function MarginCalculator() {
               inherits the default - type a margin into any line to override it, and clear the field to inherit the
               default again. The totals panel tracks total cost, gross profit, selling price and the blended margin
               across the whole quote, live as you type. It is the same per-line margin behaviour as the quote editor in
-              the full QuoteCore+ app - <Link href="/signup" className="text-[#BD4A1A] font-medium">plans from $19/mo</Link> when you
+              the full QuoteCore+ app - <Link href="/pricing" className="text-[#BD4A1A] font-medium">configurations from US$29/month</Link> when you
               want margins, measurements, material orders and invoicing connected.
             </p>
           </div>
@@ -619,7 +619,7 @@ function MarginCalculator() {
                   Is this calculator really free?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">Yes - the calculator itself is completely free, no signup required, with no limits on how many calculations you run. Everything calculates in your browser. The only limited feature is the AI quote import (photo upload or paste text), which has a small number of free scans per day and offers a free account for more. If you want quote tracking, follow-ups, digital takeoff and client management, <Link href="/signup" className="text-[#BD4A1A] font-medium">try QuoteCore+ free &rarr;</Link></p>
+                  <p className="text-sm text-slate-600">Yes - the calculator itself is completely free, no signup required, with no limits on how many calculations you run. Everything calculates in your browser. The only limited feature is the AI quote import (photo upload or paste text), which has a small number of free scans per day and offers a free account for more. If you want quote tracking, follow-ups, digital takeoff and client management, <Link href="/demo" className="text-[#BD4A1A] font-medium">explore the QuoteCore+ interactive demo &rarr;</Link></p>
                 </div>
               </details>
             </div>

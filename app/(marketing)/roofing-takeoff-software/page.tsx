@@ -158,7 +158,7 @@ export default function RoofingTakeoffSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Upload plans and measure roof areas, lengths and pitch digitally - on site from your phone or tablet, or at the office on desktop. AI Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Paid plans from $19 to $59/month.
+              Upload plans and measure roof areas, lengths and pitch digitally - on site from your phone or tablet, or at the office on desktop. AI Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Configurations from US$29/month through the pricing builder.
             </p>
 
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -170,7 +170,7 @@ export default function RoofingTakeoffSoftwarePage() {
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Access to the full app.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Explore the interactive demo before subscribing.</p>
 
             {/* Free product bridge */}
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-[#FF6B35]/30 bg-orange-50/50 px-5 py-4 text-left">
@@ -612,7 +612,7 @@ export default function RoofingTakeoffSoftwarePage() {
           </a>
 
           <p className="mt-4 text-sm text-zinc-500">
-            Free tools, no signup. access to the full app on paid plans.{" "}
+            Free tools, no signup. Explore the interactive demo before subscribing to the paid app.{" "}
             <a href="/pricing" className="underline hover:text-zinc-900">
               See pricing
             </a>

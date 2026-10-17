@@ -222,7 +222,7 @@ export default function Post() {
       </p>
       <h3>What does custom roofing software cost vs QuoteCore+?</h3>
       <p>
-        QuoteCore+ is a subscription from $19/month. A bespoke roofing platform is a
+        Current QuoteCore+ configurations start at US$29/month. A bespoke roofing platform is a
         five-to-six figure development project. If configuration solves your problem,
         that difference stays in your pocket.
       </p>

@@ -23,7 +23,7 @@ export default function Post() {
       <p>You can check the main trust signals here:</p>
       <ul>
         <li>live website at quote-core.com</li>
-        <li><Link href="/free-trial">free tools and paid plans from $19/month</Link></li>
+        <li><Link href="/free-trial">free tools, interactive demo and current pricing</Link></li>
         <li>free tools with no signup</li>
         <li>public contact email</li>
         <li>founder call option with Shaun</li>
@@ -113,7 +113,7 @@ export default function Post() {
       <hr />
 
       <h2>What happens after you get started?</h2>
-      <p>Your first 30 days are the best chance to test QuoteCore+ with a real workflow - and every plan includes access to the full app.</p>
+      <p>The interactive app demo and free tools are the best way to evaluate QuoteCore+ before subscribing. Once subscribed, test the workflow with real jobs and confirm it fits the way your business works.</p>
       <p>The best way to try it is not to click around randomly. It is to take one job you would normally quote manually and run it through the platform.</p>
       <p>A good first-month process looks like this:</p>
       <ol>

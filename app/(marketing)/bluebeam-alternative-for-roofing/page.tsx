@@ -19,8 +19,8 @@ const pageData: CompetitorPageData = {
     "sub": "Measure the roof, apply your saved pricing rules and produce the customer quote from the same job. Work on phone, tablet or desktop, with Smart Assistant for supported account questions and changes.",
     "qualifier": "Keep Bluebeam when you need its PDF editing, Studio collaboration, CAD workflows or established Excel links. QuoteCore+ is not a general PDF-document replacement.",
     "primaryCta": {
-      "href": "/pricing",
-      "label": "See paid plans"
+      "href": "/demo",
+      "label": "Explore interactive demo"
     },
     "ghostCta": {
       "href": "/free-roofing-takeoff-builder",
@@ -119,7 +119,7 @@ const pageData: CompetitorPageData = {
       {
         "number": "02",
         "title": "Review before using the quantities",
-        "body": "Check scale, pitch and visible geometry. With AI Scan Assist, review and correct the outline before component detection, then verify the result. The scan is assistance, not a guarantee."
+        "body": "Check scale, pitch and visible geometry before pricing. On a clear, correctly calibrated roof plan, AI Scan Assist can complete the roof geometry accurately. Plan quality and complexity determine when manual adjustment is more likely, and every result remains editable."
       },
       {
         "number": "03",
@@ -136,12 +136,12 @@ const pageData: CompetitorPageData = {
       "heading": "See the measurement and pricing workflow",
       "images": [
         {
-          "src": "/images/features/digital-roof-takeoff.png",
+          "src": "/marketing/current-ux/ai-scan-assist-completed-roof.webp",
           "alt": "QuoteCore+ roof takeoff showing colour-coded measurement lines over a roof plan",
           "caption": "Example takeoff view. Check the plan scale, roof outline and component measurements."
         },
         {
-          "src": "/images/features/smart-components-quote.png",
+          "src": "/marketing/current-ux/quote-builder-components-measurements.webp",
           "alt": "Smart Components applying material quantities and pricing inside a QuoteCore+ quote",
           "caption": "Example pricing view. Your saved material, labour and waste rules feed the quote."
         }
@@ -347,7 +347,7 @@ const pageData: CompetitorPageData = {
         },
         "qc": {
           "status": "yes",
-          "note": "Paid plans from $19/month; free standalone tools are separate."
+          "note": "Current QuoteCore+ configurations range from US$29 to US$259/month; free standalone tools are separate."
         }
       },
       {
@@ -398,7 +398,7 @@ const pageData: CompetitorPageData = {
       {
         "label": "Your main requirement is customer quoting",
         "competitor": "Check the PDF, spreadsheet and customer-document steps in your existing setup.",
-        "qc": "Paid plans start at $19/month. Compare the full workflow rather than assuming every tier is cheaper."
+        "qc": "Current configurations start at US$29/month. Compare the full workflow rather than assuming the lowest headline price covers the same job."
       }
     ],
     "scenarioNote": "Illustrative workflow comparisons, not equivalent bundles. External imagery, measurement reports, setup time and separately required services are not included in the QuoteCore+ subscription."
@@ -469,7 +469,7 @@ const pageData: CompetitorPageData = {
     },
     {
       "question": "Is there a free QuoteCore+ app plan?",
-      "answer": "No. The app is paid, with plans from $19/month and access to the full app. Separate free tools can be used without signing up, but they are not a free account with the full app's saved workspace and capabilities."
+      "answer": "No. QuoteCore+ does not offer a full-app trial. The interactive app demo and separate free tools let you evaluate the workflow before subscribing. Current paid configurations range from US$29 to US$259/month and are built through the pricing tool."
     },
     {
       "question": "Is switching from Bluebeam automatic?",
@@ -529,8 +529,8 @@ const pageData: CompetitorPageData = {
   ],
   "finalCta": {
     "heading": "Make the next measured job easier to quote",
-    "body": "Work with your measurements and your pricing, from site or office. Review paid plans for saved jobs and connected workflows, or use a separate free tool first.",
-    "ctaLabel": "See paid plans"
+    "body": "Work with your measurements and your pricing, from site or office. Explore the prepared app demo first, then build a paid configuration if the workflow fits.",
+    "ctaLabel": "Explore interactive demo"
   }
 };
 

@@ -29,7 +29,7 @@ export function FinalCtaSection({ config }: { config: Pick<HomepageConfig, 'demo
         <article className={c.path}>
           <span className={c.icon}><Icon name="people" size={23} /></span>
           <h3>Let’s talk it through.</h3>
-          <p>A free 15-minute demo call. Tell us how you work and ask what you need.</p>
+          <p>A free 20-minute tailored demo call. Tell us how you work and ask what you need.</p>
           <div className={c.actions}><DemoCallButton bookingHref={config.bookingHref} label="Book a free call" location="final-cta" /></div>
           <a className={c.setupLink} href="/done-for-you-setup" target="_blank" rel="noopener noreferrer">Want us to set it up? Explore Done For You<Icon name="arrow" size={14} /></a>
         </article>

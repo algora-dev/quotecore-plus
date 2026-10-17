@@ -11,11 +11,11 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Roofing Quoting Software | QuoteCore+",
   description:
-    "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, AI Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Paid plans from $19 to $59/month.",
+    "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, AI Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Configurations from US$29/month through the pricing builder.",
   openGraph: {
     title: "Roofing Quoting Software | QuoteCore+",
     description:
-      "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, AI Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Paid plans from $19 to $59/month.",
+      "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, AI Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Configurations from US$29/month through the pricing builder.",
     url: "/roofing-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -136,7 +136,7 @@ const faqs = [
   },
   {
     q: "How do plans and free tools work?",
-    a: "The free tools are unlimited and need no signup. Paid plans start at $19/month with access to the full app.",
+    a: "The free tools are unlimited and need no signup. Current paid configurations start at US$29/month; the interactive demo is available before subscribing.",
   },
   {
     q: "Can I create and manage quotes from my phone?",
@@ -257,7 +257,7 @@ export default function RoofingQuotingSoftwarePage() {
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Access to the full app.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Explore the interactive demo before subscribing.</p>
           </div>
         </section>
 
@@ -640,7 +640,7 @@ export default function RoofingQuotingSoftwarePage() {
             Get started with QuoteCore+
           </a>
 
-          <p className="mt-4 text-sm text-zinc-500">Free tools, no signup. access to the full app on paid plans. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
+          <p className="mt-4 text-sm text-zinc-500">Free tools, no signup. Explore the interactive demo before subscribing to the paid app. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
         </section>
 
         <SiteFooter />

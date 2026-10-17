@@ -19,8 +19,8 @@ const pageData: CompetitorPageData = {
     "sub": "Measure roofing plans, apply saved component rules and prepare the quote in one connected workflow. Work on your phone, tablet or desktop instead of reserving the takeoff for a Windows workstation.",
     "qualifier": "PlanSwift has established takeoff, assemblies and AI tools. QuoteCore+ is an alternative for the workflow you need, not an automatic converter for your existing PlanSwift setup.",
     "primaryCta": {
-      "href": "/pricing",
-      "label": "See paid plans"
+      "href": "/demo",
+      "label": "Explore interactive demo"
     },
     "ghostCta": {
       "href": "/free-roofing-takeoff-builder",
@@ -119,7 +119,7 @@ const pageData: CompetitorPageData = {
       {
         "number": "02",
         "title": "Review before using the quantities",
-        "body": "Check scale, pitch and visible geometry. With AI Scan Assist, review and correct the outline before component detection, then verify the result. The scan is assistance, not a guarantee."
+        "body": "Check scale, pitch and visible geometry before pricing. On a clear, correctly calibrated roof plan, AI Scan Assist can complete the roof geometry accurately. Plan quality and complexity determine when manual adjustment is more likely, and every result remains editable."
       },
       {
         "number": "03",
@@ -136,12 +136,12 @@ const pageData: CompetitorPageData = {
       "heading": "See the measurement and pricing workflow",
       "images": [
         {
-          "src": "/images/features/digital-roof-takeoff.png",
+          "src": "/marketing/current-ux/ai-scan-assist-completed-roof.webp",
           "alt": "QuoteCore+ roof takeoff showing colour-coded measurement lines over a roof plan",
           "caption": "Example takeoff view. Check the plan scale, roof outline and component measurements."
         },
         {
-          "src": "/images/features/smart-components-quote.png",
+          "src": "/marketing/current-ux/quote-builder-components-measurements.webp",
           "alt": "Smart Components applying material quantities and pricing inside a QuoteCore+ quote",
           "caption": "Example pricing view. Your saved material, labour and waste rules feed the quote."
         }
@@ -182,7 +182,7 @@ const pageData: CompetitorPageData = {
         },
         "qc": {
           "status": "yes",
-          "note": "AI Scan Assist: scan, review the outline, then detect and check components."
+          "note": "AI Scan Assist can complete clear, correctly calibrated roof geometry; every result remains editable."
         }
       },
       {
@@ -248,7 +248,7 @@ const pageData: CompetitorPageData = {
         },
         "qc": {
           "status": "yes",
-          "note": "Paid plans from $19/month; free standalone tools are separate."
+          "note": "Current QuoteCore+ configurations range from US$29 to US$259/month; free standalone tools are separate."
         }
       },
       {
@@ -289,7 +289,7 @@ const pageData: CompetitorPageData = {
       {
         "label": "One estimator choosing a paid plan",
         "competitor": "Compare the annual Essential or Core seat licence and required features.",
-        "qc": "Choose a monthly app tier for quote volume and capabilities, starting at $19/month."
+        "qc": "Build a monthly configuration around the features and usage you need, starting at US$29/month."
       },
       {
         "label": "Existing customized estimating setup",
@@ -365,7 +365,7 @@ const pageData: CompetitorPageData = {
     },
     {
       "question": "Is there a free QuoteCore+ app plan?",
-      "answer": "No. The app is paid, with plans from $19/month and access to the full app. Separate free tools can be used without signing up, but they are not a free account with the full app's saved workspace and capabilities."
+      "answer": "No. QuoteCore+ does not offer a full-app trial. The interactive app demo and separate free tools let you evaluate the workflow before subscribing. Current paid configurations range from US$29 to US$259/month and are built through the pricing tool."
     },
     {
       "question": "Is switching from PlanSwift automatic?",
@@ -435,8 +435,8 @@ const pageData: CompetitorPageData = {
   ],
   "finalCta": {
     "heading": "Make the next measured job easier to quote",
-    "body": "Work with your measurements and your pricing, from site or office. Review paid plans for saved jobs and connected workflows, or use a separate free tool first.",
-    "ctaLabel": "See paid plans"
+    "body": "Work with your measurements and your pricing, from site or office. Explore the prepared app demo first, then build a paid configuration if the workflow fits.",
+    "ctaLabel": "Explore interactive demo"
   }
 };
 

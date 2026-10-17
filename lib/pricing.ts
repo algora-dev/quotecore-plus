@@ -1,3 +1,4 @@
+/** LEGACY ADMIN COMPATIBILITY DATA. Do not use this module for public marketing, pricing UI, metadata or schema. */
 export type CurrencyCode = "USD" | "GBP";
 
 export type PricingPlan = {

@@ -44,7 +44,7 @@ const FAQS = [
   {
     question: 'How do I get the full app?',
     answer:
-      'Our free tools work instantly with no signup. For the full workflow on your own plans, choose a paid plan from $19/month.',
+      'Our free tools work instantly with no signup. For the full connected workflow, build a paid configuration in the pricing tool. Current global configurations range from US$29 to US$259 per month, and the interactive app demo is available before subscribing.',
   },
 ];
 
@@ -110,7 +110,7 @@ export default function TakeoffDemoPage() {
           <div className="mt-4">
             <YouTubeLite videoId="pqIfx-rOcmo" title="Create a Quote from Start to Finish with QuoteCore+" showTitle rounded />
           </div>
-            <TrialCTA label="Get started with QuoteCore+ - from $19/month" className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]" />
+            <TrialCTA label="Build your QuoteCore+ plan - from US$29/month" className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]" />
         </div>
       </section>
 
@@ -129,8 +129,7 @@ export default function TakeoffDemoPage() {
           <div>
             <h3 className="text-base font-semibold text-slate-900">2. Measure or verify on the plan</h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Check the AI&apos;s measurements on the plan and adjust them, or skip the scan entirely and measure
-              manually with the drawing tools. Every measurement you place feeds straight into the quote.
+              Review the AI measurements on the plan and adjust them if needed, or skip the scan entirely and measure manually with the drawing tools. Every measurement you place feeds straight into the quote.
             </p>
           </div>
           <div>
@@ -149,8 +148,7 @@ export default function TakeoffDemoPage() {
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Measure manually or scan with AI</h2>
           <p className="mt-4 text-sm leading-relaxed text-slate-600">
             Most takeoff tools give you one way of working. In this demo - exactly as in the full app - both modes live
-            in the same workstation. Use AI Scan Assist to find the roof areas and components automatically, then fine-tune
-            anything it missed with the manual drawing tools. Or start from a blank canvas and measure the whole plan
+            in the same workstation. On a clear, correctly calibrated plan, AI Scan Assist can complete suitable roof geometry automatically. Review the result and use the manual drawing tools only where adjustments are needed. Or start from a blank canvas and measure the whole plan
             yourself, placing points and lines with the same precision tools. Either route ends in the same place: a
             priced, customer-ready quote.
           </p>
@@ -161,7 +159,7 @@ export default function TakeoffDemoPage() {
       <section className="mx-auto max-w-3xl px-4 py-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Take it into the full app</h2>
         <p className="mt-4 text-sm leading-relaxed text-slate-600">
-          This is the real workstation. Try the free tools with no signup, or start in the app from $19/month.
+          This is the real workstation. Try the free tools with no signup, explore the full interactive app demo, or build a paid configuration from US$29/month.
         </p>
         <TrialCTA />
       </section>

@@ -19,8 +19,8 @@ const pageData: CompetitorPageData = {
     "sub": "Keep the roofing job in one place from plan or site dimensions to customer quote. Work from your phone, tablet or desktop, and ask Smart Assistant to retrieve account information or propose supported changes.",
     "qualifier": "STACK already connects takeoff and estimating and now advertises conversational actions through STACK IQ. QuoteCore+ is an alternative in scope and workflow, not the only app with an assistant.",
     "primaryCta": {
-      "href": "/pricing",
-      "label": "See paid plans"
+      "href": "/demo",
+      "label": "Explore interactive demo"
     },
     "ghostCta": {
       "href": "/free-roofing-takeoff-builder",
@@ -114,12 +114,12 @@ const pageData: CompetitorPageData = {
       {
         "number": "01",
         "title": "Measure or enter known dimensions",
-        "body": "Measure the roofing plan on phone, tablet or desktop. Use AI Scan Assist in stages with outline review and component checks. Alternatively, enter dimensions you have already checked."
+        "body": "Measure the roofing plan on phone, tablet or desktop. Use AI Scan Assist to complete suitable roof geometry quickly, with every result remaining editable. Alternatively, enter dimensions you have already checked."
       },
       {
         "number": "02",
         "title": "Review before using the quantities",
-        "body": "Check scale, pitch and visible geometry. With AI Scan Assist, review and correct the outline before component detection, then verify the result. The scan is assistance, not a guarantee."
+        "body": "Check scale, pitch and visible geometry before pricing. On a clear, correctly calibrated roof plan, AI Scan Assist can complete the roof geometry accurately. Plan quality and complexity determine when manual adjustment is more likely, and every result remains editable."
       },
       {
         "number": "03",
@@ -136,12 +136,12 @@ const pageData: CompetitorPageData = {
       "heading": "See the measurement and pricing workflow",
       "images": [
         {
-          "src": "/images/features/digital-roof-takeoff.png",
+          "src": "/marketing/current-ux/ai-scan-assist-completed-roof.webp",
           "alt": "QuoteCore+ roof takeoff showing colour-coded measurement lines over a roof plan",
           "caption": "Example takeoff view. Check the plan scale, roof outline and component measurements."
         },
         {
-          "src": "/images/features/smart-components-quote.png",
+          "src": "/marketing/current-ux/quote-builder-components-measurements.webp",
           "alt": "Smart Components applying material quantities and pricing inside a QuoteCore+ quote",
           "caption": "Example pricing view. Your saved material, labour and waste rules feed the quote."
         }
@@ -314,7 +314,7 @@ const pageData: CompetitorPageData = {
         },
         "qc": {
           "status": "yes",
-          "note": "Paid plans from $19/month; free standalone tools are separate."
+          "note": "Current QuoteCore+ configurations range from US$29 to US$259/month; free standalone tools are separate."
         }
       },
       {
@@ -371,7 +371,7 @@ const pageData: CompetitorPageData = {
       {
         "label": "You need integrated estimates and proposals",
         "competitor": "Check Pro and any required add-ons, not only the lower Premium headline.",
-        "qc": "Choose a paid tier for your quote volume and supported features, from $19/month."
+        "qc": "Build a paid configuration around the features and usage you need, from US$29/month."
       },
       {
         "label": "You need conversational actions",
@@ -447,7 +447,7 @@ const pageData: CompetitorPageData = {
     },
     {
       "question": "Is there a free QuoteCore+ app plan?",
-      "answer": "No. The app is paid, with plans from $19/month and access to the full app. Separate free tools can be used without signing up, but they are not a free account with the full app's saved workspace and capabilities."
+      "answer": "No. QuoteCore+ does not offer a full-app trial. The interactive app demo and separate free tools let you evaluate the workflow before subscribing. Current paid configurations range from US$29 to US$259/month and are built through the pricing tool."
     },
     {
       "question": "Is switching from STACK automatic?",
@@ -512,8 +512,8 @@ const pageData: CompetitorPageData = {
   ],
   "finalCta": {
     "heading": "Make the next measured job easier to quote",
-    "body": "Work with your measurements and your pricing, from site or office. Review paid plans for saved jobs and connected workflows, or use a separate free tool first.",
-    "ctaLabel": "See paid plans"
+    "body": "Work with your measurements and your pricing, from site or office. Explore the prepared app demo first, then build a paid configuration if the workflow fits.",
+    "ctaLabel": "Explore interactive demo"
   }
 };
 
@@ -524,7 +524,7 @@ const threeWays: ThreeWaysToWorkProps = {
   "cards": [
     {
       "title": "Measure in the app",
-      "body": "Measure the roofing plan on phone, tablet or desktop. Use AI Scan Assist in stages with outline review and component checks.",
+      "body": "Measure the roofing plan on phone, tablet or desktop. Use AI Scan Assist to complete suitable roof geometry quickly, with every result remaining editable.",
       "href": "/features/digital-roof-takeoff",
       "linkLabel": "Explore digital takeoff"
     },

@@ -11,11 +11,11 @@ export const metadata: Metadata = {
   // Root layout appends "| QuoteCore+" via template - do NOT add brand suffix here (avoids suffix doubling)
   title: "Contractor Estimating & Quoting Software for Construction",
   description:
-    "Contractor estimating and quoting software for trades - build estimates and quotes from measurements on site or in the office, with digital takeoff, Smart Components, material ordering, invoicing and Smart Assistant. Free tools and paid plans from $19/month with access to the full app.",
+    "Contractor estimating and quoting software for trades - build estimates and quotes from measurements on site or in the office, with digital takeoff, Smart Components, material ordering, invoicing and Smart Assistant. Free tools with no signup; paid configurations from US$29/month.",
   openGraph: {
     title: "Contractor Estimating & Quoting Software | QuoteCore+",
     description:
-      "Contractor estimating and quoting software for trades - build estimates and quotes from measurements on site or in the office. Free tools and paid plans from $19/month.",
+      "Contractor estimating and quoting software for trades - build estimates and quotes from measurements on site or in the office. Free tools with no signup; paid configurations from US$29/month.",
     url: "/construction-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -117,7 +117,7 @@ const faqSchema = {
       name: "Can I try it before paying?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Our free tools work instantly with no signup, and every paid plan includes access to the full app.",
+        text: "Yes. Our free tools work instantly with no signup, and current paid configurations start at US$29/month, with the interactive app demo available before subscribing.",
       },
     },
     {
@@ -247,7 +247,7 @@ const faqs = [
   },
   {
     q: "Can I try it before paying?",
-    a: "Yes. Our free tools work instantly with no signup, and every paid plan includes access to the full app.",
+    a: "Yes. Our free tools work instantly with no signup, and current paid configurations start at US$29/month, with the interactive app demo available before subscribing.",
   },
   {
     q: "Who do I contact with questions?",
@@ -385,7 +385,7 @@ export default function ConstructionQuotingSoftwarePage() {
                 Quick answer
               </p>
               <p className="text-sm leading-6 text-zinc-600">
-                Quoting software for contractors turns measurements, labour and material prices into a professional, priced quote - without spreadsheets or re-typed numbers. It is built for contractors, builders, roofers, plasterers and subcontractors who quote from measurements or plans. Try the free tools with no signup, then choose a paid plan from $19/month with access to the full app - so you can move to a connected quoting workflow with confidence.
+                Quoting software for contractors turns measurements, labour and material prices into a professional, priced quote - without spreadsheets or re-typed numbers. It is built for contractors, builders, roofers, plasterers and subcontractors who quote from measurements or plans. Try the free tools with no signup, then build a paid configuration from US$29/month through the pricing tool - so you can move to a connected quoting workflow with confidence.
               </p>
             </div>
 
@@ -407,7 +407,7 @@ export default function ConstructionQuotingSoftwarePage() {
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-400">Free tools forever. access to the full app on paid plans.</p>
+            <p className="mt-3 text-sm text-zinc-400">Free tools forever. Interactive demo available before subscribing.</p>
 
             <p className="mt-3 text-sm text-zinc-500">
               Already have spreadsheets, price lists or quote templates?{" "}
@@ -418,11 +418,7 @@ export default function ConstructionQuotingSoftwarePage() {
               <span className="font-semibold text-zinc-950">Simple pricing:</span>
               <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Free tools</a>
               <span className="text-zinc-300">·</span>
-              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Starter $19/mo</a>
-              <span className="text-zinc-300">·</span>
-              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Pro $39/mo</a>
-              <span className="text-zinc-300">·</span>
-              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Pro Plus $59/mo</a>
+              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Configurations from US$29/mo</a>
             </div>
           </div>
         </section>
@@ -498,12 +494,10 @@ export default function ConstructionQuotingSoftwarePage() {
         <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
           <div className="rounded-[2rem] border border-zinc-200 bg-zinc-50 px-7 py-8">
             <h2 className="text-2xl font-semibold text-zinc-950">How much does it cost?</h2>
-            <p className="mt-3 text-zinc-600">Simple monthly plans in USD. Paid plans from $19/month, each with access to the full app.</p>
+            <p className="mt-3 text-zinc-600">Configurable monthly pricing in USD. Current global configurations range from US$29 to US$259/month, built through the pricing tool.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-4">
               {[
-                { name: "Starter", price: "$19/mo", note: "Quoting + templates" },
-                { name: "Pro", price: "$39/mo", note: "Takeoff + AI Scan Assist" },
-                { name: "Pro Plus", price: "$59/mo", note: "Everything included" },
+                { name: "Configurable", price: "US$29+", note: "Build your setup in the pricing tool" },
               ].map((p) => (
                 <div key={p.name} className="rounded-2xl border border-zinc-200 bg-white px-5 py-4">
                   <p className="text-sm font-semibold text-zinc-950">{p.name}</p>
@@ -618,7 +612,7 @@ export default function ConstructionQuotingSoftwarePage() {
           </div>
           <div className="mt-10 text-center">
             <a href="/free-trial" className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">Get started</a>
-            <p className="mt-3 text-sm text-zinc-400">Free tools forever. access to the full app on paid plans.</p>
+            <p className="mt-3 text-sm text-zinc-400">Free tools forever. Interactive demo available before subscribing.</p>
           </div>
         </section>
 
@@ -1006,7 +1000,7 @@ export default function ConstructionQuotingSoftwarePage() {
             Get started
           </a>
 
-          <p className="mt-4 text-sm text-zinc-400">Free tools forever. access to the full app on paid plans. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
+          <p className="mt-4 text-sm text-zinc-400">Free tools forever. Interactive demo available before subscribing. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
         </section>
 
         <SiteFooter />

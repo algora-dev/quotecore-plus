@@ -465,7 +465,7 @@ export default function CareersPage() {
                     "Waste rules where required",
                     "QuoteCore+ account setup",
                     "Personalised walkthrough and training",
-                    "6 months QuoteCore+ Pro included",
+                    "6 months of your agreed QuoteCore+ subscription included",
                     "6 months setup and product support",
                   ]}
                 />
@@ -486,7 +486,7 @@ export default function CareersPage() {
                     "Help organising larger pricing lists or catalogues",
                     "More detailed workflow configuration",
                     "Personalised training on their own setup",
-                    "6 months QuoteCore+ Pro included",
+                    "6 months of your agreed QuoteCore+ subscription included",
                     "6 months setup and product support",
                   ]}
                 />

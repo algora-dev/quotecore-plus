@@ -1,272 +1,125 @@
-import type { Metadata } from "next";
-import Script from "next/script";
-import Link from "next/link";
-import DemoCTACard from "@/components/DemoCTACard";
-import BlogHeader from "@/components/BlogHeader";
-import Breadcrumbs from "@/components/Breadcrumbs";
-import SiteFooter from "@/components/SiteFooter";
-import { MarketingCalculator } from "@/app/components/pricing/MarketingCalculator";
-import { pricingPlans } from "@/lib/pricing";
-import { buildBreadcrumbSchema, buildFaqSchema, buildPricingOffers } from "@/lib/schema";
-import { hreflangLanguages } from "@/lib/seo/hreflang";
+import type { Metadata } from 'next';
+import { MarketingCalculator } from '@/app/components/pricing/MarketingCalculator';
+import {
+  BulletList,
+  Container,
+  ConversionPaths,
+  FaqAccordion,
+  FeatureGrid,
+  FinalCta,
+  Hero,
+  PageScaffold,
+  ProductFrame,
+  Section,
+  SectionHeader,
+  SplitFeature,
+  type FaqItem,
+} from '@/components/marketing/page-v2/PageV2';
+import { buildBreadcrumbSchema, buildFaqSchema, buildPricingOffers } from '@/lib/schema';
+import { publicPricing } from '@/lib/public-pricing';
+import { hreflangLanguages } from '@/lib/seo/hreflang';
 
 export const metadata: Metadata = {
-  title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
-  description:
-    "Compare QuoteCore+ paid plans from $19 to $59/month, each with access to the full app. Takeoff, Smart Components, invoicing, and material ordering included.",
-  alternates: {
-    canonical: "https://quote-core.com/pricing",
-    languages: hreflangLanguages("/pricing"),
-  },
+  title: 'QuoteCore+ Pricing | Build Your Estimating & Quoting Plan',
+  description: 'Build a QuoteCore+ plan around your workload and the tools you need. Current global configurations range from US$29 to US$259/month. Explore demos, free tools and Done For You Setup.',
+  alternates: { canonical: 'https://quote-core.com/pricing', languages: hreflangLanguages('/pricing') },
   openGraph: {
-    title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
-    description: "Compare QuoteCore+ paid plans from $19 to $59/month with access to the full app.",
-    url: "https://quote-core.com/pricing",
-    siteName: "QuoteCore+",
-    type: "website",
+    title: 'QuoteCore+ Pricing | Build Your Estimating & Quoting Plan',
+    description: 'Configure the workload and tools you need. Current global QuoteCore+ configurations range from US$29 to US$259/month.',
+    url: 'https://quote-core.com/pricing', siteName: 'QuoteCore+', type: 'website',
   },
 };
 
-const pricingSchema = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "@id": "https://quote-core.com/#software",
-  name: "QuoteCore+",
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
-  url: "https://quote-core.com/pricing",
-  offers: [buildPricingOffers("USD")],
-};
-
-const breadcrumbSchema = buildBreadcrumbSchema([
-  { name: "Home", url: "https://quote-core.com" },
-  { name: "Pricing", url: "https://quote-core.com/pricing" },
-]);
-
-const faqs = [
-  {
-    question: "Do you offer a free trial?",
-    answer: "We offer permanent free tools with no signup. For the full app workflow, choose a paid plan and activate your workspace.",
-  },
-  {
-    question: "Can I use anything for free without paying?",
-    answer: "Yes. Our free tools - takeoff builder, roofing calculator, quote generator, invoice generator and more - are free forever with no signup. The connected app workflow (quotes to orders to invoicing) is part of the paid plans.",
-  },
-  {
-    question: "Which currencies are shown?",
-    answer: "This global pricing page shows current monthly prices in US dollars. Taxes are calculated where applicable.",
-  },
+const faqs: FaqItem[] = [
+  { question: 'How much does QuoteCore+ cost?', answer: `QuoteCore+ uses configurable monthly pricing built around your workload and selected tools. Current global configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month. Use the pricing builder on this page to choose your workload and tools and see the resulting monthly price.` },
+  { question: 'What is the cheapest QuoteCore+ setup?', answer: `The current global pricing builder starts at US$${publicPricing.monthlyMin} per month for the minimum public configuration. Your exact monthly price changes with the workload and optional tools you choose.` },
+  { question: 'What can make my monthly price higher?', answer: 'The pricing builder changes the monthly total based on your core job or quote allowance and optional usage such as Digital Takeoff, AI Scan Assist, offcut optimisation and Smart Assistant. The builder shows the total before you continue.' },
+  { question: 'Is there a free trial?', answer: 'No. There is no full-app trial. You can explore the interactive app demo, use the free browser tools with no signup, try the focused takeoff demo, or book a tailored product demo before subscribing.' },
+  { question: 'Can I try QuoteCore+ before subscribing?', answer: 'Yes. The interactive app demo gives you a prepared fictional roofing workspace to explore, and the free tools let you complete practical takeoff, measurement, pricing and document tasks without a paid account.' },
+  { question: 'Can I change my configuration later?', answer: 'The public pricing model is built around configurable usage and tools. Use the current app and billing controls for any available subscription changes after signup.' },
+  { question: 'Is Done For You included in the monthly subscription?', answer: `No. Done For You Setup is a separate one-time service starting from US$${publicPricing.doneForYouStarting}. It is for businesses that want QuoteCore+ to help configure agreed materials, labour, waste and pricing logic and then train them using their own workflow.` },
+  { question: 'Are taxes included?', answer: 'The pricing builder displays the subscription price before any tax treatment that may apply to your location. The checkout flow is the final source for applicable taxes and the amount charged.' },
 ];
 
-const faqSchema = buildFaqSchema(faqs);
-
-// Card styling per tier - richer treatment on higher tiers draws the eye up-range
-function planStyles(plan: (typeof pricingPlans)[number]): string {
-  const premium = plan.name === "Pro Plus";
-  if (plan.featured) {
-    return "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)] hover:border-[#BD4A1A] hover:shadow-[0_26px_64px_rgba(189,74,26,0.22)]";
-  }
-  if (premium) {
-    return "border-zinc-300 bg-gradient-to-b from-white to-zinc-50 shadow-[0_10px_36px_rgba(24,24,27,0.07)] hover:border-zinc-400 hover:shadow-[0_22px_54px_rgba(24,24,27,0.15)]";
-  }
-  return "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]";
-}
-
-const dfyPackages = [
-  {
-    name: "Done-For-You Estimating Setup",
-    price: "$499",
-    tagline: "Best for smaller estimating setups or contractors with a focused range of products and services.",
-    items: [
-      "Up to 20 custom components built for you",
-      "Your material pricing configured",
-      "Labour and waste rules configured",
-      "Personalised training",
-      "6 months setup and product support",
-      "6 months QuoteCore+ Pro included",
-    ],
-  },
-  {
-    name: "Complete Done-For-You Setup",
-    price: "$999",
-    tagline: "Best for larger or more detailed estimating systems.",
-    highlight: true,
-    items: [
-      "Up to 60 custom components built for you",
-      "Larger material and pricing setup",
-      "More complex labour and waste configurations",
-      "Help organising larger pricing lists or catalogues",
-      "More detailed workflow configuration",
-    ],
-  },
+const schemas = [
+  { '@context': 'https://schema.org', '@type': 'SoftwareApplication', '@id': 'https://quote-core.com/#software', name: 'QuoteCore+', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', url: 'https://quote-core.com/pricing', offers: buildPricingOffers('USD') },
+  buildBreadcrumbSchema([{ name: 'Home', url: 'https://quote-core.com/' }, { name: 'Pricing', url: 'https://quote-core.com/pricing' }]),
+  buildFaqSchema(faqs),
 ];
 
 export default function PricingPage() {
-  const customSetupUi = process.env.CUSTOM_SETUP_UI_ENABLED === "true";
   return (
-    <>
-      <Script id="pricing-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingSchema) }} />
-      <Script id="pricing-breadcrumb-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <Script id="pricing-faq-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <BlogHeader />
-      <main className="bg-white text-zinc-950">
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Pricing" }]} />
-        {customSetupUi ? (
-          <section className="pb-6">
-            <h1 className="sr-only">QuoteCore+ pricing</h1>
-            <MarketingCalculator />
-          </section>
-        ) : (
-        <>
-        <section className="mx-auto max-w-7xl px-6 pb-14 pt-12 text-center lg:px-8 lg:pb-20">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">Simple monthly plans</p>
-          <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-            QuoteCore+ pricing for every stage of a roofing business.
-          </h1>
-          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-zinc-600">
-            Try the free tools with no signup, then choose a plan from $19/month to activate the full app workflow. Compare each plan by its real quote, storage and AI Scan Assist limits before you choose.
-          </p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Get started
-            </Link>
-            <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 px-7 text-sm font-semibold text-zinc-900 transition-colors hover:border-zinc-500">
-              Compare features
-            </Link>
-          </div>
-        </section>
+    <PageScaffold breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Pricing' }]} schemas={schemas}>
+      <Hero
+        eyebrow="QuoteCore+ pricing"
+        title={<>Build a plan around the way you work.</>}
+        lead={`Choose your workload and the tools you need. The pricing builder creates the monthly setup and shows the price before you continue. Current global configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month.`}
+        body="There is no full-app trial. If you want to try the workflow first, explore the interactive demo, use the free tools or book a tailored product demo."
+        primary={{ href: '#build-your-plan', label: 'Build your plan' }}
+        secondary={{ href: '/demo', label: 'Explore the interactive demo' }}
+        proof={['One configurable monthly price', 'See the total before signup', 'Free tools and demos available first']}
+        visual={<ProductFrame src="/marketing/current-ux/job-space-overview.webp" alt="Current QuoteCore+ Job Space overview" width={2048} height={1112} eager caption="The pricing configuration changes with the tools and usage you choose. The goal remains one connected job workflow." />}
+      />
 
-        <section className="border-y border-zinc-200 bg-zinc-50 py-16">
-          <div className="mx-auto grid max-w-7xl items-stretch gap-6 px-6 sm:grid-cols-2 lg:grid-cols-3 lg:px-8">
-            {pricingPlans.map((plan) => (
-              <article
-                key={plan.name}
-                className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${planStyles(plan)}`}
-              >
-                {plan.featured && <span className="absolute -top-3 right-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
-                <h2 className="text-xl font-semibold">{plan.displayName}</h2>
-                <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{plan.subtitle}</p>
-                <div className="mt-6">
-                  <div className="flex min-h-[92px] w-full flex-col justify-center rounded-xl border border-zinc-200/80 bg-white/60 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USD</p>
-                    <p className="mt-1 text-2xl font-semibold">{plan.usd}</p>
-                    {!plan.isFree && !plan.contactUs && <p className="text-xs text-zinc-500">per month</p>}
-                  </div>
-                </div>
-                {plan.originalUsd && (
-                  <p className="mt-3 text-xs text-zinc-500">Regular monthly price: <s>{plan.originalUsd} USD</s></p>
-                )}
-                <ul className="mt-6 flex-1 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex gap-3 text-sm text-zinc-700">
-                      <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#BD4A1A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <a href={plan.contactUs ? "/contact" : "https://app.quote-core.com/signup?utm_source=pricing"} className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${plan.featured ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
-                  {plan.contactUs ? "Contact us" : plan.isFree ? "Get started" : "Choose this plan"}
-                </a>
-              </article>
-            ))}
-            {dfyPackages.map((pkg) => (
-              <article
-                key={pkg.name}
-                className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${pkg.highlight ? "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)]" : "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]"}`}
-              >
-                {pkg.highlight && <span className="absolute -top-3 right-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most complete</span>}
-                <h2 className="text-xl font-semibold">{pkg.name}</h2>
-                <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{pkg.tagline}</p>
-                <div className="mt-6">
-                  <div className="flex min-h-[92px] w-full flex-col justify-center rounded-xl border border-zinc-200/80 bg-white/60 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USD</p>
-                    <p className="mt-1 text-2xl font-semibold">{pkg.price}</p>
-                    <p className="text-xs text-zinc-500">one-time setup</p>
-                  </div>
-                </div>
-                <ul className="mt-6 flex-1 space-y-3">
-                  {pkg.items.map((item) => (
-                    <li key={item} className="flex gap-3 text-sm text-zinc-700">
-                      <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#BD4A1A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/done-for-you-setup" className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${pkg.highlight ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
-                  See what is included
-                </Link>
-              </article>
-            ))}
-          </div>
-          <p className="mx-auto mt-8 max-w-3xl px-6 text-center text-sm text-zinc-600">All prices are shown in USD. Taxes are calculated at checkout where applicable.</p>
-        </section>
-        </>
-        )}
+      <Section tone="soft" id="build-your-plan">
+        <Container>
+          <SectionHeader eyebrow="Pricing builder" title="Choose the tools and usage that earn their place." lead="Answer the questions in the builder to see the current monthly configuration before you continue to signup." />
+        </Container>
+        <MarketingCalculator />
+      </Section>
 
-        <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">Pricing questions</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Know what happens before you start.</h2>
-          </div>
-          <div className="mt-10 divide-y divide-zinc-200 border-y border-zinc-200">
-            {faqs.map((faq) => (
-              <div key={faq.question} className="py-6">
-                <h3 className="font-semibold text-zinc-950">{faq.question}</h3>
-                <p className="mt-2 leading-7 text-zinc-600">{faq.answer}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+      <Section>
+        <Container>
+          <SectionHeader eyebrow="What changes the price" title="Pay for the workload and tools you choose." lead="The builder combines the core workload with the optional tools and allowances that match how you expect to use QuoteCore+." />
+          <FeatureGrid columns={3} items={[
+            { title: 'Core workload', body: <p>Your expected job or quote volume sets the core allowance used by the builder.</p> },
+            { title: 'Digital Takeoff', body: <p>Add the in-app plan measurement workspace when you want to measure drawings directly in QuoteCore+.</p> },
+            { title: 'AI Scan Assist', body: <p>Choose the AI Scan Assist allowance that fits how often you expect to automate roof-plan takeoff.</p> },
+            { title: 'Offcut optimisation', body: <p>Add offcut and cut-plan capability when it belongs in your roofing workflow.</p> },
+            { title: 'Smart Assistant', body: <p>Choose an Assistant allowance based on how much help you expect to use across supported account tasks.</p> },
+            { title: 'One monthly total', body: <p>The builder combines the choices into one monthly price before you continue to signup.</p> },
+          ]} />
+        </Container>
+      </Section>
 
-        {/* Related */}
-        <section className="mx-auto max-w-7xl px-6 pb-20 lg:px-8">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Related</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <a href="/roofsnap-alternative" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">RoofSnap alternative</p>
-              <p className="mt-1 text-sm text-zinc-600">How our pricing and workflow compare.</p>
-            </a>
-            <a href="/eagleview-alternative" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">EagleView alternative</p>
-              <p className="mt-1 text-sm text-zinc-600">Per-report costs vs a flat subscription.</p>
-            </a>
-            <a href="/planswift-alternative" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">PlanSwift alternative</p>
-              <p className="mt-1 text-sm text-zinc-600">US$2,000/seat/yr vs paid QuoteCore+ plans.</p>
-            </a>
-            <a href="/features" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Features</p>
-              <p className="mt-1 text-sm text-zinc-600">See what is included in each plan.</p>
-            </a>
-            <a href="/trust" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Trust and security</p>
-              <p className="mt-1 text-sm text-zinc-600">Plan terms, cancellation, data ownership.</p>
-            </a>
-            <a href="/free-tools" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Free tools</p>
-              <p className="mt-1 text-sm text-zinc-600">Calculators and generators, no signup required.</p>
-            </a>
-            <a href="/roofing-quoting-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Roofing quoting software</p>
-              <p className="mt-1 text-sm text-zinc-600">The full roofing workflow.</p>
-            </a>
-            <a href="/construction-quoting-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Construction quoting software</p>
-              <p className="mt-1 text-sm text-zinc-600">The full construction workflow.</p>
-            </a>
-            <a href="/contact" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">Contact us</p>
-              <p className="mt-1 text-sm text-zinc-600">Questions about plans or pricing.</p>
-            </a>
-          </div>
-        </section>
-      </main>
-        {/* Demo card */}
-        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
-          <DemoCTACard location="pricing_bottom" variant="inline" className="mx-auto max-w-2xl" />
-        </section>
+      <Section tone="soft">
+        <Container>
+          <SplitFeature visual={<ProductFrame src="/marketing/current-ux/job-space-overview.webp" alt="Current QuoteCore+ Job Space showing the connected job workflow" width={2048} height={1112} caption="The plan configuration changes. The connected workflow is what the subscription gives you access to." />}>
+            <h2>The plan changes. The connected workflow stays the point.</h2>
+            <p>QuoteCore+ is designed so the important job information can stay together instead of being retyped between a takeoff tool, spreadsheet, quote document and invoicing system.</p>
+            <BulletList items={['Saved jobs and measurements', 'Reusable Smart Components', 'Customer quotes and activity', 'Material ordering and invoicing workflow', 'Phone, tablet and desktop access']} />
+          </SplitFeature>
+        </Container>
+      </Section>
 
-        <SiteFooter />
-    </>
+      <Section>
+        <Container>
+          <SectionHeader eyebrow="Try it before you subscribe" title="No full-app trial. Three useful ways to evaluate QuoteCore+." lead="Choose the evaluation path that answers what you actually need to know." />
+          <ConversionPaths items={[
+            { title: 'Explore the interactive app demo', body: 'Open a prepared fictional roofing account, follow the guided examples and look around the wider workspace at your own pace.', href: '/demo', label: 'Explore the demo' },
+            { title: 'Use the free tools', body: 'Try takeoff, measurement-to-pricing, calculators and document tools in your browser without creating a paid app account.', href: '/free-tools', label: 'Browse free tools' },
+            { title: 'Book a tailored 20-minute demo', body: 'Tell us how you currently measure and price work. We will share our screen and show a workflow that is relevant to your trade and questions.', href: 'https://calendly.com/quote-core-info/15-minute-meeting', label: 'Book a tailored demo' },
+          ]} />
+        </Container>
+      </Section>
+
+      <Section tone="soft">
+        <Container>
+          <SplitFeature reverse visual={<ProductFrame src="/marketing/current-ux/smart-components-pricing-library.webp" alt="QuoteCore+ Smart Components pricing library" width={2048} height={1111} caption="Done For You Setup can help translate agreed materials, labour, waste and pricing logic into the account you will actually use." />}>
+            <h2>Want us to help build the setup around your business?</h2>
+            <p>Done For You Setup is a separate one-time service starting from <strong>US${publicPricing.doneForYouStarting}</strong>. It is for businesses that want help translating existing materials, labour rates, waste rules and pricing logic into QuoteCore+ and learning the agreed setup using real jobs.</p>
+            <p>Your monthly subscription is still configured separately through the pricing builder above.</p>
+            <BulletList items={['Existing spreadsheets and price lists can be a starting point', 'The agreed setup is configured around your own pricing logic', 'Training focuses on the way your business will use QuoteCore+']} />
+          </SplitFeature>
+        </Container>
+      </Section>
+
+      <Section>
+        <Container><FaqAccordion faqs={faqs} title="Pricing FAQ" /></Container>
+      </Section>
+
+      <FinalCta title="See your price, then choose how you want to start." body="Build the configuration that fits your workload, or explore the product before you subscribe." primary={{ href: '#build-your-plan', label: 'Build your plan' }} secondary={{ href: '/demo', label: 'Explore the demo' }} />
+      <div style={{ height: 72 }} />
+    </PageScaffold>
   );
 }

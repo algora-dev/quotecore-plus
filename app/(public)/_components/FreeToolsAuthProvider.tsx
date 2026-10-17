@@ -276,7 +276,7 @@ function FreeToolsAuthModal({
             </ul>
           </div>
           <p className="relative text-[11px] leading-snug text-zinc-500">
-            Need the full quoting app? Plans from $19/mo.
+            Need the full quoting app? Current configurations from US$29/month; interactive demo available before subscribing.
           </p>
         </aside>
         <div className="relative p-6">
@@ -297,7 +297,7 @@ function FreeToolsAuthModal({
         </div>
         <p className="text-xs text-slate-500">
           {mode === 'signup'
-            ? 'Create an account and pick a plan from $19/mo to save your work into QuoteCore+.'
+            ? 'Create an account and pick a plan (from US$29/month; interactive demo available) to save your work into QuoteCore+.'
             : 'Welcome back. Log in to access your saved tools.'}
         </p>
 

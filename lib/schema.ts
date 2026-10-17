@@ -1,34 +1,22 @@
 import type { FaqItem } from "./faqs";
-import { schemaPricingPlans } from "./pricing";
+import { publicPricing } from "./public-pricing";
 
 export const siteUrl = "https://quote-core.com";
 export const organizationId = `${siteUrl}/#organization`;
 export const websiteId = `${siteUrl}/#website`;
 export const softwareId = `${siteUrl}/#software`;
 
-export function buildPricingOffers(currency: "USD" | "GBP" = "USD") {
-  const priceKey = currency === "GBP" ? "schemaPriceGbp" : "schemaPriceUsd";
-  const prices = schemaPricingPlans
-    .map((plan) => plan[priceKey])
-    .filter((price) => price > 0);
-
+export function buildPricingOffers(currency: "USD" = "USD") {
   return {
     "@type": "AggregateOffer",
     url: `${siteUrl}/pricing`,
     priceCurrency: currency,
-    lowPrice: String(Math.min(...prices)),
-    highPrice: String(Math.max(...prices)),
-    offerCount: schemaPricingPlans.length,
-    offers: schemaPricingPlans.map((plan) => ({
-      "@type": "Offer",
-      name: plan.displayName,
-      price: String(plan[priceKey]),
-      priceCurrency: currency,
-      url: `${siteUrl}/pricing`,
-      availability: "https://schema.org/InStock",
-      category: plan.isFree ? "Free plan" : "Subscription",
-      description: `${plan.subtitle}. ${plan.features.join(", ")}.`,
-    })),
+    lowPrice: String(publicPricing.monthlyMin),
+    highPrice: String(publicPricing.monthlyMax),
+    offerCount: 1,
+    availability: "https://schema.org/InStock",
+    category: "Configurable monthly subscription",
+    description: `Build a QuoteCore+ monthly configuration around workload and selected tools. Current public configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month.`,
   };
 }
 

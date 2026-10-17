@@ -38,7 +38,7 @@ export default function Post() {
               ["GST handling", "Handles Australian GST (10%) correctly on quotes and invoices"],
               ["Mobile-friendly", "Works on site, in a ute, not just at a desk"],
               ["AU pricing in AUD", "Pricing and support for Australian suppliers and pricing"],
-              ["Free trial or access to the full app", "Low-risk way to test before committing"],
+              ["Interactive demo and free tools", "Low-risk way to try before committing"],
             ].map(([feature, why]) => (
               <tr key={feature}>
                 <td className="px-4 py-3 font-medium text-zinc-800">{feature}</td>
@@ -54,7 +54,7 @@ export default function Post() {
       <h2>The best quoting software for Australian tradies in 2026</h2>
 
       <h3>1. QuoteCore+ - Best for roofers and measured-trade quoting</h3>
-      <p><strong>Pricing:</strong> Free tools with no signup; paid plans from $19/month. All plans include digital takeoff and quoting, and every plan includes access to the full app.</p>
+      <p><strong>Pricing:</strong> Free tools are available with no signup. Current QuoteCore+ configurations range from US$29 to US$259 per month, and the interactive app demo is available before subscribing.</p>
       <p>QuoteCore+ is <a href="/roofing-quoting-software">roofing quoting software</a> built specifically for roofing and construction trades that measure from plans or site - and the wider <a href="/construction-quoting-software">construction quoting workflow</a> (carpentry, plastering, subcontractors) is covered in the same platform. The core workflow is: measure the roof (digitally or manually), apply pitch and waste factors, generate material quantities from a component library, and produce a branded quote.</p>
       <p>The standout feature is <strong>Smart Components</strong> - reusable material assemblies that automatically calculate quantities from measurements. A metal roof component might include Colorbond sheets, screws, ridge flashing, barge flashings, underlay, and insulation - all calculated from one roof area entry with pitch applied. You build the component once, use it on every quote, and the maths is always consistent.</p>
       <p>QuoteCore+ includes <a href="/features/ai-scan-assist">AI Scan Assist</a>, which identifies roof areas and flashings from an uploaded plan - useful for Australian roofers who want to speed up takeoffs without sacrificing accuracy.</p>
@@ -176,10 +176,10 @@ export default function Post() {
       <p>For roofers specifically, QuoteCore+ is the strongest option because it includes digital takeoff, component-based material calculations, and support for metal roofing (Colorbond, Zincalume) and tile systems. Other tools like SimPRO and AroFlo are better for service trades that need scheduling but do not need measurement-based quoting.</p>
 
       <h3>Do I need quoting software if I am a solo tradie?</h3>
-      <p>If you quote more than 3-4 jobs per week, quoting software will save you time. The break-even is usually within the first month. Even a free tool like QuoteCore+ Lite or a simple spreadsheet-to-PDF workflow is better than sending hand-written quotes.</p>
+      <p>If you quote more than 3-4 jobs per week, quoting software will save you time. The break-even is usually within the first month. Even a standalone free tool from QuoteCore+ or a simple spreadsheet-to-PDF workflow is better than sending hand-written quotes.</p>
 
       <h3>Can I use QuoteCore+ for free?</h3>
-      <p>Yes. QuoteCore+ has free tools (no signup) plus paid plans from $19/month that include digital takeoff and quoting. The <a href="/free-roofing-calculator">roofing calculator</a> and <a href="/free-roofing-takeoff-builder">roof takeoff builder</a> are also free to use without signing up.</p>
+      <p>Yes. QuoteCore+ has free tools with no signup plus a configurable paid app. Current global configurations range from US$29 to US$259 per month. The <a href="/free-roofing-calculator">roofing calculator</a> and <a href="/free-roofing-takeoff-builder">roof takeoff builder</a> are also free to use without signing up.</p>
 
       <h3>Does quoting software handle GST?</h3>
       <p>All the tools listed above handle Australian GST (10%). The question is how well. QuoteCore+, SimPRO, AroFlo, and Tradify all handle GST on quotes and invoices. Xero handles it natively as an accounting platform.</p>

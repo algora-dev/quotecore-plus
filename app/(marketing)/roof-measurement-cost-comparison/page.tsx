@@ -7,14 +7,14 @@ import LazyYouTube from "@/components/LazyYouTube";
 export const metadata: Metadata = {
   title: "What Does a Roof Measurement or Quote Actually Cost? QuoteCore+ vs Per-Report Services",
   description:
-    "Roof measurement reports cost $13-$105 each. QuoteCore+ works out to well under $1 per quote. A sourced, dated cost comparison of QuoteCore+, RoofSnap, EagleView and PlanSwift.",
+    "Compare per-report roof measurement pricing with QuoteCore+ configurable subscription pricing. A sourced, dated comparison of QuoteCore+, RoofSnap, EagleView and PlanSwift.",
   alternates: {
     canonical: "https://quote-core.com/roof-measurement-cost-comparison",
   },
   openGraph: {
     title: "What Does a Roof Measurement or Quote Actually Cost?",
     description:
-      "Roof measurement reports cost $13-$105 each. QuoteCore+ works out to well under $1 per quote. Sourced, dated comparison.",
+      "Compare per-report roof measurement pricing with QuoteCore+ configurable subscription pricing. Sourced, dated comparison.",
     url: "https://quote-core.com/roof-measurement-cost-comparison",
     type: "article",
   },
@@ -23,10 +23,10 @@ export const metadata: Metadata = {
 const rows = [
   {
     service: "QuoteCore+",
-    model: "Subscription (free tier available)",
-    cost: "Cents per AI scan, worst case ~$0.50 per measurement; Pro at $39/mo with 50+ quotes/mo works out to well under $1 per quote",
+    model: "Configurable subscription (free tools separate)",
+    cost: "Current global configurations range from US$29 to US$259/month; AI Scan Assist usage depends on the selected allowance",
     detail:
-      "Measure your own plans (manual takeoff is unlimited and free of per-measurement fees) or use AI Scan Assist at cents per scan. Paid plans from $19/month with access to the full app.",
+      "Measure your own plans or use AI Scan Assist within the allowance you configure. Current paid configurations range from US$29 to US$259/month; the interactive demo and standalone free tools are available before subscribing.",
     highlight: true,
   },
   {
@@ -119,19 +119,13 @@ export default function RoofMeasurementCostComparison() {
             </div>
           </div>
 
-          <h2 className="mt-14 text-2xl font-semibold">How QuoteCore+ works out to under $1 per quote</h2>
+          <h2 className="mt-14 text-2xl font-semibold">How QuoteCore+ subscription pricing differs from per-report fees</h2>
           <div className="prose prose-zinc mt-4 max-w-none prose-a:text-[#BD4A1A]">
             <p>
-              QuoteCore+ is subscription software, not a per-report service. Manual digital takeoff
-              is unlimited - no per-measurement fee. AI Scan Assist (which detects roof areas,
-              ridges, hips, valleys, barges and spouting for you to verify) costs cents per scan,
-              with a worst case around $0.50.
+              QuoteCore+ is configurable subscription software, not a per-report measurement service. Manual digital takeoff and AI Scan Assist sit inside the connected estimating workflow rather than being sold as individual measurement reports.
             </p>
             <p>
-              On the Pro plan ($39/mo), a roofer sending 50+ quotes a month works out to well under
-              $1 per quote - including measurement, pricing, the quote document itself, sending,
-              tracking, material orders and invoicing. Paid plans start at $19/month with a 30-day
-              Access to the full app.
+              Current global configurations range from US$29 to US$259 per month, depending on the features and usage you select. Compare that monthly workflow cost with the number of external reports you would otherwise order, plus any separate estimating, quoting or job-document software you still need.
             </p>
             <p>
               We&rsquo;ve demonstrated a complete complex roofing quote created in under 3 minutes
@@ -184,7 +178,7 @@ export default function RoofMeasurementCostComparison() {
           <div className="mt-14 rounded-2xl border border-zinc-200 bg-zinc-50 px-8 py-10 text-center">
             <h2 className="text-xl font-semibold">Try the measure-to-quote workflow yourself</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-600">
-              Free tools, no signup. Paid plans from $19/month with access to the full app.
+              Free tools, no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing.
             </p>
             <Link
               href="/free-trial"

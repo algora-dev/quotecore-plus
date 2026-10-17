@@ -153,7 +153,7 @@ export default function ConstructionTakeoffSoftwarePage() {
               </a>
             </div>
             <p className="mt-3 text-sm text-zinc-500">
-              Free tools need no signup. Paid plans from $19/month with access to the full app.
+              Free tools need no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing.
             </p>
           </div>
         </section>

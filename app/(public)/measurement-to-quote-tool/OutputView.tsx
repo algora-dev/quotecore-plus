@@ -218,7 +218,7 @@ export default function OutputView({ areas, components, measureMode, unitSystem,
           )}
           <p className="mt-4 text-xs text-slate-400">
             Already have an account?{' '}
-            <Link href="/login" className="underline hover:text-slate-600">Log in</Link>
+            <Link href="https://app.quote-core.com/login" className="underline hover:text-slate-600">Log in</Link>
             {' '}&middot;{' '}
             <button onClick={onBackToBuilder} className="underline hover:text-slate-600">Back to the builder</button>
           </p>
