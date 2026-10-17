@@ -11,6 +11,10 @@ import { robotsDirective } from "@/app/lib/seo";
 const AttributionTracker = dynamic(() => import("@/components/AttributionTracker"));
 const SiteAssistant = dynamic(() => import("@/components/SiteAssistant"));
 
+// Kill switch: Q (SiteAssistant) is disabled site-wide while its knowledge base
+// is updated (owner, 2026-10-17). Flip to true to re-enable everywhere.
+const SITE_ASSISTANT_ENABLED = false;
+
 export const metadata: Metadata = {
   title: "QuoteCore+ | Roofing Quoting & Takeoff Software",
   description:
@@ -82,7 +86,7 @@ export default function MarketingLayout({
           notice banner hides itself here (see :has rule in globals.css). */}
       <div hidden data-qcp-consent-scope />
       <CookieConsent />
-      <SiteAssistant />
+      {SITE_ASSISTANT_ENABLED && <SiteAssistant />}
       {/* Google Analytics 4 */}
       <Script
         src="https://www.googletagmanager.com/gtag/js?id=G-HV8F4G8BN1"
