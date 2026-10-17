@@ -3,12 +3,12 @@ import type { SmartComponentEditor, ComponentEditorInitial } from '../SmartCompo
 import type { createComponentCollection } from '@/app/(auth)/[workspaceSlug]/components/actions';
 
 // Projection of the existing editor contract, NOT a parallel component schema.
-export type IdentityFields = Pick<ComponentEditorInitial, 'name' | 'sku'>;
+export type IdentityFields = Pick<ComponentEditorInitial, 'name' | 'sku' | 'assistantCallName'>;
 export type IdentityLibrary = ComponentProps<typeof SmartComponentEditor>['collections'][number] & {
   visibility?: string | null;
 };
 export type CreateLibraryResult = Awaited<ReturnType<typeof createComponentCollection>>;
-export type IdentityErrors = Partial<Record<'name' | 'sku' | 'library', string>>;
+export type IdentityErrors = Partial<Record<'name' | 'sku' | 'assistantCallName' | 'library', string>>;
 
 export const EXAMPLE_NAME = 'Valley Flashing 0.55g (Color Steel)';
 export const LIBRARY_EXAMPLES = [
@@ -26,13 +26,14 @@ export function validateIdentity(fields: IdentityFields, libraryId: string, libr
   const errors: IdentityErrors = {};
   if (!fields.name.trim()) errors.name = 'Give this item a name, such as Valley Flashing.';
   if (skuRequired && !fields.sku.trim()) errors.sku = 'Add a product code for this published supplier library.';
+  if ((fields.assistantCallName ?? '').trim().length > 80) errors.assistantCallName = 'Use 80 characters or fewer.';
   if (libraryId && !libraries.some(library => library.id === libraryId)) errors.library = 'Choose an available library.';
   if (!libraryId || libraries.length === 0) errors.library = 'Choose an account library, or create one for this item.';
   return errors;
 }
 
 export function normaliseIdentity(fields: IdentityFields): IdentityFields {
-  return { name: fields.name.trim(), sku: fields.sku.trim() };
+  return { name: fields.name.trim(), sku: fields.sku.trim(), assistantCallName: (fields.assistantCallName ?? '').trim() };
 }
 
 export function validateLibraryName(name: string, libraries: readonly IdentityLibrary[]): string | undefined {

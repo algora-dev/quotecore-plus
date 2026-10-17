@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { ProposalError } from '../v2/action-domain';
 import { isUuid, type Access } from '../v2/contracts';
 import type { LibraryCatalogItem } from '../library-workflow/contracts';
-import { validateVocabulary, conceptSupportsMeasurement, type AssistantConcept } from './vocabulary';
+import { validateVocabulary, conceptSupportsMeasurement, resolveConcept, type AssistantConcept } from './vocabulary';
 
 // Additive tables have intentionally local contracts until integration regenerates
 // database.types.ts. Every query retains the authenticated client and tenant filter.
@@ -34,7 +34,7 @@ export async function readWorkflowCatalog(client:SupabaseClient,access:Access,co
   const ids=profiles.map((p:any)=>p.collection_id);
   if(ids.some((id:unknown)=>!isUuid(id)))throw new ProposalError('An assistant library has an invalid identity.');
   if(!ids.length)return [];
-  const {data:collections,error:collectionError}=await db(client).from('component_collections').select('id,name').eq('company_id',access.companyId).in('id',ids).order('id').limit(201);
+  const {data:collections,error:collectionError}=await db(client).from('component_collections').select('id,name,assistant_call_name').eq('company_id',access.companyId).in('id',ids).order('id').limit(201);
   if(collectionError||collections?.length!==ids.length)throw new ProposalError('A configured library changed. Review assistant library access.');
   const readAll=async(table:'assistant_v2_library_members'|'component_library',fields:string)=>{
     const output:any[]=[];
@@ -51,19 +51,35 @@ export async function readWorkflowCatalog(client:SupabaseClient,access:Access,co
   };
   const [members,components]=await Promise.all([
     readAll('assistant_v2_library_members','id,collection_id,component_id,included,concept_key,is_default'),
-    readAll('component_library','id,collection_id,name,measurement_type,takeoff_slot,is_active'),
+    readAll('component_library','id,collection_id,name,assistant_call_name,measurement_type,takeoff_slot,is_active'),
   ]);
   const profilesById=new Map<string,any>(profiles.map((p:any)=>[p.collection_id,p]));
   const names=new Map<string,string>(collections.map((c:any)=>[c.id,c.name]));
+  const collectionCallNames=new Map<string,string|null>(collections.map((c:any)=>[c.id,c.assistant_call_name??null]));
   const assignments=new Map<string,any>(members.map(m=>[m.component_id,m]));
+  const compatible=(concept:AssistantConcept|null|undefined,component:any)=>!!concept&&conceptSupportsMeasurement(concept.behavior,String(component.measurement_type));
+  const componentConcept=(component:any,member:any):AssistantConcept|null=>{
+    // Existing explicit mappings remain authoritative. The customer-facing
+    // settings page no longer asks users to duplicate Smart Component rules,
+    // so safe deterministic metadata/name inference is only a fallback.
+    const explicit=concepts.find(c=>c.key===member?.concept_key);
+    if(compatible(explicit,component))return explicit!;
+    const slot=typeof component.takeoff_slot==='string' ? concepts.find(c=>c.key===component.takeoff_slot) : null;
+    if(compatible(slot,component))return slot!;
+    for(const label of [component.name,component.assistant_call_name]){
+      if(typeof label!=='string'||!label.trim())continue;
+      const inferred=resolveConcept(label,concepts);
+      if(compatible(inferred,component))return inferred;
+    }
+    return null;
+  };
   const out:LibraryCatalogItem[]=[];
   for(const component of components){
     const profile=profilesById.get(component.collection_id),member=assignments.get(component.id);
     if(!profile||!(member ? member.included===true : profile.include_all===true))continue;
-    const concept=concepts.find(c=>c.key===member?.concept_key);
-    // Included but unmapped components do not become a guessed structural role.
-    if(!concept||!conceptSupportsMeasurement(concept.behavior,String(component.measurement_type)))continue;
-    out.push({id:component.id,collectionId:component.collection_id,collectionName:names.get(component.collection_id)!,name:component.name,
+    const concept=componentConcept(component,member);
+    if(!concept)continue;
+    out.push({id:component.id,collectionId:component.collection_id,collectionName:names.get(component.collection_id)!,collectionCallName:collectionCallNames.get(component.collection_id)??null,name:component.name,callName:component.assistant_call_name??null,
       role:concept.behavior,conceptKey:concept.key,isDefault:member.is_default===true,measurementType:component.measurement_type,
       takeoffSlot:component.takeoff_slot??null,unit:component.measurement_type==='area'?'m2':['count','quantity','fixed'].includes(component.measurement_type)?'each':'m',active:true});
   }

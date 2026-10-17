@@ -19,7 +19,7 @@ export function resolveWorkingBrief(source: WorkingBrief, catalog: LibraryCatalo
   if (brief.basisPending) questions.push({ key: 'basis', label: 'Are these measurements plan or actual?', role: 'roof_area',
     options: [ { id: 'plan', label: 'Plan measurements', detail: 'Measured flat / from the drawing - pitch is applied' },
       { id: 'actual', label: 'Actual measurements', detail: 'Measured on the roof surface - pitch already included' } ] });
-  const collections = [...new Map(catalog.map(c => [c.collectionId, c.collectionName])).entries()];
+  const collections = [...new Map(catalog.map(c => [c.collectionId, { name: c.collectionName, callName: c.collectionCallName }])).entries()];
   if (brief.collectionId && !collections.some(([id]) => id === brief.collectionId)) {
     issues.push('The selected library is no longer enabled or has no eligible products. Choose an enabled library; no replacement was guessed.');
     return { brief, questions, issues, catalog: [] as LibraryCatalogItem[] };
@@ -27,26 +27,27 @@ export function resolveWorkingBrief(source: WorkingBrief, catalog: LibraryCatalo
   if (!brief.collectionId && brief.collectionName) {
     const requested = labelKey(brief.collectionName);
     const stripWords = (value: string) => labelKey(value).split(' ').filter(word => !['library','libraries','collection','collections','catalogue','catalog','lib'].includes(word)).join(' ');
-    const matches = collections.filter(([,name]) => labelKey(name) === requested);
+    const callMatches = collections.filter(([,meta]) => meta.callName && labelKey(meta.callName) === requested);
+    const matches = callMatches.length ? callMatches : collections.filter(([,meta]) => labelKey(meta.name) === requested);
     if (matches.length === 1) brief.collectionId = matches[0][0];
     else {
       // Owner 2026-10-05 (pass 5): tolerate natural phrasing like "the roofing
       // library" against an enabled "Roofing" collection - a unique match
       // resolves; ambiguity still asks instead of guessing.
       const stripped = stripWords(brief.collectionName);
-      const loose = collections.filter(([,name]) => { const candidate = stripWords(name); return !!stripped && !!candidate && (candidate === stripped || (stripped.length >= 3 && (candidate.includes(stripped) || stripped.includes(candidate)))); });
+      const loose = collections.filter(([,meta]) => { const candidate = stripWords(meta.name); const shortcut = meta.callName ? stripWords(meta.callName) : ''; return !!stripped && ((!!candidate && (candidate === stripped || (stripped.length >= 3 && (candidate.includes(stripped) || stripped.includes(candidate))))) || (!!shortcut && shortcut === stripped)); });
       if (loose.length === 1) brief.collectionId = loose[0][0];
       else issues.push(`The requested library “${brief.collectionName}” did not match one enabled library exactly.`);
     }
   }
   if (!brief.collectionId && !brief.collectionName && collections.length === 1) brief.collectionId = collections[0][0];
   if (!brief.collectionId) {
-    if (collections.length && collections.length <= 50) questions.push({ key: 'collection', label: 'Which component library should I use?', role: 'roof_area', options: collections.map(([id,name]) => ({id,label:name,detail:'Assistant-enabled library'})) });
+    if (collections.length && collections.length <= 50) questions.push({ key: 'collection', label: 'Which component library should I use?', role: 'roof_area', options: collections.map(([id,meta]) => ({id,label:meta.name,detail:meta.callName ? `Call name: ${meta.callName}` : 'Assistant-enabled library'})) });
     else issues.push(collections.length ? 'There are more than 50 enabled libraries. Give the exact library name.' : 'No component library is enabled for Smart Assistant.');
     // Never auto-pick role defaults across libraries before this decision.
     return { brief, questions, issues, catalog: [] as LibraryCatalogItem[] };
   }
-  brief.collectionName = collections.find(([id]) => id === brief.collectionId)![1];
+  brief.collectionName = collections.find(([id]) => id === brief.collectionId)![1].name;
   const available = catalog.filter(c => c.collectionId === brief.collectionId);
   const questionKeys = new Set<string>();
   for (const m of brief.measurements) {
@@ -67,7 +68,10 @@ export function resolveWorkingBrief(source: WorkingBrief, catalog: LibraryCatalo
       issues.push(`The selected ${concept.displayName} product is no longer eligible or compatible. Choose a current alternative.`);
     }
     if (m.requestedProduct) {
-      const matches = candidates.filter(c => labelKey(c.name) === labelKey(m.requestedProduct!));
+      const requested = labelKey(m.requestedProduct!);
+      const shortcutMatches = candidates.filter(c => c.callName && labelKey(c.callName) === requested);
+      const nameMatches = candidates.filter(c => labelKey(c.name) === requested);
+      const matches = shortcutMatches.length ? shortcutMatches : nameMatches;
       if (matches.length === 1) { brief.selections[explicitKey] = matches[0].id; brief.selectionSources[explicitKey] = 'explicit'; continue; }
       // An explicit product request outranks defaults; never silently replace it.
     } else if (!selected) {
@@ -80,7 +84,7 @@ export function resolveWorkingBrief(source: WorkingBrief, catalog: LibraryCatalo
     if (!questionKeys.has(key)) {
       questionKeys.add(key);
       questions.push({ key, label: m.requestedProduct ? `${concept.displayName}: choose the product for “${m.requestedProduct}”` : concept.displayName, role: concept.behavior,
-        options: candidates.map(c => ({ id: c.id, label: c.name, detail: `${c.collectionName} · ${c.measurementType}` })) });
+        options: candidates.map(c => ({ id: c.id, label: c.name, detail: `${c.callName ? `Call name: ${c.callName} · ` : ''}${c.collectionName} · ${c.measurementType}` })) });
     }
   }
   return { brief, questions, issues: [...new Set(issues)], catalog: available };

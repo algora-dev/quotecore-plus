@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { QcField, QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
@@ -21,6 +22,8 @@ export interface ComponentIdentityStepProps {
   supplierSkuRequired?: boolean;
   onContinue: (value: IdentityFields) => void;
   onBack: () => void;
+  smartAssistantAvailable?: boolean;
+  smartAssistantUpgradeHref?: string;
 }
 
 export function ComponentIdentityStep(props: ComponentIdentityStepProps) {
@@ -28,6 +31,7 @@ export function ComponentIdentityStep(props: ComponentIdentityStepProps) {
   const id = useId();
   const nameRef = useRef<HTMLInputElement>(null);
   const skuRef = useRef<HTMLInputElement>(null);
+  const callNameRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLSelectElement>(null);
   const newLibraryRef = useRef<HTMLInputElement>(null);
   const creatingRef = useRef(false);
@@ -42,7 +46,7 @@ export function ComponentIdentityStep(props: ComponentIdentityStepProps) {
 
   function update(patch: Partial<IdentityFields>) {
     props.onChange({ ...value, ...patch });
-    setErrors(previous => ({ ...previous, ...(patch.name !== undefined ? { name: undefined } : {}), ...(patch.sku !== undefined ? { sku: undefined } : {}) }));
+    setErrors(previous => ({ ...previous, ...(patch.name !== undefined ? { name: undefined } : {}), ...(patch.sku !== undefined ? { sku: undefined } : {}), ...(patch.assistantCallName !== undefined ? { assistantCallName: undefined } : {}) }));
   }
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -53,6 +57,7 @@ export function ComponentIdentityStep(props: ComponentIdentityStepProps) {
     setErrors(nextErrors);
     if (nextErrors.name) nameRef.current?.focus();
     else if (nextErrors.sku) { setShowCode(true); requestAnimationFrame(() => skuRef.current?.focus()); }
+    else if (nextErrors.assistantCallName) callNameRef.current?.focus();
     else if (nextErrors.library) libraryRef.current?.focus();
     else props.onContinue(normaliseIdentity(value));
   }
@@ -88,6 +93,21 @@ export function ComponentIdentityStep(props: ComponentIdentityStepProps) {
             {errors.name && <p className="qc-identity-error" id={`${id}-name-error`} role="alert">{errors.name}</p>}
             <div className="qc-identity-example"><span>Need an example?</span><button type="button" className="qc-guided-text-link"
               onClick={() => { update({ name: EXAMPLE_NAME }); nameRef.current?.focus(); }}>Use example name</button></div>
+            <div className="qc-identity-code qc-identity-assistant-call-name" data-locked={!props.smartAssistantAvailable || undefined}>
+              <div className="qc-identity-assistant-heading"><span>Smart Assistant</span>{!props.smartAssistantAvailable && <span>Plan feature</span>}</div>
+              <QcField htmlFor={`${id}-assistant-call-name`} label="Smart Assistant call name (optional)"
+                helpId={`${id}-assistant-call-name-help`} help={props.smartAssistantAvailable
+                  ? 'A short name you can say or type so Smart Assistant finds this exact component. Your component name on quotes does not change.'
+                  : 'Available with Smart Assistant. Call names make long or similar component names faster to use by voice or text.'}>
+                <QcInput ref={callNameRef} id={`${id}-assistant-call-name`} name="assistant_call_name" maxLength={80} autoComplete="off"
+                  disabled={!props.smartAssistantAvailable} value={value.assistantCallName ?? ''}
+                  placeholder={props.smartAssistantAvailable ? 'e.g. Ridge 1' : 'Only available with Smart Assistant'} aria-invalid={!!errors.assistantCallName}
+                  aria-describedby={`${id}-assistant-call-name-help${errors.assistantCallName ? ` ${id}-assistant-call-name-error` : ''}`}
+                  onChange={event => update({ assistantCallName: event.target.value })} />
+              </QcField>
+              {errors.assistantCallName && <p className="qc-identity-error" id={`${id}-assistant-call-name-error`} role="alert">{errors.assistantCallName}</p>}
+              {!props.smartAssistantAvailable && props.smartAssistantUpgradeHref && <Link href={props.smartAssistantUpgradeHref} className="qc-identity-assistant-link">See Smart Assistant plans</Link>}
+            </div>
             {!codeVisible ? <button type="button" className="qc-minimal-text-action" onClick={() => { setShowCode(true); requestAnimationFrame(() => skuRef.current?.focus()); }}>
               Add a product code <span>(optional)</span>
             </button> : <div className="qc-identity-code">

@@ -143,6 +143,7 @@ export function GuidedIdentityDialog({ onRequestClose, onUseQuickEditor, onGuide
         rows={[
           {label:'Library',value:selectedLibrary?.name || 'My Components'},
           ...(identity.value.sku ? [{label:'Product code',value:identity.value.sku}] : []),
+          ...(identity.value.assistantCallName ? [{label:'Smart Assistant call name',value:identity.value.assistantCallName}] : []),
           {label:'Measurement',value:selected.editorLabel},
           {label:'Material cost',value:material.pricingStrategy === 'per_unit' ? `${currency}${material.materialRate} per ${selected.unit}` : `${currency}${material.packPrice} per pack (${material.packSize} units)`},
           {label:'Labour cost',value:`${currency}${labour.labourRate} per ${selected.unit}`},

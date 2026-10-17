@@ -1,10 +1,6 @@
 'use client';
 
 import { useId, useRef, useState } from 'react';
-import { useCapability } from '@/app/components/smart-assistant/v2/useCapability';
-import { AssistantButton } from '@/app/components/smart-assistant/ui/AssistantButton';
-import tokens from '@/app/components/smart-assistant/ui/assistant-v2.tokens.module.css';
-import styles from '@/app/components/smart-assistant/ui/assistant-v2.module.css';
 import {
   ASSISTANT_SECTIONS,
   PERMISSION_LEVELS,
@@ -16,9 +12,10 @@ import {
 } from '@/app/lib/smart-assistant/section-permissions';
 import { loadAssistantSectionPermissions, saveAssistantSectionPermissions } from './permission-actions';
 
+const VISIBLE_KEYS = new Set(['quotes','draft_quotes','orders','invoices','components','customers']);
+const LEVEL_COPY: Record<string,string> = { hidden: 'No access', read_only: 'View', edit: 'Edit' };
+
 export function AssistantPermissionsPanel({ initialState }: { initialState: PermissionResult }) {
-  const capability=useCapability();
-  const activeV2=capability.access?.phases.p1===true;
   const id = useId();
   const [state, setState] = useState(initialState);
   const [snapshot, setSnapshot] = useState<PermissionSnapshot | null>(initialState.ok ? initialState.snapshot : null);
@@ -28,123 +25,58 @@ export function AssistantPermissionsPanel({ initialState }: { initialState: Perm
   const inFlight = useRef(false);
   const dirty = snapshot !== null && draft !== null && !permissionsEqual(snapshot.permissions, draft);
   const blocked = !state.ok || !snapshot?.canManage || pending !== null;
+  const visibleSections = ASSISTANT_SECTIONS.filter(section => VISIBLE_KEYS.has(section.key));
 
   function applyResult(result: PermissionResult) {
     setState(result);
-    if (result.ok) {
-      setSnapshot(result.snapshot);
-      setDraft({ ...result.snapshot.permissions });
-    }
-    // On error retain both the draft and its revision. Never silently overwrite
-    // someone else's later save, or report a network-unknown write as saved.
+    if (result.ok) { setSnapshot(result.snapshot); setDraft({ ...result.snapshot.permissions }); }
   }
 
   async function save() {
     if (inFlight.current || blocked || !snapshot || !draft) return;
-    inFlight.current = true;
-    setPending('save');
-    setSaved(false);
+    inFlight.current = true; setPending('save'); setSaved(false);
     try {
       const result = await saveAssistantSectionPermissions({ permissions: draft, expectedRevision: snapshot.revision, expectedCompanyId: snapshot.companyId });
-      applyResult(result);
-      setSaved(result.ok);
-    } catch {
-      setState(permissionFailure(null));
-    } finally {
-      inFlight.current = false;
-      setPending(null);
-    }
+      applyResult(result); setSaved(result.ok);
+    } catch { setState(permissionFailure(null)); }
+    finally { inFlight.current = false; setPending(null); }
   }
 
   async function reload() {
     if (inFlight.current) return;
-    inFlight.current = true;
-    setPending('reload');
-    setSaved(false);
-    try {
-      applyResult(await loadAssistantSectionPermissions());
-    } catch {
-      setState(permissionFailure(null));
-    } finally {
-      inFlight.current = false;
-      setPending(null);
-    }
+    inFlight.current = true; setPending('reload'); setSaved(false);
+    try { applyResult(await loadAssistantSectionPermissions()); }
+    catch { setState(permissionFailure(null)); }
+    finally { inFlight.current = false; setPending(null); }
   }
 
-  return (
-    <section className={`${tokens.scope} ${styles.panel}`} data-qc-ui="v2" data-clarity-mask="true" data-testid="sa-v2-permissions" aria-labelledby={`${id}-heading`}>
-      <div className={styles.header}>
-        <h2 id={`${id}-heading`} className={styles.heading}>Assistant access</h2>
-        <span className={styles.badge}>{activeV2?'V2 active':'V2 setup'}</span>
-      </div>
-      <p className={styles.intro}>Choose what your assistant can access in each part of QuoteCore+.</p>
-      <div className={styles.notice}>
-        {activeV2?<><p><strong>These permissions control V2 tools.</strong></p><p>Hidden removes a section from new assistant reads. Edit permits only supported actions in enabled phases and still requires confirmation. It does not grant general app permissions or enable email, billing or settings changes.</p></>:<><p><strong>{capability.error?'V2 availability could not be verified.':'Prepared settings until V2 is enabled.'}</strong></p><p>These choices are saved for V2. The legacy V1 assistant does not enforce section permissions. Edit alone does not enable actions; your administrator must enable the relevant V2 phase.</p></>}
-      </div>
-      <p className={styles.help}>Hidden: no access. View: read only. Edit: read and make changes with the required confirmation. Draft quotes have their own setting.</p>
+  return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6" aria-labelledby={`${id}-heading`}>
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+      <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600">Permissions</p><h2 id={`${id}-heading`} className="mt-1 text-lg font-semibold text-slate-900">What can Smart Assistant access?</h2><p className="mt-1 text-sm text-slate-500">Keep access as narrow or as useful as you need. Edit still uses QuoteCore+ confirmation rules.</p></div>
+      {snapshot?.canManage && state.ok && <button type="button" onClick={() => void save()} disabled={blocked || (!dirty && snapshot.source === 'saved')} className="rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40">{pending === 'save' ? 'Saving…' : 'Save access'}</button>}
+    </div>
 
-      {!state.ok && (
-        <div className={styles.notice} data-tone={state.code === 'migration_required' ? 'warning' : 'danger'} role="alert">
-          <p>{state.error}</p>
-          <div className={styles.actions}>
-            <AssistantButton onClick={() => void reload()} pending={pending === 'reload'} pendingLabel="Loading..." disabled={pending !== null}>
-              {dirty ? 'Discard draft and reload' : 'Reload permissions'}
-            </AssistantButton>
-          </div>
-        </div>
-      )}
+    {!state.ok && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="alert"><p>{state.error}</p><button type="button" onClick={() => void reload()} disabled={pending !== null} className="mt-2 font-semibold underline underline-offset-2">{pending === 'reload' ? 'Loading…' : 'Reload access'}</button></div>}
+    {snapshot && !snapshot.canManage && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Only a workspace owner or admin can change access.</div>}
 
-      {snapshot && !snapshot.canManage && (
-        <div className={styles.notice} data-tone="warning">
-          Only a workspace owner or admin can change these permissions. Team members with permission to manage assistant identity or knowledge cannot change access levels.
+    {draft && <div className="mt-5 overflow-hidden rounded-xl border border-slate-200">
+      <div className="hidden grid-cols-[minmax(180px,1fr)_300px] bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 md:grid"><span>QuoteCore+ area</span><span>Access</span></div>
+      {visibleSections.map(section => <div key={section.key} className="grid gap-3 border-t border-slate-100 px-4 py-4 first:border-t-0 md:grid-cols-[minmax(180px,1fr)_300px] md:items-center">
+        <div><p className="text-sm font-semibold text-slate-900">{section.label === 'Components' ? 'Pricing Library' : section.label}</p><p className="mt-0.5 text-xs leading-5 text-slate-500">{section.description}</p></div>
+        <div className="grid grid-cols-3 rounded-xl border border-slate-200 bg-slate-50 p-1" role="radiogroup" aria-label={`${section.label} access`}>
+          {PERMISSION_LEVELS.map(level => <label key={level.value} className={`cursor-pointer rounded-lg px-2 py-2.5 text-center text-xs font-semibold transition focus-within:outline-none focus-within:ring-2 focus-within:ring-orange-400 ${draft[section.key] === level.value ? 'bg-gradient-to-r from-[#FF641F] via-[#FF8A3D] to-[#FFB36B] text-[#191B20] shadow-sm' : 'text-slate-500 hover:bg-white hover:text-slate-800'} ${blocked ? 'cursor-not-allowed opacity-60' : ''}`}>
+            <input className="sr-only" type="radio" name={`${id}-${section.key}`} value={level.value} disabled={blocked} checked={draft[section.key] === level.value} onChange={() => { setSaved(false); setDraft(current => current ? { ...current, [section.key]: level.value } : current); }} />
+            {LEVEL_COPY[level.value]}
+          </label>)}
         </div>
-      )}
+      </div>)}
+    </div>}
 
-      {draft && (
-        <div>
-          {ASSISTANT_SECTIONS.map((section) => (
-            <fieldset key={section.key} className={styles.fieldset} disabled={blocked} aria-describedby={`${id}-${section.key}-help`}>
-              <legend className={styles.legend}>{section.label}</legend>
-              <p className={styles.help} id={`${id}-${section.key}-help`}>{section.description}</p>
-              <div className={styles.choices} data-component-id="C10">
-                {PERMISSION_LEVELS.map((level) => (
-                  <label key={level.value} className={styles.choice} data-selected={draft[section.key] === level.value} data-disabled={blocked}>
-                    <input
-                      type="radio"
-                      name={`${id}-${section.key}`}
-                      value={level.value}
-                      checked={draft[section.key] === level.value}
-                      onChange={() => {
-                        setSaved(false);
-                        setDraft((current) => current ? { ...current, [section.key]: level.value } : current);
-                      }}
-                    />
-                    <span>{level.label}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          ))}
-        </div>
-      )}
-
-      <div role="status" aria-live="polite" aria-atomic="true">
-        {saved && state.ok && <p className={styles.notice} data-tone="success">Permissions saved. Enabled V2 tools check the new permissions on their next request.</p>}
-        {dirty && <p className={styles.help}>You have unsaved permission changes.</p>}
-      </div>
-      {snapshot && state.ok && (
-        <p className={styles.help}>
-          {snapshot.source === 'default' ? 'Using the agreed defaults. No custom permissions have been saved.' : `Saved permissions, revision ${snapshot.revision}.`}
-        </p>
-      )}
-      {snapshot?.canManage && state.ok && (
-        <div className={styles.actions}>
-          <AssistantButton variant="primary" onClick={() => void save()} pending={pending === 'save'} pendingLabel="Saving permissions..." disabled={blocked || (!dirty && snapshot.source === 'saved')}>Save permissions</AssistantButton>
-          {dirty && (
-            <AssistantButton disabled={pending !== null} onClick={() => { setDraft({ ...snapshot.permissions }); setSaved(false); }}>Discard changes</AssistantButton>
-          )}
-        </div>
-      )}
-    </section>
-  );
+    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500" aria-live="polite">
+      <span><strong>No access</strong> hides the section. <strong>View</strong> is read-only. <strong>Edit</strong> permits supported changes with confirmation.</span>
+      {dirty && <span className="font-semibold text-orange-700">Unsaved changes</span>}
+      {saved && state.ok && <span className="font-semibold text-emerald-700">Access saved</span>}
+      {dirty && snapshot && <button type="button" disabled={pending !== null} onClick={() => { setDraft({ ...snapshot.permissions }); setSaved(false); }} className="font-semibold text-slate-700 underline underline-offset-2">Discard changes</button>}
+    </div>
+  </section>;
 }
