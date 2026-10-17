@@ -148,5 +148,19 @@ export async function saveOffcutOnePagerToJob(
 ): Promise<OffcutOnePagerResult> {
   const dataUrl = await buildOffcutOnePagerPdf(payload, opts);
   const { uploadOffcutOnePagerFile } = await import('@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/uploadOffcutOnePager');
-  return uploadOffcutOnePagerFile(quoteId, dataUrl, opts.jobLabel);
+  const result = await uploadOffcutOnePagerFile(quoteId, dataUrl, opts.jobLabel);
+  if (!result.ok) return result;
+  // Owner 2026-10-17: also persist the photo-overlay composite PNG when the
+  // workbench supplied one. A PNG failure must not fail the whole save - the
+  // PDF is the primary artifact and the plan review is already done.
+  if (payload.compositeSvg) {
+    try {
+      const png = await svgToPng(payload.compositeSvg);
+      const { uploadOffcutOverlayImageFile } = await import('@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/uploadOffcutOnePager');
+      await uploadOffcutOverlayImageFile(quoteId, png.dataUrl, opts.jobLabel);
+    } catch (error) {
+      console.warn('[offcutOnePager] overlay PNG not saved:', error);
+    }
+  }
+  return result;
 }

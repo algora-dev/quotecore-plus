@@ -8013,11 +8013,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     ]);
     setIsDirty(true);
   }, [quote.id, applyOffcutFigure]);
+  // Owner 2026-10-17: consumed by onClosed to show the "saved to draft"
+  // banner when the user lands back in the digital takeoff after Save & close.
+  const offcutSavedNoticeRef = useRef(false);
   const saveOffcutOnePager = useCallback(async (payload: OffcutOnePagerPayload) => {
     const { saveOffcutOnePagerToJob } = await import('@/app/lib/takeoff/offcutOnePager');
     const jobLabel = String(quote.quote_number ?? '') || 'Quote';
     const result = await saveOffcutOnePagerToJob(quote.id, payload, { jobLabel });
     if (!result.ok) throw new Error(result.message);
+    offcutSavedNoticeRef.current = true;
   }, [quote.id, quote.quote_number]);
   const [, forceOffcutsCommit] = useState(0);
   const offcutsCaptureAbortRef = useRef<AbortController | null>(null);
@@ -9219,7 +9223,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                               onQuantityProposal: receiveOffcutQuantity,
                               onSaveOnePager: saveOffcutOnePager,
                               onPlanInvalidated: invalidateOffcutFigure,
-                              onClosed: () => { offcutsModalRef.current = null; void refreshOffcutAreaFigure(); },
+                              onClosed: () => { offcutsModalRef.current = null; void refreshOffcutAreaFigure(); if (offcutSavedNoticeRef.current) { offcutSavedNoticeRef.current = false; showAlert('Offcut plan saved', "The offcut image and information were saved to this quote's draft - see Files & Documents.", 'success'); } },
                               readContext: () => {
                                 const live = offcutsLiveSnapshotRef.current;
                                 if (!live) throw new Error('The takeoff workspace is not ready.');
@@ -9300,7 +9304,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                               onQuantityProposal: receiveOffcutQuantity,
                               onSaveOnePager: saveOffcutOnePager,
                               onPlanInvalidated: invalidateOffcutFigure,
-                              onClosed: () => { offcutsModalRef.current = null; void refreshOffcutAreaFigure(); },
+                              onClosed: () => { offcutsModalRef.current = null; void refreshOffcutAreaFigure(); if (offcutSavedNoticeRef.current) { offcutSavedNoticeRef.current = false; showAlert('Offcut plan saved', "The offcut image and information were saved to this quote's draft - see Files & Documents.", 'success'); } },
                               initialSavedReview:stored,
                               initialCalculation:recovered?.calculation,
                               imageUrl: /^https?:/i.test(image) ? image : undefined,

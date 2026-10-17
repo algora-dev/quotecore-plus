@@ -37,6 +37,14 @@ export function cloneTakeoffSnapshot(s: QuoteCoreSnapshot): QuoteCoreSnapshot {
  * Canonical hashing keeps the value stable across jsonb/clone key reordering. */
 export function liveInputFingerprint(s: QuoteCoreSnapshot): string {
   const copy=cloneTakeoffSnapshot(s);delete copy.imageUrl;
+  const {imageRevision:_imgRev,...content}=copy;
+  return canonicalFingerprint(content);
+}
+/** Read-only verification for captures saved before the 2026-10-17 fix (their
+ * stored fingerprints still included the rotating imageRevision). Never used
+ * to write new fingerprints. */
+export function imageRevisionLiveInputFingerprint(s: QuoteCoreSnapshot): string {
+  const copy=cloneTakeoffSnapshot(s);delete copy.imageUrl;
   return canonicalFingerprint(copy);
 }
 /** Captures saved before the canonical-hash switch hashed insertion key order.

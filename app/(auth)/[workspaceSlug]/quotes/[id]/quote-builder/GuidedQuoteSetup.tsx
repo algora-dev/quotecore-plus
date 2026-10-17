@@ -32,6 +32,8 @@ interface Props {
   collections?: { id: string; name: string; is_bootstrap?: boolean }[];
   /** Quote's default library: pre-selects the AddFromLibrary picker. */
   defaultCollectionId?: string | null;
+  /** Batch add (owner 2026-10-17): all selected components in one round trip. */
+  onAddFromLibraryBatch?: (libIds: string[], areaId: string | null, type: 'main' | 'extra') => Promise<QuoteComponentRow[]>;
   currency: string;
   totals: { totalMaterials: number; totalLabour: number; grandTotal: number };
   onCreateArea: (label: string) => Promise<QuoteRoofAreaRow | null>;
@@ -70,6 +72,7 @@ export function GuidedQuoteSetup({
   libraryComponents,
   collections = [],
   defaultCollectionId,
+  onAddFromLibraryBatch,
   currency,
   totals,
   onCreateArea,
@@ -167,6 +170,27 @@ export function GuidedQuoteSetup({
       const created = await onAddFromLibrary(libraryId, areaId, 'main');
       if (created) {
         setNewComponentFocus(previous => ({ id: created.id, request: (previous?.request ?? 0) + 1 }));
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function addComponentsBatch(libraryIds: string[], areaId: string | null) {
+    if (!libraryIds.length) return;
+    setBusy(true);
+    try {
+      if (areaId) {
+        const area = roofAreas.find(item => item.id === areaId);
+        if (area?.is_locked) await onToggleAreaLock(areaId, false);
+      }
+      if (onAddFromLibraryBatch) {
+        const created = await onAddFromLibraryBatch(libraryIds, areaId, 'main');
+        if (created.length) {
+          setNewComponentFocus(previous => ({ id: created[created.length - 1].id, request: (previous?.request ?? 0) + 1 }));
+        }
+      } else {
+        for (const id of libraryIds) await addComponent(id, areaId);
       }
     } finally {
       setBusy(false);
@@ -358,11 +382,11 @@ export function GuidedQuoteSetup({
         collections={collections}
         defaultCollectionId={defaultCollectionId}
         onAdd={libraryId => addComponent(libraryId, null)}
+        onAddBatch={libraryIds => addComponentsBatch(libraryIds, null)}
                   onCreateNew={() => onCreateComponent(null, 'main')}
                   measurementSystem={quote.measurement_system}
                   label="Add to this quote"
                   placeholder="Choose a component, product or service..."
-                  addButtonLabel="Add"
                   appearance="guided"
                 />
 
@@ -477,11 +501,11 @@ export function GuidedQuoteSetup({
         collections={collections}
         defaultCollectionId={defaultCollectionId}
         onAdd={libraryId => addComponent(libraryId, activeArea.id)}
+        onAddBatch={libraryIds => addComponentsBatch(libraryIds, activeArea.id)}
                   onCreateNew={() => { if (activeArea.is_locked) void onToggleAreaLock(activeArea.id, false); onCreateComponent(activeArea.id, 'main'); }}
                   measurementSystem={quote.measurement_system}
                   label={`Add to ${activeArea.label}`}
                   placeholder="Choose a component, product or service..."
-                  addButtonLabel="Add"
                   appearance="guided"
                 />
 

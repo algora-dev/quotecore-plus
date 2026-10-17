@@ -53,6 +53,9 @@ export interface RenderOptions {
   editPieces?: boolean; editGroups?: boolean; selectedGroupId?: string;
   selectedSectionId?: string; sections?: MaterialSection[]; showDetailedLabels?: boolean;
   print?: boolean; viewBox?: string; pendingPolygon?: Point[];
+  /** In-memory data-URL plan image embedded in a PRINT render (saved overlay
+   *  composite, owner 2026-10-17). Data URLs carry no signed token. */
+  embedImage?: string;
   hiddenFaceIds?: ReadonlySet<string>;
   pendingCursor?:Point; snapHint?:DrawingSnap; boundaryRepair?:BoundaryRepair; boundaryIssues?:Issue[];
   coverage?: CoverageRegion[]; focusedDiagnosticId?: string;
@@ -75,7 +78,8 @@ export function renderSvg(draft: Draft, options: RenderOptions): string {
   let shapes = '';
   // Export excludes signed plan URLs. A reviewer may attach their source plan
   // separately; external image URLs must never leak in downloadable drawings.
-  if (!options.print && roof.imageUrl && /^(https?:|blob:|data:image\/)/.test(roof.imageUrl)) shapes += `<image href="${escapeHtml(roof.imageUrl)}" x="0" y="0" width="${roof.sceneWidth}" height="${roof.sceneHeight}" preserveAspectRatio="none" opacity="0.82"/>`;
+  const planImageHref = options.embedImage ?? (!options.print ? roof.imageUrl : null);
+  if (planImageHref && /^(https?:|blob:|data:image\/)/.test(planImageHref)) shapes += `<image href="${escapeHtml(planImageHref)}" x="0" y="0" width="${roof.sceneWidth}" height="${roof.sceneHeight}" preserveAspectRatio="none" opacity="0.82"/>`;
   for (const outline of roof.outlines) shapes += `<polygon points="${points(outline.polygon)}" fill="#f3f5f7" fill-opacity="${roof.imageUrl ? '.05' : '.65'}" stroke="#253443" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
   if(options.showSources)for (const edge of roof.edges) shapes += `<line x1="${n(edge.a.x)}" y1="${n(edge.a.y)}" x2="${n(edge.b.x)}" y2="${n(edge.b.y)}" stroke="${edge.kind==='valley'?'#a96c23':edge.kind==='broken_hip'?'#d36f25':'#697784'}" stroke-width="1.2" vector-effect="non-scaling-stroke"${edge.kind==='spouting'?' stroke-dasharray="6 4"':''}/>`;
   for (const f of faces) {

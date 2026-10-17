@@ -158,6 +158,8 @@ export function fromQuoteCore(s: QuoteCoreSnapshot): AdaptedTakeoff {
   return { roof, issues, audit };
 }
 export function roofRevision(roof: RoofInput): string {
-  const { imageUrl: _url, sourceRevision: _revision, ...content } = roof;
+  // imageRevision excluded (owner 2026-10-17 resume fix): it rotates per page
+  // load and carries no geometry, so it must not invalidate saved reviews.
+  const { imageUrl: _url, sourceRevision: _revision, imageRevision: _imgRev, ...content } = roof;
   return fingerprint(content);
 }

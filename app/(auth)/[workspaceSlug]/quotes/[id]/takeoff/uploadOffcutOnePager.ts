@@ -41,3 +41,39 @@ export async function uploadOffcutOnePagerFile(
     quoteId,
   });
 }
+
+/**
+ * Offcuts close-save (owner 2026-10-17): persist the photo-overlay composite
+ * PNG next to the one-pager PDF. Same bucket, auth and metadata path as the
+ * PDF variant; both show under "Offcut Plan" in Files & Documents.
+ */
+export async function uploadOffcutOverlayImageFile(
+  quoteId: string,
+  dataUrl: string,
+  jobLabel: string,
+): Promise<{ ok: true; id: string } | { ok: false; message: string }> {
+  const base64 = dataUrl.split(',')[1];
+  if (!dataUrl.startsWith('data:image/png') || !base64) {
+    return { ok: false, message: 'The overlay image could not be read.' };
+  }
+  const profile = await requireCompanyContext();
+  const buffer = Buffer.from(base64, 'base64');
+  const blob = new Blob([buffer], { type: 'image/png' });
+  const filePath = `${profile.company_id}/${quoteId}/offcut-overlay-${quoteId}-${Date.now()}.png`;
+  const admin = createAdminClient();
+  const { data, error } = await admin.storage
+    .from(BUCKETS.QUOTE_DOCUMENTS)
+    .upload(filePath, blob, { contentType: 'image/png', upsert: false });
+  if (error || !data?.path) {
+    console.error('[uploadOffcutOverlayImageFile] upload failed:', error);
+    return { ok: false, message: 'The overlay image could not be uploaded.' };
+  }
+  const safeLabel = (jobLabel || 'Quote').replace(/[^\w\s-]/g, '').trim().slice(0, 60) || 'Quote';
+  return saveGeneratedQuoteFileMetadata({
+    companyId: profile.company_id,
+    fileType: 'offcuts',
+    fileName: `Offcut plan image — ${safeLabel}.png`,
+    storagePath: data.path,
+    quoteId,
+  });
+}

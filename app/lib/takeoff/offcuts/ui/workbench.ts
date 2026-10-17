@@ -58,6 +58,9 @@ import { sceneScale, watchSceneViewport } from './viewport';
  * panel shows. */
 export interface OffcutOnePagerPayload {
   svg: string;
+  /** Photo + overlay composite with the plan image embedded as a data URL.
+   *  Saved as a PNG alongside the PDF (owner 2026-10-17). Optional. */
+  compositeSvg?: string;
   figures: {
     netRoofAreaM2: number;
     purchasedLinealM: number;
@@ -652,7 +655,7 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       ${errors.length>1?`<small>${errors.length} checks remain. Other valid faces are preserved.</small>`:''}</div>`:'';
     const advisory=visibleIssues.find(i=>i.code==='BACKGROUND_IMAGE'&&i.severity==='warning')??visibleIssues.find(i=>i.severity==='warning'&&!partition().regions.some(r=>r.id===i.objectId)&&!['SNAPPED_ENDPOINTS','NARROW_FACE','FLOW_REVIEW'].includes(i.code));
     const advisoryCard=advisory?`<details class="qc-advisory"><summary>${esc(issueTitle(advisory,draft.faces))}</summary><p>${esc(advisory.message)}</p><button data-action="ignore-warning" data-id="${warningKey(advisory,draft)}">Ignore</button></details>`:'';
-    shadow.innerHTML = `<style>${styles}${geometryStyles}${portfolioStyles}${installationStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.30 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? '<button data-action="close" aria-label="Close offcut review">Close</button>' : ''}</header>
+    shadow.innerHTML = `<style>${styles}${geometryStyles}${portfolioStyles}${installationStyles}</style><div class="qc-app"><header class="qc-header"><div class="qc-title"><span class="qc-brand-mark">${icon('focus')}</span><div><h1>Find offcuts</h1><p>Plan the new sheets. Reuse the cuts.</p></div></div><span class="qc-badge">V2.30 · Draft plan</span>${salvagePreview?'<small class="qc-save-status" role="status">Preview only - original kept</small>':saveState?`<small class="qc-save-status" role="status">${esc(saveState.message)}</small>`:''}${options.onClose ? `<button data-action="close" aria-label="Close offcut review">${draft.solution?'Save and close':'Close'}</button>` : ''}</header>
       <nav class="qc-topbar" aria-label="Offcut review and view controls"><span class="qc-step" ${phase === 'faces' ? 'aria-current="step"' : ''}><b>1</b>Review faces</span><span class="qc-muted" aria-hidden="true">→</span><span class="qc-step" ${phase === 'solution' ? 'aria-current="step"' : ''}><b>2</b>Cut plan</span><span class="qc-spacer"></span><span class="qc-nav-divider"></span><button class="qc-icon-button" data-action="undo" aria-label="Undo" title="Undo (Ctrl / ⌘ Z)" ${history.length ? '' : 'disabled'}>${icon('undo')}</button><button class="qc-icon-button" data-action="redo" aria-label="Redo" title="Redo (Ctrl / ⌘ Shift Z)" ${redoHistory.length ? '' : 'disabled'}>${icon('redo')}</button><button data-action="pan" aria-pressed="${panMode}" title="Pan tool. Also use middle mouse or Space + drag.">${icon('hand')}Pan</button><button data-action="fit" title="Fit whole plan">Fit</button><button class="qc-icon-button" data-action="zoom-in" aria-label="Zoom in">${icon('plus')}</button><button class="qc-icon-button" data-action="zoom-out" aria-label="Zoom out">${icon('minus')}</button>${s ? '<button data-action="export-svg">Export drawing</button>' : ''}</nav>
       <main class="qc-main"><section class="qc-viewport"><div class="qc-canvas" data-focus="roof-canvas" tabindex="0" aria-label="Roof canvas. Scroll to zoom. Middle mouse or Space and drag to pan. Select a face in review, or a material section in the cut plan."></div><div class="qc-help">${geometryTool==='split'?'Click two boundary points · Esc cancels':geometryTool==='merge'?'Click a neighbouring face · Esc cancels':drawPoints ? 'Click corners · click first point / Enter to finish · Backspace removes last · Esc cancels · Alt bypasses snap' : phase === 'faces' ? 'Scroll to zoom · middle mouse / Space + drag to pan · select a face to edit' : 'Select a section for source & lengths · solid = new · hatch = offcuts · grey = filler'}</div>${busy ? `<div class="qc-busy" role="status"><strong>Planning sheet banks & offcuts</strong><span data-run-progress>${esc(progress)}</span><span class="qc-muted">The layout count is only one stage. Cancel keeps your reviewed faces.</span><div class="qc-actions"><button data-action="cancel">Cancel</button><button data-action="export-trace">Export diagnostics</button></div></div>` : ''}</section>
       <aside class="qc-sidebar" aria-label="Offcut review controls">${storageCard}<div id="qc-export-status" role="status" aria-live="polite"></div>${stale ? '<div class="qc-note qc-error" role="alert">Takeoff changed. Close and reopen Find offcuts before using this plan.</div>' : ''}${notice ? `<div class="qc-notice" role="status">${esc(notice)}</div>` : ''}${error ? `<div class="qc-note qc-error" role="alert">${esc(error).replace(/\n/g, '<br/>')}<button data-action="export-trace">Export diagnostics</button><button data-action="dismiss-action-error">Dismiss message</button></div>` : ''}${interrupted}${coverageAlert}${actionableError}${pendingSourceAck ? `<div class="qc-note"><b>Use your reviewed faces?</b><p>The original linework had ambiguities. Continue only after checking the faces and water arrows. Geometry and coverage checks still apply.</p><div class="qc-actions"><button data-action="acknowledge-run">Use reviewed faces</button><button data-action="cancel-acknowledge">Keep reviewing</button></div></div>` : ''}${normal}${advisoryCard}${advanced}</aside></main>
@@ -855,7 +858,21 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         download(`quotecore-cut-plan-${draft.solution.layoutId||'selected'}.zip`,cutPlanPackage(draft,svg),'application/zip');
         notice='Cut plan exported. The selected review, quantities, drawing and source ledger are included. No quote quantities changed.';render();return;
       }
-      if(action==='close'){options.onClose?.();return;}
+      if(action==='close'){
+        // Owner 2026-10-17: close is the save trigger. With a cut plan
+        // present the one-pager PDF + photo-overlay PNG save automatically
+        // before the workbench closes; without one it stays a plain close.
+        if(savingOnePager)return;ensureCurrent();
+        const host=options.onSaveOnePager;
+        if(!draft.solution||!host){options.onClose?.();return;}
+        if(validateDraft(draft).some(i=>i.severity==='error')){notice='Fix the highlighted plan issues, then close again to save.';render();return;}
+        savingOnePager=true;notice='Saving cut plan to this job…';render();
+        void (async()=>{
+          try{await Promise.resolve(host(await buildClosePayload()));savingOnePager=false;options.onClose?.();}
+          catch(error:unknown){savingOnePager=false;notice=error instanceof Error?error.message:'The offcut plan could not be saved. Fix any issues and close again.';render();}
+        })();
+        return;
+      }
       if(action==='cancel'){cancelByUser();return;}
       if(action==='salvage-search'){run('salvage');return;}
       if(action==='salvage-keep'){endSalvage(false);return;}
@@ -964,6 +981,26 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         if(action==='send-quantity'){void completePlan();return;}
         else {download('quotecore-offcuts-material-quantity.json',JSON.stringify({proposal,totals:quantities()},null,2),'application/json');notice='Quantity proposal exported. No quote or measured roof area has been changed.';}
         render();return;
+      }
+      // Owner 2026-10-17: close = save trigger. Shared payload builder; the
+      // plan image is fetched as a data URL so the composite SVG (photo +
+      // overlay) can be rasterised offscreen for the saved PNG.
+      const onePagerSvgOptions=()=>({phase:'solution' as const,print:true,showSheets,showEnvelope,showDetailedLabels,coverage:partition().regions});
+      async function fetchPlanImageAsDataUrl():Promise<string|null>{
+        const url=draft.roof.imageUrl;
+        if(!url||!/^(https?:|blob:|data:image\/)/.test(url))return null;
+        try{const res=await fetch(url);if(!res.ok)return null;const blob=await res.blob();
+          return await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(r.error);r.readAsDataURL(blob);});}catch{return null;}
+      }
+      async function buildClosePayload():Promise<OffcutOnePagerPayload>{
+        const q=quantities();const ledger=rootSheetLedger(draft.solution!);
+        const payload:OffcutOnePagerPayload={svg:renderSvg(draft,onePagerSvgOptions()),
+          figures:q?{netRoofAreaM2:q.netRoofAreaM2,purchasedLinealM:q.purchasedLinealM,suppliedCoverAreaM2:q.suppliedCoverAreaM2,suppliedProfileAreaM2:q.suppliedProfileAreaM2,newSheetCount:q.newSheetCount,reusedPositions:q.reusedPositions,coverUpliftPercent:q.coverUpliftPercent,profileUpliftPercent:q.profileUpliftPercent}:null,
+          schedule:ledger.stockSchedule.map(r=>({faceId:r.faceId,count:r.count,lengthM:r.lengthM,linealM:r.linealM})),
+          meta:{savedAt:new Date().toISOString(),engineVersion:draft.solution?.engineVersion??'2.19',pageId:draft.roof.pageId,areaScopeId:draft.roof.areaScopeId??null}};
+        const dataUrl=await fetchPlanImageAsDataUrl();
+        if(dataUrl)payload.compositeSvg=renderSvg(draft,{...onePagerSvgOptions(),embedImage:dataUrl});
+        return payload;
       }
       if(action==='save-one-pager'){
         if(savingOnePager)return;

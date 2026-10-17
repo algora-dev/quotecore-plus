@@ -3,7 +3,7 @@ import { QuoteJourneyContext } from '@/app/components/quote-entry/QuoteJourneyCo
 import { useState, useRef, useEffect, useId, type ReactNode, Fragment } from 'react';
 import Link from 'next/link';
 import { COMPONENT_FOCUS_EVENT, componentFocusId } from '@/app/lib/smart-assistant/v2/component-focus';
-import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries } from '../actions';
+import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, addQuoteComponentsBulk, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries } from '../actions';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { entryLabel, addMoreLabel, measurementTypeLabel } from '@/app/lib/types';
@@ -329,6 +329,23 @@ export function QuoteBuilder({
     });
     setComponents(prev => [...prev, created]);
     setEntries(prev => ({ ...prev, [created.id]: [] }));
+    return created;
+  }
+
+  /** Batch add (owner 2026-10-17): every selected component in one server
+   *  round trip; rows land in the same order they were ticked. */
+  async function handleAddFromLibraryBatch(libIds: string[], areaId: string | null, type: 'main' | 'extra'): Promise<QuoteComponentRow[]> {
+    if (!libIds.length) return [];
+    const created = await addQuoteComponentsBulk(quote.id, libIds, {
+      quote_roof_area_id: areaId ?? undefined,
+      component_type: type,
+    });
+    setComponents(prev => [...prev, ...created]);
+    setEntries(prev => {
+      const next = { ...prev };
+      for (const c of created) next[c.id] = [];
+      return next;
+    });
     return created;
   }
 
@@ -762,6 +779,7 @@ export function QuoteBuilder({
           libraryComponents={localLibrary}
           collections={collections}
           defaultCollectionId={defaultCollectionId}
+          onAddFromLibraryBatch={handleAddFromLibraryBatch}
           currency={effectiveCurrency}
           totals={{ totalMaterials: totals.totalMaterials, totalLabour: totals.totalLabour, grandTotal: totals.grandTotal }}
           onCreateArea={handleAddArea}
@@ -873,6 +891,7 @@ export function QuoteBuilder({
                 measurementSystem={quote.measurement_system}
                 collections={collections}
                 defaultCollectionId={defaultCollectionId}
+                onAddBatch={ids => handleAddFromLibraryBatch(ids, null, 'main')}
               />
             </div>
           )}
@@ -915,6 +934,7 @@ export function QuoteBuilder({
                   measurementSystem={quote.measurement_system}
                   collections={collections}
                   defaultCollectionId={defaultCollectionId}
+                  onAddBatch={ids => handleAddFromLibraryBatch(ids, area.id, 'main')}
                 />
               </div>
             );
@@ -968,6 +988,7 @@ export function QuoteBuilder({
               measurementSystem={quote.measurement_system}
               collections={collections}
               defaultCollectionId={defaultCollectionId}
+              onAddBatch={ids => handleAddFromLibraryBatch(ids, null, 'extra')}
             />
           </div>
           <div className="qb-step-actions">

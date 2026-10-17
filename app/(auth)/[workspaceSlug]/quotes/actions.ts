@@ -895,6 +895,81 @@ export async function addQuoteComponent(quoteId: string, input: any) {
   return data;
 }
 
+/**
+ * Batch add (owner 2026-10-17): add many library components to a quote in
+ * ONE round trip. Runs the same trade-compat check and display-pref snapshot
+ * as addQuoteComponent for every selected component, then bulk-inserts all
+ * quote_components rows in a single statement. Mirrors the single-add insert
+ * shape exactly (rates/waste/pitch from library defaults; snapshot columns
+ * from the library row).
+ */
+export async function addQuoteComponentsBulk(
+  quoteId: string,
+  libraryIds: string[],
+  input: { quote_roof_area_id?: string | null; component_type: 'main' | 'extra' },
+) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
+  const ids = [...new Set(libraryIds.filter(Boolean))].slice(0, 100);
+  if (ids.length === 0) return [];
+
+  const { data: libRowsRaw, error: libError } = await supabase
+    .from('component_library')
+    .select('id, name, measurement_type, default_material_rate, default_labour_rate, default_waste_type, default_waste_percent, default_waste_fixed, default_pitch_type, quantity_display, cover_width_mm, quantity_spacing_m, quantity_spacing_allowance_percent, quantity_spacing_round_up, units_per_area_enabled, units_per_area')
+    .in('id', ids);
+  if (libError) throw new Error(libError.message);
+  // Live schema drift: quantity_spacing_* / units_per_area_* exist in the live
+  // DB but not the committed generated types, so select rows are cast through
+  // unknown (same pattern as the single-add action).
+  const libRows = (libRowsRaw ?? []) as unknown as Array<Record<string, unknown> & { id: string; name: string; measurement_type: string }>;
+  const libById = new Map(libRows.map(r => [r.id, r]));
+
+  const rows: Record<string, unknown>[] = [];
+  for (const id of ids) {
+    const lib = libById.get(id);
+    if (!lib) continue;
+    try {
+      await assertComponentCompatibleWithQuote({
+        quoteId,
+        componentId: id,
+        companyId: profile.company_id,
+      });
+    } catch (err) {
+      if (err instanceof TradeIncompatibleError) {
+        throw new Error(`trade_incompatible: ${err.message}`);
+      }
+      throw err;
+    }
+    rows.push({
+      quote_id: quoteId,
+      quote_roof_area_id: input.quote_roof_area_id ?? null,
+      component_library_id: id,
+      name: lib.name,
+      component_type: input.component_type,
+      measurement_type: lib.measurement_type,
+      input_mode: 'calculated',
+      material_rate: (lib.default_material_rate as number | null) ?? 0,
+      labour_rate: (lib.default_labour_rate as number | null) ?? 0,
+      waste_type: (lib.default_waste_type as string | null) ?? 'none',
+      waste_percent: (lib.default_waste_percent as number | null) ?? 0,
+      waste_fixed: (lib.default_waste_fixed as number | null) ?? 0,
+      pitch_type: (lib.default_pitch_type as string | null) ?? 'none',
+      quantity_display: (lib.quantity_display as string | null) ?? null,
+      cover_width_mm: (lib.cover_width_mm as string | number | null) ?? null,
+      quantity_spacing_m: (lib.quantity_spacing_m as number | null) ?? null,
+      quantity_spacing_allowance_percent: Number(lib.quantity_spacing_allowance_percent ?? 0),
+      quantity_spacing_round_up: Number(lib.quantity_spacing_round_up ?? 1),
+      units_per_area_enabled: lib.units_per_area_enabled === true,
+      units_per_area: (lib.units_per_area as number | null) ?? null,
+    });
+  }
+  if (rows.length === 0) return [];
+  const { data, error } = await supabase.from('quote_components').insert(rows as never).select();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function removeQuoteComponent(id: string) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
