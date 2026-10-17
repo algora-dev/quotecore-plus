@@ -376,12 +376,13 @@ export function QuoteDetailsForm({ workspaceSlug, templates, templatesLoadError 
                   {TRADES.map(trade => <option key={trade} value={trade}>{trade.charAt(0).toUpperCase() + trade.slice(1)}</option>)}
                 </QcSelect>
               </div>
-              <div className="qce-field"><label htmlFor={`${id}-collection`}>Component collection</label>
+              <div className="qce-field"><label htmlFor={`${id}-collection`}>Default component library</label>
                 <QcSelect id={`${id}-collection`} value={selectedCollectionId} onChange={e => setSelectedCollectionId(e.target.value)}>
                   <option value="">All Components</option>
                   {componentCollections.map(c => <option key={c.id} value={c.id}>{c.name}{c.is_bootstrap ? ' (default)' : ''}</option>)}
                 </QcSelect>
-                {componentCollections.length === 0 && <p className="qce-help">No collections yet. You can create one in Pricing Library.</p>}
+                <p className="qce-help">Opens first in the takeoff and quote builder. You can switch libraries or mix components from any library while quoting.</p>
+                {componentCollections.length === 0 && <p className="qce-help">No libraries yet. You can create one in Pricing Library.</p>}
               </div>
             </div>}
             {!measureFirst && <div className="qce-field qce-template" data-copilot="quote-template">

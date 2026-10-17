@@ -29,6 +29,9 @@ interface Props {
   components: QuoteComponentRow[];
   entries: Record<string, QuoteComponentEntryRow[]>;
   libraryComponents: ComponentLibraryRow[];
+  collections?: { id: string; name: string; is_bootstrap?: boolean }[];
+  /** Quote's default library: pre-selects the AddFromLibrary picker. */
+  defaultCollectionId?: string | null;
   currency: string;
   totals: { totalMaterials: number; totalLabour: number; grandTotal: number };
   onCreateArea: (label: string) => Promise<QuoteRoofAreaRow | null>;
@@ -65,6 +68,8 @@ export function GuidedQuoteSetup({
   components,
   entries,
   libraryComponents,
+  collections = [],
+  defaultCollectionId,
   currency,
   totals,
   onCreateArea,
@@ -348,9 +353,11 @@ export function GuidedQuoteSetup({
                   </div>
                 </div>
 
-                <AddFromLibrary
-                  library={libraryComponents.filter(component => component.component_type === 'main')}
-                  onAdd={libraryId => addComponent(libraryId, null)}
+      <AddFromLibrary
+        library={libraryComponents.filter(component => component.component_type === 'main')}
+        collections={collections}
+        defaultCollectionId={defaultCollectionId}
+        onAdd={libraryId => addComponent(libraryId, null)}
                   onCreateNew={() => onCreateComponent(null, 'main')}
                   measurementSystem={quote.measurement_system}
                   label="Add to this quote"
@@ -465,9 +472,11 @@ export function GuidedQuoteSetup({
                   </div>
                 </div>
 
-                <AddFromLibrary
-                  library={libraryComponents.filter(component => component.component_type === 'main')}
-                  onAdd={libraryId => addComponent(libraryId, activeArea.id)}
+      <AddFromLibrary
+        library={libraryComponents.filter(component => component.component_type === 'main')}
+        collections={collections}
+        defaultCollectionId={defaultCollectionId}
+        onAdd={libraryId => addComponent(libraryId, activeArea.id)}
                   onCreateNew={() => { if (activeArea.is_locked) void onToggleAreaLock(activeArea.id, false); onCreateComponent(activeArea.id, 'main'); }}
                   measurementSystem={quote.measurement_system}
                   label={`Add to ${activeArea.label}`}

@@ -6,6 +6,7 @@ import type { ComponentLibraryRow, MeasurementSystem } from '@/app/lib/types';
 import { measurementTypeLabel } from '@/app/lib/types';
 
 const CREATE_NEW_COMPONENT_ID = '__create_new_component__';
+const ALL_LIBRARIES = '__all__';
 
 export function AddFromLibrary({
   library,
@@ -17,6 +18,8 @@ export function AddFromLibrary({
   placeholder = 'Choose a Smart Component...',
   addButtonLabel = 'Add component',
   appearance = 'default',
+  collections,
+  defaultCollectionId,
 }: {
   library: ComponentLibraryRow[];
   onAdd: (id: string) => Promise<unknown>;
@@ -27,11 +30,27 @@ export function AddFromLibrary({
   placeholder?: string;
   addButtonLabel?: string;
   appearance?: 'default' | 'guided';
+  /** Named component libraries shown in the library selector. */
+  collections?: { id: string; name: string }[];
+  /** Quote's default library: pre-selects the selector. Non-restrictive. */
+  defaultCollectionId?: string | null;
 }) {
   const [sel, setSel] = useState('');
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState('');
   const selectId = useId();
+  const libSelectId = useId();
+  const showLibPicker = !!collections && collections.length > 0;
+  const [libSel, setLibSel] = useState<string>(() =>
+    defaultCollectionId && collections?.some(c => c.id === defaultCollectionId)
+      ? defaultCollectionId
+      : ALL_LIBRARIES,
+  );
+  // Switching library only filters this picker; components already added to
+  // the quote stay, so lines from multiple libraries can coexist.
+  const visibleLibrary = libSel === ALL_LIBRARIES
+    ? library
+    : library.filter(c => (c.collection_id ?? null) === libSel);
 
   async function addSelected() {
     if (!sel || adding) return;
@@ -52,6 +71,21 @@ export function AddFromLibrary({
   return (
     <div className={`qb-library ${appearance === 'guided' ? 'qb-library--guided' : ''}`} {...(copilotId ? { 'data-copilot': copilotId } : {})}>
       <label htmlFor={selectId} className="qc-label">{label}</label>
+      {showLibPicker && (
+        <div className="qb-lib-picker">
+          <label htmlFor={libSelectId} className="qc-label">Smart Component library</label>
+          <QcSelect
+            id={libSelectId}
+            value={libSel}
+            onChange={e => setLibSel(e.target.value || ALL_LIBRARIES)}
+          >
+            <option value={ALL_LIBRARIES}>All libraries</option>
+            {collections?.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </QcSelect>
+        </div>
+      )}
       <div className="qb-inline-form">
       <QcSelect
         id={selectId}
@@ -73,7 +107,7 @@ export function AddFromLibrary({
         {onCreateNew && (
           <option value={CREATE_NEW_COMPONENT_ID}>+ Create new Smart Component™</option>
         )}
-        {library.map(c => (
+        {visibleLibrary.map(c => (
           <option key={c.id} value={c.id}>
             {c.name} ({measurementTypeLabel(c.measurement_type as any, measurementSystem)})
           </option>
@@ -91,7 +125,7 @@ export function AddFromLibrary({
       </QcButton>
       </div>
       {addError && <p className="qc-help qb-library-error" role="alert">{addError}</p>}
-      {library.length === 0 && <p className="qc-help">No saved components in this list.{onCreateNew ? ' Choose Create new Smart Component in the menu to add one.' : ''}</p>}
+      {visibleLibrary.length === 0 && <p className="qc-help">{libSel === ALL_LIBRARIES ? 'No saved components in this list.' : 'No saved components in this library.'}{onCreateNew ? ' Choose Create new Smart Component in the menu to add one.' : ''}</p>}
     </div>
   );
 }

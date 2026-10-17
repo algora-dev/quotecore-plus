@@ -1685,6 +1685,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, componentEnt
           catalogs={catalogs}
           collections={collections}
           componentLibrary={componentLibrary}
+          defaultCollectionId={(quote as { component_collection_id?: string | null }).component_collection_id ?? null}
           onAdd={handleAddLineItem}
           onClose={() => setShowAddLine(false)}
         />

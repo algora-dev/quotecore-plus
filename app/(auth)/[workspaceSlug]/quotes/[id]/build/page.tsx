@@ -16,7 +16,8 @@ export default async function QuoteBuilderV2Page({
   const { workspaceSlug, id } = await params;
   const { step = 'roof-areas' } = await searchParams;
 
-  // Load quote first so we can use its collection_id to filter the library.
+  // Load quote first (its collection_id pre-selects the default library in
+  // the builder; the picker itself is non-restrictive and shows every library).
   const supabase = await createSupabaseServerClient();
   const quote = await loadQuote(id);
 
@@ -25,14 +26,15 @@ export default async function QuoteBuilderV2Page({
     redirect(`/${workspaceSlug}/quotes/${id}`);
   }
 
-  // Load remaining data in parallel, now that we have the quote's collection_id.
-  const collectionId = (quote as unknown as { component_collection_id?: string | null }).component_collection_id;
+  // Load remaining data in parallel. The FULL component library is loaded -
+  // the quote's collection only pre-selects the default in the picker; users
+  // can switch libraries and mix components from any of them (owner 2026-10-17).
   const [roofAreas, roofAreaEntries, components, entries, libraryComponents, collections] = await Promise.all([
     loadQuoteRoofAreas(id),
     loadAllRoofAreaEntriesForQuote(id),
     loadQuoteComponents(id),
     loadAllEntriesForQuote(id),
-    loadComponentLibrary(collectionId),
+    loadComponentLibrary(),
     loadComponentCollections(),
   ]);
 

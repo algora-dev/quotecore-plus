@@ -61,6 +61,8 @@ interface Props {
   collections: { id: string; name: string }[];
   /** Full company component library for the component picker. */
   componentLibrary: { id: string; name: string; collection_id: string | null }[];
+  /** Quote's default collection: pre-selects the Collection dropdown. */
+  defaultCollectionId?: string | null;
   onAdd: (lines: LineItemPayload[]) => void;
   onClose: () => void;
 }
@@ -99,6 +101,7 @@ export function AddLineItemModal({
   catalogs,
   collections,
   componentLibrary,
+  defaultCollectionId,
   onAdd,
   onClose,
 }: Props) {
@@ -121,7 +124,9 @@ export function AddLineItemModal({
   const [catalogUnitPrice, setCatalogUnitPrice] = useState('');
 
   // ── Component tab state ──
-  const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(
+    defaultCollectionId && collections.some((c) => c.id === defaultCollectionId) ? defaultCollectionId : null,
+  );
   const [selectedComponent, setSelectedComponent] = useState<{ id: string; name: string } | null>(null);
   const [compQty, setCompQty] = useState('1');
   const [compPrice, setCompPrice] = useState('');

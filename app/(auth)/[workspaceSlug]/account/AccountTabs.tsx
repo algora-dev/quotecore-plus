@@ -1,6 +1,7 @@
 'use client';
 
 import { QcJourney } from '@/app/components/ui/v2/QcJourney';
+import { LEGACY_Q_ENABLED } from '@/app/lib/assistant/legacyQ';
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -129,11 +130,14 @@ function readTabFromUrl(value: string | null): AccountTabKey {
   switch (value) {
     case 'company':
     case 'security':
-    case 'notifications':
     case 'billing':
     case 'integrations':
     case 'support':
       return value;
+    case 'notifications':
+      // Legacy Q kill switch (owner 2026-10-17): deep links fall back to
+      // Profile while Q is hidden.
+      return LEGACY_Q_ENABLED ? 'notifications' : 'profile';
     case 'profile':
     default:
       return 'profile';
@@ -181,7 +185,7 @@ export function AccountTabs({ panels }: AccountTabsProps) {
       <aside className="w-full md:w-56 lg:w-60 md:flex-shrink-0"><QcJourney>
         <nav aria-label="Account sections" className="qc-flow-settings-nav md:sticky md:top-6 md:self-start">
           <ul className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
-            {TABS.map((tab) => {
+            {TABS.filter(tab => LEGACY_Q_ENABLED || tab.key !== 'notifications').map((tab) => {
               if (tab.disabled) {
                 return (
                   <li key={tab.key}>

@@ -33,6 +33,7 @@ main:has(> [data-qc-ui='v2'][data-qc-page='quote-builder']) {
 :where([data-qc-ui='v2']) .qb-grow { flex: 1 1 220px; min-width: 0; }
 :where([data-qc-ui='v2']) .qb-full-width { width: 100%; }
 :where([data-qc-ui='v2']) .qb-add-area, :where([data-qc-ui='v2']) .qb-library { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; }
+:where([data-qc-ui='v2']) .qb-lib-picker { display: grid; gap: 6px; }
 :where([data-qc-ui='v2']) .qb-library { border-top: 1px solid var(--qc-border-divider); padding-top: 16px; }
 :where([data-qc-ui='v2']) .qb-step-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 8px 0 4px; }
 :where([data-qc-ui='v2']) .qb-step-actions-end { justify-content: flex-end; }

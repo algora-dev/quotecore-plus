@@ -10,6 +10,7 @@ import { PasswordSection } from '@/app/(auth)/[workspaceSlug]/settings/PasswordS
 import { MfaSection, RecoveryCodesPanel } from '@/app/(auth)/[workspaceSlug]/settings/MfaSection';
 import { SecurityQuestionsSection } from '@/app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection';
 import { AssistantSection } from '@/app/(auth)/[workspaceSlug]/settings/AssistantSection';
+import { LEGACY_Q_ENABLED } from '@/app/lib/assistant/legacyQ';
 import { SupportSection } from './support/SupportSection';
 import { IntegrationsPanel } from './integrations/IntegrationsPanel';
 
@@ -193,7 +194,7 @@ export default async function AccountPage() {
       </section>
     ),
 
-    notifications: (
+    notifications: LEGACY_Q_ENABLED ? (
       <section className="space-y-6">
         <div>
           <h2 className="text-lg md:text-xl font-semibold text-slate-900">Q Assistant</h2>
@@ -209,7 +210,7 @@ export default async function AccountPage() {
           />
         </div>
       </section>
-    ),
+    ) : null,
 
     billing: (() => {
       const stripeMode = getStripeMode();

@@ -182,6 +182,10 @@ export function QuoteBuilder({
 
   // localLibrary: lifted from prop so newly-created mid-quote components are
   // immediately available for future adds in the same session.
+  // Quote's default library (set at creation). Non-restrictive: it only
+  // pre-selects the AddFromLibrary picker; users can switch libraries and
+  // mix components from any of them (owner 2026-10-17).
+  const defaultCollectionId = (quote as { component_collection_id?: string | null }).component_collection_id ?? null;
   const [localLibrary, setLocalLibrary] = useState<ComponentLibraryRow[]>(libraryComponents);
   // Mid-quote Smart Component™ creation modal state.
   const [showCreateComponentModal, setShowCreateComponentModal] = useState(false);
@@ -756,6 +760,8 @@ export function QuoteBuilder({
           components={components}
           entries={entries}
           libraryComponents={localLibrary}
+          collections={collections}
+          defaultCollectionId={defaultCollectionId}
           currency={effectiveCurrency}
           totals={{ totalMaterials: totals.totalMaterials, totalLabour: totals.totalLabour, grandTotal: totals.grandTotal }}
           onCreateArea={handleAddArea}
@@ -865,6 +871,8 @@ export function QuoteBuilder({
                 onCreateNew={() => { setCreateCompForAreaId(null); setCreateCompType('main'); setShowCreateComponentModal(true); }}
                 copilotId="quote-add-from-library"
                 measurementSystem={quote.measurement_system}
+                collections={collections}
+                defaultCollectionId={defaultCollectionId}
               />
             </div>
           )}
@@ -905,6 +913,8 @@ export function QuoteBuilder({
                   onCreateNew={() => { setCreateCompForAreaId(area.id); setCreateCompType('main'); setShowCreateComponentModal(true); }}
                   copilotId={areaIdx === 0 ? 'quote-add-from-library' : undefined}
                   measurementSystem={quote.measurement_system}
+                  collections={collections}
+                  defaultCollectionId={defaultCollectionId}
                 />
               </div>
             );
@@ -956,6 +966,8 @@ export function QuoteBuilder({
               onAdd={libId => handleAddFromLibrary(libId, null, 'extra')}
               onCreateNew={() => { setCreateCompForAreaId(null); setCreateCompType('extra'); setShowCreateComponentModal(true); }}
               measurementSystem={quote.measurement_system}
+              collections={collections}
+              defaultCollectionId={defaultCollectionId}
             />
           </div>
           <div className="qb-step-actions">

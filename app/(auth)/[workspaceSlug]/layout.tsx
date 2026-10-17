@@ -11,6 +11,7 @@ import { HelpDrawerProvider } from '@/app/components/docs/HelpDrawerContext';
 import { HelpDrawerLayout } from '@/app/components/docs/HelpDrawerLayout';
 import { AssistantWidget } from '@/app/components/assistant/AssistantWidget';
 import { SmartAssistantLauncher } from '@/app/components/smart-assistant/SmartAssistantLauncher';
+import { LEGACY_Q_ENABLED } from '@/app/lib/assistant/legacyQ';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
@@ -90,12 +91,17 @@ export default async function WorkspaceLayout({
   // Per-user Chat Assistant visibility preference (default ON). When false the
   // widget renders nothing. Read directly here (not in the shared profile
   // selector) to avoid touching getCurrentProfile's broad usage.
-  const { data: assistantPref } = await supabase
-    .from('users')
-    .select('assistant_enabled')
-    .eq('id', profile.id)
-    .maybeSingle();
-  const assistantEnabled = (assistantPref as { assistant_enabled?: boolean } | null)?.assistant_enabled ?? true;
+  // LEGACY_Q_ENABLED=false (owner 2026-10-17): skip the query entirely - the
+  // legacy Q widget never mounts while the kill switch is off.
+  let assistantEnabled = false;
+  if (LEGACY_Q_ENABLED) {
+    const { data: assistantPref } = await supabase
+      .from('users')
+      .select('assistant_enabled')
+      .eq('id', profile.id)
+      .maybeSingle();
+    assistantEnabled = (assistantPref as { assistant_enabled?: boolean } | null)?.assistant_enabled ?? true;
+  }
 
   // Smart Assistant (V1.5): flag-on companies get the launcher instead of
   // the legacy Q widget. Conversations + config are fetched here so the
@@ -163,10 +169,10 @@ export default async function WorkspaceLayout({
           ) : smartAssistantProps ? (
             <SmartAssistantLauncher workspaceSlug={slug} initialConversations={smartAssistantProps.conversations}
               assistantName={smartAssistantProps.name} greeting={smartAssistantProps.greeting} />
-          ) : (
+          ) : LEGACY_Q_ENABLED ? (
             <AssistantWidget userId={profile.id} companyId={company.id}
               trade={(company as { default_trade?: string }).default_trade ?? 'roofing'} enabled={assistantEnabled} />
-          )}
+          ) : null}
         >
           {children}
         </QcAppShell>
