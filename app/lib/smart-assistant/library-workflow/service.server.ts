@@ -15,6 +15,7 @@ import type { PlannedDraft } from '../workflow-controller/structural-diff';
 import { createWorkingBrief, applyWorkingDeltas, validateWorkingBrief } from '../workflow-controller/brief';
 import { resolveWorkingBrief, workingBriefSummary, workingProposalArgs } from '../workflow-controller/decisions';
 import { readWorkflowCatalog, readWorkflowEpoch, readWorkflowVocabulary } from '../workflow-controller/configuration.server';
+import { applyCallNamesToPrepare, applyCallNamesToRevision } from '../workflow-controller/call-names';
 import { libraryWorkflowEnabled } from './config';
 import { isDemoCompany } from '@/app/lib/demo/context';
 
@@ -34,6 +35,7 @@ async function environment(client:SupabaseClient,access:Access){
   if(await readWorkflowEpoch(client,access.companyId)!==config.epoch)throw new ProposalError('Assistant settings changed while preparing this brief. Review it again.');
   return {...config,catalog};
 }
+
 // Kept as an exported seam for existing callers; resolution always uses the new
 // deliberate concept mapping, never a Takeoff role fallback.
 export async function readAssistantLibraryCatalog(client:SupabaseClient,access:Access,collectionId?:string|null){
@@ -116,14 +118,16 @@ async function evaluate(client:SupabaseClient,access:Access,conversationId:strin
 }
 export async function prepareDraftWorkflow(client:SupabaseClient,access:Access,conversationId:string,runId:string,args:Record<string,unknown>){
   await workflowAccess(client,access);
-  const [{data},config]=await Promise.all([creationContext(client,access),readWorkflowVocabulary(client,access.companyId)]);
-  return evaluate(client,access,conversationId,runId,createWorkingBrief(args,data,config.concepts));
+  const [{data},env]=await Promise.all([creationContext(client,access),environment(client,access)]);
+  const normalized=applyCallNamesToPrepare(args,env.catalog);
+  return evaluate(client,access,conversationId,runId,createWorkingBrief(normalized,data,env.concepts));
 }
 export async function reviseDraftWorkflow(client:SupabaseClient,access:Access,conversationId:string,runId:string,args:Record<string,unknown>){
   await workflowAccess(client,access);
   const state=await loadState(access,conversationId,String(args.state_id),Number(args.revision));
-  const config=await readWorkflowVocabulary(client,access.companyId);
-  return evaluate(client,access,conversationId,runId,applyWorkingDeltas(state.brief,args.deltas,config.concepts),state);
+  const env=await environment(client,access);
+  const normalized=applyCallNamesToRevision(args,env.catalog,state.brief);
+  return evaluate(client,access,conversationId,runId,applyWorkingDeltas(state.brief,normalized.deltas,env.concepts),state);
 }
 export async function applyDraftChoice(client:SupabaseClient,access:Access,conversationId:string,runId:string,choice:DraftChoiceWire):Promise<WorkflowResult>{
   await workflowAccess(client,access);

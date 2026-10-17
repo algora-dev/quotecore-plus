@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import type { ComponentType, MeasurementSystem, MeasurementType, PitchType, PricingStrategy, WasteType, WasteUnit, FlashingLibraryRow } from '@/app/lib/types';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
@@ -21,7 +22,7 @@ export interface ComponentEditorSettings {
   unitsPerAreaEnabled: boolean; unitsPerArea: string;
 }
 export interface ComponentEditorInitial {
-  name: string; sku: string; componentType: ComponentType; materialRate: string; labourRate: string;
+  name: string; sku: string; assistantCallName?: string; componentType: ComponentType; materialRate: string; labourRate: string;
   wasteAmount: string; pitchType: PitchType; eligibleForOrders: boolean;
   /** Stored values needed when generic-trades controls are gated off. */
   storedStrategy?: PricingStrategy; storedPackPrice?: string; storedPackSize?: string; storedPackCoverage?: string;
@@ -40,6 +41,7 @@ interface Props {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>; onCancel: () => void;
   onDirty: () => void; onCalculated?: () => void; onCopy?: (initial: ComponentEditorInitial) => void;
   openTestInitially?: boolean; testRequest?: number; learning?: boolean;
+  smartAssistantAvailable?: boolean; smartAssistantUpgradeHref?: string;
 }
 export function SmartComponentEditor(props: Props) {
   const { initial, settings: s, onSettingsChange: set, mode, saving, genericTradesEnabled } = props;
@@ -49,6 +51,7 @@ export function SmartComponentEditor(props: Props) {
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const [name, setName] = useState(initial.name);
   const [sku, setSku] = useState(initial.sku);
+  const [assistantCallName, setAssistantCallName] = useState(initial.assistantCallName ?? '');
   const [componentType, setComponentType] = useState(initial.componentType);
   const [materialRate, setMaterialRate] = useState(initial.materialRate);
   const [labourRate, setLabourRate] = useState(initial.labourRate);
@@ -106,7 +109,7 @@ export function SmartComponentEditor(props: Props) {
         placeholder="0" aria-describedby={options?.help ? `${id}-${key}-help` : undefined} onChange={e => update(e.target.value)} />
     </QcField>
   );
-  const copyInitial = (): ComponentEditorInitial => ({ ...initial, name: `${name || 'Component'} (copy)`, sku: '', componentType,
+  const copyInitial = (): ComponentEditorInitial => ({ ...initial, name: `${name || 'Component'} (copy)`, sku: '', assistantCallName: '', componentType,
     materialRate, labourRate, wasteAmount, pitchType: s.pitchEnabled ? pitchType : 'none', eligibleForOrders: eligible });
   return <section className="qc-component-editor" data-mobile-view={mobileView} data-qc-ui="v2" data-qc-component="C69" aria-labelledby={`${id}-title`}>
     <header className="qc-pricing-editor-header"><div><p className="qc-eyebrow">Your reusable pricing</p>
@@ -135,6 +138,17 @@ export function SmartComponentEditor(props: Props) {
               <div data-copilot="component-sku"><QcField htmlFor={`${id}-sku`} label={`Product code / SKU${props.supplierSkuRequired ? ' (required for publishing)' : ' (optional)'}`} help={mode === 'edit' && initial.sku ? 'An existing product code cannot be changed.' : undefined}>
                 <QcInput id={`${id}-sku`} name="sku" value={sku} readOnly={mode === 'edit' && !!initial.sku} onChange={e => setSku(e.target.value)} placeholder="Your reference code" />
               </QcField></div>
+              <div data-copilot="component-assistant-call-name" className="qc-assistant-call-name" data-locked={!props.smartAssistantAvailable || undefined}>
+                <div className="qc-assistant-call-name-heading"><span>Smart Assistant</span>{!props.smartAssistantAvailable && <span className="qc-assistant-call-name-badge">Plan feature</span>}</div>
+                <QcField htmlFor={`${id}-assistant-call-name`} label="Smart Assistant call name (optional)" help={props.smartAssistantAvailable
+                  ? 'A short name you can say or type so Smart Assistant finds this exact component. It never changes the component name shown on quotes.'
+                  : assistantCallName ? 'This saved call name is kept. Upgrade to Smart Assistant to change it or use it with the Assistant.' : 'Available with Smart Assistant. Give components short names that are quicker to say or type and easier to match exactly.'}>
+                  <QcInput id={`${id}-assistant-call-name`} name="assistant_call_name" value={assistantCallName} maxLength={80}
+                    disabled={!props.smartAssistantAvailable} onChange={e => setAssistantCallName(e.target.value)}
+                    placeholder={props.smartAssistantAvailable ? 'e.g. Ridge 1' : 'Only available with Smart Assistant'} />
+                </QcField>
+                {!props.smartAssistantAvailable && props.smartAssistantUpgradeHref && <Link href={props.smartAssistantUpgradeHref} className="qc-assistant-call-name-link">See Smart Assistant plans</Link>}
+              </div>
               {mode === 'create' && <div data-copilot="component-type"><QcField htmlFor={`${id}-type`} label="Used as" help="Main items form the job. Extras cover additional work or charges."><QcSelect id={`${id}-type`} name="component_type" value={componentType} onChange={e => setComponentType(e.target.value as ComponentType)}>
                 <option value="main">Main component</option><option value="extra">Extra</option></QcSelect></QcField></div>}
               <div data-copilot="component-measurement"><QcField htmlFor={`${id}-measurement`} label="How do you measure it?" help="Choose what you enter on a job. Purchasing is set separately below.">

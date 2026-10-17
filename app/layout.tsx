@@ -94,9 +94,12 @@ export default async function RootLayout({
 }>) {
   const headerSet = await headers();
   const host = headerSet.get('host') || '';
-  // Do not send disposable demo inputs, verification codes or customer previews
-  // to a third-party session replay service. Normal analytics are unchanged.
-  const demoRequest = headerSet.get('x-qcp-auth-namespace') === 'demo' || host.split(':')[0] === 'demo.quote-core.com';
+  const hostname = host.split(':')[0];
+  // Owner 2026-10-17: Clarity tracks every production surface - marketing,
+  // app and demo subdomains. Preview/testing hosts stay out so replay data
+  // stays clean.
+  const clarityHosts = new Set(['quote-core.com', 'www.quote-core.com', 'app.quote-core.com', 'demo.quote-core.com']);
+  const clarityOn = clarityHosts.has(hostname);
   const lang = htmlLang(host);
 
   return (
@@ -111,8 +114,9 @@ export default async function RootLayout({
         {/* Drives the .pill-shimmer hover animation: one full sweep per
             pointerenter, plays to completion even if hover ends mid-sweep. */}
         <PillShimmerScript />
-        {/* Microsoft Clarity analytics (heatmaps / session replay). */}
-        {!demoRequest && <Script id="ms-clarity" strategy="afterInteractive">
+        {/* Microsoft Clarity analytics (heatmaps / session replay) on
+            production hosts: quote-core.com, app. and demo. subdomains. */}
+        {clarityOn && <Script id="ms-clarity" strategy="afterInteractive">
           {`(function(c,l,a,r,i,t,y){
             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
             t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;

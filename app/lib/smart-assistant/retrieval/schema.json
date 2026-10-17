@@ -1160,6 +1160,10 @@
           "sql": "c.name",
           "type": "text"
         },
+        "assistant_call_name": {
+          "sql": "c.assistant_call_name",
+          "type": "text"
+        },
         "sku": {
           "sql": "c.sku",
           "type": "text"
@@ -1174,6 +1178,10 @@
         },
         "collection_name": {
           "sql": "col.name",
+          "type": "text"
+        },
+        "collection_call_name": {
+          "sql": "col.assistant_call_name",
           "type": "text"
         },
         "currency": {
@@ -1236,20 +1244,25 @@
       "defaults": [
         "id",
         "name",
+        "assistant_call_name",
         "sku",
         "collection_name",
+        "collection_call_name",
         "measurement_type",
         "default_material_rate",
         "currency"
       ],
       "nameFields": [
         "name",
+        "assistant_call_name",
         "sku"
       ],
       "searchFields": [
         "name",
+        "assistant_call_name",
         "sku",
         "collection_name",
+        "collection_call_name",
         "notes"
       ],
       "relations": {
@@ -1281,6 +1294,10 @@
           "sql": "c.name",
           "type": "text"
         },
+        "assistant_call_name": {
+          "sql": "c.assistant_call_name",
+          "type": "text"
+        },
         "currency": {
           "sql": "c.currency",
           "type": "text"
@@ -1301,14 +1318,17 @@
       "defaults": [
         "id",
         "name",
+        "assistant_call_name",
         "currency",
         "unit_system"
       ],
       "nameFields": [
-        "name"
+        "name",
+        "assistant_call_name"
       ],
       "searchFields": [
-        "name"
+        "name",
+        "assistant_call_name"
       ],
       "relations": {},
       "sectionSql": "'components'::text",

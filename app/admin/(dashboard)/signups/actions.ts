@@ -2,6 +2,7 @@
 
 import { requireAdmin } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { loadDemoVisitors, type DemoVisitorRow } from '@/app/lib/admin/demo-visitors';
 
 export interface SignupRow {
   companyId: string;
@@ -17,12 +18,18 @@ export interface SignupRow {
 }
 
 export type SignupsResult =
-  | { ok: true; signups: SignupRow[] }
+  | { ok: true; signups: SignupRow[]; demoVisitors: DemoVisitorRow[] }
   | { ok: false; error: string };
 
 /**
- * Recent signups for the admin "Signups" tab. Same field set as
- * /api/admin/signups (agent feed) so both surfaces tell the same story.
+ * Admin "Signups" tab split into two feeds:
+ *  - Real companies: plan_code is not 'demo' (main app users).
+ *  - Demo visitors: fictional plan_code='demo' companies created by
+ *    quote-core.com/demo provisioning (owner rows carry @demo.invalid
+ *    placeholder emails; one row per anonymous visitor session).
+ *
+ * The real-signups field set mirrors /api/admin/signups (agent feed), which
+ * also excludes demo companies, so both surfaces tell the same story.
  */
 export async function loadRecentSignups(limit: number = 50): Promise<SignupsResult> {
   await requireAdmin();
@@ -31,6 +38,7 @@ export async function loadRecentSignups(limit: number = 50): Promise<SignupsResu
   const { data: companies, error } = await admin
     .from('companies')
     .select('id, name, slug, created_at, admin_paused, plan_code, subscription_status, trial_ends_at')
+    .or('plan_code.neq.demo,plan_code.is.null')
     .order('created_at', { ascending: false })
     .limit(limit);
 
@@ -60,5 +68,13 @@ export async function loadRecentSignups(limit: number = 50): Promise<SignupsResu
     };
   });
 
-  return { ok: true, signups };
+  // Demo tab degrades to empty on failure; the real feed above still renders.
+  let demoVisitors: DemoVisitorRow[] = [];
+  try {
+    demoVisitors = await loadDemoVisitors(limit);
+  } catch {
+    demoVisitors = [];
+  }
+
+  return { ok: true, signups, demoVisitors };
 }

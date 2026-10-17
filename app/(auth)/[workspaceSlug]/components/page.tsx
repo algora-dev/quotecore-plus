@@ -7,6 +7,8 @@ import { BackButton } from '@/app/components/BackButton';
 import { getPendingSupplierUpdates } from '../supplier-directory/actions';
 import { TakeoffDraftNoteBanner } from '../TakeoffDraftNoteBanner';
 import type { PendingUpdate } from '../supplier-directory/actions';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 
 export default async function ComponentsPage(props: {
   params: Promise<{ workspaceSlug: string }>;
@@ -41,6 +43,14 @@ export default async function ComponentsPage(props: {
   const introSeen = await hasSeenComponentsIntro();
   const collections = await loadComponentCollections();
   const editWarningDismissed = await hasDismissedComponentEditWarning();
+  let smartAssistantAvailable = false;
+  try {
+    const supabase = await createSupabaseServerClient();
+    smartAssistantAvailable = await smartAssistantFeatureAvailable(supabase, company.id);
+  } catch {
+    // This is an optional editor enhancement. Billing/rollout read failures
+    // fail closed so a paid Assistant-only field is never accidentally enabled.
+  }
   // Demo (owner 2026-10-05): fresh demo visitors land on the Roofing library
   // (the seeded default takeoff library) instead of "All Libraries".
   const demoDefaultLibraryId = company?.id && await isDemoCompany(company.id)
@@ -82,6 +92,7 @@ export default async function ComponentsPage(props: {
         restoreDraftId={restoreDraftId}
         highlightComponentId={createdComponentId}
         isSupplier={(company as { is_supplier?: boolean }).is_supplier ?? false}
+        smartAssistantAvailable={smartAssistantAvailable}
       />
     </>
   );

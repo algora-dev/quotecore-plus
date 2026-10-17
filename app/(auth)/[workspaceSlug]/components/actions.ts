@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient, requireCompanyContext, requireUser } from '@/app/lib/supabase/server';
 import { pickFields } from '@/app/lib/security/pickFields';
 import type { ComponentLibraryInsert } from '@/app/lib/types';
+import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 
 /**
  * Sentinel id we slot into `copilot_progress.guides_completed[]` once the
@@ -12,6 +13,20 @@ import type { ComponentLibraryInsert } from '@/app/lib/types';
  * exports async functions, which Next requires for server-action modules.
  */
 const COMPONENTS_INTRO_SEEN_KEY = 'components-intro-seen';
+
+function normalizeAssistantCallNameValue(value: unknown): string | null {
+  if (value == null || value === '') return null;
+  if (typeof value !== 'string') throw new Error('Smart Assistant call name must be text.');
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (trimmed.length > 80 || /[\u0000-\u001f]/.test(trimmed)) throw new Error('Smart Assistant call name must be 80 characters or fewer.');
+  return trimmed;
+}
+function assistantCallNameConflict(error: { code?: string; message?: string; details?: string } | null | undefined) {
+  if (error?.code !== '23505') return false;
+  const detail = `${error.message ?? ''} ${error.details ?? ''}`.toLowerCase();
+  return detail.includes('assistant_call_name');
+}
 
 /**
  * Returns true if the current user has already dismissed the components
@@ -98,7 +113,7 @@ export async function loadComponentLibrary(collectionId?: string | null) {
     console.error('Failed to get company context:', err);
     throw new Error('Account setup incomplete. Please ensure you are logged in and have a company workspace.');
   }
-  
+
   const supabase = await createSupabaseServerClient();
   let query = supabase
     .from('component_library')
@@ -113,12 +128,12 @@ export async function loadComponentLibrary(collectionId?: string | null) {
   }
 
   const { data, error } = await query;
-  
+
   if (error) {
     console.error('Database error loading components:', error);
     throw new Error(`Failed to load components: ${error.message}`);
   }
-  
+
   // Note: After migration 022, database uses 'lineal' (no transform needed)
   return data;
 }
@@ -153,15 +168,22 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
     return { ok: false, code: 'internal_error', message: error instanceof Error ? error.message : 'Demo allowance unavailable.' };
   }
 
+  let assistantCallName: string | null;
+  try { assistantCallName = normalizeAssistantCallNameValue((input as unknown as Record<string, unknown>).assistant_call_name); }
+  catch (error) { return { ok: false, code: 'internal_error', message: error instanceof Error ? error.message : 'Invalid Smart Assistant call name.' }; }
   const supabase = await createSupabaseServerClient();
+  if (assistantCallName && !await smartAssistantFeatureAvailable(supabase, profile.company_id)) {
+    return { ok: false, code: 'internal_error', message: 'Smart Assistant call names are available when Smart Assistant is included in this workspace.' };
+  }
   const { data, error } = await supabase
     .from('component_library')
-    .insert({ ...input, company_id: profile.company_id })
+    .insert({ ...input, assistant_call_name: assistantCallName, company_id: profile.company_id } as any)
     .select()
     .single();
 
   if (error) {
     console.error('[createComponent] Database error:', error);
+    if (assistantCallNameConflict(error)) return { ok: false, code: 'internal_error', message: 'That Smart Assistant call name is already used by another component in this library.' };
     return { ok: false, code: 'internal_error', message: `${error.message} (Code: ${error.code})` };
   }
 
@@ -217,6 +239,7 @@ const UPDATABLE_COMPONENT_FIELDS = [
   'quantity_spacing_round_up',
   'units_per_area_enabled',
   'units_per_area',
+  'assistant_call_name',
 ] as const;
 
 export async function updateComponent(id: string, input: Partial<ComponentLibraryInsert>) {
@@ -224,6 +247,13 @@ export async function updateComponent(id: string, input: Partial<ComponentLibrar
 
   // Whitelist columns before passing to the DB; see pickFields.ts for why.
   const update = pickFields(input as Record<string, unknown>, UPDATABLE_COMPONENT_FIELDS);
+  if ('assistant_call_name' in update) {
+    update.assistant_call_name = normalizeAssistantCallNameValue(update.assistant_call_name);
+    const accessClient = await createSupabaseServerClient();
+    if (!await smartAssistantFeatureAvailable(accessClient, profile.company_id)) {
+      throw new Error('Smart Assistant call names are available when Smart Assistant is included in this workspace.');
+    }
+  }
 
   // SKU lock: once a component has a SKU, it cannot be changed.
   // This applies to all components (not just published supplier libraries).
@@ -235,11 +265,11 @@ export async function updateComponent(id: string, input: Partial<ComponentLibrar
       .eq('id', id)
       .eq('company_id', profile.company_id)
       .single();
-    
+
     if (existing) {
       const hasExistingSku = !!existing.sku;
       const newSku = (update as Record<string, unknown>).sku as string | null;
-      
+
       if (hasExistingSku && newSku !== existing.sku) {
         throw new Error('SKU cannot be changed once set. Create a new component if you need a different SKU.');
       }
@@ -257,8 +287,11 @@ export async function updateComponent(id: string, input: Partial<ComponentLibrar
     .eq('company_id', profile.company_id)
     .select()
     .single();
-  
-  if (error) throw new Error(error.message);
+
+  if (error) {
+    if (assistantCallNameConflict(error)) throw new Error('That Smart Assistant call name is already used by another component in this library.');
+    throw new Error(error.message);
+  }
   await demoComponentSaved(profile.company_id, data, 'update');
   revalidatePath('/[workspaceSlug]/components', 'page');
   return data;

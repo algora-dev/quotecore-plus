@@ -101,21 +101,31 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
 
   const q = (query ?? '').trim();
 
+  // Owner 2026-10-17: demo visitors are managed under the admin Demo tab;
+  // every Users path excludes fictional plan_code='demo' tenants.
+  const { data: demoCos } = await admin.from('companies').select('id').eq('plan_code', 'demo').limit(2000);
+  const demoIds = (demoCos ?? []).map((c) => c.id);
+  const notDemoFilter = demoIds.length ? demoIds.join(',') : null;
+
   if (!q) {
     // Owner 2026-10-12: paginate at the USER level with an exact total. The
     // old company-level window (50 most recent companies) flooded with
     // per-session demo companies and hid older real accounts - the admin saw
     // "38 users" while the dashboard counted 44.
-    const { count: total, error: countErr } = await admin
+    let countQuery = admin
       .from('users')
       .select('id', { count: 'exact', head: true });
+    if (notDemoFilter) countQuery = countQuery.not('company_id', 'in', `(${notDemoFilter})`);
+    const { count: total, error: countErr } = await countQuery;
     if (countErr) return { ok: false, error: countErr.message };
 
-    const { data: pageUsers, error: uErr } = await admin
+    let pageQuery = admin
       .from('users')
       .select('id, email, full_name, is_admin, company_id')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
+    if (notDemoFilter) pageQuery = pageQuery.not('company_id', 'in', `(${notDemoFilter})`);
+    const { data: pageUsers, error: uErr } = await pageQuery;
     if (uErr) return { ok: false, error: uErr.message };
 
     const companyIds = Array.from(new Set((pageUsers ?? []).map((u) => u.company_id).filter(Boolean))) as string[];
@@ -154,12 +164,14 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
   }
 
   // Search by email first
-  const { data: emailMatches, error: emailErr } = await admin
+  let emailQuery = admin
     .from('users')
     .select('id, email, full_name, is_admin, company_id')
     .ilike('email', `%${q}%`)
     .order('email', { ascending: true })
     .limit(limit);
+  if (notDemoFilter) emailQuery = emailQuery.not('company_id', 'in', `(${notDemoFilter})`);
+  const { data: emailMatches, error: emailErr } = await emailQuery;
   if (emailErr) return { ok: false, error: emailErr.message };
 
   const emailCompanyIds = (emailMatches ?? []).map((u) => u.company_id).filter(Boolean) as string[];
@@ -199,11 +211,14 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
 
   // If we didn't get enough results from email search, also search by company name
   if (users.length < limit) {
-    const { data: coMatches } = await admin
+    let coQuery = admin
       .from('companies')
       .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
       .ilike('name', `%${q}%`)
       .limit(limit);
+    // Demo companies never surface in user search (owner 2026-10-17).
+    coQuery = coQuery.or('plan_code.neq.demo,plan_code.is.null');
+    const { data: coMatches } = await coQuery;
 
     const existingCompanyIds = new Set(Object.keys(companiesById));
     const newCoIds = (coMatches ?? []).filter((c) => !existingCompanyIds.has(c.id)).map((c) => c.id);

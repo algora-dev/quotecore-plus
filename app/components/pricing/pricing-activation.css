@@ -119,3 +119,15 @@
   .qc-component-editor[data-mobile-view='test'] .qc-pricing-mobile-test-footer { display:grid; gap:8px; padding:0 16px 16px; }
   .qc-pricing-mobile-test-footer p { font-size:12px; color:var(--qc-text-secondary); margin:0; line-height:1.6; }
 }
+
+/* Smart Assistant discovery: visible in every Smart Component, editable only
+   when the workspace has Assistant access. The locked treatment is deliberate
+   product education rather than a hidden/disabled mystery field. */
+.qc-assistant-call-name { border:1px solid rgba(255,107,53,.22); border-radius:14px; padding:13px; background:linear-gradient(180deg,#fff 0%,#fffaf7 100%); }
+.qc-assistant-call-name[data-locked="true"] { border-color:#d7dbe2; background:#f1f3f6; box-shadow:inset 0 0 0 1px rgba(255,255,255,.55); }
+.qc-assistant-call-name-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#c44f18; }
+.qc-assistant-call-name[data-locked="true"] .qc-assistant-call-name-heading { color:#535b68; }
+.qc-assistant-call-name-badge { border:1px solid #c7ccd4; border-radius:999px; background:#fff; padding:3px 7px; font-size:10px; letter-spacing:.04em; color:#596170; }
+.qc-assistant-call-name[data-locked="true"] .qc-input:disabled { opacity:1; border-color:#cbd0d8; background:#e4e7eb; color:#6d7480; -webkit-text-fill-color:#6d7480; cursor:not-allowed; }
+.qc-assistant-call-name-link { display:inline-flex; margin-top:8px; color:#b94714; font-size:12px; font-weight:750; text-decoration:underline; text-underline-offset:3px; }
+.qc-assistant-call-name-link:hover { color:#8f350f; }

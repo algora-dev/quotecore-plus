@@ -36,6 +36,7 @@ import type { MeasurementSystem } from '@/app/lib/types';
 import { RoofAreaCard } from './quote-builder/RoofAreaCard';
 import { ExpandableComponent } from './quote-builder/ExpandableComponent';
 import { AddFromLibrary } from './quote-builder/AddFromLibrary';
+import { GuidedQuoteSetup } from './quote-builder/GuidedQuoteSetup';
 import { formatQuantity, formatPricedQuantity } from './quote-builder/helpers';
 import { ScrollIndicator } from '@/app/components/ui/ScrollIndicator';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
@@ -114,6 +115,8 @@ export function QuoteBuilder({
   const materialMarginId = useId();
   const labourMarginId = useId();
   const [internalPhase, setInternalPhase] = useState<Phase>('areas');
+  const manualEntry = initialQuote.entry_mode === 'manual';
+  const [workspaceMode, setWorkspaceMode] = useState<'guided' | 'advanced'>(manualEntry ? 'guided' : 'advanced');
   
   // Use external phase if provided, otherwise use internal
   const phase = externalPhase ?? internalPhase;
@@ -238,12 +241,14 @@ export function QuoteBuilder({
 
   const allAreasLocked = roofAreas.every(a => a.is_locked);
 
-  async function handleAddArea() {
-    if (!newAreaLabel.trim()) return;
-    const created = await addQuoteRoofArea(quote.id, newAreaLabel.trim());
+  async function handleAddArea(labelOverride?: string): Promise<QuoteRoofAreaRow | null> {
+    const label = (labelOverride ?? newAreaLabel).trim();
+    if (!label) return null;
+    const created = await addQuoteRoofArea(quote.id, label);
     setRoofAreas(prev => [...prev, created]);
     setRoofAreaEntries(prev => ({ ...prev, [created.id]: [] }));
-    setNewAreaLabel('');
+    if (labelOverride == null) setNewAreaLabel('');
+    return created;
   }
 
   async function handleUpdateArea(id: string, updates: Parameters<typeof updateQuoteRoofArea>[1]) {
@@ -302,9 +307,9 @@ export function QuoteBuilder({
     }
   }
 
-  async function handleAddFromLibrary(libId: string, areaId: string | null, type: 'main' | 'extra') {
+  async function handleAddFromLibrary(libId: string, areaId: string | null, type: 'main' | 'extra'): Promise<QuoteComponentRow | null> {
     const lib = localLibrary.find(c => c.id === libId);
-    if (!lib) return;
+    if (!lib) return null;
     const created = await addQuoteComponent(quote.id, {
       quote_roof_area_id: areaId ?? undefined,
       component_library_id: libId,
@@ -320,6 +325,7 @@ export function QuoteBuilder({
     });
     setComponents(prev => [...prev, created]);
     setEntries(prev => ({ ...prev, [created.id]: [] }));
+    return created;
   }
 
   /**
@@ -600,7 +606,7 @@ export function QuoteBuilder({
 
   return (
     <>
-    <section data-qc-ui="v2" data-qc-page="quote-builder" data-qc-phase={phase} className="qb-workspace">
+    <section data-qc-ui="v2" data-qc-page="quote-builder" data-qc-phase={phase} data-qc-workspace-mode={workspaceMode} className="qb-workspace">
       <header className="qb-header">
         <div className="min-w-0">
           <Link href={`/${workspaceSlug}/quotes`} className="qb-back-link">
@@ -633,11 +639,38 @@ export function QuoteBuilder({
         </div>
       </header>
 
-      <QuoteJourneyContext
+      {workspaceMode === 'advanced' && <QuoteJourneyContext
         digital={quote.entry_mode === 'digital'}
         hasMeasurements={Object.values(entries).some(items => items.length > 0) || Object.values(roofAreaEntries).some(items => items.length > 0)}
         pitchRelevant={tradeLabels.pitchRequired || !!tradeLabels.pitchOptional}
-      />
+      />}
+
+      {manualEntry && (
+        <div className="qb-workspace-mode" role="group" aria-label="Quote builder view">
+          <div>
+            <span className="qb-guided-kicker">Workspace view</span>
+            <strong>{workspaceMode === 'guided' ? 'Guided setup' : 'Advanced workspace'}</strong>
+          </div>
+          <div className="qb-workspace-mode-actions">
+            <QcButton
+              size="sm"
+              variant={workspaceMode === 'guided' ? 'primary' : 'ghost'}
+              aria-pressed={workspaceMode === 'guided'}
+              onClick={() => { setWorkspaceMode('guided'); if (phase === 'components') setPhase('areas'); }}
+            >
+              Guided setup
+            </QcButton>
+            <QcButton
+              size="sm"
+              variant={workspaceMode === 'advanced' ? 'secondary' : 'ghost'}
+              aria-pressed={workspaceMode === 'advanced'}
+              onClick={() => setWorkspaceMode('advanced')}
+            >
+              Advanced workspace
+            </QcButton>
+          </div>
+        </div>
+      )}
 
       <div className="qb-context-tools">
       {/* Edit Digital Take-off - always visible above Plans & Files (2026-07-06) */}
@@ -672,10 +705,27 @@ export function QuoteBuilder({
 
       </div>
 
-      <QcWorkflowStepper steps={phases.map(step => ({ ...step, disabled: reviewCompleting }))} current={phase} onSelect={setPhase} />
+      {workspaceMode === 'guided' ? (
+        <nav className="qb-guided-stage-nav" aria-label="Guided quote steps">
+          {[
+            { key: 'areas' as const, label: 'Work areas', description: 'Group the job and add measurements' },
+            { key: 'extras' as const, label: 'Extras', description: 'Other items and services' },
+            { key: 'review' as const, label: 'Review', description: 'Check pricing and continue' },
+          ].map((step, index) => {
+            const currentKey = phase === 'components' ? 'areas' : phase;
+            return <button key={step.key} type="button" aria-current={currentKey === step.key ? 'step' : undefined}
+              onClick={() => setPhase(step.key)} disabled={reviewCompleting}>
+              <span className="qb-guided-stage-number">{index + 1}</span>
+              <span><strong>{step.label}</strong><small>{step.description}</small></span>
+            </button>;
+          })}
+        </nav>
+      ) : (
+        <QcWorkflowStepper steps={phases.map(step => ({ ...step, disabled: reviewCompleting }))} current={phase} onSelect={setPhase} />
+      )}
 
-      <div className="qb-work-grid">
-        {phase !== 'review' && (
+      <div className={`qb-work-grid ${workspaceMode === 'guided' && (phase === 'areas' || phase === 'components') ? 'qb-work-grid--guided' : ''}`}>
+        {phase !== 'review' && !(workspaceMode === 'guided' && (phase === 'areas' || phase === 'components')) && (
           <aside className="qb-totals-rail">
             <QcMoneySummary
               audience="internal"
@@ -692,12 +742,42 @@ export function QuoteBuilder({
           </aside>
         )}
         <div className="qb-step-content">
-          <header className="qb-phase-heading">
-            <p className="qb-eyebrow">Step {phases.findIndex(p => p.key === phase) + 1} of 4</p>
+          {!(workspaceMode === 'guided' && (phase === 'areas' || phase === 'components')) && <header className="qb-phase-heading">
+            <p className="qb-eyebrow">{workspaceMode === 'guided' ? `Step ${phase === 'extras' ? 2 : 3} of 3` : `Step ${phases.findIndex(p => p.key === phase) + 1} of 4`}</p>
             <h2>{phases.find(p => p.key === phase)?.label}</h2>
             <p>{phaseHelp[phase]}</p>
-          </header>
-      {phase === 'areas' && (
+          </header>}
+
+      {workspaceMode === 'guided' && (phase === 'areas' || phase === 'components') && (
+        <GuidedQuoteSetup
+          quote={quote}
+          roofAreas={roofAreas}
+          roofAreaEntries={roofAreaEntries}
+          components={components}
+          entries={entries}
+          libraryComponents={localLibrary}
+          currency={effectiveCurrency}
+          totals={{ totalMaterials: totals.totalMaterials, totalLabour: totals.totalLabour, grandTotal: totals.grandTotal }}
+          onCreateArea={handleAddArea}
+          onUpdateArea={handleUpdateArea}
+          onToggleAreaLock={handleToggleLock}
+          onAddAreaEntry={handleAddRoofAreaEntry}
+          onRemoveAreaEntry={handleRemoveRoofAreaEntry}
+          onRemoveArea={handleRemoveArea}
+          onAddFromLibrary={handleAddFromLibrary}
+          onCreateComponent={(areaId, type) => { setCreateCompForAreaId(areaId); setCreateCompType(type); setShowCreateComponentModal(true); }}
+          onAddEntry={handleAddEntry}
+          onUseRoofArea={handleUseRoofArea}
+          onRemoveEntry={handleRemoveEntry}
+          onRemoveComponent={handleRemoveComponent}
+          onUpdateComponent={handleUpdateCompSettings}
+          onCombineEntries={handleCombineEntries}
+          onSplitEntries={handleSplitEntries}
+          onContinue={() => setPhase('extras')}
+        />
+      )}
+
+      {workspaceMode === 'advanced' && phase === 'areas' && (
         <div className="qb-stack">
           {roofAreas.map(area => (
             <RoofAreaCard
@@ -725,10 +805,10 @@ export function QuoteBuilder({
               data-copilot="quote-area-name"
               className="qb-grow"
               inputMode="text"
-              onKeyDown={e => e.key === 'Enter' && handleAddArea()}
+              onKeyDown={e => { if (e.key === 'Enter') void handleAddArea(); }}
             />
             <QcButton
-              onClick={handleAddArea}
+              onClick={() => void handleAddArea()}
               disabled={!newAreaLabel.trim()}
               data-copilot="quote-add-area"
               variant={roofAreas.length === 0 ? 'primary' : 'ghost'}
@@ -751,7 +831,7 @@ export function QuoteBuilder({
         </div>
       )}
 
-      {phase === 'components' && (
+      {workspaceMode === 'advanced' && phase === 'components' && (
         <div className="qb-stack" data-copilot="quote-components-phase">
           {/* Phase 8: quotes with no areas - show a flat component list.
               All components live at the quote level (quote_roof_area_id = NULL)
@@ -883,7 +963,7 @@ export function QuoteBuilder({
               onClick={() => setPhase('components')}
               variant="ghost"
             >
-              ← Smart Components™
+              ← {workspaceMode === 'guided' ? 'Work areas' : 'Smart Components™'}
             </QcButton>
             <QcButton
               onClick={() => setPhase('review')}

@@ -62,7 +62,7 @@ export type WorkflowCard = {
 };
 export type DraftChoiceWire = { version:1; stateId:string; revision:number; selections:Record<string,string>; choice?:'apply'|'cancel' };
 export type LibraryCatalogItem = {
-  id:string; collectionId:string; collectionName:string; name:string; role:AssistantLibraryRole|null; isDefault:boolean;
+  id:string; collectionId:string; collectionName:string; collectionCallName:string|null; name:string; callName:string|null; role:AssistantLibraryRole|null; isDefault:boolean;
   conceptKey?:string|null; measurementType:string; takeoffSlot:string|null; unit:string; active:boolean;
 };
 export type WorkflowResult =

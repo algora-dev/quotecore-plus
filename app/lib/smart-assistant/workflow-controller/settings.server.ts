@@ -18,11 +18,11 @@ export async function readWorkflowSettings(client:SupabaseClient,companyId:strin
     throw new Error('Incomplete settings read.');
   }
   const [collections,profiles,members,components]=await Promise.all([
-    all('component_collections','id,name','id'),all('assistant_v2_library_profiles','collection_id,enabled,include_all','collection_id'),
+    all('component_collections','id,name,assistant_call_name','id'),all('assistant_v2_library_profiles','collection_id,enabled,include_all','collection_id'),
     all('assistant_v2_library_members','collection_id,component_id,included,concept_key,is_default','component_id'),
-    all('component_library','id,collection_id,name,measurement_type,takeoff_slot','id',true),
+    all('component_library','id,collection_id,name,assistant_call_name,measurement_type,takeoff_slot','id',true),
   ]);
   if(config.epoch!==await readWorkflowEpoch(client,companyId))throw new Error('Assistant settings changed. Reload the page.');
   const pMap=new Map(profiles.map(p=>[p.collection_id,p])),mMap=new Map(members.map(m=>[m.component_id,m]));
-  return {...config,libraries:collections.sort((a,b)=>a.name.localeCompare(b.name)).map(c=>{const p=pMap.get(c.id);return {id:c.id,name:c.name,enabled:p?.enabled===true,includeAll:p?.include_all===true,components:components.filter(x=>x.collection_id===c.id).sort((a,b)=>a.name.localeCompare(b.name)).map(x=>{const m=mMap.get(x.id);return {id:x.id,name:x.name,measurementType:x.measurement_type,takeoffSlot:x.takeoff_slot,included:m?m.included===true:p?.include_all===true,conceptKey:m?.concept_key??null,isDefault:m?.is_default===true};})};})};
+  return {...config,libraries:collections.sort((a,b)=>a.name.localeCompare(b.name)).map(c=>{const p=pMap.get(c.id);return {id:c.id,name:c.name,callName:c.assistant_call_name??'',enabled:p?.enabled===true,includeAll:p?.include_all===true,components:components.filter(x=>x.collection_id===c.id).sort((a,b)=>a.name.localeCompare(b.name)).map(x=>{const m=mMap.get(x.id);return {id:x.id,name:x.name,callName:x.assistant_call_name??'',measurementType:x.measurement_type,takeoffSlot:x.takeoff_slot,included:m?m.included===true:p?.include_all===true,conceptKey:m?.concept_key??null,isDefault:m?.is_default===true};})};})};
 }

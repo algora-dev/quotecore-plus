@@ -55,6 +55,7 @@ export function ComponentList({
   highlightComponentId,
   isSupplier = false,
   demoDefaultLibraryId,
+  smartAssistantAvailable = false,
 }: {
   initialComponents: ComponentLibraryRow[];
   workspaceSlug: string;
@@ -78,6 +79,8 @@ export function ComponentList({
   highlightComponentId?: string;
   /** Whether this company is an approved supplier. Shows publishing controls. */
   isSupplier?: boolean;
+  /** Smart Assistant is both exposed to the workspace and included in its current plan. */
+  smartAssistantAvailable?: boolean;
 }) {
   const demoSearch = useSearchParams();
   const openedDemoTarget = useRef<string | null>(null);
@@ -96,7 +99,7 @@ export function ComponentList({
   const [createDefaults, setCreateDefaults] = useState<ComponentEditorInitial | null>(null);
   // Guided creation steps 1 to 4. Existing editor settings, save and test remain canonical.
   const [guidedOpen, setGuidedOpen] = useState(false);
-  const [guidedIdentity, setGuidedIdentity] = useState<IdentityFields>({ name: '', sku: '' });
+  const [guidedIdentity, setGuidedIdentity] = useState<IdentityFields>({ name: '', sku: '', assistantCallName: '' });
   const [guidedMaterialRate, setGuidedMaterialRate] = useState('');
   const [guidedLabourRate, setGuidedLabourRate] = useState('');
   const [guidedWasteAmount, setGuidedWasteAmount] = useState('');
@@ -588,7 +591,8 @@ export function ComponentList({
       eligible_for_orders: fd.get('eligible_for_orders') === 'on',
       flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
       sku: (fd.get('sku') as string)?.trim() || null,
-    };
+      ...(smartAssistantAvailable ? { assistant_call_name: (fd.get('assistant_call_name') as string)?.trim() || null } : {}),
+    } as unknown as ComponentLibraryInsert;
 
     // Phase 6.5 (Generic Trades) additions. Only attached when the client flag
     // is on, so the existing roofing flow keeps writing the exact same payload
@@ -725,7 +729,8 @@ export function ComponentList({
       eligible_for_orders: fd.get('eligible_for_orders') === 'on',
       flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
       sku: (fd.get('sku') as string)?.trim() || null,
-    };
+      ...(smartAssistantAvailable ? { assistant_call_name: (fd.get('assistant_call_name') as string)?.trim() || null } : {}),
+    } as unknown as ComponentLibraryInsert;
 
     // Phase 6.5 (Generic Trades) additions: same as create.
     // `formMeasurementType` is set in startEdit() and updated by the edit form's dropdown.
@@ -836,7 +841,7 @@ export function ComponentList({
   const editingComponent = components.find(component => component.id === editingId);
   function initialForComponent(component: ComponentLibraryRow): ComponentEditorInitial {
     const extra = component as unknown as Record<string, unknown>;
-    return { name: component.name, sku: component.sku ?? '', componentType: component.component_type,
+    return { name: component.name, sku: component.sku ?? '', assistantCallName: String(extra.assistant_call_name ?? ''), componentType: component.component_type,
       materialRate: String(component.default_material_rate ?? 0), labourRate: String(component.default_labour_rate ?? 0),
       wasteAmount: String(component.default_waste_type === 'percent' ? component.default_waste_percent ?? 0 : component.default_waste_fixed ?? 0),
       pitchType: component.default_pitch_type, eligibleForOrders: component.eligible_for_orders ?? true,
@@ -845,7 +850,7 @@ export function ComponentList({
       storedHeightMm: String(extra.height_value_mm ?? ''), storedDepthMm: String(extra.depth_value_mm ?? '') };
   }
   const editorInitial: ComponentEditorInitial = editingComponent ? initialForComponent(editingComponent) : createDefaults ?? {
-    name: restoredName, sku: '', componentType: filter === 'extra' ? 'extra' : 'main', materialRate: restoredMaterialRate,
+    name: restoredName, sku: '', assistantCallName: '', componentType: filter === 'extra' ? 'extra' : 'main', materialRate: restoredMaterialRate,
     labourRate: restoredLabourRate, wasteAmount: restoredWasteAmount, pitchType: 'rafter', eligibleForOrders: true };
   const editorSettings: ComponentEditorSettings = { measurementType: formMeasurementType, wasteType: formWasteType,
     pitchEnabled: formPitchEnabled, pricingStrategy: formPricingStrategy, packPrice: formPackPrice, packSize: formPackSize,
@@ -915,7 +920,7 @@ export function ComponentList({
     // Reuse the same reset/dirty-state guard, filter-derived type and library defaults.
     if (!(await startNew())) return;
     setShowForm(false);
-    setGuidedIdentity({ name: '', sku: '' });
+    setGuidedIdentity({ name: '', sku: '', assistantCallName: '' });
     setGuidedMaterialRate('');
     setGuidedLabourRate('');
     setGuidedWasteAmount('');
@@ -933,7 +938,7 @@ export function ComponentList({
     // Explicit handoff, NOT a save. Measurement settings, packs, library and notes stay in this
     // controller's form state because the guided steps wrote them via updateEditorSettings;
     // identity/rates ride into the editor via createDefaults so nothing is reset on the way through.
-    const copy: ComponentEditorInitial = { ...editorInitial, name: guidedIdentity.name.trim(), sku: guidedIdentity.sku.trim(), materialRate: guidedMaterialRate, labourRate: guidedLabourRate, wasteAmount: guidedWasteAmount, pitchType: guidedPitchType };
+    const copy: ComponentEditorInitial = { ...editorInitial, name: guidedIdentity.name.trim(), sku: guidedIdentity.sku.trim(), assistantCallName: (guidedIdentity.assistantCallName ?? '').trim(), materialRate: guidedMaterialRate, labourRate: guidedLabourRate, wasteAmount: guidedWasteAmount, pitchType: guidedPitchType };
     setEditingId(null); setCreateDefaults(copy); setEditorVersion(value => value + 1);
     setShowForm(true); setFormError(null); setEditorDirty(true); setDraftTested(false);
     setTestOnOpen(false); setTestRequest(0);
@@ -988,7 +993,8 @@ export function ComponentList({
       eligible_for_orders: editorInitial.eligibleForOrders,
       flashing_ids: null,
       sku: identity.sku || null,
-    };
+      ...(smartAssistantAvailable ? { assistant_call_name: identity.assistantCallName || null } : {}),
+    } as unknown as ComponentLibraryInsert;
     const inputWithGenericTrades = genericTradesEnabled
       ? ({
           ...input,
@@ -1038,7 +1044,7 @@ export function ComponentList({
       showNotice({ title: 'Component saved', tone: 'success', focus: true,
         description: `${result.data.name} is saved in your library. Check another component or price a job when your costs are ready.` });
       setGuidedOpen(false);
-      setGuidedIdentity({ name: '', sku: '' });
+      setGuidedIdentity({ name: '', sku: '', assistantCallName: '' });
       setGuidedMaterialRate(''); setGuidedLabourRate(''); setGuidedWasteAmount(''); setGuidedPitchType('rafter');
       setFormMeasurementType('area'); setFormWasteType('none'); setFormPitchEnabled(false); setFormPricingStrategy('per_unit');
       setFormPackPrice(''); setFormPackSize(''); setFormPackCoverageM2('');
@@ -1137,7 +1143,7 @@ export function ComponentList({
         }} />
 
 
-      
+
 
       {/* Active library title + rename */}
       {collections.length > 0 && (
@@ -1264,7 +1270,7 @@ export function ComponentList({
               library page for now. Re-add the Link here when the supplier
               feature returns. */}
         </div>
-        
+
         <div className="flex flex-col gap-2 md:flex-row">
           <ComponentCreationActions disabled={saving}
             onGuided={() => { void startGuidedIdentity(); }}
@@ -1384,6 +1390,7 @@ export function ComponentList({
         libraries={collections} libraryId={selectedCollectionId}
         onLibraryChange={id => { setSelectedCollectionId(id); setEditorDirty(true); }}
         onCreateLibrary={createGuidedLibrary} isSupplier={isSupplier}
+        smartAssistantAvailable={smartAssistantAvailable} smartAssistantUpgradeHref={`/${workspaceSlug}/account/billing`}
         measurement={editorSettings} onMeasurementChange={updateEditorSettings}
         measurementSystem={companyMeasurementSystem} genericTradesEnabled={genericTradesEnabled}
         currency={companyCurrency}
@@ -1420,6 +1427,7 @@ export function ComponentList({
             flashings={flashings} assignedFlashings={assignedFlashings} selectedFlashingId={selectedFlashingId}
             onFlashingSelection={setSelectedFlashingId} onAddFlashing={addFlashing} onRemoveFlashing={removeFlashing}
             imageHelperText={imageHelperText} supplierSkuRequired={!!(isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published')}
+            smartAssistantAvailable={smartAssistantAvailable} smartAssistantUpgradeHref={`/${workspaceSlug}/account/billing`}
             saving={saving} error={formError} onSubmit={editingComponent ? event => handleUpdate(event, editingComponent.id) : handleCreate}
             onCancel={() => { void mayLeaveEditor().then(leave => { if (leave) cancelEdit(); }); }}
             onDirty={() => { setEditorDirty(true); setDraftTested(false); }} onCalculated={() => {
@@ -1483,8 +1491,8 @@ export function ComponentList({
                   </svg>
                   Open & test
                 </button>
-                <button aria-label={`Delete ${comp.name}`} data-qc-variant="ghost" 
-                  onClick={(e) => { e.stopPropagation(); setDeleteCompId(comp.id); }} 
+                <button aria-label={`Delete ${comp.name}`} data-qc-variant="ghost"
+                  onClick={(e) => { e.stopPropagation(); setDeleteCompId(comp.id); }}
                   title="Click to delete"
                   className="qc-button qc-flow-control qc-library-control "
                 >
