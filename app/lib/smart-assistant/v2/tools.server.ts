@@ -135,7 +135,7 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
     const readableKinds = ENTITY_KINDS.filter(kind => access.permissions[ENTITY_SECTIONS[kind]] !== 'hidden');
     const tools: Record<string, RegisteredTool> = {
         find_records: {
-            schema: { name: 'find_records', description: 'Find authorised quotes, separate drafts, material orders, invoices, library components or quote-derived customer contacts. Fuzzy names and exact numbers; up to ten matches. OMIT the query (with a kind) to list that record kind NEWEST FIRST - use that for "most recent / latest / last" requests, then read or open the first result directly. Results create real Open buttons.',
+            schema: { name: 'find_records', description: 'Find authorised quotes, separate drafts, material orders, invoices, component libraries (the user\'s named collections, e.g. "RS Roofing library"), individual library components or quote-derived customer contacts. Fuzzy names and exact numbers; up to ten matches. OMIT the query (with a kind) to list that record kind NEWEST FIRST - use that for "most recent / latest / last" requests, then read or open the first result directly. Results create real Open buttons.',
                 parameters: { type: 'object', properties: { kind: { type: 'string', enum: ['all', ...readableKinds] }, query: { type: 'string', maxLength: 120 } }, required: ['kind'], additionalProperties: false } },
             handler: async (args) => {
                 const rawQuery = typeof args.query === 'string' ? args.query : '';

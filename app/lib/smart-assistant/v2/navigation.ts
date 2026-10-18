@@ -15,6 +15,8 @@ export function destinationFor(hit: EntityHit, slug: string): string | null {
         case 'order': return `${base}/material-orders/${hit.id}/preview`;
         case 'invoice': return `${base}/invoices/${hit.id}`;
         case 'component': return `${base}/components?created=${hit.id}`; // existing highlightComponentId contract
+        // A component library (collection) opens the Pricing Library filtered to it.
+        case 'component_collection': return `${base}/components?collection=${hit.id}`;
         // Customers have no independent page/table in the supplied application.
         // A customer hit is a contact snapshot on an authorised source quote.
         case 'customer': return hit.fields.source_status === 'draft'
@@ -30,7 +32,7 @@ export function isSafeDestination(path: unknown, slug: string): path is string {
         return false;
     const tail = path.slice(prefix.length);
     const uuid = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
-    return new RegExp(`^(quotes/${uuid}(/summary|/blank-build|/build\\?step=roof-areas)?|quotes/${uuid}(\\?sa_component=${uuid}|/build\\?step=(components|extras)&sa_component=${uuid})|material-orders/${uuid}/preview|invoices/${uuid}|components\\?created=${uuid})$`).test(tail);
+    return new RegExp(`^(quotes/${uuid}(/summary|/blank-build|/build\\?step=roof-areas)?|quotes/${uuid}(\\?sa_component=${uuid}|/build\\?step=(components|extras)&sa_component=${uuid})|material-orders/${uuid}/preview|invoices/${uuid}|components\\?created=${uuid}|components\\?collection=${uuid})$`).test(tail);
 }
 export function pageHint(pathname: unknown, slug: string): PageHint | null {
     if (typeof pathname !== 'string' || pathname.length > 500 || /[\\\u0000-\u0020?#%]/.test(pathname) || !pathname.startsWith(`/${slug}/`))

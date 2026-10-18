@@ -55,6 +55,7 @@ export function ComponentList({
   highlightComponentId,
   isSupplier = false,
   demoDefaultLibraryId,
+  initialLibraryId,
   smartAssistantAvailable = false,
 }: {
   initialComponents: ComponentLibraryRow[];
@@ -70,6 +71,8 @@ export function ComponentList({
   componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
   /** Demo only: library pre-selected on first landing instead of "All Libraries" (owner 2026-10-05). */
   demoDefaultLibraryId?: string;
+  /** Smart Assistant deep link (?collection=): opens filtered to this library for this load only. */
+  initialLibraryId?: string;
   /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
   editWarningDismissed?: boolean;
   /** Draft ID from ?restore= query param - loads a saved calculator draft. */
@@ -149,6 +152,9 @@ export function ComponentList({
   // Initialise from localStorage so the user's last-set default is applied on landing.
   const LOCAL_KEY = `qc-default-lib-${workspaceSlug}`;
   const [activeLibraryId, setActiveLibraryId] = useState<string>(() => {
+    // Smart Assistant deep link (?collection=) wins for this load: an explicit
+    // navigation request overrides saved/demo defaults, but never persists.
+    if (initialLibraryId && componentCollections.some(c => c.id === initialLibraryId)) return initialLibraryId;
     if (reviewImported || typeof window === 'undefined') return '';
     const saved = localStorage.getItem(LOCAL_KEY);
     // Validate saved id still exists in collections list before applying.

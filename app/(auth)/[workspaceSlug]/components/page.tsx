@@ -12,10 +12,10 @@ import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access
 
 export default async function ComponentsPage(props: {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ restore?: string; created?: string; from?: string; learn?: string; reviewImport?: string }>;
+  searchParams: Promise<{ restore?: string; created?: string; from?: string; learn?: string; reviewImport?: string; collection?: string }>;
 }) {
   const { workspaceSlug } = await props.params;
-  const { restore: restoreDraftId, created: createdComponentId, from, learn, reviewImport } = await props.searchParams;
+  const { restore: restoreDraftId, created: createdComponentId, from, learn, reviewImport, collection } = await props.searchParams;
   let components;
 
   try {
@@ -42,6 +42,12 @@ export default async function ComponentsPage(props: {
   // Personal guidance preference only, never a company-pricing readiness flag.
   const introSeen = await hasSeenComponentsIntro();
   const collections = await loadComponentCollections();
+  // Smart Assistant deep link: "take me to the X library" routes here with ?collection=.
+  // Validate the id belongs to this company before applying; never trust it raw.
+  const requestedLibraryId = typeof collection === 'string'
+    && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(collection)
+    && collections.some(c => c.id === collection)
+    ? collection : undefined;
   const editWarningDismissed = await hasDismissedComponentEditWarning();
   let smartAssistantAvailable = false;
   try {
@@ -88,6 +94,7 @@ export default async function ComponentsPage(props: {
         companyDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
         componentCollections={collections}
         demoDefaultLibraryId={demoDefaultLibraryId}
+        initialLibraryId={requestedLibraryId}
         editWarningDismissed={editWarningDismissed}
         restoreDraftId={restoreDraftId}
         highlightComponentId={createdComponentId}

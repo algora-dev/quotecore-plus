@@ -18,10 +18,12 @@ const kinds: Record<string, EntityKind> = {
   'draft quote': 'draft_quote', 'draft quotes': 'draft_quote',
   order: 'order', orders: 'order', 'material order': 'order', 'material orders': 'order',
   invoice: 'invoice', invoices: 'invoice', component: 'component', components: 'component',
+  library: 'component_collection', libraries: 'component_collection',
+  'component library': 'component_collection', 'component libraries': 'component_collection',
   customer: 'customer', customers: 'customer',
 };
-const singular = '(draft quote|material order|quote|draft|order|invoice|component|customer)';
-const plural = '(draft quotes|material orders|quotes|drafts|orders|invoices|components|customers)';
+const singular = '(draft quote|material order|component library|quote|draft|order|invoice|component|customer)';
+const plural = '(draft quotes|material orders|component libraries|quotes|drafts|orders|invoices|components|customers)';
 const verb = '(?:open|show(?: me)?|take me to|go to|pull up)';
 
 export function parseFastIntent(raw: string): FastIntent | null {
@@ -46,9 +48,9 @@ export function parseFastIntent(raw: string): FastIntent | null {
     return { type: 'records', request: { kind: kinds[m[1]], selector: 'list', presentation: 'read' } };
   }
   if ((m = text.match(new RegExp(`^${verb} (?:the )?${singular} (?:number |#)?([a-z]{0,8}-?\\d{1,12})$`)))) {
-    // Components/customers have no unique record-number contract.
+    // Components/customers/libraries have no unique record-number contract.
     const kind = kinds[m[1]];
-    if (kind === 'component' || kind === 'customer' || (['quote', 'draft_quote'].includes(kind) && !/^\d+$/.test(m[2]))) return null;
+    if (kind === 'component' || kind === 'component_collection' || kind === 'customer' || (['quote', 'draft_quote'].includes(kind) && !/^\d+$/.test(m[2]))) return null;
     return { type: 'records', request: { kind, selector: 'number', query: m[2], presentation: 'open' } };
   }
   if ((m = text.match(new RegExp(`^${verb} (?:this|the current) ${singular}$`)))) {

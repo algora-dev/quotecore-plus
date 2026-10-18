@@ -3,7 +3,7 @@ import { ASSISTANT_SECTIONS, isRecord, parseSectionPermissions, type AssistantSe
 import { parseTaskView, type TaskView } from '../tasks/contracts';
 import { WORKFLOW_STATES } from '../workflow-controller/contracts';
 import { ASSISTANT_LIBRARY_ROLES, type WorkflowCard } from '../library-workflow/contracts';
-export type EntityKind = 'quote' | 'draft_quote' | 'order' | 'invoice' | 'component' | 'customer';
+export type EntityKind = 'quote' | 'draft_quote' | 'order' | 'invoice' | 'component' | 'component_collection' | 'customer';
 export type SearchKind = EntityKind | 'all';
 export type Phase = 'p1' | 'p2' | 'p3' | 'p4';
 export type PhaseFlags = Record<Phase, boolean>;
@@ -143,7 +143,7 @@ export type SessionSnapshot = {
 };
 export const ENTITY_SECTIONS: Record<EntityKind, AssistantSection> = {
     quote: 'quotes', draft_quote: 'draft_quotes', order: 'orders', invoice: 'invoices',
-    component: 'components', customer: 'customers',
+    component: 'components', component_collection: 'components', customer: 'customers',
 };
 export const ENTITY_KINDS = Object.keys(ENTITY_SECTIONS) as EntityKind[];
 export function isUuid(value: unknown): value is string {

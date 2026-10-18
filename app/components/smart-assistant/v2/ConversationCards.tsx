@@ -6,7 +6,7 @@ import { targetKey } from '@/app/lib/smart-assistant/v2/navigation';
 import { DraftWorkflowCard } from './DraftWorkflowCard';
 import { AssistantIcon, type AssistantIconName } from './AssistantIcon';
 import s from './assistant.module.css';
-const icons: Record<RecordTarget['kind'], AssistantIconName> = { quote: 'quote', draft_quote: 'draft', order: 'order', invoice: 'invoice', component: 'component', customer: 'customer' };
+const icons: Record<RecordTarget['kind'], AssistantIconName> = { quote: 'quote', draft_quote: 'draft', order: 'order', invoice: 'invoice', component: 'component', component_collection: 'component', customer: 'customer' };
 
 /** Authoritative cards only. Styling never changes a selection into confirmation. */
 export function ConversationCards({ cards, actions, busy, canConfirm, onOpen, onReply, onAction, isStale }: {
