@@ -10,10 +10,13 @@ export type SmartAssistantCompanyRow = {
   name: string;
   slug: string | null;
   plan_code: string | null;
+  billing_model: string | null;
   owner_email: string | null;
   owner_name: string | null;
   enabled: boolean;
   enabled_at: string | null;
+  /** Explicit override: force_on (testing) / force_off (kill switch) / null = subscription decides. */
+  override: 'force_on' | 'force_off' | null;
 };
 
 export type ActionResult =
@@ -28,7 +31,7 @@ export async function listSmartAssistantCompanies(
 
   const { data: companyRows, error: companyErr } = await admin
     .from('companies')
-    .select('id, name, slug, plan_code')
+    .select('id, name, slug, plan_code, billing_model')
     .order('created_at', { ascending: false })
     .limit(500);
 
@@ -69,10 +72,12 @@ export async function listSmartAssistantCompanies(
       name: c.name,
       slug: c.slug,
       plan_code: c.plan_code ?? null,
+      billing_model: c.billing_model ?? null,
       owner_email: owner?.email ?? null,
       owner_name: owner?.full_name ?? null,
       enabled: flag?.enabled ?? false,
       enabled_at: flag?.updated_at ?? null,
+      override: flag ? (flag.enabled ? 'force_on' as const : 'force_off' as const) : null,
     };
   });
 
@@ -86,9 +91,9 @@ export async function listSmartAssistantCompanies(
     );
   }
 
-  // Enabled companies first so the rollout list is visible without scrolling.
+  // Companies with an explicit override first so they are visible without scrolling.
   rows.sort((a, b) => {
-    if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
+    if ((a.override === null) !== (b.override === null)) return a.override === null ? 1 : -1;
     return a.name.localeCompare(b.name);
   });
 
@@ -135,5 +140,39 @@ export async function setSmartAssistantEnabled(
   );
 
   revalidatePath('/admin/smart-assistant');
-  return { ok: true, message: enabled ? 'Access granted' : 'Access revoked' };
+  return { ok: true, message: enabled ? 'Forced on - override active' : 'Forced off - kill switch active' };
+}
+
+/** Remove the override row entirely: the subscription decides access again. */
+export async function clearSmartAssistantOverride(companyId: string): Promise<ActionResult> {
+  const adminProfile = await requireAdmin();
+  const admin = createAdminClient();
+
+  if (!/^[0-9a-f-]{36}$/i.test(companyId)) {
+    return { ok: false, error: 'Invalid company id.' };
+  }
+
+  const { error } = await admin
+    .from('assistant_feature_flags')
+    .delete()
+    .eq('company_id', companyId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  await writeAudit(
+    admin,
+    adminProfile,
+    'smart_assistant_override_cleared',
+    companyId,
+    null,
+    null,
+    null,
+    null,
+    { companyId },
+  );
+
+  revalidatePath('/admin/smart-assistant');
+  return { ok: true, message: 'Override cleared - the subscription now decides.' };
 }

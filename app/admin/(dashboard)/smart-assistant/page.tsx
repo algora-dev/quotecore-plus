@@ -14,9 +14,10 @@ export default async function SmartAssistantAdminPage() {
       <div>
         <h1 className="text-xl font-semibold text-slate-900">Smart Assistant</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Dark-launch access control. Grant a company access to the Smart
-          Assistant before it has a public plan. Flag off = completely
-          invisible: no nav item, no routes, no API access.
+          Access follows the subscription: custom plans that include the
+          Assistant product get it automatically; legacy plans do not. Use an
+          override to force access on (internal testing) or off (emergency
+          kill switch).
         </p>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { getEmbedding } from '@/app/lib/assistant/llmClient';
 
@@ -28,10 +29,9 @@ export async function requireAssistantManager(): Promise<
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  const { data: flagOn } = await supabase.rpc('smart_assistant_enabled', {
-    p_company_id: profile.company_id,
-  });
-  if (!flagOn) return { ok: false, error: 'Smart Assistant is not enabled for this workspace.' };
+  if (!(await smartAssistantFeatureAvailable(supabase, profile.company_id))) {
+    return { ok: false, error: 'Smart Assistant is not available on this plan.' };
+  }
 
   const { data: user } = await supabase
     .from('users')

@@ -8,6 +8,7 @@ import { withDemoTranscription } from '@/app/lib/demo/assistant.server';
 import { NextRequest, NextResponse } from 'next/server';
 import { VOICE_UPLOAD_MAX_BYTES, voiceAudioMaxBytes } from '@/app/lib/smart-assistant/voice-policy';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 
 export const runtime = 'nodejs';
 
@@ -40,8 +41,9 @@ async function handlePost(req: NextRequest) {
     return NextResponse.json({ code: 'usage_unavailable', error: 'Billing access could not be verified.' }, { status: 503 });
   }
 
-  const { data: flagOn } = await supabase.rpc('smart_assistant_enabled', { p_company_id: profile.company_id });
-  if (!flagOn) return NextResponse.json({ error: 'Not available' }, { status: 404 });
+  if (!(await smartAssistantFeatureAvailable(supabase, profile.company_id))) {
+    return NextResponse.json({ error: 'Not available' }, { status: 404 });
+  }
 
   const contentLength = Number(req.headers.get('content-length') ?? '0');
   if (contentLength > VOICE_UPLOAD_MAX_BYTES) return NextResponse.json({ error: 'Recording too long' }, { status: 413 });

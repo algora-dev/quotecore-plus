@@ -5,6 +5,7 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 import { MeasureJobButton } from './MeasureJobModal';
 import { WelcomeModal } from './tutorials/WelcomeModal';
 import { getActiveDemoContext } from '@/app/lib/demo/context';
@@ -86,11 +87,8 @@ export default async function WorkspaceHome({
   // only sets the draft cookie. The draft id alone is enough to import.
   const hasCalcDraft = Boolean(signupDraft);
 
-  // Smart Assistant dark-launch flag (service-written per company). Gates
-  // the dashboard card so flag-off companies never see the entry point.
-  const { data: smartAssistantOn } = await supabase.rpc('smart_assistant_enabled', {
-    p_company_id: profile.company_id,
-  });
+  // Smart Assistant entry card: subscription-gated (owner 2026-10-17).
+  const smartAssistantOn = await smartAssistantFeatureAvailable(supabase, profile.company_id);
 
   // HOME-01 (wired): company-scoped recent work, bounded to the 5 most recently
   // updated quotes. User client + RLS: no cross-company rows are possible. On

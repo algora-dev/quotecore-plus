@@ -1,6 +1,7 @@
 import { withDemoSpeech } from '@/app/lib/demo/assistant.server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 import { TTS_CONFIG } from '@/app/lib/assistant/config';
 import { isRecord } from '@/app/lib/smart-assistant/section-permissions';
 
@@ -32,10 +33,7 @@ async function handlePost(req: NextRequest) {
   }
 
   const profile = await requireCompanyContext();
-  const { data: flagOn } = await supabase.rpc('smart_assistant_enabled', {
-    p_company_id: profile.company_id,
-  });
-  if (!flagOn) {
+  if (!(await smartAssistantFeatureAvailable(supabase, profile.company_id))) {
     return NextResponse.json({ error: 'Not available' }, { status: 404 });
   }
 

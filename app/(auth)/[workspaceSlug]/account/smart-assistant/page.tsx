@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 import { SmartAssistantConfigPanel } from './SmartAssistantConfigPanel';
 import { AddToPhone } from './AddToPhone';
 import { AssistantPermissionsPanel } from './AssistantPermissionsPanel';
@@ -55,8 +56,7 @@ export default async function SmartAssistantConfigPage({ params }: { params: Pro
     return <DemoFeatureGate title="Try Smart Assistant" description="Smart Assistant is unlocked through the guided demo so its real actions stay inside the prepared scenario." chapter="smart-assistant" workspaceSlug={workspaceSlug} href={`/${workspaceSlug}/account/smart-assistant`} />;
   }
   const supabase = await createSupabaseServerClient();
-  const { data: flagOn } = await supabase.rpc('smart_assistant_enabled', { p_company_id: profile.company_id });
-  if (!flagOn) notFound();
+  if (!(await smartAssistantFeatureAvailable(supabase, profile.company_id))) notFound();
 
   const [{ data: config }, permissionState, usage] = await Promise.all([
     supabase.from('assistant_configs').select('name, greeting, enabled, members_can_manage').eq('company_id', profile.company_id).maybeSingle(),

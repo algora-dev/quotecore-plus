@@ -92,7 +92,7 @@ export function CustomBillingSection({ companyId }: { companyId: string }) {
     setRaw(serialized);
     setGrantPreview({ monthlyCents: res.monthlyCents, rows: res.rows, codes: res.codes });
     setOpen(false);
-    return { message: 'Review the grant below, then confirm.' };
+    return { message: 'Review the setup below, then confirm.' };
   }, [companyId, stripeLinked]);
 
   function runAction(fn: () => Promise<{ ok: true; message: string } | { ok: false; error: string }>) {
@@ -120,8 +120,8 @@ export function CustomBillingSection({ companyId }: { companyId: string }) {
           <p className="text-sm text-slate-500 mt-1">
             {state === null ? 'Loading billing state…'
               : stripeLinked ? 'Stripe-backed custom subscription. Changes swap the live subscription with proration.'
-              : snapshot ? 'Admin-granted setup (no Stripe charge). Update or clear it here.'
-              : 'Legacy billing. Grant a custom setup to migrate or comp this account.'}
+              : snapshot ? 'Admin-granted setup (no Stripe charge). Update or remove it here.'
+              : 'Legacy billing. Add a custom setup to migrate or comp this account.'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -132,17 +132,17 @@ export function CustomBillingSection({ companyId }: { companyId: string }) {
           ) : (
             <button type="button" onClick={() => { setOpen(true); setNotice(''); }}
               className="inline-flex items-center rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
-              disabled={pending}>{snapshot ? 'Update grant' : 'Grant custom setup'}</button>
+              disabled={pending}>{snapshot ? 'Update setup' : 'Add custom setup'}</button>
           )}
           {snapshot && !stripeLinked && (
             confirmClear ? (
               <button type="button" onClick={() => reason.trim() ? runAction(() => adminClearCustomSetup(companyId, reason)) : setError('A reason is required for the audit trail.')}
                 className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-                disabled={pending}>{pending ? 'Clearing…' : 'Confirm clear'}</button>
+                disabled={pending}>{pending ? 'Removing…' : 'Confirm remove'}</button>
             ) : (
               <button type="button" onClick={() => { setConfirmClear(true); setNotice(''); }}
                 className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                disabled={pending}>Clear grant</button>
+                disabled={pending}>Remove setup</button>
             )
           )}
         </div>
@@ -208,7 +208,7 @@ export function CustomBillingSection({ companyId }: { companyId: string }) {
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" onClick={() => reason.trim() ? runAction(() => adminGrantCustomSetup(companyId, raw, reason, endsAt)) : setError('A reason is required for the audit trail.')}
               className="inline-flex items-center rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
-              disabled={pending}>{pending ? 'Granting…' : 'Confirm grant'}</button>
+              disabled={pending}>{pending ? 'Adding…' : 'Confirm add'}</button>
             <button type="button" onClick={() => setOpen(true)} disabled={pending}
               className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50">Adjust choices</button>
           </div>

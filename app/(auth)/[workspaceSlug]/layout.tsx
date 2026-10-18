@@ -12,6 +12,7 @@ import { HelpDrawerLayout } from '@/app/components/docs/HelpDrawerLayout';
 import { AssistantWidget } from '@/app/components/assistant/AssistantWidget';
 import { SmartAssistantLauncher } from '@/app/components/smart-assistant/SmartAssistantLauncher';
 import { LEGACY_Q_ENABLED } from '@/app/lib/assistant/legacyQ';
+import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
@@ -103,12 +104,11 @@ export default async function WorkspaceLayout({
     assistantEnabled = (assistantPref as { assistant_enabled?: boolean } | null)?.assistant_enabled ?? true;
   }
 
-  // Smart Assistant (V1.5): flag-on companies get the launcher instead of
-  // the legacy Q widget. Conversations + config are fetched here so the
-  // embedded ChatClient has its initial state server-side.
-  const { data: smartAssistantOn } = await supabase.rpc('smart_assistant_enabled', {
-    p_company_id: company.id,
-  });
+  // Smart Assistant: subscription-gated (owner 2026-10-17) - custom plans
+  // that include the Assistant product, plus demos and admin overrides.
+  // Conversations + config are fetched here so the embedded ChatClient has
+  // its initial state server-side.
+  const smartAssistantOn = await smartAssistantFeatureAvailable(supabase, company.id);
   let smartAssistantProps: {
     conversations: { id: string; title: string | null; last_active_at: string }[];
     name: string;

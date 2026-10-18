@@ -246,8 +246,17 @@ function CompanyInfoSection({
           <dd className="mt-1 text-slate-600">{c.slug ?? '-'}</dd>
         </div>
         <div>
-          <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">Plan Code</dt>
-          <dd className="mt-1 text-slate-900">{c.planCode ?? '-'}</dd>
+                <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">Plan</dt>
+                <dd className="mt-1 text-slate-900">
+                  {c.billingModel === 'custom_setup' ? (
+                    <span>
+                      Custom setup
+                      {c.planCode ? <span className="text-slate-400 font-normal"> (legacy tier: {c.planCode.replace(/_/g, ' ')})</span> : null}
+                    </span>
+                  ) : (
+                    c.planCode ?? '-'
+                  )}
+                </dd>
         </div>
         <div>
           <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">Subscription Status</dt>
