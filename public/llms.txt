@@ -1,6 +1,6 @@
 # QuoteCore+
 
-> Construction quoting software for contractors and trade businesses. Build accurate quotes from complex plans in under 3 minutes for less than a dollar.
+> Construction quoting software for contractors and trade businesses. Measure plans, apply your own pricing logic and build professional quotes from one connected workflow.
 
 ## Products
 - [QuoteCore+ App](https://app.quote-core.com)
@@ -72,6 +72,9 @@ A user provides roof measurements (area, pitch, ridges, hips, valleys, barges, s
 ## Features
 - [All Features](https://quote-core.com/features)
 - [Digital Roof Takeoff](https://quote-core.com/features/digital-roof-takeoff)
+- [Roof Scan Assist](https://quote-core.com/features/ai-scan-assist) - two-stage AI roof-plan scanning that builds editable roof geometry from a calibrated plan, with every result reviewable
+- [Smart Assistant](https://quote-core.com/features/smart-assistant) - conversational voice or text interface for supported quote drafting, account questions and pricing changes (V1 Beta; broader actions planned in V2)
+- [Offcut Optimiser](https://quote-core.com/features/offcut-optimiser) - suggested whole-roof cutting plans and reusable-offcut matching for long-run metal roofing
 - [Smart Components](https://quote-core.com/features/smart-components)
 - [Material Ordering](https://quote-core.com/features/material-ordering)
 - [Invoicing](https://quote-core.com/features/invoicing)

@@ -19,8 +19,11 @@ export default function SiteFooter() {
             <h2 className="text-sm font-semibold text-zinc-950">Product</h2>
             <div className="mt-4 flex flex-col gap-3">
               <Link href="/features" className={linkClass}>All features</Link>
+              <Link href="/features/ai-scan-assist" className={linkClass}>Roof Scan Assist</Link>
               <Link href="/features/digital-roof-takeoff" className={linkClass}>Digital roof takeoff</Link>
+              <Link href="/features/smart-assistant" className={linkClass}>Smart Assistant</Link>
               <Link href="/features/smart-components" className={linkClass}>Smart Components™</Link>
+              <Link href="/features/offcut-optimiser" className={linkClass}>Offcut Optimiser</Link>
               <Link href="/features/material-ordering" className={linkClass}>Material ordering</Link>
               <Link href="/features/invoicing" className={linkClass}>Invoicing</Link>
               <Link href="/features/supplier-resources" className={linkClass}>Supplier resources</Link>
