@@ -6,7 +6,7 @@
  */
 
 import 'server-only';
-import { isCustomUsageCompany, loadCustomUsage } from './custom/usage/store';
+import { customUsageMeteringApplies, loadCustomUsage } from './custom/usage/store';
 
 import type { Json } from '@/app/lib/supabase/database.types';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
@@ -162,7 +162,7 @@ export async function createQuoteAtomic(
   const admin = createAdminClient();
 
   // Verify the host account/mode without using a cached quota precheck.
-  if (await isCustomUsageCompany(companyId)) await loadCustomUsage(companyId);
+  if (await customUsageMeteringApplies(companyId)) await loadCustomUsage(companyId);
 
   // P2: custom quota is enforced in the database transaction. Do not add a
   // cached precheck here: it can reject valid replays and races at period edges.

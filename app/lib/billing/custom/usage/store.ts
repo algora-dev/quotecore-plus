@@ -30,3 +30,16 @@ export async function isCustomUsageCompany(companyId: string): Promise<boolean> 
   if (model !== 'legacy' && model !== 'custom_setup') throw new UsageError('usage_unavailable', 'Billing ownership is not recognised.');
   return model === 'custom_setup';
 }
+
+/** True only for Stripe-linked custom companies. Admin-granted setups
+ *  (stripe_customer_id = 'admin-granted') have no usage-registry linkage
+ *  and must not depend on the custom billing environment, which is held
+ *  off production until the Stripe live-switch (2026-10-17): they run
+ *  unmetered against their granted allowance until then. */
+export async function customUsageMeteringApplies(companyId: string): Promise<boolean> {
+  if (!(await isCustomUsageCompany(companyId))) return false;
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: snap } = await (admin as any).from('company_custom_billing').select('stripe_customer_id').eq('company_id', companyId).maybeSingle();
+  return (snap as { stripe_customer_id?: string | null } | null)?.stripe_customer_id !== 'admin-granted';
+}

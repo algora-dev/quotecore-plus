@@ -359,12 +359,18 @@ export const loadCompanyEntitlements = cache(
     if (company.billing_model === 'custom_setup' && customResult.error) {
       throw new Error(`Custom billing snapshot could not be loaded: ${customResult.error.message}`);
     }
+    // Admin-granted setups (no Stripe linkage) must not depend on the custom
+    // billing environment, deliberately held off production until the Stripe
+    // live-switch (Roofline incident 2026-10-17): customAccess resolves them
+    // from the granted snapshot and usage reconciliation is skipped.
+    const isAdminGrant = company.billing_model === 'custom_setup'
+      && (customSnap as unknown as { stripe_customer_id?: string | null })?.stripe_customer_id === 'admin-granted';
     const access = company.billing_model === 'custom_setup'
-      ? customAccess({ ...company, admin_override_plan_code: null, admin_override_until: null, comp_until: null }, customSnap, customScope())
+      ? customAccess({ ...company, admin_override_plan_code: null, admin_override_until: null, comp_until: null }, customSnap, isAdminGrant ? null : customScope())
       : { source: 'legacy' as const, limits: null, available: true, reason: 'legacy' };
     // Legacy admin overrides remain unchanged. A legacy override must not
     // silently turn purchased custom allowances into the pro_plus limits.
-    const paidUsage = company.billing_model === 'custom_setup' ? await loadCustomUsage(companyId) : null;
+    const paidUsage = company.billing_model === 'custom_setup' && !isAdminGrant ? await loadCustomUsage(companyId) : null;
     if (paidUsage && customSnap && (Date.parse(paidUsage.periodStart) !== Date.parse(customSnap.period_start)
       || Date.parse(paidUsage.periodEnd) !== Date.parse(customSnap.period_end)
       || paidUsage.subscriptionId !== customSnap.stripe_subscription_id)) {
@@ -378,7 +384,7 @@ export const loadCompanyEntitlements = cache(
     const paymentGraceLimits = company.billing_model === 'custom_setup' && paidUsage?.available && paidUsage.paymentGrace && customSnap
       ? parsePurchasedLimits(customSnap.purchased_entitlements) : null;
     const customRestricted = company.billing_model === 'custom_setup'
-      && ((!access.available && !paymentGraceLimits) || !paidUsage?.available || company.admin_paused);
+      && ((!access.available && !paymentGraceLimits) || (!isAdminGrant && !paidUsage?.available) || company.admin_paused);
     const customEnt = company.billing_model === 'custom_setup'
       ? (customRestricted ? { ...ZERO_LIMITS } : (paymentGraceLimits ?? access.limits)) : null;
     if (effCodeResult.error || effActiveResult.error) {

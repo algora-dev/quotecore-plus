@@ -1,4 +1,4 @@
-import { isCustomUsageCompany, loadCustomUsage } from '@/app/lib/billing/custom/usage/store';
+import { customUsageMeteringApplies, loadCustomUsage } from '@/app/lib/billing/custom/usage/store';
 import { usageError } from '@/app/lib/billing/custom/usage/contracts';
 import { withDemoAssistantTurn } from '@/app/lib/demo/assistant.server';
 import { NextRequest, NextResponse } from 'next/server';
@@ -83,7 +83,7 @@ async function handlePost(req: NextRequest) {
   const { data: owner, error: ownerError } = await supabase.from('users').select('company_id').eq('id', session.user.id).maybeSingle();
   if (ownerError || !owner?.company_id) return NextResponse.json({ error: 'Company access could not be verified.' }, { status: 403 });
   try {
-    if (await isCustomUsageCompany(owner.company_id)) await loadCustomUsage(owner.company_id);
+    if (await customUsageMeteringApplies(owner.company_id)) await loadCustomUsage(owner.company_id);
   } catch (err) {
     const error = usageError(err);
     return NextResponse.json({ error: error.message, error_code: error.code }, { status: error.httpStatus });

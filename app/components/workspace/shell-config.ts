@@ -48,5 +48,8 @@ export function navIsActive(item: ShellNavItem, pathname: string, slug: string) 
   if (item.key === 'quotes' && jobSummary) return false;
   if (item.key === 'orders' && pathname.startsWith(`/${slug}/orders`)) return true;
   if (item.key === 'resources' && /^\/(attachments|catalogs|templates|drawings)(\/|$)/.test(pathname.slice(`/${slug}`.length))) return true;
+  // The Smart Assistant settings page is its own nav destination under
+  // /account; Account must not also claim it active (double-highlight 2026-10-17).
+  if (item.key === 'account' && pathname.startsWith(`/${slug}/account/smart-assistant`)) return false;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }

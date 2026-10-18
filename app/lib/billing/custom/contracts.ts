@@ -201,12 +201,25 @@ export interface AccessSnapshot {
   stripe_account_id: string; stripe_mode: string; stripe_subscription_id: string; stripe_customer_id: string;
   provider_status: string; period_start: string; period_end: string; purchased_entitlements: unknown;
 }
-export function customAccess(company: AccessCompany, snap: AccessSnapshot | null, scope: { mode: StripeMode; accountId: string }, now = Date.now()) {
+export function customAccess(company: AccessCompany, snap: AccessSnapshot | null, scope: { mode: StripeMode; accountId: string } | null, now = Date.now()) {
   const override = !!company.admin_override_plan_code && Date.parse(company.admin_override_until ?? '') > now;
   const comp = Date.parse(company.comp_until ?? '') > now;
   if (company.billing_model !== 'custom_setup' || override || comp) return { source: 'legacy' as const, limits: null, available: true, reason: override || comp ? 'admin_override' : 'legacy' };
   // Do not infer model from a stale snapshot and never fall back to pro_plus.
   insist(snap, 'custom_snapshot_missing');
+  // Admin-granted setups (stripe_customer_id = 'admin-granted') have no
+  // Stripe linkage: the granted snapshot alone decides limits and period.
+  // They must not depend on the custom billing environment, which is held
+  // off production until the Stripe live-switch (Roofline incident 2026-10-17).
+  if (snap.stripe_customer_id === 'admin-granted') {
+    const limits = parsePurchasedLimits(snap.purchased_entitlements);
+    const start = Date.parse(snap.period_start); const end = Date.parse(snap.period_end);
+    insist(Number.isFinite(start) && Number.isFinite(end) && end > start, 'custom_snapshot_period_invalid');
+    const lifecycle = ['active','trialing','past_due','disputed'].includes(company.subscription_status) && ['active','trialing','past_due','unpaid','disputed'].includes(snap.provider_status);
+    const available = lifecycle && start <= now && now < end;
+    return { source: 'custom' as const, limits: available ? limits : { ...ZERO_LIMITS }, available, reason: !lifecycle ? 'lifecycle_restricted' : available ? 'admin_grant' : 'paid_period_expired' };
+  }
+  insist(scope, 'custom_scope_missing');
   insist(snap.stripe_account_id === scope.accountId && snap.stripe_mode === scope.mode && company.stripe_mode === scope.mode, 'custom_snapshot_mode_mismatch');
   insist(snap.stripe_subscription_id === company.stripe_subscription_id && snap.stripe_customer_id === company.stripe_customer_id, 'custom_snapshot_identity_mismatch');
   const limits = parsePurchasedLimits(snap.purchased_entitlements);

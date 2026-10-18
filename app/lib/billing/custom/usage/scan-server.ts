@@ -2,7 +2,7 @@ import 'server-only';
 import type { NextRequest } from 'next/server';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { customScope } from '../environment';
-import { isCustomUsageCompany, usageClient } from './store';
+import { customUsageMeteringApplies, usageClient } from './store';
 import { parseScanRequest } from './scan-contract';
 import { executePurchasedScan } from './scan-execution';
 import { UsageError, usageError } from './contracts';
@@ -15,7 +15,9 @@ export async function withPurchasedScan(req: NextRequest,
     const { data: { session } } = await user.auth.getSession();
     if (!session) return Response.json({ success: false, error: 'Authentication required' }, { status: 401 });
     const profile = await requireCompanyContext();
-    if (!(await isCustomUsageCompany(profile.company_id))) return execute(req, false);
+  // Admin-granted setups (no Stripe linkage) run the standard path until the
+  // custom billing environment is live (2026-10-17).
+  if (!(await customUsageMeteringApplies(profile.company_id))) return execute(req, false);
     if (Number(req.headers.get('content-length') ?? 0) > 26*1024*1024) {
       throw new UsageError('scan_request_too_large', 'The plan image is too large.', 413);
     }

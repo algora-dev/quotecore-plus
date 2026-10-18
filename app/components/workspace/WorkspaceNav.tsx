@@ -72,7 +72,9 @@ export function WorkspaceNav({
     <>
       <nav className="flex flex-wrap items-center gap-2 text-sm">
         {items.map((item) => {
-          const isActive = pathname?.startsWith(`${item.href}`);
+          // The Smart Assistant page sits under /account but is its own nav
+          // item; Account must not also claim it active (2026-10-17).
+          const isActive = pathname?.startsWith(`${item.href}`) && !(item.href.endsWith('/account') && pathname.startsWith(`${item.href}/smart-assistant`));
           const isGated = item.gatedBy ? !entitlements.features[item.gatedBy] : false;
 
           // Gated items: navigate to the page (which shows the upgrade splash)

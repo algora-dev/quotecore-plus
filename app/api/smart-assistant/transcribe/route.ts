@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { customScope } from '@/app/lib/billing/custom/environment';
-import { isCustomUsageCompany, usageClient } from '@/app/lib/billing/custom/usage/store';
+import { customUsageMeteringApplies, usageClient } from '@/app/lib/billing/custom/usage/store';
 import { usageError } from '@/app/lib/billing/custom/usage/contracts';
 import { withVoiceProviderBudget } from '@/app/lib/billing/custom/usage/voice-provider';
 import { voiceActualMicroUsd, voiceCostRatesFromEnv } from '@/app/lib/billing/custom/usage/voice-cost';
@@ -36,7 +36,7 @@ async function handlePost(req: NextRequest) {
   const profile = await requireCompanyContext();
   let custom = false;
   try {
-    custom = await isCustomUsageCompany(profile.company_id);
+    custom = await customUsageMeteringApplies(profile.company_id);
   } catch {
     return NextResponse.json({ code: 'usage_unavailable', error: 'Billing access could not be verified.' }, { status: 503 });
   }

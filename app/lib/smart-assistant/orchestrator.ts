@@ -181,6 +181,19 @@ async function withProviderBudgetStep(companyId: string, runId: string, base: St
     throw new OrchestratorExecutionError('billing_unavailable', 0, 0);
   }
   if (!custom) return base;
+  // Admin-granted setups (no Stripe linkage) run without usage-registry
+  // metering: the custom billing environment is held off production until
+  // the Stripe live-switch (2026-10-17). Their allowance still shows from
+  // the granted snapshot; hard metering resumes when the environment is live.
+  let metered = true;
+  try {
+    const usageStore = await import('@/app/lib/billing/custom/usage/store');
+    metered = await usageStore.customUsageMeteringApplies(companyId);
+  } catch {
+    // Billing ownership unreadable: fail closed before any provider spend.
+    throw new OrchestratorExecutionError('billing_unavailable', 0, 0);
+  }
+  if (!metered) return base;
   const [{ customScope }, { withAssistantProviderBudget }] = await Promise.all([
     import('@/app/lib/billing/custom/environment'),
     import('@/app/lib/billing/custom/usage/assistant-provider'),
