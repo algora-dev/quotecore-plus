@@ -6285,7 +6285,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                       <div className="flex gap-1.5">
                         {([
                           { value: 'low', label: 'Simple roof', hint: 'Small, simple roofs · 2 points' },
-                          { value: 'high', label: 'Medium+ roof', hint: 'Medium complexity and beyond · 12 points' },
+                          { value: 'high', label: 'Medium+ roof', hint: 'Medium complexity and beyond · 10 points' },
                         ] as const).map(opt => {
                           const cost = opt.value === 'low' ? 2 : 12;
                           const canAfford = !aiPoints || aiPoints.remaining >= cost;

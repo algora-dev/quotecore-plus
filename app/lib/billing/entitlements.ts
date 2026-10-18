@@ -387,6 +387,19 @@ export const loadCompanyEntitlements = cache(
       && ((!access.available && !paymentGraceLimits) || (!isAdminGrant && !paidUsage?.available) || company.admin_paused);
     const customEnt = company.billing_model === 'custom_setup'
       ? (customRestricted ? { ...ZERO_LIMITS } : (paymentGraceLimits ?? access.limits)) : null;
+    // Admin-granted setups have no usage-registry linkage by design (usage
+    // metering deferred until the Stripe live-switch, 2026-10-17): count
+    // admitted assistant runs in the paid period directly so the billing
+    // meter reflects real usage against the granted allowance.
+    let adminGrantAssistantUsed: number | null = null;
+    if (isAdminGrant && !customRestricted && customSnap) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { count } = await (admin as any).from('smart_assistant_runs')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+        .gte('started_at', customSnap.period_start);
+      adminGrantAssistantUsed = typeof count === 'number' ? count : 0;
+    }
     if (effCodeResult.error || effActiveResult.error) {
       throw new Error('Effective billing access could not be verified.');
     }
@@ -435,7 +448,7 @@ export const loadCompanyEntitlements = cache(
       billingModel: company.billing_model,
       customAccessStatus: company.billing_model === 'custom_setup' ? (customRestricted ? paidUsage?.reason ?? access.reason : 'paid_period') : null,
       assistantTasksLimit: customEnt ? customEnt.assistantTasks : null,
-      assistantTasksUsed: paidUsage?.assistantTasksUsed ?? null,
+      assistantTasksUsed: paidUsage?.assistantTasksUsed ?? adminGrantAssistantUsed,
       usagePeriodStart: paidUsage?.periodStart ?? periodStart,
       usagePeriodEnd: paidUsage?.periodEnd ?? null,
       storagePendingBytes: paidUsage?.storagePendingBytes ?? 0,

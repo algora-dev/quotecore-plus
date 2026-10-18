@@ -761,11 +761,11 @@ async function handleScanPost(req: NextRequest, customMetered = false) {
       : { scan1: 5000, scan2: 8000, scan3: 8000 };
 
     // ── AI Assist points quota ──────────────────────────────────────
-    // Point cost per quality level: simple=2, medium+=12 (pointCost.ts).
+    // Point cost per quality level: simple=2, medium+=10 (pointCost.ts).
     // Per-scan billing (owner 2026-10-04): the AREA scan (scan1) charges its
     // tier; the COMPONENT scan charges the tier chosen for it when it starts
     // (scan2). Scan3 is the tail of the component pass - no deduction.
-    // Canonical point costs (2/12) - shared constant, keep in sync with
+    // Canonical point costs (2/10) - shared constant, keep in sync with
     // pointCost.ts and the SQL queue path (see parity checklist).
     const pointsToSpend = getAiScanPointCost(qualityLevel);
 
