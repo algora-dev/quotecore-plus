@@ -128,6 +128,8 @@ const nextConfig: NextConfig = {
       { source: '/cookies', destination: '/cookie-policy', permanent: true },
       // Old free tool name -> canonical /measurement-to-quote-tool
       { source: '/free-quote-builder', destination: '/measurement-to-quote-tool', permanent: true },
+      // Short DFY alias -> canonical /done-for-you-setup (unknown apex paths otherwise fall through to the noindexed app host)
+      { source: '/done-for-you', destination: '/done-for-you-setup', permanent: true },
       // Partner program aliases -> canonical /affiliate-program
       { source: '/referrals', destination: '/affiliate-program', permanent: true },
       { source: '/partners', destination: '/affiliate-program', permanent: true },
