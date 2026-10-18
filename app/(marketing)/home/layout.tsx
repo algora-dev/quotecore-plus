@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Roofing Takeoff, Estimating & Quoting Software | QuoteCore Plus",
-    description: "Roofing takeoff, estimating and quoting software. Digital takeoff, AI Scan Assist and Smart Components turn roof measurements into materials, pricing and quotes. Free plan available.",
+    description: "Roofing takeoff, estimating and quoting software. Digital takeoff, Roof Scan Assist and Smart Components turn roof measurements into materials, pricing and quotes. Free plan available.",
     url: "/",
     siteName: "QuoteCore+",
     type: "website",

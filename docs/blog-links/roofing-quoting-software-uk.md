@@ -37,7 +37,7 @@ Source: `app/(marketing)/blog/[slug]/content/roofing-quoting-software-uk.tsx`
 
 | Destination | Anchor |
 |---|---|
-| /features/ai-scan-assist | AI Scan Assist |
+| /features/ai-scan-assist | Roof Scan Assist |
 
 ## Inbound in-article links (5)
 

@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof-online.tsx`
 
-## Outbound internal links (14)
+## Outbound internal links (15)
 
 ### Money pages (1)
 
@@ -28,12 +28,13 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof-online.tsx`
 | /free-roofing-material-calculator | free roofing material calculator |
 | /free-quote-generator | free quote generator |
 | /free-roof-takeoff | Measure your roof plan online free |
-| /free-trial | start a free QuoteCore+ trial |
+| /free-trial | get started with QuoteCore+ |
 
-### Other site pages (3)
+### Other site pages (4)
 
 | Destination | Anchor |
 |---|---|
+| /research/google-earth-roof-measurement-accuracy | Google Earth roof takeoff study |
 | /roof-measurement-cost-comparison | what measurement reports cost |
 | /roof-measurement-cost-comparison | Roof Measurement Cost Comparison |
 | /roof-measurement-cost-comparison | see the cost comparison |

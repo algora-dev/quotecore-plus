@@ -62,8 +62,8 @@ Source: `app/(marketing)/blog/[slug]/content/best-free-tools-for-roofers.tsx`
 | /free-quote-generator | Quote Generator |
 | /free-purchase-order-generator | Purchase Order Generator |
 | /free-invoice-generator | Invoice Generator |
-| /free-trial | Start your free QuoteCore+ trial |
-| /free-trial | Start your free QuoteCore+ trial today |
+| /free-trial | Get started with QuoteCore+ |
+| /free-trial | Get started with QuoteCore+ today |
 
 ### Other site pages (1)
 

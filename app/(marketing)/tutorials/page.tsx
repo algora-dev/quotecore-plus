@@ -247,7 +247,7 @@ export default function TutorialsPage() {
           <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <a href="/features" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-slate-900">Explore features</p>
-              <p className="mt-1 text-sm text-slate-500">Digital takeoff, AI Scan Assist, Smart Components, sending and tracking, and more.</p>
+              <p className="mt-1 text-sm text-slate-500">Digital takeoff, Roof Scan Assist, Smart Components, sending and tracking, and more.</p>
             </a>
             <a href="/free-trial" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-slate-900">Get started</p>

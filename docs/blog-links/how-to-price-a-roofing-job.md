@@ -2,16 +2,17 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 
-## Outbound internal links (19)
+## Outbound internal links (21)
 
-### Money pages (2)
+### Money pages (3)
 
 | Destination | Anchor |
 |---|---|
+| /construction-quoting-software | quoting software for contractors |
 | /roofing-quoting-software | QuoteCore+ roofing quoting software |
 | /roofing-estimating-software | roofing estimating software |
 
-### Blog articles (8)
+### Blog articles (9)
 
 | Destination | Anchor |
 |---|---|
@@ -19,6 +20,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 | /blog/how-to-calculate-roof-pitch | How to Calculate Roof Pitch |
 | /blog/best-free-tools-for-roofers | Best Free Tools for Roofers (2026 Guide) |
 | /blog/how-to-calculate-roof-pitch | How to Calculate Roof Pitch |
+| /blog/best-quoting-software-nz | quoting software for NZ trades |
 | /blog/roof-replacement-cost-guide-uk | Roof replacement cost guide (UK) |
 | /blog/construction-cost-estimator-guide | Construction cost estimator guide |
 | /blog/roofing-quoting-software-vs-spreadsheets | Roofing Quoting Software vs Spreadsheets: What Actually Saves Time? |
@@ -35,13 +37,13 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 | /free-roof-replacement-cost-calculator | Roof Replacement Cost Calculator |
 | /free-roofing-quote-calculator | Roofing Quote Calculator |
 | /free-margin-calculator | free margin calculator |
-| /free-trial | start your free QuoteCore+ trial today |
+| /free-trial | get started with QuoteCore+ today |
 
 ### Other site pages (1)
 
 | Destination | Anchor |
 |---|---|
-| /features/ai-scan-assist | AI Scan Assist |
+| /features/ai-scan-assist | Roof Scan Assist |
 
 ## Inbound in-article links (22)
 

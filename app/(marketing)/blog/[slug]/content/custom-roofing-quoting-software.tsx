@@ -128,7 +128,7 @@ export default function Post() {
           <Link href="/features/digital-roof-takeoff" className={link}>
             digital takeoff
           </Link>
-          , AI Scan Assist, or measurements typed in from site
+          , Roof Scan Assist, or measurements typed in from site
         </li>
         <li>
           <strong>Your documents</strong> - quotes, material orders, labour sheets and

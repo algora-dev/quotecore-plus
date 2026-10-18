@@ -22,7 +22,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-quote-a-roof-from-plans.tsx`
 
 | Destination | Anchor |
 |---|---|
-| /free-trial | Start a free 14-day trial |
+| /free-trial | Get started with QuoteCore+ |
 | /free-roof-takeoff | free roof takeoff tool |
 
 ## Inbound in-article links (4)

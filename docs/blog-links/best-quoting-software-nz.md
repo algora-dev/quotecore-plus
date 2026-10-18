@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/best-quoting-software-nz.tsx`
 
-## Outbound internal links (15)
+## Outbound internal links (14)
 
 ### Money pages (3)
 
@@ -26,23 +26,27 @@ Source: `app/(marketing)/blog/[slug]/content/best-quoting-software-nz.tsx`
 
 | Destination | Anchor |
 |---|---|
-| /free-trial | Start a free 14-day trial of QuoteCore+ |
+| /free-trial | Get started with QuoteCore+ |
 | /free-roofing-takeoff-builder | free roof takeoff builder |
-| /free-trial | start a 14-day free trial of QuoteCore+ |
+| /free-trial | get started with QuoteCore+ |
 
-### Other site pages (4)
+### Other site pages (3)
 
 | Destination | Anchor |
 |---|---|
-| /features/ai-scan-assist | AI Scan Assist |
-| /pricing | pricing page |
+| /features/ai-scan-assist | Roof Scan Assist |
 | /suppliers | supplier directory |
 | /suppliers | supplier directory |
 
-## Inbound in-article links (1)
+## Inbound in-article links (6)
 
 | From | Anchor used |
 |---|---|
 | /blog/best-quoting-software-au | quoting software in New Zealand |
+| /blog/best-quoting-software-us | comparison of quoting software for NZ tradies |
+| /blog/construction-quote-speed-checklist | quoting software comparison for NZ tradies |
+| /blog/how-to-do-a-roof-takeoff | best quoting software for NZ trades |
+| /blog/how-to-get-more-work-as-a-contractor | best quoting software for NZ tradies |
+| /blog/how-to-price-a-roofing-job | quoting software for NZ trades |
 
-External links in source: 0
+External links in source: 1

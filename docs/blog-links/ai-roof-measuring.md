@@ -13,8 +13,8 @@ Source: `app/(marketing)/blog/[slug]/content/ai-roof-measuring.tsx`
 | /free-smart-component-creator | Smart Component Creator |
 | /free-quote-generator | Free Quote Generator |
 | /free-tools | Browse all free tools |
-| /free-trial | start a free 14-day trial of QuoteCore+ |
-| /free-trial | Try it free for 14 days |
+| /free-trial | get started with QuoteCore+ |
+| /free-trial | Get started |
 
 ### Other site pages (1)
 

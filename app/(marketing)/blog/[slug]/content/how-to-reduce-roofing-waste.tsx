@@ -21,7 +21,7 @@ export default function Post() {
       </ul>
       <h2>Strategy 1: Accurate takeoff measurements</h2>
       <p>Waste allowance compensates for unavoidable losses - it cannot fix a bad measurement. If your takeoff is wrong, your waste percentage is applied to the wrong quantity, and the error compounds.</p>
-      <p>Start with accurate measurements. <Link href="/features/digital-roof-takeoff">Digital roof takeoff</Link> tools measure from PDF plans using the embedded scale, eliminating the error of a physical scale ruler. For complex roofs, <Link href="/features/ai-scan-assist">AI Scan Assist</Link> can auto-detect roof geometry for you to verify.</p>
+      <p>Start with accurate measurements. <Link href="/features/digital-roof-takeoff">Digital roof takeoff</Link> tools measure from PDF plans using the embedded scale, eliminating the error of a physical scale ruler. For complex roofs, <Link href="/features/ai-scan-assist">Roof Scan Assist</Link> can auto-detect roof geometry for you to verify.</p>
       <p>See <a href="/blog/how-to-do-a-roof-takeoff">how to do a roof takeoff</a> for the full measurement process.</p>
       <h2>Strategy 2: Use the right waste percentage by material type</h2>
       <p>Applying a flat 10% or 15% to every material is the most common mistake. Different materials waste differently:</p>

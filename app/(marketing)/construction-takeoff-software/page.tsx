@@ -62,7 +62,7 @@ const faqs = [
   {
     question: "Can I take off plans on my phone or tablet?",
     answer:
-      "In the paid app, yes. The full takeoff workflow - upload, calibrate, measure, AI Scan Assist on roofs, save and continue - runs on phones and tablets, not just desktop. The free browser takeoff tools are the quickest way to try the measurement workflow; the full mobile workflow is part of the paid app.",
+      "In the paid app, yes. The full takeoff workflow - upload, calibrate, measure, Roof Scan Assist on roofs, save and continue - runs on phones and tablets, not just desktop. The free browser takeoff tools are the quickest way to try the measurement workflow; the full mobile workflow is part of the paid app.",
   },
   {
     question: "Is this only for roofing?",

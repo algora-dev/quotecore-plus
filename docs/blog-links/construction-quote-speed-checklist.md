@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/construction-quote-speed-checklist.tsx`
 
-## Outbound internal links (14)
+## Outbound internal links (15)
 
 ### Money pages (1)
 
@@ -10,7 +10,7 @@ Source: `app/(marketing)/blog/[slug]/content/construction-quote-speed-checklist.
 |---|---|
 | /construction-quoting-software | QuoteCore+ construction quoting software |
 
-### Blog articles (6)
+### Blog articles (7)
 
 | Destination | Anchor |
 |---|---|
@@ -20,13 +20,14 @@ Source: `app/(marketing)/blog/[slug]/content/construction-quote-speed-checklist.
 | /blog/how-to-price-a-roofing-job | How to Price a Roofing Job: Step-by-Step Pricing Guide |
 | /blog/how-to-follow-up-on-a-quote | How to Follow Up on a Quote Without Losing the Job |
 | /blog/do-professional-quotes-win-more-jobs | see the evidence on professional quotes and win rates |
+| /blog/best-quoting-software-nz | quoting software comparison for NZ tradies |
 
 ### Free tools (6)
 
 | Destination | Anchor |
 |---|---|
 | /free-quote-generator | free quote generator |
-| /free-trial | Start your free 14-day trial |
+| /free-trial | See ways to try QuoteCore+ |
 | /free-roofing-takeoff-builder | free roof takeoff builder |
 | /free-roofing-material-calculator | free roofing material calculator |
 | /free-quote-generator | free quote generator |

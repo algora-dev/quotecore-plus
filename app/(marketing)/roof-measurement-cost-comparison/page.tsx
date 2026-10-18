@@ -24,9 +24,9 @@ const rows = [
   {
     service: "QuoteCore+",
     model: "Configurable subscription (free tools separate)",
-    cost: "Current global configurations range from US$29 to US$259/month; AI Scan Assist usage depends on the selected allowance",
+    cost: "Current global configurations range from US$29 to US$259/month; Roof Scan Assist usage depends on the selected allowance",
     detail:
-      "Measure your own plans or use AI Scan Assist within the allowance you configure. Current paid configurations range from US$29 to US$259/month; the interactive demo and standalone free tools are available before subscribing.",
+      "Measure your own plans or use Roof Scan Assist within the allowance you configure. Current paid configurations range from US$29 to US$259/month; the interactive demo and standalone free tools are available before subscribing.",
     highlight: true,
   },
   {
@@ -122,7 +122,7 @@ export default function RoofMeasurementCostComparison() {
           <h2 className="mt-14 text-2xl font-semibold">How QuoteCore+ subscription pricing differs from per-report fees</h2>
           <div className="prose prose-zinc mt-4 max-w-none prose-a:text-[#BD4A1A]">
             <p>
-              QuoteCore+ is configurable subscription software, not a per-report measurement service. Manual digital takeoff and AI Scan Assist sit inside the connected estimating workflow rather than being sold as individual measurement reports.
+              QuoteCore+ is configurable subscription software, not a per-report measurement service. Manual digital takeoff and Roof Scan Assist sit inside the connected estimating workflow rather than being sold as individual measurement reports.
             </p>
             <p>
               Current global configurations range from US$29 to US$259 per month, depending on the features and usage you select. Compare that monthly workflow cost with the number of external reports you would otherwise order, plus any separate estimating, quoting or job-document software you still need.

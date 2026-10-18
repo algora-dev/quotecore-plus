@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/construction-estimating-spreadsheet-alternative.tsx`
 
-## Outbound internal links (7)
+## Outbound internal links (8)
 
 ### Money pages (1)
 
@@ -25,17 +25,19 @@ Source: `app/(marketing)/blog/[slug]/content/construction-estimating-spreadsheet
 |---|---|
 | /free-smart-component-creator | Catalog-to-Component Converter |
 
-### Other site pages (1)
+### Other site pages (2)
 
 | Destination | Anchor |
 |---|---|
 | /measurement-to-quote-tool | Try the free Measurement-to-Quote Tool → |
+| /integrations/xero | See the QuoteCore+ Xero workflow |
 
-## Inbound in-article links (4)
+## Inbound in-article links (5)
 
 | From | Anchor used |
 |---|---|
 | /blog/convert-spreadsheet-to-quote | spreadsheet alternative guide |
+| /blog/import-price-list-csv-to-components | the spreadsheet-alternative guide |
 | /blog/price-a-job-from-measurements | our guide to moving on from an estimating spreadsheet |
 | /blog/roofing-estimating-spreadsheet-vs-software | alternatives to construction estimating spreadsheets |
 | /blog/roofing-quoting-software-vs-spreadsheets | construction estimating spreadsheet alternatives |

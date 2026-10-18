@@ -10,7 +10,7 @@ import { trackEvent } from "@/lib/analytics";
  * variant="inline" - compact horizontal card (blogs, calculators, CTA areas)
  *
  * primaryMode lets a placement emphasise one button (e.g. AI on the
- * AI Scan Assist feature page) - the other stays as secondary.
+ * Roof Scan Assist feature page) - the other stays as secondary.
  */
 export default function DemoCTACard({
   location,
@@ -38,7 +38,7 @@ export default function DemoCTACard({
             : "bg-[#FF6B35] text-white hover:bg-[#E55A28]"
         }`}
       >
-        Try AI Scan Assist
+        Try Roof Scan Assist
       </a>
       <a
         href="/takeoff-demo?mode=manual"
@@ -89,7 +89,7 @@ export default function DemoCTACard({
                     : "bg-[#FF6B35] text-white hover:bg-[#E55A28]"
                 }`}
               >
-                Try AI Scan Assist
+                Try Roof Scan Assist
               </a>
               <a
                 href="/takeoff-demo?mode=manual"

@@ -119,7 +119,7 @@ const pageData: CompetitorPageData = {
       {
         "number": "02",
         "title": "Review before using the quantities",
-        "body": "Check scale, pitch and visible geometry before pricing. On a clear, correctly calibrated roof plan, AI Scan Assist can complete the roof geometry accurately. Plan quality and complexity determine when manual adjustment is more likely, and every result remains editable."
+        "body": "Check scale, pitch and visible geometry before pricing. On a clear, correctly calibrated roof plan, Roof Scan Assist can complete the roof geometry accurately. Plan quality and complexity determine when manual adjustment is more likely, and every result remains editable."
       },
       {
         "number": "03",
@@ -182,7 +182,7 @@ const pageData: CompetitorPageData = {
         },
         "qc": {
           "status": "yes",
-          "note": "AI Scan Assist can complete clear, correctly calibrated roof geometry; every result remains editable."
+          "note": "Roof Scan Assist can complete clear, correctly calibrated roof geometry; every result remains editable."
         }
       },
       {

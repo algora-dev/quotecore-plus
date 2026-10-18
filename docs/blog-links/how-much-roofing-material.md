@@ -32,8 +32,8 @@ Source: `app/(marketing)/blog/[slug]/content/how-much-roofing-material.tsx`
 | /free-roofing-takeoff-builder | Roof Takeoff Builder |
 | /free-roof-pricing-calculator | Roof Pricing Calculator |
 | /free-quote-generator | free Quote Generator |
-| /free-trial | try QuoteCore+ free for 14 days |
-| /free-trial | start your free QuoteCore+ trial today |
+| /free-trial | get started with QuoteCore+ |
+| /free-trial | get started with QuoteCore+ today |
 
 ## Inbound in-article links (4)
 

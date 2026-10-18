@@ -31,12 +31,13 @@ Source: `app/(marketing)/blog/[slug]/content/roofing-estimating-spreadsheet-vs-s
 | /features/smart-components | how Smart Components work |
 | /features/digital-roof-takeoff | digital roof takeoff |
 
-## Inbound in-article links (3)
+## Inbound in-article links (4)
 
 | From | Anchor used |
 |---|---|
 | /blog/construction-estimating-spreadsheet-alternative | whether to keep your spreadsheet or switch to estimating software |
 | /blog/convert-spreadsheet-to-quote | roofing estimating spreadsheet vs software |
+| /blog/roof-measurements-to-quote | Spreadsheet vs Software |
 | /blog/roofing-quoting-software-vs-spreadsheets | whether to keep your roofing spreadsheet or switch to estimating software |
 
 External links in source: 0

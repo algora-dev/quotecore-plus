@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-get-more-work-as-a-contractor.tsx`
 
-## Outbound internal links (10)
+## Outbound internal links (11)
 
 ### Money pages (1)
 
@@ -10,7 +10,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-get-more-work-as-a-contracto
 |---|---|
 | /construction-quoting-software | QuoteCore+ construction quoting software |
 
-### Blog articles (6)
+### Blog articles (7)
 
 | Destination | Anchor |
 |---|---|
@@ -18,6 +18,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-get-more-work-as-a-contracto
 | /blog/construction-quote-speed-checklist | The Construction Quote Speed Checklist |
 | /blog/roofing-quoting-software-uk | here is how UK roofers are using digital quoting to send better quotes faster - and what that means for winning work |
 | /blog/how-to-price-a-roofing-job | How to Price a Roofing Job: Step-by-Step Pricing Guide |
+| /blog/best-quoting-software-nz | best quoting software for NZ tradies |
 | /blog/best-free-tools-for-roofers | Best Free Tools for Roofers and Contractors (2026) |
 | /blog/do-professional-quotes-win-more-jobs | what the evidence says about professional quotes winning more jobs |
 
@@ -26,7 +27,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-get-more-work-as-a-contracto
 | Destination | Anchor |
 |---|---|
 | /free-quote-generator | free quote generator |
-| /free-trial | start your free QuoteCore+ trial today |
+| /free-trial | get started with QuoteCore+ today |
 
 ### Other site pages (1)
 

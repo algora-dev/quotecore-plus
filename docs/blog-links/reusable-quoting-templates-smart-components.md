@@ -24,7 +24,7 @@ Source: `app/(marketing)/blog/[slug]/content/reusable-quoting-templates-smart-co
 |---|---|
 | /free-smart-component-creator | free Smart Component Creator |
 | /free-smart-component-creator | free Smart Component Creator |
-| /free-trial | free QuoteCore+ trial |
+| /free-trial | started with QuoteCore+ |
 
 ## Inbound in-article links (1)
 

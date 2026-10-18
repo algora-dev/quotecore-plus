@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/best-quoting-software-us.tsx`
 
-## Outbound internal links (9)
+## Outbound internal links (10)
 
 ### Money pages (2)
 
@@ -11,11 +11,12 @@ Source: `app/(marketing)/blog/[slug]/content/best-quoting-software-us.tsx`
 | /roofing-quoting-software | roofing quoting software |
 | /construction-quoting-software | construction quoting workflow |
 
-### Blog articles (1)
+### Blog articles (2)
 
 | Destination | Anchor |
 |---|---|
 | /blog/roofing-quoting-software-vs-spreadsheets | roofing quoting software vs spreadsheets |
+| /blog/best-quoting-software-nz | comparison of quoting software for NZ tradies |
 
 ### Free tools (5)
 
@@ -23,7 +24,7 @@ Source: `app/(marketing)/blog/[slug]/content/best-quoting-software-us.tsx`
 |---|---|
 | /free-roofing-calculator | roofing calculator |
 | /free-roofing-takeoff-builder | roof takeoff builder |
-| /free-trial | Try it free |
+| /free-trial | Get started |
 | /free-roofing-calculator | roofing calculator |
 | /free-roofing-takeoff-builder | roof takeoff builder |
 
@@ -31,7 +32,7 @@ Source: `app/(marketing)/blog/[slug]/content/best-quoting-software-us.tsx`
 
 | Destination | Anchor |
 |---|---|
-| /features/ai-scan-assist | AI Scan Assist |
+| /features/ai-scan-assist | Roof Scan Assist |
 
 ## Inbound in-article links (1)
 

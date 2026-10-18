@@ -37,7 +37,7 @@ Source: `app/(marketing)/blog/[slug]/content/construction-cost-estimator-guide.t
 | /free-purchase-order-generator | free purchase order generator |
 | /free-invoice-generator | free invoice generator |
 | /free-construction-calculator | free construction calculator |
-| /free-trial | free QuoteCore+ trial |
+| /free-trial | started with QuoteCore+ |
 
 ### Other site pages (1)
 

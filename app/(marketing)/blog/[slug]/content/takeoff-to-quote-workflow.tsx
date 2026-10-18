@@ -36,7 +36,7 @@ export default function Post() {
         Upload the plan, calibrate the scale, then either draw each roof area and
         line (ridges, hips, valleys, barges, spouting) yourself - or let{' '}
         <Link href="/features/ai-scan-assist" className={link}>
-          AI Scan Assist
+          Roof Scan Assist
         </Link>{' '}
         propose the geometry for you to check and adjust. Every measurement lands in
         the job, named by area, ready for pricing.
@@ -149,7 +149,7 @@ export default function Post() {
       </p>
       <h3>Do I have to draw the plan myself?</h3>
       <p>
-        No. AI Scan Assist can propose the roof geometry from an uploaded plan, which
+        No. Roof Scan Assist can propose the roof geometry from an uploaded plan, which
         you then verify and adjust. A full manual drawing path also exists, and you
         can mix both on the same plan.
       </p>

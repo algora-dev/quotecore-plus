@@ -24,14 +24,14 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-reduce-roofing-waste.tsx`
 | /free-roofing-waste-calculator | free roofing waste calculator |
 | /free-smart-component-creator | free Smart Component Creator |
 | /free-roofing-waste-calculator | free roofing waste calculator |
-| /free-trial | Start your free QuoteCore+ trial today |
+| /free-trial | Get started with QuoteCore+ today |
 
 ### Other site pages (4)
 
 | Destination | Anchor |
 |---|---|
 | /features/digital-roof-takeoff | Digital roof takeoff |
-| /features/ai-scan-assist | AI Scan Assist |
+| /features/ai-scan-assist | Roof Scan Assist |
 | /features/smart-components | Smart Components&#8482; |
 | /features/material-ordering | material ordering |
 

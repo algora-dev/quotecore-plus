@@ -43,7 +43,7 @@ export default function DemoToolCard() {
               onClick={() => go("ai")}
               className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-[#FF6B35] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
             >
-              Try AI Scan Assist
+              Try Roof Scan Assist
             </a>
             <a
               href={`https://quote-core.com/demo?mode=manual`}

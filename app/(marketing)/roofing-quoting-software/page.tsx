@@ -11,11 +11,11 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Roofing Quoting Software | QuoteCore+",
   description:
-    "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, AI Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Configurations from US$29/month through the pricing builder.",
+    "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, Roof Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Configurations from US$29/month through the pricing builder.",
   openGraph: {
     title: "Roofing Quoting Software | QuoteCore+",
     description:
-      "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, AI Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Configurations from US$29/month through the pricing builder.",
+      "Roofing quoting software for roofers and contractors. Digital roof takeoff on phone, tablet or desktop, Roof Scan Assist, Smart Components, quotes, material ordering, invoicing, and Smart Assistant. Configurations from US$29/month through the pricing builder.",
     url: "/roofing-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -34,7 +34,7 @@ const howToSchema = {
     {
       "@type": "HowToStep",
       name: "Measure the job",
-      text: "Upload a roof plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - then feed straight into Smart Components for pricing.",
+      text: "Upload a roof plan and use Roof Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - then feed straight into Smart Components for pricing.",
     },
     {
       "@type": "HowToStep",
@@ -68,7 +68,7 @@ const steps = [
   {
     number: "01",
     title: "Measure the job",
-    body: "Upload a roof plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - then feed straight into your quote via Smart Components™.",
+    body: "Upload a roof plan and use Roof Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - then feed straight into your quote via Smart Components™.",
   },
   {
     number: "02",
@@ -99,7 +99,7 @@ const steps = [
 
 const bullets = [
   "Digital takeoffs and measurement workflows built around roofing",
-  "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting",
+  "Roof Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting",
   "Smart Components™ with materials, labour, waste, measurements, drawings, calculations and pricing rules",
   "Professional quotes that are clear for customers and easy to approve",
   "Materials ordering connected to accepted quotes",
@@ -120,7 +120,7 @@ const faqs = [
   },
   {
     q: "Can QuoteCore+ help with roofing measurements?",
-    a: "Yes. QuoteCore+ combines digital takeoff tools with AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges from an uploaded plan. Measurements feed directly into Smart Components™, which apply your stored pricing, labour, waste, and business rules - so the takeoff becomes a priced quote without manual re-entry.",
+    a: "Yes. QuoteCore+ combines digital takeoff tools with Roof Scan Assist to identify roof areas, ridges, hips, valleys, and barges from an uploaded plan. Measurements feed directly into Smart Components™, which apply your stored pricing, labour, waste, and business rules - so the takeoff becomes a priced quote without manual re-entry.",
   },
   {
     q: "Does QuoteCore+ handle materials ordering?",
@@ -233,7 +233,7 @@ export default function RoofingQuotingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure the roof with digital takeoff and AI Scan Assist, build the quote with Smart Components™, send it to the customer, order materials, manage the job, invoice and get paid - all in one connected workflow that runs on phone, tablet or desktop.
+              Measure the roof with digital takeoff and Roof Scan Assist, build the quote with Smart Components™, send it to the customer, order materials, manage the job, invoice and get paid - all in one connected workflow that runs on phone, tablet or desktop.
             </p>
 
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
@@ -289,7 +289,7 @@ export default function RoofingQuotingSoftwarePage() {
           cards={[
             {
               title: "Measure it in QuoteCore+",
-              body: "Measure roof areas, ridges, hips, valleys and spouting from plans or images with digital takeoff on phone, tablet or desktop. Use AI Scan Assist where it helps, then review before pricing.",
+              body: "Measure roof areas, ridges, hips, valleys and spouting from plans or images with digital takeoff on phone, tablet or desktop. Use Roof Scan Assist where it helps, then review before pricing.",
               href: "/features/digital-roof-takeoff",
               linkLabel: "See digital takeoff →",
             },

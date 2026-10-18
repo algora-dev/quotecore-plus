@@ -13,7 +13,7 @@ import LazyYouTube from "@/components/LazyYouTube";
 export const metadata: Metadata = {
   title: "Digital Roof Takeoff Software",
   description:
-    "Upload roof plans and measure digitally on phone, tablet or desktop with AI Scan Assist or manual drawing. Pitch, waste, and material quantities auto-calculated. A faster, simpler alternative to expensive takeoff software.",
+    "Upload roof plans and measure digitally on phone, tablet or desktop with Roof Scan Assist or manual drawing. Pitch, waste, and material quantities auto-calculated. A faster, simpler alternative to expensive takeoff software.",
   alternates: {
     canonical: "https://quote-core.com/features/digital-roof-takeoff",
     languages: hreflangLanguages("/features/digital-roof-takeoff"),
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Digital Roof Takeoff Software",
     description:
-      "Upload roof plans, measure digitally on phone, tablet or desktop, and build a complete roof takeoff. AI Scan Assist or manual drawing. Auto-calculated pitch, waste, and quantities.",
+      "Upload roof plans, measure digitally on phone, tablet or desktop, and build a complete roof takeoff. Roof Scan Assist or manual drawing. Auto-calculated pitch, waste, and quantities.",
     url: "https://quote-core.com/features/digital-roof-takeoff",
     siteName: "QuoteCore+",
     type: "website",
@@ -35,7 +35,7 @@ const softwareSchema = {
   applicationCategory: "BusinessApplication",
   applicationSubCategory: "Digital takeoff",
   operatingSystem: "Web",
-  description: "Digital roof takeoff software with AI Scan Assist and manual drawing tools. Upload plans, measure digitally, and auto-calculate pitch, waste, and material quantities.",
+  description: "Digital roof takeoff software with Roof Scan Assist and manual drawing tools. Upload plans, measure digitally, and auto-calculate pitch, waste, and material quantities.",
   url: `${SITE_URL}/features/digital-roof-takeoff`,
   publisher: { "@id": `${SITE_URL}/#organization` },
   offers: { "@type": "AggregateOffer", priceCurrency: "USD", lowPrice: publicPricing.monthlyMin, highPrice: publicPricing.monthlyMax, offerCount: 1, url: `${SITE_URL}/pricing` },
@@ -68,7 +68,7 @@ const faqSchema = {
       name: "Does QuoteCore+ have AI takeoff scanning?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. AI Scan Assist can scan an uploaded roof plan and automatically identify multiple roof areas, ridges, hips, valleys, barges and spouting. You can name each roof area, assign different pitches and materials, then review and adjust everything before generating the takeoff. You can also skip AI entirely and draw everything manually.",
+        text: "Yes. Roof Scan Assist can scan an uploaded roof plan and automatically identify multiple roof areas, ridges, hips, valleys, barges and spouting. You can name each roof area, assign different pitches and materials, then review and adjust everything before generating the takeoff. You can also skip AI entirely and draw everything manually.",
       },
     },
     {
@@ -76,7 +76,7 @@ const faqSchema = {
       name: "Can I use QuoteCore+ takeoff without AI?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. The manual drawing tool lets you upload a plan and draw all areas, lines, and points yourself. You have full control over every measurement. AI Scan Assist is optional.",
+        text: "Yes. The manual drawing tool lets you upload a plan and draw all areas, lines, and points yourself. You have full control over every measurement. Roof Scan Assist is optional.",
       },
     },
     {
@@ -100,26 +100,26 @@ const faqSchema = {
       name: "Can I do takeoff on my phone?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. The full takeoff workflow - upload, calibrate, measure, AI Scan Assist, component picking and save & continue - runs on phones and tablets as well as desktop. Start measuring on site and the job saves to your account so you can continue on any device.",
+        text: "Yes. The full takeoff workflow - upload, calibrate, measure, Roof Scan Assist, component picking and save & continue - runs on phones and tablets as well as desktop. Start measuring on site and the job saves to your account so you can continue on any device.",
       },
     },
   ],
 };
 
 const steps = [
-  { num: 1, title: "Upload your plan", text: "Upload a roof plan, drawing, or image - on phone, tablet or desktop. Both AI Scan Assist and manual drawing start from the same uploaded plan. No plan? You can also start from scratch with site measurements." },
-  { num: 2, title: "Draw or scan - your choice", text: "Use AI Scan Assist to automatically detect roof edges, ridges, valleys, and hips. Or switch to manual and draw every line yourself. Both paths give you the same result." },
+  { num: 1, title: "Upload your plan", text: "Upload a roof plan, drawing, or image - on phone, tablet or desktop. Both Roof Scan Assist and manual drawing start from the same uploaded plan. No plan? You can also start from scratch with site measurements." },
+  { num: 2, title: "Draw or scan - your choice", text: "Use Roof Scan Assist to automatically detect roof edges, ridges, valleys, and hips. Or switch to manual and draw every line yourself. Both paths give you the same result." },
   { num: 3, title: "Pitch and quantities auto-calculate", text: "When you draw a section, the pitch and pitch type are calculated automatically. Areas, waste allowances, and material quantities update in real time. You just draw what you see." },
   { num: 4, title: "Attach to components and send to quote", text: "Each measurement attaches to a Smart Component that already knows its pricing and waste rules. Your takeoff flows directly into the quote builder. No copy-pasting." },
 ];
 
 const faqs = [
   { q: "What is a digital roof takeoff?", a: "A digital roof takeoff is the process of measuring a roof from digital plans or drawings using software, instead of measuring manually on site or with paper plans. It calculates areas, lengths, and material quantities from the measurements you input." },
-  { q: "Does QuoteCore+ have AI takeoff scanning?", a: "Yes. AI Scan Assist can scan an uploaded roof plan and automatically identify multiple roof areas, ridges, hips, valleys, barges and spouting. You can name each roof area, assign different pitches and materials, then review and adjust everything before generating the takeoff. You can also skip AI entirely and draw everything manually." },
-  { q: "Can I use QuoteCore+ takeoff without AI?", a: "Yes. The manual drawing tool lets you upload a plan and draw all areas, lines, and points yourself. You have full control over every measurement. AI Scan Assist is optional." },
+  { q: "Does QuoteCore+ have AI takeoff scanning?", a: "Yes. Roof Scan Assist can scan an uploaded roof plan and automatically identify multiple roof areas, ridges, hips, valleys, barges and spouting. You can name each roof area, assign different pitches and materials, then review and adjust everything before generating the takeoff. You can also skip AI entirely and draw everything manually." },
+  { q: "Can I use QuoteCore+ takeoff without AI?", a: "Yes. The manual drawing tool lets you upload a plan and draw all areas, lines, and points yourself. You have full control over every measurement. Roof Scan Assist is optional." },
   { q: "Does the takeoff calculate pitch automatically?", a: "Yes. When you draw a roof section, the pitch and pitch type are auto-calculated. Areas, waste allowances, and material quantities all update automatically based on the pitch. You just draw what you see and the system handles the calculations." },
   { q: "What roof types does the takeoff support?", a: "The takeoff builder supports hips, valleys, ridges, eaves, flashings, and custom components. It works with metal, tile, shingle, and membrane roof types." },
-  { q: "Can I do takeoff on my phone?", a: "Yes. The full takeoff workflow - upload, calibrate, measure, AI Scan Assist, component picking and save & continue - runs on phones and tablets as well as desktop. Start measuring on site and the job saves to your account so you can continue on any device." },
+  { q: "Can I do takeoff on my phone?", a: "Yes. The full takeoff workflow - upload, calibrate, measure, Roof Scan Assist, component picking and save & continue - runs on phones and tablets as well as desktop. Start measuring on site and the job saves to your account so you can continue on any device." },
 ];
 
 export default function DigitalRoofTakeoffPage() {
@@ -141,7 +141,7 @@ export default function DigitalRoofTakeoffPage() {
               Digital roof takeoff that actually works.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
-              Upload a plan on your phone, tablet or desktop, draw what you see, and let the system handle the rest. Pitch, waste, and material quantities auto-calculate. Use AI Scan Assist or draw manually - both paths lead to a complete, priced takeoff.
+              Upload a plan on your phone, tablet or desktop, draw what you see, and let the system handle the rest. Pitch, waste, and material quantities auto-calculate. Use Roof Scan Assist or draw manually - both paths lead to a complete, priced takeoff.
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
@@ -176,7 +176,7 @@ export default function DigitalRoofTakeoffPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
                 <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" /></svg>
               </div>
-              <h3 className="mt-3 font-semibold text-slate-900">AI Scan Assist</h3>
+              <h3 className="mt-3 font-semibold text-slate-900">Roof Scan Assist</h3>
               <p className="mt-1 text-sm text-zinc-600">Upload a plan and let AI identify individual roof areas, ridges, hips, valleys, and barges automatically. Review and adjust before committing.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-5">
@@ -216,13 +216,13 @@ export default function DigitalRoofTakeoffPage() {
             <div className="rounded-xl border border-slate-200 p-6">
               <div className="flex items-center gap-3">
                 <span className="rounded-full bg-[#FF6B35]/10 px-3 py-1 text-xs font-semibold text-[#BD4A1A]">AI</span>
-                <h3 className="text-lg font-semibold">AI Scan Assist</h3>
+                <h3 className="text-lg font-semibold">Roof Scan Assist</h3>
               </div>
               <p className="mt-3 text-sm text-zinc-600">
-                Upload a roof plan and let AI Scan Assist do the heavy lifting. The workflow is staged: it scans the plan, you review and correct the detected roof outline, then it identifies the individual roof areas, ridges, hips, valleys, and barges on the corrected geometry. Review what it found, adjust anything that needs tweaking, and commit.
+                Upload a roof plan and let Roof Scan Assist do the heavy lifting. The workflow is staged: it scans the plan, you review and correct the detected roof outline, then it identifies the individual roof areas, ridges, hips, valleys, and barges on the corrected geometry. Review what it found, adjust anything that needs tweaking, and commit.
               </p>
               <p className="mt-3 text-sm text-zinc-600">
-                Perfect for when you have a clear plan and want to save time on the initial drawing. AI Scan Assist covers the core roof components - you stay in control of the final measurements.
+                Perfect for when you have a clear plan and want to save time on the initial drawing. Roof Scan Assist covers the core roof components - you stay in control of the final measurements.
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
@@ -234,7 +234,7 @@ export default function DigitalRoofTakeoffPage() {
                 Upload a plan and draw everything yourself. Trace roof areas, mark ridges, hips, valleys, and barges - but also add any custom components you have saved in your component library. You could add 30 different component types to a single roof, or hundreds if that's what the job needs. Full control over every line and measurement.
               </p>
               <p className="mt-3 text-sm text-zinc-600">
-                Ideal when you want complete control, when the plan is unusual, or when you have specialised components that AI Scan Assist doesn't cover. Digital measure lets you fully customise your takeoff with your entire component library.
+                Ideal when you want complete control, when the plan is unusual, or when you have specialised components that Roof Scan Assist doesn't cover. Digital measure lets you fully customise your takeoff with your entire component library.
               </p>
             </div>
           </div>
@@ -291,8 +291,8 @@ export default function DigitalRoofTakeoffPage() {
               <p className="mt-2 text-sm text-zinc-600">The takeoff builder works from 2D plans and drawings. It does not create 3D roof models or import aerial imagery directly.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900">AI Scan Assist covers core components only</h3>
-              <p className="mt-2 text-sm text-zinc-600">AI Scan Assist identifies roof areas, ridges, hips, valleys, and barges. It does not automatically detect flashings, gutters, or custom components - use manual drawing for those.</p>
+              <h3 className="font-semibold text-slate-900">Roof Scan Assist covers core components only</h3>
+              <p className="mt-2 text-sm text-zinc-600">Roof Scan Assist identifies roof areas, ridges, hips, valleys, and barges. It does not automatically detect flashings, gutters, or custom components - use manual drawing for those.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">No direct supplier API integration</h3>
@@ -327,7 +327,7 @@ export default function DigitalRoofTakeoffPage() {
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">You only do flat commercial roofing</h3>
-              <p className="mt-2 text-sm text-zinc-600">The tool is optimised for pitched roofing with hips, valleys, and ridges. Flat roof work is supported but the AI Scan Assist value is reduced since flat roofs have fewer component types to detect.</p>
+              <p className="mt-2 text-sm text-zinc-600">The tool is optimised for pitched roofing with hips, valleys, and ridges. Flat roof work is supported but the Roof Scan Assist value is reduced since flat roofs have fewer component types to detect.</p>
             </div>
           </div>
         </section>

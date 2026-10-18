@@ -14,11 +14,11 @@ import {
 export const metadata: Metadata = {
   title: "Roofing Estimating Software | QuoteCore+",
   description:
-    "Roofing estimating software with digital takeoff on phone, tablet or desktop, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Configurations from US$29/month through the pricing builder.",
+    "Roofing estimating software with digital takeoff on phone, tablet or desktop, Roof Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Configurations from US$29/month through the pricing builder.",
   openGraph: {
     title: "Roofing Estimating Software | QuoteCore+",
     description:
-      "Roofing estimating software with digital takeoff on phone, tablet or desktop, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Configurations from US$29/month through the pricing builder.",
+      "Roofing estimating software with digital takeoff on phone, tablet or desktop, Roof Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Configurations from US$29/month through the pricing builder.",
     url: "/roofing-estimating-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -32,12 +32,12 @@ const faqs = [
   {
     question: "Can QuoteCore+ estimate roofing materials from a plan?",
     answer:
-      "Yes. Upload a roof plan and use digital takeoff tools or AI Scan Assist to identify roof areas, ridges, hips, valleys, barges and spouting. Measurements feed directly into Smart Components, which apply your stored materials, quantities, waste allowances and pricing rules to produce a material estimate automatically.",
+      "Yes. Upload a roof plan and use digital takeoff tools or Roof Scan Assist to identify roof areas, ridges, hips, valleys, barges and spouting. Measurements feed directly into Smart Components, which apply your stored materials, quantities, waste allowances and pricing rules to produce a material estimate automatically.",
   },
   {
-    question: "How accurate is AI Scan Assist for estimating?",
+    question: "How accurate is Roof Scan Assist for estimating?",
     answer:
-      "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting from an uploaded plan. It speeds up the measuring process significantly, but results should always be reviewed and adjusted manually before finalising an estimate. QuoteCore+ gives you full control to correct any measurement before it becomes part of a quote.",
+      "Roof Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting from an uploaded plan. It speeds up the measuring process significantly, but results should always be reviewed and adjusted manually before finalising an estimate. QuoteCore+ gives you full control to correct any measurement before it becomes part of a quote.",
   },
   {
     question: "Can I reuse estimating rules across jobs?",
@@ -62,7 +62,7 @@ const faqs = [
   {
     question: "Can I estimate from my phone or tablet?",
     answer:
-      "Yes. The full measure-to-quote workflow - plan upload, digital takeoff, AI Scan Assist, Smart Components pricing and quote creation - runs on phones and tablets as well as desktop. Measure the roof on site, save and continue, and the same job is ready when you open it on another device.",
+      "Yes. The full measure-to-quote workflow - plan upload, digital takeoff, Roof Scan Assist, Smart Components pricing and quote creation - runs on phones and tablets as well as desktop. Measure the roof on site, save and continue, and the same job is ready when you open it on another device.",
   },
   {
     question: "What is Smart Assistant?",
@@ -87,7 +87,7 @@ const estimatingSteps = [
   {
     number: "01",
     title: "Upload plans or use AI scan",
-    body: "Upload a roof plan, satellite image or drawing - on phone, tablet or desktop. Use AI Scan Assist to identify roof areas, ridges, hips, valleys, barges and spouting automatically, or measure manually with digital takeoff tools.",
+    body: "Upload a roof plan, satellite image or drawing - on phone, tablet or desktop. Use Roof Scan Assist to identify roof areas, ridges, hips, valleys, barges and spouting automatically, or measure manually with digital takeoff tools.",
   },
   {
     number: "02",
@@ -178,7 +178,7 @@ export default function RoofingEstimatingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure roofs on site or in the office - phone, tablet or desktop - with AI Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Configurations from US$29/month through the pricing builder.
+              Measure roofs on site or in the office - phone, tablet or desktop - with Roof Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Configurations from US$29/month through the pricing builder.
             </p>
 
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -240,7 +240,7 @@ export default function RoofingEstimatingSoftwarePage() {
           cards={[
             {
               title: "Measure the roof in QuoteCore+",
-              body: "Measure roof areas, ridges, hips, valleys and spouting from plans or images with digital takeoff on phone, tablet or desktop. Use AI Scan Assist where it helps, then review and correct before pricing.",
+              body: "Measure roof areas, ridges, hips, valleys and spouting from plans or images with digital takeoff on phone, tablet or desktop. Use Roof Scan Assist where it helps, then review and correct before pricing.",
               href: "/features/digital-roof-takeoff",
               linkLabel: "See digital takeoff →",
             },
@@ -282,7 +282,7 @@ export default function RoofingEstimatingSoftwarePage() {
                 href="/features/ai-scan-assist"
                 className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-6 transition-all hover:border-orange-200 hover:bg-orange-50/40"
               >
-                <h3 className="text-xl font-semibold">AI Scan Assist</h3>
+                <h3 className="text-xl font-semibold">Roof Scan Assist</h3>
                 <p className="mt-3 text-zinc-600">
                   Automatically identifies roof areas, ridges, hips, valleys, barges and spouting from an uploaded plan. Review and adjust before pricing.
                 </p>
@@ -518,7 +518,7 @@ export default function RoofingEstimatingSoftwarePage() {
               href="/features/ai-scan-assist"
               className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
             >
-              <p className="font-semibold text-zinc-950">AI Scan Assist</p>
+              <p className="font-semibold text-zinc-950">Roof Scan Assist</p>
               <p className="mt-1 text-sm text-zinc-600">
                 Automatic identification of roof areas, ridges, hips and valleys.
               </p>

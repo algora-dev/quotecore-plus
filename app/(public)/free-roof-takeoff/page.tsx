@@ -73,7 +73,7 @@ const FAQS = [
   {
     question: 'Does the free roof takeoff use AI?',
     answer:
-      'You can draw measurements manually. The current tool also offers AI Scan Assist when available, subject to the device credits shown in the tool. AI assistance processes your plan to suggest measurements; check the scale, outlines and results before using them.',
+      'You can draw measurements manually. The current tool also offers Roof Scan Assist when available, subject to the device credits shown in the tool. AI assistance processes your plan to suggest measurements; check the scale, outlines and results before using them.',
   },
 ];
 
@@ -131,7 +131,7 @@ const COMPARISON: [string, string, string][] = [
   ['Upload & measure your own plan', 'Yes', 'Yes'],
   ['Pitch-calculated measurements', 'Yes', 'Yes'],
   ['Custom components with your pricing', 'Up to 7', 'Reusable saved libraries'],
-  ['AI Scan Assist', 'Subject to device credits', 'Yes'],
+  ['Roof Scan Assist', 'Subject to device credits', 'Yes'],
   ['Materials, ordering & invoicing', 'No', 'Yes'],
   ['Save takeoffs & manage jobs', 'Optional handoff to a QuoteCore+ account', 'Yes'],
 ];
@@ -259,7 +259,7 @@ export default async function FreeRoofTakeoffPage({
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">You stay in control of every measurement</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Set the drawing scale and check each measurement against your plan. Draw areas and lengths yourself, or review
-          the suggestions from AI Scan Assist when you use it. Stop printing roof
+          the suggestions from Roof Scan Assist when you use it. Stop printing roof
           plans just to measure them - upload the drawing, set the scale and measure roof areas and lengths directly in
           your browser instead of working between printed plans, a ruler, calculator and spreadsheet.
         </p>
@@ -347,7 +347,7 @@ export default async function FreeRoofTakeoffPage({
           measure supported roof areas and linear features. The tool can be used without creating an account. Users who
           want to save their takeoff or continue into the wider QuoteCore+ estimating and quoting workflow can create a
           QuoteCore+ account afterward. Keep this page open while you measure, then print the report or choose to save
-          the takeoff. AI Scan Assist processes your plan when you use it.
+          the takeoff. Roof Scan Assist processes your plan when you use it.
         </p>
       </section>
 

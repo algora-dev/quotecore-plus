@@ -27,7 +27,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-create-an-invoice-for-contra
 | /free-invoice-generator | free invoice generator |
 | /free-invoice-generator | free invoice generator |
 | /free-purchase-order-generator | free purchase order generator |
-| /free-trial | free QuoteCore+ trial |
+| /free-trial | started with QuoteCore+ |
 
 ## Inbound in-article links (1)
 

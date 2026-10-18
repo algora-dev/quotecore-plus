@@ -23,7 +23,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-follow-up-on-a-quote.tsx`
 | Destination | Anchor |
 |---|---|
 | /free-quote-generator | free quote generator |
-| /free-trial | free QuoteCore+ trial |
+| /free-trial | started with QuoteCore+ |
 
 ## Inbound in-article links (4)
 

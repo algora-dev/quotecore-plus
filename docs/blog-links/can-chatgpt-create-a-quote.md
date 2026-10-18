@@ -2,7 +2,13 @@
 
 Source: `app/(marketing)/blog/[slug]/content/can-chatgpt-create-a-quote.tsx`
 
-## Outbound internal links (10)
+## Outbound internal links (11)
+
+### Money pages (1)
+
+| Destination | Anchor |
+|---|---|
+| /construction-quoting-software | contractor quoting software |
 
 ### Blog articles (2)
 
@@ -22,7 +28,7 @@ Source: `app/(marketing)/blog/[slug]/content/can-chatgpt-create-a-quote.tsx`
 | /free-invoice-generator | free invoice generator |
 | /free-purchase-order-generator | free purchase order generator |
 | /free-quote-generator | QuoteCore+ free quote generator |
-| /free-trial | start a free QuoteCore+ trial |
+| /free-trial | get started with QuoteCore+ |
 
 ## Inbound in-article links (2)
 

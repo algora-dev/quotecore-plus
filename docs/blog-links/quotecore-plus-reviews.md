@@ -16,7 +16,7 @@ Source: `app/(marketing)/blog/[slug]/content/quotecore-plus-reviews.tsx`
 
 | Destination | Anchor |
 |---|---|
-| /free-trial | free 14-day trial |
+| /free-trial | free tools, interactive demo and current pricing |
 
 ### Other site pages (1)
 
@@ -28,7 +28,7 @@ Source: `app/(marketing)/blog/[slug]/content/quotecore-plus-reviews.tsx`
 
 | From | Anchor used |
 |---|---|
-| /blog/built-by-a-roofer | here is an honest breakdown of what to expect from the product and the free trial |
-| /blog/quotecore-plus-vs-quotesmith | what to expect from QuoteCore+ as a product and what the free trial actually gives you access to |
+| /blog/built-by-a-roofer | here is an honest breakdown of what to expect from the product and how to get started |
+| /blog/quotecore-plus-vs-quotesmith | what to expect from QuoteCore+ as a product and what getting started actually gives you access to |
 
 External links in source: 0

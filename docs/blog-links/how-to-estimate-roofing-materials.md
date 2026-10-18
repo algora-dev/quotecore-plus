@@ -33,7 +33,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-estimate-roofing-materials.t
 | /free-flat-roof-calculator | free flat roof calculator |
 | /free-roofing-waste-calculator | free roofing waste calculator |
 | /free-roofing-material-calculator | free roofing material calculator |
-| /free-trial | start a free trial |
+| /free-trial | get started with QuoteCore+ |
 
 ### Other site pages (4)
 
@@ -42,7 +42,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-estimate-roofing-materials.t
 | /features/digital-roof-takeoff | digital roof takeoff |
 | /features/smart-components | Smart Components&#8482; |
 | /features/digital-roof-takeoff | digital takeoff |
-| /features/ai-scan-assist | AI Scan Assist |
+| /features/ai-scan-assist | Roof Scan Assist |
 
 ## Inbound in-article links (1)
 

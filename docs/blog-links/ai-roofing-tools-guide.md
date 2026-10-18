@@ -13,7 +13,7 @@ Source: `app/(marketing)/blog/[slug]/content/ai-roofing-tools-guide.tsx`
 | /free-smart-component-creator | Smart Component Creator |
 | /free-quote-generator | Free Quote Generator |
 | /free-tools | Browse all free tools |
-| /free-trial | start a free 14-day trial |
+| /free-trial | get started with QuoteCore+ |
 
 ### Other site pages (1)
 

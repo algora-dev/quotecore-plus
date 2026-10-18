@@ -17,7 +17,7 @@ Source: `app/(marketing)/blog/[slug]/content/quotecore-plus-vs-quotesmith.tsx`
 | /blog/roofing-quoting-software-uk | this breakdown of how UK roofers are winning more jobs with digital quotes |
 | /blog/roofing-quoting-software-vs-spreadsheets | here is how roofing quoting software and spreadsheets actually compare |
 | /blog/how-to-price-a-roofing-job | How to Price a Roofing Job: Step-by-Step Pricing Guide |
-| /blog/quotecore-plus-reviews | what to expect from QuoteCore+ as a product and what the free trial actually gives you access to |
+| /blog/quotecore-plus-reviews | what to expect from QuoteCore+ as a product and what getting started actually gives you access to |
 
 ### Other site pages (1)
 

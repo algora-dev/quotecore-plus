@@ -114,12 +114,12 @@ const pageData: CompetitorPageData = {
       {
         "number": "01",
         "title": "Measure or enter known dimensions",
-        "body": "Measure the roofing plan on phone, tablet or desktop. Use AI Scan Assist to complete suitable roof geometry quickly, with every result remaining editable. Alternatively, enter dimensions you have already checked."
+        "body": "Measure the roofing plan on phone, tablet or desktop. Use Roof Scan Assist to complete suitable roof geometry quickly, with every result remaining editable. Alternatively, enter dimensions you have already checked."
       },
       {
         "number": "02",
         "title": "Review before using the quantities",
-        "body": "Check scale, pitch and visible geometry before pricing. On a clear, correctly calibrated roof plan, AI Scan Assist can complete the roof geometry accurately. Plan quality and complexity determine when manual adjustment is more likely, and every result remains editable."
+        "body": "Check scale, pitch and visible geometry before pricing. On a clear, correctly calibrated roof plan, Roof Scan Assist can complete the roof geometry accurately. Plan quality and complexity determine when manual adjustment is more likely, and every result remains editable."
       },
       {
         "number": "03",
@@ -193,7 +193,7 @@ const pageData: CompetitorPageData = {
         },
         "qc": {
           "status": "yes",
-          "note": "Reviewed AI Scan Assist and a separate account assistant."
+          "note": "Reviewed Roof Scan Assist and a separate account assistant."
         }
       },
       {
@@ -524,7 +524,7 @@ const threeWays: ThreeWaysToWorkProps = {
   "cards": [
     {
       "title": "Measure in the app",
-      "body": "Measure the roofing plan on phone, tablet or desktop. Use AI Scan Assist to complete suitable roof geometry quickly, with every result remaining editable.",
+      "body": "Measure the roofing plan on phone, tablet or desktop. Use Roof Scan Assist to complete suitable roof geometry quickly, with every result remaining editable.",
       "href": "/features/digital-roof-takeoff",
       "linkLabel": "Explore digital takeoff"
     },

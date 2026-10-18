@@ -75,11 +75,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'How a roof takeoff becomes a priced quote without re-entering data: plan, takeoff, components, calculation, quote, order and invoice - one connected path with no copy-paste.',
     date: '2026-08-31',
-    lastModified: '2026-08-31',
+    lastModified: '2026-10-17',
     faqs: [
       { question: 'Does QuoteCore+ turn a takeoff into a quote automatically?', answer: 'A takeoff with components attached produces calculated quantities and prices for the whole job. The quote document is generated from that same data - you review, adjust presentation, and send. No re-entry between takeoff and quote.' },
       { question: 'Can I go straight from a takeoff to a material order?', answer: 'Yes. Once a quote is accepted, it converts into a material order using the same calculated quantities - and later into an invoice. The job data is entered once and reused downstream.' },
-      { question: 'Do I have to draw the plan myself?', answer: 'No. AI Scan Assist can propose the roof geometry from an uploaded plan, which you then verify and adjust. A full manual drawing path also exists, and you can mix both on the same plan.' },
+      { question: 'Do I have to draw the plan myself?', answer: 'No. Roof Scan Assist can propose the roof geometry from an uploaded plan, which you then verify and adjust. A full manual drawing path also exists, and you can mix both on the same plan.' },
       { question: 'What if I have measurements but no plan?', answer: 'Use the site-measurement path instead: enter your measurements directly and attach components - see our Roof Measurements to Quote guide. A plan is optional, not required.' },
     ],
   },
@@ -105,7 +105,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Custom roofing software vs a configurable platform: a decision table and framework for whether you need a bespoke build or software that uses your own pricing, labour and waste rules.',
     date: '2026-08-31',
-    lastModified: '2026-08-31',
+    lastModified: '2026-10-17',
     faqs: [
       { question: 'Is QuoteCore+ custom software?', answer: "It's configurable software. The platform is purpose-built for roofing estimating and commercial workflows, but the content - your components, products, prices, labour, waste rules and documents - is entirely yours. That gets you the fit of custom software without funding a from-scratch build." },
       { question: 'What does custom roofing software cost vs QuoteCore+?', answer: 'Current QuoteCore+ configurations start at US$29/month. A bespoke roofing platform is a five-to-six figure development project. If configuration solves your problem, that difference stays in your pocket.' },
@@ -188,7 +188,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Need better roofing estimating software but don\u2019t want another complicated app? Learn what simple estimating software should actually do - and how to switch without the setup pain.',
     date: '2026-08-26',
-    lastModified: '2026-08-26',
+    lastModified: '2026-10-17',
     faqs: [
       { question: 'What is the easiest roofing estimating software to use?', answer: 'The easiest system depends on how you already work. Look for software that lets you reuse your common pricing, labour and material rules, supports the measurements you already have, and avoids forcing you to configure features you do not need.' },
       { question: 'Is roofing estimating software difficult to set up?', answer: 'It can be if you have a large amount of existing pricing, products and labour rules to move across. A sensible approach is to start with your most common work and build gradually, or use a setup service if the software provider offers one.' },
@@ -223,7 +223,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Many UK roofing businesses lose time after the site visit, when notes, photos, pricing and material details have to be pulled together manually. Here\u2019s how a better quote workflow helps.',
     date: '2026-05-06',
-    lastModified: '2026-05-06',
+    lastModified: '2026-10-17',
   },
   {
     slug: 'roofing-quoting-software-vs-spreadsheets',
@@ -268,7 +268,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Six quoting tools for NZ tradies compared on NZD pricing, GST and features: QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact and Xero - from free to $149/mo, side by side.',
     date: '2026-07-15',
-    lastModified: '2026-09-21',
+    lastModified: '2026-10-17',
   },
   {
     slug: 'best-quoting-software-au',
@@ -277,7 +277,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Compare the best quoting software for Australian builders and trades. Features, pricing in AUD, GST support, and AU-specific tools for roofers, builders, and contractors.',
     date: '2026-08-05',
-    lastModified: '2026-08-05',
+    lastModified: '2026-10-17',
   },
   {
     slug: 'best-quoting-software-us',
@@ -286,7 +286,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Compare the best quoting software for US contractors. Features, pricing in USD, and trade-specific tools for roofers, builders, and home service businesses.',
     date: '2026-08-05',
-    lastModified: '2026-08-05',
+    lastModified: '2026-10-17',
   },
   {
     slug: 'best-roofing-quoting-software-uk-2026',
@@ -322,7 +322,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Three ways to measure a roof (site visit, plans, digital takeoff), how to calculate actual surface area from plan dimensions with pitch factors, and free tools that handle the maths for you.',
     date: '2026-07-29',
-    lastModified: '2026-07-29',
+    lastModified: '2026-10-17',
   },
   {
     slug: 'how-to-measure-a-roof-from-a-pdf-plan',
@@ -331,7 +331,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Measure a roof from a PDF plan: verify or calibrate the scale, work plane by plane, apply pitch factors, and price linear components. Free Roof Takeoff Builder, no signup.',
     date: '2026-08-28',
-    lastModified: '2026-08-28',
+    lastModified: '2026-10-17',
     faqs: [
       { question: 'Can you measure a roof from a PDF plan?', answer: 'Yes. Verify the drawing scale against a labelled dimension first (or calibrate from any known dimension), then measure each roof plane on screen, apply pitch factors for true area, and measure ridges, hips, valleys, verges and eaves separately. The free Roof Takeoff Builder does this from an uploaded PDF with no account required.' },
       { question: 'What if the PDF plan has no scale?', answer: 'Calibrate from a known dimension: any labelled dimension string, or a standard component drawn to scale such as a door leaf or parking bay. Measure it on screen, divide the real size by the measured size, and apply that factor to every other measurement. If nothing on the drawing has a knowable size, request a scaled drawing or measure on site.' },
@@ -364,7 +364,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Complete roofing pricing guide with worked example. Covers materials, labour, scaffold, disposal, overhead, profit margin, common pricing mistakes, and how to present your price professionally.',
     date: '2026-07-29',
-    lastModified: '2026-07-29',
+    lastModified: '2026-10-17',
   },
   {
     slug: 'best-free-tools-for-roofers',
@@ -465,7 +465,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Complete roof takeoff guide: measure roof area from plans, calculate pitch-adjusted quantities, separate roof planes and linear components, apply waste, and produce a material order. With free tools and video walkthroughs.',
     date: '2026-07-31',
-    lastModified: '2026-07-31',
+    lastModified: '2026-10-17',
   },
   {
     slug: 'roofing-material-list',
@@ -624,11 +624,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Learn how to estimate roofing materials with accuracy. Covers roof measurement, material quantities, waste allowances, and how digital takeoff tools reduce errors.',
     date: '2026-08-09',
-    lastModified: '2026-08-09',
+    lastModified: '2026-10-17',
     faqs: [
       { question: 'How do I calculate how many roofing sheets I need?', answer: 'Divide the roof width by the sheet cover width to get the number of sheets. For length, use the roof slope length (not the plan length). Round up to full sheets and add the waste allowance. Include flashings, screws, and closures separately.' },
       { question: 'What waste percentage should I add for roofing materials?', answer: 'It depends on the material and roof complexity. Metal roofing typically needs 5-10%, tiles 5-12%, shingles 10-15%, and slate 15-20%. Complex roofs with hips, valleys, and dormers generate more waste than simple gables.' },
-      { question: 'Do I need to measure the roof myself or can I use plans?', answer: 'You can use plans if they are current, accurately scaled, and detailed enough. Verify key dimensions on site if possible. QuoteCore+ lets you measure directly from PDF plans using digital takeoff tools, and AI Scan Assist can auto-detect roof geometry from a plan.' },
+      { question: 'Do I need to measure the roof myself or can I use plans?', answer: 'You can use plans if they are current, accurately scaled, and detailed enough. Verify key dimensions on site if possible. QuoteCore+ lets you measure directly from PDF plans using digital takeoff tools, and Roof Scan Assist can auto-detect roof geometry from a plan.' },
       { question: 'Can software estimate roofing materials automatically?', answer: 'Yes. QuoteCore+ Smart Components™ store material calculations, waste rules, and pricing for each roof element. When you measure a roof area or length in the takeoff, the component applies the correct materials and quantities automatically.' },
     ],
   },
@@ -639,12 +639,12 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Manual roof takeoff with a scale rule vs digital takeoff with software. Compare time per job, accuracy, material waste, and cost to decide which method wins.',
     date: '2026-08-09',
-    lastModified: '2026-08-09',
+    lastModified: '2026-10-17',
     faqs: [
       { question: 'Is digital roof takeoff accurate?', answer: 'Yes, when the plan is accurately scaled and the software uses the embedded scale correctly. Digital takeoff eliminates the measurement error of a physical scale ruler and the transcription error of moving numbers from paper to spreadsheet. Always verify key dimensions, especially if the plan may have been re-scaled.' },
       { question: 'Do I need special hardware for digital takeoff?', answer: 'No. QuoteCore+ runs in a web browser on any laptop or desktop. You upload a PDF plan and measure on screen. No drawing tablet, large monitor, or specialised hardware is required.' },
-      { question: 'Can AI really measure a roof from a plan?', answer: 'AI Scan Assist can identify roof areas, ridges, hips, valleys, and barges from a digital roof plan. It does the initial detection - you review and adjust every measurement before committing. The AI speeds up the first pass, but the estimator stays in control of the final numbers.' },
-      { question: 'How long does digital takeoff take compared to manual?', answer: 'For a standard residential roof, digital takeoff typically takes 10-20 minutes compared to 45-90 minutes for manual. With AI Scan Assist, the initial detection can take as little as 5-10 minutes, with additional time for review and adjustment. The exact time depends on roof complexity and plan quality.' },
+      { question: 'Can AI really measure a roof from a plan?', answer: 'Roof Scan Assist can identify roof areas, ridges, hips, valleys, and barges from a digital roof plan. It does the initial detection - you review and adjust every measurement before committing. The AI speeds up the first pass, but the estimator stays in control of the final numbers.' },
+      { question: 'How long does digital takeoff take compared to manual?', answer: 'For a standard residential roof, digital takeoff typically takes 10-20 minutes compared to 45-90 minutes for manual. With Roof Scan Assist, the initial detection can take as little as 5-10 minutes, with additional time for review and adjustment. The exact time depends on roof complexity and plan quality.' },
     ],
   },
   {
@@ -654,7 +654,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'The QuoteCore+ Roof Pitch Calculator Chrome extension works out pitch, angle, slope and rafter length as you type, and converts rise/run, degrees and ratios. Free, no account.',
     date: '2026-08-18',
-    lastModified: '2026-08-18',
+    lastModified: '2026-10-17',
     faqs: [
       { question: 'Is the QuoteCore+ Roof Pitch Calculator extension free?', answer: 'Yes. The extension is completely free with no paid tier, no usage limit and no account required. It installs from the Chrome Web Store like any other extension.' },
       { question: 'Does the roof pitch calculator extension need an account?', answer: 'No. It is a self-contained popup calculator that opens when you click the toolbar icon. It does not ask for any personal details and does not connect to an account.' },
@@ -670,7 +670,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Roofing waste eats your profit margins. Learn 7 practical strategies to reduce waste in your estimates, from accurate takeoffs to Smart Components that apply the right waste factor automatically.',
     date: '2026-08-09',
-    lastModified: '2026-08-09',
+    lastModified: '2026-10-17',
     faqs: [
       { question: 'What is a typical waste percentage for roofing?', answer: 'It depends on the material. Metal roofing typically needs 5-10%, concrete tiles 5-8%, clay tiles 7-12%, asphalt shingles 10-15%, and slate 15-20%. Roof complexity, crew experience, and site conditions also affect the actual waste generated.' },
       { question: 'How do I calculate roofing waste?', answer: 'Calculate the net quantity (measured area or length), apply the waste percentage for the material type, and round up to the nearest supplier pack size. For example: 120 m² net area at 8% waste = 129.6 m² gross. If packs cover 2.4 m², order 54 packs.' },

@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-do-a-roof-takeoff.tsx`
 
-## Outbound internal links (19)
+## Outbound internal links (21)
 
 ### Money pages (2)
 
@@ -11,7 +11,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-do-a-roof-takeoff.tsx`
 | /construction-quoting-software | quoting software for contractors |
 | /roofing-quoting-software | roofing quoting software |
 
-### Blog articles (7)
+### Blog articles (8)
 
 | Destination | Anchor |
 |---|---|
@@ -21,6 +21,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-do-a-roof-takeoff.tsx`
 | /blog/ai-roof-measuring | AI roof measuring |
 | /blog/roofing-waste-calculation | roofing waste calculation |
 | /blog/how-to-price-a-roofing-job | how to price a roofing job |
+| /blog/best-quoting-software-nz | best quoting software for NZ trades |
 | /blog/how-to-measure-a-roof-online | here is the step-by-step guide to measuring a roof online |
 
 ### Free tools (8)
@@ -36,20 +37,22 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-do-a-roof-takeoff.tsx`
 | /free-roof-takeoff | free roof takeoff tool |
 | /free-roofing-takeoff-builder | free roofing takeoff builder |
 
-### Other site pages (2)
+### Other site pages (3)
 
 | Destination | Anchor |
 |---|---|
-| /features/ai-scan-assist | AI Scan Assist |
+| /features/ai-scan-assist | Roof Scan Assist |
 | /features/digital-roof-takeoff | digital roof takeoff |
+| /integrations/xero | send its information to Xero as a draft invoice |
 
-## Inbound in-article links (11)
+## Inbound in-article links (13)
 
 | From | Anchor used |
 |---|---|
 | /blog/construction-cost-estimator-guide | how to do a roof takeoff |
 | /blog/how-to-measure-a-roof-from-a-pdf-plan | complete roof takeoff guide |
 | /blog/how-to-measure-a-roof-online | How to Do a Roof Takeoff: Complete Step-by-Step Guide |
+| /blog/how-to-measure-a-roof | full roof takeoff guide |
 | /blog/how-to-quote-a-roof-from-plans | complete roof takeoff guide |
 | /blog/how-to-quote-a-roof-from-plans | complete roof takeoff guide |
 | /blog/how-to-reduce-roofing-waste | how to do a roof takeoff |
@@ -58,5 +61,6 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-do-a-roof-takeoff.tsx`
 | /blog/roofing-material-list | how to do a roof takeoff |
 | /blog/roofing-quoting-software-uk | How to Do a Roof Takeoff: Complete Step-by-Step Guide |
 | /blog/roofing-waste-calculation | how to do a roof takeoff |
+| /blog/takeoff-to-quote-workflow | How to Do a Roof Takeoff |
 
 External links in source: 2

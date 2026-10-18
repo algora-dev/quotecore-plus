@@ -114,12 +114,12 @@ const pageData: CompetitorPageData = {
       {
         "number": "01",
         "title": "Measure or enter known dimensions",
-        "body": "Trace and revise the roofing plan directly on phone, tablet or desktop. AI Scan Assist can complete clear, correctly calibrated roof geometry, but it is not photo-to-3D reconstruction. Alternatively, enter dimensions you have already checked."
+        "body": "Trace and revise the roofing plan directly on phone, tablet or desktop. Roof Scan Assist can complete clear, correctly calibrated roof geometry, but it is not photo-to-3D reconstruction. Alternatively, enter dimensions you have already checked."
       },
       {
         "number": "02",
         "title": "Review before using the quantities",
-        "body": "Check scale, pitch and visible geometry before pricing. On a clear, correctly calibrated roof plan, AI Scan Assist can complete the roof geometry accurately. Plan quality and complexity determine when manual adjustment is more likely, and every result remains editable."
+        "body": "Check scale, pitch and visible geometry before pricing. On a clear, correctly calibrated roof plan, Roof Scan Assist can complete the roof geometry accurately. Plan quality and complexity determine when manual adjustment is more likely, and every result remains editable."
       },
       {
         "number": "03",
@@ -204,7 +204,7 @@ const pageData: CompetitorPageData = {
         },
         "qc": {
           "status": "yes",
-          "note": "AI Scan Assist can complete clear, correctly calibrated roof geometry; every result remains editable."
+          "note": "Roof Scan Assist can complete clear, correctly calibrated roof geometry; every result remains editable."
         }
       },
       {
@@ -519,7 +519,7 @@ const threeWays: ThreeWaysToWorkProps = {
   "cards": [
     {
       "title": "Measure in the app",
-      "body": "Trace and revise the roofing plan directly on phone, tablet or desktop. AI Scan Assist can complete clear, correctly calibrated roof geometry, but it is not photo-to-3D reconstruction.",
+      "body": "Trace and revise the roofing plan directly on phone, tablet or desktop. Roof Scan Assist can complete clear, correctly calibrated roof geometry, but it is not photo-to-3D reconstruction.",
       "href": "/features/digital-roof-takeoff",
       "linkLabel": "Explore digital takeoff"
     },

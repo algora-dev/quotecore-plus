@@ -21,7 +21,7 @@ Source: `app/(marketing)/blog/[slug]/content/manual-vs-digital-roof-takeoff.tsx`
 | Destination | Anchor |
 |---|---|
 | /free-roofing-takeoff-builder | free roofing takeoff builder |
-| /free-trial | Start your free QuoteCore+ trial today |
+| /free-trial | Get started with QuoteCore+ today |
 
 ### Other site pages (3)
 
@@ -29,12 +29,15 @@ Source: `app/(marketing)/blog/[slug]/content/manual-vs-digital-roof-takeoff.tsx`
 |---|---|
 | /features/digital-roof-takeoff | digital roof takeoff |
 | /features/smart-components | Smart Components&#8482; |
-| /features/ai-scan-assist | AI Scan Assist |
+| /features/ai-scan-assist | Roof Scan Assist |
 
-## Inbound in-article links (1)
+## Inbound in-article links (4)
 
 | From | Anchor used |
 |---|---|
 | /blog/how-to-do-a-roof-takeoff | manual vs digital roof takeoff |
+| /blog/how-to-measure-a-roof-from-a-pdf-plan | manual vs digital roof takeoff |
+| /blog/how-to-measure-a-roof | manual vs digital roof takeoff |
+| /blog/how-to-measure-walls-cladding-from-plans | manual vs digital roof takeoff |
 
 External links in source: 0

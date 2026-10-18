@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx`
 
-## Outbound internal links (22)
+## Outbound internal links (25)
 
 ### Money pages (1)
 
@@ -10,7 +10,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx`
 |---|---|
 | /roofing-quoting-software | QuoteCore+ roofing quoting software |
 
-### Blog articles (7)
+### Blog articles (9)
 
 | Destination | Anchor |
 |---|---|
@@ -21,32 +21,35 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx`
 | /blog/best-free-tools-for-roofers | Best Free Tools for Roofers (2026 Guide) |
 | /blog/how-to-price-a-roofing-job | How to Price a Roofing Job: Step-by-Step Pricing Guide |
 | /blog/best-free-tools-for-roofers | the best free roofing tools |
+| /blog/how-to-do-a-roof-takeoff | full roof takeoff guide |
+| /blog/manual-vs-digital-roof-takeoff | manual vs digital roof takeoff |
 
-### Free tools (11)
+### Free tools (12)
 
 | Destination | Anchor |
 |---|---|
 | /free-roofing-takeoff-builder | try the free roof takeoff builder |
 | /free-roofing-takeoff-builder | free Roof Takeoff Builder |
-| /free-trial | try QuoteCore+ free |
+| /free-trial | get started with QuoteCore+ |
 | /free-hip-valley-calculator | Hip and Valley Calculator |
 | /free-roofing-takeoff-builder | Roof Takeoff Builder |
 | /free-roof-area-calculator | Roof Area Calculator |
 | /free-roof-square-footage-calculator | Roof Square Footage Calculator |
+| /free-roof-square-metre-calculator | Roof Square Metre Calculator |
 | /free-roofing-calculator | Full Roofing Calculator |
 | /free-quote-generator | Quote Generator |
 | /free-roofing-takeoff-builder | Try the free roof takeoff builder |
-| /free-trial | start your free QuoteCore+ trial |
+| /free-trial | get started with QuoteCore+ |
 
 ### Other site pages (3)
 
 | Destination | Anchor |
 |---|---|
 | /features/digital-roof-takeoff | digital roof takeoff |
-| /features/ai-scan-assist | AI Scan Assist |
+| /features/ai-scan-assist | Roof Scan Assist |
 | /features/smart-components | Smart Components |
 
-## Inbound in-article links (9)
+## Inbound in-article links (10)
 
 | From | Anchor used |
 |---|---|
@@ -57,6 +60,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx`
 | /blog/how-to-estimate-roofing-materials | how to measure a roof for materials |
 | /blog/how-to-measure-a-roof-online | How to Measure a Roof for Materials |
 | /blog/how-to-quote-a-roof-from-plans | how to measure a roof |
+| /blog/roof-measurements-to-quote | How to Measure a Roof |
 | /blog/roof-replacement-cost-guide-uk | how to measure a roof for materials |
 | /blog/roofing-material-list | how to measure a roof for materials |
 

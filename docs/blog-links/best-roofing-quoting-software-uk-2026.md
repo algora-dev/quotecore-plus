@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/best-roofing-quoting-software-uk-2026.tsx`
 
-## Outbound internal links (14)
+## Outbound internal links (15)
 
 ### Money pages (2)
 
@@ -11,12 +11,13 @@ Source: `app/(marketing)/blog/[slug]/content/best-roofing-quoting-software-uk-20
 | /roofing-quoting-software | quoting software for contractors |
 | /construction-quoting-software | construction quoting software for contractors |
 
-### Blog articles (8)
+### Blog articles (9)
 
 | Destination | Anchor |
 |---|---|
 | /blog/roofing-quoting-software-vs-spreadsheets | roofing quoting software vs spreadsheets |
 | /blog/how-to-price-a-roofing-job | How to Price a Roofing Job: Step-by-Step Pricing Guide |
+| /blog/how-to-start-a-roofing-business-uk | starting a roofing business in the UK |
 | /blog/built-by-a-roofer | Read the full story of how QuoteCore+ was built from inside the industry |
 | /blog/quotecore-plus-vs-quotesmith | QuoteCore+ vs QuoteSmith |
 | /blog/construction-quote-speed-checklist | Construction Quote Speed Checklist |
@@ -29,7 +30,7 @@ Source: `app/(marketing)/blog/[slug]/content/best-roofing-quoting-software-uk-20
 | Destination | Anchor |
 |---|---|
 | /free-roofing-takeoff-builder | free Roof Takeoff Builder |
-| /free-trial | Start a free 14-day trial |
+| /free-trial | Get started with QuoteCore+ |
 
 ### Other site pages (2)
 

@@ -26,7 +26,7 @@ Source: `app/(marketing)/blog/[slug]/content/roofing-waste-calculation.tsx`
 | /free-smart-component-creator | free Smart Component Creator |
 | /free-roofing-waste-calculator | free roofing waste calculator |
 | /free-roofing-material-calculator | free roofing material calculator |
-| /free-trial | free QuoteCore+ trial |
+| /free-trial | started with QuoteCore+ |
 
 ### Other site pages (1)
 

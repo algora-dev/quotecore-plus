@@ -248,7 +248,7 @@ export default function Post() {
       </p>
       <p>
         QuoteCore+ can be used to measure roof areas and linear items from uploaded plans,
-        with manual takeoff tools and optional AI Scan Assist. Those measurements can then
+        with manual takeoff tools and optional Roof Scan Assist. Those measurements can then
         flow into the same pricing process.
       </p>
       <p>

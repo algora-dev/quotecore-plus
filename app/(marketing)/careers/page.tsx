@@ -106,7 +106,7 @@ const resourceGroups = [
     body: "Use this when the pain is printed plans, scale rulers, manual transfer or separate takeoff software.",
     links: [
       ["Digital Roof Takeoff", QC.digitalTakeoff],
-      ["AI Scan Assist", QC.aiScan],
+      ["Roof Scan Assist", QC.aiScan],
       ["Free tools", QC.freeTools],
     ],
   },
@@ -156,8 +156,8 @@ const faqs = [
     a: "Give them a relevant free tool. The free tools are part of the sales system because they solve real problems and let prospects experience the QuoteCore+ approach before they are ready for the full app.",
   },
   {
-    q: "Does AI Scan Assist replace checking the takeoff?",
-    a: "No. AI Scan Assist speeds up the first pass. The user reviews and adjusts the detected measurements and components before using the result.",
+    q: "Does Roof Scan Assist replace checking the takeoff?",
+    a: "No. Roof Scan Assist speeds up the first pass. The user reviews and adjusts the detected measurements and components before using the result.",
   },
   {
     q: "What if the prospect actually needs a bespoke system?",
@@ -391,7 +391,7 @@ export default function CareersPage() {
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               ["Digital takeoff", "Measure from uploaded plans without printing and retyping."],
-              ["AI Scan Assist", "Speed up the first pass, then verify and adjust the result."],
+              ["Roof Scan Assist", "Speed up the first pass, then verify and adjust the result."],
               ["Smart Components", "Save reusable material, labour, waste and pricing logic."],
               ["Connected workflow", "Carry the same job information forward instead of rebuilding it."],
             ].map(([title, body]) => (

@@ -26,10 +26,12 @@ Source: `app/(marketing)/blog/[slug]/content/price-a-job-from-measurements.tsx`
 | /measurement-to-quote-tool | free Measurement-to-Quote Tool |
 | /measurement-to-quote-tool | free tool here |
 
-## Inbound in-article links (1)
+## Inbound in-article links (3)
 
 | From | Anchor used |
 |---|---|
 | /blog/construction-estimating-spreadsheet-alternative | See the measurements-to-pricing example |
+| /blog/how-to-do-cladding-takeoff | turn the measurements into a price |
+| /blog/roof-measurements-to-quote | How to Price a Job From Your Measurements |
 
 External links in source: 0

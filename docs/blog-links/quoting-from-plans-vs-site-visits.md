@@ -21,12 +21,14 @@ Source: `app/(marketing)/blog/[slug]/content/quoting-from-plans-vs-site-visits.t
 | Destination | Anchor |
 |---|---|
 | /free-roofing-takeoff-builder | Roof Takeoff Builder |
-| /free-trial | start a free 14-day QuoteCore+ trial |
+| /free-trial | get started with QuoteCore+ |
 
-## Inbound in-article links (1)
+## Inbound in-article links (3)
 
 | From | Anchor used |
 |---|---|
 | /blog/how-to-measure-a-roof-from-a-pdf-plan | quoting from plans vs site visits |
+| /blog/how-to-measure-walls-cladding-from-plans | quoting from plans vs site visits |
+| /blog/roof-measurements-to-quote | Quoting From Plans vs Site Visits |
 
 External links in source: 0

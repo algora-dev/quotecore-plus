@@ -29,9 +29,9 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-calculate-roof-pitch.tsx`
 | /free-roof-pitch-converter | Roof Pitch Converter |
 | /free-roofing-calculator | Roofing Calculator |
 | /free-roofing-takeoff-builder | try the free Roof Takeoff Builder |
-| /free-trial | Start your free QuoteCore+ trial today |
+| /free-trial | Get started with QuoteCore+ today |
 
-## Inbound in-article links (7)
+## Inbound in-article links (8)
 
 | From | Anchor used |
 |---|---|
@@ -42,5 +42,6 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-calculate-roof-pitch.tsx`
 | /blog/how-to-measure-a-roof | How to Calculate Roof Pitch (And Why It Matters for Your Quote) |
 | /blog/how-to-price-a-roofing-job | How to Calculate Roof Pitch |
 | /blog/how-to-price-a-roofing-job | How to Calculate Roof Pitch |
+| /blog/roof-measurements-to-quote | How to Calculate Roof Pitch |
 
 External links in source: 7

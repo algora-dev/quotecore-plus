@@ -277,7 +277,7 @@ export default function SendingAndTrackingPage() {
               <p className="mt-2 text-sm text-zinc-600">Create orders from saved quotes with three display formats.</p>
             </Link>
             <Link href="/features/ai-scan-assist" className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition-all">
-              <h3 className="text-base font-semibold text-zinc-950">AI Scan Assist</h3>
+              <h3 className="text-base font-semibold text-zinc-950">Roof Scan Assist</h3>
               <p className="mt-2 text-sm text-zinc-600">AI identifies roof areas and components from your plan.</p>
             </Link>
           </div>

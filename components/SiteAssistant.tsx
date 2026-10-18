@@ -51,7 +51,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(how.*work|system work|workflow|process|walkthrough|what does quotecore|what is quotecore|what.*quotecore.*do|tell me about)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ is roofing quoting, takeoff and job workflow software. Upload a roof plan and AI Scan Assist can complete suitable, correctly calibrated roof geometry. Review the result and edit it if needed, then Smart Components calculate materials, labour and pricing. From a saved quote you can create, send and track quotes, orders and invoices - all from the same connected job. With preconfigured Smart Components, go from complex plan to quote in under 3 minutes for less than a dollar.",
+      text: "QuoteCore+ is roofing quoting, takeoff and job workflow software. Upload a roof plan and Roof Scan Assist can complete suitable, correctly calibrated roof geometry. Review the result and edit it if needed, then Smart Components calculate materials, labour and pricing. From a saved quote you can create, send and track quotes, orders and invoices - all from the same connected job. With preconfigured Smart Components, go from complex plan to quote in under 3 minutes for less than a dollar.",
       sectionLink: { label: "See How it works", href: "/#how-it-works" },
       links: [
         startCTA,
@@ -187,7 +187,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(ai|ai takeoff|plan takeoff|upload.*plan|trace.*plan|ai.*scan|ai assist|ai scan)/.test(message)) {
     return {
       sender: "assistant",
-      text: "AI Scan Assist is an optional accelerator inside digital takeoff. Upload a clear roof plan, calibrate it correctly, and AI Scan Assist can complete suitable roof geometry including supported areas and roof lines. Plan quality and complexity affect when edits are needed, and every result remains editable in the same takeoff workspace. From there, Smart Components apply your saved materials, labour, waste and pricing logic.",
+      text: "Roof Scan Assist is an optional accelerator inside digital takeoff. Upload a clear roof plan, calibrate it correctly, and Roof Scan Assist can complete suitable roof geometry including supported areas and roof lines. Plan quality and complexity affect when edits are needed, and every result remains editable in the same takeoff workspace. From there, Smart Components apply your saved materials, labour, waste and pricing logic.",
       links: [
         startCTA,
         { label: "See how it works", href: "/#how-it-works" },

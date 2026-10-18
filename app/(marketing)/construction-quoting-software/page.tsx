@@ -46,7 +46,7 @@ const howToSchema = {
     {
       "@type": "HowToStep",
       name: "Measure or add the job details",
-      text: "Start with site details, manual measurements, saved Smart Components™, or upload a plan and use AI Scan Assist to identify areas and components automatically. Keep the job information connected from the beginning.",
+      text: "Start with site details, manual measurements, saved Smart Components™, or upload a plan and use Roof Scan Assist to identify areas and components automatically. Keep the job information connected from the beginning.",
     },
     {
       "@type": "HowToStep",
@@ -125,7 +125,7 @@ const faqSchema = {
       name: "How much does construction quoting software cost?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "QuoteCore+ plans range from 19 to 59 dollars per month and all include the full feature set - digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. Plans also include digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. See our pricing page for current plan details.",
+        text: "QuoteCore+ plans range from 19 to 59 dollars per month and all include the full feature set - digital takeoff, Roof Scan Assist, material ordering, invoicing, and Smart Components. Plans also include digital takeoff, Roof Scan Assist, material ordering, invoicing, and Smart Components. See our pricing page for current plan details.",
       },
     },
     {
@@ -191,7 +191,7 @@ const steps = [
   {
     number: "01",
     title: "Choose how you want to quote",
-    body: "Start from a blank quote, use saved Smart Components™, or upload a plan and measure digitally on phone, tablet or desktop. AI Scan Assist identifies roof areas and components from an uploaded plan automatically. QuoteCore+ gives you different ways to build the job depending on how you work.",
+    body: "Start from a blank quote, use saved Smart Components™, or upload a plan and measure digitally on phone, tablet or desktop. Roof Scan Assist identifies roof areas and components from an uploaded plan automatically. QuoteCore+ gives you different ways to build the job depending on how you work.",
   },
   {
     number: "02",
@@ -365,7 +365,7 @@ export default function ConstructionQuotingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure jobs with digital takeoff and AI Scan Assist, build priced quotes with Smart Components™, track customer approval, order materials, manage work, invoice and get paid - all in one connected workflow that runs on phone, tablet or desktop.
+              Measure jobs with digital takeoff and Roof Scan Assist, build priced quotes with Smart Components™, track customer approval, order materials, manage work, invoice and get paid - all in one connected workflow that runs on phone, tablet or desktop.
             </p>
 
             {/* Two entry paths */}
@@ -472,7 +472,7 @@ export default function ConstructionQuotingSoftwarePage() {
           cards={[
             {
               title: "Measure it in QuoteCore+",
-              body: "Measure from plans or images with digital takeoff on phone, tablet or desktop - roofs, walls or floors. Use AI Scan Assist where it helps, then review before pricing.",
+              body: "Measure from plans or images with digital takeoff on phone, tablet or desktop - roofs, walls or floors. Use Roof Scan Assist where it helps, then review before pricing.",
               href: "/features/digital-roof-takeoff",
               linkLabel: "See digital takeoff →",
             },
@@ -517,7 +517,7 @@ export default function ConstructionQuotingSoftwarePage() {
 
           <div className="mt-10 space-y-5">
             {[
-              { slug: "roofing", title: "Roofing contractors", body: <>Roofing quoting is measurement-heavy: roof areas, ridges, hips, valleys, barges, waste allowances and material pricing per square. QuoteCore+ includes <a href="/features/digital-roof-takeoff" className="text-[#BD4A1A] hover:underline">digital roof takeoff</a> with AI Scan Assist to identify roof areas and components from an uploaded plan, and Smart Components™ that store your per-square pricing, labour and waste rules so re-roof and repair quotes build in minutes. See the dedicated <a href="/roofing-quoting-software" className="text-[#BD4A1A] hover:underline">roofing quoting software</a> and <a href="/roofing-estimating-software" className="text-[#BD4A1A] hover:underline">roofing estimating software</a> pages.</> },
+              { slug: "roofing", title: "Roofing contractors", body: <>Roofing quoting is measurement-heavy: roof areas, ridges, hips, valleys, barges, waste allowances and material pricing per square. QuoteCore+ includes <a href="/features/digital-roof-takeoff" className="text-[#BD4A1A] hover:underline">digital roof takeoff</a> with Roof Scan Assist to identify roof areas and components from an uploaded plan, and Smart Components™ that store your per-square pricing, labour and waste rules so re-roof and repair quotes build in minutes. See the dedicated <a href="/roofing-quoting-software" className="text-[#BD4A1A] hover:underline">roofing quoting software</a> and <a href="/roofing-estimating-software" className="text-[#BD4A1A] hover:underline">roofing estimating software</a> pages.</> },
               { slug: "carpentry", title: "Carpentry", body: <>Carpentry quotes mix materials (timber, fixings, sheet goods), labour hours and often repeated assemblies - decks, pergolas, framing packages. Save each assembly once as a Smart Component™ with its materials list, labour and pricing rule, then drop it into the next quote and adjust quantities. Measure on site or from plans, then let the quote update from the measurements.</> },
               { slug: "plastering", title: "Plastering", body: <>Plastering quotes come from wall and ceiling areas, openings deducted, coats and finishes priced per area, and materials like plasterboard, compound and tape ordered by the job. Build Smart Components™ per finish type, quote from measured areas, and turn the accepted quote into a material order without re-keying anything.</> },
               { slug: "subcontractors", title: "Subcontractors", body: <>Subcontractors quote from head-contractor plans, then need to move fast: price it, submit it, and if accepted, order materials and invoice without admin overhead. QuoteCore+ keeps takeoff, quote, <a href="/features/material-ordering" className="text-[#BD4A1A] hover:underline">material orders</a> and <a href="/features/invoicing" className="text-[#BD4A1A] hover:underline">invoicing</a> connected to the same job data - especially valuable when you repeat similar work across multiple jobs.</> },
@@ -572,7 +572,7 @@ export default function ConstructionQuotingSoftwarePage() {
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
                   {[
-                    ["Measure from plans / digital takeoff", "Yes - built-in, with AI Scan Assist", "No - separate tool or manual", "No"],
+                    ["Measure from plans / digital takeoff", "Yes - built-in, with Roof Scan Assist", "No - separate tool or manual", "No"],
                     ["Reusable trade pricing rules", "Yes - Smart Components™", "Fragile formulas you rebuild", "No"],
                     ["Professional quote output", "Yes - from live job data", "Manual formatting each time", "Basic templates"],
                     ["Quote-to-material-order flow", "Yes - from the accepted quote", "Copy-paste into a new sheet", "No"],
@@ -846,7 +846,7 @@ export default function ConstructionQuotingSoftwarePage() {
                       </>
                     ) : f.a === "cost-link" ? (
                       <>
-                        QuoteCore+ plans range from 19 to 59 dollars per month and all include the full feature set - digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. Plans also include digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. See our{" "}
+                        QuoteCore+ plans range from 19 to 59 dollars per month and all include the full feature set - digital takeoff, Roof Scan Assist, material ordering, invoicing, and Smart Components. Plans also include digital takeoff, Roof Scan Assist, material ordering, invoicing, and Smart Components. See our{" "}
                         <a href="/pricing" className="text-[#FF6B35] hover:underline">pricing page</a>{" "}
                         for current plan details.
                       </>
@@ -926,7 +926,7 @@ export default function ConstructionQuotingSoftwarePage() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <a href="/features/digital-roof-takeoff" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Digital roof takeoff</p>
-              <p className="mt-1 text-sm text-zinc-600">Upload plans, measure digitally, and use AI Scan Assist.</p>
+              <p className="mt-1 text-sm text-zinc-600">Upload plans, measure digitally, and use Roof Scan Assist.</p>
             </a>
             <a href="/features/smart-components" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Smart Components™</p>

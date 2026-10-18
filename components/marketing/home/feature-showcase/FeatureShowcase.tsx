@@ -40,7 +40,7 @@ const takeoffCapture: Capture = {
   src: '/marketing/current-ux/digital-takeoff-manual.webp',
   label: 'Measure in App',
   alt: 'QuoteCore+ Digital Takeoff workspace with a roof plan open and a manual line measurement in progress.',
-  caption: 'Measure directly on the plan with the same editable takeoff workspace used by AI Scan Assist.',
+  caption: 'Measure directly on the plan with the same editable takeoff workspace used by Roof Scan Assist.',
   width: 2048,
   height: 1114,
 };

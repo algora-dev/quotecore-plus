@@ -108,7 +108,7 @@ export default function Post() {
         The extension is a single-purpose tool. When you want to turn that pitch into a complete,
         priced, customer-ready quote - the{" "}
         <Link href="/roofing-quoting-software">QuoteCore+ platform</Link> picks up where it
-        leaves off: digital takeoff, AI Scan Assist, Smart Components with your own pricing rules,
+        leaves off: digital takeoff, Roof Scan Assist, Smart Components with your own pricing rules,
         then quotes, orders and invoices from the same job data.
       </p>
 

@@ -16,7 +16,7 @@ export default function Post() {
       <p>For the same standard residential roof, digital takeoff typically takes 10 to 20 minutes. Measurements are more accurate because the software uses the plan's embedded scale, and there is no transcription - quantities flow directly into the estimate.</p>
       <p>QuoteCore+ includes <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link> tools that handle area measurement, linear measurement, and pitch calculation. Measurements feed directly into <Link href="/features/smart-components">Smart Components&#8482;</Link> that apply materials, labour, and pricing.</p>
       <h2>AI-assisted takeoff: the next step</h2>
-      <p>AI-assisted takeoff takes digital a step further. Instead of tracing every line manually, <Link href="/features/ai-scan-assist">AI Scan Assist</Link> analyses a roof plan and automatically identifies roof areas, ridges, hips, valleys, and barges. You review the AI's work and adjust before committing.</p>
+      <p>AI-assisted takeoff takes digital a step further. Instead of tracing every line manually, <Link href="/features/ai-scan-assist">Roof Scan Assist</Link> analyses a roof plan and automatically identifies roof areas, ridges, hips, valleys, and barges. You review the AI's work and adjust before committing.</p>
       <p>For a standard residential roof, AI-assisted takeoff can take as little as 5 to 10 minutes - the AI handles the initial detection, and you verify rather than draw from scratch.</p>
       <p>The key point: AI does not replace the estimator. It does the first pass, and you confirm or correct every measurement. The time saving comes from not having to trace every line manually.</p>
       <h2>Side-by-side comparison</h2>
@@ -121,9 +121,9 @@ export default function Post() {
       <h3>Do I need special hardware for digital takeoff?</h3>
       <p>No. QuoteCore+ runs in a web browser on any laptop or desktop. You upload a plan image or a multi-page PDF (pick the page you need) and measure on screen. No drawing tablet, large monitor, or specialised hardware is required.</p>
       <h3>Can AI really measure a roof from a plan?</h3>
-      <p>AI Scan Assist can identify roof areas, ridges, hips, valleys, and barges from a digital roof plan. It does the initial detection - you review and adjust every measurement before committing. The AI speeds up the first pass, but the estimator stays in control of the final numbers.</p>
+      <p>Roof Scan Assist can identify roof areas, ridges, hips, valleys, and barges from a digital roof plan. It does the initial detection - you review and adjust every measurement before committing. The AI speeds up the first pass, but the estimator stays in control of the final numbers.</p>
       <h3>How long does digital takeoff take compared to manual?</h3>
-      <p>For a standard residential roof, digital takeoff typically takes 10-20 minutes compared to 45-90 minutes for manual. With AI Scan Assist, the initial detection can take as little as 5-10 minutes, with additional time for review and adjustment. The exact time depends on roof complexity and plan quality.</p>
+      <p>For a standard residential roof, digital takeoff typically takes 10-20 minutes compared to 45-90 minutes for manual. With Roof Scan Assist, the initial detection can take as little as 5-10 minutes, with additional time for review and adjustment. The exact time depends on roof complexity and plan quality.</p>
       <p>Ready to try digital takeoff? <a href="/free-trial">Get started with QuoteCore+ today</a>.</p>
     </div>
   );

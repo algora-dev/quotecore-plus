@@ -206,7 +206,7 @@ export default function FreeConstructionTakeoffToolsPage() {
               <li>Save jobs and takeoffs</li>
               <li>Saved component libraries and reusable pricing</li>
               <li>Full quote, order and invoice workflow</li>
-              <li>AI Scan Assist where included, plus job and customer history</li>
+              <li>Roof Scan Assist where included, plus job and customer history</li>
             </ul>
           </div>
         </div>

@@ -28,9 +28,9 @@ Source: `app/(marketing)/blog/[slug]/content/do-professional-quotes-win-more-job
 | /free-quote-generator | free QuoteCore+ quote generator |
 | /free-quote-generator | free quote generator |
 | /free-calculators | free calculators hub |
-| /free-trial | start a free trial |
+| /free-trial | get started |
 | /free-quote-generator | QuoteCore+ quote generator |
-| /free-trial | start a free QuoteCore+ trial |
+| /free-trial | get started with QuoteCore+ |
 
 ## Inbound in-article links (5)
 

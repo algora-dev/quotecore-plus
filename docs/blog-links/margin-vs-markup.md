@@ -28,7 +28,7 @@ Source: `app/(marketing)/blog/[slug]/content/margin-vs-markup.tsx`
 | /free-margin-calculator | free margin calculator |
 | /free-margin-calculator | free margin calculator |
 | /free-quote-generator | free quote generator |
-| /free-trial | start a free QuoteCore+ trial |
+| /free-trial | get started with QuoteCore+ |
 
 ## Inbound in-article links (2)
 

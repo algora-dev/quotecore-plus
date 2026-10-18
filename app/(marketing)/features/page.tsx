@@ -35,13 +35,13 @@ export const metadata: Metadata = {
 };
 
 const faqs: FaqItem[] = [
-  { question: 'What does QuoteCore+ include?', answer: 'QuoteCore+ connects job measurements, Digital Takeoff, AI Scan Assist, reusable Smart Components, estimating and pricing, customer quotes, sending and tracking, material orders, invoices and supporting account tools in one web-based workflow.' },
-  { question: 'Can QuoteCore+ measure plans digitally?', answer: 'Yes. Digital Takeoff lets you calibrate a plan and measure areas and lengths directly in the app. Roofing can also use AI Scan Assist to automate the roof geometry on suitable plans.' },
-  { question: 'Can AI Scan Assist complete a roof takeoff?', answer: 'Yes. On a clear, correctly calibrated plan, especially a simple to moderately complex roof, AI Scan Assist can complete the roof geometry quickly and accurately. Lower-quality drawings or more complex geometry can require manual edits in the same takeoff workspace.' },
+  { question: 'What does QuoteCore+ include?', answer: 'QuoteCore+ connects job measurements, Digital Takeoff, Roof Scan Assist, reusable Smart Components, estimating and pricing, customer quotes, sending and tracking, material orders, invoices and supporting account tools in one web-based workflow.' },
+  { question: 'Can QuoteCore+ measure plans digitally?', answer: 'Yes. Digital Takeoff lets you calibrate a plan and measure areas and lengths directly in the app. Roofing can also use Roof Scan Assist to automate the roof geometry on suitable plans.' },
+  { question: 'Can Roof Scan Assist complete a roof takeoff?', answer: 'Yes. On a clear, correctly calibrated plan, especially a simple to moderately complex roof, Roof Scan Assist can complete the roof geometry quickly and accurately. Lower-quality drawings or more complex geometry can require manual edits in the same takeoff workspace.' },
   { question: 'Can I use measurements I already have?', answer: 'Yes. You can enter areas, lengths and quantities from a site measure, another takeoff, an aerial report or a spreadsheet instead of measuring a plan inside QuoteCore+.' },
   { question: 'Does QuoteCore+ use my own material and labour prices?', answer: 'Yes. Smart Components store the materials, labour, waste, quantity rules and pricing logic you choose. The measured quantity then drives the calculation instead of using a generic price book.' },
   { question: 'What happens after I send a quote?', answer: 'QuoteCore+ can keep the customer quote connected to its job, help you track quote activity and follow-up, and carry accepted work into downstream steps such as material orders and invoices.' },
-  { question: 'Is QuoteCore+ only for roofing?', answer: 'No. QuoteCore+ has deep roofing workflows, including AI Scan Assist and long-run offcut tools, but the core measure-to-price workflow can also suit construction and measured trades such as cladding, flooring and other work that begins with quantities.' },
+  { question: 'Is QuoteCore+ only for roofing?', answer: 'No. QuoteCore+ has deep roofing workflows, including Roof Scan Assist and long-run offcut tools, but the core measure-to-price workflow can also suit construction and measured trades such as cladding, flooring and other work that begins with quantities.' },
 ];
 
 const schemas = [
@@ -80,7 +80,7 @@ export default function FeaturesPage() {
         <Container>
           <SectionHeader eyebrow="One connected workflow" title="Measure. Price. Quote. Track. Order. Invoice." lead="Not every job uses every feature, but the information can stay attached to the same job as the work moves forward." dark />
           <WorkflowRail steps={[
-            { label: 'Measure', body: 'Use Digital Takeoff, AI Scan Assist or measurements you already have.' },
+            { label: 'Measure', body: 'Use Digital Takeoff, Roof Scan Assist or measurements you already have.' },
             { label: 'Price', body: 'Apply Smart Components with your materials, labour, waste and pricing rules.' },
             { label: 'Quote', body: 'Build and edit the customer-facing quote from the priced job.' },
             { label: 'Send & track', body: 'Send from QuoteCore+ and keep quote activity and follow-up connected.' },
@@ -92,17 +92,17 @@ export default function FeaturesPage() {
 
       <Section>
         <Container>
-          <SplitFeature visual={<ProductFrame src="/marketing/current-ux/ai-scan-assist-completed-roof.webp" alt="Current AI Scan Assist result in the QuoteCore+ Digital Takeoff workspace" width={2048} height={1114} caption="AI Scan Assist can complete the roof geometry on a suitable calibrated plan, while the same workspace keeps full manual editing control available." />}>
+          <SplitFeature visual={<ProductFrame src="/marketing/current-ux/ai-scan-assist-completed-roof.webp" alt="Current Roof Scan Assist result in the QuoteCore+ Digital Takeoff workspace" width={2048} height={1114} caption="Roof Scan Assist can complete the roof geometry on a suitable calibrated plan, while the same workspace keeps full manual editing control available." />}>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">01 · Start with the measurements</p>
             <h2>Measure in the app, or start from measurements you already trust.</h2>
             <p>QuoteCore+ does not force every job through the same measurement method. Start with a plan when that is useful, or enter the areas, lengths and quantities you already have from site, another report or another takeoff.</p>
-            <BulletList items={['Digital Takeoff for plan areas and lengths', 'AI Scan Assist for suitable roof plans', 'Full manual editing in the takeoff workspace', 'Direct entry for measurements from site, reports or existing notes']} />
+            <BulletList items={['Digital Takeoff for plan areas and lengths', 'Roof Scan Assist for suitable roof plans', 'Full manual editing in the takeoff workspace', 'Direct entry for measurements from site, reports or existing notes']} />
             <TextLink href="/roofing-takeoff-software">Explore roofing takeoff</TextLink>
           </SplitFeature>
           <div className="mt-12">
             <FeatureGrid items={[
               { title: 'Digital Roof Takeoff', body: <p>Calibrate a roof plan and measure the geometry directly in QuoteCore+.</p> },
-              { title: 'AI Scan Assist', body: <p>Let AI complete the roof geometry first on a clear, correctly calibrated plan, then edit only when needed.</p> },
+              { title: 'Roof Scan Assist', body: <p>Let AI complete the roof geometry first on a clear, correctly calibrated plan, then edit only when needed.</p> },
               { title: 'Measurements you already have', body: <p>Enter areas, lengths and quantities directly when measurement work has already been completed.</p> },
             ]} />
           </div>
@@ -161,7 +161,9 @@ export default function FeaturesPage() {
           <SectionHeader eyebrow="Feature index" title="Go straight to the part you want to understand." />
           <FeatureGrid columns={4} items={[
             { kicker: 'Measure', title: 'Digital Takeoff', body: <><p>Measure plans directly in the app.</p><TextLink href="/features/digital-roof-takeoff">Open feature</TextLink></> },
-            { kicker: 'Measure', title: 'AI Scan Assist', body: <><p>Automate roof geometry on suitable plans.</p><TextLink href="/features/ai-scan-assist">Open feature</TextLink></> },
+            { kicker: 'Measure', title: 'Roof Scan Assist', body: <><p>Automate roof geometry on suitable plans.</p><TextLink href="/features/ai-scan-assist">Open feature</TextLink></> },
+            { kicker: 'Assist', title: 'Smart Assistant', body: <><p>Use voice or text for supported estimating tasks.</p><TextLink href="/features/smart-assistant">Open feature</TextLink></> },
+            { kicker: 'Plan', title: 'Offcut Optimiser', body: <><p>Suggest cutting plans for long-run metal roofs.</p><TextLink href="/features/offcut-optimiser">Open feature</TextLink></> },
             { kicker: 'Price', title: 'Smart Components', body: <><p>Reuse your own materials, labour and pricing logic.</p><TextLink href="/features/smart-components">Open feature</TextLink></> },
             { kicker: 'Send', title: 'Sending & Tracking', body: <><p>Send quotes and keep activity or follow-up connected.</p><TextLink href="/features/sending-and-tracking">Open feature</TextLink></> },
             { kicker: 'Order', title: 'Material Ordering', body: <><p>Carry accepted job quantities into supplier orders.</p><TextLink href="/features/material-ordering">Open feature</TextLink></> },
@@ -190,7 +192,9 @@ export default function FeaturesPage() {
       <Section>
         <Container>
           <RelatedLinks items={[
-            { href: '/features/ai-scan-assist', title: 'AI Scan Assist', body: 'See when AI can complete a roof takeoff and when manual edits are more likely.' },
+            { href: '/features/ai-scan-assist', title: 'Roof Scan Assist', body: 'See when AI can complete a roof takeoff and when manual edits are more likely.' },
+            { href: '/features/smart-assistant', title: 'Smart Assistant', body: 'Use voice or text to draft, revise and retrieve, with the result left reviewable.' },
+            { href: '/features/offcut-optimiser', title: 'Offcut Optimiser', body: 'Turn long-run roof geometry into suggested cutting plans and a realistic material allowance.' },
             { href: '/features/smart-components', title: 'Smart Components', body: 'See how your own material, labour, waste and pricing rules become reusable.' },
             { href: '/measurement-to-quote-tool', title: 'Measurement-to-Quote', body: 'Already have quantities? Try the free pricing workflow.' },
             { href: '/done-for-you-setup', title: 'Done For You Setup', body: 'Want help translating your existing pricing into QuoteCore+?' },

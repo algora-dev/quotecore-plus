@@ -29,7 +29,7 @@ const FAQS = [
   {
     question: 'What roof plan does the demo use?',
     answer:
-      'The demo uses a sample roof plan with the pitch fixed at 25 degrees, and the AI scan result was captured from a real QuoteCore+ takeoff session. You can scan it with AI Scan Assist or measure it manually with the drawing tools.',
+      'The demo uses a sample roof plan with the pitch fixed at 25 degrees, and the AI scan result was captured from a real QuoteCore+ takeoff session. You can scan it with Roof Scan Assist or measure it manually with the drawing tools.',
   },
   {
     question: 'Does the takeoff demo work on mobile?',
@@ -39,7 +39,7 @@ const FAQS = [
   {
     question: 'Can I upload my own plans in the full app?',
     answer:
-      'Yes. In the full QuoteCore+ app you upload your own roof plans (PDF or image), scan them with AI Scan Assist, measure manually, and price them with your own components. The demo uses a fixed sample plan so it needs no sign-in.',
+      'Yes. In the full QuoteCore+ app you upload your own roof plans (PDF or image), scan them with Roof Scan Assist, measure manually, and price them with your own components. The demo uses a fixed sample plan so it needs no sign-in.',
   },
   {
     question: 'How do I get the full app?',
@@ -121,7 +121,7 @@ export default function TakeoffDemoPage() {
           <div>
             <h3 className="text-base font-semibold text-slate-900">1. Scan the plan with AI</h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Click &quot;Scan plan with AI&quot; and AI Scan Assist identifies the roof areas, ridges, hips, valleys
+              Click &quot;Scan plan with AI&quot; and Roof Scan Assist identifies the roof areas, ridges, hips, valleys
               and barges on the sample plan in seconds. The scan result in the demo was captured from a real QuoteCore+
               takeoff session, so you see exactly what the tool produces.
             </p>
@@ -148,7 +148,7 @@ export default function TakeoffDemoPage() {
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Measure manually or scan with AI</h2>
           <p className="mt-4 text-sm leading-relaxed text-slate-600">
             Most takeoff tools give you one way of working. In this demo - exactly as in the full app - both modes live
-            in the same workstation. On a clear, correctly calibrated plan, AI Scan Assist can complete suitable roof geometry automatically. Review the result and use the manual drawing tools only where adjustments are needed. Or start from a blank canvas and measure the whole plan
+            in the same workstation. On a clear, correctly calibrated plan, Roof Scan Assist can complete suitable roof geometry automatically. Review the result and use the manual drawing tools only where adjustments are needed. Or start from a blank canvas and measure the whole plan
             yourself, placing points and lines with the same precision tools. Either route ends in the same place: a
             priced, customer-ready quote.
           </p>

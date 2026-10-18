@@ -15,7 +15,7 @@ Source: `app/(marketing)/blog/[slug]/content/built-by-a-roofer.tsx`
 | Destination | Anchor |
 |---|---|
 | /blog/roofing-quoting-software-uk | here is how UK roofers are already using it to win more jobs |
-| /blog/quotecore-plus-reviews | here is an honest breakdown of what to expect from the product and the free trial |
+| /blog/quotecore-plus-reviews | here is an honest breakdown of what to expect from the product and how to get started |
 | /blog/best-free-tools-for-roofers | Best Free Tools for Roofers and Contractors (2026) |
 
 ## Inbound in-article links (4)

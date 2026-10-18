@@ -20,12 +20,13 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-start-a-roofing-business-uk.
 | /free-quote-generator | free quote generator |
 | /free-purchase-order-generator | free purchase order generator |
 | /free-invoice-generator | free invoice generator |
-| /free-trial | free QuoteCore+ trial |
+| /free-trial | started with QuoteCore+ |
 
-## Inbound in-article links (1)
+## Inbound in-article links (2)
 
 | From | Anchor used |
 |---|---|
+| /blog/best-roofing-quoting-software-uk-2026 | starting a roofing business in the UK |
 | /blog/how-to-get-more-work-as-a-contractor | starting a roofing business in the UK |
 
 External links in source: 6

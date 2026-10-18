@@ -22,7 +22,7 @@ Source: `app/(marketing)/blog/[slug]/content/roofing-estimating-vs-quoting.tsx`
 
 | Destination | Anchor |
 |---|---|
-| /free-trial | Start your free QuoteCore+ trial today |
+| /free-trial | Get started with QuoteCore+ today |
 
 ### Other site pages (3)
 

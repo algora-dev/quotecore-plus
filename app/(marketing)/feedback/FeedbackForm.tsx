@@ -12,7 +12,7 @@ import { useState } from "react";
 const FEATURES: { key: string; label: string }[] = [
   { key: "smart_components", label: "Smart Components" },
   { key: "digital_measure", label: "Digital measuring & takeoff tool" },
-  { key: "ai_scan_assist", label: "AI Scan Assist (upload plans, auto-measure)" },
+  { key: "ai_scan_assist", label: "Roof Scan Assist (upload plans, auto-measure)" },
   {
     key: "auto_follow_ups",
     label: "Automatic follow-ups for quotes, orders & invoices",

@@ -18,14 +18,14 @@ const SITE_ASSISTANT_ENABLED = false;
 export const metadata: Metadata = {
   title: "QuoteCore+ | Roofing Quoting & Takeoff Software",
   description:
-    "Turn roof measurements into accurate quotes with digital takeoff, AI Scan Assist, and Smart Components™. Choose the QuoteCore+ tools your business needs with configurable subscriptions.",
+    "Turn roof measurements into accurate quotes with digital takeoff, Roof Scan Assist, and Smart Components™. Choose the QuoteCore+ tools your business needs with configurable subscriptions.",
   metadataBase: new URL("https://quote-core.com"),
   alternates: {
     canonical: "https://quote-core.com/",
   },
   openGraph: {
     title: "QuoteCore+ | Roofing Quoting & Takeoff Software",
-    description: "Turn roof measurements into accurate quotes in minutes. Digital takeoff, AI Scan Assist, and Smart Components™.",
+    description: "Turn roof measurements into accurate quotes in minutes. Digital takeoff, Roof Scan Assist, and Smart Components™.",
     url: "https://quote-core.com/",
     siteName: "QuoteCore+",
     type: "website",
