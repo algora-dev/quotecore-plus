@@ -175,6 +175,12 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
   if (assistantCallName && !await smartAssistantFeatureAvailable(supabase, profile.company_id)) {
     return { ok: false, code: 'internal_error', message: 'Smart Assistant call names are available when Smart Assistant is included in this workspace.' };
   }
+  // Demo workspaces never persist call names (owner 2026-10-18): the teaser
+  // input is display-only in the demo, so saves can never fail on it.
+  if (assistantCallName) {
+    const { readActiveDemoContext } = await import('@/app/lib/demo/context');
+    if (await readActiveDemoContext(profile.company_id, profile.id)) assistantCallName = null;
+  }
   const { data, error } = await supabase
     .from('component_library')
     .insert({ ...input, assistant_call_name: assistantCallName, company_id: profile.company_id } as any)

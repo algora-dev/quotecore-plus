@@ -59,7 +59,8 @@ export default async function ComponentsPage(props: {
   }
   // Demo (owner 2026-10-05): fresh demo visitors land on the Roofing library
   // (the seeded default takeoff library) instead of "All Libraries".
-  const demoDefaultLibraryId = company?.id && await isDemoCompany(company.id)
+  const isDemo = company?.id ? await isDemoCompany(company.id) : false;
+  const demoDefaultLibraryId = isDemo
     ? collections.find(c => (c as { is_default_takeoff_library?: boolean }).is_default_takeoff_library)?.id
     : undefined;
 
@@ -94,6 +95,7 @@ export default async function ComponentsPage(props: {
         companyDefaultTrade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
         componentCollections={collections}
         demoDefaultLibraryId={demoDefaultLibraryId}
+        isDemoWorkspace={isDemo}
         initialLibraryId={requestedLibraryId}
         editWarningDismissed={editWarningDismissed}
         restoreDraftId={restoreDraftId}

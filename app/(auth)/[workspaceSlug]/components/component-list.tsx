@@ -55,6 +55,7 @@ export function ComponentList({
   highlightComponentId,
   isSupplier = false,
   demoDefaultLibraryId,
+  isDemoWorkspace,
   initialLibraryId,
   smartAssistantAvailable = false,
 }: {
@@ -71,6 +72,8 @@ export function ComponentList({
   componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
   /** Demo only: library pre-selected on first landing instead of "All Libraries" (owner 2026-10-05). */
   demoDefaultLibraryId?: string;
+  /** Demo: Smart Assistant call names are display-only teaser inputs (owner 2026-10-18). */
+  isDemoWorkspace?: boolean;
   /** Smart Assistant deep link (?collection=): opens filtered to this library for this load only. */
   initialLibraryId?: string;
   /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
@@ -597,7 +600,7 @@ export function ComponentList({
       eligible_for_orders: fd.get('eligible_for_orders') === 'on',
       flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
       sku: (fd.get('sku') as string)?.trim() || null,
-      ...(smartAssistantAvailable ? { assistant_call_name: (fd.get('assistant_call_name') as string)?.trim() || null } : {}),
+      ...(smartAssistantAvailable && !isDemoWorkspace ? { assistant_call_name: (fd.get('assistant_call_name') as string)?.trim() || null } : {}),
     } as unknown as ComponentLibraryInsert;
 
     // Phase 6.5 (Generic Trades) additions. Only attached when the client flag
@@ -735,7 +738,7 @@ export function ComponentList({
       eligible_for_orders: fd.get('eligible_for_orders') === 'on',
       flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
       sku: (fd.get('sku') as string)?.trim() || null,
-      ...(smartAssistantAvailable ? { assistant_call_name: (fd.get('assistant_call_name') as string)?.trim() || null } : {}),
+      ...(smartAssistantAvailable && !isDemoWorkspace ? { assistant_call_name: (fd.get('assistant_call_name') as string)?.trim() || null } : {}),
     } as unknown as ComponentLibraryInsert;
 
     // Phase 6.5 (Generic Trades) additions: same as create.
@@ -999,7 +1002,7 @@ export function ComponentList({
       eligible_for_orders: editorInitial.eligibleForOrders,
       flashing_ids: null,
       sku: identity.sku || null,
-      ...(smartAssistantAvailable ? { assistant_call_name: identity.assistantCallName || null } : {}),
+      ...(smartAssistantAvailable && !isDemoWorkspace ? { assistant_call_name: identity.assistantCallName || null } : {}),
     } as unknown as ComponentLibraryInsert;
     const inputWithGenericTrades = genericTradesEnabled
       ? ({
@@ -1396,7 +1399,7 @@ export function ComponentList({
         libraries={collections} libraryId={selectedCollectionId}
         onLibraryChange={id => { setSelectedCollectionId(id); setEditorDirty(true); }}
         onCreateLibrary={createGuidedLibrary} isSupplier={isSupplier}
-        smartAssistantAvailable={smartAssistantAvailable} smartAssistantUpgradeHref={`/${workspaceSlug}/account/billing`}
+        smartAssistantAvailable={smartAssistantAvailable} assistantCallNameDemoLocked={isDemoWorkspace} smartAssistantUpgradeHref={`/${workspaceSlug}/account/billing`}
         measurement={editorSettings} onMeasurementChange={updateEditorSettings}
         measurementSystem={companyMeasurementSystem} genericTradesEnabled={genericTradesEnabled}
         currency={companyCurrency}
@@ -1433,7 +1436,7 @@ export function ComponentList({
             flashings={flashings} assignedFlashings={assignedFlashings} selectedFlashingId={selectedFlashingId}
             onFlashingSelection={setSelectedFlashingId} onAddFlashing={addFlashing} onRemoveFlashing={removeFlashing}
             imageHelperText={imageHelperText} supplierSkuRequired={!!(isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published')}
-            smartAssistantAvailable={smartAssistantAvailable} smartAssistantUpgradeHref={`/${workspaceSlug}/account/billing`}
+            smartAssistantAvailable={smartAssistantAvailable} assistantCallNameDemoLocked={isDemoWorkspace} smartAssistantUpgradeHref={`/${workspaceSlug}/account/billing`}
             saving={saving} error={formError} onSubmit={editingComponent ? event => handleUpdate(event, editingComponent.id) : handleCreate}
             onCancel={() => { void mayLeaveEditor().then(leave => { if (leave) cancelEdit(); }); }}
             onDirty={() => { setEditorDirty(true); setDraftTested(false); }} onCalculated={() => {
