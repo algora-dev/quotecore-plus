@@ -13,6 +13,7 @@ import { customStripeMode, customPricingOnly } from '@/app/lib/billing/custom/en
 import { BillingPanel } from '@/app/(auth)/[workspaceSlug]/account/billing/BillingPanel';
 import { CustomSetupPayCard } from '@/app/components/billing/CustomSetupPayCard';
 import { PaywallSetupFlow } from '@/app/components/billing/PaywallSetupFlow';
+import { LapsedCompNotice } from '@/app/components/billing/LapsedCompNotice';
 
 /**
  * Onboarding paywall (paid-upfront model, 2026-09-16).
@@ -43,9 +44,16 @@ export default async function PaywallPage() {
   const supabase = await createSupabaseServerClient();
   const { data: companyRow } = await supabase
     .from('companies')
-    .select('stripe_customer_id, stripe_subscription_id, cancel_at_period_end, cancel_at')
+    .select('stripe_customer_id, stripe_subscription_id, cancel_at_period_end, cancel_at, comp_until')
     .eq('id', company.id)
     .maybeSingle();
+
+  // Lapsed complimentary grant (owner directive 2026-10-18): expired comps
+  // land here blocked; show them why plus the demo / pricing / homepage
+  // routes instead of a silent generic paywall.
+  const lapsedComp = Boolean(
+    companyRow?.comp_until && new Date(companyRow.comp_until) <= new Date(),
+  );
 
   // V5 pricing cutover (testing, owner 2026-10-11): calculator-only paywall,
   // no legacy plan cards regardless of entry path. Main keeps legacy surfaces.
@@ -69,7 +77,9 @@ export default async function PaywallPage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">
-        <div className="text-center max-w-2xl mx-auto">
+        {lapsedComp && <LapsedCompNotice endedOn={companyRow?.comp_until ?? null} />}
+
+        <div className="mt-8 text-center max-w-2xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
             Activate your workspace
           </h1>
