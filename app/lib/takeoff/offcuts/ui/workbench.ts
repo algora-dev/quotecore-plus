@@ -274,6 +274,27 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
   function selectedProposal(basis:QuoteQuantityBasis):QuoteQuantityProposal {
     ensureCurrent();return {...quoteQuantityProposal(draft,basis),originalSourceRevision:capturedRevision};
   }
+  // Owner 2026-10-17: close = save trigger. Shared payload builder (hoisted
+  // 2026-10-19 so completePlan saves the same artifacts); the plan image is
+  // fetched as a data URL so the composite SVG (photo + overlay) can be
+  // rasterised offscreen for the saved PNG.
+  const onePagerSvgOptions=()=>({phase:'solution' as const,print:true,showSheets,showEnvelope,showDetailedLabels,coverage:partition().regions});
+  async function fetchPlanImageAsDataUrl():Promise<string|null>{
+    const url=draft.roof.imageUrl;
+    if(!url||!/^(https?:|blob:|data:image\/)/.test(url))return null;
+    try{const res=await fetch(url);if(!res.ok)return null;const blob=await res.blob();
+      return await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(r.error);r.readAsDataURL(blob);});}catch{return null;}
+  }
+  async function buildClosePayload():Promise<OffcutOnePagerPayload>{
+    const q=quantities();const ledger=rootSheetLedger(draft.solution!);
+    const payload:OffcutOnePagerPayload={svg:renderSvg(draft,onePagerSvgOptions()),
+      figures:q?{netRoofAreaM2:q.netRoofAreaM2,purchasedLinealM:q.purchasedLinealM,suppliedCoverAreaM2:q.suppliedCoverAreaM2,suppliedProfileAreaM2:q.suppliedProfileAreaM2,newSheetCount:q.newSheetCount,reusedPositions:q.reusedPositions,coverUpliftPercent:q.coverUpliftPercent,profileUpliftPercent:q.profileUpliftPercent}:null,
+      schedule:ledger.stockSchedule.map(r=>({faceId:r.faceId,count:r.count,lengthM:r.lengthM,linealM:r.linealM})),
+      meta:{savedAt:new Date().toISOString(),engineVersion:draft.solution?.engineVersion??'2.19',pageId:draft.roof.pageId,areaScopeId:draft.roof.areaScopeId??null}};
+    const dataUrl=await fetchPlanImageAsDataUrl();
+    if(dataUrl)payload.compositeSvg=renderSvg(draft,{...onePagerSvgOptions(),embedImage:dataUrl});
+    return payload;
+  }
   async function completePlan():Promise<void> {
     if(completing||busy||salvagePreview)return;
     try {
@@ -284,6 +305,15 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       await flushCurrentReview();ensureCurrent();
       if(!draft.solution||selected!==planSignature(draft.solution))throw new Error('The selected plan changed. Finish the current plan instead.');
       await options.onQuantityProposal?.(proposal);
+      // Owner 2026-10-19: "Use this plan in quote" must save the same cut-plan
+      // artifacts as the header "Save and close" button - one-pager PDF +
+      // photo-overlay PNG land in Files & Documents before the workbench
+      // closes, so every exit keeps the offcut record on the quote.
+      const onePagerHost=options.onSaveOnePager;
+      if(draft.solution&&onePagerHost){
+        notice='Saving cut plan to this job…';render();
+        await Promise.resolve(onePagerHost(await buildClosePayload()));
+      }
       notice=options.onQuantityProposal?'Selected plan saved. Its material quantities are available in component measurement lists.':'Selected draft saved.';
       completing=false;
       if(options.onCompleted)options.onCompleted();else if(options.onClose)options.onClose();else render();
@@ -981,26 +1011,6 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
         if(action==='send-quantity'){void completePlan();return;}
         else {download('quotecore-offcuts-material-quantity.json',JSON.stringify({proposal,totals:quantities()},null,2),'application/json');notice='Quantity proposal exported. No quote or measured roof area has been changed.';}
         render();return;
-      }
-      // Owner 2026-10-17: close = save trigger. Shared payload builder; the
-      // plan image is fetched as a data URL so the composite SVG (photo +
-      // overlay) can be rasterised offscreen for the saved PNG.
-      const onePagerSvgOptions=()=>({phase:'solution' as const,print:true,showSheets,showEnvelope,showDetailedLabels,coverage:partition().regions});
-      async function fetchPlanImageAsDataUrl():Promise<string|null>{
-        const url=draft.roof.imageUrl;
-        if(!url||!/^(https?:|blob:|data:image\/)/.test(url))return null;
-        try{const res=await fetch(url);if(!res.ok)return null;const blob=await res.blob();
-          return await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(r.error);r.readAsDataURL(blob);});}catch{return null;}
-      }
-      async function buildClosePayload():Promise<OffcutOnePagerPayload>{
-        const q=quantities();const ledger=rootSheetLedger(draft.solution!);
-        const payload:OffcutOnePagerPayload={svg:renderSvg(draft,onePagerSvgOptions()),
-          figures:q?{netRoofAreaM2:q.netRoofAreaM2,purchasedLinealM:q.purchasedLinealM,suppliedCoverAreaM2:q.suppliedCoverAreaM2,suppliedProfileAreaM2:q.suppliedProfileAreaM2,newSheetCount:q.newSheetCount,reusedPositions:q.reusedPositions,coverUpliftPercent:q.coverUpliftPercent,profileUpliftPercent:q.profileUpliftPercent}:null,
-          schedule:ledger.stockSchedule.map(r=>({faceId:r.faceId,count:r.count,lengthM:r.lengthM,linealM:r.linealM})),
-          meta:{savedAt:new Date().toISOString(),engineVersion:draft.solution?.engineVersion??'2.19',pageId:draft.roof.pageId,areaScopeId:draft.roof.areaScopeId??null}};
-        const dataUrl=await fetchPlanImageAsDataUrl();
-        if(dataUrl)payload.compositeSvg=renderSvg(draft,{...onePagerSvgOptions(),embedImage:dataUrl});
-        return payload;
       }
       if(action==='save-one-pager'){
         if(savingOnePager)return;
