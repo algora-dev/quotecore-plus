@@ -1,3 +1,5 @@
+import { workflowCallHref } from '@/lib/booking';
+
 /** Host-owned integration points. No appointments or video are fabricated. */
 export interface HomepageConfig {
   demoHref: string;
@@ -25,7 +27,7 @@ export function validYouTubeId(value: string): string {
 
 export const homepageConfig: HomepageConfig = {
   demoHref: '/demo',
-  bookingHref: safeBookingHref(process.env.NEXT_PUBLIC_HOMEPAGE_BOOKING_URL ?? ''),
+  bookingHref: workflowCallHref,
   youtubeId: validYouTubeId(process.env.NEXT_PUBLIC_HOMEPAGE_YOUTUBE_ID ?? ''),
   videoTitle: 'See how QuoteCore+ works for you',
   videoUploadDate: process.env.NEXT_PUBLIC_HOMEPAGE_VIDEO_UPLOAD_DATE ?? '',

@@ -35,7 +35,7 @@ export default function DoneForYouBanner() {
               href="/contact"
               className="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:border-slate-400 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
-              Book a 15-minute call
+              Book a 20-minute call
             </Link>
           </div>
           <p className="text-xs italic text-slate-400">

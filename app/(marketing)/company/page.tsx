@@ -6,6 +6,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { ORG_NAME, ORG_LEGAL_NAME, ORG_EMAIL, ORG_LINKEDIN } from "@/app/lib/seo";
 
+import { workflowCallHref } from '@/lib/booking';
 export const metadata: Metadata = {
   title: "About QuoteCore+ | Construction Quoting Software Company",
   description:
@@ -187,7 +188,7 @@ export default function CompanyPage() {
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">Book a demo</h3>
-              <p className="mt-2 text-sm text-zinc-600"><a href="https://calendly.com/quote-core-info/15-minute-meeting" target="_blank" rel="noopener noreferrer" className="text-[#BD4A1A] hover:underline">Book a 15-minute call with Shaun</a></p>
+              <p className="mt-2 text-sm text-zinc-600"><a href={workflowCallHref} target="_blank" rel="noopener noreferrer" className="text-[#BD4A1A] hover:underline">Book a free 20-minute call</a></p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">YouTube</h3>
@@ -199,13 +200,13 @@ export default function CompanyPage() {
         {/* CTA */}
         <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">Get started with QuoteCore+</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">Explore the interactive demo</h2>
             <p className="mt-2 text-zinc-600">Free tools with no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing.</p>
             <a
-              href="/free-trial"
+              href="/demo"
               className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
             >
-              Get started
+              Explore the interactive demo
             </a>
             <p className="mt-4 text-sm text-zinc-500">
               <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>

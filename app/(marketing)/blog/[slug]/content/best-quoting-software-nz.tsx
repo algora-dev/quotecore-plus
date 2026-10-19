@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { publicPricing } from "@/lib/public-pricing";
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -10,7 +11,7 @@ export default function Post() {
           href="https://www.quote-core.co.nz"
           className="font-medium text-[#BD4A1A] underline underline-offset-2 hover:text-[#a03f16]"
         >
-          QuoteCore+ NZ - NZD pricing, GST-inclusive quoting
+          QuoteCore+ NZ - USD subscription billing, NZ-ready quoting workflow
         </a>{" "}
         built specifically for Kiwi tradies.
       </div>
@@ -38,7 +39,7 @@ export default function Post() {
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {[
-              ["Starting price (NZD)", "NZ$50-$450/mo", "~$49/mo", "~$49/mo", "~$39/mo", "~$149/mo", "Included"],
+              ["Published starting price / range", `US$${publicPricing.monthlyMin}-${publicPricing.monthlyMax}/mo (USD)`, "~$49/mo", "~$49/mo", "~$39/mo", "~$149/mo", "Included"],
               ["GST-ready (15%)", "✅", "✅", "✅", "✅", "✅", "✅"],
               ["Roofing suitability", "✅ Strong", "Basic", "Basic", "Basic", "Builder-focused", "❌"],
               ["Plan-based takeoff", "✅", "❌", "❌", "❌", "✅", "❌"],
@@ -60,7 +61,7 @@ export default function Post() {
         <p className="mt-2 text-xs text-zinc-500">Cells marked ~ are approximate published rates - check with the vendor for current pricing and inclusions.</p>
       </div>
 
-      <p><strong>How we assessed these tools:</strong> each platform was evaluated on NZD pricing with GST handling, plan-based takeoff and measurement support, suitability for roofing and measured trades, the quote-to-order-to-invoice workflow, and NZ-specific support. Where a vendor does not publish a figure or we could not verify a capability, we say so rather than guess. Note: this guide is published by QuoteCore+, so our own product appears in the comparison - we have flagged where other tools may fit better.</p>
+      <p><strong>How we assessed these tools:</strong> each platform was evaluated on pricing transparency, GST handling, plan-based takeoff and measurement support, suitability for roofing and measured trades, the quote-to-order-to-invoice workflow, and NZ-specific support. Where a vendor does not publish a figure or we could not verify a capability, we say so rather than guess. Note: this guide is published by QuoteCore+, so our own product appears in the comparison - we have flagged where other tools may fit better.</p>
 
       <hr />
 
@@ -119,7 +120,7 @@ export default function Post() {
       <p>Once the quote is sent, acceptance tracking runs automatically. You get a notification when a customer views or accepts the quote. No more chasing phone calls asking whether they received it.</p>
       <p>From an accepted quote, you generate a materials order directly - including custom details for specific job requirements. The job then moves into workflow management: tracked from first measurement to job completion in one place.</p>
 
-      <p><strong>Pricing:</strong> QuoteCore+ uses a configurable pricing builder. Current New Zealand configurations range from NZ$50 to NZ$450 per month, depending on the features and usage selected. Standalone free tools need no signup, and the interactive app demo is available before subscribing. See how the plans compare side by side on the <Link href="/construction-quoting-software">construction quoting software hub</Link>.</p>
+      <p><strong>Pricing:</strong> QuoteCore+ uses a configurable pricing builder. Current QuoteCore+ configurations are billed in USD and currently range from US$29 to US$259 per month, depending on the features and usage selected. Standalone free tools need no signup, and the interactive app demo is available before subscribing. See how the plans compare side by side on the <Link href="/construction-quoting-software">construction quoting software hub</Link>.</p>
 
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe

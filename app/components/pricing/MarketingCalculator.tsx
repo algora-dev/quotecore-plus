@@ -1,5 +1,7 @@
 'use client';
 
+import { workflowCallHref } from '@/lib/booking';
+
 import type { CSSProperties } from 'react';
 
 /**
@@ -17,7 +19,7 @@ import type { CSSProperties } from 'react';
  */
 import { PricingCalculator, PREVIEW_CATALOG, buildSignupHref } from './calculator';
 
-const CALENDLY = 'https://calendly.com/quote-core-info/15-minute-meeting';
+const CALENDLY = workflowCallHref;
 
 /** Sticky BlogHeader clearance for the marketing mount (px). */
 const SHELL_STYLE = { '--qcp-header-offset': '80px' } as CSSProperties;

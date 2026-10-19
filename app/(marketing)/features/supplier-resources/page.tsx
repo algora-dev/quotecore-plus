@@ -110,8 +110,8 @@ export default function SupplierResourcesPage() {
               Search for suppliers in your area, browse their pricing catalogs and component libraries, and import ready-made components directly into your account. No more calling around for price lists. No more manual data entry. Real pricing, ready to quote with.
             </p>
             <div className="mt-6 flex gap-3">
-              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-                Get started
+              <a href="/demo" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
+                Explore the interactive demo
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
                 All features
@@ -401,8 +401,8 @@ export default function SupplierResourcesPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try supplier resources free</h2>
             <p className="mt-2 text-zinc-600">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Get started
+            <a href="/demo" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
+              Explore the interactive demo
             </a>
             <p className="mt-4 text-sm text-zinc-500">
               <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>

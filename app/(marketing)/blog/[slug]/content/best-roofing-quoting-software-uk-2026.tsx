@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { publicPricing } from "@/lib/public-pricing";
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -336,7 +337,7 @@ export default function Post() {
               ["Team management", "✅", "Basic", "Strong", "Strong", "Basic", "✅", "Basic"],
               ["Job costing", "Basic", "Basic", "✅", "✅", "Basic", "Strong", "Basic"],
               ["Free option", "✅ free tools", "✅ free tier", "❌", "❌", "❌", "❌", "✅ free tier"],
-              ["Starting price", "£19/mo", "Free/£29.99", "£29/user", "~£39/mo", "~£20/mo", "~£35/mo", "Free/£39.99"],
+              ["Starting price / range", `US$${publicPricing.monthlyMin}-${publicPricing.monthlyMax}/mo (USD)`, "Free/£29.99", "£29/user", "~£39/mo", "~£20/mo", "~£35/mo", "Free/£39.99"],
             ].map(([feature, ...values]) => (
               <tr key={feature}>
                 <td className="px-3 py-2 font-medium text-zinc-800 text-xs">{feature}</td>

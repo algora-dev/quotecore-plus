@@ -18,6 +18,7 @@ import {
   WorkflowRail,
   type FaqItem,
 } from '@/components/marketing/page-v2/PageV2';
+import { workflowCallHref } from '@/lib/booking';
 import { buildBreadcrumbSchema, buildFaqSchema, buildSoftwareApplicationSchema } from '@/lib/schema';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 
@@ -183,7 +184,7 @@ export default function FeaturesPage() {
           <SectionHeader eyebrow="Choose your next step" title="Choose the next step that suits you" lead="Use the route that answers what you need to know next." />
           <ConversionPaths items={[
             { title: 'Explore the interactive app demo', body: 'Open a prepared QuoteCore+ roofing workspace and explore the current workflow at your own pace.', href: '/demo', label: 'Explore the demo' },
-            { title: 'Book a tailored 20-minute demo', body: 'Tell us how you currently work and we will screen-share a workflow that is relevant to your trade and questions.', href: 'https://calendly.com/quote-core-info/15-minute-meeting', label: 'Book a tailored demo' },
+            { title: 'Book a tailored 20-minute demo', body: 'Tell us how you currently work and we will screen-share a workflow that is relevant to your trade and questions.', href: workflowCallHref, label: 'Book a tailored demo' },
             { title: 'Build your plan', body: 'Choose the workload and tools your business needs and see the current monthly price before you continue.', href: '/pricing', label: 'Build your configuration' },
           ]} />
         </Container>

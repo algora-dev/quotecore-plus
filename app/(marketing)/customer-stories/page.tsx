@@ -107,8 +107,8 @@ export default function CustomerStoriesPage() {
               <h3 className="font-semibold text-slate-900">Trust and Security</h3>
               <p className="mt-1 text-sm text-zinc-600">How we protect your data and respect your business.</p>
             </a>
-            <a href="/free-trial" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <h3 className="font-semibold text-slate-900">Get started</h3>
+            <a href="/demo" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <h3 className="font-semibold text-slate-900">Explore the interactive demo</h3>
               <p className="mt-1 text-sm text-zinc-600">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
             </a>
           </div>
@@ -119,8 +119,8 @@ export default function CustomerStoriesPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try it yourself</h2>
             <p className="mt-2 text-zinc-600">Free tools, no signup. Explore the interactive demo before subscribing to the paid app.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Get started
+            <a href="/demo" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
+              Explore the interactive demo
             </a>
           </div>
         </section>

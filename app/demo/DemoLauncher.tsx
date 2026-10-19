@@ -6,6 +6,7 @@ import { DemoUnitChoice } from '@/app/components/demo/DemoUnitChoice';
 import { createDemoBrowserClient } from '@/app/lib/demo/browser-client';
 import { demoSystemLabel, type DemoSystem } from '@/app/lib/demo/presentation';
 import { DemoRequestError, demoJsonRequest, demoRequest, safeDemoHref } from '@/app/lib/demo/client-request';
+import { trackEvent } from '@/lib/analytics';
 import './demo-launcher.css';
 
 type StartResult = { slug: string; sessionId: string; resumed?: boolean; expiresAt?: string | null; system?: DemoSystem };
@@ -51,6 +52,10 @@ export function DemoLauncher() {
   }
 
   useEffect(() => {
+    trackEvent('demo_launcher_ready');
+  }, []);
+
+  useEffect(() => {
     alive.current = true;
     const controller = new AbortController();
     setScreen('checking'); setError('');
@@ -86,6 +91,7 @@ export function DemoLauncher() {
 
   async function build(reset: boolean) {
     if (busy.current || !system || (reset && !existing)) return;
+    trackEvent(reset ? 'demo_restart_started' : 'demo_workspace_started', { measurement_system: system });
     busy.current = true; isReset.current = reset; setError(''); setScreen('building');
     try {
       const result = await demoRequest<StartResult>(reset ? '/api/demo/reset' : '/api/demo/start', demoJsonRequest(
@@ -112,9 +118,13 @@ export function DemoLauncher() {
 
   function continueDemo() {
     if (!existing || opening) return;
+    trackEvent('demo_workspace_resumed', { measurement_system: existing.system ?? 'unknown' });
     setOpening(true); router.replace(`/${existing.slug}`);
   }
-  function fresh() { setSystem(existing?.system ?? null); setError(''); setScreen('fresh'); }
+  function fresh() {
+    trackEvent('demo_restart_opened', { measurement_system: existing?.system ?? 'unknown' });
+    setSystem(existing?.system ?? null); setError(''); setScreen('fresh');
+  }
   const title = screen === 'checking' ? 'Opening your demo' : screen === 'building' ? (isReset.current ? 'Preparing a fresh workspace' : 'Preparing your workspace')
     : screen === 'slow' ? 'Your workspace may still be preparing' : screen === 'error' ? 'Let’s try that again'
     : screen === 'resume' ? 'Welcome back' : screen === 'fresh' ? 'Start with a clean workspace' : 'How do you measure?';

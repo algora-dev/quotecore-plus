@@ -127,10 +127,10 @@ export default function AboutPage() {
             <p className="text-xl font-semibold text-zinc-950">See it for yourself.</p>
             <p className="mt-2 text-zinc-500">Free tools with no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing.</p>
             <a
-              href="/free-trial"
+              href="/demo"
               className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
             >
-              Get started
+              Explore the interactive demo
             </a>
             <p className="mt-4 text-sm text-zinc-500">
               <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a> · <a href="/contact" className="underline hover:text-zinc-900">Contact us</a>

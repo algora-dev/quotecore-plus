@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import dynamic from "next/dynamic";
-import { Analytics } from "@vercel/analytics/next";
-import CookieConsent from "@/components/CookieConsent";
 import QuoteCorePlusStyler from "@/components/QuoteCorePlusStyler";
 import { buildBreadcrumbSchema, buildSoftwareApplicationSchema, organizationId, siteUrl, websiteId } from "@/lib/schema";
 import { robotsDirective } from "@/app/lib/seo";
 
 // Lazy-load heavy client components that aren't needed for initial render
-const AttributionTracker = dynamic(() => import("@/components/AttributionTracker"));
 const SiteAssistant = dynamic(() => import("@/components/SiteAssistant"));
 
 // Kill switch: Q (SiteAssistant) is disabled site-wide while its knowledge base
@@ -79,33 +76,8 @@ export default function MarketingLayout({
     <>
       <link rel="preload" as="image" href="/MainQCP.png" fetchPriority="high" />
       {children}
-      <Analytics />
-      <AttributionTracker />
       <QuoteCorePlusStyler />
-      {/* Marketing pages run CookieConsent as the cookie UI, so the global
-          notice banner hides itself here (see :has rule in globals.css). */}
-      <div hidden data-qcp-consent-scope />
-      <CookieConsent />
       {SITE_ASSISTANT_ENABLED && <SiteAssistant />}
-      {/* Google Analytics 4 */}
-      <Script
-        src="https://www.googletagmanager.com/gtag/js?id=G-HV8F4G8BN1"
-        strategy="afterInteractive"
-      />
-      <Script id="ga4" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('consent', 'default', {
-            analytics_storage: 'denied',
-            ad_storage: 'denied',
-            ad_user_data: 'denied',
-            ad_personalization: 'denied'
-          });
-          gtag('js', new Date());
-          gtag('config', 'G-HV8F4G8BN1');
-        `}
-      </Script>
       <Script
         id="combined-schema"
         type="application/ld+json"

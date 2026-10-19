@@ -18,7 +18,7 @@ const styles = {
 /** Tracked CTA link for the Done-For-You page. */
 export default function DfyCtaButton({
   event,
-  label = 'Book a 15-minute fit call',
+  label = 'Book a 20-minute fit call',
   variant = 'primary',
 }: {
   event: string;

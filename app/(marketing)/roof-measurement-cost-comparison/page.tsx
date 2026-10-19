@@ -181,7 +181,7 @@ export default function RoofMeasurementCostComparison() {
               Free tools, no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing.
             </p>
             <Link
-              href="/free-trial"
+              href="/demo"
               className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
             >
               Get started

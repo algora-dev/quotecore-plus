@@ -4,6 +4,17 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
+const WORKFLOW_CALL_URL = (() => {
+  const raw = process.env.NEXT_PUBLIC_HOMEPAGE_BOOKING_URL?.trim();
+  if (raw) {
+    try {
+      const url = new URL(raw);
+      if (url.protocol === "https:" && !url.username && !url.password) return url.href;
+    } catch { /* fall through */ }
+  }
+  return "https://quote-core.com/contact";
+})();
+
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -97,7 +108,7 @@ export async function POST(req: NextRequest) {
           <p style="font-weight:700;margin:0 0 8px;color:#333;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">Your message</p>
           <p style="margin:0;color:#555;white-space:pre-wrap;line-height:1.6;font-size:15px;">${message}</p>
         </div>
-        <p style="color:#444;line-height:1.6;">If you'd prefer to jump on a quick call, you can <a href="https://calendly.com/quote-core-info/15-minute-meeting" style="color:#FF6B35;">book a free 15-minute chat here</a>.</p>
+        <p style="color:#444;line-height:1.6;">If you'd prefer to jump on a quick call, you can <a href="${WORKFLOW_CALL_URL}" style="color:#FF6B35;">book a free 20-minute workflow call here</a>.</p>
         <p style="color:#444;line-height:1.6;margin-top:24px;">Talk soon,<br/><strong>The QuoteCore+ team</strong></p>
         <hr style="border:none;border-top:1px solid #eee;margin:32px 0;" />
         <p style="font-size:12px;color:#999;margin:0;">QuoteCore+ - quoting software for contractors and trade businesses.<br/><a href="https://quote-core.com" style="color:#999;">quote-core.com</a></p>

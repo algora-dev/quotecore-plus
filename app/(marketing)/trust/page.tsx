@@ -221,8 +221,8 @@ export default function TrustPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Get started</h2>
             <p className="mt-2 text-zinc-600">Free tools with no signup. Current paid configurations start at US$29/month; explore the interactive demo before subscribing. Cancel anytime.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Get started
+            <a href="/demo" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
+              Explore the interactive demo
             </a>
             <p className="mt-4 text-sm text-zinc-500">
               <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>
