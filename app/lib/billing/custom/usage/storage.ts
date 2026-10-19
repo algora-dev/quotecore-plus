@@ -2,18 +2,42 @@ import 'server-only';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { StorageQuotaExceededError } from '@/app/lib/billing/errors';
 import { customScope } from '../environment';
-import { callUsage, customUsageMeteringApplies } from './store';
+import { callUsage, customUsageMeteringApplies, isCustomUsageCompany } from './store';
 import { UsageError, safeCount } from './contracts';
 export type StorageObject = { companyId: string; bucket: string; path: string };
 /** The byte value is server-measured, and the RPC verifies Storage metadata again. */
-/** Admin-granted setups run unmetered against their granted allowance until
- *  the custom billing live-switch (2026-10-17 deferral). Reservations follow
- *  the same metering gate as quote creation and scan: on main, where the
- *  Stripe-scoped env is held, an unguarded scope read here threw QCP01 and
- *  broke plan attach right after quote creation (2026-10-19 incident). */
+/** Reservation scope. Stripe-linked companies use the deployment env scope.
+ *  Admin-granted setups have no deployment env before the custom billing
+ *  live-switch, so their own registry row supplies the account/mode the
+ *  reserve RPC verifies against. The DB hold contract
+ *  (qcp_guard_file_metadata trigger, QCP07) applies to EVERY custom_setup
+ *  company, so admin grants must still reserve: skipping the hold broke
+ *  plan attach with QCP07 on main (2026-10-19 second incident). Quota stays
+ *  enforced server-side against the granted snapshot limits either way. */
+async function reserveScopeFor(companyId: string): Promise<{ accountId: string; mode: 'test' | 'live' }> {
+  if (await customUsageMeteringApplies(companyId)) {
+    const env = customScope();
+    return { accountId: env.accountId, mode: env.mode };
+  }
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: snap } = await (admin as any).from('company_custom_billing')
+    .select('stripe_account_id, stripe_mode')
+    .eq('company_id', companyId)
+    .maybeSingle();
+  const registry = snap as { stripe_account_id?: string | null; stripe_mode?: string | null } | null;
+  const accountId = registry?.stripe_account_id ?? '';
+  const mode = registry?.stripe_mode === 'live' ? 'live' : registry?.stripe_mode === 'test' ? 'test' : null;
+  if (!/^acct_[A-Za-z0-9]+$/.test(accountId) || !mode) {
+    throw new UsageError('custom_access_unavailable', 'This setup has no billing registry for storage reservation.');
+  }
+  return { accountId, mode };
+}
+
+/** The byte value is server-measured, and the RPC verifies Storage metadata again. */
 export async function reservePurchasedStorage(input: StorageObject & { size: number; kind: 'logo' | 'document' }): Promise<boolean> {
-  if (!(await customUsageMeteringApplies(input.companyId))) return false;
-  const scope = customScope();
+  if (!(await isCustomUsageCompany(input.companyId))) return false;
+  const scope = await reserveScopeFor(input.companyId);
   try {
     const result = await callUsage<{ kind: string }>('qcp_reserve_storage', {
       p_company_id: input.companyId, p_account_id: scope.accountId, p_mode: scope.mode,
