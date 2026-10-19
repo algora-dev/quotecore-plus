@@ -1137,8 +1137,10 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
   return { ...entry, componentTotals };
 }
 
-export async function useRoofAreaTotal(quoteComponentId: string, roofAreaSqm: number, areaPitch: number | null) {
-  return addComponentEntry(quoteComponentId, roofAreaSqm, areaPitch);
+export async function useRoofAreaTotal(quoteComponentId: string, roofAreaSqm: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean }) {
+  // options passthrough (owner 2026-10-19): LxH preset comps attach a finished
+  // area figure, so the height multiplier must be bypassed.
+  return addComponentEntry(quoteComponentId, roofAreaSqm, areaPitch, options);
 }
 
 /** Quote-builder shared measurements (owner directive 2026-10-19): persist a

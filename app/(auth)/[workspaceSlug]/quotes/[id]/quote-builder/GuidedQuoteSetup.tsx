@@ -46,7 +46,7 @@ interface Props {
   onAddFromLibrary: (libraryId: string, areaId: string | null, type: 'main' | 'extra') => Promise<QuoteComponentRow | null>;
   onCreateComponent: (areaId: string | null, type: 'main' | 'extra') => void;
   onAddEntry: (compId: string, rawValue: number, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; convertAs?: 'area' | 'linear' | 'volume' | 'none'; entryHeightM?: number | null; entryDepthM?: number | null }) => Promise<void>;
-  onUseRoofArea: (compId: string, roofAreaSqm: number) => Promise<void>;
+  onUseRoofArea: (compId: string, roofAreaSqm: number, options?: { bypassHeightMultiplier?: boolean }) => Promise<void>;
   onRemoveEntry: (entryId: string, compId: string) => Promise<void>;
   onRemoveComponent: (id: string) => Promise<void>;
   onUpdateComponent: (compId: string, updates: {

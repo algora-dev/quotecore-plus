@@ -47,7 +47,7 @@ export function ExpandableComponent({
   quote: QuoteRow;
   currency: string;
   onAddEntry: (compId: string, rawValue: number, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; convertAs?: 'area' | 'linear' | 'volume' | 'none'; entryHeightM?: number | null; entryDepthM?: number | null }) => Promise<void>;
-  onUseRoofArea?: (compId: string, roofAreaSqm: number) => Promise<void>;
+  onUseRoofArea?: (compId: string, roofAreaSqm: number, options?: { bypassHeightMultiplier?: boolean }) => Promise<void>;
   onRemoveEntry: (entryId: string, compId: string) => Promise<void>;
   onRemove: (id: string) => Promise<void>;
   onUpdateSettings: (
@@ -160,6 +160,12 @@ export function ExpandableComponent({
   const sharedLinealOffers = (sharedMeasurements ?? []).filter(o => o.kind === 'lineal' && o.source_component_id !== comp.id);
   const canReuseSharedLineal = linealShareEligible && sharedLinealOffers.length > 0 && !!onApplyShared;
   const [shareOpen, setShareOpen] = useState(false);
+  // Area-total quick-apply (owner 2026-10-19): every component whose entries
+  // are stored as m2 can attach its assigned area's total in one click -
+  // pure area, irregular area, lineal-cover (entries stay m2) and the LxH
+  // family. LxH preset must bypass the height multiplier: the attached
+  // figure is already the finished area.
+  const canUseAreaTotal = isAreaType || hasLinealCover || isLxhPreset || isLxhFreestyle;
 
   // Helper to display values with correct units
   function displayValue(value: number): string {
@@ -421,9 +427,9 @@ export function ExpandableComponent({
             </div>
           )}
 
-          {isAreaBased && roofArea && onUseRoofArea && (
+          {canUseAreaTotal && roofArea && onUseRoofArea && (
             <QcButton
-              onClick={() => onUseRoofArea(comp.id, roofArea.computed_sqm ?? 0)}
+              onClick={() => onUseRoofArea(comp.id, roofArea.computed_sqm ?? 0, isLxhPreset ? { bypassHeightMultiplier: true } : undefined)}
               size="sm" variant="ghost"
             >
               → Use {compTradeLabels.areaSingularLabel.toLowerCase()} total ({formatArea(roofArea.computed_sqm ?? 0, quote.measurement_system)})

@@ -432,7 +432,7 @@ export function QuoteBuilder({
     } : c));
   }
 
-  async function handleUseRoofArea(compId: string, roofAreaSqm: number) {
+  async function handleUseRoofArea(compId: string, roofAreaSqm: number, options?: { bypassHeightMultiplier?: boolean }) {
     const _comp = components.find(c => c.id === compId);
     // Roof area total is already pitched - don't apply pitch again
     // `useRoofAreaTotal` is a server action, not a React hook - React's
