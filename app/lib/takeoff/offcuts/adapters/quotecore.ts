@@ -105,7 +105,14 @@ export function fromQuoteCore(s: QuoteCoreSnapshot): AdaptedTakeoff {
     counts:{componentGroups:s.componentMeasurements.length,measurementRows:0,includedLines:0,includedEdges:0,excludedRows:0,unmappedLines:0,bySemantic},unresolvedComponents:[]};
   const outlines: RoofInput['outlines'] = [], outlineIds = new Set<string>();
   for (const a of s.roofAreas) {
-    const reason = excludeScope(a) ?? (a.visible === false ? 'hidden' : s.selectedOutlineIds && !s.selectedOutlineIds.includes(a.id) ? 'not-selected' : 'included');
+    // Offcut pseudo-areas (owner 2026-10-12) carry no geometry (points: [])
+    // and are derived quantities, not source linework. Excluding them keeps
+    // roofRevision stable when 'Use this plan in quote' materialises one
+    // mid-flight - otherwise the workbench staleness poll flags 'Takeoff
+    // changed' seconds after the click (owner report 2026-10-19).
+    const pseudoArea = !a.points || a.points.length === 0;
+    const reason = pseudoArea ? 'offcut-pseudo-area'
+      : excludeScope(a) ?? (a.visible === false ? 'hidden' : s.selectedOutlineIds && !s.selectedOutlineIds.includes(a.id) ? 'not-selected' : 'included');
     audit.outlines.push({id:a.id,included:reason==='included',reason,pointCount:a.points?.length??0});
     if (reason !== 'included') continue;
     if (!a.id || outlineIds.has(a.id)) throw new Error('Duplicate or missing live outline ID. Finish the current edit and try again.');

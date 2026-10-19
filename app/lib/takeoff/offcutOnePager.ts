@@ -7,8 +7,10 @@ import type { OffcutOnePagerPayload } from '@/app/lib/takeoff/offcuts/ui/workben
 export type OffcutOnePagerResult = { ok: true; id: string } | { ok: false; message: string };
 
 /** Rasterise the standalone plan SVG on a white canvas (up to 2x). Falls back
- * to the viewBox when the rasterised image reports no intrinsic size. */
-async function svgToPng(svg: string): Promise<{ dataUrl: string; width: number; height: number }> {
+ * to the viewBox when the rasterised image reports no intrinsic size.
+ * opts.longSidePx pins the output long side (native-resolution composite
+ * export); opts.mime/quality mirror canvasSnapshot's JPEG model. */
+async function svgToPng(svg: string, opts?: { longSidePx?: number; mime?: 'image/png' | 'image/jpeg'; quality?: number }): Promise<{ dataUrl: string; width: number; height: number }> {
   const viewBox = /viewBox="([-\d.,\s]+)"/.exec(svg);
   const parts = viewBox ? viewBox[1].trim().split(/[\s,]+/).map(Number) : null;
   const fallbackW = parts && parts.length === 4 && parts[2] > 0 ? parts[2] : 1000;
@@ -23,7 +25,9 @@ async function svgToPng(svg: string): Promise<{ dataUrl: string; width: number; 
     });
     const sourceW = image.naturalWidth || fallbackW;
     const sourceH = image.naturalHeight || fallbackH;
-    const scale = Math.min(2, 2600 / Math.max(sourceW, sourceH));
+    const scale = opts?.longSidePx && opts.longSidePx > 0
+      ? opts.longSidePx / Math.max(sourceW, sourceH)
+      : Math.min(2, 2600 / Math.max(sourceW, sourceH));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(sourceW * scale));
     canvas.height = Math.max(1, Math.round(sourceH * scale));
@@ -32,7 +36,7 @@ async function svgToPng(svg: string): Promise<{ dataUrl: string; width: number; 
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    return { dataUrl: canvas.toDataURL('image/png'), width: canvas.width, height: canvas.height };
+    return { dataUrl: canvas.toDataURL(opts?.mime ?? 'image/png', opts?.quality), width: canvas.width, height: canvas.height };
   } finally {
     URL.revokeObjectURL(blobUrl);
   }
@@ -155,7 +159,23 @@ export async function saveOffcutOnePagerToJob(
   // PDF is the primary artifact and the plan review is already done.
   if (payload.compositeSvg) {
     try {
-      const png = await svgToPng(payload.compositeSvg);
+      // Owner 2026-10-19: rasterise at the plan photo's NATIVE resolution -
+      // the same model as the takeoff canvas snapshot (canvasSnapshot.ts):
+      // 1 image px per output px, capped at 2400 long side, JPEG q0.92 so a
+      // full-res composite stays inside the server-action body limit.
+      const view = /viewBox="([-\d.,\s]+)"/.exec(payload.compositeSvg);
+      const vp = view ? view[1].trim().split(/[\s,]+/).map(Number) : null;
+      const vbW = vp && vp.length === 4 && vp[2] > 0 ? vp[2] : 0;
+      const vbH = vp && vp.length === 4 && vp[3] > 0 ? vp[3] : 0;
+      const src = payload.compositeSourceSize;
+      let longSidePx: number | undefined;
+      if (src && src.width > 0 && src.height > 0 && vbW > 60 && vbH > 60) {
+        // viewBox = scene + 60 padding (+/-30); the photo spans the scene rect
+        // (preserveAspectRatio="none"), so this scale maps it 1:1.
+        const perSceneUnit = Math.max(src.width / (vbW - 60), src.height / (vbH - 60));
+        longSidePx = Math.min(2400, Math.round(Math.max(vbW, vbH) * perSceneUnit));
+      }
+      const png = await svgToPng(payload.compositeSvg, { longSidePx, mime: 'image/jpeg', quality: 0.92 });
       const { uploadOffcutOverlayImageFile } = await import('@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/uploadOffcutOnePager');
       await uploadOffcutOverlayImageFile(quoteId, png.dataUrl, opts.jobLabel);
     } catch (error) {

@@ -44,8 +44,10 @@ export async function uploadOffcutOnePagerFile(
 
 /**
  * Offcuts close-save (owner 2026-10-17): persist the photo-overlay composite
- * PNG next to the one-pager PDF. Same bucket, auth and metadata path as the
- * PDF variant; both show under "Offcut Plan" in Files & Documents.
+ * next to the one-pager PDF. Same bucket, auth and metadata path as the PDF
+ * variant; both show under "Offcut Plan" in Files & Documents.
+ * 2026-10-19: the composite is now exported at the plan photo's native
+ * resolution as JPEG (canvasSnapshot parity) - PNG remains accepted.
  */
 export async function uploadOffcutOverlayImageFile(
   quoteId: string,
@@ -53,17 +55,21 @@ export async function uploadOffcutOverlayImageFile(
   jobLabel: string,
 ): Promise<{ ok: true; id: string } | { ok: false; message: string }> {
   const base64 = dataUrl.split(',')[1];
-  if (!dataUrl.startsWith('data:image/png') || !base64) {
+  const isPng = dataUrl.startsWith('data:image/png');
+  const isJpeg = dataUrl.startsWith('data:image/jpeg');
+  if ((!isPng && !isJpeg) || !base64) {
     return { ok: false, message: 'The overlay image could not be read.' };
   }
   const profile = await requireCompanyContext();
   const buffer = Buffer.from(base64, 'base64');
-  const blob = new Blob([buffer], { type: 'image/png' });
-  const filePath = `${profile.company_id}/${quoteId}/offcut-overlay-${quoteId}-${Date.now()}.png`;
+  const mime = isPng ? 'image/png' : 'image/jpeg';
+  const ext = isPng ? 'png' : 'jpg';
+  const blob = new Blob([buffer], { type: mime });
+  const filePath = `${profile.company_id}/${quoteId}/offcut-overlay-${quoteId}-${Date.now()}.${ext}`;
   const admin = createAdminClient();
   const { data, error } = await admin.storage
     .from(BUCKETS.QUOTE_DOCUMENTS)
-    .upload(filePath, blob, { contentType: 'image/png', upsert: false });
+    .upload(filePath, blob, { contentType: mime, upsert: false });
   if (error || !data?.path) {
     console.error('[uploadOffcutOverlayImageFile] upload failed:', error);
     return { ok: false, message: 'The overlay image could not be uploaded.' };
@@ -72,7 +78,7 @@ export async function uploadOffcutOverlayImageFile(
   return saveGeneratedQuoteFileMetadata({
     companyId: profile.company_id,
     fileType: 'offcuts',
-    fileName: `Offcut plan image — ${safeLabel}.png`,
+    fileName: `Offcut plan image — ${safeLabel}.${ext}`,
     storagePath: data.path,
     quoteId,
   });

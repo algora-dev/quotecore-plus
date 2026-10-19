@@ -59,8 +59,12 @@ import { sceneScale, watchSceneViewport } from './viewport';
 export interface OffcutOnePagerPayload {
   svg: string;
   /** Photo + overlay composite with the plan image embedded as a data URL.
-   *  Saved as a PNG alongside the PDF (owner 2026-10-17). Optional. */
+   *  Saved as an image alongside the PDF (owner 2026-10-17). Optional. */
   compositeSvg?: string;
+  /** Native pixel size of the embedded plan photo. Lets the saved overlay
+   *  rasterise at source resolution (canvasSnapshot parity, capped 2400px)
+   *  instead of scene/display resolution (owner report 2026-10-19). */
+  compositeSourceSize?: { width: number; height: number };
   figures: {
     netRoofAreaM2: number;
     purchasedLinealM: number;
@@ -292,8 +296,19 @@ export function mountWorkbench(host: HTMLElement, roof: RoofInput, options: Work
       schedule:ledger.stockSchedule.map(r=>({faceId:r.faceId,count:r.count,lengthM:r.lengthM,linealM:r.linealM})),
       meta:{savedAt:new Date().toISOString(),engineVersion:draft.solution?.engineVersion??'2.19',pageId:draft.roof.pageId,areaScopeId:draft.roof.areaScopeId??null}};
     const dataUrl=await fetchPlanImageAsDataUrl();
-    if(dataUrl)payload.compositeSvg=renderSvg(draft,{...onePagerSvgOptions(),embedImage:dataUrl});
+    if(dataUrl){
+      payload.compositeSvg=renderSvg(draft,{...onePagerSvgOptions(),embedImage:dataUrl});
+      const size=await imageSizeOf(dataUrl);
+      if(size)payload.compositeSourceSize=size;
+    }
     return payload;
+  }
+  async function imageSizeOf(src:string):Promise<{width:number;height:number}|null>{
+    try{
+      const img=await new Promise<HTMLImageElement>((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('load failed'));i.src=src;});
+      const w=img.naturalWidth,h=img.naturalHeight;
+      return w>0&&h>0?{width:w,height:h}:null;
+    }catch{return null;}
   }
   async function completePlan():Promise<void> {
     if(completing||busy||salvagePreview)return;
