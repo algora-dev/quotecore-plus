@@ -44,6 +44,7 @@ interface TakeoffMeasurement {
     pitch_applied?: boolean;
     source_geometry_id?: string;
     corner_count?: number;
+    shared_from?: string;
   } | null;
 }
 
@@ -282,7 +283,7 @@ export async function saveTakeoffMeasurements(
           // reads entry_inputs for calculation).
           //  - preset height/depth: from component_library at save time
           //  - user height/depth: carried on the measurement (freestyle/volume_3d)
-          let entryInputs: OffcutEntryProvenance & { height_m?: number | null; depth_m?: number | null; source?: 'preset' | 'user'; value_basis?: string; corner_count?: number; source_geometry_id?: string } | null = null;
+        let entryInputs: OffcutEntryProvenance & { height_m?: number | null; depth_m?: number | null; source?: 'preset' | 'user'; value_basis?: string; corner_count?: number; source_geometry_id?: string; shared_from?: string } | null = null;
           if (m.type === 'multi_lineal_lxh' && heightMm && heightM > 0) {
             entryInputs = { height_m: heightM, source: 'preset' };
           } else if (m.type === 'area' && libComp.measurement_type === 'volume' && depthM) {
@@ -381,6 +382,13 @@ export async function saveTakeoffMeasurements(
           const pitchPreApplied = !hasLiveBasis && ei?.pitch_applied === true;
           // basis 'plan' explicitly opts out of pitch entirely.
           const basisPlanOnly = hasLiveBasis && ei!.value_basis === 'plan';
+
+          // Shared measurements are deliberately non-geometric, but keep the
+          // marker in entry_inputs so re-entry/offcut snapshots continue to
+          // distinguish them from unfinished canvas lines.
+          if (m.entryInputs?.shared_from) {
+            entryInputs = { ...(entryInputs ?? {}), shared_from: m.entryInputs.shared_from };
+          }
 
           const result = applyPitchAndWaste(
             metricValue,

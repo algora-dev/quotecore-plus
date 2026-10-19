@@ -28,6 +28,7 @@ export function cloneTakeoffSnapshot(s: QuoteCoreSnapshot): QuoteCoreSnapshot {
     components:s.components.map(c=>({id:c.id,name:c.name,...(c.semanticType!==undefined?{semanticType:c.semanticType}:{}),...(c.is_system!==undefined?{is_system:c.is_system}:{})})),
     componentMeasurements:s.componentMeasurements.map(g=>({componentId:g.componentId,measurements:g.measurements.map(m=>({
       id:m.id,type:m.type,...(m.points?{points:m.points.map(point)}:{}),visible:m.visible!==false,fromPageId:m.fromPageId??null,quoteRoofAreaId:m.quoteRoofAreaId??null,
+      ...(m.entryInputs?.shared_from ? { entryInputs: { shared_from: m.entryInputs.shared_from } } : {}),
       ...(m.geometryKind!==undefined?{geometryKind:m.geometryKind}:{}),...(m.aiOrigin!==undefined?{aiOrigin:m.aiOrigin}:{}),...(m.source!==undefined?{source:m.source}:{}),...(m.semanticType!==undefined?{semanticType:m.semanticType}:{})}))})),
     ...(s.semanticByComponentId?{semanticByComponentId:{...s.semanticByComponentId}}:{}),...(s.selectedOutlineIds?{selectedOutlineIds:[...s.selectedOutlineIds]}:{})};
   if(JSON.stringify(copy).length>3_000_000)throw new Error('This live takeoff exceeds the 3 MB snapshot limit. Select a smaller roof scope.');

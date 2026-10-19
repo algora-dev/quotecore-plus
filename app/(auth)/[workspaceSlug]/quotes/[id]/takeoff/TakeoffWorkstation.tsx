@@ -198,6 +198,7 @@ interface ComponentMeasurement {
     offcut_layout_id?: string;
     offcut_source_revision?: string;
     offcut_faces_revision?: string;
+    shared_from?: string;
     /** Corner-derived point entries (2026-09-30): count snapshot at attach
      *  time - verification reference, the value IS the count. */
     corner_count?: number;
@@ -2566,6 +2567,7 @@ export function TakeoffWorkstation({
       id: `shared-${crypto.randomUUID()}`,
       type: kind === 'area' ? 'area' : 'line', value, points: [], visible: true, canvasObjects: [],
       fromPageId: currentPageIdRef.current, quoteRoofAreaId: activeAreaIdRef.current ?? null,
+      entryInputs: { shared_from: option.id },
     };
     setComponentMeasurements(groups => {
       const existing = groups.find(g => g.componentId === componentId);

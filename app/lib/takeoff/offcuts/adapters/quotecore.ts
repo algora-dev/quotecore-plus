@@ -8,6 +8,7 @@ export interface SnapshotScope { fromPageId?: string | null; quoteRoofAreaId?: s
 export interface SnapshotMeasurement extends SnapshotScope {
   id: string; type: string; points?: Point[]; visible?: boolean;
   aiOrigin?: boolean; source?: string; semanticType?: BoundaryMeaning;
+  entryInputs?: { shared_from?: string } | null;
   /** For host-specific measurement arithmetic; geometry role is explicit. */
   geometryKind?: 'polyline'|'polygon'|'point';
 }
@@ -122,7 +123,8 @@ export function fromQuoteCore(s: QuoteCoreSnapshot): AdaptedTakeoff {
         source:m.source??(m.aiOrigin===true?'ai':m.aiOrigin===false?'manual':'unspecified'),visible:m.visible!==false,
         pageId:m.fromPageId??null,areaScopeId:m.quoteRoofAreaId??null,...resolved,points:(m.points??[]).map(p=>({...p})),included:false,reason:'',topologyEdgeIds:[]};
       audit.lines.push(row);audit.counts.measurementRows++;
-      row.reason = excludeScope(m) ?? (m.visible===false?'hidden':!isPlanLineMeasurement(m)?'not-plan-line':resolved.semanticType==='ignore'?'explicitly-not-roof-boundary':!m.points||m.points.length<2?'incomplete-points':'included');
+      const isSharedReuse = Boolean(m.entryInputs?.shared_from);
+      row.reason = excludeScope(m) ?? (isSharedReuse?'shared-reuse':m.visible===false?'hidden':!isPlanLineMeasurement(m)?'not-plan-line':resolved.semanticType==='ignore'?'explicitly-not-roof-boundary':!m.points||m.points.length<2?'incomplete-points':'included');
       if(row.reason!=='included') {
         audit.counts.excludedRows++;
         if(row.reason==='incomplete-points')issues.push({severity:'error',code:'INCOMPLETE_LIVE_LINE',objectId:m.id,message:`Finish or remove the incomplete line in “${name}”, then reopen Find offcuts.`});

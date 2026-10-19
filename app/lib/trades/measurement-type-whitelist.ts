@@ -128,6 +128,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',     // legacy alias
     'fixed',
     'hours_days',   // hourly / day-rate labor
+    'quantity_by_spacing',
   ]),
   // Electrical: lineal cable runs and curved paths are primary; count-based
   // for fittings/outlets/panels; area for lighting or solar coverage; hours
@@ -146,6 +147,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',     // legacy alias
     'fixed',
     'hours_days',   // hourly / day-rate labor
+    'quantity_by_spacing',
   ]),
   // Landscaping: full measurement palette - paths, retaining walls, gardens,
   // driveways, decks, planting, fencing. Pitch is shown as "Angle / Slope"
@@ -167,6 +169,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',
     'fixed',
     'hours_days',
+    'quantity_by_spacing',
   ]),
   // Flooring: area-dominant (floor coverings) with lineal trims/edges and
   // volume for screed/levelling. No wall-height types, no pitch.
@@ -183,6 +186,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',
     'fixed',
     'hours_days',
+    'quantity_by_spacing',
   ]),
   // Tiling: full area palette including wall tiling (multi_lineal_lxh + lxh
   // for splashbacks/showers). No volume, no pitch.
@@ -201,6 +205,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',
     'fixed',
     'hours_days',
+    'quantity_by_spacing',
   ]),
   // Foundations: area for slab, lineal for footings/beams, volume for
   // concrete/excavation, count for piers/pads. No wall-height, no pitch.
@@ -217,6 +222,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',
     'fixed',
     'hours_days',
+    'quantity_by_spacing',
   ]),
   // Insulation: area-dominant (ceiling/floor batts, sheets) plus wall area
   // types for wall insulation. Pitch supported (rafter only) for loft and
@@ -235,6 +241,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',
     'fixed',
     'hours_days',
+    'quantity_by_spacing',
   ]),
   // Painting: area-dominant with wall-area types for plan-view takeoff.
   // Lineal for trims/skirtings/architraves. No volume, no pitch.
@@ -253,6 +260,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',
     'fixed',
     'hours_days',
+    'quantity_by_spacing',
   ]),
   // Fencing: lineal-dominant with area for paved zones and wall-area types
   // for panel area when needed. No volume, no pitch.
@@ -271,6 +279,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',
     'fixed',
     'hours_days',
+    'quantity_by_spacing',
   ]),
   // Concrete: area + volume primary (slabs, pours), lineal for kerbs/edges/
   // joints/sawn cuts. Pitch shown as "Slope / Pitch" for slab fall to drainage
@@ -288,6 +297,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'quantity',
     'fixed',
     'hours_days',
+    'quantity_by_spacing',
   ]),
   // Construction (umbrella): full measurement palette like generic - covers
   // any general construction job mixing multiple disciplines. Pitch off at
@@ -309,6 +319,7 @@ export const TRADE_ALLOWED_MEASUREMENT_TYPES: Readonly<Record<Trade, ReadonlySet
     'count',
     'quantity',
     'fixed',
+    'quantity_by_spacing',
   ]),
 };
 
