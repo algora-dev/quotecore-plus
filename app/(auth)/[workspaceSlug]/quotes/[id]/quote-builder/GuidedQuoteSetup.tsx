@@ -15,6 +15,7 @@ import type {
   QuoteRoofAreaEntryRow,
   QuoteRoofAreaRow,
   QuoteRow,
+  QuoteSharedMeasurementRow,
 } from '@/app/lib/types';
 import { RoofAreaCard } from './RoofAreaCard';
 import { ExpandableComponent } from './ExpandableComponent';
@@ -56,6 +57,11 @@ interface Props {
   }) => Promise<void>;
   onCombineEntries?: (compId: string) => Promise<void>;
   onSplitEntries?: (compId: string) => Promise<void>;
+  /** Shared measurements (owner 2026-10-19): threaded to ExpandableComponent. */
+  sharedMeasurements?: QuoteSharedMeasurementRow[];
+  onShareMeasurements?: (mode: 'entry' | 'combined' | 'all', compId: string, entryIds: string[]) => Promise<void>;
+  onRemoveShared?: (id: string) => Promise<void>;
+  onApplyShared?: (compId: string, sharedId: string) => Promise<void>;
   onContinue: () => void;
 }
 
@@ -90,6 +96,10 @@ export function GuidedQuoteSetup({
   onUpdateComponent,
   onCombineEntries,
   onSplitEntries,
+  sharedMeasurements,
+  onShareMeasurements,
+  onRemoveShared,
+  onApplyShared,
   onContinue,
 }: Props) {
   const areaNameId = useId();
@@ -406,6 +416,10 @@ export function GuidedQuoteSetup({
                       onUpdateSettings={onUpdateComponent}
                       onCombineEntries={onCombineEntries}
                       onSplitEntries={onSplitEntries}
+                      sharedMeasurements={sharedMeasurements}
+                      onShareMeasurements={onShareMeasurements}
+                      onRemoveShared={onRemoveShared}
+                      onApplyShared={onApplyShared}
                       assistantFocusRequest={newComponentFocus?.id === component.id ? newComponentFocus.request : 0}
                       appearance="guided"
                     />
@@ -532,6 +546,10 @@ export function GuidedQuoteSetup({
                       onUpdateSettings={onUpdateComponent}
                       onCombineEntries={onCombineEntries}
                       onSplitEntries={onSplitEntries}
+                      sharedMeasurements={sharedMeasurements}
+                      onShareMeasurements={onShareMeasurements}
+                      onRemoveShared={onRemoveShared}
+                      onApplyShared={onApplyShared}
                       assistantFocusRequest={newComponentFocus?.id === component.id ? newComponentFocus.request : 0}
                       appearance="guided"
                     />

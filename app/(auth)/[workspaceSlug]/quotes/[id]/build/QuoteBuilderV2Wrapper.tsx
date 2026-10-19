@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { QuoteBuilder } from '../quote-builder';
-import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow } from '@/app/lib/types';
+import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, QuoteSharedMeasurementRow } from '@/app/lib/types';
 
 interface SupportingFile {
   storagePath: string;
@@ -27,6 +27,7 @@ interface Props {
   initialRoofAreaEntries: Record<string, QuoteRoofAreaEntryRow[]>;
   initialComponents: QuoteComponentRow[];
   initialEntries: Record<string, QuoteComponentEntryRow[]>;
+  initialSharedMeasurements?: QuoteSharedMeasurementRow[];
   libraryComponents: ComponentLibraryRow[];
   workspaceSlug: string;
   companyDefaultCurrency: string;

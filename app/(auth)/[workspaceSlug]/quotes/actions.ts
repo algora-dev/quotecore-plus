@@ -8,7 +8,7 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import { calculateQuantityBySpacing, calculateRequiredAreaUnits } from '@/app/lib/pricing/quantityCalculations';
-import type { InputMode, WasteType, PitchType } from '@/app/lib/types';
+import type { InputMode, WasteType, PitchType, QuoteSharedMeasurementRow } from '@/app/lib/types';
 import { verifyQuoteOwnership, verifyRoofAreaOwnership, verifyComponentOwnership } from '@/app/lib/auth/ownership';
 import { seedQuoteTaxesOnCreate } from '@/app/lib/taxes/seed';
 import { createAdminClient } from '@/app/lib/supabase/admin';
@@ -1034,7 +1034,7 @@ export async function updateComponentSettings(id: string, updates: { input_mode?
   // causes expanded components to collapse (useState resets on remount).
 }
 
-export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; entryHeightM?: number | null; entryDepthM?: number | null }) {
+export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; entryHeightM?: number | null; entryDepthM?: number | null; sharedFrom?: { id: string; label: string } }) {
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
   await verifyComponentOwnership(supabase, quoteComponentId, profile.company_id);
@@ -1046,7 +1046,7 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
   // entry row. User-entered H/D come via options (dims / area+depth /
   // freestyle modes); preset H/D are captured below when the multiplier is
   // applied. Nothing reads entry_inputs for calculation.
-  let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user' } | null = null;
+  let entryInputs: { height_m?: number; depth_m?: number; source?: 'preset' | 'user'; shared_from?: string; shared_label?: string } | null = null;
   if (options?.entryHeightM && options.entryHeightM > 0) {
     entryInputs = { height_m: options.entryHeightM, source: 'user' };
   } else if (options?.entryDepthM && options.entryDepthM > 0) {
@@ -1092,6 +1092,12 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
     }
   }
 
+  // Builder shared measurements (owner 2026-10-19): stamp the applied entry
+  // with its source share so the row shows provenance after save/reload.
+  if (options?.sharedFrom) {
+    entryInputs = { ...(entryInputs ?? {}), shared_from: options.sharedFrom.id, shared_label: options.sharedFrom.label };
+  }
+
   // Prefer the quote snapshot so an existing quote keeps the spacing rule it
   // was built with even if the reusable library component changes later.
   const compCalc = comp as unknown as Record<string, unknown>;
@@ -1133,6 +1139,53 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
 
 export async function useRoofAreaTotal(quoteComponentId: string, roofAreaSqm: number, areaPitch: number | null) {
   return addComponentEntry(quoteComponentId, roofAreaSqm, areaPitch);
+}
+
+/** Quote-builder shared measurements (owner directive 2026-10-19): persist a
+ *  share offer ("fictitious measurement") quote-scoped so any eligible
+ *  component can attach it in one click. value is a metric snapshot
+ *  (lineal = metres, area = m2). Table postdates the generated Database
+ *  types, so the query builder is cast locally (TYPES RULE: splice-only). */
+export async function createSharedMeasurement(quoteId: string, input: {
+  kind: 'area' | 'lineal';
+  mode: 'entry' | 'combined' | 'all';
+  label: string;
+  value: number;
+  sourceComponentId: string;
+  sourceComponentName: string;
+  sourceEntryIds: string[];
+}) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
+  const value = Number(input.value);
+  if (!Number.isFinite(value) || value <= 0) throw new Error('Shared measurement value must be greater than zero.');
+  // The scoped cast keeps the new table usable without regenerating the
+  // stale Database types; every column is server-supplied or validated here.
+  const sharedTable = (supabase as unknown as { from: (table: string) => any }).from('quote_shared_measurements');
+  const { data, error } = await sharedTable.insert({
+    quote_id: quoteId,
+    kind: input.kind,
+    mode: input.mode,
+    label: input.label.slice(0, 120),
+    value,
+    source_component_id: input.sourceComponentId,
+    source_component_name: input.sourceComponentName.slice(0, 120),
+    source_entry_ids: input.sourceEntryIds,
+  }).select().single();
+  if (error) throw new Error(error.message);
+  return data as QuoteSharedMeasurementRow;
+}
+
+export async function removeSharedMeasurement(id: string) {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+  const sharedTable = (supabase as unknown as { from: (table: string) => any }).from('quote_shared_measurements');
+  const { data: existing } = await sharedTable.select('quote_id').eq('id', id).maybeSingle();
+  if (!existing) return;
+  await verifyQuoteOwnership(supabase, existing.quote_id as string, profile.company_id);
+  const { error } = await sharedTable.delete().eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
 export async function removeComponentEntry(entryId: string, quoteComponentId: string) {

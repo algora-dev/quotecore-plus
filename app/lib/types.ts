@@ -296,6 +296,21 @@ export type QuoteRoofAreaRow = Tables<'quote_roof_areas'>;
 export type QuoteRoofAreaEntryRow = Tables<'quote_roof_area_entries'>;
 export type QuoteComponentRow = Tables<'quote_components'>;
 export type QuoteComponentEntryRow = Tables<'quote_component_entries'>;
+/** Quote-builder shared measurements (owner directive 2026-10-19): persistent
+ *  share offers. Hand-written - the table postdates the generated types
+ *  (TYPES RULE: splice-only, never regen). value is metric (lineal = metres). */
+export interface QuoteSharedMeasurementRow {
+  id: string;
+  quote_id: string;
+  kind: 'area' | 'lineal';
+  mode: 'entry' | 'combined' | 'all';
+  label: string;
+  value: number;
+  source_component_id: string;
+  source_component_name: string;
+  source_entry_ids: string[];
+  created_at: string;
+}
 export type CustomerQuoteLineRow = Tables<'customer_quote_lines'>;
 export type CustomerQuoteTemplateRow = Tables<'customer_quote_templates'>;
 

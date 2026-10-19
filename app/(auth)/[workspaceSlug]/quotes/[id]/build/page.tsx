@@ -75,6 +75,27 @@ export default async function QuoteBuilderV2Page({
     .eq('quote_id', id);
   const hasExistingTakeoff = (takeoffMeasurementCount ?? 0) > 0;
 
+  // Shared measurements (owner 2026-10-19): quote-scoped share offers created
+  // in the builder component step. Table postdates the generated types; the
+  // query is cast to the hand-written row shape.
+  const { data: sharedMeasurementsRaw } = await supabase
+    .from('quote_shared_measurements' as never)
+    .select('id, quote_id, kind, mode, label, value, source_component_id, source_component_name, source_entry_ids, created_at')
+    .eq('quote_id', id as never)
+    .order('created_at', { ascending: true });
+  const sharedMeasurements = ((sharedMeasurementsRaw ?? []) as unknown as Array<Record<string, unknown>>).map(row => ({
+    id: String(row.id),
+    quote_id: String(row.quote_id),
+    kind: row.kind as 'area' | 'lineal',
+    mode: row.mode as 'entry' | 'combined' | 'all',
+    label: String(row.label ?? ''),
+    value: Number(row.value ?? 0),
+    source_component_id: String(row.source_component_id),
+    source_component_name: String(row.source_component_name ?? ''),
+    source_entry_ids: Array.isArray(row.source_entry_ids) ? (row.source_entry_ids as string[]) : [],
+    created_at: String(row.created_at ?? ''),
+  }));
+
   // All uploaded plans for thumbnail strip (2026-07-06):
   // Fetch takeoff_pages with their images + which roof areas have entries on each page.
   const { data: takeoffPagesRaw } = await supabase
@@ -164,6 +185,7 @@ export default async function QuoteBuilderV2Page({
       initialRoofAreaEntries={roofAreaEntries}
       initialComponents={components}
       initialEntries={entries}
+      initialSharedMeasurements={sharedMeasurements}
       libraryComponents={libraryComponents.filter(c => c.is_active !== false)}
       workspaceSlug={workspaceSlug}
       companyDefaultCurrency={company?.default_currency || 'GBP'}

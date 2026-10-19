@@ -10,11 +10,12 @@ import { formatArea, formatLinear, formatVolume, getUnitLabel } from '@/app/lib/
 import { formatLinealMetres } from '@/app/lib/measurements/componentDisplay';
 import { formatComponentQuantity } from '@/app/lib/measurements/componentDisplay';
 import { formatCurrency } from '@/app/lib/currency/currencies';
-import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, QuoteComponentEntryRow, InputMode } from '@/app/lib/types';
+import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, QuoteComponentEntryRow, InputMode, QuoteSharedMeasurementRow } from '@/app/lib/types';
 import type { MeasurementSystem } from '@/app/lib/types';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { PitchInput } from '@/app/components/PitchInput';
 import { CreateSmartComponentModal } from '@/app/components/CreateSmartComponentModal';
+import { SharedMeasurementsModal } from '../takeoff/modals/SharedMeasurementsModal';
 import { formatQuantity, formatPricedQuantity } from './helpers';
 
 export function ExpandableComponent({
@@ -31,6 +32,10 @@ export function ExpandableComponent({
   onUpdateSettings,
   onCombineEntries,
   onSplitEntries,
+  sharedMeasurements,
+  onShareMeasurements,
+  onRemoveShared,
+  onApplyShared,
   copilotId,
   assistantFocusRequest = 0,
   appearance = 'default',
@@ -56,6 +61,12 @@ export function ExpandableComponent({
   ) => Promise<void>;
   onCombineEntries?: (compId: string) => Promise<void>;
   onSplitEntries?: (compId: string) => Promise<void>;
+  /** Shared measurements (owner 2026-10-19): lineal offers persisted on the
+   *  quote; share / reuse / remove are wired in QuoteBuilder. */
+  sharedMeasurements?: QuoteSharedMeasurementRow[];
+  onShareMeasurements?: (mode: 'entry' | 'combined' | 'all', compId: string, entryIds: string[]) => Promise<void>;
+  onRemoveShared?: (id: string) => Promise<void>;
+  onApplyShared?: (compId: string, sharedId: string) => Promise<void>;
   copilotId?: string;
   assistantFocusRequest?: number;
   appearance?: 'default' | 'guided';
@@ -140,6 +151,15 @@ export function ExpandableComponent({
   const spacingMeasuredLength = isSpacing ? compEntries.reduce((sum, entry) => sum + Number(entry.raw_value ?? 0), 0) : 0;
   const assignedArea = roofAreas.find(a => a.id === comp.quote_roof_area_id);
   const areaPitch = assignedArea?.calc_pitch_degrees ?? 0;
+  // Shared lineal measurements (owner directive 2026-10-19): pure lineal
+  // comps (LINEAR_LIKE_TYPES) and quantity_by_spacing store entries as
+  // lineal metres, so they can share AND consume shared offers in one click.
+  // Lineal-cover comps store m2 and LxH variants store area - excluded v1.
+  const linealShareEligible = (isLinearLike && !hasLinealCover) || isSpacing;
+  const canShareLineal = linealShareEligible && compEntries.length > 0 && !!onShareMeasurements;
+  const sharedLinealOffers = (sharedMeasurements ?? []).filter(o => o.kind === 'lineal' && o.source_component_id !== comp.id);
+  const canReuseSharedLineal = linealShareEligible && sharedLinealOffers.length > 0 && !!onApplyShared;
+  const [shareOpen, setShareOpen] = useState(false);
 
   // Helper to display values with correct units
   function displayValue(value: number): string {
@@ -410,6 +430,40 @@ export function ExpandableComponent({
             </QcButton>
           )}
 
+          {/* Shared lineal measurements (owner 2026-10-19): share this
+              component's lineal entries; reuse another component's shared
+              figure in one click. Applied as a normal entry - the target's
+              pitch/waste/spacing maths applies exactly like a typed value. */}
+          {(canShareLineal || canReuseSharedLineal) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {canShareLineal && (
+                <QcButton onClick={() => setShareOpen(true)} size="sm" variant="ghost">
+                  ⇗ Share measurements
+                </QcButton>
+              )}
+              {canReuseSharedLineal && (
+                <QcSelect
+                  aria-label={`Reuse a shared measurement for ${comp.name}`}
+                  defaultValue=""
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (v) {
+                      void onApplyShared?.(comp.id, v);
+                      e.target.value = '';
+                    }
+                  }}
+                >
+                  <option value="">Reuse a shared measurement…</option>
+                  {sharedLinealOffers.map(o => (
+                    <option key={o.id} value={o.id}>
+                      {o.source_component_name} · {o.mode === 'all' ? 'total' : o.mode === 'combined' ? 'combined' : 'measurement'} · {formatLinear(Number(o.value), quote.measurement_system)}
+                    </option>
+                  ))}
+                </QcSelect>
+              )}
+            </div>
+          )}
+
           {compEntries.map((entry, idx) => {
             const isCombined = (entry as unknown as { is_combined?: boolean }).is_combined === true;
             const sourceCount = isCombined
@@ -426,6 +480,14 @@ export function ExpandableComponent({
                     combined from {sourceCount}
                   </span>
                 )}
+                {!isCombined && (() => {
+                  // Shared-measurement provenance (owner 2026-10-19): rows
+                  // applied from a shared offer carry their source label.
+                  const sf = (entry as unknown as { entry_inputs?: { shared_from?: string; shared_label?: string } | null }).entry_inputs;
+                  return sf?.shared_from ? (
+                    <span className="qb-combined-label">↳ shared{sf.shared_label ? ` · ${sf.shared_label}` : ''}</span>
+                  ) : null;
+                })()}
                 {!isCombined && (() => {
                   // v8 (2026-07-08): read-only input reference display. Shows
                   // the values used to produce this entry's final value -
@@ -856,6 +918,28 @@ export function ExpandableComponent({
             </QcButton>
           )}
         </div>
+      )}
+
+      {shareOpen && (
+        <SharedMeasurementsModal
+          componentName={comp.name}
+          kind="lineal"
+          unitLabel={getUnitLabel('lineal', quote.measurement_system)}
+          entries={compEntries.map((e, i) => ({ id: e.id, label: `Entry #${i + 1}`, value: Number(e.raw_value ?? 0) }))}
+          existing={(sharedMeasurements ?? []).filter(o => o.source_component_id === comp.id).map(o => ({
+            id: o.id,
+            sourceComponentId: o.source_component_id,
+            sourceComponentName: o.source_component_name,
+            kind: 'lineal' as const,
+            mode: o.mode,
+            measurementIds: o.source_entry_ids ?? [],
+            value: Number(o.value),
+          }))}
+          valueForOption={option => Number(option.value)}
+          onShare={(mode, ids) => { void onShareMeasurements?.(mode, comp.id, ids); }}
+          onRemove={id => { void onRemoveShared?.(id); }}
+          onClose={() => setShareOpen(false)}
+        />
       )}
     </div>
   );

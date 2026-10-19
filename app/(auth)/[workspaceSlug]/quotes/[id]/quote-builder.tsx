@@ -3,7 +3,7 @@ import { QuoteJourneyContext } from '@/app/components/quote-entry/QuoteJourneyCo
 import { useState, useRef, useEffect, useId, type ReactNode, Fragment } from 'react';
 import Link from 'next/link';
 import { COMPONENT_FOCUS_EVENT, componentFocusId } from '@/app/lib/smart-assistant/v2/component-focus';
-import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, addQuoteComponentsBulk, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries } from '../actions';
+import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, addQuoteComponentsBulk, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries, createSharedMeasurement, removeSharedMeasurement } from '../actions';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
 import { entryLabel, addMoreLabel, measurementTypeLabel } from '@/app/lib/types';
@@ -19,7 +19,7 @@ import {
 } from '@/app/lib/measurements/conversions';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { formatArea, formatLinear, formatVolume, getUnitLabel } from '@/app/lib/measurements/displayHelpers';
-import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode } from '@/app/lib/types';
+import type { QuoteRow, QuoteRoofAreaRow, QuoteRoofAreaEntryRow, QuoteComponentRow, QuoteComponentEntryRow, ComponentLibraryRow, InputMode, QuoteSharedMeasurementRow } from '@/app/lib/types';
 // MeasurementSystemToggle removed: a quote's measurement system is locked at
 // creation time and cannot be changed afterwards (see
 // QuoteDetailsForm + convertQuoteMeasurementSystem).
@@ -64,6 +64,7 @@ interface Props {
   initialRoofAreaEntries: Record<string, QuoteRoofAreaEntryRow[]>;
   initialComponents: QuoteComponentRow[];
   initialEntries: Record<string, QuoteComponentEntryRow[]>;
+  initialSharedMeasurements?: QuoteSharedMeasurementRow[];
   libraryComponents: ComponentLibraryRow[];
   workspaceSlug: string;
   companyDefaultCurrency: string;
@@ -91,6 +92,7 @@ export function QuoteBuilder({
   initialRoofAreaEntries,
   initialComponents,
   initialEntries,
+  initialSharedMeasurements,
   libraryComponents,
   workspaceSlug,
   companyDefaultCurrency,
@@ -155,6 +157,9 @@ export function QuoteBuilder({
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
   const [components, setComponents] = useState(initialComponents);
   const [entries, setEntries] = useState(initialEntries);
+  // Shared measurements (owner 2026-10-19): persistent quote-scoped share
+  // offers - any eligible lineal component can reuse them in one click.
+  const [sharedMeasurements, setSharedMeasurements] = useState<QuoteSharedMeasurementRow[]>(initialSharedMeasurements ?? []);
   // Assistant navigation only reveals an already-loaded component. It never
   // mutates data or turns a card/navigation event into approval.
   const [assistantFocus, setAssistantFocus] = useState<{ id: string; request: number } | null>(null);
@@ -435,6 +440,56 @@ export function QuoteBuilder({
     // action is a larger change; suppress here is the lower-risk path.
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const entry = await useRoofAreaTotal(compId, roofAreaSqm, null);
+    const totals = (entry as { componentTotals?: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number; required_units: number | null } }).componentTotals;
+    setEntries(prev => ({ ...prev, [compId]: [...(prev[compId] ?? []), entry] }));
+    setComponents(prev => prev.map(c => c.id === compId ? {
+      ...c,
+      final_quantity: totals?.final_quantity ?? c.final_quantity,
+      priced_quantity: totals ? totals.priced_quantity : c.priced_quantity,
+      material_cost: totals?.material_cost ?? c.material_cost,
+      labour_cost: totals?.labour_cost ?? c.labour_cost,
+      required_units: totals ? totals.required_units : (c as typeof c & { required_units?: number | null }).required_units,
+    } : c));
+  }
+
+  /** Shared measurements (owner directive 2026-10-19): share one /
+   *  combined / all entries of a lineal component as a persistent
+   *  quote-scoped offer (snapshot in metric metres). */
+  async function handleShareMeasurements(mode: 'entry' | 'combined' | 'all', compId: string, entryIds: string[]) {
+    const comp = components.find(c => c.id === compId);
+    if (!comp) return;
+    const compEntries = entries[compId] ?? [];
+    const selected = mode === 'all' ? compEntries : compEntries.filter(e => entryIds.includes(e.id));
+    if (!selected.length) return;
+    const value = selected.reduce((sum, e) => sum + Number(e.raw_value ?? 0), 0);
+    if (!(value > 0)) return;
+    const created = await createSharedMeasurement(quote.id, {
+      kind: 'lineal',
+      mode,
+      label: comp.name,
+      value,
+      sourceComponentId: compId,
+      sourceComponentName: comp.name,
+      sourceEntryIds: selected.map(e => e.id),
+    });
+    setSharedMeasurements(prev => [...prev, created]);
+  }
+
+  async function handleRemoveShared(id: string) {
+    await removeSharedMeasurement(id);
+    setSharedMeasurements(prev => prev.filter(o => o.id !== id));
+  }
+
+  /** Apply a shared offer as a normal entry - the target component's own
+   *  pitch/waste/spacing maths applies, exactly like a typed value. */
+  async function handleApplyShared(compId: string, sharedId: string) {
+    const shared = sharedMeasurements.find(o => o.id === sharedId);
+    const comp = components.find(c => c.id === compId);
+    if (!shared || !comp) return;
+    const areaPitch = comp.quote_roof_area_id
+      ? roofAreas.find(a => a.id === comp.quote_roof_area_id)?.calc_pitch_degrees ?? null
+      : null;
+    const entry = await addComponentEntry(compId, Number(shared.value), areaPitch, { sharedFrom: { id: shared.id, label: shared.source_component_name } });
     const totals = (entry as { componentTotals?: { final_quantity: number; priced_quantity: number | null; material_cost: number; labour_cost: number; required_units: number | null } }).componentTotals;
     setEntries(prev => ({ ...prev, [compId]: [...(prev[compId] ?? []), entry] }));
     setComponents(prev => prev.map(c => c.id === compId ? {
@@ -797,6 +852,10 @@ export function QuoteBuilder({
           onUpdateComponent={handleUpdateCompSettings}
           onCombineEntries={handleCombineEntries}
           onSplitEntries={handleSplitEntries}
+          sharedMeasurements={sharedMeasurements}
+          onShareMeasurements={handleShareMeasurements}
+          onRemoveShared={handleRemoveShared}
+          onApplyShared={handleApplyShared}
           onContinue={() => setPhase('extras')}
         />
       )}
@@ -880,6 +939,10 @@ export function QuoteBuilder({
                   onUpdateSettings={handleUpdateCompSettings}
                   onCombineEntries={handleCombineEntries}
                   onSplitEntries={handleSplitEntries}
+                  sharedMeasurements={sharedMeasurements}
+                  onShareMeasurements={handleShareMeasurements}
+                  onRemoveShared={handleRemoveShared}
+                  onApplyShared={handleApplyShared}
                   copilotId={idx === 0 ? 'quote-first-component' : undefined}
                 />
               ))}
@@ -923,6 +986,10 @@ export function QuoteBuilder({
                     onUpdateSettings={handleUpdateCompSettings}
                     onCombineEntries={handleCombineEntries}
                     onSplitEntries={handleSplitEntries}
+                    sharedMeasurements={sharedMeasurements}
+                    onShareMeasurements={handleShareMeasurements}
+                    onRemoveShared={handleRemoveShared}
+                    onApplyShared={handleApplyShared}
                     copilotId={areaIdx === 0 && compIdx === 0 ? 'quote-first-component' : undefined}
                   />
                 ))}
@@ -979,6 +1046,10 @@ export function QuoteBuilder({
                 onUpdateSettings={handleUpdateCompSettings}
                 onCombineEntries={handleCombineEntries}
                 onSplitEntries={handleSplitEntries}
+                sharedMeasurements={sharedMeasurements}
+                onShareMeasurements={handleShareMeasurements}
+                onRemoveShared={handleRemoveShared}
+                onApplyShared={handleApplyShared}
               />
             ))}
             <AddFromLibrary
