@@ -12,6 +12,7 @@ import { assistantExample, chapterOutcome, clampGuidePosition, demoSystemLabel, 
 import { demoJsonRequest, demoRequest, safeDemoHref } from '@/app/lib/demo/client-request';
 import { useDemoSession } from './useDemoSession';
 import { DemoUnitChoice } from './DemoUnitChoice';
+import { DemoInfoModal } from './DemoInfoModal';
 import './demo-experience.css';
 
 type Props = { workspaceSlug: string; sessionId: string; expiresAt: string; initialState: DemoGuideState };
@@ -28,7 +29,10 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const session = useDemoSession(sessionId, expiresAt, initialState);
   const { state, units, allowance, features, guidedQuote, expired, pending, syncError, refresh } = session;
   const [mounted, setMounted] = useState(false);
-  const [open, setOpen] = useState(initialState.mode === 'guided' || !initialState.welcomed);
+  // Owner 2026-10-19: on first landing the Demo Info modal replaces the
+  // helper's auto-opened welcome (fuller orientation + conversion CTAs); the
+  // helper only auto-opens for returning guided visitors.
+  const [open, setOpen] = useState(initialState.welcomed && initialState.mode === 'guided');
   const [error, setError] = useState('');
   const [resetOpen, setResetOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -45,6 +49,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
   const [copyStatus, setCopyStatus] = useState('');
   const [copying, setCopying] = useState(false);
   const [mobileNotice, setMobileNotice] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [quoteNotice, setQuoteNotice] = useState('');
   const quoteSeen = useRef<string | undefined>(undefined);
   const widget = useRef<HTMLElement>(null);
@@ -91,6 +96,13 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
     try { if (localStorage.getItem('qc-demo-mobile-notice') === '1') return; } catch { return; }
     setMobileNotice(true);
   }, []);
+  useEffect(() => {
+    // Owner 2026-10-19: auto-open the Demo Info modal once for first-visit
+    // sessions (render gates it behind the mobile notice and expiry). Any
+    // dismissal fires the explore welcome command, so it never nags on reload.
+    if (initialState.welcomed) return;
+    setInfoOpen(true);
+  }, [initialState.welcomed]);
   useEffect(() => {
     alive.current = true; setMounted(true);
     const component = (event: Event) => setSurface(readComponentSurface((event as CustomEvent).detail));
@@ -246,6 +258,10 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
 
   function showGuidance() { setOpen(true); requestAnimationFrame(() => widget.current?.focus({ preventScroll: true })); }
   function collapse() { setOpen(false); requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true })); }
+  function closeInfo() {
+    setInfoOpen(false);
+    if (!state.welcomed && !pending && !expired && !resetting) void runCommand({ action: 'welcome', mode: 'explore' });
+  }
   function beginReset() { setError(''); setResetUnits(units); setResetOpen(true); }
   async function reset() {
     if (resetBusy.current || !resetUnits) return;
@@ -332,7 +348,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
           if (delta[event.key] && widget.current) { event.preventDefault(); const rect = widget.current.getBoundingClientRect(); setPosition(clampGuidePosition({ x: rect.left + delta[event.key].x, y: rect.top + delta[event.key].y }, rect.width, rect.height, window.innerWidth, window.innerHeight)); }
         }}><span aria-hidden="true">⠿</span></button>
         <div><span>CHAPTER {chapterIndex + 1} OF 4</span><strong>{chapter.title}</strong></div><div className="qc-demo-menu"><button type="button" className="qc-demo-menu-btn" aria-haspopup="menu" aria-expanded={menuOpen} aria-label="Guide menu" onClick={() => setMenuOpen(v => !v)}><span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" /></button>
-        {menuOpen && <div className="qc-demo-menu-pop" role="menu"><QcLinkButton variant="ghost" size="sm" className="qc-demo-menu-item" role="menuitem" href={`/${workspaceSlug}/demo-guide`}>All chapters</QcLinkButton><button type="button" role="menuitem" className="qc-demo-menu-item" onClick={() => { setPosition(null); setMenuOpen(false); }}>Reset position</button></div>}</div>
+        {menuOpen && <div className="qc-demo-menu-pop" role="menu"><button type="button" role="menuitem" className="qc-demo-menu-item" onClick={() => { setMenuOpen(false); setInfoOpen(true); }}>Demo info</button><QcLinkButton variant="ghost" size="sm" className="qc-demo-menu-item" role="menuitem" href={`/${workspaceSlug}/demo-guide`}>All chapters</QcLinkButton><button type="button" role="menuitem" className="qc-demo-menu-item" onClick={() => { setPosition(null); setMenuOpen(false); }}>Reset position</button></div>}</div>
       </header>
       <div className="qc-demo-progress" role="progressbar" aria-label="Guide lessons handled" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.handled} aria-valuetext={`${progress.done} completed, ${progress.skipped} skipped, ${progress.total} total`}><i style={{ width: `${100 * progress.handled / progress.total}%` }} /></div>
       <button type="button" className="qc-demo-hide" onClick={collapse} aria-label="Hide the demo guide"><span>Hide guide</span><span aria-hidden="true">▾</span></button>
@@ -430,7 +446,18 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
         <p className="qc-demo-complete-note">Your saved work stays in this demo until it expires. Come back any time.</p>
       </div>
     </QcDialog>
+    <DemoInfoModal open={infoOpen && !expired && !resetting && !mobileNotice} welcomed={state.welcomed} pending={pending}
+      onRequestClose={closeInfo}
+      onBeginGuide={() => {
+        setInfoOpen(false);
+        if (!state.welcomed) void runCommand({ action: 'welcome', mode: 'guided' }, true);
+        else showGuidance();
+      }}
+      onExploreFirst={() => {
+        setInfoOpen(false);
+        if (!state.welcomed) void runCommand({ action: 'welcome', mode: 'explore' });
+      }} />
   </div>;
 
-  return <><div className="qc-demo-banner"><strong>DEMO</strong><span className="qc-demo-banner-context">{demoSystemLabel(units ?? undefined)}<span> · Until {expiryLabel}</span></span><button type="button" onClick={showGuidance} aria-expanded={showGuide} aria-controls="qc-demo-guide">Guide</button><button type="button" onClick={beginReset} disabled={expired || resetting}>Start fresh</button><a href={accountHref}>Get your own account</a></div>{mounted && createPortal(overlays, portalHost ?? document.body)}</>;
+  return <><div className="qc-demo-banner"><strong>DEMO</strong><span className="qc-demo-banner-context">{demoSystemLabel(units ?? undefined)}<span> · Until {expiryLabel}</span></span><button type="button" onClick={showGuidance} aria-expanded={showGuide} aria-controls="qc-demo-guide">Guide</button><button type="button" onClick={() => setInfoOpen(true)}>Demo info</button><button type="button" onClick={beginReset} disabled={expired || resetting}>Start fresh</button><a href={accountHref}>Get your own account</a></div>{mounted && createPortal(overlays, portalHost ?? document.body)}</>;
 }
