@@ -15,6 +15,7 @@ import {
   SplitFeature,
   type FaqItem,
 } from '@/components/marketing/page-v2/PageV2';
+import { workflowCallHref } from '@/lib/booking';
 import { buildBreadcrumbSchema, buildFaqSchema, buildPricingOffers } from '@/lib/schema';
 import { publicPricing } from '@/lib/public-pricing';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
@@ -98,7 +99,7 @@ export default function PricingPage() {
           <ConversionPaths items={[
             { title: 'Explore the interactive app demo', body: 'Open a prepared fictional roofing account, follow the guided examples and look around the wider workspace at your own pace.', href: '/demo', label: 'Explore the demo' },
             { title: 'Use the free tools', body: 'Try takeoff, measurement-to-pricing, calculators and document tools in your browser without creating a paid app account.', href: '/free-tools', label: 'Browse free tools' },
-            { title: 'Book a tailored 20-minute demo', body: 'Tell us how you currently measure and price work. We will share our screen and show a workflow that is relevant to your trade and questions.', href: 'https://calendly.com/quote-core-info/15-minute-meeting', label: 'Book a tailored demo' },
+            { title: 'Book a tailored 20-minute demo', body: 'Tell us how you currently measure and price work. We will share our screen and show a workflow that is relevant to your trade and questions.', href: workflowCallHref, label: 'Book a tailored demo' },
           ]} />
         </Container>
       </Section>

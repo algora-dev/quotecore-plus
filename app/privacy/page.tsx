@@ -25,7 +25,7 @@ const TOC = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <LegalPageShell title="Privacy Policy" effectiveDate="17 July 2026" toc={TOC}>
+    <LegalPageShell title="Privacy Policy" effectiveDate="19 October 2026" toc={TOC}>
       <p>
         This Privacy Policy explains how QuoteCore<span className="text-orange-500">+</span>{' '}
         (&ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;) handles your personal data when you use our
@@ -94,12 +94,12 @@ export default function PrivacyPolicyPage() {
         <li>Server logs from our hosting provider (Vercel) and our database (Supabase) which include request paths, IP addresses, and user-agent strings</li>
       </ul>
 
-      <h3>What we do NOT collect</h3>
+      <h3>Website analytics and marketing data</h3>
       <ul>
-        <li>We do not use analytics platforms (no Google Analytics, no Mixpanel, no Plausible)</li>
-        <li>We do not place advertising cookies</li>
-        <li>We do not embed social media tracking pixels</li>
-        <li>We do not buy or sell personal data, ever</li>
+        <li>With your consent, we use Google Analytics 4 and Microsoft Clarity to understand website usage and improve the experience</li>
+        <li>With your consent, we may use Meta Pixel and LinkedIn Insight Tag to measure marketing performance</li>
+        <li>These services may process device, browser, approximate location, page-view and interaction information as described in our <Link href="/cookie-policy">Cookie Policy</Link></li>
+        <li>We do not buy or sell personal data</li>
       </ul>
 
       <h2 id="why-we-use-it">Why we use it</h2>
@@ -108,6 +108,7 @@ export default function PrivacyPolicyPage() {
         <li><strong>To authenticate you</strong> - verify your password, manage 2FA, mint sessions</li>
         <li><strong>To send transactional emails</strong> - quote-accepted alerts, password reset links, security notifications. We do not send marketing email.</li>
         <li><strong>To keep your account safe</strong> - detect suspicious recovery attempts via the audit log, enforce cooldowns on sensitive actions</li>
+        <li><strong>To improve our website and measure marketing</strong> - where you consent to optional analytics or marketing technologies</li>
         <li><strong>To provide AI features</strong> - document parsing and smart component assistance via OpenAI&apos;s API. Data sent to OpenAI via API is not used to train their models.</li>
         <li><strong>To comply with the law</strong> - keep records we are legally required to retain</li>
       </ul>
@@ -118,24 +119,28 @@ export default function PrivacyPolicyPage() {
         <li><strong>Contract</strong> (Art. 6(1)(b)) - to deliver the Service you signed up for</li>
         <li><strong>Legitimate interests</strong> (Art. 6(1)(f)) - to keep the Service secure and working, and to defend against abuse</li>
         <li><strong>Legal obligation</strong> (Art. 6(1)(c)) - to retain records required by law</li>
-        <li><strong>Consent</strong> (Art. 6(1)(a)) - only where strictly required (e.g. specific opt-in features added in future)</li>
+        <li><strong>Consent</strong> (Art. 6(1)(a)) - for optional analytics and marketing technologies where consent is required</li>
       </ul>
 
       <h2 id="sharing">Who we share with</h2>
       <p>We share data with the following third-party processors. Each one is contractually bound to handle data only for the purpose we hire them for.</p>
       <ul>
         <li><strong>Supabase</strong> (database, authentication, file storage). Project hosted in Sydney, Australia (ap-southeast-2).</li>
-        <li><strong>Vercel</strong> (web hosting). Edge network with global presence; data may transit through US infrastructure.</li>
+        <li><strong>Vercel</strong> (web hosting and production web analytics). Edge network with global presence; data may transit through US infrastructure.</li>
+        <li><strong>Google Analytics 4</strong> (website analytics, where you consent).</li>
+        <li><strong>Microsoft Clarity</strong> (website analytics and session replay, where you consent).</li>
+        <li><strong>Meta</strong> and <strong>LinkedIn</strong> (marketing measurement, where you consent to marketing technologies).</li>
         <li><strong>Resend</strong> (transactional email delivery). US-based.</li>
         <li><strong>OpenAI</strong> (AI document parsing and assistance). US-based. API data is not used for model training.</li>
         <li><strong>Stripe</strong> (payment processing). US-based with global infrastructure.</li>
         <li><strong>Google</strong> (only if you choose Google sign-in). Used purely to verify your identity at sign-in.</li>
       </ul>
       <p>
-        We do not sell your data and we do not share it with advertisers,
-        analytics providers, or social platforms. We may disclose data if
-        compelled by a valid legal order, in which case we will tell you unless
-        legally barred from doing so.
+        We do not sell your personal data. Where you consent to optional analytics or
+        marketing technologies, website and device interaction data may be processed by
+        the providers listed above for analytics or marketing measurement, as described
+        in our <Link href="/cookie-policy">Cookie Policy</Link>. We may also disclose data
+        if compelled by a valid legal order, in which case we will tell you unless legally barred from doing so.
       </p>
 
       <h2 id="storage">Where data is stored</h2>
@@ -170,11 +175,11 @@ export default function PrivacyPolicyPage() {
         <li><strong>Withdraw consent</strong> - where we process based on consent, you can withdraw it at any time</li>
       </ul>
       <p>
-        If you live in California, you also have rights under the CCPA/CPRA
-        (right to know, right to delete, right to correct, right to opt-out of
-        sale or sharing). We do not sell or share data for advertising
-        purposes, so the opt-out is automatic, but the other rights apply and
-        you can exercise them via the same email.
+        If you live in California, you may also have rights under the CCPA/CPRA,
+        including rights to know, delete, correct, and opt out of certain sale or
+        sharing of personal information. We do not sell personal data. You can
+        reject or withdraw optional marketing technologies through cookie
+        preferences and exercise applicable privacy rights via the same email.
       </p>
       <p>
         If you live in Australia, your rights under the Privacy Act 1988 (Cth)

@@ -128,7 +128,7 @@ export default function SendingAndTrackingPage() {
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/demo" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-                Get started
+                Explore the interactive demo
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
                 All features
@@ -307,7 +307,7 @@ export default function SendingAndTrackingPage() {
             <h2 className="text-3xl font-semibold sm:text-4xl">Stop chasing. Start tracking.</h2>
             <p className="mt-4 text-base text-zinc-600">Send, track and follow up automatically. Explore the interactive demo or build your configuration in the pricing tool.</p>
             <a href="/demo" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
-              Get started
+              Explore the interactive demo
             </a>
           </div>
         </section>

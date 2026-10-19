@@ -183,10 +183,10 @@ export default function RoofingEstimatingSoftwarePage() {
 
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <a
-                href="/free-trial"
+                href="/demo"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
-                Get started with QuoteCore+
+                Explore the interactive demo
               </a>
             </div>
 
@@ -591,10 +591,10 @@ export default function RoofingEstimatingSoftwarePage() {
           </p>
 
           <a
-            href="/free-trial"
+            href="/demo"
             className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
           >
-            Get started with QuoteCore+
+            Explore the interactive demo
           </a>
 
           <p className="mt-4 text-sm text-zinc-500">

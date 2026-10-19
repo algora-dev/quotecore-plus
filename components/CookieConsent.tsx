@@ -17,23 +17,20 @@ function loadScript(id: string, inline: string) {
 
 function applyGtagConsent(analytics: boolean, marketing: boolean) {
   if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
-    if (analytics) {
-      (window as any).gtag("consent", "update", { analytics_storage: "granted" });
-    }
-    if (marketing) {
-      (window as any).gtag("consent", "update", {
-        ad_storage: "granted",
-        ad_user_data: "granted",
-        ad_personalization: "granted",
-      });
-    }
+    (window as any).gtag("consent", "update", {
+      analytics_storage: analytics ? "granted" : "denied",
+      ad_storage: marketing ? "granted" : "denied",
+      ad_user_data: marketing ? "granted" : "denied",
+      ad_personalization: marketing ? "granted" : "denied",
+    });
   }
 }
 
-function loadAnalyticsScripts() {
+function loadAnalyticsScripts(clarityProjectId: string) {
+  if (!/^[a-zA-Z0-9]+$/.test(clarityProjectId)) return;
   loadScript(
     "clarity-consent",
-    `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","wwl3bv888v");`
+    `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","${clarityProjectId}");`
   );
 }
 
@@ -64,7 +61,7 @@ const secondaryBtn =
 const cardRecipe =
   "rounded-2xl border border-white/[0.08] bg-[rgba(13,16,20,0.94)] shadow-[0_20px_56px_rgba(0,0,0,0.4)] backdrop-blur-[12px]";
 
-export default function CookieConsent() {
+export default function CookieConsent({ clarityProjectId }: { clarityProjectId: string }) {
   const [showBanner, setShowBanner] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [analyticsChecked, setAnalyticsChecked] = useState(true);
@@ -78,9 +75,9 @@ export default function CookieConsent() {
     }
     // Reapply saved consent on every page load
     applyGtagConsent(existing.analytics, existing.marketing);
-    if (existing.analytics) loadAnalyticsScripts();
+    if (existing.analytics) loadAnalyticsScripts(clarityProjectId);
     if (existing.marketing) loadMarketingScripts();
-  }, []);
+  }, [clarityProjectId]);
 
   useEffect(() => {
     // Allow footer/anywhere to trigger "Manage Cookie Preferences"
@@ -96,9 +93,22 @@ export default function CookieConsent() {
   }, []);
 
   function apply(analytics: boolean, marketing: boolean) {
+    const previous = getConsent();
     saveConsent(analytics, marketing);
     applyGtagConsent(analytics, marketing);
-    if (analytics) loadAnalyticsScripts();
+
+    // Optional scripts cannot all be reliably unloaded in-place. If a visitor
+    // revokes a category that was previously enabled, reload once after saving
+    // the new preference so the page restarts without that script category.
+    const revokedLoadedCategory = Boolean(
+      (previous?.analytics && !analytics) || (previous?.marketing && !marketing)
+    );
+    if (revokedLoadedCategory) {
+      window.location.reload();
+      return;
+    }
+
+    if (analytics) loadAnalyticsScripts(clarityProjectId);
     if (marketing) loadMarketingScripts();
     setShowBanner(false);
     setShowModal(false);

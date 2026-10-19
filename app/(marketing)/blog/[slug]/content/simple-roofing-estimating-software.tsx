@@ -383,7 +383,7 @@ export default function Post() {
         <Link href="/done-for-you-setup" className={link}><strong>See Done-For-You Setup</strong></Link>
       </p>
       <p>
-        <Link href="/contact" className={link}><strong>Book a 15-minute fit call</strong></Link>
+        <Link href="/contact" className={link}><strong>Book a 20-minute fit call</strong></Link>
       </p>
       <p>
         <strong>

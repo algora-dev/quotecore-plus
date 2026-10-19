@@ -6,6 +6,7 @@ import { buildBreadcrumbSchema, siteUrl } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import DemoCTACard from "@/components/DemoCTACard";
 
+import { workflowCallHref } from '@/lib/booking';
 export const metadata: Metadata = {
   title: "Done-for-you roofing quote service",
   description:
@@ -177,12 +178,12 @@ export default function ServicesPage() {
                   Get in touch
                 </a>
                 <a
-                  href="https://calendly.com/quote-core-info/15-minute-meeting"
+                  href={workflowCallHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="pill-shimmer inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 bg-white px-7 py-2.5 text-sm font-medium text-zinc-900 shadow-[0_10px_25px_rgba(15,23,42,0.05)] transition-colors duration-200 hover:border-[#FF6B35]/40 sm:w-44"
                 >
-                  Book a 15-min call
+                  Book a free 20-min call
                 </a>
               </div>
             </div>
@@ -265,12 +266,12 @@ export default function ServicesPage() {
                   Get in touch
                 </a>
                 <a
-                  href="https://calendly.com/quote-core-info/15-minute-meeting"
+                  href={workflowCallHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="pill-shimmer inline-flex min-h-11 w-full flex-1 items-center justify-center rounded-full border border-zinc-300 bg-white px-7 py-2.5 text-sm font-medium leading-none text-zinc-900 shadow-[0_10px_25px_rgba(15,23,42,0.05)] transition-colors duration-200 hover:border-[#FF6B35]/40 sm:min-h-14 sm:px-8 sm:py-3"
                 >
-                  Book a 15-min call
+                  Book a free 20-min call
                 </a>
               </div>
             </div>

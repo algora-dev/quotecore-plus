@@ -20,9 +20,9 @@ import {
 } from '@/components/marketing/page-v2/PageV2';
 import { buildBreadcrumbSchema, buildFaqSchema, buildSoftwareApplicationSchema } from '@/lib/schema';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
-import { safeBookingHref } from '@/components/marketing/home/homepage-config';
+import { workflowCallHref } from '@/lib/booking';
 
-const bookingHref = safeBookingHref(process.env.NEXT_PUBLIC_DFU_BOOKING_URL ?? '') || '/contact';
+const bookingHref = workflowCallHref;
 
 export const metadata: Metadata = {
   title: 'Offcut Optimiser: Long-Run Roofing Cut List & Offcut Planning | QuoteCore+',

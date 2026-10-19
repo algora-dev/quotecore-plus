@@ -6,7 +6,9 @@ import DemoCTACard from "@/components/DemoCTACard";
 import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import YouTubeLite from "@/components/YouTubeLite";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
+import { publicPricing } from "@/lib/public-pricing";
 
+import { workflowCallHref } from '@/lib/booking';
 export const metadata: Metadata = {
   // Root layout appends "| QuoteCore+" via template - do NOT add brand suffix here (avoids suffix doubling)
   title: "Contractor Estimating & Quoting Software for Construction",
@@ -125,7 +127,7 @@ const faqSchema = {
       name: "How much does construction quoting software cost?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "QuoteCore+ plans range from 19 to 59 dollars per month and all include the full feature set - digital takeoff, Roof Scan Assist, material ordering, invoicing, and Smart Components. Plans also include digital takeoff, Roof Scan Assist, material ordering, invoicing, and Smart Components. See our pricing page for current plan details.",
+        text: `QuoteCore+ uses configurable monthly pricing. Current public configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month, depending on workload and selected tools. See the pricing page for the current configuration and total before subscribing.`,
       },
     },
     {
@@ -391,19 +393,19 @@ export default function ConstructionQuotingSoftwarePage() {
 
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <a
-                href="/free-trial"
+                href="/demo"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
-                Get started
+                Explore the interactive demo
               </a>
 
               <a
-                href="https://calendly.com/quote-core-info/15-minute-meeting"
+                href={workflowCallHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="pill-shimmer inline-flex min-h-12 items-center justify-center rounded-full border border-zinc-300 bg-white px-8 py-3 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
               >
-                Book a 15-minute call
+                Book a free 20-minute call
               </a>
             </div>
 
@@ -611,7 +613,7 @@ export default function ConstructionQuotingSoftwarePage() {
             ))}
           </div>
           <div className="mt-10 text-center">
-            <a href="/free-trial" className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">Get started</a>
+            <a href="/demo" className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">Explore the interactive demo</a>
             <p className="mt-3 text-sm text-zinc-400">Free tools forever. Interactive demo available before subscribing.</p>
           </div>
         </section>
@@ -835,20 +837,20 @@ export default function ConstructionQuotingSoftwarePage() {
                         </a>{" "}
                         or book a free{" "}
                         <a
-                          href="https://calendly.com/quote-core-info/15-minute-meeting"
+                          href={workflowCallHref}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[#FF6B35] hover:underline"
                         >
-                          15-minute call with Shaun
+                          20-minute call
                         </a>
                         .
                       </>
                     ) : f.a === "cost-link" ? (
                       <>
-                        QuoteCore+ plans range from 19 to 59 dollars per month and all include the full feature set - digital takeoff, Roof Scan Assist, material ordering, invoicing, and Smart Components. Plans also include digital takeoff, Roof Scan Assist, material ordering, invoicing, and Smart Components. See our{" "}
+                        QuoteCore+ uses configurable monthly pricing. Current public configurations range from US${publicPricing.monthlyMin} to US${publicPricing.monthlyMax} per month, depending on workload and selected tools. See the{" "}
                         <a href="/pricing" className="text-[#FF6B35] hover:underline">pricing page</a>{" "}
-                        for current plan details.
+                        for the current configuration and total before subscribing.
                       </>
                     ) : f.a === "spreadsheets-link" ? (
                       <>
@@ -994,10 +996,10 @@ export default function ConstructionQuotingSoftwarePage() {
           </p>
 
           <a
-            href="/free-trial"
+            href="/demo"
             className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
           >
-            Get started
+            Explore the interactive demo
           </a>
 
           <p className="mt-4 text-sm text-zinc-400">Free tools forever. Interactive demo available before subscribing. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>

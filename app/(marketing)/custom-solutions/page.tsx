@@ -125,10 +125,10 @@ export default function CustomSolutionsPage() {
               </Link>
               <p className="mt-3 text-xs text-slate-500">
                 Or{' '}
-                <Link href="/free-trial" className="font-medium text-[#BD4A1A] hover:underline">
-                  get started
+                <Link href="/pricing" className="font-medium text-[#BD4A1A] hover:underline">
+                  build your configuration
                 </Link>{' '}
-                and try it with your own pricing.
+                around the features and usage you need.
               </p>
             </div>
           </div>
@@ -194,10 +194,10 @@ export default function CustomSolutionsPage() {
           </p>
           <div className="mt-6 flex flex-wrap gap-4">
             <Link
-              href="/free-trial"
+              href="/demo"
               className="inline-block rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.45)]"
             >
-              Try QuoteCore+ Free
+              Explore the interactive demo
             </Link>
             <Link
               href="/blog/custom-roofing-quoting-software"

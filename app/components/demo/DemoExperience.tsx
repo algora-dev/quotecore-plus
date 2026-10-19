@@ -13,6 +13,7 @@ import { demoJsonRequest, demoRequest, safeDemoHref } from '@/app/lib/demo/clien
 import { useDemoSession } from './useDemoSession';
 import { DemoUnitChoice } from './DemoUnitChoice';
 import { DemoInfoModal } from './DemoInfoModal';
+import { workflowCallHref } from '@/lib/booking';
 import './demo-experience.css';
 
 type Props = { workspaceSlug: string; sessionId: string; expiresAt: string; initialState: DemoGuideState };
@@ -425,7 +426,7 @@ export function DemoExperience({ workspaceSlug, sessionId, expiresAt, initialSta
         <QcLinkButton variant="primary" href="https://quote-core.com/pricing" target="_blank" rel="noopener noreferrer">Explore pricing</QcLinkButton>
         <div className="qc-demo-complete-row">
           <QcLinkButton variant="secondary" href="https://quote-core.com/done-for-you-setup" target="_blank" rel="noopener noreferrer">See Done-For-You packages</QcLinkButton>
-          <QcLinkButton variant="secondary" href="https://calendly.com/quote-core-info/meeting" target="_blank" rel="noopener noreferrer">Book a free 20-minute call</QcLinkButton>
+          <QcLinkButton variant="secondary" href={workflowCallHref} target="_blank" rel="noopener noreferrer">Book a free 20-minute call</QcLinkButton>
         </div>
         <QcButton variant="ghost" onClick={() => setCompleteOpen(false)}>Continue exploring the demo</QcButton>
       </div>}>

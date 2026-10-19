@@ -266,7 +266,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     category: 'comparisons',
     title: 'Best Quoting Software NZ 2026 - Pricing Compared',
     description:
-      'Six quoting tools for NZ tradies compared on NZD pricing, GST and features: QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact and Xero - from free to $149/mo, side by side.',
+      'Six quoting tools for NZ tradies compared on published pricing, GST handling and features: QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact and Xero, side by side.',
     date: '2026-07-15',
     lastModified: '2026-10-17',
   },

@@ -21,7 +21,7 @@ export default function CookiePolicyPage() {
 
       <div className="mx-auto max-w-3xl px-6 py-16 lg:px-8 lg:py-24">
         <h1 className="text-4xl font-semibold tracking-tight">Cookie Policy</h1>
-        <p className="mt-3 text-sm text-zinc-500">Last updated: 17 July 2026</p>
+        <p className="mt-3 text-sm text-zinc-500">Last updated: 19 October 2026</p>
 
         <div className="mt-6">
           <ManageCookiesButton />

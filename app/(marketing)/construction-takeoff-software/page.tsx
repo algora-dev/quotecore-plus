@@ -146,10 +146,10 @@ export default function ConstructionTakeoffSoftwarePage() {
                 Try the free takeoff tools
               </a>
               <a
-                href="/free-trial"
+                href="/demo"
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-zinc-300 bg-white px-8 py-3 text-base font-semibold text-zinc-900 transition-colors hover:border-[#FF6B35]/40"
               >
-                Get started
+                Explore the app demo
               </a>
             </div>
             <p className="mt-3 text-sm text-zinc-500">

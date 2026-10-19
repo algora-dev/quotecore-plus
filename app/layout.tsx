@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { CookieBanner } from "./components/CookieBanner";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
+import AttributionTracker from "@/components/AttributionTracker";
+import CookieConsent from "@/components/CookieConsent";
 import { PillShimmerScript } from "./components/PillShimmerScript";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { htmlLang } from "@/lib/seo/dual-domain";
@@ -95,11 +97,12 @@ export default async function RootLayout({
   const headerSet = await headers();
   const host = headerSet.get('host') || '';
   const hostname = host.split(':')[0];
-  // Owner 2026-10-17: Clarity tracks every production surface - marketing,
-  // app and demo subdomains. Preview/testing hosts stay out so replay data
-  // stays clean.
-  const clarityHosts = new Set(['quote-core.com', 'www.quote-core.com', 'app.quote-core.com', 'demo.quote-core.com']);
-  const clarityOn = clarityHosts.has(hostname);
+  // Phase 1: one analytics layer across the production marketing, app and
+  // demo surfaces. Preview/testing hosts stay out so GA/Clarity data remains
+  // usable for acquisition and conversion decisions.
+  const analyticsHosts = new Set(['quote-core.com', 'www.quote-core.com', 'app.quote-core.com', 'demo.quote-core.com']);
+  const analyticsOn = analyticsHosts.has(hostname);
+  const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || 'yjsu5zv8xr';
   const lang = htmlLang(host);
 
   return (
@@ -109,20 +112,48 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
-        {/* Global cookie notice. Self-hides once dismissed (localStorage). */}
-        <CookieBanner />
         {/* Drives the .pill-shimmer hover animation: one full sweep per
             pointerenter, plays to completion even if hover ends mid-sweep. */}
         <PillShimmerScript />
-        {/* Microsoft Clarity analytics (heatmaps / session replay) on
-            production hosts: quote-core.com, app. and demo. subdomains. */}
-        {clarityOn && <Script id="ms-clarity" strategy="afterInteractive">
-          {`(function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-          })(window, document, "clarity", "script", "yjsu5zv8xr");`}
-        </Script>}
+        {analyticsOn && <>
+          <Analytics />
+          <AttributionTracker />
+          <CookieConsent clarityProjectId={clarityProjectId} />
+          <Script id="ga4-consent-default" strategy="beforeInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              var qcAnalytics = false;
+              var qcMarketing = false;
+              try {
+                var qcMatch = document.cookie.split(';').map(function(v){ return v.trim(); }).find(function(v){ return v.indexOf('qc_cookie_consent=') === 0; });
+                if (qcMatch) {
+                  var qcPrefs = JSON.parse(decodeURIComponent(qcMatch.slice('qc_cookie_consent='.length)));
+                  qcAnalytics = qcPrefs && qcPrefs.analytics === true;
+                  qcMarketing = qcPrefs && qcPrefs.marketing === true;
+                }
+              } catch (e) {}
+              gtag('consent', 'default', {
+                analytics_storage: qcAnalytics ? 'granted' : 'denied',
+                ad_storage: qcMarketing ? 'granted' : 'denied',
+                ad_user_data: qcMarketing ? 'granted' : 'denied',
+                ad_personalization: qcMarketing ? 'granted' : 'denied',
+                wait_for_update: 500
+              });
+            `}
+          </Script>
+          <Script
+            src="https://www.googletagmanager.com/gtag/js?id=G-HV8F4G8BN1"
+            strategy="afterInteractive"
+          />
+          <Script id="ga4" strategy="afterInteractive">
+            {`
+              gtag('set', 'linker', { domains: ['quote-core.com', 'quote-core.co.nz'] });
+              gtag('js', new Date());
+              gtag('config', 'G-HV8F4G8BN1');
+            `}
+          </Script>
+        </>}
       </body>
     </html>
   );

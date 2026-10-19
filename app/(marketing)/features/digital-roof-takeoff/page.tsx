@@ -144,8 +144,8 @@ export default function DigitalRoofTakeoffPage() {
               Upload a plan on your phone, tablet or desktop, draw what you see, and let the system handle the rest. Pitch, waste, and material quantities auto-calculate. Use Roof Scan Assist or draw manually - both paths lead to a complete, priced takeoff.
             </p>
             <div className="mt-6 flex gap-3">
-              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-                Get started
+              <a href="/demo" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
+                Explore the interactive demo
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
                 All features
