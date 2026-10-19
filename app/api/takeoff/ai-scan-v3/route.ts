@@ -1,4 +1,5 @@
 import { withPurchasedScan } from '@/app/lib/billing/custom/usage/scan-server';
+import { isCustomUsageCompany } from '@/app/lib/billing/custom/usage/store';
 /**
  * AI Takeoff V3 - 3-scan pipeline.
  *
@@ -769,7 +770,15 @@ async function handleScanPost(req: NextRequest, customMetered = false) {
     // pointCost.ts and the SQL queue path (see parity checklist).
     const pointsToSpend = getAiScanPointCost(qualityLevel);
 
-    if (!customMetered && (stage === 'scan1' || stage === 'scan2')) {
+    // Legacy AI-points quota applies to legacy companies only. customMetered
+    // is false for BOTH legacy and admin-granted custom setups (the wrapper
+    // runs admin grants unmetered until the live-switch, 2026-10-17
+    // deferral), and the legacy points RPC is not valid for custom_setup
+    // companies: it failed there with a 500 quota-verify error on main
+    // (2026-10-19 scan incident). Admin grants run unmetered against their
+    // granted snapshot allowance.
+    const legacyQuotaCompany = !customMetered && !(await isCustomUsageCompany(profile.company_id));
+    if (legacyQuotaCompany && (stage === 'scan1' || stage === 'scan2')) {
       const admin = createServiceClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
