@@ -2,12 +2,17 @@ import 'server-only';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { StorageQuotaExceededError } from '@/app/lib/billing/errors';
 import { customScope } from '../environment';
-import { callUsage, isCustomUsageCompany } from './store';
+import { callUsage, customUsageMeteringApplies } from './store';
 import { UsageError, safeCount } from './contracts';
 export type StorageObject = { companyId: string; bucket: string; path: string };
 /** The byte value is server-measured, and the RPC verifies Storage metadata again. */
+/** Admin-granted setups run unmetered against their granted allowance until
+ *  the custom billing live-switch (2026-10-17 deferral). Reservations follow
+ *  the same metering gate as quote creation and scan: on main, where the
+ *  Stripe-scoped env is held, an unguarded scope read here threw QCP01 and
+ *  broke plan attach right after quote creation (2026-10-19 incident). */
 export async function reservePurchasedStorage(input: StorageObject & { size: number; kind: 'logo' | 'document' }): Promise<boolean> {
-  if (!(await isCustomUsageCompany(input.companyId))) return false;
+  if (!(await customUsageMeteringApplies(input.companyId))) return false;
   const scope = customScope();
   try {
     const result = await callUsage<{ kind: string }>('qcp_reserve_storage', {
