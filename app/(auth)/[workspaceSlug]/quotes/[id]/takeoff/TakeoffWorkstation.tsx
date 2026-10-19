@@ -61,6 +61,8 @@ import { PointMeasurementModal } from './modals/PointMeasurementModal';
 import { LineMeasurementModal } from './modals/LineMeasurementModal';
 import { CalibrationModal } from './modals/CalibrationModal';
 import { RoofPitchEstimatorModal } from './modals/RoofPitchEstimatorModal';
+import { SharedMeasurementsModal } from './modals/SharedMeasurementsModal';
+import { sharedKindForComponent, sharedKindForMeasurementType, resolveSharedValue, type SharedMeasurementOption } from '@/app/lib/takeoff/sharedMeasurements';
 // Viewport pattern (2026-09-26): shared zoom/pan math for the takeoff canvas.
 import { computeFitVpt, clampVpt, panVpt, zoomVptAtPoint, isSceneClipped, type Vpt } from './canvasViewport';
 // P2/P6 AI-assisted calibration (flag-gated, live search via /api/takeoff/calibration)
@@ -756,6 +758,8 @@ export function TakeoffWorkstation({
   
   // Component measurements
   const [componentMeasurements, setComponentMeasurements] = useState<ComponentWithMeasurements[]>([]);
+  const [sharedMeasurementOptions, setSharedMeasurementOptions] = useState<SharedMeasurementOption[]>([]);
+  const [shareMeasurementsFor, setShareMeasurementsFor] = useState<string | null>(null);
   const [lineMode, setLineMode] = useState(false);
   const [linePoints, setLinePoints] = useState<{ x: number; y: number }[]>([]);
   const [pointMode, setPointMode] = useState(false);
@@ -2526,6 +2530,49 @@ export function TakeoffWorkstation({
       const mt = (component.measurement_type ?? component.default_measurement_type ?? '').toLowerCase();
       applyToolForType(mt, componentId);
     }
+  };
+
+  const shareableMeasurementsFor = (componentId: string) => {
+    const group = componentMeasurements.find(g => g.componentId === componentId);
+    return (group?.measurements ?? []).filter(m => sharedKindForMeasurementType(m.type));
+  };
+
+  const handleShareMeasurements = (mode: 'entry' | 'combined' | 'all', componentId: string, ids: string[]) => {
+    const component = components.find(c => c.id === componentId);
+    const measurements = shareableMeasurementsFor(componentId);
+    if (!component || !measurements.length) return;
+    const selected = mode === 'all' ? measurements : measurements.filter(m => ids.includes(m.id));
+    const kind = sharedKindForMeasurementType(selected[0]?.type ?? measurements[0].type);
+    if (!kind || selected.some(m => sharedKindForMeasurementType(m.type) !== kind)) return;
+    const option: SharedMeasurementOption = {
+      id: crypto.randomUUID(), sourceComponentId: componentId, sourceComponentName: component.name,
+      kind, mode, measurementIds: mode === 'all' ? [] : selected.map(m => m.id),
+      value: selected.reduce((sum, m) => sum + Number(m.value || 0), 0),
+    };
+    setSharedMeasurementOptions(prev => [...prev.filter(o => !(o.sourceComponentId === componentId && o.mode === mode && o.measurementIds.join(',') === option.measurementIds.join(','))), option]);
+  };
+
+  const handleApplySharedMeasurement = (componentId: string, optionId: string) => {
+    const option = sharedMeasurementOptions.find(o => o.id === optionId);
+    const component = components.find(c => c.id === componentId);
+    if (!option || !component) return;
+    const kind = sharedKindForComponent(component.measurement_type ?? component.default_measurement_type ?? '');
+    if (kind !== option.kind || option.sourceComponentId === componentId) return;
+    const source = componentMeasurements.find(g => g.componentId === option.sourceComponentId);
+    const value = resolveSharedValue(option, source?.measurements ?? []);
+    if (!(value > 0)) return;
+    pushHistorySnapshot();
+    const entry: ComponentMeasurement = {
+      id: `shared-${crypto.randomUUID()}`,
+      type: kind === 'area' ? 'area' : 'line', value, points: [], visible: true, canvasObjects: [],
+      fromPageId: currentPageIdRef.current, quoteRoofAreaId: activeAreaIdRef.current ?? null,
+    };
+    setComponentMeasurements(groups => {
+      const existing = groups.find(g => g.componentId === componentId);
+      if (existing) return groups.map(g => g.componentId === componentId ? { ...g, expanded: true, measurements: [...g.measurements, entry] } : g);
+      return [...groups, { componentId, expanded: true, measurements: [entry] }];
+    });
+    setIsDirty(true);
   };
   
   /** Apply an existing (already-drawn) roof area to an area-type component:
@@ -8765,6 +8812,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                     </button>
                                     <button type="button"
                                       onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (compData?.measurements.some(m => sharedKindForMeasurementType(m.type))) setShareMeasurementsFor(comp.id);
+                                      }}
+                                      className="qc-takeoff-icon-action" aria-label={`Share ${comp.name} measurements`} title="Share measurements with other components">
+                                      <QcIcon name="plus" />
+                                    </button>
+                                    <button type="button"
+                                      onClick={(e) => {
                                           e.stopPropagation();
                                           handleRemoveComponent(comp.id);
                                         }}
@@ -8793,12 +8848,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                       as a normal entry stamped with that area - the
                                       report pitches/prices it like a hand-drawn one.
                                       Ported from free roof takeoff 2026-08-30. */}
-                                  {((mt === 'area' && roofAreas.length > 0) || (offcutAreaFigure && materialUnitForComponent(mt))) && (
+                                  {((mt === 'area' && roofAreas.length > 0) || (offcutAreaFigure && materialUnitForComponent(mt)) || sharedMeasurementOptions.some(o => o.sourceComponentId !== comp.id && sharedKindForComponent(mt) === o.kind)) && (
                                     <div className="mt-2">
                                       <select
                                         onChange={(e) => {
                                           if (e.target.value) {
                                             if (e.target.value.startsWith(OFFCUT_MEASUREMENT_OPTION + ':')) handleApplyOffcutMaterial(comp.id, e.target.value.slice(OFFCUT_MEASUREMENT_OPTION.length + 1));
+                                            else if (e.target.value.startsWith('shared:')) handleApplySharedMeasurement(comp.id, e.target.value.slice(7));
                                             else handleApplyRoofAreaToComponent(comp.id, e.target.value);
                                             e.target.value = '';
                                           }
@@ -8814,6 +8870,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                             {ra.name}{ra.offcutProvenance ? ' · purchased material' : ''} · {(ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1)).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}{!ra.offcutProvenance && ra.pitch ? ` (pitch ${Math.round(ra.pitch)}°)` : ''}
                                           </option>
                                         ))}
+                                        {sharedMeasurementOptions.filter(o => o.sourceComponentId !== comp.id && sharedKindForComponent(mt) === o.kind).map(option => {
+                                          const source = componentMeasurements.find(g => g.componentId === option.sourceComponentId);
+                                          const value = resolveSharedValue(option, source?.measurements ?? []);
+                                          return <option key={`shared:${option.id}`} value={`shared:${option.id}`}>{option.sourceComponentName} · {option.mode === 'all' ? 'total' : option.mode === 'combined' ? 'combined' : 'measurement'} · {value.toFixed(2)} {option.kind === 'area' ? (calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²') : (calibrations[0]?.unit === 'feet' ? 'ft' : 'm')}</option>;
+                                        })}
                                       </select>
                                     </div>
                                   )}
@@ -9959,7 +10020,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
 
       {/* Area Name Prompt */}
       {showAreaNamePrompt && (
-        <AreaNameModal
+      <AreaNameModal
           isRoofing={tradeConfig.pitchRequired}
           modalTitle={tradeConfig.createAreaModalTitle}
           namePlaceholder={tradeConfig.areaNamePlaceholder}
@@ -9976,6 +10037,30 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
           }}
         />
       )}
+
+      {shareMeasurementsFor && (() => {
+        const sourceComponent = components.find(c => c.id === shareMeasurementsFor);
+        const sourceMeasurements = shareableMeasurementsFor(shareMeasurementsFor);
+        const sourceKind = sharedKindForMeasurementType(sourceMeasurements[0]?.type ?? '') ?? 'lineal';
+        const unit = calibrations[0]?.unit ?? 'meters';
+        const unitLabel = sourceKind === 'area' ? (unit === 'feet' ? 'ft²' : 'm²') : (unit === 'feet' ? 'ft' : 'm');
+        const modalEntries = sourceMeasurements.map((measurement, index) => ({ id: measurement.id, label: `Measurement #${index + 1}`, value: measurement.value }));
+        const sourceOptions = sharedMeasurementOptions.filter(option => option.sourceComponentId === shareMeasurementsFor && option.kind === sourceKind);
+        const resolveModalValue = (option: SharedMeasurementOption) => resolveSharedValue(option, sourceMeasurements);
+        return sourceComponent ? (
+          <SharedMeasurementsModal
+            componentName={sourceComponent.name}
+            kind={sourceKind}
+            unitLabel={unitLabel}
+            entries={modalEntries}
+            existing={sourceOptions}
+            valueForOption={resolveModalValue}
+            onShare={(mode, ids) => handleShareMeasurements(mode, shareMeasurementsFor, ids)}
+            onRemove={(id) => setSharedMeasurementOptions(prev => prev.filter(option => option.id !== id))}
+            onClose={() => setShareMeasurementsFor(null)}
+          />
+        ) : null;
+      })()}
 
       {/* (2026-07-05) Assign Area Measurement modal REMOVED (RC-1/RC-5). */}
 
