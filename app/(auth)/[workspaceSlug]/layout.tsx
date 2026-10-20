@@ -89,6 +89,19 @@ export default async function WorkspaceLayout({
     .eq('status', 'active');
   const inboxUnreadCount = inboxUnreadCountRaw ?? 0;
 
+  // Newest unread alert ID for the inbox envelope's identity-keyed badge
+  // dismissal (2026-10-20 fix: the old count-keyed model stayed dismissed
+  // whenever the count repeated a previously clicked value).
+  const { data: latestUnreadAlert } = await supabase
+    .from('alerts')
+    .select('id')
+    .eq('company_id', company.id)
+    .eq('is_read', false)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  const latestUnreadAlertId = (latestUnreadAlert as { id: string }[] | null)?.[0]?.id ?? null;
+
   // Per-user Chat Assistant visibility preference (default ON). When false the
   // widget renders nothing. Read directly here (not in the shared profile
   // selector) to avoid touching getCurrentProfile's broad usage.
@@ -161,7 +174,7 @@ export default async function WorkspaceLayout({
           </>}
           entitlementBanner={<EntitlementBanner entitlements={entitlements} workspaceSlug={slug} />}
           bell={<AlertBell initialAlerts={alerts || []} initialUnreadCount={unreadCount} workspaceSlug={slug} userId={profile.id} />}
-          inbox={<InboxLink workspaceSlug={slug} unreadCount={inboxUnreadCount} />}
+          inbox={<InboxLink workspaceSlug={slug} userId={profile.id} unreadCount={inboxUnreadCount} latestUnreadAlertId={latestUnreadAlertId} />}
           help={<HelpDrawerTrigger />}
           logout={<LogoutButton className="qc-button qc-shell-logout-button" />}
           assistant={demoContext && demoContext.tutorialState.chapter !== 'smart-assistant' && demoContext.tutorialState.chapter !== 'complete' ? (

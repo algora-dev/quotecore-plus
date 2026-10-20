@@ -5,42 +5,54 @@ import Link from 'next/link';
 
 interface Props {
   workspaceSlug: string;
+  userId: string;
   unreadCount?: number;
+  /** ID of the newest unread (is_read=false, status=active) alert. */
+  latestUnreadAlertId?: string | null;
 }
 
-const INBOX_SEEN_KEY = 'quotecore:inbox-seen';
+/** Per-user/per-workspace seen marker (scoped like AlertBell's key). */
+function inboxSeenKey(workspaceSlug: string, userId: string): string {
+  return `quotecore:inbox-seen:${workspaceSlug}:${userId}`;
+}
 
 /**
  * Envelope icon in the top nav that opens the Message Center (/inbox).
  * Shows an orange glow + unread badge when there are unread messages,
  * matching the AlertBell's visual treatment.
  *
- * Badge clears on click (like the bell) using a localStorage "seen" flag.
- * The server still tracks is_read independently in the Message Center.
- * Heroicons outline envelope, 24x24.
+ * Badge dismissal is keyed to the IDENTITY of the newest unread alert (same
+ * model as AlertBell), never the count. The old model stored the unread
+ * count, so a repeated count after new mail stayed wrongly dismissed (owner
+ * report 2026-10-20: clicked at 2, then 2 new alerts arrived and no badge
+ * showed). With identity-keyed dismissal any new mail gets a new newest
+ * alert ID and the badge always re-shows. The server still tracks is_read
+ * independently in the Message Center. Heroicons outline envelope, 24x24.
  */
-export function InboxLink({ workspaceSlug, unreadCount = 0 }: Props) {
+export function InboxLink({
+  workspaceSlug,
+  userId,
+  unreadCount = 0,
+  latestUnreadAlertId = null,
+}: Props) {
   const [dismissed, setDismissed] = useState(false);
 
-  // On mount, check if the user has already acknowledged the current batch.
+  // Dismissed only when the stored marker equals the CURRENT newest unread
+  // alert ID. No unread mail (or identity unavailable): never show a stale
+  // badge; unknown identity while unread exists: fail open to showing.
   useEffect(() => {
-    if (unreadCount > 0) {
-      const seen = localStorage.getItem(INBOX_SEEN_KEY);
-      // If we've seen this exact count before, stay dismissed.
-      if (seen === String(unreadCount)) {
-        setDismissed(true);
-      } else {
-        setDismissed(false);
-      }
-    } else {
+    if (unreadCount <= 0 || !latestUnreadAlertId) {
       setDismissed(false);
+      return;
     }
-  }, [unreadCount]);
+    const seen = localStorage.getItem(inboxSeenKey(workspaceSlug, userId));
+    setDismissed(seen === latestUnreadAlertId);
+  }, [unreadCount, latestUnreadAlertId, workspaceSlug, userId]);
 
   function handleClick() {
     // Mark as acknowledged immediately so the glow/badge disappears on click.
-    if (unreadCount > 0) {
-      localStorage.setItem(INBOX_SEEN_KEY, String(unreadCount));
+    if (unreadCount > 0 && latestUnreadAlertId) {
+      localStorage.setItem(inboxSeenKey(workspaceSlug, userId), latestUnreadAlertId);
       setDismissed(true);
     }
   }
