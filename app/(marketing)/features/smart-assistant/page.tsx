@@ -34,6 +34,20 @@ export const metadata: Metadata = {
     url: 'https://quote-core.com/features/smart-assistant',
     siteName: 'QuoteCore+',
     type: 'website',
+    images: [
+      {
+        url: '/images/social/og-smart-assistant.png',
+        width: 1200,
+        height: 630,
+        alt: 'QuoteCore+ Smart Assistant - Run your estimating app just by asking.',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Smart Assistant: AI Estimating Assistant for Contractors | QuoteCore+',
+    description: 'Voice or text. Draft quotes, calculate materials, measure a roof - just by asking.',
+    images: ['/images/social/og-smart-assistant.png'],
   },
 };
 

@@ -43,7 +43,7 @@ export function buildOgMetadata({
   title,
   description,
   path,
-  image = '/MainQCP.png',
+  image = '/og-image.png',
   type = 'website',
 }: {
   title: string;
@@ -66,7 +66,7 @@ export function buildOgMetadata({
 export function buildTwitterMetadata({
   title,
   description,
-  image = '/MainQCP.png',
+  image = '/og-image.png',
 }: {
   title: string;
   description: string;

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "QuoteCore+ - From complex plans to custom quotes in under 3 minutes",
+        alt: "QuoteCore+ - Measure. Price. Quote. Faster and easier.",
       },
     ],
   },

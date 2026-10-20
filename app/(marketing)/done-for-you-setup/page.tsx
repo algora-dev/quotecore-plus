@@ -17,6 +17,28 @@ export const metadata: Metadata = {
     canonical: 'https://quote-core.com/done-for-you-setup',
     languages: hreflangLanguages('/done-for-you-setup'),
   },
+  openGraph: {
+    title: 'Done-For-You QuoteCore+ Setup | Free 20-Minute Discovery Call',
+    description:
+      'Hate software? Let us set it up for you. Your pricing. Your workflow. Ready to use.',
+    url: 'https://quote-core.com/done-for-you-setup',
+    siteName: 'QuoteCore+',
+    type: 'website',
+    images: [
+      {
+        url: '/images/social/og-done-for-you.png',
+        width: 1200,
+        height: 630,
+        alt: 'Done-For-You QuoteCore+ Setup - Hate software? Let us set it up for you.',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Done-For-You QuoteCore+ Setup | Free 20-Minute Discovery Call',
+    description: 'We configure your account around how you already work. Your pricing. Your workflow. Ready to use.',
+    images: ['/images/social/og-done-for-you.png'],
+  },
 };
 
 const breadcrumbSchema = buildBreadcrumbSchema([

@@ -1,8 +1,40 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { getDemoControl } from '@/app/lib/demo/control';
 import { DemoLauncher } from './DemoLauncher';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Live Demo - Try the Roofing Estimating App Free | QuoteCore+',
+  description:
+    'Try a real roofing estimating app. Fully guided. Completely free. No signup, no card.',
+  alternates: {
+    canonical: 'https://quote-core.com/demo',
+  },
+  openGraph: {
+    title: 'Live Demo - Try the Roofing Estimating App Free | QuoteCore+',
+    description:
+      'Try a real roofing estimating app. Fully guided. Completely free. No signup, no card.',
+    url: 'https://quote-core.com/demo',
+    siteName: 'QuoteCore+',
+    type: 'website',
+    images: [
+      {
+        url: '/images/social/og-demo.png',
+        width: 1200,
+        height: 630,
+        alt: 'QuoteCore+ live demo - Try a real roofing estimating app. Fully guided. Completely free.',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Live Demo - Try the Roofing Estimating App Free | QuoteCore+',
+    description: 'Fully guided. Completely free. No signup, no card.',
+    images: ['/images/social/og-demo.png'],
+  },
+};
 
 /**
  * Public demo entry (Architecture V2). Owner direction 2026-09-28: no middle
