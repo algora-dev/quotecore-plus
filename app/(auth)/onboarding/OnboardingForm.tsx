@@ -74,17 +74,10 @@ export function OnboardingForm({
           current={2} label="Workspace setup" />
 
         <div className="text-center space-y-3">
-          <div className="w-20 h-20 mx-auto rounded-full overflow-hidden ring-2 ring-orange-200 shadow-sm">
-            <img src="/q-avatar.png" alt="Q, your QuoteCore+ assistant" className="w-full h-full object-cover" />
-          </div>
           <h2 className="text-xl font-semibold text-slate-900">Your workspace is almost ready</h2>
           <p className="text-sm text-slate-600 max-w-md mx-auto">
-            To get started, use <span className="font-semibold text-slate-900">“Q”</span> &mdash; your
-            assistant for any help, guide-me assistance, or general questions to get you up and
-            running easily.
-          </p>
-          <p className="text-sm text-slate-600 max-w-md mx-auto">
-            After setup, a paid subscription is required to enter your workspace. Q will be there when you need help.
+            After setup, a paid subscription is required to enter your workspace. Step-by-step
+            tutorials and help guides are available inside the app whenever you need them.
           </p>
         </div>
 

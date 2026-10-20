@@ -249,9 +249,9 @@ function CompanyInfoSection({
                 <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">Plan</dt>
                 <dd className="mt-1 text-slate-900">
                   {c.billingModel === 'custom_setup' ? (
-                    <span>
-                      Custom setup
-                      {c.planCode ? <span className="text-slate-400 font-normal"> (legacy tier: {c.planCode.replace(/_/g, ' ')})</span> : null}
+                    <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border bg-emerald-100 text-emerald-700 border-emerald-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Custom
                     </span>
                   ) : (
                     c.planCode ?? '-'
