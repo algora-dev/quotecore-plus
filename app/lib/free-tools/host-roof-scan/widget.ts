@@ -242,6 +242,8 @@ async function acceptToolResult(result, epoch = ++loadEpoch) {
   notice(state.points.length ? 'Review the proposed boundary. Drag any corner to correct it, then confirm.' : 'Ask your AI assistant to propose an outline, or tap the roof corners to trace it yourself.');
   $('prompt').value = outlineRequest();
   $('delivery-status').textContent = 'Canonical image verified locally. AI visibility is not yet verified.';
+  // Browser tab (no AI host bridge): manual image sharing is the production delivery path - surface it immediately.
+  if (window.parent === window) $('prompt-box').open = true;
   $('prepared-name').textContent = canonicalFilename();
   updateReviewLink(link);
   if (state.reviewToken) await prepareExport();
@@ -549,6 +551,17 @@ window.addEventListener('openai:set_globals',event=>{if(window.parent===window)r
 $('load-link').onclick=()=>operation(async()=>{
   if(state.dirty&&!window.confirm('Replace unconfirmed edits with the saved review link? Save a local draft first to keep them.'))return;
   await loadReviewLink($('recovery-link').value.trim());$('recovery-link').value='';
+});
+// Same-tab navigation to a different review link changes only the fragment. Without this,
+// an older link re-opened in the same tab would keep showing the newer live session state.
+window.addEventListener('hashchange',()=>{
+  if(!location.hash||state.busy)return;
+  const url=QC_API_ORIGIN+'/mcp/host-scan/review'+location.hash;
+  if(state.data&&state.data.resultUrl===url)return;
+  operation(async()=>{
+    if(state.dirty&&!window.confirm('Replace unconfirmed edits with the saved review link? Save a local draft first to keep them.'))return;
+    await loadReviewLink(url);
+  });
 });
 $('copy-review-link').onclick=async()=>{
   if(!state.data?.resultUrl)return;
