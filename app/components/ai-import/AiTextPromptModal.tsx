@@ -186,7 +186,8 @@ export function AiTextPromptModal({ documentType, onParsed, onClose }: AiTextPro
           {success ? (
             <button
               onClick={onClose}
-              className="px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all"
+              className="qc-button"
+              data-qc-variant="primary"
             >
               Done
             </button>
@@ -194,14 +195,16 @@ export function AiTextPromptModal({ documentType, onParsed, onClose }: AiTextPro
             <>
               <button
                 onClick={onClose}
-                className="px-5 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"
+                className="qc-button"
+                data-qc-variant="ghost"
               >
                 Cancel
               </button>
               <button
                 onClick={handleParse}
                 disabled={loading || !text.trim()}
-                className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold rounded-full bg-black text-white transition-all hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="qc-button"
+                data-qc-variant="primary"
               >
                 {loading ? (
                   <>

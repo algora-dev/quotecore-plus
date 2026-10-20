@@ -153,7 +153,7 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
                 <button data-qc-variant="primary"
                   type="button"
                   onClick={close}
-                  className="qc-flow-control qc-button w-full rounded-full bg-black px-5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
+                  className="qc-flow-control qc-button w-full"
                 >
                   Done
                 </button>
@@ -171,7 +171,7 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
                 <button data-qc-variant="primary"
                   type="button"
                   onClick={close}
-                  className="qc-flow-control qc-button w-full rounded-full bg-black px-5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
+                  className="qc-flow-control qc-button w-full"
                 >
                   Close
                 </button>

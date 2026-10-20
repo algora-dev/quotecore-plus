@@ -417,14 +417,14 @@ export function SendDocumentModal(props: SendDocumentProps & { hook: Hook }) {
                   <button data-qc-variant="primary"
                     onClick={handleProceedToGate}
                     disabled={isSending || isPlanGated}
-                    className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                    className="qc-flow-control qc-button"
                   >
                     Continue
                   </button>
                 ) : (
                   <button data-qc-variant="ghost"
                     onClick={() => setOpen(false)}
-                    className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                    className="qc-flow-control qc-button"
                   >
                     Close
                   </button>
@@ -477,7 +477,8 @@ function FollowUpBuilder({ hook, props }: { hook: Hook; props: SendDocumentProps
                 type="button"
                 onClick={() => addDraftRule('triggered')}
                 disabled={draftRules.length >= 3}
-                className="qc-flow-control qc-button px-3 py-1.5 text-xs font-semibold rounded-full bg-black text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="qc-flow-control qc-button"
+                data-qc-size="sm"
               >
                 + Triggered follow-up
               </button>
@@ -486,7 +487,8 @@ function FollowUpBuilder({ hook, props }: { hook: Hook; props: SendDocumentProps
               type="button"
               onClick={() => addDraftRule('time_based')}
               disabled={draftRules.length >= 3}
-              className="qc-flow-control qc-button px-3 py-1.5 text-xs font-semibold rounded-full bg-black text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="qc-flow-control qc-button"
+              data-qc-size="sm"
             >
               + {config.followUps.timeBasedLabel}
             </button>
@@ -629,7 +631,7 @@ function FollowUpBuilder({ hook, props }: { hook: Hook; props: SendDocumentProps
           type="button"
           onClick={handleConfirmFollowUpsAndSend}
           disabled={followUpSaving || isSending || emailTemplates.length === 0 || draftRules.length === 0}
-          className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          className="qc-flow-control qc-button"
         >
           {followUpSaving || isSending ? 'Saving & sending…' : 'Save follow-ups & send'}
         </button>

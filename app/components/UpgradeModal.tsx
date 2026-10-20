@@ -115,7 +115,8 @@ export function UpgradeModal({
           <Link
             href={href}
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
+            className="qc-button"
+            data-qc-variant="primary"
           >
             {ctaLabel}
           </Link>

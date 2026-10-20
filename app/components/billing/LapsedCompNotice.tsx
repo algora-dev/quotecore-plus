@@ -40,14 +40,16 @@ export function LapsedCompNotice({ endedOn }: { endedOn: string | null }) {
         <Link
           href="/pricing"
           prefetch={false}
-          className="inline-flex items-center justify-center rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+          className="qc-button"
+          data-qc-variant="primary"
         >
           Create your paid plan
         </Link>
         <Link
           href="/demo"
           prefetch={false}
-          className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]"
+          className="qc-button"
+          data-qc-variant="glass"
         >
           Explore the demo
         </Link>

@@ -248,7 +248,8 @@ export function LegacyChatClient({ initialConversations, assistantName, greeting
         <div className="p-3">
           <button
             onClick={newChat}
-            className="w-full rounded-full bg-black px-4 py-2 text-sm text-white hover:shadow-[0_0_12px_rgba(0,0,0,0.25)]"
+            className="qc-button w-full"
+            data-qc-variant="primary"
           >
             New chat
           </button>

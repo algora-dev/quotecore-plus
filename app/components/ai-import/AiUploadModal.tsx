@@ -255,14 +255,16 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
           {status === 'done' ? (
             <button
               onClick={onClose}
-              className="px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all"
+              className="qc-button"
+              data-qc-variant="primary"
             >
               Done
             </button>
           ) : (
             <button
               onClick={onClose}
-              className="px-5 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"
+              className="qc-button"
+              data-qc-variant="ghost"
             >
               Cancel
             </button>

@@ -109,12 +109,13 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <button type="button" onClick={() => { setOpen(true); setDone(''); }}
-            className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:shadow-[0_0_12px_rgba(255,107,53,0.35)] min-h-[44px]">
+            className="qc-flow-control qc-button"
+            data-qc-variant="primary">
             Change my setup
           </button>
           <button data-qc-variant="ghost" type="button" onClick={onManage} disabled={manageDisabled}
             title="Cancel, update card, or view invoices"
-            className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]">
+            className="qc-flow-control qc-button">
             Manage subscription
           </button>
         </div>
@@ -161,11 +162,12 @@ export function CustomPlanCard({ currentPeriodEnd, onManage, manageDisabled }: {
           {error && <p className="mt-2 text-sm text-red-700" role="alert">{error}</p>}
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" onClick={confirmChange} disabled={confirming}
-              className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:shadow-[0_0_12px_rgba(255,107,53,0.35)] disabled:opacity-50 min-h-[44px]">
+              className="qc-flow-control qc-button"
+              data-qc-variant="primary">
               {confirming ? 'Applying…' : 'Confirm change'}
             </button>
             <button data-qc-variant="glass" type="button" onClick={() => setOpen(true)} disabled={confirming}
-              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]">
+              className="qc-flow-control qc-button">
               Adjust choices
             </button>
           </div>

@@ -680,7 +680,7 @@ export function AddFromCatalogModal({
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <button data-qc-variant="ghost"
                       onClick={handleReset}
-                      className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
+                      className="qc-flow-control qc-button"
                     >
                       Back
                     </button>
@@ -700,7 +700,7 @@ export function AddFromCatalogModal({
                         setStep('destination');
                       }}
                       disabled={selectedRowIndices.size === 0}
-                      className="qc-flow-control qc-button px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      className="qc-flow-control qc-button"
                     >
                       Next: Choose Library ({selectedRowIndices.size} selected)
                     </button>
@@ -779,13 +779,13 @@ export function AddFromCatalogModal({
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <button data-qc-variant="ghost"
                   onClick={() => setStep('view-rows')}
-                  className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
+                  className="qc-flow-control qc-button"
                 >
                   Back
                 </button>
                 <button data-qc-variant="primary"
                   onClick={handleCreate}
-                  className="qc-flow-control qc-button px-5 py-2 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition cursor-pointer"
+                  className="qc-flow-control qc-button"
                 >
                   Create {selectedRowIndices.size} Component{selectedRowIndices.size !== 1 ? 's' : ''}
                 </button>
@@ -818,13 +818,13 @@ export function AddFromCatalogModal({
               <div className="flex gap-3 justify-center">
                 <button data-qc-variant="ghost"
                   onClick={handleReset}
-                  className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
+                  className="qc-flow-control qc-button"
                 >
                   Import more
                 </button>
                 <button data-qc-variant="primary"
                   onClick={onClose}
-                  className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition cursor-pointer"
+                  className="qc-flow-control qc-button"
                 >
                   Review components
                 </button>

@@ -261,7 +261,6 @@ export function usePdfPagePicker() {
                 <QcHostedButton variant="secondary"
                   type="button"
                   onClick={() => finish(null)}
-                  className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all"
                 >
                   OK
                 </QcHostedButton>
@@ -313,7 +312,6 @@ export function usePdfPagePicker() {
                   type="button"
                   onClick={() => finish(null)}
                   disabled={converting}
-                  className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-all"
                 >
                   Cancel
                 </QcHostedButton>
@@ -321,7 +319,6 @@ export function usePdfPagePicker() {
                   type="button"
                   onClick={confirmPage}
                   disabled={selectedPage === null || converting}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50 disabled:hover:shadow-none"
                 >
                   {converting ? 'Converting…' : 'Use this page'}
                 </QcHostedButton>

@@ -165,7 +165,9 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
                     type="button"
                     onClick={handleSaveEdit}
                     disabled={isPending}
-                    className="px-4 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_8px_rgba(255,107,53,0.3)]"
+                    className="qc-button"
+                    data-qc-variant="primary"
+                    data-qc-size="sm"
                   >
                     {isPending ? 'Saving…' : 'Save'}
                   </button>
@@ -271,7 +273,9 @@ function AddNoteForm({ onAdded, onCancel, quoteId, currentUserFullName }: AddFor
           type="button"
           onClick={handleSave}
           disabled={isPending || !title.trim() || !body.trim()}
-          className="px-4 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_8px_rgba(255,107,53,0.3)]"
+          className="qc-button"
+          data-qc-variant="primary"
+          data-qc-size="sm"
         >
           {isPending ? 'Saving…' : 'Save note'}
         </button>
@@ -339,7 +343,9 @@ export function QuoteNotesPanel({ quoteId, initialNotes, currentUserFullName }: 
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-700 transition-all"
+              className="qc-button"
+              data-qc-variant="ghost"
+              data-qc-size="sm"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
