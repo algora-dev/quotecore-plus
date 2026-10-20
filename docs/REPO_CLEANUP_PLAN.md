@@ -120,7 +120,37 @@ Authority is fragmented: six root `START_HERE_*` entry points from different era
 1. UX fixtures: **keep current standard (v2.14) only** in repo; history moves to the design workspace archive. APPROVED.
 2. Screenshots + docs/archive out of the working tree: APPROVED (with per-item reference checks at execution).
 3. Real root AGENTS.md drafted by Gavin: APPROVED.
-4. Branch pruning (12 dead branches): APPROVED � everything remains recoverable: all pruned branches are fully merged into or superseded by ux/phase-4, so git history retains every commit; only pointers are deleted. Owner will have smoke-tested offcuts before execution.
+4. Branch pruning (12 dead branches): APPROVED � everything remains recoverable: all pruned branches are fully merged into or superseded by ux/phase-4, so git history retains every commit; only pointers are deleted. Owner will have smoke-tested offcuts before execution.
 5. SMART_ASSISTANT_P1_P4_FILE_MANIFEST.json deletion after final script-reference check: APPROVED.
 
 Execution: tomorrow (2026-10-04), after the main push, starting with a delta re-audit of anything landed overnight.
+
+*(Status 2026-10-20: never executed — V2 launch work took priority. Delta re-audit below.)*
+
+---
+
+# Delta Re-Audit & Plan Update — 2026-10-20 (post V2 launch)
+
+Context at re-audit: main = 3673c1e5 (merge of development 7cf90112, V2 launch parity 10-20 01:25 UTC). Local checkout on `main`, clean except untracked workspace scratch (q1023/v221/v223 one-off scripts, tools/billing-p2, .qcp-*-backups — judged separately, not repo targets).
+
+## What changed since the 10-03 audit
+
+1. **Nothing was executed.** All GREEN items still present verbatim: UsersJimmyAppDataLocalTemp/ (32KB), 11MB typecheck-attempt.log, memory/ (53KB), demo-shots/ (615KB), header_fix.py, RETURN_NOTES.md + CHANGED_FILES.json + WORKFLOW_CHANGED_FILES.json + AGENT_INTEGRATION_WORKFLOW_V1.md, empty root AGENTS.md (0KB) + README-DEV.md (0KB), projects/ stray, P1_P4 manifest, broken .gitignore tail. START_HERE_* grew 6 → 7.
+2. **docs/ root partially organized already**: loose root .md went 438 → 70 (docs-overhaul work landed 10-14 era). BLUE item 4 is mostly DONE by other hands; remainder = finish/verify organization only.
+3. **docs/ux grew 48.6 → 50MB** (phase-5..8 + experience-1 fixtures landed post-audit). Owner decision #1 (keep current standard only, archive history to design workspace) still stands and now recovers ~50MB.
+4. **Branch entropy exploded**: audit targeted 12 dead branches; remote now has **45** (Darren added ~20 since, plus Ron funnel lines, feature-showcase, gavin/oct15-safe-fixes, v228-integration-backup, demo-v22, homepage-v2). Prune list must be rebuilt with fresh containment checks. KEEP: `main`, `development`. Everything else = prune candidate ONLY after verifying merged-or-superseded (recent Oct branches may hold unmerged commits — check `git branch --no-merged main` / containment against development tip).
+5. **New must-keep docs landed**: docs/billing/LEGACY_RETIREMENT_PROPOSAL.md (active owner-read pending), CHECKLIST.md (contains smoke:billing hard rule), never-again billing infra (app/lib/billing/company-type.ts resolver + npm run check:billing + smoke:billing). These are RED/protected — do not touch.
+6. **Baseline numbers are stale** (tsc 151 / lint 9534 were 10-03 numbers, three weeks + a launch of churn ago). Re-baseline at execution time; stages validate against THAT baseline, not the old one.
+7. Locked-manifest coupling (LOCKED_FILES.json sa-p171 + BASELINE_PROTECTED.json sa-p172) still applies to GREEN deletions — strip hash entries in-stage, resolver/task-quality source checks must stay green.
+
+## Updated execution sequence (three-agent protocol compliant)
+
+- **Stage A (local, no push):** re-baseline (tsc/lint/build + roof-takeoff/topology/calibration/precision suites + smoke:billing runner syntax). Then GREEN deletions + manifest-entry strips + .gitignore tail fix on a `development` checkout. One commit, full local gate suite.
+- **Stage B:** push development (one batched push) → deploy testing → `npm run smoke:billing` (HARD RULE) + full gates → parity. Announce to Shaun before deploy.
+- **Stage C (on owner go):** BLUE consolidation — real root AGENTS.md, START_HERE_* → docs/history (now 7), docs/ux trim to current standard per decision #1 (archive to design workspace first), AngleImages byte-compare then delete if identical, P1_P4 manifest delete after script-ref grep. Same test → testing → main pipeline.
+- **Stage D:** branch prune (rebuilt containment-checked list from the 45 remotes) + local branch cleanup + .gitignore hardening. Pointer-only deletions; anything not provably contained gets kept and reported.
+- **Stage E:** merge to main on Shaun's explicit go (Gavin's lane), CLI deploy, prod battery.
+
+## Estimated impact (updated)
+
+~13MB GREEN (11MB = the one log) + ~50MB docs/ux trim + branch count 45 → ~4. Working-tree reduction ≈ 65% of non-public/ weight. Risk unchanged: LOW (all deletions code-unreferenced; only coupling = locked manifests, handled in-stage).
