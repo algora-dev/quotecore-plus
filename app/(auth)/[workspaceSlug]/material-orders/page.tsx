@@ -43,7 +43,7 @@ export default async function MaterialOrdersPage(props: Props) {
               <div className="mt-4">
                 <Link data-qc-variant="primary"
                   href={`/${workspaceSlug}/account?tab=billing&plan=${requiredPlan}`}
-                  className="qc-button qc-flow-control inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
+                  className="qc-button qc-flow-control"
                 >
                   View plans
                 </Link>

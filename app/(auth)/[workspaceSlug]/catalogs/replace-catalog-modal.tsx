@@ -234,12 +234,12 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
 
             <div className="flex flex-wrap items-center gap-2 pt-2">
               <button data-qc-variant="primary" onClick={handleReplace} disabled={replacing}
-                className="qc-flow-control qc-button cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-40">
+                className="qc-flow-control qc-button">
                 {replacing ? `Replacing... ${uploadProgress}%` : `Replace ${preview.rowCount} rows`}
               </button>
               <button data-qc-variant="ghost" onClick={() => { setPreview(null); setParsedData(null); }}
                 disabled={replacing}
-                className="qc-flow-control qc-button cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-40">
+                className="qc-flow-control qc-button">
                 Choose different file
               </button>
 

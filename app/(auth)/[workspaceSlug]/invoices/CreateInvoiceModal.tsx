@@ -255,7 +255,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-3 pt-1">
                 <button data-qc-variant="ghost" type="button" onClick={() => { setShowFromQuote(false); setSelectedQuoteId(null); setError(null); }}
-                  className="qc-flow-control qc-button flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Back</button>
+                  className="qc-flow-control qc-button flex-1">Back</button>
                 <button data-qc-variant="primary" type="button"
                   onClick={() => {
                     if (!selectedQuoteId) { setError('Please select a quote.'); return; }
@@ -264,7 +264,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                     onClose();
                   }}
                   disabled={!selectedQuoteId || quotesLoading || quotesError}
-                  className="qc-flow-control qc-button flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
+                  className="qc-flow-control qc-button flex-1">
                   Select Lines →
                 </button>
               </div>
@@ -289,11 +289,11 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-3 pt-1">
                 <button data-qc-variant="ghost" type="button" onClick={() => { setStep('pick-method'); setError(null); }}
-                  className="qc-flow-control qc-button flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Back</button>
+                  className="qc-flow-control qc-button flex-1">Back</button>
                 <button data-qc-variant="primary" type="button" data-copilot="invoice-choose-template" data-assistant-id="invoice-choose-template"
                   onClick={() => { if (!customerName.trim()) { setError('Customer name is required.'); return; } setError(null); setStep('pick-template'); }}
                   disabled={!customerName.trim()}
-                  className="qc-flow-control qc-button flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
+                  className="qc-flow-control qc-button flex-1">
                   Choose Template
                 </button>
               </div>
@@ -357,10 +357,10 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-3 pt-1">
                 <button data-qc-variant="ghost" type="button" onClick={() => { setStep('blank-form'); setError(null); }}
-                  className="qc-flow-control qc-button flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Back</button>
+                  className="qc-flow-control qc-button flex-1">Back</button>
                 <button data-qc-variant="primary" type="button" data-copilot="invoice-create-confirm" data-assistant-id="invoice-create-confirm"
                   onClick={handleCreate} disabled={busy || templatesLoading || (templatesError && !skipUnavailableTemplates)}
-                  className="qc-flow-control qc-button flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-all">
+                  className="qc-flow-control qc-button flex-1">
                   {busy ? 'Creating…' : 'Create Invoice'}
                 </button>
               </div>

@@ -486,7 +486,8 @@ export function OrderList({ orders, workspaceSlug }: Props) {
           <button data-qc-variant="primary"
             onClick={handleBulkDownload}
             disabled={bulkBusy !== null}
-            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button"
+            data-qc-size="sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
@@ -496,7 +497,8 @@ export function OrderList({ orders, workspaceSlug }: Props) {
           <button data-qc-variant="danger"
             onClick={() => setBulkDeleteConfirmOpen(true)}
             disabled={bulkBusy !== null}
-            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button"
+            data-qc-size="sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -537,14 +539,14 @@ export function OrderList({ orders, workspaceSlug }: Props) {
             <div className="flex gap-3 justify-end mt-6">
               <button data-qc-variant="ghost"
                 onClick={() => setBulkDeleteConfirmOpen(false)}
-                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-flow-control qc-button"
                 disabled={bulkBusy === 'delete'}
               >
                 Cancel
               </button>
               <button data-qc-variant="danger"
                 onClick={handleBulkDelete}
-                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="qc-flow-control qc-button"
                 disabled={bulkBusy === 'delete'}
               >
                 {bulkBusy === 'delete' ? 'Deleting...' : `Delete ${selectedIds.size}`}
@@ -561,8 +563,8 @@ export function OrderList({ orders, workspaceSlug }: Props) {
             <h3 className="text-lg font-semibold text-slate-900">Delete Order</h3>
             <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The order will be permanently deleted.</p>
             <div className="flex gap-3 justify-end mt-6">
-              <button data-qc-variant="ghost" onClick={() => setDeleteId(null)} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={!!deleting}>Cancel</button>
-              <button data-qc-variant="danger" onClick={confirmDelete} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={!!deleting}>{deleting ? 'Deleting...' : 'Delete'}</button>
+              <button data-qc-variant="ghost" onClick={() => setDeleteId(null)} className="qc-flow-control qc-button" disabled={!!deleting}>Cancel</button>
+              <button data-qc-variant="danger" onClick={confirmDelete} className="qc-flow-control qc-button" disabled={!!deleting}>{deleting ? 'Deleting...' : 'Delete'}</button>
             </div>
           </div>
         </QcJourneyDialog>

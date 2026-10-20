@@ -118,13 +118,15 @@ export function LineSelector({ quoteId, workspaceSlug, layout, column, component
         <div className="flex gap-2">
           <button data-qc-variant="ghost"
             onClick={selectAll}
-            className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white text-slate-600 hover:border-orange-300 hover:text-orange-600 transition"
+            className="qc-flow-control qc-button"
+            data-qc-size="sm"
           >
             Select all
           </button>
           <button data-qc-variant="ghost"
             onClick={deselectAll}
-            className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white text-slate-600 hover:border-slate-400 transition"
+            className="qc-flow-control qc-button"
+            data-qc-size="sm"
           >
             Deselect all
           </button>
@@ -202,7 +204,7 @@ export function LineSelector({ quoteId, workspaceSlug, layout, column, component
           <button data-qc-variant="primary"
             onClick={handleCreateOrder}
             disabled={selected.size === 0}
-            className="qc-flow-control qc-button px-5 py-2 text-sm font-medium rounded-full bg-black text-white disabled:opacity-40 hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-flow-control qc-button"
           >
             Create Order →
           </button>

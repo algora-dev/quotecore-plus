@@ -10547,25 +10547,25 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 {stagedFlow ? (
                 <QcHostedButton variant="primary" type="button"
                   onClick={handleContinueAiScan}
-                  className="w-full justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e55a28] transition-colors">
+                  className="w-full justify-center">
                   AI scan for components
                 </QcHostedButton>
                 ) : (
                 <QcHostedButton variant="primary" type="button"
                   onClick={() => { setOutlineEditingAreaId(null); setOutlineTool(null); setOutlineSelectedVertex(null); }}
-                  className="w-full justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e55a28] transition-colors">
+                  className="w-full justify-center">
                   Done
                 </QcHostedButton>
                 )}
                 <div className="flex gap-2 mt-2">
                   {stagedFlow && <QcHostedButton variant="ghost" type="button"
                     onClick={() => { setAiStagedPageId(null); setOutlineEditingAreaId(null); setOutlineTool(null); setOutlineSelectedVertex(null); }}
-                    className="flex-1 justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                    className="flex-1 justify-center">
                     Add components manually
                   </QcHostedButton>}
                   <QcHostedButton variant="ghost" type="button"
                     onClick={handleOutlineFinishAndSave}
-                    className="flex-1 justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                    className="flex-1 justify-center">
                     Finish &amp; save
                   </QcHostedButton>
                 </div>
@@ -10579,13 +10579,11 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
             <div className="mt-3 flex items-center justify-center gap-2">
               <QcHostedButton variant="primary"
                 onClick={handleContinueAiScan}
-                className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e55a28] transition-colors"
               >
                 Detect components
               </QcHostedButton>
               <QcHostedButton variant="ghost"
                 onClick={() => { setAiStagedPageId(null); setOutlineEditingAreaId(null); }}
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Not now
               </QcHostedButton>

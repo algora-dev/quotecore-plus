@@ -312,7 +312,7 @@ export function TemplateForm({ mode, initialData, onSubmit, onCancel, saving, is
                       disabled={uploadingLogo}
                       className="qc-flow-file qc-library-control hidden"
                     />
-                    <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors">
+                    <span className="qc-button cursor-pointer" data-qc-variant="ghost">
                       {uploadingLogo ? (
                         <>
                           <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">

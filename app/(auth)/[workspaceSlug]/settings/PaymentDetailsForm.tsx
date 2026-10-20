@@ -152,7 +152,7 @@ export function PaymentDetailsForm({ current }: Props) {
         <button data-qc-variant="primary"
           type="submit"
           disabled={isPending}
-          className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
+          className="qc-flow-control qc-button"
         >
           {isPending ? 'Saving…' : 'Save Payment Details'}
         </button>

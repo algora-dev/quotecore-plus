@@ -128,7 +128,8 @@ export function EmailChangeSection({ currentEmail, authProvider }: Props) {
             setIsOpen(true);
           }}
           disabled={inCooldown}
-          className="qc-flow-control qc-button px-4 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="qc-flow-control qc-button"
+          data-qc-size="sm"
         >
           Change Email
         </button>
@@ -181,14 +182,14 @@ export function EmailChangeSection({ currentEmail, authProvider }: Props) {
                   type="button"
                   onClick={handleClose}
                   disabled={isPending}
-                  className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition"
+                  className="qc-flow-control qc-button"
                 >
                   Cancel
                 </button>
                 <button data-qc-variant="primary"
                   type="submit"
                   disabled={isPending || !newEmail || !password}
-                  className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
+                  className="qc-flow-control qc-button"
                 >
                   {isPending ? 'Sending…' : 'Send confirmation links'}
                 </button>

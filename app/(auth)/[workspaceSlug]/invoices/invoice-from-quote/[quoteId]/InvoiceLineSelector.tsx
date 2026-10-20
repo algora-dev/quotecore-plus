@@ -89,7 +89,8 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
           type="button"
           onClick={selectAll}
           disabled={allFilteredSelected}
-          className="qc-flow-control qc-button px-3 py-2 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-700 disabled:opacity-40 disabled:cursor-default transition-all"
+          className="qc-flow-control qc-button"
+          data-qc-size="sm"
         >
           Select all
         </button>
@@ -97,7 +98,8 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
           type="button"
           onClick={deselectAll}
           disabled={noneFilteredSelected}
-          className="qc-flow-control qc-button px-3 py-2 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-700 disabled:opacity-40 disabled:cursor-default transition-all"
+          className="qc-flow-control qc-button"
+          data-qc-size="sm"
         >
           Deselect all
         </button>
@@ -162,7 +164,7 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
           type="button"
           onClick={handleCreate}
           disabled={selected.size === 0 || navigating}
-          className="qc-flow-control qc-button px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.25)] disabled:opacity-40 transition-all"
+          className="qc-flow-control qc-button"
         >
           {navigating ? 'Loading…' : 'Create Invoice →'}
         </button>

@@ -584,7 +584,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
           type="button"
           data-copilot="new-invoice"
           onClick={() => setShowCreate(true)}
-          className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
+          className="qc-flow-control qc-button"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -628,7 +628,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
             <button data-qc-variant="primary"
               type="button"
               onClick={() => setShowCreate(true)}
-              className="qc-flow-control qc-button mt-4 inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+              className="qc-flow-control qc-button mt-4"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -762,7 +762,8 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
           <button data-qc-variant="primary"
             onClick={handleBulkDownload}
             disabled={bulkBusy !== null}
-            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button"
+            data-qc-size="sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
@@ -772,7 +773,8 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
           <button data-qc-variant="danger"
             onClick={() => setBulkDeleteConfirmOpen(true)}
             disabled={bulkBusy !== null}
-            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button"
+            data-qc-size="sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

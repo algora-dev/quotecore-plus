@@ -101,7 +101,7 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
         type="button"
         onClick={() => setConfirming(true)}
         title="Withdraw the active acceptance link so it can no longer be used"
-        className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-all hover:shadow-[0_0_12px_rgba(220,38,38,0.4)]"
+        className="qc-flow-control qc-button"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -130,7 +130,7 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
                 type="button"
                 onClick={() => { setConfirming(false); setError(null); }}
                 disabled={pending}
-                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+                className="qc-flow-control qc-button"
               >
                 Cancel
               </button>
@@ -138,7 +138,7 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
                 type="button"
                 onClick={handleConfirm}
                 disabled={pending}
-                className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="qc-flow-control qc-button"
               >
                 {pending ? 'Withdrawing...' : 'Withdraw link'}
               </button>

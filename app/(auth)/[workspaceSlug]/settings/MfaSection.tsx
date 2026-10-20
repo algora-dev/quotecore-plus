@@ -361,7 +361,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
                       })
                     }
                     disabled={pending}
-                    className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+                    className="qc-flow-control qc-button"
                   >
                     Cancel
                   </button>
@@ -390,7 +390,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
                 })
               }
               disabled={pending}
-              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
+              className="qc-flow-control qc-button"
             >
               {hasVerified ? 'Add another factor' : 'Set up 2FA'}
             </button>
@@ -553,21 +553,24 @@ export function RecoveryCodesPanel({
               <button data-qc-variant="primary"
                 type="button"
                 onClick={download}
-                className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.4)]"
+                className="qc-flow-control qc-button"
+                data-qc-size="sm"
               >
                 Download as .txt
               </button>
               <button data-qc-variant="ghost"
                 type="button"
                 onClick={copyAll}
-                className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-flow-control qc-button"
+                data-qc-size="sm"
               >
                 Copy all
               </button>
               <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => setCodes(null)}
-                className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 ml-auto"
+                className="qc-flow-control qc-button ml-auto"
+                data-qc-size="sm"
               >
                 Done
               </button>
@@ -587,7 +590,7 @@ export function RecoveryCodesPanel({
                 })
               }
               disabled={pending}
-              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
+              className="qc-flow-control qc-button"
             >
               {pending ? 'Generating...' : 'Generate recovery codes'}
             </button>
@@ -597,7 +600,7 @@ export function RecoveryCodesPanel({
               type="button"
               onClick={() => setConfirmRegen(true)}
               disabled={pending}
-              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+              className="qc-flow-control qc-button"
             >
               Regenerate
             </button>

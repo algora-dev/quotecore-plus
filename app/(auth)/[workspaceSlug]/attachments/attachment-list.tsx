@@ -169,7 +169,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
         <button data-qc-variant="primary"
           data-copilot="attachment-upload-btn"
           onClick={() => setUploadOpen(true)}
-          className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
+          className="qc-flow-control qc-button"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -190,7 +190,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
           <p className="text-xs text-slate-400 mb-4">Upload a file to reuse it across your quotes and templates.</p>
           <button data-qc-variant="primary"
             onClick={() => setUploadOpen(true)}
-            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+            className="qc-flow-control qc-button"
           >
             Upload your first file
           </button>
@@ -257,10 +257,10 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
             </p>
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
             <div className="flex gap-3 justify-end mt-6">
-              <button data-qc-variant="ghost" onClick={() => setDeleteTarget(null)} disabled={busyId === deleteTarget.id} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
+              <button data-qc-variant="ghost" onClick={() => setDeleteTarget(null)} disabled={busyId === deleteTarget.id} className="qc-flow-control qc-button">
                 Cancel
               </button>
-              <button data-qc-variant="danger" onClick={handleDelete} disabled={busyId === deleteTarget.id} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
+              <button data-qc-variant="danger" onClick={handleDelete} disabled={busyId === deleteTarget.id} className="qc-flow-control qc-button">
                 {busyId === deleteTarget.id ? 'Deleting...' : 'Delete'}
               </button>
             </div>
