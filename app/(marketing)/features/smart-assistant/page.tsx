@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/images/social/og-smart-assistant.png',
+        url: '/images/social/og-smart-assistant.jpg',
         width: 1200,
         height: 630,
         alt: 'QuoteCore+ Smart Assistant - Run your estimating app just by asking.',
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Smart Assistant: AI Estimating Assistant for Contractors | QuoteCore+',
     description: 'Voice or text. Draft quotes, calculate materials, measure a roof - just by asking.',
-    images: ['/images/social/og-smart-assistant.png'],
+    images: ['/images/social/og-smart-assistant.jpg'],
   },
 };
 

@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/images/social/og-done-for-you.png',
+        url: '/images/social/og-done-for-you.jpg',
         width: 1200,
         height: 630,
         alt: 'Done-For-You QuoteCore+ Setup - Hate software? Let us set it up for you.',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Done-For-You QuoteCore+ Setup | Free 20-Minute Discovery Call',
     description: 'We configure your account around how you already work. Your pricing. Your workflow. Ready to use.',
-    images: ['/images/social/og-done-for-you.png'],
+    images: ['/images/social/og-done-for-you.jpg'],
   },
 };
 

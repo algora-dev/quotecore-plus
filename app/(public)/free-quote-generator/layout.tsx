@@ -25,13 +25,13 @@ export async function generateMetadata(): Promise<Metadata> {
         description: 'Create professional quotes with GST in minutes. No signup required.',
         url: `${origin}${path}`,
         type: 'website',
-        images: [{ url: '/og-image.png', alt: 'Free Quote Generator' }],
+        images: [{ url: '/og-image.jpg', alt: 'Free Quote Generator' }],
       },
       twitter: {
         card: 'summary_large_image',
         title: 'Free Quote Generator for NZ Trades',
         description: 'Create professional quotes with GST in minutes. No signup required.',
-        images: ['/og-image.png'],
+        images: ['/og-image.jpg'],
       },
     };
   }
@@ -46,13 +46,13 @@ export async function generateMetadata(): Promise<Metadata> {
       description: 'Create professional roofing and construction quotes in minutes. No signup required.',
       url: `${origin}${path}`,
       type: 'website',
-      images: [{ url: '/og-image.png', alt: 'Free Quote Generator' }],
+      images: [{ url: '/og-image.jpg', alt: 'Free Quote Generator' }],
     },
     twitter: {
       card: 'summary_large_image',
       title: 'Free Quote Generator - Create Professional Quotes Online',
       description: 'Create professional roofing and construction quotes in minutes. No signup required.',
-      images: ['/og-image.png'],
+      images: ['/og-image.jpg'],
     },
   };
 }

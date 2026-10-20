@@ -43,7 +43,7 @@ export function buildOgMetadata({
   title,
   description,
   path,
-  image = '/og-image.png',
+  image = '/og-image.jpg',
   type = 'website',
 }: {
   title: string;
@@ -66,7 +66,7 @@ export function buildOgMetadata({
 export function buildTwitterMetadata({
   title,
   description,
-  image = '/og-image.png',
+  image = '/og-image.jpg',
 }: {
   title: string;
   description: string;
@@ -199,7 +199,7 @@ export function blogPostingSchema({
     },
     image: {
       '@type': 'ImageObject',
-      url: image || `${SITE_URL}/og-image.png`,
+      url: image || `${SITE_URL}/og-image.jpg`,
       width: 1200,
       height: 630,
     },

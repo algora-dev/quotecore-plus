@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/images/social/og-demo.png',
+        url: '/images/social/og-demo.jpg',
         width: 1200,
         height: 630,
         alt: 'QuoteCore+ live demo - Try a real roofing estimating app. Fully guided. Completely free.',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Live Demo - Try the Roofing Estimating App Free | QuoteCore+',
     description: 'Fully guided. Completely free. No signup, no card.',
-    images: ['/images/social/og-demo.png'],
+    images: ['/images/social/og-demo.jpg'],
   },
 };
 

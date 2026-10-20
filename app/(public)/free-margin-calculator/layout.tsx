@@ -20,13 +20,13 @@ export async function generateMetadata(): Promise<Metadata> {
         description: 'Calculate margin per line or on a total. See selling price and profit instantly.',
         url: `${origin}${path}`,
         type: 'website',
-        images: [{ url: '/og-image.png', alt: 'Free Margin Calculator' }],
+        images: [{ url: '/og-image.jpg', alt: 'Free Margin Calculator' }],
       },
       twitter: {
         card: 'summary_large_image',
         title: 'Free Margin Calculator for NZ Trades',
         description: 'Calculate margin per line or on a total. See selling price and profit instantly.',
-        images: ['/og-image.png'],
+        images: ['/og-image.jpg'],
       },
     };
   }
@@ -43,13 +43,13 @@ export async function generateMetadata(): Promise<Metadata> {
       description: 'Enter costs, add margin per line or on a total, see selling price and profit instantly.',
       url: `${origin}${path}`,
       type: 'website',
-      images: [{ url: '/og-image.png', alt: 'Free Margin Calculator' }],
+      images: [{ url: '/og-image.jpg', alt: 'Free Margin Calculator' }],
     },
     twitter: {
       card: 'summary_large_image',
       title: 'Free Margin Calculator - Selling Price, Profit and Markup',
       description: 'Enter costs, add margin per line or on a total, see selling price and profit instantly.',
-      images: ['/og-image.png'],
+      images: ['/og-image.jpg'],
     },
   };
 }
