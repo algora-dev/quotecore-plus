@@ -24,6 +24,7 @@ import {
   SubscriptionInactiveError,
   FEATURE_LABELS,
 } from '@/app/lib/billing/entitlements';
+import { assertAdminGrantAllowance, recordAdminGrantUsage, AdminGrantAllowanceError } from '@/app/lib/billing/custom/admin-grant-enforcement';
 import { getSiteUrl } from '@/app/lib/email/urls';
 
 import type { SendDocumentInput, SendDocumentResult, DocumentSendAdapter } from './types';
@@ -82,6 +83,20 @@ export async function sendDocumentMessage(
   const sendableError = adapter.validateSendable?.(entity);
   if (sendableError) {
     return { ok: false, error: sendableError };
+  }
+
+  // Admin-grant hard enforcement (owner decision 2026-10-20): quote email
+  // sends consume the send allowance. URL copies are enforced inside
+  // generateAcceptanceToken; both share one idempotent per-quote counter.
+  if (input.entityKind === 'quote') {
+    try {
+      await assertAdminGrantAllowance(profile.company_id, 'quote_sent');
+    } catch (grantErr) {
+      if (grantErr instanceof AdminGrantAllowanceError) {
+        return { ok: false, error: grantErr.message, gated: true };
+      }
+      throw grantErr;
+    }
   }
 
   // ─── 4. Resolve token ───
@@ -216,6 +231,10 @@ export async function sendDocumentMessage(
   const workspaceSlug = company?.slug ?? '';
   for (const path of adapter.revalidatePaths(workspaceSlug, input.entityId)) {
     revalidatePath(path);
+  }
+
+  if (input.entityKind === 'quote') {
+    await recordAdminGrantUsage(profile.company_id, 'quote_sent', input.entityId);
   }
 
   return { ok: true, messageId: result.messageId, status: result.status };

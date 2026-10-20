@@ -16,6 +16,7 @@ import { notifyCustomerExpiryExtended } from '@/app/lib/email/notify';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { pickFields } from '@/app/lib/security/pickFields';
 import { createQuoteAtomic, resolveQuoteCreationDefaults } from '@/app/lib/billing/quote-creation';
+import { assertAdminGrantAllowance, recordAdminGrantUsage } from '@/app/lib/billing/custom/admin-grant-enforcement';
 import {
   assertComponentCompatibleWithQuote,
   TradeIncompatibleError,
@@ -229,6 +230,13 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
   if ((quote as any).accepted_at) throw new Error('Quote has already been accepted');
   if ((quote as any).declined_at) throw new Error('Quote has already been declined');
 
+  // Admin-grant hard enforcement (owner decision 2026-10-20): the send/copy
+  // commit consumes the quote allowance. Display-only fetches (applyExpiry=false)
+  // and drafting never count and are never blocked.
+  if (applyExpiry) {
+    await assertAdminGrantAllowance(profile.company_id, 'quote_sent');
+  }
+
   // Reuse the existing token when there's a live one (not withdrawn, not expired)
   // but ALWAYS update acceptance_token_expires_at to the newly requested expiry.
   // This lets the user change the deadline in the Send panel without rotating
@@ -253,6 +261,7 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
       .eq('id', quoteId)
       .eq('company_id', profile.company_id);
     revalidatePath('/');
+    await recordAdminGrantUsage(profile.company_id, 'quote_sent', quoteId);
     return quote.acceptance_token;
   }
 
@@ -284,6 +293,9 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
   if (error) throw new Error(error.message);
 
   revalidatePath('/');
+  if (applyExpiry) {
+    await recordAdminGrantUsage(profile.company_id, 'quote_sent', quoteId);
+  }
   return token;
 }
 
