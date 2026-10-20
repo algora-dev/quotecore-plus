@@ -172,23 +172,14 @@ type StepFn = (input: ChatTurnInput) => Promise<ChatTurnResult>;
  * Legacy and demo companies keep the exact previous code path.
  */
 async function withProviderBudgetStep(companyId: string, runId: string, base: StepFn): Promise<StepFn> {
-  let custom = false;
+  // Single resolver decision (company-type.ts): legacy and admin-granted
+  // custom setups keep the exact previous code path (no usage-registry
+  // metering; admin grants run unmetered until the Stripe live-switch,
+  // 2026-10-17). Only Stripe-linked custom companies get provider metering.
+  let metered = false;
   try {
-    const store = await import('@/app/lib/billing/custom/usage/store');
-    custom = await store.isCustomUsageCompany(companyId);
-  } catch {
-    // Billing ownership unreadable: fail closed before any provider spend.
-    throw new OrchestratorExecutionError('billing_unavailable', 0, 0);
-  }
-  if (!custom) return base;
-  // Admin-granted setups (no Stripe linkage) run without usage-registry
-  // metering: the custom billing environment is held off production until
-  // the Stripe live-switch (2026-10-17). Their allowance still shows from
-  // the granted snapshot; hard metering resumes when the environment is live.
-  let metered = true;
-  try {
-    const usageStore = await import('@/app/lib/billing/custom/usage/store');
-    metered = await usageStore.customUsageMeteringApplies(companyId);
+    const { resolveBillingType } = await import('@/app/lib/billing/company-type');
+    metered = (await resolveBillingType(companyId)).kind === 'custom_metered';
   } catch {
     // Billing ownership unreadable: fail closed before any provider spend.
     throw new OrchestratorExecutionError('billing_unavailable', 0, 0);
