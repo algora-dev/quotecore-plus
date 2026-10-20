@@ -1,1 +1,0 @@
-module.exports={content:['/mnt/data/pricing_activation_work/quotecore-plus/app/(auth)/[workspaceSlug]/components/**/*.tsx','/mnt/data/pricing_activation_work/quotecore-plus/app/components/pricing/*.tsx','/mnt/data/pricing_activation_work/quotecore-plus/app/components/ui/v2/*.tsx'],theme:{extend:{}},plugins:[]};
