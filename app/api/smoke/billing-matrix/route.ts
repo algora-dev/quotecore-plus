@@ -146,20 +146,38 @@ async function cleanupFixture(admin: ReturnType<typeof createAdminClient>, compa
   return notes;
 }
 
+/** Surface UsageError code + details: mapped messages alone hide the SQLSTATE. */
+function describeError(error: unknown): string {
+  const e = error as { code?: string; details?: unknown };
+  const parts: string[] = [];
+  if (e?.code) parts.push(`code=${e.code}`);
+  if (e?.details !== undefined && e?.details !== null) parts.push(`details=${JSON.stringify(e.details)}`);
+  parts.push(error instanceof Error ? error.message : String(error));
+  return parts.join(' ');
+}
+
 /** Storage reserve + full QCP07 hold-contract round-trip for custom fixtures. */
 async function storageRoundTrip(companyId: string, sfx: string, checks: Check[]): Promise<void> {
   const admin = createAdminClient();
   const bucket = 'company-logos';
-  const path = `${companyId}/smoke/billing-matrix-${sfx}.bin`;
+  const dir = `${companyId}/smoke`;
+  const path = `${dir}/billing-matrix-${sfx}.bin`;
   try {
-    await admin.storage.from(bucket).upload(path, Buffer.from('x'), { contentType: 'application/octet-stream', upsert: true });
+    // Upload + readback: the reserve RPC verifies storage.objects metadata,
+    // so record exactly what storage holds before blaming the RPC.
+    const up = await admin.storage.from(bucket).upload(path, Buffer.from('x'), { contentType: 'application/octet-stream' });
+    if (up.error) throw new Error(`upload: ${up.error.message}`);
+    const list = await admin.storage.from(bucket).list(dir, { limit: 10 });
+    const found = (list.data ?? []).find(o => o.name === `billing-matrix-${sfx}.bin`);
+    const meta = found ? `metadata=${JSON.stringify((found as { metadata?: unknown }).metadata ?? null)}` : 'object NOT listed after upload';
+    checks.push({ name: 'storage.upload', ok: !!found, error: found ? undefined : `${meta} (list error: ${list.error?.message ?? 'none'})` });
     const reserved = await reservePurchasedStorage({ companyId, bucket, path, size: 1, kind: 'logo' });
-    checks.push({ name: 'storage.reserve', ok: reserved === true, error: reserved === true ? undefined : `reserve returned ${reserved}` });
+    checks.push({ name: 'storage.reserve', ok: reserved === true, error: reserved === true ? undefined : `reserve returned ${reserved}; ${meta}` });
     const cleaned = await cleanupUnregisteredCustomObject({ companyId, bucket, path });
     checks.push({ name: 'storage.hold-release', ok: cleaned === true, error: cleaned === true ? undefined : `cleanup returned ${cleaned}` });
   } catch (error) {
+    checks.push({ name: 'storage.reserve', ok: false, error: describeError(error) });
     await admin.storage.from(bucket).remove([path]).catch(() => undefined);
-    checks.push({ name: 'storage.reserve', ok: false, error: error instanceof Error ? error.message : String(error) });
   }
 }
 

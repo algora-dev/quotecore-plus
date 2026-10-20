@@ -22,15 +22,16 @@ const argValue = (name) => {
 };
 
 function keyFromEnvLocal() {
-  try {
-    const m = readFileSync(join(import.meta.dirname, '..', '.env.local'), 'utf8')
-      .match(/^BILLING_SMOKE_KEY=(.+)$/m);
-    return m ? m[1].trim().replace(/^["']|["']$/g, '') : null;
-  } catch { return null; }
+  const text = (() => {
+    try { return readFileSync(join(import.meta.dirname, '..', '.env.local'), 'utf8'); } catch { return ''; }
+  })();
+  const pick = (name) => text.match(new RegExp(`^${name}=(.+)$`, 'm'))?.[1]?.trim().replace(/^["']|["']$/g, '') ?? null;
+  return { key: pick('BILLING_SMOKE_KEY'), url: pick('QCP_TESTING_URL') };
 }
 
-const url = argValue('--url') ?? process.env.QCP_TESTING_URL;
-const key = argValue('--key') ?? process.env.BILLING_SMOKE_KEY ?? keyFromEnvLocal();
+const local = keyFromEnvLocal();
+const url = argValue('--url') ?? process.env.QCP_TESTING_URL ?? local.url;
+const key = argValue('--key') ?? process.env.BILLING_SMOKE_KEY ?? local.key;
 
 if (!url || !key) {
   console.error('Usage: node scripts/billing-matrix-smoke.mjs --url https://<host> [--key <secret>]');
