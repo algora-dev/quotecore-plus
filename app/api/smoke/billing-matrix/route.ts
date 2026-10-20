@@ -164,8 +164,9 @@ async function storageRoundTrip(companyId: string, sfx: string, checks: Check[])
   const path = `${dir}/billing-matrix-${sfx}.bin`;
   try {
     // Upload + readback: the reserve RPC verifies storage.objects metadata,
-    // so record exactly what storage holds before blaming the RPC.
-    const up = await admin.storage.from(bucket).upload(path, Buffer.from('x'), { contentType: 'application/octet-stream' });
+    // so record exactly what storage holds before blaming the RPC. The logos
+    // bucket restricts mime types (images only): declare image/png.
+    const up = await admin.storage.from(bucket).upload(path, Buffer.from('x'), { contentType: 'image/png' });
     if (up.error) throw new Error(`upload: ${up.error.message}`);
     const list = await admin.storage.from(bucket).list(dir, { limit: 10 });
     const found = (list.data ?? []).find(o => o.name === `billing-matrix-${sfx}.bin`);
