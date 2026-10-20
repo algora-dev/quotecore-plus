@@ -3,6 +3,7 @@ import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import { CommercialFinalCta } from "@/components/conversion/CommercialConversion";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import {
   buildSoftwareApplicationSchema,
@@ -138,15 +139,17 @@ export default function ConstructionTakeoffSoftwarePage() {
               roofs, siding/cladding, floors and other measured work, then turn the measurements into materials,
               labour, pricing and professional estimates or quotes.
             </p>
-            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center" data-analytics-location="construction_takeoff_hero" data-analytics-surface="commercial_hero_actions">
               <a
                 href="/free-construction-takeoff-tools"
+                data-analytics-action="free_takeoff_tools"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
               >
                 Try the free takeoff tools
               </a>
               <a
                 href="/demo"
+                data-analytics-action="demo"
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-zinc-300 bg-white px-8 py-3 text-base font-semibold text-zinc-900 transition-colors hover:border-[#FF6B35]/40"
               >
                 Explore the app demo
@@ -278,6 +281,14 @@ export default function ConstructionTakeoffSoftwarePage() {
             <Link href="/construction-quoting-software" className={link}>contractor estimating &amp; quoting software</Link>{" "}
             for the full picture.
           </p>
+        </section>
+
+        <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
+          <CommercialFinalCta
+            location="construction_takeoff_workflow_bridge"
+            title="Measure first. Keep the rest of the job connected."
+            body="Use the free tools when you only need the takeoff. When you want the measurements to continue into reusable pricing, quotes, orders and invoices, try the app demo or talk through your workflow with us."
+          />
         </section>
 
         {/* Done-for-you setup */}

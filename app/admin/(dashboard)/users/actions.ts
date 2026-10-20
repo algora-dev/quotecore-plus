@@ -49,6 +49,7 @@ export interface SearchUserRow {
   companyId: string;
   companyName: string;
   planCode: string | null;
+  billingModel: string | null;
   stripeSubscriptionId: string | null;
   subscriptionStatus: string | null;
   compUntil: string | null;
@@ -129,11 +130,13 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
     if (uErr) return { ok: false, error: uErr.message };
 
     const companyIds = Array.from(new Set((pageUsers ?? []).map((u) => u.company_id).filter(Boolean))) as string[];
-    let companiesById: Record<string, { id: string; name: string; plan_code: string | null; subscription_status: string | null; admin_paused: boolean; stripe_subscription_id: string | null; comp_until: string | null }> = {};
+    let companiesById: Record<string, { id: string; name: string; plan_code: string | null; billing_model: string | null; subscription_status: string | null; admin_paused: boolean; stripe_subscription_id: string | null; comp_until: string | null }> = {};
     if (companyIds.length > 0) {
-      const { data: cos, error: cErr } = await admin
+      // billing_model is not in the generated DB types (regen pending).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: cos, error: cErr } = await (admin as any)
         .from('companies')
-        .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
+        .select('id, name, plan_code, billing_model, subscription_status, admin_paused, stripe_subscription_id, comp_until')
         .in('id', companyIds);
       if (cErr) return { ok: false, error: cErr.message };
       for (const c of cos ?? []) companiesById[c.id] = c;
@@ -153,6 +156,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
         companyId: u.company_id ?? '',
         companyName: co?.name ?? 'Unknown',
         planCode: co?.plan_code ?? null,
+        billingModel: co?.billing_model ?? null,
         subscriptionStatus: co?.subscription_status ?? null,
         stripeSubscriptionId: co?.stripe_subscription_id ?? null,
         compUntil: co?.comp_until ?? null,
@@ -175,12 +179,13 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
   if (emailErr) return { ok: false, error: emailErr.message };
 
   const emailCompanyIds = (emailMatches ?? []).map((u) => u.company_id).filter(Boolean) as string[];
-  let companiesById: Record<string, { id: string; name: string; plan_code: string | null; subscription_status: string | null; admin_paused: boolean; stripe_subscription_id: string | null; comp_until: string | null }> = {};
+  let companiesById: Record<string, { id: string; name: string; plan_code: string | null; billing_model: string | null; subscription_status: string | null; admin_paused: boolean; stripe_subscription_id: string | null; comp_until: string | null }> = {};
 
   if (emailCompanyIds.length > 0) {
-    const { data: cos } = await admin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: cos } = await (admin as any)
       .from('companies')
-      .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
+      .select('id, name, plan_code, billing_model, subscription_status, admin_paused, stripe_subscription_id, comp_until')
       .in('id', emailCompanyIds);
     for (const c of cos ?? []) {
       companiesById[c.id] = c;
@@ -201,6 +206,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       companyId: u.company_id ?? '',
       companyName: co?.name ?? 'Unknown',
       planCode: co?.plan_code ?? null,
+      billingModel: co?.billing_model ?? null,
       subscriptionStatus: co?.subscription_status ?? null,
       stripeSubscriptionId: co?.stripe_subscription_id ?? null,
       compUntil: co?.comp_until ?? null,
@@ -211,9 +217,10 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
 
   // If we didn't get enough results from email search, also search by company name
   if (users.length < limit) {
-    let coQuery = admin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let coQuery = (admin as any)
       .from('companies')
-      .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id, comp_until')
+      .select('id, name, plan_code, billing_model, subscription_status, admin_paused, stripe_subscription_id, comp_until')
       .ilike('name', `%${q}%`)
       .limit(limit);
     // Demo companies never surface in user search (owner 2026-10-17).
@@ -221,7 +228,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
     const { data: coMatches } = await coQuery;
 
     const existingCompanyIds = new Set(Object.keys(companiesById));
-    const newCoIds = (coMatches ?? []).filter((c) => !existingCompanyIds.has(c.id)).map((c) => c.id);
+    const newCoIds = (coMatches ?? []).filter((c: { id: string }) => !existingCompanyIds.has(c.id)).map((c: { id: string }) => c.id);
 
     if (newCoIds.length > 0) {
       const { data: coUsers } = await admin
@@ -243,6 +250,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
             companyId: c.id,
             companyName: c.name,
             planCode: c.plan_code,
+            billingModel: (c as { billing_model?: string | null }).billing_model ?? null,
             subscriptionStatus: c.subscription_status,
             stripeSubscriptionId: c.stripe_subscription_id ?? null,
             compUntil: (c as { comp_until?: string | null }).comp_until ?? null,

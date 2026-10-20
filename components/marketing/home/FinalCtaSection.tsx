@@ -6,7 +6,7 @@ import s from './Homepage.module.css';
 import c from './FinalCtaSection.module.css';
 
 export function FinalCtaSection({ config }: { config: Pick<HomepageConfig, 'demoHref' | 'bookingHref'> }) {
-  return <section id="next-step" className={c.section} aria-labelledby="next-step-title">
+  return <section id="next-step" className={c.section} aria-labelledby="next-step-title" data-analytics-location="homepage_final" data-analytics-surface="homepage_final_cta">
     <div className={`${s.container} ${c.inner}`}>
       <div className={c.heading}>
         <div><p className={`${s.eyebrow} ${c.eyebrow}`}>Your next step</p>

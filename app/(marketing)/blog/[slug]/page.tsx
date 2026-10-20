@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import BlogHeader from '@/components/BlogHeader';
+import BlogConversionPanel from '@/components/conversion/BlogConversionPanel';
 import {
   buildPageMetadata,
   breadcrumbSchema,
@@ -176,23 +177,8 @@ export default async function BlogPostPage({ params }: Props) {
             <Content />
           </div>
 
-          {/* Internal links */}
-          <div className="mt-16 flex flex-col gap-3 rounded-[1.75rem] border border-[#FF6B35]/20 bg-[#FF6B35]/5 p-7 sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-semibold text-zinc-950">Ready to quote faster?</p>
-            <div className="flex gap-3">
-              <a
-                href="/"
-                className="pill-shimmer inline-flex items-center justify-center rounded-full border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
-              >
-                Explore QuoteCore+
-              </a>
-              <a
-                href="/demo"
-                className="inline-flex items-center justify-center rounded-full bg-[#E55A28] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#BD4A1A]"
-              >
-                Try the demo
-              </a>
-            </div>
+          <div className="mt-16">
+            <BlogConversionPanel slug={slug} />
           </div>
         </article>
         </main>

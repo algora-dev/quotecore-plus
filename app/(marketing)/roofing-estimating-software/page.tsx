@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import { CommercialFinalCta, CommercialHeroActions } from "@/components/conversion/CommercialConversion";
 import DemoCTACard from "@/components/DemoCTACard";
 import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import {
@@ -181,16 +182,9 @@ export default function RoofingEstimatingSoftwarePage() {
               Measure roofs on site or in the office - phone, tablet or desktop - with Roof Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Configurations from US$29/month through the pricing builder.
             </p>
 
-            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <a
-                href="/demo"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-              >
-                Explore the interactive demo
-              </a>
-            </div>
+            <CommercialHeroActions location="roofing_estimating_hero" />
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Explore the interactive demo before subscribing.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools stay free. The demo and workflow call are available before subscribing.</p>
 
             {/* Two entry paths */}
             <div className="mx-auto mt-6 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
@@ -581,29 +575,12 @@ export default function RoofingEstimatingSoftwarePage() {
         </section>
 
         {/* Final CTA */}
-        <section className="mx-auto max-w-4xl px-6 py-24 text-center lg:px-8">
-          <h2 className="text-3xl font-semibold sm:text-5xl">
-            Estimate. Quote. Build.
-          </h2>
-
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-600">
-            Stop estimating in spreadsheets and re-entering the same data into a quote. QuoteCore+ gives you one connected workflow from measurement to final payment.
-          </p>
-
-          <a
-            href="/demo"
-            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-          >
-            Explore the interactive demo
-          </a>
-
-          <p className="mt-4 text-sm text-zinc-500">
-            Free tools, no signup. Explore the interactive demo before subscribing to the paid app.{" "}
-            <a href="/pricing" className="underline hover:text-zinc-900">
-              See pricing
-            </a>
-            .
-          </p>
+        <section className="mx-auto max-w-4xl px-6 py-24 lg:px-8">
+          <CommercialFinalCta
+            location="roofing_estimating_final"
+            title="Estimate. Quote. Build."
+            body="Try the estimating workflow with real product screens, or use the free workflow call to map QuoteCore+ against the way you currently measure and price jobs."
+          />
         </section>
 
         <SiteFooter />

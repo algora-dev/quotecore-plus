@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import { CommercialFinalCta, CommercialHeroActions } from "@/components/conversion/CommercialConversion";
 import DemoCTACard from "@/components/DemoCTACard";
 import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import YouTubeLite from "@/components/YouTubeLite";
@@ -248,16 +249,9 @@ export default function RoofingQuotingSoftwarePage() {
               </p>
             </div>
 
-            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <a
-                href="/demo"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-              >
-                Explore the interactive demo
-              </a>
-            </div>
+            <CommercialHeroActions location="roofing_quoting_hero" />
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Explore the interactive demo before subscribing.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools stay free. The demo and workflow call are available before subscribing.</p>
           </div>
         </section>
 
@@ -624,23 +618,12 @@ export default function RoofingQuotingSoftwarePage() {
         </section>
 
         {/* Final CTA */}
-        <section className="mx-auto max-w-4xl px-6 py-24 text-center lg:px-8">
-          <h2 className="text-3xl font-semibold sm:text-5xl">
-  Quote. Manage. Grow.
-</h2>
-
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-600">
-            Stop running one roofing job through five different tools. QuoteCore+ gives you one connected workflow from first measurement to final payment.
-          </p>
-
-          <a
-            href="/demo"
-            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-          >
-            Explore the interactive demo
-          </a>
-
-          <p className="mt-4 text-sm text-zinc-500">Free tools, no signup. Explore the interactive demo before subscribing to the paid app. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
+        <section className="mx-auto max-w-4xl px-6 py-24 lg:px-8">
+          <CommercialFinalCta
+            location="roofing_quoting_final"
+            title="Quote. Manage. Grow."
+            body="Experience the connected roofing workflow yourself, or book a short call to see how it would work with your own pricing, components and business process."
+          />
         </section>
 
         <SiteFooter />

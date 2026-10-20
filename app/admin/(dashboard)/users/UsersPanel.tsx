@@ -46,7 +46,16 @@ function formatLastActive(iso: string | null): string {
   return `${dateStr} (${days} days ago)`;
 }
 
-function PlanBadge({ code, status, hasSub }: { code: string | null; status?: string | null; hasSub?: boolean }) {
+function PlanBadge({ code, status, hasSub, billingModel }: { code: string | null; status?: string | null; hasSub?: boolean; billingModel?: string | null }) {
+  // Custom-billing companies: green "Custom" pill (owner 2026-10-19) - the
+  // legacy plan_code carried from signup is display noise for them.
+  if (billingModel === 'custom_setup') {
+    return (
+      <span className="rounded-full px-2.5 py-1 text-xs font-medium bg-emerald-100 text-emerald-700">
+        Custom
+      </span>
+    );
+  }
   if (!code || code === 'premium') return null;
   // Never-paid account (signed up, never picked/paid a plan): distinct amber
   // "Unpaid" pill instead of the plan it defaulted to.
@@ -193,7 +202,7 @@ export function UsersPanel() {
                   <td className="px-4 py-3 text-slate-700">{u.companyName}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <PlanBadge code={u.planCode} status={u.subscriptionStatus} hasSub={!!u.stripeSubscriptionId} />
+                      <PlanBadge code={u.planCode} status={u.subscriptionStatus} hasSub={!!u.stripeSubscriptionId} billingModel={u.billingModel} />
                       {u.compUntil && (
                         <CompBadge until={u.compUntil} />
                       )}

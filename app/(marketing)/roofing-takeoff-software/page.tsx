@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import { CommercialFinalCta, CommercialHeroActions } from "@/components/conversion/CommercialConversion";
 import DemoCTACard from "@/components/DemoCTACard";
 import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import {
@@ -161,16 +162,9 @@ export default function RoofingTakeoffSoftwarePage() {
               Upload plans and measure roof areas, lengths and pitch digitally - on site from your phone or tablet, or at the office on desktop. Roof Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Configurations from US$29/month through the pricing builder.
             </p>
 
-            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <a
-                href="/demo"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-              >
-                Explore the interactive demo
-              </a>
-            </div>
+            <CommercialHeroActions location="roofing_takeoff_hero" />
 
-            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. Explore the interactive demo before subscribing.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools stay free. The demo and workflow call are available before subscribing.</p>
 
             {/* Free product bridge */}
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-[#FF6B35]/30 bg-orange-50/50 px-5 py-4 text-left">
@@ -595,29 +589,12 @@ export default function RoofingTakeoffSoftwarePage() {
         </section>
 
         {/* Final CTA */}
-        <section className="mx-auto max-w-4xl px-6 py-24 text-center lg:px-8">
-          <h2 className="text-3xl font-semibold sm:text-5xl">
-            Measure. Price. Quote.
-          </h2>
-
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-600">
-            Stop doing takeoff in one tool and re-entering measurements into another. QuoteCore+ gives you one workflow from plan upload to final payment.
-          </p>
-
-          <a
-            href="/demo"
-            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-          >
-            Explore the interactive demo
-          </a>
-
-          <p className="mt-4 text-sm text-zinc-500">
-            Free tools, no signup. Explore the interactive demo before subscribing to the paid app.{" "}
-            <a href="/pricing" className="underline hover:text-zinc-900">
-              See pricing
-            </a>
-            .
-          </p>
+        <section className="mx-auto max-w-4xl px-6 py-24 lg:px-8">
+          <CommercialFinalCta
+            location="roofing_takeoff_final"
+            title="Measure. Price. Quote."
+            body="See the takeoff workflow yourself, or talk through how your existing plans, pricing and components would fit before you subscribe."
+          />
         </section>
 
         <SiteFooter />

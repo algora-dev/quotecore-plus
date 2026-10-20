@@ -218,10 +218,10 @@ export default function TutorialsPage() {
               </div>
               <div className="flex flex-col gap-3">
                 <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
-                  Q - Your AI assistant
+                  Guided walkthroughs
                 </h4>
                 <p className="text-sm leading-6 text-zinc-600">
-                  Inside the app, Q provides guided "show me how" flows for common tasks like creating your first quote, setting up Smart Components, and sending orders. Just ask Q what you need help with.
+                  Inside the app, guided "show me how" flows walk you through common tasks like creating your first quote, setting up Smart Components, and sending orders - step by step, at your pace.
                 </p>
               </div>
             </div>

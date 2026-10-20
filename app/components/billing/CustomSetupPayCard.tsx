@@ -28,6 +28,7 @@ import {
 import { resolveIntent } from '@/app/components/pricing/calculator/routing';
 import { expandBillingSelection } from '@/app/components/pricing/calculator/billingCatalogue';
 import type { PlanIntent } from '@/app/components/pricing/calculator/types';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { createCustomCheckoutSession } from '@/app/(auth)/[workspaceSlug]/account/billing/actions';
 
 function formatUsd(cents: number): string {
@@ -88,7 +89,7 @@ export function CustomSetupPayCard({ catalog = PREVIEW_CATALOG }: { catalog?: Ca
   }
 
   return (
-    <div className="rounded-xl border-2 border-[#FF6B35] bg-white p-6 shadow-sm mb-6" data-qc-custom-setup-card>
+    <div data-qc-ui="v2" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-lg mb-6" data-qc-custom-setup-card>
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="text-lg font-bold text-slate-900">Your configured setup</h2>
         <span className="rounded-full bg-orange-50 border border-orange-200 px-2.5 py-1 text-xs font-medium text-[#BD4A1A] whitespace-nowrap">
@@ -126,15 +127,15 @@ export function CustomSetupPayCard({ catalog = PREVIEW_CATALOG }: { catalog?: Ca
           {checkoutState === 'canceled' && (
             <p className="mt-3 text-xs text-slate-500">Checkout canceled - your setup is saved, activate whenever you are ready.</p>
           )}
-          <button
-            type="button"
+          <QcButton
+            variant="primary"
+            size="lg"
+            className="mt-5 w-full"
+            pending={isPending}
             onClick={pay}
-            disabled={isPending}
-            data-qc-variant="primary"
-            className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-60"
           >
             {isPending ? 'Preparing checkout…' : `Pay ${formatUsd(total)}/mo & activate`}
-          </button>
+          </QcButton>
           <p className="mt-2 text-center text-xs text-slate-400">Secure checkout via Stripe · monthly subscription · cancel future renewals anytime</p>
         </>
       )}

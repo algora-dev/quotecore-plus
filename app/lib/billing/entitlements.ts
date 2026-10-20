@@ -28,6 +28,7 @@ import { cache } from 'react';
 
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { customAccess, parsePurchasedLimits, ZERO_LIMITS, type AccessSnapshot } from './custom/contracts';
+import { resolveBillingType } from './company-type';
 import { loadCustomUsage } from './custom/usage/store';
 import { customScope } from './custom/environment';
 import {
@@ -363,8 +364,8 @@ export const loadCompanyEntitlements = cache(
     // billing environment, deliberately held off production until the Stripe
     // live-switch (Roofline incident 2026-10-17): customAccess resolves them
     // from the granted snapshot and usage reconciliation is skipped.
-    const isAdminGrant = company.billing_model === 'custom_setup'
-      && (customSnap as unknown as { stripe_customer_id?: string | null })?.stripe_customer_id === 'admin-granted';
+    // Type decided by the single resolver (company-type.ts).
+    const isAdminGrant = (await resolveBillingType(companyId)).kind === 'custom_admin_granted';
     const access = company.billing_model === 'custom_setup'
       ? customAccess({ ...company, admin_override_plan_code: null, admin_override_until: null, comp_until: null }, customSnap, isAdminGrant ? null : customScope())
       : { source: 'legacy' as const, limits: null, available: true, reason: 'legacy' };

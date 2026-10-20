@@ -1,5 +1,24 @@
 ﻿# Smoke Test Checklist
 
+### BILLING-MATRIX SMOKE (HARD RULE - run on EVERY testing deploy; owner directive 2026-10-19)
+
+Probes all three company billing kinds (legacy / custom_metered / custom_admin_granted) through the real
+decision + metering call sites (resolver, entitlements, usage snapshot vs env scope, storage QCP07 hold
+round-trip, legacy points RPC, SA gate). Would have caught all three 2026-10-19 incidents pre-merge.
+
+Run right after the testing deploy goes Ready (needs BILLING_SMOKE_KEY env on the testing project):
+
+```
+npx vercel ls                                   # confirm deploy Ready, alias flipped
+npm run smoke:billing                          # uses QCP_TESTING_URL + BILLING_SMOKE_KEY
+# or: node scripts/billing-matrix-smoke.mjs --url https://<testing-host>
+```
+
+- [ ] `npm run check:billing` passes (resolver grep guard; run before any billing-touching push)
+- [ ] smoke:billing prints `[PASS] legacy`, `[PASS] custom_metered`, `[PASS] custom_admin_granted`, ALL GREEN
+- [ ] Any FAIL row = do not hand QA to Shaun; fix first. `usage.snapshot_env_scope` failing = CUSTOM_BILLING_* env drift on the deployment.
+- [ ] Endpoint 404 on a testing deploy = BILLING_SMOKE_KEY missing there (env applies to NEW deployments only - redeploy after setting).
+
 ### Pending verification (PAID-ONLY CHANGEOVER, pushed 2026-09-16, main `91eed806`)
 
 **TRIAL REMOVAL - APP + DOCS (test on app.quote-core.com once deployed)**

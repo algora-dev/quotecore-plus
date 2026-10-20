@@ -1,6 +1,7 @@
 import 'server-only';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { customScope } from '../environment';
+import { resolveBillingType } from '../../company-type';
 import { parseUsageSnapshot, usageError, UsageError, type UsageSnapshot, type RpcClient } from './contracts';
 export type { RpcClient } from './contracts';
 /** One narrow cast until the integrating agent regenerates Supabase types. */
@@ -19,27 +20,18 @@ export async function loadCustomUsage(companyId: string): Promise<UsageSnapshot>
   if (result.accountId !== scope.accountId || result.mode !== scope.mode) throw new UsageError('usage_scope_mismatch', 'Billing environment could not be verified.');
   return result;
 }
-/** Resolve billing ownership before deciding which enforcement path to use. */
+/** Resolve billing ownership before deciding which enforcement path to use.
+ *  Thin wrapper over the single resolver (app/lib/billing/company-type.ts):
+ *  true only for custom_setup companies (metered OR admin-granted). */
 export async function isCustomUsageCompany(companyId: string): Promise<boolean> {
-  const admin = createAdminClient();
-  // Supabase type regeneration is part of host integration.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (admin as any).from('companies').select('billing_model').eq('id', companyId).maybeSingle();
-  if (error || !data) throw new UsageError('usage_unavailable', 'Billing ownership could not be verified.');
-  const model = (data as unknown as { billing_model: unknown }).billing_model;
-  if (model !== 'legacy' && model !== 'custom_setup') throw new UsageError('usage_unavailable', 'Billing ownership is not recognised.');
-  return model === 'custom_setup';
+  return (await resolveBillingType(companyId)).kind !== 'legacy';
 }
 
 /** True only for Stripe-linked custom companies. Admin-granted setups
- *  (stripe_customer_id = 'admin-granted') have no usage-registry linkage
- *  and must not depend on the custom billing environment, which is held
- *  off production until the Stripe live-switch (2026-10-17): they run
- *  unmetered against their granted allowance until then. */
+ *  (no Stripe linkage) have no usage-registry linkage and must not depend
+ *  on the custom billing environment, which is held off production until
+ *  the Stripe live-switch (2026-10-17): they run unmetered against their
+ *  granted allowance until then. Thin wrapper over the single resolver. */
 export async function customUsageMeteringApplies(companyId: string): Promise<boolean> {
-  if (!(await isCustomUsageCompany(companyId))) return false;
-  const admin = createAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: snap } = await (admin as any).from('company_custom_billing').select('stripe_customer_id').eq('company_id', companyId).maybeSingle();
-  return (snap as { stripe_customer_id?: string | null } | null)?.stripe_customer_id !== 'admin-granted';
+  return (await resolveBillingType(companyId)).kind === 'custom_metered';
 }
