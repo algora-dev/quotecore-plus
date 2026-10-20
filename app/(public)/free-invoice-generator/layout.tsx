@@ -10,8 +10,8 @@ export async function generateMetadata():Promise<Metadata> {
   const title=nz?'Free Invoice Generator for NZ Trades':'Free Invoice Generator';
   const description='Create professional invoices with '+(nz?'GST':'tax')+', line items and payment instructions. No signup required to start. Print or save as PDF; daily allowances apply.';
   return {title,description,alternates:{canonical:origin+path,languages:dualDomainHreflang(path)},
-    openGraph:{title,description,url:origin+path,type:'website',images:[{url:'/og-image.png',alt:title}]},
-    twitter:{card:'summary_large_image',title,description,images:['/og-image.png']}};
+    openGraph:{title,description,url:origin+path,type:'website',images:[{url:'/og-image.jpg',alt:title}]},
+    twitter:{card:'summary_large_image',title,description,images:['/og-image.jpg']}};
 }
 export default async function Layout({children}:{children:ReactNode}) {
   const h=await headers(),origin=canonicalOrigin(h.get('host')||'');

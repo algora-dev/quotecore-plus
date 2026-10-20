@@ -655,7 +655,8 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
                 <button
                   type="button"
                   onClick={addLength}
-                  className="w-full px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600"
+                  className="qc-button w-full"
+                  data-qc-variant="primary"
                 >
                   {entryMode === 'area' ? 'Add Area Entry' : entryMode === 'volume' ? 'Add Volume Entry' : 'Add Length Entry'}
                 </button>
@@ -737,14 +738,16 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors"
+            className="qc-button"
+            data-qc-variant="ghost"
           >
             Cancel
           </button>
           <button
             type="submit"
             onClick={handleSubmit}
-            className="px-6 py-2.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm"
+            className="qc-button"
+            data-qc-variant="primary"
           >
             {existingLine ? (embedded ? 'Apply changes' : 'Save Changes') : 'Add Item'}
           </button>

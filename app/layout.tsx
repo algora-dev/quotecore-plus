@@ -68,10 +68,10 @@ export const metadata: Metadata = {
     url: '/',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'QuoteCore+ - From complex plans to custom quotes in under 3 minutes',
+        alt: 'QuoteCore+ - Measure. Price. Quote. Faster and easier.',
       },
     ],
   },
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'QuoteCore+',
     description: 'Roofing measurement and quoting platform.',
-    images: ['/og-image.png'],
+    images: ['/og-image.jpg'],
   },
   icons: {
     icon: [

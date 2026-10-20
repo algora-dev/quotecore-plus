@@ -41,13 +41,13 @@ export async function generateMetadata(): Promise<Metadata> {
         url: 'https://quote-core.com/',
         siteName: 'QuoteCore+',
         type: 'website',
-        images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'QuoteCore+ - Roofing & Construction Quoting Software' }],
+        images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'QuoteCore+ - Roofing & Construction Quoting Software' }],
       },
       twitter: {
         card: 'summary_large_image',
         title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
         description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice, all in one platform.',
-        images: ['/og-image.png'],
+        images: ['/og-image.jpg'],
       },
     };
   }

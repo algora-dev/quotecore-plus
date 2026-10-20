@@ -24,12 +24,6 @@ import { CalibrationEvidenceZoom } from './CalibrationEvidenceZoom';
 
 const UNIT_OPTIONS: readonly DistanceUnit[] = ['m', 'cm', 'mm', 'ft', 'in', 'yd'];
 
-const btnPrimary =
-  'inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50 disabled:cursor-not-allowed';
-const btnAccent =
-  'inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed';
-const btnGhost =
-  'px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed';
 
 /** A page without a server-stored image (still local/unsaved) cannot run AI search. */
 function isLocalPage(pageId: string): boolean {
@@ -226,7 +220,7 @@ export function CalibrationReviewPanel({
           </div>
         </div>
         <div className="px-4 py-3 border-t border-slate-100 flex justify-end">
-          <button type="button" className={btnGhost} onClick={onSwitchToManual}>
+          <button type="button" className="qc-button" data-qc-variant="ghost" onClick={onSwitchToManual}>
             Calibrate manually
           </button>
         </div>
@@ -272,12 +266,12 @@ export function CalibrationReviewPanel({
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 space-y-2">
             <p className="text-sm text-red-700">{state.error.message}</p>
             {lastFailure?.recoverable && state.phase === 'reviewing' && (
-              <button type="button" className={btnGhost} onClick={retrySearch}>
+              <button type="button" className="qc-button" data-qc-variant="ghost" onClick={retrySearch}>
                 Retry search
               </button>
             )}
             {(state.error.code === 'REQUEST_CONFLICT' || lastFailure && !lastFailure.recoverable) && (
-              <button type="button" className={btnGhost} onClick={onSwitchToManual}>
+              <button type="button" className="qc-button" data-qc-variant="ghost" onClick={onSwitchToManual}>
                 Calibrate manually
               </button>
             )}
@@ -291,7 +285,7 @@ export function CalibrationReviewPanel({
               {rescanRemaining > 0 && state.accepted.length < 3 && (
                 <button
                   type="button"
-                  className={btnGhost}
+                  className="qc-button" data-qc-variant="ghost"
                   onClick={() => dispatch({ type: 'REQUEST_RESCAN', strategy: 'different_references' })}
                 >
                   Find different measurements
@@ -302,7 +296,7 @@ export function CalibrationReviewPanel({
                   </span>
                 </button>
               )}
-              <button type="button" className={btnGhost} onClick={onSwitchToManual}>
+              <button type="button" className="qc-button" data-qc-variant="ghost" onClick={onSwitchToManual}>
                 Calibrate manually
               </button>
             </div>
@@ -373,14 +367,14 @@ export function CalibrationReviewPanel({
                 <div className="space-y-2">
                   <button
                     type="button"
-                    className={btnPrimary}
+                    className="qc-button" data-qc-variant="primary"
                     onClick={() => dispatch({ type: 'ACCEPT_AND_FINISH' })}
                   >
                     Accept &amp; start measuring
                   </button>
                   <button
                     type="button"
-                    className={btnGhost}
+                    className="qc-button" data-qc-variant="ghost"
                     onClick={() => dispatch({ type: 'ACCEPT_CURRENT' })}
                     disabled={state.accepted.length >= 3}
                   >
@@ -388,7 +382,7 @@ export function CalibrationReviewPanel({
                   </button>
                   <button
                     type="button"
-                    className={btnGhost}
+                    className="qc-button" data-qc-variant="ghost"
                     onClick={() => dispatch({ type: 'SKIP_CURRENT', reason: 'endpoints' })}
                   >
                     Skip - points are wrong
@@ -434,14 +428,14 @@ export function CalibrationReviewPanel({
                     <div className="flex flex-col gap-2">
                       <button
                         type="button"
-                        className={btnAccent}
+                        className="qc-button" data-qc-variant="primary"
                         onClick={() => dispatch({ type: 'FINISH_ACCEPTED' })}
                       >
                         Use these measurements anyway
                       </button>
                       <button
                         type="button"
-                        className={btnGhost}
+                        className="qc-button" data-qc-variant="ghost"
                         onClick={() => setDisagreementDismissed(true)}
                       >
                         Review/remove one
@@ -453,7 +447,7 @@ export function CalibrationReviewPanel({
                   {!showDisagreementBlock && (
                   <button
                     type="button"
-                    className={btnAccent}
+                    className="qc-button" data-qc-variant="primary"
                     onClick={() => dispatch({ type: 'FINISH_ACCEPTED' })}
                   >
                     Use {validAccepted.length} accepted measurement
@@ -490,7 +484,7 @@ export function CalibrationReviewPanel({
               {state.accepted.length < 3 && (
                 <button
                   type="button"
-                  className={btnGhost}
+                  className="qc-button" data-qc-variant="ghost"
                   disabled={rescanRemaining === 0}
                   onClick={() =>
                     dispatch({ type: 'REQUEST_RESCAN', strategy: 'different_references' })
@@ -507,7 +501,7 @@ export function CalibrationReviewPanel({
               {canRefineActive && activeCandidate && (
                 <button
                   type="button"
-                  className={btnGhost}
+                  className="qc-button" data-qc-variant="ghost"
                   onClick={() =>
                     dispatch({
                       type: 'REQUEST_RESCAN',
@@ -519,7 +513,7 @@ export function CalibrationReviewPanel({
                   Improve these points
                 </button>
               )}
-              <button type="button" className={btnGhost} onClick={onSwitchToManual}>
+              <button type="button" className="qc-button" data-qc-variant="ghost" onClick={onSwitchToManual}>
                 Use manual calibration
               </button>
             </div>
@@ -530,7 +524,7 @@ export function CalibrationReviewPanel({
       <div className="px-4 py-3 border-t border-slate-100 flex justify-end">
         <button
           type="button"
-          className={btnGhost}
+          className="qc-button" data-qc-variant="ghost"
           onClick={() => dispatch({ type: 'CANCEL' })}
         >
           Cancel

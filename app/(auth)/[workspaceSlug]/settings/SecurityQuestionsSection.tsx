@@ -217,14 +217,14 @@ function SecurityQuestionEditor({
               type="button"
               onClick={onClose}
               disabled={isPending}
-              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition"
+              className="qc-flow-control qc-button"
             >
               Cancel
             </button>
             <button data-qc-variant="primary"
               type="submit"
               disabled={isPending}
-              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
+              className="qc-flow-control qc-button"
             >
               {isPending ? 'Saving…' : 'Save'}
             </button>

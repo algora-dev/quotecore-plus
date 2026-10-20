@@ -108,13 +108,14 @@ export function InvoiceHeaderModal({
         </div>
 
         <div className="px-6 pb-5 flex gap-3">
-          <button type="button" onClick={onClose} className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={onClose} className="qc-button flex-1" data-qc-variant="ghost">
             Cancel
           </button>
           <button
             type="button"
             onClick={() => onSave({ companyName, companyAddress, companyEmail, companyPhone, companyLogoUrl, footerText })}
-            className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-all"
+            className="qc-button flex-1"
+            data-qc-variant="primary"
           >
             Apply
           </button>

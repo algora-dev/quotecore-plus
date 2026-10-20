@@ -406,8 +406,8 @@ export function TemplatesPageClient({
             <h3 className="text-lg font-semibold text-slate-900">Delete Template</h3>
             <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The template will be permanently deleted.</p>
             <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => { setPendingDeleteId(null); setPendingDeleteType(null); }} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={!!deleting}>Cancel</button>
-              <button onClick={confirmDelete} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={!!deleting}>{deleting ? 'Deleting...' : 'Delete'}</button>
+              <button onClick={() => { setPendingDeleteId(null); setPendingDeleteType(null); }} className="qc-button" data-qc-variant="ghost" disabled={!!deleting}>Cancel</button>
+              <button onClick={confirmDelete} className="qc-button" data-qc-variant="danger" disabled={!!deleting}>{deleting ? 'Deleting...' : 'Delete'}</button>
             </div>
           </div>
         </div>

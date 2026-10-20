@@ -87,7 +87,9 @@ export function QuoteExpiryEditor({ quoteId, expiresAt, isFinalised }: Props) {
           <button
             onClick={handleSave}
             disabled={isPending}
-            className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_8px_rgba(255,107,53,0.3)]"
+            className="qc-button"
+            data-qc-variant="primary"
+            data-qc-size="sm"
           >
             {isPending ? 'Saving…' : 'Save'}
           </button>

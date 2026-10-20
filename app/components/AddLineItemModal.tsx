@@ -537,7 +537,8 @@ export function AddLineItemModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="qc-button flex-1"
+            data-qc-variant="ghost"
           >
             Cancel
           </button>
@@ -549,7 +550,8 @@ export function AddLineItemModal({
               handleAddComponent
             }
             disabled={!canAdd}
-            className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-all disabled:opacity-50"
+            data-qc-variant="primary"
+            className="qc-button flex-1"
           >
             Add Line
           </button>

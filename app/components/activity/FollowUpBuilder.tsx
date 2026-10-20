@@ -288,7 +288,9 @@ export function FollowUpBuilder({
           type="button"
           onClick={() => addDraftRule('triggered')}
           disabled={draftRules.length >= 3}
-          className="px-3 py-1.5 text-xs font-semibold rounded-full bg-black text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="qc-button"
+          data-qc-variant="primary"
+          data-qc-size="sm"
         >
           + Triggered follow-up
         </button>
@@ -296,7 +298,9 @@ export function FollowUpBuilder({
           type="button"
           onClick={() => addDraftRule('time_based')}
           disabled={draftRules.length >= 3}
-          className="px-3 py-1.5 text-xs font-semibold rounded-full bg-black text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="qc-button"
+          data-qc-variant="primary"
+          data-qc-size="sm"
         >
           + Time-based follow-up
         </button>
@@ -406,7 +410,8 @@ export function FollowUpBuilder({
           type="button"
           onClick={handleSave}
           disabled={saving || draftRules.length === 0}
-          className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          className="qc-button"
+          data-qc-variant="primary"
         >
           {saving ? 'Saving…' : 'Save follow-ups'}
         </button>

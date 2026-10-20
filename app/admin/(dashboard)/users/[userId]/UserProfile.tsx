@@ -28,6 +28,13 @@ import { StorageTab } from './StorageTab';
 import { QuotesTab } from './quotes-tab/QuotesTab';
 import { FreeToolUsageSection } from './FreeToolUsageSection';
 import { CustomBillingSection } from './custom-billing/CustomBillingSection';
+import { QcDialog } from '@/app/components/ui/v2/QcDialog';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import {
+  listCompanyPayments,
+  createAdminRefund,
+  type RefundablePayment,
+} from './refund-actions';
 
 const PLAN_OPTIONS = [
   { code: 'free', label: 'Free' },
@@ -114,7 +121,7 @@ export function UserProfile({ data }: { data: UserProfileData }) {
       {/* B.5 Custom Setup (billing): grant/comp + Stripe-linked change */}
       <CustomBillingSection companyId={data.company.id} />
 
-      {/* P3. Stripe refund observations (manual refunds remain a Stripe action) */}
+      {/* P3.5 Refunds: issue full or partial refunds in-app; history auto-observed via Stripe webhook */}
       <RefundHistorySection data={data} />
 
       {/* C. Discount / Coupon */}
@@ -461,37 +468,191 @@ function SubscriptionSection({
 }
 
 // ---------------------------------------------------------------------------
-// P3: observed Stripe refunds. This is read-only; refunds are issued manually
-// in Stripe and never restore QuoteCore usage or cancel a subscription.
+// P3.5: refunds issued from the admin panel (2026-10-20). Money only: a refund
+// never restores usage or cancels a subscription. History rows are auto-observed
+// from the Stripe webhook (refund.created / charge.refunded).
 // ---------------------------------------------------------------------------
 
 function RefundHistorySection({ data }: { data: UserProfileData }) {
-  if (!data.refunds.length) return null;
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [payments, setPayments] = useState<RefundablePayment[] | null>(null);
+  const [listError, setListError] = useState('');
+  const [selectedId, setSelectedId] = useState('');
+  const [partial, setPartial] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState('');
+
+  const selected = payments?.find((p) => p.chargeId === selectedId) ?? null;
+  const remaining = selected?.remainingCents ?? 0;
+  const parsedAmount = amount.trim() === '' ? NaN : Number(amount);
+  const amountCents =
+    selected && partial && Number.isFinite(parsedAmount) ? Math.round(parsedAmount * 100) : null;
+  const amountValid =
+    !partial ||
+    (Number.isFinite(parsedAmount) &&
+      parsedAmount > 0 &&
+      amountCents !== null &&
+      amountCents >= 1 &&
+      amountCents <= remaining);
+  const canSubmit = !!selected && amountValid && reason.trim().length >= 3 && !submitting;
+
+  function openDialog() {
+    setOpen(true);
+    setDone('');
+    setError('');
+    if (payments === null) {
+      setLoading(true);
+      setListError('');
+      listCompanyPayments(data.user.id)
+        .then((res) => {
+          if (res.ok) {
+            setPayments(res.payments);
+            if (res.payments[0]) setSelectedId(res.payments[0].chargeId);
+          } else {
+            setListError(res.error);
+          }
+        })
+        .catch(() => setListError('Failed to load payments.'))
+        .finally(() => setLoading(false));
+    }
+  }
+
+  function submit() {
+    if (!selected) return;
+    setSubmitting(true);
+    setError('');
+    createAdminRefund(data.user.id, {
+      chargeId: selected.chargeId,
+      amountCents,
+      reason: reason.trim(),
+    })
+      .then((res) => {
+        if (res.ok) {
+          setDone(
+            'Refund ' +
+              res.refundId +
+              ' issued: ' +
+              (res.amountCents / 100).toFixed(2) +
+              ' ' +
+              res.currency.toUpperCase() +
+              '. It appears in the history below once Stripe confirms (usually within seconds).',
+          );
+          setPayments(null);
+          setSelectedId('');
+          setPartial(false);
+          setAmount('');
+          setReason('');
+          router.refresh();
+        } else {
+          setError(res.error);
+        }
+      })
+      .catch(() => setError('Refund failed.'))
+      .finally(() => setSubmitting(false));
+  }
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Refund history</h2>
-          <p className="text-xs text-slate-500 mt-1">Observed from Stripe. Money refunds do not restore consumed allowances and do not automatically cancel the subscription.</p>
+          <h2 className="text-lg font-semibold text-slate-900">Refunds</h2>
+          <p className="text-xs text-slate-500 mt-1">Issue full or partial refunds from here. Money refunds do not restore consumed allowances and do not automatically cancel the subscription.</p>
         </div>
+        <QcButton variant="primary" size="sm" onClick={openDialog}>Refund a payment</QcButton>
       </div>
-      <div className="mt-4 divide-y divide-slate-100 border border-slate-200 rounded-lg overflow-hidden">
-        {data.refunds.map(refund => (
-          <div key={refund.refundId} className="p-3 grid gap-1 sm:grid-cols-[1fr_auto_auto] sm:items-center text-sm">
-            <div>
-              <div className="font-medium text-slate-800">{refund.refundId}</div>
-              <div className="text-xs text-slate-500">{new Date(refund.providerCreatedAt).toLocaleString()}{refund.reason ? ` · ${refund.reason}` : ''}</div>
+
+      {data.refunds.length > 0 && (
+        <div className="mt-4 divide-y divide-slate-100 border border-slate-200 rounded-lg overflow-hidden">
+          {data.refunds.map(refund => (
+            <div key={refund.refundId} className="p-3 grid gap-1 sm:grid-cols-[1fr_auto_auto] sm:items-center text-sm">
+              <div>
+                <div className="font-medium text-slate-800">{refund.refundId}</div>
+                <div className="text-xs text-slate-500">{new Date(refund.providerCreatedAt).toLocaleString()}{refund.reason ? ' \u00b7 ' + refund.reason : ''}</div>
+              </div>
+              <div className="text-slate-700">{(refund.amountCents / 100).toFixed(2)} {refund.currency.toUpperCase()}</div>
+              <span className="justify-self-start sm:justify-self-end rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{refund.status}</span>
             </div>
-            <div className="text-slate-700">{(refund.amountCents / 100).toFixed(2)} {refund.currency.toUpperCase()}</div>
-            <span className="justify-self-start sm:justify-self-end rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{refund.status}</span>
+          ))}
+        </div>
+      )}
+
+      <QcDialog
+        open={open}
+        onRequestClose={() => { if (!submitting) setOpen(false); }}
+        pending={submitting}
+        size="md"
+        title="Refund a payment"
+        description="Payments are pulled live from Stripe. The refund reaches the customer automatically; the reason is kept in Stripe and our admin audit log."
+      >
+        {done ? (
+          <div className="text-sm text-slate-700 space-y-4">
+            <p className="rounded-lg bg-slate-50 border border-slate-200 p-3">{done}</p>
+            <div className="flex justify-end gap-2">
+              <QcButton variant="ghost" size="sm" onClick={() => setOpen(false)}>Close</QcButton>
+              <QcButton variant="secondary" size="sm" onClick={() => { setDone(''); openDialog(); }}>Refund another</QcButton>
+            </div>
           </div>
-        ))}
-      </div>
+        ) : (
+          <div className="space-y-4">
+            {loading && <p className="text-sm text-slate-500">Loading payments from Stripe...</p>}
+            {!loading && listError && (
+              <p className="text-sm text-red-600 rounded-lg bg-red-50 border border-red-100 p-3">{listError}</p>
+            )}
+            {!loading && !listError && payments !== null && payments.length === 0 && (
+              <p className="text-sm text-slate-500 rounded-lg border border-dashed border-slate-200 p-4">No refundable payments found for this company.</p>
+            )}
+            {!loading && payments !== null && payments.length > 0 && (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {payments.map((p) => (
+                  <label key={p.chargeId} className={'flex items-start gap-3 rounded-lg border p-3 cursor-pointer text-sm ' + (selectedId === p.chargeId ? 'border-slate-900 bg-slate-50' : 'border-slate-200')}>
+                    <input type="radio" name="refund-payment" className="mt-1" checked={selectedId === p.chargeId} onChange={() => setSelectedId(p.chargeId)} disabled={submitting} />
+                    <span className="flex-1">
+                      <span className="block font-medium text-slate-800">{(p.amountCents / 100).toFixed(2)} {p.currency.toUpperCase()}{p.refundedCents > 0 ? ' (' + (p.refundedCents / 100).toFixed(2) + ' already refunded)' : ''}</span>
+                      <span className="block text-xs text-slate-500">{new Date(p.createdIso).toLocaleString()}{p.description ? ' - ' + p.description : ''}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {selected && (
+              <div className="space-y-3 border-t border-slate-100 pt-3">
+                <div className="flex gap-4 text-sm">
+                  <label className="flex items-center gap-2"><input type="radio" name="refund-amount-mode" checked={!partial} onChange={() => { setPartial(false); setAmount(''); }} disabled={submitting} /> Full remaining ({(selected.remainingCents / 100).toFixed(2)} {selected.currency.toUpperCase()})</label>
+                  <label className="flex items-center gap-2"><input type="radio" name="refund-amount-mode" checked={partial} onChange={() => setPartial(true)} disabled={submitting} /> Partial</label>
+                </div>
+                {partial && (
+                  <div>
+                    <input type="number" min="0.01" step="0.01" max={(selected.remainingCents / 100).toFixed(2)} value={amount} onChange={(e) => setAmount(e.target.value)} disabled={submitting} placeholder={'Amount (max ' + (selected.remainingCents / 100).toFixed(2) + ' ' + selected.currency.toUpperCase() + ')'} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                    {!amountValid && <p className="text-xs text-red-600 mt-1">Enter an amount between 0.01 and {(selected.remainingCents / 100).toFixed(2)}.</p>}
+                  </div>
+                )}
+                <div>
+                  <textarea value={reason} onChange={(e) => setReason(e.target.value)} disabled={submitting} rows={2} placeholder="Reason (required, kept in Stripe and the admin audit log)" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                </div>
+              </div>
+            )}
+
+            {error && <p className="text-sm text-red-600 rounded-lg bg-red-50 border border-red-100 p-3">{error}</p>}
+
+            <div className="flex justify-end gap-2">
+              <QcButton variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={submitting}>Cancel</QcButton>
+              <QcButton variant="danger" size="sm" pending={submitting} disabled={!canSubmit} onClick={submit}>Issue refund</QcButton>
+            </div>
+          </div>
+        )}
+      </QcDialog>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
+
 // Section C: Discount / Coupon
 // ---------------------------------------------------------------------------
 

@@ -29,7 +29,8 @@ export function CustomerQuotePreview({
         <Link
           href={`/${workspaceSlug}/quotes/${quoteId}/customer-edit`}
           data-copilot="create-customer-quote"
-          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          className="qc-button"
+          data-qc-variant="primary"
         >
           Create customer quote
         </Link>
@@ -143,7 +144,8 @@ export function LaborSheetPreview({
         <Link
           href={`/${workspaceSlug}/quotes/${quoteId}/labor-sheet`}
           data-copilot="create-labor-sheet"
-          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          className="qc-button"
+          data-qc-variant="primary"
         >
           Create labour sheet
         </Link>

@@ -366,7 +366,7 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
 
         {/* Footer */}
         <div className="px-6 pb-5 flex gap-3 border-t border-slate-100 pt-4">
-          <button type="button" onClick={onClose} className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={onClose} className="qc-button flex-1" data-qc-variant="ghost">
             Cancel
           </button>
           <button
@@ -377,7 +377,8 @@ export function AddInvoiceLineModal({ currency, catalogs, collections, component
               mode === 'catalog' ? !selectedCatalogRow :
               !selectedComponent
             }
-            className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-all disabled:opacity-50 transition-all"
+            className="qc-button flex-1"
+            data-qc-variant="primary"
           >
             Add Line
           </button>

@@ -190,7 +190,7 @@ export default async function PaywallPage() {
               <Link data-qc-variant="primary"
                 href="/done-for-you-setup"
                 prefetch={false}
-                className="qc-button qc-flow-control mt-5 inline-flex items-center justify-center rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                className="qc-button qc-flow-control mt-5"
               >
                 Learn more &rarr;
               </Link>
@@ -234,7 +234,7 @@ export default async function PaywallPage() {
               <Link data-qc-variant="primary"
                 href="/done-for-you-setup"
                 prefetch={false}
-                className="qc-button qc-flow-control mt-5 inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="qc-button qc-flow-control mt-5"
               >
                 Learn more &rarr;
               </Link>

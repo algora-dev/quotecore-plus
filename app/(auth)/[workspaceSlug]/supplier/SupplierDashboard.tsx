@@ -1327,7 +1327,7 @@ export function SupplierDashboard({
                     </div>
                     <div className="flex flex-col gap-1.5 items-end shrink-0">
                       <button data-qc-variant="ghost" type="button" onClick={() => setShowCatalogPublishModal(cat.id)} className="qc-button qc-flow-control qc-library-control ">{cat.visibility === 'private' ? 'Publish' : 'Settings'}</button>
-                      {cat.visibility === 'published' && (<Link href={`/${workspaceSlug}/catalogs?replace=${cat.id}`} className="qc-flow-link qc-library-control text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition font-medium text-center">Upload New Version</Link>)}
+                      {cat.visibility === 'published' && (<Link href={`/${workspaceSlug}/catalogs?replace=${cat.id}`} className="qc-button qc-flow-control text-xs" data-qc-variant="primary" data-qc-size="sm">Upload New Version</Link>)}
                       {publishResult[cat.id] && <span className={`text-xs ${publishResult[cat.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>{publishResult[cat.id].message}</span>}
                       {cat.published_version > 0 && cat.visibility === 'published' && <span className="text-xs text-slate-400">v{cat.published_version}</span>}
                     </div>

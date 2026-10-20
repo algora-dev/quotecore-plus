@@ -127,7 +127,8 @@ export default async function Page({
           </p>
           <a
             href={`/${workspaceSlug}/quotes/${quoteId}`}
-            className="mt-5 inline-flex items-center rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+            className="qc-button mt-5"
+            data-qc-variant="primary"
           >
             Open quote
           </a>

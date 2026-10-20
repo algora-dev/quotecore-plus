@@ -28,6 +28,20 @@ export const metadata: Metadata = {
     title: 'QuoteCore+ Pricing | Build Your Estimating & Quoting Plan',
     description: 'Configure the workload and tools you need. Current global QuoteCore+ configurations range from US$29 to US$259/month.',
     url: 'https://quote-core.com/pricing', siteName: 'QuoteCore+', type: 'website',
+    images: [
+      {
+        url: '/images/social/og-pricing.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'QuoteCore+ pricing - Why pay for features you don\u2019t use? Build the plan you actually need. Plans from $29/month.',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'QuoteCore+ Pricing | Build Your Estimating & Quoting Plan',
+    description: 'Why pay for features you don\u2019t use? Build the plan you actually need. Plans from $29/month.',
+    images: ['/images/social/og-pricing.jpg'],
   },
 };
 

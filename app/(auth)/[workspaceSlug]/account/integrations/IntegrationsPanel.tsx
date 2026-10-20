@@ -127,14 +127,16 @@ export function IntegrationsPanel({ workspaceSlug }: { workspaceSlug?: string })
               type="button"
               onClick={disconnect}
               disabled={disconnecting}
-              className="qc-flow-control qc-button rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:border-red-300 hover:bg-red-50/40 transition disabled:opacity-50"
+              className="qc-flow-control qc-button"
+              data-qc-size="sm"
             >
               {disconnecting ? 'Disconnecting...' : 'Disconnect'}
             </button>
           ) : (
             <a data-qc-variant="primary"
               href={connectHref}
-              className="qc-button qc-flow-control rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
+              className="qc-button qc-flow-control"
+              data-qc-size="sm"
             >
               Connect
             </a>
@@ -177,7 +179,8 @@ export function IntegrationsPanel({ workspaceSlug }: { workspaceSlug?: string })
               type="button"
               onClick={disconnectQbo}
               disabled={qboDisconnecting}
-              className="qc-flow-control qc-button rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:border-red-300 hover:bg-red-50/40 transition disabled:opacity-50"
+              className="qc-flow-control qc-button"
+              data-qc-size="sm"
             >
               {qboDisconnecting ? 'Disconnecting...' : 'Disconnect'}
             </button>
@@ -186,7 +189,8 @@ export function IntegrationsPanel({ workspaceSlug }: { workspaceSlug?: string })
               href={workspaceSlug
                 ? `/api/integrations/quickbooks/connect?workspace=${encodeURIComponent(workspaceSlug)}`
                 : '/api/integrations/quickbooks/connect'}
-              className="qc-button qc-flow-control rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
+              className="qc-button qc-flow-control"
+              data-qc-size="sm"
             >
               Connect
             </a>
