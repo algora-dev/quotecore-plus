@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import { CommercialFinalCta, CommercialHeroActions } from "@/components/conversion/CommercialConversion";
 import DemoCTACard from "@/components/DemoCTACard";
 import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import YouTubeLite from "@/components/YouTubeLite";
@@ -391,37 +392,14 @@ export default function ConstructionQuotingSoftwarePage() {
               </p>
             </div>
 
-            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <a
-                href="/demo"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-              >
-                Explore the interactive demo
-              </a>
+            <CommercialHeroActions location="construction_quoting_hero" />
 
-              <a
-                href={workflowCallHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="pill-shimmer inline-flex min-h-12 items-center justify-center rounded-full border border-zinc-300 bg-white px-8 py-3 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
-              >
-                Book a free 20-minute call
-              </a>
-            </div>
-
-            <p className="mt-3 text-sm text-zinc-400">Free tools forever. Interactive demo available before subscribing.</p>
+            <p className="mt-3 text-sm text-zinc-400">Free tools forever. Current paid configurations start at US$29/month.</p>
 
             <p className="mt-3 text-sm text-zinc-500">
               Already have spreadsheets, price lists or quote templates?{" "}
               <a href="/done-for-you-setup" className="font-medium text-[#BD4A1A] hover:underline">We can help configure the system around the way you already work.</a>
             </p>
-
-            <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-600">
-              <span className="font-semibold text-zinc-950">Simple pricing:</span>
-              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Free tools</a>
-              <span className="text-zinc-300">·</span>
-              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Configurations from US$29/mo</a>
-            </div>
           </div>
         </section>
 
@@ -986,23 +964,12 @@ export default function ConstructionQuotingSoftwarePage() {
         </section>
 
         {/* Final CTA */}
-        <section className="mx-auto max-w-4xl px-6 py-24 text-center lg:px-8">
-          <h2 className="text-3xl font-semibold sm:text-5xl">
-  Quote. Manage. Grow.
-</h2>
-
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-600">
-            Stop managing one job with five different apps. QuoteCore+ gives construction and trade businesses one connected workflow from first quote to final payment.
-          </p>
-
-          <a
-            href="/demo"
-            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-          >
-            Explore the interactive demo
-          </a>
-
-          <p className="mt-4 text-sm text-zinc-400">Free tools forever. Interactive demo available before subscribing. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
+        <section className="mx-auto max-w-4xl px-6 py-24 lg:px-8">
+          <CommercialFinalCta
+            location="construction_quoting_final"
+            title="Quote. Manage. Grow."
+            body="Try the connected contractor workflow yourself, or book a free 20-minute call to map QuoteCore+ against your current measurements, pricing and quoting process."
+          />
         </section>
 
         <SiteFooter />

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import ConversionPanel from "@/components/conversion/ConversionPanel";
 
 export default function Post() {
   return (
@@ -114,6 +115,20 @@ export default function Post() {
       <p>A takeoff supports a quote, but quantities alone are not a complete price. Allow for strip-off and disposal, loading and material movement, scaffolding, lifting, complex details, weather protection, travel, supervision, and site constraints.</p>
       <p>Two roofs with the same area can require very different labour. A clear, accessible gable roof is not equivalent to a roof with multiple levels, valleys, rooflights, and restricted loading space.</p>
       <p>For the pricing stage, use <a href="/blog/how-to-price-a-roofing-job">how to price a roofing job</a>. And if you are choosing a platform to run measurement-plus-quoting in one place, our guide to the <a href="/blog/best-quoting-software-nz">best quoting software for NZ trades</a> compares the main options side by side.</p>
+      <div className="not-prose my-10">
+        <ConversionPanel
+          location="roof_takeoff_guide_after_pricing"
+          surface="article_mid_bridge"
+          eyebrow="Try it on a job"
+          title="You have the takeoff logic. Now put it to work."
+          body="Use the free takeoff tool on a plan of your own, or open the interactive demo to see measurements continue into reusable pricing and a customer quote."
+          actions={[
+            { href: "/free-roof-takeoff", label: "Try a roof plan free", style: "primary", analyticsAction: "free_takeoff" },
+            { href: "/demo", label: "See the connected app demo", style: "secondary", analyticsAction: "demo" },
+            { href: "/roofing-takeoff-software", label: "How the full takeoff workflow works", style: "text", analyticsAction: "commercial_page" },
+          ]}
+        />
+      </div>
       <h2>Worked example: a simple pitched roof</h2>
       <p>Assume a two-plane gable roof has a total plan area of 96 m? at 25 degrees.</p>
       <ol>

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { getConsent } from "@/lib/consent";
-import { trackConversion, type ConversionType } from "@/lib/analytics";
+import { trackAnalyticsOnly, trackConversion, type ConversionType } from "@/lib/analytics";
 
 const STORAGE_KEY = "qc_attribution_v2";
 const LEGACY_STORAGE_KEY = "qc_attribution_v1";
@@ -277,20 +278,84 @@ function trackAnchorConversion(event: MouseEvent): void {
   try { url = new URL(anchor.href, window.location.href); } catch { return; }
   url = decorateDestinationWithAttribution(url, anchor);
   const conversionType = classifyDestination(url);
-  if (!conversionType) return;
 
   const locationNode = anchor.closest("[data-analytics-location]") as HTMLElement | null;
+  const surfaceNode = anchor.closest("[data-analytics-surface]") as HTMLElement | null;
   const label = (anchor.textContent || anchor.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim().slice(0, 120);
-  trackConversion(conversionType, {
-    source_path: window.location.pathname,
-    destination_host: url.hostname,
-    destination_path: url.pathname,
-    link_text: label || "unlabelled",
-    location: locationNode?.dataset.analyticsLocation?.slice(0, 120) || "unspecified",
+  const location = locationNode?.dataset.analyticsLocation?.slice(0, 120) || "unspecified";
+  const surfaceLocation = surfaceNode?.dataset.analyticsLocation?.slice(0, 120) || location;
+
+  if (surfaceNode) {
+    trackAnalyticsOnly("conversion_surface_click", {
+      source_path: window.location.pathname,
+      destination_host: url.hostname,
+      destination_path: url.pathname,
+      link_text: label || "unlabelled",
+      location: surfaceLocation,
+      surface: surfaceNode.dataset.analyticsSurface?.slice(0, 80) || "unspecified",
+      action: anchor.dataset.analyticsAction?.slice(0, 80) || conversionType || "navigate",
+    });
+  }
+
+  if (conversionType) {
+    trackConversion(conversionType, {
+      source_path: window.location.pathname,
+      destination_host: url.hostname,
+      destination_path: url.pathname,
+      link_text: label || "unlabelled",
+      location,
+    });
+  }
+}
+
+function observeConversionSurfaces(): () => void {
+  if (typeof document === "undefined" || typeof IntersectionObserver === "undefined") return () => {};
+
+  const observed = new WeakSet<HTMLElement>();
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.35) continue;
+      const node = entry.target as HTMLElement;
+      if (node.dataset.analyticsViewed === "true") { observer.unobserve(node); continue; }
+      node.dataset.analyticsViewed = "true";
+      trackAnalyticsOnly("conversion_surface_view", {
+        source_path: window.location.pathname,
+        location: node.dataset.analyticsLocation?.slice(0, 120) || "unspecified",
+        surface: node.dataset.analyticsSurface?.slice(0, 80) || "unspecified",
+      });
+      observer.unobserve(node);
+    }
+  }, { threshold: [0.35] });
+
+  const observeNode = (node: HTMLElement) => {
+    if (!node.matches("[data-analytics-surface]") || node.dataset.analyticsViewed === "true" || observed.has(node)) return;
+    observed.add(node);
+    observer.observe(node);
+  };
+  const scan = (root: ParentNode) => {
+    if (root instanceof HTMLElement) observeNode(root);
+    root.querySelectorAll<HTMLElement>("[data-analytics-surface]").forEach(observeNode);
+  };
+
+  scan(document);
+  const mutationObserver = new MutationObserver((records) => {
+    for (const record of records) {
+      record.addedNodes.forEach((node) => {
+        if (node instanceof HTMLElement) scan(node);
+      });
+    }
   });
+  if (document.body) mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+  return () => {
+    mutationObserver.disconnect();
+    observer.disconnect();
+  };
 }
 
 export default function AttributionTracker() {
+  const pathname = usePathname();
+
   useEffect(() => {
     const capture = () => {
       captureAttribution();
@@ -304,5 +369,22 @@ export default function AttributionTracker() {
       document.removeEventListener("click", trackAnchorConversion, true);
     };
   }, []);
+
+  useEffect(() => {
+    let stop = observeConversionSurfaces();
+    const refresh = () => {
+      stop();
+      document.querySelectorAll<HTMLElement>("[data-analytics-surface]").forEach((node) => {
+        delete node.dataset.analyticsViewed;
+      });
+      stop = observeConversionSurfaces();
+    };
+    window.addEventListener("qc:consent-updated", refresh as EventListener);
+    return () => {
+      stop();
+      window.removeEventListener("qc:consent-updated", refresh as EventListener);
+    };
+  }, [pathname]);
+
   return null;
 }

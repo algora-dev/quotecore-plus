@@ -21,6 +21,15 @@ export type ConversionType =
   | "create_account"
   | "open_app";
 
+
+/** GA-only interaction telemetry for CRO surfaces. Unlike trackEvent, this
+ * deliberately does not forward to Meta or LinkedIn conversion APIs. */
+export function trackAnalyticsOnly(eventName: string, params?: AnalyticsParams) {
+  if (typeof window === "undefined") return;
+  if (getConsent()?.analytics !== true) return;
+  if (window.gtag) window.gtag("event", eventName, params ?? {});
+}
+
 export function trackEvent(eventName: string, params?: AnalyticsParams) {
   if (typeof window === "undefined") return;
 

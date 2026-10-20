@@ -7,14 +7,15 @@ import type {TakeoffCurrency} from './takeoff-examples';
 import {Button,ActionLink,Dialog,Icon} from './TakeoffUI';
 import {printTakeoffReport} from './takeoff-print';
 import s from './TakeoffExperience.module.css';
+import {workflowCallHref} from '@/lib/booking';
 export type {TakeoffTrade} from './takeoff-report-model';
 export interface TakeoffOutputExtras {planDataUrl:string;elapsedMs:number;}
 const number=(n:number)=>n.toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:0});
 const money=(n:number,currency:string)=>new Intl.NumberFormat('en-NZ',{style:'currency',currency,currencyDisplay:'code'}).format(n);
-function Benefits(){return <div className={s.upsell}><p className={s.eyebrow}>Keep the momentum</p><h3>Set it up once.<br/>Use it on every job.</h3><p>In the paid QuoteCore+ app, your work doesn’t end with this session.</p>
+function Benefits(){const externalCall=/^https:\/\//.test(workflowCallHref);return <div className={s.upsell} data-analytics-location="free_takeoff_result_app_bridge" data-analytics-surface="tool_result_bridge"><p className={s.eyebrow}>Keep the momentum</p><h3>Set it up once.<br/>Use it on every job.</h3><p>In the paid QuoteCore+ app, your work doesn’t end with this session.</p>
   <ul><li><Icon name="check"/>Save your component library and reuse your pricing.</li><li><Icon name="check"/>Keep takeoffs and documents together with your jobs.</li><li><Icon name="check"/>Create and send quotes, orders and invoices.</li></ul>
-  <ActionLink href="/demo" target="_blank" rel="noopener noreferrer"><Icon name="play"/>Try the app demo</ActionLink>
-  <div className={s.upsellLinks}><a href="/" target="_blank" rel="noopener noreferrer">Explore QuoteCore+</a><span>·</span><a href="/done-for-you-setup" target="_blank" rel="noopener noreferrer">Done For You Setup</a></div>
+  <ActionLink href="/demo" target="_blank" rel="noopener noreferrer" data-analytics-action="demo"><Icon name="play"/>Try the app demo</ActionLink>
+  <div className={s.upsellLinks}><a href={workflowCallHref} target={externalCall?'_blank':undefined} rel={externalCall?'noopener noreferrer':undefined} data-analytics-action="book_call">Free 20-minute workflow call</a><span>·</span><a href="/done-for-you-setup" target="_blank" rel="noopener noreferrer" data-analytics-action="done_for_you">Done For You Setup</a></div>
  </div>;}
 function TransferDialog({report,onClose,onOpenQuote,trade}:{report:ReportModel;onClose:()=>void;onOpenQuote?:(url:string)=>void;trade:TakeoffTrade}){
  const [priced,setPriced]=useState(!report.hasExamples&&report.hasPrices),[ack,setAck]=useState(false);
