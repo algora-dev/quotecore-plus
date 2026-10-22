@@ -1,9 +1,32 @@
 import { ScanError } from '../host-roof-scan/types';
 
 type Environment = Record<string, string | undefined>;
+export type FreeToolsMcpMode = 'free-tools' | 'legacy';
+
+/**
+ * Resolve which product surface the main MCP endpoint should expose.
+ *
+ * Preview/staging deployments default to the Free Tools surface because that is
+ * where connector development happens. The old QC_FREE_TOOLS_MCP_ENABLED flag
+ * remains accepted for production/local backwards compatibility, but a stale
+ * `false` value no longer silently forces preview deployments back onto the
+ * experimental roof-only connector. Use QC_FREE_TOOLS_MCP_MODE=legacy for an
+ * intentional preview rollback.
+ */
+export function freeToolsMcpMode(env: Environment = process.env): FreeToolsMcpMode {
+  const explicitMode = env.QC_FREE_TOOLS_MCP_MODE?.trim();
+  if (explicitMode) {
+    if (explicitMode === 'free-tools' || explicitMode === 'legacy') return explicitMode;
+    throw new ScanError('CONFIGURATION_REQUIRED', 'QC_FREE_TOOLS_MCP_MODE must be free-tools or legacy.', 503);
+  }
+
+  if (env.QC_FREE_TOOLS_MCP_ENABLED === 'true') return 'free-tools';
+  if (env.VERCEL_ENV === 'preview') return 'free-tools';
+  return 'legacy';
+}
 
 export function freeToolsMcpEnabled(env: Environment = process.env): boolean {
-  return env.QC_FREE_TOOLS_MCP_ENABLED === 'true';
+  return freeToolsMcpMode(env) === 'free-tools';
 }
 
 export function freeToolsMcpOrigin(env: Environment = process.env): string {

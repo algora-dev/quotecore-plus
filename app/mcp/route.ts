@@ -32,18 +32,31 @@ async function createServer(origin: string, withHostOutline: boolean, withFreeTo
   let freeToolsInstructions = '';
   if (withFreeTools) {
     const registration = await import('../lib/free-tools/mcp-free-tools/registration');
-    freeToolsInstructions = ` ${registration.FREE_TOOLS_MCP_INSTRUCTIONS}`;
+    freeToolsInstructions = registration.FREE_TOOLS_MCP_INSTRUCTIONS;
   }
+  const instructions = withFreeTools
+    ? `${freeToolsInstructions} Use get_roof_takeoff_schema only when numeric Roof Takeoff Builder input semantics are unclear. Use calculate_roof_takeoff only when the user already has numeric roof measurements or explicitly asks for the deterministic calculation; do not use it instead of start_roof_takeoff for an attached plan. Actual measurements are not pitch-adjusted; plan measurements are.`
+    : 'Use get_roof_takeoff_schema when input semantics are unclear. Use calculate_roof_takeoff to calculate and return the provided resultUrl. Actual measurements are not pitch-adjusted; plan measurements are.' + (withHostOutline ? ' ' + SERVER_INSTRUCTIONS : '');
   const server = new McpServer(
-    { name: 'quotecore-free-tools', version: '1.1.0' },
-    { instructions: 'Use get_roof_takeoff_schema when input semantics are unclear. Use calculate_roof_takeoff to calculate and return the provided resultUrl. Actual measurements are not pitch-adjusted; plan measurements are.' + (withHostOutline ? ' ' + SERVER_INSTRUCTIONS : '') + freeToolsInstructions },
+    { name: 'quotecore-free-tools', version: '1.2.0' },
+    { instructions },
   );
+
+  // Register the product-routing tools first when active. Tool order is part of
+  // the host-facing discovery surface, so the primary Free Tools workflows
+  // should not appear after the legacy numeric calculator helpers.
+  if (withFreeTools) {
+    const { registerFreeToolsMcpTools } = await import('../lib/free-tools/mcp-free-tools/registration');
+    const { freeToolsMcpService } = await import('../lib/free-tools/mcp-free-tools/runtime');
+    const { freeToolsMcpOrigin } = await import('../lib/free-tools/mcp-free-tools/config');
+    registerFreeToolsMcpTools(server, freeToolsMcpOrigin(), freeToolsMcpService);
+  }
 
   server.registerTool(
     'get_roof_takeoff_schema',
     {
       title: 'Get roof takeoff schema',
-      description: 'Returns every supported Roof Takeoff Builder input, mode, unit, alias, validation rule, output, endpoint, and example.',
+      description: withFreeTools ? 'Returns the numeric Roof Takeoff Builder schema for measurements already known. This is not the plan-image workflow; use start_roof_takeoff when the user attached a roof plan.' : 'Returns every supported Roof Takeoff Builder input, mode, unit, alias, validation rule, output, endpoint, and example.',
       inputSchema: {},
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
@@ -57,7 +70,7 @@ async function createServer(origin: string, withHostOutline: boolean, withFreeTo
     'calculate_roof_takeoff',
     {
       title: 'Calculate roof takeoff',
-      description: 'Calculates a deterministic roof takeoff and returns structured component totals plus a QuoteCore+ URL showing the same result.',
+      description: withFreeTools ? 'Calculates a deterministic roof takeoff from numeric measurements already supplied or finalized. Do not use this to visually measure an attached plan; use start_roof_takeoff so the exterior is reviewed before component measurement.' : 'Calculates a deterministic roof takeoff and returns structured component totals plus a QuoteCore+ URL showing the same result.',
       inputSchema,
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
@@ -102,15 +115,6 @@ async function createServer(origin: string, withHostOutline: boolean, withFreeTo
     const { registerHostOutlineTools } = await import('../lib/free-tools/host-roof-scan/registration');
     const { runtimeService } = await import('../lib/free-tools/host-roof-scan/runtime');
     registerHostOutlineTools(server, runtimeService);
-  }
-  if (withFreeTools) {
-    // Keep the full Free Tools/storage graph out of the existing MCP endpoint
-    // unless explicitly enabled. The website registry remains the product
-    // taxonomy; these tools only adapt ChatGPT into those real workflows.
-    const { registerFreeToolsMcpTools } = await import('../lib/free-tools/mcp-free-tools/registration');
-    const { freeToolsMcpService } = await import('../lib/free-tools/mcp-free-tools/runtime');
-    const { freeToolsMcpOrigin } = await import('../lib/free-tools/mcp-free-tools/config');
-    registerFreeToolsMcpTools(server, freeToolsMcpOrigin(), freeToolsMcpService);
   }
   return server;
 }

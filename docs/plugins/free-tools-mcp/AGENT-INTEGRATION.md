@@ -43,15 +43,15 @@ For PDF attachments, the original PDF is preserved and the existing browser PDF 
 - Temporary plan/PDF/measurement assets live in the dedicated **private** Supabase bucket.
 - Signed session lifetime is 30 minutes. The hourly cron prunes expired object namespaces with a two-hour grace window.
 - Plan uploads and measurement-session creation have separate per-client/global capacity guards.
-- When `QC_FREE_TOOLS_MCP_ENABLED=true`, the new Free Tools MCP surface supersedes the experimental roof-only host tools on `/mcp` so the model does not see two competing roof workflows.
+- On Vercel preview/staging deployments, the new Free Tools MCP surface is the default. Set `QC_FREE_TOOLS_MCP_MODE=legacy` only for an intentional rollback. Production remains legacy unless explicitly enabled. When Free Tools is active, it supersedes the experimental roof-only host tools on `/mcp` so the model does not see two competing roof workflows.
 
 ## Staging sequence
 
 1. Apply the patch to the supplied full-codebase baseline.
 2. Install the repository dependencies and run the normal typecheck/lint/build and relevant tests.
 3. Create/configure the dedicated private Supabase bucket.
-4. Deploy with `QC_FREE_TOOLS_MCP_ENABLED=true`, canonical `QC_FREE_TOOLS_MCP_ORIGIN`, strong separate secret, Supabase storage, and **blank** `QC_FREE_TOOLS_MCP_FILE_ORIGINS` initially.
-5. Refresh the ChatGPT connector and attach a small PNG. Call `start_roof_takeoff`.
+4. Deploy preview/staging with `QC_FREE_TOOLS_MCP_MODE=free-tools` (explicit even though preview defaults to it), canonical `QC_FREE_TOOLS_MCP_ORIGIN`, strong separate secret, Supabase storage, and **blank** `QC_FREE_TOOLS_MCP_FILE_ORIGINS` initially. Do not leave `QC_FREE_TOOLS_MCP_MODE=legacy` set from a rollback.
+5. Before testing attachments, refresh/rescan the ChatGPT connector and inspect `tools/list`. Expect the 8 Free Tools actions plus the 3 deterministic roof calculator helpers; the 5 experimental `qc_*` host-outline tools must not be present. Then attach a small PNG and call `start_roof_takeoff`.
 6. Expect a fail-closed `FILE_HOST_NOT_ALLOWED` that names only the rejected HTTPS origin. Verify that origin independently, add that exact origin to `QC_FREE_TOOLS_MCP_FILE_ORIGINS`, redeploy.
 7. Fresh chat acceptance:
    - PNG roof + model exterior outline → existing calibration → outline review/edit → AI component scan → component review/manual reassignment.
@@ -73,3 +73,10 @@ For PDF attachments, the original PDF is preserved and the existing browser PDF 
 - existing touch outline regression tests under `app/lib/takeoff/precision/`
 
 The supplied handoff environment did not include the full repository `node_modules`, so a production Next.js build must still be run after normal dependency installation.
+
+
+## Troubleshooting tool discovery
+
+- If ChatGPT still shows only the three deterministic roof tools plus five `qc_*` experimental tools, the connector is on the legacy surface. On preview/staging, check for `QC_FREE_TOOLS_MCP_MODE=legacy`, redeploy, then **refresh/rescan the connector**; a fresh chat alone does not guarantee a new tool schema.
+- `QC_FREE_TOOLS_MCP_ENABLED=false` is a deprecated rollout value. Preview/staging ignores that stale false value so a code deploy cannot silently fall back to the old product. Use `QC_FREE_TOOLS_MCP_MODE=legacy` for an intentional rollback.
+- The MCP server version for this hotfix is `1.2.0`. Attached plan requests should prefer `start_roof_takeoff` / `start_cladding_takeoff` / `start_flooring_takeoff`; `calculate_roof_takeoff` is for numeric measurements already supplied or finalized.
