@@ -28,10 +28,15 @@ const inputSchema = {
   fixings: z.number().positive().optional(),
 };
 
-async function createServer(origin: string, withHostOutline: boolean) {
+async function createServer(origin: string, withHostOutline: boolean, withFreeTools: boolean) {
+  let freeToolsInstructions = '';
+  if (withFreeTools) {
+    const registration = await import('../lib/free-tools/mcp-free-tools/registration');
+    freeToolsInstructions = ` ${registration.FREE_TOOLS_MCP_INSTRUCTIONS}`;
+  }
   const server = new McpServer(
-    { name: 'quotecore-roof-takeoff', version: '1.0.0' },
-    { instructions: 'Use get_roof_takeoff_schema when input semantics are unclear. Use calculate_roof_takeoff to calculate and return the provided resultUrl. Actual measurements are not pitch-adjusted; plan measurements are.' + (withHostOutline ? ' ' + SERVER_INSTRUCTIONS : '') },
+    { name: 'quotecore-free-tools', version: '1.1.0' },
+    { instructions: 'Use get_roof_takeoff_schema when input semantics are unclear. Use calculate_roof_takeoff to calculate and return the provided resultUrl. Actual measurements are not pitch-adjusted; plan measurements are.' + (withHostOutline ? ' ' + SERVER_INSTRUCTIONS : '') + freeToolsInstructions },
   );
 
   server.registerTool(
@@ -98,6 +103,15 @@ async function createServer(origin: string, withHostOutline: boolean) {
     const { runtimeService } = await import('../lib/free-tools/host-roof-scan/runtime');
     registerHostOutlineTools(server, runtimeService);
   }
+  if (withFreeTools) {
+    // Keep the full Free Tools/storage graph out of the existing MCP endpoint
+    // unless explicitly enabled. The website registry remains the product
+    // taxonomy; these tools only adapt ChatGPT into those real workflows.
+    const { registerFreeToolsMcpTools } = await import('../lib/free-tools/mcp-free-tools/registration');
+    const { freeToolsMcpService } = await import('../lib/free-tools/mcp-free-tools/runtime');
+    const { freeToolsMcpOrigin } = await import('../lib/free-tools/mcp-free-tools/config');
+    registerFreeToolsMcpTools(server, freeToolsMcpOrigin(), freeToolsMcpService);
+  }
   return server;
 }
 
@@ -118,14 +132,23 @@ async function handle(request: Request): Promise<Response> {
     // the 240/hr per-IP route rate limit, and the upload-budget guard on prepare itself.
     const body = await readLimited(request, LIMITS.mcpJsonBytes);
     rpc = parseRpc(body);
-    const withHostOutline = exposedOnMainMcp();
+    const { freeToolsMcpEnabled } = await import('../lib/free-tools/mcp-free-tools/config');
+    const withFreeTools = freeToolsMcpEnabled();
+    // The Free Tools integration supersedes the experimental roof-only host
+    // tools on the main connector. Keeping both surfaces visible would give
+    // the model two competing ways to start the same takeoff.
+    const withHostOutline = !withFreeTools && exposedOnMainMcp();
     if (withHostOutline) {
       const { guardHostOutlineRpc, isHostOutlineRpc } = await import('../lib/free-tools/host-roof-scan/runtime');
       if (isHostOutlineRpc(rpc)) await guardHostOutlineRpc(request, rpc);
     }
+    if (withFreeTools) {
+      const { guardFreeToolsMcpRpc } = await import('../lib/free-tools/mcp-free-tools/runtime');
+      await guardFreeToolsMcpRpc(request, rpc);
+    }
     // Existing deterministic result URLs retain their original request-origin semantics.
-    // Private scan/review URLs use only QC_HOST_SCAN_ORIGIN, never a request header.
-    const server = await createServer(new URL(request.url).origin, withHostOutline);
+    // Private Free Tools/scan URLs use configured canonical origins, never request headers.
+    const server = await createServer(new URL(request.url).origin, withHostOutline, withFreeTools);
     return await runStatelessMcp(request, body, server);
   } catch (error) { return rpcError(error, rpc?.id); }
 }

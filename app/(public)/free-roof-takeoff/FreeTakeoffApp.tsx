@@ -146,6 +146,9 @@ export interface FreeTakeoffSeedComponent {
 export interface FreeTakeoffSeed {
   /** Plan image URL (same-origin or CORS-enabled; PNG/JPG/WebP up to 10 MB). */
   planUrl: string;
+  /** Original source filename/mime when a host provides a Blob/Object URL. */
+  planFileName?: string;
+  planMimeType?: string;
   /** Defaults to metric. */
   unitSystem?: TakeoffUnitSystem;
   /** Replaces the wizard's default component list when provided. */
@@ -156,8 +159,12 @@ export interface FreeTakeoffSeed {
   calibration?: Calibration[];
   /** AI Assist points display override. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean };
-  /** Captured AI scan replay: replaces every live endpoint scan and applies
-   *  automatically once the canvas + calibration are ready. */
+  /** Host-provided phase-1 outline proposal. It enters the same review/edit
+   *  flow as a live scan1 result; scans 2+3 remain live and consume the
+   *  human-corrected outline. */
+  outlineSuggestion?: { data: AiScanData; pitch?: number; autoPresent?: boolean };
+  /** Captured full AI scan replay for demos/previews. This intentionally
+   *  replaces every live AI stage and is separate from outlineSuggestion. */
   autoScan?: { data: AiScanData; pitch?: number };
 }
 
@@ -366,7 +373,8 @@ function TakeoffPhaseInner({
     () => setTouchTool('calibrate'),
     { pitch, onPitchChange: setPitch, onEnterComponents: enterComponents, onFinish: emitFinish,
       planNoun: config.planNoun, requiresPitch: config.requiresPitch,
-      defaultAreaName: `Main ${config.planNoun[0].toUpperCase()}${config.planNoun.slice(1)}` },
+      defaultAreaName: `Main ${config.planNoun[0].toUpperCase()}${config.planNoun.slice(1)}`,
+      autoStartAi: Boolean(seed?.outlineSuggestion?.autoPresent) },
   );
 
   const componentsStep = useTouchComponents(
@@ -416,6 +424,16 @@ function TakeoffPhaseInner({
     () => (seed?.autoScan ? { data: seed.autoScan.data, pitch: seed.autoScan.pitch, autoRun: true } : undefined),
     [seed],
   );
+  const seededOutline = useMemo(
+    () => seed?.outlineSuggestion
+      ? {
+          data: seed.outlineSuggestion.data,
+          pitch: seed.outlineSuggestion.pitch,
+          autoPresent: seed.outlineSuggestion.autoPresent ?? true,
+        }
+      : undefined,
+    [seed],
+  );
 
   const workstation = (
     <TakeoffWorkstation
@@ -429,6 +447,7 @@ function TakeoffPhaseInner({
       aiTakeoffAvailable={config.aiScan}
       aiAssistPoints={config.aiScan ? seed?.aiAssistPoints ?? null : null}
       seededScan={seededScan}
+      seededOutline={seededOutline}
       aiCalibrationEnabled={false}
       onTouchOutlineAdapter={registerAdapter}
       onPage1Resolved={setResolvedPage1Id}
@@ -523,6 +542,7 @@ export function FreeTakeoffApp({
   const [error, setError] = useState<string | null>(null);
   const [seedState, setSeedState] = useState<'idle' | 'loading' | 'error'>(seed ? 'loading' : 'idle');
   const [seedError, setSeedError] = useState<string | null>(null);
+  const pdfPicker = usePdfPagePicker();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [unitSystem, setUnitSystem] = useState<TakeoffUnitSystem>('metric');
@@ -560,12 +580,20 @@ export function FreeTakeoffApp({
         const response = await fetch(seed.planUrl);
         if (!response.ok) throw new Error(`Could not load the plan image (HTTP ${response.status}).`);
         const blob = await response.blob();
-        if (blob.size > MAX_IMAGE_BYTES) throw new Error('Plan image too large - maximum 10 MB.');
+        const sourceName = seed.planFileName || (seed.planMimeType === 'application/pdf' || blob.type === 'application/pdf' ? 'plan.pdf' : 'plan.png');
+        let file: File | null = new File([blob], sourceName, { type: seed.planMimeType || blob.type || 'application/octet-stream' });
+        if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+          if (file.size > 50 * 1024 * 1024) throw new Error('PDF too large - maximum 50 MB.');
+          file = await pdfPicker.convertIfNeeded(file);
+          if (!file) throw new Error('Choose a PDF page to continue.');
+        }
+        if (!ACCEPTED.includes(file.type)) throw new Error('Choose a PNG, JPG, WebP or PDF plan.');
+        if (file.size > MAX_IMAGE_BYTES) throw new Error('Plan image too large - maximum 10 MB.');
         const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(String(reader.result));
           reader.onerror = () => reject(new Error('Could not read the plan image.'));
-          reader.readAsDataURL(blob);
+          reader.readAsDataURL(file);
         });
         if (cancelled) return;
         seedAppliedRef.current = true;
@@ -659,8 +687,6 @@ export function FreeTakeoffApp({
 
   const activeSpecs = useMemo(() => componentChoice === 'ours' ? defaultSpecs : specs, [componentChoice, defaultSpecs, specs]);
 
-  const pdfPicker = usePdfPagePicker();
-
   const onFileSelected = useCallback(async (raw: File) => {
     if (importFlight.current) return;
     importFlight.current = true; setUploading(true); setError(null);
@@ -725,6 +751,7 @@ export function FreeTakeoffApp({
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-[3px] border-slate-200 border-t-[#FF6B35]" />
           <p className="mt-3 text-sm font-medium text-slate-600">Loading plan…</p>
         </div>
+        {pdfPicker.modal}
       </div>
     );
   }

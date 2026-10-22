@@ -243,6 +243,14 @@ interface Props {
      *  captured per-area pitch when omitted). */
     pitch?: number;
   };
+  /** Host-provided phase-1 outline proposal. Unlike seededScan this only
+   *  supplies scan1: the user reviews/edits the outline, then scans 2+3 run
+   *  live against the corrected geometry. */
+  seededOutline?: {
+    data: AiScanData;
+    autoPresent?: boolean;
+    pitch?: number;
+  };
   /** P2/P6 AI-assisted calibration: per-company flag read server-side. */
   aiCalibrationEnabled?: boolean;
   /** M5: registers the touch-outline bridge adapter (single data owner stays
@@ -283,6 +291,14 @@ function computeCanvasDimensions(naturalWidth: number, naturalHeight: number): {
     height: Math.round(naturalHeight * scale),
     scale,
   };
+}
+
+/** Stable-enough client revision for rejecting component-scan results when the
+ * reviewed outline changes while scans 2+3 are in flight. This is not a
+ * security hash; authoritative geometry validation still happens in the scan
+ * pipeline. */
+function outlineRevision(points: Array<{ x: number; y: number }>): string {
+  return points.map(point => `${point.x.toFixed(3)},${point.y.toFixed(3)}`).join(';');
 }
 
 // Color palette for components (10 highly distinct colors)
@@ -356,6 +372,7 @@ export function TakeoffWorkstation({
   aiTakeoffAvailable = false,
   aiAssistPoints = null,
   seededScan,
+  seededOutline,
   aiCalibrationEnabled = false,
   onFreeFinish,
   onExitFree,
@@ -369,6 +386,10 @@ export function TakeoffWorkstation({
   const takeoffActions = useTakeoffActions();
   // Free-tool / MCP surface: app chrome copy + library UI adapt.
   const freeToolMode = onFreeFinish !== undefined;
+  // Phase-1 host suggestions are consumable once. After the user has seen
+  // the suggestion, any explicit re-scan is a real scan1 request rather than
+  // silently replaying stale geometry. Shared by desktop + touch presenters.
+  const seededOutlineConsumedRef = useRef(false);
   const [componentLibraryOpen, setComponentLibraryOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Zoom ownership: when set, the zoom was applied by auto-fit (initial load,
@@ -4057,6 +4078,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         if (!fabricRef.current?.backgroundImage) {
           return { ok: false, error: 'No plan image loaded.' };
         }
+        if (seededOutline && !seededOutlineConsumedRef.current) {
+          seededOutlineConsumedRef.current = true;
+          return { ok: true, data: seededOutline.data };
+        }
         const imageUrl = live?.currentImageUrl ?? null;
         if (!imageUrl) return { ok: false, error: 'No plan image URL available.' };
         const qualityLevel = 'low' as const; // Touch outline-only default; desktop choice is unchanged.
@@ -4460,6 +4485,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           .pop();
         if (!saved) return { ok: false, error: 'Save the roof outline before scanning components.' };
         const outlinePoints = saved.points.map(p => ({ x: p.x, y: p.y }));
+        const reviewedOutlineRevision = outlineRevision(outlinePoints);
         const imageUrl = live?.currentImageUrl ?? null;
         if (!imageUrl) return { ok: false, error: 'No plan image URL available.' };
         const qualityLevel = 'low' as const; // Touch default; desktop choice unchanged.
@@ -4612,6 +4638,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             return { ok: false, error: `${scan3Result.error || `AI scan failed (HTTP ${scan3Response.status}).`}${violations}` };
           }
           if (freeToolMode && scan3Result.credits) setFreeScanCredits(scan3Result.credits);
+          // Never apply components to a different outline revision. A page
+          // switch/edit can complete while network scans are in flight.
+          const latestSaved = [...(touchOutlineAdapterRef.current?.getAreas() ?? [])]
+            .filter(a => a.points.length >= 3)
+            .pop();
+          if (currentPageIdRef.current !== pageId || !latestSaved || outlineRevision(latestSaved.points) !== reviewedOutlineRevision) {
+            return { ok: false, error: 'The roof outline changed while components were being scanned. Review it and run the component scan again.' };
+          }
           // Shared post-processing (perimeter accounting, snapping,
           // clustering, calibration lengths) then a dedicated overlay
           // layer grouped by semantic key.
@@ -6520,6 +6554,54 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       await runSeededScan();
       return;
     }
+    if (seededOutline && !seededOutlineConsumedRef.current) {
+      const pageId = pages[currentPageIndex]?.id ?? null;
+      if (!pageId) { setAiScanError('No active page.'); return; }
+      const data = seededOutline.data;
+      if (!data.roof_areas?.length) {
+        seededOutlineConsumedRef.current = true;
+        setAiScanError('The host-provided outline did not contain usable roof geometry.');
+        return;
+      }
+      seededOutlineConsumedRef.current = true;
+      // A normal desktop scan starts from the calibration-complete dialog,
+      // whose button closes that dialog first. Host auto-present must do the
+      // same or the instructions modal can cover the review result.
+      setShowRoofAreaInstructions(false);
+      roofAreaInstructionsDismissedRef.current = true;
+      setAiScanning(false);
+      setAiScanStage('outline');
+      setAiScanError(null);
+      setAiScanRaw(data);
+      const areaInfos: AiResultsArea[] = data.roof_areas.map((area, idx) => {
+        const sizeValue = computeAreaValue((area.points ?? []).map(p => ({ x: p.x, y: p.y })), calibrations);
+        return {
+          index: idx,
+          name: area.name || `Area ${idx + 1}`,
+          pitch: seededOutline.pitch ?? area.pitch_degrees ?? data.pitch?.global_degrees ?? null,
+          vertexCount: area.points?.length ?? 0,
+          sizeLabel: sizeValue > 0
+            ? `${sizeValue >= 100 ? Math.round(sizeValue).toLocaleString() : sizeValue.toFixed(1)} ${quote.measurement_system === 'metric' ? 'm²' : 'ft²'}`
+            : null,
+        };
+      });
+      setAiResults({
+        summary: {
+          areas: data.roof_areas.length, components: 0, ridges: 0, hips: 0, valleys: 0,
+          broken_hips: 0, barges: 0, spouting: 0, uncertain: 0,
+          notes: [
+            'ChatGPT suggested this exterior outline from the attached plan. Review and correct it before scanning components.',
+            ...(Array.isArray(data.notes) ? data.notes : []),
+          ].slice(0, 8),
+          unreadable: false,
+        },
+        scaleCheck: null,
+        droppedCount: 0,
+        areas: areaInfos,
+      });
+      setAiStagedPageId(pageId);
+      return;
+    }
     const canvas = fabricRef.current;
     if (!canvas || !quote) return;
 
@@ -6679,6 +6761,23 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     }
   };
 
+  // MCP/host outline proposals should enter the same desktop review flow
+  // automatically once calibration is ready. Hidden desktop owners under
+  // touch presentation must not consume the one-shot seed.
+  const seededOutlineAutoPresentRef = useRef(false);
+  useEffect(() => {
+    if (!desktopAppearance || !seededOutline?.autoPresent || seededOutlineAutoPresentRef.current) return;
+    if (seededOutlineConsumedRef.current || !canvasReady || calibrations.length === 0) return;
+    seededOutlineAutoPresentRef.current = true;
+    const timer = setTimeout(() => {
+      if (!seededOutlineConsumedRef.current) void handleAiScan();
+    }, 400);
+    return () => clearTimeout(timer);
+  // The scan handler intentionally owns the current page/calibration state;
+  // refs make this a strict one-shot host handoff.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [desktopAppearance, seededOutline, canvasReady, calibrations.length]);
+
   // ── AI Takeoff: run scan 2 + scan 3 ──────────────────────────────
   const runRemainingAiScans = async ({
     outlineData,
@@ -6831,6 +6930,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     // user may have dragged vertices after applying the outline).
     const stagedAreas = roofAreas.filter(ra => ra.fromPageId === pageId && ra.quoteRoofAreaId);
     if (stagedAreas.length === 0) { setAiScanError('The AI outline is no longer on this page.'); return; }
+    const reviewedOutlineRevision = stagedAreas.map(area => outlineRevision(area.points)).join('|');
     const outlineData = {
       roof_areas: stagedAreas.map(ra => ({
         name: ra.name,
@@ -6877,6 +6977,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         silent: true,
       });
       if (!outcome.completed || !outcome.data) return; // errors set inside
+      const currentStagedAreas = roofAreasRef.current.filter(ra => ra.fromPageId === pageId && ra.quoteRoofAreaId);
+      const currentOutlineRevision = currentStagedAreas.map(area => outlineRevision(area.points)).join('|');
+      if (currentOutlineRevision !== reviewedOutlineRevision) {
+        setAiScanError('The roof outline changed while components were being scanned. Review the outline and run the component scan again.');
+        return;
+      }
       // Apply ONLY the components: the outline areas are already applied.
       await handleApplyAiResults({}, { areasAlreadyApplied: true, aiDataOverride: outcome.data });
       setAiStagedPageId(null);

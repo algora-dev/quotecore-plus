@@ -89,9 +89,9 @@ export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   planNoun: 'roof',
   standardComponentsSummary: 'Roof area, ridge, hip, valley, barge and spouting.',
   requiresPitch: true,
-  // Owner directive 2026-10-05: scan assist disabled for the free roofing
-  // tool (and the future MCP plugin version). The marketing demo overrides
-  // this to true - its scan is a captured replay, not a real API call.
+  // Public website default: live scan assist stays disabled here. Host
+  // surfaces may override this explicitly (the marketing demo uses a captured
+  // replay; the MCP workspace uses the reviewed two-phase live flow).
   aiScan: false,
   unitOptions: [METRIC, IMPERIAL, SQUARES],
   placeholderComponents: [

@@ -97,6 +97,10 @@ interface EditorOptions {
   requiresPitch?: boolean;
   /** P4: name given to a NEW outline on save (roof default: "Main Roof"). */
   defaultAreaName?: string;
+  /** Host surfaces may have already supplied a scan1 proposal. When true,
+   *  request the adapter's first outline scan as soon as the calibrated
+   *  editor is ready; the adapter decides whether that is seeded or live. */
+  autoStartAi?: boolean;
 }
 interface PendingLeave { label: string; proceed: () => void }
 
@@ -143,6 +147,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
   }, [active]);
   const scanSequence = useRef(0);
   const scanInFlight = useRef(false);
+  const autoScanStarted = useRef(false);
   const sessionRef = useRef(session);
   const currentRef = useRef({ active, adapter, context, stage, pitchEntry, scanning, pendingLeave });
   useLayoutEffect(() => {
@@ -342,6 +347,17 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
       if (sequence === scanSequence.current) setError(err instanceof Error ? err.message : 'The scan failed. Try manually.');
     } finally { if (sequence === scanSequence.current) { scanInFlight.current = false; setScanning(false); } }
   };
+  useEffect(() => {
+    if (!active || !options.autoStartAi || autoScanStarted.current || !ready) return;
+    const info = adapter?.getAiOutlineScanInfo();
+    if (!info || info.blocked) return;
+    autoScanStarted.current = true;
+    void runScan();
+  // runScan reads the current adapter/context and protects itself with the
+  // existing scan sequence; this effect only supplies the one-shot trigger.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, options.autoStartAi, ready, adapter]);
+
   const cancelScan = () => {
     scanSequence.current += 1; scanInFlight.current = false; adapter?.cancelOutlineOnlyScan(); setScanning(false);
   };

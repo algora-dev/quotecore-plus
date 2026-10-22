@@ -17,10 +17,34 @@ import m from './MeasurementPricing.module.css';
 export default function FreeQuoteBuilder({initialMode,initialTrade}:{initialMode?:MeasureMode;initialTrade?:Trade}){
  const [job,setJob]=useState<Job|null>(()=>initialTrade?newJob(initialTrade,'metric',initialMode??'actual'):null),[phase,setPhase]=useState<'setup'|'measure'|'report'>('setup');
  const [resume,setResume]=useState<Job|null>(null),[ready,setReady]=useState(false),[storageError,setStorageError]=useState(false);
+ const [mcpLoading,setMcpLoading]=useState(false);
  const [notice,setNotice]=useState(''),[undo,setUndo]=useState<{job:Job;label:string}|null>(null),[editing,setEditing]=useState<Spec|null|undefined>(undefined),[csv,setCsv]=useState(false);
  const result=useMemo(()=>job?calculateJob(job):null,[job]);const focusRef=useRef<HTMLDivElement>(null),hasMoved=useRef(false);
- // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-only restore of the sessionStorage tab draft (external system); not derivable during render
- useEffect(()=>{try{const raw=sessionStorage.getItem(DRAFT_KEY);if(raw){const restored=restoreJob(raw);if(restored)setResume(restored);else setNotice('A previous tab draft could not be restored safely. Start a new estimate; no account data was changed.');}}catch{setStorageError(true);}setReady(true);},[]);
+ // Mount-only restore. An MCP session is explicit user intent and takes precedence
+ // over this tab's previous draft; after hydration the normal draft autosave owns it.
+ // eslint-disable-next-line react-hooks/set-state-in-effect -- external browser/session state is only available after mount
+ useEffect(()=>{
+  let cancelled=false;
+  const token=new URLSearchParams(window.location.hash.replace(/^#/, '')).get('mcpSession');
+  if(token){
+   setMcpLoading(true);
+   void (async()=>{try{
+    const response=await fetch('/api/mcp/free-tools/measurement-session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:token}),cache:'no-store'});
+    const payload=await response.json() as {job?:Job;measurementCount?:number;error?:string};
+    if(!response.ok||!payload.job)throw Error(payload.error||'Could not load the measurements from ChatGPT.');
+    const imported=restoreJob(JSON.stringify(payload.job));if(!imported)throw Error('The imported measurement session was not valid.');
+    if(cancelled)return;
+    setJob(imported);setResume(null);setUndo(null);setPhase('measure');
+    setNotice(`Imported ${payload.measurementCount??0} measurement${payload.measurementCount===1?'':'s'} from ChatGPT. Rates start at zero - review Setup & rates before you rely on the price.`);
+    history.replaceState(null,'',`${location.pathname}${location.search}`);
+   }catch(error){if(!cancelled)setNotice(error instanceof Error?error.message:'Could not load the measurements from ChatGPT.');}
+   finally{if(!cancelled){setMcpLoading(false);setReady(true);}}
+   })();
+   return()=>{cancelled=true;};
+  }
+  try{const raw=sessionStorage.getItem(DRAFT_KEY);if(raw){const restored=restoreJob(raw);if(restored)setResume(restored);else setNotice('A previous tab draft could not be restored safely. Start a new estimate; no account data was changed.');}}catch{setStorageError(true);}setReady(true);
+  return()=>{cancelled=true;};
+ },[]);
  useEffect(()=>{if(!ready||!job||resume)return;const timer=setTimeout(()=>{try{sessionStorage.setItem(DRAFT_KEY,JSON.stringify(job));setStorageError(false);}catch{setStorageError(true);}},300);return()=>clearTimeout(timer);},[ready,job,resume]);
  useEffect(()=>{if(!result?.entryCount)return;const handler=(e:BeforeUnloadEvent)=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler);},[result?.entryCount]);
  useEffect(()=>{if(!hasMoved.current){hasMoved.current=true;return;}focusRef.current?.focus({preventScroll:true});focusRef.current?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});},[phase,job?.trade]);
@@ -37,6 +61,7 @@ export default function FreeQuoteBuilder({initialMode,initialTrade}:{initialMode
  <nav className={m.breadcrumb} aria-label="Breadcrumb"><Link href="/free-tools">Free tools</Link><Icon name="chevron"/><span>Measurements to pricing</span>{job&&<><Icon name="chevron"/><span>{TRADE_COPY[job.trade].name}</span></>}</nav>
  {job&&<><header className={`${m.toolHeader} ${darkClass}`}><div><p className={m.eyebrow}>FREE MEASUREMENTS TO PRICING <span>{TRADE_COPY[job.trade].name}</span></p><h1>{phase==='setup'?'A familiar start. Your own measurements.':phase==='measure'?'You measure. Components do the maths.':'From measured work to your next quote.'}</h1><p>{phase==='measure'?TRADE_COPY[job.trade].hint:'The same Smart Components as digital takeoff, without needing a plan.'}</p></div><Button onClick={changeTrade}><Icon name="back"/> Start a new job</Button></header><div className={m.progressBar}><StepBar step={phase} onSetup={()=>setPhase('setup')} onMeasure={goMeasure} canMeasure={!!job.components.length}/><div className={m.progressMeta}><span>{job.units==='metric'?'Metric':job.units==='imperial'?'Imperial':'Roofing squares'} · {job.currency}</span>{phase!=='setup'&&<Button quiet onClick={()=>setPhase('setup')}><Icon name="edit"/> Setup &amp; rates</Button>}</div></div></>}
  {notice&&<div className={m.feedback} role="status"><span>{notice}</span><button type="button" aria-label="Dismiss message" onClick={()=>setNotice('')}><Icon name="close"/></button></div>}
+ {mcpLoading&&<Notice>Loading the measurements supplied in ChatGPT…</Notice>}
  {undo&&<div className={m.undo} role="status"><span>{undo.label}.</span><Button onClick={()=>{setJob(undo.job);setUndo(null);setNotice('Restored.');}}>Undo</Button><small>Available until your next edit.</small></div>}
  {storageError&&<Notice>Browser storage is unavailable. Keep this page open until you export; a refresh may lose your work.</Notice>}
  {job&&resume&&<div className={m.resume}><p>A previous estimate is still in this tab.</p><Button onClick={()=>setResume(null)}>Start fresh</Button><Button primary onClick={()=>{setJob(resume);setResume(null);setPhase('measure');}}>Resume estimate</Button></div>}

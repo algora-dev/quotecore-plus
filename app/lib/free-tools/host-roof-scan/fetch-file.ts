@@ -30,8 +30,13 @@ export function validateDownloadUrl(value: string, allowedOrigins: readonly stri
     catch {
         throw new ScanError('INVALID_FILE_URL', 'The file reference is not a valid HTTPS URL.');
     }
-    if (value.length > 8192 || url.protocol !== 'https:' || url.username || url.password || url.hash || (url.port && url.port !== '443') || isIP(url.hostname.replace(/^\[|\]$/g, '')) || !allowedOrigins.includes(url.origin))
-        throw new ScanError('FILE_HOST_NOT_ALLOWED', 'This file host is not allowlisted. Upload the image in the QuoteCore+ review panel instead.');
+    if (value.length > 8192 || url.protocol !== 'https:' || url.username || url.password || url.hash || (url.port && url.port !== '443') || isIP(url.hostname.replace(/^\[|\]$/g, '')))
+        throw new ScanError('FILE_HOST_NOT_ALLOWED', 'This file reference is not an allowed public HTTPS host.');
+    if (!allowedOrigins.includes(url.origin))
+        // Deliberately expose only the origin - never the signed path/query - so
+        // staging can discover ChatGPT's current transfer host without leaking
+        // a bearer-style download URL into model-visible diagnostics.
+        throw new ScanError('FILE_HOST_NOT_ALLOWED', `File host ${url.origin} is not allowlisted. Verify it, then add that exact HTTPS origin to the connector allowlist.`);
     return url;
 }
 export async function downloadPlan(value: string, allowedOrigins: readonly string[]): Promise<Buffer> {
