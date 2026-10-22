@@ -297,7 +297,7 @@ function computeCanvasDimensions(naturalWidth: number, naturalHeight: number): {
  * reviewed outline changes while scans 2+3 are in flight. This is not a
  * security hash; authoritative geometry validation still happens in the scan
  * pipeline. */
-function outlineRevision(points: Array<{ x: number; y: number }>): string {
+function outlineRevision(points: ReadonlyArray<{ x: number; y: number }>): string {
   return points.map(point => `${point.x.toFixed(3)},${point.y.toFixed(3)}`).join(';');
 }
 

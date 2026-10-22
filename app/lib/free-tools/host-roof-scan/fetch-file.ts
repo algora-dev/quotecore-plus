@@ -39,7 +39,18 @@ export function validateDownloadUrl(value: string, allowedOrigins: readonly stri
         throw new ScanError('FILE_HOST_NOT_ALLOWED', `File host ${url.origin} is not allowlisted. Verify it, then add that exact HTTPS origin to the connector allowlist.`);
     return url;
 }
-export async function downloadPlan(value: string, allowedOrigins: readonly string[]): Promise<Buffer> {
+export async function downloadPlan(value: string, allowedOrigins: readonly string[], options?: {
+    maxBytes?: number;
+    accept?: string;
+    userAgent?: string;
+    tooLargeMessage?: string;
+}): Promise<Buffer> {
+    // Defaults preserve the host-roof-scan widget limits exactly; the Free Tools
+    // MCP service passes larger caps and an image+pdf accept list for plan uploads.
+    const maxBytes = options?.maxBytes ?? LIMITS.uploadBytes;
+    const accept = options?.accept ?? 'image/png,image/jpeg,image/webp';
+    const userAgent = options?.userAgent ?? 'QuoteCore-Host-Outline/1.0';
+    const tooLargeMessage = options?.tooLargeMessage ?? 'Use an image under 3 MiB.';
     const url = validateDownloadUrl(value, allowedOrigins);
     let addresses: {
         address: string;
@@ -58,7 +69,7 @@ export async function downloadPlan(value: string, allowedOrigins: readonly strin
         let total = 0;
         const chunks: Buffer[] = [];
         const req = request(url, {
-            method: 'GET', agent: false, headers: { Accept: 'image/png,image/jpeg,image/webp', 'User-Agent': 'QuoteCore-Host-Outline/1.0' },
+            method: 'GET', agent: false, headers: { Accept: accept, 'User-Agent': userAgent },
             // Pin the validated resolution so a second DNS lookup cannot redirect to an internal service.
             lookup: ((_host: unknown, _options: unknown, callback: (...args: unknown[]) => void) => {
                 const opts = _options as {
@@ -73,10 +84,10 @@ export async function downloadPlan(value: string, allowedOrigins: readonly strin
             const fail = (error: ScanError) => { res.destroy(); reject(error); };
             if (res.statusCode !== 200)
                 return fail(new ScanError('FILE_DOWNLOAD_FAILED', 'The image URL expired or redirected. Refresh the attachment or upload it in the review panel.'));
-            if (Number(res.headers['content-length'] ?? 0) > LIMITS.uploadBytes)
-                return fail(new ScanError('FILE_TOO_LARGE', 'Use an image under 3 MiB.', 413));
-            res.on('data', (chunk: Buffer) => { total += chunk.length; if (total > LIMITS.uploadBytes)
-                fail(new ScanError('FILE_TOO_LARGE', 'Use an image under 3 MiB.', 413));
+            if (Number(res.headers['content-length'] ?? 0) > maxBytes)
+                return fail(new ScanError('FILE_TOO_LARGE', tooLargeMessage, 413));
+            res.on('data', (chunk: Buffer) => { total += chunk.length; if (total > maxBytes)
+                fail(new ScanError('FILE_TOO_LARGE', tooLargeMessage, 413));
             else
                 chunks.push(chunk); });
             res.on('end', () => resolve(Buffer.concat(chunks)));

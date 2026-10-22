@@ -4,13 +4,12 @@ import { CONFIGS, TRADE_COPY, id as measurementId, newJob, newMeasurement, resto
 import type { TakeoffCurrency } from '@/app/(public)/free-roof-takeoff/takeoff-examples';
 import { parseOutline } from '../host-roof-scan/geometry';
 import { prepareRaster } from '../host-roof-scan/image';
-import { downloadHostedFile } from '../host-roof-scan/fetch-file';
+import { downloadPlan } from '../host-roof-scan/fetch-file';
 import { ScanError } from '../host-roof-scan/types';
 import { WorkspaceTickets } from './tokens';
 import {
   FREE_TOOLS_MCP_VERSION,
   type ImageStore,
-  type NormalizedOutline,
   type SourceFile,
   type TakeoffTrade,
   type UnitSystem,
@@ -220,7 +219,7 @@ export class FreeToolsMcpService {
     const file = sourceFile(input.plan);
     const raw = this.options.fetchFile
       ? await this.options.fetchFile(file.download_url, this.options.allowedFileOrigins)
-      : await downloadHostedFile(file.download_url, this.options.allowedFileOrigins, {
+      : await downloadPlan(file.download_url, this.options.allowedFileOrigins, {
           maxBytes: MAX_PDF_ATTACHMENT_BYTES,
           accept: 'image/png,image/jpeg,image/webp,application/pdf',
           userAgent: 'QuoteCore-Free-Tools-MCP/2.0',

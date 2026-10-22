@@ -22,7 +22,6 @@ export default function FreeQuoteBuilder({initialMode,initialTrade}:{initialMode
  const result=useMemo(()=>job?calculateJob(job):null,[job]);const focusRef=useRef<HTMLDivElement>(null),hasMoved=useRef(false);
  // Mount-only restore. An MCP session is explicit user intent and takes precedence
  // over this tab's previous draft; after hydration the normal draft autosave owns it.
- // eslint-disable-next-line react-hooks/set-state-in-effect -- external browser/session state is only available after mount
  useEffect(()=>{
   let cancelled=false;
   const token=new URLSearchParams(window.location.hash.replace(/^#/, '')).get('mcpSession');

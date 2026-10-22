@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { FreeTakeoffApp, type FreeTakeoffSeed } from '@/app/(public)/free-roof-takeoff/FreeTakeoffApp';
 import {
   ROOFING_TAKEOFF_CONFIG,
@@ -72,7 +73,7 @@ export function PluginTakeoffWorkspace() {
   }, [state]);
 
   if (state.status === 'loading') return <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6"><p>Loading your QuoteCore+ takeoff...</p></main>;
-  if (state.status === 'error') return <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6"><div className="max-w-lg text-center"><h1 className="text-2xl font-semibold">Takeoff session unavailable</h1><p className="mt-3 text-slate-300">{state.message}</p><a className="mt-6 inline-block underline" href="/free-tools">Open QuoteCore+ Free Tools</a></div></main>;
+  if (state.status === 'error') return <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6"><div className="max-w-lg text-center"><h1 className="text-2xl font-semibold">Takeoff session unavailable</h1><p className="mt-3 text-slate-300">{state.message}</p><Link className="mt-6 inline-block underline" href="/free-tools">Open QuoteCore+ Free Tools</Link></div></main>;
 
   const seed: FreeTakeoffSeed = {
     planUrl: state.planUrl,
