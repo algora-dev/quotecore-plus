@@ -106,8 +106,10 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
-    try {
-      await fetch("https://api.resend.com/emails", {
+    // Parallel sends: the submitter waits on this response, so both emails
+    // go out at once instead of back to back (~halves the wait).
+    const [teamRes, senderRes] = await Promise.allSettled([
+      fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -117,8 +119,8 @@ export async function POST(req: NextRequest) {
           subject: `Feature request: ${currentSoftware}`,
           html: teamHtml,
         }),
-      });
-      await fetch("https://api.resend.com/emails", {
+      }),
+      fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -127,10 +129,10 @@ export async function POST(req: NextRequest) {
           subject: "Your free $109 QuoteCore+ subscription - next steps",
           html: senderHtml,
         }),
-      });
-    } catch (err) {
-      console.error("Resend error:", err);
-    }
+      }),
+    ]);
+    if (teamRes.status === "rejected") console.error("Resend team email error:", teamRes.reason);
+    if (senderRes.status === "rejected") console.error("Resend sender email error:", senderRes.reason);
   }
 
   return NextResponse.json({ ok: true });

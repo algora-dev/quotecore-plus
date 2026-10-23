@@ -74,6 +74,7 @@ export function FeatureRequestForm() {
   const [wish, setWish] = useState("");
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const submittedViaGoogle = useRef(false);
@@ -191,6 +192,7 @@ export function FeatureRequestForm() {
   }
 
   const startGoogle = useCallback(async () => {
+    setGoogleLoading(true);
     try {
       window.sessionStorage.setItem(
         PENDING_KEY,
@@ -205,12 +207,21 @@ export function FeatureRequestForm() {
       options: { redirectTo: `${window.location.origin}/feature-request` },
     });
     if (error) {
+      setGoogleLoading(false);
       setModalError("Couldn't start Google sign in. You can enter your email instead.");
     }
+    // Success navigates to Google; the loading state stays until then so the
+    // button never sits there looking dead during the authorize round trip.
   }, [currentSoftware, wish]);
 
+  const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined;
+
   return (
-    <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-[rgba(13,16,20,0.94)] p-6 shadow-2xl shadow-black/50 backdrop-blur sm:p-8">
+    <>
+      {supabaseOrigin && <link rel="preconnect" href={supabaseOrigin} />}
+      <link rel="dns-prefetch" href="https://accounts.google.com" />
+      <link rel="preconnect" href="https://accounts.google.com" />
+      <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-[rgba(13,16,20,0.94)] p-6 shadow-2xl shadow-black/50 backdrop-blur sm:p-8">
       <Image
         src="/MainQCP-light.png"
         alt="QuoteCore+"
@@ -342,10 +353,23 @@ export function FeatureRequestForm() {
                   <button
                     type="button"
                     onClick={startGoogle}
-                    className="flex w-full min-h-11 items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                    disabled={googleLoading}
+                    className="flex w-full min-h-11 items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-70"
                   >
-                    <GoogleIcon />
-                    Continue with Google
+                    {googleLoading ? (
+                      <>
+                        <svg className="h-4 w-4 animate-spin text-slate-500" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z" />
+                        </svg>
+                        Connecting to Google...
+                      </>
+                    ) : (
+                      <>
+                        <GoogleIcon />
+                        Continue with Google
+                      </>
+                    )}
                   </button>
 
                   {modalError && (
@@ -380,6 +404,7 @@ export function FeatureRequestForm() {
           </p>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
