@@ -7,7 +7,12 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export function GET() {
   return NextResponse.json(
-    { buildId: process.env.VERCEL_GIT_COMMIT_SHA ?? 'local' },
+    {
+      buildId: process.env.VERCEL_GIT_COMMIT_SHA ?? 'local',
+      // Runtime visibility for Node CVE audits (Stripe/Node Oct 2026 advisory):
+      // lets us confirm Vercel's managed runtime picked up a patched Node.
+      nodeVersion: process.version,
+    },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }

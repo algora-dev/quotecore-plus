@@ -86,6 +86,13 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '8mb',
     },
+    // Next 16.4 defaults `next build` type checking to the project-local tsc
+    // CLI, which checks EVERY file in tsconfig (incl. our 81 pre-existing
+    // test-file errors) and fails the build. 16.2 used the JS compiler API
+    // which skipped orphan test files. Restore 16.2 semantics until the
+    // test-file debt is paid down; the standalone `npx tsc --noEmit` gate
+    // (81 baseline) remains the type-error tracker.
+    useTypeScriptCli: false,
   },
   // Client build stamp for stale-bundle detection: the assistant compares its
   // baked NEXT_PUBLIC_BUILD_ID against /api/build-id and reloads when the
