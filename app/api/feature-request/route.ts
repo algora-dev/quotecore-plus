@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+// Booking link for the 20-minute walkthrough (same pattern as the contact
+// route): the homepage Calendly URL when configured, /contact as fallback.
+const WORKFLOW_CALL_URL = (() => {
+  const raw = process.env.NEXT_PUBLIC_HOMEPAGE_BOOKING_URL?.trim();
+  if (raw) {
+    try {
+      const url = new URL(raw);
+      if (url.protocol === "https:" && !url.username && !url.password) return url.href;
+    } catch { /* fall through */ }
+  }
+  return "https://quote-core.com/contact";
+})();
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -25,8 +36,8 @@ function escapeHtml(val: string): string {
  * Submissions from the /feature-request ad landing page (2026-10-23):
  * "What roofing software are you using?" + "What do you wish it did better?"
  * + email (typed manually or captured via the Continue with Google button).
- * Stores the row in Supabase (best effort) and always notifies the team via
- * Resend so a missing table never loses a lead.
+ * Email-only by owner decision (2026-10-23): the team notification to info@
+ * is the system of record, so there is no database dependency.
  */
 export async function POST(req: NextRequest) {
   let body: Record<string, unknown>;
@@ -46,43 +57,7 @@ export async function POST(req: NextRequest) {
   if (!wish) return NextResponse.json({ error: "Tell us what you wish it did better" }, { status: 400 });
   if (!email || !isValidEmail(email)) return NextResponse.json({ error: "Valid email required" }, { status: 400 });
 
-  // 1. Save to Supabase (best effort: email notification below still goes out
-  // if the table is missing or the insert fails).
-  if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
-    try {
-      const sbRes = await fetch(`${SUPABASE_URL}/rest/v1/feature_requests`, {
-        method: "POST",
-        headers: {
-          apikey: SUPABASE_SERVICE_ROLE_KEY,
-          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify({
-          current_software: currentSoftware,
-          wish,
-          email,
-          email_source: emailSource,
-          source: "feature-request-page",
-          created_at: new Date().toISOString(),
-        }),
-      });
-      if (!sbRes.ok) {
-        const t = await sbRes.text();
-        console.error("Feature request insert failed:", sbRes.status, t);
-      }
-    } catch (err) {
-      console.error("Feature request save error:", err);
-    }
-  } else {
-    console.info("Feature request received without Supabase configured", {
-      currentSoftware,
-      wish,
-      email,
-    });
-  }
-
-  // 2. Team notification + submitter confirmation via Resend.
+  // Team notification + submitter confirmation via Resend.
   if (RESEND_API_KEY) {
     const softwareHtml = escapeHtml(currentSoftware);
     const wishHtml = escapeHtml(wish);
@@ -109,16 +84,22 @@ export async function POST(req: NextRequest) {
         <p style="color:#444;line-height:1.6;">Thanks for telling us what you need. Here's how to get your free subscription:</p>
         <ol style="color:#444;line-height:1.8;margin:16px 0;padding-left:20px;">
           <li><a href="https://app.quote-core.com/signup" style="color:#FF6B35;">Create your account here</a> (takes about a minute).</li>
-          <li>Reply to this email with the email address you signed up with.</li>
-          <li>We apply your free $109 QuoteCore+ subscription and confirm.</li>
+          <li>Sign-up ends at a pricing step. Feel free to explore the plans, but <strong style="color:#111;">don't pay anything</strong>, getting that far is all we need.</li>
+          <li>Reply to this email to tell us you've set up your account (just reply with the email you signed up with).</li>
+          <li>We activate your free $109 QuoteCore+ subscription and confirm by email. You won't have app access until then, that's normal.</li>
         </ol>
-        <p style="color:#444;line-height:1.6;"><strong style="color:#111;">There's more.</strong> If what you told us helps us improve QuoteCore+, we'll add another two months to your free subscription and let you know.</p>
+        <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin:24px 0;">
+          <p style="font-weight:700;margin:0 0 8px;color:#333;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">While you wait, have a look around</p>
+          <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:15px;"><strong>Explore the app:</strong> open the <a href="https://quote-core.com/demo" style="color:#FF6B35;">interactive demo</a> and click through the real thing.</p>
+          <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:15px;"><strong>Book a walkthrough:</strong> a free 20-minute call where we show you how QuoteCore+ fits the way you already work. <a href="${WORKFLOW_CALL_URL}" style="color:#FF6B35;">Book here</a>.</p>
+          <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:15px;"><strong>Tell us what's missing:</strong> if something would be useful to you and other contractors, reply and tell us. If we build it, we'll add <strong>two extra months</strong> to your free subscription.</p>
+          <p style="margin:0;color:#555;line-height:1.6;font-size:15px;"><strong>Want it set up for you?</strong> <a href="https://quote-core.com/done-for-you-setup" style="color:#FF6B35;">Done For You Setup</a> takes your materials, labour rates and pricing and configures it all.</p>
+        </div>
         <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin:24px 0;">
           <p style="font-weight:700;margin:0 0 8px;color:#333;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">What you told us</p>
           <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:15px;"><strong>Current software:</strong> ${softwareHtml}</p>
           <p style="margin:0;color:#555;line-height:1.6;font-size:15px;"><strong>Wish:</strong> ${wishHtml}</p>
         </div>
-        <p style="color:#444;line-height:1.6;">Want a hand getting set up? Reply to this email and we'll help you directly. If you'd rather we did the heavy lifting, <a href="https://quote-core.com/done-for-you-setup" style="color:#FF6B35;">Done For You Setup</a> configures your materials, labour rates and pricing for you.</p>
         <p style="color:#444;line-height:1.6;margin-top:24px;">Talk soon,<br/><strong>The QuoteCore+ team</strong></p>
         <hr style="border:none;border-top:1px solid #eee;margin:32px 0;" />
         <p style="font-size:12px;color:#999;margin:0;">QuoteCore+ - quoting software for contractors and trade businesses.<br/><a href="https://quote-core.com" style="color:#999;">quote-core.com</a></p>
