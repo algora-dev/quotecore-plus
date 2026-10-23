@@ -104,13 +104,20 @@ export async function POST(req: NextRequest) {
     const senderHtml = `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
         <img src="https://quote-core.com/MainQCP.png" alt="QuoteCore+" style="height:36px;margin-bottom:24px;" />
-        <h2 style="color:#111;margin-bottom:8px;">Thanks for telling us what you need.</h2>
-        <p style="color:#444;line-height:1.6;">We read every response. If we build what you asked for, you'll be the first to know.</p>
+        <h2 style="color:#111;margin-bottom:8px;">Your free $109 QuoteCore+ subscription is ready to claim.</h2>
+        <p style="color:#444;line-height:1.6;">Thanks for telling us what you need. Here's how to get your free subscription:</p>
+        <ol style="color:#444;line-height:1.8;margin:16px 0;padding-left:20px;">
+          <li><a href="https://app.quote-core.com/signup" style="color:#FF6B35;">Create your account here</a> (takes about a minute).</li>
+          <li>Reply to this email with the email address you signed up with.</li>
+          <li>We apply your free $109 QuoteCore+ subscription and confirm.</li>
+        </ol>
+        <p style="color:#444;line-height:1.6;"><strong style="color:#111;">There's more.</strong> If what you told us helps us improve QuoteCore+, we'll add another two months to your free subscription and let you know.</p>
         <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin:24px 0;">
           <p style="font-weight:700;margin:0 0 8px;color:#333;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;">What you told us</p>
           <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:15px;"><strong>Current software:</strong> ${softwareHtml}</p>
           <p style="margin:0;color:#555;line-height:1.6;font-size:15px;"><strong>Wish:</strong> ${wishHtml}</p>
         </div>
+        <p style="color:#444;line-height:1.6;">Want a hand getting set up? Reply to this email and we'll help you directly. If you'd rather we did the heavy lifting, <a href="https://quote-core.com/done-for-you-setup" style="color:#FF6B35;">Done For You Setup</a> configures your materials, labour rates and pricing for you.</p>
         <p style="color:#444;line-height:1.6;margin-top:24px;">Talk soon,<br/><strong>The QuoteCore+ team</strong></p>
         <hr style="border:none;border-top:1px solid #eee;margin:32px 0;" />
         <p style="font-size:12px;color:#999;margin:0;">QuoteCore+ - quoting software for contractors and trade businesses.<br/><a href="https://quote-core.com" style="color:#999;">quote-core.com</a></p>
@@ -135,7 +142,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           from: "QuoteCore+ <info@quote-core.com>",
           to: [email],
-          subject: "We've got your feature request - QuoteCore+",
+          subject: "Your free $109 QuoteCore+ subscription - next steps",
           html: senderHtml,
         }),
       });

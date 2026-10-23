@@ -6,7 +6,7 @@ import { createClient } from "@/app/lib/supabase/client";
 import buttonStyles from "@/components/marketing/MarketingButton.module.css";
 
 /**
- * /feature-request ad landing form (2026-10-23).
+ * /feature-request ad landing form (2026-10-23, dark theme + $109 offer).
  * Two questions, no visible email field (keeps the Facebook ad frame
  * friction-free). Email is captured in a modal after submit: typed manually
  * or via Continue with Google (Supabase OAuth, email only). The answers are
@@ -14,7 +14,7 @@ import buttonStyles from "@/components/marketing/MarketingButton.module.css";
  * completes automatically when the visitor lands back on this page.
  */
 
-const PENDING_KEY = "qcp-feature-request-pending";
+const PENDING_KEY = "qcp-fe…ding";
 const PENDING_TTL_MS = 30 * 60 * 1000;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -47,7 +47,7 @@ function clearPending() {
 }
 
 const inputClasses =
-  "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 transition-colors";
+  "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-base text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/25 transition-colors";
 
 function GoogleIcon() {
   return (
@@ -158,7 +158,7 @@ export function FeatureRequestForm() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!currentSoftware.trim() || !wish.trim()) {
-      setFormError("Please answer both questions so we know what to build.");
+      setFormError("Please answer both questions so we can send your free subscription.");
       return;
     }
     setFormError(null);
@@ -210,28 +210,28 @@ export function FeatureRequestForm() {
   }, [currentSoftware, wish]);
 
   return (
-    <div className="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-xl p-6 sm:p-8">
+    <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-[rgba(13,16,20,0.94)] p-6 shadow-2xl shadow-black/50 backdrop-blur sm:p-8">
       <Image
-        src="/MainQCP.png"
+        src="/MainQCP-light.png"
         alt="QuoteCore+"
-        width={194}
-        height={48}
+        width={163}
+        height={40}
         priority
-        className="h-10 w-auto sm:h-11"
+        className="h-10 w-auto sm:h-10"
       />
 
       {step === "form" && (
         <>
-          <h1 className="mt-5 text-[28px] leading-tight sm:text-3xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-5 text-[28px] leading-tight text-white sm:text-3xl font-bold tracking-tight">
             Tell us what you use and what you need
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Two questions. 20 seconds. Your answers shape what we build next.
+          <p className="mt-2 text-[15px] leading-snug font-semibold text-[#FFB36B]">
+            Answer the questions below to receive a free $109 QuoteCore+ subscription.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
             <div>
-              <label htmlFor="current-software" className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="current-software" className="mb-1.5 block text-sm font-semibold text-slate-200">
                 What roofing software are you using?
               </label>
               <input
@@ -246,7 +246,7 @@ export function FeatureRequestForm() {
             </div>
 
             <div>
-              <label htmlFor="wish" className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="wish" className="mb-1.5 block text-sm font-semibold text-slate-200">
                 What do you wish it did better?
               </label>
               <textarea
@@ -260,7 +260,7 @@ export function FeatureRequestForm() {
             </div>
 
             {formError && (
-              <p className="text-sm text-[#BD4A1A]" role="alert">
+              <p className="text-sm text-red-400" role="alert">
                 {formError}
               </p>
             )}
@@ -285,26 +285,26 @@ export function FeatureRequestForm() {
             if (e.target === e.currentTarget && step === "modal") setStep("form");
           }}
         >
-          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl p-6 sm:p-8">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[rgba(13,16,20,0.94)] p-6 shadow-2xl shadow-black/50 backdrop-blur sm:p-8">
             {step === "modal" ? (
               <>
                 <div className="flex items-start justify-between gap-4">
-                  <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                  <h2 className="text-xl font-bold tracking-tight text-white">
                     Where should we send our reply?
                   </h2>
                   <button
                     type="button"
                     onClick={() => setStep("form")}
                     aria-label="Close"
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-slate-500 hover:text-slate-300 transition-colors"
                   >
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
-                <p className="mt-2 text-sm text-slate-500">
-                  Enter your email or continue with Google. We&apos;ll only use it to follow up on what you told us.
+                <p className="mt-2 text-sm text-slate-400">
+                  Enter your email or continue with Google to receive your free subscription and our reply.
                 </p>
 
                 <div className="mt-5 space-y-4">
@@ -334,22 +334,22 @@ export function FeatureRequestForm() {
                   </button>
 
                   <div className="flex items-center gap-3" aria-hidden="true">
-                    <span className="h-px flex-1 bg-slate-200" />
-                    <span className="text-xs font-semibold text-slate-400">or</span>
-                    <span className="h-px flex-1 bg-slate-200" />
+                    <span className="h-px flex-1 bg-white/10" />
+                    <span className="text-xs font-semibold text-slate-500">or</span>
+                    <span className="h-px flex-1 bg-white/10" />
                   </div>
 
                   <button
                     type="button"
                     onClick={startGoogle}
-                    className="flex w-full min-h-11 items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:border-slate-400"
+                    className="flex w-full min-h-11 items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
                   >
                     <GoogleIcon />
                     Continue with Google
                   </button>
 
                   {modalError && (
-                    <p className="text-sm text-[#BD4A1A]" role="alert">
+                    <p className="text-sm text-red-400" role="alert">
                       {modalError}
                     </p>
                   )}
@@ -361,7 +361,7 @@ export function FeatureRequestForm() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z" />
                 </svg>
-                <p className="mt-4 text-sm font-semibold text-slate-700">Finishing up...</p>
+                <p className="mt-4 text-sm font-semibold text-slate-200">Finishing up...</p>
               </div>
             )}
           </div>
@@ -370,12 +370,13 @@ export function FeatureRequestForm() {
 
       {step === "done" && (
         <div className="mt-6">
-          <CheckCircleIcon className="h-12 w-12 text-[#BD4A1A]" />
-          <h1 className="mt-4 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          <CheckCircleIcon className="h-12 w-12 text-[#FFB36B]" />
+          <h1 className="mt-4 text-2xl sm:text-3xl font-bold tracking-tight text-white">
             Thanks. We&apos;ve got it.
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Your answers are with the team. If we build what you asked for, you&apos;ll be the first to know.
+          <p className="mt-2 text-sm text-slate-400">
+            Check your email for how to claim your free $109 QuoteCore+ subscription. If what you told us helps
+            us improve, there may be extra free months in it for you.
           </p>
         </div>
       )}
