@@ -43,6 +43,15 @@ const DOCS_CSP = [
 ].join('; ');
 
 /**
+ * Enforced CSP for the two Free Tools MCP pages ChatGPT embeds in an iframe
+ * (takeoff workstation + Measurements to Pricing). Only frame-ancestors is
+ * enforced: per spec it takes precedence over the global X-Frame-Options:
+ * DENY in modern browsers, allowing only OpenAI hosts to embed these pages.
+ * Same pattern as the host-scan review route's widgetCsp.
+ */
+const MCP_EMBED_CSP = 'frame-ancestors https://chatgpt.com https://*.chatgpt.com https://chat.openai.com https://*.openai.com';
+
+/**
  * Compatibility CSP for the full application surface.
  *
  * Report-only is deliberate for the pre-launch rollout: it gives every route
@@ -172,6 +181,17 @@ const nextConfig: NextConfig = {
       {
         source: '/free-tools',
         headers: [{ key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' }],
+      },
+      // Free Tools MCP pages that ChatGPT embeds in an iframe. See
+      // MCP_EMBED_CSP above; the global X-Frame-Options: DENY stays as
+      // legacy-browser defence-in-depth — frame-ancestors wins in modern browsers.
+      {
+        source: '/mcp-free-tools/workspace',
+        headers: [{ key: 'Content-Security-Policy', value: MCP_EMBED_CSP }],
+      },
+      {
+        source: '/measurement-to-quote-tool',
+        headers: [{ key: 'Content-Security-Policy', value: MCP_EMBED_CSP }],
       },
       // Strict CSP for the public docs surface (HTML).
       {

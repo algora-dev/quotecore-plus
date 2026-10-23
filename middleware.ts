@@ -116,6 +116,11 @@ const PUBLIC_PATHS = [
   '/free-invoice-generator',       // Free AI invoice generator (future)
   '/free-tools',                   // Free tools auth callback (future)
   '/mcp',                          // Public roof takeoff MCP endpoint
+  '/mcp-free-tools/workspace',     // Free Tools MCP workstation page embedded in
+                                   // ChatGPT. The signed short-lived session token
+                                   // lives in the URL fragment (never sent to the
+                                   // server); the page validates it client-side via
+                                   // the token-gated /api/mcp/free-tools/* endpoints.
   '/llms.txt',                     // Public machine-discovery document
   '/admin/login',  // Admin sign-in (the rest of /admin/* is gated by
                    //  the requireAdmin() helper at the page boundary).
