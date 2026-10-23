@@ -130,6 +130,7 @@ const PUBLIC_PATHS = [
   '/file',         // Hosted attachment downloads (token-gated). Already
                    //  HMAC-verified at the route level.
   '/feedback',     // Public feedback questionnaire (email campaign + site-wide).
+  '/feature-request', // Public feature-request page (Facebook ad landing, 2026-10-23).
 ];
 
 // Paths reachable when the user has an AAL1 session but still needs to clear 2FA.
