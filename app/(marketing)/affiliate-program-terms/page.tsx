@@ -26,9 +26,10 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "2. Standard commission",
     body: (
       <p>
-        The standard offer is <strong>30% of eligible revenue</strong> from each referred paying customer for{" "}
-        <strong>12 months</strong> from that customer&apos;s first eligible payment. Custom commercial terms may be
-        agreed individually and will be confirmed in writing.
+        The standard offer is <strong>30% of eligible revenue</strong> from each referred paying customer. On
+        subscriptions this runs for <strong>12 months</strong> from that customer&apos;s first eligible payment. On
+        Done For You setups it is <strong>30% of the setup fee</strong>, paid once when the fee is collected. Custom
+        commercial terms may be agreed individually and will be confirmed in writing.
       </p>
     ),
   },
@@ -36,9 +37,10 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "3. Eligible revenue",
     body: (
       <p>
-        Eligible revenue means the subscription fees actually collected from the referred customer, net of refunds,
-        chargebacks, failed payments and applicable taxes (e.g. VAT/GST). One-off services, add-ons or other revenue may
-        be excluded at QuoteCore&apos;s discretion unless agreed in a custom deal.
+        Eligible revenue means the subscription fees and Done For You setup fees actually collected from the referred
+        customer, net of refunds, chargebacks, failed payments, applicable taxes (e.g. VAT/GST) and any discount granted
+        through the partner&apos;s code beyond the included 5% (see section 5). Other one-off services, add-ons or
+        revenue may be excluded at QuoteCore&apos;s discretion unless agreed in a custom deal.
       </p>
     ),
   },
@@ -57,8 +59,12 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "5. Discount codes",
     body: (
       <p>
-        Partner discount codes give referred customers a discount on their first month, as confirmed at approval.
-        Partners must not misrepresent the value of their code or present it as a QuoteCore-wide promotion.
+        Every partner code includes a standard customer discount of up to 5% that the partner can choose to offer. That
+        5% is provided on top of the partner&apos;s 30% commission and does not reduce it. A partner may grant a deeper
+        discount to help close a deal; anything beyond the included 5% comes out of the partner&apos;s commission rather
+        than QuoteCore&apos;s price. As a guide on the standard 30% rate: a 10% customer discount leaves 25% commission,
+        15% leaves 20%, and 20% leaves 15%. Partners must not misrepresent the value of their code or present it as a
+        QuoteCore-wide promotion.
       </p>
     ),
   },
@@ -146,7 +152,7 @@ export default function AffiliateProgramTermsPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">Legal</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-zinc-950">Partner Program Terms</h1>
           <p className="mt-3 text-sm text-zinc-500">
-            Last updated: 24 August 2026 · Questions?{" "}
+            Last updated: 25 October 2026 · Questions?{" "}
             <Link href="/affiliate-program" className="font-medium text-[#BD4A1A] hover:underline">
               See the program page
             </Link>{" "}

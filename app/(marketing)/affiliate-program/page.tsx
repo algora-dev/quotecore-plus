@@ -2,55 +2,82 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { MarketingButton } from "@/components/marketing/MarketingButton";
+import pageV2 from "@/components/marketing/page-v2/PageV2.module.css";
 import DistributorApplicationForm from "./DistributorApplicationForm";
 
 export const metadata: Metadata = {
-  title: "QuoteCore Partner Program - Earn 30% Recurring Commission",
+  title: "QuoteCore+ Affiliate Program | 30% Recurring Commission for 12 Months",
   description:
-    "Join the QuoteCore affiliate program: earn 30% recurring commission on referred paying customers for 12 months, with custom partnership terms available. Apply in about 30 seconds.",
+    "Join the QuoteCore+ affiliate program: a flat 30% recurring commission on referred subscriptions for 12 months, plus 30% of every Done For You setup. Includes a customer discount you control. Apply in about 30 seconds.",
   alternates: { canonical: "https://quote-core.com/affiliate-program" },
   openGraph: {
     title: "Earn 30% Recurring Commission Promoting QuoteCore+",
     description:
-      "A software affiliate program for creators, trade professionals and distributors. Custom terms available. Apply in about 30 seconds.",
+      "Flat 30% on referred subscriptions for 12 months, plus 30% of Done For You setups. A customer discount you control. Apply in about 30 seconds.",
     url: "https://quote-core.com/affiliate-program",
     siteName: "QuoteCore+",
     type: "website",
   },
 };
 
+const H2 = "text-balance text-[clamp(32px,3.45vw,48px)] font-[650] leading-[1.085] tracking-[-0.045em] text-zinc-950";
+const CARD_BODY = "text-[13px] leading-[1.65] text-zinc-600";
+
 const faqs = [
   {
-    q: "What commission do I earn?",
-    a: "The standard starting offer is 30% of eligible referred customer revenue for 12 months. Custom terms may be available for selected partnerships.",
+    question: "What commission do I earn?",
+    answer:
+      "A flat 30% of eligible revenue. On referred subscriptions that is 30% of the subscription fees we actually collect, every month for 12 months from the customer's first payment. On Done For You setups it is 30% of the collected setup fee, paid once: a US$499 setup earns you US$149.70. Custom terms may be available for selected partnerships.",
   },
   {
-    q: "Can I ask for a different deal?",
-    a: "Yes. Anyone can request a custom partnership discussion in the application form. We will review the opportunity and decide whether different terms make sense.",
+    question: "How does my discount code work?",
+    answer:
+      "Your partner code gives referred customers a 5% discount and attributes the purchase to you when used at checkout. That 5% is included in the deal, so you still earn the full 30%. If you want to give a customer a bigger discount to close a deal, the extra comes out of your share rather than our price: give 10% off and you earn 25%, give 15% and you earn 20%. You never have to use the discount at all.",
   },
   {
-    q: "Do I need a large audience?",
-    a: "No. We consider creators, industry professionals, publishers, communities, agencies, outbound operators and people with a credible distribution strategy. A small, relevant audience can be more valuable than a large unrelated one.",
+    question: "Do I earn commission on Done For You setups?",
+    answer:
+      "Yes. Done For You Setup is our configuration service, scoped from US$499 per customer. You earn 30% of the setup fee once it is collected, and it stacks with subscription commission if that customer also subscribes.",
   },
   {
-    q: "Do I have to promote the free tools?",
-    a: "No. You can promote QuoteCore in whatever approved way suits your audience or strategy. Free tools are simply one low-friction option that gives people something useful immediately.",
+    question: "Is there a demo I can show people?",
+    answer:
+      "Yes. The interactive demo at quote-core.com/demo walks through the real app with no signup and no account. It is the easiest thing you can share with an audience that wants to see the product before committing to anything.",
   },
   {
-    q: "How does my discount code work?",
-    a: "Your code gives referred customers a discount on their first month and attributes the purchase to you when used at checkout. The exact customer offer is confirmed when you are approved, and stronger offers may be available for custom deals.",
+    question: "Can I ask for a different deal?",
+    answer:
+      "Yes. Anyone can request a custom partnership discussion in the application form. We will review the opportunity and decide whether different terms make sense.",
   },
   {
-    q: "What if someone uses a free tool and upgrades later?",
-    a: "Some people discover QuoteCore through a free tool and only upgrade weeks later. Make sure your audience knows your discount code so they use it when they eventually purchase - that is how the purchase is attributed to you.",
+    question: "Do I need a large audience?",
+    answer:
+      "No. We consider creators, industry professionals, publishers, communities, agencies, outbound operators and people with a credible distribution strategy. A small, relevant audience can be more valuable than a large unrelated one.",
   },
   {
-    q: "Is this a job?",
-    a: "No. This is an independent partner/referral opportunity, not employment or salaried work. You choose how and when you promote QuoteCore.",
+    question: "Do I have to promote the free tools?",
+    answer:
+      "No. You can promote QuoteCore in whatever approved way suits your audience or strategy. Free tools are simply one low-friction option that gives people something useful immediately.",
   },
   {
-    q: "Does it cost anything to join?",
-    a: "No. There is no fee to apply or participate in the standard program.",
+    question: "What if someone uses a free tool and upgrades later?",
+    answer:
+      "Some people discover QuoteCore through a free tool and only upgrade weeks later. Make sure your audience knows your discount code so they use it when they eventually purchase. That is how the purchase is attributed to you.",
+  },
+  {
+    question: "Where can I read more about how selling QuoteCore+ works?",
+    answer:
+      "The T3 Labs sales guide for QuoteCore+ at t3labs.tech/qcp-careers covers who to target, when to lead with Done For You, worked commission examples and how the discount flexibility plays out in real deals. It is optional reading: everything you need to apply is on this page.",
+  },
+  {
+    question: "Is this a job?",
+    answer:
+      "No. This is an independent partner/referral opportunity, not employment or salaried work. You choose how and when you promote QuoteCore.",
+  },
+  {
+    question: "Does it cost anything to join?",
+    answer: "No. There is no fee to apply or participate in the standard program.",
   },
 ];
 
@@ -59,8 +86,8 @@ const jsonLd = {
   "@type": "FAQPage",
   mainEntity: faqs.map((f) => ({
     "@type": "Question",
-    name: f.q,
-    acceptedAnswer: { "@type": "Answer", text: f.a },
+    name: f.question,
+    acceptedAnswer: { "@type": "Answer", text: f.answer },
   })),
 };
 
@@ -81,11 +108,11 @@ function ArrowIcon() {
 }
 
 const proofPoints = [
-  "30% standard revenue share",
-  "12 months per referred paying customer",
+  "Flat 30% commission",
+  "12 months per referred subscription",
+  "30% of Done For You setups",
   "Monthly payouts",
   "Custom deals considered",
-  "Work from anywhere",
   "No fee to apply",
 ];
 
@@ -117,7 +144,7 @@ const promoteWays = [
   },
   {
     title: "Direct Outreach",
-    desc: "Email, calls, DMs, local trade networks. Lead with a useful free tool instead of a sales pitch.",
+    desc: "Email, calls, DMs, local trade networks. Lead with the demo or a useful free tool instead of a sales pitch.",
     icon: "M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z",
   },
 ];
@@ -133,12 +160,21 @@ const whoProfiles = [
 ];
 
 const whatToPromote = [
-  { title: "Free Quote Generator", href: "/free-quote-generator", desc: "Create professional quotes in minutes - no account needed." },
+  { title: "Interactive Demo", href: "/demo", desc: "The full app in a guided walkthrough. No signup, no account. The easiest link to share." },
+  { title: "The QuoteCore+ App", href: "/pricing", desc: "The full quoting and job management platform, from US$29/month." },
+  { title: "Done For You Setup", href: "/done-for-you-setup", desc: "From US$499 one-off. We configure their whole account. Pays 30% once collected." },
+  { title: "Free Quote Generator", href: "/free-quote-generator", desc: "Create professional quotes in minutes with no account needed." },
   { title: "Free Margin Calculator", href: "/free-margin-calculator", desc: "Help trades price jobs profitably." },
   { title: "Roofing & Takeoff Tools", href: "/free-roof-takeoff", desc: "Upload a plan, measure a roof, price materials." },
   { title: "Free Calculators Hub", href: "/free-calculators", desc: "The full library of free construction calculators." },
   { title: "Invoice Generator", href: "/free-invoice-generator", desc: "Free professional invoices for contractors." },
-  { title: "The QuoteCore+ App", href: "/pricing", desc: "The full quoting and job management platform." },
+];
+
+const discountTradeoff = [
+  { discount: "0% to 5% customer discount", commission: "30% commission" },
+  { discount: "10% customer discount", commission: "25% commission" },
+  { discount: "15% customer discount", commission: "20% commission" },
+  { discount: "20% customer discount", commission: "15% commission" },
 ];
 
 export default function DistributorsPage() {
@@ -150,34 +186,35 @@ export default function DistributorsPage() {
         {/* Hero */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">
-              QuoteCore Partner &amp; Affiliate Program
+            <p className="flex items-center justify-center gap-[18px] text-[10px] font-bold uppercase tracking-[0.24em] text-[#BD4A1A]">
+              <span aria-hidden="true" className="h-px w-[42px] flex-none bg-[linear-gradient(90deg,#ff641f,#ffb36b)]" />
+              QuoteCore+ Affiliate and Partner Program
+              <span aria-hidden="true" className="h-px w-[42px] flex-none bg-[linear-gradient(90deg,#ffb36b,#ff641f)]" />
             </p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-950 sm:text-5xl">
-              Earn recurring income promoting QuoteCore
+            <h1 className="mt-6 text-balance text-[clamp(43px,4.16vw,60px)] font-bold leading-[1.045] tracking-[-0.053em] text-zinc-950">
+              Partner with QuoteCore+.
+              <br />
+              <span className="bg-[linear-gradient(135deg,#ff641f_0%,#ff8a3d_55%,#ffb36b_100%)] bg-clip-text text-transparent">
+                Earn 30% recurring.
+              </span>
             </h1>
-            <p className="mt-5 text-lg leading-8 text-zinc-600">
-              Earn <strong className="text-zinc-900">30% as standard</strong> on eligible revenue from referred paying
-              customers for 12 months, with custom partnership terms available. Promote our free tools, app, content, or
-              use your own strategy. Apply in about 30 seconds.
+            <p className="mx-auto mt-6 max-w-2xl text-[17px] leading-[1.75] text-zinc-600">
+              A flat <strong className="font-semibold text-zinc-900">30% commission on referred subscriptions for 12 months</strong>, plus
+              30% of every Done For You setup you refer. Your partner code carries a customer discount you control. Apply in about 30
+              seconds.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a
-                href="#apply"
-                className="inline-flex items-center gap-2 rounded-full bg-black px-7 py-3.5 text-sm font-semibold text-white transition hover:shadow-[0_0_24px_rgba(255,107,53,0.35)]"
-              >
-                Apply to Partner with QuoteCore
-                <ArrowIcon />
-              </a>
-              <a href="#how-it-works" className="text-sm font-semibold text-[#BD4A1A] hover:underline">
-                See how the program works
-              </a>
+              <MarketingButton href="#apply" variant="primary" size="large" icon={<ArrowIcon />}>
+                Apply to partner with QuoteCore+
+              </MarketingButton>
+              <MarketingButton href="#commission" variant="glass" size="large">
+                See how the commission works
+              </MarketingButton>
             </div>
-            <p className="mt-3 text-sm text-zinc-500">Apply in about 30 seconds.</p>
           </div>
           <ul className="mx-auto mt-10 flex max-w-4xl flex-wrap items-center justify-center gap-x-6 gap-y-2">
             {proofPoints.map((p) => (
-              <li key={p} className="flex items-center gap-2 text-sm text-zinc-700">
+              <li key={p} className="flex items-center gap-2 text-[13px] text-zinc-700">
                 <span className="text-[#FF6B35]">
                   <CheckIcon />
                 </span>
@@ -188,9 +225,9 @@ export default function DistributorsPage() {
         </section>
 
         {/* How it works */}
-        <section id="how-it-works" className="mt-20 md:mt-28">
+        <section id="how-it-works" className="mt-20 scroll-mt-24 md:mt-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-center text-3xl font-bold tracking-tight text-zinc-950">How it works</h2>
+            <h2 className={`text-center ${H2}`}>How it works</h2>
             <div className="mt-12 grid gap-6 md:grid-cols-3">
               {[
                 {
@@ -201,21 +238,162 @@ export default function DistributorsPage() {
                 {
                   step: "02",
                   title: "Get your link and code",
-                  desc: "Approved partners receive a unique referral link and discount code.",
+                  desc: "Approved partners receive a unique referral link and a discount code that includes your 5% customer discount allowance.",
                 },
                 {
                   step: "03",
                   title: "Promote and earn",
-                  desc: "Send users to QuoteCore through whatever strategy makes sense for you. When eligible referred users become paying customers, earn your agreed share.",
+                  desc: "Send users to QuoteCore through whatever strategy makes sense for you. Subscriptions pay you monthly for 12 months. Done For You setups pay once. You choose the mix.",
                 },
               ].map((s) => (
                 <div key={s.step} className="rounded-2xl border border-zinc-200 bg-white p-8">
                   <span className="text-sm font-bold text-[#FF6B35]">{s.step}</span>
                   <h3 className="mt-3 text-xl font-semibold text-zinc-950">{s.title}</h3>
-                  <p className="mt-2 leading-7 text-zinc-600">{s.desc}</p>
+                  <p className={`mt-2 ${CARD_BODY}`}>{s.desc}</p>
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Commission structure */}
+        <section id="commission" className="mt-20 scroll-mt-24 bg-zinc-50 py-16 md:mt-28 md:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-3xl text-center">
+              <h2 className={H2}>One flat rate. 30% of what they pay.</h2>
+              <p className="mt-4 text-[17px] leading-[1.75] text-zinc-600">
+                No tiers, no unlocking, no fine print. Whether a referred customer subscribes or buys a Done For You setup, your share is
+                the same flat 30%.
+              </p>
+            </div>
+            <div className="mt-12 grid gap-6 md:grid-cols-2">
+              <div className="rounded-2xl border border-zinc-200 bg-white p-8">
+                <span className="text-sm font-bold text-[#FF6B35]">Subscriptions</span>
+                <h3 className="mt-3 text-xl font-semibold text-zinc-950">30% of the subscription, every month, for 12 months.</h3>
+                <p className={`mt-2 ${CARD_BODY}`}>
+                  From the referred customer&apos;s first payment, you earn 30% of the subscription fees we actually collect for a full
+                  12 months.
+                </p>
+                <ul className="mt-4 space-y-2">
+                  {[
+                    ["US$29/month customer", "US$8.70/month to you"],
+                    ["US$59/month customer", "US$17.70/month to you"],
+                    ["US$259/month customer", "US$77.70/month to you"],
+                  ].map(([a, b]) => (
+                    <li key={a} className="flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px]">
+                      <span className="text-zinc-600">{a}</span>
+                      <span className="font-semibold text-zinc-950">{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-white p-8">
+                <span className="text-sm font-bold text-[#FF6B35]">Done For You setups</span>
+                <h3 className="mt-3 text-xl font-semibold text-zinc-950">30% of the setup fee, paid once.</h3>
+                <p className={`mt-2 ${CARD_BODY}`}>
+                  Done For You Setup is our configuration service, scoped from US$499 per customer. It pays the same flat 30% when the
+                  fee is collected, and stacks with subscription commission if the customer also subscribes.
+                </p>
+                <ul className="mt-4 space-y-2">
+                  {[
+                    ["US$499 setup", "US$149.70 to you, one-off"],
+                    ["Customer later subscribes", "30% of that too, for 12 months"],
+                  ].map(([a, b]) => (
+                    <li key={a} className="flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px]">
+                      <span className="text-zinc-600">{a}</span>
+                      <span className="font-semibold text-zinc-950">{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Discount control */}
+            <div className="mt-12 rounded-2xl border border-zinc-200 bg-white p-8 md:p-10">
+              <div className="mx-auto max-w-3xl text-center">
+                <h3 className="text-balance text-2xl font-[650] tracking-[-0.02em] text-zinc-950">
+                  Your code carries a 5% customer discount. You control it.
+                </h3>
+                <p className="mt-3 text-[15px] leading-[1.7] text-zinc-600">
+                  Give the customer 5% off and keep the full 30% yourself: the discount is included, not taken from your share. Need a
+                  deeper discount to close a deal? The extra comes off your commission, not our price. You never have to use the discount
+                  at all.
+                </p>
+              </div>
+              <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {discountTradeoff.map((t) => (
+                  <div key={t.discount} className="rounded-xl border border-zinc-200 bg-white p-4 text-center">
+                    <p className="text-[12px] leading-[1.65] text-zinc-500">{t.discount}</p>
+                    <p className="mt-1 text-lg font-semibold text-zinc-950">{t.commission}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-center text-[12px] leading-[1.65] text-zinc-500">
+                Illustrative on the standard 30% rate. Custom partnership deals can agree different mechanics.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 text-center">
+                <MarketingButton href="https://t3labs.tech/qcp-careers" variant="ghost" icon={<ArrowIcon />}>
+                  Read the full commission guide
+                </MarketingButton>
+                <p className="text-[12px] leading-[1.65] text-zinc-500">
+                  Optional, opens on the T3 Labs site: worked examples, who to target, when to lead with Done For You.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Earnings example */}
+        <section className="mt-20 md:mt-28">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className={H2}>What 30% could look like</h2>
+              <p className={`mt-4 ${CARD_BODY}`}>Illustrative examples using the standard 30% revenue share on subscriptions.</p>
+            </div>
+            <div className="mt-10 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 bg-zinc-50">
+                    <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">Referred paying customers</th>
+                    <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">Monthly at US$29/mo customers</th>
+                    <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">Monthly at US$59/mo customers</th>
+                    <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">12-month total at US$59/mo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { c: 10, m29: 87, m59: 177, y59: 2124 },
+                    { c: 25, m29: 218, m59: 443, y59: 5310 },
+                    { c: 50, m29: 435, m59: 885, y59: 10620 },
+                    { c: 100, m29: 870, m59: 1770, y59: 21240 },
+                  ].map((r) => (
+                    <tr key={r.c} className="border-b border-zinc-100 last:border-0">
+                      <td className="px-6 py-4 font-medium text-zinc-900">{r.c}</td>
+                      <td className="px-6 py-4 text-zinc-700">${r.m29.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-zinc-700">${r.m59.toLocaleString()}</td>
+                      <td className="px-6 py-4 font-semibold text-zinc-950">${r.y59.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
+              Done For You setups add a one-off 30% on top: a US$499 setup is US$149.70, paid when it is collected.
+            </p>
+            <p className="mt-2 text-center text-xs leading-5 text-zinc-500">
+              Examples use illustrative US$29 and US$59 monthly customer spends. US$29 equals the current starting configuration; current
+              global configurations can range up to US$259/month, so actual customer spend and commissions will vary.
+            </p>
+            <p className="mt-2 text-center text-xs leading-5 text-zinc-500">
+              Illustrative example only. Actual earnings depend on customer plan, spend, retention, refunds, eligibility and agreed
+              partner terms. Earnings are not guaranteed.
+            </p>
+            <p className="mt-6 text-center">
+              <a href="#apply" className="inline-flex items-center gap-2 text-sm font-semibold text-[#BD4A1A] hover:underline">
+                Think you could refer 50+ paying customers? Apply and tell us how.
+                <ArrowIcon />
+              </a>
+            </p>
           </div>
         </section>
 
@@ -223,20 +401,17 @@ export default function DistributorsPage() {
         <section className="mt-20 bg-zinc-50 py-16 md:mt-28 md:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-3xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">
-                You do not have to start with a sales pitch
-              </h2>
-              <p className="mt-4 text-lg leading-8 text-zinc-600">
-                Instead of asking someone to immediately pay for software, share something useful first - a free quote
-                generator, a margin calculator, a roof measurement tool. Someone might discover QuoteCore through a free
-                tool today, create a free account later, and upgrade weeks afterwards. It is the lowest-friction way to
-                start - but only one of many.
+              <h2 className={H2}>You do not have to start with a sales pitch</h2>
+              <p className="mt-4 text-[17px] leading-[1.75] text-zinc-600">
+                Instead of asking someone to immediately pay for software, share something useful first: the interactive demo, a free
+                quote generator, a margin calculator, a roof measurement tool. Someone might discover QuoteCore through a free tool
+                today, create a free account later, and upgrade weeks afterwards. It is the lowest-friction way to start, but only one of
+                many.
               </p>
-              <p className="mt-4 rounded-2xl border border-zinc-200 bg-white p-6 text-left leading-7 text-zinc-700">
-                <strong className="text-zinc-950">Your code matters.</strong> Your personal discount code gives referred
-                customers a discount on their first month (the exact customer offer is confirmed when you are approved)
-                and attributes their purchase to you. Some people may discover QuoteCore through your content and only
-                upgrade weeks later - make sure your audience knows your code so they use it when they purchase.
+              <p className="mt-4 rounded-2xl border border-zinc-200 bg-white p-6 text-left text-[15px] leading-[1.7] text-zinc-700">
+                <strong className="text-zinc-950">Your code matters.</strong> Your personal discount code gives referred customers 5% off
+                and attributes their purchase to you. Some people may discover QuoteCore through your content and only upgrade weeks
+                later. Make sure your audience knows your code so they use it when they purchase.
               </p>
             </div>
           </div>
@@ -246,14 +421,12 @@ export default function DistributorsPage() {
         <section className="mt-20 md:mt-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">
-                Promote the part of QuoteCore that fits your audience
-              </h2>
-              <p className="mt-4 leading-7 text-zinc-600">
-                A roofing audience may respond to a free roof tool. A small-business audience may care about quotes and
-                invoices. Another partner may prefer to promote the full QuoteCore+ app or paid plans directly, through
-                reviews, tutorials, client recommendations, newsletters, social, blogs or outreach. Free tools are the
-                lowest-friction entry point - not a requirement.
+              <h2 className={H2}>Promote the part of QuoteCore that fits your audience</h2>
+              <p className={`mt-4 ${CARD_BODY}`}>
+                A roofing audience may respond to the demo or a free roof tool. A small-business audience may care about quotes and
+                invoices. Another partner may prefer to promote the full QuoteCore+ app or Done For You setups directly, through reviews,
+                tutorials, client recommendations, newsletters, social, blogs or outreach. Free tools are the lowest-friction entry
+                point, not a requirement.
               </p>
             </div>
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -269,7 +442,7 @@ export default function DistributorsPage() {
                       <ArrowIcon />
                     </span>
                   </h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">{t.desc}</p>
+                  <p className={`mt-2 ${CARD_BODY}`}>{t.desc}</p>
                 </Link>
               ))}
             </div>
@@ -280,10 +453,10 @@ export default function DistributorsPage() {
         <section className="mt-20 bg-zinc-50 py-16 md:mt-28 md:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">Ways you can promote QuoteCore</h2>
-              <p className="mt-4 leading-7 text-zinc-600">
-                These are examples, not restrictions. We are open to partners finding their own effective and compliant
-                ways to promote QuoteCore. <strong className="text-zinc-900">You choose how you promote.</strong>
+              <h2 className={H2}>Ways you can promote QuoteCore</h2>
+              <p className={`mt-4 ${CARD_BODY}`}>
+                These are examples, not restrictions. We are open to partners finding their own effective and compliant ways to promote
+                QuoteCore. <strong className="text-zinc-900">You choose how you promote.</strong>
               </p>
             </div>
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -293,7 +466,7 @@ export default function DistributorsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d={w.icon} />
                   </svg>
                   <h3 className="mt-3 font-semibold text-zinc-950">{w.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">{w.desc}</p>
+                  <p className={`mt-2 ${CARD_BODY}`}>{w.desc}</p>
                 </div>
               ))}
             </div>
@@ -304,17 +477,17 @@ export default function DistributorsPage() {
         <section className="mt-20 md:mt-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">Who can apply</h2>
-              <p className="mt-4 leading-7 text-zinc-600">
-                You do not need a massive following. A small, relevant audience or a strong distribution strategy can be
-                more valuable than a large unrelated audience.
+              <h2 className={H2}>Who can apply</h2>
+              <p className={`mt-4 ${CARD_BODY}`}>
+                You do not need a massive following. A small, relevant audience or a strong distribution strategy can be more valuable
+                than a large unrelated audience.
               </p>
             </div>
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {whoProfiles.map((p) => (
                 <div key={p.title} className="rounded-xl border border-zinc-200 bg-white p-6">
                   <h3 className="font-semibold text-zinc-950">{p.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">{p.desc}</p>
+                  <p className={`mt-2 ${CARD_BODY}`}>{p.desc}</p>
                 </div>
               ))}
             </div>
@@ -325,8 +498,8 @@ export default function DistributorsPage() {
         <section className="mt-20 md:mt-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">What you get when approved</h2>
-              <p className="mt-4 leading-7 text-zinc-600">
+              <h2 className={H2}>What you get when approved</h2>
+              <p className={`mt-4 ${CARD_BODY}`}>
                 You will not be left to figure everything out yourself. Every approved partner receives:
               </p>
             </div>
@@ -334,12 +507,13 @@ export default function DistributorsPage() {
               {[
                 "Your unique referral link",
                 "Your personal discount code",
-                "Links to relevant tools and products",
+                "Your 5% customer discount allowance",
+                "Links to the demo, tools and products",
                 "Screenshots and brand assets",
                 "Tutorials and content to share",
                 "Promotion ideas to get you started",
               ].map((item) => (
-                <li key={item} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-5 py-4 text-sm font-medium text-zinc-800">
+                <li key={item} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-5 py-4 text-sm font-[550] text-zinc-800">
                   <span className="text-[#FF6B35]">
                     <CheckIcon />
                   </span>
@@ -350,66 +524,14 @@ export default function DistributorsPage() {
           </div>
         </section>
 
-        {/* Earnings example */}
-        <section className="mt-20 bg-zinc-50 py-16 md:mt-28 md:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">What 30% could look like</h2>
-              <p className="mt-4 leading-7 text-zinc-600">
-                Illustrative examples using the standard 30% revenue share.
-              </p>
-            </div>
-            <div className="mt-10 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50">
-                    <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">Referred paying customers</th>
-                    <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">Your monthly commission (30%)</th>
-                    <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">12-month total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { c: 10, m: 87, y: 1044 },
-                    { c: 25, m: 218, y: 2601 },
-                    { c: 50, m: 435, y: 5220 },
-                    { c: 100, m: 870, y: 10440 },
-                  ].map((r) => (
-                    <tr key={r.c} className="border-b border-zinc-100 last:border-0">
-                      <td className="px-6 py-4 font-medium text-zinc-900">{r.c}</td>
-                      <td className="px-6 py-4 font-semibold text-zinc-950">${r.m.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-zinc-600">${r.y.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
-              Examples use an illustrative US$29 monthly customer spend, equal to the current starting configuration. Current global configurations can range up to US$259/month, so actual customer spend and commissions will vary.
-            </p>
-            <p className="mt-2 text-center text-xs leading-5 text-zinc-500">
-              Illustrative example only. Actual earnings depend on customer plan, spend, retention, refunds, eligibility
-              and agreed partner terms. Earnings are not guaranteed.
-            </p>
-            <p className="mt-6 text-center">
-              <a href="#apply" className="inline-flex items-center gap-2 text-sm font-semibold text-[#BD4A1A] hover:underline">
-                Think you could refer 50+ paying customers? Apply and tell us how.
-                <ArrowIcon />
-              </a>
-            </p>
-          </div>
-        </section>
-
         {/* Strategic partnerships */}
         <section className="mt-20 md:mt-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="rounded-2xl border border-zinc-200 bg-gradient-to-b from-white to-orange-50/30 p-8 text-center md:p-12">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">
-                Have a large audience or a serious distribution opportunity?
-              </h2>
-              <p className="mx-auto mt-4 max-w-2xl leading-7 text-zinc-600">
-                For established creators, publishers, industry networks and other high-potential partners, we can
-                discuss custom commercial terms and additional campaign support.
+              <h2 className={`text-balance ${H2}`}>Have a large audience or a serious distribution opportunity?</h2>
+              <p className={`mx-auto mt-4 max-w-2xl ${CARD_BODY}`}>
+                For established creators, publishers, industry networks and other high-potential partners, we can discuss custom
+                commercial terms and additional campaign support.
               </p>
               <a href="#apply" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#BD4A1A] hover:underline">
                 Tick &ldquo;I&rsquo;d like to discuss a custom partnership deal&rdquo; in the application
@@ -422,19 +544,23 @@ export default function DistributorsPage() {
         {/* FAQ */}
         <section className="mt-20 md:mt-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-center text-3xl font-bold tracking-tight text-zinc-950">Frequently asked questions</h2>
-            <div className="mt-10 divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white">
-              {faqs.map((f) => (
-                <details key={f.q} className="group p-6">
-                  <summary className="flex cursor-pointer items-center justify-between gap-4 font-semibold text-zinc-950 [&::-webkit-details-marker]:hidden">
-                    {f.q}
-                    <svg className="h-5 w-5 shrink-0 text-zinc-400 transition group-open:rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                  </summary>
-                  <p className="mt-3 leading-7 text-zinc-600">{f.a}</p>
-                </details>
-              ))}
+            <div className={pageV2.faqGrid}>
+              <div className={pageV2.faqIntro}>
+                <p className={pageV2.eyebrow}>FAQ</p>
+                <h2>Affiliate program FAQ</h2>
+                <p>Commission, discount codes, Done For You setups and how attribution works, answered plainly.</p>
+              </div>
+              <div className={pageV2.faqList}>
+                {faqs.map((f) => (
+                  <details key={f.question}>
+                    <summary>
+                      <span className={pageV2.faqQuestion}>{f.question}</span>
+                      <span className={pageV2.faqIcon} aria-hidden="true">+</span>
+                    </summary>
+                    <p>{f.answer}</p>
+                  </details>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -443,8 +569,8 @@ export default function DistributorsPage() {
         <section id="apply" className="mt-20 scroll-mt-24 bg-zinc-50 py-16 md:mt-28 md:py-20">
           <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">Apply to become a partner</h2>
-              <p className="mt-3 text-sm text-zinc-500">Takes about 30 seconds.</p>
+              <h2 className={H2}>Apply to become a partner</h2>
+              <p className="mt-3 text-[12px] leading-[1.65] text-zinc-500">Takes about 30 seconds.</p>
             </div>
             <div className="mt-10 rounded-2xl border border-zinc-200 bg-white p-6 sm:p-10">
               <DistributorApplicationForm />
@@ -455,8 +581,8 @@ export default function DistributorsPage() {
         {/* Terms note */}
         <section className="py-10">
           <p className="text-center text-xs leading-5 text-zinc-400">
-            This is an independent partner/referral opportunity, not employment. By applying you agree to be contacted by
-            email about your application. Commission, attribution and payout rules are covered in the{" "}
+            This is an independent partner/referral opportunity, not employment. By applying you agree to be contacted by email about
+            your application. Commission, attribution and payout rules are covered in the{" "}
             <Link href="/affiliate-program-terms" className="underline hover:text-zinc-600">
               Partner Program Terms
             </Link>

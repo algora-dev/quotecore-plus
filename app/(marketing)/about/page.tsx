@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Script from "next/script";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -133,7 +134,7 @@ export default function AboutPage() {
               Explore the interactive demo
             </a>
             <p className="mt-4 text-sm text-zinc-500">
-              <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a> · <a href="/contact" className="underline hover:text-zinc-900">Contact us</a>
+              <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link> · <Link href="/contact" className="underline hover:text-zinc-900">Contact us</Link> · <Link href="/affiliate-program" className="underline hover:text-zinc-900">Partner program</Link>
             </p>
           </div>
         </section>

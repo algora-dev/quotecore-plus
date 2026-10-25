@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import mb from "@/components/marketing/MarketingButton.module.css";
 
 const PROMOTION_METHODS = [
   "YouTube",
@@ -87,11 +88,19 @@ export default function DistributorApplicationForm() {
           Thanks. We will review your application and contact you by email if we think there is a good fit.
         </p>
         <p className="mt-4 text-sm text-zinc-500">
-          In the meantime, explore the{" "}
+          In the meantime, walk through the{" "}
+          <Link href="/demo" className="font-semibold text-[#BD4A1A] hover:underline">
+            interactive demo
+          </Link>
+          , explore the{" "}
           <Link href="/free-calculators" className="font-semibold text-[#BD4A1A] hover:underline">
             free tools
           </Link>{" "}
-          and think about which ones best fit your audience.
+          or see how{" "}
+          <Link href="/done-for-you-setup" className="font-semibold text-[#BD4A1A] hover:underline">
+            Done For You Setup
+          </Link>{" "}
+          works, so you know exactly what you will be promoting.
         </p>
       </div>
     );
@@ -230,7 +239,7 @@ export default function DistributorApplicationForm() {
       <button
         type="submit"
         disabled={status === "submitting" || methods.length === 0}
-        className="w-full rounded-full bg-black px-7 py-3.5 text-sm font-semibold text-white transition hover:shadow-[0_0_24px_rgba(255,107,53,0.35)] disabled:cursor-not-allowed disabled:opacity-50"
+        className={["w-full", mb.button, mb.primary, mb.large, "disabled:cursor-not-allowed disabled:opacity-50"].join(" ")}
       >
         {status === "submitting" ? "Submitting…" : "Apply to Partner with QuoteCore"}
       </button>

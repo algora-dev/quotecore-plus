@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     const notificationHtml = `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
         <h2 style="color:#111;margin-bottom:4px;">New partner/distributor application</h2>
-        <p style="color:#666;margin-top:0;font-size:14px;">Received via quote-core.com/distributors</p>
+        <p style="color:#666;margin-top:0;font-size:14px;">Received via quote-core.com/affiliate-program</p>
         <table style="width:100%;border-collapse:collapse;margin:20px 0;">
           <tr><td style="padding:8px 0;font-weight:700;width:160px;color:#333;">Name / channel / business</td><td style="padding:8px 0;color:#111;">${escapeHtml(name)}</td></tr>
           <tr><td style="padding:8px 0;font-weight:700;color:#333;">Email</td><td style="padding:8px 0;"><a href="mailto:${escapeHtml(email)}" style="color:#FF6B35;">${escapeHtml(email)}</a></td></tr>
