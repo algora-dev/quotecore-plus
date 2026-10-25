@@ -1,5 +1,11 @@
 ﻿# Smoke Test Checklist
 
+### AFFILIATE PROGRAM V2 (main c2e7441e, 2026-10-25, dpl_GHCfJYo6vN8HBzUpiBVVr4UUWFGv)
+
+- [ ] quote-core.com/affiliate-program: title "QuoteCore+ Affiliate Program | 30% Recurring Commission for 12 Months", hero "Partner with QuoteCore+. Earn 30% recurring.", T3 Labs commission-guide bridge link (all verified on deploy day)
+- [ ] /affiliate-program-terms: Done-For-You commissionable wording + 5% discount allowance present
+- [ ] Footer + About "Partner program" links resolve to /affiliate-program (footer verified on deploy day)
+
 ### BILLING-MATRIX SMOKE (HARD RULE - run on EVERY testing deploy; owner directive 2026-10-19)
 
 Probes all three company billing kinds (legacy / custom_metered / custom_admin_granted) through the real
