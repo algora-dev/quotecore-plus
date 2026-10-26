@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/app/lib/supabase/client";
+import { workflowCallHref } from "@/lib/booking";
 import buttonStyles from "@/components/marketing/MarketingButton.module.css";
 
 /**
@@ -402,6 +403,49 @@ export function FeatureRequestForm() {
             Check your email for how to claim your free $109 QuoteCore+ subscription. If what you told us helps
             us improve, there may be extra free months in it for you.
           </p>
+
+          <div className="mt-8 border-t border-white/10 pt-6">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">While you wait</p>
+            <p className="mt-1.5 text-sm font-semibold text-slate-200">
+              See what QuoteCore+ can do for the way you quote.
+            </p>
+            <div className="mt-4 space-y-3">
+              <a
+                href="/demo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={[buttonStyles.button, buttonStyles.primary, buttonStyles.large, "w-full"].join(" ")}
+              >
+                Try the interactive demo
+              </a>
+              <a
+                href={workflowCallHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full min-h-11 items-center justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 hover:border-white/25"
+              >
+                Book a free 20-minute call
+              </a>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              <a
+                href="/done-for-you-setup"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-slate-300 underline underline-offset-4 transition-colors hover:text-white"
+              >
+                Done-for-you setup
+              </a>
+              <a
+                href="/pricing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-slate-300 underline underline-offset-4 transition-colors hover:text-white"
+              >
+                See pricing and build your own setup
+              </a>
+            </div>
+          </div>
         </div>
       )}
       </div>
