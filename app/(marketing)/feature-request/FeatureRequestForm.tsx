@@ -250,7 +250,7 @@ export function FeatureRequestForm() {
                 type="text"
                 value={currentSoftware}
                 onChange={(e) => setCurrentSoftware(e.target.value)}
-                placeholder="e.g. software, spreadsheets, manually, something else"
+                placeholder="e.g. software, spreadsheets, manually, a combination, something else"
                 autoComplete="off"
                 className={inputClasses}
               />
@@ -258,7 +258,7 @@ export function FeatureRequestForm() {
 
             <div>
               <label htmlFor="wish" className="mb-1.5 block text-sm font-semibold text-slate-200">
-                What do you wish it did better?
+                What do you wish was better?
               </label>
               <textarea
                 id="wish"
