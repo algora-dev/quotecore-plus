@@ -10,17 +10,19 @@ export default function Post() {
         do, and how to think about it if you are running a roofing or construction business.
       </p>
       <p>
-        We use AI at QuoteCore+ - it powers our roof plan takeoff - so we are not anti-AI. But we
-        are also not going to pretend it is more than it is. AI in roofing is image recognition and
-        text processing. It is not running a estimating engine. It is not making structural
-        assessments. It is a tool that does specific things well and leaves the rest to you.
+        We use AI at QuoteCore+ - it powers our roof plan takeoff and our conversational{' '}
+        <a href="/features/smart-assistant">Smart Assistant</a> - so we are not anti-AI. But we
+        are also not going to pretend it is more than it is. AI in roofing is image recognition,
+        text processing and, increasingly, conversation. It is not running an estimating engine. It
+        is not making structural assessments. It is a tool that does specific things well and
+        leaves the rest to you.
       </p>
 
       <hr />
 
       <h2>What AI actually means in roofing</h2>
       <p>
-        When a roofing product says "AI-powered," it usually means one of three things:
+        When a roofing product says "AI-powered," it usually means one of four things:
       </p>
       <h3>Image recognition</h3>
       <p>
@@ -44,6 +46,14 @@ export default function Post() {
         newest category and the one where the hype is loudest. Some of it is genuinely useful. Some
         of it is a parlor trick. For quoting specifically, see{' '}
         <a href="/blog/ai-quoting-software">can AI write quotes for contractors</a>.
+      </p>
+      <h3>Conversational software control</h3>
+      <p>
+        The newest entry: an assistant you talk to instead of navigating screens. Describe the task
+        in normal language, by voice or text, and it works through the software with you - preparing
+        a quote draft, answering a question about your jobs, or proposing a pricing update for
+        review. QuoteCore+ Smart Assistant is this category. It is the least mature of the four and
+        the one advancing fastest.
       </p>
       <p>
         Notice what is not on that list: AI is not running calculations, applying building codes,
@@ -86,6 +96,11 @@ export default function Post() {
             <td>AI roof design generation (Artemis)</td>
             <td>Generates roof designs from satellite imagery in seconds</td>
             <td>Yes - generative AI</td>
+          </tr>
+          <tr>
+            <td>AI estimating assistant (QuoteCore+)</td>
+            <td>Voice or text quote drafting, job and quote queries, proposed pricing changes</td>
+            <td>Yes - conversational AI operating the workflow</td>
           </tr>
         </tbody>
       </table>
@@ -202,17 +217,28 @@ export default function Post() {
 
       <h2>How QuoteCore+ uses AI</h2>
       <p>
-        QuoteCore+ uses AI for one specific thing: tracing roof plans. You upload a plan image and{' '}
-        <a href="/features/ai-scan-assist">Roof Scan Assist</a> runs a two-stage scan using
-        industry-leading vision models to trace the outline, detect internal lines, and classify
-        them - all in an efficient pipeline that keeps costs low.
-        You verify everything on an interactive canvas. Then the system calculates measurements and
-        material quantities from the verified takeoff.
+        QuoteCore+ uses AI in two places, and the two do completely different jobs.
       </p>
       <p>
-        The AI does not set prices. It does not assess structural condition. It does not write terms
-        and conditions. It traces geometry, reads dimensions, and flags uncertainty. Everything else
-        is either rule-based calculation or human input.
+        <strong>Roof Scan Assist</strong> is the vision layer. You upload a plan image and it runs
+        a two-stage scan using industry-leading vision models to trace the outline, detect internal
+        lines, and classify them - all in an efficient pipeline that keeps costs low. You verify
+        everything on an interactive canvas. Then the system calculates measurements and material
+        quantities from the verified takeoff.
+      </p>
+      <p>
+        <strong>Smart Assistant</strong> is the conversational layer. It lets you run the app by
+        asking: describe a job by voice or text and it prepares or revises the quote draft, answers
+        questions about your quotes, jobs, orders and invoices, and proposes supported pricing
+        changes. It works with your configured components and pricing instead of a generic price
+        list, every result is left for you to review, and in the current V1 Beta the sending and
+        finalising steps stay manual. See <a href="/features/smart-assistant">Smart
+        Assistant</a> for the full picture of the conversational side.
+      </p>
+      <p>
+        Neither AI sets your prices. Neither assesses structural condition. Neither writes your
+        terms and conditions. One traces geometry and reads dimensions. The other removes navigation
+        and typing. Everything commercial stays with you.
       </p>
       <p>
         You can try this yourself:
@@ -290,6 +316,12 @@ export default function Post() {
         They work best on clear, to-scale drawings of standard roofs. Unusual geometry, curved
         sections or cluttered plans lower confidence. Roof Scan Assist flags uncertain lines rather
         than guessing, which shows you where to spend review time.
+      </p>
+      <h3>Can AI run my estimating software for me?</h3>
+      <p>
+        Conversational assistants are starting to. QuoteCore+ Smart Assistant (V1 Beta) drafts and
+        revises quotes by voice or text, answers questions about your jobs and quotes, and proposes
+        supported pricing changes for review. Sending and finalising stay manual today.
       </p>
     </div>
   );

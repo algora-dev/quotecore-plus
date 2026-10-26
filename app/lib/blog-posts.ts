@@ -596,6 +596,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       { question: 'Can AI measure a roof from a photo?', answer: 'A calibrated plan or drawing works best. An uncalibrated photo can be traced, but scale has to be set from a known dimension before the numbers mean anything. Roof Scan Assist scans calibrated plans in two stages.' },
       { question: 'Do I still need to check AI measurements?', answer: 'Yes, always. The AI proposes geometry, you verify it. You carry the liability for the quote, so the workflow is built around review: confirm the outline, check flagged lines, set pitch, then calculate.' },
       { question: 'What is the difference between AI plan takeoff and EagleView?', answer: 'An aerial report starts from a property address and returns a finished PDF you cannot adjust. AI plan takeoff starts from a plan you already have, shows editable results, and feeds measurements straight into your quote. See our EagleView alternative comparison for the full breakdown.' },
+      { question: 'Can AI write the quote after measuring the roof?', answer: 'It can draft it. QuoteCore+ Smart Assistant (V1 Beta) prepares and revises quote drafts by voice or text from your verified measurements and your own component pricing, with the result left for review. Pricing, scope and sending stay with you.' },
     ],
   },
   {
@@ -603,7 +604,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     category: 'ai',
     title: 'AI Roofing Tools: The Complete Guide to AI in Roofing (2026)',
     description:
-      'Honest guide to AI in roofing: the three layers of AI technology, what it does well, what it does poorly, what always needs a human, and how to evaluate AI roofing tools for your business.',
+      'Honest guide to AI in roofing: the four layers of AI technology, what it does well, what it does poorly, what always needs a human, and how to evaluate AI roofing tools for your business.',
     date: '2026-07-29',
     lastModified: '2026-10-26',
     faqs: [
@@ -612,6 +613,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       { question: 'Will AI replace roofers?', answer: 'Not the parts that matter. AI traces plans and reads dimensions. It cannot assess structure, access, substrate condition or site history, and it carries no liability for your quote. The value is using it for tedious work while judgment and site knowledge stay with you.' },
       { question: 'What is the cheapest way to try AI roofing tools?', answer: 'The free QuoteCore+ tools (takeoff builder, roofing calculator, quote generator) cost nothing and need no account. The full AI takeoff pipeline is part of the QuoteCore+ subscription rather than a per-scan fee.' },
       { question: 'Do AI roofing tools work on any roof plan?', answer: 'They work best on clear, to-scale drawings of standard roofs. Unusual geometry, curved sections or cluttered plans lower confidence. Roof Scan Assist flags uncertain lines rather than guessing, which shows you where to spend review time.' },
+      { question: 'Can AI run my estimating software for me?', answer: 'Conversational assistants are starting to. QuoteCore+ Smart Assistant (V1 Beta) drafts and revises quotes by voice or text, answers questions about your jobs and quotes, and proposes supported pricing changes for review. Sending and finalising stay manual today.' },
     ],
   },
   {
@@ -704,6 +706,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       { question: 'What should I look for in AI quoting software?', answer: 'Verifiable output (see the traced plan, not a black box), the full workflow from measurement to sent quote, the ability to override everything, and real product data instead of generic rules of thumb.' },
       { question: 'Is AI quoting software worth it for a small business?', answer: 'If you quote multiple jobs a week from plans, the time saved on tracing and calculating pays back quickly. If you quote occasionally from site measurements, the free tools may be enough until volume grows.' },
       { question: 'Who is responsible if an AI-generated quote is wrong?', answer: 'You are. Software terms exclude liability for output accuracy, so verification is not optional. A serious AI quoting tool shows its work on an interactive canvas before anything becomes a quote.' },
+      { question: 'Can AI draft a quote by voice?', answer: 'Yes. QuoteCore+ Smart Assistant (V1 Beta) prepares and revises quote drafts by voice or text using your configured components and pricing. The draft stays in the normal workflow for review, and sending or finalising remains a manual step today.' },
     ],
   },
   {

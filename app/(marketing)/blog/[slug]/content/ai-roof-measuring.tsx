@@ -76,6 +76,14 @@ export default function Post() {
         confirm the scale and pitch, and adjust anything that is wrong. The AI did the boring
         part. You did the quality check. That is the workflow.
       </p>
+      <p>
+        And once the measurements exist, the admin that follows them is the next tedious part.
+        That is where QuoteCore+ uses a second, very different AI:{' '}
+        <a href="/features/smart-assistant">Smart Assistant</a>, a conversational layer that
+        drafts and revises quotes by voice or text from your verified measurements and configured
+        pricing. One AI traces the plan. The other takes the typing out of the quote. Both leave
+        you in control of the numbers.
+      </p>
 
       <h2>What happens if you do not verify</h2>
       <p>
@@ -286,6 +294,12 @@ export default function Post() {
         feeds measurements straight into your quote. See our{' '}
         <a href="/eagleview-alternative">EagleView alternative comparison</a> for the full
         breakdown.
+      </p>
+      <h3>Can AI write the quote after measuring the roof?</h3>
+      <p>
+        It can draft it. QuoteCore+ Smart Assistant (V1 Beta) prepares and revises quote drafts by
+        voice or text from your verified measurements and your own component pricing, with the
+        result left for review. Pricing, scope and sending stay with you.
       </p>
     </div>
   );

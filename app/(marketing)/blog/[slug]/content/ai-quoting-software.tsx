@@ -53,6 +53,17 @@ export default function Post() {
         The AI handled the data entry. You handled the commercial decisions. That is the right
         division of labour.
       </p>
+      <h3>Draft the quote by describing the job</h3>
+      <p>
+        This is where AI quoting has moved fastest: conversational drafting. Instead of building
+        every line from a blank screen, you describe the job the way you would explain it to a
+        person, by voice or text, and an assistant prepares a structured quote draft inside your
+        quoting software - using your own components and pricing, not a generic price list. In
+        QuoteCore+, <a href="/features/smart-assistant">Smart Assistant</a> (V1 Beta) does
+        exactly this: describe the work, it prepares or revises the draft, and you review the
+        result before anything goes further. Sending and finalising stay manual for now, which is
+        the honest boundary of what an assistant should be trusted with today.
+      </p>
 
       <h2>What AI cannot do in the quoting workflow</h2>
       <h3>Set the right price</h3>
@@ -99,6 +110,12 @@ export default function Post() {
         traced outline, the detected lines, the calculated areas, and the material quantities before
         anything goes into a quote. If the tool produces a black-box quote with no way to verify the
         underlying measurements, you are taking on risk you cannot see.
+      </p>
+      <p>
+        This is also why reviewability is a design decision, not an afterthought. Smart Assistant
+        leaves every draft, answer and proposed change open to review, edit or discard, and keeps
+        the sending step manual until the assistant has earned more autonomy. That is what
+        trusting an AI tool with commercial work should look like.
       </p>
 
       <h2>How the quoting workflow changes with AI</h2>
@@ -264,6 +281,12 @@ export default function Post() {
         You are. Software terms exclude liability for output accuracy, so verification is not
         optional. A serious AI quoting tool shows its work on an interactive canvas before
         anything becomes a quote.
+      </p>
+      <h3>Can AI draft a quote by voice?</h3>
+      <p>
+        Yes. QuoteCore+ Smart Assistant (V1 Beta) prepares and revises quote drafts by voice or
+        text using your configured components and pricing. The draft stays in the normal workflow
+        for review, and sending or finalising remains a manual step today.
       </p>
     </div>
   );
