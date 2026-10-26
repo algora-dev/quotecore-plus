@@ -4,7 +4,7 @@ import { FeatureRequestForm } from "./FeatureRequestForm";
 // Ad landing page for the Facebook campaign (2026-10-23). Temporary by design:
 // noindex keeps it out of organic search and the sitemap; paid traffic only.
 export const metadata: Metadata = {
-  title: "Tell us what you use and what you need | QuoteCore+",
+  title: "Tell us how you estimate/quote currently | QuoteCore+",
   description:
     "Answer two quick questions and receive a free $109 QuoteCore+ subscription.",
   robots: { index: false, follow: false },

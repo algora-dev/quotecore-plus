@@ -234,7 +234,7 @@ export function FeatureRequestForm() {
       {step === "form" && (
         <>
           <h1 className="mt-5 text-[28px] leading-tight text-white sm:text-3xl font-bold tracking-tight">
-            Tell us what you use and what you need
+            Tell us how you estimate/quote currently
           </h1>
           <p className="mt-2 text-[15px] leading-snug font-semibold text-[#FFB36B]">
             Answer the questions below to receive a free $109 QuoteCore+ subscription.
@@ -243,14 +243,14 @@ export function FeatureRequestForm() {
           <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
             <div>
               <label htmlFor="current-software" className="mb-1.5 block text-sm font-semibold text-slate-200">
-                What roofing software are you using?
+                How are you currently estimating/quoting?
               </label>
               <input
                 id="current-software"
                 type="text"
                 value={currentSoftware}
                 onChange={(e) => setCurrentSoftware(e.target.value)}
-                placeholder="e.g. AccuLynx, Roofr, JobNimbus, spreadsheets"
+                placeholder="e.g. software, spreadsheets, manually, something else"
                 autoComplete="off"
                 className={inputClasses}
               />
