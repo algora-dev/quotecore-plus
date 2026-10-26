@@ -45,16 +45,19 @@ export default function Post() {
         that looks wrong before generating measurements.
       </p>
       <p>
-        This is what QuoteCore+ does. The AI does the tracing. You do the verifying. The difference
-        from an aerial report is that you stay in control of the output and can fix errors on the
-        spot instead of hoping the report is right.
+        This is what QuoteCore+ does with{' '}
+        <a href="/features/ai-scan-assist">Roof Scan Assist</a>. The AI does the tracing. You do
+        the verifying. The difference from an aerial report is that you stay in control of the
+        output and can fix errors on the spot instead of hoping the report is right.
       </p>
       <h3>3. AI damage detection</h3>
       <p>
         Drone or smartphone photos analysed by AI to find cracked shingles, missing flashing,
         ponding water. This is genuinely useful for insurance work and storm damage, but it is a
         different workflow - it does not produce material takeoffs. If you are quoting a re-roof,
-        you do not need AI damage detection. You need measurements.
+        you do not need AI damage detection. You need measurements. We break down all of these
+        categories, plus what is genuinely available in 2026, in our{' '}
+        <a href="/blog/ai-roofing-tools-guide">complete guide to AI roofing tools</a>.
       </p>
 
       <h2>How AI plan takeoff works in practice</h2>
@@ -63,7 +66,7 @@ export default function Post() {
       </p>
       <p>
         You upload a roof plan image. Could be a PDF you exported, a photo of a drawing, or a
-        screenshot from planning software. The AI runs multiple specialised scans using
+        screenshot from planning software. Roof Scan Assist runs a two-stage scan using
         industry-leading vision models to trace the roof geometry, detect internal lines,
         and classify them. The whole pipeline is designed to be fast and cost-efficient,
         so you get results in seconds without high per-scan costs being passed on to you.
@@ -192,7 +195,8 @@ export default function Post() {
       <p>
         If you already have a plan, AI takeoff is faster, cheaper, and gives you control over the
         output. If you do not have a plan and cannot get one easily, an aerial report is the right
-        tool for that situation.
+        tool for that situation. See <a href="/roofing-takeoff-software">roofing takeoff
+        software</a> for how the scan fits into the full measure-to-quote workflow.
       </p>
 
       <h2>Try it yourself</h2>
@@ -224,7 +228,7 @@ export default function Post() {
         </li>
       </ul>
       <p>
-        The takeoff builder, material calculator, and quote generator are all free. When you want
+        All of the tools above are free. When you want
         the full AI pipeline with unlimited scans, the full component library, and the ability to
         generate quotes directly from takeoffs,{' '}
         <a href="/free-trial">get started with QuoteCore+</a>. You get every feature,
@@ -243,7 +247,45 @@ export default function Post() {
       </p>
       <p>
         If you are still tracing plans by hand, that is the part AI can help with today.{' '}
-        <a href="/free-trial">Get started</a> and see whether it fits your workflow.
+        <a href="/free-trial">Get started</a> and see whether it fits your workflow. And if you
+        are wondering whether AI can go further and write the whole quote, we answer that
+        separately in <a href="/blog/ai-quoting-software">can AI write quotes for
+        contractors</a>.
+      </p>
+
+      <h2>FAQ</h2>
+      <h3>Is AI roof measuring accurate?</h3>
+      <p>
+        For outline tracing on clear plans of standard roofs, yes, and it saves the most time.
+        Accuracy depends on plan quality and scale, and pitch cannot be inferred from a 2D plan,
+        so you enter it. Every scan is reviewed on an interactive canvas before measurements are
+        calculated.
+      </p>
+      <h3>How much does AI roof measuring cost?</h3>
+      <p>
+        Aerial measurement reports typically cost $7-15 per report. AI plan takeoff with Roof
+        Scan Assist is included in the QuoteCore+ subscription with no per-scan fees, and free
+        tools let you evaluate the workflow before subscribing.
+      </p>
+      <h3>Can AI measure a roof from a photo?</h3>
+      <p>
+        A calibrated plan or drawing works best. An uncalibrated photo can be traced, but scale
+        has to be set from a known dimension before the numbers mean anything. Roof Scan Assist
+        scans calibrated plans in two stages.
+      </p>
+      <h3>Do I still need to check AI measurements?</h3>
+      <p>
+        Yes, always. The AI proposes geometry, you verify it. You carry the liability for the
+        quote, so the workflow is built around review: confirm the outline, check flagged lines,
+        set pitch, then calculate.
+      </p>
+      <h3>What is the difference between AI plan takeoff and EagleView?</h3>
+      <p>
+        An aerial report starts from a property address and returns a finished PDF you cannot
+        adjust. AI plan takeoff starts from a plan you already have, shows editable results, and
+        feeds measurements straight into your quote. See our{' '}
+        <a href="/eagleview-alternative">EagleView alternative comparison</a> for the full
+        breakdown.
       </p>
     </div>
   );

@@ -425,6 +425,11 @@ const pageData: CompetitorPageData = {
         "description": "Use dimensions you already have."
       },
       {
+        "label": "AI roof measuring guide",
+        "href": "/blog/ai-roof-measuring",
+        "description": "How AI measurement actually works."
+      },
+      {
         "label": "Browse free tools",
         "href": "/free-tools",
         "description": "Choose a standalone tool for the task."

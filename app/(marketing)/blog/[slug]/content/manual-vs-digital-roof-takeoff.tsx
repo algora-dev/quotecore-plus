@@ -104,7 +104,7 @@ export default function Post() {
           allowFullScreen
         />
       </div>
-      <p>You can also try the <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> for a one-off job, or read <a href="/blog/how-to-do-a-roof-takeoff">how to do a roof takeoff</a> for the complete process guide.</p>
+      <p>You can also try the <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> for a one-off job, or read <a href="/blog/how-to-do-a-roof-takeoff">how to do a roof takeoff</a> for the complete process guide. For the AI side, see our <a href="/blog/ai-roof-measuring">AI roof measuring guide</a>.</p>
       <p>See how fast a full roofing quote can be once measurements flow directly into pricing:</p>
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe

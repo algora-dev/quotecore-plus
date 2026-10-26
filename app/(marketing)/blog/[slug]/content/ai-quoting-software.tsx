@@ -10,7 +10,9 @@ export default function Post() {
       </p>
       <p>
         This guide covers exactly where AI helps in the quoting process, where it does not, and how
-        to think about it if you are considering AI quoting software for your business.
+        to think about it if you are considering AI quoting software for your business. For the
+        narrower question of whether ChatGPT can draft a quote, see{' '}
+        <a href="/blog/can-chatgpt-create-a-quote">can ChatGPT create a quote</a>.
       </p>
 
       <hr />
@@ -20,14 +22,17 @@ export default function Post() {
       <p>
         This is where AI adds the most value. You upload a roof plan and the AI traces the outline,
         detects internal lines (ridges, hips, valleys), and reads dimension annotations. In
-        QuoteCore+, this happens through a multi-stage AI pipeline that uses industry-leading
-        vision models to trace geometry and extract measurements. You verify everything on an
+        QuoteCore+, this happens through{' '}
+        <a href="/features/ai-scan-assist">Roof Scan Assist</a>, a two-stage scan that uses
+        industry-leading vision models to trace geometry and extract measurements. You verify everything on an
         interactive canvas, and then the system calculates measurements from the verified data.
       </p>
       <p>
         Without AI, this is the most time-consuming part of quoting. You are either tracing a plan
         by hand, visiting the site to measure manually, or paying for an aerial report. AI plan
-        takeoff does the initial tracing in seconds. You verify. You move on.
+        takeoff does the initial tracing in seconds. You verify. You move on. We cover the
+        measuring side in detail in our{' '}
+        <a href="/blog/ai-roof-measuring">AI roof measuring guide</a>.
       </p>
       <h3>Calculate material quantities from measurements</h3>
       <p>
@@ -157,7 +162,8 @@ export default function Post() {
         <li>
           <strong>Does it handle the full workflow?</strong> Measurement to material calculation to
           quote document. If you need three different tools to do one quote, the time savings
-          disappear.
+          disappear. The <a href="/roofing-quoting-software">connected quoting workflow</a> exists
+          precisely to avoid that.
         </li>
         <li>
           <strong>Can you override everything?</strong> The AI suggests. You decide. If the tool
@@ -171,8 +177,8 @@ export default function Post() {
         </li>
         <li>
           <strong>What does it cost?</strong> Per-quote pricing adds up. Subscription pricing with
-          unlimited use is more predictable. An interactive demo and free tools let you evaluate the workflow before subscribing
-          before committing.
+          unlimited use is more predictable. An interactive demo and free tools let you evaluate
+          the workflow before subscribing.
         </li>
       </ol>
 
@@ -205,7 +211,7 @@ export default function Post() {
         </li>
       </ul>
       <p>
-        Those three tools are free, no account needed. When you want the full workflow - AI takeoff
+        All of the tools above are free, no account needed. When you want the full workflow - AI takeoff
         with unlimited scans, the component library with real product coverage rates, and integrated
         quote building from takeoff data -{' '}
         <a href="/free-trial">get started with QuoteCore+</a>. Every feature is
@@ -225,6 +231,39 @@ export default function Post() {
         If you are still writing quotes from scratch in Word or Excel, AI-assisted quoting will
         change how fast you get quotes out. <a href="/free-trial">Get started</a> and
         see the difference on your next quote.
+      </p>
+
+      <h2>FAQ</h2>
+      <h3>Can AI write a complete quote for a roofing job?</h3>
+      <p>
+        It can draft the data-heavy parts: measurements from a plan, material quantities and
+        pre-filled line items. Pricing, scope, terms and commercial judgment stay with you. Any
+        tool that claims otherwise is overselling.
+      </p>
+      <h3>Can ChatGPT write a construction quote?</h3>
+      <p>
+        It can produce a generic template with placeholder quantities. It cannot read your plan,
+        verify measurements, use real product coverage rates or connect to your job workflow. See
+        our full breakdown in{' '}
+        <a href="/blog/can-chatgpt-create-a-quote">can ChatGPT create a quote</a>.
+      </p>
+      <h3>What should I look for in AI quoting software?</h3>
+      <p>
+        Verifiable output (see the traced plan, not a black box), the full workflow from
+        measurement to sent quote, the ability to override everything, and real product data
+        instead of generic rules of thumb.
+      </p>
+      <h3>Is AI quoting software worth it for a small business?</h3>
+      <p>
+        If you quote multiple jobs a week from plans, the time saved on tracing and calculating
+        pays back quickly. If you quote occasionally from site measurements, the free tools may be
+        enough until volume grows.
+      </p>
+      <h3>Who is responsible if an AI-generated quote is wrong?</h3>
+      <p>
+        You are. Software terms exclude liability for output accuracy, so verification is not
+        optional. A serious AI quoting tool shows its work on an interactive canvas before
+        anything becomes a quote.
       </p>
     </div>
   );

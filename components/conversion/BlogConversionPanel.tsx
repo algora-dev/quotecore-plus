@@ -94,6 +94,27 @@ const TARGETED_PATHS: Record<string, BlogPath> = {
     relatedHref: "/construction-quoting-software",
     relatedLabel: "See contractor quoting software",
   },
+  "ai-roof-measuring": {
+    eyebrow: "Try the scan yourself",
+    title: "Watch an AI takeoff happen on a real plan.",
+    body: "The interactive demo shows the scan, review and calculate workflow end to end. Or book a short call to see how your own plans and pricing would fit.",
+    relatedHref: "/roofing-takeoff-software",
+    relatedLabel: "See roofing takeoff software",
+  },
+  "ai-roofing-tools-guide": {
+    eyebrow: "See what AI actually does here",
+    title: "Watch Roof Scan Assist trace a plan.",
+    body: "One scan, editable geometry, measurements you verify before they become a quote. Try the demo, or book a call to see it on the roofs you actually quote.",
+    relatedHref: "/features/ai-scan-assist",
+    relatedLabel: "See Roof Scan Assist",
+  },
+  "ai-quoting-software": {
+    eyebrow: "From takeoff to sent quote",
+    title: "Try the connected quoting workflow.",
+    body: "See measurements flow into material quantities, pricing and a customer-ready quote without re-entering the job, or book a call to compare it with your current process.",
+    relatedHref: "/roofing-quoting-software",
+    relatedLabel: "See the roofing workflow",
+  },
 };
 
 export default function BlogConversionPanel({ slug }: { slug: string }) {

@@ -27,7 +27,8 @@ export default function Post() {
         The AI looks at an image - a roof plan, a satellite photo, a drone shot - and identifies
         what is in it. This could be tracing a roof outline from a plan, detecting damage from drone
         photos, or reading dimension annotations. This is the most mature use of AI in roofing and
-        the one most likely to save you real time.
+        the one most likely to save you real time. The measuring use case gets its own deep dive
+        in our <a href="/blog/ai-roof-measuring">AI roof measuring guide</a>.
       </p>
       <h3>Text and data processing</h3>
       <p>
@@ -41,7 +42,8 @@ export default function Post() {
         The AI produces content based on a prompt - generating a roof design from satellite imagery,
         drafting a quote document from takeoff data, or suggesting material lists. This is the
         newest category and the one where the hype is loudest. Some of it is genuinely useful. Some
-        of it is a parlor trick.
+        of it is a parlor trick. For quoting specifically, see{' '}
+        <a href="/blog/ai-quoting-software">can AI write quotes for contractors</a>.
       </p>
       <p>
         Notice what is not on that list: AI is not running calculations, applying building codes,
@@ -97,7 +99,8 @@ export default function Post() {
       </p>
       <p>
         For a deeper look at how plan-based takeoff stacks up against aerial report services, see
-        our <a href="/eagleview-alternative">EagleView alternative comparison</a>.
+        our <a href="/eagleview-alternative">EagleView alternative comparison</a>. For phone-based
+        3D capture, see our <a href="/hover-alternative">HOVER alternative comparison</a>.
       </p>
 
       <h2>What AI does well in roofing</h2>
@@ -199,9 +202,10 @@ export default function Post() {
 
       <h2>How QuoteCore+ uses AI</h2>
       <p>
-        QuoteCore+ uses AI for one specific thing: tracing roof plans. You upload a plan image, the
-        AI runs multiple specialised scans using industry-leading vision models to trace the outline,
-        detect internal lines, and classify them - all in an efficient pipeline that keeps costs low.
+        QuoteCore+ uses AI for one specific thing: tracing roof plans. You upload a plan image and{' '}
+        <a href="/features/ai-scan-assist">Roof Scan Assist</a> runs a two-stage scan using
+        industry-leading vision models to trace the outline, detect internal lines, and classify
+        them - all in an efficient pipeline that keeps costs low.
         You verify everything on an interactive canvas. Then the system calculates measurements and
         material quantities from the verified takeoff.
       </p>
@@ -237,7 +241,7 @@ export default function Post() {
         </li>
       </ul>
       <p>
-        All three are free, no account needed. For the full AI takeoff pipeline with unlimited
+        All of the tools above are free, no account needed. For the full AI takeoff pipeline with unlimited
         scans, the complete component library, and integrated quote building,{' '}
         <a href="/free-trial">get started with QuoteCore+</a>. Every feature is included - the AI
         takeoff, the component library, the quote builder - all available on paid configurations, with an interactive demo and free tools available before subscribing.
@@ -253,6 +257,39 @@ export default function Post() {
         knowledge, or your judgment. The contractors who get the most value from AI are the ones who
         use it to handle the tedious work and spend their time on the things that actually require a
         human.
+      </p>
+
+      <h2>FAQ</h2>
+      <h3>What AI tools do roofers actually use?</h3>
+      <p>
+        The mature uses are AI plan takeoff (tracing roof geometry from drawings), damage detection
+        from drone photos, and reading text and dimensions from plans and datasheets. Aerial
+        measurement services are photogrammetry, not AI, despite the marketing.
+      </p>
+      <h3>Is EagleView an AI tool?</h3>
+      <p>
+        No. EagleView and similar services use photogrammetry, the mathematical processing of
+        aerial imagery. That is why they charge per report and deliver a finished PDF. AI vision
+        models are a different technology that interprets plan images you can check on screen.
+      </p>
+      <h3>Will AI replace roofers?</h3>
+      <p>
+        Not the parts that matter. AI traces plans and reads dimensions. It cannot assess
+        structure, access, substrate condition or site history, and it carries no liability for
+        your quote. The value is using it for tedious work while judgment and site knowledge stay
+        with you.
+      </p>
+      <h3>What is the cheapest way to try AI roofing tools?</h3>
+      <p>
+        The free QuoteCore+ tools (takeoff builder, roofing calculator, quote generator) cost
+        nothing and need no account. The full AI takeoff pipeline is part of the QuoteCore+
+        subscription rather than a per-scan fee.
+      </p>
+      <h3>Do AI roofing tools work on any roof plan?</h3>
+      <p>
+        They work best on clear, to-scale drawings of standard roofs. Unusual geometry, curved
+        sections or cluttered plans lower confidence. Roof Scan Assist flags uncertain lines rather
+        than guessing, which shows you where to spend review time.
       </p>
     </div>
   );

@@ -202,6 +202,7 @@ export default function RoofScanAssistPage() {
             { href: '/features/digital-roof-takeoff', title: 'Digital Roof Takeoff', body: 'See the manual measurement and editing workspace that Roof Scan Assist works inside.' },
             { href: '/features/smart-components', title: 'Smart Components', body: 'Use the measured quantities with your own materials, labour, waste and pricing logic.' },
             { href: '/roofing-takeoff-software', title: 'Roofing takeoff software', body: 'Compare the complete AI-assisted and manual roof takeoff workflow.' },
+            { href: '/blog/ai-roof-measuring', title: 'AI roof measuring guide', body: 'What AI roof measuring can and cannot do, and why verification still wins.' },
           ]} />
         </Container>
       </Section>

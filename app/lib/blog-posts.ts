@@ -589,8 +589,14 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'What AI roof measuring can actually do in 2026: how AI traces roof plans, detects lines, and classifies geometry. Where it excels, where it struggles, and what always needs human verification.',
     date: '2026-07-29',
-    lastModified: '2026-07-29',
-    draft: true,
+    lastModified: '2026-10-26',
+    faqs: [
+      { question: 'Is AI roof measuring accurate?', answer: 'For outline tracing on clear plans of standard roofs, yes, and it saves the most time. Accuracy depends on plan quality and scale, and pitch cannot be inferred from a 2D plan, so you enter it. Every scan is reviewed on an interactive canvas before measurements are calculated.' },
+      { question: 'How much does AI roof measuring cost?', answer: 'Aerial measurement reports typically cost $7-15 per report. AI plan takeoff with Roof Scan Assist is included in the QuoteCore+ subscription with no per-scan fees, and free tools let you evaluate the workflow before subscribing.' },
+      { question: 'Can AI measure a roof from a photo?', answer: 'A calibrated plan or drawing works best. An uncalibrated photo can be traced, but scale has to be set from a known dimension before the numbers mean anything. Roof Scan Assist scans calibrated plans in two stages.' },
+      { question: 'Do I still need to check AI measurements?', answer: 'Yes, always. The AI proposes geometry, you verify it. You carry the liability for the quote, so the workflow is built around review: confirm the outline, check flagged lines, set pitch, then calculate.' },
+      { question: 'What is the difference between AI plan takeoff and EagleView?', answer: 'An aerial report starts from a property address and returns a finished PDF you cannot adjust. AI plan takeoff starts from a plan you already have, shows editable results, and feeds measurements straight into your quote. See our EagleView alternative comparison for the full breakdown.' },
+    ],
   },
   {
     slug: 'ai-roofing-tools-guide',
@@ -599,8 +605,14 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Honest guide to AI in roofing: the three layers of AI technology, what it does well, what it does poorly, what always needs a human, and how to evaluate AI roofing tools for your business.',
     date: '2026-07-29',
-    lastModified: '2026-07-29',
-    draft: true,
+    lastModified: '2026-10-26',
+    faqs: [
+      { question: 'What AI tools do roofers actually use?', answer: 'The mature uses are AI plan takeoff (tracing roof geometry from drawings), damage detection from drone photos, and reading text and dimensions from plans and datasheets. Aerial measurement services are photogrammetry, not AI, despite the marketing.' },
+      { question: 'Is EagleView an AI tool?', answer: 'No. EagleView and similar services use photogrammetry, the mathematical processing of aerial imagery. That is why they charge per report and deliver a finished PDF. AI vision models are a different technology that interprets plan images you can check on screen.' },
+      { question: 'Will AI replace roofers?', answer: 'Not the parts that matter. AI traces plans and reads dimensions. It cannot assess structure, access, substrate condition or site history, and it carries no liability for your quote. The value is using it for tedious work while judgment and site knowledge stay with you.' },
+      { question: 'What is the cheapest way to try AI roofing tools?', answer: 'The free QuoteCore+ tools (takeoff builder, roofing calculator, quote generator) cost nothing and need no account. The full AI takeoff pipeline is part of the QuoteCore+ subscription rather than a per-scan fee.' },
+      { question: 'Do AI roofing tools work on any roof plan?', answer: 'They work best on clear, to-scale drawings of standard roofs. Unusual geometry, curved sections or cluttered plans lower confidence. Roof Scan Assist flags uncertain lines rather than guessing, which shows you where to spend review time.' },
+    ],
   },
   {
     slug: 'roofing-estimating-vs-quoting',
@@ -685,8 +697,14 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Can AI write quotes for contractors? What AI quoting software can do (draft line items, calculate materials, format documents) and what it cannot do (set prices, assess job difficulty, define scope).',
     date: '2026-07-29',
-    lastModified: '2026-07-29',
-    draft: true,
+    lastModified: '2026-10-26',
+    faqs: [
+      { question: 'Can AI write a complete quote for a roofing job?', answer: 'It can draft the data-heavy parts: measurements from a plan, material quantities and pre-filled line items. Pricing, scope, terms and commercial judgment stay with you. Any tool that claims otherwise is overselling.' },
+      { question: 'Can ChatGPT write a construction quote?', answer: 'It can produce a generic template with placeholder quantities. It cannot read your plan, verify measurements, use real product coverage rates or connect to your job workflow. See our full breakdown in can ChatGPT create a quote.' },
+      { question: 'What should I look for in AI quoting software?', answer: 'Verifiable output (see the traced plan, not a black box), the full workflow from measurement to sent quote, the ability to override everything, and real product data instead of generic rules of thumb.' },
+      { question: 'Is AI quoting software worth it for a small business?', answer: 'If you quote multiple jobs a week from plans, the time saved on tracing and calculating pays back quickly. If you quote occasionally from site measurements, the free tools may be enough until volume grows.' },
+      { question: 'Who is responsible if an AI-generated quote is wrong?', answer: 'You are. Software terms exclude liability for output accuracy, so verification is not optional. A serious AI quoting tool shows its work on an interactive canvas before anything becomes a quote.' },
+    ],
   },
   {
     slug: 'do-professional-quotes-win-more-jobs',
