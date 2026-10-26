@@ -411,10 +411,18 @@ export function FeatureRequestForm() {
             </p>
             <div className="mt-4 space-y-3">
               <a
-                href="/demo"
+                href="/done-for-you-setup"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={[buttonStyles.button, buttonStyles.primary, buttonStyles.large, "w-full"].join(" ")}
+              >
+                Done-for-you setup
+              </a>
+              <a
+                href="/demo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full min-h-11 items-center justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 hover:border-white/25"
               >
                 Try the interactive demo
               </a>
@@ -428,14 +436,6 @@ export function FeatureRequestForm() {
               </a>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-              <a
-                href="/done-for-you-setup"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-slate-300 underline underline-offset-4 transition-colors hover:text-white"
-              >
-                Done-for-you setup
-              </a>
               <a
                 href="/pricing"
                 target="_blank"
