@@ -3,6 +3,7 @@ import { PageScaffold } from '@/components/marketing/page-v2/PageV2';
 import { buildBreadcrumbSchema, siteUrl } from '@/lib/schema';
 import { workflowCallHref } from '@/lib/booking';
 import { EvidenceZoomRoot, ZoomCard } from './EvidenceZoom';
+import { VideoStage } from './VideoStage';
 import s from './fastest.module.css';
 
 const c = (...names: string[]) => names.map((name) => s[name]).join(' ');
@@ -117,6 +118,19 @@ const faqSchema = {
       },
     },
   ],
+};
+
+const videoSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'VideoObject',
+  name: 'QuoteCore+ multi-face roof plan to sent customer quote in 2:27',
+  description:
+    'Uncut, normal-speed recording: an unmeasured multi-face pitched residential roof plan measured, priced and sent as a customer quote in 2 minutes 27 seconds (Quote #1040).',
+  thumbnailUrl: ['https://i.ytimg.com/vi/uevX8puAlQ8/maxresdefault.jpg'],
+  embedUrl: 'https://www.youtube-nocookie.com/embed/uevX8puAlQ8',
+  contentUrl: 'https://www.youtube.com/watch?v=uevX8puAlQ8',
+  uploadDate: '2026-10-27',
+  duration: 'PT2M27S',
 };
 
 const components = [
@@ -397,7 +411,7 @@ export default function FastestRoofingEstimatingSoftwarePage() {
   return (
     <PageScaffold
       breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Fastest Roofing Estimating Software' }]}
-      schemas={[webPageSchema, faqSchema, breadcrumbSchema]}
+      schemas={[webPageSchema, faqSchema, videoSchema, breadcrumbSchema]}
     >
       <EvidenceZoomRoot>
         <div className={s.fx}>
@@ -534,27 +548,18 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                 <div className={s['section-copy']}>
                   <div className={s.eyebrow}>Uncut roof estimating benchmark</div>
                   <h2>Watch the complete roof-plan-to-quote workflow.</h2>
-                  <p>The final narrated recording will sit here. The timer starts on the unmeasured architectural plan and stops only when QuoteCore+ confirms the customer quote has been sent.</p>
+                  <p>Watch the complete narrated recording. The timer starts on the unmeasured architectural plan and stops only when QuoteCore+ confirms the customer quote has been sent.</p>
                 </div>
                 <div className={s['aside-copy']}>This is the proof section. Watch the run, then stop reading if it answers your question. Everything below exists for buyers who want to inspect the roof, pricing logic, comparison method or setup requirements.</div>
               </div>
               <div className={s['video-wrap']}>
                 <div className={s['video-card']}>
-                  <div className={s['video-stage']}>
-                    <div aria-label="Video poster showing the actual benchmark roof before and after measurement" className={s['video-proof-poster']}>
-                      <figure>
-                        <img alt="Blank roof plan at the start of the benchmark" src={IMG.blank} />
-                        <figcaption>Start · unmeasured plan</figcaption>
-                      </figure>
-                      <figure>
-                        <img alt="Measured roof plan during the benchmark" src={IMG.measured} />
-                        <figcaption>Measured · priced next</figcaption>
-                      </figure>
-                    </div>
-                    <div aria-hidden="true" className={s.play}>▶</div>
-                    <div className={s['video-evidence-tag']}>Actual roof · actual Quote #1040 · uncut recording</div>
-                    <div className={s['video-timer']}><span className={s['gradient-time']}>2:27</span></div>
-                  </div>
+                  <VideoStage
+                    videoId="uevX8puAlQ8"
+                    title="QuoteCore+ multi-face roof plan to sent customer quote in 2:27"
+                    blankSrc={IMG.blank}
+                    measuredSrc={IMG.measured}
+                  />
                   <div className={s['video-meta']}>
                     <div><b>Uncut</b>One continuous recording</div>
                     <div><b>Normal speed</b>No playback acceleration</div>
