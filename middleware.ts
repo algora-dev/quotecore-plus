@@ -101,6 +101,7 @@ const PUBLIC_PATHS = [
   '/roofing-quoting-software',
   '/roofing-estimating-software',
   '/roofing-takeoff-software',
+  '/fastest-roofing-estimating-software', // Speed benchmark landing page (marketing)
   '/roofsnap-alternative',        // Competitor comparison pages (marketing)
   '/eagleview-alternative',
   '/planswift-alternative',
