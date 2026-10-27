@@ -557,8 +557,6 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                   <VideoStage
                     videoId="uevX8puAlQ8"
                     title="QuoteCore+ multi-face roof plan to sent customer quote in 2:27"
-                    blankSrc={IMG.blank}
-                    measuredSrc={IMG.measured}
                   />
                   <div className={s['video-meta']}>
                     <div><b>Uncut</b>One continuous recording</div>
