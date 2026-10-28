@@ -3,15 +3,18 @@
 /**
  * 3D roof view (Tier 1 spike, owner-approved 2026-10-28).
  *
- * Builds a lightweight pitched 3D preview from the drawn roof areas: each
- * plan-view polygon is hinged on its longest edge (treated as the eave line)
- * and every vertex rises by tan(pitch) x its perpendicular plan distance from
- * that hinge. All faces render in one Three.js scene the user can orbit and
- * zoom; the current view and four standard angles download as PNGs.
+ * Builds a lightweight pitched 3D preview from the drawn roof areas using the
+ * grassfire model: every boundary edge of a roof area acts as an eave and the
+ * surface rises inward at the area pitch, creasing at the medial ridge. A
+ * rectangular outline becomes a proper gable, triangular outlines become
+ * hips, and irregular outlines approximate the straight-skeleton result. All
+ * areas render in one Three.js scene the user can orbit and zoom; the current
+ * view and four standard angles download as PNGs.
  *
- * Tier 1 limitations (by design): seams where faces of different pitch meet
+ * Tier 1 limitations (by design): seams where areas of different pitch meet
  * are approximate, and the result is a visual preview, not watertight
- * geometry. Faces are independent planes; shared edges are not welded.
+ * geometry. Areas are independent roofs in one scene; shared edges between
+ * separately drawn areas are not welded.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -35,38 +38,23 @@ const FACE_COLORS = ['#F97316', '#0EA5E9', '#10B981', '#8B5CF6', '#F43F5E', '#EA
 
 type Pt = { x: number; y: number };
 
-/** A hinge (eave) line plus a height function derived from one face. */
-interface LiftedFace {
-  /** Height of a plan point: tan(pitch) x perpendicular distance uphill. */
-  heightAt: (p: Pt) => number;
+/** A pitched roof built from one plan-view outline. */
+type PitchedFace =
+  | { mode: 'gable'; ring: Pt[]; heightAt: (p: Pt) => number }
+  | { mode: 'fan'; ring: Pt[]; peak: Pt; heightAt: (p: Pt) => number };
+
+interface EdgeInfo {
+  a: Pt;
+  dx: number;
+  dy: number;
+  len: number;
+  /** Interior-pointing unit normal. */
+  inx: number;
+  iny: number;
 }
 
-/**
- * Compute the lift function for one polygon. The longest edge is the hinge;
- * the uphill side is the one containing the polygon centroid. Distances on
- * the downhill side clamp to zero so the hinge stays at height 0.
- */
-function liftFace(points: Pt[], pitchDeg: number): LiftedFace | null {
-  if (points.length < 3) return null;
+function polygonEdges(points: Pt[]): EdgeInfo[] {
   const n = points.length;
-  let best = 0;
-  let bestLen = -1;
-  for (let i = 0; i < n; i++) {
-    const a = points[i];
-    const b = points[(i + 1) % n];
-    const len = Math.hypot(b.x - a.x, b.y - a.y);
-    if (len > bestLen) {
-      bestLen = len;
-      best = i;
-    }
-  }
-  const a = points[best];
-  const b = points[(best + 1) % n];
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const nx = -dy / len;
-  const ny = dx / len;
   let cx = 0;
   let cy = 0;
   for (const p of points) {
@@ -75,11 +63,190 @@ function liftFace(points: Pt[], pitchDeg: number): LiftedFace | null {
   }
   cx /= n;
   cy /= n;
-  const sign = (cx - a.x) * nx + (cy - a.y) * ny >= 0 ? 1 : -1;
+  const edges: EdgeInfo[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % n];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len = Math.hypot(dx, dy) || 1;
+    let nx = -dy / len;
+    let ny = dx / len;
+    if ((cx - a.x) * nx + (cy - a.y) * ny < 0) {
+      nx = -nx;
+      ny = -ny;
+    }
+    edges.push({ a, dx: dx / len, dy: dy / len, len, inx: nx, iny: ny });
+  }
+  return edges;
+}
+
+/** Grassfire distance: nearest edge line, interior side, clamped at zero. */
+function grassfireDistance(p: Pt, edges: EdgeInfo[]): number {
+  let best = Infinity;
+  for (const e of edges) {
+    const d = (p.x - e.a.x) * e.inx + (p.y - e.a.y) * e.iny;
+    if (d < best) best = d;
+  }
+  return Math.max(0, best);
+}
+
+function pointInPolygon(p: Pt, ring: Pt[]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i];
+    const b = ring[j];
+    if ((a.y > p.y) !== (b.y > p.y) && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+/** Clip an infinite line (origin + direction) to the polygon; null if no overlap. */
+function clipLineToPolygon(origin: Pt, dir: Pt, ring: Pt[]): [Pt, Pt] | null {
+  const params: number[] = [];
+  const n = ring.length;
+  for (let i = 0; i < n; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % n];
+    const ex = b.x - a.x;
+    const ey = b.y - a.y;
+    const denom = dir.x * ey - dir.y * ex;
+    if (Math.abs(denom) < 1e-9) continue;
+    const t = ((a.x - origin.x) * ey - (a.y - origin.y) * ex) / denom;
+    const u = ((a.x - origin.x) * dir.y - (a.y - origin.y) * dir.x) / denom;
+    if (u >= -1e-9 && u <= 1 + 1e-9) params.push(t);
+  }
+  if (params.length < 2) return null;
+  params.sort((x, y) => x - y);
+  const t0 = params[0];
+  const t1 = params[params.length - 1];
+  if (t1 - t0 < 1e-6) return null;
+  return [
+    { x: origin.x + dir.x * t0, y: origin.y + dir.y * t0 },
+    { x: origin.x + dir.x * t1, y: origin.y + dir.y * t1 },
+  ];
+}
+
+/** Insert a point into the ring after the edge it lies on (no-op if off-boundary). */
+function insertIntoRing(ring: Pt[], p: Pt): void {
+  const eps = 1e-6;
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % ring.length];
+    const ex = b.x - a.x;
+    const ey = b.y - a.y;
+    const len2 = ex * ex + ey * ey || 1;
+    const u = ((p.x - a.x) * ex + (p.y - a.y) * ey) / len2;
+    if (u < -eps || u > 1 + eps) continue;
+    const px = a.x + ex * Math.min(Math.max(u, 0), 1);
+    const py = a.y + ey * Math.min(Math.max(u, 0), 1);
+    if (Math.hypot(p.x - px, p.y - py) < 1e-4) {
+      ring.splice(i + 1, 0, { x: px, y: py });
+      return;
+    }
+  }
+}
+
+/** Densify the ring so long edges carry midpoints for a smoother silhouette. */
+function densifyRing(ring: Pt[]): Pt[] {
+  const out: Pt[] = [];
+  let perimeter = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % ring.length];
+    perimeter += Math.hypot(b.x - a.x, b.y - a.y);
+  }
+  const maxStep = Math.max(perimeter / 28, 1e-3);
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % ring.length];
+    out.push(a);
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    const segs = Math.floor(len / maxStep);
+    for (let s = 1; s <= segs; s++) {
+      const t = s / (segs + 1);
+      out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+    }
+  }
+  return out;
+}
+
+/**
+ * Build a pitched roof from one plan outline. The height function is the
+ * grassfire model (tan(pitch) x distance to the nearest eave line); the mesh
+ * inserts the ridge so the crease is real geometry, not interpolation luck.
+ * Gable mode: a near-parallel non-adjacent edge pair gives a ridge segment.
+ * Fan mode fallback: one interior peak, tent triangulation (hips).
+ */
+function buildPitchedFace(points: Pt[], pitchDeg: number): PitchedFace | null {
+  if (points.length < 3) return null;
   const rise = Math.tan((Math.max(0, pitchDeg) * Math.PI) / 180);
-  return {
-    heightAt: (p: Pt) => Math.max(0, ((p.x - a.x) * nx + (p.y - a.y) * ny) * sign) * rise,
-  };
+  const edges = polygonEdges(points);
+  const heightAt = (p: Pt) => rise * grassfireDistance(p, edges);
+
+  // Gable candidates: near-parallel, non-adjacent edge pairs. Pick the pair
+  // whose equidistant ridge line clips to the longest segment in the polygon.
+  let bestRidge: [Pt, Pt] | null = null;
+  let bestRidgeLen = 0;
+  for (let i = 0; i < edges.length; i++) {
+    for (let j = i + 2; j < edges.length; j++) {
+      if (i === 0 && j === edges.length - 1) continue;
+      const e1 = edges[i];
+      const e2 = edges[j];
+      const parallel = Math.abs(e1.dx * e2.dx + e1.dy * e2.dy);
+      if (parallel < 0.94) continue;
+      // Equidistant line between the two edge lines (interior side).
+      const d1 = (e2.a.x - e1.a.x) * e1.inx + (e2.a.y - e1.a.y) * e1.iny;
+      if (d1 <= 0) continue;
+      const origin = { x: e1.a.x + e1.inx * (d1 / 2), y: e1.a.y + e1.iny * (d1 / 2) };
+      const dir = { x: e1.dx, y: e1.dy };
+      const ridge = clipLineToPolygon(origin, dir, points);
+      if (!ridge) continue;
+      const rl = Math.hypot(ridge[1].x - ridge[0].x, ridge[1].y - ridge[0].y);
+      if (rl > bestRidgeLen) {
+        bestRidgeLen = rl;
+        bestRidge = ridge;
+      }
+    }
+  }
+
+  const ring = densifyRing(points);
+  if (bestRidge && bestRidgeLen > 0.18 * (edges.reduce((m, e) => Math.max(m, e.len), 0))) {
+    const gableRing = ring.slice();
+    insertIntoRing(gableRing, bestRidge[0]);
+    insertIntoRing(gableRing, bestRidge[1]);
+    return { mode: 'gable', ring: gableRing, heightAt };
+  }
+
+  // Tent fallback: deepest interior point via a coarse grid becomes the peak.
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of points) {
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x);
+    maxY = Math.max(maxY, p.y);
+  }
+  let peak: Pt | null = null;
+  let peakDist = -1;
+  const steps = 26;
+  for (let sx = 1; sx < steps; sx++) {
+    for (let sy = 1; sy < steps; sy++) {
+      const p = { x: minX + ((maxX - minX) * sx) / steps, y: minY + ((maxY - minY) * sy) / steps };
+      if (!pointInPolygon(p, points)) continue;
+      const d = grassfireDistance(p, edges);
+      if (d > peakDist) {
+        peakDist = d;
+        peak = p;
+      }
+    }
+  }
+  if (!peak) return null;
+  return { mode: 'fan', ring, peak, heightAt };
 }
 
 /** Standard screenshot angles: four isometric views at a low elevation. */
@@ -147,18 +314,35 @@ export function Roof3DModal({
     const group = new THREE.Group();
     usable.forEach((face, i) => {
       const pts = centred[i];
-      const lift = liftFace(pts, face.pitch);
-      if (!lift) return;
-      const shape = new THREE.Shape(pts.map((p) => new THREE.Vector2(p.x, p.y)));
-      const geometry = new THREE.ShapeGeometry(shape);
-      const pos = geometry.attributes.position as THREE.BufferAttribute;
-      for (let v = 0; v < pos.count; v++) {
-        pos.setZ(v, lift.heightAt({ x: pos.getX(v), y: pos.getY(v) }));
+      const built = buildPitchedFace(pts, face.pitch);
+      if (!built) return;
+      let geometry: THREE.BufferGeometry;
+      if (built.mode === 'fan') {
+        const vertices: number[] = [];
+        const n = built.ring.length;
+        for (let v = 0; v < n; v++) {
+          const a = built.ring[v];
+          const b = built.ring[(v + 1) % n];
+          for (const p of [a, b, built.peak]) {
+            vertices.push(p.x, built.heightAt(p), -p.y);
+          }
+        }
+        geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.computeVertexNormals();
+      } else {
+        const shape = new THREE.Shape(built.ring.map((p) => new THREE.Vector2(p.x, p.y)));
+        geometry = new THREE.ShapeGeometry(shape);
+        const pos = geometry.attributes.position as THREE.BufferAttribute;
+        for (let v = 0; v < pos.count; v++) {
+          const p = { x: pos.getX(v), y: pos.getY(v) };
+          pos.setZ(v, built.heightAt(p));
+        }
+        pos.needsUpdate = true;
+        geometry.computeVertexNormals();
+        // Shape space is (x, y, height); rotate so world is (x, height, -y).
+        geometry.rotateX(-Math.PI / 2);
       }
-      pos.needsUpdate = true;
-      geometry.computeVertexNormals();
-      // Shape space is (x, y, height); rotate so world is (x, height, -y).
-      geometry.rotateX(-Math.PI / 2);
       const material = new THREE.MeshLambertMaterial({
         color: new THREE.Color(FACE_COLORS[i % FACE_COLORS.length]),
         side: THREE.DoubleSide,
