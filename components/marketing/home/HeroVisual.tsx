@@ -1,6 +1,7 @@
 'use client';
 import type { Testimonial } from './homepage-content';
 import { HeroReview } from './HeroReview';
+import { HeroVideoTeaser } from './HeroVideoTeaser';
 import { ProductScreenshot } from './ProductScreenshot';
 import { useHeroMotion } from './useHeroMotion';
 import s from './Homepage.module.css';
@@ -20,5 +21,6 @@ export function HeroVisual({ review }: { review: Testimonial }) {
       <div className={s.appViewport}><ProductScreenshot eager /></div>
     </div>
     <HeroReview review={review} />
+    <HeroVideoTeaser />
   </div>;
 }

@@ -143,7 +143,7 @@
   transform-origin: center center;
   backface-visibility: hidden;
 }
-.heroApp::before, .heroReview::before {
+.heroApp::before, .heroReview::before, .heroVideo::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
   background: linear-gradient(130deg,#fff,rgba(255,255,255,.08) 33%,rgba(255,255,255,.1) 60%,rgba(255,230,212,.8) 79%,#fff);
   -webkit-mask: linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
@@ -178,7 +178,7 @@
   backface-visibility: hidden;
   transition: box-shadow 120ms var(--ease),border-color 120ms var(--ease);
 }
-.heroVisual[data-motion="moving"] .heroApp, .heroVisual[data-motion="moving"] .heroReview { will-change: transform; }
+.heroVisual[data-motion="moving"] .heroApp, .heroVisual[data-motion="moving"] .heroReview, .heroVisual[data-motion="moving"] .heroVideo { will-change: transform; }
 .quoteMark { color: var(--orange-ink); }
 .heroReview > .quoteMark { float: left; margin: 0 8px 0 0; }
 .heroReview blockquote { font-size: 12px; line-height: 1.55; letter-spacing: -.01em; }
@@ -188,6 +188,25 @@
 .reviewAuthor small { display: block; color: var(--muted); font-size: 10px; }
 .reviewAuthor > svg { margin-left: auto; color: var(--muted); }
 .placeholderLabel { display: block; font-size: 10px; line-height: 1.4; margin-top: 10px; border-top: 1px solid #dce0e5; padding-top: 8px; color: #626b79; }
+.heroVideo {
+  position: absolute; left: -26px; bottom: -30px; display: block; width: 340px; padding: 8px;
+  border-radius: 18px; border: 1px solid rgba(255,255,255,.8); color: var(--ink);
+  background: linear-gradient(145deg,rgba(255,255,255,.8),rgba(255,255,255,.43)),rgba(248,250,253,.48);
+  -webkit-backdrop-filter: blur(22px) saturate(1.12); backdrop-filter: blur(22px) saturate(1.12);
+  box-shadow: inset 0 1px 1px #fff,inset 0 -1px 1px rgba(37,47,64,.10),0 4px 9px rgba(15,23,37,.055),0 18px 44px rgba(15,23,37,.18);
+  transform: rotateX(calc(3deg + var(--review-y) * -2.8deg)) rotateY(calc(6deg + var(--review-x) * 3.5deg)) rotateZ(calc(-.75deg + var(--review-x) * -.3deg)) translate3d(calc(var(--review-x) * -5px),calc(var(--review-y) * -4px),calc(24px + var(--engaged) * 9px));
+  backface-visibility: hidden;
+  transition: box-shadow 120ms var(--ease),border-color 120ms var(--ease);
+}
+.videoThumb { position: relative; display: block; aspect-ratio: 16/9; border-radius: 11px; overflow: hidden; background: #0d1014; }
+.videoThumb img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 200ms var(--ease); }
+.videoPlay { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: var(--gradient); color: #191b20; box-shadow: inset 0 1px 0 #ffffffd9,0 0 0 9px rgba(255,107,53,.12),0 10px 26px rgba(13,16,20,.38); transition: scale 160ms var(--ease); }
+.videoDuration { position: absolute; right: 8px; bottom: 8px; padding: 3px 7px; border-radius: 8px; background: rgba(13,16,20,.92); border: 1px solid rgba(255,255,255,.18); color: #fff; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.videoMeta { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 10px 6px 6px; }
+.videoMeta strong { font-size: 12px; font-weight: 650; letter-spacing: -.01em; }
+.videoMeta small { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; color: var(--orange-ink); font-size: 11px; font-weight: 650; }
+.videoArrow { transition: transform 140ms var(--ease); }
+.heroVideo:focus-visible { outline: 2px solid var(--orange-bright); outline-offset: 3px; }
 
 /* First dark break: a real player shell, no generated imitation software. */
 .overview { padding-block: 70px; background: radial-gradient(ellipse at 88% 30%,rgba(255,100,31,.105),transparent 54%),var(--focus-canvas); border-bottom: 1px solid #28272a; }
@@ -475,6 +494,10 @@ button.optionalNextAction:hover { border-color: #ffb36b; background: #ffffff12; 
   .textLink:hover, .toolCard:hover > span, .footerWrap footer a:hover { color: var(--orange-ink); }
   .dark .textLink:hover { color: var(--orange-bright); }
   .heroReview:hover { border-color: #fff; box-shadow: inset 0 1px 1px #fff,inset 0 -1px 1px rgba(37,47,64,.1),0 6px 12px rgba(15,23,37,.07),0 22px 50px rgba(15,23,37,.21); }
+  .heroVideo:hover { border-color: #fff; box-shadow: inset 0 1px 1px #fff,inset 0 -1px 1px rgba(37,47,64,.1),0 6px 12px rgba(15,23,37,.07),0 22px 50px rgba(15,23,37,.21); }
+  .heroVideo:hover .videoThumb img { transform: scale(1.045); }
+  .heroVideo:hover .videoPlay { scale: 1.09; }
+  .heroVideo:hover .videoArrow { transform: translateX(3px); }
   .videoPoster:hover { border-color: #ffffff80; box-shadow: inset 0 0 0 6px #ffffff0b,0 20px 65px #0005,15px -6px 55px #ff641f15; }
   .workflowTab:hover { background: #ffffff08; color: #fff; }
   .faqItem summary:hover { color: #ffb36b; }
@@ -485,6 +508,7 @@ button.optionalNextAction:hover { border-color: #ffb36b; background: #ffffff12; 
   .heroCopy { max-width: 480px; }
   .heroVisual { width: calc(100% + 15px); height: 425px; }
   .heroReview { width: 270px; bottom: 0; right: 8px; }
+  .heroVideo { width: 308px; left: -12px; bottom: -24px; }
   .heroActions { gap: 9px; }
   .heroActions .button { font-size: 12px; padding-inline: 14px; }
   .heroActions .button svg { width: 17px; height: 17px; }
@@ -504,6 +528,7 @@ button.optionalNextAction:hover { border-color: #ffb36b; background: #ffffff12; 
   .heroBackground img { object-position: 70% center; }
   .heroVisual { width: min(770px,94%); height: auto; padding-top: 14px; margin-left: auto; margin-right: 0; padding-bottom: 0; }
   .heroReview { position: relative; margin: -55px 0 0 auto; bottom: auto; right: 12px; width: 280px; }
+  .heroVideo { position: relative; left: auto; bottom: auto; margin: -64px 0 0 -6px; width: 320px; transform: none; }
   .heroVisual { --app-rest-y: -5deg; --app-rest-z: -1deg; }
   .overviewGrid { gap: 32px; grid-template-columns: .9fr 1.1fr; }
   .overview .sectionTitle { font-size: 36px; }
@@ -561,6 +586,7 @@ button.optionalNextAction:hover { border-color: #ffb36b; background: #ffffff12; 
   .heroReview { transform: none; }
   .appChrome { height: 22px; font-size: 7px; padding-inline: 7px; padding-bottom: 2px; }
   .heroReview { width: 262px; right: 0; margin-top: -20px; padding: 15px 17px 12px; border-radius: 14px; }
+  .heroVideo { width: min(320px,100%); margin: 14px 0 0 0; border-radius: 14px; }
   .heroReview blockquote { font-size: 11px; }
   .heroReview > .quoteMark { width: 18px; height: 18px; }
   .heroGrid { padding-bottom: 28px; }
@@ -644,6 +670,7 @@ button.optionalNextAction:hover { border-color: #ffb36b; background: #ffffff12; 
   .reassurance { gap: 9px 17px; font-size: 10px; margin-top: 17px; }
   .heroCopy { padding-bottom: 15px; }
   .heroReview { width: 245px; }
+  .heroVideo { width: min(300px,100%); }
   .demoCtas { gap: 9px; }
   .demoCtas .button { width: 100%; min-height: 50px; }
   .posterHeadline { font-size: 23px; max-width: 123px; }
@@ -674,21 +701,23 @@ button.optionalNextAction:hover { border-color: #ffb36b; background: #ffffff12; 
   .workflowTab { padding-inline: 10px; font-size: 11px !important; }
   .closingActions .button { width: 100%; }
   .heroReview { width: 235px; }
+  .heroVideo { width: 100%; }
 }
 @media (prefers-reduced-motion:reduce) {
   .root *, .root *::before, .root *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .heroApp { transform: rotateY(-5deg) rotateZ(-1deg); }
   .heroReview { transform: none; }
+  .heroVideo { transform: none; }
   .textLink:hover svg, .toolCard:hover > span svg { transform: none; }
 }
 @media (prefers-reduced-motion:reduce) and (max-width:767px) { .heroApp { transform: none; } }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
-  .heroApp, .heroReview, .demoFrame { background: #f8fafc; }
+  .heroApp, .heroReview, .heroVideo, .demoFrame { background: #f8fafc; }
   .playOrb { background: #181c22; }
 }
 @media (prefers-reduced-transparency:reduce) {
-  .heroApp, .heroReview, .demoFrame { background: #f8fafc; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .heroApp::after, .heroApp::before, .heroReview::before { display: none; }
+  .heroApp, .heroReview, .heroVideo, .demoFrame { background: #f8fafc; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .heroApp::after, .heroApp::before, .heroReview::before, .heroVideo::before { display: none; }
   .playOrb { background: #181c22; }
   .dialog::backdrop { background: #06080ceb; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
@@ -696,8 +725,8 @@ button.optionalNextAction:hover { border-color: #ffb36b; background: #ffffff12; 
   .root, .dark, .dialog { background: Canvas; color: CanvasText; }
   .heroBackground, .heroWash { display: none; }
   .root .button, .root .iconButton, .workflowTab, .videoPoster, .playOrb { background: ButtonFace; color: ButtonText; border: 1px solid ButtonText; box-shadow: none; }
-  .heroApp, .heroReview, .demoFrame { background: Canvas; color: CanvasText; }
-  .heroApp::after, .heroApp::before, .heroReview::before { display: none; }
+  .heroApp, .heroReview, .heroVideo, .demoFrame { background: Canvas; color: CanvasText; }
+  .heroApp::after, .heroApp::before, .heroReview::before, .heroVideo::before { display: none; }
   .root :focus-visible { outline: 2px solid Highlight; }
   .workflowTab[aria-selected="true"] { border: 2px solid Highlight; }
   .comparison td, .comparison th, .faqItem { border-color: CanvasText; }
