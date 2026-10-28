@@ -61,6 +61,7 @@ import { PointMeasurementModal } from './modals/PointMeasurementModal';
 import { LineMeasurementModal } from './modals/LineMeasurementModal';
 import { CalibrationModal } from './modals/CalibrationModal';
 import { RoofPitchEstimatorModal } from './modals/RoofPitchEstimatorModal';
+import dynamic from 'next/dynamic';
 import { SharedMeasurementsModal } from './modals/SharedMeasurementsModal';
 import { sharedKindForComponent, sharedKindForMeasurementType, resolveSharedValue, type SharedMeasurementOption } from '@/app/lib/takeoff/sharedMeasurements';
 // Viewport pattern (2026-09-26): shared zoom/pan math for the takeoff canvas.
@@ -353,6 +354,10 @@ interface TakeoffSnapshot {
   selectedComponentId: string | null;
   activeSaveRoofAreaId: string | null;
 }
+
+// 3D roof view (Tier 1 spike): Three.js modal, code-split so three never
+// loads unless the viewer is opened.
+const Roof3DModal = dynamic(() => import('./modals/Roof3DModal').then((m) => ({ default: m.Roof3DModal })), { ssr: false });
 
 export function TakeoffWorkstation({
   demoFinishHref,
@@ -718,6 +723,8 @@ export function TakeoffWorkstation({
   const [pitchOnlyDegrees, setPitchOnlyDegrees] = useState<number | null>(null);
   // Roof Pitch Estimator: opened from the toolbar or the pitch prompts.
   const [showPitchEstimator, setShowPitchEstimator] = useState(false);
+  // 3D roof view (Tier 1 spike): pitched preview of the drawn roof areas.
+  const [showRoof3D, setShowRoof3D] = useState(false);
   // Area-to-component attach chooser: which value basis to attach (plan vs
   // pitched). Fixes the 2026-09-03 stale-pitch bug: the basis + plan value
   // are stored on the entry so the save path recomputes from LIVE pitch.
@@ -9253,7 +9260,12 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       onClick={() => setShowPitchEstimator(true)}
                       data-copilot="takeoff-tool-pitch-estimator"
                       title="Estimate roof pitch from a photo"
-                    ><QcIcon name="pitch" />Estimate pitch</QcToolButton>
+                    ><QcIcon name="pitch" />Estimate pitch</QcToolButton><QcToolButton
+                      onClick={() => setShowRoof3D(true)}
+                      data-copilot="takeoff-tool-3d"
+                      title="View the drawn roof areas as a pitched 3D model"
+                      disabled={roofAreas.length === 0 || calibrations.length === 0}
+                    ><QcIcon name="home" />3D view</QcToolButton>
                     {process.env.NEXT_PUBLIC_TAKEOFF_OFFCUTS_V1 === 'true' && !freeToolMode && (
                       <>
                       <button
@@ -9951,6 +9963,18 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
           onApply={showPitchOnlyPrompt
             ? (deg) => { setPitchOnlyDegrees(deg); setShowPitchEstimator(false); }
             : undefined}
+        />
+      )}
+
+      {/* 3D roof view (Tier 1 spike): pitched preview modal from the toolbar. */}
+      {showRoof3D && calibrations[0] && roofAreas.some((a) => a.visible && a.points.length >= 3) && (
+        <Roof3DModal
+          faces={roofAreas
+            .filter((a) => a.visible && a.points.length >= 3)
+            .map((a) => ({ id: a.id, name: a.name, pitch: a.pitch, points: a.points, area: a.area }))}
+          scale={calibrations[0].scale}
+          unit={calibrations[0].unit}
+          onClose={() => setShowRoof3D(false)}
         />
       )}
 
