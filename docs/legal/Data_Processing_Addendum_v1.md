@@ -46,7 +46,7 @@ Data subjects may include your customers, prospects, suppliers, employees and ot
 
 ### 2.4 Processing location
 
-Processing occurs in Australia (Supabase, Sydney), the United States (Vercel, Resend, OpenAI, Stripe) and New Zealand (T3 Play Limited operations).
+Processing occurs in the United States (Supabase, Vercel, Resend, OpenAI, Stripe) and New Zealand (T3 Play Limited operations).
 
 ---
 

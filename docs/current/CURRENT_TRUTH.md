@@ -61,7 +61,7 @@ Roofing estimates are often assembled across plans, physical measurements, calcu
 - **Operational outcome:** Measurements and pricing logic entered once, reused downstream.
 - **Strategic outcome:** A platform where contractors, suppliers and product systems meet inside a structured takeoff and estimating workflow.
 - **Revenue model:** SaaS subscriptions (Starter $19, Pro $39, Pro Plus $59/month). Growth tier ($29) exists but is inactive. Free tier with limited functionality.
-- **Legal entity:** Costa Rica. NZ entity exists but is intentionally kept off the legal surface.
+- **Legal entity:** T3 Play Limited (NZ company 9148617, NZBN 9429051941314). Confirmed by Shaun 2026-10-28. The Costa Rica entity is not used; all references retired.
 
 ## 3. Target Users and Markets
 

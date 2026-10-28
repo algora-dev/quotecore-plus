@@ -7,15 +7,12 @@ public-facing copy starts with an entry in the change log at the bottom.
 
 ---
 
-## Active Placeholders (fill these in before first paid customer)
+## Active Placeholders
 
-| Placeholder | Files | Notes |
-| --- | --- | --- |
-| `[Costa Rica Entity Name TBC]` | `app/privacy/page.tsx`, `app/terms/page.tsx` | The Costa Rica company that owns and operates QuoteCore+. Replace once the registered name is confirmed. The footer in `LegalPageShell.tsx` no longer renders this placeholder — only the in-policy occurrences remain (those are legally required to identify the controller, so they stay as `[TBC]` until you fill them in). |
-| `[Costa Rica Registered Address TBC]` | `app/privacy/page.tsx`, `app/terms/page.tsx` | Full registered address as it appears on the company registration certificate. |
-
-The NZ entity is intentionally NOT mentioned anywhere — see below in
-`Decisions Made` for the rationale.
+None. All legal pages name T3 Play Limited (NZ company 9148617, NZBN
+9429051941314), 85 Tongariro Street, Halswell, Christchurch 8025, New Zealand.
+The 2026-05 Costa Rica placeholder plan was retired 2026-10-28; that entity is
+not used.
 
 ---
 
@@ -31,6 +28,7 @@ The NZ entity is intentionally NOT mentioned anywhere — see below in
 | 2026-05-09 | EU/UK Article 27 representative not yet appointed | We're in beta with low EU user volume. Privacy policy notes this and points users at our direct contact email. Action item: appoint a paid EU-rep service (e.g. EDPO, GDPR-Rep.eu) before paid launch or once EU user count crosses ~250. |
 | 2026-05-09 | PRODHAB database registration not yet done | Costa Rica's data protection law may require registering our user database. Action: confirm with a CR lawyer before paid launch. |
 | 2026-05-09 | No analytics / advertising / tracking cookies — at all | Stated explicitly in privacy + cookies pages. If we ever add analytics, the cookie banner MUST be upgraded to a full Accept/Reject control AND non-essential cookies MUST NOT be set until the user accepts. |
+| 2026-10-28 | Legal entity = T3 Play Limited (NZ); Costa Rica retired | Shaun confirmed the NZ entity is the sole authoritative operator. Live terms/privacy/cookies/company pages and the DPA already name T3 Play; governing law is New Zealand. The Costa Rica placeholders were never filled and are obsolete. |
 
 ---
 
@@ -40,8 +38,6 @@ These are items the legal pages hint at and that need follow-up — but don't
 block the pages going live as drafts.
 
 - [ ] Appoint EU/UK Article 27 representative (or evaluate a service like EDPO)
-- [ ] Talk to a Costa Rica lawyer about PRODHAB database registration before
-      paid launch
 - [ ] When Stripe goes live, link to Stripe's Terms + DPA from our Terms
 - [ ] Draft a public-facing DPA users can request when they ask for one
       (template exists at e.g. https://stripe.com/legal/dpa or use SCC modules)
@@ -59,7 +55,7 @@ block the pages going live as drafts.
 ```
 app/privacy/page.tsx          Privacy Policy (full GDPR-shaped doc)
 app/cookies/page.tsx          Cookie Policy (table of essential cookies only)
-app/terms/page.tsx            Terms of Service (Costa Rica governing law, Beta v1.0)
+app/terms/page.tsx            Terms of Service (New Zealand governing law)
 
 app/components/LegalPageShell.tsx   Shared header/footer/TOC layout for the 3 pages
 app/components/CookieBanner.tsx     Bottom-right toast, dismissible, localStorage-persisted
@@ -80,3 +76,4 @@ Append a row whenever a legal page is materially updated. Bump the
 | --- | --- | --- | --- |
 | 2026-05-09 | privacy / cookies / terms — all three | Gavin | Initial drafts. Costa Rica entity placeholders. Beta v1.0. GDPR-shaped privacy. Notice-style cookie banner. |
 | 2026-05-09 | LegalPageShell, CookieBanner, globals.css | Gavin | Removed `[Costa Rica Entity Name TBC]` from the page footer (kept only in the policy bodies where it's legally required). Replaced cookie-emoji icon with an inline SVG shield (no emojis policy). Added explicit `legal-doc` typography in globals.css because @tailwindcss/typography isn't installed — the previous `prose` classes were silently being ignored. |
+| 2026-10-28 | PLACEHOLDERS.md, Data_Processing_Addendum_v1.md, adhoc email template | Gavin | Costa Rica entity retired per Shaun; T3 Play Limited (NZ) recorded as sole entity, PRODHAB action cancelled. DPA processing location corrected (Supabase moved from Sydney to US us-east-1 on 2026-10-26). Marketing email footer now renders the unsubscribe link inside the HTML body (was text-only, a real bug) plus the NZ registered postal address for CAN-SPAM. |

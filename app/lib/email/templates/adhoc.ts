@@ -108,6 +108,13 @@ export function renderAdhocEmail(input: AdhocEmailInput): {
   const firstName = input.firstName.trim() || 'there';
   const greeting = `<p style="margin:0 0 16px 0;font-size:15px;line-height:24px;color:#374151;">Hi ${escapeHtml(firstName)},</p>`;
 
+  // CAN-SPAM footer for marketing sends: visible unsubscribe link plus the
+  // operator's physical postal address, rendered in both HTML and text.
+  const postalAddress = 'T3 Play Limited, 85 Tongariro Street, Halswell, Christchurch 8025, New Zealand';
+  const marketingFooterHtml = input.unsubscribeUrl
+    ? `<p style="margin:12px 0 0 0;font-size:12px;line-height:18px;color:#9CA3AF;">You're receiving this because you opted in to updates from QuoteCore+. <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:#9CA3AF;text-decoration:underline;">Unsubscribe</a></p><p style="margin:4px 0 0 0;font-size:12px;line-height:18px;color:#9CA3AF;">${escapeHtml(postalAddress)}</p>`
+    : '';
+
   const innerHtml = [
     greeting,
     renderIntro(input.intro),
@@ -118,14 +125,10 @@ export function renderAdhocEmail(input: AdhocEmailInput): {
       ? `<p style="margin:20px 0 0 0;font-size:14px;line-height:20px;"><a href="${escapeHtml(input.secondaryUrl)}" style="color:#F97316;text-decoration:none;font-weight:600;">${escapeHtml(input.secondaryLabel)}</a></p>`
       : '',
     input.closing ? `<p style="margin:28px 0 0 0;font-size:15px;line-height:24px;color:#374151;">${escapeHtml(input.closing)}</p>` : '',
+    marketingFooterHtml,
   ]
     .filter(Boolean)
     .join('\n');
-
-  // Footer unsubscribe line for marketing sends.
-  const unsubscribeHtml = input.unsubscribeUrl
-    ? `<p style="margin:12px 0 0 0;font-size:12px;line-height:18px;color:#9CA3AF;">You're receiving this because you opted in to updates from QuoteCore+. <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:#9CA3AF;text-decoration:underline;">Unsubscribe</a></p>`
-    : '';
 
   const html = renderEmailLayout({
     heading: input.heading,
@@ -147,7 +150,10 @@ export function renderAdhocEmail(input: AdhocEmailInput): {
     textLines.push(`${input.secondaryLabel}: ${input.secondaryUrl}`);
   }
   if (input.closing) textLines.push(`\n${input.closing}`);
-  if (input.unsubscribeUrl) textLines.push(`\nUnsubscribe: ${input.unsubscribeUrl}`);
+  if (input.unsubscribeUrl) {
+    textLines.push(`\nUnsubscribe: ${input.unsubscribeUrl}`);
+    textLines.push(postalAddress);
+  }
   const text = textLines.filter(Boolean).join('\n\n');
 
   return { subject: input.subject, html, text };
