@@ -633,3 +633,12 @@ npm run smoke:billing                          # uses QCP_TESTING_URL + BILLING_
 - Reverse search: dominated 81-sheet / ~439 lm variants NOT shown as selectable cards; equal-total Fresh barge starts remains; genuine trade-offs still appear.
 - 14-face regression 63 / 289.305 unchanged; older 12-face fixture 67 / 405.776 (fixture-only, not the live staging input).
 - Reverse auto-preview + Showing on drawing selector still work; save/restore, quantity reuse, Export Cut Plan, PDF/one-pager unchanged.
+
+## Debt ratchet + verified evidence (2026-10-29, zero-risk QA batch)
+- Baselines recorded in scripts/debt-baseline.json: tsc 81 errors (npx tsc --noEmit, matches AGENTS.md), lint 8973 problems (npx eslint . --format json, errors+warnings; replaces stale Oct-3 count of 9,534).
+- Ratchet gate: node scripts/debt-ratchet.cjs fails if either count grows; use --record to re-baseline ONLY after debt was paid down.
+- [ ] Before pushing debt-affecting changes: run node scripts/debt-ratchet.cjs and confirm Ratchet OK
+- Privacy spec fix: phase25-public-link-privacy assertNoDataLeak now executes EVERY leak pattern (STRICT direct + CONTEXTUAL label-followed-by-value within 24 chars). Previously patterns without \d in source were silently skipped. Re-run e2e:security next time testing is exercised; expect possible new real failures (that is the point).
+- Rate-limit audit: docs/security/RATE_LIMIT_AUDIT.md (33 callsites; auth + AI-spend + demo-provisioning carry failClosed; public token pages fail-open by design).
+- Migration inventory: docs/db/MIGRATION_INVENTORY.md (228 + 99 SQL files, two roots; applied-ledger query on active project returned HTTP 400 twice, needs manual psql check).
+- Known-failing, pre-existing, NOT from this batch: smoke:billing custom_metered fixture tier (A/B-proven 10-28); precision-suite touchAiOutline (demo-pass era).

@@ -15,19 +15,30 @@ import { test, expect, type Page } from '../fixtures/base';
 const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 /** Patterns that must NEVER appear on a denial page */
-const LEAK_PATTERNS = [
+/** Patterns specific enough to assert directly on any denial page */
+const STRICT_LEAK_PATTERNS = [
+  /\u00A3\d/,
+  /\$\d/,
+  /\u20AC\d/,
+  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, // UUIDs
+];
+
+/**
+ * Generic words that only count as a leak when they appear in a data-like
+ * context: the label followed within 24 chars on the same line by a digit
+ * ("Total: $1,234"). Bare UI copy ("Total", "Attachments") does not trip
+ * these. Previously these patterns were silently skipped because the old
+ * helper only ran patterns whose source contained a literal \d.
+ */
+const CONTEXTUAL_LEAK_PATTERNS = [
   /customer\s*name/i,
   /company\s*name/i,
-  /Â£\d/,
-  /\$\d/,
-  /â‚¬\d/,
   /total/i,
   /subtotal/i,
   /grand total/i,
   /attachment/i,
   /invoice\s*number/i,
   /quote\s*number/i,
-  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, // UUIDs
 ];
 
 /** Check that a page does not leak sensitive data (uses innerText to exclude RSC script payloads) */
@@ -35,13 +46,15 @@ async function assertNoDataLeak(page: Page) {
   const bodyText = await page.innerText('body');
   expect(bodyText).toBeTruthy();
 
-  for (const pattern of LEAK_PATTERNS) {
-    // Some words like "total" may appear in generic UI text â€” only flag
-    // if it appears alongside numbers or in a data-like context
-    if (pattern.source.includes('\\d')) {
-      // Pattern requires a number nearby â€” check directly
-      expect(bodyText).not.toMatch(pattern);
-    }
+  // Strict patterns: any occurrence is a leak
+  for (const pattern of STRICT_LEAK_PATTERNS) {
+    expect(bodyText).not.toMatch(pattern);
+  }
+
+  // Contextual patterns: leak only when a label is followed by a value
+  for (const pattern of CONTEXTUAL_LEAK_PATTERNS) {
+    const withValue = new RegExp(`${pattern.source}[^\\S\\n]{0,24}\\d`, pattern.flags);
+    expect(bodyText).not.toMatch(withValue);
   }
 
   // No open redirect: URL must stay on the same origin
