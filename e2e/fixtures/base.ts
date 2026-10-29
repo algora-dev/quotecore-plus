@@ -4,7 +4,7 @@
  * Merges: auth, evidence capture, run context, manifest, noise filtering.
  * All specs import { test, expect } from this file.
  */
-import { test as base, expect, type Page, type ConsoleMessage, type Response } from '@playwright/test';
+import { test as base, expect, type BrowserContext, type Page, type ConsoleMessage, type Response } from '@playwright/test';
 import { assertOrigin } from '../config/guard';
 import { isConsoleNoise, isNetworkNoise } from '../config/noise-allowlist';
 import {
@@ -121,6 +121,14 @@ export const test = base.extend<E2EFixtures>({
   },
 
   loginAs: async ({ browser }, use) => {
+    // Track every context created for THIS test; close them all at test
+    // teardown. Unclosed contexts leak across tests in the worker, and at
+    // failure time Playwright's error attachments can then capture the
+    // WRONG open page (another test's context still showing its app page),
+    // manufacturing false evidence. This exact trap produced the 2026-10-29
+    // cross-tenant false positive: the "leak screenshot" was tenant A's
+    // still-open control-test page, not tenant B's denial shell.
+    const contexts: BrowserContext[] = [];
     await use(async (fixture: string) => {
       const account = getAccount(fixture);
       assertE2EAccount(account.email, getKnownAccountEmails());
@@ -132,6 +140,7 @@ export const test = base.extend<E2EFixtures>({
       } else {
         context = await browser.newContext();
       }
+      contexts.push(context);
       const page = await context.newPage();
 
       // Verify auth by hitting workspace
@@ -150,14 +159,23 @@ export const test = base.extend<E2EFixtures>({
 
       return { page, email: account.email, slug: account.workspaceSlug };
     });
+    // Test teardown: close everything loginAs opened for this test.
+    for (const context of contexts) {
+      await context.close().catch(() => {});
+    }
   },
 
   freshPage: async ({ browser }, use) => {
+    const contexts: BrowserContext[] = [];
     await use(async () => {
       const context = await browser.newContext();
+      contexts.push(context);
       const page = await context.newPage();
       return page;
     });
+    for (const context of contexts) {
+      await context.close().catch(() => {});
+    }
   },
 });
 
