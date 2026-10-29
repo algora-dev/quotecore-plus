@@ -250,6 +250,64 @@ flowchart LR
 
 ---
 
+# Working with this repository
+
+## Repository map
+
+- `app/` - Next.js App Router
+  - `(auth)/[workspaceSlug]/` - the authenticated application (takeoff workstation, quotes, orders, invoices, settings)
+  - `(public)/` - marketing pages, free tools, guided demo
+  - `api/` - route handlers (webhooks, public links, free tools, integrations)
+  - `lib/` - domain logic: takeoff geometry, billing resolver, security, email
+- `components/` - shared UI (marketing + app)
+- `e2e/` - Playwright E2E specs (security, entitlements, public, mobile, email) and fixtures
+- `docs/` - architecture, billing, smoke checklist, debt triage, audits
+- `scripts/` - verification tooling (billing checks, smoke suites, debt ratchet)
+- `backend/supabase/migrations/` + `supabase/migrations/` - SQL migrations (see docs/db/MIGRATION_INVENTORY.md)
+
+## Local development
+
+```bash
+npm ci
+npm run dev        # http://localhost:3000
+npm run build      # production build (must pass before any push)
+```
+
+Environment: Supabase, Stripe and Resend credentials via `.env.local` (never committed).
+
+## Verification commands
+
+```bash
+npx tsc --noEmit                  # typecheck (known baseline 81, docs/debt/TSC_TRIAGE.md)
+npx eslint .                      # lint (baseline in scripts/debt-baseline.json)
+node scripts/debt-ratchet.cjs     # fails if tsc or lint debt grows past baseline
+npm run check:billing             # billing resolver strict check
+npm run smoke:billing             # billing matrix smoke (against testing)
+npm run test:precision            # roof takeoff precision suite
+npm run e2e:security              # security-tagged Playwright specs
+```
+
+## Deployment model
+
+Production is deploy-on-purpose, not deploy-on-push:
+
+1. Work lands on `development`; nothing auto-deploys from it.
+2. The testing environment (`quotecore-plus-testing`) is deployed explicitly by CLI when verification is wanted.
+3. Pushes to `main` auto-deploy production (`quotecore-plus-main` -> quote-core.com). Main only advances from testing on the owner's explicit approval, by default through one overseer agent.
+
+The agent identities in git history coordinate through that single owner-approved promotion lane instead of pull requests.
+
+## Documentation map
+
+- `docs/ARCHITECTURE.md` - system structure and trust boundaries
+- `docs/debt/TSC_TRIAGE.md` - typed debt inventory and paydown order
+- `docs/security/RATE_LIMIT_AUDIT.md` - every rate-limit callsite and fail-open/closed classification
+- `docs/db/MIGRATION_INVENTORY.md` - migration roots and ledger state
+- `docs/smoke-tests/CHECKLIST.md` - living verification evidence
+- `docs/testing/TWO_TENANT_ISOLATION_FIXTURES.md` - build guide for real cross-tenant security tests
+
+---
+
 # What this project demonstrates
 
 QuoteCore+ is one example, not the boundary of what I work on.
