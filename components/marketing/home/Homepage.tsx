@@ -14,6 +14,7 @@ import { doneForYouConfig } from './done-for-you-config';
 import { ExploreNextSteps } from './ExploreNextSteps';
 import { WorkflowExplorer } from './WorkflowExplorer';
 import { Icon, type IconName } from './Icon';
+import { BenchmarkStrip } from './BenchmarkStrip';
 import { homepageConfig, type HomepageConfig } from './homepage-config';
 import { comparisonRows, placeholderReview, publishedHeroReview } from './homepage-content';
 import s from './Homepage.module.css';
@@ -46,6 +47,8 @@ export default function MarketingHomepage({ config = homepageConfig, preview = f
         </div>
         <div className={s.heroBottomLine} aria-hidden="true" />
       </section>
+
+      <BenchmarkStrip />
 
       <WorkflowExplorer demoHref={config.demoHref} config={config} />
 
