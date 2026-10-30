@@ -1,9 +1,14 @@
 /**
- * Phase B: Tenant Isolation & Security — Direct API tests
+ * Phase B: Workspace-boundary smoke (slug-level denial) + direct API probes
  *
- * Tests that Company D CANNOT read or write Company A's data
- * via direct API calls. RLS is the last line of defence and
- * must be verified at the API level, not just UI redirect level.
+ * PROVES: a logged-in Company D session is denied Company A workspace
+ * pages/exports by direct URL, and probes against nonexistent/guessed
+ * record IDs fail safely without 5xx or metadata leaks.
+ * DOES NOT PROVE: denial against a REAL foreign-owned record - a missing
+ * record and a denied record can look identical (QC-04, external review
+ * 2026-10-29). Real-record proof for quotes lives in
+ * e2e/specs/tenant-isolation-real.spec.ts (cross-tenant read + server-action
+ * write denial with live fixtures).
  *
  * @smoke @security @cross-tenant
  */

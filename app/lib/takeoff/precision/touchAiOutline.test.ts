@@ -55,11 +55,11 @@ test('O10: billing is identical mobile vs desktop - full scan1 charge, no cheape
   for (const [level, cost] of Object.entries(AI_SCAN_POINT_COST)) {
     assert.equal(outlineOnlyScanCharge(level), cost);
   }
-  // QUARANTINED 2026-10-29 (Gavin): the unknown-level fallback returned 2 when
-  // this test was written (demo-pass era); current code returns 10. Known-level
-  // parity above still runs. Needs owner confirmation of the intended fallback
-  // cost before restoring. Tracked in docs/smoke-tests/CHECKLIST.md.
-  // assert.equal(outlineOnlyScanCharge('unknown'), 2);
+  // Owner decision 2026-10-30 ("doesn't really matter either way"): keep the
+  // current live behavior. The unknown-level fallback charge is 10, matching
+  // the highest known tier rather than the demo-era 2. Regression-asserted
+  // so it cannot silently change again.
+  assert.equal(outlineOnlyScanCharge('unknown'), 10);
 });
 
 test('O10: candidates read ONLY roof-area polygons; lines/classification data is never converted', () => {

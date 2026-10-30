@@ -1,10 +1,16 @@
 /**
- * P2.5-03 — Attachment & data tenant isolation (HARDENED)
+ * P2.5-03 - Attachment boundary smoke (guessed-ID + tampered-token denial)
  *
  * Uses E2E Company A (trial-a) and E2E Company D (cross-tenant-d).
- * Avoids calling loginAs twice in one test (creates separate browser
- * contexts and causes 30s timeouts). Instead uses known slugs for
- * direct URL construction and single-login tests.
+ * Single-login design: known slugs for direct URL construction.
+ *
+ * PROVES: guessed attachment IDs 4xx with no file metadata, tampered
+ * download tokens are rejected safely, D cannot reach A's workspace by
+ * direct URL, cross-tenant API calls return no foreign data.
+ * DOES NOT PROVE: denial against a REAL foreign attachment with a valid
+ * signed token (attachment lifecycle fixtures queued; QC-04, external
+ * review 2026-10-29). Real-record quote/link proof lives in
+ * tenant-isolation-real.spec.ts + public-link-lifecycle-real.spec.ts.
  *
  * @smoke @security @attachments
  */

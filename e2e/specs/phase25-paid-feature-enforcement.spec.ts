@@ -1,8 +1,14 @@
 /**
- * P2.5-02 — Server-side paid-feature enforcement (HARDENED)
+ * P2.5-02 - Paid-feature enforcement smoke (baseline denial + no side effects)
  *
  * Hits API routes directly as baseline (unpaid) and paid users.
  * Asserts not just 4xx but also that NO side effects occur.
+ *
+ * PROVES: baseline-plan users are denied paid routes/AI/parse APIs without
+ * 5xx, without job creation or point debits; paid users pass.
+ * DOES NOT PROVE: real metered-billing entitlement matrices - those run in
+ * smoke:billing (legacy / custom_metered / custom_admin_granted fixtures
+ * against the live resolver; QC-04/QC-12, external review 2026-10-29).
  *
  * @smoke @security @entitlements
  */
