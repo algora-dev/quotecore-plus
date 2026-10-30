@@ -342,9 +342,13 @@ export function QuotesList({
     setSelectedIds((prev) => {
       const next = new Set(prev);
       const visibleIds = visibleQuotes.map((q) => q.id);
-      const allSelected = visibleIds.every((id) => next.has(id));
-      if (allSelected) {
-        // "Unselect all visible" - unconditionally clears them.
+      // Toggle-off when ANY visible quote is selected. The old check (every
+      // visible selected) is unreachable when the visible count exceeds
+      // MAX_BULK_SELECTION, which trapped the header checkbox in select-only
+      // mode (owner report 2026-10-30: select-all never deselected).
+      const anySelected = visibleIds.some((id) => next.has(id));
+      if (anySelected) {
+        // "Deselect all visible" - unconditionally clears them.
         for (const id of visibleIds) next.delete(id);
         return next;
       }

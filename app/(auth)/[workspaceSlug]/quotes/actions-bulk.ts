@@ -605,6 +605,20 @@ export async function bulkDeleteQuotes(ids: string[]): Promise<{ deleted: number
     }
   }
 
+  // assistant_v2_draft_briefs.produced_quote_id is the one FK to quotes
+  // without cascade/set-null: stale AI draft briefs block the batch delete
+  // (FK 23503 -> masked server error client-side, owner report 2026-10-30).
+  // Table missing from generated types (live-schema drift): cast per house pattern.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: briefErr } = await (supabaseAdmin as any)
+    .from('assistant_v2_draft_briefs')
+    .delete()
+    .in('produced_quote_id', ownedIds);
+  if (briefErr) {
+    await finishBulkAudit(auditId, 'error', 0, skipped, briefErr.message);
+    throw new Error(`Failed to clear quote briefs: ${briefErr.message}`);
+  }
+
   // Delete the quote rows (cascade handles children).
   const { error: deleteErr } = await supabase
     .from('quotes')

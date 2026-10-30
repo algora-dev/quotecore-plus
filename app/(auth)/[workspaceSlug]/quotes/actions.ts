@@ -1882,6 +1882,18 @@ export async function deleteQuote(id: string) {
     }
   }
 
+  // assistant_v2_draft_briefs.produced_quote_id is the one FK to quotes
+  // without cascade/set-null: a stale AI draft brief blocks quote deletion
+  // with FK 23503 (surfacing client-side as a masked server error, owner
+  // report 2026-10-30 React #441). Clear briefs for this quote first.
+  // Table missing from generated types (live-schema drift): cast per house pattern.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: briefErr } = await (supabaseAdmin as any)
+    .from('assistant_v2_draft_briefs')
+    .delete()
+    .eq('produced_quote_id', id);
+  if (briefErr) throw new Error(briefErr.message);
+
   const { error } = await supabase
     .from('quotes')
     .delete()
