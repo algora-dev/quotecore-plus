@@ -68,3 +68,5 @@ memory/
 demo-shots/
 v505-work/
 docs/**/validation/*.log
+
+scripts/harness/

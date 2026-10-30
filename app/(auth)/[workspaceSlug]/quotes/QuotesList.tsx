@@ -250,6 +250,10 @@ export function QuotesList({
   }, [quotes]);
 
   const drafts = quotes.filter(q => q.status === 'draft');
+  // Draft-aware delete copy (owner 2026-10-30): deleting a draft must SAY
+  // draft in every surface so users never fear they removed a finished quote.
+  const deletingIsDraft = deleteId ? quotes.some(q => q.id === deleteId && q.status === 'draft') : false;
+  const draftsViewLabel = activeTab === 'draft';
   const confirmed = quotes
     .filter(q => q.status !== 'draft');
 
@@ -299,10 +303,11 @@ export function QuotesList({
 
   async function handleDelete() {
     if (!deleteId) return;
+    const wasDraft = quotes.some(q => q.id === deleteId && q.status === 'draft');
     setDeleting(true);
     try {
       await deleteQuote(deleteId);
-      showNotice({ tone: 'success', title: 'Quote deleted', description: 'The selected quote has been deleted.', focus: true });
+      showNotice({ tone: 'success', title: wasDraft ? 'Draft quote deleted' : 'Quote deleted', description: wasDraft ? 'The draft quote has been deleted.' : 'The selected quote has been deleted.', focus: true });
       setDeleteId(null);
       router.refresh();
     } catch (err) {
@@ -504,7 +509,7 @@ export function QuotesList({
       setSelectedIds(new Set());
       setBulkDeleteConfirmOpen(false);
       router.refresh();
-      showNotice({ tone: result.skipped ? 'warning' : 'success', title: result.skipped ? 'Deletion finished with skipped records' : 'Deletion complete', description: `Quotes deleted: ${result.deleted}. Skipped: ${result.skipped} (not owned or already gone).`, focus: true });
+      showNotice({ tone: result.skipped ? 'warning' : 'success', title: result.skipped ? 'Deletion finished with skipped records' : 'Deletion complete', description: `${draftsViewLabel ? 'Draft quotes' : 'Quotes'} deleted: ${result.deleted}. Skipped: ${result.skipped} (not owned or already gone).`, focus: true });
     } catch (err) {
       console.error('[bulkDelete] failed:', err);
       setBulkDeleteConfirmOpen(false);
@@ -655,7 +660,7 @@ export function QuotesList({
             title="Select all visible quotes" aria-label="Select all visible quotes"
             className="qc-check w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
           />
-          <span>Quote</span>
+          <span>Quote{draftsViewLabel ? ' (draft)' : ''}</span>
           <span>Client / Job</span>
           <span>Status</span>
           <span>Last Activity</span>
@@ -820,9 +825,9 @@ export function QuotesList({
       {bulkDeleteConfirmOpen && (
         <QcJourneyDialog label="Manage quotes" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Delete {selectedIds.size} Quotes</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Delete {selectedIds.size} {draftsViewLabel ? 'Draft ' : ''}Quotes</h3>
             <p className="text-sm text-slate-500 mt-2">
-              This action cannot be undone. All selected quotes and their attached files will be permanently deleted.
+              This action cannot be undone. All selected {draftsViewLabel ? 'draft ' : ''}quotes and their attached files will be permanently deleted.
               Make sure you&apos;ve downloaded a copy first if you want to keep records.
             </p>
             <div className="flex gap-3 justify-end mt-6">
@@ -849,9 +854,9 @@ export function QuotesList({
       {deleteId && (
         <QcJourneyDialog label="Manage quotes" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Delete Quote</h3>
+            <h3 className="text-lg font-semibold text-slate-900">{deletingIsDraft ? 'Delete Draft Quote' : 'Delete Quote'}</h3>
             <p className="text-sm text-slate-500 mt-2">
-              This action cannot be undone. The quote will be permanently deleted.
+              This action cannot be undone. {deletingIsDraft ? 'This draft quote' : 'The quote'} will be permanently deleted.
             </p>
             <div className="flex gap-3 justify-end mt-6">
               <button data-qc-variant="ghost"
