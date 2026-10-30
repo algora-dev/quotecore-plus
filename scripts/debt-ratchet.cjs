@@ -13,6 +13,11 @@
  * Known baseline origin: 81 tsc errors documented in AGENTS.md (2026-10);
  * lint baseline first recorded 2026-10-29. Counts include test/e2e files,
  * matching the standalone `npx tsc --noEmit` gate semantics.
+ *
+ * Fail-closed process handling (QC-01, external review 2026-10-29): a
+ * crashed, killed, or misconfigured tool MUST fail this gate (exit 2),
+ * never read as "zero errors". Tool exit codes: tsc/eslint exit 1 when
+ * diagnostics/problems are found; higher exits mean fatal/config errors.
  */
 const { spawnSync } = require('child_process');
 const fs = require('fs');
@@ -20,7 +25,7 @@ const path = require('path');
 
 const BASELINE_PATH = path.join(__dirname, 'debt-baseline.json');
 
-function runCount(cmd, args, countFn) {
+function runCount(cmd, args, countFn, opts = {}) {
   const res = spawnSync(cmd, args, {
     cwd: path.join(__dirname, '..'),
     encoding: 'utf8',
@@ -28,7 +33,25 @@ function runCount(cmd, args, countFn) {
     maxBuffer: 1024 * 1024 * 512,
   });
   const out = (res.stdout || '') + '\n' + (res.stderr || '');
-  return { count: countFn(out), raw: out };
+  const count = countFn(out);
+  // Some tools exit 1 whenever findings exist (eslint with 8973 problems
+  // exits 1 on every run). For those, pass { exitOneMeansProblems: true }:
+  // their evidence lives in the parsed output file, and only hard process
+  // failures fail the gate here.
+  const exitOneIsClean = Boolean(opts.exitOneMeansProblems);
+  const processFailure =
+    res.error
+      ? `spawn error: ${res.error.message}`
+      : res.signal
+        ? `killed by signal ${res.signal}`
+        : res.status === null || res.status === undefined
+          ? 'no exit status'
+          : res.status >= 2
+            ? `exit ${res.status} (fatal or config error)`
+            : res.status === 1 && count === 0 && !exitOneIsClean
+              ? 'exit 1 but no parsable diagnostics (crash or output-format change)'
+              : null;
+  return { count, raw: out, processFailure };
 }
 
 function countTscErrors(out) {
@@ -63,20 +86,28 @@ function getBaseline() {
 
 function measure() {
   console.log('Counting tsc errors (npx tsc --noEmit)... this can take a minute.');
-  const tsc = runCount('npx', ['tsc', '--noEmit'], countTscErrors);
-  if (tsc.count < 0) {
-    console.error('tsc run produced no parsable output.');
+  // DEBT_RATCHET_TSC exists solely to simulate tool failure in verification
+  // runs (point it at a nonexistent package; the gate must exit 2).
+  const tscBin = process.env.DEBT_RATCHET_TSC ?? 'tsc';
+  const tsc = runCount('npx', [tscBin, '--noEmit'], countTscErrors);
+  if (tsc.processFailure) {
+    console.error(`tsc run failed (fail-closed): ${tsc.processFailure}`);
     process.exit(2);
   }
   console.log(`tsc errors: ${tsc.count}`);
   console.log('Counting lint problems (npx eslint . --format json)... this can take minutes.');
   const tmp = path.join(__dirname, '.eslint-count.json');
-  spawnSync('npx', ['eslint', '.', '--format', 'json', '--output-file', tmp], {
-    cwd: path.join(__dirname, '..'),
-    encoding: 'utf8',
-    shell: true,
-    maxBuffer: 1024 * 1024 * 64,
-  });
+  const lint = runCount(
+    'npx',
+    ['eslint', '.', '--format', 'json', '--output-file', tmp],
+    () => 0,
+    { exitOneMeansProblems: true }
+  );
+  if (lint.processFailure) {
+    if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
+    console.error(`eslint run failed (fail-closed): ${lint.processFailure}`);
+    process.exit(2);
+  }
   const lintCount = countLintProblems(tmp);
   if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
   if (lintCount < 0) {

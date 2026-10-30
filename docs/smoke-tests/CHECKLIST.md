@@ -634,6 +634,13 @@ npm run smoke:billing                          # uses QCP_TESTING_URL + BILLING_
 - 14-face regression 63 / 289.305 unchanged; older 12-face fixture 67 / 405.776 (fixture-only, not the live staging input).
 - Reverse auto-preview + Showing on drawing selector still work; save/restore, quantity reuse, Export Cut Plan, PDF/one-pager unchanged.
 
+## Security E2E: two-tenant isolation (2026-10-29, development dbf49a59 + 22ac5fc2)
+
+- [ ] `E2E_BASE_URL=https://quotecore-plus-testing.vercel.app npx playwright test e2e/specs/tenant-isolation-real.spec.ts` = 5/5 green
+- Covers: A creates real quote + positive control, B denied under both workspace slugs (page and HTTP level, no foreign data in body), mutation guard, teardown
+- Known behavior (polish item, not security): denial surfaces render HTTP 200 with denial copy instead of a 404 status; assertions check content, never status alone
+- History: the 10-29 "cross-tenant leak" was a harness false positive (unclosed browser contexts + wrong-page failure evidence); fixture guide at docs/testing/TWO_TENANT_ISOLATION_FIXTURES.md
+
 ## Debt ratchet + verified evidence (2026-10-29, zero-risk QA batch)
 - Baselines recorded in scripts/debt-baseline.json: tsc 81 errors (npx tsc --noEmit, matches AGENTS.md), lint 8973 problems (npx eslint . --format json, errors+warnings; replaces stale Oct-3 count of 9,534).
 - Ratchet gate: node scripts/debt-ratchet.cjs fails if either count grows; use --record to re-baseline ONLY after debt was paid down.

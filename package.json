@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "check:billing": "node scripts/check-billing-resolver.mjs --strict",
+    "check:debt": "node scripts/debt-ratchet.cjs",
     "smoke:billing": "node scripts/billing-matrix-smoke.mjs",
     "seo:check": "node scripts/seo-check.mjs",
     "e2e": "playwright test",

@@ -1,6 +1,6 @@
 # Supabase Region Migration Plan: eu-central-1 -> us-east-1 (Option A)
 
-Status: PLANNED - awaiting owner go + window confirmation. Nothing executed yet.
+Status: EXECUTED 2026-10-26 (us-east-1 project bcqrrrvbzlfmfgvotzqw "quotecore-prod-use1"). This document is now a historical record of the plan; see docs/db/MIGRATION_INVENTORY.md for the current migration landscape. Verified outcome: full logical migration (451MB DB 16/16 tables row-verified, 142 auth users + identities, 1510 storage objects / 642MB zero-fail, SMTP + 16 redirects copied, pg_cron job + vault secret recreated, 66 dispatch calls verified). Known limitation: the supabase_migrations ledger table did not survive the logical restore (Management API ledger query 400s); applied-migration truth is established by schema inspection, not the CLI ledger.
 
 ## Why
 Server pages make ~25-35 sequential DB roundtrips. Vercel functions (iad1, Washington) currently pay ~100ms per roundtrip to Frankfurt (eu-central-1) = 2.5-3.5s per page. Colocating DB with functions in US East drops roundtrips to 1-3ms -> sub-500ms server renders. Optimal for US/Canada/DR users. Vercel stays in iad1 - NO Vercel change.

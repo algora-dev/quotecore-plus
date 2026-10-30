@@ -2,10 +2,26 @@ import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
 
 /**
- * Supabase host for the project. Allowed in img-src/connect-src so authed
- * pages can load signed URLs, public assets, and Realtime traffic.
+ * Supabase hosts for CSP allowlists and next/image remotePatterns.
+ * The ACTIVE host is derived from the deployment's NEXT_PUBLIC_SUPABASE_URL
+ * (us-east-1 project since the 2026-10-26 region migration); the legacy
+ * eu-central-1 host stays allowlisted during the transition so cached
+ * assets and old references keep working. QC-09 (external review
+ * 2026-10-29): the previously hardcoded old host silently excluded the
+ * new project from the docs CSP and image optimization.
  */
-const SUPABASE_HOST = 'aaavvfttkesdzblttmby.supabase.co';
+function supabaseHost(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+const LEGACY_SUPABASE_HOST = 'aaavvfttkesdzblttmby.supabase.co';
+const ACTIVE_SUPABASE_HOST =
+  supabaseHost(process.env.NEXT_PUBLIC_SUPABASE_URL) ?? LEGACY_SUPABASE_HOST;
+const SUPABASE_HOSTS = Array.from(new Set([ACTIVE_SUPABASE_HOST, LEGACY_SUPABASE_HOST]));
 
 /**
  * Strict Content-Security-Policy applied to the public `/docs/*` surface.
@@ -33,8 +49,8 @@ const DOCS_CSP = [
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data: https://fonts.gstatic.com",
-  `img-src 'self' data: blob: https://${SUPABASE_HOST}`,
-  `connect-src 'self' https://${SUPABASE_HOST} wss://${SUPABASE_HOST}`,
+  `img-src 'self' data: blob: ${SUPABASE_HOSTS.map((h) => `https://${h}`).join(' ')}`,
+  `connect-src 'self' ${SUPABASE_HOSTS.flatMap((h) => [`https://${h}`, `wss://${h}`]).join(' ')}`,
   "media-src 'self'",
   "frame-src 'none'",
   "worker-src 'self' blob:",
@@ -62,8 +78,7 @@ const APP_CSP_REPORT_ONLY = [
   "img-src 'self' data: blob: https:",
   [
     "connect-src 'self'",
-    `https://${SUPABASE_HOST}`,
-    `wss://${SUPABASE_HOST}`,
+    ...SUPABASE_HOSTS.flatMap((h) => [`https://${h}`, `wss://${h}`]),
     'https://www.google-analytics.com',
     'https://*.google-analytics.com',
     'https://*.analytics.google.com',
@@ -121,13 +136,11 @@ const nextConfig: NextConfig = {
   },
   // No serverExternalPackages needed for fabric.js
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: SUPABASE_HOST,
-        pathname: '/storage/v1/object/public/**',
-      },
-    ],
+    remotePatterns: SUPABASE_HOSTS.map((hostname) => ({
+      protocol: 'https' as const,
+      hostname,
+      pathname: '/storage/v1/object/public/**',
+    })),
   },
   async redirects() {
     return [
