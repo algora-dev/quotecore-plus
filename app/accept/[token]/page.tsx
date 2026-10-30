@@ -94,12 +94,11 @@ export default async function AcceptQuotePage({
               This quote is no longer valid. You can request a fresh quote below or contact the sender directly.
             </p>
           </div>
-          <RequestRequoteButton
-            token={token}
-            variant="expired"
-            defaultCustomerName={quote.customer_name ?? null}
-            defaultCustomerEmail={quote.customer_email ?? null}
-          />
+          {/* Privacy: never pass customer PII to the denial variant. These
+              props serialize into the RSC flight payload of the raw HTML,
+              which leaked customer name/email on withdrawn + expired links
+              (caught by e2e/specs/public-link-lifecycle-real.spec.ts). */}
+          <RequestRequoteButton token={token} variant="expired" />
         </div>
       </div>
     );
@@ -117,12 +116,8 @@ export default async function AcceptQuotePage({
               This quote link has expired. You can request a fresh quote below or contact the sender directly.
             </p>
           </div>
-          <RequestRequoteButton
-            token={token}
-            variant="expired"
-            defaultCustomerName={quote.customer_name ?? null}
-            defaultCustomerEmail={quote.customer_email ?? null}
-          />
+          {/* Privacy: same as the withdrawn variant above - no PII props. */}
+          <RequestRequoteButton token={token} variant="expired" />
         </div>
       </div>
     );

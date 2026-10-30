@@ -9,7 +9,11 @@
  * 1. Control: tenant A can access its own quote (proves the ID is valid)
  * 2. Denial: tenant B cannot view or fetch tenant A's quote by ID, under
  *    either workspace slug, at the page or HTTP level, with no data leak
- * 3. Mutation guard: A's quote is unchanged after B's attempts
+ * 3. Cross-tenant WRITE: B replays A's captured addQuoteNote server-action
+ *    request (same build = same action ID, B's cookies) against A's quote.
+ *    verifyQuoteOwnership must reject the foreign insert and persist zero
+ *    foreign rows (QC-03 from the 2026-10-29 external review).
+ * 4. Mutation guard: A's quote is unchanged after B's attempts
  *
  * Fixtures: 'paid-c' = tenant A (owner), 'cross-tenant-d' = tenant B.
  * Guide: docs/testing/TWO_TENANT_ISOLATION_FIXTURES.md
@@ -148,6 +152,74 @@ test.describe.serial('Two-tenant isolation (real records) @security', () => {
     assertNoServerErrors();
   });
 
+  test('cross-tenant write: B server-action note insert on A quote rejected, zero side effects', async ({ loginAs }) => {
+    test.setTimeout(120_000);
+
+    // ---- Phase 1: owner-positive control. A writes via the REAL UI ----
+    const a = await loginAs(TENANT_A);
+    const noteTitle = `IsoLeak-W-A-${Date.now().toString(36)}`;
+    const noteBody = `owner write marker ${noteTitle}`;
+
+    let actionReq: { url: string; headers: Record<string, string>; body: string } | null = null;
+    a.page.on('request', (req) => {
+      const h = req.headers();
+      const body = req.postData() ?? '';
+      if (req.method() === 'POST' && h['next-action'] && body.includes(ctx.quoteId) && body.includes(noteTitle)) {
+        actionReq = { url: req.url(), headers: h, body };
+      }
+    });
+
+    await a.page.goto(`${ctx.quoteUrl}/summary`);
+    // Notes UI lives behind the "Files & notes" job-space tab (tabpanels
+    // are stably mounted but hidden until the tab is active).
+    await a.page.getByRole('tab', { name: /^files & notes$/i }).click();
+    await a.page.getByRole('button', { name: /^add note$/i }).first().click();
+    await a.page.getByPlaceholder(/site visit notes/i).fill(noteTitle);
+    await a.page.getByPlaceholder(/enter your note here/i).fill(noteBody);
+    await a.page.getByRole('button', { name: /^save note$/i }).click();
+
+    // Owner-positive control: the write persisted and renders for A.
+    await expect(a.page.getByText(noteTitle).first()).toBeVisible({ timeout: 20_000 });
+    const captured = actionReq;
+    expect(captured, 'must capture the addQuoteNote server-action request').toBeTruthy();
+    if (!captured) throw new Error('no captured addQuoteNote request');
+
+    // ---- Phase 2: B replays the same action call against A's quote ----
+    // Same build = same action ID. Byte-level replay of the captured request
+    // under B's session (browser fetch attaches B's cookies) with foreign
+    // markers swapped in, so a broken ownership check stays observable.
+    // This is exactly the request a logged-in foreign user could craft from
+    // the public client bundle - the real attack surface, not a guess.
+    const attackTitle = noteTitle.replace('-A-', '-B-FOREIGN-');
+    const attackBody = captured.body
+      .split(noteBody).join('foreign write marker')
+      .split(noteTitle).join(attackTitle);
+    const b = await loginAs(TENANT_B);
+    const attack = await b.page.evaluate(async ({ url, headers, body }: { url: string; headers: Record<string, string>; body: string }) => {
+      const h: Record<string, string> = { ...headers };
+      // Let the browser re-derive these for B's session.
+      delete h['cookie']; delete h['content-length']; delete h['host']; delete h['connection'];
+      const resp = await fetch(url, { method: 'POST', headers: h, body });
+      const text = await resp.text();
+      return { status: resp.status, actionError: resp.headers.get('x-action-error'), head: text.slice(0, 400) };
+    }, { url: captured.url, headers: captured.headers, body: attackBody });
+
+    // addQuoteNote -> verifyQuoteOwnership throws for foreign quotes, so the
+    // response must not carry a success payload ("ok":true).
+    const succeeded = /"ok"\s*:\s*true/.test(attack.head);
+    expect(succeeded, `B foreign write must not succeed (status=${attack.status}, x-action-error=${attack.actionError}, head=${attack.head.slice(0, 160)})`).toBe(false);
+
+    // ---- Phase 3: persisted-state guard ----
+    await a.page.reload();
+    await a.page.waitForLoadState('domcontentloaded');
+    await a.page.getByRole('tab', { name: /^files & notes$/i }).click();
+    await expect(a.page.getByText(noteTitle).first()).toBeVisible({ timeout: 20_000 });
+    const bodyText = await a.page.innerText('body');
+    expect(bodyText, "A's quote intact after B's write attempt").toContain(ctx.customerName);
+    expect(bodyText.includes(attackTitle), 'B foreign note must NOT be persisted on A quote').toBe(false);
+    expect(bodyText.includes('foreign write marker'), 'B foreign note body must NOT be persisted on A quote').toBe(false);
+  });
+
   test('mutation guard: A quote unchanged after B attempts', async ({ loginAs }) => {
     const { page } = await loginAs(TENANT_A);
 
@@ -162,19 +234,23 @@ test.describe.serial('Two-tenant isolation (real records) @security', () => {
     expect(body.length).toBeGreaterThan(0);
   });
 
-  test('teardown: delete the fixture quote as A (best effort)', async ({ loginAs }) => {
-    const { page } = await loginAs(TENANT_A);
-    await page.goto(ctx.quoteUrl);
+  test('teardown: delete the fixture quote as A via list UI', async ({ loginAs }) => {
+    const { page, slug } = await loginAs(TENANT_A);
+    await page.goto(`${BASE_URL}/${slug}/quotes`);
     await page.waitForLoadState('domcontentloaded');
 
-    const del = page.getByRole('button', { name: /delete|remove|trash/i }).first();
-    if (await del.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await del.click();
-      const confirm = page.getByRole('button', { name: /^(delete|confirm|remove)$/i }).last();
-      if (await confirm.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await confirm.click();
-      }
-    }
-    // Best effort only: prefixed names make leftovers identifiable for cleanup runs.
+    // Fresh fixture quotes are drafts: switch to the Drafts tab.
+    await page.getByRole('button', { name: /^drafts \(/i }).click();
+
+    // Rows carry class "group" (delete button is hover-revealed inside them).
+    const row = page.locator('div.group', { hasText: ctx.customerName }).first();
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await row.hover();
+    await row.getByRole('button', { name: 'Click to delete' }).click();
+    await page.getByRole('button', { name: /^delete$/i }).last().click();
+    // Strict assertion: silent leftovers are exactly what QC-03 flags. If the
+    // row survives, fail loudly - leftover fixture IDs are also identifiable
+    // by the E2E-...-IsoLeak prefix for a Management-API sweep.
+    await expect(row).toBeHidden({ timeout: 15_000 });
   });
 });

@@ -20,6 +20,7 @@ import { resolveBillingType } from '@/app/lib/billing/company-type';
 import { customUsageMeteringApplies, isCustomUsageCompany, loadCustomUsage } from '@/app/lib/billing/custom/usage/store';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { reservePurchasedStorage, cleanupUnregisteredCustomObject } from '@/app/lib/billing/custom/usage/storage';
+import { customStripeMode } from '@/app/lib/billing/custom/environment';
 import { PREVIEW_CATALOG } from '@/app/components/pricing/calculator/calculatorConfig';
 
 export const runtime = 'nodejs';
@@ -52,6 +53,11 @@ async function createFixture(plan: FixturePlan, admin: ReturnType<typeof createA
   const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   const limits = limitsForSmoke();
   const envAcct = process.env.CUSTOM_BILLING_STRIPE_ACCOUNT_ID ?? null;
+  // The entitlements/usage loaders verify fixture rows against the DEPLOYMENT
+  // stripe scope (mode derived from STRIPE_SECRET_KEY). Since the 10-20 live
+  // switch, testing runs a live key, so hardcoded 'test' rows fail with
+  // custom_snapshot_mode_mismatch. Stamp the deployment's real mode instead.
+  const envMode = customStripeMode();
 
   const base = {
     name: plan.name,
@@ -75,7 +81,7 @@ async function createFixture(plan: FixturePlan, admin: ReturnType<typeof createA
     insert = {
       ...base,
       billing_model: 'custom_setup',
-      stripe_mode: 'test',
+      stripe_mode: envMode,
       stripe_customer_id: `cus_smoke${sfx}`,
       stripe_subscription_id: `sub_smoke${sfx}`,
     };
@@ -96,7 +102,7 @@ async function createFixture(plan: FixturePlan, admin: ReturnType<typeof createA
       stripe_account_id: plan.kind === 'custom_metered'
         ? (envAcct ?? '')
         : (envAcct ?? 'acct_smokefixture01'),
-      stripe_mode: 'test',
+      stripe_mode: plan.kind === 'custom_metered' ? envMode : 'test',
       stripe_customer_id: plan.kind === 'custom_admin_granted' ? 'admin-granted' : `cus_smoke${sfx}`,
       stripe_subscription_id: plan.kind === 'custom_admin_granted' ? `admin-smoke-${sfx}` : `sub_smoke${sfx}`,
       catalog_id: PREVIEW_CATALOG.id,
@@ -119,7 +125,7 @@ async function createFixture(plan: FixturePlan, admin: ReturnType<typeof createA
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: grantErr } = await (admin as any).from('custom_billing_period_grants').insert({
         company_id: company.id,
-        stripe_mode: 'test',
+        stripe_mode: envMode,
         subscription_id: `sub_smoke${sfx}`,
         period_start: periodStart,
         period_end: periodEnd,
