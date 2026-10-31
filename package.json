@@ -27,6 +27,7 @@
     "test:precision": "node --import tsx --test \"app/lib/takeoff/precision/*.test.ts\"",
     "test:assistant": "node scripts/test-smart-assistant.mjs",
     "test:sa-image": "node --import tsx --test \"app/lib/smart-assistant/image-policy.test.ts\"",
+    "test:sa-cards": "node --import tsx --test \"app/lib/smart-assistant/v2/parse-card.test.ts\"",
     "prebuild": "node scripts/check-server-deps.mjs"
   },
   "dependencies": {

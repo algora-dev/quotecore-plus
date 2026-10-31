@@ -16,8 +16,11 @@ export async function readSession(client: SupabaseClient, access: Access, conver
         throw rpcError(null);
     const cards = data.cards.map(parseCard);
     const actions = data.actions.map(parseActionView);
+    // Owner incident 2026-10-31: one malformed card (basis plan/actual literal
+    // ids vs the UUID check) made the whole conversation unreadable. Malformed
+    // entries are dropped - never rendered - and logged; the session stays readable.
     if (cards.some((c) => !c) || actions.some((a) => !a))
-        throw rpcError(null);
+        console.error('[smart-assistant:session]', JSON.stringify({ conversationId, droppedCards: cards.filter((c) => !c).length, droppedActions: actions.filter((a) => !a).length }));
     if (!Array.isArray(data.messages) || !Array.isArray(data.recent_runs))
         throw rpcError(null);
     const messages = data.messages.map(parseMessage);

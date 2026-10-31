@@ -260,8 +260,14 @@ export function parseCard(value: unknown): ConversationCard | null {
                 || !ASSISTANT_LIBRARY_ROLES.includes(q.role as never) || !Array.isArray(q.options) || q.options.length < 1 || q.options.length > 50) return null;
             const options: WorkflowCard['questions'][number]['options'] = [];
             for (const o of q.options) {
-                if (!isRecord(o) || !isUuid(o.id) || !boundedText(o.label, 300) || typeof o.detail !== 'string' || o.detail.length > 600) return null;
-                options.push({id:o.id,label:String(o.label),detail:o.detail});
+                // Basis options use the literal ids 'plan'/'actual' (wire contract
+                // in decodeDraftChoice/applyDraftChoice); every other question's
+                // options are record identities. Owner incident 2026-10-31: the
+                // UUID-only check rejected the basis card and failed the whole
+                // session read, hiding the reply AND the card from the user.
+                const idOk = q.key === 'basis' ? o.id === 'plan' || o.id === 'actual' : isUuid(o.id);
+                if (!isRecord(o) || !idOk || !boundedText(o.label, 300) || typeof o.detail !== 'string' || o.detail.length > 600) return null;
+                options.push({id:String(o.id),label:String(o.label),detail:o.detail});
             }
             questions.push({key:q.key,label:q.label,role:q.role as WorkflowCard['questions'][number]['role'],options});
         }
@@ -339,7 +345,10 @@ export function parsePublicSession(value: unknown): SessionSnapshot | null {
     const actions = value.actions.map(a => isRecord(a) ? parseActionView({ ...a, action_kind: a.actionKind, proof_digest: a.proofDigest, created_at: a.createdAt }) : null);
     const messages = value.messages.map(m => isRecord(m) ? parseMessage({ ...m, run_id: m.runId, created_at: m.createdAt }) : null);
     const runs = value.runs.map(v => isRecord(v) ? parseRunOutcome({ ...v, client_request_id: v.requestId, error_code: v.errorCode }) : null);
-    if (cards.some(c => !c) || actions.some(a => !a) || messages.some(m => !m) || runs.some(r => !r))
+    // Cards/actions the parser cannot verify are dropped (never rendered);
+    // only unreadable messages/runs invalidate the whole snapshot. Incident
+    // 2026-10-31: one malformed card bricked the entire conversation read.
+    if (messages.some(m => !m) || runs.some(r => !r))
         return null;
     let page: PageHint | null = null;
     if (value.page !== null) {
