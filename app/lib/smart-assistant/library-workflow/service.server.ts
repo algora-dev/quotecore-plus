@@ -104,7 +104,7 @@ async function evaluate(client:SupabaseClient,access:Access,conversationId:strin
     const card:WorkflowCard={kind:'draft_workflow',title:stored.produced_quote_id?'Revise this draft':'Finish this draft',workflowState:state,
       stateId:stored.id,revision:stored.revision,taskId:conversationId,summary:workingBriefSummary(decision.brief,env.concepts),issues:decision.issues,questions:decision.questions};
     await addCard(runId,access,`draft-workflow-${stored.id}-${stored.revision}`,WORKFLOW_SECTIONS,card);
-    return {state:'awaiting_input',answer:decision.questions.length?'Choose the remaining options together below. Your job details and separate measurements are retained.':'Your brief is saved. Please provide the missing details listed below.',card};
+    return {state:'awaiting_input',answer:decision.questions.length?'Still building your draft — choose below and it continues automatically.':`Almost there — ${decision.issues[0]}`,card};
   }
   const action=await proposeDraft(client,access,runId,workingProposalArgs(decision.brief,decision.catalog),{
     controllerVersion:1,briefStateId:stored.id,briefRevision:stored.revision,workflowEpoch:env.epoch,producedQuoteId:stored.produced_quote_id,

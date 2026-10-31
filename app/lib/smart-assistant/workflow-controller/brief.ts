@@ -156,8 +156,9 @@ export function validateWorkingBrief(brief: WorkingBrief, concepts: readonly Ass
 
 export function briefIssues(brief: WorkingBrief): string[] {
   const issues: string[] = [];
-  if (!brief.customerName) issues.push('What is the customer name?');
-  if (!brief.jobName) issues.push('What should this job be called?');
+  // Owner 2026-10-31: customer and job names are NOT draft blockers. A photo or
+  // typed measurement request reaches review without them; the card summary
+  // still shows the hint and they stay editable via revise or the builder.
   if (!brief.measurements.length) issues.push('Add the roof area or component measurements.');
   for (const a of brief.areas) if (a.basis === 'plan' && a.pitchDegrees == null && brief.defaultPitchDegrees == null) issues.push(`What is the pitch for ${a.label}? A flat roof is 0 degrees.`);
   for (const m of brief.measurements) if (m.basis === 'plan' && ROLE_PITCH_TYPE[m.role] !== 'none' && brief.defaultPitchDegrees == null && (!m.areaId || brief.areas.find(a => a.id === m.areaId)?.pitchDegrees == null)) {
