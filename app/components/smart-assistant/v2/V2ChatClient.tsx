@@ -220,6 +220,9 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     attachmentCount.current += next.length;
     setAttachments(prev => [...prev, ...next]); setSheet(null);
     if (errors.length) setNotice(errors[0]);
+    // Owner 2026-10-31: attaching a photo opens the text composer immediately -
+    // send the photo alone or add a message. No mode switch required.
+    if (next.some(a => a.file.type.startsWith('image/')) && mode !== 'text') changeMode('text', true);
   };
 
   const refresh = useCallback(async (id: string) => {
@@ -542,8 +545,19 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
       const next = await refresh(id);
       if (mounted.current && current.current === id && next) {
         const outcome = next.runs.find(r => r.requestId === logical.requestId);
-        if (outcome || pending.current.has(id)) setNotice(null);
-        else setNotice(error instanceof Error ? error.message : 'The request could not be submitted.');
+        if (outcome) {
+          setNotice(null);
+        } else if (!next.activeRunId) {
+          // The turn never admitted server-side (network drop, 5xx or a failed
+          // stream): clear the pending marker and surface the real error
+          // instead of the dead-end "outcome not confirmed" banner (owner
+          // 2026-10-31 report).
+          pending.current.delete(id);
+          setUnresolved(false);
+          setNotice(error instanceof Error && error.message ? error.message : 'The request could not be submitted. Try again.');
+        } else {
+          setNotice(null);
+        }
       }
     } finally {
       if (!navPending.current) {

@@ -97,6 +97,9 @@ async function handlePost(req: NextRequest) {
   });
 
   if (admitError) {
+    // Silent 500s here dead-ended the client (owner 2026-10-31 report): log
+    // every non-QCP admission failure so Vercel logs show the cause.
+    console.error('[smart-assistant] turn admission failed:', admitError.message, 'code:', String(admitError.code ?? ''), 'hint:', String(admitError.hint ?? ''));
     if (String(admitError.code ?? '').startsWith('QCP')) {
       const error = usageError(admitError);
       return NextResponse.json({ ok: false, status: 'refused', error_code: error.code, error: error.message, ...error.details },
