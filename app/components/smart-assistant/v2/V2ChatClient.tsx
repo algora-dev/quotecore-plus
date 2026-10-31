@@ -25,6 +25,8 @@ import { AssistantSheet } from './AssistantSheet';
 import { VoiceCapture } from './VoiceCapture';
 import { useAssistantViewport } from './useAssistantViewport';
 import { attachmentError, MAX_LOCAL_ATTACHMENTS } from './media-utils';
+import { compressImageToJpeg } from './image-compress';
+import { isSaImageType } from '@/app/lib/smart-assistant/image-policy';
 import s from './assistant.module.css';
 
 type Pending = {
@@ -144,7 +146,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     // then the transcript submits itself once the recorder has fully stopped.
     const composed = inputValue.current ? `${inputValue.current} ${text}` : text;
     if (composed.length > MAX_INPUT) { setNotice('That would make the message too long. Send the existing draft first, then record another note.'); return; }
-    if (attachments.length > 0) { setNotice('Attachments are local previews only in this build. Remove them to send a text or voice message.'); return; }
+    if (attachments.length > 0) { setNotice('Photos are read on send from Type mode. Switch to Type to send them with your note.'); return; }
     setVoiceSendQueue(composed);
   });
   const speech = useSpeechPlayback(visible && !locked, speechPrefKey, ttsPrefKey);
@@ -407,16 +409,54 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
 
   const send = async (textOverride?: string) => {
     const rawText = (textOverride ?? input).trim();
-    if (!rawText || rawText.length > MAX_INPUT || operation.current || locked || voice.state !== 'off') return;
-    if (textOverride === undefined && attachments.length > 0) {
-      setNotice('Attachments are local previews only in this build. Remove them to send a text or voice message.');
+    if ((!rawText && (textOverride !== undefined || attachments.length === 0)) || rawText.length > MAX_INPUT || operation.current || locked || voice.state !== 'off') return;
+    if (textOverride === undefined && attachments.length > 0 && attachments.some(a => !isSaImageType(a.file.type))) {
+      setNotice('Photos (JPG, PNG, WebP) are read on send. Remove the PDF, text or GIF preview to continue.');
       return;
     }
     if (snapshot?.activeRunId) {
       setNotice('The assistant is still working. Please wait or refresh.');
       return;
     }
-    const text = rawText; // No fake attachment metadata is ever sent as a model prompt.
+    // Photo input (owner 2026-10-31): manual sends extract attached photos first
+    // and the lifted measurements join the message as the user's own data. The
+    // /turn admission then meters it exactly like a typed or spoken request.
+    let text = rawText;
+    if (textOverride === undefined && attachments.length > 0) {
+      operation.current = true;
+      setBusy(true);
+      setNotice('Reading your photo…');
+      const summaries: string[] = [];
+      try {
+        for (const att of attachments) {
+          const compressed = await compressImageToJpeg(att.file);
+          const form = new FormData();
+          form.append('image', compressed, compressed.name || 'photo.jpg');
+          const res = await fetch('/api/smart-assistant/extract-image', { method: 'POST', body: form });
+          const data: unknown = await res.json().catch(() => null);
+          const extracted = isRecord(data) && typeof data.text === 'string' ? data.text.trim() : '';
+          if (!res.ok || !extracted) {
+            const serverError = isRecord(data) && typeof data.error === 'string' ? data.error : '';
+            throw new Error(serverError || 'The photo could not be read. Try again or remove it to send text only.');
+          }
+          summaries.push(extracted);
+        }
+      } catch (error) {
+        operation.current = false;
+        setBusy(false);
+        setNotice(error instanceof Error ? error.message : 'The photo could not be read.');
+        return;
+      }
+      const extractedBlock = summaries.join('\n\n');
+      text = rawText ? `${rawText}\n\n${extractedBlock}` : extractedBlock;
+      if (text.length > MAX_INPUT) {
+        operation.current = false;
+        setBusy(false);
+        setNotice('That photo added more than one message can hold. Send fewer photos or less text.');
+        return;
+      }
+      setNotice(null);
+    }
     let id = active;
     if (!id) {
       id = await newChat() ?? null;
@@ -487,6 +527,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
       if (mounted.current && current.current === id) {
         setInput(value => value.trim() === rawText ? '' : value);
         setSheet(null);
+        clearAttachments();
       }
       const next = await refresh(id);
       if (result.status === 'completed') {
@@ -689,16 +730,16 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
           {attachments.length > 0 && <div className={s.attachments}>
             <div className={s.attachmentList}>{attachments.map(item => <div key={item.id} className={s.attachmentItem}>
               {item.previewUrl ? <img src={item.previewUrl} alt="Local attachment preview" width="40" height="40"/> : <AssistantIcon name="file"/>}
-              <span><strong>{item.file.name}</strong><small>On this device · not uploaded</small></span>
+              <span><strong>{item.file.name}</strong><small>{isSaImageType(item.file.type) ? 'Read on send' : 'Local preview · not uploaded'}</small></span>
               <QcButton className={s.iconButton} aria-label={`Remove ${item.file.name}`} onClick={() => removeAttachment(item.id)}><AssistantIcon name="close"/></QcButton>
             </div>)}</div>
-            <p>File reading is not enabled yet. Remove previews to send.</p>
+            <p>Photos are read when you send. PDF and text files stay local previews.</p>
           </div>}
           {mode === 'text' && <div className={s.textDock}>
             <textarea ref={composer} className={s.input} aria-label="Message the assistant" value={input} disabled={busy || locked || voice.state !== 'off'} maxLength={MAX_INPUT} rows={1} placeholder="Ask Smart Assistant…" onChange={e => { setInput(e.target.value); setDraftOrigin('text'); }} onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia('(hover: hover) and (pointer: fine)').matches) { e.preventDefault(); void send(); }
             }}/>
-            <QcButton className={s.sendButton} variant="primary" aria-label="Send message" disabled={controlsBusy || voice.state !== 'off' || !input.trim() || !!attachments.length} onClick={() => void send()}><AssistantIcon name="send"/></QcButton>
+            <QcButton className={s.sendButton} variant="primary" aria-label="Send message" disabled={controlsBusy || voice.state !== 'off' || (!input.trim() && attachments.length === 0) || attachments.some(a => !isSaImageType(a.file.type))} onClick={() => void send()}><AssistantIcon name="send"/></QcButton>
           </div>}
           <div className={s.modeBar} role="group" aria-label="Input controls">
             <QcButton className={s.modeButton} aria-pressed={mode === 'text'} onClick={() => changeMode('text', true)}><AssistantIcon name="keyboard"/><span>Type</span></QcButton>
@@ -734,12 +775,12 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         <div className={s.conversationList}>{conversations.slice(0, 12).map(c => <QcButton key={c.id} disabled={controlsBusy} aria-current={active === c.id ? 'page' : undefined} onClick={() => { voice.cancel(); speech.stop(); setActive(c.id); setInput(''); clearAttachments(); setSheet(null); }}><AssistantIcon name="history"/><span>{c.title || `Conversation · ${new Date(c.last_active_at).toLocaleDateString()}`}</span><AssistantIcon name="chevron"/></QcButton>)}</div>
       </> : <>
         <p className={s.sheetIntro}>Add context to your next request.</p>
-        <div className={s.attachmentNotice}><AssistantIcon name="lock"/><p><strong>Local preview only</strong>Photo and file reading is not enabled in this build. Nothing is uploaded or sent to the assistant.</p></div>
+        <div className={s.attachmentNotice}><AssistantIcon name="camera"/><p><strong>Photos are read on send</strong>Attached photos are read by AI to lift measurements into your next message. PDF and text files stay local previews only.</p></div>
         <div className={s.attachmentOptions}>
           <QcButton onClick={() => cameraInput.current?.click()}><span className={s.optionIcon}><AssistantIcon name="camera"/></span><span><strong>Take a photo</strong><small>Open your camera</small></span><AssistantIcon name="chevron"/></QcButton>
           <QcButton onClick={() => imageInput.current?.click()}><span className={s.optionIcon}><AssistantIcon name="image"/></span><span><strong>Choose an image</strong><small>From your photo library</small></span><AssistantIcon name="chevron"/></QcButton>
           <QcButton onClick={() => uploadInput.current?.click()}><span className={s.optionIcon}><AssistantIcon name="file"/></span><span><strong>Choose a file</strong><small>PDF or plain text</small></span><AssistantIcon name="chevron"/></QcButton>
-        </div><p className={s.detail}>Up to 3 local previews · 10 MB each. Remove previews before sending a message.</p>
+        </div><p className={s.detail}>Up to 3 photos at a time · 10 MB each, read when you send.</p>
         <input ref={cameraInput} hidden type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={e => { onFilesSelected(e.target.files); e.currentTarget.value = ''; }}/>
         <input ref={imageInput} hidden type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={e => { onFilesSelected(e.target.files); e.currentTarget.value = ''; }}/>
         <input ref={uploadInput} hidden type="file" accept="application/pdf,text/plain" multiple onChange={e => { onFilesSelected(e.target.files); e.currentTarget.value = ''; }}/>
