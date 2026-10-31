@@ -80,7 +80,10 @@ export async function readWorkflowCatalog(client:SupabaseClient,access:Access,co
     const concept=componentConcept(component,member);
     if(!concept)continue;
     out.push({id:component.id,collectionId:component.collection_id,collectionName:names.get(component.collection_id)!,collectionCallName:collectionCallNames.get(component.collection_id)??null,name:component.name,callName:component.assistant_call_name??null,
-      role:concept.behavior,conceptKey:concept.key,isDefault:member.is_default===true,measurementType:component.measurement_type,
+      // member is undefined for components covered by include_all without an
+      // explicit membership row (RS Roofing 2026-10-31: crashed prepare_draft_from_brief
+      // with "Cannot read properties of undefined (reading 'is_default')").
+      role:concept.behavior,conceptKey:concept.key,isDefault:member?.is_default===true,measurementType:component.measurement_type,
       takeoffSlot:component.takeoff_slot??null,unit:component.measurement_type==='area'?'m2':['count','quantity','fixed'].includes(component.measurement_type)?'each':'m',active:true});
   }
   return out;
