@@ -16,8 +16,10 @@
  *
  * Fail-closed process handling (QC-01, external review 2026-10-29): a
  * crashed, killed, or misconfigured tool MUST fail this gate (exit 2),
- * never read as "zero errors". Tool exit codes: tsc/eslint exit 1 when
- * diagnostics/problems are found; higher exits mean fatal/config errors.
+ * never read as "zero errors". Tool exit codes: eslint exits 1 when
+ * problems are found, 2 on crashes; tsc --noEmit exits 2 whenever
+ * diagnostics exist (outputs skipped), so tsc passes exitTwoMeansFindings
+ * and exit 2 is only accepted with parsable TS1xxx/TS2xxx diagnostics.
  */
 const { spawnSync } = require('child_process');
 const fs = require('fs');
@@ -39,6 +41,7 @@ function runCount(cmd, args, countFn, opts = {}) {
   // their evidence lives in the parsed output file, and only hard process
   // failures fail the gate here.
   const exitOneIsClean = Boolean(opts.exitOneMeansProblems);
+  const exitTwoMeansFindings = Boolean(opts.exitTwoMeansFindings);
   const processFailure =
     res.error
       ? `spawn error: ${res.error.message}`
@@ -46,16 +49,21 @@ function runCount(cmd, args, countFn, opts = {}) {
         ? `killed by signal ${res.signal}`
         : res.status === null || res.status === undefined
           ? 'no exit status'
-          : res.status >= 2
+          : res.status >= 3
             ? `exit ${res.status} (fatal or config error)`
-            : res.status === 1 && count === 0 && !exitOneIsClean
-              ? 'exit 1 but no parsable diagnostics (crash or output-format change)'
+            : res.status >= 2 && !exitTwoMeansFindings
+              ? `exit ${res.status} (fatal or config error)`
+            : res.status >= 1 && count === 0 && !exitOneIsClean
+              ? `exit ${res.status} but no parsable diagnostics (crash or output-format change)`
               : null;
   return { count, raw: out, processFailure };
 }
 
 function countTscErrors(out) {
-  return (out.match(/error TS\d+:/g) || []).length;
+  // Count syntax/semantic diagnostics only (TS1xxx/TS2xxx). Config and
+  // project errors (TS5xxx/TS6xxx) never count as debt: with none of the
+  // countable kinds present the nonzero exit fails the gate instead.
+  return (out.match(/error TS[124]\d+:/g) || []).length;
 }
 
 function countLintProblems(eslintJsonPath) {
@@ -89,7 +97,7 @@ function measure() {
   // DEBT_RATCHET_TSC exists solely to simulate tool failure in verification
   // runs (point it at a nonexistent package; the gate must exit 2).
   const tscBin = process.env.DEBT_RATCHET_TSC ?? 'tsc';
-  const tsc = runCount('npx', [tscBin, '--noEmit'], countTscErrors);
+  const tsc = runCount('npx', [tscBin, '--noEmit'], countTscErrors, { exitTwoMeansFindings: true });
   if (tsc.processFailure) {
     console.error(`tsc run failed (fail-closed): ${tsc.processFailure}`);
     process.exit(2);
