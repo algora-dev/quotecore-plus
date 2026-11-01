@@ -130,12 +130,18 @@ export async function sendLoginLinkAction(email: string) {
   }
 
   const supabase = await createSupabaseServerClient();
+
+  // Keep the link on the domain the user started from (see signup/actions.ts
+  // for the reasoning; Supabase otherwise pins links to the Site URL).
+  const host = h.get('x-forwarded-host') || h.get('host') || '';
+  const proto = h.get('x-forwarded-proto') || 'https';
+  const emailRedirectTo = host ? `${proto}://${host}/auth/callback` : undefined;
+
   const { error } = await supabase.auth.signInWithOtp({
     email: normalizedEmail,
     options: {
       shouldCreateUser: false,
-      // The link lands on /auth/callback which routes to workspace or
-      // onboarding depending on whether they have a company yet.
+      ...(emailRedirectTo ? { emailRedirectTo } : {}),
     },
   });
 

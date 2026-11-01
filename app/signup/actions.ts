@@ -38,12 +38,20 @@ export async function sendSignupLinkAction(email: string): Promise<SignupLinkRes
   }
 
   const supabase = await createSupabaseServerClient();
+
+  // Keep the link on the domain the user started from (testing alias vs
+  // app.quote-core.com). Without emailRedirectTo, Supabase builds the link
+  // against the project Site URL (app.quote-core.com), silently moving a
+  // testing signup onto production. All our hosts are allowlisted.
+  const host = h.get('x-forwarded-host') || h.get('host') || '';
+  const proto = h.get('x-forwarded-proto') || 'https';
+  const emailRedirectTo = host ? `${proto}://${host}/auth/callback` : undefined;
+
   const { error } = await supabase.auth.signInWithOtp({
     email: normalizedEmail,
     options: {
       shouldCreateUser: true,
-      // The link lands on /auth/callback which auto-provisions the free
-      // workspace for new emails and signs existing users straight in.
+      ...(emailRedirectTo ? { emailRedirectTo } : {}),
     },
   });
 
