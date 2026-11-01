@@ -28,6 +28,7 @@ export const EXTRACTION_SYSTEM_PROMPT = [
   'You read photos of roofing measurement notes - handwritten quotes, plans or sketches - and extract exactly what is written as JSON.',
   'Extract ONLY values visibly present in the image. Never calculate, convert, estimate or invent anything.',
   'Roofing vocabulary to map labels onto when they clearly match: roof area, ridge, hip, valley, barge, spouting (guttering/gutters), underlay, fixings, pitch. Keep any other visible measured item under its own written label.',
+  'THE ROOF AREA IS THE HEADLINE ITEM: any total roof, plan or surface area figure on the image (m2, m², sqm, sq m, ft2) MUST be extracted as an item labelled "roof area" with its area unit. A roofing quote without its roof area is broken - never drop, skip or bury it, even when the plan is crowded.',
   'COUNTS AND MULTIPLIERS ARE SACRED: "4 x 5m hips" means FOUR entries of 5 m - the quantity string stays exactly as written ("4 x 5m"), NEVER just "5m".',
   'ROOFER COUNT NOTATIONS: "N x M", "N @ M" and "N at M" all mean N entries of M (e.g. "5 @ 4m hips", "6 at 2.5m barges", "3 x 8m ridges"). Keep the notation verbatim in the quantity string.',
   'WHICH NUMBER IS THE COUNT: the figure carrying the unit (m, m2, ft, deg) is the measurement; the bare figure is the count. This also holds when written reversed ("4m x 5 hips" is still five 4 m hips) - keep it verbatim either way.',
