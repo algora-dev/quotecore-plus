@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import { publicPricing } from "@/lib/public-pricing";
+import { workflowCallHref } from "@/lib/booking";
+
+const bookingHref = workflowCallHref;
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -149,7 +152,7 @@ export default function Post() {
         <li>Newer platform - integration ecosystem still growing</li>
       </ul>
 
-      <p><a href="/free-trial">Get started with QuoteCore+</a></p>
+      <p><Link href="/signup">Create a free workspace</Link>, or <Link href={bookingHref}>book a free 20-minute call with Shaun</Link>.</p>
 
       <p>QuoteCore+ also includes a <a href="/suppliers">supplier directory</a> where roofing and construction suppliers can publish their catalogues and get found by contractors and AI search:</p>
 
@@ -274,8 +277,8 @@ export default function Post() {
 
       <hr />
 
-      <h2>Try the free tools before you decide</h2>
-      <p>Not ready to commit to a platform yet? Start with the <Link href="/free-roofing-takeoff-builder">free roof takeoff builder</Link> - enter your roof measurements and get instant material quantities and indicative pricing. No signup, no card, no download. Then when you are ready for the full quoting workflow, <Link href="/free-trial">get started with QuoteCore+</Link>.</p>
+      <h2>Get started</h2>
+      <p>Ready to see it for yourself? <Link href="/signup">Create a free workspace</Link> and start measuring, pricing and quoting in metric. Prefer a walkthrough first? <Link href={bookingHref}>Book a free 20-minute call with Shaun</Link> and we will map the workflow to your jobs.</p>
 
     </div>
   );

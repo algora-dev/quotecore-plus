@@ -59,7 +59,7 @@
 .workflowRail[data-count="6"] li:nth-child(3n) { border-right: 0; }
 .workflowRail li { position: relative; min-height: 178px; padding: 27px 25px; border-right: 1px solid rgba(255,255,255,.12); }
 .workflowRail li:last-child { border-right: 0; }
-.workflowRail li:not(:last-child)::after { content: 'â†’'; position: absolute; top: 26px; right: -8px; z-index: 2; color: #ff8a52; font-size: 16px; }
+.workflowRail li:not(:last-child)::after { content: '\2192'; position: absolute; top: 26px; right: -8px; z-index: 2; color: #ff8a52; font-size: 16px; }
 .stepNo { display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 27px; border: 1px solid rgba(255,149,97,.35); border-radius: 999px; color: #ff9b6c; background: rgba(255,107,53,.08); font-size: 10px; font-weight: 750; letter-spacing: .06em; }
 .workflowRail h3 { margin: 19px 0 0; color: #fff; font-size: 18px; line-height: 1.25; letter-spacing: -.025em; }
 .workflowRail p { margin: 9px 0 0; color: #aeb7c5; font-size: 13px; line-height: 1.65; }

@@ -93,8 +93,8 @@ export default function NzLongRunRoofingEstimatingPage() {
         eyebrow="NZ long-run roofing estimating"
         title={<>Long-run roofing estimating for hips, valleys and offcuts.</>}
         lead="Roof area alone does not tell you how much long-run roofing to buy. Here is why, and how to plan cut-to-length material properly before the price is fixed."
-        primary={{ href: bookingHref, label: 'Book a free 20-minute workflow call' }}
-        secondary={{ href: '/free-roof-takeoff', label: 'Try the free roof takeoff' }}
+        primary={{ href: bookingHref, label: 'Book a free 20-minute call with Shaun' }}
+        secondary={{ href: '/signup', label: 'Create a free workspace' }}
         proof={['Cut-to-length sheeting', 'Hips, valleys and angled cuts', 'Reusable offcut planning']}
       />
 
@@ -219,7 +219,7 @@ export default function NzLongRunRoofingEstimatingPage() {
             items={[
               {
                 title: 'Digital roof takeoff',
-                body: <p>Measure the roof in metric from plans or on site. The geometry feeds everything downstream. <Link href="/free-roof-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Try it free</Link>.</p>,
+                body: <p>Measure the roof in metric from plans or on site. The geometry feeds everything downstream.</p>,
               },
               {
                 title: 'Offcut Optimiser',
@@ -241,28 +241,22 @@ export default function NzLongRunRoofingEstimatingPage() {
         <Container>
           <SectionHeader
             eyebrow="Next steps"
-            title="See it on a roof like yours."
-            lead="The fastest route is to measure a real roof free, or let us walk your current long-run process with you."
+            title="Two ways to start."
+            lead="Book a free 20-minute call with Shaun to walk your long-run process, or create a free workspace and explore the workflow yourself."
           />
           <ConversionPaths
             items={[
               {
-                title: 'Try the free roof takeoff',
-                body: 'Measure a roof plan in the browser and see the geometry that sits underneath cut planning.',
-                href: '/free-roof-takeoff',
-                label: 'Open the free roof takeoff',
-              },
-              {
-                title: 'Book a free 20-minute call',
-                body: 'Show us how you currently estimate long-run work and we will walk the workflow against your process.',
+                title: 'Book a free 20-minute call with Shaun',
+                body: 'Show us how you currently estimate long-run work and we will walk the workflow against your process. No obligation.',
                 href: bookingHref,
                 label: 'Book the call',
               },
               {
-                title: 'See pricing',
-                body: 'Add Offcut Optimiser in the pricing builder and see the resulting monthly subscription.',
-                href: '/pricing',
-                label: 'See pricing',
+                title: 'Create a free workspace',
+                body: 'Set up your workspace and start measuring, pricing and quoting in metric.',
+                href: '/signup',
+                label: 'Create a free workspace',
               },
             ]}
           />
@@ -281,7 +275,6 @@ export default function NzLongRunRoofingEstimatingPage() {
             items={[
               { href: '/nz/roofing-quoting-software', title: 'Roofing quoting software NZ', body: 'The full NZ quoting workflow from measurement to invoice, including long-run roofing.' },
               { href: '/features/offcut-optimiser', title: 'Offcut Optimiser', body: 'The feature that generates whole-roof cutting plans from a reviewed takeoff.' },
-              { href: '/free-roof-takeoff', title: 'Free roof takeoff', body: 'Measure a roof plan free in the browser, no signup.' },
               { href: '/roofing-estimating-software', title: 'Roofing estimating software', body: 'The global view of the measure to price workflow.' },
             ]}
           />
@@ -291,8 +284,8 @@ export default function NzLongRunRoofingEstimatingPage() {
       <FinalCta
         title="Know the sheets before you fix the price."
         body="Plan the cuts and purchased lengths before the quote is sent, and the margin survives contact with the material order."
-        primary={{ href: bookingHref, label: 'Book a free 20-minute workflow call' }}
-        secondary={{ href: '/free-roof-takeoff', label: 'Try the free roof takeoff' }}
+        primary={{ href: bookingHref, label: 'Book a free 20-minute call with Shaun' }}
+        secondary={{ href: '/signup', label: 'Create a free workspace' }}
       />
       <div style={{ height: 72 }} />
     </PageScaffold>

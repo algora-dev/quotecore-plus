@@ -62,12 +62,12 @@ const faqs: FaqItem[] = [
   },
   {
     question: 'How much does QuoteCore+ cost?',
-    answer: `Subscription configurations are billed in USD and start from US$${publicPricing.monthlyMin} per month through the pricing builder. The free tools, including the roof takeoff, need no signup.`,
+    answer: `Subscription configurations are billed in USD and start from US$${publicPricing.monthlyMin} per month through the pricing builder.`,
   },
   {
     question: 'Can I try it before paying?',
     answer:
-      'Yes. The free roof takeoff and calculators work instantly with no signup, the interactive demo shows the quoting workflow end to end, and you can book a free 20-minute workflow call to see it against your own jobs.',
+      'Yes. Create a free workspace and start measuring, pricing and quoting, or book a free 20-minute call with Shaun to see the workflow walked through against your own jobs.',
   },
   {
     question: 'Is this different from the global QuoteCore+ product?',
@@ -96,8 +96,8 @@ export default function NzRoofingQuotingSoftwarePage() {
         eyebrow="For New Zealand roofers"
         title={<>Roofing quoting software for New Zealand roofers.</>}
         lead="Measure the roof, calculate quantities, apply your own pricing, build the customer quote, then carry accepted work into material orders and invoices. One connected workflow built for measurement-driven roofing."
-        primary={{ href: bookingHref, label: 'Book a free 20-minute workflow call' }}
-        secondary={{ href: '/free-roof-takeoff', label: 'Try the free roof takeoff' }}
+        primary={{ href: bookingHref, label: 'Book a free 20-minute call with Shaun' }}
+        secondary={{ href: '/signup', label: 'Create a free workspace' }}
         proof={['Metric measurements', 'Long-run and cut-to-length roofing', 'NZD quoting with GST', 'Your own material and labour pricing']}
       />
 
@@ -226,34 +226,22 @@ export default function NzRoofingQuotingSoftwarePage() {
         <Container>
           <SectionHeader
             eyebrow="Start wherever suits you"
-            title="Try the workflow free, or let us walk your process with you."
-            lead="No signup is needed for the free tools. When you want the full picture, the interactive demo and a short call show how the workflow fits your roofing business."
+            title="Two ways to start."
+            lead="Book a free 20-minute call with Shaun to see the workflow against your own jobs, or create a free workspace and take it from there."
           />
           <ConversionPaths
             items={[
               {
-                title: 'Try the free roof takeoff',
-                body: 'Measure a roof plan in the browser and see the quantities that feed the quote. No signup.',
-                href: '/free-roof-takeoff',
-                label: 'Open the free roof takeoff',
-              },
-              {
-                title: 'Watch the interactive demo',
-                body: 'See the measure to quote to order to invoice workflow running end to end.',
-                href: '/takeoff-demo',
-                label: 'Open the demo',
-              },
-              {
-                title: 'See pricing',
-                body: 'Build your configuration in the pricing builder and see the monthly subscription.',
-                href: '/pricing',
-                label: 'See pricing',
-              },
-              {
-                title: 'Book a free 20-minute workflow call',
-                body: 'Show us how you quote long-run and measured roofing work and we will map the workflow to it.',
+                title: 'Book a free 20-minute call with Shaun',
+                body: 'Show us how you quote long-run and measured roofing work and we will map the workflow to it. No obligation.',
                 href: bookingHref,
                 label: 'Book the call',
+              },
+              {
+                title: 'Create a free workspace',
+                body: 'Set up your workspace and start measuring, pricing and quoting in metric.',
+                href: '/signup',
+                label: 'Create a free workspace',
               },
             ]}
           />
@@ -273,7 +261,6 @@ export default function NzRoofingQuotingSoftwarePage() {
               { href: '/nz/long-run-roofing-estimating', title: 'Long-run roofing estimating guide', body: 'Why roof area alone does not tell you how much long-run roofing to buy, and how to plan for hips, valleys and offcuts.' },
               { href: '/roofing-quoting-software', title: 'Roofing quoting software', body: 'The global product page for the full roofing quoting workflow.' },
               { href: '/features/offcut-optimiser', title: 'Offcut Optimiser', body: 'Generated whole-roof cutting plans for long-run and metal roofing.' },
-              { href: '/free-roof-takeoff', title: 'Free roof takeoff', body: 'Measure a roof plan free in the browser, no signup.' },
             ]}
           />
         </Container>
@@ -282,8 +269,8 @@ export default function NzRoofingQuotingSoftwarePage() {
       <FinalCta
         title="Quote NZ roofing work from the measurement up."
         body="Measure, price with your own rates, quote in NZD with GST, then carry accepted work into orders and invoices without re-typing the job."
-        primary={{ href: bookingHref, label: 'Book a free 20-minute workflow call' }}
-        secondary={{ href: '/free-roof-takeoff', label: 'Try the free roof takeoff' }}
+        primary={{ href: bookingHref, label: 'Book a free 20-minute call with Shaun' }}
+        secondary={{ href: '/signup', label: 'Create a free workspace' }}
       />
       <div style={{ height: 72 }} />
     </PageScaffold>
