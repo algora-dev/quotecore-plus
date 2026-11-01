@@ -95,7 +95,7 @@ export default function SmartAssistantPage() {
         </Container>
       </Section>
 
-      <Section tone="soft">
+      <Section tone="dark">
         <Container>
           <SectionHeader eyebrow="A different interface" title="Ask for the outcome instead of remembering the clicks." lead="Smart Assistant is most useful when the task is easier to explain than the software path needed to complete it." />
           <WorkflowRail steps={[

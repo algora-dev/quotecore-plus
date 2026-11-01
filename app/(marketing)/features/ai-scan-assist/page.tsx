@@ -82,7 +82,7 @@ export default function RoofScanAssistPage() {
         </Container>
       </Section>
 
-      <Section tone="soft">
+      <Section tone="dark">
         <Container>
           <SectionHeader eyebrow="Save attention, not only minutes" title="A fast scan is useful even when you are already good at manual takeoff." lead="A competent estimator might trace a straightforward roof in a few minutes. The difference is that manual tracing occupies those minutes. Roof Scan Assist can do the repetitive work while you use that attention somewhere else." />
           <WorkflowRail steps={[

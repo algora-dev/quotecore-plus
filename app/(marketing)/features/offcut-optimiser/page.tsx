@@ -80,7 +80,7 @@ export default function OffcutOptimiserPage() {
         </Container>
       </Section>
 
-      <Section tone="soft">
+      <Section tone="dark">
         <Container>
           <SectionHeader eyebrow="Quote it before you win it" title="Do not discover the real material requirement after the customer has accepted your price." lead="Many roofers only spend time building the detailed cut list after they win the job. That is efficient until the final cut list reveals the quote did not allow enough material. Offcut Optimiser moves that check forward into estimating." />
           <WorkflowRail steps={[
