@@ -11,7 +11,7 @@
  * 4. Cross-domain sitemap contamination
  * 5. Missing H1 in page files
  * 6. Blog posts not in sitemap (uses shared source now)
- * 7. Hreflang reciprocity (global ↔ NZ)
+ * 7. Hreflang reciprocity (global â†” NZ)
  * 8. Coming-soon docs pages in sitemap
  * 9. Schema markup presence on key pages
  * 10. Canonical URL correctness (must match SITE_URL pattern)
@@ -46,7 +46,7 @@ function walkDir(dir, ext, callback) {
   }
 }
 
-// ── Check 1: Marketing pages should have canonical or metadata helper ──────
+// â”€â”€ Check 1: Marketing pages should have canonical or metadata helper â”€â”€â”€â”€â”€â”€
 function checkMarketingCanonicals() {
   const marketingDir = join(APP_DIR, '(marketing)');
   walkDir(marketingDir, '.tsx', (file) => {
@@ -59,7 +59,7 @@ function checkMarketingCanonicals() {
   });
 }
 
-// ── Check 2: No production noindex in layouts ──────────────────────────────
+// â”€â”€ Check 2: No production noindex in layouts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkNoProductionNoindex() {
   walkDir(APP_DIR, '.tsx', (file) => {
     if (!file.endsWith('layout.tsx')) return;
@@ -72,7 +72,7 @@ function checkNoProductionNoindex() {
   });
 }
 
-// ── Check 3: Sitemap should not contain app.quote-core.com URLs ────────────
+// â”€â”€ Check 3: Sitemap should not contain app.quote-core.com URLs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkSitemapNoAppUrls() {
   const sitemapFile = join(APP_DIR, 'sitemap.ts');
   if (!existsSync(sitemapFile)) return;
@@ -82,11 +82,11 @@ function checkSitemapNoAppUrls() {
     errors.push('Homepage sitemap URL must use slashless SITE_URL to match the rendered canonical');
   }
   if (codeOnly.includes('app.quote-core.com')) {
-    errors.push('Sitemap contains app.quote-core.com URLs — should only contain quote-core.com URLs');
+    errors.push('Sitemap contains app.quote-core.com URLs â€” should only contain quote-core.com URLs');
   }
 }
 
-// ── Check 4: Blog posts shared source integrity ───────────────────────────
+// â”€â”€ Check 4: Blog posts shared source integrity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkBlogPostsSharedSource() {
   const blogPostsFile = join(APP_DIR, 'lib', 'blog-posts.ts');
   const sitemapFile = join(APP_DIR, 'sitemap.ts');
@@ -99,12 +99,12 @@ function checkBlogPostsSharedSource() {
 
   // Sitemap must import from shared source
   if (!sitemapContent.includes('blog-posts')) {
-    errors.push('sitemap.ts does not import from blog-posts.ts — blog sitemap may be manually duplicated');
+    errors.push('sitemap.ts does not import from blog-posts.ts â€” blog sitemap may be manually duplicated');
   }
 
   // Blog page must import from shared source
   if (!blogPageContent.includes('blog-posts')) {
-    errors.push('blog/[slug]/page.tsx does not import from blog-posts.ts — blog metadata may be duplicated');
+    errors.push('blog/[slug]/page.tsx does not import from blog-posts.ts â€” blog metadata may be duplicated');
   }
 
   // Extract slugs from shared source
@@ -115,7 +115,7 @@ function checkBlogPostsSharedSource() {
   }
 }
 
-// ── Check 5: All layout.tsx files should have a default export ─────────────
+// â”€â”€ Check 5: All layout.tsx files should have a default export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkLayoutExports() {
   walkDir(APP_DIR, '.tsx', (file) => {
     if (!file.endsWith('layout.tsx')) return;
@@ -126,12 +126,12 @@ function checkLayoutExports() {
   });
 }
 
-// ── Check 6: Hreflang — page-level only, no site-wide layout emission ──────
+// â”€â”€ Check 6: Hreflang â€” page-level only, no site-wide layout emission â”€â”€â”€â”€â”€â”€
 function checkHreflangReciprocity() {
   // Helper file must exist
   const hreflangHelper = join(ROOT, 'lib', 'seo', 'hreflang.ts');
   if (!existsSync(hreflangHelper)) {
-    errors.push('Missing app/lib/seo/hreflang.ts helper — page-level hreflang cannot work without it');
+    errors.push('Missing app/lib/seo/hreflang.ts helper â€” page-level hreflang cannot work without it');
   }
 
   // Layouts must NOT emit site-wide hreflang languages
@@ -140,7 +140,7 @@ function checkHreflangReciprocity() {
     const content = readFileSync(marketingLayout, 'utf-8');
     const alternatesMatch = content.match(/alternates:\s*\{[^}]*\}/s);
     if (alternatesMatch && alternatesMatch[0].includes('languages')) {
-      errors.push('Marketing layout emits site-wide hreflang languages — must be page-level only to avoid pointing unrelated pages to NZ homepage');
+      errors.push('Marketing layout emits site-wide hreflang languages â€” must be page-level only to avoid pointing unrelated pages to NZ homepage');
     }
   }
 
@@ -152,7 +152,7 @@ function checkHreflangReciprocity() {
     const content = readFileSync(nzLayout, 'utf-8');
     const alternatesMatch = content.match(/alternates:\s*\{[^}]*\}/s);
     if (alternatesMatch && alternatesMatch[0].includes('languages')) {
-      errors.push('NZ root layout emits site-wide hreflang languages — must be page-level only');
+      errors.push('NZ root layout emits site-wide hreflang languages â€” must be page-level only');
     }
     if (!existsSync(nzHreflangHelper)) {
       warnings.push('NZ site missing lib/hreflang.ts helper');
@@ -173,7 +173,7 @@ function checkHreflangReciprocity() {
     if (globalFile) {
       const content = readFileSync(globalFile, 'utf-8');
       if (!content.includes('hreflangLanguages')) {
-        warnings.push(`Global page ${path} missing hreflangLanguages import — should have hreflang if it has a regional equivalent`);
+        warnings.push(`Global page ${path} missing hreflangLanguages import â€” should have hreflang if it has a regional equivalent`);
       }
     }
     // Also check for a layout.tsx in the same dir (for client-component pages)
@@ -182,7 +182,7 @@ function checkHreflangReciprocity() {
       if (existsSync(layoutFile)) {
         const layoutContent = readFileSync(layoutFile, 'utf-8');
         if (!layoutContent.includes('hreflangLanguages')) {
-          warnings.push(`Global layout for ${path} missing hreflangLanguages — client component pages need a layout with hreflang`);
+          warnings.push(`Global layout for ${path} missing hreflangLanguages â€” client component pages need a layout with hreflang`);
         }
       }
     }
@@ -193,7 +193,7 @@ function checkHreflangReciprocity() {
   if (existsSync(globalHomeLayout)) {
     const content = readFileSync(globalHomeLayout, 'utf-8');
     if (!content.includes('hreflangLanguages')) {
-      errors.push('Global home layout missing hreflangLanguages — homepage must have hreflang');
+      errors.push('Global home layout missing hreflangLanguages â€” homepage must have hreflang');
     }
   } else {
     warnings.push('Global site missing app/(marketing)/home/layout.tsx for homepage hreflang');
@@ -203,7 +203,7 @@ function checkHreflangReciprocity() {
   if (existsSync(globalContactLayout)) {
     const content = readFileSync(globalContactLayout, 'utf-8');
     if (!content.includes('hreflangLanguages')) {
-      errors.push('Global contact layout missing hreflangLanguages — contact page must have hreflang');
+      errors.push('Global contact layout missing hreflangLanguages â€” contact page must have hreflang');
     }
   } else {
     warnings.push('Global site missing app/(marketing)/contact/layout.tsx for contact hreflang');
@@ -214,7 +214,7 @@ function checkHreflangReciprocity() {
   if (existsSync(nzHomeLayout)) {
     const content = readFileSync(nzHomeLayout, 'utf-8');
     if (!content.includes('hreflangLanguages')) {
-      errors.push('NZ home layout missing hreflangLanguages — homepage must have hreflang');
+      errors.push('NZ home layout missing hreflangLanguages â€” homepage must have hreflang');
     }
   } else {
     warnings.push('NZ site missing app/(home)/layout.tsx for homepage hreflang');
@@ -224,14 +224,14 @@ function checkHreflangReciprocity() {
   if (existsSync(nzContactLayout)) {
     const content = readFileSync(nzContactLayout, 'utf-8');
     if (!content.includes('hreflangLanguages')) {
-      errors.push('NZ contact layout missing hreflangLanguages — contact page must have hreflang');
+      errors.push('NZ contact layout missing hreflangLanguages â€” contact page must have hreflang');
     }
   } else {
     warnings.push('NZ site missing app/contact/layout.tsx for contact hreflang');
   }
 }
 
-// ── Check 7: Coming-soon docs should NOT be in sitemap ─────────────────────
+// â”€â”€ Check 7: Coming-soon docs should NOT be in sitemap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkComingSoonDocsFiltered() {
   const treeFile = join(APP_DIR, 'lib', 'docs', 'tree.ts');
   const sitemapFile = join(APP_DIR, 'sitemap.ts');
@@ -242,16 +242,16 @@ function checkComingSoonDocsFiltered() {
 
   // sitemap.ts should use getPublishedSlugs, not getAllSlugs
   if (sitemapContent.includes('getAllSlugs') && !sitemapContent.includes('getPublishedSlugs')) {
-    errors.push('sitemap.ts uses getAllSlugs — should use getPublishedSlugs to exclude coming-soon pages');
+    errors.push('sitemap.ts uses getAllSlugs â€” should use getPublishedSlugs to exclude coming-soon pages');
   }
 
   // tree.ts should have getPublishedSlugs function
   if (!treeContent.includes('getPublishedSlugs')) {
-    warnings.push('tree.ts missing getPublishedSlugs function — coming-soon pages may appear in sitemap');
+    warnings.push('tree.ts missing getPublishedSlugs function â€” coming-soon pages may appear in sitemap');
   }
 }
 
-// ── Check 8: Docs pages should have canonical URLs ─────────────────────────
+// â”€â”€ Check 8: Docs pages should have canonical URLs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkDocsCanonicals() {
   const docsPage = join(APP_DIR, '(public)', 'docs', '[[...slug]]', 'page.tsx');
   if (!existsSync(docsPage)) return;
@@ -261,7 +261,7 @@ function checkDocsCanonicals() {
   }
 }
 
-// ── Check 9: SoftwareApplication not on every page (should be product only) ─
+// â”€â”€ Check 9: SoftwareApplication not on every page (should be product only) â”€
 function checkSoftwareApplicationScope() {
   const marketingLayout = join(APP_DIR, '(marketing)', 'layout.tsx');
   if (!existsSync(marketingLayout)) return;
@@ -273,12 +273,12 @@ function checkSoftwareApplicationScope() {
   if (layoutSchemaMatch) {
     const schemaBlock = layoutSchemaMatch[0];
     if (schemaBlock.includes('SoftwareApplication') || schemaBlock.includes('buildSoftwareApplicationSchema')) {
-      warnings.push('Marketing layout combinedSchema includes SoftwareApplication — should be on product pages only');
+      warnings.push('Marketing layout combinedSchema includes SoftwareApplication â€” should be on product pages only');
     }
   }
 }
 
-// ── Check 10: Canonical URL correctness ────────────────────────────────────
+// â”€â”€ Check 10: Canonical URL correctness â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkCanonicalCorrectness() {
   const seoFile = join(APP_DIR, 'lib', 'seo.ts');
   if (!existsSync(seoFile)) return;
@@ -304,7 +304,7 @@ function checkCanonicalCorrectness() {
   });
 }
 
-// ── Check 11: Sitemap/robots conflicts ─────────────────────────────────────
+// â”€â”€ Check 11: Sitemap/robots conflicts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkSitemapRobotsConflicts() {
   const sitemapFile = join(APP_DIR, 'sitemap.ts');
   const robotsFile = join(APP_DIR, 'robots.ts');
@@ -360,7 +360,7 @@ function checkSitemapRobotsConflicts() {
   }
 }
 
-// ── Check 12: Non-self-canonicals ──────────────────────────────────────────
+// â”€â”€ Check 12: Non-self-canonicals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkNonSelfCanonicals() {
   const marketingDir = join(APP_DIR, '(marketing)');
   const publicDir = join(APP_DIR, '(public)');
@@ -388,7 +388,7 @@ function checkNonSelfCanonicals() {
   checkDir(publicDir);
 }
 
-// ── Check 13: Duplicate title suffixes ─────────────────────────────────────
+// â”€â”€ Check 13: Duplicate title suffixes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkDuplicateTitleSuffixes() {
   const titleSuffixPattern = /title:\s*['"`]([^'"`]+)['"`]/g;
   const suffixCounts = {};
@@ -421,7 +421,7 @@ function checkDuplicateTitleSuffixes() {
   }
 }
 
-// ── Check 14: Client-only JSON-LD ──────────────────────────────────────────
+// â”€â”€ Check 14: Client-only JSON-LD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkClientOnlyJsonLd() {
   walkDir(APP_DIR, '.tsx', (file) => {
     if (!file.endsWith('page.tsx')) return;
@@ -442,7 +442,7 @@ function checkClientOnlyJsonLd() {
   });
 }
 
-// ── Check 15: Missing H1 in server-rendered pages ──────────────────────────
+// â”€â”€ Check 15: Missing H1 in server-rendered pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkMissingH1() {
   // Only check marketing and public server components (not auth pages - they're noindex)
   const checkDirs = [
@@ -519,7 +519,7 @@ function checkMissingH1() {
   }
 }
 
-// ── Check 16: Orphan tool pages ────────────────────────────────────────────
+// â”€â”€ Check 16: Orphan tool pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function checkOrphanToolPages() {
   const freeTools = [
     '/free-roofing-calculator',
@@ -575,81 +575,52 @@ function checkDualDomainContracts() {
   if (existsSync(globalHelper)) {
     const helper = readFileSync(globalHelper, 'utf-8');
     if (!helper.includes('en:')) errors.push('Global hreflang helper must expose generic en');
+    const helperCode = helper.split('\n').filter((line) => !line.trim().startsWith('*') && !line.trim().startsWith('//')).join('\n');
+    if (helperCode.includes('quote-core.co.nz')) {
+      errors.push('Global hreflang helper still references the retired quote-core.co.nz domain');
+    }
     if (helper.includes('"en-US"') || helper.includes('"en-GB"')) {
       errors.push('Global hreflang helper must not map one URL as separate en-US and en-GB pages');
     }
   }
 
-  const nzCandidates = [
-    join(ROOT, '..', 'quotecore-nz-development'),
-    join(ROOT, '..', 'quotecore-nz'),
-  ];
-  const nzRoot = nzCandidates.find((candidate) => existsSync(join(candidate, 'app')));
-  if (!nzRoot) {
-    warnings.push('NZ sibling repo not found; skipped reciprocal dual-domain source checks');
-    return;
-  }
-
-  const nzHelper = join(nzRoot, 'lib', 'seo', 'hreflang.ts');
-  if (!existsSync(nzHelper)) {
-    errors.push('NZ site missing lib/seo/hreflang.ts');
-  } else {
-    const helper = readFileSync(nzHelper, 'utf-8');
-    if (!helper.includes('en:')) errors.push('NZ hreflang helper must expose generic en');
-    if (helper.includes('"en-US"') || helper.includes('"en-GB"')) {
-      errors.push('NZ hreflang helper must not expose duplicate en-US/en-GB alternates');
-    }
-  }
-
-  walkDir(join(nzRoot, 'app'), '.tsx', (file) => {
-    if (!file.endsWith('page.tsx') && !file.endsWith('layout.tsx')) return;
+  // NZ domain consolidation (2026-11-01): quote-core.co.nz is retired to a
+  // permanent redirect. No public .com page may link to it, and the only
+  // reciprocal en-NZ hreflang pair is the global/NZ roofing quoting pages.
+  const retiredLink = /href\s*=\s*["']https?:\/\/(?:www\.)?quote-core\.co\.nz/;
+  const scanRetiredLink = (file) => {
     const content = readFileSync(file, 'utf-8');
-    if (/canonical:\s*["']https:\/\/quote-core\.com/.test(content)) {
-      errors.push(`NZ page canonicalises to global domain: ${file}`);
+    if (retiredLink.test(content)) {
+      errors.push('Page links to retired NZ domain: ' + file);
     }
-    if (/priceCurrency:\s*["']USD["']/.test(content)) {
-      errors.push(`NZ public schema uses USD instead of NZD: ${file}`);
-    }
-  });
+  };
+  walkDir(APP_DIR, '.tsx', scanRetiredLink);
+  walkDir(join(ROOT, 'components'), '.tsx', scanRetiredLink);
 
-  const reciprocal = [
-    'features',
-    'features/digital-roof-takeoff',
-    'features/smart-components',
-    'features/material-ordering',
-    'features/invoicing',
-    'features/supplier-resources',
-    'roofing-quoting-software',
-    'construction-quoting-software',
-    'about',
-    'contact',
-    'services',
-    'free-trial',
+  const reciprocalPairs = [
+    {
+      route: 'roofing-quoting-software',
+      globalFile: join(APP_DIR, '(marketing)', 'roofing-quoting-software', 'page.tsx'),
+      nzFile: join(APP_DIR, '(marketing)', 'nz', 'roofing-quoting-software', 'page.tsx'),
+    },
   ];
-  for (const route of reciprocal) {
-    const globalCandidates = [
-      join(APP_DIR, '(marketing)', route, 'page.tsx'),
-      join(APP_DIR, '(marketing)', route, 'layout.tsx'),
-      join(APP_DIR, route, 'page.tsx'),
-      join(APP_DIR, route, 'layout.tsx'),
-    ];
-    const nzCandidatesForRoute = [
-      join(nzRoot, 'app', route, 'page.tsx'),
-      join(nzRoot, 'app', route, 'layout.tsx'),
-    ];
-    const globalFiles = globalCandidates.filter(existsSync);
-    const nzFiles = nzCandidatesForRoute.filter(existsSync);
-    if (!globalFiles.length || !nzFiles.length) continue;
-    if (!globalFiles.some((file) => readFileSync(file, 'utf-8').includes('hreflangLanguages'))) {
-      errors.push(`Global reciprocal route missing hreflang: /${route}`);
+  for (const pair of reciprocalPairs) {
+    if (!existsSync(pair.globalFile) || !existsSync(pair.nzFile)) {
+      errors.push(`Reciprocal NZ pair incomplete for /${pair.route}`);
+      continue;
     }
-    if (!nzFiles.some((file) => readFileSync(file, 'utf-8').includes('hreflangLanguages'))) {
-      errors.push(`NZ reciprocal route missing hreflang: /${route}`);
+    const globalContent = readFileSync(pair.globalFile, 'utf-8');
+    const nzContent = readFileSync(pair.nzFile, 'utf-8');
+    if (!globalContent.includes('hreflangLanguages') || !globalContent.includes('/nz/roofing-quoting-software')) {
+      errors.push(`Global reciprocal route missing NZ hreflang: /${pair.route}`);
+    }
+    if (!nzContent.includes('hreflangLanguages')) {
+      errors.push(`NZ reciprocal route missing hreflang: /nz/${pair.route}`);
     }
   }
 }
 
-// ── Run all checks ─────────────────────────────────────────────────────────
+// â”€â”€ Run all checks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 console.log('Running SEO checks...\n');
 checkMarketingCanonicals();
 checkNoProductionNoindex();
@@ -671,16 +642,16 @@ checkDualDomainContracts();
 
 // Report
 if (warnings.length > 0) {
-  console.log('⚠️  Warnings:');
+  console.log('âš ï¸  Warnings:');
   for (const w of warnings) console.log(`   ${w}`);
   console.log();
 }
 
 if (errors.length > 0) {
-  console.error('❌ Errors:');
+  console.error('âŒ Errors:');
   for (const e of errors) console.error(`   ${e}`);
   console.log(`\n${errors.length} error(s), ${warnings.length} warning(s)`);
   process.exit(1);
 }
 
-console.log(`✅ All checks passed. ${warnings.length} warning(s).`);
+console.log(`âœ… All checks passed. ${warnings.length} warning(s).`);

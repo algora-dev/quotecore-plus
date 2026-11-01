@@ -72,7 +72,6 @@ export default function SiteFooter() {
               <Link href="/terms" className={linkClass}>Terms</Link>
               <Link href="/cookie-policy" className={linkClass}>Cookie policy</Link>
             </div>
-            <a href="https://www.quote-core.co.nz" className="mt-6 inline-flex min-h-11 items-center rounded-full border border-zinc-300 px-4 text-sm font-medium text-zinc-800 transition-colors hover:border-[#FF6B35]/50 hover:text-zinc-950">New Zealand site</a>
           </nav>
         </div>
         <div className="mt-10 flex flex-col gap-2 border-t border-zinc-200 pt-6 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">

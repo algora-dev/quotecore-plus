@@ -99,6 +99,7 @@ const PUBLIC_PATHS = [
   '/construction-takeoff-software',
   '/free-construction-takeoff-tools', // Free high-value takeoff tool discovery page
   '/roofing-quoting-software',
+  '/nz',               // NZ localized landing pages (/nz/roofing-quoting-software, /nz/long-run-roofing-estimating)
   '/roofing-estimating-software',
   '/roofing-takeoff-software',
   '/fastest-roofing-estimating-software', // Speed benchmark landing page (marketing)

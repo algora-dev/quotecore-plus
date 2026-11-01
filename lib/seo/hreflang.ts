@@ -1,21 +1,30 @@
 /**
- * Hreflang language alternates for pages with genuine regional equivalents
- * on both quote-core.com (global) and quote-core.co.nz (NZ).
+ * Hreflang language alternates.
  *
- * ONLY call this for paths that exist on BOTH sites with equivalent purpose/content.
- * Pages without a regional equivalent must NOT emit hreflang at all.
+ * NZ domain consolidation (2026-11-01): quote-core.co.nz is a permanent
+ * redirect-only domain pointing at quote-core.com. Every page canonicalizes
+ * to the global domain, so the default output declares only generic en +
+ * x-default self-alternates.
  *
- * Keep the approved page map in docs/DUAL_DOMAIN_PAGE_MAP.md in sync.
+ * A page with a localized NZ equivalent passes the /nz path as the second
+ * argument to add the reciprocal en-NZ alternate on the global domain.
+ * The only current pair is the roofing quoting software page:
+ *
+ *   languages: hreflangLanguages('/roofing-quoting-software', '/nz/roofing-quoting-software')
+ *
+ * Pages without a regional equivalent must NOT declare an en-NZ alternate.
  */
 
 const GLOBAL = "https://quote-core.com";
-const NZ = "https://www.quote-core.co.nz";
 
-export function hreflangLanguages(path: string): Record<string, string> {
+export function hreflangLanguages(path: string, nzPath?: string): Record<string, string> {
   const cleanPath = path === "" ? "/" : path.startsWith("/") ? path : `/${path}`;
-  return {
+  const languages: Record<string, string> = {
     en: `${GLOBAL}${cleanPath}`,
-    "en-NZ": `${NZ}${cleanPath}`,
     "x-default": `${GLOBAL}${cleanPath}`,
   };
+  if (nzPath) {
+    languages["en-NZ"] = `${GLOBAL}${nzPath.startsWith("/") ? nzPath : `/${nzPath}`}`;
+  }
+  return languages;
 }

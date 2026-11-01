@@ -175,13 +175,6 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
 
             <div className={styles.menuFooter}>
               <SocialIcons className="justify-start" />
-              <a
-                href="https://www.quote-core.co.nz"
-                className={styles.countryLink}
-                onClick={() => setMenuOpen(false)}
-              >
-                Switch to New Zealand
-              </a>
             </div>
           </div>
         </div>

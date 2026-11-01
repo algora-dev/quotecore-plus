@@ -148,7 +148,7 @@ export default async function RootLayout({
           />
           <Script id="ga4" strategy="afterInteractive">
             {`
-              gtag('set', 'linker', { domains: ['quote-core.com', 'quote-core.co.nz'] });
+              gtag('set', 'linker', { domains: ['quote-core.com'] });
               gtag('js', new Date());
               gtag('config', 'G-HV8F4G8BN1');
             `}

@@ -6,7 +6,7 @@ import { canonicalOrigin } from '@/lib/seo/dual-domain';
  * robots.txt - domain-aware.
  *
  * quote-core.com: allows crawling of all public pages, blocks private/app routes.
- * quote-core.co.nz: same rules, but sitemap + host point to .co.nz.
+ * quote-core.co.nz: retired 2026-11, permanent-redirect domain (no site served here).
  * Preview/staging: blocks all crawling (noindex everything).
  */
 

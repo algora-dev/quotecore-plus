@@ -161,7 +161,7 @@ export default function CompanyPage() {
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">New Zealand</h3>
-              <p className="mt-2 text-sm text-zinc-600">Dedicated NZ site at <a href="https://www.quote-core.co.nz" className="text-[#BD4A1A] hover:underline">quote-core.co.nz</a>. Pricing in NZD. GST included.</p>
+              <p className="mt-2 text-sm text-zinc-600">Supported via the global site. Metric measurements, NZD quoting with GST on customer documents. See the <a href="/nz/roofing-quoting-software" className="text-[#BD4A1A] hover:underline">New Zealand roofing page</a>.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">Australia</h3>

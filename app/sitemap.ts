@@ -31,6 +31,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/roofing-estimating-software`, changeFrequency: 'monthly', priority: 0.9, lastModified: '2026-10-17' },
     { url: `${SITE_URL}/roofing-takeoff-software`, changeFrequency: 'monthly', priority: 0.9, lastModified: '2026-10-17' },
     { url: `${SITE_URL}/fastest-roofing-estimating-software`, changeFrequency: 'monthly', priority: 0.9, lastModified: '2026-10-27' },
+    { url: `${SITE_URL}/nz/roofing-quoting-software`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/nz/long-run-roofing-estimating`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/construction-quoting-software`, changeFrequency: 'monthly', priority: 0.9, lastModified: '2026-10-17' },
   { url: `${SITE_URL}/construction-takeoff-software`, changeFrequency: 'monthly', priority: 0.9, lastModified: '2026-10-17' },
   { url: `${SITE_URL}/free-construction-takeoff-tools`, changeFrequency: 'monthly', priority: 0.9 },

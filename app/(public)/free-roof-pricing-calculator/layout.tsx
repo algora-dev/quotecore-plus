@@ -10,7 +10,6 @@ export const metadata = {
   alternates: {
     canonical: `${SITE_URL}/free-roof-pricing-calculator`,
     languages: {
-      'en-NZ': 'https://www.quote-core.co.nz/roof-cost-calculator-nz',
       'en-US': `${SITE_URL}/free-roof-pricing-calculator`,
       'x-default': `${SITE_URL}/free-roof-pricing-calculator`,
     },

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://quote-core.com/roofing-quoting-software",
-    languages: hreflangLanguages("/roofing-quoting-software"),
+    languages: hreflangLanguages("/roofing-quoting-software", "/nz/roofing-quoting-software"),
   },
 };
 
@@ -577,6 +577,10 @@ export default function RoofingQuotingSoftwarePage() {
             <a href="/roofing-estimating-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Roofing estimating software</p>
               <p className="mt-1 text-sm text-zinc-600">Measure roofs, calculate materials and labour, and build accurate estimates.</p>
+            </a>
+            <a href="/nz/roofing-quoting-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">New Zealand roofers</p>
+              <p className="mt-1 text-sm text-zinc-600">The NZ roofing quoting workflow, metric and long-run ready.</p>
             </a>
             <a href="/roofing-takeoff-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Roofing takeoff software</p>
