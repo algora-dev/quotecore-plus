@@ -46,9 +46,12 @@ function covering(a: WorkingArea, id: () => string): WorkingMeasurement {
 export function createWorkingBrief(input: Record<string, unknown>, context: Record<string, unknown>, concepts: readonly AssistantConcept[], id: () => string = randomUUID): WorkingBrief {
   const siteAddress = input.site_address == null ? null : text(input.site_address, 500, 'Site address');
   const customerName = input.customer_name == null ? '' : text(input.customer_name, 200, 'Customer');
-  // A job title is a label, not a separate identity decision. Prefer the supplied
-  // title; otherwise reuse supplied address/customer rather than interrogating.
-  const jobName = input.job_name == null ? (siteAddress ?? customerName).slice(0, 200) : text(input.job_name, 200, 'Job');
+  // A job title is a label, not a separate identity decision. Owner 2026-11-01:
+  // default the label to the CUSTOMER name (e.g. 'Alex Smith'), never the site
+  // address — the address already has its own field and documents must not show
+  // it twice. Prefer a supplied title; fall back to address only when no
+  // customer name exists either.
+  const jobName = input.job_name == null ? (customerName || siteAddress || '').slice(0, 200) : text(input.job_name, 200, 'Job');
   if (!Array.isArray(input.areas) || input.areas.length > 12) throw new ProposalError('Use at most twelve areas.');
   const areas = input.areas.map(v => area(object(v), id));
   // Owner 2026-10-05 (pass 5): unstated plan/actual becomes a button question.

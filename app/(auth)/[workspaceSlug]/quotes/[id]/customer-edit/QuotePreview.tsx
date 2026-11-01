@@ -116,7 +116,7 @@ export function QuotePreview({
         companyName={companyName} logo={companyLogoUrl} selection={selection}
         companyDetails={<>{companyAddress && <p>{companyAddress}</p>}{companyPhone && <p>{companyPhone}</p>}{companyEmail && <p>{companyEmail}</p>}</>}
         recipientLabel="Prepared for"
-        recipient={<><p><strong>{quote.customer_name}</strong></p>{quote.job_name && <p>{quote.job_name}</p>}{quote.site_address && <p>{quote.site_address}</p>}</>}
+        recipient={<><p><strong>{quote.customer_name}</strong></p>{quote.job_name && quote.job_name.trim().toLowerCase() !== (quote.customer_name ?? '').trim().toLowerCase() && <p>{quote.job_name}</p>}{quote.site_address && quote.site_address.trim().toLowerCase() !== (quote.job_name ?? '').trim().toLowerCase() && quote.site_address.trim().toLowerCase() !== (quote.customer_name ?? '').trim().toLowerCase() && <p>{quote.site_address}</p>}</>}
         meta={<><div className="qc-output-meta-row"><span>Date</span><span>{new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}</span></div>{metadataExtra}</>}
       />
       {showEditButtons && onEditHeader && <button type="button" data-exclude-pdf data-html2canvas-ignore="true" onClick={onEditHeader} aria-label="Edit header details">Edit header</button>}

@@ -62,8 +62,8 @@ export function CustomerQuotePreview({
               <h1 className="text-xl font-bold text-black mb-4">QUOTE #{quote.quote_number || 'DRAFT'}</h1>
               <div className="space-y-2">
                 <p className="text-base text-black"><span className="font-semibold">Client:</span> {quote.customer_name}</p>
-                {quote.job_name && <p className="text-base text-black"><span className="font-semibold">Job:</span> {quote.job_name}</p>}
-                {quote.site_address && <p className="text-base text-black"><span className="font-semibold">Site:</span> {quote.site_address}</p>}
+                {quote.job_name && quote.job_name.trim().toLowerCase() !== (quote.customer_name ?? '').trim().toLowerCase() && <p className="text-base text-black"><span className="font-semibold">Job:</span> {quote.job_name}</p>}
+                {quote.site_address && quote.site_address.trim().toLowerCase() !== (quote.job_name ?? '').trim().toLowerCase() && quote.site_address.trim().toLowerCase() !== (quote.customer_name ?? '').trim().toLowerCase() && <p className="text-base text-black"><span className="font-semibold">Site:</span> {quote.site_address}</p>}
                 <p className="text-base text-black"><span className="font-semibold">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
               </div>
             </div>
@@ -164,7 +164,7 @@ export function LaborSheetPreview({
         <div className="border-b-2 border-black pb-6">
           <h1 className="text-xl font-bold text-black mb-4">LABOR SHEET - Quote #{quote.quote_number || 'DRAFT'}</h1>
           <p className="text-base text-black"><span className="font-semibold">Client:</span> {quote.customer_name}</p>
-          {quote.job_name && <p className="text-base text-black"><span className="font-semibold">Job:</span> {quote.job_name}</p>}
+          {quote.job_name && quote.job_name.trim().toLowerCase() !== (quote.customer_name ?? '').trim().toLowerCase() && <p className="text-base text-black"><span className="font-semibold">Job:</span> {quote.job_name}</p>}
         </div>
 
         <div className="space-y-3">
