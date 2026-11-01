@@ -45,15 +45,15 @@ export function FreeToolsSignupBanner() {
       <div aria-hidden className="pointer-events-none absolute -right-14 -top-16 h-36 w-36 rounded-full bg-[#FF6B35]/20 blur-3xl" />
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <p className="text-sm text-zinc-200">
-          <span className="font-semibold text-white">Save your work into QuoteCore+</span>
-          <span className="mt-1 block text-xs text-zinc-400">Current configurations from US$29/month; interactive demo available before subscribing</span>
+          <span className="font-semibold text-white">Save your work into a free workspace</span>
+          <span className="mt-1 block text-xs text-zinc-400">Create your free QuoteCore+ workspace with just your email. No card needed.</span>
         </p>
         <div className="flex shrink-0 items-center gap-2">
           <button
             onClick={() => openAuthModal('signup')}
             className="qc-glint rounded-full bg-[#FF6B35] bg-gradient-to-r from-[#FF6B35] to-[#FF8C1F] px-4 py-2 text-xs font-semibold text-white shadow-[0_10px_24px_rgba(255,107,53,0.3)] transition-all hover:shadow-[0_14px_30px_rgba(255,107,53,0.42)] hover:brightness-105"
           >
-            Sign up
+            Create free workspace
           </button>
           <button
             onClick={() => openAuthModal('signin')}

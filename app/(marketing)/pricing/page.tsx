@@ -1,20 +1,5 @@
 import type { Metadata } from 'next';
-import { MarketingCalculator } from '@/app/components/pricing/MarketingCalculator';
-import {
-  BulletList,
-  Container,
-  ConversionPaths,
-  FaqAccordion,
-  FeatureGrid,
-  FinalCta,
-  Hero,
-  PageScaffold,
-  ProductFrame,
-  Section,
-  SectionHeader,
-  SplitFeature,
-  type FaqItem,
-} from '@/components/marketing/page-v2/PageV2';
+import { BulletList, Container, ConversionPaths, FaqAccordion, FeatureGrid, FinalCta, Hero, PageScaffold, ProductFrame, Section, SectionHeader, SplitFeature, type FaqItem } from '@/components/marketing/page-v2/PageV2';
 import { workflowCallHref } from '@/lib/booking';
 import { buildBreadcrumbSchema, buildFaqSchema, buildPricingOffers } from '@/lib/schema';
 import { publicPricing } from '@/lib/public-pricing';
@@ -68,31 +53,24 @@ export default function PricingPage() {
       <Hero
         eyebrow="QuoteCore+ pricing"
         title={<>Build a plan around the way you work.</>}
-        lead={`Choose your workload and the tools you need. The pricing builder creates the monthly setup and shows the price before you continue. Current global configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month.`}
-        body="There is no full-app trial. If you want to try the workflow first, explore the interactive demo, use the free tools or book a tailored product demo."
-        primary={{ href: '#build-your-plan', label: 'Build your plan' }}
+        lead={`Choose your workload and the tools you need. Current global configurations range from US$${publicPricing.monthlyMin} to US$${publicPricing.monthlyMax} per month, configured inside your workspace when you are ready.`}
+        body="Create a free workspace with just your email, or explore the interactive demo, use the free tools or book a tailored product demo first."
+        primary={{ href: '/signup', label: 'Create your free workspace' }}
         secondary={{ href: '/demo', label: 'Explore the interactive demo' }}
-        proof={['One configurable monthly price', 'See the total before signup', 'Free tools and demos available first']}
+        proof={['One configurable monthly price', 'Free workspace to start', 'Free tools and demos available first']}
         visual={<ProductFrame src="/marketing/current-ux/job-space-overview.webp" alt="Current QuoteCore+ Job Space overview" width={2048} height={1112} eager caption="The pricing configuration changes with the tools and usage you choose. The goal remains one connected job workflow." />}
       />
 
-      <Section tone="soft" id="build-your-plan">
+      <Section tone="soft">
         <Container>
-          <SectionHeader eyebrow="Pricing builder" title="Choose the tools and usage that earn their place." lead="Answer the questions in the builder to see the current monthly configuration before you continue to signup." />
-        </Container>
-        <MarketingCalculator />
-      </Section>
-
-      <Section>
-        <Container>
-          <SectionHeader eyebrow="What changes the price" title="Pay for the workload and tools you choose." lead="The builder combines the core workload with the optional tools and allowances that match how you expect to use QuoteCore+." />
+          <SectionHeader eyebrow="What changes the price" title="Pay for the workload and tools you choose." lead="Your core workload combines with the optional tools and allowances that match how you expect to use QuoteCore+. Build and change your configuration inside your workspace billing settings at any time." />
           <FeatureGrid columns={3} items={[
-            { title: 'Core workload', body: <p>Your expected job or quote volume sets the core allowance used by the builder.</p> },
+            { title: 'Core workload', body: <p>Your expected job or quote volume sets the core allowance used by your plan.</p> },
             { title: 'Digital Takeoff', body: <p>Add the in-app plan measurement workspace when you want to measure drawings directly in QuoteCore+.</p> },
             { title: 'Roof Scan Assist', body: <p>Choose the Roof Scan Assist allowance that fits how often you expect to automate roof-plan takeoff.</p> },
             { title: 'Offcut optimisation', body: <p>Add offcut and cut-plan capability when it belongs in your roofing workflow.</p> },
             { title: 'Smart Assistant', body: <p>Choose an Assistant allowance based on how much help you expect to use across supported account tasks.</p> },
-            { title: 'One monthly total', body: <p>The builder combines the choices into one monthly price before you continue to signup.</p> },
+            { title: 'One monthly total', body: <p>Your choices combine into one monthly price, configured and changed inside the app.</p> },
           ]} />
         </Container>
       </Section>
@@ -123,7 +101,7 @@ export default function PricingPage() {
           <SplitFeature reverse visual={<ProductFrame src="/marketing/current-ux/smart-components-pricing-library.webp" alt="QuoteCore+ Smart Components pricing library" width={2048} height={1111} caption="Done For You Setup can help translate agreed materials, labour, waste and pricing logic into the account you will actually use." />}>
             <h2>Want us to help build the setup around your business?</h2>
             <p>Done For You Setup is a separate one-time service starting from <strong>US${publicPricing.doneForYouStarting}</strong>. It is for businesses that want help translating existing materials, labour rates, waste rules and pricing logic into QuoteCore+ and learning the agreed setup using real jobs.</p>
-            <p>Your monthly subscription is still configured separately through the pricing builder above.</p>
+            <p>Your monthly subscription is configured separately inside your workspace billing settings.</p>
             <BulletList items={['Existing spreadsheets and price lists can be a starting point', 'The agreed setup is configured around your own pricing logic', 'Training focuses on the way your business will use QuoteCore+']} />
           </SplitFeature>
         </Container>
@@ -133,7 +111,7 @@ export default function PricingPage() {
         <Container><FaqAccordion faqs={faqs} title="Pricing FAQ" /></Container>
       </Section>
 
-      <FinalCta title="See your price, then choose how you want to start." body="Build the configuration that fits your workload, or explore the product before you subscribe." primary={{ href: '#build-your-plan', label: 'Build your plan' }} secondary={{ href: '/demo', label: 'Explore the demo' }} />
+      <FinalCta title="Start free, configure when you are ready." body="Create a free workspace in seconds with just your email, or explore the product before you configure a paid plan." primary={{ href: '/signup', label: 'Create your free workspace' }} secondary={{ href: '/demo', label: 'Explore the demo' }} />
       <div style={{ height: 72 }} />
     </PageScaffold>
   );
