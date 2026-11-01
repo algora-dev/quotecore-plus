@@ -66,7 +66,15 @@ function enumValue<T extends string>(value: unknown, choices: readonly T[], fall
 }
 function field(spec: SourceSpec, value: unknown, permissions: SectionPermissions): [string, FieldSpec] {
   const name = string(value, 60);
-  if (!owns(spec.fields, name) || spec.fields[name].internal) throw new RetrievalError('unsupported_field', 'That field is not registered for this source. Use describe_workspace_sources for supported fields; do not infer a permission failure.');
+  if (!owns(spec.fields, name) || spec.fields[name].internal) {
+    // 2026-11-01 RS Roofing incident: the model filtered component_collections by
+    // 'collection_call_name' (a component_library field), burned its single repair on the
+    // same wrong plan, then declared the draft blocked. Name the closest registered
+    // fields so the one allowed repair lands instead of dead-ending the turn.
+    const norm = (s: string) => s.toLowerCase().replace(/^(?:collection_|library_)/, '');
+    const near = Object.keys(spec.fields).filter(k => !spec.fields[k].internal && (norm(k).includes(norm(name)) || norm(name).includes(norm(k)))).slice(0, 3);
+    throw new RetrievalError('unsupported_field', `That field is not registered for this source.${near.length ? ` Closest registered fields: ${near.join(', ')}.` : ''} Use describe_workspace_sources for supported fields; do not infer a permission failure.`);
+  }
   const f = spec.fields[name];
   if (!fieldAllowed(f, permissions)) throw new RetrievalError('permission_denied', 'That field requires a section that is hidden. No data was searched.');
   return [name, f];
