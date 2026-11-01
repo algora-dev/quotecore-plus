@@ -140,6 +140,17 @@ export async function confirmCreation(client: SupabaseClient, access: Access, id
         const finished = await trusted.rpc('sa_v2_creation_finish', { p_action_id: id, p_user_id: access.userId, p_children: toJson(children) });
         if (finished.error)
             throw workflowRpcError(finished.error);
+        // Owner 2026-11-01: bind the produced quote as the committed action's target
+        // so Confirm drops the user straight into the quote builder. New-draft proposals
+        // carry no target (the quote does not exist at proposal time); patch it now so
+        // the client's committed-draft branch can navigate. The client still
+        // re-authorizes through the navigation endpoint before navigating.
+        try {
+            const adminActions = createAdminClient() as any;
+            const freshRow = await adminActions.from('assistant_v2_actions').select('payload').eq('id', id).eq('company_id', access.companyId).maybeSingle();
+            if (!freshRow.error && freshRow.data && isRecord(freshRow.data.payload))
+                await adminActions.from('assistant_v2_actions').update({ payload: { ...freshRow.data.payload, target: { kind: 'draft_quote', id: quoteId } } }).eq('id', id).eq('company_id', access.companyId);
+        } catch { /* navigation aid only; the committed draft itself is unaffected */ }
         // The SQL finisher binds the quote and committed snapshot to the brief
         // in the SAME transaction as child creation/audit. No best-effort update.
         return parsedAction(finished.data);

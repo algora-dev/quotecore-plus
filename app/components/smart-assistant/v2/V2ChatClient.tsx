@@ -584,13 +584,17 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     operation.current = true;
     setBusy(true);
     setNotice(null);
+    // Owner 2026-11-01: the proposal card the user confirmed from may be filtered
+    // out of the refreshed snapshot after commit; keep it so the committed-draft
+    // branch can still navigate straight into the quote builder.
+    const confirmCard = snapshot?.cards.find(c => c.content.kind === 'proposal' && c.content.actionId === action.id) ?? null;
     try {
       await request('/api/smart-assistant/v2/actions', { actionId: action.id, command, proofDigest: action.proofDigest, version: action.version, companyId: access.companyId });
       window.dispatchEvent(new Event('qc-demo-refresh'));
       const next = await refresh(active);
       router.refresh();
       const saved = next?.actions.find(a => a.id === action.id);
-      const card = next?.cards.find(c => c.content.kind === 'proposal' && c.content.actionId === action.id);
+      const card = next?.cards.find(c => c.content.kind === 'proposal' && c.content.actionId === action.id) ?? confirmCard;
       if (command === 'confirm' && saved?.actionKind === 'draft_create' && saved.status === 'committed' && saved.target && card && visibility.current) {
         operation.current = false;
         setBusy(false);

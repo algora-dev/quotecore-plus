@@ -306,6 +306,12 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
                 schema: {name:'prepare_draft_from_brief',description:'Begin a NEW server-owned job brief from user measurements and workspace concepts/aliases. Do not use for corrections to ACTIVE_WORKING_BRIEF. No draft is created until button confirmation.',parameters:PREPARE_WORKING_BRIEF_PARAMETERS},
                 handler: workflowToolHandler(async args => {
                     if(workflowHint && task?.decision.disposition !== 'new' && task?.decision.disposition !== 'close') throw new ProposalError('A working brief already exists. Use revise_draft_workflow with typed corrections, or explicitly start a new task.');
+                    // Owner 2026-11-01: GPT-6 Luna conflated the 'rs' library call name with
+                    // 'imperial_rs' and switched a metric workspace draft to roofing squares.
+                    // The workspace default applies unless the user's own words this turn
+                    // explicitly name a unit system.
+                    if (args.measurement_system !== undefined && !/\b(?:roofing squares?|imperial|metric|metres?|meters?|square feet|sq\.?\s*ft|feet|foot|ft)\b/i.test(input.userMessage))
+                        args = { ...args, measurement_system: undefined };
                     return finishWorkflow(await prepareDraftWorkflow(input.supabase,access,input.conversationId,input.runId,args));
                 }),
                 terminalReply: result => isRecord(result) && typeof result.answer === 'string' ? result.answer : null,
