@@ -43,7 +43,7 @@ export function TroubleSigningInPanel() {
       try {
         const supabase = createClient();
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/reset-password`,
+          redirectTo: `${window.location.origin}/auth/verify`,
         });
         if (error) {
           setStatus('error');

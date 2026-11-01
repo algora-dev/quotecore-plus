@@ -131,11 +131,11 @@ export async function sendLoginLinkAction(email: string) {
 
   const supabase = await createSupabaseServerClient();
 
-  // Keep the link on the domain the user started from (see signup/actions.ts
-  // for the reasoning; Supabase otherwise pins links to the Site URL).
+  // Links go to /auth/verify with a stateless token_hash (works from any
+  // browser/device), pinned to the domain the user started from.
   const host = h.get('x-forwarded-host') || h.get('host') || '';
   const proto = h.get('x-forwarded-proto') || 'https';
-  const emailRedirectTo = host ? `${proto}://${host}/auth/callback` : undefined;
+  const emailRedirectTo = host ? `${proto}://${host}/auth/verify` : undefined;
 
   const { error } = await supabase.auth.signInWithOtp({
     email: normalizedEmail,
@@ -180,10 +180,17 @@ export async function resendConfirmationAction(email: string) {
     return { ok: false, error: 'Too many confirmation emails sent. Please try again in an hour.' };
   }
 
+  // Confirmation links go to /auth/verify with a stateless token_hash,
+  // pinned to the domain the user started from.
+  const host = h.get('x-forwarded-host') || h.get('host') || '';
+  const proto = h.get('x-forwarded-proto') || 'https';
+  const emailRedirectTo = host ? `${proto}://${host}/auth/verify` : undefined;
+
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.resend({
     type: 'signup',
     email: normalizedEmail,
+    ...(emailRedirectTo ? { options: { emailRedirectTo } } : {}),
   });
 
   if (error) {

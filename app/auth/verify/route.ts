@@ -1,35 +1,47 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
-import { createAdminClient } from '@/app/lib/supabase/admin';
+import { completeSignIn } from '@/app/lib/auth/complete-signin';
+import { safeReturnPath } from '@/app/lib/auth/resume-contract';
 
 /**
- * Magic-link verification route.
+ * Stateless magic-link / email-token verification (2026-11-01).
+ *
+ * Auth email links now carry a token_hash straight to this route (see the
+ * Supabase email templates): `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=...`
+ * where .RedirectTo is the emailRedirectTo our actions pass (origin + this
+ * route). verifyOtp exchanges the hash WITHOUT any browser-side PKCE
+ * verifier, so links work no matter which browser or device opens them.
  *
  * Used by:
- * - Impersonation flow: admin is redirected here with a hashed_token from
- *   `supabase.auth.admin.generateLink({ type: 'magiclink' })`. The token
- *   exchanges for a real Supabase auth session for the target user.
+ * - Signup magic links (type=signup -> free workspace provisioning)
+ * - Login magic links (type=magiclink -> workspace / provisioning)
+ * - Password resets (type=recovery -> /auth/reset-password)
+ * - Admin impersonation (type=magiclink + next=/admin/... override)
  *
- * After session exchange, redirects to the `next` param (defaults to `/`).
- *
- * Security: the hashed_token is single-use and expires quickly. It's
- * generated server-side via the service-role client and never exposed
- * to the browser - the admin is redirected directly through this route.
+ * Security: token_hash is single-use and short-lived; `next` is sanitized to
+ * path-only via safeReturnPath.
  */
+const EMAIL_OTP_TYPES = ['magiclink', 'signup', 'invite', 'recovery', 'email_change'] as const;
+type EmailOtpType = (typeof EMAIL_OTP_TYPES)[number];
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const tokenHash = searchParams.get('token_hash');
-  const type = searchParams.get('type') || 'magiclink';
-  const next = searchParams.get('next') || '/';
+  const typeParam = searchParams.get('type') || 'magiclink';
+  const next = safeReturnPath(searchParams.get('next'));
 
   if (!tokenHash) {
     return NextResponse.redirect(`${origin}/login?error=missing_token`);
   }
+  if (!EMAIL_OTP_TYPES.includes(typeParam as EmailOtpType)) {
+    return NextResponse.redirect(`${origin}/login?error=invalid_type`);
+  }
+  const type = typeParam as EmailOtpType;
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.verifyOtp({
     token_hash: tokenHash,
-    type: type as 'magiclink',
+    type,
   });
 
   if (error || !data.session) {
@@ -38,28 +50,29 @@ export async function GET(request: Request) {
   }
 
   // Session is now set in cookies via the Supabase SSR client.
-  // Fetch the user's profile to find their workspace slug for redirect.
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const admin = createAdminClient();
-    const { data: profile } = await admin
-      .from('users')
-      .select('company_id')
-      .eq('id', user.id)
-      .maybeSingle();
 
-    if (profile?.company_id) {
-      const { data: company } = await admin
-        .from('companies')
-        .select('slug')
-        .eq('id', profile.company_id)
-        .maybeSingle();
-
-      if (company?.slug) {
-        return NextResponse.redirect(`${origin}/${company.slug}${next === '/' ? '' : next}`);
-      }
-    }
+  // Password resets: straight to the reset form (session is set).
+  if (type === 'recovery') {
+    return NextResponse.redirect(`${origin}/auth/reset-password`);
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  // Explicit destination override (admin impersonation passes next=/admin/...).
+  // Path-shaped only: safeReturnPath rejects absolute URLs.
+  if (next) {
+    return NextResponse.redirect(`${origin}${next}`);
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.redirect(`${origin}/login?error=verify_failed`);
+  }
+
+  // Same completion as /auth/callback: draft handoff, orphan recovery,
+  // workspace routing, free-workspace provisioning for brand-new users.
+  const draftCookie = request.headers.get('cookie') || '';
+  const draftMatch = draftCookie.match(/qcp_doc_draft=([^;]+)/);
+  const draftId = draftMatch ? decodeURIComponent(draftMatch[1]) : null;
+
+  const destination = await completeSignIn({ supabase, user, origin, draftId });
+  return NextResponse.redirect(destination);
 }

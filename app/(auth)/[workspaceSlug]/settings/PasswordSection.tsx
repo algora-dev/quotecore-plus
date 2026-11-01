@@ -23,7 +23,7 @@ export function PasswordSection({ authProvider, userEmail }: Props) {
       const supabase = createClient();
 
       const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${window.location.origin}/auth/verify`,
       });
 
       if (error) {
