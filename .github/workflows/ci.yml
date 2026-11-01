@@ -1,0 +1,39 @@
+# Read-only quality gate for PRs and development pushes (QC-05, owner
+# approval 2026-10-30). Deterministic checks ONLY: no deploys, no E2E, no
+# secrets. next build is intentionally NOT here in v1 (needs an env
+# strategy); browser E2E runs from the dev box against testing instead
+# (docs/testing/EVIDENCE_MATRIX.md).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [development]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Debt ratchet (fail-closed tsc + lint counts)
+        run: npm run check:debt
+
+      - name: Deterministic unit suites
+        run: |
+          npm run test:precision
+          npm run test:roof-takeoff
+          npm run test:calibration
+          npm run test:topology
