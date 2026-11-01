@@ -134,11 +134,13 @@ export const RETENTION = {
 // ---------------------------------------------------------------------------
 
 export const MODEL_CONFIG = {
-  // Chat/reasoning model. Owner decision 2026-09-25: gpt-5.6-luna (benchmark
-  // 2026-09-25: avg 12.1s vs 15.3s, steady-state ~9.6s, 0 failures vs 2x
-  // empty_completion on the gpt-5 variant, 42% leaner output). Env override
-  // ASSISTANT_CHAT_MODEL still wins (set to gpt-5.6-luna on testing).
-  chatModel: process.env.ASSISTANT_CHAT_MODEL ?? 'gpt-5.6-luna',
+  // Chat/reasoning model. Owner decision 2026-11-01: gpt-6-luna - the same
+  // model the scan assist uses (faster, cheaper, better reasoning than the
+  // 2026-09-25 gpt-5.6-luna pick). Tool turns run reasoning_effort 'none' on
+  // chat completions (required for function calling on GPT-6 Sol/Luna; see
+  // llmClient gate). Env override ASSISTANT_CHAT_MODEL still wins (set to
+  // gpt-6-luna on testing).
+  chatModel: process.env.ASSISTANT_CHAT_MODEL ?? 'gpt-6-luna',
   /** Embedding model for doc_chunks (Phase 0B). */
   embeddingModel: process.env.ASSISTANT_EMBEDDING_MODEL ?? 'text-embedding-3-small',
   /** Embedding vector dimensions (must match the doc_chunks column). */

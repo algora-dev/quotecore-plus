@@ -141,9 +141,14 @@ export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult>
   // rejects max_completion_tokens above the model cap (400 request_rejected)
   // and rejects function tools unless reasoning_effort is explicitly set -
   // infer neither from defaults; pin both explicitly for any gpt-5 id.
+  // 2026-11-01: owner moved chatModel to gpt-6-luna (same model as scan
+  // assist). GPT-6 Sol/Luna support function calling on chat completions ONLY
+  // with reasoning_effort 'none' (gpt-6.1-sol/astra need the Responses API
+  // entirely), and they reason by default when the param is omitted - so the
+  // explicit pin now covers gpt-6 ids with the same tool/synthesis split.
   const chatModelId = MODEL_CONFIG.chatModel.includes('/') ? MODEL_CONFIG.chatModel.split('/').pop() ?? MODEL_CONFIG.chatModel : MODEL_CONFIG.chatModel;
   const reasoning: { reasoning_effort?: 'low' | 'none' } = {};
-  if (chatModelId.startsWith('gpt-5')) {
+  if (/^gpt-[56]/i.test(chatModelId)) {
     reasoning.reasoning_effort = input.tools.length > 0 ? 'none' : 'low';
   }
   const stream = await client().chat.completions.create(
