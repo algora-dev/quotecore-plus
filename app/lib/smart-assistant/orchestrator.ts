@@ -183,14 +183,18 @@ type StepFn = (input: ChatTurnInput) => Promise<ChatTurnResult>;
  * Legacy and demo companies keep the exact previous code path.
  */
 async function withProviderBudgetStep(companyId: string, runId: string, base: StepFn): Promise<StepFn> {
-  // Single resolver decision (company-type.ts): legacy and admin-granted
-  // custom setups keep the exact previous code path (no usage-registry
-  // metering; admin grants run unmetered until the Stripe live-switch,
-  // 2026-10-17). Only Stripe-linked custom companies get provider metering.
+  // Single resolver decision (company-type.ts): every custom_setup company is
+  // per-call metered - Stripe-linked AND admin-granted. The 2026-10-17
+  // carve-out (admin grants unmetered until the live-switch) is superseded
+  // 2026-11-01: admin-granted companies (owner test accounts + free
+  // workspaces) are the only custom companies running real turns, so without
+  // them qcp_assistant_provider_calls stays empty and assistant spend
+  // tracking / overspend detection is dead. Enabled budget policies exist
+  // for the shared account in both modes. Legacy/demo companies stay unmetered.
   let metered = false;
   try {
     const { resolveBillingType } = await import('@/app/lib/billing/company-type');
-    metered = (await resolveBillingType(companyId)).kind === 'custom_metered';
+    metered = (await resolveBillingType(companyId)).kind !== 'legacy';
   } catch {
     // Billing ownership unreadable: fail closed before any provider spend.
     throw new OrchestratorExecutionError('billing_unavailable', 0, 0);
