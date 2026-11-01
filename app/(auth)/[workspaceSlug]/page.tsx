@@ -8,6 +8,7 @@ import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { smartAssistantFeatureAvailable } from '@/app/lib/smart-assistant/access.server';
 import { MeasureJobButton } from './MeasureJobModal';
 import { WelcomeModal } from './tutorials/WelcomeModal';
+import { FreeWelcomeModal } from './FreeWelcomeModal';
 import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { DocDraftRestorer } from './DocDraftRestorer';
 import { TakeoffDraftNoteBanner } from './TakeoffDraftNoteBanner';
@@ -122,6 +123,7 @@ export default async function WorkspaceHome({
 
   return (
     <section data-qc-ui="v2" className="space-y-5">
+      <Suspense fallback={null}><FreeWelcomeModal workspaceSlug={workspaceSlug} /></Suspense>
       {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} pricingFirst={!hasCalcDraft && recentWork !== undefined && recentWork.length === 0 && !(company as { is_supplier?: boolean }).is_supplier} /> : null}
       {hasCalcDraft && <CalcDraftImportBanner draftId={signupDraft!} sourceRef={signupRef ?? null} />}
       <Suspense fallback={null}><DocDraftRestorer workspaceSlug={workspaceSlug} /></Suspense>

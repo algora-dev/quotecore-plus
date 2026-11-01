@@ -1,78 +1,61 @@
 'use server';
 
-import { redirect } from 'next/navigation';
-import { createSupabaseServerClient } from '@/app/lib/supabase/server';
-
-type SignupInput = {
-  companyName: string;
-  fullName: string;
-  email: string;
-  password: string;
-};
-
 /**
- * Email/password signup - TWO-STAGE FLOW (Gerald M-01).
+ * Free-workspace signup (owner decision 2026-11-01): the ONLY signup path is
+ * email -> magic link (or Google). The old password + company wizard is gone.
  *
- * Stage 1 (here): create the Supabase auth user via `signUp()`, which
- *   automatically sends the confirmation email instantly. Company name
- *   and full name are stored in user_metadata so they survive until the
- *   confirmation callback. NO company, NO profile, NO workspace state
- *   is created until the email is confirmed.
+ * This action sends a sign-in link that ALSO creates the auth account when
+ * the email is new (shouldCreateUser: true). The link lands on /auth/callback,
+ * which auto-provisions the free workspace (company + profile + full-access
+ * custom grant) and drops the user straight into the app.
  *
- * Stage 2 (in /auth/callback): after the user clicks the confirmation link,
- *   the callback creates the company + profile from the stored metadata
- *   and redirects to onboarding.
- *
- * IMPORTANT: We use `supabase.auth.signUp()` (not admin.createUser + resend)
- * because signUp sends the confirmation email automatically and instantly
- * as part of the signup. The previous admin.createUser + resend approach
- * was unreliable - the resend endpoint could delay or fail silently,
- * leaving users waiting 5-15 minutes for a confirmation email.
+ * Rate limiting mirrors sendLoginLinkAction (login/actions.ts): 5 per IP per
+ * hour and 3 per email per hour, fail-closed to prevent email bombing.
  */
-export async function signupWithCompany(input: SignupInput) {
-  const companyName = input.companyName.trim();
-  const fullName = input.fullName.trim();
-  const email = input.email.trim().toLowerCase();
-  const password = input.password;
 
-  if (!companyName || !fullName || !email || !password) {
-    return { ok: false, error: 'All fields are required.' };
+import { headers } from 'next/headers';
+import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
+
+export type SignupLinkResult = { ok: true } | { ok: false; error: string };
+
+export async function sendSignupLinkAction(email: string): Promise<SignupLinkResult> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return { ok: false, error: 'Enter a valid email address.' };
   }
 
-  if (password.length < 8) {
-    return { ok: false, error: 'Password must be at least 8 characters.' };
+  // Rate limit: failClosed so email bombing can never slip through.
+  const h = await headers();
+  const ip = getClientIP(h);
+  const ipAllowed = await checkRateLimit(`signuplink-ip:${ip}`, 5, 60 * 60 * 1000, { failClosed: true });
+  if (!ipAllowed) {
+    return { ok: false, error: 'Too many requests. Please try again later.' };
+  }
+  const emailAllowed = await checkRateLimit(`signuplink-email:${normalizedEmail}`, 3, 60 * 60 * 1000, { failClosed: true });
+  if (!emailAllowed) {
+    return { ok: false, error: 'Too many signup links sent to this email. Please try again in an hour.' };
   }
 
   const supabase = await createSupabaseServerClient();
-
-  // Use signUp() - this automatically sends the confirmation email
-  // instantly. No need for a separate resend call.
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
+  const { error } = await supabase.auth.signInWithOtp({
+    email: normalizedEmail,
     options: {
-      data: {
-        full_name: fullName,
-        company_name: companyName,
-        role: 'owner',
-      },
+      shouldCreateUser: true,
+      // The link lands on /auth/callback which auto-provisions the free
+      // workspace for new emails and signs existing users straight in.
     },
   });
 
   if (error) {
     const msg = error.message.toLowerCase();
-    if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already registered')) {
-      return { ok: false, error: 'An account with this email already exists. Try logging in instead.' };
+    if (msg.includes('rate') || msg.includes('over_email_send_rate_limit')) {
+      return { ok: false, error: 'Too many requests. Please try again in a few minutes.' };
     }
     return { ok: false, error: error.message };
   }
 
-  // If the user somehow already has a session (e.g. email was already
-  // confirmed), data.session will be non-null. In that case they're
-  // already logged in - redirect to their workspace or onboarding.
-  if (data.session) {
-    redirect('/onboarding');
-  }
-
-  redirect('/login?signup=pending');
+  // Generic success either way: never leak whether the email already exists.
+  // Existing emails simply receive a sign-in link.
+  return { ok: true };
 }
