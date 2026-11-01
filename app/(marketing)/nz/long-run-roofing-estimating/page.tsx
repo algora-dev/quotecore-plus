@@ -188,7 +188,7 @@ export default function NzLongRunRoofingEstimatingPage() {
         </Container>
       </Section>
 
-      <Section tone="soft">
+      <Section tone="dark">
         <Container>
           <SectionHeader
             eyebrow="Practical workflow"

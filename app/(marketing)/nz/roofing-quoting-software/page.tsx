@@ -170,7 +170,7 @@ export default function NzRoofingQuotingSoftwarePage() {
         </Container>
       </Section>
 
-      <Section>
+      <Section tone="dark">
         <Container>
           <SectionHeader
             eyebrow="Connected workflow"
