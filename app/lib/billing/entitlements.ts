@@ -298,10 +298,13 @@ export const loadCompanyEntitlements = cache(
     // Free Workspace grants roll monthly (2026-11-02): refresh before the
     // snapshot read so access gating and quota displays never see a stale
     // period. No-op for non-admin-free companies. Loose cast: the fn is
-    // SQL-side only (not in generated types).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (admin as unknown as { rpc(fn: string, args?: unknown): Promise<unknown> })
-      .rpc('qcp_admin_free_period_refresh', { p_company_id: companyId }).catch(() => {});
+    // SQL-side only (not in generated types). try/catch (not .catch) so
+    // test doubles without promise results stay happy.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (admin as unknown as { rpc(fn: string, args?: unknown): Promise<unknown> })
+        .rpc('qcp_admin_free_period_refresh', { p_company_id: companyId });
+    } catch { /* best-effort refresh */ }
 
     const [
       companyResult,

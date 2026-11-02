@@ -50,9 +50,10 @@ async function loadAdminGrantWindow(companyId: string): Promise<AdminGrantWindow
   // Free Workspace grants roll monthly (2026-11-02): refresh before reading so
   // the window (and every count below) is always the current month.
   // Loose cast: the refresh fn is SQL-side only (not in generated types).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (createAdminClient() as unknown as { rpc(fn: string, args?: unknown): Promise<unknown> })
-    .rpc('qcp_admin_free_period_refresh', { p_company_id: companyId }).catch(() => {});
+  try {
+    await (createAdminClient() as unknown as { rpc(fn: string, args?: unknown): Promise<unknown> })
+      .rpc('qcp_admin_free_period_refresh', { p_company_id: companyId });
+  } catch { /* best-effort refresh */ }
   const admin = createAdminClient() as unknown as {
     from(table: string): {
       select(cols: string): { eq(col: string, val: string): { maybeSingle(): Promise<{ data: unknown; error: unknown }> } };
