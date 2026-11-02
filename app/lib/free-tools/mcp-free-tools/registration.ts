@@ -1,4 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { z } from 'zod';
 import { getAdvice } from '@/app/(public)/free-tools/finder-advice';
 import { buildConvertUrl, type ConvertibleLine } from '@/app/(public)/shared/convertLines';
@@ -26,6 +27,57 @@ const noAuth = [{ type: 'noauth' as const }];
 const launcherMeta = {
   ui: { resourceUri: FREE_TOOLS_LAUNCHER_URI, visibility: ['model', 'app'] as const },
   'openai/outputTemplate': FREE_TOOLS_LAUNCHER_URI,
+};
+
+const takeoffOutputSchema = {
+  status: z.enum(['ready', 'error']),
+  trade: z.enum(['roofing', 'cladding', 'flooring']).optional(),
+  phase: z.enum(['outline_review', 'takeoff_workspace']).optional(),
+  humanReviewRequired: z.boolean().optional(),
+  hasSuggestedOutline: z.boolean().optional(),
+  nextAction: z.enum(['open_and_review_outline', 'open_takeoff_workspace']).optional(),
+  componentScanAvailableAfterReview: z.boolean().optional(),
+  resultUrl: z.string().url().optional(),
+  code: z.string().optional(),
+  message: z.string().optional(),
+};
+const pricingOutputSchema = {
+  status: z.enum(['ready', 'error']),
+  workflow: z.literal('measurements_to_pricing').optional(),
+  trade: z.enum(['roofing', 'cladding', 'flooring']).optional(),
+  unitSystem: z.enum(['metric', 'imperial', 'squares']).optional(),
+  measurementCount: z.number().int().min(0).optional(),
+  resultUrl: z.string().url().optional(),
+  code: z.string().optional(),
+  message: z.string().optional(),
+};
+const documentOutputSchema = {
+  status: z.enum(['ready', 'error']),
+  kind: z.enum(['quote', 'invoice', 'order']).optional(),
+  subtotal: z.number().optional(),
+  tax: z.number().optional(),
+  total: z.number().optional(),
+  currency: z.enum(['GBP', 'USD', 'EUR', 'AUD', 'CAD', 'NZD']).optional(),
+  resultUrl: z.string().url().optional(),
+  code: z.string().optional(),
+  message: z.string().optional(),
+};
+const finderOutputSchema = {
+  kind: z.enum(['match', 'clarify', 'none']),
+  confident: z.boolean().optional(),
+  message: z.string(),
+  choices: z.array(z.object({ label: z.string(), query: z.string() }).strict()).optional(),
+  tools: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    url: z.string().url(),
+    action: z.union([
+      z.object({ name: z.enum(['start_roof_takeoff', 'start_cladding_takeoff', 'start_flooring_takeoff']), requires: z.literal('plan_attachment') }).strict(),
+      z.object({ name: z.enum(['start_measurements_to_pricing', 'create_quote', 'create_invoice', 'create_purchase_order']), requires: z.literal('none') }).strict(),
+      z.null(),
+    ]),
+  }).strict()).optional(),
 };
 
 
@@ -109,17 +161,19 @@ export const FREE_TOOLS_MCP_TOOL_NAMES = [
 ] as const;
 
 export function registerFreeToolsMcpTools(server: McpServer, origin: string, getService: () => FreeToolsMcpService): void {
-  server.registerResource('quotecore-free-tools-launcher', FREE_TOOLS_LAUNCHER_URI, {
-    mimeType: 'text/html;profile=mcp-app',
+  const launcherResourceUi = { prefersBorder: true, csp: { connectDomains: [], resourceDomains: [] } };
+  registerAppResource(server, 'quotecore-free-tools-launcher', FREE_TOOLS_LAUNCHER_URI, {
     description: 'Compact QuoteCore+ action card for opening a prepared free-tool workflow.',
-  }, async (uri) => ({
+    _meta: { ui: launcherResourceUi },
+  }, async () => ({
     contents: [{
-      uri: uri.href,
-      mimeType: 'text/html;profile=mcp-app',
+      uri: FREE_TOOLS_LAUNCHER_URI,
+      mimeType: RESOURCE_MIME_TYPE,
       text: freeToolsLauncherHtml(),
       _meta: {
-        ui: { prefersBorder: true, domain: origin, csp: { connectDomains: [], resourceDomains: [] } },
+        ui: launcherResourceUi,
         'openai/widgetDescription': 'A compact QuoteCore+ card that opens the prepared takeoff, pricing or document workflow.',
+        'openai/widgetPrefersBorder': true,
         'openai/widgetCSP': { connect_domains: [], resource_domains: [], redirect_domains: [origin] },
         'openai/ui': { availableDisplayModes: ['inline'] },
       },
@@ -129,7 +183,7 @@ export function registerFreeToolsMcpTools(server: McpServer, origin: string, get
   server.registerTool('find_quotecore_tool', {
     title: 'Find the right QuoteCore+ free tool',
     description: 'Uses the same deterministic Free Tools router as quote-core.com to recommend or clarify the correct measurement, specialist calculator, pricing or document workflow. Use this for ambiguous jobs, for calculator discovery, or when the user asks which QuoteCore+ tool to use. Skip it when a directly exposed MCP action already matches a clear measurement, pricing or document request.',
-    inputSchema: { query: z.string().min(1).max(300) }, annotations, _meta: { ...launcherMeta, securitySchemes: noAuth },
+    inputSchema: { query: z.string().min(1).max(300) }, outputSchema: finderOutputSchema, annotations, _meta: { securitySchemes: noAuth },
   }, async ({ query }) => {
     const advice = getAdvice(query);
     if (advice.kind === 'clarify') return { structuredContent: advice, content: [{ type: 'text', text: `${advice.message} ${advice.choices.map(c => c.label).join(' / ')}` }] };
@@ -142,10 +196,11 @@ export function registerFreeToolsMcpTools(server: McpServer, origin: string, get
     plan: fileParam.describe('The plan image or PDF attached to the ChatGPT conversation. The host transfers this file to QuoteCore+.'),
     unitSystem: z.enum(['metric', 'imperial', 'squares']).optional(),
   };
-  server.registerTool('start_roof_takeoff', {
+  registerAppTool(server, 'start_roof_takeoff', {
     title: 'Measure a roof from an attached plan', description: takeoffDescription('roofing'),
     inputSchema: { ...commonTakeoffSchema, source_outline: sourceOutline.optional().describe('Optional exterior roof polygon traced from this SAME attachment. Full-image normalized coordinates: top-left is 0,0 and bottom-right is 1,1. Do not infer pitch, scale, ridges, hips, valleys or other components.') },
-    annotations: { ...annotations, readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+    outputSchema: takeoffOutputSchema,
+    annotations: { ...annotations, readOnlyHint: false, idempotentHint: false, openWorldHint: false },
     _meta: { ...launcherMeta, securitySchemes: noAuth, 'openai/fileParams': ['plan'], 'openai/toolInvocation/invoking': 'Preparing roof takeoff', 'openai/toolInvocation/invoked': 'Roof takeoff ready for review' },
   }, async (args) => startTakeoff(getService(), 'roofing', args));
 
@@ -153,14 +208,15 @@ export function registerFreeToolsMcpTools(server: McpServer, origin: string, get
     ['start_cladding_takeoff', 'cladding', 'Measure walls or cladding from an attached plan'],
     ['start_flooring_takeoff', 'flooring', 'Measure flooring from an attached plan'],
   ] as const) {
-    server.registerTool(name, {
+    registerAppTool(server, name, {
       title, description: takeoffDescription(trade), inputSchema: commonTakeoffSchema,
-      annotations: { ...annotations, readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+      outputSchema: takeoffOutputSchema,
+      annotations: { ...annotations, readOnlyHint: false, idempotentHint: false, openWorldHint: false },
       _meta: { ...launcherMeta, securitySchemes: noAuth, 'openai/fileParams': ['plan'], 'openai/toolInvocation/invoking': `Preparing ${trade} takeoff`, 'openai/toolInvocation/invoked': `${title} is ready` },
     }, async (args) => startTakeoff(getService(), trade, args));
   }
 
-  server.registerTool('start_measurements_to_pricing', {
+  registerAppTool(server, 'start_measurements_to_pricing', {
     title: 'Price measurements you already have',
     description: 'Opens the existing QuoteCore+ Measurements to Pricing UX when the user already knows areas, lengths or quantities. If measurements were supplied in the conversation, pass them here so QuoteCore+ preloads the same values and the user only has to review rates/waste/pitch. For a prefilled session, trade and unitSystem are required and must match the supplied values; do not silently default, convert or invent them. If no measurements were supplied, omit the array and open the normal blank workflow.',
     inputSchema: {
@@ -170,7 +226,7 @@ export function registerFreeToolsMcpTools(server: McpServer, origin: string, get
       title: z.string().max(160).optional(),
       basis: z.enum(['actual', 'plan']).optional(),
       measurements: z.array(measurementPrefill).max(500).default([]),
-    }, annotations, _meta: { ...launcherMeta, securitySchemes: noAuth },
+    }, outputSchema: pricingOutputSchema, annotations: { ...annotations, readOnlyHint: false, idempotentHint: false }, _meta: { ...launcherMeta, securitySchemes: noAuth },
   }, async ({ trade, unitSystem, currency, title, basis, measurements }) => {
     try {
       if (!measurements.length) {
@@ -193,7 +249,7 @@ export function registerFreeToolsMcpTools(server: McpServer, origin: string, get
   });
 
   const registerDocument = (name: 'create_quote' | 'create_invoice' | 'create_purchase_order', kind: DocumentKind, title: string) => {
-    server.registerTool(name, {
+    registerAppTool(server, name, {
       title,
       description: `Opens an editable ${kind === 'order' ? 'purchase order' : kind} draft in the existing QuoteCore+ document generator. Prefill any line items the user has already supplied; if none were supplied, open a blank draft instead of forcing the user to repeat the request. This does not send or persist the document; the user reviews it in QuoteCore+ and can print/save it.`,
       inputSchema: {
@@ -204,6 +260,7 @@ export function registerFreeToolsMcpTools(server: McpServer, origin: string, get
         taxRate: z.number().min(0).max(100).default(0),
         taxName: z.string().min(1).max(100).default('Tax'),
       },
+      outputSchema: documentOutputSchema,
       annotations, _meta: { ...launcherMeta, securitySchemes: noAuth },
     }, async ({ lines, recipientName, currency, taxEnabled, taxRate, taxName }) => {
       try {

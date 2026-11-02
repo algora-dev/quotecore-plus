@@ -28,6 +28,52 @@ const inputSchema = {
   fixings: z.number().positive().optional(),
 };
 
+const roofSchemaOutputSchema = {
+  name: z.string(),
+  description: z.string(),
+  calculationVersion: z.string(),
+  preferredAgentWorkflow: z.unknown(),
+  modes: z.unknown(),
+  units: z.unknown(),
+  parameterDetails: z.unknown(),
+  components: z.array(z.unknown()),
+  outputs: z.unknown(),
+  urlEncodingRules: z.unknown(),
+  resultUrlGuidance: z.unknown(),
+  endpoints: z.unknown(),
+  supplierParameter: z.unknown(),
+  countryParameter: z.unknown(),
+  supplierDiscovery: z.unknown(),
+  agentInstructions: z.unknown(),
+  naturalLanguageMappingExamples: z.array(z.unknown()),
+  example: z.unknown(),
+};
+
+const roofCalculationOutputSchema = {
+  success: z.boolean(),
+  status: z.enum(['complete', 'needs_clarification']).optional(),
+  authoritative: z.boolean().optional(),
+  calculator: z.literal('QuoteCore+ Free Roof Takeoff Builder').optional(),
+  calculationVersion: z.string().optional(),
+  timestamp: z.string().optional(),
+  mode: z.enum(['actual', 'plan']).optional(),
+  units: z.enum(['metric', 'imperial', 'squares']).optional(),
+  pitchDegrees: z.number().optional(),
+  measurementBasis: z.record(z.string(), z.enum(['plan', 'actual'])).optional(),
+  inputs: z.unknown().optional(),
+  normalizedInputs: z.record(z.string(), z.unknown()).optional(),
+  results: z.unknown().optional(),
+  warnings: z.array(z.string()).optional(),
+  resultUrl: z.string().url().optional(),
+  nextAction: z.unknown().optional(),
+  locationMatch: z.unknown().optional(),
+  pricing: z.unknown().optional(),
+  question: z.string().optional(),
+  requiredField: z.string().optional(),
+  partialResults: z.record(z.string(), z.unknown()).optional(),
+  errors: z.array(z.object({ field: z.string(), message: z.string() }).strict()).optional(),
+};
+
 async function createServer(origin: string, withHostOutline: boolean, withFreeTools: boolean) {
   let freeToolsInstructions = '';
   if (withFreeTools) {
@@ -38,7 +84,7 @@ async function createServer(origin: string, withHostOutline: boolean, withFreeTo
     ? `${freeToolsInstructions} Use get_roof_takeoff_schema only when numeric Roof Takeoff Builder input semantics are unclear. Use calculate_roof_takeoff only when the user already has numeric roof measurements or explicitly asks for the deterministic calculation; do not use it instead of start_roof_takeoff for an attached plan. Actual measurements are not pitch-adjusted; plan measurements are.`
     : 'Use get_roof_takeoff_schema when input semantics are unclear. Use calculate_roof_takeoff to calculate and return the provided resultUrl. Actual measurements are not pitch-adjusted; plan measurements are.' + (withHostOutline ? ' ' + SERVER_INSTRUCTIONS : '');
   const server = new McpServer(
-  { name: 'quotecore-free-tools', version: '1.2.2' },
+  { name: 'quotecore-free-tools', version: '1.2.4' },
     { instructions },
   );
 
@@ -58,6 +104,7 @@ async function createServer(origin: string, withHostOutline: boolean, withFreeTo
       title: 'Get roof takeoff schema',
       description: withFreeTools ? 'Returns the numeric Roof Takeoff Builder schema for measurements already known. This is not the plan-image workflow; use start_roof_takeoff when the user attached a roof plan.' : 'Returns every supported Roof Takeoff Builder input, mode, unit, alias, validation rule, output, endpoint, and example.',
       inputSchema: {},
+      outputSchema: roofSchemaOutputSchema,
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
     async () => ({
@@ -72,6 +119,7 @@ async function createServer(origin: string, withHostOutline: boolean, withFreeTo
       title: 'Calculate roof takeoff',
       description: withFreeTools ? 'Calculates a deterministic roof takeoff from numeric measurements already supplied or finalized. Do not use this to visually measure an attached plan; use start_roof_takeoff so the exterior is reviewed before component measurement.' : 'Calculates a deterministic roof takeoff and returns structured component totals plus a QuoteCore+ URL showing the same result.',
       inputSchema,
+      outputSchema: roofCalculationOutputSchema,
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
     async (input) => {
@@ -96,12 +144,14 @@ async function createServer(origin: string, withHostOutline: boolean, withFreeTo
       title: 'Get calculation result',
       description: 'Reads and recalculates a QuoteCore+ roof takeoff result URL using the same versioned engine.',
       inputSchema: { resultUrl: z.string().url().describe('A QuoteCore+ /free-roofing-takeoff-builder/calculate URL.') },
+      outputSchema: roofCalculationOutputSchema,
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
     async ({ resultUrl }) => {
       const url = new URL(resultUrl);
       if (url.origin !== origin || url.pathname !== '/free-roofing-takeoff-builder/calculate') {
-        return { isError: true, content: [{ type: 'text', text: 'The result URL must be a QuoteCore+ roof takeoff result URL.' }] };
+        const error = { field: 'resultUrl', message: 'The result URL must be a QuoteCore+ roof takeoff result URL.' };
+        return { isError: true, structuredContent: { success: false, errors: [error] }, content: [{ type: 'text', text: error.message }] };
       }
       const input = parseQueryInput(url.searchParams);
       const result = calculatePublicRoofTakeoff(input);
