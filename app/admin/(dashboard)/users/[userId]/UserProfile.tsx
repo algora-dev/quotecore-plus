@@ -27,6 +27,7 @@ import {
 import { StorageTab } from './StorageTab';
 import { QuotesTab } from './quotes-tab/QuotesTab';
 import { FreeToolUsageSection } from './FreeToolUsageSection';
+import { DemoUsageSection } from './DemoUsageSection';
 import { CustomBillingSection } from './custom-billing/CustomBillingSection';
 import { QcDialog } from '@/app/components/ui/v2/QcDialog';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
@@ -155,6 +156,9 @@ export function UserProfile({ data }: { data: UserProfileData }) {
 
       {/* K. Free Tool Usage (T3) */}
       <FreeToolUsageSection userId={data.user.id} />
+
+      {/* L. Guided Walkthrough (Demo) usage */}
+      <DemoUsageSection userId={data.user.id} />
     </div>
   );
 }

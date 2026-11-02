@@ -35,7 +35,10 @@
   display: flex;
   flex-direction: column;
   width: min(600px, calc(100vw - 24px));
-  max-height: min(780px, calc(100dvh - 32px));
+  /* vh first: browsers without dynamic-viewport units drop the whole dvh
+     declaration, which let the dialog grow past the screen (clipped footer,
+     top-packed slides - owner report 2026-11-02, older laptop). */
+  max-height: min(780px, calc(100vh - 32px));
   padding: 0;
   border: 1px solid var(--qc-border-divider);
   border-radius: 20px;
@@ -43,6 +46,12 @@
   color: var(--qc-text-body);
   box-shadow: 0 28px 90px rgba(6,7,10,.46), inset 0 1px rgba(255,255,255,.035);
   overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  .qc-demo-overlays [data-qc-ui='v2'].qc-dialog.qc-demo-info-dialog {
+    max-height: min(780px, calc(100dvh - 32px));
+  }
 }
 
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -266,8 +275,13 @@
 @media (max-width: 640px) {
   .qc-demo-overlays [data-qc-ui='v2'].qc-dialog.qc-demo-info-dialog {
     width: calc(100vw - 16px);
-    max-height: calc(100dvh - 16px);
+    max-height: calc(100vh - 16px);
     border-radius: 18px;
+  }
+  @supports (height: 100dvh) {
+    .qc-demo-overlays [data-qc-ui='v2'].qc-dialog.qc-demo-info-dialog {
+      max-height: calc(100dvh - 16px);
+    }
   }
   .qc-demo-info-head { padding: 14px 12px 10px 16px; }
   .qc-demo-info-dialog .qc-demo-info-close { width: 44px; min-width: 44px; min-height: 44px; }

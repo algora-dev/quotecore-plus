@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
 import { QcAppShell } from '@/app/components/workspace/QcAppShell';
-import { QcLinkButton } from '@/app/components/ui/v2/QcButton';
+import { DemoShellToggle } from '@/app/components/workspace/DemoShellToggle';
 import { AlertBell } from '@/app/components/alerts/AlertBell';
 import { InboxLink } from '@/app/components/alerts/InboxLink';
 import { HelpDrawerTrigger, HelpDrawerPanel } from '@/app/components/docs/HelpDrawer';
@@ -74,11 +74,7 @@ export default async function WorkspaceLayout({
   const demoToggleHref = demoContext
     ? (realSlug ? `${appUrl(shellHost)}/${realSlug}` : (appUrl(shellHost) || '/'))
     : `${demoUrl(shellHost)}/demo`;
-  const demoToggle = (
-    <QcLinkButton variant="secondary" size="sm" href={demoToggleHref}>
-      {demoContext ? 'My Workspace' : 'Demo'}
-    </QcLinkButton>
-  );
+  const demoToggle = <DemoShellToggle active={demoContext ? 'demo' : 'workspace'} otherHref={demoToggleHref} />;
 
   const supabase = await createSupabaseServerClient();
 

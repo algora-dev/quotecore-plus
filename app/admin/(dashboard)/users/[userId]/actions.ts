@@ -1,5 +1,6 @@
 'use server';
 import { isLegacyBillingCompany } from '@/app/lib/billing/custom/legacy-boundary';
+import { readGuide } from '@/app/lib/demo/model';
 
 /**
  * Admin per-user profile actions.
@@ -1303,4 +1304,67 @@ export async function resetMonthlyQuota(companyId: string, quotaKey: string): Pr
   );
 
   return { ok: true, message: `${quotaKey} quota reset to 0.` };
+}
+
+// ---------------------------------------------------------------------------
+// Guided Walkthrough (demo) usage - owner-linked sandboxes (2026-11-02)
+// ---------------------------------------------------------------------------
+
+export interface DemoUsageSession {
+  id: string;
+  status: string;
+  createdAt: string;
+  lastSeenAt: string | null;
+  expiresAt: string | null;
+  resetCount: number;
+  furthestChapter: string;
+  completedAt: string | null;
+  events: string[];
+  demoSlug: string | null;
+}
+
+export type DemoUsageResult =
+  | { ok: true; firstTriedAt: string | null; lastUsedAt: string | null; sessions: DemoUsageSession[] }
+  | { ok: false; error: string };
+
+export async function getUserDemoUsage(userId: string): Promise<DemoUsageResult> {
+  try {
+    await requireAdmin();
+    const admin = createAdminClient();
+    const { data, error } = await admin.from('demo_sessions')
+      .select('id, status, created_at, last_seen_at, expires_at, reset_count, tutorial_state, company_id')
+      .eq('owner_user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) return { ok: false, error: error.message };
+
+    // Resolve slugs for still-active sandboxes so the row can deep-link there.
+    const activeCompanyIds = [...new Set((data ?? []).filter(r => r.company_id && r.status === 'active').map(r => r.company_id as string))];
+    const slugs = new Map<string, string>();
+    if (activeCompanyIds.length) {
+      const { data: cos } = await admin.from('companies').select('id, slug').in('id', activeCompanyIds);
+      for (const co of cos ?? []) if (co.slug) slugs.set(co.id, co.slug);
+    }
+
+    const sessions: DemoUsageSession[] = (data ?? []).map(r => {
+      const guide = readGuide(r.tutorial_state);
+      return {
+        id: r.id,
+        status: r.status,
+        createdAt: r.created_at,
+        lastSeenAt: r.last_seen_at,
+        expiresAt: r.expires_at,
+        resetCount: r.reset_count,
+        furthestChapter: guide.chapter,
+        completedAt: guide.completed_at ?? null,
+        events: Object.keys(guide.acknowledgements),
+        demoSlug: r.company_id ? (slugs.get(r.company_id) ?? null) : null,
+      };
+    });
+    const firstTriedAt = sessions.length ? sessions[sessions.length - 1].createdAt : null;
+    const lastUsedAt = sessions.reduce<string | null>((acc, s) => (s.lastSeenAt && (!acc || s.lastSeenAt > acc) ? s.lastSeenAt : acc), null);
+    return { ok: true, firstTriedAt, lastUsedAt, sessions };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Failed to load guided walkthrough usage.' };
+  }
 }
