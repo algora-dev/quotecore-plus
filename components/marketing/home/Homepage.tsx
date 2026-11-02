@@ -2,8 +2,7 @@ import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
 import { MarketingButton } from '@/components/marketing/MarketingButton';
-import { DoneForYouInquiryButton } from '@/components/marketing/DoneForYouInquiryButton';
-import { DoneForYouInquiryLink } from '@/components/marketing/DoneForYouInquiryLink';
+import Link from 'next/link';
 import { WorkflowExplorer } from './WorkflowExplorer';
 import { homepageConfig, type HomepageConfig } from './homepage-config';
 import styles from './HomeLocked.module.css';
@@ -37,7 +36,7 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
 
       <section className={c('price-strip')} id="pricing"><div className={c('wrap','price-layout')}>
         <div><p className={styles.eyebrow}>Pricing that fits your business</p><h2>Only pay for what you need.</h2><p className={c('price-copy')}>Try QuoteCore+ first, learn which tools and usage fit the way you work, then create your exact plan inside your account.</p></div>
-        <div className={c('price-summary')}><p className={c('price-range')}><strong>From US$29/mo</strong><span>for lighter setups</span><i className={c('price-separator')}>to</i><strong>US$259/mo</strong><span>for larger configurations.</span></p><div className={c('price-actions')}><MarketingButton href="/pricing" className={c('btn','btn-primary')}>See how pricing works →</MarketingButton><DoneForYouInquiryLink className={c('text-link')} source="homepage-pricing-strip"><span className={c('dfy-link-label')}>Want us to set it up?</span><span className={c('dfy-link-action')}>Inquire about Done For You ↓</span></DoneForYouInquiryLink></div></div>
+        <div className={c('price-summary')}><p className={c('price-range')}><strong>From US$29/mo</strong><span>for lighter setups</span><i className={c('price-separator')}>to</i><strong>US$259/mo</strong><span>for larger configurations.</span></p><div className={c('price-actions')}><MarketingButton href="/pricing" className={c('btn','btn-primary')}>See how pricing works →</MarketingButton><Link href="/done-for-you-setup" className={c('text-link')}><span className={c('dfy-link-label')}>Want us to set it up?</span><span className={c('dfy-link-action')}>Inquire about Done For You →</span></Link></div></div>
       </div></section>
 
       <section className={c('founder-section')} id="shaun"><div className={c('wrap','founder-grid')}>
@@ -57,7 +56,7 @@ export default function MarketingHomepage({ config = homepageConfig }: { config?
       </div></div></section>
 
       <section className={styles.dfy} id="done-for-you"><div className={styles.blueprint} aria-hidden="true" /><div className={styles.wrap}><div className={c('dfy-panel')}>
-        <div><p className={styles.eyebrow}>Done For You Setup</p><h2><span>Your workflow.</span><span className={styles.orange}>Your pricing.</span><span className={styles.grey}>We set it up for <span className={styles.orange} style={{display:'inline'}}>you.</span></span></h2><p>Show us how you price and quote today. We&apos;ll configure QuoteCore+ around that workflow, guide you through using it on your own jobs, and stay available while you get going.</p><div className={c('dfy-benefits')}><span>Configured for you</span><span>Guided on your jobs</span><span>3 months of support</span><span>3 months of QuoteCore+ included</span></div><div className={c('dfy-actions')}><DoneForYouInquiryButton size="large" source="homepage-dfy" className={c('btn','btn-primary')}>Inquire about Done For You →</DoneForYouInquiryButton></div></div>
+        <div><p className={styles.eyebrow}>Done For You Setup</p><h2><span>Your workflow.</span><span className={styles.orange}>Your pricing.</span><span className={styles.grey}>We set it up for <span className={styles.orange} style={{display:'inline'}}>you.</span></span></h2><p>Show us how you price and quote today. We&apos;ll configure QuoteCore+ around that workflow, guide you through using it on your own jobs, and stay available while you get going.</p><div className={c('dfy-benefits')}><span>Configured for you</span><span>Guided on your jobs</span><span>3 months of support</span><span>3 months of QuoteCore+ included</span></div><div className={c('dfy-actions')}><MarketingButton href="/done-for-you-setup" size="large" className={c('btn','btn-primary')}>Learn more →</MarketingButton></div></div>
         <div className={c('dfy-media')} aria-label="Shaun, founder of QuoteCore+"><img src="/shaun-smiling.jpg" alt="Shaun, founder of QuoteCore+" /><span className={c('video-caption')}><b>Shaun, founder of QuoteCore+</b><span>20+ years in roofing &amp; construction.</span></span></div>
       </div></div></section>
 

@@ -4,7 +4,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { appUrl } from "@/lib/app-url";
 import SocialIcons from "./SocialIcons";
-import { MarketingButton } from "./marketing/MarketingButton";
 import { FreeWorkspaceButton } from "./marketing/FreeWorkspaceButton";
 import { workflowCallHref } from "@/lib/booking";
 import styles from "./BlogHeader.module.css";
@@ -99,18 +98,10 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
                 ← {backLabel}
               </a>
             ) : null}
-            <MarketingButton
-              href={workflowCallHref}
-              variant="primary"
-              size="large"
-              onClick={() => trackEvent("book_call_click", { location: "nav" })}
-            >
-              Book 25 minutes with Shaun
-            </MarketingButton>
-            <FreeWorkspaceButton variant="glass" size="large">Create free workspace</FreeWorkspaceButton>
+            <FreeWorkspaceButton variant="primary" size="large" className={styles.workspaceCta}>Create free workspace</FreeWorkspaceButton>
           </div>
 
-          <MarketingButton href={workflowCallHref} variant="primary" className={styles.mobileDemo} onClick={() => trackEvent("book_call_click", { location: "mobile_nav" })}>25 min with Shaun</MarketingButton>
+          <FreeWorkspaceButton variant="primary" className={`${styles.mobileDemo} ${styles.workspaceCta}`}>Create free workspace</FreeWorkspaceButton>
 
           <button
             ref={menuButtonRef}
