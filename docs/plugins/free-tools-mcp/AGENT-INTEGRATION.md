@@ -37,7 +37,7 @@ For PDF attachments, the original PDF is preserved and the existing browser PDF 
 ## Security / storage
 
 - Attachment ingestion uses `openai/fileParams` host transfer; raw sandbox paths remain invalid.
-- Download hosts are an exact HTTPS origin allowlist. No wildcard/suffix matching and no arbitrary URLs.
+- Download hosts are an exact HTTPS origin allowlist, optionally plus explicit single-label prefix families (e.g. `https://oaisdmntp*.blob.core.windows.net`) for ChatGPT's rotating regional attachment-staging accounts. A family entry needs at least three literal characters before the `*`, the `*` ends its label, and every later label stays literal — `https://*.blob.core.windows.net` remains invalid. No arbitrary URLs.
 - SSRF controls in the existing hosted-file downloader remain active (DNS/public-address checks, redirect denial, byte/time limits, image decode validation).
 - A rejected host diagnostic may expose only `url.origin`, never a signed path/query.
 - Temporary plan/PDF/measurement assets live in the dedicated **private** Supabase bucket.

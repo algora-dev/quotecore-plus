@@ -38,7 +38,7 @@ async function createServer(origin: string, withHostOutline: boolean, withFreeTo
     ? `${freeToolsInstructions} Use get_roof_takeoff_schema only when numeric Roof Takeoff Builder input semantics are unclear. Use calculate_roof_takeoff only when the user already has numeric roof measurements or explicitly asks for the deterministic calculation; do not use it instead of start_roof_takeoff for an attached plan. Actual measurements are not pitch-adjusted; plan measurements are.`
     : 'Use get_roof_takeoff_schema when input semantics are unclear. Use calculate_roof_takeoff to calculate and return the provided resultUrl. Actual measurements are not pitch-adjusted; plan measurements are.' + (withHostOutline ? ' ' + SERVER_INSTRUCTIONS : '');
   const server = new McpServer(
-    { name: 'quotecore-free-tools', version: '1.2.0' },
+  { name: 'quotecore-free-tools', version: '1.2.1' },
     { instructions },
   );
 

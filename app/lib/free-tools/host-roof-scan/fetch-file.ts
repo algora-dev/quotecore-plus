@@ -20,6 +20,35 @@ export function publicAddress(ip: string): boolean {
     }
     return false;
 }
+/**
+ * Parse an explicit single-label prefix-family origin entry such as
+ * https://oaisdmntp*.blob.core.windows.net, used for hosts that legitimately
+ * rotate inside one organisation's namespace (ChatGPT stages attachments from
+ * regional Azure storage accounts). The '*' must terminate its label, at least
+ * three literal characters must precede it, and at least two literal labels
+ * must follow, so a bare https://*.blob.core.windows.net stays invalid.
+ */
+export function parseOriginFamilyPattern(entry: string): { prefix: string; suffix: string } | null {
+    const lower = entry.toLowerCase();
+    if (!/^https:\/\/[a-z0-9-]{3,}\*\.(?:[a-z0-9-]+\.)+[a-z0-9-]+$/.test(lower)) return null;
+    const host = lower.slice('https://'.length);
+    const starIndex = host.indexOf('*');
+    return { prefix: host.slice(0, starIndex), suffix: host.slice(starIndex + 1) };
+}
+/** Exact-origin allowlist membership, plus any explicit single-label prefix families. */
+export function originAllowed(origin: string, allowedOrigins: readonly string[]): boolean {
+    if (allowedOrigins.includes(origin)) return true;
+    if (!origin.startsWith('https://')) return false;
+    const host = origin.slice('https://'.length).toLowerCase();
+    if (!host || host.includes('*')) return false;
+    for (const entry of allowedOrigins) {
+        const family = parseOriginFamilyPattern(entry);
+        if (!family || !host.startsWith(family.prefix)) continue;
+        const rest = host.slice(family.prefix.length);
+        if (rest.endsWith(family.suffix) && /^[a-z0-9-]*$/.test(rest.slice(0, rest.length - family.suffix.length))) return true;
+    }
+    return false;
+}
 export function validateDownloadUrl(value: string, allowedOrigins: readonly string[]): URL {
     if (/^(?:\/mnt\/|sandbox:|file:|data:|blob:|[a-zA-Z]:[\\/])/.test(value))
         throw new ScanError('LOCAL_FILE_REFERENCE', 'This is a local or inline file reference, not a transferable HTTPS attachment. QuoteCore+ cannot read the chat sandbox. Upload the image in the review panel.');
@@ -32,11 +61,11 @@ export function validateDownloadUrl(value: string, allowedOrigins: readonly stri
     }
     if (value.length > 8192 || url.protocol !== 'https:' || url.username || url.password || url.hash || (url.port && url.port !== '443') || isIP(url.hostname.replace(/^\[|\]$/g, '')))
         throw new ScanError('FILE_HOST_NOT_ALLOWED', 'This file reference is not an allowed public HTTPS host.');
-    if (!allowedOrigins.includes(url.origin))
+    if (!originAllowed(url.origin, allowedOrigins))
         // Deliberately expose only the origin - never the signed path/query - so
         // staging can discover ChatGPT's current transfer host without leaking
         // a bearer-style download URL into model-visible diagnostics.
-        throw new ScanError('FILE_HOST_NOT_ALLOWED', `File host ${url.origin} is not allowlisted. Verify it, then add that exact HTTPS origin to the connector allowlist.`);
+        throw new ScanError('FILE_HOST_NOT_ALLOWED', `File host ${url.origin} is not allowlisted. Verify it, then add that exact HTTPS origin (or its explicit prefix family) to the connector allowlist.`);
     return url;
 }
 export async function downloadPlan(value: string, allowedOrigins: readonly string[], options?: {

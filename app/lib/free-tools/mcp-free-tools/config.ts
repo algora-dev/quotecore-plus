@@ -1,4 +1,5 @@
 import { ScanError } from '../host-roof-scan/types';
+import { parseOriginFamilyPattern } from '../host-roof-scan/fetch-file';
 
 type Environment = Record<string, string | undefined>;
 export type FreeToolsMcpMode = 'free-tools' | 'legacy';
@@ -43,13 +44,25 @@ export function freeToolsMcpOrigin(env: Environment = process.env): string {
 }
 
 export function freeToolsMcpFileOrigins(env: Environment = process.env): string[] {
-  const values = [...new Set((env.QC_FREE_TOOLS_MCP_FILE_ORIGINS ?? '').split(',').map(value => value.trim()).filter(Boolean))];
-  for (const value of values) {
+  const rawValues = (env.QC_FREE_TOOLS_MCP_FILE_ORIGINS ?? '').split(',').map(value => value.trim()).filter(Boolean);
+  const values: string[] = [];
+  for (const value of rawValues) {
+    if (value.includes('*')) {
+      // ChatGPT stages attachments from rotating regional Azure accounts inside
+      // one namespace, so exact origins alone cannot cover it. Accept a single
+      // explicit single-label prefix family (https://oaisdmntp*.blob.core.windows.net);
+      // the parser enforces the literal prefix/suffix so broad wildcards stay invalid.
+      if (!parseOriginFamilyPattern(value))
+        throw new ScanError('CONFIGURATION_REQUIRED', 'QC_FREE_TOOLS_MCP_FILE_ORIGINS wildcards must be an explicit single-label prefix family like https://oaisdmntp*.blob.core.windows.net.', 503);
+      values.push(value.toLowerCase());
+      continue;
+    }
     let url: URL;
     try { url = new URL(value); }
     catch { throw new ScanError('CONFIGURATION_REQUIRED', 'QC_FREE_TOOLS_MCP_FILE_ORIGINS must contain exact HTTPS origins.', 503); }
-    if (url.protocol !== 'https:' || url.origin !== value || url.username || url.password || url.hostname.includes('*'))
-      throw new ScanError('CONFIGURATION_REQUIRED', 'QC_FREE_TOOLS_MCP_FILE_ORIGINS cannot contain wildcards, credentials, paths or trailing slashes.', 503);
+    if (url.protocol !== 'https:' || url.origin !== value || url.username || url.password)
+      throw new ScanError('CONFIGURATION_REQUIRED', 'QC_FREE_TOOLS_MCP_FILE_ORIGINS cannot contain credentials, paths or trailing slashes.', 503);
+    values.push(value);
   }
-  return values;
+  return [...new Set(values)];
 }
