@@ -101,7 +101,9 @@ export function verifyProviderPrice(raw: unknown, row: RegistryRow, sale: boolea
   insist(price.billing_scheme === 'per_unit' && price.transform_quantity == null, 'provider_price_shape_unsupported');
   if (sale) insist(price.active === true, 'provider_price_inactive');
 }
-export interface PurchasedLimits { capacity: 'low'|'medium'|'high'; quotes: number; storageBytes: number; digitalTakeoff: boolean; scanTokens: number; offcuts: boolean; assistantTasks: number }
+export interface PurchasedLimits { capacity: 'low'|'medium'|'high'; quotes: number; storageBytes: number; digitalTakeoff: boolean; scanTokens: number; offcuts: boolean; assistantTasks: number;
+  /** Free Workspace extras (2026-11-02): optional so paid snapshots stay valid. */
+  quoteSends?: number; componentLimit?: number; offcutGenerations?: number }
 export function parsePurchasedLimits(raw: unknown): PurchasedLimits {
   const v = object(raw);
   insist(['low','medium','high'].includes(String(v.capacity)), 'snapshot_capacity_invalid');

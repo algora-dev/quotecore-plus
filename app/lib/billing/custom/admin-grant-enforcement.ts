@@ -47,6 +47,12 @@ interface AdminGrantWindow {
 
 /** Load the admin grant's purchased limits + period. null when unreadable. */
 async function loadAdminGrantWindow(companyId: string): Promise<AdminGrantWindow | null> {
+  // Free Workspace grants roll monthly (2026-11-02): refresh before reading so
+  // the window (and every count below) is always the current month.
+  // Loose cast: the refresh fn is SQL-side only (not in generated types).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (createAdminClient() as unknown as { rpc(fn: string, args?: unknown): Promise<unknown> })
+    .rpc('qcp_admin_free_period_refresh', { p_company_id: companyId }).catch(() => {});
   const admin = createAdminClient() as unknown as {
     from(table: string): {
       select(cols: string): { eq(col: string, val: string): { maybeSingle(): Promise<{ data: unknown; error: unknown }> } };
@@ -99,7 +105,9 @@ export async function assertAdminGrantAllowance(companyId: string, kind: AdminGr
     );
   }
 
-  const limit = win.limits.quotes;
+  // Send/URL cap: Free Workspace uses its own quoteSends key (5/month);
+  // grants without it keep the shared quotes allowance.
+  const limit = win.limits.quoteSends ?? win.limits.quotes;
   // Chainable read builder: eq/gte/lt compose, then head-count select.
   type UsageChain = {
     eq(col: string, val: string): UsageChain;
@@ -159,4 +167,41 @@ export async function recordAdminGrantUsage(companyId: string, kind: AdminGrantU
   } catch (err) {
     console.error('[admin-grant] usage record threw:', err);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Offcuts planner: Free Workspace 2 generations/month (owner 2026-11-02).
+// Counted per quote (first offcut-based save marks the quote); the marker is
+// idempotent so re-saves of the same quote never double-count.
+// ---------------------------------------------------------------------------
+
+export async function assertOffcutAllowance(quoteId: string): Promise<void> {
+  const adminClient = createAdminClient();
+  const { data: q } = await adminClient.from('quotes').select('company_id').eq('id', quoteId).maybeSingle();
+  const companyId = (q as { company_id?: string } | null)?.company_id;
+  if (!companyId) return;
+  const resolved = await resolveBillingType(companyId);
+  if (resolved.kind !== 'custom_admin_granted') return;
+  const win = await loadAdminGrantWindow(companyId);
+  if (!win) return;
+  const cap = win.limits.offcutGenerations ?? 0;
+  if (cap <= 0) return;
+  // Loose typing: company_admin_grant_usage is a service-role table outside
+  // the generated types (same pattern as the rest of this file).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = createAdminClient() as unknown as { from(table: string): any };  // Already-marked quotes never re-count.
+  const { data: existing } = await admin.from('company_admin_grant_usage')
+    .select('id').eq('company_id', companyId).eq('kind', 'offcut_generated').eq('ref_id', quoteId).maybeSingle();
+  if (existing) return;
+  const { count } = await admin.from('company_admin_grant_usage')
+    .select('id', { count: 'exact', head: true })
+    .eq('company_id', companyId).eq('kind', 'offcut_generated')
+    .gte('occurred_at', win.periodStart).lt('occurred_at', win.periodEnd);
+  if ((count ?? 0) >= cap) {
+    throw new AdminGrantAllowanceError('admin_grant_limit',
+      `The Offcuts planner is limited to ${cap} uses per month on Free Workspace. Upgrade from Account \u2192 Billing & Pricing to keep using it.`,
+      { kind: 'quote_sent', used: count ?? 0, limit: cap, periodEnd: win.periodEnd });
+  }
+  await admin.from('company_admin_grant_usage')
+    .insert({ company_id: companyId, kind: 'offcut_generated', ref_id: quoteId });
 }

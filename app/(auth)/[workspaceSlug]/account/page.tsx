@@ -26,6 +26,7 @@ import { customPricingOnly } from '@/app/lib/billing/custom/environment';
 import { getStripeMode } from '@/app/lib/billing/stripe';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { BillingPanel, type BillingPlanInfo } from './billing/BillingPanel';
+import { FreeWorkspaceCard } from './billing/FreeWorkspaceCard';
 
 /**
  * Unified /account page.
@@ -308,6 +309,7 @@ export default async function AccountPage() {
             <h2 className="text-lg md:text-xl font-semibold text-slate-900">Billing &amp; Subscription</h2>
             <p className="text-sm text-slate-500 mt-1">Manage your plan and payment details.</p>
           </div>
+          <FreeWorkspaceCard companyId={profile.company_id} slug={company.slug ?? ''} />
           {customPricingOnly() && entitlements.billingModel !== 'custom_setup' && (
             <div className="rounded-xl border border-orange-200 bg-orange-50/40 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <p className="text-sm text-slate-700">New pricing is here. Compare a setup that fits your work - your current plan is unchanged.</p>

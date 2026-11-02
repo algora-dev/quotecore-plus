@@ -145,7 +145,7 @@ export async function loadComponentLibrary(collectionId?: string | null) {
  */
 export type CreateComponentResult =
   | { ok: true; data: NonNullable<Awaited<ReturnType<typeof loadComponentLibrary>>>[number] }
-  | { ok: false; code: 'internal_error'; message: string };
+  | { ok: false; code: 'internal_error' | 'quota_reached'; message: string };
 
 export async function createComponent(input: ComponentLibraryInsert): Promise<CreateComponentResult> {
   let profile;
@@ -167,6 +167,30 @@ export async function createComponent(input: ComponentLibraryInsert): Promise<Cr
   } catch (error) {
     return { ok: false, code: 'internal_error', message: error instanceof Error ? error.message : 'Demo allowance unavailable.' };
   }
+
+  // Free Workspace: 15 smart components in total, lifetime (owner 2026-11-02).
+  // Admin-free grants carry the cap in purchased_entitlements.componentLimit.
+  try {
+    const { createAdminClient } = await import('@/app/lib/supabase/admin');
+    // Loose typing: company_custom_billing is a service-role table outside the
+    // generated types (same pattern as the entitlements snapshot).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = createAdminClient() as unknown as { from(table: string): any };
+    const grantRes = await admin.from('company_custom_billing')
+      .select('purchased_entitlements, stripe_subscription_id')
+      .eq('company_id', profile.company_id).maybeSingle();
+    const grant = (grantRes?.data ?? null) as { purchased_entitlements?: Record<string, unknown>; stripe_subscription_id?: string } | null;
+    const limits = (grant?.purchased_entitlements ?? null) as Record<string, unknown> | null;
+    const cap = grant?.stripe_subscription_id?.startsWith('admin-free-') && limits ? Number(limits.componentLimit ?? 0) : 0;
+    if (cap > 0) {
+      const { count } = await admin.from('component_library')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', profile.company_id);
+      if ((count ?? 0) >= cap) {
+        return { ok: false, code: 'quota_reached', message: `Free Workspace includes ${cap} smart components in total. To add more, upgrade from Account \u2192 Billing & Pricing.` };
+      }
+    }
+  } catch { /* resolution failure must not block creation */ }
 
   let assistantCallName: string | null;
   try { assistantCallName = normalizeAssistantCallNameValue((input as unknown as Record<string, unknown>).assistant_call_name); }

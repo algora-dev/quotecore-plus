@@ -81,6 +81,20 @@ export async function saveTakeoffMeasurements(
 ): Promise<{ success: true } | { success: false; error: string }> {
   const demoContext = await assertDemoTakeoffQuote(quoteId, currentPageId);
   if (demoContext && measurements.length > 300) return { success: false, error: 'This demo accepts up to 300 measurements on its prepared plan.' };
+  // Free Workspace: offcuts planner allowance (owner 2026-11-02) - 2 uses per
+  // month, marked per quote so re-saves never double-count.
+  if (measurements.some(m => (m as { entryInputs?: { value_basis?: string } | null }).entryInputs?.value_basis === 'offcuts')) {
+    try {
+      const { assertOffcutAllowance } = await import('@/app/lib/billing/custom/admin-grant-enforcement');
+      await assertOffcutAllowance(quoteId);
+    } catch (e) {
+      const code = (e as { code?: string }).code;
+      if (code === 'admin_grant_limit' || code === 'admin_grant_expired') {
+        return { success: false, error: e instanceof Error ? e.message : 'Offcuts planner limit reached.' };
+      }
+      throw e;
+    }
+  }
   const supabase = await createSupabaseServerClient();
 
   // Ownership check (RLS still applies inside the RPC, but this gives us a clearer error

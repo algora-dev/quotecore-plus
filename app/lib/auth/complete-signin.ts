@@ -146,20 +146,28 @@ async function provisionFreeWorkspace(
           catalog_id: PREVIEW_CATALOG.id,
           catalog_revision: PREVIEW_CATALOG.revision,
           component_codes: ['core_high', 'digital_takeoff', 'scan_high', 'offcuts_high', 'assistant_heavy'],
+          // Free Workspace quotas (owner-approved 2026-11-02): monthly ledger
+          // quotas reset by rolling the grant period (qcp_admin_free_period_refresh).
+          // quoteSends/componentLimit/offcutGenerations are app-layer caps.
           purchased_entitlements: {
             capacity: 'high',
-            quotes: 100,
-            storageBytes: 10_000_000_000,
+            quotes: 10,
+            quoteSends: 5,
+            storageBytes: 1_000_000_000,
             digitalTakeoff: true,
-            scanTokens: 400,
+            scanTokens: 12,
+            componentLimit: 15,
             offcuts: true,
-            assistantTasks: 1500,
+            offcutGenerations: 2,
+            assistantTasks: 20,
           },
           provider_status: 'active',
           currency: PREVIEW_CATALOG.currency.toLowerCase(),
           monthly_cents: 0,
           period_start: nowIso,
-          period_end: '2099-12-31T00:00:00.000Z',
+          // First period runs to the end of the current calendar month; the
+          // daily refresh (qcp_admin_free_period_refresh) rolls it monthly.
+          period_end: (() => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)).toISOString(); })(),
           reconciled_at: nowIso,
         }, { onConflict: 'company_id' });
       if (grantError) {
