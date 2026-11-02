@@ -38,6 +38,7 @@
 .logoLink {
   display: inline-flex;
   min-width: 0;
+  min-height: 44px;
   align-items: center;
   border-radius: 12px;
   outline: none;
@@ -258,7 +259,7 @@
 .signIn { min-height: 48px; padding: 12px 20px; }
 .menuPanel { max-height: calc(100dvh - 72px); overflow-y: auto; overscroll-behavior: contain; }
 .menuFooter > div { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-.menuFooter > div a { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; min-height: 32px; color: #596273; }
+.menuFooter > div a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; color: #596273; }
 .menuFooter > div svg { width: 19px; height: 19px; }
 .navItem:focus-visible, .countryLink:focus-visible, .menuFooter a:focus-visible { outline: 2px solid var(--qc-header-orange-ink); outline-offset: 3px; }
 @media (max-width:767px) {

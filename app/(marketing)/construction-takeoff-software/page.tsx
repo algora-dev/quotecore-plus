@@ -4,6 +4,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { CommercialFinalCta } from "@/components/conversion/CommercialConversion";
+import { DoneForYouInquiryLink } from "@/components/marketing/DoneForYouInquiryLink";
 import TwoPathCta from "@/components/conversion/TwoPathCta";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import {
@@ -264,9 +265,9 @@ export default function ConstructionTakeoffSoftwarePage() {
               that setup inside QuoteCore+ with you - configuration, onboarding and training included.
             </p>
             <p className="mt-4">
-              <Link href="/done-for-you-setup" className="font-semibold text-[#BD4A1A] hover:underline">
-                See how Done-For-You setup works →
-              </Link>
+              <DoneForYouInquiryLink className="font-semibold text-[#BD4A1A] hover:underline" source="construction-takeoff-dfy">
+                Inquire about Done For You →
+              </DoneForYouInquiryLink>
             </p>
           </div>
         </section>

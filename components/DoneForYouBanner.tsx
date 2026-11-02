@@ -1,6 +1,4 @@
-import { MarketingButton } from "@/components/marketing/MarketingButton";
-import { workflowCallHref } from "@/lib/booking";
-import { shaunCallPromiseShort } from "@/lib/marketing-conversion";
+import { DoneForYouInquiryButton } from "@/components/marketing/DoneForYouInquiryButton";
 
 /** Narrow Done For You reassurance CTA. */
 export default function DoneForYouBanner() {
@@ -16,8 +14,8 @@ export default function DoneForYouBanner() {
           </p>
         </div>
         <div className="flex max-w-sm flex-col items-center gap-3 lg:items-end">
-          <MarketingButton href={workflowCallHref} variant="primary" size="large">Book 25 minutes with Shaun</MarketingButton>
-          <p className="text-xs leading-5 text-zinc-500 lg:text-right">{shaunCallPromiseShort}</p>
+          <DoneForYouInquiryButton size="large" source="dfy-banner">Inquire about Done For You</DoneForYouInquiryButton>
+          <p className="text-xs leading-5 text-zinc-500 lg:text-right">Choose a 25-minute call or inquire without calling in around 60 seconds.</p>
         </div>
       </div>
     </section>

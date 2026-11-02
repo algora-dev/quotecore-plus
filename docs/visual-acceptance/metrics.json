@@ -1,0 +1,836 @@
+[
+  {
+    "docW": 1440,
+    "clientW": 1440,
+    "docH": 5586,
+    "h1": [
+      {
+        "fs": "59.904px",
+        "lh": "62.5997px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "Only pay for what you need.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Show me how you measure, estimate or quote today. I'll show you how to do it fas",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Create your free live workspace.",
+        "fs": "48px",
+        "lh": "50.88px"
+      },
+      {
+        "t": "From people doing the work.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Your workflow.Your pricing.We set it up for you.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Explore the features that save you time and make estimating easier.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Tell me how you measure, estimate or quote today.I'll show you how to do it fast",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "homepage",
+    "viewport": "desktop",
+    "w": 1440,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1440,
+    "clientW": 1440,
+    "docH": 2729,
+    "h1": [
+      {
+        "fs": "59.904px",
+        "lh": "62.5997px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "Know what fits in about 15 minutes.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Try it yourself. Or let us help.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Because preset plans make you guess.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "pricing",
+    "viewport": "desktop",
+    "w": 1440,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1440,
+    "clientW": 1440,
+    "docH": 2519,
+    "h1": [
+      {
+        "fs": "59.904px",
+        "lh": "62.5997px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "Learn the core workflow in 10 to 15 minutes.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Free might be all you need.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "free-workspace",
+    "viewport": "desktop",
+    "w": 1440,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1440,
+    "clientW": 1440,
+    "docH": 5384,
+    "h1": [
+      {
+        "fs": "59.904px",
+        "lh": "63.1987px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "25 minutes with Shaun is still the fastest way to scope it.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "A closer look at Done For You.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Why can the price change?A solo operator and a larger roofing business can need ",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "We set it up, then hand it over in the way that suits you.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Tell us how you work.Get a tailored proposal.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "A few things worth knowing.",
+        "fs": "48px",
+        "lh": "52.08px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "done-for-you",
+    "viewport": "desktop",
+    "w": 1440,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1440,
+    "clientW": 1440,
+    "docH": 900,
+    "h1": [],
+    "h2": [
+      {
+        "t": "How would you like to get started?",
+        "fs": "36px",
+        "lh": "38.88px"
+      }
+    ],
+    "surface": "done-for-you-inquiry",
+    "viewport": "desktop",
+    "w": 1440,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1440,
+    "clientW": 1440,
+    "docH": 900,
+    "h1": [],
+    "h2": [
+      {
+        "t": "Create a free workspace",
+        "fs": "34px",
+        "lh": "36.04px"
+      }
+    ],
+    "surface": "free-workspace-modal",
+    "viewport": "desktop",
+    "w": 1440,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1024,
+    "clientW": 1024,
+    "docH": 6041,
+    "h1": [
+      {
+        "fs": "43px",
+        "lh": "44.935px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "Only pay for what you need.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Show me how you measure, estimate or quote today. I'll show you how to do it fas",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Create your free live workspace.",
+        "fs": "34.816px",
+        "lh": "36.905px"
+      },
+      {
+        "t": "From people doing the work.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Your workflow.Your pricing.We set it up for you.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Explore the features that save you time and make estimating easier.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Tell me how you measure, estimate or quote today.I'll show you how to do it fast",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "homepage",
+    "viewport": "tablet",
+    "w": 1024,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1024,
+    "clientW": 1024,
+    "docH": 2667,
+    "h1": [
+      {
+        "fs": "43px",
+        "lh": "44.935px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "Know what fits in about 15 minutes.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Try it yourself. Or let us help.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Because preset plans make you guess.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "pricing",
+    "viewport": "tablet",
+    "w": 1024,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1024,
+    "clientW": 1024,
+    "docH": 2438,
+    "h1": [
+      {
+        "fs": "43px",
+        "lh": "44.935px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "Learn the core workflow in 10 to 15 minutes.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Free might be all you need.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "free-workspace",
+    "viewport": "tablet",
+    "w": 1024,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1024,
+    "clientW": 1024,
+    "docH": 5054,
+    "h1": [
+      {
+        "fs": "43px",
+        "lh": "45.365px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "25 minutes with Shaun is still the fastest way to scope it.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "A closer look at Done For You.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Why can the price change?A solo operator and a larger roofing business can need ",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "We set it up, then hand it over in the way that suits you.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Tell us how you work.Get a tailored proposal.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "A few things worth knowing.",
+        "fs": "35.328px",
+        "lh": "38.3309px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "done-for-you",
+    "viewport": "tablet",
+    "w": 1024,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1024,
+    "clientW": 1024,
+    "docH": 900,
+    "h1": [],
+    "h2": [
+      {
+        "t": "How would you like to get started?",
+        "fs": "36px",
+        "lh": "38.88px"
+      }
+    ],
+    "surface": "done-for-you-inquiry",
+    "viewport": "tablet",
+    "w": 1024,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 1024,
+    "clientW": 1024,
+    "docH": 900,
+    "h1": [],
+    "h2": [
+      {
+        "t": "Create a free workspace",
+        "fs": "34px",
+        "lh": "36.04px"
+      }
+    ],
+    "surface": "free-workspace-modal",
+    "viewport": "tablet",
+    "w": 1024,
+    "h": 900,
+    "overflow": false
+  },
+  {
+    "docW": 390,
+    "clientW": 390,
+    "docH": 9775,
+    "h1": [
+      {
+        "fs": "43px",
+        "lh": "44.935px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "Only pay for what you need.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Show me how you measure, estimate or quote today. I'll show you how to do it fas",
+        "fs": "37px",
+        "lh": "40.145px"
+      },
+      {
+        "t": "Create your free live workspace.",
+        "fs": "36px",
+        "lh": "38.16px"
+      },
+      {
+        "t": "From people doing the work.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Your workflow.Your pricing.We set it up for you.",
+        "fs": "40px",
+        "lh": "43.4px"
+      },
+      {
+        "t": "Explore the features that save you time and make estimating easier.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Tell me how you measure, estimate or quote today.I'll show you how to do it fast",
+        "fs": "39px",
+        "lh": "42.315px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "homepage",
+    "viewport": "mobile",
+    "w": 390,
+    "h": 844,
+    "overflow": false
+  },
+  {
+    "docW": 390,
+    "clientW": 390,
+    "docH": 5856,
+    "h1": [
+      {
+        "fs": "43px",
+        "lh": "44.935px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "Know what fits in about 15 minutes.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Try it yourself. Or let us help.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Because preset plans make you guess.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "pricing",
+    "viewport": "mobile",
+    "w": 390,
+    "h": 844,
+    "overflow": false
+  },
+  {
+    "docW": 390,
+    "clientW": 390,
+    "docH": 5575,
+    "h1": [
+      {
+        "fs": "43px",
+        "lh": "44.935px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "Learn the core workflow in 10 to 15 minutes.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Free might be all you need.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "free-workspace",
+    "viewport": "mobile",
+    "w": 390,
+    "h": 844,
+    "overflow": false
+  },
+  {
+    "docW": 390,
+    "clientW": 390,
+    "docH": 8297,
+    "h1": [
+      {
+        "fs": "43px",
+        "lh": "45.58px"
+      }
+    ],
+    "h2": [
+      {
+        "t": "25 minutes with Shaun is still the fastest way to scope it.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "A closer look at Done For You.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Why can the price change?A solo operator and a larger roofing business can need ",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "We set it up, then hand it over in the way that suits you.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Tell us how you work.Get a tailored proposal.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "A few things worth knowing.",
+        "fs": "32px",
+        "lh": "34.72px"
+      },
+      {
+        "t": "Product",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Explore",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Company",
+        "fs": "14px",
+        "lh": "21px"
+      },
+      {
+        "t": "Legal",
+        "fs": "14px",
+        "lh": "21px"
+      }
+    ],
+    "surface": "done-for-you",
+    "viewport": "mobile",
+    "w": 390,
+    "h": 844,
+    "overflow": false
+  },
+  {
+    "docW": 390,
+    "clientW": 390,
+    "docH": 844,
+    "h1": [],
+    "h2": [
+      {
+        "t": "How would you like to get started?",
+        "fs": "28px",
+        "lh": "30.24px"
+      }
+    ],
+    "surface": "done-for-you-inquiry",
+    "viewport": "mobile",
+    "w": 390,
+    "h": 844,
+    "overflow": false
+  },
+  {
+    "docW": 390,
+    "clientW": 390,
+    "docH": 844,
+    "h1": [],
+    "h2": [
+      {
+        "t": "Create a free workspace",
+        "fs": "30px",
+        "lh": "31.8px"
+      }
+    ],
+    "surface": "free-workspace-modal",
+    "viewport": "mobile",
+    "w": 390,
+    "h": 844,
+    "overflow": false
+  }
+]

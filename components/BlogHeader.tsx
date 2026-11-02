@@ -158,7 +158,14 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
             </nav>
 
             <div className={styles.menuFooter}>
-              <SocialIcons className="justify-start" />
+              <SocialIcons align="start" />
+              <a
+                href="/nz/roofing-quoting-software"
+                className={styles.countryLink}
+                onClick={() => setMenuOpen(false)}
+              >
+                Switch to New Zealand
+              </a>
             </div>
           </div>
         </div>

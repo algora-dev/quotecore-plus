@@ -4,6 +4,7 @@ import { useState } from "react";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { MarketingButton } from "@/components/marketing/MarketingButton";
+import { DoneForYouInquiryLink } from "@/components/marketing/DoneForYouInquiryLink";
 import { homepageConfig } from "@/components/marketing/home/homepage-config";
 import { trackEvent } from "@/lib/analytics";
 import styles from "./ContactPage.module.css";
@@ -79,13 +80,13 @@ export default function ContactPage() {
                   <a className={styles.routeLink} href={bookingHref} onClick={() => trackEvent("book_call_click", { source: "contact_route_demo" })}>Choose a time <ArrowIcon /></a>
                 </span>
               </article>
-              <a className={styles.routeCard} href="/done-for-you-setup" onClick={() => trackEvent("contact_setup_click", { source: "contact_route_setup" })}>
+              <DoneForYouInquiryLink className={styles.routeCard} source="contact-route-setup">
                 <span className={styles.routeIcon}><SparkIcon /></span>
                 <span className={styles.routeNumber}>02</span>
-                <h2>Done-for-you setup</h2>
-                <p>Want help setting up pricing, components or your workflow? Book time with the team.</p>
-                <span className={styles.routeLink}>Get setup help <ArrowIcon /></span>
-              </a>
+                <h2>Done For You setup</h2>
+                <p>Want help setting up pricing, components or your workflow? Choose a call or send a 60-second enquiry.</p>
+                <span className={styles.routeLink}>Inquire about Done For You <ArrowIcon /></span>
+              </DoneForYouInquiryLink>
               <a className={styles.routeCard} href="/#questions" onClick={() => trackEvent("contact_faq_click", { source: "contact_route_faq" })}>
                 <span className={styles.routeIcon}><HelpIcon /></span>
                 <span className={styles.routeNumber}>03</span>

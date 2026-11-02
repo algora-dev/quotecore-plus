@@ -35,6 +35,22 @@
     color: #94a3b8 !important;
     -webkit-text-fill-color: #94a3b8 !important;
   }
+
+  /* Current dark dialogs are deliberate self-contained theme roots. The
+     legacy force-light fallback above must not bleach their fields when the
+     user's OS prefers dark colours. */
+  [data-qc-theme="dark"] input,
+  [data-qc-theme="dark"] textarea,
+  [data-qc-theme="dark"] select {
+    color: #FBFCFF !important;
+    background-color: #171C23 !important;
+    -webkit-text-fill-color: #FBFCFF !important;
+  }
+  [data-qc-theme="dark"] input::placeholder,
+  [data-qc-theme="dark"] textarea::placeholder {
+    color: #9AA3B1 !important;
+    -webkit-text-fill-color: #9AA3B1 !important;
+  }
 }
 
 body {

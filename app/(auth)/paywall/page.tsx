@@ -148,11 +148,11 @@ export default async function PaywallPage() {
             </div>
             <Link
               data-qc-variant="primary"
-              href="/done-for-you-setup"
+              href="/done-for-you-setup?inquire=1"
               prefetch={false}
               className="qc-button qc-flow-control shrink-0"
             >
-              See Done For You &rarr;
+              Inquire about Done For You &rarr;
             </Link>
           </div>
         </div>

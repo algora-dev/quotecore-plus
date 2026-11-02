@@ -1,7 +1,6 @@
-import { MarketingButton } from '@/components/marketing/MarketingButton';
 import { FounderVideo } from './FounderVideo';
 import { Icon } from './Icon';
-import { safeBookingHref } from './homepage-config';
+import { DoneForYouInquiryButton } from '@/components/marketing/DoneForYouInquiryButton';
 import s from './Homepage.module.css';
 import d from './DoneForYou.module.css';
 
@@ -12,12 +11,10 @@ export interface DoneForYouConfig {
   captionsSrc?: string;
 }
 
-export function DoneForYouSection({ config = {}, detailsHref = '/done-for-you-setup', preview = false }: {
+export function DoneForYouSection({ config = {}, preview = false }: {
   config?: DoneForYouConfig;
-  detailsHref?: string;
   preview?: boolean;
 }) {
-  const bookingHref = safeBookingHref(config.bookingHref ?? '');
   return <section id="setup" className={`${s.dark} ${d.section}`} aria-labelledby="setup-title">
     <div className={d.blueprint} aria-hidden="true">
       <svg viewBox="0 0 1280 520" preserveAspectRatio="xMidYMid slice" focusable="false">
@@ -64,14 +61,11 @@ export function DoneForYouSection({ config = {}, detailsHref = '/done-for-you-se
             <li><Icon name="check" size={16} />3 months of support</li>
           </ul>
           <div className={d.actions}>
-            <MarketingButton href={detailsHref} variant="primary" size="large" className={`${s.button} ${d.cta}`} icon={<Icon name="arrow" size={18} />}>
-              See How Done For You Works
-            </MarketingButton>
-            <MarketingButton href={bookingHref || detailsHref} variant="glass" size="large" className={`${s.button} ${d.secondaryCta}`}>
-              {bookingHref ? 'Book a Free 25-Minute Call' : 'Explore Done For You Setup'}
-            </MarketingButton>
+            <DoneForYouInquiryButton size="large" className={`${s.button} ${d.cta}`} source="homepage-dfy-section" icon={<Icon name="arrow" size={18} />}>
+              Inquire about Done For You
+            </DoneForYouInquiryButton>
           </div>
-          <p className={d.reassurance}>Free 25-minute call with Shaun. No obligation. You’ll also get his #1 tip for winning more of the jobs you quote.</p>
+          <p className={d.reassurance}>Choose a 25-minute discovery call or inquire without calling in around 60 seconds.</p>
         </div>
         <FounderVideo videoSrc={config.videoSrc} youtubeId={config.youtubeId} captionsSrc={config.captionsSrc} preview={preview} />
       </div>

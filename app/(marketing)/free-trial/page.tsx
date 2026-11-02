@@ -1,139 +1,63 @@
 import type { Metadata } from 'next';
-import {
-  Container,
-  FaqAccordion,
-  FeatureGrid,
-  FinalCta,
-  Hero,
-  PageScaffold,
-  Section,
-  SectionHeader,
-  WorkflowRail,
-} from '@/components/marketing/page-v2/PageV2';
+import BlogHeader from '@/components/BlogHeader';
+import SiteFooter from '@/components/SiteFooter';
+import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
+import { MarketingButton } from '@/components/marketing/MarketingButton';
 import { homepageConfig } from '@/components/marketing/home/homepage-config';
-import { buildBreadcrumbSchema, buildFaqSchema, buildSoftwareApplicationSchema, siteUrl } from '@/lib/schema';
+import { buildBreadcrumbSchema, buildSoftwareApplicationSchema, siteUrl } from '@/lib/schema';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
+import styles from './FreeWorkspaceLocked.module.css';
 
 export const metadata: Metadata = {
   title: 'Free QuoteCore+ Workspace | No Card, No Expiry',
   description: 'Create a real QuoteCore+ Free Workspace, use it on your own jobs for as long as you want, and try the optional 10 to 15 minute guided walkthrough when you want help learning the workflow.',
-  alternates: {
-    canonical: 'https://quote-core.com/free-trial',
-    languages: hreflangLanguages('/free-trial'),
-  },
+  alternates: { canonical: 'https://quote-core.com/free-trial', languages: hreflangLanguages('/free-trial') },
 };
 
-const faqs = [
-  {
-    question: 'Is this a free trial?',
-    answer: 'No. It is a real Free Workspace with no expiry. Use it on your own jobs for as long as the included features and allowances are enough for your business.',
-  },
-  {
-    question: 'Do I need a credit card?',
-    answer: 'No. Create your Free Workspace with Google or email. There is no card, plan selection or payment step before you can start using QuoteCore+.',
-  },
-  {
-    question: 'What is the guided walkthrough?',
-    answer: 'It is an optional 10 to 15 minute guided workflow using a preconfigured fictional roofing business. It takes you through adding pricing, measuring with that pricing, editing and sending a quote, and using Smart Assistant for similar supported tasks.',
-  },
-  {
-    question: 'Can I skip the walkthrough?',
-    answer: 'Yes. Your Free Workspace is your real account. You can skip the walkthrough and start with your own jobs immediately, or move between the guided experience and your own workspace when you want.',
-  },
-  {
-    question: 'When do I need to upgrade?',
-    answer: 'Only when you need more features, capacity or usage. If the Free Workspace is enough for the way you work, keep using it.',
-  },
-];
+function c(...names: string[]) { return names.map((name) => styles[name]).filter(Boolean).join(' '); }
 
 export default function FreeWorkspacePage() {
   const bookingHref = homepageConfig.bookingHref || '/contact';
   const schemas = [
-    buildBreadcrumbSchema([
-      { name: 'Home', url: `${siteUrl}/` },
-      { name: 'Free Workspace', url: `${siteUrl}/free-trial` },
-    ]),
-    buildFaqSchema(faqs),
+    buildBreadcrumbSchema([{ name: 'Home', url: `${siteUrl}/` }, { name: 'Free Workspace', url: `${siteUrl}/free-trial` }]),
     { '@context': 'https://schema.org', ...buildSoftwareApplicationSchema() },
   ];
+  return <div className={styles.root}>
+    {schemas.map((schema, i) => <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />)}
+    <BlogHeader />
+    <main>
+      <section className={styles.hero}><div className={styles.wrap}><div className={c('hero-grid')}>
+        <div>
+          <p className={styles.eyebrow}>Free Workspace</p>
+          <h1>Start with a real QuoteCore+ workspace. <span className={styles.gradient}>Free for as long as you want.</span></h1>
+          <p className={c('hero-copy')}>Instead of a timed trial, we give you a real workspace you can use on your own jobs. Try every feature, learn what helps your business, and upgrade only if you need more.</p>
+          <div className={c('hero-actions')}><FreeWorkspaceButton className={c('btn','btn-primary')}>Create my free workspace →</FreeWorkspaceButton><MarketingButton href={bookingHref} className={c('btn','btn-outline')}>Book 25 minutes with Shaun</MarketingButton></div>
+          <div className={c('hero-trust')}><span>No card needed</span><span>No expiry</span><span>Use it on real jobs</span></div>
+        </div>
+        <aside className={styles.included} aria-label="What is included">
+          <div className={c('included-head')}><small>Included from day one</small><strong>Your account, your workspace.</strong></div>
+          <div className={c('included-row')}><div className={c('included-icon')}>01</div><div><b>Real Free Workspace</b><p>Use QuoteCore+ on your own jobs and keep the account for as long as you want.</p></div></div>
+          <div className={c('included-row')}><div className={c('included-icon')}>02</div><div><b>Every feature available</b><p>Try the tools yourself with free usage included, so you can learn what actually helps.</p></div></div>
+          <div className={c('included-row')}><div className={c('included-icon')}>03</div><div><b>Optional guided walkthrough</b><p>Learn the core workflow in around 10 to 15 minutes, then switch back to your own workspace.</p></div></div>
+        </aside>
+      </div></div></section>
 
-  return (
-    <PageScaffold breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Free Workspace' }]} schemas={schemas}>
-      <Hero
-        eyebrow="Free Workspace"
-        title={<>Start with a real QuoteCore+ workspace. Free for as long as you want.</>}
-        lead="Instead of a timed trial, we give you a real workspace you can use on your own jobs. Try every feature, learn what helps your business, and upgrade only if you need more."
-        primary={{ href: '/signup', label: 'Create my Free Workspace', freeWorkspace: true }}
-        secondary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }}
-        proof={['No card needed', 'No expiry', 'Use it on real jobs']}
-      />
+      <section className={styles.walkthrough}><div className={styles.wrap}>
+        <div className={c('walkthrough-head')}><div><p className={styles.eyebrow}>Recommended, but optional</p><h2>Learn the core workflow in 10 to 15 minutes.</h2></div><div className={c('walkthrough-copy')}><p>The guided walkthrough opens a <strong>preconfigured fictional roofing business</strong> and takes you through four connected tasks. Follow it when you want help, or skip it and explore your own workspace instead.</p></div></div>
+        <div className={c('task-grid')}>
+          <article className={styles.task}><div className={c('task-num')}>01 · Pricing</div><h3>Add your pricing</h3><p>See how your materials, labour and pricing can live inside QuoteCore+.</p></article>
+          <article className={styles.task}><div className={c('task-num')}>02 · Measure</div><h3>Measure with that pricing</h3><p>Measure the sample job and see the pricing flow through as you work.</p></article>
+          <article className={styles.task}><div className={c('task-num')}>03 · Quote</div><h3>Edit and send the quote</h3><p>Finish the customer quote, make the final edits and see how sending works.</p></article>
+          <article className={styles.task}><div className={c('task-num')}>04 · Assistant</div><h3>Try Smart Assistant</h3><p>Use the Assistant to complete similar supported tasks in a faster way.</p></article>
+        </div>
+        <div className={c('walkthrough-note')}><span><strong>The walkthrough never locks you in.</strong> Switch back to your own workspace whenever you want.</span><span className={styles.mini}>Guided when useful · Yours when ready</span></div>
+      </div></section>
 
-      <Section tone="soft">
-        <Container>
-          <SectionHeader
-            eyebrow="Included from day one"
-            title="Your account, your workspace."
-            lead="Start with the real product, not a restricted trial account."
-          />
-          <FeatureGrid columns={3} items={[
-            {
-              title: 'A real Free Workspace',
-              body: <p>Use QuoteCore+ on your own jobs and keep the account for as long as you want.</p>,
-            },
-            {
-              title: 'Explore every feature',
-              body: <p>Try the tools with the free allowances included in your workspace so you can understand what actually helps before you pay for more.</p>,
-            },
-            {
-              title: 'Optional guided walkthrough',
-              body: <p>Learn the core workflow in around 10 to 15 minutes, then switch back to your own workspace whenever you want.</p>,
-            },
-          ]} />
-        </Container>
-      </Section>
-
-      <Section tone="dark">
-        <Container>
-          <SectionHeader
-            eyebrow="Recommended, but optional"
-            title="Learn the core workflow in 10 to 15 minutes."
-            lead="The Guided Walkthrough opens a preconfigured fictional roofing business and takes you through four connected tasks. Follow it when you want help, or skip it and explore your own workspace instead."
-            dark
-          />
-          <WorkflowRail steps={[
-            { label: 'Add your pricing', body: 'See how your materials, labour and pricing can live inside QuoteCore+.' },
-            { label: 'Measure with that pricing', body: 'Measure the sample job and see the pricing flow through as you work.' },
-            { label: 'Edit and send the quote', body: 'Finish the customer quote, make the final edits and see how sending works.' },
-            { label: 'Try Smart Assistant', body: 'Use the Assistant to complete similar supported tasks in a faster way.' },
-          ]} />
-        </Container>
-      </Section>
-
-      <Section>
-        <Container narrow>
-          <SectionHeader
-            eyebrow="Keep it simple"
-            title="Free might be all you need."
-            lead="If the Free Workspace gives your business enough, keep using it. Upgrade only when you need more features, capacity or usage."
-          />
-        </Container>
-      </Section>
-
-      <Section tone="soft">
-        <Container><FaqAccordion faqs={faqs} title="Free Workspace FAQ" /></Container>
-      </Section>
-
-      <Section tone="dark">
-        <Container>
-          <FinalCta
-            eyebrow="Try it first"
-            title="Create your workspace. Decide later."
-            body="Use QuoteCore+ long enough to understand how it fits your business before you ever need to think about a paid plan."
-            primary={{ href: '/signup', label: 'Create my Free Workspace', freeWorkspace: true }}
-            secondary={{ href: bookingHref, label: 'Book 25 minutes with Shaun' }}
-          />
-        </Container>
-      </Section>
-    </PageScaffold>
-  );
+      <section className={c('free-enough')} id="book-shaun"><div className={styles.wrap}><div className={c('free-grid')}>
+        <div><p className={styles.eyebrow}>Keep it simple</p><h2>Free might be all you need.</h2><p>If the Free Workspace gives your business enough, keep using it. Upgrade only when you need more features, capacity or usage.</p><div className={c('free-actions')}><FreeWorkspaceButton className={c('btn','btn-primary')}>Create my free workspace →</FreeWorkspaceButton><MarketingButton href={bookingHref} className={c('btn','btn-secondary')}>Book 25 minutes with Shaun</MarketingButton></div></div>
+        <aside className={c('free-box')}><strong>Try it first. Decide later.</strong><p>Use the app long enough to understand how it fits your business before you ever need to think about a paid plan.</p><div className={styles.line}>No card to create your workspace</div><div className={styles.line}>Guided walkthrough included</div><div className={styles.line}>Upgrade only if it earns its place</div></aside>
+      </div></div></section>
+    </main>
+    <SiteFooter />
+  </div>;
 }

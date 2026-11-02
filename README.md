@@ -1,5 +1,7 @@
 # QuoteCore+
 
+> **Marketing implementation note:** the reconciled acquisition pages are visually locked to exact-source previews generated from the same TSX/CSS in this package. Read [`docs/VISUAL-ACCEPTANCE.md`](docs/VISUAL-ACCEPTANCE.md) and `docs/visual-acceptance/` before integrating. Do not reinterpret `/`, `/pricing`, `/free-trial`, or `/done-for-you-setup` through generic page components.
+
 **One builder. Production SaaS. Real customers. AI vision, conversational agents, construction geometry, pricing, quoting, orders, invoicing, billing, email and account infrastructure.**
 
 QuoteCore+ is a production SaaS platform for roofing and construction businesses.
@@ -10,12 +12,12 @@ This repository is public partly as a technical portfolio: **QuoteCore+ is the p
 
 ## See it working
 
-- **Interactive demo:** https://demo.quote-core.com/demo
+- **Free Workspace:** https://quote-core.com/free-trial
 - **Live application:** https://app.quote-core.com
 - **Product website:** https://quote-core.com
 - **Source:** https://github.com/algora-dev/quotecore-plus
 
-The demo is the fastest way to understand the scope. This is not a portfolio mock-up or a collection of disconnected AI demos. It is commercial software with real users and customers.
+The Free Workspace is the fastest way to understand the product. It is a real QuoteCore+ account with an optional Guided Walkthrough using an isolated fictional roofing business. This is not a portfolio mock-up or a collection of disconnected AI demos. It is commercial software with real users and customers.
 
 ---
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import dynamic from "next/dynamic";
 import QuoteCorePlusStyler from "@/components/QuoteCorePlusStyler";
+import { MarketingConversionModals } from "@/components/marketing/MarketingConversionModals";
 import { buildBreadcrumbSchema, buildSoftwareApplicationSchema, organizationId, siteUrl, websiteId } from "@/lib/schema";
 import { robotsDirective } from "@/app/lib/seo";
 
@@ -77,6 +78,7 @@ export default function MarketingLayout({
       <link rel="preload" as="image" href="/MainQCP.png" fetchPriority="high" />
       {children}
       <QuoteCorePlusStyler />
+      <MarketingConversionModals />
       {SITE_ASSISTANT_ENABLED && <SiteAssistant />}
       <Script
         id="combined-schema"

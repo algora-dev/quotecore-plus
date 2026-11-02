@@ -303,7 +303,7 @@
 .root .featureTab { gap: 0; }
 .root .sceneNav { display: flex; align-items: center; gap: 10px; padding: 12px 18px; }
 .root .scenePicker { order: 1; justify-content: center; gap: 4px; }
-.root .sceneButton { flex: 0 1 auto; min-width: 0; justify-content: center; text-align: center; padding: 8px 11px; min-height: 40px; font-size: 11px !important; }
+.root .sceneButton { flex: 0 1 auto; min-width: 0; justify-content: center; text-align: center; padding: 8px 11px; min-height: 44px; font-size: 11px !important; }
 .root .sceneButton[aria-pressed="true"]::after { display: none; }
 .root .sceneCount { order: 2; min-width: 35px; text-align: center; }
 .root .railArrow { width: 48px; height: 48px; flex-shrink: 0; }
@@ -327,14 +327,14 @@
 .root .railArrow:not(:disabled):hover { border-color: var(--fs-orange-bright); background: rgba(255,115,55,.13); }
 .root .railArrow:disabled { opacity: .42; }
 @media (max-width: 900px) {
-  .root .featureTab { min-height: 43px; }
+  .root .featureTab { min-height: 44px; }
   .root .railArrow { width: 62px; min-width: 62px; }
 }
 @media (max-width: 640px) {
-  .root .featureTab { min-height: 40px; padding-top: 6px; padding-bottom: 6px; }
+  .root .featureTab { min-height: 44px; padding-top: 6px; padding-bottom: 6px; }
   .root .sceneNav { gap: 4px; }
   .root .scenePicker { flex: 1 1 0; overflow-x: auto; justify-content: flex-start; }
-  .root .railArrow { width: 53px; min-width: 53px; height: 43px; }
+  .root .railArrow { width: 53px; min-width: 53px; height: 44px; }
 }
 
 /* V2.2 - quiet orange outline, glass glint, no orange-tinted fill. */
@@ -705,7 +705,7 @@
 }
 
 .root .intro > div:first-child { max-width: 760px; }
-.root .intro h2 { font-size: clamp(29px,3vw,40px); line-height:1.15; }
+.root .intro h2 { font-size: clamp(32px,3.45vw,48px); line-height:1.085; letter-spacing:-.045em; }
 .root .introGuide { flex:0 1 310px; }
 .root .introAside { max-width:310px; }
 .root .overviewLink { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:8px 0; margin-top:8px; border:0; background:none; color:#aa3b08; font:inherit; font-size:13px; font-weight:650; text-align:left; cursor:pointer; }

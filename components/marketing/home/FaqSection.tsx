@@ -9,7 +9,7 @@ import type { HomepageConfig } from './homepage-config';
 import s from './Homepage.module.css';
 import f from './FaqSection.module.css';
 
-export function FaqSection({ config, pricingHref = '/pricing', setupHref = '/done-for-you-setup' }: {
+export function FaqSection({ config, pricingHref = '/pricing', setupHref = '/done-for-you-setup?inquire=1' }: {
   config: Pick<HomepageConfig, 'bookingHref'>;
   pricingHref?: string;
   setupHref?: string;

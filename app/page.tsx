@@ -3,9 +3,9 @@ import Image from 'next/image';
 import { headers } from 'next/headers';
 import type { Metadata } from 'next';
 import MarketingHome from './(marketing)/home/page';
-import { homepageFaqs } from '@/components/marketing/home/homepage-content';
 import { homepageConfig, homepageVideoSchema } from '@/components/marketing/home/homepage-config';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
+import { MarketingConversionModals } from '@/components/marketing/MarketingConversionModals';
 import { shouldRenderMarketing, marketingUrl } from '@/lib/app-url';
 import controls from '@/components/marketing/MarketingButton.module.css';
 import hero from '@/components/marketing/home/Homepage.module.css';
@@ -13,7 +13,6 @@ import { Icon } from '@/components/marketing/home/Icon';
 import loginActions from './login-buttons.module.css';
 import {
   buildBreadcrumbSchema,
-  buildFaqSchema,
   buildSoftwareApplicationSchema,
   buildOrganizationSchema,
   buildWebsiteSchema,
@@ -62,7 +61,6 @@ export default async function Home() {
   const marketingLink = marketingUrl(host);
 
   if (isMarketingDomain) {
-    const faqSchema = buildFaqSchema(homepageFaqs);
     const breadcrumbSchema = buildBreadcrumbSchema([
       { name: "Home", url: `${siteUrl}/` },
     ]);
@@ -76,10 +74,6 @@ export default async function Home() {
 
     return (
       <>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
@@ -101,6 +95,7 @@ export default async function Home() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(videoSchema).replace(/</g, "\\u003c") }}
         /> : null}
         <MarketingHome />
+        <MarketingConversionModals />
       </>
     );
   }

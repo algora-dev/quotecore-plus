@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DoneForYouInquiryLink } from '@/components/marketing/DoneForYouInquiryLink';
 
 const link = 'font-medium text-[#BD4A1A] hover:underline';
 
@@ -300,9 +301,9 @@ export default function Post() {
         easier to reuse.
       </p>
       <p>
-        <Link href="/done-for-you-setup" className={link}>
-          See the Done-For-You Setup
-        </Link>
+        <DoneForYouInquiryLink className={link} source="simple-estimating-setup">
+          Inquire about Done For You
+        </DoneForYouInquiryLink>
       </p>
 
       <h2>How to tell whether new estimating software is actually worth the effort</h2>
@@ -371,8 +372,8 @@ export default function Post() {
 
       <h2>You do not have to set up QuoteCore+ yourself</h2>
       <p>
-        If QuoteCore+ looks useful but the setup is the part putting you off, start with a
-        short fit call. We will first look at how you currently estimate and quote work.
+        If QuoteCore+ looks useful but the setup is the part putting you off, start with the
+        Done For You enquiry. You can choose a 25-minute discovery call with Shaun or send the quick no-call form.
       </p>
       <p>
         If QuoteCore+ does not suit your workflow, there is no point paying us to
@@ -380,10 +381,7 @@ export default function Post() {
         setup work and get your account ready around the way you already operate.
       </p>
       <p>
-        <Link href="/done-for-you-setup" className={link}><strong>See Done-For-You Setup</strong></Link>
-      </p>
-      <p>
-        <Link href="/contact" className={link}><strong>Book a 20-minute fit call</strong></Link>
+        <DoneForYouInquiryLink className={link} source="simple-estimating-final-dfy"><strong>Inquire about Done For You</strong></DoneForYouInquiryLink>
       </p>
       <p>
         <strong>

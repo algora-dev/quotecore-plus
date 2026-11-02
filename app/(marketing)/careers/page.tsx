@@ -12,7 +12,7 @@ const QC = {
   features: "/features",
   freeWorkspace: "/free-trial",
   call: workflowCallHref,
-  dfy: "/done-for-you-setup",
+  dfy: "/done-for-you-setup?inquire=1",
   tutorials: "/tutorials",
   guides: "/resources/quotecore-guides",
   digitalTakeoff: "/features/digital-roof-takeoff",
@@ -64,10 +64,10 @@ const pathCards = [
     title: "25 minutes with Shaun",
     who: "They want help understanding how QuoteCore+ could fit the way they already work.",
     action:
-      "Book the call. Shaun will ask how they currently measure, price and quote, identify where QuoteCore+ could make that faster or easier, and work out whether Done For You is worth considering.",
+      "Open the Done For You enquiry. The contractor can choose a 25-minute discovery call with Shaun or a quick no-call enquiry so Shaun can understand how they work and scope the setup.",
     next: "The call is useful even if they never buy. They also leave with Shaun's #1 tip for winning more of the jobs they already quote.",
-    href: QC.call,
-    cta: "Book 25 minutes with Shaun",
+    href: QC.dfy,
+    cta: "Inquire about Done For You",
   },
   {
     number: "02",
@@ -109,8 +109,8 @@ const resourceGroups = [
   },
   {
     title: "They want help deciding what fits",
-    body: "Do not bury the prospect under more product links. Book the 25-minute call with Shaun and let the conversation determine whether self-serve or Done For You makes more sense.",
-    links: [["Book 25 minutes with Shaun", QC.call]],
+    body: "Do not bury the prospect under more product links. Use the Done For You enquiry when setup is the real need; the contractor can choose a call or a quick no-call enquiry.",
+    links: [["Inquire about Done For You", QC.dfy]],
   },
   {
     title: "They want to learn it themselves",
@@ -130,7 +130,7 @@ const faqs = [
   },
   {
     q: "When should I lead with Done-For-You?",
-    a: "Do not lead with a package price. Lead with the 25-minute call. If setup, migration, pricing configuration or training is the real objection, Shaun can scope Done For You after learning how the contractor currently works.",
+    a: "Do not lead with a package price. If setup, migration, pricing configuration or training is the real need, use the Done For You enquiry. Shaun can scope it from either the discovery call or the no-call form.",
   },
   {
     q: "What if they want to set everything up themselves?",
@@ -432,7 +432,7 @@ export default function CareersPage() {
             The customer wants the outcome. They do not want another setup project.
           </h2>
           <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
-            Done For You is not a fixed tier you sell from a menu. Everything starts with the 25-minute call. Tell Shaun how the contractor currently works, work out how much pricing and configuration is involved, which QuoteCore+ features and usage they are likely to need, and what kind of handover suits them.
+            Done For You is not a fixed tier you sell from a menu. Start with the Done For You enquiry. The contractor can choose a 25-minute discovery call or a quick no-call form; either route gives Shaun enough context to scope pricing and configuration work, likely QuoteCore+ usage, and the right handover.
           </p>
 
           <div className="mt-7 grid gap-4 lg:grid-cols-2">
@@ -557,7 +557,7 @@ export default function CareersPage() {
               <div>
                 <p className="text-xs font-bold text-[#BD4A1A]">IF</p>
                 <p className="mt-2 text-xl font-semibold text-slate-900">They want help, have setup concerns or are unsure what they need</p>
-                <p className="mt-2 text-sm text-slate-600">→ Book 25 minutes with Shaun. Done For You can be scoped from there if it makes sense.</p>
+                <p className="mt-2 text-sm text-slate-600">→ Inquire about Done For You. Choose a discovery call or the quick no-call form.</p>
               </div>
               <div>
                 <p className="text-xs font-bold text-[#BD4A1A]">IF</p>

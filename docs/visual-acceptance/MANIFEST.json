@@ -1,0 +1,299 @@
+{
+  "contract": "Exact-source visual acceptance. HTML is generated from the production TSX/CSS plus the real global stylesheet/Tailwind preflight; do not redesign or reinterpret locked routes.",
+  "renderer": "tools/render-marketing-source-previews.js",
+  "renderer_sha256": "6dcedebc2e429a36ff6609dd802c46032159bd0407885fb12c245a4062123c34",
+  "surfaces": {
+    "homepage": {
+      "production_sources": [
+        {
+          "path": "components/marketing/home/Homepage.tsx",
+          "sha256": "bc2dedf2c11acc48fe83eac4b78ce70e95cac51880bda84fcd6738bcbf6622af",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/home/HomeLocked.module.css",
+          "sha256": "471f8b953991362d0c3aa48b02a624d2f6681d764c3e252c50feef4e57c6ede7",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/home/WorkflowExplorer.tsx",
+          "sha256": "96cb12e100bd09eab001e9a6cb355efcc558746a7df9a2564c6469a18dca54d5",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/home/feature-showcase/FeatureShowcase.tsx",
+          "sha256": "d568db65af21b9ed7a067b70666ad5b1d3b7b7f5152cc561dd825247d318ab13",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/home/feature-showcase/FeatureShowcase.module.css",
+          "sha256": "3dcc47fab7b669aa13d4bf456409a0443bfcf3f61c7c0893e5eb2f078cce8d16",
+          "exists": true
+        },
+        {
+          "path": "app/globals.css",
+          "sha256": "b16d2e8102fae13951b75e131b6dd23f0ee2cf5fe9dc9d79665e64f37de65cec",
+          "exists": true
+        },
+        {
+          "path": "components/BlogHeader.tsx",
+          "sha256": "47e5f059b9bd7a1c387bbf3b43c99b3ec1be1147cd957587af6009272e23a735",
+          "exists": true
+        },
+        {
+          "path": "components/BlogHeader.module.css",
+          "sha256": "16ba9ab0478aef3fdc77cfc9ced70ba13207b0dd14963ed1f606d98ca903f492",
+          "exists": true
+        },
+        {
+          "path": "components/SiteFooter.tsx",
+          "sha256": "9e66bc8a1c7b21149d68f44cdf7b99ebd9459ffbf012c4aa4fa11dcb52c12a17",
+          "exists": true
+        },
+        {
+          "path": "components/SiteFooter.module.css",
+          "sha256": "41985f593984c7aa664d31c6ac5d923a7208eeb9d1b7147da654809031bf09c8",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/MarketingButton.tsx",
+          "sha256": "22f9e2f7b03da93c3ff923513a198c352acf5a2f1fc46c7b8fb8abed92c910a4",
+          "exists": true
+        }
+      ],
+      "exact_source_html": "html/homepage.html",
+      "html_sha256": "a544cd682368019e50a29cab791036dd4d1b4df44fdc58cd0c28289fe540ad0f",
+      "screenshots": {
+        "desktop": "screenshots/desktop/homepage.png",
+        "tablet": "screenshots/tablet/homepage.png",
+        "mobile": "screenshots/mobile/homepage.png"
+      }
+    },
+    "pricing": {
+      "production_sources": [
+        {
+          "path": "app/(marketing)/pricing/page.tsx",
+          "sha256": "360622919547201edbcaf81c3b7a5245cc48d8a91895a9dbb6b5776b0b8c7bd4",
+          "exists": true
+        },
+        {
+          "path": "app/(marketing)/pricing/PricingLocked.module.css",
+          "sha256": "f802f29ff130e1c852d15337d9557386d7e143e5e5fa3268de81f64983f27ab5",
+          "exists": true
+        },
+        {
+          "path": "app/globals.css",
+          "sha256": "b16d2e8102fae13951b75e131b6dd23f0ee2cf5fe9dc9d79665e64f37de65cec",
+          "exists": true
+        },
+        {
+          "path": "components/BlogHeader.tsx",
+          "sha256": "47e5f059b9bd7a1c387bbf3b43c99b3ec1be1147cd957587af6009272e23a735",
+          "exists": true
+        },
+        {
+          "path": "components/BlogHeader.module.css",
+          "sha256": "16ba9ab0478aef3fdc77cfc9ced70ba13207b0dd14963ed1f606d98ca903f492",
+          "exists": true
+        },
+        {
+          "path": "components/SiteFooter.tsx",
+          "sha256": "9e66bc8a1c7b21149d68f44cdf7b99ebd9459ffbf012c4aa4fa11dcb52c12a17",
+          "exists": true
+        },
+        {
+          "path": "components/SiteFooter.module.css",
+          "sha256": "41985f593984c7aa664d31c6ac5d923a7208eeb9d1b7147da654809031bf09c8",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/MarketingButton.tsx",
+          "sha256": "22f9e2f7b03da93c3ff923513a198c352acf5a2f1fc46c7b8fb8abed92c910a4",
+          "exists": true
+        }
+      ],
+      "exact_source_html": "html/pricing.html",
+      "html_sha256": "936bc7b66740973311afad1d1f3fedae67977d9dc4e9f33b1d2fc3a7552f7d91",
+      "screenshots": {
+        "desktop": "screenshots/desktop/pricing.png",
+        "tablet": "screenshots/tablet/pricing.png",
+        "mobile": "screenshots/mobile/pricing.png"
+      }
+    },
+    "free-workspace": {
+      "production_sources": [
+        {
+          "path": "app/(marketing)/free-trial/page.tsx",
+          "sha256": "6a08cb54221cbd6783274d9d338b93b05a3adcf5456e5a7e49aeb4eff7afbd5d",
+          "exists": true
+        },
+        {
+          "path": "app/(marketing)/free-trial/FreeWorkspaceLocked.module.css",
+          "sha256": "9a7722b28d18d620b837e95a1b5745dceb56a914f032434227e713b8f8a3157b",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/FreeWorkspaceButton.tsx",
+          "sha256": "52dbb02d6054171f311275dafcc99e651db1c29c596f32187e367d671ae6c715",
+          "exists": true
+        },
+        {
+          "path": "app/globals.css",
+          "sha256": "b16d2e8102fae13951b75e131b6dd23f0ee2cf5fe9dc9d79665e64f37de65cec",
+          "exists": true
+        },
+        {
+          "path": "components/BlogHeader.tsx",
+          "sha256": "47e5f059b9bd7a1c387bbf3b43c99b3ec1be1147cd957587af6009272e23a735",
+          "exists": true
+        },
+        {
+          "path": "components/BlogHeader.module.css",
+          "sha256": "16ba9ab0478aef3fdc77cfc9ced70ba13207b0dd14963ed1f606d98ca903f492",
+          "exists": true
+        },
+        {
+          "path": "components/SiteFooter.tsx",
+          "sha256": "9e66bc8a1c7b21149d68f44cdf7b99ebd9459ffbf012c4aa4fa11dcb52c12a17",
+          "exists": true
+        },
+        {
+          "path": "components/SiteFooter.module.css",
+          "sha256": "41985f593984c7aa664d31c6ac5d923a7208eeb9d1b7147da654809031bf09c8",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/MarketingButton.tsx",
+          "sha256": "22f9e2f7b03da93c3ff923513a198c352acf5a2f1fc46c7b8fb8abed92c910a4",
+          "exists": true
+        }
+      ],
+      "exact_source_html": "html/free-workspace.html",
+      "html_sha256": "77871b885ee14498fd5dfd460d4a0da658dc333b4174fcd7f865ba548729ae5d",
+      "screenshots": {
+        "desktop": "screenshots/desktop/free-workspace.png",
+        "tablet": "screenshots/tablet/free-workspace.png",
+        "mobile": "screenshots/mobile/free-workspace.png"
+      }
+    },
+    "done-for-you": {
+      "production_sources": [
+        {
+          "path": "app/(marketing)/done-for-you-setup/page.tsx",
+          "sha256": "0b96cd35a5eb968d29f89ce279c70a36bbe470208435d5d37586359de54010bf",
+          "exists": true
+        },
+        {
+          "path": "app/(marketing)/done-for-you-setup/DoneForYouSetup.module.css",
+          "sha256": "21700c8d49a9cd7511efe821a078a91a43a2d07e06db811c5e187de300a2fc82",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/DoneForYouInquiryButton.tsx",
+          "sha256": "808ea16eea0c03c3bb582629923abcb94ced340f545369a8addb4963a3338395",
+          "exists": true
+        },
+        {
+          "path": "app/globals.css",
+          "sha256": "b16d2e8102fae13951b75e131b6dd23f0ee2cf5fe9dc9d79665e64f37de65cec",
+          "exists": true
+        },
+        {
+          "path": "components/BlogHeader.tsx",
+          "sha256": "47e5f059b9bd7a1c387bbf3b43c99b3ec1be1147cd957587af6009272e23a735",
+          "exists": true
+        },
+        {
+          "path": "components/BlogHeader.module.css",
+          "sha256": "16ba9ab0478aef3fdc77cfc9ced70ba13207b0dd14963ed1f606d98ca903f492",
+          "exists": true
+        },
+        {
+          "path": "components/SiteFooter.tsx",
+          "sha256": "9e66bc8a1c7b21149d68f44cdf7b99ebd9459ffbf012c4aa4fa11dcb52c12a17",
+          "exists": true
+        },
+        {
+          "path": "components/SiteFooter.module.css",
+          "sha256": "41985f593984c7aa664d31c6ac5d923a7208eeb9d1b7147da654809031bf09c8",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/MarketingButton.tsx",
+          "sha256": "22f9e2f7b03da93c3ff923513a198c352acf5a2f1fc46c7b8fb8abed92c910a4",
+          "exists": true
+        }
+      ],
+      "exact_source_html": "html/done-for-you.html",
+      "html_sha256": "d80583c082d2eb07b757a2ddc24e60f72ed7909556503b269238a06dbaae05d3",
+      "screenshots": {
+        "desktop": "screenshots/desktop/done-for-you.png",
+        "tablet": "screenshots/tablet/done-for-you.png",
+        "mobile": "screenshots/mobile/done-for-you.png"
+      }
+    },
+    "done-for-you-inquiry": {
+      "production_sources": [
+        {
+          "path": "components/marketing/DoneForYouInquiryModal.tsx",
+          "sha256": "23816bd3ca774029985a2837486a3ee2f1d83467d190441cf5517aeab057b760",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/DoneForYouInquiryModal.module.css",
+          "sha256": "1ad013a972ef71e213add82b1314ec47f2b623fbe42394b82e024877977f0bd3",
+          "exists": true
+        },
+        {
+          "path": "app/api/done-for-you-inquiry/route.ts",
+          "sha256": "a49a99334ee68c7987db9693d8d99da87d95145e7a8e4e3018af9b27e6ccbf87",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/home/done-for-you-config.ts",
+          "sha256": "e6c5514c6f6bd0c36aad060a7e0f8b5c0eb4af714a77b363434bd4bbecd63261",
+          "exists": true
+        },
+        {
+          "path": "app/globals.css",
+          "sha256": "b16d2e8102fae13951b75e131b6dd23f0ee2cf5fe9dc9d79665e64f37de65cec",
+          "exists": true
+        }
+      ],
+      "exact_source_html": "html/done-for-you-inquiry.html",
+      "html_sha256": "79cd378abec78b51f58ab11cbbfe80b23999edeb8f3a6b52f30ae2ca76191e40",
+      "screenshots": {
+        "desktop": "screenshots/desktop/done-for-you-inquiry.png",
+        "tablet": "screenshots/tablet/done-for-you-inquiry.png",
+        "mobile": "screenshots/mobile/done-for-you-inquiry.png"
+      }
+    },
+    "free-workspace-modal": {
+      "production_sources": [
+        {
+          "path": "components/marketing/FreeWorkspaceModal.tsx",
+          "sha256": "ab7fa2168e2e6c2aacb24eaf94c5afebd777dc5d89d4b17b90254ba90d822258",
+          "exists": true
+        },
+        {
+          "path": "components/marketing/FreeWorkspaceModal.module.css",
+          "sha256": "4ff7c0a7cfa9480dd94093aa27fc9651f4bca7a79796e933c11da92452df1550",
+          "exists": true
+        },
+        {
+          "path": "app/globals.css",
+          "sha256": "b16d2e8102fae13951b75e131b6dd23f0ee2cf5fe9dc9d79665e64f37de65cec",
+          "exists": true
+        }
+      ],
+      "exact_source_html": "html/free-workspace-modal.html",
+      "html_sha256": "e51b09c490254e97a38e13ee497c874ffb8758021dcf24c4f9b1eb028b961589",
+      "screenshots": {
+        "desktop": "screenshots/desktop/free-workspace-modal.png",
+        "tablet": "screenshots/tablet/free-workspace-modal.png",
+        "mobile": "screenshots/mobile/free-workspace-modal.png"
+      }
+    }
+  },
+  "metrics_sha256": "63fb4c8699f8d29fc7b428af8e4399becf6c7a676f663ba0f7734faa57b04de0"
+}

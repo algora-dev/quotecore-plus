@@ -1,4 +1,6 @@
-export default function SocialIcons({ className = "" }: { className?: string }) {
+import styles from "./SocialIcons.module.css";
+
+export default function SocialIcons({ className = "", align = "center" }: { className?: string; align?: "center" | "start" }) {
   const socials = [
     {
       href: "https://www.facebook.com/profile.php?id=61590048782970",
@@ -28,7 +30,7 @@ export default function SocialIcons({ className = "" }: { className?: string }) 
   ];
 
   return (
-    <div className={`flex items-center justify-center gap-5 ${className}`}>
+    <div className={[styles.root, align === "start" ? styles.start : "", className].filter(Boolean).join(" ")}>
       {socials.map((s) => (
         <a
           key={s.label}
@@ -36,9 +38,9 @@ export default function SocialIcons({ className = "" }: { className?: string }) 
           target="_blank"
           rel="noopener noreferrer"
           aria-label={s.label}
-          className="text-black transition-all duration-200 hover:text-[#FF6B35] hover:drop-shadow-[0_0_6px_rgba(255,107,53,0.5)]"
+          className={styles.link}
         >
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+          <svg viewBox="0 0 24 24" className={styles.icon} fill="currentColor">
             <path d={s.path} />
           </svg>
         </a>

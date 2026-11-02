@@ -3,6 +3,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { CommercialFinalCta, CommercialHeroActions } from "@/components/conversion/CommercialConversion";
+import { DoneForYouInquiryLink } from "@/components/marketing/DoneForYouInquiryLink";
 import DemoCTACard from "@/components/DemoCTACard";
 import ThreeWaysToWork from "@/components/ThreeWaysToWork";
 import YouTubeLite from "@/components/YouTubeLite";
@@ -386,7 +387,7 @@ export default function ConstructionQuotingSoftwarePage() {
 
             <p className="mt-3 text-sm text-zinc-500">
               Already have spreadsheets, price lists or quote templates?{" "}
-              <a href="/done-for-you-setup" className="font-medium text-[#BD4A1A] hover:underline">We can help configure the system around the way you already work.</a>
+              <DoneForYouInquiryLink className="font-medium text-[#BD4A1A] hover:underline" source="construction-quoting-dfy">Inquire about Done For You.</DoneForYouInquiryLink>
             </p>
           </div>
         </section>

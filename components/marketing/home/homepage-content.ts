@@ -34,8 +34,8 @@ export const homepageFaqs: HomepageFaq[] = [
   {
     id: 'setup-and-training',
     question: 'Can you set it up and show me how to use it?',
-    answer: 'Yes. Done For You starts with a free 25-minute call with Shaun. Tell him how you work, then decide whether you want us to configure the account and hand it over live or with a custom recorded walkthrough.',
-    link: { label: 'Explore Done For You Setup', destination: 'setup' },
+    answer: 'Yes. Open the Done For You enquiry and choose either a free 25-minute discovery call with Shaun or a quick no-call enquiry. Tell us how you work, then Shaun can scope the setup and recommend the best handover.',
+    link: { label: 'Inquire about Done For You', destination: 'setup' },
   },
   {
     id: 'free-workspace',

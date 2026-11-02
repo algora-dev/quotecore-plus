@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { PageScaffold } from '@/components/marketing/page-v2/PageV2';
 import TwoPathCta from '@/components/conversion/TwoPathCta';
 import { FreeWorkspaceButton } from '@/components/marketing/FreeWorkspaceButton';
+import { DoneForYouInquiryLink } from '@/components/marketing/DoneForYouInquiryLink';
 import { buildBreadcrumbSchema, siteUrl } from '@/lib/schema';
 import { workflowCallHref } from '@/lib/booking';
 import { EvidenceZoomRoot, ZoomCard } from './EvidenceZoom';
@@ -657,8 +658,7 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                   <p>That is the point of reusable estimating software. Your products, labour rates, coverage, waste and pricing rules need to exist in QuoteCore+ before the system can reuse them this quickly.</p>
                 </div>
                 <div className={s['setup-context-actions']}>
-                  <a className={c('button', 'button-primary')} href="/done-for-you-setup">See Done For You Setup</a>
-                  <a className={c('button', 'button-light')} href={BOOK}>Talk setup through with Shaun</a>
+                  <DoneForYouInquiryLink className={c('button', 'button-primary')} source="fastest-setup-context">Inquire about Done For You</DoneForYouInquiryLink>
                 </div>
               </div>
             </div>
@@ -960,8 +960,7 @@ export default function FastestRoofingEstimatingSoftwarePage() {
                   <p>Your products, labour, coverage, waste, margin and pricing rules need to be configured before they can be reused automatically. Build that library yourself, or use Done For You Setup and tell Shaun how you quote today so he can help translate the workflow into QuoteCore+.</p>
                 </div>
                 <div className={s['dfy-actions']}>
-                  <a className={c('button', 'button-primary')} href="/done-for-you-setup">See Done For You Setup</a>
-                  <a className={c('button', 'button-secondary')} href={BOOK}>Book 25 minutes with Shaun</a>
+                  <DoneForYouInquiryLink className={c('button', 'button-primary')} source="fastest-dfy-card">Inquire about Done For You</DoneForYouInquiryLink>
                 </div>
               </div>
             </div>

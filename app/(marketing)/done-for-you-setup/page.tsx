@@ -3,22 +3,22 @@ import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import DfyPageViewTracker from '@/components/DfyPageViewTracker';
 import { MarketingButton } from '@/components/marketing/MarketingButton';
-import { DfyBookButton } from '@/components/marketing/DfyBookButton';
+import { DoneForYouInquiryButton } from '@/components/marketing/DoneForYouInquiryButton';
 import YouTubeLite from '@/components/YouTubeLite';
 import { siteUrl, buildBreadcrumbSchema } from '@/lib/schema';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 import styles from './DoneForYouSetup.module.css';
 
 export const metadata: Metadata = {
-  title: 'Done For You QuoteCore+ Setup | Free 25-Minute Call With Shaun',
-  description: 'Done For You starts with a free 25-minute call with Shaun. Tell him how you work, find out how QuoteCore+ could help, and get a tailored setup proposal if you want us to configure it for you.',
+  title: 'Done For You QuoteCore+ Setup | Get a Tailored Proposal',
+  description: 'Tell us how you currently work and get a tailored Done For You proposal. Book 25 minutes with Shaun or send a quick enquiry in around 60 seconds.',
   alternates: {
     canonical: 'https://quote-core.com/done-for-you-setup',
     languages: hreflangLanguages('/done-for-you-setup'),
   },
   openGraph: {
-    title: 'Done For You QuoteCore+ Setup | Free 25-Minute Call With Shaun',
-    description: 'Tell Shaun how you currently measure, price and quote. Work out what would make it faster, and whether having QuoteCore+ set up for you makes sense.',
+    title: 'Done For You QuoteCore+ Setup | Get a Tailored Proposal',
+    description: 'Tell us how you measure, price and quote. Choose a 25-minute call with Shaun or a quick enquiry and get a tailored Done For You proposal.',
     url: 'https://quote-core.com/done-for-you-setup',
     siteName: 'QuoteCore+',
     type: 'website',
@@ -26,8 +26,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Done For You QuoteCore+ Setup | Free 25-Minute Call With Shaun',
-    description: 'Tell Shaun how you work. Find out what would make it faster and whether Done For You is worth it.',
+    title: 'Done For You QuoteCore+ Setup | Get a Tailored Proposal',
+    description: 'Book 25 minutes with Shaun or send a quick 60-second enquiry and get a tailored Done For You proposal.',
     images: ['/images/social/og-done-for-you.jpg'],
   },
 };
@@ -39,8 +39,12 @@ const breadcrumbSchema = buildBreadcrumbSchema([
 
 const faqs = [
   {
+    q: 'Do I have to book a call?',
+    a: 'No. If you prefer, send a quick enquiry in around 60 seconds. Shaun can review how you work, your quote volume, how many pricing elements need configuring and your preferred handover, then email you a tailored proposal without a call.',
+  },
+  {
     q: 'What do I need to send Shaun?',
-    a: 'Whatever you already use can help: price lists, spreadsheets, supplier information, labour rates, old quotes or notes. It does not need to be cleaned up first, and you may not need to send anything until after the initial call.',
+    a: 'Whatever you already use can help: price lists, spreadsheets, supplier information, labour rates, old quotes or notes. It does not need to be cleaned up first, and you may not need to send anything until after the initial enquiry.',
   },
   {
     q: 'What happens after the first three months?',
@@ -99,15 +103,15 @@ export default function DoneForYouSetupPage() {
             <div className={styles.heroLayout}>
               <div className={styles.heroCopy}>
                 <p className={styles.eyebrow}>Done For You QuoteCore+ setup</p>
-                <h1 id="dfy-title"><span className={styles.heroPrimary}>Done For You starts with</span><br /><span className={styles.heroGradient}>25 minutes with Shaun.</span></h1>
-                <p className={styles.heroLead}>Tell Shaun how you currently measure, price and quote. He will help you work out how QuoteCore+ could make that faster and easier, what you would actually need, and whether having it all set up for you makes sense.</p>
+                <h1 id="dfy-title"><span className={styles.heroPrimary}>Tell us how you work.</span><br /><span className={styles.heroGradient}>We&apos;ll scope the rest.</span></h1>
+                <p className={styles.heroLead}>Book 25 minutes with Shaun, or send a quick enquiry in around 60 seconds. We&apos;ll work out how QuoteCore+ could make measuring, pricing and quoting faster, what setup is involved, and what a tailored Done For You proposal would look like.</p>
                 <div className={styles.heroActions}>
-                  <DfyBookButton cta="hero" size="large" label="Book my free 25-minute call" />
+                  <DoneForYouInquiryButton size="large" source="dfy-hero">Inquire about Done For You</DoneForYouInquiryButton>
                   <MarketingButton href="#how-it-works" variant="glass" size="large">See how it works</MarketingButton>
                 </div>
                 <div className={styles.tipStrip}>
                   <img src="/shaun-smiling.jpg" alt="" aria-hidden="true" />
-                  <p><strong>Worth the call even if you never buy anything.</strong> Shaun will give you his #1 tip for winning more of the jobs you quote, drawn from 20+ years in roofing and construction.</p>
+                  <p><strong>Prefer to talk it through?</strong> Spend 25 minutes with Shaun. Tell him how you currently work, see how QuoteCore+ could make it faster and easier, and take away his #1 tip for winning more of the jobs you already quote.</p>
                 </div>
               </div>
 
@@ -129,8 +133,8 @@ export default function DoneForYouSetupPage() {
         <section id="how-it-works" className={styles.processSection} aria-labelledby="process-title">
           <div className={styles.container}>
             <div className={styles.sectionIntroSingle}>
-              <p className={styles.lightEyebrow}>The first 25 minutes</p>
-              <h2 id="process-title">The call is useful even if you decide to do it yourself.</h2>
+              <p className={styles.lightEyebrow}>Prefer to talk it through?</p>
+              <h2 id="process-title">25 minutes with Shaun is still the fastest way to scope it.</h2>
             </div>
             <ol className={styles.processList}>
               {callSteps.map((item) => (
@@ -142,7 +146,7 @@ export default function DoneForYouSetupPage() {
             </ol>
             <div className={styles.discoveryNote}>
               <p><strong>There is no obligation to purchase anything on the call.</strong> It is a discovery call designed to learn how you work and what you are likely to need. Tell Shaun what you can, there is no need to be on camera or physically show him anything, and we can send you a tailored proposal after the call for you to review, accept or decline in your own time.</p>
-              <DfyBookButton cta="pricing" label="Book 25 minutes with Shaun" />
+              <DoneForYouInquiryButton source="dfy-process">Inquire about Done For You</DoneForYouInquiryButton>
             </div>
           </div>
         </section>
@@ -154,7 +158,7 @@ export default function DoneForYouSetupPage() {
                 <p className={styles.lightEyebrow}>See how it works</p>
                 <h2 id="video-title">A closer look at Done For You.</h2>
               </div>
-              <p>See the Done For You process in context before deciding whether the call is worth it for your business.</p>
+              <p>See the Done For You process in context before deciding whether you want to talk it through or send an enquiry.</p>
             </div>
             <YouTubeLite videoId="fJYVEnVTcOA" title="How QuoteCore+ Done For You Setup works" uploadDate="2026-10-15" className={styles.videoPlayer} />
           </div>
@@ -209,13 +213,13 @@ export default function DoneForYouSetupPage() {
         <section className={styles.finalSection} aria-labelledby="final-title">
           <div className={styles.finalGlow} aria-hidden="true" />
           <div className={`${styles.container} ${styles.finalInner}`}>
-            <p className={styles.eyebrow}>Free 25-minute call</p>
-            <h2 id="final-title">Tell Shaun how you work.<br />Find out what would make it faster.</h2>
-            <p>Use the call to work out whether QuoteCore+ fits and whether Done For You is worth it. Then decide what you want to do in your own time.</p>
+            <p className={styles.eyebrow}>Done For You enquiry</p>
+            <h2 id="final-title">Tell us how you work.<br />Get a tailored proposal.</h2>
+            <p>Choose a 25-minute call with Shaun or send a quick enquiry in around 60 seconds. We&apos;ll use what you tell us to scope the setup, likely QuoteCore+ features and indicative price or range.</p>
             <div className={styles.finalActions}>
-              <DfyBookButton cta="final" size="large" label="Book my free 25-minute call" />
+              <DoneForYouInquiryButton size="large" source="dfy-final">Inquire about Done For You</DoneForYouInquiryButton>
             </div>
-            <div className={styles.finalTip}><img src="/shaun-smiling.jpg" alt="" aria-hidden="true" /><span><strong>Either way:</strong> take away Shaun&apos;s #1 tip for winning more of the jobs you quote.</span></div>
+            <div className={styles.finalTip}><img src="/shaun-smiling.jpg" alt="" aria-hidden="true" /><span><strong>No obligation:</strong> choose the call or the form, then review the proposal in your own time.</span></div>
           </div>
         </section>
 
