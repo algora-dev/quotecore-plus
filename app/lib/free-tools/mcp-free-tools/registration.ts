@@ -56,7 +56,7 @@ async function startTakeoff(
         componentScanAvailableAfterReview: trade === 'roofing',
         resultUrl: result.resultUrl,
       },
-      content: [{ type: 'text' as const, text: `${wording} Do not replace this review step with a static markup or final component quantities. Open ${result.resultUrl}` }],
+      content: [{ type: 'text' as const, text: `${wording} Do not replace this review step with a static markup or final component quantities. Open ${result.resultUrl} now, and always include this exact workspace URL as a clickable link in your reply.` }],
     };
   } catch (error) {
     return { isError: true, structuredContent: { status: 'error', code: code(error), message: message(error) }, content: [{ type: 'text' as const, text: message(error) }] };

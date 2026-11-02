@@ -167,6 +167,15 @@ const nextConfig: NextConfig = {
         key: 'Content-Security-Policy-Report-Only',
         value: APP_CSP_REPORT_ONLY,
       },
+      // ChatGPT's connector app panel iframes the app URL registered in the
+      // developer portal, which may be any route (root included), not just the
+      // two workstation routes. Enforce frame-ancestors globally so whichever
+      // URL the panel loads can render. X-Frame-Options: DENY above stays as
+      // legacy-browser defence-in-depth; frame-ancestors wins in modern browsers.
+      {
+        key: 'Content-Security-Policy',
+        value: MCP_EMBED_CSP,
+      },
     ];
 
     return [
@@ -182,8 +191,8 @@ const nextConfig: NextConfig = {
         source: '/free-tools',
         headers: [{ key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' }],
       },
-      // Free Tools MCP pages that ChatGPT embeds in an iframe. See
-      // MCP_EMBED_CSP above; the global X-Frame-Options: DENY stays as
+      // (Frame-ancestors is now enforced globally in globalHeaders via
+      // MCP_EMBED_CSP - see above.)
       // legacy-browser defence-in-depth — frame-ancestors wins in modern browsers.
       {
         source: '/mcp-free-tools/workspace',
