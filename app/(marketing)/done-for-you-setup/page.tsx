@@ -178,10 +178,12 @@ export default function DoneForYouSetupPage() {
 
         <section className={styles.fitSection} aria-labelledby="handover-title">
           <div className={`${styles.container} ${styles.handoverLayout}`}>
-            <div className={styles.handoverCopy}>
+            <div className={styles.handoverHead}>
               <p className={styles.lightEyebrow}>If you choose Done For You</p>
               <h2 id="handover-title">We set it up, then hand it over in the way that suits you.</h2>
               <p className={styles.handoverIntro}>Choose the handover that works best for you.</p>
+            </div>
+            <div className={styles.handoverBody}>
               <div className={styles.choiceGrid}>
                 <article className={styles.choiceCard}>
                   <span>Option 1</span>
