@@ -262,3 +262,7 @@
 .proof-card-simple{transition:transform .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease)}
 .proof-card-simple:hover{transform:translateY(-3px);border-color:rgba(255,140,66,.42);box-shadow:0 25px 68px rgba(11,13,16,.25),0 0 0 1px rgba(255,140,66,.14),inset 0 1px 0 rgba(255,255,255,.08)}
 @media (prefers-reduced-motion:reduce){.proof-card-simple:hover{transform:none}}
+/* Founder/DFY cards now host the real YouTube video, centred in the card. */
+.video-card,.dfy-media{display:flex;align-items:center}
+.video-embed{width:100%}
+.video-card .video-caption,.dfy-media .video-caption{pointer-events:none}
