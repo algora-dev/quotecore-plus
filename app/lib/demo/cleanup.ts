@@ -59,7 +59,11 @@ export async function cleanupDemoSession(sessionId: string): Promise<'deleted' |
       if (auth.data.user) { const result = await db.auth.admin.deleteUser(row.anon_user_id); if (result.error) throw new Error('Auth cleanup failed'); }
       else if (auth.error && auth.error.status !== 404) throw new Error('Could not verify auth deletion');
     }
-    const final = await db.from('demo_sessions').update({ status: 'deleted', company_id: null, tutorial_state: {},
+    // Demo toggle (2026-11-02): owner-linked sessions keep their guide
+    // progress (furthest chapter, acknowledgements) for re-engagement
+    // analytics; anonymous rows are scrubbed exactly as before.
+    const final = await db.from('demo_sessions').update({ status: 'deleted', company_id: null,
+      tutorial_state: row.owner_user_id ? row.tutorial_state : {},
       cleanup_finished_at: now, failure_context: null }).eq('id', sessionId);
     if (final.error) throw new Error('Could not finalize cleanup');
     return 'deleted';

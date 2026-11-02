@@ -1,9 +1,11 @@
 import { PushSessionBridge } from '@/app/components/pwa/PushSessionBridge';
 import { ReactNode } from 'react';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
 import { QcAppShell } from '@/app/components/workspace/QcAppShell';
+import { QcLinkButton } from '@/app/components/ui/v2/QcButton';
 import { AlertBell } from '@/app/components/alerts/AlertBell';
 import { InboxLink } from '@/app/components/alerts/InboxLink';
 import { HelpDrawerTrigger, HelpDrawerPanel } from '@/app/components/docs/HelpDrawer';
@@ -23,6 +25,8 @@ import { UserImpersonationBanner } from '@/app/components/UserImpersonationBanne
 import { getAnnouncement } from '@/app/admin/(dashboard)/settings/actions';
 import { getActiveDemoContext } from '@/app/lib/demo/context';
 import { DemoExperience } from '@/app/components/demo/DemoExperience';
+import { readRealWorkspaceSlug } from '@/app/lib/demo/owner';
+import { appUrl, demoUrl } from '@/lib/app-url';
 
 export default async function WorkspaceLayout({
   children,
@@ -59,6 +63,22 @@ export default async function WorkspaceLayout({
   const _workspaceLabel = company.name ? company.name.slice(0, 10) : 'Workspace';
   const profile = await getCurrentProfile();
   const demoContext = await getActiveDemoContext(company.id);
+
+  // Demo toggle (2026-11-02): "Demo" from the real workspace, "My Workspace"
+  // inside the sandbox. The demo identity lives in its own cookie namespace, so
+  // both sessions coexist and switching is plain navigation - no re-login.
+  // Production's demo host is entirely demo-namespace, so the back link must
+  // be absolute (app host + real slug); single-host testing uses /<slug>.
+  const shellHost = (await headers()).get('host') || '';
+  const realSlug = demoContext ? await readRealWorkspaceSlug(shellHost) : null;
+  const demoToggleHref = demoContext
+    ? (realSlug ? `${appUrl(shellHost)}/${realSlug}` : (appUrl(shellHost) || '/'))
+    : `${demoUrl(shellHost)}/demo`;
+  const demoToggle = (
+    <QcLinkButton variant="secondary" size="sm" href={demoToggleHref}>
+      {demoContext ? 'My Workspace' : 'Demo'}
+    </QcLinkButton>
+  );
 
   const supabase = await createSupabaseServerClient();
 
@@ -173,6 +193,7 @@ export default async function WorkspaceLayout({
             {'isBeingImpersonated' in profile && profile.isBeingImpersonated && <UserImpersonationBanner />}
           </>}
           entitlementBanner={<EntitlementBanner entitlements={entitlements} workspaceSlug={slug} />}
+          demoToggle={demoToggle}
           bell={<AlertBell initialAlerts={alerts || []} initialUnreadCount={unreadCount} workspaceSlug={slug} userId={profile.id} />}
           inbox={<InboxLink workspaceSlug={slug} userId={profile.id} unreadCount={inboxUnreadCount} latestUnreadAlertId={latestUnreadAlertId} />}
           help={<HelpDrawerTrigger />}

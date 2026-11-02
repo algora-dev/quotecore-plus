@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
   const retentionCutoff = new Date(Date.now() - 7 * 86_400_000).toISOString();
   const [prunedCounters, prunedSessions] = await Promise.all([
     db.from('demo_budget_counters').delete().lt('expires_at', retentionCutoff),
-    db.from('demo_sessions').delete().eq('status', 'deleted').lt('cleanup_finished_at', retentionCutoff),
+    // Demo toggle (2026-11-02): owner-linked rows carry re-engagement
+    // analytics and persist; only anonymous tombstones are purged.
+    db.from('demo_sessions').delete().eq('status', 'deleted').lt('cleanup_finished_at', retentionCutoff).is('owner_user_id', null),
   ]);
   if (prunedCounters.error || prunedSessions.error) { counts.failed++; console.warn('[demo/cleanup] Metadata retention purge needs retry'); }
   return NextResponse.json(counts, { status: counts.failed ? 207 : 200, headers: { 'Cache-Control': 'no-store' } });

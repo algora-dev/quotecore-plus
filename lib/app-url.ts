@@ -101,6 +101,34 @@ export function marketingUrl(host?: string): string {
 }
 
 /**
+ * Returns the base URL for the guided-walkthrough demo.
+ *
+ * - On production hosts           -> https://demo.quote-core.com
+ * - *.vercel.app / localhost      -> '' (empty string, relative /demo)
+ *
+ * Used by the workspace Demo toggle; middleware redirects /demo there on
+ * production app/marketing hosts anyway, but linking directly avoids the hop.
+ */
+export function demoUrl(host?: string): string {
+  if (typeof window !== 'undefined') {
+    host = host || window.location.host;
+    if (isPreviewHost(host)) {
+      return '';
+    }
+    return 'https://demo.quote-core.com';
+  }
+
+  if (host) {
+    if (isPreviewHost(host)) {
+      return '';
+    }
+    return 'https://demo.quote-core.com';
+  }
+
+  return 'https://demo.quote-core.com';
+}
+
+/**
  * Returns true if the given host should render the marketing homepage
  * (as opposed to the app landing page).
  *

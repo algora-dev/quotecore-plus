@@ -7,6 +7,7 @@ import { DemoError } from './errors';
 import { fictionalCompany, type DemoMeasurementSystem, type DemoCurrency } from './seed-data';
 import { seedDemoCompany } from './seed';
 import { DEMO_SEED_VERSION, DEMO_SESSION_MS, initialDemoGuide } from './model';
+import type { DemoOwner } from './owner';
 import { ipHmacFor } from './identity';
 import type { Database } from '@/app/lib/supabase/server';
 export { ipHmacFor } from './identity';
@@ -35,7 +36,7 @@ export async function probeDemo(anonUserId: string): Promise<{ slug: string; ses
   const system: DemoMeasurementSystem = company.data.default_measurement_system === 'imperial_ft' || company.data.default_measurement_system === 'imperial_rs' ? company.data.default_measurement_system : 'metric';
   return { slug: company.data.slug, sessionId: old.id, expiresAt: old.expires_at, system };
 }
-export async function provisionDemo(anonUserId: string, ip: string | null, reset = false, system?: DemoMeasurementSystem, currency?: DemoCurrency): Promise<{ slug: string; sessionId: string; resumed: boolean; expiresAt: string | null; system: DemoMeasurementSystem }> {
+export async function provisionDemo(anonUserId: string, ip: string | null, reset = false, system?: DemoMeasurementSystem, currency?: DemoCurrency, owner?: DemoOwner | null): Promise<{ slug: string; sessionId: string; resumed: boolean; expiresAt: string | null; system: DemoMeasurementSystem }> {
   if (!(await getDemoControl()).demoEnabled) throw new DemoError('The demo is currently switched off.', 503, 'demo_off');
   const admin = createAdminClient();
   const verified = await admin.auth.admin.getUserById(anonUserId);
@@ -101,7 +102,7 @@ export async function provisionDemo(anonUserId: string, ip: string | null, reset
     }
   }
   const created = await admin.from('demo_sessions').insert({ id: sessionId, anon_user_id: anonUserId,
-    template_version: DEMO_SEED_VERSION, ip_hmac: ipHmac, status: 'provisioning', reset_count: (old?.reset_count ?? 0) + (reset ? 1 : 0) });
+    template_version: DEMO_SEED_VERSION, ip_hmac: ipHmac, status: 'provisioning', reset_count: (old?.reset_count ?? 0) + (reset ? 1 : 0), owner_user_id: owner?.userId ?? null, owner_email: owner?.email ?? null });
   if (created.error) {
     if (old?.status === 'active') await admin.from('demo_sessions').update({ status: 'active' }).eq('id', old.id).eq('status', 'terminating');
     throw new DemoError('Could not start provisioning.', 503);

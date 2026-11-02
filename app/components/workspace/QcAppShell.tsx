@@ -17,6 +17,7 @@ interface Props {
   workspaceSlug: string; userId: string; companyName: string;
   entitlements: WorkspaceNavEntitlements; isSupplier: boolean; assistantAvailable: boolean;
   children: ReactNode; notices: ReactNode; entitlementBanner: ReactNode;
+  demoToggle?: ReactNode;
   bell: ReactNode; inbox: ReactNode; help: ReactNode; logout: ReactNode; assistant: ReactNode;
 }
 /** C23. The server retains authentication, data loading and plan gates.
@@ -24,7 +25,7 @@ interface Props {
  * This component stores only a sidebar preference, never quote/client data.
  */
 export function QcAppShell({ workspaceSlug, userId, companyName, entitlements, isSupplier,
-  assistantAvailable, children, notices, entitlementBanner, bell, inbox, help, logout, assistant }: Props) {
+  assistantAvailable, children, notices, entitlementBanner, demoToggle, bell, inbox, help, logout, assistant }: Props) {
   const pathname = usePathname() ?? `/${workspaceSlug}`;
   const route = shellRoute(pathname, workspaceSlug);
   const items = workspaceNavigation(workspaceSlug, isSupplier, assistantAvailable);
@@ -89,7 +90,7 @@ export function QcAppShell({ workspaceSlug, userId, companyName, entitlements, i
             onClick={() => setMobileOpen(true)}><QcIcon name="menu" /></QcButton>
           <span className="qc-topbar-title">{route.label}</span>
         </div>
-        <div className="qc-shell-utilities">{bell}{inbox}{help}</div>
+        <div className="qc-shell-utilities">{demoToggle}{bell}{inbox}{help}</div>
       </header>
       {entitlementBanner}
       <main id="qc-main" tabIndex={-1} className="qc-main"><QcMobileReturn pathname={pathname} workspaceSlug={workspaceSlug} />{children}</main>

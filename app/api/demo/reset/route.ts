@@ -7,6 +7,7 @@ import { demoCurrencyFromAcceptLanguage } from '@/app/lib/demo/seed-data';
 import { isRecord } from '@/app/lib/demo/model';
 import { createDemoRouteClient } from '@/app/lib/demo/route-client';
 import { seedDemoAssistantPermissionsBestEffort } from '@/app/lib/demo/assistant.server';
+import { readDemoOwner } from '@/app/lib/demo/owner';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -26,7 +27,8 @@ export async function POST(request: NextRequest) {
     // visitor's CURRENT browser locale (same rule as first provision), so an
     // existing device picks up its locale currency instead of carrying a
     // pre-fix GBP seed forever.
-    const result = await provisionDemo(user.id, requestIp(request.headers), true, system, demoCurrencyFromAcceptLanguage(request.headers.get('accept-language')));
+    const owner = await readDemoOwner(request.nextUrl.hostname);
+    const result = await provisionDemo(user.id, requestIp(request.headers), true, system, demoCurrencyFromAcceptLanguage(request.headers.get('accept-language')), owner);
     await seedDemoAssistantPermissionsBestEffort(await createDemoRouteClient(request.nextUrl.hostname));
     return demoJson(result);
   } catch (error) { return demoErrorResponse(error); }
