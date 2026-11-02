@@ -15,7 +15,7 @@ const company = [
 const legal = [["Privacy", "/privacy"], ["Terms", "/terms"], ["Cookie policy", "/cookie-policy"]] as const;
 
 function FooterNav({ title, links }: { title: string; links: readonly (readonly [string,string])[] }) {
-  return <nav aria-label={title}><h2 className={styles.navTitle}>{title}</h2><div className={styles.links}>{links.map(([label, href]) => <Link key={label} href={href} className={styles.link}>{label}</Link>)}</div></nav>;
+  return <nav aria-label={title}><h2 className={styles.navTitle}>{title}</h2><div className={styles.links}>{links.map(([label, href]) => <Link key={label} href={href} target={/^https?:\/\//.test(href) ? '_blank' : undefined} rel={/^https?:\/\//.test(href) ? 'noopener noreferrer' : undefined} className={styles.link}>{label}</Link>)}</div></nav>;
 }
 
 export default function SiteFooter() {

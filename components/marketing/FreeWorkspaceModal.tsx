@@ -24,7 +24,7 @@ export function openFreeWorkspaceModal(): boolean {
   const event = new CustomEvent(FREE_WORKSPACE_EVENT, { cancelable: true });
   const unhandled = window.dispatchEvent(event);
   if (unhandled && window.location.pathname !== '/signup') {
-    window.location.assign('/signup');
+    window.open('/signup', '_blank', 'noopener');
     return false;
   }
   return !unhandled;

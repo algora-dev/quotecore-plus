@@ -4,9 +4,9 @@ import type { MouseEvent, ReactNode } from 'react';
 import { MarketingButton } from './MarketingButton';
 
 /**
- * Free Workspace CTA. Opens Gavin's signup flow at /signup (owner decision
- * 2026-11-01: signup flow stays on the development implementation; the
- * external handoff modal is not used).
+ * Free Workspace CTA. Opens the signup flow at /signup in a new browser tab
+ * (owner decisions 2026-11-01 development signup flow, 2026-11-02 new tab so
+ * the marketing page stays open).
  */
 export function FreeWorkspaceButton({
   children = 'Create my free workspace',
@@ -26,6 +26,7 @@ export function FreeWorkspaceButton({
   return (
     <MarketingButton
       href="/signup"
+      target="_blank"
       variant={variant}
       size={size}
       className={className}

@@ -29,11 +29,13 @@ export function MarketingButton({
   target,
   rel,
 }: Props) {
+  const isExternal = /^https?:\/\//i.test(href);
+  const resolvedTarget = target ?? (isExternal ? '_blank' : undefined);
   return (
     <a
       href={href}
-      target={target}
-      rel={rel ?? (target === "_blank" ? "noopener noreferrer" : undefined)}
+      target={resolvedTarget}
+      rel={rel ?? (resolvedTarget === '_blank' ? 'noopener noreferrer' : undefined)}
       aria-label={ariaLabel}
       onClick={onClick}
       className={[styles.button, styles[variant], size === 'large' ? styles.large : '', className].filter(Boolean).join(' ')}

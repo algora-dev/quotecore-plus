@@ -151,7 +151,7 @@ export function DoneForYouInquiryModal() {
 
   function bookCall() {
     trackEvent('dfy_inquiry_path_select', { path: 'call' });
-    window.location.assign(bookingHref);
+    window.open(bookingHref, '_blank', 'noopener,noreferrer');
   }
 
   function nextStep() {

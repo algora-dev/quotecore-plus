@@ -64,6 +64,8 @@ export default function SupplierCTA({
   return (
     <a
       href={href}
+      target={/^https?:\/\//.test(href) ? "_blank" : undefined}
+      rel={/^https?:\/\//.test(href) ? "noopener noreferrer" : undefined}
       className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2 ${variantClasses[variant]} ${className}`}
       onClick={() =>
         trackEvent("supplier_partnership_cta_click", {

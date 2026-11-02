@@ -134,6 +134,8 @@ export default function BlogHeader({ backLabel, backHref = "/", theme = "dark", 
                 <a
                   key={item.label}
                   href={item.href}
+                  target={/^https?:\/\//.test(item.href) ? '_blank' : undefined}
+                  rel={/^https?:\/\//.test(item.href) ? 'noopener noreferrer' : undefined}
                   className={styles.navItem}
                   onClick={() => {
                     if (item.app) trackEvent("app_click", { location: "menu-open-app" });
