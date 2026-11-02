@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import DfyPageViewTracker from '@/components/DfyPageViewTracker';
-import { MarketingButton } from '@/components/marketing/MarketingButton';
 import { DoneForYouInquiryButton } from '@/components/marketing/DoneForYouInquiryButton';
 import YouTubeLite from '@/components/YouTubeLite';
 import { siteUrl, buildBreadcrumbSchema } from '@/lib/schema';
@@ -107,7 +106,6 @@ export default function DoneForYouSetupPage() {
                 <p className={styles.heroLead}>Book 25 minutes with Shaun, or send a quick enquiry in around 60 seconds. We&apos;ll work out how QuoteCore+ could make measuring, pricing and quoting faster, what setup is involved, and what a tailored Done For You proposal would look like.</p>
                 <div className={styles.heroActions}>
                   <DoneForYouInquiryButton size="large" source="dfy-hero">Inquire about Done For You</DoneForYouInquiryButton>
-                  <MarketingButton href="#how-it-works" variant="glass" size="large">See how it works</MarketingButton>
                 </div>
                 <div className={styles.tipStrip}>
                   <img src="/shaun-smiling.jpg" alt="" aria-hidden="true" />

@@ -2,6 +2,7 @@
 
 import type { MouseEvent, ReactNode } from 'react';
 import { MarketingButton } from '@/components/marketing/MarketingButton';
+import controls from '@/components/marketing/MarketingButton.module.css';
 import { openDoneForYouInquiry } from '@/components/marketing/DoneForYouInquiryModal';
 import { trackEvent } from '@/lib/analytics';
 
@@ -34,7 +35,7 @@ export function DoneForYouInquiryButton({
       href="/done-for-you-setup?inquire=1"
       variant={variant}
       size={size}
-      className={className}
+      className={`${controls.glint} ${className}`.trim()}
       icon={icon}
       onClick={handleClick}
     >

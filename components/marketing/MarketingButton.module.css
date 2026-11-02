@@ -174,3 +174,32 @@
   }
   .button:focus-visible { outline-color: Highlight; }
 }
+
+/* One-pass glint modifier for non-glass variants (orange primary CTAs),
+   matching the glass ::after sweep so primary CTAs like the Done For You
+   inquiry button glint like every other orange button. */
+.glint {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.glint::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 18%, rgba(255, 255, 255, 0.76) 48%, transparent 78%);
+  transform: translateX(-120%);
+  pointer-events: none;
+  transition: none;
+}
+@media (hover: hover) {
+  .glint:hover:not(:disabled)::after {
+    transform: translateX(120%);
+    transition: transform 220ms cubic-bezier(0.2, 0, 0, 1);
+  }
+}
+@media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .glint::after {
+    display: none;
+  }
+}
