@@ -34,7 +34,7 @@ test('atomic roof start binds the transferred image and normalized outline into 
   const { instance } = service(bytes);
   const started = await instance.startTakeoff({
     plan, trade: 'roofing', unitSystem: 'metric',
-    sourceOutline: { name: 'Main roof', points: [{ x: .1, y: .1 }, { x: .9, y: .1 }, { x: .9, y: .8 }, { x: .1, y: .8 }] },
+    sourceOutline: { kind: 'polygon', name: 'Main roof', points: [{ x: .1, y: .1 }, { x: .9, y: .1 }, { x: .9, y: .8 }, { x: .1, y: .8 }] },
   });
   assert.equal(started.hasSuggestedOutline, true);
   assert.match(started.resultUrl, /^https:\/\/quote\.example\/mcp-free-tools\/workspace#session=/);
@@ -61,18 +61,37 @@ test('cladding and flooring start with the real workstation but reject roof-only
   assert.equal(loaded.trade, 'cladding');
   assert.equal(loaded.unitSystem, 'metric');
   assert.equal(loaded.outlineSuggestion, null);
-  await assert.rejects(() => instance.startTakeoff({ plan, trade: 'flooring', sourceOutline: { points: [{x:.1,y:.1},{x:.9,y:.1},{x:.9,y:.9}] } }), /supported only for roofing/);
+  await assert.rejects(() => instance.startTakeoff({ plan, trade: 'flooring', sourceOutline: { kind: 'polygon', points: [{x:.1,y:.1},{x:.9,y:.1},{x:.9,y:.9}] } }), /supported only for roofing/);
 });
 
-test('invalid model outline geometry degrades to a no-outline workspace instead of failing the takeoff', async () => {
+test('invalid outline geometry fails loudly with retry guidance instead of silently degrading', async () => {
   const bytes = await fixture();
   const { instance } = service(bytes);
-  const outOfRange = await instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: { points: [{x:-.1,y:.1},{x:.8,y:.1},{x:.8,y:.8}] } });
-  assert.equal(outOfRange.hasSuggestedOutline, false);
-  const selfCrossing = await instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: { points: [{x:.1,y:.1},{x:.9,y:.9},{x:.9,y:.1},{x:.1,y:.9}] } });
-  assert.equal(selfCrossing.hasSuggestedOutline, false);
-  const notAnObject = await instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: 'nonsense' });
-  assert.equal(notAnObject.hasSuggestedOutline, false);
+  await assert.rejects(
+    () => instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: { kind: 'polygon', points: [{x:-.1,y:.1},{x:.8,y:.1},{x:.8,y:.8}] } }),
+    /Retry start_roof_takeoff with a corrected source_outline polygon/,
+  );
+  await assert.rejects(
+    () => instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: { kind: 'polygon', points: [{x:.1,y:.1},{x:.9,y:.9},{x:.9,y:.1},{x:.1,y:.9}] } }),
+    /Retry start_roof_takeoff with a corrected source_outline polygon/,
+  );
+  await assert.rejects(
+    () => instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: 'nonsense' }),
+    /source_outline must be an object/,
+  );
+  await assert.rejects(
+    () => instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: { points: [{x:.1,y:.1},{x:.9,y:.1},{x:.9,y:.9}] } }),
+    /source_outline.kind must be "polygon"/,
+  );
+});
+
+test('an explicit skipped outline opens a no-outline workspace without error', async () => {
+  const bytes = await fixture();
+  const { instance } = service(bytes);
+  const skipped = await instance.startTakeoff({ plan, trade: 'roofing', sourceOutline: { kind: 'skipped', reason: 'unclear' } });
+  assert.equal(skipped.hasSuggestedOutline, false);
+  const loaded = await instance.loadSession(skipped.token);
+  assert.equal(loaded.outlineSuggestion, null);
 });
 
 test('workspace session is signed and expires', async () => {
@@ -100,9 +119,12 @@ test('PDF attachments are preserved for the existing browser page picker instead
   assert.equal(loaded.asset.frame, null);
   const asset = await instance.loadAsset(started.token);
   assert.equal(asset.bytes.toString('ascii', 0, 5), '%PDF-');
-  const pdfWithOutline = await instance.startTakeoff({ plan: pdfPlan, trade: 'roofing', sourceOutline: { points: [{x:.1,y:.1},{x:.9,y:.1},{x:.9,y:.9}] } });
+  const pdfWithOutline = await instance.startTakeoff({ plan: pdfPlan, trade: 'roofing', sourceOutline: { kind: 'polygon', points: [{x:.1,y:.1},{x:.9,y:.1},{x:.9,y:.9}] } });
   assert.equal(pdfWithOutline.assetKind, 'pdf');
   assert.equal(pdfWithOutline.hasSuggestedOutline, false);
+  const pdfSkipped = await instance.startTakeoff({ plan: pdfPlan, trade: 'roofing', sourceOutline: { kind: 'skipped', reason: 'pdf' } });
+  assert.equal(pdfSkipped.assetKind, 'pdf');
+  assert.equal(pdfSkipped.hasSuggestedOutline, false);
 });
 
 test('measurements-to-pricing session preserves supplied values and starts all pricing rates at zero', async () => {

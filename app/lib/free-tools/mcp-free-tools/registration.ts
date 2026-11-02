@@ -17,11 +17,17 @@ const fileParam = z.object({
   file_name: z.string().max(255).optional(),
 }).strict();
 const normalizedPoint = z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) }).strict();
-const sourceOutline = z.object({
+const sourceOutlinePolygon = z.object({
+  kind: z.literal('polygon'),
   name: z.string().max(80).optional(),
   points: z.array(normalizedPoint).min(3).max(160),
   notes: z.array(z.string().max(240)).max(6).optional(),
 }).strict();
+const sourceOutlineSkipped = z.object({
+  kind: z.literal('skipped'),
+  reason: z.enum(['pdf', 'multi_building', 'unclear']).describe('pdf: the attachment is a PDF and the page is chosen later. multi_building: several separate buildings. unclear: no single exterior boundary is visible.'),
+}).strict();
+const sourceOutline = z.union([sourceOutlinePolygon, sourceOutlineSkipped]);
 const annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 const noAuth = [{ type: 'noauth' as const }];
 const launcherMeta = {
@@ -116,7 +122,7 @@ async function startTakeoff(
 }
 
 function takeoffDescription(trade: TakeoffTrade): string {
-  if (trade === 'roofing') return 'PREFERRED tool whenever the user asks to measure an attached roof image or PDF. Start the real QuoteCore+ roof takeoff/review workflow before asking for pitch or calculating component quantities in chat. PDF page selection happens in QuoteCore+. For image (non-PDF) attachments showing one primary building, you MUST include source_outline: your traced exterior roof boundary as a closed polygon in normalized 0..1 full-image coordinates (top-left 0,0, bottom-right 1,1), even if imperfect - the user calibrates, reviews and corrects it in QuoteCore+. Omit source_outline ONLY for multi-building plans or when no boundary is clearly visible; invalid geometry is discarded automatically, so always attempt the trace rather than skipping it. Never infer scale, pitch or internal components. The outline is only an unverified phase-1 suggestion: the user calibrates, reviews and can edit it in the existing two-phase takeoff UX. After saving the corrected outline they can either measure components manually or run QuoteCore+ AI scans 2+3 to propose internal components for review. Do not substitute a generated static markup for this human review step.';
+  if (trade === 'roofing') return 'PREFERRED tool whenever the user asks to measure an attached roof image or PDF. Start the real QuoteCore+ roof takeoff/review workflow before asking for pitch or calculating component quantities in chat. PDF page selection happens in QuoteCore+. Every call MUST include source_outline, and for an image (non-PDF) plan showing one primary building it MUST be kind "polygon": your traced exterior roof boundary in full-image normalized 0..1 coordinates (top-left 0,0, bottom-right 1,1), even if imperfect - the user calibrates, reviews and corrects it in QuoteCore+. Kind "skipped" (reason "pdf", "multi_building" or "unclear") is only for attachments where a single traced boundary genuinely is not possible; do not skip the trace on a visible single-building plan. Invalid polygon geometry returns an error - retry with corrected vertices instead of skipping. Never infer scale, pitch or internal components. The outline is only an unverified phase-1 suggestion: the user calibrates, reviews and can edit it in the existing two-phase takeoff UX. After saving the corrected outline they can either measure components manually or run QuoteCore+ AI scans 2+3 to propose internal components for review. Do not substitute a generated static markup for this human review step.';
   if (trade === 'cladding') return 'Starts the real QuoteCore+ wall/cladding takeoff workstation from a ChatGPT-attached PNG/JPEG/WebP image or PDF elevation/plan. PDF page selection happens in QuoteCore+ before measurement. QuoteCore+ does not infer wall components here; the user calibrates and measures in the shared workstation.';
   return 'Starts the real QuoteCore+ flooring takeoff workstation from a ChatGPT-attached PNG/JPEG/WebP image or PDF floor plan. PDF page selection happens in QuoteCore+ before measurement. QuoteCore+ does not infer flooring components here; the user calibrates and measures in the shared workstation.';
 }
@@ -198,7 +204,7 @@ export function registerFreeToolsMcpTools(server: McpServer, origin: string, get
   };
   registerAppTool(server, 'start_roof_takeoff', {
     title: 'Measure a roof from an attached plan', description: takeoffDescription('roofing'),
-    inputSchema: { ...commonTakeoffSchema, source_outline: sourceOutline.optional().describe('REQUIRED for single-building image plans: the exterior roof boundary you traced from this SAME attachment, as a closed polygon in full-image normalized coordinates (top-left 0,0, bottom-right 1,1). Omit only for multi-building/unclear plans or PDFs. Do not infer pitch, scale, ridges, hips, valleys or other components.') },
+    inputSchema: { ...commonTakeoffSchema, source_outline: sourceOutline.describe('REQUIRED on every call. Preferred for image plans: {"kind":"polygon","points":[{x,y},...]} = the exterior roof boundary you traced from this SAME attachment as a closed polygon in full-image normalized 0..1 coordinates (top-left 0,0, bottom-right 1,1). Only send {"kind":"skipped","reason":"pdf"|"multi_building"|"unclear"} when tracing genuinely is not possible. Do not infer pitch, scale, ridges, hips, valleys or other components.') },
     outputSchema: takeoffOutputSchema,
     annotations: { ...annotations, readOnlyHint: false, idempotentHint: false, openWorldHint: false },
     _meta: { ...launcherMeta, securitySchemes: noAuth, 'openai/fileParams': ['plan'], 'openai/toolInvocation/invoking': 'Preparing roof takeoff', 'openai/toolInvocation/invoked': 'Roof takeoff ready for review' },
@@ -282,7 +288,7 @@ export function registerFreeToolsMcpTools(server: McpServer, origin: string, get
 export const FREE_TOOLS_MCP_INSTRUCTIONS = [
   'QuoteCore+ Free Tools follows the same Measure / Calculate / Create documents routing as quote-core.com/free-tools.',
   'When the user wants to measure an attached roof, wall/cladding or floor plan, call the matching start_*_takeoff tool before doing an ad-hoc visual takeoff in chat. For an attached roof plan, start_roof_takeoff is the preferred first action; do not ask for pitch first and do not use calculate_roof_takeoff as a substitute for plan review. If no plan is attached, ask for the plan image or PDF rather than inventing a file reference.',
-  'For a single roof image that you can actually see, include one exterior source_outline in normalized full-image 0..1 coordinates in the SAME start_roof_takeoff call - it is REQUIRED whenever the image shows one primary building; trace the boundary even if imperfect. Never infer scale, pitch or internal roof components. For PDF attachments, omit source_outline because the user must choose the page first. Only omit source_outline for multi-building or genuinely unclear plans; invalid geometry is discarded automatically.',
+  'Every start_roof_takeoff call must include source_outline. For a single roof image you can actually see, send {"kind":"polygon","points":[...]} - your traced exterior boundary in normalized full-image 0..1 coordinates - in the SAME call, even if imperfect; the user calibrates and corrects it in QuoteCore+. Send {"kind":"skipped","reason":"pdf"} for PDF attachments (the user must choose the page first), and reasons "multi_building" or "unclear" only when a single boundary genuinely is not traceable. If invalid geometry is rejected, retry with corrected vertices rather than skipping. Never infer scale, pitch or internal roof components.',
   'The takeoff workstation is authoritative for calibration, edits and measured components. A model-suggested roof outline is unverified until the user reviews it. Surface/open the real QuoteCore+ review workflow rather than generating a static annotated image as a replacement. For roofing, after the corrected outline is saved the existing workstation offers either manual component measurement or AI scans 2+3 for internal component proposals; those scans use the corrected human-reviewed outline, not the original model polygon.',
   'If the user already has measurements, use start_measurements_to_pricing instead of asking for a plan. Pass measurements the user already supplied so they appear in the existing QuoteCore+ pricing UX; never invent missing quantities, units, pitch or rates.',
   'Use create_quote, create_invoice or create_purchase_order for document requests. Prefill line items already supplied by the user, but the tools may also open a blank editable draft when details have not been supplied yet. They do not send documents.',

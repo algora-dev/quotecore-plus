@@ -74,12 +74,18 @@ function sourceFile(value: unknown): SourceFile {
   };
 }
 
+function isSkippedOutline(value: unknown): boolean {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value) && (value as Record<string, unknown>).kind === 'skipped');
+}
+
 function normalizedOutline(value: unknown, frame: { width: number; height: number }): { outline: ReturnType<typeof parseOutline>; notes: string[] } {
   if (!value || typeof value !== 'object' || Array.isArray(value))
-    throw new ScanError('INVALID_INPUT', 'source_outline must be an object.');
+    throw new ScanError('INVALID_INPUT', 'source_outline must be an object with kind "polygon" or "skipped".');
   const input = value as Record<string, unknown>;
-  if (Object.keys(input).some(key => !['name', 'points', 'notes'].includes(key)))
+  if (Object.keys(input).some(key => !['kind', 'name', 'points', 'notes'].includes(key)))
     throw new ScanError('INVALID_INPUT', 'source_outline contains unsupported fields.');
+  if (input.kind !== 'polygon')
+    throw new ScanError('INVALID_INPUT', 'source_outline.kind must be "polygon" for a traced boundary, or "skipped" with a reason.');
   if (!Array.isArray(input.points) || input.points.length < 3 || input.points.length > 160)
     throw new ScanError('INVALID_GEOMETRY', 'Provide 3 to 160 exterior vertices.');
   const points = input.points.map((raw, index) => {
@@ -233,8 +239,8 @@ export class FreeToolsMcpService {
 
     if (isPdf) {
       if (raw.length > MAX_PDF_ATTACHMENT_BYTES) throw new ScanError('FILE_TOO_LARGE', 'Use a PDF plan under 50 MiB.', 413);
-      // v5: outlines are meaningless before PDF page selection, and the required-outline
-      // instruction means models may attach one anyway - discard it and continue.
+      // v6: outlines are meaningless before PDF page selection - ignore both polygon and
+      // skipped submissions and continue; the user picks the page in QuoteCore+.
       bytes = raw;
       const sha256 = createHash('sha256').update(bytes).digest('hex');
       asset = {
@@ -256,15 +262,16 @@ export class FreeToolsMcpService {
         tooLargeMessage: 'Use a PNG, JPEG or WebP plan image under 10 MiB.',
       });
       bytes = prepared.bytes;
-      if (input.sourceOutline !== undefined) {
+      if (input.sourceOutline !== undefined && !isSkippedOutline(input.sourceOutline)) {
         if (input.trade !== 'roofing') throw new ScanError('INVALID_INPUT', 'source_outline is currently supported only for roofing plans.');
+        // v6: invalid outline geometry fails loudly so the model can retry with
+        // corrected vertices instead of silently opening a no-outline workspace.
         try {
           const proposal = normalizedOutline(input.sourceOutline, prepared.frame);
           outlineSuggestion = outlineScan(proposal.outline, proposal.notes);
         } catch (error) {
-          // v5: the tool asks the model to ALWAYS attempt the outline, so junk
-          // geometry must degrade to a no-outline workspace, never fail the takeoff.
           if (!(error instanceof ScanError)) throw error;
+          throw new ScanError(error.code, `${error.message} Retry start_roof_takeoff with a corrected source_outline polygon, or send {"kind":"skipped","reason":"unclear"} if the boundary truly cannot be traced.`, error.status);
         }
       }
       asset = {
