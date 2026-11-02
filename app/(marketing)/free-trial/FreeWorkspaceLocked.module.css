@@ -55,9 +55,25 @@
 }
 .btn-primary:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 13px 32px rgba(255,107,53,.28)}
 .btn-secondary{
-  color:#fff;background:#191F27;border-color:#2C333D;
+  /* Book-call secondary: orange outline + light grey glint on the dark glass
+     base. Themed through the glass CSS variables so base, hover and glint
+     never fight the cross-module cascade. */
+  --qc-glass-ink:#fff;
+  --qc-glass-fill:#191F27;
+  --qc-glass-edge:#ff641f;
+  --qc-glass-hover:#202730;
+  --qc-glass-accent:#ff8a3d;
+  --qc-glass-glint:rgba(255,255,255,.45);
+  --qc-glass-highlight:rgba(255,255,255,.22);
+  --qc-glass-lowlight:rgba(255,255,255,.05);
+  --qc-glass-shadow:rgba(11,13,16,.28);
+  --qc-glass-hover-shadow:rgba(255,107,53,.14);
+  --qc-glass-rim:rgba(255,140,66,.5);
+  --qc-glass-sheen:rgba(255,255,255,.06);
+  --qc-glass-toe:rgba(255,255,255,.02);
+  --qc-glass-pressed:#262D38;
+  --qc-glass-solid:#191F27;
 }
-.btn-secondary:hover{transform:translateY(-1px);border-color:#4B5664;background:#202730}
 .btn-outline{border-color:#CFD5DC;background:#fff;color:#2D333B}
 .btn-outline:hover{transform:translateY(-1px);border-color:#FF8A3D;background:#fff}
 .root button:focus-visible,.root a:focus-visible,.root input:focus-visible{outline:3px solid #FF9A5C;outline-offset:3px}

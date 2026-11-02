@@ -30,7 +30,7 @@ export default function PricingPage() {
         <div className={styles.wrap}><div className={c('hero-inner')}>
           <p className={styles.eyebrow}>QuoteCore+ pricing</p>
           <h1>Don&apos;t pay for something you don&apos;t need. <span className={styles.gradient}>Try everything first for free.</span></h1>
-          <p className={c('hero-copy')}>See how our app can help your business, what features you need, then create your plan.</p>
+          <p className={c('hero-copy')}>See how our app can help your business, what features you need, then create your plan. Or chat with Shaun to see what features you need based on how you currently work.</p>
           <div className={c('price-range')}><strong>US${publicPricing.monthlyMin} to US${publicPricing.monthlyMax}/month</strong><span>Paid plans currently sit within this range.</span></div>
           <div className={c('hero-actions')}>
             <FreeWorkspaceButton className={c('btn','btn-primary')}>Create my free workspace →</FreeWorkspaceButton>
@@ -49,7 +49,7 @@ export default function PricingPage() {
         <div className={c('paths-intro','compact-intro')}><div><p className={styles.eyebrow}>Two ways to get your price</p><h2>Try it yourself. Or let us help.</h2></div></div>
         <div className={c('path-combined')}>
           <article className={c('path-card')}><span className={c('path-label')}>Option 1 · Try it yourself</span><h3>Start with a free workspace.</h3><p>Use the guided walkthrough or explore on your own. When you know what helps, create your plan inside your account.</p><FreeWorkspaceButton className={c('btn','btn-primary')}>Create my free workspace →</FreeWorkspaceButton></article>
-          <article className={c('path-card')} id="shaun-price"><span className={c('path-label')}>Option 2 · Let us help</span><h3>Tell me how you work.</h3><p>Show Shaun how you measure, estimate and quote today. He&apos;ll help you understand what could make it faster and easier, and what that setup would cost.</p><div className={c('shaun','compact-shaun')}><img src="/shaun-smiling.jpg" alt="Shaun, founder of QuoteCore+" /><div><b>Shaun · Founder</b><small>20+ years roofing & construction</small></div></div><MarketingButton href={workflowCallHref} className={c('btn','btn-primary')}>Book my free 25-minute call →</MarketingButton></article>
+          <article className={c('path-card')} id="shaun-price"><span className={c('path-label')}>Option 2 · Let us help</span><h3>Tell me how you work.</h3><p>Chat to Shaun about how you measure, estimate and quote today. He&apos;ll help you understand what could make it faster and easier, and what that setup would cost.</p><div className={c('shaun','compact-shaun')}><img src="/shaun-smiling.jpg" alt="Shaun, founder of QuoteCore+" /><div><b>Shaun · Founder</b><small>20+ years roofing & construction</small></div></div><MarketingButton href={workflowCallHref} className={c('btn','btn-primary')}>Book my free 25-minute call →</MarketingButton></article>
         </div>
       </div></section>
 
